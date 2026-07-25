@@ -28,16 +28,15 @@ namespace GalaxyEggbert::Game
     // frame/bracket), so GetInnerFlatPlateAxis() returns PlateAxis::Y
     // (horizontal, matching the grass-top overlay's usage of the same axis)
     // for those 5 only. Saw/SawStopped (378/379) is deliberately NOT in
-    // this list -- see TerrainRenderer.cpp's IsGroundAnchoredPlateIcon()
+    // this list -- see BlockRenderMode::GroundAnchoredPlate
     // for why it needs its own additive (solid-cube-plus-overlay) handling
     // instead of an exclusive InnerFlatPlate.
-    bool IsInnerFlatPlateIcon(int icon);
-
     // The icon's own default axis (PlateAxis::Z for every confirmed icon
     // except 368-372's PlateAxis::Y -- see the reasoning above), with an
     // X<->Z swap applied when @p rotated is true (see
     // PlateRotationMetadata.hpp's kPlateRotationMetadataType comment, the
     // mechanism a caller uses to look up @p rotated for a given block).
-    // Only meaningful when IsInnerFlatPlateIcon() is true.
+    // Only meaningful when BlockDefinitionRegistry selected
+    // BlockRenderMode::InnerFlatPlate.
     Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated);
 }

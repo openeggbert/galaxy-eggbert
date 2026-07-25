@@ -1,6 +1,8 @@
 #include "InnerPillarBoxTiles.hpp"
 #include "SwatchUv.hpp"
 
+#include <cstdlib>
+
 namespace GalaxyEggbert::Game
 {
     namespace
@@ -8,8 +10,8 @@ namespace GalaxyEggbert::Game
         using Easy3D::CubeFace;
     }
 
-    bool TryGetInnerPillarBoxFaces(int icon, const Easy3D::UvRect& tileUv,
-                                   Easy3D::DirectionalCubeFace (&outFaces)[6])
+    void ConfigureInnerPillarBoxFaces(int icon, const Easy3D::UvRect& tileUv,
+                                      Easy3D::DirectionalCubeFace (&outFaces)[6])
     {
         if (icon == 76)
         {
@@ -26,7 +28,7 @@ namespace GalaxyEggbert::Game
             }
             outFaces[static_cast<int>(CubeFace::PosY)].Visible = false;
             outFaces[static_cast<int>(CubeFace::NegY)].Visible = false;
-            return true;
+            return;
         }
 
         if (icon == 384 || icon == 385)
@@ -46,9 +48,9 @@ namespace GalaxyEggbert::Game
             outFaces[static_cast<int>(CubeFace::PosY)].Uv = SwatchUv(tileUv, kTopSwatchV);
             outFaces[static_cast<int>(CubeFace::NegY)].Uv = SwatchUv(tileUv, kBottomSwatchV);
             outFaces[static_cast<int>(CubeFace::PosZ)].Uv = tileUv;
-            return true;
+            return;
         }
 
-        return false;
+        std::abort();
     }
 }

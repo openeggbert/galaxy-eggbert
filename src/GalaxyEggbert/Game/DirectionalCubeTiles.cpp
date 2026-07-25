@@ -3,6 +3,8 @@
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 
+#include <cstdlib>
+
 namespace GalaxyEggbert::Game
 {
     namespace
@@ -33,7 +35,7 @@ namespace GalaxyEggbert::Game
             // color" entry -- the confirmed answer's "textura má i průhlednost"
             // is about the SIDE faces' own texture having real per-pixel alpha,
             // not a different face layout. That alpha need is handled
-            // separately in TerrainRenderer.cpp (NeedsAlphaBlend()), which
+            // separately through BlockDefinition::alphaBlend, which
             // routes these 2 icons to a dedicated semi-transparent draw pass
             // reusing the water render mode's blend state (2026-07-08).
             // Editor-only markers (moveable-object start position) per the
@@ -56,7 +58,7 @@ namespace GalaxyEggbert::Game
             // its confirmed answer is "shora samostatná textura trávy"
             // (top = a SEPARATE grass texture), rendered by
             // TerrainRenderer's dedicated grass-top pass
-            // (IsGrassTopIcon()/m_grassRenderer, 2026-07-08, §8 task 3), not
+            // (BlockDefinition::grassTop/m_grassRenderer, 2026-07-08, §8 task 3), not
             // by this table at all. Setting TopColor=false here just stops
             // this table from drawing a competing/z-fighting top face over
             // the grass plate. zdola (bottom) = hnědá plná barva, and
@@ -276,9 +278,9 @@ namespace GalaxyEggbert::Game
         };
     }
 
-    bool TryGetDirectionalCubeFaces(int icon, const Easy3D::UvRect& tileUv,
-                                    const Easy3D::UvRect& icon107Uv,
-                                    Easy3D::DirectionalCubeFace (&outFaces)[6])
+    void ConfigureDirectionalCubeFaces(int icon, const Easy3D::UvRect& tileUv,
+                                       const Easy3D::UvRect& icon107Uv,
+                                       Easy3D::DirectionalCubeFace (&outFaces)[6])
     {
         using Easy3D::CubeFace;
 
@@ -297,7 +299,7 @@ namespace GalaxyEggbert::Game
             }
             outFaces[static_cast<int>(CubeFace::PosY)].Visible = false;
             outFaces[static_cast<int>(CubeFace::NegY)].Visible = false;
-            return true;
+            return;
         }
 
         for (const auto& entry : kSymmetricEntries)
@@ -321,7 +323,7 @@ namespace GalaxyEggbert::Game
             bottom.Visible = entry.BottomColor;
             bottom.Uv = entry.BottomColor ? SwatchUv(tileUv, kBottomSwatchV) : bottom.Uv;
 
-            return true;
+            return;
         }
 
         for (const auto& fan : kFanEntries)
@@ -351,7 +353,7 @@ namespace GalaxyEggbert::Game
                 auto& top = outFaces[static_cast<int>(CubeFace::PosY)];
                 top.Uv = Easy3D::UvRect{top.Uv.U1, top.Uv.V1, top.Uv.U0, top.Uv.V0};
             }
-            return true;
+            return;
         }
 
         for (const auto& entry : kDirectionalEntries)
@@ -457,7 +459,7 @@ namespace GalaxyEggbert::Game
                 }
             }
 
-            return true;
+            return;
         }
 
         // Icons 108/109: "krychle, 2 boční strany vlastní textura, 1 boční
@@ -465,7 +467,7 @@ namespace GalaxyEggbert::Game
         // plná barva, shora samostatná textura trávy". Top is intentionally
         // left OPEN here (Visible=false), same reasoning as icon 107 itself
         // -- the real top surface is TerrainRenderer's separate grass-top
-        // overlay plate (IsGrassTopIcon()/m_grassRenderer), not this table.
+        // overlay plate (BlockDefinition::grassTop/m_grassRenderer), not this table.
         // Facing (which 2 adjacent sides get the icon's own texture, which 1
         // gets icon 107's, which 1 is open) has no confirmed cue in the
         // questionnaire text and the crops didn't resolve it even after
@@ -499,9 +501,11 @@ namespace GalaxyEggbert::Game
 
             // Top (PosY) stays open -- the real grass top is drawn
             // separately, see this block's comment above.
-            return true;
+            return;
         }
 
-        return false;
+        // BlockDefinitionRegistry is the sole mode classifier. Reaching
+        // this point means its DirectionalCube definition lacks parameters.
+        std::abort();
     }
 }

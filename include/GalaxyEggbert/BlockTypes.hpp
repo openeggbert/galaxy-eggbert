@@ -1,4 +1,6 @@
 #pragma once
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
+
 #include <cstdint>
 
 // Block type IDs for galaxy-eggbert's voxel World format.
@@ -94,8 +96,12 @@ constexpr uint16_t WorldSelect10 = 167;
 constexpr uint16_t WorldSelect11 = 168;
 constexpr uint16_t WorldSelect12 = 169;
 
-inline bool isWorldSelect(uint16_t bt) { return bt >= WorldSelect1 && bt <= WorldSelect12; }
-inline int worldSelectIndex(uint16_t bt) { return isWorldSelect(bt) ? static_cast<int>(bt - WorldSelect1 + 1) : -1; }
+inline bool isWorldSelect(uint16_t bt) {
+    return GalaxyEggbert::GetBlockDefinition(bt).worldSelectIndex > 0;
+}
+inline int worldSelectIndex(uint16_t bt) {
+    return GalaxyEggbert::GetBlockDefinition(bt).worldSelectIndex;
+}
 
 // Real per-world sublevel-select door gate (`Decor::AdaptDoors()`'s
 // `m_mission % 10 == 0` branch, `SearchDoor()`/icon `182`, found
@@ -116,8 +122,12 @@ constexpr uint16_t ProgressDoor6 = 174;
 constexpr uint16_t ProgressDoor7 = 175;
 constexpr uint16_t ProgressDoor8 = 176;
 
-inline bool isProgressDoor(uint16_t bt) { return bt >= ProgressDoor2 && bt <= ProgressDoor8; }
-inline int progressDoorIndex(uint16_t bt) { return isProgressDoor(bt) ? static_cast<int>(bt - ProgressDoor2 + 2) : -1; }
+inline bool isProgressDoor(uint16_t bt) {
+    return GalaxyEggbert::GetBlockDefinition(bt).progressDoorIndex > 0;
+}
+inline int progressDoorIndex(uint16_t bt) {
+    return GalaxyEggbert::GetBlockDefinition(bt).progressDoorIndex;
+}
 
 // Engine-specific (NOT a real mobile-eggbert concept): a dedicated portal
 // in the global hub leading to `world999.vwr`, this engine's own quarantined
@@ -156,7 +166,7 @@ constexpr uint16_t Water2   =  96;
 // Spring tile — launches Blupi upward automatically on contact (SoundChannel41).
 constexpr uint16_t Spring   = 211;
 
-inline bool isSpring(uint16_t bt) { return bt == Spring; }
+inline bool isSpring(uint16_t bt) { return GalaxyEggbert::GetBlockDefinition(bt).spring; }
 
 // Temp tile — oscillating 20-frame cycle (icons 324-329); invisible for 2 frames.
 // When SetActive(false) during invisible frames, Blupi falls through (faithful to mobile-eggbert IsTemp).
@@ -170,14 +180,18 @@ constexpr uint16_t FanUp    = 132;  // blows in -Z direction (2D: up = -Y)
 constexpr uint16_t FanDown  = 135;  // blows in +Z direction (2D: down = +Y)
 
 inline bool isFan(uint16_t bt) {
-    return bt == FanLeft || bt == FanRight || bt == FanUp || bt == FanDown;
+    return GalaxyEggbert::GetBlockDefinition(bt).fanDirection !=
+           GalaxyEggbert::BlockFanDirection::None;
 }
 
 // Blitz tile — electric floor, kills Blupi 25 % of ticks (animPhase % 4 == 0).
 // Icon 305 is a solid floor with an active-kill phase (same pattern as Crusher).
 constexpr uint16_t Blitz    = 305;
 
-inline bool isBlitz(uint16_t bt) { return bt == Blitz; }
+inline bool isBlitz(uint16_t bt) {
+    return GalaxyEggbert::GetBlockDefinition(bt).hazard ==
+           GalaxyEggbert::BlockHazardKind::Blitz;
+}
 
 // Blitz emitter -- the icon real `Decor::BlitzActif()` checks one cell above a
 // Blitz(305) floor tile to decide whether to play the zap sound (Decor.cpp:
@@ -194,7 +208,7 @@ constexpr uint16_t Teleport3 = 332;
 constexpr uint16_t Teleport4 = 333;
 
 inline bool isTeleporter(uint16_t bt) {
-    return bt == Teleport1 || bt == Teleport2 || bt == Teleport3 || bt == Teleport4;
+    return GalaxyEggbert::GetBlockDefinition(bt).teleporterIndex > 0;
 }
 
 // Switch tiles — Blupi presses Action to toggle (384=open/active, 385=closed/inactive).
@@ -205,13 +219,13 @@ constexpr uint16_t SwitchOff = 385;  // closed — linked saws stopped (safe)
 // Stopped saw state set by switch. 378 = spinning (hazard), 379 = stopped (safe).
 constexpr uint16_t SawStopped = 379;
 
-inline bool isSwitch(uint16_t bt) { return bt == Switch || bt == SwitchOff; }
+inline bool isSwitch(uint16_t bt) { return GalaxyEggbert::GetBlockDefinition(bt).switchBlock; }
 
 // Bridge tile — passable trigger in mobile-eggbert; in galaxy-eggbert rendered as solid.
 // When Blupi steps on it, bridge-building animation (ObjectType52, PICKUP-064) triggers.
 constexpr uint16_t Bridge = 364;
 
-inline bool isBridge(uint16_t bt) { return bt == Bridge; }
+inline bool isBridge(uint16_t bt) { return GalaxyEggbert::GetBlockDefinition(bt).bridge; }
 
 // Marine tile — animated water surface (table_marine, 11 frames: 203→208→203).
 constexpr uint16_t Marine = 203;
@@ -222,42 +236,29 @@ constexpr uint16_t Door1    = 334;
 constexpr uint16_t Door2    = 335;
 constexpr uint16_t Door3    = 336;
 
-inline bool isDoor(uint16_t bt)      { return bt == Door1 || bt == Door2 || bt == Door3; }
+inline bool isDoor(uint16_t bt)      {
+    return GalaxyEggbert::GetBlockDefinition(bt).doorKeyType >= 0;
+}
 inline int  doorKeyType(uint16_t bt) {
-    if (bt == Door1) return 49;
-    if (bt == Door2) return 50;
-    if (bt == Door3) return 51;
-    return -1;
+    return GalaxyEggbert::GetBlockDefinition(bt).doorKeyType;
 }
 
 // Map any icon in an animated tile group to the group's base/master icon.
 // All tiles in a group share one cached material whose UV is updated each frame.
 inline uint16_t tileAnimBase(uint16_t icon) {
-    if (icon >= 68  && icon <= 72)  return Lava;     // lava 8-frame loop
-    if (icon == 347 || icon == 373 || icon == 374) return Spike; // spike 16-frame
-    if (icon >= 317 && icon <= 323) return Crusher;  // crusher 10-frame
-    if (icon >= 378 && icon <= 383) return Saw;      // saw 6-frame loop
-    if (icon >= 92  && icon <= 95)  return Water1;   // water1 6-frame loop
-    if (icon == 91  || (icon >= 96 && icon <= 98)) return Water2; // water2 6-frame
-    if (icon >= 126 && icon <= 128) return FanLeft;  // fan-left 3-frame
-    if (icon >= 129 && icon <= 131) return FanRight; // fan-right 3-frame
-    if (icon >= 132 && icon <= 134) return FanUp;    // fan-up 3-frame
-    if (icon >= 135 && icon <= 137) return FanDown;  // fan-down 3-frame
-    if (icon >= 324 && icon <= 329) return Temp;     // temp tile 20-frame
-    if (icon >= 203 && icon <= 208) return Marine;   // marine 11-frame
-    return icon;
+    return GalaxyEggbert::GetBlockDefinition(icon).animation.baseIcon;
 }
 
 // True for water tiles (91=deep water, 92=water surface) — Blupi swims when grounded on these.
 inline bool isWater(uint16_t bt) {
-    uint16_t b = tileAnimBase(bt);
-    return b == Water1 || b == Water2;
+    return GalaxyEggbert::GetBlockDefinition(bt).water;
 }
 
 // True if a tile type is a hazard (kills Blupi on contact when not shielded).
 inline bool isHazard(uint16_t bt) {
-    uint16_t base = tileAnimBase(bt);
-    return base == Lava || base == Spike || base == Crusher || base == Saw || base == Blitz;
+    const auto hazard = GalaxyEggbert::GetBlockDefinition(bt).hazard;
+    return hazard != GalaxyEggbert::BlockHazardKind::None &&
+           hazard != GalaxyEggbert::BlockHazardKind::Fan;
 }
 
 // Block type → icon index. Since block type IS the icon index, this is trivial.
@@ -271,32 +272,8 @@ inline int toIconIndex(uint16_t t) {
 // Icons 68 (Lava) and 317 (Crusher) are excluded and kept solid for the
 // galaxy-eggbert hazard system even though they are quart-passable.
 inline bool isMobileTransparent(int icon) {
-    static const bool kPassable[441] = {
-        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false, false, true, true, true, true, true, true, true, true, true, true, true,
-        true, true, true, true, true, true, true, true, false, true, true, true, true, true, false, false, true, true, false, false,
-        false, false, false, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false, false, false, true, true, true, true, true, true, true, true, true, true,
-        true, true, true, true, true, true, false, true, true, false, true, true, false, true, true, false, true, true, true, false,
-        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true,
-        true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-        true, true, false, false, true, true, false, false, false, false, false, false, false, false, false, false, false, false, true, true,
-        true, true, true, true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, true, true, true,
-        true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-        true, true, true, false, false, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-        true, false, true, true, false, false, true, true, true, true, true, false, false, false, false, false, false, false, true, true,
-        true, true, true, true, false, true, true, true, true, true, false, false, false, false, false, false, false, true, false, true,
-        false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-        false, false, false, false, false, false, false, true, true, true, true, true, true, false, false, true, true, true, false, false,
-        true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true,
-        true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-        true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-        false
-    };
-    return icon >= 0 && icon < 441 && kPassable[icon];
+    return icon >= 0 && GalaxyEggbert::IsSupportedBlockType(static_cast<uint16_t>(icon)) &&
+           GalaxyEggbert::GetBlockDefinition(static_cast<uint16_t>(icon)).mobileTransparent;
 }
 
 // Convert a mobile-eggbert decor icon ID to a block type.

@@ -632,7 +632,7 @@ namespace GalaxyEggbert::Game
         // this engine's ground resolution treats the topmost solid block
         // in a column as that column's floor) -- resolved by making
         // teleporter icons ALWAYS non-solid for collision purposes
-        // (IsPointSolid()'s own IsTeleporterIcon() skip, still in force
+        // (IsPointSolid()'s registry-backed teleporter skip, still in force
         // after INFRA-005's move to ResolveMove(), plan.md E3D-MIG-147 §3),
         // reproducing
         // real mobile-eggbert's genuinely per-tile-independent 2D

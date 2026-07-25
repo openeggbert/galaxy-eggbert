@@ -657,8 +657,8 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMeshRenderer_;
 
-        // Billboard rendering for the 5 confirmed object-m.png-sourced
-        // MoveObjects (ObjectIcons::IsObjectMPngSourced, NEXT.md §3,
+        // Billboard rendering for the confirmed object-m.png-sourced
+        // MoveObjects (ObjectDefinitionRegistry, NEXT.md §3,
         // 2026-07-09) -- same camera-facing billboard technique as
         // objectMeshRenderer_ above, but reuses terrainTexture_
         // (object-m.png) via its own dedicated effect (BasicEffect only
@@ -666,8 +666,8 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectMPngEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMPngMeshRenderer_;
 
-        // Billboard rendering for the 12 confirmed explo.png-sourced
-        // MoveObjects (ObjectIcons::IsExploPngSourced, NEXT.md §3,
+        // Billboard rendering for the confirmed explo.png-sourced
+        // MoveObjects (ObjectDefinitionRegistry, NEXT.md §3,
         // 2026-07-09) -- explosions/visual effects, a genuinely new texture
         // (not previously loaded anywhere in GalaxyEggbertCNA), same
         // camera-facing billboard technique as objectMeshRenderer_ above.
@@ -675,10 +675,10 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> exploEffect_;
         std::unique_ptr<Easy3D::BillboardMeshRenderer> exploMeshRenderer_;
 
-        // Billboard rendering for the 4 confirmed Blupi-skin MoveObjects
-        // (ObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
+        // Billboard rendering for the confirmed Blupi-skin MoveObjects
+        // (ObjectDefinitionRegistry, NEXT.md §3, 2026-07-09) --
         // ObjectType200 sources blupi.png, ObjectType201/202/203 source
-        // blupi1.png (ObjectIcons::UsesBlupi1Texture) -- two separate
+        // blupi1.png -- two separate
         // textures/effects/renderers since BasicEffect only binds one
         // texture at a time. blupiObjectTexture_/blupiObjectEffect_ are
         // deliberately separate from the existing blupiIconTexture_/
@@ -719,7 +719,7 @@ namespace GalaxyEggbert::CNA
         // mobile-eggbert-reference/15-3d-render-mapping-design.md §5's two
         // confirmed "render as a cube, not a billboard" exceptions:
         // ObjectType1/47/48 platform lifts and ObjectType12 crates, see
-        // ObjectIcons::IsUniformCubeObject). Reuses terrainTexture_
+        // ObjectDefinitionRegistry's SolidCube mode). Reuses terrainTexture_
         // (object-m.png, the confirmed-correct sheet for these types) via
         // its own effect, same reason as bigDecorEffect_ above. Rebuilt
         // every frame in Draw() (2026-07-09) using each MobileObjSpec's

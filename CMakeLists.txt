@@ -26,6 +26,7 @@ set(GE_SHARED_SOURCES
     src/GalaxyEggbert/Worlds/World.cpp
     src/GalaxyEggbert/MoveObjectRecord.cpp
     src/GalaxyEggbert/BigDecorRecord.cpp
+    src/GalaxyEggbert/BlockDefinitionRegistry.cpp
 )
 
 # =============================================================================
@@ -149,10 +150,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/ThinBarTiles.cpp
         src/GalaxyEggbert/Game/InnerFlatPlateTiles.cpp
         src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
-        src/GalaxyEggbert/Game/TripleCrossBillboardTiles.cpp
         src/GalaxyEggbert/Game/BlupiController.cpp
         src/GalaxyEggbert/Game/CameraShake.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         src/GalaxyEggbert/Game/Sound.cpp
         src/GalaxyEggbert/Game/InteractionSystem.cpp
         src/GalaxyEggbert/Game/Hud.cpp
@@ -389,6 +390,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/TrainingHints.cpp
         src/GalaxyEggbert/Game/BlupiController.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         src/GalaxyEggbert/Game/Hud.cpp
         ${GE_SHARED_SOURCES}
     )
@@ -481,6 +483,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/Hud.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(GEEditorVerifySupport PUBLIC
@@ -522,6 +525,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     ge_add_editor_verify(VerifyGEEditorPalette tools/VerifyGEEditorPalette.cpp)
     ge_add_editor_verify(VerifyGEEditorStorage tools/VerifyGEEditorStorage.cpp)
     ge_add_editor_verify(VerifyGEEditorObjects tools/VerifyGEEditorObjects.cpp)
+    ge_add_editor_verify(VerifyDefinitionRegistries tools/VerifyDefinitionRegistries.cpp)
 
     # -------------------------------------------------------------------
     # Linux runtime bundle (BUILD-010)
@@ -609,6 +613,7 @@ endif() # GALAXY_EGGBERT_BUILD_CNA
 add_executable(GenerateSampleWorld3D
         tools/GenerateSampleWorld3D.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
         ${GE_SHARED_SOURCES}
 )
@@ -675,6 +680,7 @@ endif()
 add_executable(VerifyTerrainAnimDivisor
         tools/VerifyTerrainAnimDivisor.cpp
         src/GalaxyEggbert/Game/TerrainAnimDivisor.cpp
+        src/GalaxyEggbert/BlockDefinitionRegistry.cpp
 )
 
 target_include_directories(VerifyTerrainAnimDivisor PRIVATE
@@ -690,6 +696,7 @@ target_include_directories(VerifyTerrainAnimDivisor PRIVATE
 add_executable(VerifyGetObjIcon
         tools/VerifyGetObjIcon.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
 )
 
 target_include_directories(VerifyGetObjIcon PRIVATE
@@ -706,6 +713,7 @@ target_include_directories(VerifyGetObjIcon PRIVATE
 add_executable(VerifyObjIconAgainstReferenceDoc
         tools/VerifyObjIconAgainstReferenceDoc.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
 )
 
 target_include_directories(VerifyObjIconAgainstReferenceDoc PRIVATE
@@ -757,6 +765,8 @@ target_include_directories(VerifyCameraShake PRIVATE
 add_executable(VerifyMoveObjectTypesCna
         tools/VerifyMoveObjectTypesCna.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         ${GE_SHARED_SOURCES}
 )
 
@@ -778,6 +788,7 @@ add_executable(VerifyBigDecorParsingCna
         tools/VerifyBigDecorParsingCna.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         ${GE_SHARED_SOURCES}
 )
 

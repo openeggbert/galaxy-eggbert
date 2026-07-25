@@ -7097,7 +7097,7 @@ specifically, same as any other large/risky item elsewhere in this file.
       while the executable target remains `GalaxyEggbertCNA`. Updated CMake, `main.cpp`, type
       registration, documentation, and source comments. Verification: full `build-cna` build with
       `-j2`; all 90 applicable CTest tests pass.
-- [ ] `INFRA-014` — Central `BlockDefinitionRegistry` for every voxel block.
+- [x] `INFRA-014` done (2026-07-25) — Central `BlockDefinitionRegistry` for every voxel block.
       Introduce one authoritative, CNA-independent lookup keyed by the 12-bit block type/icon id.
       A `BlockDefinition` must describe at least: texture sheet and icon, render mode
       (`Air`, `UniformCube`, `DirectionalCube`, `InnerPillarBox`, `ThinBar`, `InnerFlatPlate`,
@@ -7118,8 +7118,17 @@ specifically, same as any other large/risky item elsewhere in this file.
       Air), parity tests against the current UV/render-mode/animation/collision decisions, and
       representative gameplay-flag tests. Done only when the full `-j2` build and all applicable
       CTest tests pass and a grep/audit confirms that runtime block classification is registry
-      backed rather than duplicated.
-- [ ] `INFRA-015` — Central `ObjectDefinitionRegistry` for every `Def::ObjectType`/`MoveObject`.
+      backed rather than duplicated. Implemented the CNA-independent definition table for all
+      `object-m.png` ids `0..440`, with explicit Air/fallback behavior, texture/render modes,
+      animation data, collision masks, alpha, and gameplay semantics. `BlockTypes`, `TileAtlas`,
+      `TerrainRenderer`, collision, and editor validation now consume it; specialized geometry
+      helpers retain only mesh parameters. Removed the obsolete triple-cross classification helper.
+      Exhaustive `VerifyDefinitionRegistries` coverage checks every supported id plus render,
+      texture, animation, collision, fallback, and representative semantics. Verification: full
+      `build-cna` build succeeds with `-j2`; all 91 applicable CTest tests pass; classification
+      audit found no second runtime block render/animation/collision registry.
+- [x] `INFRA-015` done (2026-07-25) — Central `ObjectDefinitionRegistry` for every
+      `Def::ObjectType`/`MoveObject`.
       Introduce one authoritative, CNA-independent lookup keyed by `Def::ObjectType`. An
       `ObjectDefinition` must describe at least: whether the type is null, directly placeable, or
       transient/runtime-only; its visual render mode (`Hidden`, billboard, or solid cube); texture
@@ -7140,4 +7149,15 @@ specifically, same as any other large/risky item elsewhere in this file.
       placeability, visual overrides, phase-dependent ObjectType38 behavior, and representative
       directional patrol animations. Done only when the full `-j2` build and all applicable CTest
       tests pass and a grep/audit confirms that object visual/type classification has one
-      authoritative registry.
+      authoritative registry. Implemented definitions for the complete `ObjectType0..203` domain:
+      placement kind, render mode, texture source (including ObjectType38's phase-dependent
+      source), semantic category, vertical policy, reference-world support, and patrol-motion
+      policy. `ResolveObjectVisual` now combines definition, phase animation, and per-instance
+      visual override. The CNA render passes, `WorldRuntime`, editor validation, and legacy
+      `ObjectIcons` accessors consume the registry; the latter are thin compatibility wrappers,
+      while the reference animation tables remain the single icon-frame resolver. Exhaustive
+      registry tests cover all 204 ids, icon/texture/render/placeability parity, overrides,
+      reference-world and patrol classification, phase-dependent texture selection, and
+      directional animation. Verification: full `build-cna` build succeeds with `-j2`; all 91
+      applicable CTest tests pass; audit found no second authoritative object visual/type
+      classification.

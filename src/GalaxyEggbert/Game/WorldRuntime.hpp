@@ -355,7 +355,7 @@ namespace GalaxyEggbert::Game
         // Worlds::World's block-extra-metadata mechanism). Rendered as
         // Billboard by default, UniformCube for platform lifts + crates --
         // see 15-3d-render-mapping-design.md §5 and
-        // ObjectIcons::IsUniformCubeObject.
+        // ObjectDefinitionRegistry's SolidCube render mode.
         [[nodiscard]] const std::vector<MobileObjSpec>& GetMobileObjects() const { return mobileObjects_; }
 
         // Mutable access for InteractionSystem (2026-07-10) -- patrol

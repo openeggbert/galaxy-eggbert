@@ -2,44 +2,8 @@
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 
-#include <algorithm>
-#include <iterator>
-
 namespace GalaxyEggbert::Game
 {
-    namespace
-    {
-        // Source: mobile-eggbert-reference/questionnaire-all-remaining-tiles.md,
-        // every icon whose "Render mód?" answer is `InnerFlatPlate`,
-        // confirmed 2026-07-08.
-        constexpr int kInnerFlatPlateIcons[] = {
-            77, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
-            122, 123, 124, 125, 138, 199,
-            264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276,
-            277, 278, 279, 280, 281, 282, 285, 286, 287, 288, 289, 290, 291,
-            292, 293, 294, 295, 296, 297, 298, 299, 300, 302, 303,
-            367, 368, 369, 370, 371, 372,
-            398,
-            // Saw/SawStopped (378/379) is NOT in this list -- moved out
-            // 2026-07-20 (3rd round of live user feedback) into its own
-            // dedicated ground-anchored-overlay system in
-            // TerrainRenderer.cpp (IsGroundAnchoredPlateIcon(), handled
-            // the same additive way as IsGrassTopIcon() -- a normal solid
-            // floor cube PLUS a horizontal blade plate on top), since an
-            // exclusive InnerFlatPlate (hollow block, no solid cube at all)
-            // read as a hole/pit in the floor once the blade itself was
-            // correctly reoriented to lie flat. See that file's own comment
-            // for the full history (2 earlier rounds, 2026-07-11, only
-            // repositioned a VERTICAL plate before this axis correction).
-        };
-    }
-
-    bool IsInnerFlatPlateIcon(int icon)
-    {
-        return std::find(std::begin(kInnerFlatPlateIcons), std::end(kInnerFlatPlateIcons), icon) !=
-               std::end(kInnerFlatPlateIcons);
-    }
-
     Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated)
     {
         Easy3D::PlateAxis axis;

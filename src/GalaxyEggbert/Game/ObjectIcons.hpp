@@ -14,12 +14,8 @@ namespace GalaxyEggbert::Game
     //
     // Known limitation (tracked as DOC-007): ObjectType32/33 need
     // blupi1.png, not element.png, in real mobile-eggbert data -- still not
-    // fixed. ObjectType1/12/47/48 (see IsUniformCubeObject below) and
-    // ObjectType14/15/31/35/52 (see IsObjectMPngSourced below) DO now
-    // correctly source object-m.png instead of element.png -- not fixed via
-    // this function itself, since GetElementIconUv is still hardcoded to
-    // the element.png sheet layout; the caller picks the right sheet/UV
-    // function based on those two predicates.
+    // fixed. The ObjectDefinitionRegistry supplies the correct non-element
+    // texture sources for the already-confirmed exceptions.
     //
     // Coverage (2026-07-09, NEXT.md §3): 66 confirmed ObjectTypes now have a
     // real icon (up from 65, 65 up from 31 earlier this session) -- the
@@ -37,9 +33,8 @@ namespace GalaxyEggbert::Game
     // (which texture sheet) depends on phase, not just its icon within a
     // fixed sheet: blupi1.png for ticks 0-29 of its cycle, element.png for
     // 30-89 (Decor.cpp confirms the switch). GetObjIcon() itself always
-    // returns the correct icon for whichever channel is active --
-    // IsBlupiPngSourcedAtPhase() below is what a renderer must additionally
-    // check to pick the right texture/UV function per instance, per frame.
+    // returns the correct icon for whichever channel is active; renderers
+    // consume ResolveObjectVisual() to obtain the matching texture source.
     // Genuinely no icon exists in mobile-eggbert source data for
     // ObjectType0/18/22/58 -- default: return 0 is correct for those, not a
     // gap.
@@ -53,7 +48,16 @@ namespace GalaxyEggbert::Game
     // represented by a single per-tick icon return without a richer
     // "sometimes render nothing" mechanism, which doesn't exist yet even
     // though phase itself now advances.
+    // Registry-backed compatibility accessor. New rendering code should use
+    // ResolveObjectVisual(), which returns icon, texture source and render
+    // mode together. The long reference animation tables are implemented by
+    // ResolveObjectIconFrame() below as a registry-owned resolution detail.
     int GetObjIcon(GalaxyEggbert::Def::ObjectType type, int phase);
+
+    // Internal icon/animation-frame resolver consumed by
+    // ObjectDefinitionRegistry. It intentionally answers only "which icon";
+    // it does not classify render mode, texture sheet or placeability.
+    int ResolveObjectIconFrame(GalaxyEggbert::Def::ObjectType type, int phase);
 
     // ObjectType4 (bulldozer) real per-direction/per-turn-transition icon
     // (ENEMY-013, added 2026-07-20) -- unlike GetObjIcon()'s own ObjectType4
@@ -100,7 +104,8 @@ namespace GalaxyEggbert::Game
     struct ObjectIconUv { float U0, V0, U1, V1; };
     ObjectIconUv GetElementIconUv(int icon);
 
-    // True for the two confirmed exceptions that render as a solid
+    // Registry-backed compatibility accessor for the confirmed exceptions
+    // that render as a solid
     // UniformCube instead of a billboard (mobile-eggbert-reference/
     // 15-3d-render-mapping-design.md §5): platform lifts (ObjectType1/47/48
     // -- Blupi physically stands and rides on top, a flat billboard would
@@ -110,7 +115,8 @@ namespace GalaxyEggbert::Game
     // see 03-objects.md), the same sheet as terrain, not element.png.
     bool IsUniformCubeObject(GalaxyEggbert::Def::ObjectType type);
 
-    // True for the 5 confirmed Category B ObjectTypes that are billboards
+    // Registry-backed compatibility accessor for the confirmed Category B
+    // ObjectTypes that are billboards
     // (unlike IsUniformCubeObject's cubes) but sourced from object-m.png
     // instead of element.png (ObjectType14/15/31/35/52 -- water splash/
     // bubble, charge power-up, bridge construction; mobile-eggbert-
@@ -131,7 +137,8 @@ namespace GalaxyEggbert::Game
     // from accidentally being interpreted as object-m.png terrain again.
     ObjectIconUv GetBigDecorIconUv(int icon);
 
-    // True for the 12 confirmed Category B ObjectTypes sourced from
+    // Registry-backed compatibility accessor for the confirmed Category B
+    // ObjectTypes sourced from
     // explo.png (explosions/visual effects: ObjectType8/9/10/11/53/90/91/
     // 92/93/98/99/100; mobile-eggbert-reference/03-objects.md, added
     // 2026-07-09). The icon GetObjIcon() returns for these types is an
@@ -145,7 +152,8 @@ namespace GalaxyEggbert::Game
     // mobile-eggbert-reference/03-objects.md line 228).
     ObjectIconUv GetBlupiIconUv(int icon);
 
-    // True for the 4 confirmed Blupi-skin ObjectTypes (ObjectType200/201/
+    // Registry-backed compatibility accessor for the 4 confirmed Blupi-skin
+    // ObjectTypes (ObjectType200/201/
     // 202/203, mobile-eggbert-reference/03-objects.md, added 2026-07-09)
     // plus ObjectType38's electric arc (added same day). The icon
     // GetObjIcon() returns for these types is a blupi.png/blupi1.png index
@@ -153,10 +161,12 @@ namespace GalaxyEggbert::Game
     // blupi.png-sourced part of the time (its real behavior is two-channel)
     // -- this predicate alone is phase-blind and returns true for it
     // unconditionally; renderers that need the correct per-instance,
-    // per-tick answer must use IsBlupiPngSourcedAtPhase() below instead.
+    // per-tick answer must use ResolveObjectVisual() (or the compatibility
+    // IsBlupiPngSourcedAtPhase() wrapper) instead.
     bool IsBlupiPngSourced(GalaxyEggbert::Def::ObjectType type);
 
-    // Phase-aware version of IsBlupiPngSourced() (2026-07-09) -- for
+    // Phase-aware registry-backed compatibility version of
+    // IsBlupiPngSourced() (2026-07-09) -- for
     // ObjectType200/201/202/203 identical to IsBlupiPngSourced() (always
     // true, they never switch sheets). For ObjectType38 (electric arc, a
     // real two-channel animation: blupi1.png for the first 30 of its
@@ -168,7 +178,8 @@ namespace GalaxyEggbert::Game
     // predicate, since a single MoveObject switches sheets mid-animation.
     bool IsBlupiPngSourcedAtPhase(GalaxyEggbert::Def::ObjectType type, int phase);
 
-    // True for the ObjectTypes that source blupi1.png instead of blupi.png
+    // Registry-backed compatibility accessor for ObjectTypes that source
+    // blupi1.png instead of blupi.png
     // whenever they ARE blupi-sourced (see IsBlupiPngSourcedAtPhase() for
     // whether they currently are): the 3 of the 4 Blupi-skin types
     // (ObjectType201/202/203 -- ObjectType200 uses blupi.png itself) plus

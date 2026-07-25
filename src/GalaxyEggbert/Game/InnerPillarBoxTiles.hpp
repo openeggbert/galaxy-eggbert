@@ -25,6 +25,8 @@ namespace GalaxyEggbert::Game
     constexpr float kInnerPillarWidth = 0.35f;  // X/Z extent (thin post)
     constexpr float kInnerPillarHeight = 0.9f;  // Y extent (nearly full block height)
 
-    bool TryGetInnerPillarBoxFaces(int icon, const Easy3D::UvRect& tileUv,
-                                   Easy3D::DirectionalCubeFace (&outFaces)[6]);
+    // Called only after BlockDefinitionRegistry selected InnerPillarBox;
+    // this helper supplies face parameters and does not classify icons.
+    void ConfigureInnerPillarBoxFaces(int icon, const Easy3D::UvRect& tileUv,
+                                      Easy3D::DirectionalCubeFace (&outFaces)[6]);
 }

@@ -33,6 +33,8 @@ namespace GalaxyEggbert::Game
     // already established for an unanchored single face).
     constexpr float kThinBarThickness = 0.3f; // Y/Z extent (thin rod cross-section)
 
-    bool TryGetThinBarFaces(int icon, const Easy3D::UvRect& tileUv,
-                             Easy3D::DirectionalCubeFace (&outFaces)[6]);
+    // Called only after BlockDefinitionRegistry selected ThinBar; this
+    // helper supplies face parameters and does not classify icons.
+    void ConfigureThinBarFaces(int icon, const Easy3D::UvRect& tileUv,
+                               Easy3D::DirectionalCubeFace (&outFaces)[6]);
 }

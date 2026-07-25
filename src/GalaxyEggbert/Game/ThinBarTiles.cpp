@@ -1,6 +1,8 @@
 #include "ThinBarTiles.hpp"
 #include "SwatchUv.hpp"
 
+#include <cstdlib>
+
 namespace GalaxyEggbert::Game
 {
     namespace
@@ -8,8 +10,8 @@ namespace GalaxyEggbert::Game
         using Easy3D::CubeFace;
     }
 
-    bool TryGetThinBarFaces(int icon, const Easy3D::UvRect& tileUv,
-                             Easy3D::DirectionalCubeFace (&outFaces)[6])
+    void ConfigureThinBarFaces(int icon, const Easy3D::UvRect& tileUv,
+                               Easy3D::DirectionalCubeFace (&outFaces)[6])
     {
         if (icon == 202)
         {
@@ -24,9 +26,9 @@ namespace GalaxyEggbert::Game
             }
             outFaces[static_cast<int>(CubeFace::PosX)].Uv = SwatchUv(tileUv, kMidSwatchV);
             outFaces[static_cast<int>(CubeFace::NegX)].Uv = SwatchUv(tileUv, kMidSwatchV);
-            return true;
+            return;
         }
 
-        return false;
+        std::abort();
     }
 }

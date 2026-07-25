@@ -1,7 +1,7 @@
 #include "GalaxyEggbertGame.hpp"
 
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
-#include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
+#include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include "GalaxyEggbert/BlockTypes.hpp"
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
@@ -389,16 +389,16 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: " << worldRuntime_.GetMobileObjects().size()
                   << " MoveObject(s) parsed for billboard rendering." << std::endl;
 
-        // Billboard rendering for the 5 object-m.png-sourced MoveObjects
-        // (ObjectIcons::IsObjectMPngSourced, NEXT.md §3) -- reuses
+        // Billboard rendering for object-m.png-sourced MoveObjects
+        // (ObjectDefinitionRegistry, NEXT.md §3) -- reuses
         // terrainTexture_ (object-m.png), same reasoning as bigDecorEffect_.
         objectMPngEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         objectMPngEffect_->VertexColorEnabled = false;
         objectMPngEffect_->setTextureEnabledProperty(true);
         objectMPngEffect_->setTextureProperty(&terrainTexture_);
 
-        // Billboard rendering for the 12 explo.png-sourced MoveObjects
-        // (ObjectIcons::IsExploPngSourced, NEXT.md §3) -- explo.png isn't
+        // Billboard rendering for explo.png-sourced MoveObjects
+        // (ObjectDefinitionRegistry, NEXT.md §3) -- explo.png isn't
         // loaded anywhere else in GalaxyEggbertCNA, so this is a genuinely
         // new texture load (already copied next to this binary at build
         // time, same mechanism as element.png/object-m.png).
@@ -408,8 +408,8 @@ namespace GalaxyEggbert::CNA
         exploEffect_->setTextureEnabledProperty(true);
         exploEffect_->setTextureProperty(&exploTexture_);
 
-        // Billboard rendering for the 4 Blupi-skin MoveObjects
-        // (ObjectIcons::IsBlupiPngSourced, NEXT.md §3) -- separate
+        // Billboard rendering for Blupi-skin MoveObjects
+        // (ObjectDefinitionRegistry, NEXT.md §3) -- separate
         // Texture2D instances from blupiIconTexture_ above even though
         // ObjectType200 loads the same blupi.png file, since that one is
         // owned by the 2D SpriteBatch HUD path, not this 3D BasicEffect path.
@@ -439,7 +439,8 @@ namespace GalaxyEggbert::CNA
 
         // Platform-lift/crate UniformCube object path (NEXT.md §8 task 3) --
         // reuses terrainTexture_ (object-m.png), the confirmed-correct sheet
-        // for these ObjectTypes (see ObjectIcons::IsUniformCubeObject).
+        // for these ObjectTypes (see ObjectDefinitionRegistry's SolidCube
+        // render mode).
         // Only the effect is set up here; the mesh itself is rebuilt every
         // frame in Draw() now (2026-07-09, NEXT.md §8 task 3 optional
         // follow-up), same reason as the billboards -- types 47/48
@@ -455,7 +456,8 @@ namespace GalaxyEggbert::CNA
             int cubeObjectCount = 0;
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
-                cubeObjectCount += IsUniformCubeObject(obj.type) ? 1 : 0;
+                cubeObjectCount +=
+                    GetObjectDefinition(obj.type).renderMode == ObjectRenderMode::SolidCube ? 1 : 0;
             }
             std::cout << "GalaxyEggbertCNA: " << cubeObjectCount
                       << " platform-lift/crate cube object(s) found." << std::endl;
@@ -2472,7 +2474,7 @@ namespace GalaxyEggbert::CNA
             // one cell ABOVE Blupi (GetBlockTypeAbove()), matching the real
             // detection geometry exactly. Teleporter icons are always
             // non-solid for collision (GroundHeightAt's own
-            // IsTeleporterIcon() skip), so Blupi can genuinely walk into
+            // registry-backed teleporter collision skip), so Blupi can genuinely walk into
             // the open space beneath a floating pillar to trigger this,
             // the same way real mobile-eggbert's per-tile-independent 2D
             // collision lets him walk under one (see GetBlockTypeAbove()'s
@@ -2488,8 +2490,7 @@ namespace GalaxyEggbert::CNA
             // every other Trigger*() here, so channel 71 only plays on an
             // actual new trigger.
             const auto aboveIcon = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
-            if ((aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
-                 aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4) &&
+            if (GalaxyEggbert::BlockTypes::isTeleporter(aboveIcon) &&
                 blupi_.TriggerTeleport(aboveIcon))
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
@@ -3478,18 +3479,18 @@ namespace GalaxyEggbert::CNA
                 std::vector<std::uint32_t> cubeIndices;
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
                 {
-                    if (!IsUniformCubeObject(obj.type) || !obj.active)
+                    const auto visual = ResolveObjectVisual(
+                        obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+                    if (!obj.active || !visual.visible ||
+                        visual.renderMode != ObjectRenderMode::SolidCube)
                     {
                         continue;
                     }
-                    const int icon = obj.visualIcon != 0 ?
-                        static_cast<int>(obj.visualIcon) :
-                        GetObjIcon(obj.type, static_cast<int>(obj.phase));
                     Easy3D::CubeItem item;
                     item.Center = Easy3D::CubeBatch::Vector3(
-                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ);
+                        obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
                     item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
-                    item.Uv = tileAtlas_.GetTileUv(icon);
+                    item.Uv = tileAtlas_.GetTileUv(visual.icon);
                     Easy3D::AppendCubeMesh(item, cubeVertices, cubeIndices);
                 }
 
@@ -3723,8 +3724,8 @@ namespace GalaxyEggbert::CNA
         // Billboard rendering for worldRuntime_'s parsed MoveObjects
         // (15-3d-render-mapping-design.md §5/§7, first pass 2026-07-06) —
         // now animated via each MobileObjSpec's real per-instance phase
-        // (2026-07-09, WorldRuntime::Update()), element.png only (see
-        // ObjectIcons.hpp's known-limitation note re: DOC-007). Rebuilt
+        // (2026-07-09, WorldRuntime::Update()), with this pass selected by
+        // ObjectDefinitionRegistry's Element source. Rebuilt
         // every frame since billboard vertex positions depend on the camera
         // (Easy3D::BillboardMeshRenderer's header comment) -- convenient,
         // since it also means the icon lookup naturally re-runs every frame
@@ -3750,13 +3751,15 @@ namespace GalaxyEggbert::CNA
                 // blupiObjectMeshRenderer_/blupi1ObjectMeshRenderer_ below)
                 // are also skipped here -- GetElementIconUv() would compute
                 // the wrong UV rect for them (element.png icon-index domain,
-                // not theirs). IsBlupiPngSourcedAtPhase (not the plain,
-                // phase-blind IsBlupiPngSourced) since ObjectType38 spends
-                // part of its cycle on element.png -- this loop must pick it
-                // up during that window, not skip it forever.
+                // not theirs). ResolveObjectVisual() is phase-aware because
+                // ObjectType38 spends part of its cycle on element.png --
+                // this loop must pick it up during that window.
                 const int objPhase = static_cast<int>(obj.phase);
-                if (!obj.active || IsUniformCubeObject(obj.type) || IsObjectMPngSourced(obj.type) ||
-                    IsExploPngSourced(obj.type) || IsBlupiPngSourcedAtPhase(obj.type, objPhase))
+                const auto visual =
+                    ResolveObjectVisual(obj.type, objPhase, obj.visualIcon);
+                if (!obj.active || !visual.visible ||
+                    visual.renderMode != ObjectRenderMode::Billboard ||
+                    visual.textureSource != ObjectTextureSource::Element)
                 {
                     continue;
                 }
@@ -3771,12 +3774,12 @@ namespace GalaxyEggbert::CNA
                 int icon;
                 if (!TryGetPatrolIcon(obj.type, patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks, icon))
                 {
-                    icon = GetObjIcon(obj.type, objPhase);
+                    icon = visual.icon;
                 }
                 const auto uv = GetElementIconUv(icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(
-                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
+                        obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
@@ -3795,12 +3798,12 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Billboard rendering for the 5 object-m.png-sourced MoveObjects
-        // (ObjectIcons::IsObjectMPngSourced, NEXT.md §3, 2026-07-09) --
+        // Billboard rendering for object-m.png-sourced MoveObjects
+        // (ObjectDefinitionRegistry, NEXT.md §3, 2026-07-09) --
         // same camera-facing billboard technique as the element.png batch
         // above, but reuses terrainTexture_ (object-m.png) via
         // objectMPngEffect_, and looks up UVs through tileAtlas_ instead of
-        // GetElementIconUv() (same icon-index domain as terrain/BigDecor).
+        // GetElementIconUv() (the same icon-index domain as terrain).
         if (objectMPngEffect_ && !worldRuntime_.GetMobileObjects().empty())
         {
             const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
@@ -3811,15 +3814,18 @@ namespace GalaxyEggbert::CNA
             constexpr float kObjectSize = 1.0f;
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
-                if (!obj.active || !IsObjectMPngSourced(obj.type))
+                const auto visual = ResolveObjectVisual(
+                    obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+                if (!obj.active || !visual.visible ||
+                    visual.renderMode != ObjectRenderMode::Billboard ||
+                    visual.textureSource != ObjectTextureSource::ObjectM)
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
-                const auto uv = tileAtlas_.GetTileUv(icon);
+                const auto uv = tileAtlas_.GetTileUv(visual.icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(
-                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
+                        obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     uv);
             }
@@ -3838,8 +3844,8 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Billboard rendering for the 12 explo.png-sourced MoveObjects
-        // (ObjectIcons::IsExploPngSourced, NEXT.md §3, 2026-07-09) --
+        // Billboard rendering for explo.png-sourced MoveObjects
+        // (ObjectDefinitionRegistry, NEXT.md §3, 2026-07-09) --
         // same camera-facing billboard technique as the batches above, but
         // exploTexture_ (a genuinely new texture) via exploEffect_, and
         // GetExploIconUv() instead of GetElementIconUv()/tileAtlas_.
@@ -3853,23 +3859,25 @@ namespace GalaxyEggbert::CNA
             constexpr float kObjectSize = 1.0f;
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
-                if (!obj.active || !IsExploPngSourced(obj.type))
+                const auto visual = ResolveObjectVisual(
+                    obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+                if (!obj.active || visual.renderMode != ObjectRenderMode::Billboard ||
+                    visual.textureSource != ObjectTextureSource::Explo)
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, static_cast<int>(obj.phase));
                 // Real -1 "invisible frame" sentinel (plan.md VISUAL-009,
                 // table_sploutch2/3's own leading delay ticks, fixed
                 // 2026-07-14) -- skip drawing this object entirely this
                 // tick, matching the real source's own blank-frame behavior.
-                if (icon < 0)
+                if (!visual.visible)
                 {
                     continue;
                 }
-                const auto uv = GetExploIconUv(icon);
+                const auto uv = GetExploIconUv(visual.icon);
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(
-                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
+                        obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
@@ -3888,11 +3896,11 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Billboard rendering for the 4 Blupi-skin MoveObjects
-        // (ObjectIcons::IsBlupiPngSourced, NEXT.md §3, 2026-07-09) --
+        // Billboard rendering for Blupi-skin MoveObjects
+        // (ObjectDefinitionRegistry, NEXT.md §3, 2026-07-09) --
         // ObjectType200 via blupiObjectEffect_ (blupi.png), ObjectType201/
-        // 202/203 via blupi1ObjectEffect_ (blupi1.png,
-        // ObjectIcons::UsesBlupi1Texture) -- two separate batches since
+        // 202/203 via blupi1ObjectEffect_ (blupi1.png) -- two separate
+        // batches since
         // BasicEffect only binds one texture at a time.
         if (blupiObjectEffect_ && blupi1ObjectEffect_ && !worldRuntime_.GetMobileObjects().empty())
         {
@@ -3906,16 +3914,21 @@ namespace GalaxyEggbert::CNA
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
                 const int objPhase = static_cast<int>(obj.phase);
-                if (!obj.active || !IsBlupiPngSourcedAtPhase(obj.type, objPhase))
+                const auto visual =
+                    ResolveObjectVisual(obj.type, objPhase, obj.visualIcon);
+                if (!obj.active || !visual.visible ||
+                    visual.renderMode != ObjectRenderMode::Billboard ||
+                    (visual.textureSource != ObjectTextureSource::Blupi &&
+                     visual.textureSource != ObjectTextureSource::Blupi1))
                 {
                     continue;
                 }
-                const int icon = GetObjIcon(obj.type, objPhase);
-                const auto uv = GetBlupiIconUv(icon);
-                auto& batch = UsesBlupi1Texture(obj.type) ? blupi1Batch : blupiBatch;
+                const auto uv = GetBlupiIconUv(visual.icon);
+                auto& batch = visual.textureSource == ObjectTextureSource::Blupi1
+                    ? blupi1Batch : blupiBatch;
                 batch.Add(
                     Microsoft::Xna::Framework::Vector3(
-                        obj.currentX, ObjectVisualCenterY(obj.currentY), obj.currentZ),
+                        obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
                     Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }

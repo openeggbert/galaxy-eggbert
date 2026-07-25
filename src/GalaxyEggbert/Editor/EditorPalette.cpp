@@ -1,6 +1,8 @@
 #include "EditorPalette.hpp"
 
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 
 #include <algorithm>
 
@@ -162,7 +164,11 @@ namespace GalaxyEggbert::Editor
                     placementKind_ = PlacementKind::BigDecor;
                     openCategory_ = -1;
                 }
-                else if (objectType > 0)
+                else if (objectType > 0 &&
+                         GalaxyEggbert::Game::GetObjectDefinition(
+                             static_cast<GalaxyEggbert::Def::ObjectType>(objectType))
+                                 .placementKind ==
+                             GalaxyEggbert::Game::ObjectPlacementKind::Direct)
                 {
                     selectedObjectType_ = objectType;
                     const int visualIcon =
@@ -173,7 +179,9 @@ namespace GalaxyEggbert::Editor
                     placementKind_ = PlacementKind::Object;
                     openCategory_ = -1;
                 }
-                else if (blockType > 0)
+                else if (blockType > 0 &&
+                         GalaxyEggbert::IsSupportedBlockType(
+                             static_cast<std::uint16_t>(blockType)))
                 {
                     selectedBlockType_ = blockType;
                     placementKind_ = PlacementKind::Block;

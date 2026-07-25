@@ -1,8 +1,9 @@
 #include "ObjectIcons.hpp"
+#include "ObjectDefinitionRegistry.hpp"
 
 namespace GalaxyEggbert::Game
 {
-    int GetObjIcon(GalaxyEggbert::Def::ObjectType type, int p)
+    int ResolveObjectIconFrame(GalaxyEggbert::Def::ObjectType type, int p)
     {
         static const int kCle1[12]    = {209,210,211,212,213,214,215,214,213,212,211,210};
         static const int kCle2[12]    = {220,221,222,221,220,219,218,217,216,217,218,219};
@@ -454,6 +455,11 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    int GetObjIcon(GalaxyEggbert::Def::ObjectType type, int phase)
+    {
+        return ResolveObjectVisual(type, phase).icon;
+    }
+
     int GetBulldozerIcon(bool patrolGoesLeftFromStart, int patrolStep, int patrolTimeTicks)
     {
         // Real Decor.cpp:8628-8668 -- ObjectType4's own 4-state turn/walk
@@ -718,31 +724,14 @@ namespace GalaxyEggbert::Game
 
     bool IsUniformCubeObject(GalaxyEggbert::Def::ObjectType type)
     {
-        switch (type)
-        {
-            case GalaxyEggbert::Def::ObjectType::ObjectType1:
-            case GalaxyEggbert::Def::ObjectType::ObjectType12:
-            case GalaxyEggbert::Def::ObjectType::ObjectType47:
-            case GalaxyEggbert::Def::ObjectType::ObjectType48:
-                return true;
-            default:
-                return false;
-        }
+        return GetObjectDefinition(type).renderMode == ObjectRenderMode::SolidCube;
     }
 
     bool IsObjectMPngSourced(GalaxyEggbert::Def::ObjectType type)
     {
-        switch (type)
-        {
-            case GalaxyEggbert::Def::ObjectType::ObjectType14:
-            case GalaxyEggbert::Def::ObjectType::ObjectType15:
-            case GalaxyEggbert::Def::ObjectType::ObjectType31:
-            case GalaxyEggbert::Def::ObjectType::ObjectType35:
-            case GalaxyEggbert::Def::ObjectType::ObjectType52:
-                return true;
-            default:
-                return false;
-        }
+        const auto& definition = GetObjectDefinition(type);
+        return definition.renderMode == ObjectRenderMode::Billboard &&
+               definition.textureSource == ObjectTextureSource::ObjectM;
     }
 
     ObjectIconUv GetElementIconUv(int icon)
@@ -762,24 +751,7 @@ namespace GalaxyEggbert::Game
 
     bool IsExploPngSourced(GalaxyEggbert::Def::ObjectType type)
     {
-        switch (type)
-        {
-            case GalaxyEggbert::Def::ObjectType::ObjectType8:
-            case GalaxyEggbert::Def::ObjectType::ObjectType9:
-            case GalaxyEggbert::Def::ObjectType::ObjectType10:
-            case GalaxyEggbert::Def::ObjectType::ObjectType11:
-            case GalaxyEggbert::Def::ObjectType::ObjectType53:
-            case GalaxyEggbert::Def::ObjectType::ObjectType90:
-            case GalaxyEggbert::Def::ObjectType::ObjectType91:
-            case GalaxyEggbert::Def::ObjectType::ObjectType92:
-            case GalaxyEggbert::Def::ObjectType::ObjectType93:
-            case GalaxyEggbert::Def::ObjectType::ObjectType98:
-            case GalaxyEggbert::Def::ObjectType::ObjectType99:
-            case GalaxyEggbert::Def::ObjectType::ObjectType100:
-                return true;
-            default:
-                return false;
-        }
+        return GetObjectDefinition(type).textureSource == ObjectTextureSource::Explo;
     }
 
     ObjectIconUv GetExploIconUv(int icon)
@@ -804,42 +776,24 @@ namespace GalaxyEggbert::Game
 
     bool IsBlupiPngSourced(GalaxyEggbert::Def::ObjectType type)
     {
-        switch (type)
-        {
-            case GalaxyEggbert::Def::ObjectType::ObjectType200:
-            case GalaxyEggbert::Def::ObjectType::ObjectType201:
-            case GalaxyEggbert::Def::ObjectType::ObjectType202:
-            case GalaxyEggbert::Def::ObjectType::ObjectType203:
-            case GalaxyEggbert::Def::ObjectType::ObjectType38:
-                return true;
-            default:
-                return false;
-        }
+        const auto source = GetObjectDefinition(type).textureSource;
+        return source == ObjectTextureSource::Blupi ||
+               source == ObjectTextureSource::Blupi1 ||
+               source == ObjectTextureSource::PhaseDependent;
     }
 
     bool UsesBlupi1Texture(GalaxyEggbert::Def::ObjectType type)
     {
-        switch (type)
-        {
-            case GalaxyEggbert::Def::ObjectType::ObjectType201:
-            case GalaxyEggbert::Def::ObjectType::ObjectType202:
-            case GalaxyEggbert::Def::ObjectType::ObjectType203:
-            case GalaxyEggbert::Def::ObjectType::ObjectType38:
-                return true;
-            default:
-                return false;
-        }
+        const auto source = GetObjectDefinition(type).textureSource;
+        return source == ObjectTextureSource::Blupi1 ||
+               source == ObjectTextureSource::PhaseDependent;
     }
 
     bool IsBlupiPngSourcedAtPhase(GalaxyEggbert::Def::ObjectType type, int phase)
     {
-        if (type == GalaxyEggbert::Def::ObjectType::ObjectType38)
-        {
-            // Matches Decor.cpp's channel switch (~line 8997): blupi1.png
-            // for the first 30 of the 90-tick cycle, element.png after.
-            return (phase % 90) < 30;
-        }
-        return IsBlupiPngSourced(type);
+        const auto source = ResolveObjectVisual(type, phase).textureSource;
+        return source == ObjectTextureSource::Blupi ||
+               source == ObjectTextureSource::Blupi1;
     }
 
     ObjectIconUv GetBlupiIconUv(int icon)

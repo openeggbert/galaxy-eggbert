@@ -2,11 +2,10 @@
 #include "DirectionalCubeTiles.hpp"
 #include "InnerFlatPlateTiles.hpp"
 #include "InnerPillarBoxTiles.hpp"
-#include "TerrainAnimDivisor.hpp"
 #include "ThinBarTiles.hpp"
-#include "TripleCrossBillboardTiles.hpp"
 #include "WorldRuntime.hpp"
 
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
@@ -66,7 +65,7 @@ namespace GalaxyEggbert::Game
         //     icon uses) then read as a hole/pit in the floor, since
         //     nothing filled the gap where an ordinary solid floor block
         //     would be -- fixed additively (a normal solid floor cube PLUS
-        //     the blade as an overlay, same idiom as IsGrassTopIcon's
+        //     the blade as an overlay, same idiom as the registry's grass-top
         //     grass-top overlay just below in the main Build() loop);
         // (5) with the hole fixed, the user's final word against THIS
         //     round's own screenshot: the blade should be upright again
@@ -87,11 +86,6 @@ namespace GalaxyEggbert::Game
         // mattered when the plate was still horizontal).
         constexpr float kSawPlateEpsilon = 0.02f;
 
-        bool IsGroundAnchoredPlateIcon(int icon)
-        {
-            return icon == GalaxyEggbert::BlockTypes::Saw || icon == GalaxyEggbert::BlockTypes::SawStopped;
-        }
-
         // Teleporter pillars (330-333, plan.md E3D-MIG-147): the "hrot"
         // (spike/tip) hanging below the block, per direct user Q&A live in
         // session 2026-07-11 ("pod teleporterem by měl být prostor... zbytek
@@ -104,7 +98,7 @@ namespace GalaxyEggbert::Game
         // (2) rebuilt as a non-tapering box (4 straight `DirectionalCube`
         //     side faces) -- this also (separately) surfaced that the
         //     "black" was actually real alpha=0 transparency being
-        //     rendered opaque (fixed via `NeedsAlphaBlend`, unrelated to
+        //     rendered opaque (fixed via the registry's `alphaBlend`, unrelated to
         //     the box-vs-pyramid choice), but the box itself then showed a
         //     new problem: its 4 flat side faces (each showing a triangle
         //     via an alpha cutout) don't share a common vertex the way a
@@ -127,10 +121,7 @@ namespace GalaxyEggbert::Game
 
         bool IsTeleporterTipIcon(int icon)
         {
-            return icon == GalaxyEggbert::BlockTypes::Teleport1 ||
-                   icon == GalaxyEggbert::BlockTypes::Teleport2 ||
-                   icon == GalaxyEggbert::BlockTypes::Teleport3 ||
-                   icon == GalaxyEggbert::BlockTypes::Teleport4;
+            return GalaxyEggbert::GetBlockDefinition(static_cast<std::uint16_t>(icon)).teleporterTip;
         }
 
         // The tip's 4 side faces reuse the teleporter's own tile texture,
@@ -182,16 +173,20 @@ namespace GalaxyEggbert::Game
         // (see InnerFlatPlateTiles.hpp's kPlateRotationMetadataType) --
         // callers pass whether THIS block's own position has rotation
         // metadata set, false for anything not even a candidate.
-        bool AppendSpecialGeometry(int lookupIcon, const Easy3D::UvRect& tileUv,
+        bool AppendSpecialGeometry(const GalaxyEggbert::BlockDefinition& definition,
+                                   const Easy3D::UvRect& tileUv,
                                    const Easy3D::UvRect& icon107Uv,
                                    const Easy3D::CubeBatch::Vector3& center,
                                    bool plateRotated,
                                    std::vector<Easy3D::CubeVertex>& vertices,
                                    std::vector<std::uint32_t>& indices)
         {
+            const int lookupIcon = static_cast<int>(definition.type);
             Easy3D::DirectionalCubeFace directionalFaces[6];
-            if (TryGetDirectionalCubeFaces(lookupIcon, tileUv, icon107Uv, directionalFaces))
+            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube)
             {
+                ConfigureDirectionalCubeFaces(
+                    lookupIcon, tileUv, icon107Uv, directionalFaces);
                 Easy3D::DirectionalCubeItem item;
                 item.Center = center;
                 item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
@@ -228,8 +223,9 @@ namespace GalaxyEggbert::Game
             }
 
             Easy3D::DirectionalCubeFace pillarFaces[6];
-            if (TryGetInnerPillarBoxFaces(lookupIcon, tileUv, pillarFaces))
+            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerPillarBox)
             {
+                ConfigureInnerPillarBoxFaces(lookupIcon, tileUv, pillarFaces);
                 Easy3D::DirectionalCubeItem item;
                 item.Center = center;
                 item.Size = Easy3D::CubeBatch::Vector3(kInnerPillarWidth, kInnerPillarHeight, kInnerPillarWidth);
@@ -242,8 +238,9 @@ namespace GalaxyEggbert::Game
             }
 
             Easy3D::DirectionalCubeFace thinBarFaces[6];
-            if (TryGetThinBarFaces(lookupIcon, tileUv, thinBarFaces))
+            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::ThinBar)
             {
+                ConfigureThinBarFaces(lookupIcon, tileUv, thinBarFaces);
                 Easy3D::DirectionalCubeItem item;
                 item.Center = center;
                 // Full block width along X (the bar's own long axis, so
@@ -259,7 +256,7 @@ namespace GalaxyEggbert::Game
                 return true;
             }
 
-            if (IsInnerFlatPlateIcon(lookupIcon))
+            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerFlatPlate)
             {
                 Easy3D::PlateItem item;
                 item.Width = kInnerFlatPlateWidth;
@@ -271,7 +268,7 @@ namespace GalaxyEggbert::Game
                 return true;
             }
 
-            if (IsTripleCrossBillboardIcon(lookupIcon))
+            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::TripleCrossBillboard)
             {
                 Easy3D::TripleCrossItem item;
                 item.Center = center;
@@ -285,44 +282,9 @@ namespace GalaxyEggbert::Game
             return false;
         }
 
-        // Animation frame tables — sourced from the approved
-        // mobile-eggbert Tables.cpp data; see
-        // mobile-eggbert-reference/08-animations.md.
-        constexpr int kAnimLava[8]     = {68, 69, 70, 71, 72, 71, 70, 69};
-        constexpr int kAnimSpike[16]   = {374,374,373,347,373,374,374,374,373,347,347,373,374,374,374,374};
-        constexpr int kAnimCrusher[10] = {317,317,318,319,320,321,322,323,323,323};
-        constexpr int kAnimSaw[6]      = {378,379,380,381,382,383};
-        constexpr int kAnimWater1[6]   = {92,93,94,95,94,93};
-        constexpr int kAnimWater2[6]   = {91,96,97,98,97,96};
-        constexpr int kAnimTemp[20]    = {328,328,327,327,326,326,325,325,324,324,
-                                           325,325,326,326,327,329,328,328,-1,-1};
-        constexpr int kAnimMarine[11]  = {203,204,205,206,207,208,207,206,205,204,203};
-
-        // AnimDivisor() moved to TerrainAnimDivisor.hpp/.cpp (plan.md
-        // TEST-007, 2026-07-14) so it can be exercised by a scripted test
-        // without a graphics context -- see that header for the full real-
-        // behavior citation.
-
         int AnimIcon(std::uint16_t base, int rawTick)
         {
-            using namespace GalaxyEggbert::BlockTypes;
-            const int phase = rawTick / AnimDivisor(base);
-            switch (base)
-            {
-                case Lava:     return kAnimLava[phase % 8];
-                case Spike:    return kAnimSpike[phase % 16];
-                case Crusher:  return kAnimCrusher[phase % 10];
-                case Saw:      return kAnimSaw[phase % 6];
-                case Water1:   return kAnimWater1[phase % 6];
-                case Water2:   return kAnimWater2[phase % 6];
-                case Temp:     return kAnimTemp[phase % 20];
-                case FanLeft:  return 126 + (phase % 3);
-                case FanRight: return 129 + (phase % 3);
-                case FanUp:    return 132 + (phase % 3);
-                case FanDown:  return 135 + (phase % 3);
-                case Marine:   return kAnimMarine[phase % 11];
-                default:       return static_cast<int>(base);
-            }
+            return GalaxyEggbert::ResolveBlockAnimationIcon(base, rawTick);
         }
 
         // Water is animated too, but drawn as its own semi-transparent pass
@@ -331,17 +293,13 @@ namespace GalaxyEggbert::Game
         // m_waterBlocks/m_waterRenderer instead of m_animBlocks/m_animRenderer.
         bool IsWater(std::uint16_t base)
         {
-            using namespace GalaxyEggbert::BlockTypes;
-            return base == Water1 || base == Water2;
+            return GalaxyEggbert::GetBlockDefinition(base).water;
         }
 
         bool IsAnimated(std::uint16_t base)
         {
-            using namespace GalaxyEggbert::BlockTypes;
-            return base == Lava    || base == Spike    || base == Crusher || base == Saw ||
-                   base == Temp    ||
-                   base == FanLeft || base == FanRight  || base == FanUp   || base == FanDown ||
-                   base == Marine;
+            const auto& definition = GalaxyEggbert::GetBlockDefinition(base);
+            return definition.animation.IsAnimated() && !definition.water;
         }
 
         // Icons 30/31: confirmed DirectionalCube (DirectionalCubeTiles.cpp)
@@ -360,21 +318,6 @@ namespace GalaxyEggbert::Game
         // the actual bug, same category as icons 30/31 above, not a
         // geometry problem (the tip's pyramid-vs-prism shape was a separate,
         // real issue, already fixed independently -- see AppendSpecialGeometry).
-        bool NeedsAlphaBlend(int icon)
-        {
-            // Icon 202 (thin-bar, plan.md TILE-055, 2026-07-14): direct
-            // pixel inspection of the real crop found its actual visible
-            // content is a thin stripe near the top of an otherwise fully
-            // transparent 64x64 tile (confirmed via a small script sampling
-            // object-m.png's alpha channel) -- same category of bug as
-            // icons 30/31/the teleporter pillars above: rendering it opaque
-            // shows the surrounding alpha=0 pixels' own RGB (a solid white
-            // block) instead of the real thin-rod content.
-            return icon == 30 || icon == 31 || icon == 202 ||
-                   icon == GalaxyEggbert::BlockTypes::Teleport1 || icon == GalaxyEggbert::BlockTypes::Teleport2 ||
-                   icon == GalaxyEggbert::BlockTypes::Teleport3 || icon == GalaxyEggbert::BlockTypes::Teleport4;
-        }
-
         // Icon 107: confirmed DirectionalCube with its top face intentionally
         // left open in DirectionalCubeTiles.cpp (see that file's comment) --
         // its real top surface is this separate grass_top.png overlay
@@ -384,26 +327,16 @@ namespace GalaxyEggbert::Game
         constexpr float kGrassPlateWidth = 1.0f;
         constexpr float kGrassPlateDepth = 1.0f;
 
-        bool IsGrassTopIcon(int icon)
-        {
-            // Icons 108/109 (2026-07-09) reuse icon 107's real top surface
-            // too -- their own DirectionalCube entry (DirectionalCubeTiles.cpp)
-            // leaves PosY open on purpose, same reasoning as icon 107 itself.
-            return icon == 107 || icon == 108 || icon == 109;
-        }
-
         // True if @p icon uses one of the "new geometry" render modes
         // (AppendSpecialGeometry above) -- these are smaller than a full
         // block or leave faces intentionally open, so they must never be
         // treated as occluders by IsOccluderBlock below.
         bool IsSpecialGeometryIcon(int icon)
         {
-            Easy3D::DirectionalCubeFace unusedFaces[6];
-            return TryGetDirectionalCubeFaces(icon, Easy3D::UvRect{}, Easy3D::UvRect{}, unusedFaces) ||
-                   TryGetInnerPillarBoxFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
-                   TryGetThinBarFaces(icon, Easy3D::UvRect{}, unusedFaces) ||
-                   IsInnerFlatPlateIcon(icon) ||
-                   IsTripleCrossBillboardIcon(icon);
+            const auto mode =
+                GalaxyEggbert::GetBlockDefinition(static_cast<std::uint16_t>(icon)).renderMode;
+            return mode != GalaxyEggbert::BlockRenderMode::Air &&
+                   mode != GalaxyEggbert::BlockRenderMode::UniformCube;
         }
 
         // Face-culling occlusion test (NEXT.md §8 -- "add face-culling/
@@ -417,7 +350,7 @@ namespace GalaxyEggbert::Game
         // a face is only culled when its neighbor is DEFINITELY solid on
         // that side, never a guess -- worth revisiting later for e.g.
         // DirectionalCube neighbors (their own per-face pattern is already
-        // known via TryGetDirectionalCubeFaces, so they COULD occlude on
+        // known via ConfigureDirectionalCubeFaces, so they COULD occlude on
         // their opaque faces), but that's extra complexity for a case this
         // task doesn't need yet (§8's own note: "not needed at the current
         // ~2700-block scale").
@@ -436,14 +369,15 @@ namespace GalaxyEggbert::Game
                 return false;
             }
 
-            const std::uint16_t animBase = GalaxyEggbert::BlockTypes::tileAnimBase(block.type());
+            const auto& definition = GalaxyEggbert::GetBlockDefinition(block.type());
+            const std::uint16_t animBase = definition.animation.baseIcon;
             if (IsWater(animBase) || IsAnimated(animBase))
             {
                 return false;
             }
 
             const int icon = static_cast<int>(block.type());
-            if (NeedsAlphaBlend(icon) || IsSpecialGeometryIcon(icon))
+            if (definition.alphaBlend || IsSpecialGeometryIcon(icon))
             {
                 return false;
             }
@@ -497,7 +431,8 @@ namespace GalaxyEggbert::Game
                     sumY += worldY;
                     sumZ += worldZ;
 
-                    const std::uint16_t animBase = GalaxyEggbert::BlockTypes::tileAnimBase(block.type());
+                    const auto& definition = GalaxyEggbert::GetBlockDefinition(block.type());
+                    const std::uint16_t animBase = definition.animation.baseIcon;
                     if (IsWater(animBase))
                     {
                         m_waterBlocks.push_back({worldX, worldY, worldZ, animBase});
@@ -514,17 +449,18 @@ namespace GalaxyEggbert::Game
                     const auto tileUv = tileAtlas.GetTileUv(icon);
                     const bool plateRotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
 
-                    if (NeedsAlphaBlend(icon))
+                    if (definition.alphaBlend)
                     {
                         // Not animated, so it skips m_waterBlocks entirely --
                         // goes straight into its own static-but-transparent
                         // buffer, built once here and never rebuilt by
                         // Update() (same lifecycle as m_staticRenderer).
-                        AppendSpecialGeometry(icon, tileUv, icon107Uv, center, plateRotated, transparentStaticVertices, transparentStaticIndices);
+                        AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
+                                              transparentStaticVertices, transparentStaticIndices);
                         continue;
                     }
 
-                    if (IsGrassTopIcon(icon))
+                    if (definition.grassTop)
                     {
                         // Additive, not exclusive: the block's sides/bottom
                         // still go through the normal DirectionalCube path
@@ -554,15 +490,16 @@ namespace GalaxyEggbert::Game
                     // blocks (the common case in bulk fills like the ground
                     // floor/walls/staircase) actually get culled.
                     //
-                    // Note: Saw/SawStopped (IsGroundAnchoredPlateIcon) never
+                    // Note: Saw/SawStopped (GroundAnchoredPlate mode) never
                     // reaches this point -- both are always animated
                     // (IsAnimated(Saw) above), so they're diverted into
                     // m_animBlocks earlier in this same loop; their ground-
                     // anchored-overlay handling lives in
                     // RebuildAnimatedRenderer() instead (see
-                    // IsGroundAnchoredPlateIcon's own comment above and that
+                    // GroundAnchoredPlate mode's own comment above and that
                     // call site for the full history).
-                    if (AppendSpecialGeometry(icon, tileUv, icon107Uv, center, plateRotated, staticVertices, staticIndices))
+                    if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
+                                              staticVertices, staticIndices))
                     {
                         continue;
                     }
@@ -632,6 +569,7 @@ namespace GalaxyEggbert::Game
         const auto icon107Uv = m_tileAtlas->GetTileUv(107);
         for (const auto& block : blocks)
         {
+            const auto& definition = GalaxyEggbert::GetBlockDefinition(block.base);
             const int icon = AnimIcon(block.base, animPhase);
             if (icon < 0)
             {
@@ -659,13 +597,13 @@ namespace GalaxyEggbert::Game
             // demo block: without this, fan blocks always fell through to a
             // plain untextured-on-every-face UniformCube and their
             // DirectionalCubeTiles entry was silently dead code.
-            if (IsGroundAnchoredPlateIcon(static_cast<int>(block.base)))
+            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::GroundAnchoredPlate)
             {
                 // Saw/SawStopped (2026-07-20): animated (378-383 cycle), so
                 // this path -- NOT the constructor's main Build() loop
                 // (which routes these into m_animBlocks before it would
                 // ever reach an equivalent check) -- is what actually
-                // renders it; see the constructor's own IsGroundAnchoredPlateIcon
+                // renders it; see the constructor's own GroundAnchoredPlate
                 // comment block for the full round-by-round history. No
                 // face-culling here since RebuildAnimatedRenderer never had
                 // any (every animated block already renders all 6 faces via
@@ -729,7 +667,8 @@ namespace GalaxyEggbert::Game
                 continue;
             }
 
-            if (AppendSpecialGeometry(static_cast<int>(block.base), tileUv, icon107Uv, center, plateRotated, vertices, indices))
+            if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
+                                      vertices, indices))
             {
                 continue;
             }

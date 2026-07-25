@@ -78,6 +78,15 @@ The executable target remains `GalaxyEggbertCNA`. CMake, the entry point, docume
 and type registration use the new name. The full `-j2` build succeeds and all 90 applicable CTest
 tests pass._
 
+_Central definition cleanup 2026-07-25: `INFRA-014/015` are complete.
+`BlockDefinitionRegistry` is now the authoritative CNA-independent definition of all supported
+voxel ids, including render mode, texture, animation, collision, alpha, and gameplay semantics.
+`ObjectDefinitionRegistry` likewise covers `ObjectType0..203`, including placement, semantic and
+patrol policy plus phase/override-aware resolved visuals. Terrain/game/editor consumers use these
+registries; old `BlockTypes`/`ObjectIcons` classification helpers are thin compatibility accessors.
+The new exhaustive `VerifyDefinitionRegistries` test covers the complete domains and parity
+decisions. The full `-j2` build succeeds and all 91 applicable CTest tests pass._
+
 _2026-07-20 update: the Saw blade render-orientation bug (§4/§5/§8/§9's own old entries) is now
 **resolved** — see §3's own writeup for the full 6-round history. `plan.md` §7 ("Correctness
 Infrastructure & Dual-Renderer — Vision") is new: a non-binding assessment of merged
@@ -2170,10 +2179,15 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
 - `WorldRuntime` — the live, mutable per-frame world state (terrain block queries plus the
   `MobileObjSpec` list of every pickup/enemy/effect object). `InteractionSystem` and
   `GalaxyEggbertGame` both operate on the same `WorldRuntime&` instance each frame.
+- `BlockDefinitionRegistry` / `ObjectDefinitionRegistry` — the authoritative, backend-independent
+  block and MoveObject type metadata. Rendering, collision, editor validation, imported-world
+  support, and texture-sheet selection consume these definitions; do not reintroduce parallel
+  icon/type classification lists in consumers.
 - `Hud` — 2D HUD rendering in mobile-eggbert's own 640x480 reference space, plus the
   `ProjectWorldToHudSpace()` static utility (world position → that reference space, via a real
   clip-space `Vector4::Transform` then inverting `Hud`'s own ref↔viewport scale/offset math).
-- `include/GalaxyEggbert/Worlds/`, `Def/*.hpp`, `BlockTypes.hpp` — engine-agnostic data model
+- `include/GalaxyEggbert/Worlds/`, `Def/*.hpp`, `BlockTypes.hpp`,
+  `BlockDefinitionRegistry.hpp` — engine-agnostic data model
   (`World`/`Chunk`/`Block`, real enum IDs). Shared by any future engine target; keep it that way
   (no CNA/Easy3D-specific dependencies here).
 

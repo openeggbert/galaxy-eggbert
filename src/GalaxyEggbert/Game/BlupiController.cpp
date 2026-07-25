@@ -1,7 +1,7 @@
 #include "BlupiController.hpp"
-#include "DecorQuartTable.hpp"
 #include "WorldRuntime.hpp"
 
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
@@ -232,14 +232,6 @@ namespace GalaxyEggbert::Game
             290, 289, 288, 288, 289, 289, 290, 290, 290, 290, 290, 290, 290,
             290, 290, 290, 290, 290, 1, 1};
 
-        // Teleporter pillars (plan.md E3D-MIG-147, icons 330-333) are
-        // ALWAYS non-solid for collision purposes (unlike Temp, this isn't
-        // phase-gated) -- see IsPointSolid()'s own comment for why.
-        bool IsTeleporterIcon(std::uint16_t type)
-        {
-            return type == GalaxyEggbert::BlockTypes::Teleport1 || type == GalaxyEggbert::BlockTypes::Teleport2 ||
-                   type == GalaxyEggbert::BlockTypes::Teleport3 || type == GalaxyEggbert::BlockTypes::Teleport4;
-        }
     }
 
     void BlupiController::SetPosition(float x, float y, float z) noexcept
@@ -306,7 +298,8 @@ namespace GalaxyEggbert::Game
         {
             return false;
         }
-        if (IsTeleporterIcon(blockType) || GalaxyEggbert::BlockTypes::isFan(blockType) ||
+        if (GalaxyEggbert::BlockTypes::isTeleporter(blockType) ||
+            GalaxyEggbert::BlockTypes::isFan(blockType) ||
             GalaxyEggbert::BlockTypes::isWater(blockType))
         {
             return false;
@@ -333,7 +326,9 @@ namespace GalaxyEggbert::Game
         const float fracY = y - static_cast<float>(gy);
         const int col = std::clamp(static_cast<int>(fracX * 4.0f), 0, 3);
         const int row = std::clamp(static_cast<int>((1.0f - fracY) * 4.0f), 0, 3); // real row 0 = TOP
-        return kDecorQuartTable[blockType * 16 + row * 4 + col] != 0;
+        const std::uint16_t bit =
+            static_cast<std::uint16_t>(1u << static_cast<unsigned>(row * 4 + col));
+        return (GalaxyEggbert::GetBlockDefinition(blockType).collisionMask & bit) != 0;
     }
 
     BlupiController::MoveResult BlupiController::ResolveMove(const Worlds::World& world, float startX,

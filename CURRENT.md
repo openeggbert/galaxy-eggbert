@@ -21,6 +21,10 @@ content-authoring UX, but not new gameplay mechanics.
 - The canonical game implementation lives in `src/GalaxyEggbert/Game/` under
   `GalaxyEggbert::Game`, without legacy `GE` prefixes on game-owned components; the CNA-specific
   source tree now contains only the `GalaxyEggbertGame` application host/platform wiring.
+- Block and MoveObject type metadata are centralized in backend-independent
+  `BlockDefinitionRegistry` and `ObjectDefinitionRegistry` tables. Rendering, collision, imported
+  world support, editor validation, animation, and texture-sheet selection consume these
+  definitions instead of maintaining parallel icon/type classification lists.
 - All approved world-editor milestones and follow-ups through `EDITOR-130` are complete: per-gamer
   custom worlds, Eggbert-ordered palette, raycast editing, object editing, undo/redo, box fill,
   functional touch deletion, verified Inverter/crate/Overcraft entries, menu-based sky-region
@@ -45,7 +49,7 @@ As of the date above, rebuilding and testing the current source succeeds on all 
 
 | Build | Result |
 |---|---|
-| `build-cna` (EasyGL) | 90 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
+| `build-cna` (EasyGL) | 91 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
 | `build-cna-vulkan` | 79/79 pass |
 | `cmake-build-debug` | 81 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
 

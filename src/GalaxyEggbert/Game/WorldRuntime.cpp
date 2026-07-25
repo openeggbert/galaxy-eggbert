@@ -1,4 +1,6 @@
 #include "WorldRuntime.hpp"
+
+#include "ObjectDefinitionRegistry.hpp"
 #include "ObjectVerticalPlacement.hpp"
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
@@ -20,29 +22,6 @@ namespace GalaxyEggbert::Game
     {
         constexpr int kMobileTileSize = 64;
         constexpr int kDecorGridSize = 100;
-
-        // The 29 real, in-use MoveObject types confirmed against all 78
-        // mobile-eggbert level files (see
-        // mobile-eggbert-reference/01-world-file-format.md).
-        bool IsSupportedMoveObjectType(int type)
-        {
-            return type == 1  || type == 2  || type == 3  || type == 4  || type == 5  ||
-                   type == 6  || type == 7  || type == 12 || type == 13 || type == 16 ||
-                   type == 17 || type == 19 || type == 20 || type == 21 || type == 24 ||
-                   type == 25 || type == 26 || type == 30 || type == 32 || type == 33 ||
-                   type == 40 || type == 44 || type == 46 || type == 47 || type == 49 ||
-                   type == 50 || type == 51 || type == 54 || type == 55 || type == 96;
-        }
-
-        // 32 (blupih), 44 (wasp), 54 (large creature) patrol posStart<->posEnd
-        // the same way as the other patrol enemies (Decor.cpp
-        // MoveObjectStepIcon keys their turn/walk icon off posStart vs
-        // posEnd, i.e. they are patrol-line objects too).
-        bool IsPatrolMoveObjectType(int type)
-        {
-            return type == 2 || type == 3 || type == 4 || type == 20 || type == 32 ||
-                   type == 33 || type == 44 || type == 54;
-        }
 
         // Real mobile-eggbert .txt world files are read-only external data
         // (a hand-edited or malformed cell is a real, reachable input here,
@@ -148,13 +127,20 @@ namespace GalaxyEggbert::Game
                     "posStart=%d;%d posEnd=%d;%d",
                     &type, &stepAdv, &stepRec, &stopStart, &stopEnd, &psx, &psy, &pex, &pey);
 
-                if (!IsSupportedMoveObjectType(type))
+                if (type < 0 || type > ObjectDefinitionRegistry::MaxObjectType)
+                {
+                    continue;
+                }
+                const auto objectType =
+                    static_cast<GalaxyEggbert::Def::ObjectType>(type);
+                const auto& objectDefinition = GetObjectDefinition(objectType);
+                if (!objectDefinition.mobileWorldSupported)
                 {
                     continue;
                 }
 
                 MobileObjSpec spec;
-                spec.type = static_cast<GalaxyEggbert::Def::ObjectType>(type);
+                spec.type = objectType;
                 spec.posStartX = static_cast<float>(psx) / kMobileTileSize - kWorldCenterX;
                 spec.posStartY = kGroundObjectCenterY;
                 spec.posStartZ = static_cast<float>(psy) / kMobileTileSize - kWorldCenterZ;
@@ -175,7 +161,7 @@ namespace GalaxyEggbert::Game
                 spec.timeStopStartTicks = static_cast<float>(std::max(stopStart, 0));
                 spec.timeStopEndTicks = static_cast<float>(std::max(stopEnd, 0));
 
-                if (IsPatrolMoveObjectType(type) &&
+                if (objectDefinition.patrolMotion &&
                     spec.posStartX == spec.posEndX && spec.posStartZ == spec.posEndZ)
                 {
                     spec.posStartX -= 2.0f;
@@ -360,6 +346,11 @@ namespace GalaxyEggbert::Game
         mobileObjects_.clear();
         for (const auto& record : CollectMoveObjects(*world_))
         {
+            if (!IsSupportedObjectType(record.type) ||
+                GetObjectDefinition(record.type).placementKind == ObjectPlacementKind::Null)
+            {
+                continue;
+            }
             MobileObjSpec spec;
             spec.type = record.type;
             spec.visualIcon = record.visualIcon;
