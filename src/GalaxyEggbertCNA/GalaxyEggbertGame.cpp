@@ -272,6 +272,29 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    namespace
+    {
+        // GetBackBufferData()'s no-rect overload reads the WHOLE backbuffer, and CNA sizes
+        // that read from PresentationParameters.BackBufferWidth/Height. The three one-shot
+        // captures below used to size their arrays from Viewport instead. Those are not the
+        // same rectangle: EasyGL runs a FixedHeightDynamicWidth virtual resolution, so on a
+        // window resize the Viewport becomes the LOGICAL size (height pinned to 480, width
+        // following the window's aspect) while the backbuffer stays at its 800x480 virtual
+        // resolution. Resize the window narrower than 800:480 mid-startup and the array came
+        // out smaller than the backbuffer, so CNA threw "GetBackBufferData: data array too
+        // small for requested region" -- an uncaught std::runtime_error, i.e. a hard SIGABRT
+        // (user-reported 2026-08-21, reproduced by resizing during startup).
+        //
+        // Ask for the backbuffer's own size, which is what the call actually reads.
+        void GetBackBufferSize(
+            const Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int& w, int& h)
+        {
+            const auto& pp = device.getPresentationParametersProperty();
+            w = static_cast<int>(pp.getBackBufferWidthProperty());
+            h = static_cast<int>(pp.getBackBufferHeightProperty());
+        }
+    }
+
     GalaxyEggbertGame::GalaxyEggbertGame()
     {
         Game::getWindowProperty().setTitleProperty("Galaxy Eggbert (CNA)");
@@ -3661,9 +3684,13 @@ namespace GalaxyEggbert::CNA
             {
                 terrainPixelPrinted = true;
                 terrainPixelPrintedFrame_ = drawFrameIndex_;
-                const auto& viewport = device.getViewportProperty();
-                const int w = viewport.getWidthProperty();
-                const int h = viewport.getHeightProperty();
+                // Backbuffer, not Viewport -- see GetBackBufferSize()'s comment. This site
+                // needs it for BOTH readbacks below: the whole-backbuffer capture, and the
+                // 5x5 single-pixel grid, whose sample rectangles CNA validates against the
+                // backbuffer bounds (a Viewport wider than the backbuffer made those throw
+                // std::out_of_range instead).
+                int w = 0, h = 0;
+                GetBackBufferSize(device, w, h);
 
                 // Sample a 5x5 grid over the central 60% of the screen —
                 // more robust than one center pixel, which can miss terrain
@@ -4182,9 +4209,8 @@ namespace GalaxyEggbert::CNA
         if (!hudScreenshotWritten && drawFrameIndex_ > terrainPixelPrintedFrame_)
         {
             hudScreenshotWritten = true;
-            const auto& viewport = device.getViewportProperty();
-            const int w = viewport.getWidthProperty();
-            const int h = viewport.getHeightProperty();
+            int w = 0, h = 0;
+            GetBackBufferSize(device, w, h);
             std::vector<Microsoft::Xna::Framework::Color> backBuffer(
                 static_cast<std::size_t>(w) * static_cast<std::size_t>(h),
                 Microsoft::Xna::Framework::Color(0, 0, 0, 0));
@@ -4207,9 +4233,8 @@ namespace GalaxyEggbert::CNA
             if (goldenCaptureAwaitingDraw_ &&
                 goldenCaptureNextIndex_ < kGoldenCaptureCount)
             {
-                const auto& viewport = device.getViewportProperty();
-                const int w = viewport.getWidthProperty();
-                const int h = viewport.getHeightProperty();
+                int w = 0, h = 0;
+                GetBackBufferSize(device, w, h);
                 std::vector<Microsoft::Xna::Framework::Color> backBuffer(
                     static_cast<std::size_t>(w) * static_cast<std::size_t>(h),
                     Microsoft::Xna::Framework::Color(0, 0, 0, 0));
