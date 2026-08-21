@@ -84,9 +84,13 @@ cmake --build build-cna --target GalaxyEggbertWorldsTests -j2
 ./build-cna/GalaxyEggbertWorldsTests
 ```
 
-The graphics backend (EasyGL on Linux by default, SDL_Renderer elsewhere) is CNA's own
-`CNA_GRAPHICS_BACKEND` cache option (`SDL_RENDERER` / `EASYGL` / `BGFX` / `VULKAN`), not a
-galaxy-eggbert-specific flag — pass `-DCNA_GRAPHICS_BACKEND=<value>` to override it.
+The graphics renderer is CNA's own `CNA_GRAPHICS_RENDERER` cache option, not a
+galaxy-eggbert-specific flag — pass `-DCNA_GRAPHICS_RENDERER=<value>` to override it. This
+project defaults it to `OPENGLES3` natively and `WEBGL2` under Emscripten; both select CNA's
+EasyGL implementation family. `EASYGL` is no longer a renderer name upstream — it became an
+internal family reached through the five GL-profile identities `OPENGLES2` / `OPENGLES3` /
+`OPENGL33` / `WEBGL1` / `WEBGL2`. See `../cna/cmake/RendererSelection.cmake` for every accepted
+value (`SDL_RENDERER`, `VULKAN`, `BGFX`, and ~45 more).
 
 #### Windows native build (not verified in this session)
 
@@ -111,7 +115,7 @@ rm -rf build-windows
 cmake -S . -B build-windows \
   -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/mingw-w64.cmake \
   -DGALAXY_EGGBERT_BUILD_CNA=ON \
-  -DCNA_GRAPHICS_BACKEND=SDL_RENDERER \
+  -DCNA_GRAPHICS_RENDERER=SDL_RENDERER \
   -DBUILD_TESTING=OFF
 cmake --build build-windows --target GalaxyEggbertCNA -j2
 ```
@@ -191,7 +195,7 @@ emrun cmake-build-web/GalaxyEggbertCNA.html
 
 ### Backend status for `GalaxyEggbertCNA`
 
-- Linux: confirmed working, EasyGL backend by default (`CNA_GRAPHICS_BACKEND=EASYGL`).
+- Linux: confirmed working, EasyGL family by default (`CNA_GRAPHICS_RENDERER=OPENGLES3`).
 - Windows: SDL_Renderer cross-compiles with MinGW-w64 and stages its required SDL/MinGW runtime
   DLLs, but cannot yet run the 3D game because that CNA backend is 2D-only (see `WINDOWS.md`).
 - Web (Emscripten): manually verified WebGL2 build; not exercised by CI or a publishing pipeline.

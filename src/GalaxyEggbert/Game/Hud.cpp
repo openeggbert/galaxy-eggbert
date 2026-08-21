@@ -72,7 +72,7 @@ namespace GalaxyEggbert::Game
         // all (verified empirically 2026-07-10: the identical panel quad
         // appears at 1.0 and vanishes at 0.6, while EasyGL shows it at
         // both). This is a genuine CNA/Vulkan-only bug, still unfixed --
-        // building GalaxyEggbertCNA with `-DCNA_GRAPHICS_BACKEND=VULKAN`
+        // building GalaxyEggbertCNA with `-DCNA_GRAPHICS_RENDERER=VULKAN`
         // will make every semi-transparent panel vanish again.
         constexpr float kPanelOpacity = 0.6f;
 

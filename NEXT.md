@@ -163,9 +163,9 @@ UX is fine — inventing new *gameplay* mechanics is still not.
 work) — 76/76 (100%) tests pass, cleaner than `build-cna`'s own 78/79 (the unrelated `easy-gl`
 smoke-test failure doesn't reproduce there, presumably a different target set). The editor's own
 code is confirmed backend-agnostic through this.
-- `build-cna/` — EasyGL backend (`CNA_GRAPHICS_BACKEND=EASYGL`, the default — switched back from
+- `build-cna/` — EasyGL family (`CNA_GRAPHICS_RENDERER=OPENGLES3`, the default — switched back from
   Vulkan 2026-07-18, see §3; still fully overridable at configure time).
-- `build-cna-vulkan/` — Vulkan backend (`CNA_GRAPHICS_BACKEND=VULKAN`). Has a known, unrelated CNA
+- `build-cna-vulkan/` — Vulkan renderer (`CNA_GRAPHICS_RENDERER=VULKAN`). Has a known, unrelated CNA
   engine bug: `BasicEffect` draws with `Alpha < 1` don't render at all under this backend (see §5;
   not independently re-verified this session — status as last checked). The second real bug found
   the same day (missing NDC Y-flip in `SkinnedEffect` shaders, making the third-person placeholder
@@ -2265,7 +2265,7 @@ cmake --build build-cna --target GalaxyEggbertCNA -j2
 
 Configure + build (Vulkan backend):
 ```
-cmake -S . -B build-cna-vulkan -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_BACKEND=VULKAN
+cmake -S . -B build-cna-vulkan -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_RENDERER=VULKAN
 cmake --build build-cna-vulkan --target GalaxyEggbertCNA -j2
 ```
 (Use `-j2` maximum — this environment has crashed under more parallel jobs.)

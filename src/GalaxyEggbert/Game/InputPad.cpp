@@ -50,7 +50,7 @@ namespace GalaxyEggbert::Game
         // comment). Restored 2026-07-18 now that EasyGL (not Vulkan) is the
         // default graphics backend (CMakeLists.txt); a CNA/Vulkan-only bug
         // (BasicEffect Alpha<1 doesn't render at all under Vulkan, still
-        // unfixed) means building with `-DCNA_GRAPHICS_BACKEND=VULKAN` will
+        // unfixed) means building with `-DCNA_GRAPHICS_RENDERER=VULKAN` will
         // make these panels vanish again -- see Hud.cpp's kPanelOpacity
         // for the full empirical citation.
         constexpr float kInitPanelOpacity = 0.6f;

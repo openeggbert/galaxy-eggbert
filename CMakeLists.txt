@@ -80,24 +80,39 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     set(CNA_USE_CCACHE OFF CACHE BOOL
         "Use ccache for CNA and sharp-runtime builds when available")
 
-    # Default graphics backend for GalaxyEggbertCNA -- EasyGL (2026-07-18,
-    # user request: make EasyGL the strongest/default backend, while keeping
-    # other backends buildable for the future). BEFORE add_subdirectory(CNA_HOME)
-    # below runs CNA's own (unforced, so lower-priority) default
-    # `set(... CACHE ...)`. A plain (non-FORCE) `set(... CACHE ...)` only
-    # takes effect the FIRST time a cache variable is populated, so this
-    # still respects an explicit `-DCNA_GRAPHICS_BACKEND=...` on the configure
-    # command line or an existing build directory's cache -- it only changes
-    # the *default* for a fresh configure. Previously defaulted to VULKAN on
-    # native (2026-07-09, to compare the two backends) -- reverted after this
-    # session found a real Vulkan-only bug (missing NDC Y-flip in `../cna`'s
-    # SkinnedEffect shaders, plan.md `E3D-MIG-069`) that EasyGL never had,
-    # confirming EasyGL is the more reliable backend for this project today.
-    # Vulkan/other backends remain fully buildable via an explicit
-    # `-DCNA_GRAPHICS_BACKEND=VULKAN` (etc.) override -- this is a default
-    # change only, not a removal of multi-backend support.
-    set(CNA_GRAPHICS_BACKEND "EASYGL" CACHE STRING
-        "Graphics backend to use (SDL_RENDERER, EASYGL, BGFX, or VULKAN)")
+    # Default graphics renderer for GalaxyEggbertCNA -- the EasyGL family
+    # (2026-07-18, user request: make EasyGL the strongest/default backend,
+    # while keeping the other renderers buildable for the future). Set BEFORE
+    # add_subdirectory(CNA_HOME) below runs CNA's own (unforced, so
+    # lower-priority) default `set(... CACHE ...)`. A plain (non-FORCE)
+    # `set(... CACHE ...)` only takes effect the FIRST time a cache variable is
+    # populated, so this still respects an explicit
+    # `-DCNA_GRAPHICS_RENDERER=...` on the configure command line or an
+    # existing build directory's cache -- it only changes the *default* for a
+    # fresh configure. Previously defaulted to VULKAN on native (2026-07-09, to
+    # compare the two backends) -- reverted after that session found a real
+    # Vulkan-only bug (missing NDC Y-flip in `../cna`'s SkinnedEffect shaders,
+    # plan.md `E3D-MIG-069`) that EasyGL never had, confirming EasyGL is the
+    # more reliable renderer for this project today.
+    #
+    # Renamed 2026-08-21 to follow `../cna`: the cache variable is now
+    # `CNA_GRAPHICS_RENDERER`, and "EASYGL" is no longer a public renderer
+    # name at all. EasyGL became an internal implementation family, selected
+    # through one of five public GL-profile identities -- OPENGLES2/OPENGLES3/
+    # OPENGL33 natively, WEBGL1/WEBGL2 under Emscripten (see
+    # ../cna/cmake/RendererSelection.cmake). OPENGLES3 and WEBGL2 are that
+    # file's own documented successors of the old "EASYGL" value on each
+    # platform, so they are what this project asks for. Vulkan and every other
+    # renderer stay fully buildable via an explicit
+    # `-DCNA_GRAPHICS_RENDERER=VULKAN` (etc.) -- a default choice only, not a
+    # removal of multi-renderer support.
+    if(EMSCRIPTEN)
+        set(_ge_default_cna_renderer "WEBGL2")
+    else()
+        set(_ge_default_cna_renderer "OPENGLES3")
+    endif()
+    set(CNA_GRAPHICS_RENDERER "${_ge_default_cna_renderer}" CACHE STRING
+        "CNA graphics renderer to use; OPENGLES3 (native) and WEBGL2 (Emscripten) select the EasyGL family. See ../cna/cmake/RendererSelection.cmake for the full identity list.")
 
     # Add CNA first: easy-3d's own CMakeLists.txt auto-detects an existing
     # `CNA` target from the parent project and links against it instead of
@@ -109,26 +124,15 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         add_subdirectory("${CNA_HOME}" CNA_dep)
     endif()
 
-    # Compatibility shim (found 2026-07-17): when reusing a parent-provided
-    # CNA target (our case, always), easy-3d's own CMakeLists only forwards
-    # the CNA_BACKEND_* compile definition to its `easy3d` target inside its
-    # "build CNA myself" branch -- reused-CNA consumers of CNA's own
-    # GraphicsBackendType.hpp (e.g. easy3d's BillboardMeshRenderer.cpp/
-    # CubeMeshRenderer.cpp) never got it. Previously silent/tolerated;
-    # started hard-failing (`#error "no CNA_BACKEND_* compile definition
-    # set"`) after a large unrelated `../cna` merge (`feature/graphics`)
-    # made that header stricter. This is a sibling-repo (`../cna`/
-    # `../easy-3d`) gap, not something to fix by editing those repos here --
-    # defining the same macro ourselves for this directory scope (inherited
-    # by `easy3d_dep`, added right below) is a harmless, idempotent
-    # workaround regardless of whether upstream fixes it later.
-    if(CNA_GRAPHICS_BACKEND STREQUAL "EASYGL")
-        add_compile_definitions(CNA_BACKEND_EASYGL)
-    elseif(CNA_GRAPHICS_BACKEND STREQUAL "VULKAN")
-        add_compile_definitions(CNA_BACKEND_VULKAN)
-    elseif(CNA_GRAPHICS_BACKEND STREQUAL "SDL_RENDERER")
-        add_compile_definitions(CNA_BACKEND_SDL_RENDERER)
-    endif()
+    # A CNA_BACKEND_* compile-definition shim used to live here (2026-07-17):
+    # easy-3d only forwarded that macro to its `easy3d` target inside its
+    # "build CNA myself" branch, so this project's reused-CNA path left CNA's
+    # own GraphicsBackendType.hpp without it and that header #error'd. Removed
+    # 2026-08-21: `../cna` deleted GraphicsBackendType.hpp along with the whole
+    # CNA_BACKEND_* macro family in the renderer rename, and `../easy-3d` no
+    # longer references those macros either, so the shim now defines a name
+    # nothing reads. Verified by grepping both sibling repositories rather than
+    # assumed from the build succeeding.
 
     # Keep easy-3d's own tests/examples out of this build too.
     set(EASY3D_BUILD_TESTS OFF CACHE BOOL "" FORCE)
@@ -182,31 +186,25 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
 
-    # CNA's static library and its graphics-backend static library have
-    # circular symbol references (mirrors how CNA's own examples/demo_2d
-    # link themselves in ../cna/CMakeLists.txt) — GNU/Clang on non-Windows
-    # need a linker group to resolve both directions; MSVC/MinGW do not.
-    # CNA_GRAPHICS_BACKEND is the cache variable CNA itself set while
-    # configuring above (defaults to EASYGL on Linux, SDL_RENDERER elsewhere;
-    # see ../cna/CMakeLists.txt) — reuse it to name the matching backend target.
-    set(_ge_cna_backend_target "")
-    if(CNA_GRAPHICS_BACKEND STREQUAL "SDL_RENDERER")
-        set(_ge_cna_backend_target "cna_backend_graphics_sdl_renderer")
-    elseif(CNA_GRAPHICS_BACKEND STREQUAL "EASYGL")
-        set(_ge_cna_backend_target "cna_backend_graphics_easygl")
-    elseif(CNA_GRAPHICS_BACKEND STREQUAL "BGFX")
-        set(_ge_cna_backend_target "cna_backend_graphics_bgfx")
-    elseif(CNA_GRAPHICS_BACKEND STREQUAL "VULKAN")
-        set(_ge_cna_backend_target "cna_backend_graphics_vulkan")
-    endif()
-
-    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
-        target_link_libraries(GalaxyEggbertCNA PRIVATE
-            -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
-            SHARP_RUNTIME)
-    else()
-        target_link_libraries(GalaxyEggbertCNA PRIVATE CNA SHARP_RUNTIME)
-    endif()
+    # `CNA` is an INTERFACE umbrella over the framework module libraries plus
+    # the selected renderer target (../cna/modules/CMakeLists.txt). Those
+    # archives really do reference each other in both directions -- a renderer
+    # implements IGraphicsRenderer while calling back into cna_graphics_core/
+    # cna_core/cna_math -- but `../cna` now declares those reverse edges on its
+    # own targets, so CMake repeats the archives on the final link line by
+    # itself and no manual linker group is needed here.
+    #
+    # This block used to wrap `-Wl,--start-group ... -Wl,--end-group` around a
+    # backend target name spelled out locally. That name
+    # (`cna_backend_graphics_easygl`) disappeared when `../cna` renamed its
+    # renderer targets to `cna_renderer_<family>`, and CMake passes an unknown
+    # link item through as a raw `-l` flag instead of failing the configure --
+    # so the stale name did not surface until `ld: cannot find
+    # -lcna_backend_graphics_easygl` at the very last build step. Do not
+    # reintroduce a renderer target name here: upstream has 49 renderer
+    # identities across 45 families, and `CNA` already carries whichever one
+    # CNA_GRAPHICS_RENDERER selected.
+    target_link_libraries(GalaxyEggbertCNA PRIVATE CNA SHARP_RUNTIME)
 
     # CNA_GamerServices (Microsoft::Xna::Framework::GamerServices/*.cpp,
     # includes AvatarRenderer's real-rendering extension) is a separate
