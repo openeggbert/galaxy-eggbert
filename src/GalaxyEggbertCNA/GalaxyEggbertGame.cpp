@@ -3372,7 +3372,30 @@ namespace GalaxyEggbert::CNA
         // the pillarbox seamlessly matches that background's own edge tone
         // instead of showing a visible seam between a lighter placeholder
         // blue and the actual (darker) menu artwork.
-        device.Clear(0.0f, 0.1373f, 0.3843f, 1.0f);
+        //
+        // Clears the DEPTH buffer as well, and must keep doing so: this is the
+        // only Clear() in the whole frame, so without it stale depth values
+        // survive from frame to frame and every depth-tested draw below --
+        // terrain, billboards, the background quad, the whole 3D world -- gets
+        // rejected, leaving just this clear colour under the depth-test-free
+        // HUD (`SetDepthTestEnabled(false)` further down).
+        //
+        // That is exactly what happened (user-reported 2026-08-21: "nevidim 3d
+        // svet, misto toho modrou barvu"). This used to read
+        // `Clear(0.0f, 0.1373f, 0.3843f, 1.0f)`, and on EasyGL that four-float
+        // overload cleared depth too -- as an undocumented side effect the
+        // engine has since removed on purpose (`../cna` REMED-GFX-142,
+        // 2026-07-28: "COLOUR ONLY ... it used to add ClearFlags::Depth -- so
+        // asking XNA to clear only the colour target silently wiped the depth
+        // buffer with it"). Upstream is right and this code was the one leaning
+        // on the side effect, so the fix belongs here.
+        //
+        // The single-argument overload is real XNA's own
+        // `Target | DepthBuffer | Stencil` at the viewport's MaxDepth, so it
+        // states the intent instead of re-deriving flags. RGB(0,35,98) is the
+        // same colour as the float triple it replaces (0.1373*255 = 35,
+        // 0.3843*255 = 98), still init.png's sampled corner pixel.
+        device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98));
         device.SetDepthTestEnabled(true);
 
         // Reported live (2026-07-13): the 3D world was visible bleeding
