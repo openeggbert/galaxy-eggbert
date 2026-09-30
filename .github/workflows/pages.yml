@@ -1,0 +1,51 @@
+# Deploys the project website (web/, served at galaxyeggbert.openeggbert.com) to
+# GitHub Pages. The site used to live in its own repository
+# (openeggbert/galaxyeggbert.openeggbert.com) and was imported here with
+# `git subtree add`.
+#
+# Only web/ is uploaded, never the rest of the repository. The custom domain
+# comes from the repository's Pages settings; web/CNAME is kept only as a
+# record of it.
+
+name: Deploy website to Pages
+
+on:
+  push:
+    branches: [ develop ]
+    paths: [ 'web/**', '.github/workflows/pages.yml' ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, but never cancel one in progress.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # The site needs none of the game sources.
+          sparse-checkout: web
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

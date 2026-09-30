@@ -15,10 +15,14 @@
 name: GalaxyEggbertCNA CI
 
 on:
+  # web/ is the static website, deployed by pages.yml; editing it must not
+  # rebuild and retest the game.
   push:
     branches: [ develop, master ]
+    paths-ignore: [ 'web/**' ]
   pull_request:
     branches: [ develop, master ]
+    paths-ignore: [ 'web/**' ]
   workflow_dispatch: {}
 
 jobs:
