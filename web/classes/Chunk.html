@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chunk — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Chunk</div>
+  <h1>Chunk</h1>
+  <p class="subtitle">10×10×10 palette-compressed voxel container. The storage unit inside World.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>Chunk</code> (namespace <code>GalaxyEggbert::Worlds</code>) stores <code>Chunk::Volume</code>
+    (1000) block values in a compact palette + bit-packed index format. Engine-agnostic; no CNA,
+    Easy3D, or Urho3D headers.
+  </p>
+  <p>Header: <code>include/GalaxyEggbert/Worlds/Chunk.hpp</code>. Implementation: <code>src/GalaxyEggbert/Worlds/Chunk.cpp</code>.</p>
+
+  <h2>Constants</h2>
+  <pre><code>static constexpr int Size   = 10;    // blocks per axis
+static constexpr int Volume = 1000;  // Size³</code></pre>
+
+  <h2>Internal Storage Layout</h2>
+  <pre><code>private:
+    std::vector&lt;Block&gt;                       palette_;         // unique block values (≤256)
+    std::vector&lt;uint64_t&gt;                    packedIndices_;   // bit-packed palette indices
+    uint8_t                                  bitsPerBlock_;    // ceil(log2(palette_.size()))
+    bool                                     dirty_;           // set by setBlock
+    std::vector&lt;ChunkBlockMetadataRecord&gt;    extraMetadata_;   // sparse per-block metadata</code></pre>
+  <p>
+    When the palette has 1 entry (a <em>uniform chunk</em>), <code>packedIndices_</code> may be
+    empty. <code>extraMetadata_</code> stores sparse per-block metadata keyed by local linear
+    index plus a type discriminator and arbitrary payload bytes — it does not store a render mesh;
+    meshing is meant to be a runtime-only cache built by classes like <a href="GETerrainRenderer.html">GETerrainRenderer</a>.
+  </p>
+
+  <h2>API</h2>
+  <pre><code>class Chunk {
+public:
+    static Chunk createUniform(Block fillBlock);
+    static Chunk fromBlocks(const std::array&lt;Block, Volume&gt;&amp; blocks);
+
+    Block getBlock(uint8_t lx, uint8_t ly, uint8_t lz) const;
+    void  setBlock(uint8_t lx, uint8_t ly, uint8_t lz, Block block);
+
+    std::array&lt;Block, Volume&gt; unpackBlocks() const;
+
+    bool isEmpty()   const;   // all blocks == Air
+    bool isUniform() const;   // palette_.size() == 1
+    bool isDirty()   const;   // modified since last write()
+    void clearDirty();
+
+    void setExtraMetadata(size_t localIndex, ...);
+    void removeExtraMetadata(size_t localIndex);
+    void clearExtraMetadata();
+
+    void write(std::ostream&amp; os) const;
+    void read (std::istream&amp; is);
+};</code></pre>
+
+  <h2>Bit-packing Details</h2>
+  <table>
+    <tr><th>Palette size</th><th>Bits per block</th></tr>
+    <tr><td>1 (uniform)</td><td>0</td></tr>
+    <tr><td>2</td><td>1</td></tr>
+    <tr><td>3–4</td><td>2</td></tr>
+    <tr><td>5–8</td><td>3</td></tr>
+    <tr><td>9–16</td><td>4</td></tr>
+    <tr><td>17–32</td><td>5</td></tr>
+    <tr><td>33–64</td><td>6</td></tr>
+    <tr><td>65–128</td><td>7</td></tr>
+    <tr><td>129–256</td><td>8</td></tr>
+  </table>
+  <p>
+    See <a href="VoxelConfig.html">VoxelConfig</a> for <code>bitsNeededForPalette()</code> and
+    related bit-packing constants, and <code>BinaryIO.hpp</code>/<code>BitPacking.hpp</code> for
+    the low-level pack/unpack helpers.
+  </p>
+
+  <h2>Coordinate Mapping</h2>
+  <p>
+    Local indices <code>lx, ly, lz ∈ [0, 9]</code>. Flat index: <code>lx + ly*10 + lz*100</code>.
+    World-to-local: <code>lx = worldX % 10</code>. Chunk coordinate: <code>cx = worldX / 10</code>.
+  </p>
+
+  <h2>Serialization</h2>
+  <p>
+    <code>write()</code> emits the <code>VCH1</code> chunk payload described in
+    <a href="../internals/vwr-format.html">VWR Format</a>: version/chunkSize/bitsPerBlock/flags
+    header, palette entries, packed index data, and an optional sparse metadata section
+    (<code>BMD1</code> magic).
+  </p>
+
+  <h2>Tests</h2>
+  <p>
+    Covered by <code>tests/GalaxyEggbert/Worlds/ChunkTests.cpp</code>: uniform create, palette
+    growth, bit-pack round-trip, isEmpty/isUniform, dirty flag, write/read round-trip.
+  </p>
+
+  <div class="page-nav">
+    <a href="World.html">← World</a>
+    <a href="Block.html">Block →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

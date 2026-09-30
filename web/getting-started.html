@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html" class="active">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Getting Started</div>
+  <h1>Getting Started</h1>
+  <p class="subtitle">Everything you need before your first GalaxyEggbertCNA build.</p>
+
+  <h2>Prerequisites</h2>
+  <ul>
+    <li><strong>CMake ≥ 3.21</strong> and a modern C++ compiler (GCC or Clang)</li>
+    <li><strong>Git</strong></li>
+    <li>OpenGL development libraries on Linux (for the default EasyGL backend)</li>
+  </ul>
+
+  <h2>Required Sibling Repositories</h2>
+  <p>
+    Galaxy Eggbert is not self-contained: <code>CMakeLists.txt</code> expects three sibling
+    directories next to the <code>galaxy-eggbert</code> checkout, each overridable via a CMake
+    cache variable:
+  </p>
+  <table>
+    <tr><th>Repository</th><th>Default path</th><th>Override variable</th><th>Role</th></tr>
+    <tr><td>CNA</td><td><code>../cna</code></td><td><code>CNA_HOME</code></td><td>The game framework itself (target <code>CNA</code>)</td></tr>
+    <tr><td>Easy3D</td><td><code>../easy-3d</code></td><td><code>EASY3D_HOME</code></td><td>Small helper library beside CNA (target <code>easy3d::easy3d</code>)</td></tr>
+    <tr><td>mobile-eggbert</td><td><code>../mobile-eggbert</code></td><td><code>MOBILE_EGGBERT_HOME</code></td><td>Read-only asset source (<code>Content/</code>, <code>worlds/</code>), copied at build time</td></tr>
+  </table>
+  <div class="warn">
+    <strong>Configure CNA before Easy3D</strong>
+    Order matters: Easy3D auto-detects a parent <code>CNA</code> target and links against it instead
+    of building its own copy. Configuring in the wrong order can produce duplicate-symbol errors.
+  </div>
+
+  <h2>Clone the Repository</h2>
+  <pre><code>git clone https://github.com/openeggbert/galaxy-eggbert.git
+cd galaxy-eggbert</code></pre>
+
+  <h2>Configure and Build GalaxyEggbertCNA</h2>
+  <pre><code>cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
+cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
+  <p>
+    <code>GALAXY_EGGBERT_BUILD_CNA</code> defaults to <code>OFF</code> (it is opt-in);
+    <code>GALAXY_EGGBERT_BUILD_SIMPLE3D</code> defaults to <code>ON</code> and builds the older,
+    currently-playable Simple3D reference target. See <a href="build.html">Build Guide</a> for the
+    full CMake variable reference.
+  </p>
+
+  <h2>What Gets Copied at Build Time</h2>
+  <p>
+    Post-build CMake commands copy <code>../mobile-eggbert/Content/</code> and
+    <code>../mobile-eggbert/worlds/</code> (read-only source, not committed to galaxy-eggbert)
+    plus this repo's own committed <code>worlds3d/</code> directory next to the
+    <code>GalaxyEggbertCNA</code> binary. This step is skipped under Emscripten or Android.
+  </p>
+
+  <h2>Next Steps</h2>
+  <div class="card-grid">
+    <a class="card" href="build.html">
+      <h3>&#128295; Build Guide</h3>
+      <p>Full CMake variable reference and target names.</p>
+    </a>
+    <a class="card" href="running.html">
+      <h3>&#9654; Running</h3>
+      <p>What happens when GalaxyEggbertCNA starts.</p>
+    </a>
+    <a class="card" href="architecture.html">
+      <h3>&#127963; Architecture</h3>
+      <p>The Direction Lock and how CNA/Easy3D/mobile-eggbert relate.</p>
+    </a>
+  </div>
+
+  <div class="page-nav">
+    <a href="overview.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Project Overview</span>
+    </a>
+    <a class="next" href="build.html">
+      <span class="label">Next</span>
+      <span class="title">Build Guide &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

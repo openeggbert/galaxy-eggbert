@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html" class="active">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Architecture</div>
+  <h1>Architecture</h1>
+  <p class="subtitle">The Direction Lock, layering, and how CNA, Easy3D, and mobile-eggbert relate.</p>
+
+  <h2>The Direction Lock</h2>
+  <p>Verbatim intent from <code>CLAUDE.md</code>, the project's binding architectural rule set:</p>
+  <pre><code>Galaxy Eggbert
+  -&gt; CNA directly
+  -&gt; Easy3D beside CNA (small helpers only — cameras, texture atlas, billboard/cube batching)
+  -&gt; mobile-eggbert used read-only as reference / asset / data source</code></pre>
+  <p>This supersedes an older direction: <code>Galaxy Eggbert -&gt; Simple3D -&gt; U3D / Urho3D / Nova3D -&gt; (CNA someday)</code>.</p>
+
+  <h3>Rules That Follow From the Lock</h3>
+  <ul>
+    <li>Do not expand the Simple3D/U3D/Nova3D direction except to keep <code>GalaxyEggbertSimple3D</code> working (bug fixes, faithful-remake gameplay parity are fine; new engine-layer investment is not).</li>
+    <li>Do not modify <code>../mobile-eggbert</code> without explicit user approval; do not refactor it or split it into a shared <code>core</code> library.</li>
+    <li>Do not copy mobile-eggbert code or data (tables, enums, save-format byte layout, sprite/frame logic) into Galaxy Eggbert without explicit approval — even data that "looks like just data."</li>
+    <li>Reusing mobile-eggbert <em>assets</em> (PNGs, sounds, world files) by file path / build-time copy is allowed.</li>
+    <li>New CNA/Easy3D code goes under <code>src/GalaxyEggbertCNA/</code> — do not mutate <code>src/GalaxyEggbertSimple3D/</code> into the CNA implementation.</li>
+    <li>Easy3D is a helper library beside CNA — it must not hide CNA (game code calls CNA directly), and must not grow into a scene graph / ECS / engine.</li>
+    <li>No Lua unless explicitly requested by the user. No MeshCraft, Mesh World, Nova3D, or further Simple3D features re-added to the active path.</li>
+    <li><code>../simple-3d</code> may be read (never modified) only when genuinely needed for <code>GalaxyEggbertSimple3D</code> work.</li>
+    <li><strong>No <code>#ifdef</code> engine guards</strong> in either target — each speaks its own API directly.</li>
+  </ul>
+
+  <h2>High-Level Layering</h2>
+  <pre><code>┌──────────────────────────────────────────────────────────┐
+│  mobile-eggbert (read-only reference: assets + behavior)  │
+└───────────────────────┬────────────────────────────────────┘
+                        │ assets reused by file path / build-time copy
+                        │ code/data referenced, never copied without approval
+           ┌────────────▼─────────────┐
+           │       CNA (game framework)│ ← XNA-compatible, SDL3-based
+           └────────────┬─────────────┘
+                        │ used directly (not hidden)
+           ┌────────────▼─────────────┐        ┌─────────────────────┐
+           │        Easy3D              │◄──────┤  cameras, atlas,     │
+           │  (small helper library)    │       │  cube/billboard batch│
+           └────────────┬─────────────┘        └─────────────────────┘
+                        │
+           ┌────────────▼─────────────┐
+           │     GalaxyEggbertCNA        │  ← long-term target (this doc's focus)
+           │  GalaxyEggbertCnaGame        │
+           │  GEWorldRuntime, GETerrainRenderer,
+           │  GETileAtlas, GEBlupiController
+           └────────────┬─────────────┘
+                        │ uses (engine-agnostic, shared)
+           ┌────────────▼─────────────┐
+           │   GalaxyEggbert::Worlds     │
+           │   World / Chunk / Block /   │
+           │   BlockMetadata / VoxelConfig│
+           └──────────────────────────┘
+
+  (Separately, GalaxyEggbertSimple3D — built on Simple3D/U3D — remains the
+   only fully playable target and stays as reference until CNA reaches parity.)</code></pre>
+
+  <h2>GalaxyEggbertCNA Components</h2>
+
+  <h3>Entry point — <code>main.cpp</code></h3>
+  <p>Constructs a <code>GalaxyEggbertCnaGame</code>, calls <code>Run()</code>, deletes it.</p>
+
+  <h3>Game — <code>GalaxyEggbertCnaGame</code></h3>
+  <p>
+    Subclasses <code>Microsoft::Xna::Framework::Game</code> (CNA's game base class), overriding
+    <code>LoadContent()</code>, <code>Update(GameTime&amp;)</code>, <code>Draw(const GameTime&amp;)</code>.
+    Owns the world runtime, terrain renderer, Blupi controller, and camera.
+    See <a href="classes/GalaxyEggbertCnaGame.html">class reference</a>.
+  </p>
+
+  <h3>World runtime — <code>GEWorldRuntime</code></h3>
+  <p>Wraps a <code>Worlds::World</code>; loads <code>.vwr</code> or (secondary path) mobile-eggbert <code>.txt</code>; drives the 6 fps tile-animation phase. See <a href="classes/GEWorldRuntime.html">class reference</a>.</p>
+
+  <h3>Terrain renderer — <code>GETerrainRenderer</code></h3>
+  <p>Builds a static + an animated <code>Easy3D::CubeMeshRenderer</code> from the world's non-air blocks. See <a href="classes/GETerrainRenderer.html">class reference</a>.</p>
+
+  <h3>Tile atlas — <code>GETileAtlas</code></h3>
+  <p>Maps block type IDs to UV rects in <code>object-m.png</code> via <code>Easy3D::TextureAtlas</code>. See <a href="classes/GETileAtlas.html">class reference</a>.</p>
+
+  <h3>Player controller — <code>GEBlupiController</code></h3>
+  <p>Invisible, collision-only movement placeholder: grid collision, step-up traversal, gravity, jump. See <a href="classes/GEBlupiController.html">class reference</a>.</p>
+
+  <h3>World data model — <code>GalaxyEggbert::Worlds</code></h3>
+  <p>Engine-agnostic. No CNA or Easy3D dependency. Shared verbatim by <code>GalaxyEggbertSimple3D</code> and <code>GalaxyEggbertCNA</code>. See <a href="classes/World.html">World</a>, <a href="classes/Chunk.html">Chunk</a>, <a href="classes/Block.html">Block</a>.</p>
+
+  <h2>Dependency Map</h2>
+  <table>
+    <tr><th>Component</th><th>Depends on</th></tr>
+    <tr><td><code>GalaxyEggbertCnaGame</code></td><td>CNA (<code>Game</code>, <code>GameTime</code>, <code>Texture2D</code>, <code>BasicEffect</code>, <code>Keyboard</code>), Easy3D (<code>Camera3D</code>), GEWorldRuntime, GETerrainRenderer, GEBlupiController</td></tr>
+    <tr><td><code>GEWorldRuntime</code></td><td><code>GalaxyEggbert::Worlds::World</code> only</td></tr>
+    <tr><td><code>GETerrainRenderer</code></td><td>Easy3D (<code>CubeBatch</code>, <code>CubeMesh</code>, <code>CubeMeshRenderer</code>), <code>GETileAtlas</code>, <code>Worlds::World</code>, <code>BlockTypes</code></td></tr>
+    <tr><td><code>GETileAtlas</code></td><td>Easy3D (<code>TextureAtlas</code>)</td></tr>
+    <tr><td><code>GEBlupiController</code></td><td><code>GalaxyEggbert::Worlds</code> only — no CNA/Easy3D dependency, scriptable headlessly</td></tr>
+    <tr><td><code>Worlds::World / Chunk / Block</code></td><td>C++ stdlib only</td></tr>
+  </table>
+
+  <div class="page-nav">
+    <a href="gameplay.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Gameplay</span>
+    </a>
+    <a class="next" href="project-structure.html">
+      <span class="label">Next</span>
+      <span class="title">Project Structure &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

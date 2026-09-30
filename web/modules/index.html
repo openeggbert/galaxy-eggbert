@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module Index — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <a href="../running.html">Running the Game</a>
+  <a href="../platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="../gameplay.html">Gameplay</a>
+  <a href="../controls.html">Controls</a>
+  <a href="../levels.html">Levels &amp; Worlds</a>
+  <a href="../assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="../architecture.html">Architecture</a>
+  <a href="../project-structure.html">Project Structure</a>
+  <a href="../engine-integration.html">Engine Integration</a>
+  <a href="../game-loop.html">Game Loop</a>
+  <a href="../rendering.html">Rendering</a>
+  <a href="../audio.html">Audio</a>
+  <a href="../input.html">Input</a>
+  <a href="../save-system.html">Save System</a>
+  <a href="../configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="index.html" class="active">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+  <a href="../development/coding-style.html">Coding Style</a>
+  <a href="../development/debugging.html">Debugging</a>
+  <a href="../development/extending-the-game.html">Extending the Game</a>
+  <a href="../development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Modules</div>
+  <h1>Module Index</h1>
+  <p class="subtitle">Major code modules in GalaxyEggbertCNA and the shared Worlds data model.</p>
+
+  <div class="card-grid">
+    <a class="card" href="../classes/GalaxyEggbertCnaGame.html">
+      <h3>Application</h3>
+      <p><code>GalaxyEggbertCnaGame</code> — CNA Game subclass, LoadContent/Update/Draw</p>
+    </a>
+    <a class="card" href="../classes/GEWorldRuntime.html">
+      <h3>World Runtime</h3>
+      <p><code>GEWorldRuntime</code> — loads .vwr/.txt, drives tile animation</p>
+    </a>
+    <a class="card" href="../classes/GETerrainRenderer.html">
+      <h3>Terrain Renderer</h3>
+      <p><code>GETerrainRenderer</code> — builds static + animated cube meshes</p>
+    </a>
+    <a class="card" href="../classes/GETileAtlas.html">
+      <h3>Tile Atlas</h3>
+      <p><code>GETileAtlas</code> — block type → UV rect mapping</p>
+    </a>
+    <a class="card" href="../classes/GEBlupiController.html">
+      <h3>Player Controller</h3>
+      <p><code>GEBlupiController</code> — invisible collision-only movement</p>
+    </a>
+    <a class="card" href="../classes/World.html">
+      <h3>World Data</h3>
+      <p>Voxel world: 100³ blocks, chunk-based storage</p>
+    </a>
+    <a class="card" href="../classes/Chunk.html">
+      <h3>Chunk</h3>
+      <p>Palette-compressed 10³ voxel container</p>
+    </a>
+    <a class="card" href="../classes/CubeMesh.html">
+      <h3>Easy3D::CubeMesh</h3>
+      <p>CPU-side cube-batch vertex/index builder</p>
+    </a>
+    <a class="card" href="../classes/CubeMeshRenderer.html">
+      <h3>Easy3D::CubeMeshRenderer</h3>
+      <p>Uploads and draws cube mesh data via CNA</p>
+    </a>
+    <a class="card" href="../rendering.html">
+      <h3>Rendering</h3>
+      <p>Cube-per-block terrain, animated tiles, no billboards yet</p>
+    </a>
+    <a class="card" href="../input.html">
+      <h3>Input</h3>
+      <p>Arrow keys + Space, polled via CNA Keyboard</p>
+    </a>
+    <a class="card" href="../internals/vwr-format.html">
+      <h3>World File (.vwr)</h3>
+      <p>Binary voxel format: header, chunk table, palette</p>
+    </a>
+    <a class="card" href="../levels.html">
+      <h3>Level Loading</h3>
+      <p>.vwr (default) and mobile-eggbert .txt (secondary) loading</p>
+    </a>
+  </div>
+
+  <h2>Module Responsibilities</h2>
+  <table>
+    <tr><th>Module</th><th>Files</th><th>Notes</th></tr>
+    <tr><td>Application lifecycle</td><td><code>main.cpp</code>, <code>GalaxyEggbertCnaGame.hpp/.cpp</code></td><td>Entry point; owns all CNA-side subsystems</td></tr>
+    <tr><td>World loading &amp; animation</td><td><code>Game/GEWorldRuntime.hpp/.cpp</code></td><td>.vwr default, .txt secondary; 6 fps anim phase</td></tr>
+    <tr><td>Terrain rendering</td><td><code>Game/GETerrainRenderer.hpp/.cpp</code></td><td>One cube per non-air block, static + animated split</td></tr>
+    <tr><td>Texture mapping</td><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → UV rect via Easy3D::TextureAtlas</td></tr>
+    <tr><td>Player movement</td><td><code>Game/GEBlupiController.hpp/.cpp</code></td><td>Engine-agnostic; collision-only, no rendering</td></tr>
+    <tr><td>Voxel data model</td><td><code>include/GalaxyEggbert/Worlds/*.hpp</code>, <code>src/GalaxyEggbert/Worlds/*.cpp</code></td><td>Engine-agnostic; shared with Simple3D; unit tested</td></tr>
+    <tr><td>Game definitions</td><td><code>include/GalaxyEggbert/def/</code></td><td>All enums: GamePhase, ObjectType, SoundChannel, etc.</td></tr>
+    <tr><td>Cube batching (Easy3D)</td><td><code>../easy-3d</code>: <code>CubeMesh</code>, <code>CubeMeshRenderer</code></td><td>Generic 3D-batching plumbing, no Eggbert-specific knowledge</td></tr>
+  </table>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

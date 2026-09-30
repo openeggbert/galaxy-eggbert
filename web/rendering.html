@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rendering — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html" class="active">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Rendering</div>
+  <h1>Rendering</h1>
+  <p class="subtitle">One cube per non-air block, drawn via Easy3D's CubeMeshRenderer through CNA.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>GalaxyEggbertCNA</code> renders terrain only — there is no Blupi sprite, no object
+    rendering, no HUD, no sky dome. Terrain rendering works end-to-end and is verified: a real run
+    on <code>worlds3d/world001.vwr</code> uploaded 2749 blocks (pre-bugfix count) as 65976 vertices
+    / 32988 triangles, and a 5×5 on-screen pixel sample found 21 of 25 sampled points showing real
+    terrain color across 10 distinct colors — confirming genuine texture sampling, not a placeholder.
+  </p>
+
+  <h2>Pipeline</h2>
+  <pre><code>GETerrainRenderer(world, tileAtlas):
+  for each (x, y, z) in world.blocksPerAxis()³:
+      block = world.getBlock(x, y, z)
+      if block.isAir(): continue
+      worldX = x - kWorldCenterX;  worldZ = z - kWorldCenterZ   // Y unshifted
+      if BlockTypes::tileAnimBase(block.type()) is animated:
+          store in m_animBlocks (rebuilt on anim-phase change)
+      else:
+          add a 1×1×1 cube at (worldX, y, worldZ) to a CubeBatch,
+          UV from tileAtlas.GetTileUv(block.type())
+
+  staticMesh   = Easy3D::BuildCubeMesh(staticBatch)     // 24 verts + 36 indices per cube
+  staticRenderer   = Easy3D::CubeMeshRenderer(device, staticMesh)
+  animatedRenderer = Easy3D::CubeMeshRenderer(device, animatedMeshForCurrentPhase)</code></pre>
+  <p>
+    No face culling or greedy meshing is performed — every non-air block gets a full cube, even
+    where faces are fully occluded by neighbors. This is a known, flagged limitation (see
+    <a href="development/known-issues.html">Known Issues</a>) that will matter once denser
+    hand-authored worlds exist.
+  </p>
+
+  <h2>Texture Mapping — GETileAtlas</h2>
+  <p>
+    Wraps an <code>Easy3D::TextureAtlas</code> sized to <code>object-m.png</code> (1301×1431 px),
+    registered as one grid: 64 px tiles, 20 columns, 65 px pitch (64 px icon + 1 px inter-tile gap).
+    <code>GetTileUv(blockType)</code> returns an all-zero rect for Air (type ≤ 0), otherwise looks
+    up <code>"tile_&lt;blockType&gt;"</code> in the atlas.
+  </p>
+
+  <h2>Animated Tiles</h2>
+  <p>
+    Ported 1:1 from mobile-eggbert's <code>Tables.cpp</code> (via <code>GalaxyEggbertSimple3D</code>):
+  </p>
+  <table>
+    <tr><th>Tile</th><th>Frames</th></tr>
+    <tr><td>Lava</td><td>8</td></tr>
+    <tr><td>Spike</td><td>16</td></tr>
+    <tr><td>Crusher</td><td>10</td></tr>
+    <tr><td>Saw</td><td>6</td></tr>
+    <tr><td>Water1 / Water2</td><td>6 each</td></tr>
+    <tr><td>Temp</td><td>20 (including 2 invisible/blank frames)</td></tr>
+    <tr><td>Fan ×4 directions</td><td>3 each</td></tr>
+    <tr><td>Marine</td><td>11</td></tr>
+  </table>
+  <p>
+    Animated blocks are split into a second mesh, rebuilt only when the anim phase actually
+    changes (not every frame). If the current phase yields zero visible animated cubes (e.g.
+    Temp's blank frames), the animated renderer is reset to null rather than uploading empty data.
+  </p>
+
+  <h2>Draw Call</h2>
+  <pre><code>terrainEffect_-&gt;View = camera.GetViewMatrix();
+terrainEffect_-&gt;Projection = camera.GetProjectionMatrix();
+terrainEffect_-&gt;World = Matrix::Identity;
+staticRenderer-&gt;Draw(device, *terrainEffect_);
+if (animatedRenderer) animatedRenderer-&gt;Draw(device, *terrainEffect_);</code></pre>
+
+  <h2>Known Rendering Limitations</h2>
+  <ul>
+    <li>No face culling between adjacent solid blocks.</li>
+    <li>No chunk-radius streaming — the entire world is uploaded up front.</li>
+    <li>No Blupi sprite, no object/pickup rendering, no sky dome, no HUD.</li>
+    <li><code>Easy3D::BillboardBatch</code> has no vertex builder or renderer adapter — this blocks all sprite rendering.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="game-loop.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Game Loop</span>
+    </a>
+    <a class="next" href="audio.html">
+      <span class="label">Next</span>
+      <span class="title">Audio &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

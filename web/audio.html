@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audio — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html" class="active">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Audio</div>
+  <h1>Audio</h1>
+  <p class="subtitle">Not implemented yet in GalaxyEggbertCNA.</p>
+
+  <div class="warn">
+    <strong>Planned, not implemented</strong>
+    <code>GalaxyEggbertCNA</code> plays no sound at all today. This page describes the sound system
+    it must eventually replicate faithfully from mobile-eggbert (per the E3D-MIG-080…083 roadmap
+    tasks), plus what already works in the <code>GalaxyEggbertSimple3D</code> reference target.
+  </div>
+
+  <h2>The Target: 93-Channel WAV Playback</h2>
+  <p>
+    mobile-eggbert (and <code>GalaxyEggbertSimple3D</code>, which already ports this faithfully)
+    uses 93 WAV files, <code>sound000.wav</code> through <code>sound092.wav</code>, indexed 1:1 by
+    the <code>SoundChannel</code> enum (<code>SoundChannel0</code>–<code>SoundChannel92</code>).
+    Channel 0 is reserved; channels 1–92 are sound effects. These indices are frozen — they must
+    not be renumbered, matching the original game's sound table exactly.
+  </p>
+  <p>
+    The WAV assets themselves are already copied into <code>Content/sounds/</code> at build time
+    (part of the standard mobile-eggbert asset copy), so they are available on disk — CNA simply
+    doesn't load or play them yet.
+  </p>
+
+  <h2>Roadmap (plan.md, E3D-MIG-080…083)</h2>
+  <ol>
+    <li>Add a sound wrapper around CNA's audio API.</li>
+    <li>Reuse <code>sound000.wav</code>–<code>sound092.wav</code> directly (asset reuse, no code copy).</li>
+    <li>Reuse/cross-check the <code>SoundChannel</code> enum against mobile-eggbert.</li>
+    <li>Reach 93-channel playback parity with mobile-eggbert / GalaxyEggbertSimple3D.</li>
+  </ol>
+
+  <h2>Documentation Gap</h2>
+  <p>
+    <code>mobile-eggbert-reference/07-sounds.md</code> is currently pointer-only — the 93 channels
+    are known to exist and be ID-matched, but no per-channel trigger/purpose catalog has been
+    written yet (tracked as an open documentation task, not a code task).
+  </p>
+
+  <div class="page-nav">
+    <a href="rendering.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Rendering</span>
+    </a>
+    <a class="next" href="input.html">
+      <span class="label">Next</span>
+      <span class="title">Input &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

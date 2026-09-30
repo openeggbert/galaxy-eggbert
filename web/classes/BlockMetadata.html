@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlockMetadata — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> BlockMetadata</div>
+  <h1>BlockMetadata</h1>
+  <p class="subtitle">Bit-level accessor wrapper around a Block's 4-bit metadata nibble.</p>
+
+  <h2>Overview</h2>
+  <p>
+    A thin wrapper around the 4-bit nibble stored in every <a href="Block.html">Block</a>. It does
+    not define what the bits <em>mean</em> — that semantic is left to gameplay code (e.g. rotation,
+    variant, or state), a design point relevant to the open question of per-block facing/rotation
+    metadata for cube-rendered objects (see <a href="../gameplay.html">Gameplay</a>).
+  </p>
+  <p>Header: <code>include/GalaxyEggbert/Worlds/BlockMetadata.hpp</code>.</p>
+
+  <h2>API</h2>
+  <pre><code>class BlockMetadata {
+public:
+    explicit BlockMetadata(uint8_t nibble);
+
+    bool bit0() const; bool bit1() const; bool bit2() const; bool bit3() const;
+    void setBit0(bool v); void setBit1(bool v); void setBit2(bool v); void setBit3(bool v);
+
+    bool bit(int index) const;               // generic, index 0..3
+    void setBit(int index, bool enabled);
+
+    BlockMetadata withBitN(int index, bool enabled) const;  // returns a modified copy
+
+    uint8_t rawValue() const;
+};</code></pre>
+
+  <h2>Tests</h2>
+  <p>Covered by <code>tests/GalaxyEggbert/Worlds/BlockMetadataTest.cpp</code>.</p>
+
+  <div class="page-nav">
+    <a href="Block.html">← Block</a>
+    <a href="VoxelConfig.html">VoxelConfig →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

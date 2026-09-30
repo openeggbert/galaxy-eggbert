@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GETerrainRenderer — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> GETerrainRenderer</div>
+  <h1>GETerrainRenderer</h1>
+  <p class="subtitle">Builds one cube per non-air block from a World, split into static and animated meshes.</p>
+
+  <h2>Overview</h2>
+  <p>
+    Builds two <code>Easy3D::CubeMeshRenderer</code> instances from a <code>Worlds::World</code>:
+    one static mesh for non-animated non-air blocks (built once), and one animated-subset mesh
+    rebuilt whenever <code>Update(device, animPhase)</code> sees a new phase.
+  </p>
+  <p>Sources: <code>src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp</code> and <code>.cpp</code>.</p>
+
+  <h2>Construction</h2>
+  <p>
+    Triple-nested loop over the world's full <code>blocksPerAxis()</code> cube. For every non-air
+    block:
+  </p>
+  <pre><code>worldX = x - kWorldCenterX;  worldZ = z - kWorldCenterZ;   // Y unshifted
+if (BlockTypes::tileAnimBase(block.type()) is animated)
+    m_animBlocks.push_back({worldX, y, worldZ, baseIcon});
+else
+    cubeBatch.Add(Cube(worldX, y, worldZ, size=1, uv=tileAtlas.GetTileUv(block.type())));</code></pre>
+  <p>
+    Also accumulates centroid sums (exposed as <code>CentroidX/Y/Z()</code>) — used as a camera
+    look-at target since the spawn tile may be open air.
+    <code>Easy3D::BuildCubeMesh</code> converts the batch into vertex/index arrays (24 vertices +
+    36 indices per cube), fed into a <code>CubeMeshRenderer</code> that uploads once to CNA
+    <code>VertexBuffer</code>/<code>IndexBuffer</code>.
+  </p>
+
+  <h2>Animated Tile Groups (ported from mobile-eggbert Tables.cpp)</h2>
+  <table>
+    <tr><th>Tile</th><th>Frames</th></tr>
+    <tr><td>Lava</td><td>8</td></tr>
+    <tr><td>Spike</td><td>16</td></tr>
+    <tr><td>Crusher</td><td>10</td></tr>
+    <tr><td>Saw</td><td>6</td></tr>
+    <tr><td>Water1 / Water2</td><td>6 each</td></tr>
+    <tr><td>Temp</td><td>20 (2 invisible frames)</td></tr>
+    <tr><td>Fan ×4 directions</td><td>3 each</td></tr>
+    <tr><td>Marine</td><td>11</td></tr>
+  </table>
+  <p><code>AnimIcon(base, phase)</code> looks up the current icon; <code>IsAnimated(base)</code> gates classification.</p>
+
+  <h2><code>Update(device, animPhase)</code></h2>
+  <p>
+    No-op if the phase hasn't changed. Otherwise rebuilds the animated mesh from the current
+    frame's icons. If the phase yields zero visible animated cubes (e.g. Temp's blank frames),
+    the animated renderer is reset to null rather than uploading empty data.
+  </p>
+
+  <h2>Draw</h2>
+  <pre><code>staticRenderer-&gt;Draw(device, effect);
+if (animatedRenderer) animatedRenderer-&gt;Draw(device, effect);</code></pre>
+
+  <h2>Known Limitations</h2>
+  <ul>
+    <li>No face culling or greedy meshing — every non-air block gets a full cube.</li>
+    <li>No chunk-radius streaming — the entire world is uploaded up front.</li>
+  </ul>
+
+  <h2>Dependencies</h2>
+  <p>Easy3D (<code>CubeBatch</code>, <code>CubeMesh</code>, <code>CubeMeshRenderer</code>), <code>GETileAtlas</code>, <code>Worlds::World</code>, <code>BlockTypes</code>.</p>
+
+  <div class="page-nav">
+    <a href="GEWorldRuntime.html">← GEWorldRuntime</a>
+    <a href="GETileAtlas.html">GETileAtlas →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

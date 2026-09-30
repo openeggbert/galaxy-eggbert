@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Platform Support — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html" class="active">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Platform Support</div>
+  <h1>Platform Support</h1>
+  <p class="subtitle">What platforms GalaxyEggbertCNA targets today.</p>
+
+  <h2>Summary</h2>
+  <table>
+    <tr><th>Platform</th><th>Status</th><th>Notes</th></tr>
+    <tr><td>Linux x86-64</td><td><span class="badge badge-done">Working</span></td><td>Primary development platform; CNA graphics backend defaults to EasyGL (OpenGL)</td></tr>
+    <tr><td>Windows x86-64</td><td><span class="badge badge-wip">Untested recently</span></td><td>MinGW cross-compile toolchain exists (<code>cmake/toolchains/mingw-w64.cmake</code>); CNA backend elsewhere defaults to SDL Renderer</td></tr>
+    <tr><td>Web (Emscripten)</td><td><span class="badge badge-planned">Not attempted for CNA</span></td><td>Asset-copy step explicitly skips when <code>EMSCRIPTEN</code> is set, implying future support, but no build has been attempted</td></tr>
+    <tr><td>Android</td><td><span class="badge badge-planned">Not attempted for CNA</span></td><td>Asset-copy step explicitly skips when <code>ANDROID</code> is set; a separate <code>android/</code> directory and <code>ANDROID.md</code> exist but are not confirmed to cover <code>GalaxyEggbertCNA</code></td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Simple3D vs CNA</strong>
+    <code>GalaxyEggbertSimple3D</code> (the currently-playable reference target) has separately
+    been built for Linux and Windows; its Android/Web builds are noted in <code>NEXT.md</code> as
+    "untested since the last engine change." <code>GalaxyEggbertCNA</code> is a newer, desktop-only
+    effort so far — do not assume its platform matrix mirrors Simple3D's.
+  </div>
+
+  <h2>No Engine-Difference #ifdef Guards</h2>
+  <p>
+    Per the project's direction-lock rules, neither <code>GalaxyEggbertSimple3D</code> nor
+    <code>GalaxyEggbertCNA</code> uses <code>#ifdef</code> guards to paper over engine
+    differences — each target speaks its own API (Simple3D, or CNA+Easy3D) directly. If a backend
+    beneath either is missing a feature, that is a problem for the sub-repo (<code>simple-3d</code>
+    or <code>CNA</code>/<code>easy-3d</code>), not something to work around inside galaxy-eggbert.
+    Platform differences that do exist are resolved entirely by CMake (<code>if(ANDROID)</code>,
+    <code>if(EMSCRIPTEN)</code>, <code>if(WIN32)</code>, …).
+  </p>
+
+  <div class="page-nav">
+    <a href="configuration.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Configuration</span>
+    </a>
+    <a class="next" href="modules/index.html">
+      <span class="label">Next</span>
+      <span class="title">Module Index &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

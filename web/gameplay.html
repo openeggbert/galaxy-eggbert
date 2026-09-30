@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gameplay — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html" class="active">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Gameplay</div>
+  <h1>Gameplay</h1>
+  <p class="subtitle">What GalaxyEggbertCNA actually does today, and what mobile-eggbert requires it to do eventually.</p>
+
+  <div class="warn">
+    <strong>Read this first</strong>
+    <code>GalaxyEggbertCNA</code> currently has <strong>no real gameplay</strong> — no hazards,
+    no enemies, no pickups, no exit condition, no lives, no score. What exists is terrain
+    rendering and an invisible, collision-only player controller. Everything below the "Today"
+    section describes mobile-eggbert's actual mechanics as the fidelity target CNA must eventually
+    reach — per the project rule that Galaxy Eggbert may not invent mechanics beyond mobile-eggbert.
+  </div>
+
+  <h2>Today: What Runs</h2>
+  <ol>
+    <li>The game loads <code>worlds3d/world001.vwr</code> and renders its terrain.</li>
+    <li>An invisible <code>GEBlupiController</code> spawns at <code>(0, 1, 0)</code>.</li>
+    <li>Arrow keys move it on X/Z; Space jumps when grounded; gravity and 1-block step-up traversal apply.</li>
+    <li>The camera follows the controller's position.</li>
+    <li>Nothing else happens: no damage, no win/lose condition, no HUD, no sound.</li>
+  </ol>
+
+  <h2>GEBlupiController Physics Constants</h2>
+  <table>
+    <tr><th>Constant</th><th>Value</th></tr>
+    <tr><td><code>kMoveSpeed</code></td><td>5.5 units/s</td></tr>
+    <tr><td><code>kJumpSpeed</code></td><td>12.0 units/s</td></tr>
+    <tr><td><code>kGravity</code></td><td>25.0 units/s²</td></tr>
+    <tr><td><code>kFallLimit</code></td><td>−10.0 units/s (terminal fall velocity clamp)</td></tr>
+    <tr><td><code>kStepLimit</code></td><td>1.0 unit (max step-up height)</td></tr>
+  </table>
+  <p>These constants match <code>GalaxyEggbertSimple3D</code>'s equivalent controller.</p>
+
+  <h2>The Faithful-Remake Rule</h2>
+  <p>
+    From <code>CLAUDE.md</code>: <em>"Galaxy Eggbert is a faithful 3D remake of mobile-eggbert.
+    Nothing more."</em> Before any feature is implemented or suggested, it must first be verified
+    to exist in mobile-eggbert.
+  </p>
+  <p><strong>Explicitly forbidden</strong> (do not exist in mobile-eggbert): coins/mince, time bonuses or star ratings, coyote time, wall jump, double jump, combo multipliers, or any other invented mechanic.</p>
+  <p><strong>Allowed 3D adaptations</strong> (natural technical consequences of 3D, not new gameplay): perspective camera, billboard sprites, shadows, step-up traversal.</p>
+
+  <h2>The Eventual Target: mobile-eggbert's Mechanics</h2>
+  <p>These are ported (or planned to be ported) from mobile-eggbert exactly — icons and IDs are frozen, not renumbered.</p>
+
+  <h3>Collectibles (<code>ObjectType</code>)</h3>
+  <table>
+    <tr><th>ObjectType</th><th>Name</th></tr>
+    <tr><td>5</td><td>Treasure</td></tr>
+    <tr><td>6</td><td>Extra-life egg</td></tr>
+    <tr><td>7</td><td>Level-exit goal marker</td></tr>
+    <tr><td>21</td><td>Secret-level exit marker</td></tr>
+    <tr><td>49 / 50 / 51</td><td>Key 1 / 2 / 3 (map to <code>DoorKeyFlags</code>)</td></tr>
+    <tr><td>25</td><td>Shield (100-tick invincibility)</td></tr>
+    <tr><td>30</td><td>Drink power-up</td></tr>
+    <tr><td>31</td><td>Charge/cloud power-up (100 ticks)</td></tr>
+  </table>
+
+  <h3>Enemies (<code>ObjectType</code>)</h3>
+  <table>
+    <tr><th>ObjectType</th><th>Name</th><th>Behavior</th></tr>
+    <tr><td>2, 3</td><td>Horizontal patrol enemies</td><td>Linear patrol</td></tr>
+    <tr><td>96, 97</td><td>Follow-enemy variants</td><td>97 tracks Blupi exactly</td></tr>
+    <tr><td>16</td><td>Spider</td><td>Patrol</td></tr>
+    <tr><td>17</td><td>Fish</td><td>Patrol (water)</td></tr>
+    <tr><td>20</td><td>Bird</td><td>Patrol</td></tr>
+    <tr><td>32 / 33</td><td>Blupih / Blupit tank</td><td>Fires projectiles (<code>ObjectType23</code>) on turn</td></tr>
+    <tr><td>44</td><td>Wasp/bee</td><td>Fast patrol</td></tr>
+    <tr><td>54</td><td>Large creature</td><td>Destroys helicopter on contact</td></tr>
+  </table>
+
+  <h3>Hazard Tiles (animated in CNA terrain today, but not yet damaging)</h3>
+  <table>
+    <tr><th>Tile</th><th>Frames</th></tr>
+    <tr><td>Lava</td><td>8</td></tr>
+    <tr><td>Spike</td><td>16</td></tr>
+    <tr><td>Crusher</td><td>10</td></tr>
+    <tr><td>Saw</td><td>6</td></tr>
+  </table>
+  <p>
+    These tiles already animate correctly in <code>GETerrainRenderer</code> (6 fps, matching
+    mobile-eggbert), but touching them currently has no gameplay effect — hazard damage is not wired up.
+  </p>
+
+  <h3>Game Phases (<code>GamePhase</code> — defined, not yet dispatched by CNA)</h3>
+  <table>
+    <tr><th>Phase</th><th>Meaning</th></tr>
+    <tr><td>Init</td><td>Gamer-select / main menu</td></tr>
+    <tr><td>Play</td><td>Active gameplay</td></tr>
+    <tr><td>Pause</td><td>Pause overlay</td></tr>
+    <tr><td>Win / Lost</td><td>Level complete / game over</td></tr>
+    <tr><td>MainSetup / PlaySetup</td><td>Settings screens</td></tr>
+  </table>
+
+  <h2>Roadmap</h2>
+  <p>
+    The E3D-MIG task list (<code>plan.md</code>) sequences remaining gameplay work roughly as:
+    billboard rendering for Blupi and objects → gameplay porting (pickups, hazards, enemy stomp,
+    respawn invincibility, exit gate) → sound → HUD → save/load. See
+    <a href="development/known-issues.html">Known Issues</a> for the full list.
+  </p>
+
+  <div class="page-nav">
+    <a href="running.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Running the Game</span>
+    </a>
+    <a class="next" href="controls.html">
+      <span class="label">Next</span>
+      <span class="title">Controls &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

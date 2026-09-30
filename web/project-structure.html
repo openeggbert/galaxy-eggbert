@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Structure — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html" class="active">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Project Structure</div>
+  <h1>Project Structure</h1>
+  <p class="subtitle">All important directories and files, as they exist today.</p>
+
+  <h2>Root Layout</h2>
+  <pre><code>galaxy-eggbert/
+├── CMakeLists.txt          ← main build configuration (both targets)
+├── CLAUDE.md                ← direction lock + developer guidelines
+├── NEXT.md                  ← current status / roadmap
+├── plan.md                  ← full task list, incl. E3D-MIG-* (CNA migration)
+├── easy3d.md                ← full Easy3D design analysis
+├── README.md
+├── World Format.md           ← .vwr binary format spec
+├── LICENSE
+│
+├── include/GalaxyEggbert/    ← engine-agnostic public headers
+│   ├── Worlds/                 ← World, Chunk, Block, BlockMetadata, VoxelConfig, BinaryIO, BitPacking
+│   ├── def/                    ← gameplay enums (BlupiAction, ObjectType, SoundChannel, …)
+│   ├── BlockTypes.hpp, Def.hpp, GameConstants.hpp
+│
+├── src/GalaxyEggbert/Worlds/  ← implementation of the engine-agnostic world/voxel model
+│
+├── src/GalaxyEggbertSimple3D/ ← current playable reference target (Simple3D/U3D)
+│   └── Game/                    GEBlupiController, GEBridgeSystem, GECameraRig, GEDecorSystem,
+│                                 GEExploSystem, GEHud, GESound, GETerrainRenderer, GEWorldRuntime
+│
+├── src/GalaxyEggbertCNA/      ← long-term target (this documentation's focus)
+│   ├── main.cpp
+│   ├── GalaxyEggbertCnaGame.hpp/.cpp
+│   └── Game/                    GEBlupiController, GETerrainRenderer, GETileAtlas, GEWorldRuntime
+│
+├── mobile-eggbert-reference/  ← factual catalog of mobile-eggbert's 2D content (docs + images/)
+│
+├── tools/                     ← GenerateSampleWorld3D, VerifyBlupiMovement (engine-agnostic)
+├── worlds3d/                  ← hand-authored 3D .vwr worlds (world001.vwr)
+├── worlds/                    ← mobile-eggbert-format .txt sample levels
+├── Content/                   ← copied game assets (icons/, sounds/, backgrounds/)
+├── tests/GalaxyEggbert/Worlds/ ← GoogleTest unit tests for the Worlds data model
+│
+├── cmake/toolchains/mingw-w64.cmake
+├── build-cna/                 ← generated; GalaxyEggbertCNA build
+└── cmake-build-debug/          ← generated; GalaxyEggbertSimple3D build</code></pre>
+
+  <h2><code>src/GalaxyEggbertCNA/</code> Files</h2>
+  <table>
+    <tr><th>File</th><th>Role</th></tr>
+    <tr><td><code>main.cpp</code></td><td>Constructs and runs <code>GalaxyEggbertCnaGame</code></td></tr>
+    <tr><td><code>GalaxyEggbertCnaGame.hpp/.cpp</code></td><td>CNA <code>Game</code> subclass — LoadContent/Update/Draw</td></tr>
+    <tr><td><code>Game/GEWorldRuntime.hpp/.cpp</code></td><td>World loading (.vwr, secondary .txt), tile-animation phase</td></tr>
+    <tr><td><code>Game/GETerrainRenderer.hpp/.cpp</code></td><td>Builds static + animated cube meshes from world blocks</td></tr>
+    <tr><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → UV rect mapping into <code>object-m.png</code></td></tr>
+    <tr><td><code>Game/GEBlupiController.hpp/.cpp</code></td><td>Invisible collision-only player movement</td></tr>
+  </table>
+
+  <h2><code>include/GalaxyEggbert/Worlds/</code> Files (engine-agnostic)</h2>
+  <table>
+    <tr><th>File</th><th>Role</th></tr>
+    <tr><td><code>Block.hpp</code></td><td>16-bit packed voxel value: 12-bit type + 4-bit metadata</td></tr>
+    <tr><td><code>BlockMetadata.hpp</code></td><td>Bit-level accessor wrapper around the 4-bit metadata nibble</td></tr>
+    <tr><td><code>Chunk.hpp</code></td><td>10×10×10 palette-compressed voxel container</td></tr>
+    <tr><td><code>World.hpp</code></td><td>10×10×10 grid of chunks (100³ blocks); save/load API</td></tr>
+    <tr><td><code>VoxelConfig.hpp</code></td><td>Compile-time constants: ChunkSize=10, MaxPaletteEntries=256, etc.</td></tr>
+    <tr><td><code>BinaryIO.hpp/.cpp</code></td><td>Little-endian read/write helpers, magic-signature I/O</td></tr>
+    <tr><td><code>BitPacking.hpp/.cpp</code></td><td>Palette index bit-packing</td></tr>
+    <tr><td><code>test_worlds.hpp</code></td><td>Test world generation utilities</td></tr>
+  </table>
+
+  <h2><code>include/GalaxyEggbert/def/</code> Enums</h2>
+  <p>All 12 headers are aggregated by <code>include/GalaxyEggbert/Def.hpp</code>: <code>BlupiAction</code>, <code>ContinueMissionType</code>, <code>DecorAction</code>, <code>Direction</code>, <code>DoorKeyFlags</code>, <code>GamePhase</code>, <code>GameSpeed</code>, <code>KeyPressFlags</code>, <code>ObjectType</code>, <code>SecretPower</code>, <code>SoundChannel</code>, <code>SpriteChannel</code>.</p>
+
+  <h2>Tests</h2>
+  <p><code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code> data model — no CNA, Easy3D, or Simple3D dependency.</p>
+
+  <div class="page-nav">
+    <a href="architecture.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Architecture</span>
+    </a>
+    <a class="next" href="engine-integration.html">
+      <span class="label">Next</span>
+      <span class="title">Engine Integration &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

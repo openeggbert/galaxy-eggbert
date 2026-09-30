@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Collision System — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Collision System</div>
+  <h1>Collision System</h1>
+  <p class="subtitle">GEBlupiController: grid collision, 1-block step-up traversal, gravity.</p>
+
+  <h2>Constants</h2>
+  <pre><code>kMoveSpeed = 5.5f;    // units/s
+kJumpSpeed = 12.0f;   // units/s
+kGravity   = 25.0f;   // units/s²
+kFallLimit = -10.0f;  // terminal fall velocity
+kStepLimit = 1.0f;    // max step-up height</code></pre>
+
+  <h2>Block Solidity</h2>
+  <pre><code>bool IsSolidAt(world, gx, gy, gz):
+    if out of [0, blocksPerAxis-1] on any axis: return false  // (or handled by caller clamping)
+    return !world.getBlock(gx, gy, gz).isAir()</code></pre>
+  <p>Grid coordinates are computed via <code>std::lround(pos + kWorldCenter)</code>, then clamped to <code>[0, blocksPerAxis - 1]</code>.</p>
+
+  <h2>GroundHeightAt(gx, gz)</h2>
+  <pre><code>int GroundHeightAt(world, gx, gz):
+    for y from top down to 0:
+        if IsSolidAt(world, gx, y, gz): return y + 1
+    return 0</code></pre>
+
+  <h2>TryMoveAxis (per-axis horizontal step)</h2>
+  <pre><code>bool TryMoveAxis(world, axisDelta):
+    targetGround = GroundHeightAt(world, targetGx, targetGz)
+    if targetGround - currentFeetY &lt;= kStepLimit:
+        apply the move
+        if grounded: lift Y onto targetGround   // 1-block step-up traversal
+        return true
+    return false   // blocked — step too high</code></pre>
+
+  <h2><code>Step(world, dx, dz, jumpPressed, dt)</code></h2>
+  <pre><code>Step(world, dx, dz, jumpPressed, dt):
+    TryMoveAxis(world, dx along X)
+    TryMoveAxis(world, dz along Z)
+
+    if onGround_ and jumpPressed:
+        velocityY_ = kJumpSpeed
+    velocityY_ -= kGravity * dt
+    velocityY_ = max(velocityY_, kFallLimit)
+    pos.y += velocityY_ * dt
+
+    groundY = GroundHeightAt(world, gx, gz)
+    if pos.y &lt;= groundY:
+        pos.y = groundY
+        velocityY_ = 0
+        onGround_ = true
+    else:
+        onGround_ = false</code></pre>
+
+  <h2>What's Not Implemented</h2>
+  <ul>
+    <li>No swimming, hazard, spring, or fan tile interaction — <code>BlockTypes</code> has predicate helpers for these but they aren't wired into <code>GEBlupiController</code>.</li>
+    <li>No object/enemy collision — there are no objects to collide with yet.</li>
+    <li>No AABB body — collision is a single point-column check per axis, not a swept box.</li>
+  </ul>
+
+  <h2>Verification</h2>
+  <p>
+    <code>tools/VerifyBlupiMovement.cpp</code> links only <code>GEBlupiController.cpp</code> (no CNA
+    dependency) and scripts movement scenarios headlessly to verify collision behavior without a
+    live window.
+  </p>
+
+  <div class="page-nav">
+    <a href="object-lifecycle.html">← Object Lifecycle</a>
+    <a href="index.html">Internals ↑</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

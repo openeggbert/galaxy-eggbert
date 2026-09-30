@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Systems — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="index.html" class="active">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Systems</div>
+  <h1>Systems</h1>
+  <p class="subtitle">Cross-cutting behaviors — what's implemented today, and what's planned.</p>
+
+  <div class="card-grid">
+    <a class="card" href="../gameplay.html">
+      <h3>Movement</h3>
+      <p>Gravity, jump, step-up collision. Implemented in <code>GEBlupiController</code> — invisible only.</p>
+    </a>
+    <a class="card" href="../rendering.html">
+      <h3>Rendering</h3>
+      <p>Terrain only: cube-per-block, animated tiles. No sprites yet.</p>
+    </a>
+    <a class="card" href="../audio.html">
+      <h3>Audio</h3>
+      <p>Not implemented. Planned: 93-channel WAV parity with mobile-eggbert.</p>
+    </a>
+    <a class="card" href="../input.html">
+      <h3>Input</h3>
+      <p>Arrow keys + Space, polled via CNA Keyboard each frame.</p>
+    </a>
+    <a class="card" href="../save-system.html">
+      <h3>Save System</h3>
+      <p>Not implemented. Save-format reuse is an open decision, not a default.</p>
+    </a>
+    <a class="card" href="../levels.html">
+      <h3>Level Loading</h3>
+      <p>.vwr binary format (default) and mobile-eggbert .txt parser (secondary).</p>
+    </a>
+    <a class="card" href="../game-loop.html">
+      <h3>Game Loop</h3>
+      <p>CNA's Game base class drives LoadContent/Update/Draw.</p>
+    </a>
+    <a class="card" href="../gameplay.html">
+      <h3>Gameplay</h3>
+      <p>No hazards, enemies, pickups, or exit condition yet — planned per plan.md's E3D-MIG-100s.</p>
+    </a>
+  </div>
+
+  <h2>System Interaction Map (GalaxyEggbertCNA today)</h2>
+  <table>
+    <tr><th>System</th><th>Reads from</th><th>Writes to</th><th>Owner class</th></tr>
+    <tr><td>Movement</td><td>World (blocks), Keyboard</td><td>Blupi position/velocity</td><td><code>GEBlupiController</code></td></tr>
+    <tr><td>World loading</td><td>.vwr file, mobile-eggbert .txt (secondary)</td><td><code>Worlds::World</code></td><td><code>GEWorldRuntime</code></td></tr>
+    <tr><td>Tile animation</td><td>Elapsed time</td><td><code>animPhase_</code></td><td><code>GEWorldRuntime</code></td></tr>
+    <tr><td>Terrain rendering</td><td>World blocks, GETileAtlas, anim phase</td><td>CNA VertexBuffer/IndexBuffer</td><td><code>GETerrainRenderer</code></td></tr>
+    <tr><td>Camera</td><td>Blupi position</td><td>View/Projection matrices</td><td><code>Easy3D::Camera3D</code></td></tr>
+  </table>
+  <p>
+    Audio, HUD, save, and gameplay-event systems (hazards, pickups, enemies, exit) do not exist yet
+    in this table — see <a href="../development/known-issues.html">Known Issues</a> for the roadmap.
+  </p>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

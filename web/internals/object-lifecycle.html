@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Object Lifecycle — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Object Lifecycle</div>
+  <h1>Object Lifecycle</h1>
+  <p class="subtitle">Not implemented in GalaxyEggbertCNA yet. This page describes the porting target.</p>
+
+  <div class="warn">
+    <strong>Nothing here exists in CNA today</strong>
+    <code>GalaxyEggbertCNA</code> has no object pool, no pickups, no enemies, no patrol movement,
+    and no contact/collision events beyond terrain collision. This page describes mobile-eggbert's
+    <code>Decor.cpp</code> system as the <strong>behavioral reference</strong> that a future CNA
+    object system must replicate faithfully — per <code>CLAUDE.md</code>, <code>Decor.cpp</code>
+    (~11,700 lines) is canonical behavioral reference only; it must never be linked or copied.
+  </div>
+
+  <h2>mobile-eggbert's Object Model (reference only)</h2>
+  <p>
+    A fixed-size pool of moving objects, each with a type (<code>ObjectType</code>), a linear
+    patrol path (<code>posStart</code>/<code>posEnd</code>), an animation phase, and an active
+    flag. Table-driven linear movement (<code>MoveObjectStepLine</code>) handles most patrol
+    enemies; a handful of types (dynamite, chargers, followers, crates) are hand-coded exceptions.
+    Full catalog: <code>mobile-eggbert-reference/03-objects.md</code> (204 <code>ObjectType</code>
+    IDs) and <code>04-enemy-behavior.md</code>.
+  </p>
+
+  <h2>What GalaxyEggbertSimple3D Already Ports</h2>
+  <p>
+    The reference target (<code>GalaxyEggbertSimple3D</code>) has its own <code>GEDecorSystem</code>
+    implementing much of this already — crate push, platform patrol, hazard detection, enemy stomp,
+    respawn invincibility, pickups (treasure/keys/shield/egg/drink), exit-gate logic. That
+    implementation is a useful structural reference when the CNA port eventually begins, though the
+    CNA target will need its own billboard-rendering path first (see
+    <a href="../classes/CubeMeshRenderer.html">Easy3D::CubeMeshRenderer</a> and its roadmap note).
+  </p>
+
+  <h2>Roadmap (plan.md, E3D-MIG-070…074)</h2>
+  <ol>
+    <li>Render pickups/enemies as billboards from <code>element.png</code> (blocked on Easy3D billboard support).</li>
+    <li>Reuse <code>ObjectType</code> IDs from the existing engine-agnostic enum — already numerically frozen to match mobile-eggbert.</li>
+    <li>Use <code>Decor.cpp</code> as behavior reference only, never copied.</li>
+    <li>Faithfulness checks against mobile-eggbert before implementing any object behavior.</li>
+    <li>Stop-and-discuss rule if a change would require exposing internal <code>Decor</code> state beyond what's needed.</li>
+  </ol>
+
+  <div class="page-nav">
+    <a href="world-loading.html">← World Loading</a>
+    <a href="collision.html">Collision System →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

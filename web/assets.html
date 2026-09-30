@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assets — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html" class="active">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Assets</div>
+  <h1>Assets</h1>
+  <p class="subtitle">Reused mobile-eggbert assets, and what GalaxyEggbertCNA actually uses today.</p>
+
+  <h2>The Reuse Rule</h2>
+  <p>
+    mobile-eggbert is <strong>read-only</strong>. Its <em>assets</em> (sprite sheets, sounds, world
+    files) are freely reused by direct file path or build-time copy. Its <em>code</em>
+    (<code>Decor.cpp</code>, <code>Tables.cpp</code>, <code>GameData.cpp</code>) is reference-only
+    — copying or linking requires explicit user approval, even for "just data" like animation tables.
+  </p>
+
+  <h2>What GalaxyEggbertCNA Actually Loads Today</h2>
+  <table>
+    <tr><th>Asset</th><th>Source</th><th>Used for</th></tr>
+    <tr><td><code>Content/icons/object-m.png</code></td><td>1301×1431 px, 64×64 px tiles, 20 columns, 65 px pitch (1 px gap)</td><td>Terrain block textures, mapped via <code>GETileAtlas</code></td></tr>
+    <tr><td><code>worlds3d/world001.vwr</code></td><td>Hand-authored 3D world (this repo)</td><td>Default loaded world</td></tr>
+  </table>
+  <p>Nothing else is currently loaded — no Blupi sprite, no object/element sprites, no sounds, no backgrounds.</p>
+
+  <h2>mobile-eggbert Asset Inventory (available for future use)</h2>
+  <table>
+    <tr><th>Directory</th><th>Contents</th></tr>
+    <tr><td><code>Content/icons/</code></td><td><code>object-m.png</code> (terrain), <code>blupi.png</code>/<code>blupi1.png</code> (player), <code>element.png</code> (objects), <code>explo.png</code> (explosions), <code>button.png</code>, <code>jauge.png</code> (HUD gauge), <code>pad.png</code> (touch pad), <code>text.png</code> (font)</td></tr>
+    <tr><td><code>Content/sounds/</code></td><td>93 WAV files, <code>sound000.wav</code>–<code>sound092.wav</code>, matching <code>SoundChannel</code> 1:1</td></tr>
+    <tr><td><code>Content/backgrounds/</code></td><td>~34 sky/menu PNGs (<code>decor000.png</code>… non-contiguous, plus title/menu screens)</td></tr>
+    <tr><td><code>worlds/</code></td><td>78 mobile-eggbert <code>.txt</code> levels upstream (5 sample files, <code>world001.txt</code>–<code>world005.txt</code>, committed locally)</td></tr>
+  </table>
+  <p>
+    All of the above is copied at build time from <code>../mobile-eggbert/Content</code> and
+    <code>../mobile-eggbert/worlds</code> next to the <code>GalaxyEggbertCNA</code> binary (skipped
+    under Emscripten/Android) — it is present on disk even though CNA doesn't load most of it yet.
+  </p>
+
+  <h2>Reference Catalog: mobile-eggbert-reference/</h2>
+  <p>
+    A factual catalog of mobile-eggbert's 2D content lives at <code>mobile-eggbert-reference/</code>
+    in the source repo — it exists specifically to ground future 3D-mapping decisions in verified
+    fact rather than assumption:
+  </p>
+  <table>
+    <tr><th>File</th><th>Covers</th></tr>
+    <tr><td><code>01-world-file-format.md</code></td><td>The mobile-eggbert <code>.txt</code> level format</td></tr>
+    <tr><td><code>02-tiles.md</code></td><td>All 441 tile/block icon IDs in <code>object-m.png</code></td></tr>
+    <tr><td><code>03-objects.md</code></td><td>All 204 <code>ObjectType</code> IDs, classified by behavior</td></tr>
+    <tr><td><code>04-enemy-behavior.md</code></td><td>Table-driven vs. hand-coded enemy movement</td></tr>
+    <tr><td><code>05-backgrounds.md</code></td><td>Sky/background images (partial — only 3 of 38 characterized)</td></tr>
+    <tr><td><code>06-doors.md</code></td><td>Door tiles: key-bitmask logic, opening animation</td></tr>
+    <tr><td><code>07-sounds.md</code></td><td>93 sound channels (pointer-only, not yet expanded)</td></tr>
+    <tr><td><code>08-animations.md</code></td><td>All 155 animated sequences (tiles, Blupi, objects, explosions, doors) — complete</td></tr>
+    <tr><td><code>09-open-questions.md</code></td><td>Unresolved 3D-mapping design questions</td></tr>
+  </table>
+
+  <div class="page-nav">
+    <a href="levels.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Levels &amp; Worlds</span>
+    </a>
+    <a class="next" href="architecture.html">
+      <span class="label">Next</span>
+      <span class="title">Architecture &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

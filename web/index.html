@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galaxy Eggbert Documentation</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html" class="active">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+
+<main id="content">
+  <h1>Galaxy Eggbert Documentation</h1>
+  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em> — C++ · CNA · Easy3D · CMake</p>
+
+  <div class="warn">
+    <strong>This documentation was rewritten 2026-07-04</strong>
+    It now describes the <strong>current long-term direction: Direct CNA + Easy3D</strong>
+    (<code>GalaxyEggbertCNA</code>), per the project's "Current Direction Lock" (see
+    <a href="architecture.html">Architecture</a>). The previous documentation described an
+    Urho3D-based architecture (<code>GalaxyEggbertApp</code>, <code>Blupi</code>, <code>Decor</code>, …)
+    that no longer exists in the source tree. The older, currently-playable
+    <code>GalaxyEggbertSimple3D</code> target (built on Simple3D/U3D) still exists as a reference
+    implementation and is mentioned where relevant, but is not the subject of this rewrite.
+  </div>
+
+  <h2>What is Galaxy Eggbert?</h2>
+  <p>
+    Galaxy Eggbert is a 3D remake of <em>Speedy Blupi</em>, originally a Windows Phone XNA platformer game from 2013,
+    itself later ported to C++ as <strong>mobile-eggbert</strong>.
+    Galaxy Eggbert's long-term target, <code>GalaxyEggbertCNA</code>, is built <strong>directly on CNA</strong>
+    (an XNA-compatible, SDL3-based C++ game framework) with <strong>Easy3D</strong> as a small helper
+    library beside it (cameras, texture atlas, cube/billboard batching) — Easy3D does not hide CNA.
+  </p>
+  <p>
+    <code>GalaxyEggbertCNA</code> is real, buildable code today (opt-in via CMake), not a future plan:
+    it opens a window, loads a genuinely 3D, hand-authored <code>.vwr</code> voxel world, renders
+    textured animated terrain across all Y layers, and moves an invisible collision-only Blupi
+    placeholder through it with gravity and step-up traversal. It does <strong>not</strong> yet render
+    Blupi's sprite, objects/pickups, a HUD, or play sound — see the status table below.
+  </p>
+
+  <h2>Quick Navigation</h2>
+  <div class="card-grid">
+    <a class="card" href="getting-started.html">
+      <h3>&#128640; Getting Started</h3>
+      <p>Prerequisites and first build steps for GalaxyEggbertCNA.</p>
+    </a>
+    <a class="card" href="build.html">
+      <h3>&#128295; Build Guide</h3>
+      <p>CMake options, the CNA/Easy3D/mobile-eggbert sibling repo layout.</p>
+    </a>
+    <a class="card" href="architecture.html">
+      <h3>&#127963; Architecture</h3>
+      <p>The Direction Lock, layering, and how CNA/Easy3D/mobile-eggbert relate.</p>
+    </a>
+    <a class="card" href="gameplay.html">
+      <h3>&#127918; Gameplay Status</h3>
+      <p>What actually works today vs. what's planned, faithfully to mobile-eggbert.</p>
+    </a>
+    <a class="card" href="levels.html">
+      <h3>&#127758; Worlds &amp; the .vwr Format</h3>
+      <p>The genuinely-3D voxel world format and how it differs from mobile-eggbert's flat levels.</p>
+    </a>
+    <a class="card" href="classes/index.html">
+      <h3>&#128196; Class Reference</h3>
+      <p>GEWorldRuntime, GETerrainRenderer, GEBlupiController, GETileAtlas, and the Worlds data model.</p>
+    </a>
+    <a class="card" href="tutorials/index.html">
+      <h3>&#128214; Tutorials</h3>
+      <p>Building GalaxyEggbertCNA and exploring the world/terrain pipeline.</p>
+    </a>
+    <a class="card" href="development/known-issues.html">
+      <h3>&#128679; Known Issues</h3>
+      <p>What's not implemented yet, and the E3D-MIG task roadmap.</p>
+    </a>
+  </div>
+
+  <h2>Technology Stack</h2>
+  <table>
+    <tr><th>Component</th><th>Technology</th></tr>
+    <tr><td>Language</td><td>C++ (CMake ≥ 3.21)</td></tr>
+    <tr><td>Game framework</td><td><strong>CNA</strong> — XNA-compatible, SDL3-based C++ framework (<code>../CNA</code>)</td></tr>
+    <tr><td>Helper library</td><td><strong>Easy3D</strong> — cameras, texture atlas, cube/billboard batching (<code>../easy-3d</code>)</td></tr>
+    <tr><td>Reference implementation</td><td><code>GalaxyEggbertSimple3D</code> — built on Simple3D/U3D, the currently-playable target</td></tr>
+    <tr><td>Reference game</td><td><code>mobile-eggbert</code> — read-only C++ port of the original Speedy Blupi; source of assets and behavioral truth</td></tr>
+    <tr><td>Testing</td><td>GoogleTest (world/voxel data model)</td></tr>
+    <tr><td>Graphics backend (CNA, Linux default)</td><td>EasyGL (OpenGL); SDL Renderer elsewhere</td></tr>
+  </table>
+
+  <h2>GalaxyEggbertCNA Status (2026-07-04)</h2>
+  <table>
+    <tr><th>Feature</th><th>Status</th></tr>
+    <tr><td>CMake build (<code>GALAXY_EGGBERT_BUILD_CNA=ON</code>)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Load a genuinely 3D, hand-authored <code>.vwr</code> world</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Textured terrain rendering (one cube per non-air block)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Animated tiles (lava/crusher/saw/spike/water/fan/marine/temp, 6 fps)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Invisible collision-only Blupi movement (gravity, step-up, jump)</td><td><span class="badge badge-done">Done</span></td></tr>
+    <tr><td>Blupi rendered as a sprite/billboard</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Object/pickup rendering</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>HUD</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Sound</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Real gameplay (hazards, enemies, pickups, exit, save/load)</td><td><span class="badge badge-planned">Planned</span></td></tr>
+    <tr><td>Chunk-radius world streaming / face culling</td><td><span class="badge badge-planned">Planned</span></td></tr>
+  </table>
+  <p>Full task-by-task roadmap: <a href="development/known-issues.html">Known Issues</a>.</p>
+
+  <h2>How to Open This Documentation</h2>
+  <p>
+    This is a static website — no server required. Open <code>index.html</code> directly in any modern browser.
+    All links use relative paths, so the site works from any local directory or when hosted on GitHub Pages.
+  </p>
+
+  <div class="page-nav">
+    <span></span>
+    <a class="next" href="overview.html">
+      <span class="label">Next</span>
+      <span class="title">Project Overview &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

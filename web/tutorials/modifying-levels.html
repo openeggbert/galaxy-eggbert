@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adding a Block Type — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Adding a Block Type</div>
+  <h1>Tutorial: Adding a Block Type</h1>
+  <p class="subtitle">Add a named constant in BlockTypes.hpp and see it rendered by GETerrainRenderer.</p>
+
+  <div class="warn">
+    <strong>Block type IDs are icon indices — think before adding new ones</strong>
+    A block's type ID doubles as an icon index into <code>object-m.png</code> (441 addressable
+    tiles). New "named" block types should reference an existing icon unless you also add art.
+    IDs used by mobile-eggbert <code>.txt</code> loading paths are frozen to match that format.
+  </div>
+
+  <h2>Step 1 — Add a Named Constant</h2>
+  <p>File: <code>include/GalaxyEggbert/BlockTypes.hpp</code></p>
+  <pre><code>static constexpr uint16_t MyBlock = 42;  // icon index in object-m.png</code></pre>
+
+  <h2>Step 2 — Use It When Authoring a World</h2>
+  <pre><code>world.setBlock(x, y, z, Block::make(BlockTypes::MyBlock));</code></pre>
+  <p>See <a href="first-object.html">Authoring a New .vwr World</a> for the full generator pattern.</p>
+
+  <h2>Step 3 — (Optional) Make It Animated</h2>
+  <p>
+    If the block should animate, add it to the frame tables in <code>GETerrainRenderer</code>
+    (ported from mobile-eggbert's <code>Tables.cpp</code>) and to
+    <code>BlockTypes::tileAnimBase()</code>'s classification, following the existing pattern for
+    Lava/Crusher/Saw/Spike/Water/Fan/Marine/Temp.
+  </p>
+
+  <h2>Step 4 — Rebuild and Verify</h2>
+  <pre><code>cmake --build build-cna --target GalaxyEggbertCNA -j2
+./build-cna/GalaxyEggbertCNA</code></pre>
+  <p>
+    Navigate the invisible collision point near your new block and confirm it renders with the
+    expected texture. If it appears untextured or seams appear, check <a href="../classes/GETileAtlas.html">GETileAtlas</a>'s
+    UV computation for that icon index.
+  </p>
+
+  <div class="page-nav">
+    <a href="first-object.html">← Authoring a New .vwr World</a>
+    <a href="index.html">Tutorials ↑</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

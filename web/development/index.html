@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Development — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="index.html" class="active">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> Development</div>
+  <h1>Development Guide</h1>
+  <p class="subtitle">Contributing to Galaxy Eggbert — direction rules, style, debugging, and known issues.</p>
+
+  <div class="card-grid">
+    <a class="card" href="coding-style.html">
+      <h3>Coding Style</h3>
+      <p>Naming conventions, the no-#ifdef rule, and the CNA+Easy3D direction lock.</p>
+    </a>
+    <a class="card" href="debugging.html">
+      <h3>Debugging</h3>
+      <p>The backbuffer-sampling self-check, GDB, and common problems.</p>
+    </a>
+    <a class="card" href="extending-the-game.html">
+      <h3>Extending the Game</h3>
+      <p>Where to add block types and worlds; what requires approval first.</p>
+    </a>
+    <a class="card" href="known-issues.html">
+      <h3>Known Issues &amp; Roadmap</h3>
+      <p>What's not implemented, and the E3D-MIG task list from plan.md.</p>
+    </a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

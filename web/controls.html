@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controls — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html" class="active">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Controls</div>
+  <h1>Controls</h1>
+  <p class="subtitle">Everything GalaxyEggbertCNA currently reads from the keyboard.</p>
+
+  <h2>Movement</h2>
+  <table>
+    <tr><th>Key</th><th>Action</th></tr>
+    <tr><td>↑ / ↓ Arrow</td><td>Move along Z</td></tr>
+    <tr><td>← / → Arrow</td><td>Move along X</td></tr>
+    <tr><td>Space</td><td>Jump (only when <code>GEBlupiController</code> is grounded)</td></tr>
+  </table>
+  <p>
+    Read each frame via CNA's <code>Input::Keyboard::GetState()</code> in
+    <code>GalaxyEggbertCnaGame::Update()</code>, then passed into
+    <code>GEBlupiController::Step(world, dx, dz, jump, dt)</code>.
+  </p>
+
+  <div class="nv">
+    <strong>That's all there is</strong>
+    There is no pause, no menu, no settings screen, no gamepad support, and no touch input in
+    <code>GalaxyEggbertCNA</code> today. <code>GalaxyEggbertSimple3D</code> (the reference target)
+    has a richer control scheme (rotation, strafing, phase-transition keys) — see its source under
+    <code>src/GalaxyEggbertSimple3D/</code> if you need that as a reference, but it is not yet
+    ported to CNA.
+  </div>
+
+  <div class="page-nav">
+    <a href="gameplay.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Gameplay</span>
+    </a>
+    <a class="next" href="levels.html">
+      <span class="label">Next</span>
+      <span class="title">Levels &amp; Worlds &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

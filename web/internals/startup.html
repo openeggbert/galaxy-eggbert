@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Startup Sequence — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> Startup Sequence</div>
+  <h1>Startup Sequence</h1>
+  <p class="subtitle">From process start to the first rendered terrain frame.</p>
+
+  <h2>Sequence</h2>
+  <pre><code>OS: exec GalaxyEggbertCNA
+  └─ main()  [src/GalaxyEggbertCNA/main.cpp]
+       ├─ game = new GalaxyEggbertCnaGame()
+       │    └─ constructor sets window title: "Galaxy Eggbert (CNA)"
+       ├─ game-&gt;Run()          [CNA's Game::Run() — owns the loop]
+       │    ├─ LoadContent()
+       │    │    ├─ worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")
+       │    │    │    └─ Worlds::World::loadFromFile(...) — parses VWR1 header,
+       │    │    │       chunk table, VCH1 payloads (see VWR Format)
+       │    │    ├─ terrainRenderer_ = GETerrainRenderer(world, GETileAtlas(...))
+       │    │    │    └─ builds static CubeBatch → Easy3D::BuildCubeMesh → CubeMeshRenderer
+       │    │    ├─ texture_ = Texture2D("Content/icons/object-m.png")
+       │    │    ├─ terrainEffect_ = BasicEffect(textured, no vertex color, bound to texture_)
+       │    │    └─ blupi_.SetPosition(0, 1, 0)
+       │    │
+       │    │  ... engine runs its internal frame loop ...
+       │    │
+       │    ├─ Update(gameTime)   [every frame]
+       │    │    ├─ worldRuntime_.Update(dt)      — advance 6fps anim phase
+       │    │    ├─ read Keyboard::GetState()
+       │    │    ├─ blupi_.Step(world, dx, dz, jump, dt)
+       │    │    └─ camera_.SetTarget(blupi_.GetPosition()); camera_.Update(dt)
+       │    │
+       │    └─ Draw(gameTime)     [every frame]
+       │         ├─ device.Clear(sky blue)
+       │         ├─ set View/Projection/World on terrainEffect_
+       │         └─ terrainRenderer_-&gt;Draw(device, *terrainEffect_)
+       └─ delete game</code></pre>
+
+  <h2>Key Observations</h2>
+  <ul>
+    <li>No <code>#ifdef</code> guards appear anywhere in this path — CNA is called directly.</li>
+    <li>There is no phase/menu system — <code>LoadContent()</code> goes straight into rendering the terrain.</li>
+    <li>The world path is relative (<code>"worlds3d/world001.vwr"</code>), so the working directory must be the build output directory.</li>
+    <li><code>GEBlupiController</code>'s spawn position <code>(0, 1, 0)</code> is hard-coded, not read from the world file (the <code>.vwr</code> format carries no spawn header, unlike mobile-eggbert's <code>.txt</code> format).</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="index.html">← Internals</a>
+    <a href="vwr-format.html">VWR Format →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

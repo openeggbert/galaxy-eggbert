@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Save System — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html" class="active">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Save System</div>
+  <h1>Save System</h1>
+  <p class="subtitle">Not implemented yet in GalaxyEggbertCNA; an open design question for CNA specifically.</p>
+
+  <div class="warn">
+    <strong>Not implemented, and not fully decided</strong>
+    <code>GalaxyEggbertCNA</code> has no save/load code at all — there is no lives count, no world
+    progress, and nothing to persist yet since there's no real gameplay. Even for
+    <code>GalaxyEggbertSimple3D</code> (which does implement save/load), whether to reuse
+    mobile-eggbert's exact byte-level save format for cross-compatibility is documented in
+    <code>CLAUDE.md</code> as an open question, not a default — see <code>easy3d.md</code> §12 Q7.
+  </div>
+
+  <h2>What mobile-eggbert's Format Looks Like (reference only)</h2>
+  <p>
+    mobile-eggbert's save data (<code>GameData.cpp</code>) is a flat binary layout covering per-slot
+    lives, last-world-reached, and door-open flags across 3 gamer slots. It is listed in
+    <code>CLAUDE.md</code>'s reuse table as <strong>reference only</strong> — reusing its exact byte
+    layout for save compatibility requires explicit user approval, it is not assumed.
+  </p>
+
+  <h2>Roadmap</h2>
+  <p>
+    Per <code>plan.md</code>'s E3D-MIG-100…107 gameplay-porting tasks, save/load is sequenced after
+    core gameplay (pickups, hazards, enemy stomp, exit gate) is ported — with an explicit decision
+    point on save-format reuse before implementation begins.
+  </p>
+
+  <div class="page-nav">
+    <a href="input.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Input</span>
+    </a>
+    <a class="next" href="configuration.html">
+      <span class="label">Next</span>
+      <span class="title">Configuration &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

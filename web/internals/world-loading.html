@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Loading — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Internals</a> <span>›</span> World Loading</div>
+  <h1>World Loading</h1>
+  <p class="subtitle">GEWorldRuntime picks a format; GETerrainRenderer turns it into draw calls.</p>
+
+  <h2>Load Path (GalaxyEggbertCnaGame::LoadContent)</h2>
+  <pre><code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr");   // the only path used today
+terrainRenderer_ = GETerrainRenderer(worldRuntime_.GetWorld(), tileAtlas);</code></pre>
+  <p>
+    <code>LoadFromMobileEggbertFile(path)</code> exists as a secondary/reference method on the same
+    class but is not called from <code>GalaxyEggbertCnaGame</code> today.
+  </p>
+
+  <h2><code>LoadFromVwrFile(path)</code></h2>
+  <pre><code>bool GEWorldRuntime::LoadFromVwrFile(const std::string&amp; path) {
+    try {
+        world_ = std::make_unique&lt;Worlds::World&gt;(Worlds::World::loadFromFile(path));
+    } catch (...) {
+        return false;   // prior world (if any) is left untouched
+    }
+    spawnTileX_ = spawnTileZ_ = 0;
+    skyRegion_ = 0;
+    bigDecor_.clear();
+    return true;
+}</code></pre>
+  <p>
+    Delegates entirely to <code>World::loadFromFile()</code> / <code>Chunk::read()</code> — see
+    <a href="vwr-format.html">VWR Format</a> for the binary layout. Because <code>.vwr</code>
+    carries no spawn/sky-region header, those fields are simply reset to defaults.
+  </p>
+
+  <h2><code>LoadFromMobileEggbertFile(path)</code> (secondary path, not wired into CNA's game loop yet)</h2>
+  <ol>
+    <li><strong>Header</strong> — <code>blupiPos=</code>, <code>region=</code> key/value pairs.</li>
+    <li><strong>Decor section</strong> — 100×100 tile IDs, one row per line; each converted via <code>BlockTypes::fromMobileIconId(id)</code> and placed at <code>Y=0</code> (inherently flat).</li>
+    <li><strong>BigDecor section</strong> — a second 100×100 background layer; parsed and stored in <code>bigDecor_</code> but not rendered anywhere.</li>
+    <li><strong>MoveObject entries</strong> — object placements; not currently parsed by this method for CNA.</li>
+  </ol>
+
+  <h2>GETerrainRenderer Construction</h2>
+  <pre><code>GETerrainRenderer(world, tileAtlas):
+  for x, y, z in world.blocksPerAxis()³:
+      block = world.getBlock(x, y, z)
+      if block.isAir(): continue
+      worldX = x - kWorldCenterX;  worldZ = z - kWorldCenterZ
+      if BlockTypes::tileAnimBase(block.type()) is animated:
+          m_animBlocks.push_back({worldX, y, worldZ, baseIcon})
+      else:
+          cubeBatch.Add(Cube(worldX, y, worldZ), tileAtlas.GetTileUv(block.type()))
+  staticMesh = Easy3D::BuildCubeMesh(cubeBatch)
+  staticRenderer = Easy3D::CubeMeshRenderer(device, staticMesh)</code></pre>
+  <p>
+    See <a href="../classes/GETerrainRenderer.html">GETerrainRenderer</a> and
+    <a href="../rendering.html">Rendering</a> for the animated-tile mesh rebuild logic.
+  </p>
+
+  <h2>What's Not Wired Up</h2>
+  <ul>
+    <li>No sky dome / background rendering (region index is parsed by the secondary loader but goes nowhere).</li>
+    <li>No object/pickup placement, even when loading a mobile-eggbert <code>.txt</code> file's MoveObject entries.</li>
+    <li>No chunk-radius streaming — the entire world is walked and uploaded at load time.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="vwr-format.html">← VWR Format</a>
+    <a href="object-lifecycle.html">Object Lifecycle →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

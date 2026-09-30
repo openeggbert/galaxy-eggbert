@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Block</div>
+  <h1>Block</h1>
+  <p class="subtitle">A single 16-bit packed voxel value: 12-bit type ID + 4-bit metadata.</p>
+
+  <h2>Overview</h2>
+  <p>
+    <code>Block</code> (namespace <code>GalaxyEggbert::Worlds</code>) is a <code>uint16_t</code>-packed
+    voxel value. High 12 bits encode the block type ID (0..4095, matching an icon index into
+    <code>object-m.png</code>); low 4 bits encode metadata (0..15).
+  </p>
+  <p>Header: <code>include/GalaxyEggbert/Worlds/Block.hpp</code>.</p>
+
+  <h2>API</h2>
+  <pre><code>class Block {
+public:
+    static Block air();                                   // raw value 0
+    static Block make(uint16_t type, uint8_t metadata = 0); // validates ranges
+
+    uint16_t type() const;
+    uint8_t  metadata() const;
+    BlockMetadata blockMetadata() const;   // wraps the 4-bit nibble
+
+    bool isAir() const;
+    uint16_t rawValue() const;
+};</code></pre>
+  <p>
+    <code>make()</code> throws <code>std::out_of_range</code> if <code>type &gt; VoxelConfig::MaxBlockType</code>
+    (4095) or <code>metadata &gt; VoxelConfig::MaxBlockMetadata</code> (15).
+  </p>
+
+  <h2>Encoding</h2>
+  <pre><code>rawValue = (type &lt;&lt; 4) | (metadata &amp; 0xF)</code></pre>
+  <p><code>type() == 0</code> means Air (no block).</p>
+
+  <h2>Used By</h2>
+  <p><a href="Chunk.html">Chunk</a> stores a palette of unique <code>Block</code> values per 10³ sub-volume; <a href="World.html">World</a> stores 1000 chunks.</p>
+
+  <div class="page-nav">
+    <a href="Chunk.html">← Chunk</a>
+    <a href="BlockMetadata.html">BlockMetadata →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

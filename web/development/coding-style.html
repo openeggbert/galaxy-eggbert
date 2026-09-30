@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coding Style — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Coding Style</div>
+  <h1>Coding Style</h1>
+  <p class="subtitle">Rules from CLAUDE.md's Current Direction Lock and the existing codebase.</p>
+
+  <h2>The Direction Lock (binding, not a suggestion)</h2>
+  <div class="warn">
+    <strong>Read this before touching engine-layer code</strong>
+    Full text: <a href="../architecture.html">Architecture</a>. In short: CNA is used directly (no
+    abstraction layer); Easy3D is a small helper beside it (must not hide CNA, must not become a
+    scene graph/ECS); <code>GalaxyEggbertSimple3D</code> stays as reference, not to be expanded;
+    <code>../mobile-eggbert</code> is read-only — its code/data requires explicit approval to reuse,
+    its assets do not.
+  </div>
+
+  <h2>No <code>#ifdef</code> Engine Guards</h2>
+  <p>
+    Neither <code>GalaxyEggbertSimple3D</code> nor <code>GalaxyEggbertCNA</code> may use
+    <code>#ifdef</code> to paper over engine differences — each target speaks its own API
+    (Simple3D, or CNA+Easy3D) directly. If a backend is missing a feature, that's a problem for the
+    sub-repo (<code>simple-3d</code> or <code>CNA</code>/<code>easy-3d</code>), not something to
+    work around here.
+  </p>
+
+  <h2>Naming Conventions (as used in src/GalaxyEggbertCNA/)</h2>
+  <table>
+    <tr><th>Element</th><th>Convention</th><th>Example</th></tr>
+    <tr><td>Classes</td><td>PascalCase, <code>GE</code> prefix for CNA/Simple3D game classes</td><td><code>GEWorldRuntime</code>, <code>GEBlupiController</code></td></tr>
+    <tr><td>Methods</td><td>PascalCase</td><td><code>LoadFromVwrFile()</code></td></tr>
+    <tr><td>Constants</td><td><code>kPascalCase</code></td><td><code>kMoveSpeed</code>, <code>kWorldCenterX</code></td></tr>
+    <tr><td>Enum values</td><td>PascalCase within enum class</td><td><code>GamePhase::Play</code></td></tr>
+    <tr><td>Namespaces</td><td>PascalCase</td><td><code>GalaxyEggbert::Worlds</code>, <code>GalaxyEggbert::CNA</code>, <code>Easy3D</code></td></tr>
+  </table>
+
+  <h2>Header Layout</h2>
+  <p>
+    Public API headers used by tests live under <code>include/GalaxyEggbert/</code> (all
+    engine-agnostic: <code>Worlds/</code>, <code>def/</code>, <code>BlockTypes.hpp</code>,
+    <code>Def.hpp</code>, <code>GameConstants.hpp</code>). Private implementation headers live
+    beside their <code>.cpp</code> under <code>src/GalaxyEggbertCNA/</code> or
+    <code>src/GalaxyEggbertSimple3D/</code>.
+  </p>
+
+  <h2>Enum Stability</h2>
+  <p>
+    <code>ObjectType</code>, <code>SoundChannel</code>, <code>BlupiAction</code>, and other
+    <code>def/</code> enums are frozen to match mobile-eggbert's level/save format exactly — do not
+    renumber existing values. New values must be appended at the end.
+  </p>
+
+  <h2>Approval Gates</h2>
+  <ul>
+    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../easy-3d</code> requires explicit, per-change user approval.</li>
+    <li>Copying mobile-eggbert code or data (tables, enums, save-format bytes) requires explicit approval, even data that "looks like just data."</li>
+    <li>No Lua unless explicitly requested by the user.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="index.html">← Development</a>
+    <a href="debugging.html">Debugging →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

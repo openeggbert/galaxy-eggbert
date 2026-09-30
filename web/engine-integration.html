@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engine Integration — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="index.html">Home</a>
+  <a href="overview.html">Project Overview</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="build.html">Build Guide</a>
+  <a href="running.html">Running the Game</a>
+  <a href="platform-support.html">Platform Support</a>
+  <div class="nav-section">Gameplay</div>
+  <a href="gameplay.html">Gameplay</a>
+  <a href="controls.html">Controls</a>
+  <a href="levels.html">Levels &amp; Worlds</a>
+  <a href="assets.html">Assets</a>
+  <div class="nav-section">Architecture</div>
+  <a href="architecture.html">Architecture</a>
+  <a href="project-structure.html">Project Structure</a>
+  <a href="engine-integration.html" class="active">Engine Integration</a>
+  <a href="game-loop.html">Game Loop</a>
+  <a href="rendering.html">Rendering</a>
+  <a href="audio.html">Audio</a>
+  <a href="input.html">Input</a>
+  <a href="save-system.html">Save System</a>
+  <a href="configuration.html">Configuration</a>
+  <div class="nav-section">Reference</div>
+  <a href="modules/index.html">Modules</a>
+  <a href="classes/index.html">Classes</a>
+  <a href="systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="tutorials/index.html">Tutorials</a>
+  <a href="internals/index.html">Internals</a>
+  <a href="development/index.html">Development</a>
+  <a href="development/coding-style.html">Coding Style</a>
+  <a href="development/debugging.html">Debugging</a>
+  <a href="development/extending-the-game.html">Extending the Game</a>
+  <a href="development/known-issues.html">Known Issues</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Engine Integration</div>
+  <h1>Engine Integration</h1>
+  <p class="subtitle">How Galaxy Eggbert uses CNA directly, with Easy3D as a small helper beside it.</p>
+
+  <h2>Direct CNA — Not an Abstraction Layer</h2>
+  <p>
+    Unlike the older Simple3D direction (which wrapped Urho3D behind an abstraction so the engine
+    could theoretically be swapped), <code>GalaxyEggbertCNA</code> calls <strong>CNA directly</strong>.
+    CNA is an XNA-compatible, SDL3-based C++ game framework — game code uses its
+    <code>Microsoft::Xna::Framework::*</code> namespaces and types with no engine-selection
+    indirection layer.
+  </p>
+
+  <h2>Easy3D's Role — a Helper, Not a Hiding Layer</h2>
+  <p>
+    Easy3D lives beside CNA, not above it. Game code is expected to call CNA directly for anything
+    Easy3D doesn't specifically help with. Easy3D's job is narrow: cameras, texture atlas, and
+    CPU-side batching/mesh-building for cubes and (eventually) billboards. It must never grow into
+    a scene graph, ECS, or general engine.
+  </p>
+  <h3>What Easy3D provides today, used by GalaxyEggbertCNA</h3>
+  <table>
+    <tr><th>Class</th><th>Role</th></tr>
+    <tr><td><code>Easy3D::Camera3D</code></td><td>Drives View/Projection every frame, follows Blupi</td></tr>
+    <tr><td><code>Easy3D::TextureAtlas</code></td><td>Underlies <code>GETileAtlas</code>'s UV-rect mapping</td></tr>
+    <tr><td><code>Easy3D::CubeMesh</code> (<code>BuildCubeMesh</code>)</td><td>CPU-side vertex/index builder — turns a <code>CubeBatch</code> into 24 vertices + 36 indices per cube</td></tr>
+    <tr><td><code>Easy3D::CubeMeshRenderer</code></td><td>Uploads that data to CNA <code>VertexBuffer</code>/<code>IndexBuffer</code>, issues <code>DrawIndexedPrimitives</code> via a caller-supplied <code>BasicEffect</code></td></tr>
+  </table>
+  <h3>What Easy3D does not have yet</h3>
+  <p>
+    <code>Easy3D::BillboardBatch</code> and <code>DebugDraw</code> exist as CPU-side item queues but
+    have <strong>no vertex builder or CNA renderer adapter yet</strong> — this is the main blocker
+    for rendering Blupi's sprite and mobile-eggbert objects as billboards (E3D-MIG-061/062 in
+    <code>plan.md</code>).
+  </p>
+
+  <h2>CNA APIs Used Directly by GalaxyEggbertCnaGame</h2>
+  <table>
+    <tr><th>CNA type</th><th>Used for</th></tr>
+    <tr><td><code>Microsoft::Xna::Framework::Game</code></td><td>Base class for <code>GalaxyEggbertCnaGame</code></td></tr>
+    <tr><td><code>GameTime</code></td><td>Delta time passed to <code>Update</code>/<code>Draw</code></td></tr>
+    <tr><td><code>Graphics::Texture2D</code></td><td>Loads <code>object-m.png</code></td></tr>
+    <tr><td><code>Graphics::BasicEffect</code></td><td>Textured, untextured-vertex-color-off shader for terrain draw</td></tr>
+    <tr><td><code>Input::Keyboard</code> / <code>Keys</code></td><td>Arrow keys + Space each frame</td></tr>
+    <tr><td><code>Color</code>, <code>Rectangle</code>, <code>Matrix</code></td><td>Standard XNA-compatible math/graphics types</td></tr>
+    <tr><td><code>VertexBuffer</code> / <code>IndexBuffer</code> / <code>DrawIndexedPrimitives</code></td><td>Used inside <code>GETerrainRenderer</code>, matching CNA's own <code>examples/house3d_demo.cpp</code> draw pattern</td></tr>
+  </table>
+
+  <h2>Entry Point</h2>
+  <pre><code>// src/GalaxyEggbertCNA/main.cpp
+int main() {
+    auto* game = new GalaxyEggbert::CNA::GalaxyEggbertCnaGame();
+    game-&gt;Run();
+    delete game;
+}</code></pre>
+
+  <h2>Lifecycle Overrides</h2>
+  <pre><code>class GalaxyEggbertCnaGame : public Microsoft::Xna::Framework::Game {
+    void LoadContent() override;              // load world, texture, build terrain renderer
+    void Update(GameTime&amp; gameTime) override;  // advance anim phase, read input, step Blupi, update camera
+    void Draw(const GameTime&amp; gameTime) override; // clear, set effect matrices, draw terrain
+};</code></pre>
+
+  <h2>Comparison: Simple3D vs. CNA Integration Style</h2>
+  <table>
+    <tr><th>Aspect</th><th>GalaxyEggbertSimple3D</th><th>GalaxyEggbertCNA</th></tr>
+    <tr><td>Engine access</td><td>Through Simple3D's Urho3D-shaped abstraction</td><td>Direct CNA API calls, no abstraction layer</td></tr>
+    <tr><td>Helper library</td><td>None (Simple3D itself is the abstraction)</td><td>Easy3D, explicitly small and non-hiding</td></tr>
+    <tr><td>Rendering</td><td>Scene-graph nodes with StaticModel/BillboardSet</td><td>Manual CubeMeshRenderer draw calls via BasicEffect</td></tr>
+    <tr><td>Status</td><td>Only fully playable target</td><td>Terrain + collision-only movement only</td></tr>
+  </table>
+
+  <div class="page-nav">
+    <a href="project-structure.html">
+      <span class="label">Previous</span>
+      <span class="title">&#8592; Project Structure</span>
+    </a>
+    <a class="next" href="game-loop.html">
+      <span class="label">Next</span>
+      <span class="title">Game Loop &#8594;</span>
+    </a>
+  </div>
+</main>
+</div>
+<script src="assets/script.js"></script>
+</body>
+</html>

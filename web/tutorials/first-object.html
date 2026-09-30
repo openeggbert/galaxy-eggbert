@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Authoring a New .vwr World — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Tutorials</a> <span>›</span> Authoring a New .vwr World</div>
+  <h1>Tutorial: Authoring a New .vwr World</h1>
+  <p class="subtitle">Use GenerateSampleWorld3D as a template to build your own hand-authored 3D world.</p>
+
+  <div class="warn">
+    <strong>No automated converter</strong>
+    There is deliberately no tool that converts a flat mobile-eggbert <code>.txt</code> level into
+    a <code>.vwr</code> world — this was explicitly rejected as a direction. <code>.vwr</code>
+    worlds with real Y variation must be hand-authored in code, as shown below.
+  </div>
+
+  <h2>Step 1 — Study the Existing Generator</h2>
+  <p>
+    <code>tools/GenerateSampleWorld3D.cpp</code> is the only example today. It builds
+    <code>worlds3d/world001.vwr</code>: a ground floor, a 10-step ascending staircase, a raised
+    platform, a walled room with a doorway, and two pillars — using only
+    <code>GalaxyEggbert::Worlds::World::setBlock()</code> calls, then
+    <code>world.saveToFile(...)</code>.
+  </p>
+
+  <h2>Step 2 — Copy It as a Starting Point</h2>
+  <pre><code>#include "GalaxyEggbert/Worlds/World.hpp"
+#include "GalaxyEggbert/BlockTypes.hpp"
+using namespace GalaxyEggbert::Worlds;
+
+int main() {
+    World world;
+
+    // Ground floor
+    for (int x = 30; x &lt; 70; ++x)
+        for (int z = 30; z &lt; 70; ++z)
+            world.setBlock(x, 0, z, Block::make(BlockTypes::Ground));
+
+    // Add your own shapes here — staircases, platforms, rooms.
+
+    world.saveToFile("worlds3d/myworld.vwr");
+    return 0;
+}</code></pre>
+
+  <h2>Step 3 — Add a CMake Tool Target</h2>
+  <p>Follow the existing <code>GenerateSampleWorld3D</code> target pattern in <code>CMakeLists.txt</code> — it is engine-agnostic and needs no CNA link.</p>
+
+  <h2>Step 4 — Generate and Point GalaxyEggbertCNA at It</h2>
+  <pre><code>cmake --build build-cna --target GenerateSampleWorld3D
+./build-cna/GenerateSampleWorld3D</code></pre>
+  <p>
+    Then change the path in <code>GalaxyEggbertCnaGame::LoadContent()</code>
+    (<code>worldRuntime_.LoadFromVwrFile("worlds3d/world001.vwr")</code>) to your new file, or
+    replace <code>world001.vwr</code> directly.
+  </p>
+
+  <h2>Step 5 — Verify Block Counts</h2>
+  <p>
+    Use <code>World::loadFromFile()</code> in a small test to round-trip your world and check its
+    non-air block count and Y range, the same way <code>world001.vwr</code>'s stats (2729 blocks,
+    Y range [0, 13]) were verified.
+  </p>
+
+  <div class="page-nav">
+    <a href="building.html">← Building GalaxyEggbertCNA</a>
+    <a href="modifying-levels.html">Adding a Block Type →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

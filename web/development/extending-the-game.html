@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extending the Game — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="../classes/index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Development</a> <span>›</span> Extending the Game</div>
+  <h1>Extending the Game</h1>
+  <p class="subtitle">What you can safely add today, and what requires an approval or design decision first.</p>
+
+  <h2>Safe to Add Today</h2>
+  <ul>
+    <li><strong>New block types</strong> — see <a href="../tutorials/modifying-levels.html">Adding a Block Type</a>.</li>
+    <li><strong>New hand-authored <code>.vwr</code> worlds</strong> — see <a href="../tutorials/first-object.html">Authoring a New .vwr World</a>.</li>
+    <li><strong>Bug fixes to <code>GalaxyEggbertSimple3D</code></strong> and faithful-remake gameplay parity work on it — explicitly allowed by the direction lock.</li>
+  </ul>
+
+  <h2>Requires a Design Decision First</h2>
+  <ul>
+    <li><strong>Billboard/object rendering</strong> — blocked on <code>Easy3D::BillboardBatch</code> getting a vertex builder + CNA renderer adapter (E3D-MIG-061/062), and on the open "billboard vs. textured cube" rendering-mode question for objects (see <a href="../gameplay.html">Gameplay</a> and <code>mobile-eggbert-reference/09-open-questions.md</code>).</li>
+    <li><strong>Save format</strong> — whether to reuse mobile-eggbert's exact byte layout is an open question, not a default.</li>
+    <li><strong>Chunk-radius streaming</strong> — scheduled (E3D-MIG-057) but not yet implemented.</li>
+  </ul>
+
+  <h2>Requires Explicit User Approval</h2>
+  <ul>
+    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../easy-3d</code>.</li>
+    <li>Copying mobile-eggbert code or data (Tables.cpp arrays, Decor.cpp logic, GameData.cpp byte layout) into galaxy-eggbert, even as "just data."</li>
+    <li>Adding new engine-layer investment to <code>GalaxyEggbertSimple3D</code> beyond bug fixes/parity work.</li>
+    <li>Adding MeshCraft, Mesh World, Nova3D, further Simple3D features, or Lua to the active (CNA) path.</li>
+  </ul>
+
+  <h2>Never Do</h2>
+  <ul>
+    <li>Invent gameplay mechanics that don't exist in mobile-eggbert (coins, time bonuses, coyote time, wall/double jump, combo multipliers, etc.) — see the Faithful-Remake rule in <a href="../gameplay.html">Gameplay</a>.</li>
+    <li>Add <code>#ifdef</code> engine guards to work around a backend gap — fix the backend instead.</li>
+    <li>Mutate <code>src/GalaxyEggbertSimple3D/</code> into the CNA implementation — new CNA code goes in <code>src/GalaxyEggbertCNA/</code>.</li>
+  </ul>
+
+  <div class="page-nav">
+    <a href="debugging.html">← Debugging</a>
+    <a href="known-issues.html">Known Issues →</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>

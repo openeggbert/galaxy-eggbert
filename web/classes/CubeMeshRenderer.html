@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Easy3D::CubeMeshRenderer — Galaxy Eggbert Docs</title>
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+<div id="topbar">
+  <button id="menu-toggle" aria-label="Toggle menu">&#9776;</button>
+  <a class="logo" href="../index.html">Galaxy <span>Eggbert</span> Docs</a>
+  <input id="search-input" type="search" placeholder="Search docs…" autocomplete="off">
+  <div id="search-results"></div>
+</div>
+<div id="wrapper">
+<nav id="sidebar">
+  <div class="nav-section">Getting Started</div>
+  <a href="../index.html">Home</a>
+  <a href="../overview.html">Project Overview</a>
+  <a href="../getting-started.html">Getting Started</a>
+  <a href="../build.html">Build Guide</a>
+  <div class="nav-section">Reference</div>
+  <a href="../modules/index.html">Modules</a>
+  <a href="index.html">Classes</a>
+  <a href="../systems/index.html">Systems</a>
+  <div class="nav-section">Guides</div>
+  <a href="../tutorials/index.html">Tutorials</a>
+  <a href="../internals/index.html">Internals</a>
+  <a href="../development/index.html">Development</a>
+</nav>
+<main id="content">
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Easy3D::CubeMeshRenderer</div>
+  <h1>Easy3D::CubeMeshRenderer</h1>
+  <p class="subtitle">Uploads CubeMesh data to CNA VertexBuffer/IndexBuffer and issues the draw call.</p>
+
+  <h2>Overview</h2>
+  <p>
+    The real CNA draw-path adapter (task <code>E3D-MIG-052</code>) — uploads a
+    <code>CubeMeshData</code> once, then issues <code>DrawIndexedPrimitives</code> via a
+    caller-configured <code>BasicEffect</code>, matching CNA's own <code>examples/house3d_demo.cpp</code>
+    pattern. Lives in <code>../easy-3d</code>, namespace <code>Easy3D</code>.
+  </p>
+  <p>Header: <code>include/Easy3D/CubeMeshRenderer.hpp</code>. Implementation: <code>src/CubeMeshRenderer.cpp</code> (in <code>../easy-3d</code>).</p>
+
+  <h2>API (as used by GalaxyEggbertCNA)</h2>
+  <pre><code>namespace Easy3D {
+
+class CubeMeshRenderer {
+public:
+    CubeMeshRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice&amp; device,
+                      const CubeMeshData&amp; mesh);   // uploads once
+
+    void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice&amp; device,
+               Microsoft::Xna::Framework::Graphics::BasicEffect&amp; effect);
+};
+
+}</code></pre>
+
+  <h2>Used By</h2>
+  <p>
+    <a href="GETerrainRenderer.html">GETerrainRenderer</a> owns two instances: one for the static
+    (non-animated) terrain mesh, one for the currently-animated-tile subset, rebuilt only when the
+    animation phase changes.
+  </p>
+
+  <h2>Roadmap</h2>
+  <p>
+    A billboard-batch equivalent (vertex builder + CNA renderer adapter for
+    <code>Easy3D::BillboardBatch</code>) does not exist yet — tasks <code>E3D-MIG-061</code> and
+    <code>E3D-MIG-062</code> in <code>plan.md</code>. This is the main blocker for rendering Blupi
+    and mobile-eggbert objects as sprites.
+  </p>
+
+  <div class="page-nav">
+    <a href="CubeMesh.html">← Easy3D::CubeMesh</a>
+    <a href="index.html">Classes ↑</a>
+  </div>
+</main>
+</div>
+<script src="../assets/script.js"></script>
+</body>
+</html>
