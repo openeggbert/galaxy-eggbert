@@ -176,7 +176,7 @@ pass), not on every unrelated galaxy-eggbert commit.
 | Repo | Verified commit | Date |
 |---|---|---|
 | `../easy-3d` | `6ae2e62` | 2026-10-17 |
-| `../../libcna/cna` | `7c77bac60` | 2026-10-17 |
+| `../../libcna/cna` | `00a7676cd` | 2026-10-17 |
 | `../easy-gl` | `62c0a248` | 2026-07-19 |
 | `../sharp-runtime` | `d2cc9cce` | 2026-07-16 |
 | `../meta-gl` | `d51fcd7f` | 2026-07-18 |
