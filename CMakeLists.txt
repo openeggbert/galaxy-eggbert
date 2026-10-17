@@ -271,16 +271,17 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     if(EMSCRIPTEN)
         set_target_properties(GalaxyEggbertCNA PROPERTIES SUFFIX ".html")
 
-        # CMake doesn't parse --shell-file/--pre-js out of target_link_options
-        # to discover them as link dependencies (they're just linker-flag
-        # strings to it) -- without LINK_DEPENDS, editing either file alone
-        # (no source touched) leaves `cmake --build` believing the target is
-        # already up to date and it silently keeps serving the OLD shell/
-        # pre-js baked into the previous .html/.js (found 2026-07-17: a
-        # shell-cna.html fix didn't take effect until a source file was
-        # touched to force a relink).
+        # GalaxyEggbertCNA calls the blocking Game::Run() API.  CNA keeps
+        # Asyncify as an explicit executable/event-loop policy for external
+        # applications, so linking the framework umbrella alone is not
+        # sufficient (without this the first animation-frame wait calls an
+        # undefined JavaScript Asyncify object).
+        target_link_libraries(GalaxyEggbertCNA PRIVATE CNA::EmscriptenAsyncify)
+
+        # CMake doesn't parse --shell-file out of target_link_options to
+        # discover it as a link dependency (it is just a linker-flag string).
         set_target_properties(GalaxyEggbertCNA PROPERTIES
-            LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell-cna.html;${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre.js")
+            LINK_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell-cna.html")
 
         target_link_options(GalaxyEggbertCNA PRIVATE
             -sALLOW_MEMORY_GROWTH=1
@@ -291,7 +292,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             -sFULL_ES3=1
             -lidbfs.js
             "SHELL:--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell-cna.html"
-            "SHELL:--pre-js ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/pre.js"
         )
 
         foreach(_content_dir Content/icons Content/backgrounds Content/sounds)
@@ -602,7 +602,7 @@ target_include_directories(VerifyGESaveData PRIVATE
 
 # Web/Node test wiring: unlike the NODERAWFS tools above, SaveData's own
 # kSavePath is "/save/savedata.txt" under __EMSCRIPTEN__ (an absolute IDBFS
-# mount point the real app's pre.js sets up for browser persistence, see
+# mount point CNA's storage module sets up for browser persistence, see
 # SaveData.hpp) -- NODERAWFS would instead map that absolute path onto the
 # real host's own "/save" directory, which is wrong here. Reuses a minimal
 # pre-js that just creates "/save" in this tool's own in-memory MEMFS (no

@@ -300,10 +300,15 @@ namespace GalaxyEggbert::CNA
     GalaxyEggbertGame::GalaxyEggbertGame()
     {
         Game::getWindowProperty().setTitleProperty("Galaxy Eggbert (CNA)");
-        // Standard XNA pattern: the manager must be constructed in the game
-        // constructor (before Run() initializes the device). Only used for
-        // F11's ToggleFullScreen() so far.
+        // Standard XNA pattern: the manager must be constructed and the
+        // required profile selected before Run() initializes the device.
+        // Galaxy's screenshot/golden-capture diagnostics use
+        // GetBackBufferData, which is a HiDef-only XNA operation.  Leaving
+        // CNA's default Reach profile selected made the first diagnostic
+        // frame terminate both the OpenGL 3.3 and WebGL 2 builds.
         graphics_ = std::make_unique<Microsoft::Xna::Framework::GraphicsDeviceManager>(this);
+        graphics_->setGraphicsProfileProperty(
+            Microsoft::Xna::Framework::Graphics::GraphicsProfile::HiDef);
     }
 
     void GalaxyEggbertGame::LoadContent()

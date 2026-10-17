@@ -44,13 +44,13 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Verification baseline
 
-As of the date above, rebuilding and testing the current source succeeds for the verified native
-configuration, and the WebGL 2 target cross-compiles successfully:
+As of the date above, rebuilding, testing, and live-running the current source succeeds for the
+verified native and WebGL 2 configurations:
 
 | Build | Result |
 |---|---|
-| `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the known external `easy-gl-resource-smoke-tests` excluded |
-| `build-cna-webgl2` (`WEBGL2`) | Emscripten release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data` artifacts; browser runtime not exercised in this session |
+| `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the known external `easy-gl-resource-smoke-tests` excluded; normal startup and the three-frame golden capture run successfully under Xvfb |
+| `build-cna-webgl2` (`WEBGL2`) | Emscripten release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data`; a 12-second final-artifact headless-Chrome run creates a real WebGL 2 context, loads `world001`, and renders without an application error |
 
 The deterministic golden-frame and behavioral-trace harnesses are manual `xvfb-run` checks, not
 default CTest cases. Full commands and sibling-repository pins live in `NEXT.md` §2 and §7.

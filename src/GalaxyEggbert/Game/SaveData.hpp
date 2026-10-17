@@ -165,7 +165,7 @@ namespace GalaxyEggbert::Game
 
     private:
         // Web build (2026-07-17): under /save so it lands on the IDBFS mount
-        // point pre.js sets up (persists across page reloads via IndexedDB) --
+        // point CNA's storage preRun hook sets up (persists across page reloads via IndexedDB) --
         // a platform path difference, not an engine-API one, so it doesn't
         // fall under CLAUDE.md's "no #ifdef for engine differences" rule.
 #if defined(__EMSCRIPTEN__)

@@ -177,22 +177,24 @@ emrun build-cna-webgl2/GalaxyEggbertCNA.html
 | `GalaxyEggbertCNA.wasm` | WebAssembly binary |
 | `GalaxyEggbertCNA.data` | Preloaded asset bundle |
 
-##### Virtual filesystem layout (planned)
+##### Virtual filesystem layout
 
 | Path | Source directory | Notes |
 |------|-----------------|-------|
 | `/Content/backgrounds` | `Content/backgrounds/` | Read-only; preloaded |
 | `/Content/icons` | `Content/icons/` | Read-only; preloaded |
 | `/Content/sounds` | `Content/sounds/` | Read-only; preloaded |
-| `/worlds` | `worlds/` | Read-only; preloaded |
+| `/worlds3d` | `worlds3d/` | Read-only; preloaded |
+| `/textures3d` | `textures3d/` | Read-only; preloaded |
+| `/avatars3d` | `avatars3d/` | Read-only; preloaded |
 | `/save` | IndexedDB (IDBFS) | Writable; persists save file |
 
-##### Notes (planned — not yet confirmed working for `GalaxyEggbertCNA`'s Emscripten build)
+##### Notes
 
-- Save data would be stored via IndexedDB (IDBFS), flushed on every write and on page unload.
+- CNA's storage preRun hook mounts `/save` through IndexedDB (IDBFS) with automatic persistence.
 - Audio uses SDL_mixer; the browser may require a user gesture before audio starts.
-- CPU usage bounded via `emscripten_set_main_loop` (backed by `requestAnimationFrame`) instead of
-  a busy loop.
+- CNA's blocking `Game::Run()` yields between frames through `requestAnimationFrame` and Asyncify
+  instead of using a busy loop.
 - **Game speed**: intended to use a fixed-timestep accumulator in `CNA/Game.cpp` to match native
   desktop timing, the same approach CNA already uses elsewhere.
 
@@ -201,8 +203,8 @@ emrun build-cna-webgl2/GalaxyEggbertCNA.html
 - Linux: confirmed working, EasyGL family by default (`CNA_GRAPHICS_RENDERER=OPENGLES3`).
 - Windows: the previous cross-build packaging path exists, but the current `SDL_GPU` renderer
   still needs a fresh build and live 3D verification (see `WINDOWS.md`).
-- Web (Emscripten): WebGL2 release build verified on 2026-10-17; browser runtime was not exercised
-  in that session and the target is not covered by CI or a publishing pipeline.
+- Web (Emscripten): WebGL2 release build and a 12-second final-artifact browser runtime verified on
+  2026-10-17; the target is not covered by CI or a publishing pipeline.
 - Android: intended, see `ANDROID.md`. `GalaxyEggbertCNA` is the sole game target and is enabled
   by default, so Gradle needs no target-selection argument.
 

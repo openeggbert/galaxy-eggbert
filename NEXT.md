@@ -161,11 +161,13 @@ UX is fine — inventing new *gameplay* mechanics is still not.
 Current verification targets CNA's supported desktop OpenGL 3.3 and WebGL 2 identities. The
 editor remains renderer-agnostic.
 - `build-cna-opengl3/` — desktop OpenGL 3.3 (`CNA_GRAPHICS_RENDERER=OPENGL33`); build succeeds and
-  93/93 CTest cases pass when the known external `easy-gl-resource-smoke-tests` is excluded
-  (verified 2026-10-17).
+  93/93 CTest cases pass when the known external `easy-gl-resource-smoke-tests` is excluded;
+  normal startup and the three-frame golden capture also run successfully under Xvfb (verified
+  2026-10-17).
 - `build-cna-webgl2/` — Emscripten WebGL 2 (`CNA_GRAPHICS_RENDERER=WEBGL2`); release build succeeds
-  and emits the expected HTML/JS/Wasm/data artifact set (verified 2026-10-17; browser runtime not
-  exercised in this session).
+  and emits the expected HTML/JS/Wasm/data artifact set; a 12-second final-artifact headless-Chrome run creates a
+  real WebGL 2 context, loads `world001`, and renders without an application error (verified
+  2026-10-17).
 ### Sibling-repo commit pins (`INFRA-009`, plan.md §7)
 
 Galaxy Eggbert depends on 5 sibling repositories, each under independent development (see the
@@ -175,7 +177,7 @@ pass), not on every unrelated galaxy-eggbert commit.
 
 | Repo | Verified commit | Date |
 |---|---|---|
-| `../easy-3d` | `6ae2e62` | 2026-10-17 |
+| `../easy-3d` | `ad63bf9` | 2026-10-17 |
 | `../../libcna/cna` | `00a7676cd` | 2026-10-17 |
 | `../easy-gl` | `62c0a248` | 2026-07-19 |
 | `../sharp-runtime` | `d2cc9cce` | 2026-07-16 |
@@ -221,6 +223,17 @@ Produces `build-web/GalaxyEggbertCNA.{html,js,wasm,data}` — serve that directo
 unconditionally references `AvatarRenderer` symbols from `CNA_GamerServices`, which is gated behind
 it. Verified working via a real headless-Chrome/WebGL2 run (see `BUILD-003`); it is not wired into
 a hosting pipeline, so publishing the built files remains a manual step.
+
+**Re-verified 2026-10-17 against CNA `00a7676cd`.** A real native launch first exposed that
+Easy3D always uploaded cube/billboard indices as 32-bit values while CNA's default profile was
+Reach. Easy3D `ad63bf9` now narrows meshes to 16-bit indices whenever possible. Galaxy explicitly
+selects HiDef because its existing screenshot/golden-capture diagnostics use the HiDef-only
+`GetBackBufferData`. The web target now uses CNA's sole `/save` IDBFS mount instead of mounting the
+same path a second time, and links
+`CNA::EmscriptenAsyncify` as required by external applications that call blocking `Game::Run()`.
+Native normal startup survived a 5-second final-artifact Xvfb run; the golden capture wrote frames
+60/120/180 and exited 0. The final WebGL 2 build ran for 12 seconds in headless Chrome, loaded all runtime assets and
+the terrain mesh, and logged neither an IDBFS failure nor an uncaught/fatal application exception.
 
 **Re-verified 2026-07-19** (user request: rebuild for their own site) — `build-web` was stale
 (last built 2026-07-17, before EDITOR-100..109 landed 2026-07-18); the editor sources were already
