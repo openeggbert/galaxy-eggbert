@@ -11,6 +11,8 @@
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
+#include <Microsoft/Xna/Framework/Graphics/ModelMeshPart.hpp>
+#include <Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -487,8 +489,8 @@ namespace GalaxyEggbert::CNA
         }
 
         // Third-person-mode 3D model (2026-07-09, NEXT.md §3) -- CNA's
-        // AvatarRenderer real-rendering extension, see this class's own
-        // header comment and ../cna/docs/avatar-real-rendering-ext.md.
+        // generic SkinnedModelEXT/SkinnedEffect path, see this class's own
+        // header comment and ../cna/docs/skinned-model-ext.md.
         // ContentManager's RootDirectory is pointed at avatars3d/ (not the
         // default "Content", which is mobile-eggbert's own tree, fully
         // re-copied fresh on every build -- see the textures3d/ comment
@@ -504,18 +506,23 @@ namespace GalaxyEggbert::CNA
                 blupiModel_ = content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                     "blupi_placeholder/avatar");
 
-                blupiAvatarRenderer_ = std::make_unique<Microsoft::Xna::Framework::GamerServices::AvatarRenderer>(nullptr);
-                blupiAvatarRenderer_->EnableRealRenderingEXT(device, blupiModel_);
-                // LightColor/AmbientLightColor/LightDirection default to
-                // black (matching the real, never-drawing XNA Avatar API's
-                // untouched value-type defaults) -- DrawRealEXT renders
-                // nothing visible until these are set (see the doc above).
-                blupiAvatarRenderer_->setAmbientLightColorProperty(
+                blupiEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::SkinnedEffect>(device);
+                blupiEffect_->setAmbientLightColorProperty(
                     Microsoft::Xna::Framework::Vector3(0.35f, 0.35f, 0.35f));
-                blupiAvatarRenderer_->setLightColorProperty(
+                auto& keyLight = blupiEffect_->getDirectionalLight0Property();
+                keyLight.setEnabledProperty(true);
+                keyLight.setDiffuseColorProperty(
                     Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f));
-                blupiAvatarRenderer_->setLightDirectionProperty(
+                keyLight.setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
+                keyLight.setDirectionProperty(
                     Microsoft::Xna::Framework::Vector3(-0.4f, -0.6f, -0.7f));
+                blupiEffect_->getDirectionalLight1Property().setEnabledProperty(false);
+                blupiEffect_->getDirectionalLight2Property().setEnabledProperty(false);
+                blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
+                blupiEffect_->setEmissiveColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
+                // Keep the placeholder's established warm fallback tint.
+                blupiEffect_->setDiffuseColorProperty(
+                    Microsoft::Xna::Framework::Color::NavajoWhite.ToVector3());
                 blupiModelLoaded_ = true;
                 std::cout << "GalaxyEggbertCNA: third-person placeholder model loaded — "
                              "avatars3d/blupi_placeholder/ ('C' toggles first-/third-person)."
@@ -3648,7 +3655,7 @@ namespace GalaxyEggbert::CNA
             // (death-VFX follow-up, `IsDeathHidden()`'s own comment) -- first-
             // person mode already renders no Blupi model at all, so this is
             // the only render-side change needed.
-            if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiAvatarRenderer_ &&
+            if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
                 !blupi_.IsDeathHidden())
             {
                 constexpr float kPlaceholderModelScale = 0.009095f;
@@ -3670,13 +3677,31 @@ namespace GalaxyEggbert::CNA
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(blupi_.GetYaw()) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
                         blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset, blupi_.GetZ());
-                blupiAvatarRenderer_->setWorldProperty(world);
-                blupiAvatarRenderer_->setViewProperty(camera_.GetViewMatrix());
-                blupiAvatarRenderer_->setProjectionProperty(camera_.GetProjectionMatrix());
-                blupiAvatarRenderer_->DrawRealEXT(
+                std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
+                blupiModel_->ComputeBoneTransformsEXT(
                     blupiActiveClipName_,
                     System::TimeSpan::FromSeconds(blupiClipTimeSeconds_),
-                    /*loop=*/true);
+                    /*loop=*/true,
+                    boneTransforms);
+                blupiEffect_->setWorldProperty(world);
+                blupiEffect_->setViewProperty(camera_.GetViewMatrix());
+                blupiEffect_->setProjectionProperty(camera_.GetProjectionMatrix());
+                blupiEffect_->SetBoneTransforms(boneTransforms);
+
+                for (const auto& part : blupiModel_->Parts)
+                {
+                    blupiEffect_->setTextureProperty(part.Texture);
+                    blupiEffect_->Apply();
+                    device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                    device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                    device.DrawIndexedPrimitives(
+                        Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
+                        part.Part->getVertexOffsetProperty(),
+                        0,
+                        part.Part->getNumVerticesProperty(),
+                        part.Part->getStartIndexProperty(),
+                        part.Part->getPrimitiveCountProperty());
+                }
             }
 
             static bool terrainPixelPrinted = false;

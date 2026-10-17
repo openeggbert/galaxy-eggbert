@@ -1,6 +1,6 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-07-25. Update this file whenever a change alters the current state, a known
+_Last verified: 2026-10-17. Update this file whenever a change alters the current state, a known
 limitation, a supported build, or the actionable backlog. Keep historical detail in `NEXT.md` and
 `plan.md`, not here._
 
@@ -32,12 +32,10 @@ content-authoring UX, but not new gameplay mechanics.
   thumbnails, save and play-test loop, unsaved-change protection, correctly sourced BigDecor
   scenery, a visible/Escape return from the editor browser to the main menu, and a backend-neutral
   `GalaxyEggbert::Editor` namespace/source tree without legacy `GE` prefixes on editor components.
-- Linux native, Vulkan native, and the debug build are maintained. A MinGW-w64 cross-build of
-  `GalaxyEggbertCNA.exe` (SDL_Renderer) is confirmed. Its output now stages SDL3 and MinGW thread
-  runtime DLLs beside the executable while statically linking GCC/C++. A Wine launch reaches
-  window creation and asset/world loading, then correctly exposes the current blocker:
-  CNA's `SDL_RENDERER` backend is 2D-only and throws on `CreateVertexBuffer`. The Web/Emscripten
-  build has been verified manually, but is not part of CI or a release pipeline.
+- Linux native uses CNA's current OpenGL-family renderer identities. Windows packaging support
+  stages SDL3 and MinGW thread runtime DLLs while statically linking GCC/C++, but the current
+  `SDL_GPU` path still needs a fresh build and live 3D verification. The Web/Emscripten build uses
+  `WEBGL2`; it is manually verified rather than part of CI or a release pipeline.
 - Linux provides a reproducible `GalaxyEggbertCNA-linux-x86_64.tar.gz` runtime bundle through
   CMake's `package` target. It contains source-tracked assets and bundled SDL libraries; actual
   desktop launch remains a host-environment check, not a CI/release gate.
@@ -46,13 +44,13 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Verification baseline
 
-As of the date above, rebuilding and testing the current source succeeds on all native builds:
+As of the date above, rebuilding and testing the current source succeeds for the verified native
+configuration, and the WebGL 2 target cross-compiles successfully:
 
 | Build | Result |
 |---|---|
-| `build-cna` (EasyGL) | 91 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
-| `build-cna-vulkan` | 79/79 pass |
-| `cmake-build-debug` | 81 tests pass when the known external `easy-gl-resource-smoke-tests` is excluded |
+| `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the known external `easy-gl-resource-smoke-tests` excluded |
+| `build-cna-webgl2` (`WEBGL2`) | Emscripten release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data` artifacts; browser runtime not exercised in this session |
 
 The deterministic golden-frame and behavioral-trace harnesses are manual `xvfb-run` checks, not
 default CTest cases. Full commands and sibling-repository pins live in `NEXT.md` §2 and §7.
@@ -63,11 +61,8 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
   third-person uses a temporary placeholder. A real model/rig needs user input.
 - `easy-gl-resource-smoke-tests` fails inside the `easy-gl` sibling repository, not here; CI excludes
   it. A different test failure is a regression signal.
-- Vulkan `BasicEffect` draws with `Alpha < 1` were last recorded as an upstream CNA issue; recheck
-  only when Vulkan work otherwise needs a live run.
-- The packaged Windows `SDL_RENDERER` build cannot run the 3D game yet: Wine reaches real startup,
-  then CNA throws `SDL_Renderer does not support 3D: CreateVertexBuffer`. Choose and verify a real
-  Windows 3D backend before calling this platform supported.
+- The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not
+  call Windows supported until both pass.
 - Editor text is deliberately limited to functional readouts/notices (XYZ coordinates, background
   ids, and the temporary not-implemented message); the main tool palette remains icon-driven.
 - Intermittent window-focus/input loss has occurred under Xvfb/live verification. It has not been

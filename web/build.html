@@ -53,28 +53,34 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Build Guide</div>
   <h1>Build Guide</h1>
-  <p class="subtitle">CMake targets and options for GalaxyEggbertCNA (and the GalaxyEggbertSimple3D reference target).</p>
+  <p class="subtitle">CMake targets and renderer options for GalaxyEggbertCNA.</p>
 
-  <h2>Two Build Targets</h2>
+  <h2>Game Target</h2>
   <table>
     <tr><th>CMake option</th><th>Default</th><th>Target</th><th>Role</th></tr>
-    <tr><td><code>GALAXY_EGGBERT_BUILD_SIMPLE3D</code></td><td><code>ON</code></td><td><code>GalaxyEggbertSimple3D</code></td><td>Current only fully-playable target, built on Simple3D/U3D</td></tr>
-    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td><code>OFF</code> (opt-in)</td><td><code>GalaxyEggbertCNA</code></td><td>Long-term target, built directly on CNA + Easy3D</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td><code>ON</code></td><td><code>GalaxyEggbertCNA</code></td><td>The maintained game, built directly on CNA + Easy3D</td></tr>
   </table>
 
-  <h2 id="cna">Building GalaxyEggbertCNA</h2>
-  <pre><code>cmake -S . -B build-cna \
+  <h2 id="cna">Desktop OpenGL 3.3</h2>
+  <pre><code>cmake -S . -B build-cna-opengl3 \
   -DGALAXY_EGGBERT_BUILD_CNA=ON \
-  -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF
-cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
-  <p>Build directory convention: <code>build-cna</code>. Configure order matters — <code>CNA</code> must be configured before <code>easy-3d</code> (Easy3D auto-detects a parent <code>CNA</code> target).</p>
+  -DCNA_GRAPHICS_RENDERER=OPENGL33
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA -j2</code></pre>
+  <p>Run the executable from <code>build-cna-opengl3</code>, because runtime asset paths are relative.</p>
+
+  <h2>WebGL 2</h2>
+  <pre><code>emcmake cmake -S . -B build-cna-webgl2 \
+  -DGALAXY_EGGBERT_BUILD_CNA=ON \
+  -DCNA_GRAPHICS_RENDERER=WEBGL2 \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_TESTING=OFF
+cmake --build build-cna-webgl2 --target GalaxyEggbertCNA -j2</code></pre>
 
   <h3>Sibling Repository Path Overrides</h3>
   <table>
     <tr><th>Variable</th><th>Default</th></tr>
     <tr><td><code>CNA_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../cna</code></td></tr>
     <tr><td><code>EASY3D_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../easy-3d</code></td></tr>
-    <tr><td><code>MOBILE_EGGBERT_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../mobile-eggbert</code></td></tr>
   </table>
 
   <h3>What Links Into GalaxyEggbertCNA</h3>
@@ -82,47 +88,32 @@ cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
     <li><code>CNA</code> — the game framework</li>
     <li><code>SHARP_RUNTIME</code></li>
     <li><code>easy3d::easy3d</code> (or the <code>easy3d</code> target)</li>
-    <li>The CNA graphics backend static library — <code>cna_backend_graphics_easygl</code> on Linux by default, or an SDL-renderer/BGFX/Vulkan backend elsewhere</li>
-    <li><code>${GE_SHARED_SOURCES}</code> — the engine-agnostic <code>src/GalaxyEggbert/Worlds/*.cpp</code> sources, shared with <code>GalaxyEggbertSimple3D</code></li>
+    <li>The renderer target selected by CNA's <code>CNA_GRAPHICS_RENDERER</code> option</li>
+    <li><code>${GE_SHARED_SOURCES}</code> — the engine-independent world/data sources</li>
   </ul>
-  <div class="note">
-    <strong>Circular link group</strong>
-    On non-Windows GNU/Clang toolchains, CNA and its backend library have circular symbol
-    references, so they are linked inside a <code>-Wl,--start-group … --end-group</code> block.
-  </div>
 
   <h3>Post-Build Asset Copy</h3>
   <p>
-    Custom post-build commands copy <code>mobile-eggbert/Content</code> and
-    <code>mobile-eggbert/worlds</code> (read-only source, not committed here) plus this repo's own
-    committed <code>worlds3d/</code> directory next to the <code>GalaxyEggbertCNA</code> binary.
-    Skipped when <code>EMSCRIPTEN</code> or <code>ANDROID</code> is set.
+    Custom post-build commands stage this repository's <code>Content/</code>, <code>worlds3d/</code>,
+    <code>textures3d/</code>, and <code>avatars3d/</code> beside the native executable. Emscripten
+    embeds the required directories into its generated <code>.data</code> bundle.
   </p>
 
   <h3>Additional Tool Targets</h3>
   <table>
     <tr><th>Target</th><th>Purpose</th></tr>
     <tr><td><code>GenerateSampleWorld3D</code></td><td>Generates <code>worlds3d/world001.vwr</code> — engine-agnostic, no CNA link needed</td></tr>
-    <tr><td><code>VerifyBlupiMovement</code></td><td>Exercises <code>GEBlupiController</code> headlessly (links only <code>GEBlupiController.cpp</code> — no CNA dependency)</td></tr>
+    <tr><td><code>VerifyBlupiMovement</code></td><td>Exercises the engine-independent Blupi controller headlessly</td></tr>
   </table>
 
-  <h2 id="simple3d">Building GalaxyEggbertSimple3D (reference target)</h2>
-  <pre><code>cmake -S . -B cmake-build-debug -DGALAXY_EGGBERT_BUILD_SIMPLE3D=ON
-cmake --build cmake-build-debug --target GalaxyEggbertSimple3D</code></pre>
-  <p>
-    This is the default (option is <code>ON</code> unless disabled). It remains the only
-    end-to-end-playable target and is not expected to gain new engine-layer investment beyond
-    bug fixes and faithful-remake gameplay parity work.
-  </p>
-
   <h2 id="testing">Running Tests</h2>
-  <pre><code>cmake -S . -B build-cna -DBUILD_TESTING=ON
-cmake --build build-cna --target GalaxyEggbertWorldsTests
-ctest --test-dir build-cna --output-on-failure</code></pre>
+  <pre><code>cmake --build build-cna-opengl3 -j2
+ctest --test-dir build-cna-opengl3 \
+  -E easy-gl-resource-smoke-tests --output-on-failure</code></pre>
   <p>
     <code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code>
     data model (<code>World</code>, <code>Chunk</code>, <code>Block</code>, bit-packing, binary I/O)
-    — no dependency on CNA, Easy3D, or Simple3D.
+    — no dependency on CNA or Easy3D.
   </p>
 
   <h2>Windows</h2>

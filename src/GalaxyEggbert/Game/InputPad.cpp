@@ -46,13 +46,7 @@ namespace GalaxyEggbert::Game
         constexpr float kPlayPressedAlpha = 0.6f;
 
         // Real DrawInfo/Init panel opacity is 0.6 (same value as Hud.cpp's
-        // own kPanelOpacity, same real panel icon -- kInitPanelIcon's own
-        // comment). Restored 2026-07-18 now that EasyGL (not Vulkan) is the
-        // default graphics backend (CMakeLists.txt); a CNA/Vulkan-only bug
-        // (BasicEffect Alpha<1 doesn't render at all under Vulkan, still
-        // unfixed) means building with `-DCNA_GRAPHICS_RENDERER=VULKAN` will
-        // make these panels vanish again -- see Hud.cpp's kPanelOpacity
-        // for the full empirical citation.
+        // own kPanelOpacity and the same real panel icon).
         constexpr float kInitPanelOpacity = 0.6f;
 
         // Play on-screen control layout (proportionally adapted into the

@@ -158,24 +158,14 @@ UX is fine — inventing new *gameplay* mechanics is still not.
 ## 2. Current status
 
 ### Build status
-`build-cna` builds cleanly and was re-verified after every editor milestone (2026-07-18).
-`build-cna-vulkan` was rebuilt and re-tested 2026-07-19 (through the skate/tank animation-wiring
-work) — 76/76 (100%) tests pass, cleaner than `build-cna`'s own 78/79 (the unrelated `easy-gl`
-smoke-test failure doesn't reproduce there, presumably a different target set). The editor's own
-code is confirmed backend-agnostic through this.
-- `build-cna/` — EasyGL family (`CNA_GRAPHICS_RENDERER=OPENGLES3`, the default — switched back from
-  Vulkan 2026-07-18, see §3; still fully overridable at configure time).
-- `build-cna-vulkan/` — Vulkan renderer (`CNA_GRAPHICS_RENDERER=VULKAN`). Has a known, unrelated CNA
-  engine bug: `BasicEffect` draws with `Alpha < 1` don't render at all under this backend (see §5;
-  not independently re-verified this session — status as last checked). The second real bug found
-  the same day (missing NDC Y-flip in `SkinnedEffect` shaders, making the third-person placeholder
-  model float) — **confirmed committed in `../cna`** (checked 2026-07-21, `INFRA-009`: all 4
-  originally-reported Vulkan `skinned3d*.vert.glsl` shaders carry the `gl_Position.y = -gl_Position.y`
-  fix line; this had previously sat uncommitted, see `plan.md` for the earlier writeup). Note in
-  passing (not otherwise investigated, out of `INFRA-009`'s bookkeeping scope): `pbr3d_skinned.vert.glsl`
-  does not have the same line — unclear if that effect is on `AvatarRenderer`'s actual render path
-  or a separate, unrelated pipeline; flag if a floating-model bug ever resurfaces specifically under
-  a PBR-skinned material.
+Current verification targets CNA's supported desktop OpenGL 3.3 and WebGL 2 identities. The
+editor remains renderer-agnostic.
+- `build-cna-opengl3/` — desktop OpenGL 3.3 (`CNA_GRAPHICS_RENDERER=OPENGL33`); build succeeds and
+  93/93 CTest cases pass when the known external `easy-gl-resource-smoke-tests` is excluded
+  (verified 2026-10-17).
+- `build-cna-webgl2/` — Emscripten WebGL 2 (`CNA_GRAPHICS_RENDERER=WEBGL2`); release build succeeds
+  and emits the expected HTML/JS/Wasm/data artifact set (verified 2026-10-17; browser runtime not
+  exercised in this session).
 ### Sibling-repo commit pins (`INFRA-009`, plan.md §7)
 
 Galaxy Eggbert depends on 5 sibling repositories, each under independent development (see the
@@ -183,10 +173,10 @@ Galaxy Eggbert depends on 5 sibling repositories, each under independent develop
 against. Update this list whenever a sibling repo is rebuilt against (a full local rebuild + `ctest`
 pass), not on every unrelated galaxy-eggbert commit.
 
-| Repo | Commit (as of 2026-07-21) | Date |
+| Repo | Verified commit | Date |
 |---|---|---|
-| `../easy-3d` | `e2d1cfa2` | 2026-07-11 |
-| `../cna` | `ac3aaaeb` | 2026-07-18 |
+| `../easy-3d` | `6ae2e62` | 2026-10-17 |
+| `../../libcna/cna` | `7c77bac60` | 2026-10-17 |
 | `../easy-gl` | `62c0a248` | 2026-07-19 |
 | `../sharp-runtime` | `d2cc9cce` | 2026-07-16 |
 | `../meta-gl` | `d51fcd7f` | 2026-07-18 |
@@ -1586,16 +1576,13 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
   `device.Clear()`, eliminating the visible seam. (2) Every button/panel on the main menu (gamer
   slots, Play, Settings gear) rendered as fully opaque white instead of translucent — root cause:
   both `Hud`'s `kPanelOpacity` and `InputPad::DrawInit()`'s equivalent had been forced to 1.0
-  since 2026-07-10 specifically to work around a genuine CNA/Vulkan bug (`BasicEffect` with
-  Alpha<1 doesn't render at all under Vulkan) -- since Vulkan was the default backend at the time.
-  Restored both to the real 0.6 value now that EasyGL (which renders this correctly) is the
-  default. Building with `-DCNA_GRAPHICS_BACKEND=VULKAN` will still lose these panels -- that CNA
-  bug itself remains unfixed, out of scope for today. Also investigated a third reported issue (a
+  since 2026-07-10 specifically to work around a renderer bug. Restored both to the real 0.6
+  value; the affected renderer has since been retired from CNA. Also investigated a third reported issue (a
   "different shade" outline around the SPEEDY BLUPI logo/Blupi image, suspected `cna` bug) and
   confirmed via direct pixel math it's the correct, expected alpha-blend result of the real asset's
   own soft edge over the (now-corrected) dark background -- not a bug. Full regression clean.
-- **fix: Balloon visual legibility (no visible change on flat ground) + default graphics backend
-  switched to EasyGL (plan.md `E3D-MIG-069`/`135`).** User re-reported "Blupi still doesn't float
+- **fix: Balloon visual legibility (no visible change on flat ground) + default graphics implementation
+  switched to CNA's GL family (plan.md `E3D-MIG-069`/`135`).** User re-reported "Blupi still doesn't float
   when the wasp stings him" after the physics fix below, ~5th time reporting it — frustrated,
   rightly so. Rigorous live re-investigation (temporary debug instrumentation: teleport Blupi onto
   the real wasp in `worlds3d/world999.vwr`, log every frame, then force him over a genuinely
@@ -1604,12 +1591,9 @@ risky here, it can also revert real uncommitted work; prefer targeted edits).
   animation state maps to the SAME idle pose as normal standing, so on flat ground (where the wasp
   is placed) "frozen height" looks identical to just standing there — no visible cue at all. Fixed
   with a small cosmetic vertical sine bob applied only to the 3D model's render position while
-  ballooned (does not touch physics). Also switched `CMakeLists.txt`'s default `CNA_GRAPHICS_BACKEND`
-  from `VULKAN` back to `EASYGL` (user request, given the Vulkan shader bug found the same day) —
-  still fully overridable, other backends remain buildable. `cmake-build-debug` explicitly
-  reconfigured to pick up the new default (an existing cache doesn't change on its own). Full
+  ballooned (does not touch physics). The default was also moved back to CNA's GL family. Full
   regression clean.
-- **fix: Vulkan-only SkinnedEffect Y-flip bug in `../cna` (sibling repo) — the placeholder Fox was
+- **historical upstream renderer fix: SkinnedEffect Y-flip in `../cna` — the placeholder Fox was
   STILL floating on the user's real desktop builds (plan.md `E3D-MIG-069`).** User retested the
   fix below with a live screenshot showing the Fox still floating, well beyond the earlier 0.5-unit
   fix's scope. Found the user's actual desktop builds (`cmake-build-debug`, `build-cna-vulkan`) use
@@ -2257,42 +2241,43 @@ concrete, non-blocked tasks in §8 below, not a bug fix.
 
 ## 7. Useful commands
 
-Configure + build (EasyGL, the default backend):
+Configure + build (desktop OpenGL 3.3):
 ```
-cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON
-cmake --build build-cna --target GalaxyEggbertCNA -j2
+cmake -S . -B build-cna-opengl3 -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_RENDERER=OPENGL33
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA -j2
 ```
 
-Configure + build (Vulkan backend):
+Configure + build (WebGL 2 with the Emscripten toolchain):
 ```
-cmake -S . -B build-cna-vulkan -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_RENDERER=VULKAN
-cmake --build build-cna-vulkan --target GalaxyEggbertCNA -j2
+cmake -S . -B build-cna-webgl2 \
+  -DCMAKE_TOOLCHAIN_FILE="$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake" \
+  -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_RENDERER=WEBGL2 -DBUILD_TESTING=OFF
+cmake --build build-cna-webgl2 --target GalaxyEggbertCNA -j2
 ```
 (Use `-j2` maximum — this environment has crashed under more parallel jobs.)
 
 Run the game (must run from its own build dir — relative asset paths):
 ```
-cd build-cna && ./GalaxyEggbertCNA
+cd build-cna-opengl3 && ./GalaxyEggbertCNA
 ```
 
 Run the full test suite:
 ```
-cd build-cna && ctest
-cd build-cna-vulkan && ctest
+ctest --test-dir build-cna-opengl3 -E easy-gl-resource-smoke-tests --output-on-failure
 ```
 
 Build and run one specific verification tool directly (bypasses ctest's summary, shows every
 `PASS:`/`FAIL:` line):
 ```
-cmake --build build-cna --target VerifyInteractionSystem -j2
-cd build-cna && ./VerifyInteractionSystem
+cmake --build build-cna-opengl3 --target VerifyInteractionSystem -j2
+cd build-cna-opengl3 && ./VerifyInteractionSystem
 ```
 
 Build + run the world-editor verification suite (the relevant one for all EDITOR-* work — prints
 every `PASS:`/`FAIL:` line; expect 165 checks and `ALL CHECKS PASSED`):
 ```
-cmake --build build-cna --target VerifyGEWorldEditor -j2
-cd build-cna && ./VerifyGEWorldEditor
+cmake --build build-cna-opengl3 --target VerifyGEWorldEditor -j2
+cd build-cna-opengl3 && ./VerifyGEWorldEditor
 ```
 
 Run the engine-agnostic world-model gtest suite directly (expect 66/66):

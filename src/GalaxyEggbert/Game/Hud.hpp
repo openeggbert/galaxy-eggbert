@@ -41,11 +41,7 @@ namespace GalaxyEggbert::Game
     // Deliberately drawn as REAL 3D QUADS (BasicEffect + an orthographic
     // pixel-space projection, via the same Easy3D::BillboardMeshRenderer
     // upload/draw path the game's billboards already use) and NOT via CNA's
-    // SpriteBatch: CNA's Vulkan backend records ALL SpriteBatch batches
-    // BEFORE all 3D draws inside each frame's render pass, with the sprite
-    // pipeline's depth test/write disabled
-    // (VulkanGraphicsBackend::RecordCommandBuffer -- `drawSpritesFor(...)`
-    // runs before `draw3DFor(...)`), so any SpriteBatch HUD is painted over
+    // SpriteBatch, so HUD draw order remains explicit and renderer-independent
     // by the 3D scene no matter what the game does -- the exact
     // "HUD/animation icon visible for a second, then gone" bug reported
     // live 2026-07-10 (EasyGL draws in submission order and was fine).
@@ -109,8 +105,7 @@ namespace GalaxyEggbert::Game
         // directly against `Decor.cpp:1294-1306`: a full-width pad.png
         // icon-15 panel at the very top of screen ((0,0)-(640,40), real
         // opacity 1.0 -- a DIFFERENT draw call from the treasure counter's
-        // own 0.6-opacity panel, not the same CNA-Vulkan-Alpha-under-1
-        // workaround needed here), with the hint text centered at (320,5),
+        // own 0.6-opacity panel), with the hint text centered at (320,5),
         // shrunk down (real `min(640/textWidth, 1.0)`, approximated here
         // via this class's own fixed glyph-advance model rather than the
         // real proportional font width) if it would otherwise overflow the

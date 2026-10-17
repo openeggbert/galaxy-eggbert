@@ -21,13 +21,13 @@ compatibility aliases, so the target also copies the known `bin/` DLLs from that
 a fallback. Its output directory therefore contains `libwinpthread-1.dll`, `SDL3.dll`,
 `SDL3_image.dll`, and `SDL3_mixer.dll` next to the executable.
 
-### Current 3D backend blocker
+### Current verification gap
 
-The staged `GalaxyEggbertCNA.exe` was launched through Wine on 2026-07-25. It created its SDL
-window and loaded `worlds3d/world001.vwr` plus its background texture, proving the runtime DLL
-bundle works. It then terminated at `CreateVertexBuffer`: CNA's `SDL_RENDERER` backend reports
-itself as 2D-only and does not implement 3D vertex buffers. Do not present this build as a runnable
-Windows 3D release until a Windows 3D backend is selected and verified.
+The previous staged `GalaxyEggbertCNA.exe` packaging run proved that the runtime DLL bundle could
+reach window and asset creation, but it used a CNA renderer that has since been retired. Current
+CNA offers `SDL_GPU` and `DIRECTX9` for Windows builds. The documented cross-build selects
+`SDL_GPU`; do not present Windows as supported until that configuration builds and completes a
+live 3D run.
 
 ### Linux / Web / Android
 

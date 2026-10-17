@@ -6,6 +6,8 @@ cmake-build-web/*
 /build/
 /build-cna/
 /build-cna-vulkan/
+/build-cna-opengl3/
+/build-cna-webgl2/
 # Android signing — never commit private keys or passwords
 *.keystore
 *.jks

@@ -20,9 +20,9 @@
 #include <Easy3D/BillboardMeshRenderer.hpp>
 #include <Easy3D/Camera3D.hpp>
 #include <Easy3D/CubeMeshRenderer.hpp>
-#include <Microsoft/Xna/Framework/GamerServices/AvatarRenderer.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
+#include <Microsoft/Xna/Framework/Graphics/SkinnedEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
 #include <Microsoft/Xna/Framework/GraphicsDeviceManager.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
@@ -42,8 +42,8 @@ namespace GalaxyEggbert::CNA
     // (default, unchanged since 2026-07-05 -- Blupi's current animation
     // state shown via a small 2D indicator in the screen's bottom-right
     // corner instead of an in-world sprite) and third-person, showing a
-    // real GPU-skinned 3D model via CNA's AvatarRenderer real-rendering
-    // extension (see ../cna/docs/avatar-real-rendering-ext.md) -- currently
+    // real GPU-skinned 3D model via CNA's SkinnedModelEXT/SkinnedEffect
+    // APIs (see ../cna/docs/skinned-model-ext.md) -- currently
     // a temporary placeholder model (avatars3d/blupi_placeholder/, see its
     // own README.md), not yet a real Blupi model. "C" toggles between modes
     // ("C" is the project's established switch-camera key).
@@ -733,16 +733,16 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Easy3D::CubeMeshRenderer> objectCubeMeshRenderer_;
 
         // Third-person-mode 3D model (2026-07-09, NEXT.md §3) -- CNA's
-        // AvatarRenderer real-rendering extension (../cna/docs/
-        // avatar-real-rendering-ext.md), loaded via getContentProperty()
-        // with its RootDirectory pointed at avatars3d/ (see LoadContent()).
+        // generic SkinnedModelEXT/SkinnedEffect path (../cna/docs/
+        // skinned-model-ext.md), loaded via getContentProperty() with its
+        // RootDirectory pointed at avatars3d/ (see LoadContent()).
         // Currently loads avatars3d/blupi_placeholder/ (see its own
         // README.md) -- a temporary CC0/CC-BY placeholder, not a real Blupi
         // model. blupiModelLoaded_ guards against avatars3d/ being absent
         // (e.g. a build that never ran the CMake copy step) -- degrades to
         // staying in first-person mode rather than crashing.
         std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT> blupiModel_;
-        std::unique_ptr<Microsoft::Xna::Framework::GamerServices::AvatarRenderer> blupiAvatarRenderer_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::SkinnedEffect> blupiEffect_;
         bool blupiModelLoaded_ = false;
 
         // Tracks which clip is currently playing so blupiClipTimeSeconds_

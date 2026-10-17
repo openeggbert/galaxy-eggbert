@@ -41,7 +41,7 @@ Blupi*). The project's build direction is changing:
 Three facts drive the shape of this migration plan:
 
 1. **Galaxy Eggbert's own `README.md` already describes the target CNA build** (target name
-   `GalaxyEggbert`, `CNA_BACKEND_*` CMake flags, Web/Windows cross-build instructions) — but
+   `GalaxyEggbert`, renderer-selection CMake flags, Web/Windows cross-build instructions) — but
    **`CMakeLists.txt` does not yet define any such target.** The README was apparently written
    ahead of the code. `CLAUDE.md`, `NEXT.md`, and `plan.md` still describe the Simple3D/U3D/Nova3D
    direction as current. These documents are now inconsistent with each other and need to be

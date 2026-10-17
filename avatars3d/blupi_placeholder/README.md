@@ -11,7 +11,7 @@ model is ready.
 Converted from Khronos Group's glTF Sample Assets "Fox" model
 (https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Fox) via
 CNA's own `tools/avatar_asset_pipeline/convert_avatar.py --embedded-clips`
-(see `../../cna/docs/avatar-real-rendering-ext.md`). The original glTF's
+(see CNA's `docs/skinned-model-ext.md`). The original glTF's
 single mesh primitive had no index accessor (non-indexed geometry), which
 the converter doesn't handle — patched with a synthetic sequential index
 buffer (0..N-1, matching the implicit non-indexed vertex order, no geometry

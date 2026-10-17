@@ -64,16 +64,7 @@ namespace GalaxyEggbert::Game
         // Real low-air warning: Decor.cpp:4621-4623 switches m_jauges[0]
         // from Blue to Red exactly when the water level drops to 25.
         constexpr int kWaterGaugeWarnLevel = 25;
-        // The real DrawInfo panel opacity is 0.6 -- restored 2026-07-18 now
-        // that EasyGL (not Vulkan) is the default graphics backend
-        // (CMakeLists.txt), which renders a BasicEffect Alpha<1 draw
-        // correctly. Forced to 1.0 from 2026-07-10 through today: on CNA's
-        // Vulkan backend a BasicEffect draw with Alpha < 1 doesn't render at
-        // all (verified empirically 2026-07-10: the identical panel quad
-        // appears at 1.0 and vanishes at 0.6, while EasyGL shows it at
-        // both). This is a genuine CNA/Vulkan-only bug, still unfixed --
-        // building GalaxyEggbertCNA with `-DCNA_GRAPHICS_RENDERER=VULKAN`
-        // will make every semi-transparent panel vanish again.
+        // The real DrawInfo panel opacity is 0.6.
         constexpr float kPanelOpacity = 0.6f;
 
         // blupi.png / element.png share the 60px/10-column tile convention
@@ -636,9 +627,7 @@ namespace GalaxyEggbert::Game
 
         // Training-hint banner (plan.md HUD-024): full-width panel at real
         // opacity 1.0 (own quad batch, NOT sharing padQuads/kPanelOpacity --
-        // that panel is 0.6 in the real source, even though both currently
-        // render at 1.0 here for the same CNA-Vulkan reason, see
-        // kPanelOpacity's own comment), with the hint text centered and
+        // that panel is 0.6 in the real source), with the hint text centered and
         // shrunk to fit if needed.
         if (trainingHint != nullptr && trainingHint[0] != '\0')
         {
