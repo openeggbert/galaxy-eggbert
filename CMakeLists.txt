@@ -60,6 +60,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         set(EASY3D_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../easy-3d")
     endif()
 
+    set(CNA_ENGINE_HOME "" CACHE PATH
+        "Path to the cna-engine source directory. Defaults to ../cna-engine.")
+    if(NOT CNA_ENGINE_HOME)
+        set(CNA_ENGINE_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../cna-engine")
+    endif()
+
     if(NOT EXISTS "${CNA_HOME}/CMakeLists.txt")
         message(FATAL_ERROR
             "CNA not found at '${CNA_HOME}'. Clone it there or set -DCNA_HOME=<path>.")
@@ -69,8 +75,14 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             "easy-3d not found at '${EASY3D_HOME}'. Clone it there or set -DEASY3D_HOME=<path>.")
     endif()
 
+    if(NOT EXISTS "${CNA_ENGINE_HOME}/CMakeLists.txt")
+        message(FATAL_ERROR
+            "cna-engine not found at '${CNA_ENGINE_HOME}'. Clone it there or set -DCNA_ENGINE_HOME=<path>.")
+    endif()
+
     message(STATUS "CNA source: ${CNA_HOME}")
     message(STATUS "easy-3d source: ${EASY3D_HOME}")
+    message(STATUS "cna-engine source: ${CNA_ENGINE_HOME}")
 
     # Prefer the build tree's normal incremental objects over a second copy
     # in ccache. On this workstation ccache occupied 3.7 GiB while only
@@ -99,7 +111,27 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     if(NOT TARGET CNA)
         set(CNA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(CNA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+        # cna-engine links CNA's static module libraries; a shared CNA would
+        # put a second copy of CNA into the same process (cna-engine's
+        # upstream-issues.md, UP-006), so CNA is built statically.
+        set(CNA_SHARED_LIBRARY OFF CACHE BOOL "" FORCE)
         add_subdirectory("${CNA_HOME}" CNA_dep)
+    endif()
+
+    # cna-engine's strict modules (CnaEngine::Core, CnaEngine::Graphics) over
+    # the CNA just added: XNA 4.0 types only. Its tests, examples and the
+    # modules that need CNA's extensions are not built.
+    set(CNA_ENGINE_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(CNA_ENGINE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(CNA_ENGINE_WITH_EXTENDED OFF CACHE BOOL "" FORCE)
+    set(CNA_ENGINE_WITH_ENHANCED_GRAPHICS OFF CACHE BOOL "" FORCE)
+    set(CNA_ENGINE_INSTALL OFF CACHE BOOL "" FORCE)
+    set(CNA_ENGINE_PILOT_PROBES OFF CACHE BOOL "" FORCE)
+    # A new compiler warning inside the engine must not break this game's
+    # native, web or Android build.
+    set(CNA_ENGINE_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
+    if(NOT TARGET CnaEngine::Graphics)
+        add_subdirectory("${CNA_ENGINE_HOME}" cna_engine_dep EXCLUDE_FROM_ALL)
     endif()
 
     # Keep easy-3d's own tests/examples out of this build too.
@@ -172,6 +204,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     else()
         target_link_libraries(GalaxyEggbertCNA PRIVATE easy3d)
     endif()
+    target_link_libraries(GalaxyEggbertCNA PRIVATE CnaEngine::Graphics)
 
     if(TARGET SDL3::SDL3main)
         target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3main)
@@ -361,6 +394,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     else()
         target_link_libraries(VerifyInteractionSystem PRIVATE easy3d)
     endif()
+    target_link_libraries(VerifyInteractionSystem PRIVATE CnaEngine::Graphics)
     if(BUILD_TESTING)
         # WORKING_DIRECTORY = repo root: this tool's default world path
         # ("worlds3d/world999.vwr") is relative, same quirk noted above.
@@ -396,6 +430,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     else()
         target_link_libraries(VerifyGEInputPad PRIVATE easy3d)
     endif()
+    target_link_libraries(VerifyGEInputPad PRIVATE CnaEngine::Graphics)
     if(BUILD_TESTING)
         # No file/working-directory dependency -- LoadContent() is
         # deliberately never called (see this tool's own top comment).
@@ -438,6 +473,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     else()
         target_link_libraries(GEEditorVerifySupport PRIVATE easy3d)
     endif()
+    target_link_libraries(GEEditorVerifySupport PRIVATE CnaEngine::Graphics)
 
     function(ge_add_editor_verify target source)
         add_executable(${target} ${source})
@@ -458,6 +494,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         else()
             target_link_libraries(${target} PRIVATE easy3d)
         endif()
+        target_link_libraries(${target} PRIVATE CnaEngine::Graphics)
         if(BUILD_TESTING)
             add_test(NAME ${target} COMMAND ${target})
         endif()

@@ -3,7 +3,7 @@
 # not done yet); no golden-frame/golden-trace steps (those need a real/virtual GPU display and
 # stay a manual, explicit local step -- see NEXT.md section 7).
 #
-# Sibling repos (cna, easy-3d, easy-gl, sharp-runtime, meta-gl) are plain sibling checkouts
+# Sibling repos (cna, cna-engine, easy-3d, easy-gl, sharp-runtime, meta-gl) are plain sibling checkouts
 # referenced via add_subdirectory(../x) in CMakeLists.txt, not git submodules of this repo -- same
 # pattern ../cna's own devices-tests.yml/input-ci.yml already use for the same reason. Pinned to
 # the exact commits NEXT.md's "Sibling-repo commit pins" table records as last verified to
@@ -39,11 +39,19 @@ jobs:
       - name: Checkout cna
         uses: actions/checkout@v4
         with:
-          repository: openeggbert/cna
-          ref: ac3aaaeb2a5ba27dbd9e22e782c7041e6e40947c
+          repository: libcna/cna
+          # cna-engine's compatibility baseline (its docs/adr/ADR-002); move both together.
+          ref: 900d0db3b52d76d3115ebda0a0e04a25fefad1a5
           path: cna
-          submodules: true # non-recursive on purpose -- avoids SDL_image's/SDL_mixer's own
-                            # nested optional-codec submodules this project's CMake args disable
+          submodules: true # non-recursive on purpose -- avoids SDL_mixer's own nested
+                            # optional-codec submodules this project's CMake args disable
+
+      - name: Checkout cna-engine
+        uses: actions/checkout@v4
+        with:
+          repository: libcna/cna-engine
+          ref: e56fa0f23d223d82500a5abc132db68b9b5c3db6
+          path: cna-engine
 
       - name: Checkout easy-3d
         uses: actions/checkout@v4
@@ -55,15 +63,15 @@ jobs:
       - name: Checkout easy-gl
         uses: actions/checkout@v4
         with:
-          repository: openeggbert/easy-gl
-          ref: 62c0a248a6c4144abaf92c0530cc2a2395e5fd37
+          repository: libcna/easy-gl
+          ref: f4d6afaf16cdc7e7e73130950bc45e6d865b41bd # v0.1.1, the version this CNA requires
           path: easy-gl
 
       - name: Checkout sharp-runtime
         uses: actions/checkout@v4
         with:
-          repository: openeggbert/sharp-runtime
-          ref: d2cc9cce5b494294e4c34594b85e7948f81be214
+          repository: libcna/sharp-runtime
+          ref: f2aecfefeac171b331787e5cdc4849507363ef0e
           path: sharp-runtime
 
       # Not in NEXT.md's "Sibling-repo commit pins" table (a real gap fixed alongside this
@@ -72,8 +80,8 @@ jobs:
       - name: Checkout meta-gl
         uses: actions/checkout@v4
         with:
-          repository: openeggbert/meta-gl
-          ref: d51fcd7f455de8e3df3549edbed84f2b5527f18a
+          repository: libcna/meta-gl
+          ref: dd3b30055d55fdc42240de7af248259338256992 # v0.4.1, the version this CNA requires
           path: meta-gl
 
       # VerifyMoveObjectTypesCna/VerifyBigDecorParsingCna (CMakeLists.txt WORKING_DIRECTORY =
@@ -105,14 +113,14 @@ jobs:
             libthai-dev libwayland-dev libdecor-0-dev \
             libavcodec-dev libavformat-dev libavutil-dev libswresample-dev
 
-      # Vendored SDL3/SDL3_image/SDL3_mixer are built from source on first configure (several
+      # Vendored SDL3/SDL3_mixer are built from source on first configure (several
       # minutes) into cna/.sdl-prebuilt-Linux-x86_64/ -- keyed off the exact submodule commits so
       # a submodule bump invalidates it automatically, same pattern as ../cna's own CI.
       - name: Cache vendored SDL prebuilt tree
         uses: actions/cache@v4
         with:
-          path: cna/.sdl-prebuilt-Linux-x86_64
-          key: sdl-prebuilt-linux-x86_64-${{ hashFiles('cna/third_party/SDL/**', 'cna/third_party/SDL_image/**', 'cna/third_party/SDL_mixer/**') }}
+          path: cna/.sdl-prebuilt-Linux-x86_64*
+          key: sdl-prebuilt-linux-x86_64-${{ hashFiles('cna/third_party/SDL/**', 'cna/third_party/SDL_mixer/**') }}
 
       - name: Cache ccache
         uses: actions/cache@v4
