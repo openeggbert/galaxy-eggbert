@@ -178,11 +178,14 @@ pass), not on every unrelated galaxy-eggbert commit.
 
 | Repo | Verified commit | Date |
 |---|---|---|
-| `../easy-3d` | `ad63bf9` | 2026-10-17 |
-| `../../libcna/cna` | `00a7676cd` | 2026-10-17 |
-| `../easy-gl` | `62c0a248` | 2026-07-19 |
-| `../sharp-runtime` | `d2cc9cce` | 2026-07-16 |
-| `../meta-gl` | `d51fcd7f` | 2026-07-18 |
+| `../cna-engine` (here `../../libcna/cna-engine`) | `d86c62da` | 2026-10-20 |
+| `../cna` (here `~/deps/cna-baseline`, cna-engine's compatibility baseline) | `900d0db3b` | 2026-10-20 |
+| `../easy-gl` (here `../../libcna/easy-gl`) | `f4d6afaf` (v0.1.1) | 2026-10-20 |
+| `../sharp-runtime` (here `~/deps/sharp-runtime-baseline`) | `f2aecfef` | 2026-10-20 |
+| `../meta-gl` (here `../../libcna/meta-gl`) | `dd3b3005` (v0.4.1) | 2026-10-20 |
+
+easy-3d left this table on 2026-10-20, when cna-engine replaced it (§3, "Moved from easy-3d to
+cna-engine"); it was last verified at `ad63bf9` with CNA `00a7676cd` on 2026-10-17.
 
 `../meta-gl` was added to this table 2026-07-23, found missing while setting up `BUILD-009`'s CI
 (`../easy-gl/CMakeLists.txt` unconditionally `add_subdirectory(../meta-gl)` — a genuine transitive
@@ -418,6 +421,42 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### refactor: moved from easy-3d to cna-engine (2026-10-20)
+
+easy-3d is gone; cna-engine's strict modules (`CnaEngine::Core`, `CnaEngine::Graphics`) are the
+helpers beside CNA. Branch `engine-adoption`, one commit per step:
+
+| Step | Change |
+|---|---|
+| build | cna-engine added after CNA and linked where easy3d was; CNA built statically (`CNA_SHARED_LIBRARY=OFF`, cna-engine's UP-006); CI checks out cna-engine and moves CNA to cna-engine's baseline `900d0db3b` with the easy-gl/meta-gl/sharp-runtime versions it requires |
+| camera | `CnaEngine::Graphics::Camera` (`SetLookAt`, whose view is exactly XNA's `CreateLookAt`; `SetPerspective`) instead of `Easy3D::Camera3D`; the look-at target is kept by the game (`cameraTarget_`) and the editor (`WorldEditor::CameraTarget()`) |
+| geometry and drawing | every mesh built with `MeshBuilder` (`AddBox` with `BoxFaces`, `AddPlate`, `AddCrossedPlates`, `AddBillboard`) and drawn as a `GpuMesh` with the caller's `BasicEffect`; `UvRect`/`BoxFace`/`PlateAxis` from the engine; the teleporter tip is `AddPyramidTip()` in `TerrainRenderer.cpp`; shared pieces in `src/GalaxyEggbert/Game/TexturedMesh.hpp` |
+| removal | easy-3d out of CMake (`EASY3D_HOME` gone, `CNA_ENGINE_HOME` new), CI and the docs |
+| web | the docs site describes cna-engine |
+
+Verification (Release, `OPENGLES3`, CNA `900d0db3b`, built in a worktree `build/`): before the
+first step and after every step, 93/93 CTest cases pass (`-E easy-gl-resource-smoke-tests`), and
+the three golden frames, the behavioral trace and the startup screenshots (`screenshot.png`,
+`screenshot_hud.png`) are **byte-identical** to the pre-migration build's, both under Xvfb
+(llvmpipe) and on the GPU (`SDL_VIDEODRIVER=offscreen`, Radeon 780M). The captures are
+deterministic (two pre-migration runs were byte-identical). An `OPENGL33` build of the final state
+ran the menus and the editor under Xvfb (browser, new world, palette, placing blocks, camera
+flight). All 20 changed sources and cna-engine's strict modules also compile with Emscripten's
+`em++` against the `WEBGL2` headers; a full web build was not run.
+
+Known differences: an eye exactly on its target (the chase camera pulled all the way in against a
+wall) used to give a NaN view for that frame; the camera now keeps the previous frame's view.
+
+Found on the way, not changed (independent of the migration):
+- `tests/golden/` no longer matches `develop` with this CNA: the trace runs one tick ahead of the
+  committed reference, and all three frames differ accordingly. The references need regenerating
+  once the CNA revision is settled.
+- The editor's highlight box draws its edges with `FillMode::WireFrame` without checking
+  `GraphicsCapability::WireFrame`. On an OpenGL ES context without `GL_NV_polygon_mode` (llvmpipe
+  and the Radeon 780M on this machine) CNA throws and the game terminates when the editor shows its
+  placement preview, so the native `OPENGLES3` default cannot run the editor here; `OPENGL33` can
+  (cna-engine's upstream-issues.md, UP-014).
 
 ### feat: BUILD-009 — GitHub Actions CI for GalaxyEggbertCNA, confirmed green on a real run (2026-07-23)
 

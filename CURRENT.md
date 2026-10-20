@@ -1,6 +1,6 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-10-17. Update this file whenever a change alters the current state, a known
+_Last verified: 2026-10-20. Update this file whenever a change alters the current state, a known
 limitation, a supported build, or the actionable backlog. Keep historical detail in `NEXT.md` and
 `plan.md`, not here._
 
@@ -49,8 +49,9 @@ verified native and WebGL 2 configurations:
 
 | Build | Result |
 |---|---|
-| `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the known external `easy-gl-resource-smoke-tests` excluded; normal startup and the three-frame golden capture run successfully under Xvfb |
-| `build-cna-webgl2` (`WEBGL2`) | Emscripten release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data`; a 12-second final-artifact headless-Chrome run creates a real WebGL 2 context, loads `world001`, and renders without an application error |
+| `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the known external `easy-gl-resource-smoke-tests` excluded; normal startup and the three-frame golden capture run successfully under Xvfb (2026-10-17, before cna-engine; on 2026-10-20 an `OPENGL33` build on cna-engine ran the menus and the editor under Xvfb) |
+| `OPENGLES3` on cna-engine (2026-10-20) | 93/93 CTest cases pass; golden frames, behavioral trace and startup screenshots byte-identical to the easy-3d build under Xvfb and on the GPU (`NEXT.md` §3, "Moved from easy-3d to cna-engine") |
+| `build-cna-webgl2` (`WEBGL2`) | Emscripten release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data`; a 12-second final-artifact headless-Chrome run creates a real WebGL 2 context, loads `world001`, and renders without an application error (2026-10-17, before cna-engine; since then only compiled with `em++`, not linked or run) |
 
 The deterministic golden-frame and behavioral-trace harnesses are manual `xvfb-run` checks, not
 default CTest cases. Full commands and sibling-repository pins live in `NEXT.md` §2 and §7.
@@ -61,6 +62,11 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
   third-person uses a temporary placeholder. A real model/rig needs user input.
 - `easy-gl-resource-smoke-tests` fails inside the `easy-gl` sibling repository, not here; CI excludes
   it. A different test failure is a regression signal.
+- On an OpenGL ES context without `GL_NV_polygon_mode` (the native `OPENGLES3` default on Mesa,
+  llvmpipe and radeonsi alike) the editor terminates when it draws its wireframe placement preview;
+  use `OPENGL33` for the editor until the highlight box checks the capability (`NEXT.md` §3).
+- `tests/golden/` no longer matches `develop` with CNA `900d0db3b` (the trace runs one tick ahead);
+  the references need regenerating once the CNA revision is settled.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not
   call Windows supported until both pass.
 - Editor text is deliberately limited to functional readouts/notices (XYZ coordinates, background

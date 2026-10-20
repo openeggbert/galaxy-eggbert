@@ -50,7 +50,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: libcna/cna-engine
-          ref: e56fa0f23d223d82500a5abc132db68b9b5c3db6
+          ref: d86c62da9c6078435a1596e7a44d9b286d3b35ac
           path: cna-engine
 
       - name: Checkout easy-gl
