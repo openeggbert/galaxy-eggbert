@@ -60,7 +60,7 @@ namespace GalaxyEggbert
     };
 
     // One authoritative runtime definition for a voxel block type. The
-    // structure deliberately contains no CNA or Easy3D types, so world,
+    // structure deliberately contains no CNA or cna-engine types, so world,
     // gameplay, editor, renderer and verification code can share it.
     struct BlockDefinition final
     {

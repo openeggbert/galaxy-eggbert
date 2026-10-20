@@ -51,7 +51,7 @@ namespace GalaxyEggbert::Game::QuadBatch
                              float rotationDegrees,
                              float u0, float v0, float u1, float v1);
 
-    // Builds a fresh BillboardMeshRenderer from @p quads and draws it with
+    // Builds a fresh GpuMesh from @p quads and draws it with
     // an orthographic projection matching @p viewportW x @p viewportH (0,0
     // at the top-left, matching screen pixel coordinates) -- @p effect's
     // World/View/Projection/Alpha are set here; TextureEnabled/Texture/

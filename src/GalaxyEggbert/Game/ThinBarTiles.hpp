@@ -14,12 +14,12 @@ namespace GalaxyEggbert::Game
     // square blue end caps; explicitly a different shape than the existing
     // InnerFlatPlate/DirectionalCube modes, not a variant of either.
     //
-    // Reuses Easy3D::DirectionalCubeItem/AppendDirectionalCubeMesh directly,
+    // Reuses MeshBuilder::AddBox with per-face BoxFaces directly,
     // same technique as InnerPillarBox -- a thin bar is really just a
-    // DirectionalCubeItem with a non-cubic Size (full block width along its
+    // faced box with a non-cubic size (full block width along its
     // long axis, so adjacent bar blocks connect seamlessly when Blupi walks
     // across several in a row, thin in the other two dimensions) and
-    // per-face Visible/Uv. Oriented along X by default -- mobile-eggbert's
+    // per-face visible/uv. Oriented along X by default -- mobile-eggbert's
     // own 2D world has no Z depth, so every real bar conceptually runs
     // along its only horizontal axis; no per-instance rotation data exists
     // in the world format to pick a different orientation, same "no

@@ -100,8 +100,9 @@ namespace GalaxyEggbert::Game
             // projection in FlushQuads): corner order top-left, top-right,
             // bottom-right, bottom-left is visually CLOCKWISE on screen --
             // the winding that survives XNA's default CullCounterClockwise
-            // (same convention as easy-3d's CubeMesh/BillboardMesh after
-            // the 2026-07-10 winding root-cause fix).
+            // (same convention as the cube and billboard meshes since the
+            // 2026-07-10 winding root-cause fix, kept by cna-engine's
+            // MeshBuilder).
             const std::uint32_t c0 = mesh.AddVertex(TexturedVertex({x0, y0, 0.0f}, {u0, v0}));
             const std::uint32_t c1 = mesh.AddVertex(TexturedVertex({x1, y0, 0.0f}, {u1, v0}));
             const std::uint32_t c2 = mesh.AddVertex(TexturedVertex({x1, y1, 0.0f}, {u1, v1}));

@@ -3,7 +3,7 @@
 # not done yet); no golden-frame/golden-trace steps (those need a real/virtual GPU display and
 # stay a manual, explicit local step -- see NEXT.md section 7).
 #
-# Sibling repos (cna, cna-engine, easy-3d, easy-gl, sharp-runtime, meta-gl) are plain sibling checkouts
+# Sibling repos (cna, cna-engine, easy-gl, sharp-runtime, meta-gl) are plain sibling checkouts
 # referenced via add_subdirectory(../x) in CMakeLists.txt, not git submodules of this repo -- same
 # pattern ../cna's own devices-tests.yml/input-ci.yml already use for the same reason. Pinned to
 # the exact commits NEXT.md's "Sibling-repo commit pins" table records as last verified to
@@ -52,13 +52,6 @@ jobs:
           repository: libcna/cna-engine
           ref: e56fa0f23d223d82500a5abc132db68b9b5c3db6
           path: cna-engine
-
-      - name: Checkout easy-3d
-        uses: actions/checkout@v4
-        with:
-          repository: openeggbert/easy-3d
-          ref: e2d1cfa277a3ffe9637ddab5a4fe3ff2f8bf5887
-          path: easy-3d
 
       - name: Checkout easy-gl
         uses: actions/checkout@v4

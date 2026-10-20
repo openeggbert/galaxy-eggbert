@@ -17,7 +17,7 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Engine-independent shared sources (no CNA/Easy3D dependencies).
+# Engine-independent shared sources (no CNA/cna-engine dependencies).
 # Shared by the game target and the engine-agnostic test suite.
 set(GE_SHARED_SOURCES
     src/GalaxyEggbert/Worlds/BinaryIO.cpp
@@ -30,34 +30,29 @@ set(GE_SHARED_SOURCES
 )
 
 # =============================================================================
-# Direct CNA + Easy3D target — GalaxyEggbertCNA (long-term direction, see CLAUDE.md
+# Direct CNA + cna-engine target — GalaxyEggbertCNA (long-term direction, see CLAUDE.md
 # "Current Direction Lock")
 #
 # ON by default; a plain `cmake -S . -B build` configures the maintained
 # playable game, including terrain, objects, gameplay, HUD, sound, menus,
 # persistence, and the in-game 3D editor. See CURRENT.md for verified status
-# and easy3d.md/plan.md for the original migration analysis and task history.
+# and easy3d.md/plan.md for the original migration analysis and task history (easy-3d
+# itself was replaced by cna-engine's strict modules on 2026-10-20).
 #
 # Build with:
 #   cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON
 #   cmake --build build-cna --target GalaxyEggbertCNA
 # =============================================================================
 
-option(GALAXY_EGGBERT_BUILD_CNA "Build the direct CNA + Easy3D Galaxy Eggbert target (actively developed -- see CLAUDE.md)" ON)
+option(GALAXY_EGGBERT_BUILD_CNA "Build the direct CNA + cna-engine Galaxy Eggbert target (actively developed -- see CLAUDE.md)" ON)
 
 if(GALAXY_EGGBERT_BUILD_CNA)
 
-    # Locate CNA and easy-3d: explicit option > sibling directory.
+    # Locate CNA and cna-engine: explicit option > sibling directory.
     set(CNA_HOME "" CACHE PATH
         "Path to the CNA source directory. Defaults to ../cna.")
     if(NOT CNA_HOME)
         set(CNA_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../cna")
-    endif()
-
-    set(EASY3D_HOME "" CACHE PATH
-        "Path to the easy-3d source directory. Defaults to ../easy-3d.")
-    if(NOT EASY3D_HOME)
-        set(EASY3D_HOME "${CMAKE_CURRENT_SOURCE_DIR}/../easy-3d")
     endif()
 
     set(CNA_ENGINE_HOME "" CACHE PATH
@@ -70,10 +65,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         message(FATAL_ERROR
             "CNA not found at '${CNA_HOME}'. Clone it there or set -DCNA_HOME=<path>.")
     endif()
-    if(NOT EXISTS "${EASY3D_HOME}/CMakeLists.txt")
-        message(FATAL_ERROR
-            "easy-3d not found at '${EASY3D_HOME}'. Clone it there or set -DEASY3D_HOME=<path>.")
-    endif()
 
     if(NOT EXISTS "${CNA_ENGINE_HOME}/CMakeLists.txt")
         message(FATAL_ERROR
@@ -81,7 +72,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     endif()
 
     message(STATUS "CNA source: ${CNA_HOME}")
-    message(STATUS "easy-3d source: ${EASY3D_HOME}")
     message(STATUS "cna-engine source: ${CNA_ENGINE_HOME}")
 
     # Prefer the build tree's normal incremental objects over a second copy
@@ -104,10 +94,9 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     set(CNA_GRAPHICS_RENDERER "${_ge_default_cna_renderer}" CACHE STRING
         "CNA graphics renderer to use; OPENGLES3 (native) and WEBGL2 (Emscripten) select the EasyGL family. See ../cna/cmake/RendererSelection.cmake for the full identity list.")
 
-    # Add CNA first: easy-3d's own CMakeLists.txt auto-detects an existing
-    # `CNA` target from the parent project and links against it instead of
-    # building its own copy (see easy-3d/CMakeLists.txt "Resolve CNA linkage").
-    # Keep CNA's own tests/examples out of this build — we only need the library.
+    # Add CNA first: cna-engine (below) links the CNA module targets this
+    # creates instead of building its own copy. Keep CNA's own
+    # tests/examples out of this build — we only need the library.
     if(NOT TARGET CNA)
         set(CNA_BUILD_TESTS OFF CACHE BOOL "" FORCE)
         set(CNA_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -132,13 +121,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     set(CNA_ENGINE_WARNINGS_AS_ERRORS OFF CACHE BOOL "" FORCE)
     if(NOT TARGET CnaEngine::Graphics)
         add_subdirectory("${CNA_ENGINE_HOME}" cna_engine_dep EXCLUDE_FROM_ALL)
-    endif()
-
-    # Keep easy-3d's own tests/examples out of this build too.
-    set(EASY3D_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-    set(EASY3D_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-    if(NOT TARGET easy3d)
-        add_subdirectory("${EASY3D_HOME}" easy3d_dep)
     endif()
 
     add_executable(GalaxyEggbertCNA
@@ -198,12 +180,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # truth for whichever public identity CNA_GRAPHICS_RENDERER selected.
     target_link_libraries(GalaxyEggbertCNA PRIVATE CNA SHARP_RUNTIME)
 
-    # Prefer the easy3d::easy3d alias if present.
-    if(TARGET easy3d::easy3d)
-        target_link_libraries(GalaxyEggbertCNA PRIVATE easy3d::easy3d)
-    else()
-        target_link_libraries(GalaxyEggbertCNA PRIVATE easy3d)
-    endif()
     target_link_libraries(GalaxyEggbertCNA PRIVATE CnaEngine::Graphics)
 
     if(TARGET SDL3::SDL3main)
@@ -352,7 +328,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # Scripted verification for InteractionSystem (2026-07-10, platform
     # lift patrol/crate push/pickup collection) against the real
     # worlds3d/world999.vwr sample world. Needs CNA linked (Sound touches
-    # Microsoft::Xna::Framework::Audio types) but not easy3d/SDL3main --
+    # Microsoft::Xna::Framework::Audio types) but not SDL3main --
     # Sound::LoadContent() is never called, so no live audio device is
     # exercised at runtime, only symbols resolved at link time. Run from the
     # repo root (relative default path "worlds3d/world999.vwr"), same
@@ -389,11 +365,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     else()
         target_link_libraries(VerifyInteractionSystem PRIVATE CNA SHARP_RUNTIME)
     endif()
-    if(TARGET easy3d::easy3d)
-        target_link_libraries(VerifyInteractionSystem PRIVATE easy3d::easy3d)
-    else()
-        target_link_libraries(VerifyInteractionSystem PRIVATE easy3d)
-    endif()
     target_link_libraries(VerifyInteractionSystem PRIVATE CnaEngine::Graphics)
     if(BUILD_TESTING)
         # WORKING_DIRECTORY = repo root: this tool's default world path
@@ -406,9 +377,9 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # Jump/Action/Pause + Pause-row hit-testing) -- pure layout/press-state
     # math driven by synthetic MouseState values, no GraphicsDevice/window
     # needed at runtime, but InputPad.cpp's LoadContent()/DrawPlay()/
-    # DrawPause() still reference CNA Texture2D/BasicEffect and
-    # Easy3D::BillboardMeshRenderer symbols, so this links the same way
-    # GalaxyEggbertCNA itself does (CNA + backend + SHARP_RUNTIME + easy3d).
+    # DrawPause() still reference CNA Texture2D/BasicEffect and cna-engine
+    # GpuMesh symbols, so this links the same way GalaxyEggbertCNA itself
+    # does (CNA + backend + SHARP_RUNTIME + cna-engine).
     add_executable(VerifyGEInputPad
         tools/VerifyGEInputPad.cpp
         src/GalaxyEggbert/Game/InputPad.cpp
@@ -424,11 +395,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             SHARP_RUNTIME)
     else()
         target_link_libraries(VerifyGEInputPad PRIVATE CNA SHARP_RUNTIME)
-    endif()
-    if(TARGET easy3d::easy3d)
-        target_link_libraries(VerifyGEInputPad PRIVATE easy3d::easy3d)
-    else()
-        target_link_libraries(VerifyGEInputPad PRIVATE easy3d)
     endif()
     target_link_libraries(VerifyGEInputPad PRIVATE CnaEngine::Graphics)
     if(BUILD_TESTING)
@@ -468,11 +434,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
     target_link_libraries(GEEditorVerifySupport PRIVATE CNA SHARP_RUNTIME)
-    if(TARGET easy3d::easy3d)
-        target_link_libraries(GEEditorVerifySupport PRIVATE easy3d::easy3d)
-    else()
-        target_link_libraries(GEEditorVerifySupport PRIVATE easy3d)
-    endif()
     target_link_libraries(GEEditorVerifySupport PRIVATE CnaEngine::Graphics)
 
     function(ge_add_editor_verify target source)
@@ -488,11 +449,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
                 SHARP_RUNTIME)
         else()
             target_link_libraries(${target} PRIVATE CNA SHARP_RUNTIME)
-        endif()
-        if(TARGET easy3d::easy3d)
-            target_link_libraries(${target} PRIVATE easy3d::easy3d)
-        else()
-            target_link_libraries(${target} PRIVATE easy3d)
         endif()
         target_link_libraries(${target} PRIVATE CnaEngine::Graphics)
         if(BUILD_TESTING)
@@ -570,8 +526,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
             set(CPACK_COMPONENTS_ALL Runtime)
             # CPack otherwise invokes the root install with no component,
-            # which recursively installs library/test artifacts from CNA and
-            # Easy3D as well. Package only this project's Runtime component.
+            # which recursively installs library/test artifacts from CNA as
+            # well. Package only this project's Runtime component.
             set(CPACK_INSTALL_CMAKE_PROJECTS
                 "${CMAKE_BINARY_DIR};${CMAKE_PROJECT_NAME};Runtime;/")
             include(CPack)

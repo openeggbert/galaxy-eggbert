@@ -16,8 +16,8 @@ namespace GalaxyEggbert::Game
     // and real mobile-eggbert's 2D sprite has no axis concept at all to
     // derive a "correct" per-icon default from (2026-07-11, user feedback).
     // Deliberately engine-agnostic (only depends on GalaxyEggbert::Worlds,
-    // no Easy3D) so world-authoring tools (e.g. tools/GenerateSampleWorld3D.cpp)
-    // can set this metadata without linking Easy3D/CNA, matching
+    // no cna-engine) so world-authoring tools (e.g. tools/GenerateSampleWorld3D.cpp)
+    // can set this metadata without linking cna-engine/CNA, matching
     // BlupiController/WorldRuntime's own established precedent for
     // this tree. Stored as sparse block extra-metadata
     // (Worlds::World::setBlockExtraMetadata), 1-byte payload: 0 (or

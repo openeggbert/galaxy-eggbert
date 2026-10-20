@@ -11,9 +11,10 @@ Galaxy Eggbert is a faithful 3D remake of **mobile-eggbert** (a C++ port of the 
 
 **`GalaxyEggbertCNA` is the actively developed target.** It is playable and includes 3D terrain,
 objects, gameplay, HUD, sound, menus, save/progress, and a complete in-game 3D world editor. It is
-built directly on **CNA** (a C++ reimplementation of the XNA 4.0 API), with **Easy3D** used as a
-small helper library beside CNA (cameras, texture atlas, billboard/cube batching); Easy3D does not
-hide CNA and game code can call CNA directly. See [CURRENT.md](CURRENT.md) for verified current
+built directly on **CNA** (a C++ reimplementation of the XNA 4.0 API), with the strict modules of
+**cna-engine** used as helpers beside CNA (camera, mesh builder for cubes/plates/billboards, GPU
+meshes, texture regions); they do not hide CNA and game code calls CNA directly. (Until 2026-10-20
+the helper library was easy-3d, which cna-engine replaced.) See [CURRENT.md](CURRENT.md) for verified current
 status, [NEXT.md](NEXT.md) for commands and detailed history, and [plan.md](plan.md) for research
 and the full historical task inventory.
 
@@ -23,7 +24,8 @@ and removed from the live tree on 2026-07-25. It remains recoverable in git hist
 ## Target direction
 
 The former long-term direction — Simple3D → U3D/Urho3D → Nova3D — is superseded by direct
-CNA + Easy3D (locked 2026-07-05). Galaxy Eggbert will run only on CNA long-term.
+CNA (locked 2026-07-05, with easy-3d as its helper library until cna-engine replaced it on
+2026-10-20). Galaxy Eggbert will run only on CNA long-term.
 
 ## mobile-eggbert
 
@@ -33,7 +35,7 @@ files) and its data/behavior (animation tables, gameplay logic) are the source o
 Galaxy Eggbert needs to match Speedy Blupi behavior exactly. **No changes are made to
 `mobile-eggbert` as part of this migration without explicit user approval.**
 
-Lua is not part of the first CNA/Easy3D migration phase.
+Lua is not part of the first CNA migration phase.
 
 ## Development
 
@@ -47,8 +49,8 @@ git submodule update --recursive
 ### `GalaxyEggbertCNA` build — the active target (default ON)
 
 For the verified capability and test baseline, see [CURRENT.md](CURRENT.md). Building requires
-sibling checkouts of `../cna` and `../easy-3d` (or
-`-DCNA_HOME=`/`-DEASY3D_HOME=` overrides).
+sibling checkouts of `../cna` and `../cna-engine` (or
+`-DCNA_HOME=`/`-DCNA_ENGINE_HOME=` overrides).
 
 #### Linux native build (confirmed working)
 

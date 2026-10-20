@@ -38,7 +38,7 @@ namespace GalaxyEggbert::Game
     // Blupi model exists) also renders here.
     //
     // Deliberately drawn as REAL 3D QUADS (BasicEffect + an orthographic
-    // pixel-space projection, via the same Easy3D::BillboardMeshRenderer
+    // pixel-space projection, via the same MeshBuilder/GpuMesh
     // upload/draw path the game's billboards already use) and NOT via CNA's
     // SpriteBatch, so HUD draw order remains explicit and renderer-independent
     // by the 3D scene no matter what the game does -- the exact
@@ -175,8 +175,8 @@ namespace GalaxyEggbert::Game
             float u0, v0, u1, v1;
         };
 
-        // Accumulates quads per texture, then uploads/draws each batch via
-        // BillboardMeshRenderer (positions are pixel coordinates; the
+        // Accumulates quads per texture, then uploads/draws each batch as a
+        // GpuMesh (positions are pixel coordinates; the
         // orthographic projection does the rest).
         void FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                         Microsoft::Xna::Framework::Graphics::BasicEffect& effect,

@@ -4,11 +4,11 @@
 // (renderers.md, Phase 1). The simulation (already graphics-free) populates a
 // SceneFrame each frame; a renderer consumes ONLY this, never the live sim
 // state. This is the seam that lets two interchangeable renderers exist behind
-// one IGameRenderer (a lightweight Easy3D renderer today, a hi-fi renderer
+// one IGameRenderer (a lightweight CNA + cna-engine renderer today, a hi-fi renderer
 // later) and that gives the golden/behavioral harness (REMAKE-ANALYSIS.md,
 // P0-1) a single deterministic artifact to capture and diff.
 //
-// Deliberately depends on NO Easy3D/CNA graphics types -- only on the
+// Deliberately depends on NO cna-engine/CNA graphics types -- only on the
 // engine-agnostic enums (GalaxyEggbert::Def::ObjectType, GalaxyEggbert::Def::SecretPower) and the graphics-free
 // controller enums (AnimState, VehicleMode). That keeps it headless-testable
 // and consumable by either renderer. Positions are plain world-space floats in
@@ -31,7 +31,7 @@
 namespace GalaxyEggbert::Game
 {
     // Minimal world-space vector, kept local so SceneFrame pulls in no
-    // Easy3D/CNA math header. The renderer converts to its own vector type.
+    // cna-engine/CNA math header. The renderer converts to its own vector type.
     struct SceneVec3
     {
         float x = 0.0f;

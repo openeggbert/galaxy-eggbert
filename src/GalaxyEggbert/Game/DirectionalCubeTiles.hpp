@@ -35,7 +35,7 @@ namespace GalaxyEggbert::Game
     // don't fake one) -- or, for a facing call, only once the crop image
     // gives an actually confident directional read.
     //
-    // Fills outFaces[6] (indexed by Easy3D::CubeFace) for the
+    // Fills outFaces (indexed by CnaEngine::Graphics::BoxFace) for the
     // DirectionalCube mode already selected by BlockDefinitionRegistry. A
     // "flat fallback color" face's
     // Uv is NOT tileUv -- it's a small swatch of the SAME tile's texture

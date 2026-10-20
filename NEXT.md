@@ -140,11 +140,12 @@ Note this editor is an explicit, user-approved **exception** to the faithful-rem
 UX is fine — inventing new *gameplay* mechanics is still not.
 
 **Important architectural decisions:**
-- **Direct CNA + Easy3D is the locked, sole target** (decided 2026-07-05). The retired pre-CNA
+- **Direct CNA is the locked, sole target** (decided 2026-07-05). The retired pre-CNA
   implementation was removed from the live tree on 2026-07-25 and remains in git history at
   `4afd53e`; do not resurrect its dependency path.
-- Easy3D is a small helper library beside CNA (cameras, texture atlas, batching) — it must not
-  hide CNA; game code calls CNA directly.
+- cna-engine's strict modules are the helpers beside CNA (camera, mesh builder, GPU meshes,
+  texture regions) — they must not hide CNA; game code calls CNA directly. They replaced the
+  former helper library easy-3d on 2026-10-20 (see "Moved from easy-3d to cna-engine" below).
 - `../mobile-eggbert` is **read-only, never modified, even temporarily**. Assets (PNGs, sounds,
   world files) are freely reused by direct path; code/data (tables, enum values, byte layouts) are
   reference-only and require explicit user approval to transcribe.

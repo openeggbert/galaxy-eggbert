@@ -8,10 +8,10 @@ namespace GalaxyEggbert::Game
     // questionnaire-all-remaining-tiles.md: the block's outer 6 faces are
     // never drawn at all (fully transparent); instead a smaller box (a
     // "post"/"pillar") sits centered inside it. Reuses
-    // Easy3D::DirectionalCubeItem/AppendDirectionalCubeMesh directly -- an
-    // InnerPillarBox is really just a DirectionalCubeItem with a Size
+    // MeshBuilder::AddBox with per-face BoxFaces directly -- an
+    // InnerPillarBox is really just a faced box with a size
     // smaller than the full block (see kInnerPillarWidth/kInnerPillarHeight
-    // below) and per-face Visible/Uv exactly like DirectionalCube.
+    // below) and per-face visible/uv exactly like DirectionalCube.
     //
     // 3 of 3 confirmed icons wired up (2026-07-08): icon 76 (4 side faces
     // textured, top/bottom open -- unstated in the questionnaire answer, so

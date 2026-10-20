@@ -13,12 +13,12 @@
 
 namespace GalaxyEggbert::Game
 {
-    // Builds one static Easy3D::CubeMeshRenderer covering every non-animated
+    // Builds one static GpuMesh covering every non-animated
     // opaque non-air cell of a loaded World, a second static renderer for
     // the small set of non-animated blocks that ALSO need alpha blending
     // (icons 30/31 -- see Draw()'s comment), a third for the icon-107
     // grass-top overlay (its own texture, drawn via DrawGrass() with a
-    // separate effect), plus a fourth CubeMeshRenderer for the animated,
+    // separate effect), plus a fourth GpuMesh for the animated,
     // alpha-blended subset (lava/crusher/saw/spike/fan/marine/temp -- drawn
     // opaque before 2026-07-09, fixed once object-m.png pixel sampling
     // showed these tiles are 44-81% transparent, not near-opaque like icons
@@ -77,7 +77,7 @@ namespace GalaxyEggbert::Game
         // Shared rebuild logic for m_animRenderer/m_waterRenderer: computes
         // each block's current-frame icon via AnimIcon(), applies
         // AppendSpecialGeometry() where applicable, and uploads a fresh
-        // CubeMeshRenderer. Returns nullptr if every block resolved to a
+        // GpuMesh. Returns nullptr if every block resolved to a
         // hidden frame (e.g. Temp's blank frames) — caller should just clear
         // its renderer pointer in that case rather than upload an empty mesh.
         [[nodiscard]] std::unique_ptr<CnaEngine::Graphics::GpuMesh> RebuildAnimatedRenderer(

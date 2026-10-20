@@ -3,8 +3,10 @@
 ## Current direction lock
 
 Galaxy Eggbert is a faithful 3D remake of `mobile-eggbert` / *Speedy Blupi*. The sole game target
-is `GalaxyEggbertCNA`: CNA is the engine/API surface and Easy3D is a small helper library beside
-it. Easy3D must not hide CNA or grow into a scene graph, ECS, or replacement engine.
+is `GalaxyEggbertCNA`: CNA is the engine/API surface, and cna-engine's strict modules
+(`CnaEngine::Core`, `CnaEngine::Graphics` -- camera, mesh builder, GPU meshes, texture regions; XNA
+4.0 types only) are the helpers beside it. They must not hide CNA: game code calls CNA directly.
+cna-engine replaced the former helper library easy-3d on 2026-10-20 (`NEXT.md`).
 
 The retired pre-CNA implementation was removed from the live tree on 2026-07-25 after playable
 parity and explicit user approval (`E3D-MIG-110..112`, `CLEANUP-S3D-001`). Its last state is
@@ -34,7 +36,7 @@ guidance.
 
 ## Repository boundaries
 
-- Do not modify sibling repositories (`../cna`, `../easy-3d`, `../easy-gl`, `../sharp-runtime`,
+- Do not modify sibling repositories (`../cna`, `../cna-engine`, `../easy-gl`, `../sharp-runtime`,
   `../meta-gl`, `../mobile-eggbert`) unless the user explicitly scopes that repository into the
   task.
 - Keep `InteractionSystem` free of controller, camera, and graphics dependencies.

@@ -75,7 +75,7 @@ namespace GalaxyEggbert::Game
         std::uint16_t icon = 0;
     };
 
-    // Minimal mobile-eggbert .txt world-file loader for the CNA/Easy3D target.
+    // Minimal mobile-eggbert .txt world-file loader for the CNA target.
     // Parses the tile grid, Blupi spawn point, and MoveObject records into
     // the engine-agnostic Worlds::World / mobileObjects_ list. Nothing here
     // renders yet — see plan.md Phase 5/6 and

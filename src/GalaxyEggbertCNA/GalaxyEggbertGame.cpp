@@ -352,8 +352,8 @@ namespace GalaxyEggbert::CNA
                   << nonAirBlocks << " non-air blocks, Y range [" << minY << ", " << maxY
                   << "]." << std::endl;
 
-        // Tile-atlas sanity check (plan.md E3D-MIG-053) — nothing queues a
-        // CubeBatch item from this yet; this only proves TileAtlas resolves
+        // Tile-atlas sanity check (plan.md E3D-MIG-053) — nothing builds a
+        // cube from this yet; this only proves TileAtlas resolves
         // known block types to plausible UV rects.
         const auto printTileUv = [this](const char* name, int blockType)
         {
@@ -367,7 +367,7 @@ namespace GalaxyEggbert::CNA
         printTileUv("GoldPillar", GalaxyEggbert::BlockTypes::GoldPillar);
 
         // Static terrain mesh for the loaded world (plan.md E3D-MIG-054) —
-        // one CubeBatch item per non-air cell, textured via TileAtlas.
+        // one box per non-air cell, textured via TileAtlas.
         auto& device = getGraphicsDeviceProperty();
         RebuildWorldPresentation();
 
@@ -3533,8 +3533,8 @@ namespace GalaxyEggbert::CNA
                 // phase, same reason and pattern as the billboard batches
                 // below -- types 47/48's chenille icon formulas now actually
                 // animate instead of being frozen at their first frame.
-                // CubeMeshRenderer has no in-place update API (only
-                // construction from vertex/index data), so a fresh mesh is
+                // An uploaded GpuMesh has no in-place update API (only
+                // construction from mesh data), so a fresh mesh is
                 // the only way to reflect a new icon/UV per frame -- cheap
                 // here since there are only a handful of cube objects.
                 auto cubeMesh = MakeTexturedMeshBuilder();
@@ -3809,7 +3809,7 @@ namespace GalaxyEggbert::CNA
         // (2026-07-09, WorldRuntime::Update()), with this pass selected by
         // ObjectDefinitionRegistry's Element source. Rebuilt
         // every frame since billboard vertex positions depend on the camera
-        // (Easy3D::BillboardMeshRenderer's header comment) -- convenient,
+        // (MeshBuilder::AddBillboard faces the camera's right/up) -- convenient,
         // since it also means the icon lookup naturally re-runs every frame
         // with the latest phase.
         if (objectEffect_ && !worldRuntime_.GetMobileObjects().empty())

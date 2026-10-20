@@ -106,9 +106,10 @@ namespace GalaxyEggbert::Game
         //     triangle graphics visibly failed to connect at the block's 4
         //     vertical edges ("ty hroty 4 textury trojúhelníku nejsou dole
         //     svázané k sobě");
-        // (3) reverted to a genuine tapering pyramid (`Easy3D::
-        //     PyramidTipItem`/`AppendPyramidTipMesh()`, re-added to
-        //     `../easy-3d` after round 1 had removed it) -- now combined
+        // (3) reverted to a genuine tapering pyramid (then easy-3d's
+        //     `PyramidTipItem`/`AppendPyramidTipMesh()`, re-added there after
+        //     round 1 had removed it; since 2026-10-20 AddPyramidTip()
+        //     below, same vertices) -- now combined
         //     with the alpha-blend fix from round 2, which independently
         //     fixes the original "black background" problem regardless of
         //     shape, so the pyramid's structurally-shared apex vertex
@@ -482,11 +483,11 @@ namespace GalaxyEggbert::Game
 
                     // Face culling (NEXT.md §8): only emit a face when its
                     // neighbor doesn't fully occlude it (see IsOccluderBlock).
-                    // Uses the same DirectionalCubeItem geometry AppendSpecialGeometry
+                    // Uses the same faced-box geometry AppendSpecialGeometry
                     // already uses for holed render modes -- with all 6 faces
-                    // Visible and the same Uv, it's byte-for-byte equivalent
-                    // to a plain UniformCube (confirmed by ../easy-3d's own
-                    // "all-visible-faces parity with AppendCubeMesh" test),
+                    // visible and the same uv, it's byte-for-byte equivalent
+                    // to a plain UniformCube (MeshBuilder::AddBox has one
+                    // corner table for both; cna-engine's Easy3DEquivalenceTests),
                     // so this doesn't change anything for a block with no
                     // solid neighbor (e.g. every isolated demo block in this
                     // sample world) -- only interior faces between two solid
@@ -536,10 +537,10 @@ namespace GalaxyEggbert::Game
         // Guarded the same way m_transparentStaticRenderer/m_grassRenderer
         // already are below (found 2026-07-18, plan.md EDITOR-107): a
         // genuinely empty (all-air) World -- e.g. the editor's brand-new
-        // "New World" -- has zero static blocks, and CubeMeshRenderer's
-        // Draw() unconditionally calls device.DrawIndexedPrimitives() with
-        // primitiveCount == indices.size()/3; CNA rejects primitiveCount
-        // <= 0 with an ArgumentOutOfRangeException. Every hand-authored
+        // "New World" -- has zero static blocks; easy-3d's mesh renderer then
+        // drew with primitiveCount 0, which CNA rejects with an
+        // ArgumentOutOfRangeException, and GpuMesh::Upload rejects an empty
+        // mesh outright. Every hand-authored
         // .vwr world before the editor existed always had at least some
         // terrain, so this was never reachable until now.
         if (!staticMesh.Mesh().Empty())

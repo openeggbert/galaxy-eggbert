@@ -9,7 +9,7 @@ namespace GalaxyEggbert::Game
     // Icons confirmed "InnerFlatPlate" in mobile-eggbert-reference/
     // questionnaire-all-remaining-tiles.md: the block's outer 6 faces are
     // never drawn (fully transparent); instead a single flat double-sided
-    // plate (Easy3D::PlateItem) sits centered inside it -- signposts, thin
+    // plate (MeshBuilder::AddPlate) sits centered inside it -- signposts, thin
     // posts, screens. 63 of 63 confirmed icons wired up (2026-07-08), plus
     // Saw/SawStopped (378/379, plan.md E3D-MIG-149/142) added 2026-07-11 per
     // a fresh live user Q&A that superseded their earlier "ThinMechanical,

@@ -34,7 +34,7 @@
 
 namespace GalaxyEggbert::CNA
 {
-    // Direct CNA + Easy3D target: loads a hand-authored .vwr world, renders
+    // Direct CNA + cna-engine target: loads a hand-authored .vwr world, renders
     // real textured/animated 3D terrain, and moves an invisible,
     // collision-only Blupi placeholder through it (see NEXT.md for current
     // status). Two camera modes now exist (2026-07-09): first-person
@@ -133,7 +133,7 @@ namespace GalaxyEggbert::CNA
         // (2026-07-09, NEXT.md §3 -- mobile-eggbert-reference/
         // 05-backgrounds.md/15-3d-render-mapping-design.md §9.5). Drawn as a
         // single huge camera-facing billboard quad placed far behind the
-        // scene (same BillboardBatch/BuildBillboardMesh/BillboardMeshRenderer
+        // scene (same MeshBuilder::AddBillboard/GpuMesh
         // technique already used for MoveObjects/BigDecor, just one giant
         // quad sized to fill the whole view frustum at that distance) --
         // NOT a 2D SpriteBatch overlay. Tried SpriteBatch first (drawn
@@ -653,8 +653,8 @@ namespace GalaxyEggbert::CNA
         // Billboard rendering for worldRuntime_'s parsed MoveObjects
         // (15-3d-render-mapping-design.md §5/§7) — element.png, static phase
         // (no animation yet). Rebuilt every frame since billboard vertex
-        // positions depend on the camera (see Easy3D::BillboardMeshRenderer's
-        // header comment) — objectMeshRenderer_ is reconstructed in Draw(),
+        // positions depend on the camera (MeshBuilder::AddBillboard faces
+        // the camera's right/up) — objectMeshRenderer_ is reconstructed in Draw(),
         // not lazily cached like terrainRenderer_.
         Microsoft::Xna::Framework::Graphics::Texture2D objectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
@@ -727,8 +727,8 @@ namespace GalaxyEggbert::CNA
         // its own effect, same reason as bigDecorEffect_ above. Rebuilt
         // every frame in Draw() (2026-07-09) using each MobileObjSpec's
         // real per-instance phase, same reason and pattern as the
-        // billboard renderers below -- CubeMeshRenderer has no in-place UV
-        // update API, only construction from vertex/index data, so a fresh
+        // billboard renderers below -- an uploaded GpuMesh has no in-place UV
+        // update API, only construction from mesh data, so a fresh
         // mesh each frame is the only way for types 47/48's chenille icon
         // formulas to actually animate (cheap here, only a handful of cube
         // objects).
