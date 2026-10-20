@@ -92,7 +92,9 @@ jobs:
           sparse-checkout-cone-mode: true
 
       # Same package list as ../cna's own devices-tests.yml (proven to build this dependency
-      # tree on ubuntu-latest already) plus ccache, which that workflow doesn't use.
+      # tree on ubuntu-latest already) plus ccache, which that workflow doesn't use, and libcurl
+      # and nlohmann-json, which CNA's networking and GamerServices modules require since the
+      # move to cna-engine's CNA baseline (both are on by default in CNA).
       - name: Install system dependencies
         run: |
           sudo apt-get update -y
@@ -104,7 +106,8 @@ jobs:
             libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
             libthai-dev libwayland-dev libdecor-0-dev \
-            libavcodec-dev libavformat-dev libavutil-dev libswresample-dev
+            libavcodec-dev libavformat-dev libavutil-dev libswresample-dev \
+            libcurl4-openssl-dev nlohmann-json3-dev
 
       # Vendored SDL3/SDL3_mixer are built from source on first configure (several
       # minutes) into cna/.sdl-prebuilt-Linux-x86_64/ -- keyed off the exact submodule commits so
