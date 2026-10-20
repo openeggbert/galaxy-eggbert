@@ -65,8 +65,8 @@ namespace GalaxyEggbert::Editor
         bool loaded_ = false;
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> textRenderer_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> flatEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> flatRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> flatRenderer_;
     };
 }

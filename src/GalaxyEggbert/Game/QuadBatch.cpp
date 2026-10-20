@@ -11,26 +11,18 @@ namespace GalaxyEggbert::Game::QuadBatch
         return x >= r.x0 && x < r.x1 && y >= r.y0 && y < r.y1;
     }
 
-    void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
-                      std::vector<std::uint32_t>& indices,
+    void AppendQuadUv(CnaEngine::Graphics::MeshBuilder& mesh,
                       float x0, float y0, float x1, float y1,
                       float u0, float v0, float u1, float v1)
     {
-        const auto base = static_cast<std::uint32_t>(vertices.size());
-        vertices.push_back({{x0, y0, 0.0f}, {u0, v0}});
-        vertices.push_back({{x1, y0, 0.0f}, {u1, v0}});
-        vertices.push_back({{x1, y1, 0.0f}, {u1, v1}});
-        vertices.push_back({{x0, y1, 0.0f}, {u0, v1}});
-        indices.push_back(base + 0);
-        indices.push_back(base + 1);
-        indices.push_back(base + 2);
-        indices.push_back(base + 0);
-        indices.push_back(base + 2);
-        indices.push_back(base + 3);
+        const std::uint32_t c0 = mesh.AddVertex(TexturedVertex({x0, y0, 0.0f}, {u0, v0}));
+        const std::uint32_t c1 = mesh.AddVertex(TexturedVertex({x1, y0, 0.0f}, {u1, v0}));
+        const std::uint32_t c2 = mesh.AddVertex(TexturedVertex({x1, y1, 0.0f}, {u1, v1}));
+        const std::uint32_t c3 = mesh.AddVertex(TexturedVertex({x0, y1, 0.0f}, {u0, v1}));
+        mesh.AddQuad(c0, c1, c2, c3);
     }
 
-    void AppendRotatedQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
-                             std::vector<std::uint32_t>& indices,
+    void AppendRotatedQuadUv(CnaEngine::Graphics::MeshBuilder& mesh,
                              float centerX, float centerY, float halfW, float halfH,
                              float rotationDegrees,
                              float u0, float v0, float u1, float v1)
@@ -49,22 +41,16 @@ namespace GalaxyEggbert::Game::QuadBatch
         rotate(halfW, halfH, x2, y2);
         rotate(-halfW, halfH, x3, y3);
 
-        const auto base = static_cast<std::uint32_t>(vertices.size());
-        vertices.push_back({{x0, y0, 0.0f}, {u0, v0}});
-        vertices.push_back({{x1, y1, 0.0f}, {u1, v0}});
-        vertices.push_back({{x2, y2, 0.0f}, {u1, v1}});
-        vertices.push_back({{x3, y3, 0.0f}, {u0, v1}});
-        indices.push_back(base + 0);
-        indices.push_back(base + 1);
-        indices.push_back(base + 2);
-        indices.push_back(base + 0);
-        indices.push_back(base + 2);
-        indices.push_back(base + 3);
+        const std::uint32_t c0 = mesh.AddVertex(TexturedVertex({x0, y0, 0.0f}, {u0, v0}));
+        const std::uint32_t c1 = mesh.AddVertex(TexturedVertex({x1, y1, 0.0f}, {u1, v0}));
+        const std::uint32_t c2 = mesh.AddVertex(TexturedVertex({x2, y2, 0.0f}, {u1, v1}));
+        const std::uint32_t c3 = mesh.AddVertex(TexturedVertex({x3, y3, 0.0f}, {u0, v1}));
+        mesh.AddQuad(c0, c1, c2, c3);
     }
 
     void FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                     Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                    std::unique_ptr<Easy3D::BillboardMeshRenderer>& renderer,
+                    std::unique_ptr<CnaEngine::Graphics::GpuMesh>& renderer,
                     const std::vector<Quad>& quads, int viewportW, int viewportH,
                     float alpha)
     {
@@ -72,13 +58,10 @@ namespace GalaxyEggbert::Game::QuadBatch
         {
             return;
         }
-        std::vector<Easy3D::BillboardVertex> vertices;
-        std::vector<std::uint32_t> indices;
-        vertices.reserve(quads.size() * 4);
-        indices.reserve(quads.size() * 6);
+        auto mesh = MakeTexturedMeshBuilder();
         for (const Quad& q : quads)
         {
-            AppendQuadUv(vertices, indices, q.x0, q.y0, q.x1, q.y1, q.u0, q.v0, q.u1, q.v1);
+            AppendQuadUv(mesh, q.x0, q.y0, q.x1, q.y1, q.u0, q.v0, q.u1, q.v1);
         }
 
         effect.World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
@@ -87,7 +70,7 @@ namespace GalaxyEggbert::Game::QuadBatch
             0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
         effect.setAlphaProperty(alpha);
 
-        renderer = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+        renderer = UploadTexturedMesh(device, mesh.Mesh());
         renderer->Draw(device, effect);
         effect.setAlphaProperty(1.0f);
     }

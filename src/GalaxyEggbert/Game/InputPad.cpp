@@ -509,7 +509,7 @@ namespace GalaxyEggbert::Game
 
     void InputPad::FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                 Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                                std::unique_ptr<Easy3D::BillboardMeshRenderer>& renderer,
+                                std::unique_ptr<CnaEngine::Graphics::GpuMesh>& renderer,
                                 const std::vector<Quad>& quads, int viewportW, int viewportH,
                                 float alpha)
     {
@@ -922,11 +922,10 @@ namespace GalaxyEggbert::Game
         // see ComputePauseResumeCharacterAnim()'s own comment for the
         // per-`fadeOutPhase` formulas.
         const auto anim = ComputePauseResumeCharacterAnim(phaseTimeSeconds, fadeOutPhase);
-        std::vector<Easy3D::BillboardVertex> charVertices;
-        std::vector<std::uint32_t> charIndices;
+        auto charMesh = MakeTexturedMeshBuilder();
         if (anim.visible)
         {
-            AppendRotatedQuadUv(charVertices, charIndices, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
+            AppendRotatedQuadUv(charMesh, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
                                 anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
@@ -988,14 +987,14 @@ namespace GalaxyEggbert::Game
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
-        if (!charIndices.empty())
+        if (!charMesh.Mesh().Empty())
         {
             blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
                 0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
             blupiyoupieEffect_->setAlphaProperty(anim.opacity);
-            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_ = UploadTexturedMesh(device, charMesh.Mesh());
             blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
             blupiyoupieEffect_->setAlphaProperty(1.0f);
         }
@@ -1086,11 +1085,10 @@ namespace GalaxyEggbert::Game
         const float halfWRef = (charW * 0.5f) * num;
         const float halfHRef = (charH * 0.5f) * num;
 
-        std::vector<Easy3D::BillboardVertex> charVertices;
-        std::vector<std::uint32_t> charIndices;
+        auto charMesh = MakeTexturedMeshBuilder();
         if (halfWRef > 0.0f && halfHRef > 0.0f)
         {
-            AppendRotatedQuadUv(charVertices, charIndices,
+            AppendRotatedQuadUv(charMesh,
                                 refToScreenX(kCharacterCenterX), refToScreenY(kWinLostCharacterCenterY),
                                 halfWRef * scale, halfHRef * scale, rotationDegrees,
                                 0.0f, 0.0f, 1.0f, 1.0f);
@@ -1115,13 +1113,13 @@ namespace GalaxyEggbert::Game
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, bgEffect, bgRenderer, backgroundQuads, viewportW, viewportH, 1.0f);
-        if (!charIndices.empty())
+        if (!charMesh.Mesh().Empty())
         {
             blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
                 0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
-            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_ = UploadTexturedMesh(device, charMesh.Mesh());
             blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
         }
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
@@ -1221,11 +1219,10 @@ namespace GalaxyEggbert::Game
         speedyQuad.v1 = 1.0f;
         std::vector<Quad> speedyQuads{speedyQuad};
 
-        std::vector<Easy3D::BillboardVertex> gearVertices;
-        std::vector<std::uint32_t> gearIndices;
-        AppendRotatedQuadUv(gearVertices, gearIndices, refToScreenX(kGear1CenterX), refToScreenY(kGear1CenterY),
+        auto gearMesh = MakeTexturedMeshBuilder();
+        AppendRotatedQuadUv(gearMesh, refToScreenX(kGear1CenterX), refToScreenY(kGear1CenterY),
                             kGear1Half * scale, kGear1Half * scale, anim.gearRotation1, 0.0f, 0.0f, 1.0f, 1.0f);
-        AppendRotatedQuadUv(gearVertices, gearIndices, refToScreenX(kGear2CenterX), refToScreenY(kGear2CenterY),
+        AppendRotatedQuadUv(gearMesh, refToScreenX(kGear2CenterX), refToScreenY(kGear2CenterY),
                             kGear2Half * scale, kGear2Half * scale, anim.gearRotation2, 0.0f, 0.0f, 1.0f, 1.0f);
 
         const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
@@ -1295,7 +1292,7 @@ namespace GalaxyEggbert::Game
         gearEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
             0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
         gearEffect_->setAlphaProperty(anim.gearOpacity);
-        gearRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, gearVertices, gearIndices);
+        gearRenderer_ = UploadTexturedMesh(device, gearMesh.Mesh());
         gearRenderer_->Draw(device, *gearEffect_);
         gearEffect_->setAlphaProperty(1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
@@ -1376,11 +1373,10 @@ namespace GalaxyEggbert::Game
         // this method's own class comment), so in practice fadeOutPhase
         // here is only ever None or Init.
         const auto anim = ComputePauseResumeCharacterAnim(phaseTimeSeconds, fadeOutPhase);
-        std::vector<Easy3D::BillboardVertex> charVertices;
-        std::vector<std::uint32_t> charIndices;
+        auto charMesh = MakeTexturedMeshBuilder();
         if (anim.visible)
         {
-            AppendRotatedQuadUv(charVertices, charIndices, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
+            AppendRotatedQuadUv(charMesh, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
                                 anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
@@ -1417,14 +1413,14 @@ namespace GalaxyEggbert::Game
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
-        if (!charIndices.empty())
+        if (!charMesh.Mesh().Empty())
         {
             blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
                 0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
             blupiyoupieEffect_->setAlphaProperty(anim.opacity);
-            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_ = UploadTexturedMesh(device, charMesh.Mesh());
             blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
             blupiyoupieEffect_->setAlphaProperty(1.0f);
         }
@@ -1821,11 +1817,10 @@ namespace GalaxyEggbert::Game
         titleQuad.v1 = 1.0f;
         std::vector<Quad> titleQuads{titleQuad};
 
-        std::vector<Easy3D::BillboardVertex> charVertices;
-        std::vector<std::uint32_t> charIndices;
+        auto charMesh = MakeTexturedMeshBuilder();
         if (charHalfW > 0.0f && charHalfH > 0.0f)
         {
-            AppendRotatedQuadUv(charVertices, charIndices,
+            AppendRotatedQuadUv(charMesh,
                                 refToScreenX(kInitCharacterCenterX), refToScreenY(kInitCharacterCenterY),
                                 charHalfW * scale, charHalfH * scale, charRotation, 0.0f, 0.0f, 1.0f, 1.0f);
         }
@@ -1909,14 +1904,14 @@ namespace GalaxyEggbert::Game
         FlushQuads(device, *initBgEffect_, initBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, titleQuads, viewportW, viewportH,
                    titleOpacity);
-        if (!charIndices.empty())
+        if (!charMesh.Mesh().Empty())
         {
             blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
                 0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
             blupiyoupieEffect_->setAlphaProperty(charOpacity);
-            blupiyoupieRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, charVertices, charIndices);
+            blupiyoupieRenderer_ = UploadTexturedMesh(device, charMesh.Mesh());
             blupiyoupieRenderer_->Draw(device, *blupiyoupieEffect_);
             blupiyoupieEffect_->setAlphaProperty(1.0f);
         }

@@ -4,9 +4,9 @@
 
 namespace GalaxyEggbert::Game
 {
-    Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated)
+    CnaEngine::Graphics::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated)
     {
-        Easy3D::PlateAxis axis;
+        CnaEngine::Graphics::PlateAxis axis;
         switch (icon)
         {
             case 368:
@@ -14,10 +14,10 @@ namespace GalaxyEggbert::Game
             case 370:
             case 371:
             case 372:
-                axis = Easy3D::PlateAxis::Y;
+                axis = CnaEngine::Graphics::PlateAxis::Y;
                 break;
             default:
-                axis = Easy3D::PlateAxis::Z;
+                axis = CnaEngine::Graphics::PlateAxis::Z;
                 break;
         }
         // 90-degree rotation (2026-07-11, user feedback) -- e.g. Saw needs
@@ -27,13 +27,13 @@ namespace GalaxyEggbert::Game
         // rotation-eligible horizontal-plate icon exists yet, and rotating
         // one 90 degrees around its own vertical normal isn't a simple
         // axis-enum swap the way X<->Z is.
-        if (rotated && axis == Easy3D::PlateAxis::X)
+        if (rotated && axis == CnaEngine::Graphics::PlateAxis::X)
         {
-            axis = Easy3D::PlateAxis::Z;
+            axis = CnaEngine::Graphics::PlateAxis::Z;
         }
-        else if (rotated && axis == Easy3D::PlateAxis::Z)
+        else if (rotated && axis == CnaEngine::Graphics::PlateAxis::Z)
         {
-            axis = Easy3D::PlateAxis::X;
+            axis = CnaEngine::Graphics::PlateAxis::X;
         }
         return axis;
     }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <CnaEngine/Graphics/Camera.hpp>
-#include <Easy3D/CubeMeshRenderer.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 
 #include <memory>
@@ -59,7 +59,7 @@ namespace GalaxyEggbert::Editor
                     float r, float g, float b);
 
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
-        std::unique_ptr<Easy3D::CubeMeshRenderer> mesh_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> mesh_;
         bool visible_ = false;
         bool hasWireframeEdges_ = false;
         bool hasLastBounds_ = false;

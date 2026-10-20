@@ -17,7 +17,7 @@ namespace GalaxyEggbert::Game
         const int kIconCount = BlockTypes::kSheetCols * kIconRows;
     }
 
-    Easy3D::UvRect TileAtlas::GetTileUv(int blockType) const
+    CnaEngine::Graphics::UvRect TileAtlas::GetTileUv(int blockType) const
     {
         if (blockType <= 0 || blockType >= kIconCount ||
             !GalaxyEggbert::IsSupportedBlockType(static_cast<std::uint16_t>(blockType)))
@@ -37,6 +37,6 @@ namespace GalaxyEggbert::Game
         float uScale = 0.0f;
         float vScale = 0.0f;
         BlockTypes::tileUV(definition.textureIcon, uOff, vOff, uScale, vScale);
-        return Easy3D::UvRect{uOff, vOff, uOff + uScale, vOff + vScale};
+        return CnaEngine::Graphics::UvRect{uOff, vOff, uOff + uScale, vOff + vScale};
     }
 }

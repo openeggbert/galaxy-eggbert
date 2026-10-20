@@ -5,8 +5,7 @@
 #include "GalaxyEggbert/BlockTypes.hpp"
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
-#include <Easy3D/BillboardBatch.hpp>
-#include <Easy3D/BillboardMesh.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
@@ -360,8 +359,8 @@ namespace GalaxyEggbert::CNA
         {
             const auto uv = tileAtlas_.GetTileUv(blockType);
             std::cout << "GalaxyEggbertCNA: tile " << name << " (" << blockType
-                      << ") UV = (" << uv.U0 << ", " << uv.V0 << ") - ("
-                      << uv.U1 << ", " << uv.V1 << ")" << std::endl;
+                      << ") UV = (" << uv.u0 << ", " << uv.v0 << ") - ("
+                      << uv.u1 << ", " << uv.v1 << ")" << std::endl;
         };
         printTileUv("Ground", GalaxyEggbert::BlockTypes::Ground);
         printTileUv("Lava", GalaxyEggbert::BlockTypes::Lava);
@@ -3495,28 +3494,23 @@ namespace GalaxyEggbert::CNA
                 camPos.Y + forward.Y * kBackgroundDistance,
                 camPos.Z + forward.Z * kBackgroundDistance);
 
-            Easy3D::BillboardBatch batch;
-            batch.Add(quadCenter,
-                      Microsoft::Xna::Framework::Vector2(halfWidth * 2.0f, halfHeight * 2.0f),
-                      Easy3D::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+            auto mesh = MakeTexturedMeshBuilder();
+            mesh.AddBillboard(quadCenter,
+                              Microsoft::Xna::Framework::Vector2(halfWidth * 2.0f, halfHeight * 2.0f),
+                              cameraRight, cameraUp, CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
 
-            std::vector<Easy3D::BillboardVertex> vertices;
-            std::vector<std::uint32_t> indices;
-            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
-
-            if (!indices.empty())
+            if (!mesh.Mesh().Empty())
             {
-                backgroundMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                backgroundMeshRenderer_ = UploadTexturedMesh(device, mesh.Mesh());
                 backgroundEffect_->View = camera_.View();
                 backgroundEffect_->Projection = camera_.Projection();
                 backgroundEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
-                // No CullNone override needed here anymore -- fixed at the
-                // source (2026-07-09, NEXT.md §8 task 0): Easy3D::
-                // AppendBillboardMesh's winding was back-facing under this
-                // engine's default CullCounterClockwise state; reversed
-                // there (../easy-3d/src/BillboardMesh.cpp) so every
-                // billboard consumer, not just this one, renders correctly
-                // under the default cull state.
+                // No CullNone override needed here -- fixed at the source
+                // (2026-07-09, NEXT.md §8 task 0): billboards used to be
+                // back-facing under the default CullCounterClockwise state;
+                // easy-3d's AppendBillboardMesh winding was reversed then, and
+                // cna-engine's MeshBuilder::AddBillboard took it over as is,
+                // so every billboard renders under the default cull state.
                 backgroundMeshRenderer_->Draw(device, *backgroundEffect_);
             }
         }
@@ -3543,8 +3537,7 @@ namespace GalaxyEggbert::CNA
                 // construction from vertex/index data), so a fresh mesh is
                 // the only way to reflect a new icon/UV per frame -- cheap
                 // here since there are only a handful of cube objects.
-                std::vector<Easy3D::CubeVertex> cubeVertices;
-                std::vector<std::uint32_t> cubeIndices;
+                auto cubeMesh = MakeTexturedMeshBuilder();
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
                 {
                     const auto visual = ResolveObjectVisual(
@@ -3554,17 +3547,16 @@ namespace GalaxyEggbert::CNA
                     {
                         continue;
                     }
-                    Easy3D::CubeItem item;
-                    item.Center = Easy3D::CubeBatch::Vector3(
-                        obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
-                    item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
-                    item.Uv = tileAtlas_.GetTileUv(visual.icon);
-                    Easy3D::AppendCubeMesh(item, cubeVertices, cubeIndices);
+                    AddCenteredBox(cubeMesh,
+                                   Microsoft::Xna::Framework::Vector3(
+                                       obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
+                                   Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
+                                   tileAtlas_.GetTileUv(visual.icon));
                 }
 
-                if (!cubeIndices.empty())
+                if (!cubeMesh.Mesh().Empty())
                 {
-                    objectCubeMeshRenderer_ = std::make_unique<Easy3D::CubeMeshRenderer>(device, cubeVertices, cubeIndices);
+                    objectCubeMeshRenderer_ = UploadTexturedMesh(device, cubeMesh.Mesh());
                     objectCubeEffect_->View = camera_.View();
                     objectCubeEffect_->Projection = camera_.Projection();
                     objectCubeEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
@@ -3829,7 +3821,7 @@ namespace GalaxyEggbert::CNA
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
-            Easy3D::BillboardBatch batch;
+            auto mesh = MakeTexturedMeshBuilder();
             constexpr float kObjectSize = 1.0f;
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
@@ -3867,20 +3859,16 @@ namespace GalaxyEggbert::CNA
                     icon = visual.icon;
                 }
                 const auto uv = GetElementIconUv(icon);
-                batch.Add(
+                mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
-                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
-                    Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize), cameraRight, cameraUp,
+                    CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
 
-            std::vector<Easy3D::BillboardVertex> vertices;
-            std::vector<std::uint32_t> indices;
-            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
-
-            if (!indices.empty())
+            if (!mesh.Mesh().Empty())
             {
-                objectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                objectMeshRenderer_ = UploadTexturedMesh(device, mesh.Mesh());
                 objectEffect_->View = camera_.View();
                 objectEffect_->Projection = camera_.Projection();
                 objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
@@ -3900,7 +3888,7 @@ namespace GalaxyEggbert::CNA
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
-            Easy3D::BillboardBatch batch;
+            auto mesh = MakeTexturedMeshBuilder();
             constexpr float kObjectSize = 1.0f;
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
@@ -3913,20 +3901,16 @@ namespace GalaxyEggbert::CNA
                     continue;
                 }
                 const auto uv = tileAtlas_.GetTileUv(visual.icon);
-                batch.Add(
+                mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
-                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize), cameraRight, cameraUp,
                     uv);
             }
 
-            std::vector<Easy3D::BillboardVertex> vertices;
-            std::vector<std::uint32_t> indices;
-            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
-
-            if (!indices.empty())
+            if (!mesh.Mesh().Empty())
             {
-                objectMPngMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                objectMPngMeshRenderer_ = UploadTexturedMesh(device, mesh.Mesh());
                 objectMPngEffect_->View = camera_.View();
                 objectMPngEffect_->Projection = camera_.Projection();
                 objectMPngEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
@@ -3945,7 +3929,7 @@ namespace GalaxyEggbert::CNA
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
-            Easy3D::BillboardBatch batch;
+            auto mesh = MakeTexturedMeshBuilder();
             constexpr float kObjectSize = 1.0f;
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
@@ -3965,20 +3949,16 @@ namespace GalaxyEggbert::CNA
                     continue;
                 }
                 const auto uv = GetExploIconUv(visual.icon);
-                batch.Add(
+                mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
-                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
-                    Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize), cameraRight, cameraUp,
+                    CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
 
-            std::vector<Easy3D::BillboardVertex> vertices;
-            std::vector<std::uint32_t> indices;
-            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
-
-            if (!indices.empty())
+            if (!mesh.Mesh().Empty())
             {
-                exploMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                exploMeshRenderer_ = UploadTexturedMesh(device, mesh.Mesh());
                 exploEffect_->View = camera_.View();
                 exploEffect_->Projection = camera_.Projection();
                 exploEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
@@ -3998,8 +3978,8 @@ namespace GalaxyEggbert::CNA
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
-            Easy3D::BillboardBatch blupiBatch;
-            Easy3D::BillboardBatch blupi1Batch;
+            auto blupiMesh = MakeTexturedMeshBuilder();
+            auto blupi1Mesh = MakeTexturedMeshBuilder();
             constexpr float kObjectSize = 1.0f;
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
@@ -4014,33 +3994,27 @@ namespace GalaxyEggbert::CNA
                     continue;
                 }
                 const auto uv = GetBlupiIconUv(visual.icon);
-                auto& batch = visual.textureSource == ObjectTextureSource::Blupi1
-                    ? blupi1Batch : blupiBatch;
-                batch.Add(
+                auto& mesh = visual.textureSource == ObjectTextureSource::Blupi1
+                    ? blupi1Mesh : blupiMesh;
+                mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
-                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize),
-                    Easy3D::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize), cameraRight, cameraUp,
+                    CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
 
-            std::vector<Easy3D::BillboardVertex> blupiVertices;
-            std::vector<std::uint32_t> blupiIndices;
-            Easy3D::BuildBillboardMesh(blupiBatch, cameraRight, cameraUp, blupiVertices, blupiIndices);
-            if (!blupiIndices.empty())
+            if (!blupiMesh.Mesh().Empty())
             {
-                blupiObjectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, blupiVertices, blupiIndices);
+                blupiObjectMeshRenderer_ = UploadTexturedMesh(device, blupiMesh.Mesh());
                 blupiObjectEffect_->View = camera_.View();
                 blupiObjectEffect_->Projection = camera_.Projection();
                 blupiObjectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 blupiObjectMeshRenderer_->Draw(device, *blupiObjectEffect_);
             }
 
-            std::vector<Easy3D::BillboardVertex> blupi1Vertices;
-            std::vector<std::uint32_t> blupi1Indices;
-            Easy3D::BuildBillboardMesh(blupi1Batch, cameraRight, cameraUp, blupi1Vertices, blupi1Indices);
-            if (!blupi1Indices.empty())
+            if (!blupi1Mesh.Mesh().Empty())
             {
-                blupi1ObjectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, blupi1Vertices, blupi1Indices);
+                blupi1ObjectMeshRenderer_ = UploadTexturedMesh(device, blupi1Mesh.Mesh());
                 blupi1ObjectEffect_->View = camera_.View();
                 blupi1ObjectEffect_->Projection = camera_.Projection();
                 blupi1ObjectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
@@ -4059,26 +4033,22 @@ namespace GalaxyEggbert::CNA
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
-            Easy3D::BillboardBatch batch;
+            auto mesh = MakeTexturedMeshBuilder();
             constexpr float kBigDecorSize = 1.0f;
             for (const auto& cell : bigDecorCells_)
             {
                 const auto iconUv = GetBigDecorIconUv(static_cast<int>(cell.icon));
-                batch.Add(
+                mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(
                         cell.worldX, cell.worldY, cell.worldZ),
-                    Microsoft::Xna::Framework::Vector2(kBigDecorSize, kBigDecorSize),
-                    Easy3D::UvRect{
+                    Microsoft::Xna::Framework::Vector2(kBigDecorSize, kBigDecorSize), cameraRight, cameraUp,
+                    CnaEngine::Graphics::UvRect{
                         iconUv.U0, iconUv.V0, iconUv.U1, iconUv.V1});
             }
 
-            std::vector<Easy3D::BillboardVertex> vertices;
-            std::vector<std::uint32_t> indices;
-            Easy3D::BuildBillboardMesh(batch, cameraRight, cameraUp, vertices, indices);
-
-            if (!indices.empty())
+            if (!mesh.Mesh().Empty())
             {
-                bigDecorMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
+                bigDecorMeshRenderer_ = UploadTexturedMesh(device, mesh.Mesh());
                 bigDecorEffect_->View = camera_.View();
                 bigDecorEffect_->Projection = camera_.Projection();
                 bigDecorEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();

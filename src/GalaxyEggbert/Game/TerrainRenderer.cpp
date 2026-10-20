@@ -9,9 +9,9 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
-#include <Easy3D/CubeBatch.hpp>
-#include <Easy3D/CubeMesh.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 
+#include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
 
@@ -119,6 +119,47 @@ namespace GalaxyEggbert::Game
         constexpr float kTipBaseSize = 0.7f;
         constexpr float kTipHeight = 0.6f;
 
+        // Square top face centered on `topCenter`, tapering to an apex
+        // `height` below it -- the tip hanging under a teleporter pillar
+        // (above). The top square keeps the -Y face's corner order (clockwise
+        // seen from below); each side triangle runs from one top corner to
+        // the next and down to the shared apex, so the four sides meet
+        // seamlessly. One texture region for all five faces: the square
+        // takes all of it, each triangle its top edge and the middle of its
+        // bottom edge.
+        void AddPyramidTip(CnaEngine::Graphics::MeshBuilder& mesh,
+                           const Microsoft::Xna::Framework::Vector3& topCenter,
+                           float baseSize, float height, const CnaEngine::Graphics::UvRect& uv)
+        {
+            using Microsoft::Xna::Framework::Vector2;
+            using Microsoft::Xna::Framework::Vector3;
+            const float half = baseSize * 0.5f;
+            const Vector3 baseCorners[4] = {
+                Vector3(topCenter.X - half, topCenter.Y, topCenter.Z + half),
+                Vector3(topCenter.X + half, topCenter.Y, topCenter.Z + half),
+                Vector3(topCenter.X + half, topCenter.Y, topCenter.Z - half),
+                Vector3(topCenter.X - half, topCenter.Y, topCenter.Z - half),
+            };
+            const Vector3 apex(topCenter.X, topCenter.Y - height, topCenter.Z);
+
+            const std::uint32_t top0 = mesh.AddVertex(TexturedVertex(baseCorners[0], Vector2(uv.u0, uv.v0)));
+            const std::uint32_t top1 = mesh.AddVertex(TexturedVertex(baseCorners[1], Vector2(uv.u1, uv.v0)));
+            const std::uint32_t top2 = mesh.AddVertex(TexturedVertex(baseCorners[2], Vector2(uv.u1, uv.v1)));
+            const std::uint32_t top3 = mesh.AddVertex(TexturedVertex(baseCorners[3], Vector2(uv.u0, uv.v1)));
+            mesh.AddQuad(top0, top1, top2, top3);
+
+            const Vector2 uvA(uv.u0, uv.v0);
+            const Vector2 uvB(uv.u1, uv.v0);
+            const Vector2 uvApex((uv.u0 + uv.u1) * 0.5f, uv.v1);
+            for (int i = 0; i < 4; ++i)
+            {
+                const std::uint32_t a = mesh.AddVertex(TexturedVertex(baseCorners[i], uvA));
+                const std::uint32_t b = mesh.AddVertex(TexturedVertex(baseCorners[(i + 1) % 4], uvB));
+                const std::uint32_t c = mesh.AddVertex(TexturedVertex(apex, uvApex));
+                mesh.AddTriangle(a, b, c);
+            }
+        }
+
         bool IsTeleporterTipIcon(int icon)
         {
             return GalaxyEggbert::GetBlockDefinition(static_cast<std::uint16_t>(icon)).teleporterTip;
@@ -132,10 +173,10 @@ namespace GalaxyEggbert::Game
         // downward in this atlas (tileUV's vOff comes straight from the
         // row's top pixel), so "lower" means the higher-V end of the tile's
         // own rect.
-        Easy3D::UvRect TeleporterTipUv(const Easy3D::UvRect& tileUv)
+        CnaEngine::Graphics::UvRect TeleporterTipUv(const CnaEngine::Graphics::UvRect& tileUv)
         {
-            const float v0 = tileUv.V0 + (tileUv.V1 - tileUv.V0) / 3.0f;
-            return Easy3D::UvRect{tileUv.U0, v0, tileUv.U1, tileUv.V1};
+            const float v0 = tileUv.v0 + (tileUv.v1 - tileUv.v0) / 3.0f;
+            return CnaEngine::Graphics::UvRect{tileUv.u0, v0, tileUv.u1, tileUv.v1};
         }
 
         // The cube's own 4 side faces used to reuse the WHOLE tile texture
@@ -153,14 +194,14 @@ namespace GalaxyEggbert::Game
         // panel graphic) removes the fake/duplicate one, leaving only the
         // real pyramid tip hanging below (already flush with the cube's
         // bottom face, no reposition needed).
-        Easy3D::UvRect TeleporterPanelUv(const Easy3D::UvRect& tileUv)
+        CnaEngine::Graphics::UvRect TeleporterPanelUv(const CnaEngine::Graphics::UvRect& tileUv)
         {
-            const float v1 = tileUv.V0 + (tileUv.V1 - tileUv.V0) / 3.0f;
-            return Easy3D::UvRect{tileUv.U0, tileUv.V0, tileUv.U1, v1};
+            const float v1 = tileUv.v0 + (tileUv.v1 - tileUv.v0) / 3.0f;
+            return CnaEngine::Graphics::UvRect{tileUv.u0, tileUv.v0, tileUv.u1, v1};
         }
 
         // Appends whichever "new geometry" render mode (if any) @p lookupIcon
-        // uses, into @p vertices/@p indices, textured with @p tileUv.
+        // uses, into @p mesh, textured with @p tileUv.
         // Returns true if it handled the icon (caller should skip its normal
         // UniformCube path); false if @p lookupIcon isn't one of these
         // modes. @p lookupIcon and @p tileUv's icon are the same for static
@@ -174,26 +215,19 @@ namespace GalaxyEggbert::Game
         // callers pass whether THIS block's own position has rotation
         // metadata set, false for anything not even a candidate.
         bool AppendSpecialGeometry(const GalaxyEggbert::BlockDefinition& definition,
-                                   const Easy3D::UvRect& tileUv,
-                                   const Easy3D::UvRect& icon107Uv,
-                                   const Easy3D::CubeBatch::Vector3& center,
+                                   const CnaEngine::Graphics::UvRect& tileUv,
+                                   const CnaEngine::Graphics::UvRect& icon107Uv,
+                                   const Microsoft::Xna::Framework::Vector3& center,
                                    bool plateRotated,
-                                   std::vector<Easy3D::CubeVertex>& vertices,
-                                   std::vector<std::uint32_t>& indices)
+                                   CnaEngine::Graphics::MeshBuilder& mesh)
         {
+            using CnaEngine::Graphics::BoxFace;
             const int lookupIcon = static_cast<int>(definition.type);
-            Easy3D::DirectionalCubeFace directionalFaces[6];
+            CnaEngine::Graphics::BoxFaces directionalFaces;
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube)
             {
                 ConfigureDirectionalCubeFaces(
                     lookupIcon, tileUv, icon107Uv, directionalFaces);
-                Easy3D::DirectionalCubeItem item;
-                item.Center = center;
-                item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
-                for (int face = 0; face < 6; ++face)
-                {
-                    item.Faces[face] = directionalFaces[face];
-                }
 
                 if (IsTeleporterTipIcon(lookupIcon))
                 {
@@ -201,81 +235,57 @@ namespace GalaxyEggbert::Game
                     // see TeleporterPanelUv's own comment for why (removes
                     // the fake, flattened "second tip" duplicate).
                     const auto panelUv = TeleporterPanelUv(tileUv);
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosZ)].Uv = panelUv;
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegZ)].Uv = panelUv;
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosX)].Uv = panelUv;
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegX)].Uv = panelUv;
+                    directionalFaces[static_cast<int>(BoxFace::PositiveZ)].uv = panelUv;
+                    directionalFaces[static_cast<int>(BoxFace::NegativeZ)].uv = panelUv;
+                    directionalFaces[static_cast<int>(BoxFace::PositiveX)].uv = panelUv;
+                    directionalFaces[static_cast<int>(BoxFace::NegativeX)].uv = panelUv;
                 }
 
-                Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
+                AddCenteredBox(mesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), directionalFaces);
 
                 if (IsTeleporterTipIcon(lookupIcon))
                 {
-                    Easy3D::PyramidTipItem tip;
-                    tip.Center = Easy3D::CubeBatch::Vector3(center.X, center.Y - 0.5f, center.Z);
-                    tip.BaseSize = kTipBaseSize;
-                    tip.Height = kTipHeight;
-                    tip.Uv = TeleporterTipUv(tileUv);
-                    Easy3D::AppendPyramidTipMesh(tip, vertices, indices);
+                    AddPyramidTip(mesh, Microsoft::Xna::Framework::Vector3(center.X, center.Y - 0.5f, center.Z),
+                                  kTipBaseSize, kTipHeight, TeleporterTipUv(tileUv));
                 }
 
                 return true;
             }
 
-            Easy3D::DirectionalCubeFace pillarFaces[6];
+            CnaEngine::Graphics::BoxFaces pillarFaces;
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerPillarBox)
             {
                 ConfigureInnerPillarBoxFaces(lookupIcon, tileUv, pillarFaces);
-                Easy3D::DirectionalCubeItem item;
-                item.Center = center;
-                item.Size = Easy3D::CubeBatch::Vector3(kInnerPillarWidth, kInnerPillarHeight, kInnerPillarWidth);
-                for (int face = 0; face < 6; ++face)
-                {
-                    item.Faces[face] = pillarFaces[face];
-                }
-                Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
+                AddCenteredBox(mesh, center,
+                               Microsoft::Xna::Framework::Vector3(kInnerPillarWidth, kInnerPillarHeight, kInnerPillarWidth),
+                               pillarFaces);
                 return true;
             }
 
-            Easy3D::DirectionalCubeFace thinBarFaces[6];
+            CnaEngine::Graphics::BoxFaces thinBarFaces;
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::ThinBar)
             {
                 ConfigureThinBarFaces(lookupIcon, tileUv, thinBarFaces);
-                Easy3D::DirectionalCubeItem item;
-                item.Center = center;
                 // Full block width along X (the bar's own long axis, so
                 // adjacent bar blocks connect seamlessly), thin in Y/Z --
                 // see ThinBarTiles.hpp's own comment for the real
                 // orientation justification.
-                item.Size = Easy3D::CubeBatch::Vector3(1.0f, kThinBarThickness, kThinBarThickness);
-                for (int face = 0; face < 6; ++face)
-                {
-                    item.Faces[face] = thinBarFaces[face];
-                }
-                Easy3D::AppendDirectionalCubeMesh(item, vertices, indices);
+                AddCenteredBox(mesh, center,
+                               Microsoft::Xna::Framework::Vector3(1.0f, kThinBarThickness, kThinBarThickness),
+                               thinBarFaces);
                 return true;
             }
 
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerFlatPlate)
             {
-                Easy3D::PlateItem item;
-                item.Width = kInnerFlatPlateWidth;
-                item.Height = kInnerFlatPlateHeight;
-                item.Uv = tileUv;
-                item.Axis = GetInnerFlatPlateAxis(lookupIcon, plateRotated);
-                item.Center = center;
-                Easy3D::AppendPlateMesh(item, vertices, indices);
+                mesh.AddPlate(center, kInnerFlatPlateWidth, kInnerFlatPlateHeight,
+                              GetInnerFlatPlateAxis(lookupIcon, plateRotated), tileUv);
                 return true;
             }
 
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::TripleCrossBillboard)
             {
-                Easy3D::TripleCrossItem item;
-                item.Center = center;
-                item.Width = kTripleCrossWidth;
-                item.Height = kTripleCrossHeight;
-                item.Uv = tileUv;
-                Easy3D::AppendTripleCrossMesh(item, vertices, indices);
+                mesh.AddCrossedPlates(center, kTripleCrossWidth, kTripleCrossHeight, 3, tileUv);
                 return true;
             }
 
@@ -399,12 +409,9 @@ namespace GalaxyEggbert::Game
         {
             m_rotatedPlatePositions.insert(PackPlatePositionKey(pos[0], pos[1], pos[2]));
         }
-        std::vector<Easy3D::CubeVertex> staticVertices;
-        std::vector<std::uint32_t> staticIndices;
-        std::vector<Easy3D::CubeVertex> transparentStaticVertices;
-        std::vector<std::uint32_t> transparentStaticIndices;
-        std::vector<Easy3D::CubeVertex> grassVertices;
-        std::vector<std::uint32_t> grassIndices;
+        auto staticMesh = MakeTexturedMeshBuilder();
+        auto transparentStaticMesh = MakeTexturedMeshBuilder();
+        auto grassMesh = MakeTexturedMeshBuilder();
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -444,7 +451,7 @@ namespace GalaxyEggbert::Game
                         continue;
                     }
 
-                    const Easy3D::CubeBatch::Vector3 center(worldX, worldY, worldZ);
+                    const Microsoft::Xna::Framework::Vector3 center(worldX, worldY, worldZ);
                     const int icon = static_cast<int>(block.type());
                     const auto tileUv = tileAtlas.GetTileUv(icon);
                     const bool plateRotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
@@ -456,7 +463,7 @@ namespace GalaxyEggbert::Game
                         // buffer, built once here and never rebuilt by
                         // Update() (same lifecycle as m_staticRenderer).
                         AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
-                                              transparentStaticVertices, transparentStaticIndices);
+                                              transparentStaticMesh);
                         continue;
                     }
 
@@ -468,13 +475,9 @@ namespace GalaxyEggbert::Game
                         // see DirectionalCubeTiles.cpp) -- this only adds
                         // the separate grass-textured top plate, offset to
                         // sit exactly at the block's top face (Y + 0.5).
-                        Easy3D::PlateItem grassItem;
-                        grassItem.Center = Easy3D::CubeBatch::Vector3(worldX, worldY + 0.5f, worldZ);
-                        grassItem.Width = kGrassPlateWidth;
-                        grassItem.Height = kGrassPlateDepth;
-                        grassItem.Uv = Easy3D::UvRect{0.0f, 0.0f, 1.0f, 1.0f};
-                        grassItem.Axis = Easy3D::PlateAxis::Y;
-                        Easy3D::AppendPlateMesh(grassItem, grassVertices, grassIndices);
+                        grassMesh.AddPlate(Microsoft::Xna::Framework::Vector3(worldX, worldY + 0.5f, worldZ),
+                                           kGrassPlateWidth, kGrassPlateDepth, CnaEngine::Graphics::PlateAxis::Y,
+                                           CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
                     }
 
                     // Face culling (NEXT.md §8): only emit a face when its
@@ -499,27 +502,26 @@ namespace GalaxyEggbert::Game
                     // GroundAnchoredPlate mode's own comment above and that
                     // call site for the full history).
                     if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
-                                              staticVertices, staticIndices))
+                                              staticMesh))
                     {
                         continue;
                     }
 
-                    Easy3D::DirectionalCubeItem item;
-                    item.Center = center;
-                    item.Size = Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f);
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosZ)] =
+                    using CnaEngine::Graphics::BoxFace;
+                    CnaEngine::Graphics::BoxFaces faces;
+                    faces[static_cast<int>(BoxFace::PositiveZ)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x, y, z + 1), tileUv};
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegZ)] =
+                    faces[static_cast<int>(BoxFace::NegativeZ)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x, y, z - 1), tileUv};
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosX)] =
+                    faces[static_cast<int>(BoxFace::PositiveX)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x + 1, y, z), tileUv};
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegX)] =
+                    faces[static_cast<int>(BoxFace::NegativeX)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x - 1, y, z), tileUv};
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::PosY)] =
+                    faces[static_cast<int>(BoxFace::PositiveY)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x, y + 1, z), tileUv};
-                    item.Faces[static_cast<int>(Easy3D::CubeFace::NegY)] =
+                    faces[static_cast<int>(BoxFace::NegativeY)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x, y - 1, z), tileUv};
-                    Easy3D::AppendDirectionalCubeMesh(item, staticVertices, staticIndices);
+                    AddCenteredBox(staticMesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
                 }
             }
         }
@@ -540,32 +542,35 @@ namespace GalaxyEggbert::Game
         // <= 0 with an ArgumentOutOfRangeException. Every hand-authored
         // .vwr world before the editor existed always had at least some
         // terrain, so this was never reachable until now.
-        if (!staticVertices.empty())
+        if (!staticMesh.Mesh().Empty())
         {
-            m_staticRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, staticVertices, staticIndices);
+            m_staticRenderer = UploadTexturedMesh(device, staticMesh.Mesh());
         }
 
-        if (!transparentStaticVertices.empty())
+        if (!transparentStaticMesh.Mesh().Empty())
         {
             m_transparentStaticRenderer =
-                std::make_unique<Easy3D::CubeMeshRenderer>(device, transparentStaticVertices, transparentStaticIndices);
+                UploadTexturedMesh(device, transparentStaticMesh.Mesh());
         }
 
-        if (!grassVertices.empty())
+        if (!grassMesh.Mesh().Empty())
         {
-            m_grassRenderer = std::make_unique<Easy3D::CubeMeshRenderer>(device, grassVertices, grassIndices);
+            m_grassRenderer = UploadTexturedMesh(device, grassMesh.Mesh());
         }
 
         Update(device, 0);
     }
 
-    std::unique_ptr<Easy3D::CubeMeshRenderer> TerrainRenderer::RebuildAnimatedRenderer(
+    std::unique_ptr<CnaEngine::Graphics::GpuMesh> TerrainRenderer::RebuildAnimatedRenderer(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         const std::vector<AnimBlock>& blocks, int animPhase) const
     {
-        Easy3D::CubeBatch batch;
-        std::vector<Easy3D::CubeVertex> vertices;
-        std::vector<std::uint32_t> indices;
+        // Plates and special geometry go into `mesh` as the loop meets them;
+        // plain cubes collect in `cubes` and follow all of them in the
+        // buffer (see the floor cube's comment below for why that order
+        // matters).
+        auto mesh = MakeTexturedMeshBuilder();
+        auto cubes = MakeTexturedMeshBuilder();
         const auto icon107Uv = m_tileAtlas->GetTileUv(107);
         for (const auto& block : blocks)
         {
@@ -576,7 +581,7 @@ namespace GalaxyEggbert::Game
                 // Temp tile's invisible frames — omit the cube entirely.
                 continue;
             }
-            const Easy3D::CubeBatch::Vector3 center(block.x, block.y, block.z);
+            const Microsoft::Xna::Framework::Vector3 center(block.x, block.y, block.z);
             const auto tileUv = m_tileAtlas->GetTileUv(icon);
             // Recover raw grid coordinates (block.x/y/z are already
             // world-space, offset by -kWorldCenterX/Z) for the rotation
@@ -639,20 +644,16 @@ namespace GalaxyEggbert::Game
                 // rounds of that were tried and reverted.
                 {
                     constexpr float kSawPlateHeight = 0.6f;
-                    Easy3D::PlateItem sawItem;
-                    sawItem.Center =
-                        Easy3D::CubeBatch::Vector3(block.x, block.y + 0.5f + kSawPlateHeight * 0.5f, block.z);
-                    sawItem.Width = kInnerFlatPlateWidth;
-                    sawItem.Height = kSawPlateHeight;
-                    sawItem.Uv = tileUv;
-                    sawItem.Axis = plateRotated ? Easy3D::PlateAxis::X : Easy3D::PlateAxis::Z;
-                    Easy3D::AppendPlateMesh(sawItem, vertices, indices);
+                    mesh.AddPlate(
+                        Microsoft::Xna::Framework::Vector3(block.x, block.y + 0.5f + kSawPlateHeight * 0.5f, block.z),
+                        kInnerFlatPlateWidth, kSawPlateHeight,
+                        plateRotated ? CnaEngine::Graphics::PlateAxis::X : CnaEngine::Graphics::PlateAxis::Z, tileUv);
                 }
 
                 // Floor cube shifted down by kSawPlateEpsilon (not the plate
-                // shifted up) -- this batch's cubes are only turned into
-                // triangles by BuildCubeMesh() AFTER the whole per-block
-                // loop finishes, always landing later in the shared vertex
+                // shifted up) -- the plain cubes (`cubes`) are only appended
+                // to `mesh` AFTER the whole per-block loop finishes, always
+                // landing later in the shared vertex
                 // buffer than every plate appended during the loop, so an
                 // apparent depth-test tie always resolved in the cube's
                 // favor regardless of a same-buffer Y epsilon on the plate
@@ -661,22 +662,22 @@ namespace GalaxyEggbert::Game
                 // below y+0.5 instead removes the ambiguity as real,
                 // unambiguous geometry rather than relying on depth-test
                 // tie-breaking at all.
-                batch.Add(Easy3D::CubeBatch::Vector3(block.x, block.y - kSawPlateEpsilon, block.z),
-                          Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f),
-                          m_tileAtlas->GetTileUv(GalaxyEggbert::BlockTypes::RockPile));
+                AddCenteredBox(cubes, Microsoft::Xna::Framework::Vector3(block.x, block.y - kSawPlateEpsilon, block.z),
+                               Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
+                               m_tileAtlas->GetTileUv(GalaxyEggbert::BlockTypes::RockPile));
                 continue;
             }
 
             if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
-                                      vertices, indices))
+                                      mesh))
             {
                 continue;
             }
 
-            batch.Add(center, Easy3D::CubeBatch::Vector3(1.0f, 1.0f, 1.0f), tileUv);
+            AddCenteredBox(cubes, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), tileUv);
         }
 
-        if (batch.Empty() && vertices.empty())
+        if (cubes.Mesh().Empty() && mesh.Mesh().Empty())
         {
             // Every block in this group is in a hidden frame this phase
             // (e.g. Temp's 2 blank frames out of 20) — avoid constructing a
@@ -685,8 +686,9 @@ namespace GalaxyEggbert::Game
             return nullptr;
         }
 
-        Easy3D::BuildCubeMesh(batch, vertices, indices);
-        return std::make_unique<Easy3D::CubeMeshRenderer>(device, vertices, indices);
+        CnaEngine::Graphics::MeshData combined = mesh.Take();
+        combined.Append(cubes.Mesh());
+        return UploadTexturedMesh(device, combined);
     }
 
     void TerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)

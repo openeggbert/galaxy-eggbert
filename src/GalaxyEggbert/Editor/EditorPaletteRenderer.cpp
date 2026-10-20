@@ -6,7 +6,7 @@
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
-#include <Easy3D/BillboardMeshRenderer.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 
 #include <array>
 #include <cstdio>
@@ -80,15 +80,15 @@ namespace GalaxyEggbert::Editor
     struct EditorPaletteRenderer::Impl
     {
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> flatEffect;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> flatRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> flatRenderer;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> buttonTexture;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> buttonEffect;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> buttonRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> buttonRenderer;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> textTexture;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> textRenderer;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> skyEffect;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> skyRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> skyRenderer;
         std::array<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>,
                    kSkyRegionCount> skyTextures;
         std::array<bool, kSkyRegionCount> skyTextureAttempted{};

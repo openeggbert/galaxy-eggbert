@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Easy3D/BillboardMeshRenderer.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 
@@ -39,16 +39,14 @@ namespace GalaxyEggbert::Game::QuadBatch
 
     // Appends one axis-aligned quad (2 triangles, 4 vertices) to existing
     // output arrays.
-    void AppendQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
-                      std::vector<std::uint32_t>& indices,
+    void AppendQuadUv(CnaEngine::Graphics::MeshBuilder& mesh,
                       float x0, float y0, float x1, float y1,
                       float u0, float v0, float u1, float v1);
 
     // Appends one quad rotated about its own center by rotationDegrees
     // (positive = clockwise on screen, standard XNA SpriteBatch convention
     // in this Y-down space).
-    void AppendRotatedQuadUv(std::vector<Easy3D::BillboardVertex>& vertices,
-                             std::vector<std::uint32_t>& indices,
+    void AppendRotatedQuadUv(CnaEngine::Graphics::MeshBuilder& mesh,
                              float centerX, float centerY, float halfW, float halfH,
                              float rotationDegrees,
                              float u0, float v0, float u1, float v1);
@@ -62,7 +60,7 @@ namespace GalaxyEggbert::Game::QuadBatch
     // restored to 1.0 on @p effect after drawing.
     void FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                     Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                    std::unique_ptr<Easy3D::BillboardMeshRenderer>& renderer,
+                    std::unique_ptr<CnaEngine::Graphics::GpuMesh>& renderer,
                     const std::vector<Quad>& quads, int viewportW, int viewportH,
                     float alpha);
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Easy3D/CubeMesh.hpp>
+#include <CnaEngine/Graphics/MeshBuilder.hpp>
 
 namespace GalaxyEggbert::Game
 {
@@ -20,13 +20,13 @@ namespace GalaxyEggbert::Game
     // textured, other 5 flat fallback color, same `SwatchUv` approach as
     // `DirectionalCubeTiles`). Icon 384/385's single textured face has no
     // confirmed facing cue in either the questionnaire text or their crop
-    // (a symmetric wall-panel icon) -- defaults to `CubeFace::PosZ`, same
+    // (a symmetric wall-panel icon) -- defaults to `BoxFace::PositiveZ`, same
     // convention as `DirectionalCubeTiles`'s symmetric-icon default.
     constexpr float kInnerPillarWidth = 0.35f;  // X/Z extent (thin post)
     constexpr float kInnerPillarHeight = 0.9f;  // Y extent (nearly full block height)
 
     // Called only after BlockDefinitionRegistry selected InnerPillarBox;
     // this helper supplies face parameters and does not classify icons.
-    void ConfigureInnerPillarBoxFaces(int icon, const Easy3D::UvRect& tileUv,
-                                      Easy3D::DirectionalCubeFace (&outFaces)[6]);
+    void ConfigureInnerPillarBoxFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
+                                      CnaEngine::Graphics::BoxFaces& outFaces);
 }

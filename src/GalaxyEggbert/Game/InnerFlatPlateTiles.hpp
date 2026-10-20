@@ -2,7 +2,7 @@
 
 #include "PlateRotationMetadata.hpp"
 
-#include <Easy3D/CubeMesh.hpp>
+#include <CnaEngine/Graphics/MeshBuilder.hpp>
 
 namespace GalaxyEggbert::Game
 {
@@ -38,5 +38,5 @@ namespace GalaxyEggbert::Game
     // mechanism a caller uses to look up @p rotated for a given block).
     // Only meaningful when BlockDefinitionRegistry selected
     // BlockRenderMode::InnerFlatPlate.
-    Easy3D::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated);
+    CnaEngine::Graphics::PlateAxis GetInnerFlatPlateAxis(int icon, bool rotated);
 }

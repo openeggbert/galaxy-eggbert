@@ -7,11 +7,11 @@ namespace GalaxyEggbert::Game
 {
     namespace
     {
-        using Easy3D::CubeFace;
+        using CnaEngine::Graphics::BoxFace;
     }
 
-    void ConfigureInnerPillarBoxFaces(int icon, const Easy3D::UvRect& tileUv,
-                                      Easy3D::DirectionalCubeFace (&outFaces)[6])
+    void ConfigureInnerPillarBoxFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
+                                      CnaEngine::Graphics::BoxFaces& outFaces)
     {
         if (icon == 76)
         {
@@ -23,11 +23,11 @@ namespace GalaxyEggbert::Game
             // above/below), same convention as icon 200's unstated faces.
             for (auto& face : outFaces)
             {
-                face.Visible = true;
-                face.Uv = tileUv;
+                face.visible = true;
+                face.uv = tileUv;
             }
-            outFaces[static_cast<int>(CubeFace::PosY)].Visible = false;
-            outFaces[static_cast<int>(CubeFace::NegY)].Visible = false;
+            outFaces[static_cast<int>(BoxFace::PositiveY)].visible = false;
+            outFaces[static_cast<int>(BoxFace::NegativeY)].visible = false;
             return;
         }
 
@@ -42,12 +42,12 @@ namespace GalaxyEggbert::Game
             // DirectionalCubeTiles's symmetric-icon default.
             for (auto& face : outFaces)
             {
-                face.Visible = true;
-                face.Uv = SwatchUv(tileUv, kMidSwatchV);
+                face.visible = true;
+                face.uv = SwatchUv(tileUv, kMidSwatchV);
             }
-            outFaces[static_cast<int>(CubeFace::PosY)].Uv = SwatchUv(tileUv, kTopSwatchV);
-            outFaces[static_cast<int>(CubeFace::NegY)].Uv = SwatchUv(tileUv, kBottomSwatchV);
-            outFaces[static_cast<int>(CubeFace::PosZ)].Uv = tileUv;
+            outFaces[static_cast<int>(BoxFace::PositiveY)].uv = SwatchUv(tileUv, kTopSwatchV);
+            outFaces[static_cast<int>(BoxFace::NegativeY)].uv = SwatchUv(tileUv, kBottomSwatchV);
+            outFaces[static_cast<int>(BoxFace::PositiveZ)].uv = tileUv;
             return;
         }
 

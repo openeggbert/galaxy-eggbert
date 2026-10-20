@@ -2,8 +2,7 @@
 
 #include <GalaxyEggbert/Def/GameSpeed.hpp>
 
-#include <Easy3D/BillboardMesh.hpp>
-#include <Easy3D/BillboardMeshRenderer.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
@@ -181,7 +180,7 @@ namespace GalaxyEggbert::Game
         // orthographic projection does the rest).
         void FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                         Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                        std::unique_ptr<Easy3D::BillboardMeshRenderer>& renderer,
+                        std::unique_ptr<CnaEngine::Graphics::GpuMesh>& renderer,
                         const std::vector<Quad>& quads, int viewportW, int viewportH,
                         float alpha);
 
@@ -197,13 +196,13 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> jaugeEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> buttonEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> elementRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> jaugeRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> buttonRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> hintPanelRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> blupiRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> elementRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> textRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> padRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> jaugeRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> buttonRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> hintPanelRenderer_;
         bool loaded_ = false;
     };
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Easy3D/CubeMesh.hpp>
+#include <CnaEngine/Graphics/MeshBuilder.hpp>
 
 namespace GalaxyEggbert::Game
 {
@@ -17,5 +17,5 @@ namespace GalaxyEggbert::Game
     constexpr float kBottomSwatchV = 0.92f;
     constexpr float kMidSwatchV = 0.5f;
 
-    Easy3D::UvRect SwatchUv(const Easy3D::UvRect& tile, float vCenterFrac);
+    CnaEngine::Graphics::UvRect SwatchUv(const CnaEngine::Graphics::UvRect& tile, float vCenterFrac);
 }

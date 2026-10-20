@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Easy3D/CubeMesh.hpp>
+#include <CnaEngine/Graphics/MeshBuilder.hpp>
 
 namespace GalaxyEggbert::Game
 {
@@ -53,7 +53,7 @@ namespace GalaxyEggbert::Game
     // callers already compute a UV per block anyway, so this is just
     // threading one extra, cheap, already-available value through rather
     // than growing this function's own icon-lookup responsibilities.
-    void ConfigureDirectionalCubeFaces(int icon, const Easy3D::UvRect& tileUv,
-                                       const Easy3D::UvRect& icon107Uv,
-                                       Easy3D::DirectionalCubeFace (&outFaces)[6]);
+    void ConfigureDirectionalCubeFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
+                                       const CnaEngine::Graphics::UvRect& icon107Uv,
+                                       CnaEngine::Graphics::BoxFaces& outFaces);
 }

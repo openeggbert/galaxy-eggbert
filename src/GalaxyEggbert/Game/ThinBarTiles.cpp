@@ -7,11 +7,11 @@ namespace GalaxyEggbert::Game
 {
     namespace
     {
-        using Easy3D::CubeFace;
+        using CnaEngine::Graphics::BoxFace;
     }
 
-    void ConfigureThinBarFaces(int icon, const Easy3D::UvRect& tileUv,
-                               Easy3D::DirectionalCubeFace (&outFaces)[6])
+    void ConfigureThinBarFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
+                               CnaEngine::Graphics::BoxFaces& outFaces)
     {
         if (icon == 202)
         {
@@ -21,11 +21,11 @@ namespace GalaxyEggbert::Game
             // fallback sampled from the icon's own texture.
             for (auto& face : outFaces)
             {
-                face.Visible = true;
-                face.Uv = tileUv;
+                face.visible = true;
+                face.uv = tileUv;
             }
-            outFaces[static_cast<int>(CubeFace::PosX)].Uv = SwatchUv(tileUv, kMidSwatchV);
-            outFaces[static_cast<int>(CubeFace::NegX)].Uv = SwatchUv(tileUv, kMidSwatchV);
+            outFaces[static_cast<int>(BoxFace::PositiveX)].uv = SwatchUv(tileUv, kMidSwatchV);
+            outFaces[static_cast<int>(BoxFace::NegativeX)].uv = SwatchUv(tileUv, kMidSwatchV);
             return;
         }
 

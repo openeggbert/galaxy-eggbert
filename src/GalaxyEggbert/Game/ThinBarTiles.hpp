@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Easy3D/CubeMesh.hpp>
+#include <CnaEngine/Graphics/MeshBuilder.hpp>
 
 namespace GalaxyEggbert::Game
 {
@@ -35,6 +35,6 @@ namespace GalaxyEggbert::Game
 
     // Called only after BlockDefinitionRegistry selected ThinBar; this
     // helper supplies face parameters and does not classify icons.
-    void ConfigureThinBarFaces(int icon, const Easy3D::UvRect& tileUv,
-                               Easy3D::DirectionalCubeFace (&outFaces)[6]);
+    void ConfigureThinBarFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
+                               CnaEngine::Graphics::BoxFaces& outFaces);
 }

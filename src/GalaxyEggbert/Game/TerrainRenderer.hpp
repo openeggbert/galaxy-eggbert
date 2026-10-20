@@ -4,7 +4,7 @@
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 
-#include <Easy3D/CubeMeshRenderer.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -80,15 +80,15 @@ namespace GalaxyEggbert::Game
         // CubeMeshRenderer. Returns nullptr if every block resolved to a
         // hidden frame (e.g. Temp's blank frames) — caller should just clear
         // its renderer pointer in that case rather than upload an empty mesh.
-        [[nodiscard]] std::unique_ptr<Easy3D::CubeMeshRenderer> RebuildAnimatedRenderer(
+        [[nodiscard]] std::unique_ptr<CnaEngine::Graphics::GpuMesh> RebuildAnimatedRenderer(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
             const std::vector<AnimBlock>& blocks, int animPhase) const;
 
-        std::unique_ptr<Easy3D::CubeMeshRenderer> m_staticRenderer;
-        std::unique_ptr<Easy3D::CubeMeshRenderer> m_transparentStaticRenderer;
-        std::unique_ptr<Easy3D::CubeMeshRenderer> m_animRenderer;
-        std::unique_ptr<Easy3D::CubeMeshRenderer> m_waterRenderer;
-        std::unique_ptr<Easy3D::CubeMeshRenderer> m_grassRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_staticRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_transparentStaticRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_animRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_waterRenderer;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_grassRenderer;
         std::vector<AnimBlock> m_animBlocks;
         std::vector<AnimBlock> m_waterBlocks;
         // Positions with InnerFlatPlate rotation metadata set (plan.md

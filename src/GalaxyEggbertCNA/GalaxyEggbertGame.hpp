@@ -17,9 +17,8 @@
 #include <GalaxyEggbert/Def/GamePhase.hpp>
 #include <GalaxyEggbert/Def/GameSpeed.hpp>
 
-#include <Easy3D/BillboardMeshRenderer.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <CnaEngine/Graphics/Camera.hpp>
-#include <Easy3D/CubeMeshRenderer.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedEffect.hpp>
@@ -163,7 +162,7 @@ namespace GalaxyEggbert::CNA
         // color in that case.
         Microsoft::Xna::Framework::Graphics::Texture2D backgroundTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> backgroundEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> backgroundMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> backgroundMeshRenderer_;
         bool backgroundLoaded_ = false;
 
         // Maps block types to object-m.png UV rects (plan.md E3D-MIG-053).
@@ -659,7 +658,7 @@ namespace GalaxyEggbert::CNA
         // not lazily cached like terrainRenderer_.
         Microsoft::Xna::Framework::Graphics::Texture2D objectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> objectMeshRenderer_;
 
         // Billboard rendering for the confirmed object-m.png-sourced
         // MoveObjects (ObjectDefinitionRegistry, NEXT.md §3,
@@ -668,7 +667,7 @@ namespace GalaxyEggbert::CNA
         // (object-m.png) via its own dedicated effect (BasicEffect only
         // binds one texture at a time), same reason as bigDecorEffect_.
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectMPngEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> objectMPngMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> objectMPngMeshRenderer_;
 
         // Billboard rendering for the confirmed explo.png-sourced
         // MoveObjects (ObjectDefinitionRegistry, NEXT.md §3,
@@ -677,7 +676,7 @@ namespace GalaxyEggbert::CNA
         // camera-facing billboard technique as objectMeshRenderer_ above.
         Microsoft::Xna::Framework::Graphics::Texture2D exploTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> exploEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> exploMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> exploMeshRenderer_;
 
         // Billboard rendering for the confirmed Blupi-skin MoveObjects
         // (ObjectDefinitionRegistry, NEXT.md §3, 2026-07-09) --
@@ -691,10 +690,10 @@ namespace GalaxyEggbert::CNA
         // even though both load the same blupi.png file.
         Microsoft::Xna::Framework::Graphics::Texture2D blupiObjectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiObjectEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiObjectMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> blupiObjectMeshRenderer_;
         Microsoft::Xna::Framework::Graphics::Texture2D blupi1ObjectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupi1ObjectEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupi1ObjectMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> blupi1ObjectMeshRenderer_;
 
         // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
         // (NEXT.md §8 task 3, mobile-eggbert-reference/
@@ -717,7 +716,7 @@ namespace GalaxyEggbert::CNA
         };
         std::vector<BigDecorCell> bigDecorCells_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> bigDecorEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> bigDecorMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> bigDecorMeshRenderer_;
 
         // Platform-lift/crate UniformCube object path (NEXT.md §8 task 3,
         // mobile-eggbert-reference/15-3d-render-mapping-design.md §5's two
@@ -734,7 +733,7 @@ namespace GalaxyEggbert::CNA
         // formulas to actually animate (cheap here, only a handful of cube
         // objects).
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectCubeEffect_;
-        std::unique_ptr<Easy3D::CubeMeshRenderer> objectCubeMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> objectCubeMeshRenderer_;
 
         // Third-person-mode 3D model (2026-07-09, NEXT.md §3) -- CNA's
         // generic SkinnedModelEXT/SkinnedEffect path (../cna/docs/

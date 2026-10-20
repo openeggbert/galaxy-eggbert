@@ -2,8 +2,7 @@
 
 #include "QuadBatch.hpp"
 
-#include <Easy3D/BillboardMesh.hpp>
-#include <Easy3D/BillboardMeshRenderer.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Def/GamePhase.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
@@ -543,7 +542,7 @@ namespace GalaxyEggbert::Game
 
         void FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                         Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                        std::unique_ptr<Easy3D::BillboardMeshRenderer>& renderer,
+                        std::unique_ptr<CnaEngine::Graphics::GpuMesh>& renderer,
                         const std::vector<Quad>& quads, int viewportW, int viewportH,
                         float alpha);
 
@@ -621,19 +620,19 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> initBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> speedyblupiEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> gearEffect_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> padRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> padPressedRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> pauseBgRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> blupiyoupieRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> winBgRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> lostBgRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> setupBgRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> textRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> waitBgRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> jaugeRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> initBgRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> speedyblupiRenderer_;
-        std::unique_ptr<Easy3D::BillboardMeshRenderer> gearRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> padRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> padPressedRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> pauseBgRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> blupiyoupieRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> winBgRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> lostBgRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> setupBgRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> textRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> waitBgRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> jaugeRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> initBgRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> speedyblupiRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> gearRenderer_;
         bool loaded_ = false;
 
         // Edge-trigger press tracking: which logical button (if any) the

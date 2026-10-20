@@ -1,7 +1,6 @@
 #include "EditorHighlightRenderer.hpp"
 
-#include <Easy3D/CubeBatch.hpp>
-#include <Easy3D/CubeMesh.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/FillMode.hpp>
@@ -77,16 +76,13 @@ namespace GalaxyEggbert::Editor
         }
         effect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(r, g, b));
 
-        const Easy3D::CubeBatch::Vector3 center(
+        const Microsoft::Xna::Framework::Vector3 center(
             (minX + maxX) * 0.5f, (minY + maxY) * 0.5f, (minZ + maxZ) * 0.5f);
-        const Easy3D::CubeBatch::Vector3 size(maxX - minX, maxY - minY, maxZ - minZ);
+        const Microsoft::Xna::Framework::Vector3 size(maxX - minX, maxY - minY, maxZ - minZ);
 
-        Easy3D::CubeBatch batch;
-        batch.Add(center, size);
-        std::vector<Easy3D::CubeVertex> vertices;
-        std::vector<std::uint32_t> indices;
-        Easy3D::BuildCubeMesh(batch, vertices, indices);
-        mesh_ = std::make_unique<Easy3D::CubeMeshRenderer>(device, vertices, indices);
+        auto mesh = Game::MakeTexturedMeshBuilder();
+        Game::AddCenteredBox(mesh, center, size, CnaEngine::Graphics::UvRect::Full());
+        mesh_ = Game::UploadTexturedMesh(device, mesh.Mesh());
 
         lastMinX_ = minX; lastMinY_ = minY; lastMinZ_ = minZ;
         lastMaxX_ = maxX; lastMaxY_ = maxY; lastMaxZ_ = maxZ;

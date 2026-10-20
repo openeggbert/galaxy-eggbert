@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Easy3D/TextureAtlas.hpp>
+#include <CnaEngine/Graphics/TextureAtlas.hpp>
 
 namespace GalaxyEggbert::Game
 {
@@ -28,6 +28,6 @@ namespace GalaxyEggbert::Game
 
         // UV rect for a block type. Returns an all-zero UvRect for Air (0),
         // negative values, or any type outside the sheet's grid.
-        [[nodiscard]] Easy3D::UvRect GetTileUv(int blockType) const;
+        [[nodiscard]] CnaEngine::Graphics::UvRect GetTileUv(int blockType) const;
     };
 }

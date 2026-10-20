@@ -9,7 +9,7 @@ namespace GalaxyEggbert::Game
 {
     namespace
     {
-        using Easy3D::CubeFace;
+        using CnaEngine::Graphics::BoxFace;
 
         // Every icon below answered "krychle, textura na (všech/4) bočních
         // stranách" -- all 4 side faces always show the tile's real texture;
@@ -131,17 +131,17 @@ namespace GalaxyEggbert::Game
         struct FanEntry
         {
             int Icon;
-            CubeFace BaseFace;
-            CubeFace OpenFace;
+            BoxFace BaseFace;
+            BoxFace OpenFace;
             float BaseSwatchV;
             bool RotateTop180 = false;
         };
 
         constexpr FanEntry kFanEntries[] = {
-            {126, CubeFace::NegX, CubeFace::PosX, kMidSwatchV, true},  // FanLeft: blows toward -X
-            {129, CubeFace::PosX, CubeFace::NegX, kMidSwatchV, true},  // FanRight: blows toward +X
-            {132, CubeFace::NegY, CubeFace::PosY, kBottomSwatchV, false}, // FanUp: blows up
-            {135, CubeFace::PosY, CubeFace::NegY, kTopSwatchV, false},    // FanDown: blows down
+            {126, BoxFace::NegativeX, BoxFace::PositiveX, kMidSwatchV, true},  // FanLeft: blows toward -X
+            {129, BoxFace::PositiveX, BoxFace::NegativeX, kMidSwatchV, true},  // FanRight: blows toward +X
+            {132, BoxFace::NegativeY, BoxFace::PositiveY, kBottomSwatchV, false}, // FanUp: blows up
+            {135, BoxFace::PositiveY, BoxFace::NegativeY, kTopSwatchV, false},    // FanDown: blows down
         };
 
         // Icons needing exactly ONE of the 4 side faces textured (the rest
@@ -151,8 +151,8 @@ namespace GalaxyEggbert::Game
         // orientation field -- see NEXT.md §3). Facing was instead
         // determined, icon by icon, from the actual crop image: an image
         // with a genuine asymmetric feature offset toward one edge uses that
-        // edge (2D top/bottom -> CubeFace::PosZ/NegZ, 2D left/right ->
-        // CubeFace::NegX/PosX -- same convention as the FanLeft/Right/Up/Down
+        // edge (2D top/bottom -> BoxFace::PositiveZ/NegZ, 2D left/right ->
+        // BoxFace::NegativeX/PosX -- same convention as the FanLeft/Right/Up/Down
         // icons already confirm mobile-eggbert uses). An image with NO
         // reliable directional cue (the large majority -- most of these are
         // small symmetric decorative icons, not oriented objects) defaults
@@ -175,21 +175,21 @@ namespace GalaxyEggbert::Game
         {
             int Icon;
             Pattern EntryPattern;
-            CubeFace Primary; // single-face patterns: the textured face.
+            BoxFace Primary; // single-face patterns: the textured face.
                               // Axis patterns: one face of the textured pair
                               // (its opposite is inferred).
         };
 
-        constexpr CubeFace Opposite(CubeFace f)
+        constexpr BoxFace Opposite(BoxFace f)
         {
             switch (f)
             {
-                case CubeFace::PosZ: return CubeFace::NegZ;
-                case CubeFace::NegZ: return CubeFace::PosZ;
-                case CubeFace::PosX: return CubeFace::NegX;
-                case CubeFace::NegX: return CubeFace::PosX;
-                case CubeFace::PosY: return CubeFace::NegY;
-                default:             return CubeFace::PosY;
+                case BoxFace::PositiveZ: return BoxFace::NegativeZ;
+                case BoxFace::NegativeZ: return BoxFace::PositiveZ;
+                case BoxFace::PositiveX: return BoxFace::NegativeX;
+                case BoxFace::NegativeX: return BoxFace::PositiveX;
+                case BoxFace::PositiveY: return BoxFace::NegativeY;
+                default:             return BoxFace::PositiveY;
             }
         }
 
@@ -200,33 +200,33 @@ namespace GalaxyEggbert::Game
             // matched pair from the "architectural-kit" stone set) -- every
             // other icon in this group is a small symmetric/abstract
             // decoration with no reliable edge cue, so defaults to PosZ.
-            {3, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {4, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {5, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {6, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {8, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {9, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {10, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {11, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {12, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {13, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {14, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {48, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {186, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {187, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {188, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {189, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {190, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {191, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {192, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {390, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {391, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {392, Pattern::SingleFaceRestColor, CubeFace::NegX}, // light trim on the crop's left edge
-            {393, Pattern::SingleFaceRestColor, CubeFace::PosX}, // dark trim on the crop's right edge
-            {394, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {395, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {396, Pattern::SingleFaceRestColor, CubeFace::PosZ},
-            {397, Pattern::SingleFaceRestColor, CubeFace::PosZ},
+            {3, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {4, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {5, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {6, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {8, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {9, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {10, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {11, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {12, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {13, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {14, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {48, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {186, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {187, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {188, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {189, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {190, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {191, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {192, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {390, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {391, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {392, Pattern::SingleFaceRestColor, BoxFace::NegativeX}, // light trim on the crop's left edge
+            {393, Pattern::SingleFaceRestColor, BoxFace::PositiveX}, // dark trim on the crop's right edge
+            {394, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {395, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {396, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {397, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
 
             // Group B: single face + top color + other 4 (3 sides + bottom)
             // open. Icons 74/75's own wording only states the textured side
@@ -234,30 +234,30 @@ namespace GalaxyEggbert::Game
             // unstated; treated as open here to match this fully-specified
             // pattern (the closest confirmed analog) rather than left
             // undefined -- flag for re-confirmation if that turns out wrong.
-            {19, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
-            {20, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
-            {21, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
-            {28, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
-            {74, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
-            {75, Pattern::SingleFaceTopColorRestOpen, CubeFace::PosZ},
+            {19, Pattern::SingleFaceTopColorRestOpen, BoxFace::PositiveZ},
+            {20, Pattern::SingleFaceTopColorRestOpen, BoxFace::PositiveZ},
+            {21, Pattern::SingleFaceTopColorRestOpen, BoxFace::PositiveZ},
+            {28, Pattern::SingleFaceTopColorRestOpen, BoxFace::PositiveZ},
+            {74, Pattern::SingleFaceTopColorRestOpen, BoxFace::PositiveZ},
+            {75, Pattern::SingleFaceTopColorRestOpen, BoxFace::PositiveZ},
 
             // Group C: single face + top AND bottom color + other 3 sides open.
-            {245, Pattern::SingleFaceTopBottomColorRestOpen, CubeFace::PosZ},
+            {245, Pattern::SingleFaceTopBottomColorRestOpen, BoxFace::PositiveZ},
 
             // Group E: single face + all other 5 faces open (fully passable
             // except through the one textured face).
-            {66, Pattern::SingleFaceRestOpen, CubeFace::PosZ},
+            {66, Pattern::SingleFaceRestOpen, BoxFace::PositiveZ},
 
             // Group G: 2 opposite side faces textured (an axis, not a single
             // face) + all other 4 faces (top/bottom + the other 2 sides)
             // flat color. Icon 400's crop is a symmetric archway with no
             // left/right vs. front/back cue -- defaults to the Z axis.
-            {400, Pattern::AxisRestColor, CubeFace::PosZ},
+            {400, Pattern::AxisRestColor, BoxFace::PositiveZ},
 
             // Group H: 2 opposite sides + top + bottom all textured, other 2
             // sides flat color. Icon 49's crop shows a clear horizontal
             // axle/dumbbell shape spanning left-right -> X axis.
-            {49, Pattern::AxisPlusTopBottomOtherSidesColor, CubeFace::PosX},
+            {49, Pattern::AxisPlusTopBottomOtherSidesColor, BoxFace::PositiveX},
 
             // Group I: icons 15/16/17/18 ("2 protilehlé strany + shora barva
             // + zdola průhledné + z zbylých 2 bočních stran jedna průhledná
@@ -271,18 +271,18 @@ namespace GalaxyEggbert::Game
             // 400) with NegX = open, PosX = color, per the user's explicit
             // go-ahead to use the same tie-break approach as every other
             // ambiguous icon in this table.
-            {15, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
-            {16, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
-            {17, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
-            {18, Pattern::AxisTopColorBottomOpenSideColorSideOpen, CubeFace::PosZ},
+            {15, Pattern::AxisTopColorBottomOpenSideColorSideOpen, BoxFace::PositiveZ},
+            {16, Pattern::AxisTopColorBottomOpenSideColorSideOpen, BoxFace::PositiveZ},
+            {17, Pattern::AxisTopColorBottomOpenSideColorSideOpen, BoxFace::PositiveZ},
+            {18, Pattern::AxisTopColorBottomOpenSideColorSideOpen, BoxFace::PositiveZ},
         };
     }
 
-    void ConfigureDirectionalCubeFaces(int icon, const Easy3D::UvRect& tileUv,
-                                       const Easy3D::UvRect& icon107Uv,
-                                       Easy3D::DirectionalCubeFace (&outFaces)[6])
+    void ConfigureDirectionalCubeFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
+                                       const CnaEngine::Graphics::UvRect& icon107Uv,
+                                       CnaEngine::Graphics::BoxFaces& outFaces)
     {
-        using Easy3D::CubeFace;
+        using CnaEngine::Graphics::BoxFace;
 
         if (icon == GalaxyEggbert::BlockTypes::Platform)
         {
@@ -294,11 +294,11 @@ namespace GalaxyEggbert::Game
             // comment).
             for (auto& face : outFaces)
             {
-                face.Visible = true;
-                face.Uv = tileUv;
+                face.visible = true;
+                face.uv = tileUv;
             }
-            outFaces[static_cast<int>(CubeFace::PosY)].Visible = false;
-            outFaces[static_cast<int>(CubeFace::NegY)].Visible = false;
+            outFaces[static_cast<int>(BoxFace::PositiveY)].visible = false;
+            outFaces[static_cast<int>(BoxFace::NegativeY)].visible = false;
             return;
         }
 
@@ -311,17 +311,17 @@ namespace GalaxyEggbert::Game
 
             for (auto& face : outFaces)
             {
-                face.Visible = true;
-                face.Uv = tileUv;
+                face.visible = true;
+                face.uv = tileUv;
             }
 
-            auto& top = outFaces[static_cast<int>(CubeFace::PosY)];
-            top.Visible = entry.TopColor;
-            top.Uv = entry.TopColor ? SwatchUv(tileUv, kTopSwatchV) : top.Uv;
+            auto& top = outFaces[static_cast<int>(BoxFace::PositiveY)];
+            top.visible = entry.TopColor;
+            top.uv = entry.TopColor ? SwatchUv(tileUv, kTopSwatchV) : top.uv;
 
-            auto& bottom = outFaces[static_cast<int>(CubeFace::NegY)];
-            bottom.Visible = entry.BottomColor;
-            bottom.Uv = entry.BottomColor ? SwatchUv(tileUv, kBottomSwatchV) : bottom.Uv;
+            auto& bottom = outFaces[static_cast<int>(BoxFace::NegativeY)];
+            bottom.visible = entry.BottomColor;
+            bottom.uv = entry.BottomColor ? SwatchUv(tileUv, kBottomSwatchV) : bottom.uv;
 
             return;
         }
@@ -335,23 +335,23 @@ namespace GalaxyEggbert::Game
 
             for (int i = 0; i < 6; ++i)
             {
-                const auto face = static_cast<CubeFace>(i);
+                const auto face = static_cast<BoxFace>(i);
                 if (face == fan.BaseFace || face == fan.OpenFace)
                 {
                     continue;
                 }
-                outFaces[i].Visible = true;
-                outFaces[i].Uv = tileUv;
+                outFaces[i].visible = true;
+                outFaces[i].uv = tileUv;
             }
 
-            outFaces[static_cast<int>(fan.BaseFace)].Visible = true;
-            outFaces[static_cast<int>(fan.BaseFace)].Uv = SwatchUv(tileUv, fan.BaseSwatchV);
-            outFaces[static_cast<int>(fan.OpenFace)].Visible = false;
+            outFaces[static_cast<int>(fan.BaseFace)].visible = true;
+            outFaces[static_cast<int>(fan.BaseFace)].uv = SwatchUv(tileUv, fan.BaseSwatchV);
+            outFaces[static_cast<int>(fan.OpenFace)].visible = false;
 
             if (fan.RotateTop180)
             {
-                auto& top = outFaces[static_cast<int>(CubeFace::PosY)];
-                top.Uv = Easy3D::UvRect{top.Uv.U1, top.Uv.V1, top.Uv.U0, top.Uv.V0};
+                auto& top = outFaces[static_cast<int>(BoxFace::PositiveY)];
+                top.uv = CnaEngine::Graphics::UvRect{top.uv.u1, top.uv.v1, top.uv.u0, top.uv.v0};
             }
             return;
         }
@@ -367,26 +367,26 @@ namespace GalaxyEggbert::Game
             // simpler than tracking 6 independent flags per pattern.
             for (auto& face : outFaces)
             {
-                face.Visible = false;
-                face.Uv = tileUv;
+                face.visible = false;
+                face.uv = tileUv;
             }
 
-            const auto setColor = [&](CubeFace f, float vFrac)
+            const auto setColor = [&](BoxFace f, float vFrac)
             {
                 auto& face = outFaces[static_cast<int>(f)];
-                face.Visible = true;
-                face.Uv = SwatchUv(tileUv, vFrac);
+                face.visible = true;
+                face.uv = SwatchUv(tileUv, vFrac);
             };
-            const auto setTex = [&](CubeFace f)
+            const auto setTex = [&](BoxFace f)
             {
                 auto& face = outFaces[static_cast<int>(f)];
-                face.Visible = true;
-                face.Uv = tileUv;
+                face.visible = true;
+                face.uv = tileUv;
             };
-            const auto vFracFor = [](CubeFace f)
+            const auto vFracFor = [](BoxFace f)
             {
-                if (f == CubeFace::PosY) return kTopSwatchV;
-                if (f == CubeFace::NegY) return kBottomSwatchV;
+                if (f == BoxFace::PositiveY) return kTopSwatchV;
+                if (f == BoxFace::NegativeY) return kBottomSwatchV;
                 return kMidSwatchV;
             };
 
@@ -396,7 +396,7 @@ namespace GalaxyEggbert::Game
                     setTex(entry.Primary);
                     for (int i = 0; i < 6; ++i)
                     {
-                        const auto f = static_cast<CubeFace>(i);
+                        const auto f = static_cast<BoxFace>(i);
                         if (f != entry.Primary)
                         {
                             setColor(f, vFracFor(f));
@@ -405,12 +405,12 @@ namespace GalaxyEggbert::Game
                     break;
                 case Pattern::SingleFaceTopColorRestOpen:
                     setTex(entry.Primary);
-                    setColor(CubeFace::PosY, kTopSwatchV);
+                    setColor(BoxFace::PositiveY, kTopSwatchV);
                     break;
                 case Pattern::SingleFaceTopBottomColorRestOpen:
                     setTex(entry.Primary);
-                    setColor(CubeFace::PosY, kTopSwatchV);
-                    setColor(CubeFace::NegY, kBottomSwatchV);
+                    setColor(BoxFace::PositiveY, kTopSwatchV);
+                    setColor(BoxFace::NegativeY, kBottomSwatchV);
                     break;
                 case Pattern::SingleFaceRestOpen:
                     setTex(entry.Primary);
@@ -420,7 +420,7 @@ namespace GalaxyEggbert::Game
                     setTex(Opposite(entry.Primary));
                     for (int i = 0; i < 6; ++i)
                     {
-                        const auto f = static_cast<CubeFace>(i);
+                        const auto f = static_cast<BoxFace>(i);
                         if (f != entry.Primary && f != Opposite(entry.Primary))
                         {
                             setColor(f, vFracFor(f));
@@ -430,13 +430,13 @@ namespace GalaxyEggbert::Game
                 case Pattern::AxisPlusTopBottomOtherSidesColor:
                     setTex(entry.Primary);
                     setTex(Opposite(entry.Primary));
-                    setTex(CubeFace::PosY);
-                    setTex(CubeFace::NegY);
+                    setTex(BoxFace::PositiveY);
+                    setTex(BoxFace::NegativeY);
                     for (int i = 0; i < 6; ++i)
                     {
-                        const auto f = static_cast<CubeFace>(i);
+                        const auto f = static_cast<BoxFace>(i);
                         if (f != entry.Primary && f != Opposite(entry.Primary) &&
-                            f != CubeFace::PosY && f != CubeFace::NegY)
+                            f != BoxFace::PositiveY && f != BoxFace::NegativeY)
                         {
                             setColor(f, kMidSwatchV);
                         }
@@ -446,12 +446,12 @@ namespace GalaxyEggbert::Game
                 {
                     setTex(entry.Primary);
                     setTex(Opposite(entry.Primary));
-                    setColor(CubeFace::PosY, kTopSwatchV);
+                    setColor(BoxFace::PositiveY, kTopSwatchV);
                     // Bottom (NegY) stays open -- already false from the
                     // "start all open" init above.
                     const bool primaryIsZAxis =
-                        (entry.Primary == CubeFace::PosZ || entry.Primary == CubeFace::NegZ);
-                    const CubeFace colorSide = primaryIsZAxis ? CubeFace::PosX : CubeFace::PosZ;
+                        (entry.Primary == BoxFace::PositiveZ || entry.Primary == BoxFace::NegativeZ);
+                    const BoxFace colorSide = primaryIsZAxis ? BoxFace::PositiveX : BoxFace::PositiveZ;
                     // The other axis' remaining face (NegX if primary is Z,
                     // NegZ if primary is X) stays open -- already false.
                     setColor(colorSide, kMidSwatchV);
@@ -482,22 +482,22 @@ namespace GalaxyEggbert::Game
         {
             for (auto& face : outFaces)
             {
-                face.Visible = false;
-                face.Uv = tileUv;
+                face.visible = false;
+                face.uv = tileUv;
             }
 
-            outFaces[static_cast<int>(CubeFace::PosZ)].Visible = true;
-            outFaces[static_cast<int>(CubeFace::NegZ)].Visible = true;
+            outFaces[static_cast<int>(BoxFace::PositiveZ)].visible = true;
+            outFaces[static_cast<int>(BoxFace::NegativeZ)].visible = true;
 
-            auto& icon107Face = outFaces[static_cast<int>(CubeFace::PosX)];
-            icon107Face.Visible = true;
-            icon107Face.Uv = icon107Uv;
+            auto& icon107Face = outFaces[static_cast<int>(BoxFace::PositiveX)];
+            icon107Face.visible = true;
+            icon107Face.uv = icon107Uv;
 
             // NegX stays open (already false from the loop above).
 
-            auto& bottom = outFaces[static_cast<int>(CubeFace::NegY)];
-            bottom.Visible = true;
-            bottom.Uv = SwatchUv(tileUv, kBottomSwatchV);
+            auto& bottom = outFaces[static_cast<int>(BoxFace::NegativeY)];
+            bottom.visible = true;
+            bottom.uv = SwatchUv(tileUv, kBottomSwatchV);
 
             // Top (PosY) stays open -- the real grass top is drawn
             // separately, see this block's comment above.
