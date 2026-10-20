@@ -100,7 +100,7 @@ namespace GalaxyEggbert::Editor
     }
 
     void EditorHighlightRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                         const Easy3D::Camera3D& camera)
+                                         const CnaEngine::Graphics::Camera& camera)
     {
         if (!visible_ || !mesh_ || !effect_)
         {
@@ -111,8 +111,8 @@ namespace GalaxyEggbert::Editor
         using Microsoft::Xna::Framework::Graphics::DepthStencilState;
 
         effect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
-        effect_->View = camera.GetViewMatrix();
-        effect_->Projection = camera.GetProjectionMatrix();
+        effect_->View = camera.View();
+        effect_->Projection = camera.Projection();
 
         device.setBlendStateProperty(BlendState::NonPremultiplied);
         device.setDepthStencilStateProperty(DepthStencilState::DepthRead);

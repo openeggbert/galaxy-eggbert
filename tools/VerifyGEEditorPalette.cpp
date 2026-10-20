@@ -534,7 +534,7 @@ int main()
         WorldEditor editor;
         editor.SetWorldPath(kBackgroundSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const auto tap = [&](int x, int y)
         {
             const MouseState down(
@@ -574,7 +574,7 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const auto tap = [&](int x, int y)
         {
             const MouseState down(
@@ -602,7 +602,7 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const auto tap = [&](int x, int y)
         {
             const MouseState down(
@@ -631,7 +631,7 @@ int main()
         WorldEditor editor;
         editor.SetWorldPath(kSpawnSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const auto tap = [&](int x, int y)
         {
             const MouseState down(
@@ -677,7 +677,7 @@ int main()
         WorldEditor editor;
         editor.SetWorldPath(kBigDecorSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const auto tap = [&](int x, int y)
         {
             const MouseState down(

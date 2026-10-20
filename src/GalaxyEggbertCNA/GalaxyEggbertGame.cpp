@@ -234,8 +234,8 @@ namespace GalaxyEggbert::CNA
         // BlupiController's own `IsSolidAt`). Returns the safe distance
         // along `direction` (a unit vector), always `<= maxDistance`.
         float RaymarchWallDistance(const GalaxyEggbert::Worlds::World& world,
-                                   const Easy3D::Camera3D::Vector3& origin,
-                                   const Easy3D::Camera3D::Vector3& direction, float maxDistance)
+                                   const Microsoft::Xna::Framework::Vector3& origin,
+                                   const Microsoft::Xna::Framework::Vector3& direction, float maxDistance)
         {
             constexpr float kStep = 0.1f;
             const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
@@ -309,6 +309,7 @@ namespace GalaxyEggbert::CNA
         graphics_ = std::make_unique<Microsoft::Xna::Framework::GraphicsDeviceManager>(this);
         graphics_->setGraphicsProfileProperty(
             Microsoft::Xna::Framework::Graphics::GraphicsProfile::HiDef);
+        camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
     }
 
     void GalaxyEggbertGame::LoadContent()
@@ -872,7 +873,7 @@ namespace GalaxyEggbert::CNA
         const bool projected = Hud::ProjectWorldToHudSpace(
             Microsoft::Xna::Framework::Vector3(voyageEvent->voyageWorldX, voyageEvent->voyageWorldY,
                                                 voyageEvent->voyageWorldZ),
-            camera_.GetViewMatrix(), camera_.GetProjectionMatrix(), viewportW, viewportH, projectedX, projectedY);
+            camera_.View(), camera_.Projection(), viewportW, viewportH, projectedX, projectedY);
         // Clear2Ascend (real death-VFX coinflip, plan.md `158` follow-up):
         // BOTH endpoints derive from the SAME projected world point (start
         // = Blupi's projected position, end = straight up from there by a
@@ -1045,8 +1046,8 @@ namespace GalaxyEggbert::CNA
         const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
         float endX = 0.0f, endY = 0.0f;
         const bool projected = Hud::ProjectWorldToHudSpace(
-            Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()), camera_.GetViewMatrix(),
-            camera_.GetProjectionMatrix(), viewport.getWidthProperty(), viewport.getHeightProperty(), endX, endY);
+            Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()), camera_.View(),
+            camera_.Projection(), viewport.getWidthProperty(), viewport.getHeightProperty(), endX, endY);
         // Real `VoyageGetPosVie(m_nbVies)` uses the PRE-decrement life count (evaluated as a call
         // argument before VoyageInit's body runs) -- kLivesX/Y/Step match Hud.cpp's own
         // constants exactly (already reused this way for Egg's own dynamic end point in `158`).
@@ -1629,6 +1630,7 @@ namespace GalaxyEggbert::CNA
                     worldEditor_.Update(phaseKeys, mouse, dt,
                                          viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
                                          worldRuntime_.GetWorldMutable());
+                    cameraTarget_ = worldEditor_.CameraTarget();
                     if (worldEditor_.ConsumeNeedsPresentationRebuild())
                     {
                         RebuildWorldPresentation();
@@ -2104,7 +2106,7 @@ namespace GalaxyEggbert::CNA
                 const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
                 float hudX = 0.0f, hudY = 0.0f;
                 if (Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(deathX, deathY, deathZ),
-                                                   camera_.GetViewMatrix(), camera_.GetProjectionMatrix(),
+                                                   camera_.View(), camera_.Projection(),
                                                    viewport.getWidthProperty(), viewport.getHeightProperty(), hudX,
                                                    hudY))
                 {
@@ -2482,8 +2484,8 @@ namespace GalaxyEggbert::CNA
                     if (blupi_.TriggerBye())
                     {
                         byePendingTarget_ = target;
-                        const float dx = camera_.GetPosition().X - blupi_.GetX();
-                        const float dz = camera_.GetPosition().Z - blupi_.GetZ();
+                        const float dx = camera_.Position().X - blupi_.GetX();
+                        const float dz = camera_.Position().Z - blupi_.GetZ();
                         blupi_.SetYaw(std::atan2(dx, -dz));
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel32);
                     }
@@ -3238,8 +3240,8 @@ namespace GalaxyEggbert::CNA
 
             const float yaw = blupi_.GetYaw() + lookYawOffset_;
 
-            Easy3D::Camera3D::Vector3 rawEye;
-            Easy3D::Camera3D::Vector3 rawTarget;
+            Microsoft::Xna::Framework::Vector3 rawEye;
+            Microsoft::Xna::Framework::Vector3 rawTarget;
 
             if (cameraMode_ == CameraMode::FirstPerson)
             {
@@ -3256,11 +3258,11 @@ namespace GalaxyEggbert::CNA
                 constexpr float kLookUpTilt = 2.5f;
                 const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
                 const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
-                rawEye = Easy3D::Camera3D::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
+                rawEye = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
                 // Mouse-look pitch: positive offset (drag down) tilts the
                 // view down, standard non-inverted feel. Yaw offset is
                 // already folded into `yaw` above.
-                rawTarget = Easy3D::Camera3D::Vector3(
+                rawTarget = Microsoft::Xna::Framework::Vector3(
                     rawEye.X + std::sin(yaw) * kLookDistance,
                     rawEye.Y + lookYOffset - std::sin(lookPitchOffset_) * kLookDistance,
                     rawEye.Z - std::cos(yaw) * kLookDistance);
@@ -3282,9 +3284,9 @@ namespace GalaxyEggbert::CNA
                 // the first-person branch).
                 constexpr float kBaseElevation = 0.29f;
                 const float elevation = std::clamp(kBaseElevation + lookPitchOffset_, -1.2f, 1.45f);
-                rawTarget = Easy3D::Camera3D::Vector3(
+                rawTarget = Microsoft::Xna::Framework::Vector3(
                     blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
-                const Easy3D::Camera3D::Vector3 desiredOffset(
+                const Microsoft::Xna::Framework::Vector3 desiredOffset(
                     -std::sin(yaw) * kChaseDistance * std::cos(elevation),
                     kChaseDistance * std::sin(elevation),
                     std::cos(yaw) * kChaseDistance * std::cos(elevation));
@@ -3323,8 +3325,8 @@ namespace GalaxyEggbert::CNA
             else
             {
                 const float alpha = 1.0f - std::exp(-kCameraDampingPerSecond * dt);
-                cameraEyeSmoothed_ = Easy3D::Camera3D::Vector3::Lerp(cameraEyeSmoothed_, rawEye, alpha);
-                cameraTargetSmoothed_ = Easy3D::Camera3D::Vector3::Lerp(cameraTargetSmoothed_, rawTarget, alpha);
+                cameraEyeSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraEyeSmoothed_, rawEye, alpha);
+                cameraTargetSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraTargetSmoothed_, rawTarget, alpha);
             }
 
             // Real screen-shake/forced-pan effect (plan.md CAM-008..013,
@@ -3342,12 +3344,20 @@ namespace GalaxyEggbert::CNA
                 cameraShake_.Update(dt);
             }
             constexpr float kShakePixelsToWorldUnits = 1.0f / 64.0f;
-            const Easy3D::Camera3D::Vector3 shakeOffset(
+            const Microsoft::Xna::Framework::Vector3 shakeOffset(
                 cameraShake_.GetOffsetX() * kShakePixelsToWorldUnits,
                 -cameraShake_.GetOffsetY() * kShakePixelsToWorldUnits, // real +Y is screen-down; this engine's +Y is up
                 0.0f);
-            camera_.SetPosition(cameraEyeSmoothed_ + shakeOffset);
-            camera_.SetTarget(cameraTargetSmoothed_ + shakeOffset);
+            // An eye on its target (the chase camera pulled all the way in
+            // against a wall) has no view direction; the camera keeps the
+            // last frame's view instead.
+            const Microsoft::Xna::Framework::Vector3 eye = cameraEyeSmoothed_ + shakeOffset;
+            const Microsoft::Xna::Framework::Vector3 target = cameraTargetSmoothed_ + shakeOffset;
+            if (eye != target)
+            {
+                camera_.SetLookAt(eye, target);
+                cameraTarget_ = target;
+            }
 
             // Third-person placeholder model animation clip (2026-07-09) --
             // advanced regardless of camera mode so switching into
@@ -3465,18 +3475,18 @@ namespace GalaxyEggbert::CNA
         // (backgroundLoaded_ false -- see LoadContent()).
         if (backgroundLoaded_ && backgroundEffect_)
         {
-            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
             constexpr float kBackgroundDistance = 900.0f; // < camera_'s 1000.0f far plane
             constexpr float kBackgroundMargin = 1.3f;
             const float halfHeight = kBackgroundDistance *
-                std::tan(camera_.GetFieldOfView() * 0.5f) * kBackgroundMargin;
-            const float halfWidth = halfHeight * camera_.GetAspectRatio();
+                std::tan(camera_.FieldOfView() * 0.5f) * kBackgroundMargin;
+            const float halfWidth = halfHeight * camera_.AspectRatio();
 
-            const auto& camPos = camera_.GetPosition();
-            const auto& camTarget = camera_.GetTarget();
+            const auto& camPos = camera_.Position();
+            const auto& camTarget = cameraTarget_;
             Microsoft::Xna::Framework::Vector3 forward(
                 camTarget.X - camPos.X, camTarget.Y - camPos.Y, camTarget.Z - camPos.Z);
             forward.Normalize();
@@ -3497,8 +3507,8 @@ namespace GalaxyEggbert::CNA
             if (!indices.empty())
             {
                 backgroundMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
-                backgroundEffect_->View = camera_.GetViewMatrix();
-                backgroundEffect_->Projection = camera_.GetProjectionMatrix();
+                backgroundEffect_->View = camera_.View();
+                backgroundEffect_->Projection = camera_.Projection();
                 backgroundEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 // No CullNone override needed here anymore -- fixed at the
                 // source (2026-07-09, NEXT.md §8 task 0): Easy3D::
@@ -3513,8 +3523,8 @@ namespace GalaxyEggbert::CNA
 
         if (terrainRenderer_ && terrainEffect_)
         {
-            terrainEffect_->View = camera_.GetViewMatrix();
-            terrainEffect_->Projection = camera_.GetProjectionMatrix();
+            terrainEffect_->View = camera_.View();
+            terrainEffect_->Projection = camera_.Projection();
             terrainEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             terrainRenderer_->Draw(device, *terrainEffect_);
 
@@ -3555,8 +3565,8 @@ namespace GalaxyEggbert::CNA
                 if (!cubeIndices.empty())
                 {
                     objectCubeMeshRenderer_ = std::make_unique<Easy3D::CubeMeshRenderer>(device, cubeVertices, cubeIndices);
-                    objectCubeEffect_->View = camera_.GetViewMatrix();
-                    objectCubeEffect_->Projection = camera_.GetProjectionMatrix();
+                    objectCubeEffect_->View = camera_.View();
+                    objectCubeEffect_->Projection = camera_.Projection();
                     objectCubeEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                     objectCubeMeshRenderer_->Draw(device, *objectCubeEffect_);
                 }
@@ -3570,8 +3580,8 @@ namespace GalaxyEggbert::CNA
                 // terrain pass so it composites correctly (both opaque, no
                 // special blend/depth state needed, unlike water/icons
                 // 30-31).
-                grassEffect_->View = camera_.GetViewMatrix();
-                grassEffect_->Projection = camera_.GetProjectionMatrix();
+                grassEffect_->View = camera_.View();
+                grassEffect_->Projection = camera_.Projection();
                 grassEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 terrainRenderer_->DrawGrass(device, *grassEffect_);
             }
@@ -3689,8 +3699,8 @@ namespace GalaxyEggbert::CNA
                     /*loop=*/true,
                     boneTransforms);
                 blupiEffect_->setWorldProperty(world);
-                blupiEffect_->setViewProperty(camera_.GetViewMatrix());
-                blupiEffect_->setProjectionProperty(camera_.GetProjectionMatrix());
+                blupiEffect_->setViewProperty(camera_.View());
+                blupiEffect_->setProjectionProperty(camera_.Projection());
                 blupiEffect_->SetBoneTransforms(boneTransforms);
 
                 for (const auto& part : blupiModel_->Parts)
@@ -3815,7 +3825,7 @@ namespace GalaxyEggbert::CNA
             // Camera-facing basis: the inverse view matrix's Right/Up rows
             // give the camera's world-space right/up vectors (standard
             // spherical-billboard technique).
-            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
@@ -3871,8 +3881,8 @@ namespace GalaxyEggbert::CNA
             if (!indices.empty())
             {
                 objectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
-                objectEffect_->View = camera_.GetViewMatrix();
-                objectEffect_->Projection = camera_.GetProjectionMatrix();
+                objectEffect_->View = camera_.View();
+                objectEffect_->Projection = camera_.Projection();
                 objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 objectMeshRenderer_->Draw(device, *objectEffect_);
             }
@@ -3886,7 +3896,7 @@ namespace GalaxyEggbert::CNA
         // GetElementIconUv() (the same icon-index domain as terrain).
         if (objectMPngEffect_ && !worldRuntime_.GetMobileObjects().empty())
         {
-            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
@@ -3917,8 +3927,8 @@ namespace GalaxyEggbert::CNA
             if (!indices.empty())
             {
                 objectMPngMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
-                objectMPngEffect_->View = camera_.GetViewMatrix();
-                objectMPngEffect_->Projection = camera_.GetProjectionMatrix();
+                objectMPngEffect_->View = camera_.View();
+                objectMPngEffect_->Projection = camera_.Projection();
                 objectMPngEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 objectMPngMeshRenderer_->Draw(device, *objectMPngEffect_);
             }
@@ -3931,7 +3941,7 @@ namespace GalaxyEggbert::CNA
         // GetExploIconUv() instead of GetElementIconUv()/tileAtlas_.
         if (exploEffect_ && !worldRuntime_.GetMobileObjects().empty())
         {
-            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
@@ -3969,8 +3979,8 @@ namespace GalaxyEggbert::CNA
             if (!indices.empty())
             {
                 exploMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
-                exploEffect_->View = camera_.GetViewMatrix();
-                exploEffect_->Projection = camera_.GetProjectionMatrix();
+                exploEffect_->View = camera_.View();
+                exploEffect_->Projection = camera_.Projection();
                 exploEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 exploMeshRenderer_->Draw(device, *exploEffect_);
             }
@@ -3984,7 +3994,7 @@ namespace GalaxyEggbert::CNA
         // BasicEffect only binds one texture at a time.
         if (blupiObjectEffect_ && blupi1ObjectEffect_ && !worldRuntime_.GetMobileObjects().empty())
         {
-            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
@@ -4019,8 +4029,8 @@ namespace GalaxyEggbert::CNA
             if (!blupiIndices.empty())
             {
                 blupiObjectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, blupiVertices, blupiIndices);
-                blupiObjectEffect_->View = camera_.GetViewMatrix();
-                blupiObjectEffect_->Projection = camera_.GetProjectionMatrix();
+                blupiObjectEffect_->View = camera_.View();
+                blupiObjectEffect_->Projection = camera_.Projection();
                 blupiObjectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 blupiObjectMeshRenderer_->Draw(device, *blupiObjectEffect_);
             }
@@ -4031,8 +4041,8 @@ namespace GalaxyEggbert::CNA
             if (!blupi1Indices.empty())
             {
                 blupi1ObjectMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, blupi1Vertices, blupi1Indices);
-                blupi1ObjectEffect_->View = camera_.GetViewMatrix();
-                blupi1ObjectEffect_->Projection = camera_.GetProjectionMatrix();
+                blupi1ObjectEffect_->View = camera_.View();
+                blupi1ObjectEffect_->Projection = camera_.Projection();
                 blupi1ObjectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 blupi1ObjectMeshRenderer_->Draw(device, *blupi1ObjectEffect_);
             }
@@ -4045,7 +4055,7 @@ namespace GalaxyEggbert::CNA
         // or sparse 3D `.vwr` BigDecorRecord metadata.
         if (bigDecorEffect_ && !bigDecorCells_.empty())
         {
-            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.GetViewMatrix());
+            const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
             const auto cameraRight = invView.getRightProperty();
             const auto cameraUp = invView.getUpProperty();
 
@@ -4069,8 +4079,8 @@ namespace GalaxyEggbert::CNA
             if (!indices.empty())
             {
                 bigDecorMeshRenderer_ = std::make_unique<Easy3D::BillboardMeshRenderer>(device, vertices, indices);
-                bigDecorEffect_->View = camera_.GetViewMatrix();
-                bigDecorEffect_->Projection = camera_.GetProjectionMatrix();
+                bigDecorEffect_->View = camera_.View();
+                bigDecorEffect_->Projection = camera_.Projection();
                 bigDecorEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 bigDecorMeshRenderer_->Draw(device, *bigDecorEffect_);
             }

@@ -37,19 +37,19 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(50.0f, 15.0f, 50.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
-        check(camera.GetPosition().X == 50.0f &&
-                  camera.GetPosition().Y == 15.0f &&
-                  camera.GetPosition().Z == 50.0f,
+        check(camera.Position().X == 50.0f &&
+                  camera.Position().Y == 15.0f &&
+                  camera.Position().Z == 50.0f,
               "EnterEditing sets the requested camera position");
-        check(camera.GetTarget().Z < camera.GetPosition().Z &&
-                  camera.GetTarget().Y < camera.GetPosition().Y,
+        check(editor.CameraTarget().Z < camera.Position().Z &&
+                  editor.CameraTarget().Y < camera.Position().Y,
               "the default camera looks forward and slightly downward");
 
         editor.Update(KeyboardState{Keys::W}, restMouse, 1.0f, 800, 480, camera, world);
-        check(std::fabs(camera.GetPosition().X - 50.0f) < 0.001f &&
-                  camera.GetPosition().Z < 40.0f,
+        check(std::fabs(camera.Position().X - 50.0f) < 0.001f &&
+                  camera.Position().Z < 40.0f,
               "W flies forward without sideways drift");
     }
 
@@ -57,14 +57,14 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(50.0f, 15.0f, 50.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         editor.Update(KeyboardState{Keys::D}, restMouse, 1.0f, 800, 480, camera, world);
-        check(camera.GetPosition().X > 60.0f &&
-                  std::fabs(camera.GetPosition().Z - 50.0f) < 0.001f,
+        check(camera.Position().X > 60.0f &&
+                  std::fabs(camera.Position().Z - 50.0f) < 0.001f,
               "D strafes right without forward drift");
 
         editor.Update(KeyboardState{Keys::Space}, restMouse, 1.0f, 800, 480, camera, world);
-        check(camera.GetPosition().Y > 25.0f,
+        check(camera.Position().Y > 25.0f,
               "Space moves the editor camera upward");
     }
 
@@ -72,14 +72,14 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(50.0f, 15.0f, 50.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
-        const float defaultFov = camera.GetFieldOfView();
+        const float defaultFov = camera.FieldOfView();
         const MouseState wheelUp(
             0, 0, 120, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, wheelUp, 0.0f, 800, 480, camera, world);
-        check(camera.GetFieldOfView() < defaultFov,
+        check(camera.FieldOfView() < defaultFov,
               "the mouse wheel zooms in by narrowing the field of view");
     }
 
@@ -140,7 +140,7 @@ int main()
         World world = slab;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
 
         const MouseState left(
             400, 200, 0, ButtonState::Pressed, ButtonState::Released,
@@ -169,7 +169,7 @@ int main()
         World world = slab;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const auto tapDelete = [&]()
         {
             const MouseState down(
@@ -204,7 +204,7 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const MouseState left(
             400, 200, 0, ButtonState::Pressed, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
@@ -232,7 +232,7 @@ int main()
         WorldEditor editor;
         editor.SetWorldPath(kSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         editor.Update(
             KeyboardState{Keys::Enter}, restMouse, 0.0f, 800, 480,
             camera, world);
@@ -285,7 +285,7 @@ int main()
         World world = slab;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
 
         editor.Update(
             KeyboardState{Keys::F}, restMouse, 0.0f, 800, 480,
@@ -351,7 +351,7 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const auto pressKey = [&](Keys key)
         {
             editor.Update(
@@ -377,7 +377,7 @@ int main()
     }
 
     const auto clickStop = [&](WorldEditor& editor, World& world,
-                               Easy3D::Camera3D& camera)
+                               CnaEngine::Graphics::Camera& camera)
     {
         const MouseState down(
             766, 451, 0, ButtonState::Pressed, ButtonState::Released,
@@ -393,7 +393,7 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         clickStop(editor, world, camera);
         check(editor.IsBrowsing(),
               "Stop leaves immediately when the world is unchanged");
@@ -403,7 +403,7 @@ int main()
         World world;
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         editor.Update(
             KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480,
             camera, world);

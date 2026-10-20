@@ -6,7 +6,7 @@
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
-#include <Easy3D/Camera3D.hpp>
+#include <CnaEngine/Graphics/Camera.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -3190,14 +3190,11 @@ int main(int argc, char** argv)
     // camera/viewport setup with hand-computed expected results (no such
     // projection utility existed anywhere in this codebase before this).
     {
-        Easy3D::Camera3D camera;
-        camera.SetPosition(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 5.0f));
-        camera.SetTarget(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f));
-        camera.SetUp(Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f));
-        camera.SetFieldOfView(1.57079633f); // 90 degrees
-        camera.SetAspectRatio(640.0f / 480.0f);
-        camera.SetNearPlane(0.1f);
-        camera.SetFarPlane(100.0f);
+        CnaEngine::Graphics::Camera camera;
+        camera.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 5.0f),
+                         Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f),
+                         Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f));
+        camera.SetPerspective(1.57079633f /* 90 degrees */, 640.0f / 480.0f, 0.1f, 100.0f);
 
         // Viewport matches the 640x480 reference space exactly (scale=1,
         // no horizontal centering offset), so this isolates the
@@ -3206,7 +3203,7 @@ int main(int argc, char** argv)
         // existing logic, reused verbatim here).
         float px = 0.0f, py = 0.0f;
         bool ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f),
-                                                 camera.GetViewMatrix(), camera.GetProjectionMatrix(), 640, 480, px,
+                                                 camera.View(), camera.Projection(), 640, 480, px,
                                                  py);
         check(ok, "ProjectWorldToHudSpace() succeeds for a point in front of the camera");
         check(std::fabs(px - 320.0f) < 0.5f && std::fabs(py - 240.0f) < 0.5f,
@@ -3216,18 +3213,18 @@ int main(int argc, char** argv)
         // looks down -Z with +Y up) must project to the RIGHT half of the
         // screen (px > 320); a point above center must project to the
         // TOP half (screen-space Y is down, so py < 240).
-        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(1.0f, 0.0f, 0.0f), camera.GetViewMatrix(),
-                                            camera.GetProjectionMatrix(), 640, 480, px, py);
+        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(1.0f, 0.0f, 0.0f), camera.View(),
+                                            camera.Projection(), 640, 480, px, py);
         check(ok && px > 320.0f, "a world point to the camera's right projects to the right half of the screen");
 
-        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f), camera.GetViewMatrix(),
-                                            camera.GetProjectionMatrix(), 640, 480, px, py);
+        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f), camera.View(),
+                                            camera.Projection(), 640, 480, px, py);
         check(ok && py < 240.0f, "a world point above center projects to the top half of the screen (screen-Y-down)");
 
         // Behind the camera (camera looks toward -Z from Z=5, so a point
         // further along +Z than the camera itself is behind it).
-        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 10.0f), camera.GetViewMatrix(),
-                                            camera.GetProjectionMatrix(), 640, 480, px, py);
+        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 10.0f), camera.View(),
+                                            camera.Projection(), 640, 480, px, py);
         check(!ok, "ProjectWorldToHudSpace() returns false for a point behind the camera");
     }
 

@@ -5,7 +5,7 @@
 #include "EditorHighlightRenderer.hpp"
 #include "EditorPalette.hpp"
 
-#include <Easy3D/Camera3D.hpp>
+#include <CnaEngine/Graphics/Camera.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
@@ -87,7 +87,7 @@ namespace GalaxyEggbert::Editor
         void Update(const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
                     const Microsoft::Xna::Framework::Input::MouseState& mouse,
                     float dt, int viewportWidth, int viewportHeight,
-                    Easy3D::Camera3D& camera,
+                    CnaEngine::Graphics::Camera& camera,
                     Worlds::World& world);
 
         // True exactly once, right after an Update() call that placed or
@@ -99,8 +99,16 @@ namespace GalaxyEggbert::Editor
         // InteractionSystem/BlupiController.
         [[nodiscard]] bool ConsumeNeedsPresentationRebuild() noexcept;
 
+        // The point the last Update() aimed the camera at (one unit ahead of
+        // it): the camera's view is XNA's CreateLookAt of its position and
+        // this point.
+        [[nodiscard]] const Microsoft::Xna::Framework::Vector3& CameraTarget() const noexcept
+        {
+            return cameraTarget_;
+        }
+
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                  const Easy3D::Camera3D& camera,
+                  const CnaEngine::Graphics::Camera& camera,
                   int viewportWidth, int viewportHeight);
 
     private:
@@ -124,15 +132,15 @@ namespace GalaxyEggbert::Editor
             bool skyNextHeld = false;
         };
 
-        [[nodiscard]] Easy3D::Camera3D::Vector3 UpdateCamera(
+        [[nodiscard]] Microsoft::Xna::Framework::Vector3 UpdateCamera(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
-            float dt, Easy3D::Camera3D& camera);
+            float dt, CnaEngine::Graphics::Camera& camera);
         [[nodiscard]] bool UpdatePlacementOffset(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             EditorPalette::Action paletteAction);
         void UpdatePlacementPreview(
-            const Worlds::World& world, const Easy3D::Camera3D::Vector3& forward);
+            const Worlds::World& world, const Microsoft::Xna::Framework::Vector3& forward);
         [[nodiscard]] FrameInput ReadFrameInput(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
@@ -144,7 +152,7 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool HandleBoxFill(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSkyRegion(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleObjectEditing(
-            const FrameInput& input, Easy3D::Camera3D& camera,
+            const FrameInput& input, CnaEngine::Graphics::Camera& camera,
             int viewportWidth, int viewportHeight, Worlds::World& world);
         void RemoveObjectWithHistory(
             Worlds::World& world, const MoveObjectRecord& record,
@@ -156,6 +164,7 @@ namespace GalaxyEggbert::Editor
         float camX_ = 50.0f;
         float camY_ = 15.0f;
         float camZ_ = 50.0f;
+        Microsoft::Xna::Framework::Vector3 cameraTarget_{0.0f, 0.0f, 0.0f};
         float yaw_ = 0.0f;   // radians; matches BlupiController's own convention:
                              // forward = (sin(yaw), -cos(yaw)) in the XZ plane, yaw 0 = facing -Z.
         float pitch_ = -0.35f; // radians, negative = looking down toward the terrain

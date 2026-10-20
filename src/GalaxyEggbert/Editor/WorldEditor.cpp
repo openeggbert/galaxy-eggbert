@@ -94,9 +94,9 @@ namespace GalaxyEggbert::Editor
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         float dt, int viewportWidth, int viewportHeight,
-        Easy3D::Camera3D& camera, Worlds::World& world)
+        CnaEngine::Graphics::Camera& camera, Worlds::World& world)
     {
-        const Easy3D::Camera3D::Vector3 forward = UpdateCamera(keyboard, mouse, dt, camera);
+        const Microsoft::Xna::Framework::Vector3 forward = UpdateCamera(keyboard, mouse, dt, camera);
         palette_.SetSelectedSkyRegion(world.skyRegion());
         const EditorPalette::UpdateResult paletteResult =
             palette_.Update(mouse, viewportWidth, viewportHeight, dt);
@@ -202,7 +202,7 @@ namespace GalaxyEggbert::Editor
 
     void WorldEditor::Draw(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-        const Easy3D::Camera3D& camera,
+        const CnaEngine::Graphics::Camera& camera,
         int viewportWidth, int viewportHeight)
     {
         if (showingBox_)

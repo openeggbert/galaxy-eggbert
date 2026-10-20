@@ -176,7 +176,7 @@ int main()
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         editor.SetWorldPath(kPlayTestPath);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
 
         const MouseState down(
             724, 451, 0, ButtonState::Pressed, ButtonState::Released,
@@ -222,7 +222,7 @@ int main()
 
         WorldEditor editor;
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D camera;
+        CnaEngine::Graphics::Camera camera;
         const int before = solidCount();
         const std::size_t bigDecorBefore =
             GalaxyEggbert::CollectBigDecor(world).size();

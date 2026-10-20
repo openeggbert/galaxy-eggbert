@@ -114,7 +114,7 @@ int main()
 
     WorldEditor editor;
     editor.EnterEditing(0.0f, 10.0f, 0.0f);
-    Easy3D::Camera3D camera;
+    CnaEngine::Graphics::Camera camera;
     const MouseState restMouse(
         0, 0, 0, ButtonState::Released, ButtonState::Released,
         ButtonState::Released, ButtonState::Released, ButtonState::Released);
@@ -232,7 +232,7 @@ int main()
         World emptyWorld;
         WorldEditor emptyEditor;
         emptyEditor.EnterEditing(0.0f, 10.0f, 0.0f);
-        Easy3D::Camera3D emptyCamera;
+        CnaEngine::Graphics::Camera emptyCamera;
         emptyEditor.Update(
             KeyboardState{Keys::G}, restMouse, 0.0f, 800, 480,
             emptyCamera, emptyWorld);

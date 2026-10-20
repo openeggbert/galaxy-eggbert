@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Easy3D/Camera3D.hpp>
+#include <CnaEngine/Graphics/Camera.hpp>
 #include <Easy3D/CubeMeshRenderer.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 
@@ -50,7 +50,7 @@ namespace GalaxyEggbert::Editor
         void Hide() noexcept;
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                  const Easy3D::Camera3D& camera);
+                  const CnaEngine::Graphics::Camera& camera);
 
     private:
         void Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,

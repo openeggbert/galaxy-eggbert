@@ -56,10 +56,10 @@ namespace GalaxyEggbert::Editor
         }
     }
 
-    Easy3D::Camera3D::Vector3 WorldEditor::UpdateCamera(
+    Microsoft::Xna::Framework::Vector3 WorldEditor::UpdateCamera(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
-        float dt, Easy3D::Camera3D& camera)
+        float dt, CnaEngine::Graphics::Camera& camera)
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         using Microsoft::Xna::Framework::Input::Keys;
@@ -88,33 +88,33 @@ namespace GalaxyEggbert::Editor
         const int scroll = mouse.getScrollWheelValueProperty();
         if (!hasLastScrollWheelValue_)
         {
-            camera.SetFieldOfView(kEditorDefaultFov);
+            camera.SetPerspective(kEditorDefaultFov, camera.AspectRatio(), camera.NearPlane(), camera.FarPlane());
         }
         else
         {
             const int notches = (scroll - lastScrollWheelValue_) / 120;
             if (notches != 0)
             {
-                camera.SetFieldOfView(std::clamp(
-                    camera.GetFieldOfView() *
+                camera.SetPerspective(std::clamp(
+                    camera.FieldOfView() *
                         std::pow(kScrollZoomStepPerNotch, static_cast<float>(notches)),
-                    kEditorMinFov, kEditorMaxFov));
+                    kEditorMinFov, kEditorMaxFov), camera.AspectRatio(), camera.NearPlane(), camera.FarPlane());
             }
         }
         lastScrollWheelValue_ = scroll;
         hasLastScrollWheelValue_ = true;
 
         const float cosPitch = std::cos(pitch_);
-        const Easy3D::Camera3D::Vector3 forward(
+        const Microsoft::Xna::Framework::Vector3 forward(
             std::sin(yaw_) * cosPitch, std::sin(pitch_), -std::cos(yaw_) * cosPitch);
-        const Easy3D::Camera3D::Vector3 right(std::cos(yaw_), 0.0f, std::sin(yaw_));
-        const Easy3D::Camera3D::Vector3 up(0.0f, 1.0f, 0.0f);
+        const Microsoft::Xna::Framework::Vector3 right(std::cos(yaw_), 0.0f, std::sin(yaw_));
+        const Microsoft::Xna::Framework::Vector3 up(0.0f, 1.0f, 0.0f);
 
         float moveX = 0.0f;
         float moveY = 0.0f;
         float moveZ = 0.0f;
         const auto move = [&moveX, &moveY, &moveZ](
-            const Easy3D::Camera3D::Vector3& axis, float amount)
+            const Microsoft::Xna::Framework::Vector3& axis, float amount)
         {
             moveX += axis.X * amount;
             moveY += axis.Y * amount;
@@ -130,9 +130,8 @@ namespace GalaxyEggbert::Editor
         camX_ += moveX * flySpeed_ * dt;
         camY_ += moveY * flySpeed_ * dt;
         camZ_ += moveZ * flySpeed_ * dt;
-        camera.SetPosition({camX_, camY_, camZ_});
-        camera.SetTarget({camX_ + forward.X, camY_ + forward.Y, camZ_ + forward.Z});
-        camera.SetUp(up);
+        cameraTarget_ = {camX_ + forward.X, camY_ + forward.Y, camZ_ + forward.Z};
+        camera.SetLookAt({camX_, camY_, camZ_}, cameraTarget_, up);
         return forward;
     }
 
@@ -177,7 +176,7 @@ namespace GalaxyEggbert::Editor
     }
 
     void WorldEditor::UpdatePlacementPreview(
-        const Worlds::World& world, const Easy3D::Camera3D::Vector3& forward)
+        const Worlds::World& world, const Microsoft::Xna::Framework::Vector3& forward)
     {
         const RaycastHit hit = Raycast(
             world,
@@ -623,7 +622,7 @@ namespace GalaxyEggbert::Editor
     }
 
     bool WorldEditor::HandleObjectEditing(
-        const FrameInput& input, Easy3D::Camera3D& camera,
+        const FrameInput& input, CnaEngine::Graphics::Camera& camera,
         int viewportWidth, int viewportHeight, Worlds::World& world)
     {
         if (input.selectHeld && !selectKeyHeldLastFrame_)
@@ -632,14 +631,14 @@ namespace GalaxyEggbert::Editor
             float bestDistance = kObjectPickRadius * kObjectPickRadius;
             for (const auto& record : CollectMoveObjects(world))
             {
-                const Easy3D::Camera3D::Vector3 renderPosition(
+                const Microsoft::Xna::Framework::Vector3 renderPosition(
                     record.posStartX - static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterX),
                     record.posStartY,
                     record.posStartZ - static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ));
                 float projectedX = 0.0f;
                 float projectedY = 0.0f;
                 if (!GalaxyEggbert::Game::Hud::ProjectWorldToHudSpace(
-                        renderPosition, camera.GetViewMatrix(), camera.GetProjectionMatrix(),
+                        renderPosition, camera.View(), camera.Projection(),
                         viewportWidth, viewportHeight, projectedX, projectedY))
                 {
                     continue;

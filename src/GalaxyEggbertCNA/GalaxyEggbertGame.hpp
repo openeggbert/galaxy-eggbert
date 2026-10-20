@@ -18,7 +18,7 @@
 #include <GalaxyEggbert/Def/GameSpeed.hpp>
 
 #include <Easy3D/BillboardMeshRenderer.hpp>
-#include <Easy3D/Camera3D.hpp>
+#include <CnaEngine/Graphics/Camera.hpp>
 #include <Easy3D/CubeMeshRenderer.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
@@ -108,8 +108,12 @@ namespace GalaxyEggbert::CNA
         enum class CameraMode : std::uint8_t { FirstPerson, ThirdPersonModel };
         CameraMode cameraMode_ = CameraMode::FirstPerson;
         bool cameraModeKeyWasDown_ = false;
-        // Drives terrainEffect_'s View/Projection every frame.
-        Easy3D::Camera3D camera_;
+        // Drives terrainEffect_'s View/Projection every frame. Its view is
+        // always XNA's CreateLookAt of its position and cameraTarget_ (set
+        // together through Camera::SetLookAt); it starts at (0, 2, 5) looking
+        // at the origin (see the constructor).
+        CnaEngine::Graphics::Camera camera_;
+        Microsoft::Xna::Framework::Vector3 cameraTarget_{0.0f, 0.0f, 0.0f};
 
         // Smoothed camera eye/target (2026-07-09) -- both camera modes below
         // compute a raw "desired" eye/target from Blupi's live
@@ -120,8 +124,8 @@ namespace GalaxyEggbert::CNA
         // .cpp). Initialized lazily on the first Update() so load-time
         // doesn't spend a visible lerp-in from the origin.
         bool cameraSmoothedInitialized_ = false;
-        Easy3D::Camera3D::Vector3 cameraEyeSmoothed_{0.0f, 0.0f, 0.0f};
-        Easy3D::Camera3D::Vector3 cameraTargetSmoothed_{0.0f, 0.0f, 0.0f};
+        Microsoft::Xna::Framework::Vector3 cameraEyeSmoothed_{0.0f, 0.0f, 0.0f};
+        Microsoft::Xna::Framework::Vector3 cameraTargetSmoothed_{0.0f, 0.0f, 0.0f};
 
         // Parses worlds/world001.txt (plan.md Phase 4).
         GalaxyEggbert::Game::WorldRuntime worldRuntime_;
