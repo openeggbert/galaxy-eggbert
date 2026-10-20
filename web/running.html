@@ -85,7 +85,7 @@
     <li><code>worldRuntime_.Update(dt)</code> — advances the 6 fps tile animation phase.</li>
     <li>Reads arrow keys + Space via <code>Keyboard::GetState()</code>.</li>
     <li>Steps <code>GEBlupiController::Step(world, dx, dz, jump, dt)</code> — grid collision, step-up traversal, gravity.</li>
-    <li>Updates an <code>Easy3D::Camera3D</code> to follow Blupi.</li>
+    <li>Updates a <code>CnaEngine::Graphics::Camera</code> to follow Blupi (<code>SetLookAt</code>; until 2026-10-20 an <code>Easy3D::Camera3D</code>).</li>
   </ol>
 
   <h2>Draw</h2>

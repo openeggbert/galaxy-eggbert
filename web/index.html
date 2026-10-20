@@ -58,17 +58,21 @@
 
 <main id="content">
   <h1>Galaxy Eggbert Documentation</h1>
-  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em> — C++ · CNA · Easy3D · CMake</p>
+  <p class="subtitle">A faithful 3D remake of <em>Speedy Blupi</em> — C++ · CNA · cna-engine · CMake</p>
 
   <div class="warn">
     <strong>This documentation was rewritten 2026-07-04</strong>
-    It now describes the <strong>current long-term direction: Direct CNA + Easy3D</strong>
+    It now describes the <strong>current long-term direction: Direct CNA + small helpers beside it</strong>
     (<code>GalaxyEggbertCNA</code>), per the project's "Current Direction Lock" (see
     <a href="architecture.html">Architecture</a>). The previous documentation described an
     Urho3D-based architecture (<code>GalaxyEggbertApp</code>, <code>Blupi</code>, <code>Decor</code>, …)
     that no longer exists in the source tree. The older, currently-playable
     <code>GalaxyEggbertSimple3D</code> target (built on Simple3D/U3D) still exists as a reference
     implementation and is mentioned where relevant, but is not the subject of this rewrite.
+    <br><strong>Updated 2026-10-20:</strong> the helper library easy-3d (namespace <code>Easy3D</code>)
+    was removed and replaced by the strict modules of <strong>cna-engine</strong>
+    (<code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>) — see
+    <a href="engine-integration.html">Engine Integration</a>.
   </div>
 
   <h2>What is Galaxy Eggbert?</h2>
@@ -76,8 +80,10 @@
     Galaxy Eggbert is a 3D remake of <em>Speedy Blupi</em>, originally a Windows Phone XNA platformer game from 2013,
     itself later ported to C++ as <strong>mobile-eggbert</strong>.
     Galaxy Eggbert's long-term target, <code>GalaxyEggbertCNA</code>, is built <strong>directly on CNA</strong>
-    (an XNA-compatible, SDL3-based C++ game framework) with <strong>Easy3D</strong> as a small helper
-    library beside it (cameras, texture atlas, cube/billboard batching) — Easy3D does not hide CNA.
+    (an XNA-compatible, SDL3-based C++ game framework) with the strict modules of <strong>cna-engine</strong>
+    as small helpers beside it (camera, mesh builder for cubes/plates/billboards, GPU meshes, texture
+    regions; XNA 4.0 types only) — they do not hide CNA, and game code calls CNA directly. Until
+    2026-10-20 that helper was easy-3d.
   </p>
   <p>
     <code>GalaxyEggbertCNA</code> is real, buildable code today (opt-in via CMake), not a future plan:
@@ -95,11 +101,11 @@
     </a>
     <a class="card" href="build.html">
       <h3>&#128295; Build Guide</h3>
-      <p>CMake options, the CNA/Easy3D/mobile-eggbert sibling repo layout.</p>
+      <p>CMake options, the CNA/cna-engine/mobile-eggbert sibling repo layout.</p>
     </a>
     <a class="card" href="architecture.html">
       <h3>&#127963; Architecture</h3>
-      <p>The Direction Lock, layering, and how CNA/Easy3D/mobile-eggbert relate.</p>
+      <p>The Direction Lock, layering, and how CNA/cna-engine/mobile-eggbert relate.</p>
     </a>
     <a class="card" href="gameplay.html">
       <h3>&#127918; Gameplay Status</h3>
@@ -128,7 +134,7 @@
     <tr><th>Component</th><th>Technology</th></tr>
     <tr><td>Language</td><td>C++ (CMake ≥ 3.21)</td></tr>
     <tr><td>Game framework</td><td><strong>CNA</strong> — XNA-compatible, SDL3-based C++ framework (<code>../CNA</code>)</td></tr>
-    <tr><td>Helper library</td><td><strong>Easy3D</strong> — cameras, texture atlas, cube/billboard batching (<code>../easy-3d</code>)</td></tr>
+    <tr><td>Helper library</td><td><strong>cna-engine</strong> strict modules (<code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>) — camera, mesh builder, GPU meshes, texture regions (<code>../cna-engine</code>; easy-3d until 2026-10-20)</td></tr>
     <tr><td>Reference implementation</td><td><code>GalaxyEggbertSimple3D</code> — built on Simple3D/U3D, the currently-playable target</td></tr>
     <tr><td>Reference game</td><td><code>mobile-eggbert</code> — read-only C++ port of the original Speedy Blupi; source of assets and behavioral truth</td></tr>
     <tr><td>Testing</td><td>GoogleTest (world/voxel data model)</td></tr>

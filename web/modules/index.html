@@ -85,16 +85,16 @@
       <p>Palette-compressed 10³ voxel container</p>
     </a>
     <a class="card" href="../classes/CubeMesh.html">
-      <h3>Easy3D::CubeMesh</h3>
-      <p>CPU-side cube-batch vertex/index builder</p>
+      <h3>CnaEngine::Graphics::MeshBuilder</h3>
+      <p>CPU-side builder for boxes, plates and billboards (replaced Easy3D::CubeMesh)</p>
     </a>
     <a class="card" href="../classes/CubeMeshRenderer.html">
-      <h3>Easy3D::CubeMeshRenderer</h3>
-      <p>Uploads and draws cube mesh data via CNA</p>
+      <h3>CnaEngine::Graphics::GpuMesh</h3>
+      <p>Uploads and draws built meshes via CNA (replaced Easy3D::CubeMeshRenderer)</p>
     </a>
     <a class="card" href="../rendering.html">
       <h3>Rendering</h3>
-      <p>Cube-per-block terrain, animated tiles, no billboards yet</p>
+      <p>Cube-per-block terrain, animated tiles, billboards</p>
     </a>
     <a class="card" href="../input.html">
       <h3>Input</h3>
@@ -116,11 +116,11 @@
     <tr><td>Application lifecycle</td><td><code>main.cpp</code>, <code>GalaxyEggbertCnaGame.hpp/.cpp</code></td><td>Entry point; owns all CNA-side subsystems</td></tr>
     <tr><td>World loading &amp; animation</td><td><code>Game/GEWorldRuntime.hpp/.cpp</code></td><td>.vwr default, .txt secondary; 6 fps anim phase</td></tr>
     <tr><td>Terrain rendering</td><td><code>Game/GETerrainRenderer.hpp/.cpp</code></td><td>One cube per non-air block, static + animated split</td></tr>
-    <tr><td>Texture mapping</td><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → UV rect via Easy3D::TextureAtlas</td></tr>
+    <tr><td>Texture mapping</td><td><code>Game/GETileAtlas.hpp/.cpp</code></td><td>Block type → <code>CnaEngine::Graphics::UvRect</code> via <code>BlockTypes::tileUV()</code></td></tr>
     <tr><td>Player movement</td><td><code>Game/GEBlupiController.hpp/.cpp</code></td><td>Engine-agnostic; collision-only, no rendering</td></tr>
     <tr><td>Voxel data model</td><td><code>include/GalaxyEggbert/Worlds/*.hpp</code>, <code>src/GalaxyEggbert/Worlds/*.cpp</code></td><td>Engine-agnostic; shared with Simple3D; unit tested</td></tr>
     <tr><td>Game definitions</td><td><code>include/GalaxyEggbert/def/</code></td><td>All enums: GamePhase, ObjectType, SoundChannel, etc.</td></tr>
-    <tr><td>Cube batching (Easy3D)</td><td><code>../easy-3d</code>: <code>CubeMesh</code>, <code>CubeMeshRenderer</code></td><td>Generic 3D-batching plumbing, no Eggbert-specific knowledge</td></tr>
+    <tr><td>Mesh building &amp; drawing (cna-engine)</td><td><code>../cna-engine</code> (<code>CnaEngine::Graphics</code>): <code>MeshBuilder</code>, <code>GpuMesh</code>, <code>Camera</code>, <code>UvRect</code>; game helpers in <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code></td><td>Generic helpers beside CNA, no Eggbert-specific knowledge; replaced easy-3d on 2026-10-20</td></tr>
   </table>
 </main>
 </div>

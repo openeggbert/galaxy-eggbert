@@ -71,13 +71,14 @@
   <table>
     <tr><th>Repository</th><th>Default path</th><th>Override variable</th><th>Role</th></tr>
     <tr><td>CNA</td><td><code>../cna</code></td><td><code>CNA_HOME</code></td><td>The game framework itself (target <code>CNA</code>)</td></tr>
-    <tr><td>Easy3D</td><td><code>../easy-3d</code></td><td><code>EASY3D_HOME</code></td><td>Small helper library beside CNA (target <code>easy3d::easy3d</code>)</td></tr>
+    <tr><td>cna-engine</td><td><code>../cna-engine</code></td><td><code>CNA_ENGINE_HOME</code></td><td>Strict helper modules beside CNA (targets <code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>); replaced easy-3d (<code>../easy-3d</code>, <code>EASY3D_HOME</code>) on 2026-10-20</td></tr>
     <tr><td>mobile-eggbert</td><td><code>../mobile-eggbert</code></td><td><code>MOBILE_EGGBERT_HOME</code></td><td>Read-only asset source (<code>Content/</code>, <code>worlds/</code>), copied at build time</td></tr>
   </table>
   <div class="warn">
-    <strong>Configure CNA before Easy3D</strong>
-    Order matters: Easy3D auto-detects a parent <code>CNA</code> target and links against it instead
-    of building its own copy. Configuring in the wrong order can produce duplicate-symbol errors.
+    <strong>CNA is added first and built statically</strong>
+    <code>CMakeLists.txt</code> adds CNA before cna-engine; cna-engine links CNA's static module
+    libraries instead of building its own copy. CNA is therefore built with
+    <code>CNA_SHARED_LIBRARY=OFF</code>, which the game's CMake forces.
   </div>
 
   <h2>Clone the Repository</h2>
@@ -114,7 +115,7 @@ cmake --build build-cna --target GalaxyEggbertCNA -j2</code></pre>
     </a>
     <a class="card" href="architecture.html">
       <h3>&#127963; Architecture</h3>
-      <p>The Direction Lock and how CNA/Easy3D/mobile-eggbert relate.</p>
+      <p>The Direction Lock and how CNA/cna-engine/mobile-eggbert relate.</p>
     </a>
   </div>
 

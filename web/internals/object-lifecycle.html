@@ -56,14 +56,15 @@
     The reference target (<code>GalaxyEggbertSimple3D</code>) has its own <code>GEDecorSystem</code>
     implementing much of this already — crate push, platform patrol, hazard detection, enemy stomp,
     respawn invincibility, pickups (treasure/keys/shield/egg/drink), exit-gate logic. That
-    implementation is a useful structural reference when the CNA port eventually begins, though the
-    CNA target will need its own billboard-rendering path first (see
-    <a href="../classes/CubeMeshRenderer.html">Easy3D::CubeMeshRenderer</a> and its roadmap note).
+    implementation is a useful structural reference when the CNA port eventually begins. The
+    billboard-rendering path the CNA target needed first — easy-3d's <code>BillboardBatch</code> lacked
+    one — now exists: billboards are built with cna-engine's <code>MeshBuilder::AddBillboard</code> and
+    drawn as a <a href="../classes/CubeMeshRenderer.html">GpuMesh</a>.
   </p>
 
   <h2>Roadmap (plan.md, E3D-MIG-070…074)</h2>
   <ol>
-    <li>Render pickups/enemies as billboards from <code>element.png</code> (blocked on Easy3D billboard support).</li>
+    <li>Render pickups/enemies as billboards from <code>element.png</code> (the easy-3d billboard blocker is gone: cna-engine's <code>MeshBuilder::AddBillboard</code> + <code>GpuMesh</code>).</li>
     <li>Reuse <code>ObjectType</code> IDs from the existing engine-agnostic enum — already numerically frozen to match mobile-eggbert.</li>
     <li>Use <code>Decor.cpp</code> as behavior reference only, never copied.</li>
     <li>Faithfulness checks against mobile-eggbert before implementing any object behavior.</li>

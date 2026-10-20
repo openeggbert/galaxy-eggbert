@@ -41,14 +41,14 @@
 
   <h2>Requires a Design Decision First</h2>
   <ul>
-    <li><strong>Billboard/object rendering</strong> — blocked on <code>Easy3D::BillboardBatch</code> getting a vertex builder + CNA renderer adapter (E3D-MIG-061/062), and on the open "billboard vs. textured cube" rendering-mode question for objects (see <a href="../gameplay.html">Gameplay</a> and <code>mobile-eggbert-reference/09-open-questions.md</code>).</li>
+    <li><strong>Billboard/object rendering</strong> — the open "billboard vs. textured cube" rendering-mode question for objects (see <a href="../gameplay.html">Gameplay</a> and <code>mobile-eggbert-reference/09-open-questions.md</code>). The former technical blocker — easy-3d's <code>BillboardBatch</code> had no vertex builder or CNA renderer adapter (E3D-MIG-061/062) — is gone: billboards are built with cna-engine's <code>MeshBuilder::AddBillboard</code> and drawn as a <code>GpuMesh</code>.</li>
     <li><strong>Save format</strong> — whether to reuse mobile-eggbert's exact byte layout is an open question, not a default.</li>
     <li><strong>Chunk-radius streaming</strong> — scheduled (E3D-MIG-057) but not yet implemented.</li>
   </ul>
 
   <h2>Requires Explicit User Approval</h2>
   <ul>
-    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../easy-3d</code>.</li>
+    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../cna-engine</code> (which replaced <code>../easy-3d</code> on 2026-10-20).</li>
     <li>Copying mobile-eggbert code or data (Tables.cpp arrays, Decor.cpp logic, GameData.cpp byte layout) into galaxy-eggbert, even as "just data."</li>
     <li>Adding new engine-layer investment to <code>GalaxyEggbertSimple3D</code> beyond bug fixes/parity work.</li>
     <li>Adding MeshCraft, Mesh World, Nova3D, further Simple3D features, or Lua to the active (CNA) path.</li>

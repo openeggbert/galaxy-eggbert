@@ -58,7 +58,7 @@
   <h2>Game Target</h2>
   <table>
     <tr><th>CMake option</th><th>Default</th><th>Target</th><th>Role</th></tr>
-    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td><code>ON</code></td><td><code>GalaxyEggbertCNA</code></td><td>The maintained game, built directly on CNA + Easy3D</td></tr>
+    <tr><td><code>GALAXY_EGGBERT_BUILD_CNA</code></td><td><code>ON</code></td><td><code>GalaxyEggbertCNA</code></td><td>The maintained game, built directly on CNA with cna-engine's strict modules (<code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>) beside it — easy-3d until 2026-10-20</td></tr>
   </table>
 
   <h2 id="cna">Desktop OpenGL 3.3</h2>
@@ -80,14 +80,18 @@ cmake --build build-cna-webgl2 --target GalaxyEggbertCNA -j2</code></pre>
   <table>
     <tr><th>Variable</th><th>Default</th></tr>
     <tr><td><code>CNA_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../cna</code></td></tr>
-    <tr><td><code>EASY3D_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../easy-3d</code></td></tr>
+    <tr><td><code>CNA_ENGINE_HOME</code></td><td><code>${CMAKE_CURRENT_SOURCE_DIR}/../cna-engine</code></td></tr>
   </table>
+  <p>
+    <code>CNA_ENGINE_HOME</code> (e.g. <code>-DCNA_ENGINE_HOME=&lt;path&gt;</code>) replaced
+    <code>EASY3D_HOME</code> when cna-engine replaced easy-3d on 2026-10-20.
+  </p>
 
   <h3>What Links Into GalaxyEggbertCNA</h3>
   <ul>
     <li><code>CNA</code> — the game framework</li>
     <li><code>SHARP_RUNTIME</code></li>
-    <li><code>easy3d::easy3d</code> (or the <code>easy3d</code> target)</li>
+    <li><code>CnaEngine::Graphics</code> — cna-engine's strict modules (it pulls in <code>CnaEngine::Core</code>); they link CNA's static module libraries, so CNA is built with <code>CNA_SHARED_LIBRARY=OFF</code></li>
     <li>The renderer target selected by CNA's <code>CNA_GRAPHICS_RENDERER</code> option</li>
     <li><code>${GE_SHARED_SOURCES}</code> — the engine-independent world/data sources</li>
   </ul>
@@ -113,7 +117,7 @@ ctest --test-dir build-cna-opengl3 \
   <p>
     <code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code>
     data model (<code>World</code>, <code>Chunk</code>, <code>Block</code>, bit-packing, binary I/O)
-    — no dependency on CNA or Easy3D.
+    — no dependency on CNA or cna-engine.
   </p>
 
   <h2>Windows</h2>

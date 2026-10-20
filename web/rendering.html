@@ -53,7 +53,7 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Rendering</div>
   <h1>Rendering</h1>
-  <p class="subtitle">One cube per non-air block, drawn via Easy3D's CubeMeshRenderer through CNA.</p>
+  <p class="subtitle">One cube per non-air block, built with cna-engine's MeshBuilder and drawn as a GpuMesh through CNA.</p>
 
   <h2>Overview</h2>
   <p>
@@ -66,6 +66,7 @@
 
   <h2>Pipeline</h2>
   <pre><code>GETerrainRenderer(world, tileAtlas):
+  staticMesh = MakeTexturedMeshBuilder()                // positions + one texture coordinate
   for each (x, y, z) in world.blocksPerAxis()³:
       block = world.getBlock(x, y, z)
       if block.isAir(): continue
@@ -73,12 +74,20 @@
       if BlockTypes::tileAnimBase(block.type()) is animated:
           store in m_animBlocks (rebuilt on anim-phase change)
       else:
-          add a 1×1×1 cube at (worldX, y, worldZ) to a CubeBatch,
-          UV from tileAtlas.GetTileUv(block.type())
+          AddCenteredBox(staticMesh, (worldX, y, worldZ), size 1×1×1, faces)  // MeshBuilder::AddBox
+          // faces: one BoxFaceStyle{visible, uv} per BoxFace,
+          //        uv = tileAtlas.GetTileUv(block.type())
 
-  staticMesh   = Easy3D::BuildCubeMesh(staticBatch)     // 24 verts + 36 indices per cube
-  staticRenderer   = Easy3D::CubeMeshRenderer(device, staticMesh)
-  animatedRenderer = Easy3D::CubeMeshRenderer(device, animatedMeshForCurrentPhase)</code></pre>
+  staticRenderer   = UploadTexturedMesh(device, staticMesh.Mesh())   // unique_ptr&lt;GpuMesh&gt;
+  animatedRenderer = UploadTexturedMesh(device, animatedMeshForCurrentPhase)</code></pre>
+  <p>
+    <code>MakeTexturedMeshBuilder</code>, <code>AddCenteredBox</code> and <code>UploadTexturedMesh</code>
+    are the game's small helpers in <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code> over
+    cna-engine's <a href="classes/CubeMesh.html">MeshBuilder</a> and
+    <a href="classes/CubeMeshRenderer.html">GpuMesh</a>. A full cube is 24 vertices + 36 indices — the
+    same vertices and indices easy-3d's <code>BuildCubeMesh</code> produced until 2026-10-20, bit for
+    bit; the GPU meshes replaced easy-3d's <code>CubeMeshRenderer</code>.
+  </p>
   <p>
     No face culling or greedy meshing is performed — every non-air block gets a full cube, even
     where faces are fully occluded by neighbors. This is a known, flagged limitation (see
@@ -88,10 +97,11 @@
 
   <h2>Texture Mapping — GETileAtlas</h2>
   <p>
-    Wraps an <code>Easy3D::TextureAtlas</code> sized to <code>object-m.png</code> (1301×1431 px),
-    registered as one grid: 64 px tiles, 20 columns, 65 px pitch (64 px icon + 1 px inter-tile gap).
-    <code>GetTileUv(blockType)</code> returns an all-zero rect for Air (type ≤ 0), otherwise looks
-    up <code>"tile_&lt;blockType&gt;"</code> in the atlas.
+    <code>GetTileUv(blockType)</code> returns a <code>CnaEngine::Graphics::UvRect</code>
+    (<code>u0, v0, u1, v1</code>) into <code>object-m.png</code> (1301×1431 px; 64 px tiles, 20 columns,
+    65 px pitch: 64 px icon + 1 px inter-tile gap), computed with the game's own
+    <code>BlockTypes::tileUV()</code>. It returns an all-zero rect for Air (type ≤ 0) and for types
+    outside the sheet's grid.
   </p>
 
   <h2>Animated Tiles</h2>
@@ -116,10 +126,10 @@
   </p>
 
   <h2>Draw Call</h2>
-  <pre><code>terrainEffect_-&gt;View = camera.GetViewMatrix();
-terrainEffect_-&gt;Projection = camera.GetProjectionMatrix();
+  <pre><code>terrainEffect_-&gt;View = camera_.View();             // CnaEngine::Graphics::Camera
+terrainEffect_-&gt;Projection = camera_.Projection();
 terrainEffect_-&gt;World = Matrix::Identity;
-staticRenderer-&gt;Draw(device, *terrainEffect_);
+staticRenderer-&gt;Draw(device, *terrainEffect_);       // GpuMesh::Draw: each pass of the effect
 if (animatedRenderer) animatedRenderer-&gt;Draw(device, *terrainEffect_);</code></pre>
 
   <h2>Known Rendering Limitations</h2>
@@ -127,7 +137,6 @@ if (animatedRenderer) animatedRenderer-&gt;Draw(device, *terrainEffect_);</code>
     <li>No face culling between adjacent solid blocks.</li>
     <li>No chunk-radius streaming — the entire world is uploaded up front.</li>
     <li>No Blupi sprite, no object/pickup rendering, no sky dome, no HUD.</li>
-    <li><code>Easy3D::BillboardBatch</code> has no vertex builder or renderer adapter — this blocks all sprite rendering.</li>
   </ul>
 
   <div class="page-nav">

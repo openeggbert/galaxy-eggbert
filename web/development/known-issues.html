@@ -32,11 +32,20 @@
   <h1>Known Issues &amp; Roadmap</h1>
   <p class="subtitle">What GalaxyEggbertCNA can do today (2026-07-04), what's next, and the full E3D-MIG task list.</p>
 
+  <div class="note">
+    <strong>easy-3d replaced by cna-engine (2026-10-20)</strong>
+    The helper library easy-3d (namespace <code>Easy3D</code>) named on this page was removed on
+    2026-10-20 and replaced by the strict modules of cna-engine (<code>CnaEngine::Core</code>,
+    <code>CnaEngine::Graphics</code>). The easy-3d billboard blocker listed below no longer applies:
+    billboards are built with <code>MeshBuilder::AddBillboard</code> and drawn as a
+    <code>GpuMesh</code>. See <a href="../engine-integration.html">Engine Integration</a>.
+  </div>
+
   <h2>What Works Today</h2>
   <ul>
     <li>Opt-in CMake build (<code>-DGALAXY_EGGBERT_BUILD_CNA=ON</code>), builds clean.</li>
     <li>Loads a genuinely 3D, hand-authored <code>.vwr</code> world (<code>worlds3d/world001.vwr</code>).</li>
-    <li>Renders real, textured terrain across all Y layers — one cube per non-air block, via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code>.</li>
+    <li>Renders real, textured terrain across all Y layers — one cube per non-air block, via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code> (since 2026-10-20: cna-engine's <code>MeshBuilder</code>/<code>GpuMesh</code>).</li>
     <li>Animated tiles (lava/crusher/saw/spike/water/fan/marine/temp) at 6 fps.</li>
     <li>Invisible, collision-only Blupi placeholder: arrow keys + Space, grid collision, 1-block step-up traversal, gravity.</li>
   </ul>
@@ -44,8 +53,8 @@
   <h2>Not Yet Implemented</h2>
   <table>
     <tr><th>Area</th><th>Status</th><th>Blocked on</th></tr>
-    <tr><td>Blupi sprite rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Easy3D BillboardBatch vertex builder + CNA renderer adapter (E3D-MIG-061/062)</td></tr>
-    <tr><td>Object/pickup rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Same billboard blocker, plus billboard-vs-cube design decision</td></tr>
+    <tr><td>Blupi sprite rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Was: easy-3d BillboardBatch vertex builder + CNA renderer adapter (E3D-MIG-061/062). No longer a blocker: cna-engine's <code>MeshBuilder::AddBillboard</code> + <code>GpuMesh</code></td></tr>
+    <tr><td>Object/pickup rendering</td><td><span class="badge badge-planned">Planned</span></td><td>Billboard-vs-cube design decision (the easy-3d billboard blocker is gone)</td></tr>
     <tr><td>HUD</td><td><span class="badge badge-planned">Planned</span></td><td>CNA SpriteBatch usage (E3D-MIG-090…093)</td></tr>
     <tr><td>Sound</td><td><span class="badge badge-planned">Planned</span></td><td>Sound wrapper around CNA audio (E3D-MIG-080…083)</td></tr>
     <tr><td>Real gameplay (hazards, enemies, pickups, exit)</td><td><span class="badge badge-planned">Planned</span></td><td>E3D-MIG-100…107</td></tr>
@@ -68,7 +77,7 @@
     <li>Chunk-radius world streaming once denser hand-authored worlds exist.</li>
     <li>Author more <code>.vwr</code> worlds beyond the single proof-of-concept.</li>
     <li>Add face-culling/occlusion to <code>GETerrainRenderer</code>.</li>
-    <li>Render Blupi as a billboard — requires the Easy3D billboard vertex builder + renderer adapter first.</li>
+    <li>Render Blupi as a billboard — the easy-3d billboard blocker is gone: cna-engine's <code>MeshBuilder::AddBillboard</code> + <code>GpuMesh</code> cover it.</li>
     <li>Verify <code>GalaxyEggbertCNA</code>'s clean-exit-on-window-close path.</li>
   </ol>
 
@@ -80,7 +89,7 @@
     <tr><td>E3D-MIG-010…014</td><td><span class="badge badge-done">Done</span></td><td>CNA/Easy3D/mobile-eggbert CMake inspection, asset-copy strategy decided</td></tr>
     <tr><td>E3D-MIG-020…026</td><td><span class="badge badge-done">Done</span></td><td>Option added, skeleton files, minimal Game subclass verified via smoke run</td></tr>
     <tr><td>E3D-MIG-030…043</td><td><span class="badge badge-done">Done</span></td><td>Asset build-time copy, shared sources, world file loads end-to-end, minimal GEWorldRuntime</td></tr>
-    <tr><td>E3D-MIG-050…055</td><td><span class="badge badge-done">Done</span></td><td>CNA draw-path decision, CubeMesh, CubeMeshRenderer, GETileAtlas, GETerrainRenderer, animated tiles</td></tr>
+    <tr><td>E3D-MIG-050…055</td><td><span class="badge badge-done">Done</span></td><td>CNA draw-path decision, CubeMesh, CubeMeshRenderer (easy-3d; replaced by cna-engine's MeshBuilder/GpuMesh on 2026-10-20), GETileAtlas, GETerrainRenderer, animated tiles</td></tr>
     <tr><td>E3D-MIG-058…060</td><td><span class="badge badge-done">Done</span></td><td>.vwr as default load path, GEBlupiController invisible movement + VerifyBlupiMovement tool</td></tr>
     <tr><td>E3D-MIG-015</td><td><span class="badge badge-wip">Pending decision</span></td><td>Whether to request a mobile-eggbert <code>add_library()</code> target</td></tr>
     <tr><td>E3D-MIG-056</td><td>Standing constraint</td><td>Do not add a MeshCraft/mesh-import path</td></tr>

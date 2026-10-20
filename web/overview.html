@@ -61,15 +61,20 @@
     <tr><td>Speedy Blupi (original)</td><td>C#/XNA Windows Phone platformer, 2013</td></tr>
     <tr><td>mobile-eggbert</td><td>C++ port: ILSpy decompile → MonoGame → CNA (SDL3). Read-only reference for Galaxy Eggbert.</td></tr>
     <tr><td>GalaxyEggbertSimple3D</td><td>Current playable 3D remake, built on Simple3D (wraps U3D/Urho3D). Kept as reference until CNA reaches parity.</td></tr>
-    <tr><td>GalaxyEggbertCNA</td><td><strong>Long-term target.</strong> Built directly on CNA + Easy3D. This documentation's focus.</td></tr>
+    <tr><td>GalaxyEggbertCNA</td><td><strong>Long-term target.</strong> Built directly on CNA, with cna-engine's strict modules as helpers beside it (easy-3d until 2026-10-20). This documentation's focus.</td></tr>
   </table>
 
   <h2>The Current Direction Lock</h2>
   <p>The project's <code>CLAUDE.md</code> records an explicit, binding direction:</p>
   <pre><code>Galaxy Eggbert
   -&gt; CNA directly
-  -&gt; Easy3D beside CNA (small helpers only — cameras, texture atlas, billboard/cube batching)
+  -&gt; cna-engine's strict modules beside CNA (CnaEngine::Core, CnaEngine::Graphics —
+     camera, mesh builder, GPU meshes, texture regions; XNA 4.0 types only)
   -&gt; mobile-eggbert used read-only as reference / asset / data source</code></pre>
+  <p>
+    Until 2026-10-20 the helper beside CNA was the sibling library easy-3d (namespace <code>Easy3D</code>:
+    cameras, texture atlas, billboard/cube batching); cna-engine's strict modules replaced it that day.
+  </p>
   <p>
     This supersedes an older long-term direction (<code>Galaxy Eggbert -&gt; Simple3D -&gt; U3D / Urho3D / Nova3D -&gt; (CNA someday)</code>).
     <code>GalaxyEggbertSimple3D</code> is <strong>not being removed</strong> — it remains the only
@@ -92,16 +97,17 @@
   <ul>
     <li>Builds clean via <code>-DGALAXY_EGGBERT_BUILD_CNA=ON</code> (opt-in, default OFF).</li>
     <li>Loads a genuinely 3D, hand-authored <code>.vwr</code> voxel world (<code>worlds3d/world001.vwr</code>) — not a flat mobile-eggbert layout.</li>
-    <li>Renders real, textured terrain across all Y layers: one cube per non-air world cell, textured from <code>object-m.png</code> via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code>.</li>
+    <li>Renders real, textured terrain across all Y layers: one cube per non-air world cell, textured from <code>object-m.png</code>, built with cna-engine's <code>MeshBuilder</code> and drawn as <code>GpuMesh</code>es (until 2026-10-20 via <code>Easy3D::CubeMesh</code>/<code>CubeMeshRenderer</code>).</li>
     <li>Animates hazard/special tiles (lava, crusher, saw, spike, water, fan, marine, temp) at 6 fps, matching mobile-eggbert's original rate.</li>
     <li>Moves an invisible, collision-only Blupi placeholder: arrow keys + Space, grid collision with 1-block step-up traversal and gravity — no sprite yet.</li>
   </ul>
   <div class="warn">
     <strong>Not yet implemented</strong>
     No Blupi sprite/rendering, no object or pickup rendering, no HUD, no sound, no real gameplay
-    (hazard damage, enemies, pickups, exit-gate, save/load). <code>Easy3D::BillboardBatch</code> and
-    <code>DebugDraw</code> have no CPU-side vertex builder or CNA renderer adapter yet — that is the
-    main blocker for rendering Blupi and objects. See <a href="development/known-issues.html">Known Issues</a>.
+    (hazard damage, enemies, pickups, exit-gate, save/load). The former blocker for rendering Blupi
+    and objects — easy-3d's <code>BillboardBatch</code> had no vertex builder or CNA renderer adapter —
+    no longer applies: billboards are built with cna-engine's <code>MeshBuilder::AddBillboard</code> and
+    drawn as a <code>GpuMesh</code>. See <a href="development/known-issues.html">Known Issues</a>.
   </div>
 
   <h2>Key Facts (verified from source, 2026-07-04)</h2>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Easy3D::CubeMesh — Galaxy Eggbert Docs</title>
+<title>CnaEngine::Graphics::MeshBuilder — Galaxy Eggbert Docs</title>
 <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
@@ -30,51 +30,105 @@
   <a href="../development/index.html">Development</a>
 </nav>
 <main id="content">
-  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> Easy3D::CubeMesh</div>
-  <h1>Easy3D::CubeMesh</h1>
-  <p class="subtitle">CPU-side vertex/index builder — turns a CubeBatch into GPU-ready arrays.</p>
+  <div class="breadcrumb"><a href="../index.html">Home</a> <span>›</span> <a href="index.html">Classes</a> <span>›</span> CnaEngine::Graphics::MeshBuilder</div>
+  <h1>CnaEngine::Graphics::MeshBuilder</h1>
+  <p class="subtitle">CPU-side mesh builder for faced boxes, plates, crossed plates and billboards — replaced Easy3D::CubeMesh.</p>
+
+  <div class="note">
+    <strong>Replaced <code>Easy3D::CubeMesh</code> on 2026-10-20</strong>
+    This page used to document easy-3d's <code>CubeMesh</code> (<code>BuildCubeMesh</code> over a
+    <code>CubeBatch</code>). easy-3d was removed on 2026-10-20 and replaced by the strict modules of
+    cna-engine; the game now builds every mesh with <code>MeshBuilder</code>. The page keeps its old
+    file name so existing links keep working.
+  </div>
 
   <h2>Overview</h2>
   <p>
-    Lives in the sibling <code>../easy-3d</code> repository (namespace <code>Easy3D</code>), not in
-    galaxy-eggbert itself — added under task <code>E3D-MIG-051</code> specifically because this is
-    generic 3D-batching plumbing with zero Eggbert-specific knowledge, matching Easy3D's stated
-    role as a small helper library beside CNA.
+    Lives in the sibling <code>../cna-engine</code> repository (CMake target
+    <code>CnaEngine::Graphics</code>, namespace <code>CnaEngine::Graphics</code>; XNA 4.0 types only),
+    not in galaxy-eggbert itself. Galaxy Eggbert uses it with positions plus one texture coordinate
+    per vertex. It is a helper beside CNA, not a scene graph: the game still calls CNA directly.
   </p>
-  <p>Header: <code>include/Easy3D/CubeMesh.hpp</code>. Implementation: <code>src/CubeMesh.cpp</code> (in <code>../easy-3d</code>).</p>
+  <p>
+    The builder <em>is</em> the batch — easy-3d's separate CPU batches (<code>CubeBatch</code>,
+    <code>BillboardBatch</code>) and its <code>CubeVertex</code>/<code>BillboardVertex</code> plus index
+    vectors were not taken over. The meshes come out with the same vertices and indices as easy-3d
+    produced, bit for bit (verified by cna-engine's <code>Easy3DEquivalenceTests</code>).
+  </p>
+  <p>Header: <code>include/CnaEngine/Graphics/MeshBuilder.hpp</code> (in <code>../cna-engine</code>).</p>
 
   <h2>API (as used by GalaxyEggbertCNA)</h2>
-  <pre><code>namespace Easy3D {
+  <pre><code>namespace CnaEngine::Graphics {
 
-struct CubeVertex { /* position, normal, UV */ };
+struct UvRect { float u0, v0, u1, v1; };          // was Easy3D::UvRect { U0, V0, U1, V1 }
 
-// Converts a CubeBatch (CPU-side queue of cube placements + UVs)
-// into flat vertex/index arrays: 24 vertices + 36 indices per cube.
-struct CubeMeshData {
-    std::vector&lt;CubeVertex&gt; vertices;
-    std::vector&lt;uint32_t&gt;   indices;
+enum class BoxFace { PositiveZ, NegativeZ, PositiveX, NegativeX, PositiveY, NegativeY };
+struct BoxFaceStyle { bool visible; UvRect uv; };
+using BoxFaces = std::array&lt;BoxFaceStyle, 6&gt;;      // indexed by BoxFace
+
+enum class PlateAxis { Z, X, Y };
+
+class MeshBuilder {
+public:
+    std::uint32_t AddVertex(const BuilderVertex&amp; vertex);
+    void AddTriangle(std::uint32_t a, std::uint32_t b, std::uint32_t c);
+    void AddQuad(std::uint32_t a, std::uint32_t b, std::uint32_t c, std::uint32_t d);
+
+    void AddBox(const Vector3&amp; min, const Vector3&amp; max, const BoxFaces&amp; faces);
+    void AddPlate(const Vector3&amp; center, float width, float height, PlateAxis axis, const UvRect&amp; uv);
+    void AddCrossedPlates(const Vector3&amp; center, float width, float height, int planes, const UvRect&amp; uv);
+    void AddBillboard(const Vector3&amp; position, const Vector2&amp; size,
+                      const Vector3&amp; cameraRight, const Vector3&amp; cameraUp,
+                      const UvRect&amp; uv, const Vector2&amp; origin, float rotation);
+
+    const MeshData&amp; Mesh() const;   // the mesh built so far
+    MeshData Take();                 // moves the mesh out and resets the builder
 };
-CubeMeshData BuildCubeMesh(const CubeBatch&amp; batch);
 
 }</code></pre>
 
+  <h2>What Replaced What</h2>
+  <table>
+    <tr><th>easy-3d (until 2026-10-20)</th><th>Now</th></tr>
+    <tr><td><code>CubeVertex</code>/<code>BillboardVertex</code> vectors + index vectors, <code>CubeBatch</code>, <code>BillboardBatch</code></td><td>One <code>MeshBuilder</code> (positions + one texture coordinate)</td></tr>
+    <tr><td><code>BuildCubeMesh</code>, <code>AppendCubeMesh</code></td><td><code>AddBox(min, max, BoxFaces)</code></td></tr>
+    <tr><td><code>AppendDirectionalCubeMesh</code> (<code>DirectionalCubeItem</code>, <code>DirectionalCubeFace</code>, <code>CubeFace</code>)</td><td><code>AddBox</code> with one <code>BoxFaceStyle{visible, uv}</code> per <code>BoxFace</code></td></tr>
+    <tr><td><code>AppendPlateMesh</code> (<code>PlateItem</code>, <code>PlateAxis</code>)</td><td><code>AddPlate(center, width, height, PlateAxis::{Z,X,Y}, uv)</code></td></tr>
+    <tr><td><code>AppendTripleCrossMesh</code> (<code>TripleCrossItem</code>)</td><td><code>AddCrossedPlates(center, width, height, 3, uv)</code></td></tr>
+    <tr><td><code>AppendBillboardMesh</code> (<code>BillboardItem</code>)</td><td><code>AddBillboard(position, size, cameraRight, cameraUp, uv, origin, rotation)</code></td></tr>
+    <tr><td><code>AppendPyramidTipMesh</code> (<code>PyramidTipItem</code>, the teleporter's tip)</td><td>The game's own <code>AddPyramidTip()</code> in <code>src/GalaxyEggbert/Game/TerrainRenderer.cpp</code> (built with <code>AddVertex</code>/<code>AddTriangle</code>/<code>AddQuad</code>, same vertices)</td></tr>
+  </table>
+
+  <h2>Galaxy Eggbert's Helpers — <code>TexturedMesh.hpp</code></h2>
+  <p>The small game header <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code> wraps the builder for the game's one vertex format:</p>
+  <table>
+    <tr><th>Helper</th><th>Does</th></tr>
+    <tr><td><code>MakeTexturedMeshBuilder()</code></td><td>A <code>MeshBuilder</code> with positions + one texture coordinate</td></tr>
+    <tr><td><code>TexturedVertex(position, uv)</code></td><td>A builder vertex for <code>AddVertex</code></td></tr>
+    <tr><td><code>AddCenteredBox(mesh, center, size, faces)</code><br><code>AddCenteredBox(mesh, center, size, uv)</code></td><td>A box of <code>size</code> centred on <code>center</code>, with a style per face or one texture region on all six</td></tr>
+    <tr><td><code>UploadTexturedMesh(device, meshData)</code></td><td>Uploads the built mesh as a <a href="CubeMeshRenderer.html">GpuMesh</a></td></tr>
+  </table>
+
   <h2>Used By</h2>
   <p>
-    <a href="GETerrainRenderer.html">GETerrainRenderer</a> builds a <code>CubeBatch</code> from
-    non-air world blocks and calls <code>BuildCubeMesh</code>, then hands the result to
-    <a href="CubeMeshRenderer.html">CubeMeshRenderer</a> for upload/draw.
+    <a href="GETerrainRenderer.html">GETerrainRenderer</a> builds its terrain meshes from non-air
+    world blocks with a <code>MeshBuilder</code> (<code>AddCenteredBox</code>, <code>AddPlate</code>,
+    <code>AddCrossedPlates</code>, <code>AddPyramidTip</code>) and hands the result to
+    <code>UploadTexturedMesh</code>, which uploads it as a
+    <a href="CubeMeshRenderer.html">CnaEngine::Graphics::GpuMesh</a> for drawing. Cube objects,
+    billboards (<code>AddBillboard</code>), the HUD and the editor's quads are built the same way.
   </p>
 
   <h2>Modification Policy</h2>
   <div class="warn">
     <strong>Requires approval</strong>
-    Modifying <code>../easy-3d</code> (including this class) requires explicit, per-change user
-    approval — it is not blanket-authorized just because galaxy-eggbert depends on it.
+    Modifying <code>../cna-engine</code> (including this class) requires the user to explicitly scope
+    that repository into the task — it is not blanket-authorized just because galaxy-eggbert depends on it.
   </div>
 
   <div class="page-nav">
     <a href="VoxelConfig.html">← VoxelConfig</a>
-    <a href="CubeMeshRenderer.html">Easy3D::CubeMeshRenderer →</a>
+    <a href="CubeMeshRenderer.html">CnaEngine::Graphics::GpuMesh →</a>
   </div>
 </main>
 </div>

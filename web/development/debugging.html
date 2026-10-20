@@ -46,7 +46,7 @@
 ./build-cna/VerifyBlupiMovement</code></pre>
   <p>
     <code>tools/VerifyBlupiMovement.cpp</code> links only <code>GEBlupiController.cpp</code> (no
-    CNA/Easy3D dependency) and scripts movement scenarios without a live window — the fastest way
+    CNA/cna-engine dependency) and scripts movement scenarios without a live window — the fastest way
     to debug step-up/gravity/collision logic in isolation.
   </p>
 
@@ -61,7 +61,7 @@ ctest --test-dir build-cna --output-on-failure</code></pre>
     <tr><td>Solid blue screen, no terrain</td><td>Binary not run from its build directory, so relative asset paths fail</td><td>Run from inside <code>build-cna/</code></td></tr>
     <tr><td>Texture seams between tiles</td><td>Atlas pitch miscalculated (64 px vs. real 65 px pitch)</td><td>Check <code>GETileAtlas</code>'s grid registration — see the 2026-07-04 bug fix note on its class page</td></tr>
     <tr><td>Invisible collision point falls through floor</td><td>World-center offset mismatch between renderer and controller</td><td>Both must use the same <code>kWorldCenterX/Z = 50</code></td></tr>
-    <tr><td>CMake link errors (duplicate symbols)</td><td>Easy3D configured before CNA</td><td>Reconfigure from a clean build dir, CNA first</td></tr>
+    <tr><td>CMake link errors (duplicate symbols)</td><td>Before 2026-10-20: easy-3d configured before CNA. Now <code>CMakeLists.txt</code> adds CNA first and builds it statically (<code>CNA_SHARED_LIBRARY=OFF</code>) because cna-engine links CNA's static module libraries</td><td>Reconfigure from a clean build dir</td></tr>
     <tr><td>Test suite fails to build</td><td>GoogleTest not fetched</td><td>Ensure network access during first CMake configure, or check <code>BUILD_TESTING=ON</code></td></tr>
   </table>
 

@@ -53,7 +53,7 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Engine Integration</div>
   <h1>Engine Integration</h1>
-  <p class="subtitle">How Galaxy Eggbert uses CNA directly, with Easy3D as a small helper beside it.</p>
+  <p class="subtitle">How Galaxy Eggbert uses CNA directly, with cna-engine's strict modules as small helpers beside it.</p>
 
   <h2>Direct CNA — Not an Abstraction Layer</h2>
   <p>
@@ -64,27 +64,40 @@
     indirection layer.
   </p>
 
-  <h2>Easy3D's Role — a Helper, Not a Hiding Layer</h2>
+  <h2>cna-engine's Role — a Helper, Not a Hiding Layer</h2>
   <p>
-    Easy3D lives beside CNA, not above it. Game code is expected to call CNA directly for anything
-    Easy3D doesn't specifically help with. Easy3D's job is narrow: cameras, texture atlas, and
-    CPU-side batching/mesh-building for cubes and (eventually) billboards. It must never grow into
-    a scene graph, ECS, or general engine.
+    The strict modules of <strong>cna-engine</strong> (CMake targets <code>CnaEngine::Core</code> and
+    <code>CnaEngine::Graphics</code>, namespace <code>CnaEngine::Graphics</code>; XNA 4.0 types only)
+    live beside CNA, not above it. Game code still calls CNA directly for anything the engine modules
+    don't specifically help with. Their job here is narrow: a camera, texture regions, CPU-side mesh
+    building for boxes, plates and billboards, and GPU meshes drawn with the game's own effects. They
+    are not a scene graph and not a replacement engine.
   </p>
-  <h3>What Easy3D provides today, used by GalaxyEggbertCNA</h3>
-  <table>
-    <tr><th>Class</th><th>Role</th></tr>
-    <tr><td><code>Easy3D::Camera3D</code></td><td>Drives View/Projection every frame, follows Blupi</td></tr>
-    <tr><td><code>Easy3D::TextureAtlas</code></td><td>Underlies <code>GETileAtlas</code>'s UV-rect mapping</td></tr>
-    <tr><td><code>Easy3D::CubeMesh</code> (<code>BuildCubeMesh</code>)</td><td>CPU-side vertex/index builder — turns a <code>CubeBatch</code> into 24 vertices + 36 indices per cube</td></tr>
-    <tr><td><code>Easy3D::CubeMeshRenderer</code></td><td>Uploads that data to CNA <code>VertexBuffer</code>/<code>IndexBuffer</code>, issues <code>DrawIndexedPrimitives</code> via a caller-supplied <code>BasicEffect</code></td></tr>
-  </table>
-  <h3>What Easy3D does not have yet</h3>
   <p>
-    <code>Easy3D::BillboardBatch</code> and <code>DebugDraw</code> exist as CPU-side item queues but
-    have <strong>no vertex builder or CNA renderer adapter yet</strong> — this is the main blocker
-    for rendering Blupi's sprite and mobile-eggbert objects as billboards (E3D-MIG-061/062 in
-    <code>plan.md</code>).
+    Until 2026-10-20 this role was filled by the sibling helper library <strong>easy-3d</strong>
+    (namespace <code>Easy3D</code>). easy-3d was removed that day and replaced by cna-engine's strict
+    modules; the meshes the game builds are the same vertices and indices, bit for bit (verified by
+    cna-engine's <code>Easy3DEquivalenceTests</code>).
+  </p>
+  <h3>What cna-engine provides, used by GalaxyEggbertCNA</h3>
+  <table>
+    <tr><th>Class</th><th>Role</th><th>Replaced (easy-3d)</th></tr>
+    <tr><td><code>CnaEngine::Graphics::Camera</code></td><td>Drives View/Projection every frame: <code>SetLookAt(position, target, up)</code> (view exactly XNA <code>Matrix::CreateLookAt</code>), <code>SetPerspective(fov, aspect, near, far)</code>, <code>View()</code>, <code>Projection()</code>. The game keeps the look-at target itself (<code>cameraTarget_</code>).</td><td><code>Easy3D::Camera3D</code></td></tr>
+    <tr><td><code>CnaEngine::Graphics::UvRect</code> / <code>TextureAtlas</code></td><td>Texture regions: <code>UvRect</code> (<code>u0, v0, u1, v1</code>); <code>TextureAtlas</code> is cna-engine's counterpart of <code>Easy3D::TextureAtlas</code>. <code>GETileAtlas</code> returns <code>UvRect</code>s, still computed with the game's own <code>BlockTypes::tileUV()</code> (unchanged)</td><td><code>Easy3D::UvRect</code> (<code>U0, V0, U1, V1</code>), <code>Easy3D::TextureAtlas</code></td></tr>
+    <tr><td><a href="classes/CubeMesh.html"><code>CnaEngine::Graphics::MeshBuilder</code></a></td><td>CPU-side mesh building, positions + one texture coordinate: <code>AddBox</code>, <code>AddPlate</code>, <code>AddCrossedPlates</code>, <code>AddBillboard</code>, <code>AddVertex</code>/<code>AddTriangle</code>/<code>AddQuad</code></td><td><code>CubeBatch</code>, <code>BillboardBatch</code>, <code>BuildCubeMesh</code>, <code>Append*Mesh</code></td></tr>
+    <tr><td><a href="classes/CubeMeshRenderer.html"><code>CnaEngine::Graphics::GpuMesh</code></a></td><td><code>Upload(device, mesh, VertexLayout::PositionTexture())</code> to CNA buffers; <code>Draw(device, effect)</code> applies each pass of a caller-supplied <code>BasicEffect</code></td><td><code>Easy3D::CubeMeshRenderer</code>, <code>BillboardMeshRenderer</code></td></tr>
+  </table>
+  <p>
+    The game's own header <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code> adds four small helpers
+    for its one vertex format: <code>MakeTexturedMeshBuilder()</code>, <code>TexturedVertex(position, uv)</code>,
+    <code>AddCenteredBox(mesh, center, size, faces | uv)</code> and <code>UploadTexturedMesh(device, meshData)</code>.
+    The teleporter's pyramid tip (easy-3d's <code>AppendPyramidTipMesh</code>) is now the game's own
+    <code>AddPyramidTip()</code> in <code>src/GalaxyEggbert/Game/TerrainRenderer.cpp</code>.
+  </p>
+  <h3>Not taken over from easy-3d</h3>
+  <p>
+    easy-3d's separate CPU batches were not taken over — the builder is the batch. easy-3d's
+    <code>DebugDraw</code> was never used by the game.
   </p>
 
   <h2>CNA APIs Used Directly by GalaxyEggbertCnaGame</h2>
@@ -96,7 +109,7 @@
     <tr><td><code>Graphics::BasicEffect</code></td><td>Textured, untextured-vertex-color-off shader for terrain draw</td></tr>
     <tr><td><code>Input::Keyboard</code> / <code>Keys</code></td><td>Arrow keys + Space each frame</td></tr>
     <tr><td><code>Color</code>, <code>Rectangle</code>, <code>Matrix</code></td><td>Standard XNA-compatible math/graphics types</td></tr>
-    <tr><td><code>VertexBuffer</code> / <code>IndexBuffer</code> / <code>DrawIndexedPrimitives</code></td><td>Used inside <code>GETerrainRenderer</code>, matching CNA's own <code>examples/house3d_demo.cpp</code> draw pattern</td></tr>
+    <tr><td><code>VertexBuffer</code> / <code>IndexBuffer</code> / <code>DrawIndexedPrimitives</code></td><td>Behind <code>GETerrainRenderer</code>'s meshes, created and drawn through cna-engine's <code>GpuMesh</code> (<code>Upload</code> once, <code>Draw(device, effect)</code> per frame)</td></tr>
   </table>
 
   <h2>Entry Point</h2>
@@ -118,8 +131,8 @@ int main() {
   <table>
     <tr><th>Aspect</th><th>GalaxyEggbertSimple3D</th><th>GalaxyEggbertCNA</th></tr>
     <tr><td>Engine access</td><td>Through Simple3D's Urho3D-shaped abstraction</td><td>Direct CNA API calls, no abstraction layer</td></tr>
-    <tr><td>Helper library</td><td>None (Simple3D itself is the abstraction)</td><td>Easy3D, explicitly small and non-hiding</td></tr>
-    <tr><td>Rendering</td><td>Scene-graph nodes with StaticModel/BillboardSet</td><td>Manual CubeMeshRenderer draw calls via BasicEffect</td></tr>
+    <tr><td>Helper library</td><td>None (Simple3D itself is the abstraction)</td><td>cna-engine's strict modules (<code>CnaEngine::Core</code>, <code>CnaEngine::Graphics</code>), explicitly small and non-hiding — easy-3d until 2026-10-20</td></tr>
+    <tr><td>Rendering</td><td>Scene-graph nodes with StaticModel/BillboardSet</td><td>Meshes built with <code>MeshBuilder</code>, drawn with explicit <code>GpuMesh::Draw</code> calls via BasicEffect</td></tr>
     <tr><td>Status</td><td>Only fully playable target</td><td>Terrain + collision-only movement only</td></tr>
   </table>
 

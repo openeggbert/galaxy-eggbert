@@ -68,6 +68,7 @@ terrainRenderer_ = GETerrainRenderer(worldRuntime_.GetWorld(), tileAtlas);</code
 
   <h2>GETerrainRenderer Construction</h2>
   <pre><code>GETerrainRenderer(world, tileAtlas):
+  staticMesh = MakeTexturedMeshBuilder()          // cna-engine MeshBuilder, positions + one UV
   for x, y, z in world.blocksPerAxis()³:
       block = world.getBlock(x, y, z)
       if block.isAir(): continue
@@ -75,9 +76,9 @@ terrainRenderer_ = GETerrainRenderer(worldRuntime_.GetWorld(), tileAtlas);</code
       if BlockTypes::tileAnimBase(block.type()) is animated:
           m_animBlocks.push_back({worldX, y, worldZ, baseIcon})
       else:
-          cubeBatch.Add(Cube(worldX, y, worldZ), tileAtlas.GetTileUv(block.type()))
-  staticMesh = Easy3D::BuildCubeMesh(cubeBatch)
-  staticRenderer = Easy3D::CubeMeshRenderer(device, staticMesh)</code></pre>
+          AddCenteredBox(staticMesh, (worldX, y, worldZ), 1×1×1, faces)   // MeshBuilder::AddBox
+          // faces: one BoxFaceStyle{visible, uv} per face, uv = tileAtlas.GetTileUv(block.type())
+  staticRenderer = UploadTexturedMesh(device, staticMesh.Mesh())   // CnaEngine::Graphics::GpuMesh</code></pre>
   <p>
     See <a href="../classes/GETerrainRenderer.html">GETerrainRenderer</a> and
     <a href="../rendering.html">Rendering</a> for the animated-tile mesh rebuild logic.

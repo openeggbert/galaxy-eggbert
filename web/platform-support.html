@@ -76,9 +76,9 @@
   <p>
     Per the project's direction-lock rules, neither <code>GalaxyEggbertSimple3D</code> nor
     <code>GalaxyEggbertCNA</code> uses <code>#ifdef</code> guards to paper over engine
-    differences — each target speaks its own API (Simple3D, or CNA+Easy3D) directly. If a backend
+    differences — each target speaks its own API (Simple3D, or CNA + cna-engine) directly. If a backend
     beneath either is missing a feature, that is a problem for the sub-repo (<code>simple-3d</code>
-    or <code>CNA</code>/<code>easy-3d</code>), not something to work around inside galaxy-eggbert.
+    or <code>CNA</code>/<code>cna-engine</code>), not something to work around inside galaxy-eggbert.
     Platform differences that do exist are resolved entirely by CMake (<code>if(ANDROID)</code>,
     <code>if(EMSCRIPTEN)</code>, <code>if(WIN32)</code>, …).
   </p>

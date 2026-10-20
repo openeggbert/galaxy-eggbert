@@ -43,7 +43,7 @@
        │    │    │    └─ Worlds::World::loadFromFile(...) — parses VWR1 header,
        │    │    │       chunk table, VCH1 payloads (see VWR Format)
        │    │    ├─ terrainRenderer_ = GETerrainRenderer(world, GETileAtlas(...))
-       │    │    │    └─ builds static CubeBatch → Easy3D::BuildCubeMesh → CubeMeshRenderer
+       │    │    │    └─ builds static MeshBuilder → UploadTexturedMesh → CnaEngine::Graphics::GpuMesh
        │    │    ├─ texture_ = Texture2D("Content/icons/object-m.png")
        │    │    ├─ terrainEffect_ = BasicEffect(textured, no vertex color, bound to texture_)
        │    │    └─ blupi_.SetPosition(0, 1, 0)

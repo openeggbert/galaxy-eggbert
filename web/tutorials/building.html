@@ -38,13 +38,15 @@
   <pre><code>cd ~/development
 git clone https://github.com/openeggbert/galaxy-eggbert.git
 git clone &lt;url&gt; cna
-git clone &lt;url&gt; easy-3d
+git clone &lt;url&gt; cna-engine
 git clone &lt;url&gt; mobile-eggbert
 cd galaxy-eggbert</code></pre>
   <p>
-    By default, CMake expects <code>cna</code>, <code>easy-3d</code>, and <code>mobile-eggbert</code>
+    By default, CMake expects <code>cna</code>, <code>cna-engine</code>, and <code>mobile-eggbert</code>
     as siblings of <code>galaxy-eggbert</code>. Use <code>-DCNA_HOME=</code>,
-    <code>-DEASY3D_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> if yours are elsewhere.
+    <code>-DCNA_ENGINE_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> if yours are elsewhere.
+    (Until 2026-10-20 the second sibling was <code>easy-3d</code>, overridden with
+    <code>-DEASY3D_HOME=</code>; cna-engine replaced it.)
   </p>
 
   <h2>Step 2 — Configure</h2>
@@ -53,9 +55,10 @@ cd galaxy-eggbert</code></pre>
   -DGALAXY_EGGBERT_BUILD_SIMPLE3D=OFF \
   -DCMAKE_BUILD_TYPE=Debug</code></pre>
   <div class="warn">
-    <strong>Configure order matters</strong>
-    <code>CNA</code> must configure before <code>easy-3d</code> — Easy3D auto-detects a parent
-    <code>CNA</code> target and links against it instead of building its own copy.
+    <strong>CNA is added first and built statically</strong>
+    <code>CMakeLists.txt</code> adds <code>CNA</code> before <code>cna-engine</code>; cna-engine links
+    CNA's static module libraries instead of building its own copy, so CNA is built with
+    <code>CNA_SHARED_LIBRARY=OFF</code> (forced by the game's CMake).
   </div>
 
   <h2>Step 3 — Build</h2>
@@ -79,8 +82,8 @@ ctest --test-dir build-cna --output-on-failure</code></pre>
   <h2>Troubleshooting</h2>
   <table>
     <tr><th>Problem</th><th>Fix</th></tr>
-    <tr><td>CMake can't find CNA/Easy3D/mobile-eggbert</td><td>Pass <code>-DCNA_HOME=</code>, <code>-DEASY3D_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> explicitly</td></tr>
-    <tr><td>Duplicate-symbol link errors</td><td>Reconfigure from a clean build directory — usually caused by configuring Easy3D before CNA</td></tr>
+    <tr><td>CMake can't find CNA/cna-engine/mobile-eggbert</td><td>Pass <code>-DCNA_HOME=</code>, <code>-DCNA_ENGINE_HOME=</code>, <code>-DMOBILE_EGGBERT_HOME=</code> explicitly</td></tr>
+    <tr><td>Duplicate-symbol link errors</td><td>Reconfigure from a clean build directory. (The old cause — configuring easy-3d before CNA — is gone: <code>CMakeLists.txt</code> now adds CNA first and builds it statically for cna-engine.)</td></tr>
     <tr><td>Binary can't find <code>worlds3d/world001.vwr</code></td><td>Run from inside <code>build-cna/</code>, not the repo root</td></tr>
     <tr><td>No visible terrain</td><td>Check <code>Content/icons/object-m.png</code> was copied next to the binary</td></tr>
   </table>

@@ -121,15 +121,20 @@
     </a>
   </div>
 
-  <h2>Easy3D Helpers Used by GalaxyEggbertCNA</h2>
+  <h2>cna-engine Helpers Used by GalaxyEggbertCNA</h2>
+  <p>
+    Until 2026-10-20 these helpers came from easy-3d (namespace <code>Easy3D</code>); they are now the
+    strict modules of cna-engine (namespace <code>CnaEngine::Graphics</code>). The two pages below
+    keep their old file names.
+  </p>
   <div class="card-grid">
     <a class="card" href="CubeMesh.html">
-      <h3>Easy3D::CubeMesh</h3>
-      <p>CPU-side vertex/index builder for cube batches.</p>
+      <h3>CnaEngine::Graphics::MeshBuilder</h3>
+      <p>CPU-side builder for faced boxes, plates, crossed plates and billboards (replaced <code>Easy3D::CubeMesh</code>).</p>
     </a>
     <a class="card" href="CubeMeshRenderer.html">
-      <h3>Easy3D::CubeMeshRenderer</h3>
-      <p>Uploads cube mesh data to CNA buffers and draws it.</p>
+      <h3>CnaEngine::Graphics::GpuMesh</h3>
+      <p>Uploads a built mesh to CNA buffers and draws it with the caller's effect (replaced <code>Easy3D::CubeMeshRenderer</code>).</p>
     </a>
   </div>
 

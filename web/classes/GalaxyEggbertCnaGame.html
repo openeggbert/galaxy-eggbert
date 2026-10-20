@@ -62,14 +62,14 @@
     <li>Advances <code>worldRuntime_.Update(dt)</code> — drives the 6 fps tile-animation phase.</li>
     <li>Reads <code>Keyboard::GetState()</code> for arrow keys + Space.</li>
     <li>Steps <code>blupi_.Step(world, dx, dz, jump, dt)</code>.</li>
-    <li>Updates the <code>Easy3D::Camera3D</code> to follow Blupi (<code>SetTarget</code>/<code>SetPosition</code>).</li>
+    <li>Updates the <code>CnaEngine::Graphics::Camera</code> to follow Blupi (<code>SetLookAt(position, target)</code>); the game keeps the look-at target itself in <code>cameraTarget_</code>. Until 2026-10-20 this was an <code>Easy3D::Camera3D</code> (<code>SetTarget</code>/<code>SetPosition</code>).</li>
   </ul>
 
   <h3><code>Draw(const GameTime&amp; gameTime)</code></h3>
   <ul>
     <li>Clears the device to sky blue (<code>0.392, 0.584, 0.929, 1.0</code>).</li>
     <li>Enables depth test.</li>
-    <li>Sets the terrain effect's View/Projection from the camera, World to identity.</li>
+    <li>Sets the terrain effect's View/Projection from the camera (<code>camera_.View()</code>/<code>camera_.Projection()</code>), World to identity.</li>
     <li>Calls <code>terrainRenderer_-&gt;Draw(device, *terrainEffect_)</code>.</li>
     <li>Includes a one-shot terrain-visibility self-check that samples backbuffer pixels via <code>GetBackBufferData()</code>.</li>
   </ul>
@@ -83,7 +83,7 @@
   <h2>Dependencies</h2>
   <ul>
     <li>CNA: <code>Game</code>, <code>GameTime</code>, <code>Texture2D</code>, <code>BasicEffect</code>, <code>Keyboard</code>/<code>Keys</code></li>
-    <li>Easy3D: <code>Camera3D</code></li>
+    <li>cna-engine (<code>CnaEngine::Graphics</code>): <code>Camera</code> (until 2026-10-20: <code>Easy3D::Camera3D</code>)</li>
     <li><code>GEWorldRuntime</code>, <code>GETerrainRenderer</code>, <code>GETileAtlas</code>, <code>GEBlupiController</code></li>
   </ul>
 

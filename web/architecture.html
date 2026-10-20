@@ -53,14 +53,21 @@
 <main id="content">
   <div class="breadcrumb"><a href="index.html">Home</a> <span>›</span> Architecture</div>
   <h1>Architecture</h1>
-  <p class="subtitle">The Direction Lock, layering, and how CNA, Easy3D, and mobile-eggbert relate.</p>
+  <p class="subtitle">The Direction Lock, layering, and how CNA, cna-engine, and mobile-eggbert relate.</p>
 
   <h2>The Direction Lock</h2>
-  <p>Verbatim intent from <code>CLAUDE.md</code>, the project's binding architectural rule set:</p>
+  <p>The intent of <code>CLAUDE.md</code>, the project's binding architectural rule set:</p>
   <pre><code>Galaxy Eggbert
   -&gt; CNA directly
-  -&gt; Easy3D beside CNA (small helpers only — cameras, texture atlas, billboard/cube batching)
+  -&gt; cna-engine's strict modules beside CNA (CnaEngine::Core, CnaEngine::Graphics —
+     camera, mesh builder, GPU meshes, texture regions; XNA 4.0 types only)
   -&gt; mobile-eggbert used read-only as reference / asset / data source</code></pre>
+  <p>
+    Until 2026-10-20 the helpers beside CNA were the sibling library easy-3d (namespace
+    <code>Easy3D</code>: cameras, texture atlas, billboard/cube batching). cna-engine's strict modules
+    replaced it that day; see <a href="engine-integration.html">Engine Integration</a> for what
+    replaced what.
+  </p>
   <p>This supersedes an older direction: <code>Galaxy Eggbert -&gt; Simple3D -&gt; U3D / Urho3D / Nova3D -&gt; (CNA someday)</code>.</p>
 
   <h3>Rules That Follow From the Lock</h3>
@@ -69,8 +76,8 @@
     <li>Do not modify <code>../mobile-eggbert</code> without explicit user approval; do not refactor it or split it into a shared <code>core</code> library.</li>
     <li>Do not copy mobile-eggbert code or data (tables, enums, save-format byte layout, sprite/frame logic) into Galaxy Eggbert without explicit approval — even data that "looks like just data."</li>
     <li>Reusing mobile-eggbert <em>assets</em> (PNGs, sounds, world files) by file path / build-time copy is allowed.</li>
-    <li>New CNA/Easy3D code goes under <code>src/GalaxyEggbertCNA/</code> — do not mutate <code>src/GalaxyEggbertSimple3D/</code> into the CNA implementation.</li>
-    <li>Easy3D is a helper library beside CNA — it must not hide CNA (game code calls CNA directly), and must not grow into a scene graph / ECS / engine.</li>
+    <li>New CNA/cna-engine code goes under <code>src/GalaxyEggbertCNA/</code> — do not mutate <code>src/GalaxyEggbertSimple3D/</code> into the CNA implementation.</li>
+    <li>cna-engine's strict modules are helpers beside CNA — they must not hide CNA (game code calls CNA directly); they are not a scene graph or a replacement engine.</li>
     <li>No Lua unless explicitly requested by the user. No MeshCraft, Mesh World, Nova3D, or further Simple3D features re-added to the active path.</li>
     <li><code>../simple-3d</code> may be read (never modified) only when genuinely needed for <code>GalaxyEggbertSimple3D</code> work.</li>
     <li><strong>No <code>#ifdef</code> engine guards</strong> in either target — each speaks its own API directly.</li>
@@ -87,8 +94,8 @@
            └────────────┬─────────────┘
                         │ used directly (not hidden)
            ┌────────────▼─────────────┐        ┌─────────────────────┐
-           │        Easy3D              │◄──────┤  cameras, atlas,     │
-           │  (small helper library)    │       │  cube/billboard batch│
+           │  cna-engine strict modules │◄──────┤  camera, UV regions, │
+           │  (CnaEngine::Graphics)     │       │  MeshBuilder, GpuMesh│
            └────────────┬─────────────┘        └─────────────────────┘
                         │
            ┌────────────▼─────────────┐
@@ -124,25 +131,25 @@
   <p>Wraps a <code>Worlds::World</code>; loads <code>.vwr</code> or (secondary path) mobile-eggbert <code>.txt</code>; drives the 6 fps tile-animation phase. See <a href="classes/GEWorldRuntime.html">class reference</a>.</p>
 
   <h3>Terrain renderer — <code>GETerrainRenderer</code></h3>
-  <p>Builds a static + an animated <code>Easy3D::CubeMeshRenderer</code> from the world's non-air blocks. See <a href="classes/GETerrainRenderer.html">class reference</a>.</p>
+  <p>Builds static and animated terrain meshes with cna-engine's <code>MeshBuilder</code> from the world's non-air blocks and draws them as <code>CnaEngine::Graphics::GpuMesh</code>es (until 2026-10-20: <code>Easy3D::CubeMeshRenderer</code>). See <a href="classes/GETerrainRenderer.html">class reference</a>.</p>
 
   <h3>Tile atlas — <code>GETileAtlas</code></h3>
-  <p>Maps block type IDs to UV rects in <code>object-m.png</code> via <code>Easy3D::TextureAtlas</code>. See <a href="classes/GETileAtlas.html">class reference</a>.</p>
+  <p>Maps block type IDs to <code>CnaEngine::Graphics::UvRect</code>s in <code>object-m.png</code>, computed with <code>BlockTypes::tileUV()</code>. See <a href="classes/GETileAtlas.html">class reference</a>.</p>
 
   <h3>Player controller — <code>GEBlupiController</code></h3>
   <p>Invisible, collision-only movement placeholder: grid collision, step-up traversal, gravity, jump. See <a href="classes/GEBlupiController.html">class reference</a>.</p>
 
   <h3>World data model — <code>GalaxyEggbert::Worlds</code></h3>
-  <p>Engine-agnostic. No CNA or Easy3D dependency. Shared verbatim by <code>GalaxyEggbertSimple3D</code> and <code>GalaxyEggbertCNA</code>. See <a href="classes/World.html">World</a>, <a href="classes/Chunk.html">Chunk</a>, <a href="classes/Block.html">Block</a>.</p>
+  <p>Engine-agnostic. No CNA or cna-engine dependency. Shared verbatim by <code>GalaxyEggbertSimple3D</code> and <code>GalaxyEggbertCNA</code>. See <a href="classes/World.html">World</a>, <a href="classes/Chunk.html">Chunk</a>, <a href="classes/Block.html">Block</a>.</p>
 
   <h2>Dependency Map</h2>
   <table>
     <tr><th>Component</th><th>Depends on</th></tr>
-    <tr><td><code>GalaxyEggbertCnaGame</code></td><td>CNA (<code>Game</code>, <code>GameTime</code>, <code>Texture2D</code>, <code>BasicEffect</code>, <code>Keyboard</code>), Easy3D (<code>Camera3D</code>), GEWorldRuntime, GETerrainRenderer, GEBlupiController</td></tr>
+    <tr><td><code>GalaxyEggbertCnaGame</code></td><td>CNA (<code>Game</code>, <code>GameTime</code>, <code>Texture2D</code>, <code>BasicEffect</code>, <code>Keyboard</code>), cna-engine (<code>CnaEngine::Graphics::Camera</code>), GEWorldRuntime, GETerrainRenderer, GEBlupiController</td></tr>
     <tr><td><code>GEWorldRuntime</code></td><td><code>GalaxyEggbert::Worlds::World</code> only</td></tr>
-    <tr><td><code>GETerrainRenderer</code></td><td>Easy3D (<code>CubeBatch</code>, <code>CubeMesh</code>, <code>CubeMeshRenderer</code>), <code>GETileAtlas</code>, <code>Worlds::World</code>, <code>BlockTypes</code></td></tr>
-    <tr><td><code>GETileAtlas</code></td><td>Easy3D (<code>TextureAtlas</code>)</td></tr>
-    <tr><td><code>GEBlupiController</code></td><td><code>GalaxyEggbert::Worlds</code> only — no CNA/Easy3D dependency, scriptable headlessly</td></tr>
+    <tr><td><code>GETerrainRenderer</code></td><td>cna-engine (<code>MeshBuilder</code>, <code>GpuMesh</code>, via <code>TexturedMesh.hpp</code>), <code>GETileAtlas</code>, <code>Worlds::World</code>, <code>BlockTypes</code></td></tr>
+    <tr><td><code>GETileAtlas</code></td><td>cna-engine (<code>UvRect</code>), <code>BlockTypes</code></td></tr>
+    <tr><td><code>GEBlupiController</code></td><td><code>GalaxyEggbert::Worlds</code> only — no CNA/cna-engine dependency, scriptable headlessly</td></tr>
     <tr><td><code>Worlds::World / Chunk / Block</code></td><td>C++ stdlib only</td></tr>
   </table>
 

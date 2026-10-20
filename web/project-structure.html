@@ -61,7 +61,7 @@
 ├── CLAUDE.md                ← direction lock + developer guidelines
 ├── NEXT.md                  ← current status / roadmap
 ├── plan.md                  ← full task list, incl. E3D-MIG-* (CNA migration)
-├── easy3d.md                ← full Easy3D design analysis
+├── easy3d.md                ← historical easy-3d migration analysis (easy-3d replaced by cna-engine 2026-10-20)
 ├── README.md
 ├── World Format.md           ← .vwr binary format spec
 ├── LICENSE
@@ -122,7 +122,7 @@
   <p>All 12 headers are aggregated by <code>include/GalaxyEggbert/Def.hpp</code>: <code>BlupiAction</code>, <code>ContinueMissionType</code>, <code>DecorAction</code>, <code>Direction</code>, <code>DoorKeyFlags</code>, <code>GamePhase</code>, <code>GameSpeed</code>, <code>KeyPressFlags</code>, <code>ObjectType</code>, <code>SecretPower</code>, <code>SoundChannel</code>, <code>SpriteChannel</code>.</p>
 
   <h2>Tests</h2>
-  <p><code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code> data model — no CNA, Easy3D, or Simple3D dependency.</p>
+  <p><code>GalaxyEggbertWorldsTests</code> covers only the engine-agnostic <code>Worlds/</code> data model — no CNA, cna-engine, or Simple3D dependency.</p>
 
   <div class="page-nav">
     <a href="architecture.html">

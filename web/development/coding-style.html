@@ -36,8 +36,10 @@
   <div class="warn">
     <strong>Read this before touching engine-layer code</strong>
     Full text: <a href="../architecture.html">Architecture</a>. In short: CNA is used directly (no
-    abstraction layer); Easy3D is a small helper beside it (must not hide CNA, must not become a
-    scene graph/ECS); <code>GalaxyEggbertSimple3D</code> stays as reference, not to be expanded;
+    abstraction layer); cna-engine's strict modules (<code>CnaEngine::Core</code>,
+    <code>CnaEngine::Graphics</code>; easy-3d until 2026-10-20) are small helpers beside it (must not
+    hide CNA; not a scene graph or a replacement engine); <code>GalaxyEggbertSimple3D</code> stays as
+    reference, not to be expanded;
     <code>../mobile-eggbert</code> is read-only — its code/data requires explicit approval to reuse,
     its assets do not.
   </div>
@@ -46,8 +48,8 @@
   <p>
     Neither <code>GalaxyEggbertSimple3D</code> nor <code>GalaxyEggbertCNA</code> may use
     <code>#ifdef</code> to paper over engine differences — each target speaks its own API
-    (Simple3D, or CNA+Easy3D) directly. If a backend is missing a feature, that's a problem for the
-    sub-repo (<code>simple-3d</code> or <code>CNA</code>/<code>easy-3d</code>), not something to
+    (Simple3D, or CNA + cna-engine) directly. If a backend is missing a feature, that's a problem for the
+    sub-repo (<code>simple-3d</code> or <code>CNA</code>/<code>cna-engine</code>), not something to
     work around here.
   </p>
 
@@ -58,7 +60,7 @@
     <tr><td>Methods</td><td>PascalCase</td><td><code>LoadFromVwrFile()</code></td></tr>
     <tr><td>Constants</td><td><code>kPascalCase</code></td><td><code>kMoveSpeed</code>, <code>kWorldCenterX</code></td></tr>
     <tr><td>Enum values</td><td>PascalCase within enum class</td><td><code>GamePhase::Play</code></td></tr>
-    <tr><td>Namespaces</td><td>PascalCase</td><td><code>GalaxyEggbert::Worlds</code>, <code>GalaxyEggbert::CNA</code>, <code>Easy3D</code></td></tr>
+    <tr><td>Namespaces</td><td>PascalCase</td><td><code>GalaxyEggbert::Worlds</code>, <code>GalaxyEggbert::CNA</code>, <code>CnaEngine::Graphics</code></td></tr>
   </table>
 
   <h2>Header Layout</h2>
@@ -79,7 +81,7 @@
 
   <h2>Approval Gates</h2>
   <ul>
-    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../easy-3d</code> requires explicit, per-change user approval.</li>
+    <li>Modifying <code>../mobile-eggbert</code>, <code>../simple-3d</code>, or <code>../cna-engine</code> (which replaced <code>../easy-3d</code> on 2026-10-20) requires explicit, per-change user approval.</li>
     <li>Copying mobile-eggbert code or data (tables, enums, save-format bytes) requires explicit approval, even data that "looks like just data."</li>
     <li>No Lua unless explicitly requested by the user.</li>
   </ul>

@@ -36,9 +36,12 @@
 
   <h2>Overview</h2>
   <p>
-    Builds two <code>Easy3D::CubeMeshRenderer</code> instances from a <code>Worlds::World</code>:
-    one static mesh for non-animated non-air blocks (built once), and one animated-subset mesh
-    rebuilt whenever <code>Update(device, animPhase)</code> sees a new phase.
+    Builds its meshes from a <code>Worlds::World</code> with cna-engine's
+    <a href="CubeMesh.html"><code>MeshBuilder</code></a> and keeps them as
+    <code>std::unique_ptr&lt;CnaEngine::Graphics::GpuMesh&gt;</code> members: a static mesh for
+    non-animated non-air blocks (built once), and an animated-subset mesh rebuilt whenever
+    <code>Update(device, animPhase)</code> sees a new phase. Until 2026-10-20 these were
+    <code>Easy3D::CubeMeshRenderer</code> instances.
   </p>
   <p>Sources: <code>src/GalaxyEggbertCNA/Game/GETerrainRenderer.hpp</code> and <code>.cpp</code>.</p>
 
@@ -51,13 +54,17 @@
 if (BlockTypes::tileAnimBase(block.type()) is animated)
     m_animBlocks.push_back({worldX, y, worldZ, baseIcon});
 else
-    cubeBatch.Add(Cube(worldX, y, worldZ, size=1, uv=tileAtlas.GetTileUv(block.type())));</code></pre>
+    AddCenteredBox(mesh, center=(worldX, y, worldZ), size=(1, 1, 1), faces);   // MeshBuilder::AddBox
+    // faces: one BoxFaceStyle{visible, uv} per BoxFace, uv = tileAtlas.GetTileUv(block.type())</code></pre>
   <p>
     Also accumulates centroid sums (exposed as <code>CentroidX/Y/Z()</code>) — used as a camera
     look-at target since the spawn tile may be open air.
-    <code>Easy3D::BuildCubeMesh</code> converts the batch into vertex/index arrays (24 vertices +
-    36 indices per cube), fed into a <code>CubeMeshRenderer</code> that uploads once to CNA
-    <code>VertexBuffer</code>/<code>IndexBuffer</code>.
+    The builder holds the vertex/index data directly (24 vertices + 36 indices per full cube — the same
+    data easy-3d's <code>BuildCubeMesh</code> produced); <code>UploadTexturedMesh(device, mesh)</code>
+    uploads it once to CNA <code>VertexBuffer</code>/<code>IndexBuffer</code> as a
+    <a href="CubeMeshRenderer.html"><code>GpuMesh</code></a>. Special shapes use the same builder:
+    <code>AddPlate</code>, <code>AddCrossedPlates</code> (3 planes), and the game's own
+    <code>AddPyramidTip()</code> for the teleporter's tip.
   </p>
 
   <h2>Animated Tile Groups (ported from mobile-eggbert Tables.cpp)</h2>
@@ -82,7 +89,7 @@ else
   </p>
 
   <h2>Draw</h2>
-  <pre><code>staticRenderer-&gt;Draw(device, effect);
+  <pre><code>staticRenderer-&gt;Draw(device, effect);                       // GpuMesh::Draw(device, effect)
 if (animatedRenderer) animatedRenderer-&gt;Draw(device, effect);</code></pre>
 
   <h2>Known Limitations</h2>
@@ -92,7 +99,7 @@ if (animatedRenderer) animatedRenderer-&gt;Draw(device, effect);</code></pre>
   </ul>
 
   <h2>Dependencies</h2>
-  <p>Easy3D (<code>CubeBatch</code>, <code>CubeMesh</code>, <code>CubeMeshRenderer</code>), <code>GETileAtlas</code>, <code>Worlds::World</code>, <code>BlockTypes</code>.</p>
+  <p>cna-engine (<code>MeshBuilder</code>, <code>GpuMesh</code>, <code>UvRect</code>, via <code>src/GalaxyEggbert/Game/TexturedMesh.hpp</code>), <code>GETileAtlas</code>, <code>Worlds::World</code>, <code>BlockTypes</code>. Until 2026-10-20: easy-3d (<code>CubeBatch</code>, <code>CubeMesh</code>, <code>CubeMeshRenderer</code>).</p>
 
   <div class="page-nav">
     <a href="GEWorldRuntime.html">← GEWorldRuntime</a>
