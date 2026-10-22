@@ -418,6 +418,10 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
   `SetupJump`/`SetupZoom`/`SetupAccel`, `PauseBack`, `InitRanking`/`InitBuy`.
 - Idle "fidget" periodic sounds — blocked on `AnimState` values this engine doesn't have (same
   prerequisite as the 3D Blupi model).
+- **The editor terminates on OpenGL ES contexts without `GL_NV_polygon_mode`** (the native
+  `OPENGLES3` build on Mesa): its highlight box draws in wireframe without checking the
+  capability. The OpenGL 3.3 build is unaffected. See
+  [editor-wireframe-gles-bug.md](editor-wireframe-gles-bug.md) (cna-engine UP-014).
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
