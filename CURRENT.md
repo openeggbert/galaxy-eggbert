@@ -60,9 +60,6 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 
 - Blupi has no finished faithful 3D model; first-person uses an invisible collision point and
   third-person uses a temporary placeholder. A real model/rig needs user input.
-- On an OpenGL ES context without `GL_NV_polygon_mode` (the native `OPENGLES3` default on Mesa,
-  llvmpipe and radeonsi alike) the editor terminates when it draws its wireframe placement preview;
-  use `OPENGL33` for the editor until the highlight box checks the capability (`NEXT.md` §3).
 - `tests/golden/` no longer matches `develop` with CNA `900d0db3b` (the trace runs one tick ahead);
   the references need regenerating once the CNA revision is settled.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not

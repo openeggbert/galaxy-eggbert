@@ -1,5 +1,6 @@
 #include "EditorHighlightRenderer.hpp"
 
+#include <CNA/GraphicsCapability.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
@@ -83,6 +84,9 @@ namespace GalaxyEggbert::Editor
         auto mesh = Game::MakeTexturedMeshBuilder();
         Game::AddCenteredBox(mesh, center, size, CnaEngine::Graphics::UvRect::Full());
         mesh_ = Game::UploadTexturedMesh(device, mesh.Mesh());
+        boxCenter_ = center;
+        boxSize_ = size;
+        edgeColor_ = Microsoft::Xna::Framework::Color(r, g, b);
 
         lastMinX_ = minX; lastMinY_ = minY; lastMinZ_ = minZ;
         lastMaxX_ = maxX; lastMaxY_ = maxY; lastMaxZ_ = maxZ;
@@ -114,7 +118,17 @@ namespace GalaxyEggbert::Editor
         device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
         effect_->setAlphaProperty(hasWireframeEdges_ ? 0.08f : 0.35f);
         mesh_->Draw(device, *effect_);
-        if (hasWireframeEdges_)
+        if (hasWireframeEdges_ && !device.SupportsCapability(CNA::GraphicsCapability::WireFrame))
+        {
+            // OpenGL ES contexts without GL_NV_polygon_mode cannot draw this
+            // Position+Texture mesh as a wireframe (CNA throws
+            // NotSupportedException; cna-engine's upstream-issues.md UP-014),
+            // so draw the same edges as lines there.
+            edgeLines_.Clear();
+            edgeLines_.Box(boxCenter_, boxSize_, edgeColor_);
+            edgeLines_.Draw(device, camera);
+        }
+        else if (hasWireframeEdges_)
         {
             Microsoft::Xna::Framework::Graphics::RasterizerState wireframe;
             wireframe.setCullModeProperty(Microsoft::Xna::Framework::Graphics::CullMode::None);

@@ -1,8 +1,11 @@
 #pragma once
 
 #include <CnaEngine/Graphics/Camera.hpp>
+#include <CnaEngine/Graphics/DebugDraw.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
+#include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
+#include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <memory>
 
@@ -60,6 +63,12 @@ namespace GalaxyEggbert::Editor
 
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> effect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> mesh_;
+        // ShowCell's opaque edges on contexts without FillMode::WireFrame
+        // (OpenGL ES without GL_NV_polygon_mode): the box's twelve edges as lines.
+        CnaEngine::Graphics::DebugDraw edgeLines_;
+        Microsoft::Xna::Framework::Vector3 boxCenter_;
+        Microsoft::Xna::Framework::Vector3 boxSize_;
+        Microsoft::Xna::Framework::Color edgeColor_;
         bool visible_ = false;
         bool hasWireframeEdges_ = false;
         bool hasLastBounds_ = false;

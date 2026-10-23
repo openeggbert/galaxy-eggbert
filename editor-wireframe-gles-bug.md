@@ -1,4 +1,8 @@
-# Editor highlight wireframe on OpenGL ES contexts (unresolved, 2026-10-20)
+# Editor highlight wireframe on OpenGL ES contexts (fixed 2026-10-23)
+
+**Fixed on 2026-10-23:** without `GraphicsCapability::WireFrame` the highlight box's edges are drawn
+as lines through `CnaEngine::Graphics::DebugDraw` (the suggested fix below); verified live on an
+`OPENGLES3` build under Xvfb (`NEXT.md` §3). The original record follows.
 
 Found by cna-engine's agent on 2026-10-20 while driving the editor migrated to
 cna-engine under Xvfb with the native default renderer (`OPENGLES3`); recorded

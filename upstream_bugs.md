@@ -70,4 +70,6 @@ here only so this file can serve as the index:
   refused at configure time). Vulkan is now reached through `SDL_GPU`. If the alpha problem shows
   up there, send CNA a reproducer for `SDL_GPU`.
 - Editor highlight wireframe on OpenGL ES contexts without `GL_NV_polygon_mode`. Recorded as
-  UP-014 in libcna/cna-engine's `upstream-issues.md`; see `editor-wireframe-gles-bug.md`.
+  UP-014 in libcna/cna-engine's `upstream-issues.md`; see `editor-wireframe-gles-bug.md`. Not an
+  upstream bug after all: the defect was Galaxy Eggbert's own `EditorHighlightRenderer`. **Fixed**
+  here on 2026-10-23 (`NEXT.md` §3); UP-014 in cna-engine was marked resolved.

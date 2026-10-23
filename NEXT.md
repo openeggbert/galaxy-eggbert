@@ -423,13 +423,19 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
   `SetupJump`/`SetupZoom`/`SetupAccel`, `PauseBack`, `InitRanking`/`InitBuy`.
 - Idle "fidget" periodic sounds — blocked on `AnimState` values this engine doesn't have (same
   prerequisite as the 3D Blupi model).
-- **The editor terminates on OpenGL ES contexts without `GL_NV_polygon_mode`** (the native
-  `OPENGLES3` build on Mesa): its highlight box draws in wireframe without checking the
-  capability. The OpenGL 3.3 build is unaffected. See
-  [editor-wireframe-gles-bug.md](editor-wireframe-gles-bug.md) (cna-engine UP-014).
 ## 3. Recent changes
 
 Most recent first. Full history: `git log`.
+
+### fix: the editor runs on OpenGL ES contexts without polygon mode (2026-10-23)
+`EditorHighlightRenderer` drew the placement preview's edges with `FillMode::WireFrame` without
+asking `GraphicsDevice::SupportsCapability(GraphicsCapability::WireFrame)`; on OpenGL ES without
+`GL_NV_polygon_mode` (Mesa llvmpipe/radeonsi) CNA threw and the game ended (cna-engine UP-014,
+[editor-wireframe-gles-bug.md](editor-wireframe-gles-bug.md)). Without the capability the edges are
+now drawn as twelve lines through `CnaEngine::Graphics::DebugDraw`; with it nothing changes.
+Verified live under Xvfb: an `OPENGLES3` build (`build/`, OpenGL ES 3.2 Mesa 25.0.7) opens the
+editor, shows the line-edged preview and keeps running while the preview moves; the `OPENGL33`
+build (`build-cna-opengl3`) still shows the wireframe cube; 94/94 CTest cases pass there.
 
 ### refactor: moved from easy-3d to cna-engine (2026-10-20)
 
