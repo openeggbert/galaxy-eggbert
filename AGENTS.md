@@ -70,12 +70,12 @@ Use at most two parallel compile jobs on this machine:
 ```bash
 cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON
 cmake --build build-cna --target GalaxyEggbertCNA -j2
-ctest --test-dir build-cna -E easy-gl-resource-smoke-tests --output-on-failure
+ctest --test-dir build-cna --output-on-failure
 ```
 
-`easy-gl-resource-smoke-tests` is a known external EasyGL failure and is excluded by CI. A new or
-different failure is a real signal. Run the game from its build directory because runtime asset
-paths are relative:
+Every test is expected to pass; `easy-gl-resource-smoke-tests` was quarantined until 2026-10-23
+(fixed in easy-gl `0b46d35`, part of the pinned v0.1.1), so a failure there is a real signal now.
+Run the game from its build directory because runtime asset paths are relative:
 
 ```bash
 cd build-cna

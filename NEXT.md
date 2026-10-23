@@ -200,7 +200,10 @@ at all). `cna-ci.yml` sparse-checks-out only `worlds/` (a few MB, not the full ~
 `Content/` is irrelevant to these 2 tests), pinned to `07e0a673`, 2026-07-16.
 
 **Known upstream failures, quarantined (not Galaxy Eggbert regressions if they reproduce again):**
-- `easy-gl-resource-smoke-tests` (ctest) — root-caused entirely in `../easy-gl`
+- **Fixed 2026-07-19 upstream, un-quarantined 2026-10-23:** easy-gl `0b46d35` made
+  `Texture::bind()` activate texture unit 0, which the test expects; it is part of the pinned
+  v0.1.1, and CI runs the test again (`upstream_bugs.md`). Original record:
+  `easy-gl-resource-smoke-tests` (ctest) — root-caused entirely in `../easy-gl`
   (`test_texture_upload_sets_unpack_alignment_wrap_and_unit0_binding`, see §5 for the full
   root-cause writeup). Every full `ctest` run this session shows exactly this one failure and no
   others — if a future run shows a *different* failure count/name here, treat that as a real signal
@@ -2322,7 +2325,7 @@ cd build-cna-opengl3 && ./GalaxyEggbertCNA
 
 Run the full test suite:
 ```
-ctest --test-dir build-cna-opengl3 -E easy-gl-resource-smoke-tests --output-on-failure
+ctest --test-dir build-cna-opengl3 --output-on-failure
 ```
 
 Build and run one specific verification tool directly (bypasses ctest's summary, shows every
@@ -2345,11 +2348,9 @@ cmake --build build-cna --target GalaxyEggbertWorldsTests -j2
 cd build-cna && ./GalaxyEggbertWorldsTests
 ```
 
-Reproduce the one known ctest failure (pre-existing, in the `easy-gl` dependency — **not** a
-galaxy-eggbert bug, see §5):
-```
-cd build-cna && ctest -R easy-gl-resource-smoke-tests --output-on-failure
-```
+The former quarantined failure `easy-gl-resource-smoke-tests` passes since easy-gl `0b46d35`
+(in the pinned v0.1.1); re-verified 2026-10-23 in `../../libcna/easy-gl/build` and
+`build-cna-opengl3`. CI no longer excludes it.
 
 Headless live run (for visual verification of editor/gameplay changes; needs `xvfb-run`):
 ```

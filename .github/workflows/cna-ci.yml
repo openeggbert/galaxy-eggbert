@@ -136,11 +136,8 @@ jobs:
       - name: Build
         run: cmake --build galaxy-eggbert/build-cna -j2
 
-      # easy-gl-resource-smoke-tests is a known, pre-existing upstream ../easy-gl failure,
-      # unrelated to galaxy-eggbert (see NEXT.md "Sibling-repo commit pins" -- "Known upstream
-      # failures, quarantined"). Excluded here so CI stays green for genuine galaxy-eggbert
-      # regressions; if this ever starts failing for a DIFFERENT reason, that's a real signal.
+      # Every test runs. easy-gl-resource-smoke-tests was excluded until 2026-10-23; the easy-gl
+      # bug behind it was fixed in easy-gl 0b46d35, which the pinned v0.1.1 contains.
       - name: Run ctest
         run: |
-          ctest --test-dir galaxy-eggbert/build-cna --output-on-failure \
-            -E 'easy-gl-resource-smoke-tests'
+          ctest --test-dir galaxy-eggbert/build-cna --output-on-failure

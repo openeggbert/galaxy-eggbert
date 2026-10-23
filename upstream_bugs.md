@@ -61,8 +61,10 @@ it and add the fixing commit; remove the workaround only after re-verifying.
 These upstream problems were found earlier and are documented in other files; they are listed
 here only so this file can serve as the index:
 
-- `easy-gl-resource-smoke-tests` fails inside `../easy-gl`. Quarantined in CI. See `NEXT.md`,
-  "Known upstream failures, quarantined", and the root cause in `NEXT.md` §5.
+- `easy-gl-resource-smoke-tests` failed inside `../easy-gl` (root cause in `NEXT.md` §5).
+  **Fixed** in easy-gl `0b46d35` (2026-07-19: `Texture::bind()` activates texture unit 0), which
+  the pinned v0.1.1 contains. Re-verified 2026-10-23 in easy-gl's own `build/` and in
+  `build-cna-opengl3`; the CI exclusion and the documented quarantine were removed.
 - CNA Vulkan backend: `BasicEffect` with `Alpha < 1` did not render (`build-cna-vulkan`). See
   `NEXT.md`, same section. **Obsolete:** CNA retired the `VULKAN` renderer on 2026-10-13 (it is
   refused at configure time). Vulkan is now reached through `SDL_GPU`. If the alpha problem shows
