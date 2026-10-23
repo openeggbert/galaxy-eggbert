@@ -1,0 +1,54 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "BLUPI_rd_tex_Corps",
+      "vertices": "BLUPI_rd_tex_Corps.verts.bin",
+      "indices": "BLUPI_rd_tex_Corps.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_tex_Corps.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "BLUPI_rd_ffff00",
+      "vertices": "BLUPI_rd_ffff00.verts.bin",
+      "indices": "BLUPI_rd_ffff00.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_ffff00.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "BLUPI_rd_000000",
+      "vertices": "BLUPI_rd_000000.verts.bin",
+      "indices": "BLUPI_rd_000000.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_000000.png",
+      "diffuseColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "March",
+      "clip": "clips/March.clip.bin"
+    },
+    {
+      "name": "Stop",
+      "clip": "clips/Stop.clip.bin"
+    }
+  ]
+}

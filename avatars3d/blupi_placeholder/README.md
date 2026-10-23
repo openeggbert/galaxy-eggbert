@@ -1,5 +1,8 @@
 # Placeholder third-person model (NOT Blupi)
 
+**Fallback only since 2026-10-23:** the game loads the real Blupi from `avatars3d/blupi/` and uses
+this fox only when that directory is missing.
+
 Temporary stand-in used by `GalaxyEggbertCNA`'s third-person camera mode
 (NEXT.md §3, 2026-07-09) until a real 3D Blupi model with real animations
 exists. Not a mobile-eggbert asset, not part of the faithful-remake asset

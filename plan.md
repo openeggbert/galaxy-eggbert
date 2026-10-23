@@ -678,6 +678,12 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       icon 0 at 0.976. Still to do: the face texture, the remaining scenes and their icon mapping,
       vehicles/props and game integration (`tools/rd4_to_gltf/README.md`). Generated assets are not
       committed yet (new asset set, needs approval).
+      **Walk model finished and in the game 2026-10-23** (user request: finish this model, then
+      decide on the rest): geometry generated from each scene's own masters, the face texture
+      (front views match too), and `avatars3d/blupi/` with the `March` and `Stop` clips replaces
+      the fox in third person (`NEXT.md` §3). Remaining for `069`: the other scenes (animated
+      `ball` joints, tweeners, animated deformers), the icon-to-scene mapping for every
+      `BlupiAction`, props and vehicles.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 

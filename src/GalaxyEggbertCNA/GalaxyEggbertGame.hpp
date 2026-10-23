@@ -739,14 +739,17 @@ namespace GalaxyEggbert::CNA
         // generic SkinnedModelEXT/SkinnedEffect path (../cna/docs/
         // skinned-model-ext.md), loaded via getContentProperty() with its
         // RootDirectory pointed at avatars3d/ (see LoadContent()).
-        // Currently loads avatars3d/blupi_placeholder/ (see its own
-        // README.md) -- a temporary CC0/CC-BY placeholder, not a real Blupi
-        // model. blupiModelLoaded_ guards against avatars3d/ being absent
-        // (e.g. a build that never ran the CMake copy step) -- degrades to
-        // staying in first-person mode rather than crashing.
+        // Loads the real Blupi converted from the original Ray Dream scenes
+        // (avatars3d/blupi/, tools/rd4_to_gltf/, 2026-10-23) when present,
+        // else the temporary CC0/CC-BY placeholder fox
+        // (avatars3d/blupi_placeholder/, see its own README.md).
+        // blupiModelLoaded_ guards against avatars3d/ being absent (e.g. a
+        // build that never ran the CMake copy step) -- degrades to staying
+        // in first-person mode rather than crashing.
         std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT> blupiModel_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SkinnedEffect> blupiEffect_;
         bool blupiModelLoaded_ = false;
+        bool blupiModelIsReal_ = false;
 
         // Tracks which clip is currently playing so blupiClipTimeSeconds_
         // resets to 0 on a change instead of continuing from a position that

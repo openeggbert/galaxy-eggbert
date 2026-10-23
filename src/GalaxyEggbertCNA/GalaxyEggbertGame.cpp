@@ -98,6 +98,18 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Real Blupi model clip mapping (avatars3d/blupi/, 2026-10-23): the
+        // model carries the original walk (marche-profil.rd4) and standing
+        // pose (stop-profil.rd4) so far, each played at kAnimFps like the
+        // sprite icons; every other state shows the standing pose until its
+        // own scene is converted (tools/rd4_to_gltf/README.md).
+        const std::string& BlupiAnimStateToClipName(BlupiController::AnimState state)
+        {
+            static const std::string kMarch = "March";
+            static const std::string kStop = "Stop";
+            return state == BlupiController::AnimState::March ? kMarch : kStop;
+        }
+
         // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2) handler-table
         // migration, 4th family: the vehicle GalaxyEggbert::Def::ObjectType<->VehicleMode
         // mapping, previously 2 separate 5-case switches (mount-scan and
@@ -503,13 +515,15 @@ namespace GalaxyEggbert::CNA
         // to avatars3d/ itself. Currently unused elsewhere in this class,
         // so repointing its RootDirectory here can't break anything else.
         {
+            const std::string realModelManifest = "avatars3d/blupi/avatar.skinnedmodel.json";
             const std::string blupiModelManifest = "avatars3d/blupi_placeholder/avatar.skinnedmodel.json";
-            if (std::filesystem::exists(blupiModelManifest))
+            blupiModelIsReal_ = std::filesystem::exists(realModelManifest);
+            if (blupiModelIsReal_ || std::filesystem::exists(blupiModelManifest))
             {
                 auto& content = getContentProperty();
                 content.setRootDirectoryProperty("avatars3d");
                 blupiModel_ = content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
-                    "blupi_placeholder/avatar");
+                    blupiModelIsReal_ ? "blupi/avatar" : "blupi_placeholder/avatar");
 
                 blupiEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::SkinnedEffect>(device);
                 blupiEffect_->setAmbientLightColorProperty(
@@ -528,10 +542,32 @@ namespace GalaxyEggbert::CNA
                 // Keep the placeholder's established warm fallback tint.
                 blupiEffect_->setDiffuseColorProperty(
                     Microsoft::Xna::Framework::Color::NavajoWhite.ToVector3());
+                if (blupiModelIsReal_)
+                {
+                    // The real model's part textures carry its colours
+                    // (yellow body with the face, black eyelashes), so no
+                    // tint. Ray Dream lit the sprites with an ambient 0.5
+                    // grey plus one 0.5 light and a 0.5 highlight. The chase
+                    // camera mostly sees his back, which that key light
+                    // leaves at ambient only, so a weaker opposite light fills
+                    // it in.
+                    blupiEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3::One);
+                    blupiEffect_->setAmbientLightColorProperty(
+                        Microsoft::Xna::Framework::Vector3(0.45f, 0.45f, 0.45f));
+                    keyLight.setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(0.55f, 0.55f, 0.55f));
+                    keyLight.setSpecularColorProperty(Microsoft::Xna::Framework::Vector3(0.3f, 0.3f, 0.3f));
+                    auto& fillLight = blupiEffect_->getDirectionalLight1Property();
+                    fillLight.setEnabledProperty(true);
+                    fillLight.setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3(0.35f, 0.35f, 0.35f));
+                    fillLight.setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
+                    fillLight.setDirectionProperty(Microsoft::Xna::Framework::Vector3(0.4f, -0.6f, 0.7f));
+                    blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::One);
+                    blupiEffect_->setSpecularPowerProperty(24.0f);
+                }
                 blupiModelLoaded_ = true;
-                std::cout << "GalaxyEggbertCNA: third-person placeholder model loaded — "
-                             "avatars3d/blupi_placeholder/ ('C' toggles first-/third-person)."
-                          << std::endl;
+                std::cout << "GalaxyEggbertCNA: third-person model loaded — "
+                          << (blupiModelIsReal_ ? "avatars3d/blupi/" : "avatars3d/blupi_placeholder/")
+                          << " ('C' toggles first-/third-person)." << std::endl;
             }
             else
             {
@@ -3367,7 +3403,9 @@ namespace GalaxyEggbert::CNA
             // shorter new clip's own end.
             if (blupiModelLoaded_)
             {
-                const std::string& clipName = BlupiAnimStateToPlaceholderClipName(blupi_.GetAnimState());
+                const std::string& clipName = blupiModelIsReal_
+                    ? BlupiAnimStateToClipName(blupi_.GetAnimState())
+                    : BlupiAnimStateToPlaceholderClipName(blupi_.GetAnimState());
                 if (clipName != blupiActiveClipName_)
                 {
                     blupiActiveClipName_ = clipName;
@@ -3668,6 +3706,17 @@ namespace GalaxyEggbert::CNA
                 constexpr float kPlaceholderModelScale = 0.009095f;
                 constexpr float kPlaceholderModelYOffset = -0.5f;
                 constexpr float kPlaceholderModelDepthOffset = 0.6f;
+                // The real model (avatars3d/blupi/) is in metres at 0.05 m per
+                // Ray Dream unit. The original game camera draws 3.0309 px per
+                // unit (zoom 3.43654 x 60 px / frame height 68.03136) and a
+                // block is 64 px (DIMOBJX), so a block is 21.116 units =
+                // 1.0558 m, and the model keeps the sprites' size against
+                // blocks at 1 / 1.0558. Its feet are at local y = 0 like the
+                // fox's, so it shares kPlaceholderModelYOffset; it is centred
+                // on Blupi, so no depth offset.
+                constexpr float kRealModelScale = 0.94714f;
+                const float modelScale = blupiModelIsReal_ ? kRealModelScale : kPlaceholderModelScale;
+                const float modelDepthOffset = blupiModelIsReal_ ? 0.0f : kPlaceholderModelDepthOffset;
                 // No render-only Balloon offset here: Blupi's own physics
                 // now genuinely lift him while ballooned (BlupiController's
                 // kBalloonRiseSpeed, a direct port of the real
@@ -3679,8 +3728,8 @@ namespace GalaxyEggbert::CNA
                 // the real behaviour is in place (CLAUDE.md's faithful-remake
                 // rule: nothing that isn't in mobile-eggbert).
                 const auto world =
-                    Microsoft::Xna::Framework::Matrix::CreateScale(kPlaceholderModelScale) *
-                    Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.0f, kPlaceholderModelDepthOffset) *
+                    Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
+                    Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.0f, modelDepthOffset) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(blupi_.GetYaw()) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
                         blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset, blupi_.GetZ());

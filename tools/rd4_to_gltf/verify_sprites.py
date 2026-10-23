@@ -101,6 +101,15 @@ class Model:
                 })
         self.anim = d.get("animations", [None])[0]
 
+    def select_clip(self, name: str | None):
+        anims = self.doc.get("animations", [])
+        if name is not None:
+            match = [a for a in anims if a.get("name") == name]
+            if not match:
+                raise SystemExit(f"no animation {name!r}; have {[a.get('name') for a in anims]}")
+            self.anim = match[0]
+        return self.anim
+
     def pose(self, seconds: float) -> list[np.ndarray]:
         d = self.doc
         local = [trs(n) for n in d["nodes"]]
@@ -302,23 +311,29 @@ def main(argv=None) -> int:
     ap.add_argument("--icons", required=True, help="comma-separated icon indices, one per rendered frame")
     ap.add_argument("--out", required=True, help="comparison montage .png")
     ap.add_argument("--min-iou", type=float, default=0.0, help="fail if any frame scores below this")
+    ap.add_argument("--clip", help="animation to check (default: the first)")
     args = ap.parse_args(argv)
 
     model = Model(Path(args.glb))
+    anim = model.select_clip(args.clip)
     extras = model.doc["asset"]["extras"]["rd4_to_gltf"]
+    clip_info = next((c for c in extras.get("clips", []) if anim and c["name"] == anim.get("name")), None)
     scene = sc.read_scene(rd4.parse_file(args.scene))
     cam = Camera(scene, args.camera, extras)
     sheet = np.array(Image.open(args.sheet).convert("RGBA"))
     icons = [int(x) for x in args.icons.split(",")]
-    t0, t1 = extras["clip_ticks"]
+    t0, t1 = clip_info["ticks"] if clip_info else extras["clip_ticks"]
     step = sc.TICKS_PER_SECOND / scene.fps
+    per_tick = 1.0 / sc.TICKS_PER_SECOND
+    if extras.get("frame_rate"):
+        per_tick = scene.fps / (sc.TICKS_PER_SECOND * extras["frame_rate"])
     px = cam.zoom * ICON / cam.frame_height / extras["scale"]
 
     renders, rows, scores = [], [], []
     for f, icon in enumerate(icons):
         tick = t0 + f * step
         pos, right, up, back = cam.frame(tick)
-        color, cover = render(model.skinned((tick - t0) / sc.TICKS_PER_SECOND), pos, right, up, back,
+        color, cover = render(model.skinned(max(0.0, tick - t0) * per_tick), pos, right, up, back,
                               px * SUPERSAMPLE, ICON * SUPERSAMPLE, cam.light(tick), SUPERSAMPLE)
         c, a = downsample(color, cover, SUPERSAMPLE)
         renders.append((c, a))

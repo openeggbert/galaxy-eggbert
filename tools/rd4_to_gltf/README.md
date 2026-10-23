@@ -5,8 +5,9 @@ rigged, animated glTF binary (`.glb`), and checks the result against the game's 
 rendering it with the original game camera. This is the route to the real 3D Blupi (`plan.md`
 `069`).
 
-Status (2026-10-23): the walk (`marche-profil.rd4`) is complete as a model: geometry generated
-from the scene's own masters, the face texture, and the walk cycle. With the original game camera
+Status (2026-10-23): the walk (`marche-profil.rd4`) is complete as a model and in the game
+(`avatars3d/blupi/`, see its README for the exact commands): geometry generated from the scene's
+own masters, the face texture, the walk cycle and the standing pose. With the original game camera
 its silhouettes match sprite icons 5-10 at IoU 0.978-0.985; front views with faces match too
 (`blupi-ouf4.rd4` 0.965, `blupi-sucette.rd4` 0.929, its lollipop is not converted). Generated
 files are not committed; they go to `build-probe/rd4-blupi/`.
@@ -33,6 +34,11 @@ python3 tools/rd4_to_gltf/verify_sprites.py --glb build-probe/rd4-blupi/blupi-ma
     --scene $B/marche-profil.rd4 --sheet ../mobile-eggbert/Content/icons/blupi.png \
     --icons 5,6,7,8,9,10 --out build-probe/rd4-blupi/blupi-marche-compare.png --min-iou 0.95
 ```
+
+`--clip NAME=SCENE[@FRAME]` (repeatable) puts several scenes' animations on the main scene's
+skeleton (`@FRAME`: one rendered frame as a static pose), and `--frame-rate 8` times them at the
+game's sprite cadence. `export_cna_avatar.py` turns the `.glb` into the game's CNA
+`SkinnedModelEXT` directory with each part's real colour or texture.
 
 With `--reference-*`, the converter first prints how far Ray Dream's DXF vertices lie from the
 generated surfaces (canonical units; Blupi's parts are 3.4-10.4 across):

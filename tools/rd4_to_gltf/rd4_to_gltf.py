@@ -211,7 +211,8 @@ class Converter:
                                      "wrapS": 10497, "wrapT": 33071})
         return b.add("textures", {"source": image, "sampler": sampler})
 
-    def write(self, path: Path, clip_name: str, sample_fps: float, t_bind: float, extras: dict):
+    def write(self, path: Path, clips: list["Clip"], sample_fps: float, t_bind: float, extras: dict,
+              frame_rate: float | None = None):
         self.check_supported_animation()
         self.ground_offset(t_bind)
         b = gltf.GltfBuilder("galaxy-eggbert tools/rd4_to_gltf")
@@ -276,42 +277,73 @@ class Converter:
         ibm = np.array([np.linalg.inv(m).T for m in bind_world], dtype=np.float32)  # column-major
         b.doc["skins"][skin]["inverseBindMatrices"] = b.accessor(ibm.reshape(-1, 16), gltf.FLOAT)
 
-        # Animation clip sampled from the scene's own keys.
-        t0, t1 = self.scene.begin, self.scene.end
-        if t1 > t0:
-            n = int(round((t1 - t0) / sc.TICKS_PER_SECOND * sample_fps)) + 1
-            ticks = np.linspace(t0, t1, n)
-            seconds = (ticks - t0) / sc.TICKS_PER_SECOND
-            locals_ = [self.local_matrices(float(t)) for t in ticks]
-            time_acc = b.accessor(seconds.astype(np.float32), gltf.FLOAT, minmax=True)
-            samplers, channels = [], []
-            for i in range(len(self.joints)):
-                trs = np.array([m[i][:3, 3] for m in locals_], dtype=np.float32)
-                quats = []
-                for m in locals_:
-                    q = matrix_to_quat_xyzw(m[i][:3, :3])
-                    if quats and q @ quats[-1] < 0:
-                        q = -q
-                    quats.append(q)
-                quats = np.array(quats, dtype=np.float32)
-                for path_name, data in (("translation", trs), ("rotation", quats)):
-                    if np.allclose(data, data[0], atol=1e-6):
-                        continue
-                    s_idx = len(samplers)
-                    samplers.append({"input": time_acc, "output": b.accessor(data, gltf.FLOAT),
-                                     "interpolation": "LINEAR"})
-                    channels.append({"sampler": s_idx, "target": {"node": node_of[i], "path": path_name}})
-            b.add("animations", {"name": clip_name, "samplers": samplers, "channels": channels})
+        # Animation clips: each samples its own scene's keys onto this skeleton (joints matched by
+        # name) with this scene's ground offset, so clips from scenes that place Blupi differently
+        # keep that difference, as the sprites do.
+        for clip in clips:
+            clip.write_animation(b, self, node_of, sample_fps, frame_rate)
 
         b.doc["scenes"] = [{"name": self.root.name, "nodes": [node_of[0], *mesh_nodes]}]
         b.doc["scene"] = 0
         extras = dict(extras)
         extras.update({"scale": self.scale, "offset": [float(x) for x in self.offset],
                        "rd_to_gltf": RD_TO_GLTF.tolist(), "bind_tick": t_bind,
-                       "clip_ticks": [t0, t1], "scene_fps": self.scene.fps})
+                       "clip_ticks": [self.scene.begin, self.scene.end], "scene_fps": self.scene.fps,
+                       "frame_rate": frame_rate,
+                       "clips": [{"name": c.name, "scene": c.label, "ticks": [c.t0, c.t1]} for c in clips]})
         b.doc["asset"]["extras"] = {"rd4_to_gltf": extras}
         b.write(path)
         return len(self.joints), len(mesh_nodes)
+
+
+class Clip:
+    """One animation: a scene's ticks [t0, t1] (one tick for a static pose) on the main skeleton."""
+
+    def __init__(self, name: str, conv: "Converter", label: str, t0: float, t1: float):
+        self.name, self.conv, self.label, self.t0, self.t1 = name, conv, label, t0, t1
+
+    def write_animation(self, b: gltf.GltfBuilder, main: "Converter", node_of: list[int],
+                        sample_fps: float, frame_rate: float | None):
+        conv = self.conv
+        conv.offset = main.offset
+        index = {n: i for i, n in enumerate(conv.names)}
+        missing = [n for n in main.names if n not in index]
+        if missing:
+            main.warnings.append(f"clip {self.name!r}: joints {missing} not in {self.label}; bind pose kept")
+        # Seconds per scene tick: real time, or one rendered frame per 1/frame_rate seconds.
+        per_tick = 1.0 / sc.TICKS_PER_SECOND
+        if frame_rate:
+            per_tick = conv.scene.fps / (sc.TICKS_PER_SECOND * frame_rate)
+        if self.t1 > self.t0:
+            n = max(2, int(round((self.t1 - self.t0) * per_tick * sample_fps)) + 1)
+            ticks = np.linspace(self.t0, self.t1, n)
+        else:
+            ticks = np.array([self.t0, self.t0])
+        seconds = (ticks - self.t0) * per_tick
+        if self.t1 <= self.t0:
+            seconds = np.array([0.0, 1.0 / (frame_rate or 1.0)])
+        locals_ = [conv.local_matrices(float(t)) for t in ticks]
+        time_acc = b.accessor(seconds.astype(np.float32), gltf.FLOAT, minmax=True)
+        samplers, channels = [], []
+        for i, name in enumerate(main.names):
+            if name not in index:
+                continue
+            k = index[name]
+            trs = np.array([m[k][:3, 3] for m in locals_], dtype=np.float32)
+            quats = []
+            for m in locals_:
+                q = matrix_to_quat_xyzw(m[k][:3, :3])
+                if quats and q @ quats[-1] < 0:
+                    q = -q
+                quats.append(q)
+            # Every joint gets both channels: a clip from another scene must not inherit the
+            # main scene's bind pose for joints it holds still.
+            for path_name, data in (("translation", trs), ("rotation", np.array(quats, dtype=np.float32))):
+                s_idx = len(samplers)
+                samplers.append({"input": time_acc, "output": b.accessor(data, gltf.FLOAT),
+                                 "interpolation": "LINEAR"})
+                channels.append({"sampler": s_idx, "target": {"node": node_of[i], "path": path_name}})
+        b.add("animations", {"name": self.name, "samplers": samplers, "channels": channels})
 
 
 def _path_to(node: sc.Obj, target: sc.Obj) -> list[sc.Obj]:
@@ -334,7 +366,12 @@ def main(argv=None) -> int:
     ap.add_argument("--reference-scene", help="scene the reference DXF was exported from (check only)")
     ap.add_argument("--reference-dxf", help="Ray Dream DXF export of the reference scene (check only)")
     ap.add_argument("--root", default="BLUPI", help="object whose subtree becomes the skeleton")
-    ap.add_argument("--clip", help="animation name (default: scene file stem)")
+    ap.add_argument("--clip", action="append", default=[], metavar="NAME=SCENE[@FRAME]",
+                    help="animation from a scene (repeatable); @FRAME exports that rendered frame as a "
+                         "static pose. Default: the --scene's own animation, named after the file")
+    ap.add_argument("--frame-rate", type=float,
+                    help="play one rendered scene frame per 1/FRAME_RATE s (the game's sprite cadence) "
+                         "instead of the scene's real time")
     ap.add_argument("--scale", type=float, default=0.05, help="glTF metres per Ray Dream unit")
     ap.add_argument("--sample-fps", type=float, default=30.0, help="animation sampling rate")
     ap.add_argument("--out", required=True, help="output .glb")
@@ -350,12 +387,23 @@ def main(argv=None) -> int:
             print("  " + line)
     target = sc.read_scene(rd4.parse_file(args.scene))
     conv = Converter(target, args.root, args.scale, warnings)
-    clip = args.clip or Path(args.scene).stem
-    joints, meshes = conv.write(Path(args.out), clip, args.sample_fps, target.begin,
-                               {"scene": Path(args.scene).name})
-    print(f"Wrote {args.out}: {joints} joints, {meshes} skinned meshes, clip {clip!r} "
-          f"{(target.end - target.begin) / sc.TICKS_PER_SECOND:.3f} s "
-          f"(scene renders at {target.fps:g} fps)")
+    clips = []
+    for spec in args.clip or [f"{Path(args.scene).stem}={args.scene}"]:
+        name, _, rest = spec.partition("=")
+        path, _, frame = rest.partition("@")
+        if not name or not path:
+            ap.error(f"--clip {spec!r}: expected NAME=SCENE[@FRAME]")
+        cs = target if Path(path).resolve() == Path(args.scene).resolve() else sc.read_scene(rd4.parse_file(path))
+        cconv = conv if cs is target else Converter(cs, args.root, args.scale, warnings)
+        if frame:
+            tick = cs.begin + int(frame) * sc.TICKS_PER_SECOND / cs.fps
+            clips.append(Clip(name, cconv, Path(path).name, tick, tick))
+        else:
+            clips.append(Clip(name, cconv, Path(path).name, cs.begin, cs.end))
+    joints, meshes = conv.write(Path(args.out), clips, args.sample_fps, target.begin,
+                               {"scene": Path(args.scene).name}, args.frame_rate)
+    print(f"Wrote {args.out}: {joints} joints, {meshes} skinned meshes, clips "
+          + ", ".join(f"{c.name} ({c.label}, ticks {c.t0:g}-{c.t1:g})" for c in clips))
     for w in dict.fromkeys(warnings):
         print("WARNING: " + w)
     return 0

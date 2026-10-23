@@ -427,6 +427,19 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: the real Blupi in third person, walking and standing (2026-10-23)
+At the user's request (plan.md `069`), the third-person model is now Blupi converted from the
+original Ray Dream scenes in `speedyblupi-data` by `tools/rd4_to_gltf/` (its README records every
+decoded convention and the sprite comparisons): `avatars3d/blupi/` carries 21 rigidly skinned
+bones, the face texture, and two clips timed at the sprite cadence (`kAnimFps`, 8 fps): `March`
+(the walk, icons 5-10) and `Stop` (the standing pose, icon 0). `GalaxyEggbertGame` prefers it over
+the fox placeholder, maps `AnimState::March` to `March` and every other state to `Stop`, draws it
+at 0.94714 (a 64-pixel block against the original camera's 3.03 px per Ray Dream unit) and lights
+it with the scenes' ambient/key/highlight values plus a fill light for the chase camera's view of
+his back. Verified live under Xvfb on `build-cna-opengl3`: he stands on the floor at sprite scale,
+walks away from the chase camera with the walk cycle, and shows his face when turning; 94/94 CTest
+cases pass.
+
 ### fix: the editor runs on OpenGL ES contexts without polygon mode (2026-10-23)
 `EditorHighlightRenderer` drew the placement preview's edges with `FillMode::WireFrame` without
 asking `GraphicsDevice::SupportsCapability(GraphicsCapability::WireFrame)`; on OpenGL ES without
