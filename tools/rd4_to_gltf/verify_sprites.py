@@ -12,6 +12,7 @@ checked), the camera comes from the Ray Dream scene, and every rendered frame is
 from __future__ import annotations
 
 import argparse
+import io
 import sys
 from pathlib import Path
 
@@ -78,8 +79,16 @@ class Model:
         for node in skinned:
             for p in d["meshes"][node["mesh"]]["primitives"]:
                 a = p["attributes"]
-                mat = d["materials"][p["material"]]["pbrMetallicRoughness"]["baseColorFactor"]
+                pbr = d["materials"][p["material"]]["pbrMetallicRoughness"]
+                mat = pbr.get("baseColorFactor", [1.0, 1.0, 1.0, 1.0])
                 srgb = [((c ** (1 / 2.4)) * 1.055 - 0.055) if c > 0.0031308 else c * 12.92 for c in mat[:3]]
+                tex = uv = None
+                if "baseColorTexture" in pbr:
+                    image = d["images"][d["textures"][pbr["baseColorTexture"]["index"]]["source"]]
+                    view = d["bufferViews"][image["bufferView"]]
+                    raw = self.blob[view.get("byteOffset", 0):view.get("byteOffset", 0) + view["byteLength"]]
+                    tex = np.array(Image.open(io.BytesIO(raw)).convert("RGB")).astype(float) / 255
+                    uv = gltf.read_accessor(d, self.blob, a["TEXCOORD_0"]).astype(float)
                 self.prims.append({
                     "pos": gltf.read_accessor(d, self.blob, a["POSITION"]).astype(float),
                     "nrm": gltf.read_accessor(d, self.blob, a["NORMAL"]).astype(float),
@@ -87,6 +96,8 @@ class Model:
                     "weights": gltf.read_accessor(d, self.blob, a["WEIGHTS_0"]).astype(float),
                     "tris": gltf.read_accessor(d, self.blob, p["indices"]).reshape(-1, 3).astype(int),
                     "color": np.array(srgb),
+                    "uv": uv,
+                    "tex": tex,
                 })
         self.anim = d.get("animations", [None])[0]
 
@@ -136,7 +147,7 @@ class Model:
                 pos += w * (np.einsum("nij,nj->ni", m[:, :3, :3], p["pos"]) + m[:, :3, 3])
                 nrm += w * np.einsum("nij,nj->ni", m[:, :3, :3], p["nrm"])
             nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
-            out.append((pos, nrm, p["tris"], p["color"]))
+            out.append((pos, nrm, p["tris"], p["color"], p["uv"], p["tex"]))
         return out
 
 
@@ -163,6 +174,13 @@ class Camera:
         self.zoom = iso.float("zoom")
         self.frame_height = self.obj.chunk.floats("size")[1]
 
+    def light(self, tick: float) -> Lighting:
+        """The scene's first light as a point light in glTF space (direction fallback)."""
+        for o, _p, cw, _g in sc.world_frames(self.scene, tick):
+            if o.kind == "li":
+                return Lighting(self.c @ (cw[:3, 3] * self.scale) + self.offset, point=True)
+        return Lighting(np.array([0.4, 0.7, 0.6]) / np.linalg.norm([0.4, 0.7, 0.6]))
+
     def frame(self, tick: float):
         cw = next(cw for o, _p, cw, _g in sc.world_frames(self.scene, tick) if o is self.obj)
         r = self.c @ cw[:3, :3]
@@ -172,20 +190,49 @@ class Camera:
 
 # ---- rasterizer -----------------------------------------------------------------------
 
-def render(meshes, cam_pos, right, up, back, px_per_unit, size, light_dir, pixel=1):
+class Lighting:
+    """Ray Dream's look, approximately: ambient + one light, Gouraud-shaded, with a highlight.
+
+    ``light`` is either a direction (towards the light) or, with ``point=True``, a position.
+    The default intensities are the Blupi scenes' (ambient 0.5 grey, spot colour 0.5 grey at
+    brightness 1, shader highlight 0.5).
+    """
+
+    def __init__(self, light, point=False, ambient=0.5, diffuse=0.5, highlight=0.5, shininess=24.0):
+        self.light = np.asarray(light, dtype=float)
+        self.point = point
+        self.ambient, self.diffuse, self.highlight, self.shininess = ambient, diffuse, highlight, shininess
+
+    def shade(self, pos, nrm, view_dir):
+        to_light = self.light - pos if self.point else np.broadcast_to(self.light, pos.shape)
+        to_light = to_light / np.maximum(np.linalg.norm(to_light, axis=1, keepdims=True), 1e-12)
+        ndl = np.clip((nrm * to_light).sum(1), 0, 1)
+        half = to_light + view_dir
+        half /= np.maximum(np.linalg.norm(half, axis=1, keepdims=True), 1e-12)
+        spec = self.highlight * np.clip((nrm * half).sum(1), 0, 1) ** self.shininess * (ndl > 0)
+        return self.ambient + self.diffuse * ndl, spec
+
+
+def render(meshes, cam_pos, right, up, back, px_per_unit, size, light, pixel=1):
     """Orthographic z-buffer render; the camera axis passes through the centre of the middle pixel
-    (``pixel`` is the size of one output pixel in render samples)."""
+    (``pixel`` is the size of one output pixel in render samples). ``light`` is a Lighting or a
+    plain direction vector."""
+    if not isinstance(light, Lighting):
+        light = Lighting(light, ambient=0.35, diffuse=0.65, highlight=0.0)
     w = h = size
     depth = np.full((h, w), np.inf)
     color = np.zeros((h, w, 3))
     cover = np.zeros((h, w), dtype=bool)
     ys, xs = np.mgrid[0:h, 0:w] + 0.5
-    for pos, nrm, tris, base in meshes:
+    for mesh in meshes:
+        pos, nrm, tris, base = mesh[:4]
+        uv, tex = (mesh[4], mesh[5]) if len(mesh) > 5 and mesh[4] is not None else (None, None)
         rel = pos - cam_pos
         sx = w / 2 + pixel / 2 + (rel @ right) * px_per_unit
         sy = h / 2 + pixel / 2 - (rel @ up) * px_per_unit
         sz = -(rel @ back)  # distance in front of the camera
-        lit = base * (0.35 + 0.65 * np.clip(nrm @ light_dir, 0, 1))[:, None]
+        shade, spec = light.shade(pos, nrm, back)
+        lit = base * shade[:, None] + spec[:, None]
         for a, b, c in tris:
             x0, x1 = int(max(0, np.floor(min(sx[a], sx[b], sx[c])))), int(min(w, np.ceil(max(sx[a], sx[b], sx[c]))))
             y0, y1 = int(max(0, np.floor(min(sy[a], sy[b], sy[c])))), int(min(h, np.ceil(max(sy[a], sy[b], sy[c]))))
@@ -205,7 +252,18 @@ def render(meshes, cam_pos, right, up, back, px_per_unit, size, light_dir, pixel
             sub = depth[y0:y1, x0:x1]
             win = inside & (z < sub)
             sub[win] = z[win]
-            col = (l0[..., None] * lit[a] + l1[..., None] * lit[b] + l2[..., None] * lit[c])
+            if tex is None:
+                col = (l0[..., None] * lit[a] + l1[..., None] * lit[b] + l2[..., None] * lit[c])
+            else:
+                # Nearest texel (Ray Dream's texture maps here have interpolation off), wrapping.
+                su = l0 * uv[a, 0] + l1 * uv[b, 0] + l2 * uv[c, 0]
+                sv = l0 * uv[a, 1] + l1 * uv[b, 1] + l2 * uv[c, 1]
+                th, tw = tex.shape[:2]
+                tx = np.mod(np.floor(su * tw), tw).astype(int)
+                ty = np.clip(np.floor(sv * th), 0, th - 1).astype(int)
+                sh_ = l0 * shade[a] + l1 * shade[b] + l2 * shade[c]
+                sp_ = l0 * spec[a] + l1 * spec[b] + l2 * spec[c]
+                col = tex[ty, tx] * sh_[..., None] + sp_[..., None]
             color[y0:y1, x0:x1][win] = col[win]
             cover[y0:y1, x0:x1][win] = True
     return color, cover
@@ -255,15 +313,13 @@ def main(argv=None) -> int:
     t0, t1 = extras["clip_ticks"]
     step = sc.TICKS_PER_SECOND / scene.fps
     px = cam.zoom * ICON / cam.frame_height / extras["scale"]
-    light = np.array([0.4, 0.7, 0.6])
-    light /= np.linalg.norm(light)
 
     renders, rows, scores = [], [], []
     for f, icon in enumerate(icons):
         tick = t0 + f * step
         pos, right, up, back = cam.frame(tick)
         color, cover = render(model.skinned((tick - t0) / sc.TICKS_PER_SECOND), pos, right, up, back,
-                              px * SUPERSAMPLE, ICON * SUPERSAMPLE, light, SUPERSAMPLE)
+                              px * SUPERSAMPLE, ICON * SUPERSAMPLE, cam.light(tick), SUPERSAMPLE)
         c, a = downsample(color, cover, SUPERSAMPLE)
         renders.append((c, a))
         r, col = divmod(icon, 10)

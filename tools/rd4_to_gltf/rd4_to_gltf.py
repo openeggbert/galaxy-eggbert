@@ -4,23 +4,28 @@
 Every scene object that references a master becomes one rigidly skinned part on its own joint;
 groups become joints without geometry. The scene's own animation is sampled into one clip.
 
-    python3 rd4_to_gltf.py --scene marche-profil.rd4 --reference-scene stop-profil.rd4 \\
-        --reference-dxf blupi.dxf --out blupi-marche.glb
+    python3 rd4_to_gltf.py --scene marche-profil.rd4 --out blupi-marche.glb \\
+        [--reference-scene stop-profil.rd4 --reference-dxf blupi.dxf]
 
-Geometry comes from the reference DXF (see geometry.py); joint positions, rotations and keys
-come from the scene. See README.md for the verified conventions.
+Geometry is generated from the scene's own masters (primitives.py, freeform_mesh.py); joint
+positions, rotations and keys come from the scene. With a reference scene and its Ray Dream DXF
+export, the generated shapes are also measured against Ray Dream's own triangulation. See
+README.md for the verified conventions.
 """
 
 from __future__ import annotations
 
 import argparse
+import io
 import sys
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import freeform_mesh  # noqa: E402
 import geometry  # noqa: E402
 import gltf  # noqa: E402
 import rd4  # noqa: E402
@@ -52,10 +57,9 @@ def matrix_to_quat_xyzw(m: np.ndarray) -> np.ndarray:
 
 
 class Converter:
-    def __init__(self, scene: sc.Scene, parts: dict[str, geometry.Part], root_name: str,
-                 scale: float, warnings: list[str]):
+    def __init__(self, scene: sc.Scene, root_name: str, scale: float, warnings: list[str]):
         self.scene = scene
-        self.parts = parts
+        self.canonical: dict[str, tuple] = {}
         self.scale = scale
         self.warnings = warnings
         self.offset = np.zeros(3)
@@ -119,39 +123,59 @@ class Converter:
 
     # ---- geometry -----------------------------------------------------------------
     def build_vertices(self, t_bind: float):
-        """Bind-pose geometry grouped by material: {material key: (pos, nrm, tris, joints)}."""
+        """Bind-pose geometry grouped by material: {material key: [(pos, nrm, tris, joint, uv)]}.
+
+        A textured part gets its own material key ("texture", object name); its TextureMap is
+        kept in ``self.textures``.
+        """
         frames = self.rd_frames(t_bind)
         groups: dict[tuple, list] = {}
+        self.textures: dict[tuple, shading.TextureMap] = {}
         for i, o in enumerate(self.joints):
             if not o.master:
                 continue
-            part = self.parts.get(o.name)
-            if part is None:
-                self.warnings.append(f"{o.name}: no reference geometry, skipped")
+            if o.master not in self.canonical:
+                try:
+                    self.canonical[o.master] = geometry.canonical_mesh(self.scene.masters[o.master])
+                except NotImplementedError as e:
+                    self.canonical[o.master] = None
+                    self.warnings.append(f"{o.name}: {e}; skipped")
+            if self.canonical[o.master] is None:
                 continue
-            fp = geometry.master_fingerprint(self.scene.masters[o.master])
-            if fp != part.fingerprint:
-                self.warnings.append(f"{o.name}: master {o.master!r} [{fp}] differs from reference "
-                                     f"{part.source} [{part.fingerprint}]; using reference shape")
+            mesh, ff = self.canonical[o.master]
             cw, gw = frames[i]
             # Canonical -> RD world -> glTF space.
             m = np.eye(4)
             m[:3, :3] = RD_TO_GLTF @ gw[:3, :3] * self.scale
             m[:3, 3] = RD_TO_GLTF @ (gw[:3, 3] * self.scale) + self.offset
-            pos, nrm, tris = geometry.smooth_normals(part.mesh)
+            pos, nrm, tris, src = geometry.smooth_normals(mesh, return_index=True)
+            uv = None
+            key = shading.material_key(self.scene, o)
+            try:
+                tex = shading.texture_map(self.scene, o)
+            except NotImplementedError as e:
+                tex = None
+                self.warnings.append(f"{o.name}: texture not converted ({e}); flat colour used")
+            if tex is not None and ff is None:
+                self.warnings.append(f"{o.name}: texture map on a primitive not converted")
+            elif tex is not None:
+                self.warnings.extend(tex.warnings)
+                st = freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src]
+                pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0)
+                key = ("texture", o.name)
+                self.textures[key] = tex
             wpos = pos @ m[:3, :3].T + m[:3, 3]
             nm = np.linalg.inv(m[:3, :3]).T
             wn = nrm @ nm.T
             wn /= np.linalg.norm(wn, axis=1, keepdims=True)
             if np.linalg.det(m[:3, :3]) < 0:
                 tris = tris[:, ::-1]
-            key = shading.material_key(self.scene, o)
-            groups.setdefault(key, []).append((wpos, wn, tris, i))
+            groups.setdefault(key, []).append((wpos, wn, tris, i, uv))
         return groups
 
     def ground_offset(self, t_bind: float):
         groups = self.build_vertices(t_bind)
-        lowest = min(float(w[:, 1].min()) for g in groups.values() for w, _n, _t, _i in g)
+        lowest = min(float(item[0][:, 1].min()) for g in groups.values() for item in g)
         self.offset = np.array([0.0, -lowest, 0.0])
 
     # ---- animation ----------------------------------------------------------------
@@ -174,6 +198,19 @@ class Converter:
         return out
 
     # ---- output -------------------------------------------------------------------
+    @staticmethod
+    def _add_image(b: gltf.GltfBuilder, tex: shading.TextureMap) -> int:
+        """Embed the baked texture as PNG; returns the glTF texture index."""
+        buf = io.BytesIO()
+        Image.fromarray(tex.image).save(buf, format="PNG")
+        view = b.add_blob(buf.getvalue())
+        image = b.add("images", {"bufferView": view, "mimeType": "image/png"})
+        # u wraps around the body; v ends at the caps. Ray Dream samples without interpolation
+        # (intp 0), but a game camera gets much closer than the 60-pixel sprites, so filter.
+        sampler = b.add("samplers", {"magFilter": 9729, "minFilter": 9987,
+                                     "wrapS": 10497, "wrapT": 33071})
+        return b.add("textures", {"source": image, "sampler": sampler})
+
     def write(self, path: Path, clip_name: str, sample_fps: float, t_bind: float, extras: dict):
         self.check_supported_animation()
         self.ground_offset(t_bind)
@@ -203,11 +240,15 @@ class Converter:
         mesh_nodes = []
         for key, items in groups.items():
             if key not in materials:
-                materials[key] = b.add("materials", shading.material_json(key))
-            pos = np.concatenate([w for w, _n, _t, _i in items])
-            nrm = np.concatenate([n for _w, n, _t, _i in items])
+                if key in self.textures:
+                    material = shading.textured_material_json(key[1], self._add_image(b, self.textures[key]))
+                else:
+                    material = shading.material_json(key)
+                materials[key] = b.add("materials", material)
+            pos = np.concatenate([w for w, _n, _t, _i, _uv in items])
+            nrm = np.concatenate([n for _w, n, _t, _i, _uv in items])
             tris, joints, base = [], [], 0
-            for w, _n, t, i in items:
+            for w, _n, t, i, _uv in items:
                 tris.append(t + base)
                 joints.append(np.full(len(w), i))
                 base += len(w)
@@ -226,6 +267,9 @@ class Converter:
                 "indices": b.accessor(tris.ravel(), gltf.UINT, gltf.ELEMENT_ARRAY_BUFFER),
                 "material": materials[key],
             }
+            if key in self.textures:
+                uv = np.concatenate([u for *_rest, u in items])
+                primitive["attributes"]["TEXCOORD_0"] = b.accessor(uv, gltf.FLOAT, gltf.ARRAY_BUFFER)
             name = f"{self.root.name}_{b.doc['materials'][materials[key]]['name']}"
             mesh = b.add("meshes", {"name": name, "primitives": [primitive]})
             mesh_nodes.append(b.add("nodes", {"name": name, "mesh": mesh, "skin": skin}))
@@ -287,8 +331,8 @@ def _varies(track: sc.Track) -> bool:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--scene", required=True, help="animated .rd4/.rds scene to convert")
-    ap.add_argument("--reference-scene", required=True, help="scene the reference DXF was exported from")
-    ap.add_argument("--reference-dxf", required=True, help="Ray Dream DXF export of the reference scene")
+    ap.add_argument("--reference-scene", help="scene the reference DXF was exported from (check only)")
+    ap.add_argument("--reference-dxf", help="Ray Dream DXF export of the reference scene (check only)")
     ap.add_argument("--root", default="BLUPI", help="object whose subtree becomes the skeleton")
     ap.add_argument("--clip", help="animation name (default: scene file stem)")
     ap.add_argument("--scale", type=float, default=0.05, help="glTF metres per Ray Dream unit")
@@ -297,18 +341,18 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     warnings: list[str] = []
-    ref = sc.read_scene(rd4.parse_file(args.reference_scene))
-    parts, report = geometry.recover_parts(ref, args.reference_dxf)
-    print("Reference geometry:")
-    for line in report:
-        print("  " + line)
+    if bool(args.reference_scene) != bool(args.reference_dxf):
+        ap.error("--reference-scene and --reference-dxf go together")
+    if args.reference_dxf:
+        ref = sc.read_scene(rd4.parse_file(args.reference_scene))
+        print("Generated geometry against Ray Dream's DXF:")
+        for line in geometry.compare_with_reference(ref, args.reference_dxf):
+            print("  " + line)
     target = sc.read_scene(rd4.parse_file(args.scene))
-    conv = Converter(target, parts, args.root, args.scale, warnings)
+    conv = Converter(target, args.root, args.scale, warnings)
     clip = args.clip or Path(args.scene).stem
     joints, meshes = conv.write(Path(args.out), clip, args.sample_fps, target.begin,
-                               {"scene": Path(args.scene).name,
-                                "reference_scene": Path(args.reference_scene).name,
-                                "reference_dxf": Path(args.reference_dxf).name})
+                               {"scene": Path(args.scene).name})
     print(f"Wrote {args.out}: {joints} joints, {meshes} skinned meshes, clip {clip!r} "
           f"{(target.end - target.begin) / sc.TICKS_PER_SECOND:.3f} s "
           f"(scene renders at {target.fps:g} fps)")

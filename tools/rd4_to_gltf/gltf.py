@@ -47,6 +47,14 @@ class GltfBuilder:
             acc["max"] = [float(x) for x in flat.max(0)]
         return self.add("accessors", acc)
 
+    def add_blob(self, data: bytes) -> int:
+        """Append raw bytes (e.g. an image) as a buffer view; returns its index."""
+        while len(self.blob) % 4:
+            self.blob.append(0)
+        view = {"buffer": 0, "byteOffset": len(self.blob), "byteLength": len(data)}
+        self.blob += data
+        return self.add("bufferViews", view)
+
     def write(self, path: str | Path) -> None:
         while len(self.blob) % 4:
             self.blob.append(0)

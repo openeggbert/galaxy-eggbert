@@ -106,8 +106,12 @@ def recover_parts(scene: sc.Scene, dxf_path: str) -> tuple[dict[str, Part], list
     return parts, report
 
 
-def smooth_normals(mesh: Mesh, crease_degrees: float = 60.0) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Average face normals per vertex, splitting vertices along creases. Returns (positions, normals, triangles)."""
+def smooth_normals(mesh: Mesh, crease_degrees: float = 60.0, return_index: bool = False):
+    """Average face normals per vertex, splitting vertices along creases.
+
+    Returns (positions, normals, triangles) and, with ``return_index``, the source vertex of each
+    output vertex.
+    """
     p, t = mesh.positions, mesh.triangles
     fn = np.cross(p[t[:, 1]] - p[t[:, 0]], p[t[:, 2]] - p[t[:, 0]])
     fn_unit = fn / np.maximum(np.linalg.norm(fn, axis=1, keepdims=True), 1e-12)
@@ -116,7 +120,7 @@ def smooth_normals(mesh: Mesh, crease_degrees: float = 60.0) -> tuple[np.ndarray
     for f, tri in enumerate(t):
         for v in tri:
             corners.setdefault(int(v), []).append(f)
-    out_p, out_n = [], []
+    out_p, out_n, out_src = [], [], []
     new_t = t.copy()
     for v, faces in corners.items():
         groups: list[list[int]] = []
@@ -133,6 +137,76 @@ def smooth_normals(mesh: Mesh, crease_degrees: float = 60.0) -> tuple[np.ndarray
             idx = len(out_p)
             out_p.append(p[v])
             out_n.append(n)
+            out_src.append(v)
             for f in g:
                 new_t[f][t[f] == v] = idx
+    if return_index:
+        return np.array(out_p), np.array(out_n), new_t, np.array(out_src)
     return np.array(out_p), np.array(out_n), new_t
+
+
+def orient_outwards(mesh: Mesh) -> Mesh:
+    """Counter-clockwise winding seen from outside (positive signed volume)."""
+    p, t = mesh.positions, mesh.triangles
+    vol = np.einsum("ij,ij->i", p[t[:, 0]], np.cross(p[t[:, 1]], p[t[:, 2]])).sum()
+    return Mesh(p, t[:, ::-1].copy()) if vol < 0 else mesh
+
+
+def canonical_mesh(master: rd4.Chunk):
+    """Generated canonical geometry of a master: (Mesh, FreeformMesh or None)."""
+    import freeform_mesh
+    import primitives
+    if master.tag == "ex":
+        ff = freeform_mesh.tessellate(master)
+        return Mesh(ff.positions, ff.triangles), ff
+    prim = master.chunk("prim")
+    kind = prim.chunks()[0].tag if prim is not None and prim.chunks() else master.tag
+    if kind == "sp":
+        return orient_outwards(primitives.sphere()), None
+    if kind == "cyli":
+        return orient_outwards(primitives.cylinder()), None
+    raise NotImplementedError(f"master {master.string('nm')!r}: primitive {kind!r}")
+
+
+def compare_with_reference(scene: sc.Scene, dxf_path: str) -> list[str]:
+    """Deviation of generated geometry from Ray Dream's DXF of ``scene`` (canonical units)."""
+    parts, _ = recover_parts(scene, dxf_path)
+    lines = []
+    done = set()
+    for obj, _gw in geometric_objects(scene, None):
+        if obj.master in done or obj.name not in parts:
+            continue
+        done.add(obj.master)
+        mine, _ff = canonical_mesh(scene.masters[obj.master])
+        ref = parts[obj.name].mesh
+        d = _vertices_to_surface(ref.positions, mine)
+        lines.append(f"{obj.master!r} ({obj.name}): DXF vertices to generated surface max {d.max():.4f}, "
+                     f"mean {d.mean():.4f} (extent {_extent(ref.positions):.2f})")
+    return lines
+
+
+def _extent(p: np.ndarray) -> float:
+    return float(np.linalg.norm(p.max(0) - p.min(0)))
+
+
+def _vertices_to_surface(points: np.ndarray, mesh: Mesh) -> np.ndarray:
+    a, b, c = (mesh.positions[mesh.triangles[:, k]] for k in range(3))
+    out = np.full(len(points), np.inf)
+    for i in range(0, len(points), 128):
+        p = points[i:i + 128, None, :]
+        ab, ac = b - a, c - a
+        n = np.cross(ab, ac)
+        nn = np.maximum((n * n).sum(-1), 1e-30)
+        # Distance to each triangle's plane where the projection falls inside, else to its edges.
+        t = ((p - a) * n).sum(-1) / nn
+        q = p - t[..., None] * n
+        def inside(x, y, z):
+            return (np.cross(y - x, q - x) * n).sum(-1) >= 0
+        ins = inside(a, b, c) & inside(b, c, a) & inside(c, a, b)
+        dist = np.where(ins, np.abs(t) * np.sqrt(nn), np.inf)
+        for x, y in ((a, b), (b, c), (c, a)):
+            e = y - x
+            s_ = np.clip(((p - x) * e).sum(-1) / np.maximum((e * e).sum(-1), 1e-30), 0, 1)
+            dist = np.minimum(dist, np.linalg.norm(p - (x + e * s_[..., None]), axis=-1))
+        out[i:i + 128] = dist.min(1)
+    return out
