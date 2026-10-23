@@ -30,6 +30,13 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   e.g. `f"{mesh.name}_{prim_i}"` (or the material name).
 - **Galaxy Eggbert workaround:** `tools/rd4_to_gltf/rd4_to_gltf.py` writes one mesh with a
   unique name per material, all sharing one skin. This is valid glTF and converts correctly.
+- **Status: fixed** in libcna/cna `next` `6068c1ec4` (2026-10-23; local commit, not pushed yet,
+  pushes are the CNA owner's decision). A named mesh with one primitive keeps its name; otherwise
+  the primitive index is appended (`BLUPI_0`, `BLUPI_1`) and names duplicated across meshes get a
+  further suffix. CNA added `tools/avatar_asset_pipeline/test_convert_avatar.py`. Re-verified here
+  the same day: a `.glb` whose mesh `BLUPI` has two primitives now converts to `BLUPI_0` (5374
+  vertices) and `BLUPI_1` (280 vertices). The one-mesh-per-material layout stays anyway: its mesh
+  names carry each part's colour, which the converted asset otherwise loses (UB-002).
 
 ## UB-002 — CNA `convert_avatar.py`: material colours and textures are dropped (limitation)
 
@@ -45,6 +52,9 @@ it and add the fixing commit; remove the workaround only after re-verifying.
 - **Galaxy Eggbert workaround:** none yet. The game would have to know the tint for each part
   name (for example `BLUPI_rd_ffff00`, which encodes its colour) until the converter carries
   material data through.
+- **Status: open, waiting for a decision** (2026-10-23). Reported to the CNA session, which
+  declined it for now: it needs a new manifest field and new `SkinnedModelEXT` loading and drawing,
+  and the CNA owner currently limits CNA work to defect fixes. Passed to the owner for a decision.
 
 ## Recorded elsewhere
 
@@ -53,7 +63,9 @@ here only so this file can serve as the index:
 
 - `easy-gl-resource-smoke-tests` fails inside `../easy-gl`. Quarantined in CI. See `NEXT.md`,
   "Known upstream failures, quarantined", and the root cause in `NEXT.md` §5.
-- CNA Vulkan backend: `BasicEffect` with `Alpha < 1` does not render (`build-cna-vulkan`). See
-  `NEXT.md`, same section.
+- CNA Vulkan backend: `BasicEffect` with `Alpha < 1` did not render (`build-cna-vulkan`). See
+  `NEXT.md`, same section. **Obsolete:** CNA retired the `VULKAN` renderer on 2026-10-13 (it is
+  refused at configure time). Vulkan is now reached through `SDL_GPU`. If the alpha problem shows
+  up there, send CNA a reproducer for `SDL_GPU`.
 - Editor highlight wireframe on OpenGL ES contexts without `GL_NV_polygon_mode`. Recorded as
   UP-014 in libcna/cna-engine's `upstream-issues.md`; see `editor-wireframe-gles-bug.md`.

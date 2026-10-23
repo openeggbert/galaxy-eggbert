@@ -44,7 +44,8 @@ CNA's `tools/avatar_asset_pipeline/convert_avatar.py --embedded-clips`.
   joints without geometry; duplicate names get `.001`, `.002`, ... (`Paume.001` is the left palm).
 - Every part is skinned rigidly (weight 1.0) to its own joint, as in the original, where Blupi is
   built from separate rigid parts.
-- One mesh per material, all sharing one skin (see `upstream_bugs.md` UB-001).
+- One mesh per material, named after it (`BLUPI_rd_ffff00`), all sharing one skin: CNA's converter
+  keeps only the mesh name of each part, not its colour (`upstream_bugs.md` UB-001, UB-002).
 - One animation per scene, sampled at 30 fps with LINEAR interpolation.
 - glTF space: Y up, Blupi facing +Z, feet on y = 0 in the bind pose, 0.05 m per Ray Dream unit
   (`--scale`), which makes Blupi about 0.72 m tall. `asset.extras.rd4_to_gltf` records the scale,

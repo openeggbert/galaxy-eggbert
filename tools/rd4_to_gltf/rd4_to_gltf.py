@@ -194,8 +194,9 @@ class Converter:
             if p >= 0:
                 b.doc["nodes"][node_of[p]].setdefault("children", []).append(node_of[i])
 
-        # One skinned mesh per material, each with its own name: CNA's convert_avatar.py names a
-        # part after its mesh, so several primitives in one mesh would overwrite each other.
+        # One skinned mesh per material, each named after its material: CNA's convert_avatar.py
+        # names each part after its mesh and keeps no material colour (upstream_bugs.md UB-001,
+        # UB-002), so the name is the only place the converted part's colour survives.
         skin = b.add("skins", {"name": self.root.name, "joints": node_of, "skeleton": node_of[0]})
         groups = self.build_vertices(t_bind)
         materials = {}

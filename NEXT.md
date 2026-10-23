@@ -205,7 +205,9 @@ at all). `cna-ci.yml` sparse-checks-out only `worlds/` (a few MB, not the full ~
   root-cause writeup). Every full `ctest` run this session shows exactly this one failure and no
   others — if a future run shows a *different* failure count/name here, treat that as a real signal
   worth investigating, not more of the same known issue.
-- `build-cna-vulkan`'s `BasicEffect` `Alpha < 1` non-render bug (see §5/above) — CNA engine bug, not
+- **Obsolete since 2026-10-13, when CNA retired its `VULKAN` renderer (refused at configure time;
+  Vulkan now runs through `SDL_GPU`; see `upstream_bugs.md`):**
+  `build-cna-vulkan`'s `BasicEffect` `Alpha < 1` non-render bug (see §5/above) — CNA engine bug, not
   galaxy-eggbert. Still open as far as this repo's records show; worth a fresh live check next time
   `build-cna-vulkan` is touched for an unrelated reason, since `../cna`'s blend-state handling has
   changed since this was first found (e.g. `ddef5e8f`, a Vulkan blend-function-mapping fix already
