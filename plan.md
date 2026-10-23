@@ -670,6 +670,14 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       OTHER thing "liska" was initially confused with) are unaffected and already verified working
       correctly (see `SCORE-013`'s own entry for the WorldSelect regression found/fixed the same
       session) — this fix is unrelated to that one, a pure third-person rendering correction.
+      **Original 3D source found, proof of concept 2026-10-23** (user decision: a skinned glTF
+      converted from the originals): the Ray Dream scenes the sprites were rendered from
+      (`speedyblupi-data/originals/Blupi/*.rd4`, ASCII) convert with `tools/rd4_to_gltf/` into a
+      rigidly skinned `.glb` (21 joints). With the original game camera, the walk (`marche-profil`)
+      matches sprite icons 5-10 at IoU 0.975-0.987 and the standing pose (`stop-profil`) matches
+      icon 0 at 0.976. Still to do: the face texture, the remaining scenes and their icon mapping,
+      vehicles/props and game integration (`tools/rd4_to_gltf/README.md`). Generated assets are not
+      committed yet (new asset set, needs approval).
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 

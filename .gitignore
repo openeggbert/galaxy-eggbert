@@ -22,3 +22,5 @@ android/app/.cxx/Debug
 android/app/.cxx/RelWithDebInfo
 build-web/*
 
+/build-probe/
+__pycache__/

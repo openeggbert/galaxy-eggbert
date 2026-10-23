@@ -1,0 +1,138 @@
+"""Canonical part geometry recovered from a Ray Dream DXF export.
+
+Ray Dream wrote ``blupi.dxf`` from ``stop-profil.rd4`` at that scene's stored time: one layer per
+geometric object, named ``<object name with ' '/'-' as '_'><depth-first index>``, in world
+coordinates at ``DXF_UNITS_PER_SCENE_UNIT`` times the scene's units. Mapping every layer back
+through the inverse of its object's geometry frame yields the master's canonical mesh (the shape
+before the instance transform and the ``affi`` deformer).
+
+Master *names* differ between scene files (``Corps`` here, `` Wizard`` in marche-profil.rd4), so
+parts are keyed by object name and each master is fingerprinted by its geometric definition.
+"""
+
+from __future__ import annotations
+
+import hashlib
+from dataclasses import dataclass
+
+import numpy as np
+
+import dxf
+import rd4
+import scene as sc
+
+DXF_UNITS_PER_SCENE_UNIT = 4.0
+
+# Chunks of a master that describe its shading or editor state rather than its shape.
+_NON_GEOMETRY = {"sh", "grid", "nm"}
+
+
+@dataclass
+class Mesh:
+    positions: np.ndarray  # (V, 3)
+    triangles: np.ndarray  # (T, 3) int
+
+
+@dataclass
+class Part:
+    mesh: Mesh             # canonical master geometry
+    fingerprint: str       # of the master's geometric definition
+    source: str            # DXF layer it came from
+
+
+def weld(tris: np.ndarray, decimals: int = 5) -> Mesh:
+    flat = tris.reshape(-1, 3)
+    uniq, inverse = np.unique(np.round(flat, decimals), axis=0, return_inverse=True)
+    inverse = inverse.ravel()
+    pos = np.zeros_like(uniq)
+    np.add.at(pos, inverse, flat)
+    pos /= np.bincount(inverse, minlength=len(uniq))[:, None]
+    t = inverse.reshape(-1, 3)
+    t = t[(t[:, 0] != t[:, 1]) & (t[:, 1] != t[:, 2]) & (t[:, 0] != t[:, 2])]
+    return Mesh(pos, t)
+
+
+def layer_name(obj_name: str, index: int) -> str:
+    return obj_name.replace(" ", "_").replace("-", "_") + str(index)
+
+
+def master_fingerprint(master: rd4.Chunk) -> str:
+    """Hash of everything in a master except shading/editor state (and its name)."""
+    h = hashlib.sha1(master.tag.encode())
+
+    def rec(c: rd4.Chunk):
+        for it in c.items:
+            if isinstance(it, rd4.Chunk):
+                if it.tag in _NON_GEOMETRY:
+                    continue
+                h.update(b"{" + it.tag.encode())
+                rec(it)
+                h.update(b"}")
+            elif it[0] not in _NON_GEOMETRY:
+                h.update(f"{it[0]}={it[1]};".encode("latin-1"))
+
+    rec(master)
+    return h.hexdigest()[:12]
+
+
+def geometric_objects(scene: sc.Scene, t: float | None):
+    """Depth-first (obj, geometry_to_world) for objects that reference a master."""
+    return [(o, gw) for o, _p, _cw, gw in sc.world_frames(scene, t) if o.master]
+
+
+def recover_parts(scene: sc.Scene, dxf_path: str) -> tuple[dict[str, Part], list[str]]:
+    """Return ({object name: Part}, report lines) from a DXF exported from ``scene`` at its stored time."""
+    layers = dxf.read_3dfaces(dxf_path)
+    report = []
+    parts: dict[str, Part] = {}
+    for index, (obj, gw) in enumerate(geometric_objects(scene, None)):
+        name = layer_name(obj.name, index)
+        if name not in layers:
+            raise KeyError(f"DXF has no layer {name!r} for object {obj.name!r}")
+        world = layers[name] / DXF_UNITS_PER_SCENE_UNIT
+        inv = np.linalg.inv(gw)
+        mesh = weld(world @ inv[:3, :3].T + inv[:3, 3])
+        if np.linalg.det(gw[:3, :3]) < 0:
+            mesh = Mesh(mesh.positions, mesh.triangles[:, ::-1].copy())
+        fp = master_fingerprint(scene.masters[obj.master])
+        if obj.name in parts:
+            if parts[obj.name].fingerprint != fp:
+                report.append(f"{name}: WARNING same object name, different master than {parts[obj.name].source}")
+            continue
+        parts[obj.name] = Part(mesh, fp, name)
+        lo, hi = mesh.positions.min(0), mesh.positions.max(0)
+        report.append(f"{name}: {obj.name!r} <- master {obj.master!r} [{fp}], {len(mesh.triangles)} triangles, "
+                      f"canonical box {np.round(lo, 3)}..{np.round(hi, 3)}")
+    return parts, report
+
+
+def smooth_normals(mesh: Mesh, crease_degrees: float = 60.0) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Average face normals per vertex, splitting vertices along creases. Returns (positions, normals, triangles)."""
+    p, t = mesh.positions, mesh.triangles
+    fn = np.cross(p[t[:, 1]] - p[t[:, 0]], p[t[:, 2]] - p[t[:, 0]])
+    fn_unit = fn / np.maximum(np.linalg.norm(fn, axis=1, keepdims=True), 1e-12)
+    cos_limit = np.cos(np.radians(crease_degrees))
+    corners: dict[int, list[int]] = {}
+    for f, tri in enumerate(t):
+        for v in tri:
+            corners.setdefault(int(v), []).append(f)
+    out_p, out_n = [], []
+    new_t = t.copy()
+    for v, faces in corners.items():
+        groups: list[list[int]] = []
+        for f in faces:
+            for g in groups:
+                if fn_unit[g[0]] @ fn_unit[f] >= cos_limit:
+                    g.append(f)
+                    break
+            else:
+                groups.append([f])
+        for g in groups:
+            n = fn[g].sum(0)
+            n /= max(np.linalg.norm(n), 1e-12)
+            idx = len(out_p)
+            out_p.append(p[v])
+            out_n.append(n)
+            for f in g:
+                new_t[f][t[f] == v] = idx
+    return np.array(out_p), np.array(out_n), new_t
