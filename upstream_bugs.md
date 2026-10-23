@@ -52,9 +52,15 @@ it and add the fixing commit; remove the workaround only after re-verifying.
 - **Galaxy Eggbert workaround:** none yet. The game would have to know the tint for each part
   name (for example `BLUPI_rd_ffff00`, which encodes its colour) until the converter carries
   material data through.
-- **Status: open, waiting for a decision** (2026-10-23). Reported to the CNA session, which
-  declined it for now: it needs a new manifest field and new `SkinnedModelEXT` loading and drawing,
-  and the CNA owner currently limits CNA work to defect fixes. Passed to the owner for a decision.
+- **Status: fixed** in libcna/cna `next` `41944dd8d` (2026-10-23, the owner chose full support;
+  local commit, not pushed yet). The converter writes each part's `baseColorFactor` as
+  `"diffuseColor": [r, g, b, a]` and its `baseColorTexture` as the part texture (white when there
+  is none); `SkinnedModelEXT::PartEXT::DiffuseColor` (white by default) is loaded from the manifest
+  but not applied automatically: a draw sets `setDiffuseColorProperty`/`setAlphaProperty` per part.
+  Galaxy Eggbert does not use the field yet, because CI pins CNA `900d0db3b`, which lacks it;
+  `tools/rd4_to_gltf/export_cna_avatar.py` keeps writing each part's colour into its texture, so
+  the result is the same with either CNA (`avatars3d/blupi/`'s manifest already carries valid
+  `diffuseColor` fields, which the older loader ignores).
 
 ## Recorded elsewhere
 
