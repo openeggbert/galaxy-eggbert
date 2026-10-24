@@ -1,0 +1,102 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bulldozer_rd_542000",
+      "vertices": "bulldozer_rd_542000.verts.bin",
+      "indices": "bulldozer_rd_542000.idx.bin",
+      "vertexStride": 52,
+      "texture": "bulldozer_rd_542000.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.015127141596632167,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bulldozer_rd_ff0000",
+      "vertices": "bulldozer_rd_ff0000.verts.bin",
+      "indices": "bulldozer_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "bulldozer_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bulldozer_rd_810000",
+      "vertices": "bulldozer_rd_810000.verts.bin",
+      "indices": "bulldozer_rd_810000.idx.bin",
+      "vertexStride": 52,
+      "texture": "bulldozer_rd_810000.png",
+      "diffuseColor": [
+        0.2224661538246206,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bulldozer_rd_fdbf00",
+      "vertices": "bulldozer_rd_fdbf00.verts.bin",
+      "indices": "bulldozer_rd_fdbf00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bulldozer_rd_fdbf00.png",
+      "diffuseColor": [
+        0.9909246121188983,
+        0.5225215539683921,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bulldozer_rd_545454",
+      "vertices": "bulldozer_rd_545454.verts.bin",
+      "indices": "bulldozer_rd_545454.idx.bin",
+      "vertexStride": 52,
+      "texture": "bulldozer_rd_545454.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.09065468189359736,
+        0.09065468189359736,
+        1.0
+      ]
+    },
+    {
+      "name": "bulldozer_rd_tex_p32_pelle",
+      "vertices": "bulldozer_rd_tex_p32_pelle.verts.bin",
+      "indices": "bulldozer_rd_tex_p32_pelle.idx.bin",
+      "vertexStride": 52,
+      "texture": "bulldozer_rd_tex_p32_pelle.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bulldozer_rd_ffff00",
+      "vertices": "bulldozer_rd_ffff00.verts.bin",
+      "indices": "bulldozer_rd_ffff00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bulldozer_rd_ffff00.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

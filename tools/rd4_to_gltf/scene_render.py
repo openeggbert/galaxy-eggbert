@@ -73,6 +73,9 @@ class SceneRenderer:
                 self.textures[key] = None if baked is None else (baked[0], baked[1][src])
             elif kind == "cube":
                 self.textures[key] = shading.cube_texture(self.scene, obj, pos, nrm)
+            elif ff is not None and tex is None:
+                baked = shading.freeform_texture(self.scene, obj, ff)
+                self.textures[key] = None if baked is None else (baked[0], baked[1][src])
             elif tex is not None and ff is not None:
                 self.textures[key] = (tex.image, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src])
             elif tex is not None:

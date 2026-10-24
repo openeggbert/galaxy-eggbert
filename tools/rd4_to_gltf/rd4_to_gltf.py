@@ -364,6 +364,11 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
             tex = shading.TextureMap(baked[0], (0.0, 0.0, 1.0, 1.0), 0, [])
             pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, baked[1][src], 1.0)
             key = ("texture", re.sub(r"[^\w.-]", "_", label))
+    elif ff is not None and tex is None and shading.freeform_texture(scene, o, ff) is not None:
+        baked = shading.freeform_texture(scene, o, ff)
+        tex = shading.TextureMap(baked[0], (0.0, 0.0, 1.0, 1.0), 0, [])
+        pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, baked[1][src], 1.0)
+        key = ("texture", re.sub(r"[^\w.-]", "_", label))
     elif ff is None and _prim_kind(scene, o) == "cube":
         baked = shading.cube_texture(scene, o, pos, nrm)
         tex = None

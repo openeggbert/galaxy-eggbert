@@ -1,0 +1,63 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "helicopter_rd_00bffd",
+      "vertices": "helicopter_rd_00bffd.verts.bin",
+      "indices": "helicopter_rd_00bffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "helicopter_rd_00bffd.png",
+      "diffuseColor": [
+        0.0,
+        0.5225215539683921,
+        0.9909246121188983,
+        1.0
+      ]
+    },
+    {
+      "name": "helicopter_rd_ff0918",
+      "vertices": "helicopter_rd_ff0918.verts.bin",
+      "indices": "helicopter_rd_ff0918.idx.bin",
+      "vertexStride": 52,
+      "texture": "helicopter_rd_ff0918.png",
+      "diffuseColor": [
+        1.0,
+        0.0029411764705882353,
+        0.00926431084760073,
+        1.0
+      ]
+    },
+    {
+      "name": "helicopter_rd_ffff00",
+      "vertices": "helicopter_rd_ffff00.verts.bin",
+      "indices": "helicopter_rd_ffff00.idx.bin",
+      "vertexStride": 52,
+      "texture": "helicopter_rd_ffff00.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "helicopter_rd_bfbfbf",
+      "vertices": "helicopter_rd_bfbfbf.verts.bin",
+      "indices": "helicopter_rd_bfbfbf.idx.bin",
+      "vertexStride": 52,
+      "texture": "helicopter_rd_bfbfbf.png",
+      "diffuseColor": [
+        0.5225215539683921,
+        0.5225215539683921,
+        0.5225215539683921,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

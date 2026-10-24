@@ -371,6 +371,78 @@ def cube_texture(scene: sc.Scene, obj: sc.Obj, positions: np.ndarray, normals: n
     return (atlas * 255).round().clip(0, 255).astype(np.uint8), st
 
 
+FREEFORM_ATLAS_PX = 64           # atlas pixels per unit of a free-form's surface coordinates
+FREEFORM_IMAGE_COLUMNS_ALONG = True  # a domain image's columns run along the path (fitted below)
+
+
+def freeform_texture(scene: sc.Scene, obj: sc.Obj, ff):
+    """(image, (N, 2) texture coordinates of ``ff``'s vertices) for a free-form whose primary
+    domain keeps a colour while rectangle (``srct``) or oval (``sovl``) domains carry texture
+    maps, or None: the bulldozer's blade (tracks-profil.rd4) wears its hazard stripes so. The
+    surface becomes one atlas over (around, along) = (0..perimeter, 0..path length), the
+    domains' ``bbox`` being (around, along, around, along) as for mesh masters; an image fills
+    its rectangle with its repeats (``cnth``/``cntv`` when ``tile 1``), its columns along the
+    path. Free-forms whose primary domain is a texture map (Blupi's face) keep
+    ``freeform_mesh.texture_coordinates``."""
+    sh = obj.chunk.chunk("sh") if obj.chunk is not None else None
+    if sh is None or sh.chunk("elms") is None:
+        return None
+    channels = [(d, _color_channel(d)) for d in sh.chunk("elms").chunks()]
+    if not any(d.tag in ("srct", "sovl") and ch is not None and ch.tag == "smap" for d, ch in channels):
+        return None
+    base = material_key(scene, obj)
+    base = base if isinstance(base, tuple) else (1.0, 1.0, 1.0)
+    around_max = float(ff.perimeter)
+    along_max = float(max(ff.uv[:, 1].max(), 1e-6))
+    w = int(np.clip(round(around_max * FREEFORM_ATLAS_PX), 16, 1024))
+    h = int(np.clip(round(along_max * FREEFORM_ATLAS_PX), 16, 1024))
+    us = (np.arange(w) + 0.5) / w * around_max
+    vs = (np.arange(h) + 0.5) / h * along_max
+    atlas = np.empty((h, w, 3))
+    atlas[:] = base
+    for d, ch in reversed(channels):         # earlier domains lie on top
+        if d.tag not in ("srct", "sovl") or ch is None:
+            continue
+        a0, p0, a1, p1 = d.floats("bbox")
+        fa = (us - a0) / (a1 - a0)
+        fp = (vs - p0) / (p1 - p0)
+        if d.tag == "srct":
+            inside = (fp[:, None] >= 0) & (fp[:, None] <= 1) & (fa[None, :] >= 0) & (fa[None, :] <= 1)
+        else:
+            inside = (2 * fp[:, None] - 1) ** 2 + (2 * fa[None, :] - 1) ** 2 <= 1
+        if ch.tag == "sclr":
+            atlas[inside] = ch.floats("colr")
+            continue
+        if ch.tag != "smap":
+            continue
+        img = _texels(scene, obj, ch, base)
+        if img is None:
+            continue
+        minf = ch.chunk("MInf")
+        leaf = (lambda k: minf.leaf(k)) if minf is not None else (lambda k: None)
+        reps = (int(leaf("cnth") or 1), int(leaf("cntv") or 1)) if leaf("tile") == "1" else (1, 1)
+        # Image axes: columns (horizontal, cnth) and rows (vertical, cntv).
+        fx, fy = (fp, fa) if FREEFORM_IMAGE_COLUMNS_ALONG else (fa, fp)
+        cx = np.mod(np.clip(fx, 0, 1 - 1e-9) * reps[0], 1.0)
+        cy = np.mod(np.clip(fy, 0, 1 - 1e-9) * reps[1], 1.0)
+        cx = 1.0 - cx if leaf("flph") == "1" else cx
+        cy = 1.0 - cy if leaf("flpv") == "1" else cy
+        ih, iw = img.shape[:2]
+        cols = np.minimum((cx * iw).astype(int), iw - 1)
+        rows = np.minimum((cy * ih).astype(int), ih - 1)
+        if FREEFORM_IMAGE_COLUMNS_ALONG:
+            sampled = img[rows[None, :], cols[:, None]]       # (along, around)
+        else:
+            sampled = img[rows[:, None], cols[None, :]]
+        atlas[inside] = sampled[inside]
+    # Ray Dream's "around" runs against the section loop's direction (with the right-handed
+    # section frame): measured so, the blade's stripes land on its curved front face, as in
+    # the front icons 60-63; along the loop they sat on the flat face toward the cab.
+    around = np.mod(around_max - ff.uv[:, 0], around_max)
+    st = np.stack([around / around_max, ff.uv[:, 1] / along_max], axis=1)
+    return (atlas * 255).round().clip(0, 255).astype(np.uint8), st
+
+
 def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals: np.ndarray):
     """(image, (N, 2) texture coordinates) of a texture map on a cylinder primitive: around the
     axis ``s`` = angle; the side's ``t`` runs along the axis, the caps' from the centre out, so

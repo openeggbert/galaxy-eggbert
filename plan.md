@@ -832,10 +832,13 @@ be converted one at a time.
 - [x] `BB3D-038` Green blob creature (33, 54): icons 247-251 from `creature1-5.rds` (IoU
       0.978-0.998), 242-246 with its eyes from `creature1y.rds` (0.970 mean) once the
       converter applies Studio 5's per-axis scale `xyzS` (its eyeballs are scaled spheres).
-- [ ] `BB3D-035` note (2026-10-24 trial): `Blupi/tracks-profil.rd4` with `yaw=15` matches the
-      bulldozer's icons 57-67 at 0.882 mean, but its blade is a plain yellow box where the
-      sprites have a curved blade with yellow-black hazard stripes; find the blade's real
-      scene/texture before accepting.
+- [x] `BB3D-035` The bulldozer (types 4 and 32: icons 57-67): `Blupi/tracks-profil.rd4` with
+      `yaw=15`, 0.950 mean, its blade's hazard stripes from the converter's new free-form
+      domain textures; icon 68 (in type 32's tables) is the helicopter without Blupi
+      (`helico-seul2.rd4`, 0.970). Type 32's other icons are the moving mine (3D) and the
+      shield's ball and dots (billboards).
+- [x] `BB3D-039` The shield (25, icons 144-151, 266-273) stays a billboard: `shield2.rd4` gives
+      only the ball (0.544); the orange sparks around it, most of the sprite, are an effect.
 
 **Stage 5 — animated decor objects**
 - [ ] `BB3D-040` Tentacle (53, `Decor/tentacule/*.rds`; needs `BB3D-003`/`005`).

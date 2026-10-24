@@ -1,6 +1,7 @@
 # avatars3d/objects/<directory>/, one per line; export_objects.py
 ammo_munitions-glu
 bird_oiseau
+bulldozer_tracks-profil
 creature_creature1
 creature_creature1y
 creature_creature2
@@ -13,6 +14,7 @@ egg_oeuf
 exit_fleche
 fish_poisson
 follow_bombe-follow
+helicopter_helico-seul2
 invert_panneau-invert
 key1_cle1
 key2_cle2
