@@ -1,6 +1,7 @@
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/InteractionSystem.hpp>
+#include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
 #include <GalaxyEggbert/Game/Sound.hpp>
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
@@ -1239,6 +1240,17 @@ int main(int argc, char** argv)
         check(doorTileType() != BlockTypes::Door1,
               "the door opens (tile no longer Door1) once Blupi approaches while holding the key");
         check(doorInteraction.Key1Count() == 0, "the key is consumed on use (real behavior), not just on pickup");
+        bool slideShowsDoor = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType22)
+            {
+                const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+                slideShowsDoor = obj.visualIcon == BlockTypes::Door1 && visual.icon == BlockTypes::Door1 &&
+                                 visual.textureSource == ObjectTextureSource::ObjectM;
+            }
+        }
+        check(slideShowsDoor, "the opened door's slide shows the door's own object-m.png icon (real OpenDoor)");
     }
 
     {

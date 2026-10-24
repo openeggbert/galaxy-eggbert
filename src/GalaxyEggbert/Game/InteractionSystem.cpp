@@ -188,12 +188,15 @@ namespace GalaxyEggbert::Game
         // instead of just vanishing. Real channel 33. Shared by both the
         // key-gated (160) and treasure-gated (162) door families --
         // opening itself is identical, only the trigger condition differs.
-        // The door's own icon is NOT carried onto the slide object --
-        // `ObjectIcons::GetObjIcon()` already has no confirmed icon data
-        // for type 22 (returns 0 regardless), a pre-existing gap unrelated
-        // to this task.
+        // The slide shows the door's own icon on the object channel, as
+        // the real OpenDoor sets `channel = Object; icon = m_decor[..].icon`
+        // (a block type is its object-m.png icon, so it goes in visualIcon).
         void OpenDoorAt(WorldRuntime& worldRuntime, int gx, int gy, int gz, Sound& sound)
         {
+            const std::uint16_t doorIcon = worldRuntime.GetWorld()
+                                               .getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                         static_cast<std::uint16_t>(gz))
+                                               .type();
             worldRuntime.GetWorldMutable().setBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
                                                       static_cast<std::uint16_t>(gz),
                                                       Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
@@ -206,6 +209,7 @@ namespace GalaxyEggbert::Game
             slide.posStartZ = slide.posEndZ = slide.currentZ =
                 static_cast<float>(gz) - static_cast<float>(WorldRuntime::kWorldCenterZ);
             slide.phase = 0.0f;
+            slide.visualIcon = doorIcon;
             slide.active = true;
 
             auto& objects = worldRuntime.GetMobileObjectsMutable();
