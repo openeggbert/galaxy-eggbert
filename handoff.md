@@ -52,6 +52,8 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   sections' handedness mirrors the face texture: colour 0.906 / 0.907 says it barely
   matters), then export with the commands in `avatars3d/blupi/README.md`, build, test and
   commit. If interrupted: re-run those commands.
+- **Not checked live:** BigDecor models (no generated world has BigDecor; only editor
+  worlds do). The draw path is shared with the objects, which were checked live.
 - **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing
   still (`ChaseCameraYaw::kIdleDelaySeconds`, was 0.8 s).
 - **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-004`): all 528 scenes read; the
