@@ -138,6 +138,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
         src/GalaxyEggbert/Game/BlupiController.cpp
         src/GalaxyEggbert/Game/CameraShake.cpp
+        src/GalaxyEggbert/Game/ChaseCameraYaw.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
         src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         src/GalaxyEggbert/Game/Sound.cpp
@@ -692,6 +693,18 @@ target_include_directories(VerifyCameraShake PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# ChaseCameraYaw (the real-Blupi plan's phase E) is engine-agnostic like
+# CameraShake: the third-person camera's orbit decisions, checked without CNA.
+add_executable(VerifyChaseCameraYaw
+        tools/VerifyChaseCameraYaw.cpp
+        src/GalaxyEggbert/Game/ChaseCameraYaw.cpp
+)
+
+target_include_directories(VerifyChaseCameraYaw PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # WorldRuntime.hpp/.cpp are deliberately engine-agnostic (only
 # depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
 # Vector3) — this tool links it without needing CNA at all, verifying
@@ -776,6 +789,8 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- CameraShake is a pure
     # tick-based state machine (plan.md CAM-008..013).
     add_test(NAME VerifyCameraShake COMMAND VerifyCameraShake)
+    # No file/working-directory dependency -- pure orbit-yaw state machine.
+    add_test(NAME VerifyChaseCameraYaw COMMAND VerifyChaseCameraYaw)
 endif()
 
 # =============================================================================

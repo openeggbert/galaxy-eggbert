@@ -5,6 +5,7 @@
 #include <GalaxyEggbert/Game/TerrainRenderer.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/CameraShake.hpp>
+#include <GalaxyEggbert/Game/ChaseCameraYaw.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
 #include <GalaxyEggbert/Game/Sound.hpp>
 #include <GalaxyEggbert/Game/InteractionSystem.hpp>
@@ -31,6 +32,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace GalaxyEggbert::CNA
@@ -126,6 +128,9 @@ namespace GalaxyEggbert::CNA
         bool cameraSmoothedInitialized_ = false;
         Microsoft::Xna::Framework::Vector3 cameraEyeSmoothed_{0.0f, 0.0f, 0.0f};
         Microsoft::Xna::Framework::Vector3 cameraTargetSmoothed_{0.0f, 0.0f, 0.0f};
+        // Third-person orbit around Blupi (behind, lagging, side views; see
+        // ChaseCameraYaw.hpp); reset behind him while in first person.
+        GalaxyEggbert::Game::ChaseCameraYaw chaseCamera_;
 
         // Parses worlds/world001.txt (plan.md Phase 4).
         GalaxyEggbert::Game::WorldRuntime worldRuntime_;
@@ -752,14 +757,17 @@ namespace GalaxyEggbert::CNA
         bool blupiModelLoaded_ = false;
         bool blupiModelIsReal_ = false;
 
-        // The real model's faces (avatars3d/blupi/faces.txt, written by
-        // tools/rd4_to_gltf/build_clip_library.py): one texture per expression
-        // and, per clip, the expression of every frame at BlupiController's
-        // kAnimFps; drawn on the part named blupiFacePart_.
+        // The real model's per-clip data (avatars3d/blupi/clips.txt, written
+        // by tools/rd4_to_gltf/build_clip_library.py): one texture per
+        // expression and, per clip, the expression of every frame at
+        // BlupiController's kAnimFps, drawn on the part named blupiFacePart_;
+        // and the clips that turn him toward the sprites' viewer, which put
+        // the third-person camera on his right (chaseCamera_).
         std::vector<Microsoft::Xna::Framework::Graphics::Texture2D> blupiFaces_;
         std::unordered_map<std::string, std::vector<int>> blupiClipFaces_;
         std::string blupiFacePart_;
         double blupiFaceRate_ = 8.0;
+        std::unordered_set<std::string> blupiViewerClips_;
 
         // Tracks which clip is currently playing so blupiClipTimeSeconds_
         // resets to 0 on a change instead of continuing from a position that

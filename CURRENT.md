@@ -61,9 +61,9 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 - Third person shows the real Blupi converted from the original Ray Dream scenes
   (`avatars3d/blupi/`, `tools/rd4_to_gltf/`) with a clip, expression and props per animation
   state; the vehicles, Hide and two death causes have no clip yet and show the standing pose, and
-  front/back views (Turn, Switch) use the nearest profile poses. The camera does not yet show him
-  from the side when idle (planned). First person still uses an invisible collision point. The fox
-  placeholder remains as a fallback when `avatars3d/blupi/` is absent.
+  front/back views (Turn, Switch) use the nearest profile poses. First person still uses an
+  invisible collision point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is
+  absent.
 - `tests/golden/` no longer matches `develop` with CNA `900d0db3b` (the trace runs one tick ahead);
   the references need regenerating once the CNA revision is settled.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not

@@ -427,6 +427,25 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: the third-person camera shows Blupi from the side, as the sprites did (2026-10-24)
+Phase E of the real-Blupi plan (user decisions 2026-10-24). The chase camera's orbit yaw is now
+`GalaxyEggbert::Game::ChaseCameraYaw` (engine-agnostic, checked by `VerifyChaseCameraYaw`):
+- moving, it follows Blupi's yaw with a lag (2.5 per second), so on a turn he shows his side for a
+  moment before it straightens out behind him (a Down turn-around shows his face);
+- standing (`AnimState::Stop`, no input) for 0.8 s, it orbits (1.5 per second) to his nearer side,
+  his right on a tie; a side a wall blocks within 60 % of the chase distance is skipped, and with
+  both blocked it stays behind; it keeps its side while that side stays open;
+- clips that turn him toward the sprites' viewer (`viewer` lines in `avatars3d/blupi/clips.txt`,
+  which replaces `faces.txt`; 13 clips such as the squashed and inflated Blupi, the door turn and
+  the dynamite) always put it on his right, the side the original camera saw (user decision).
+Mouse drag-look still adds its offset on top; first person is unchanged. Also fixed: the clip
+library counted the props in its ground offset, so every clip floated 0.074 m above the floor
+(`a65b133`). Size check (user question): standing, Blupi is 0.742 blocks from feet to the top of
+his body and 0.80 with eyelashes; `blupi.png`'s standing icon is 48 and 51 of a tile's 64 px.
+Verified live under Xvfb (`build-cna-opengl3`): idle he turns into profile within about two
+seconds, a turn while walking shows him diagonally before the camera catches up, at a door he
+faces the camera; 95/95 CTest cases pass.
+
 ### feat: the real Blupi plays every animation state, with his expressions and props (2026-10-24)
 Phases C and D of the plan the user approved for the real Blupi (plan.md `069`): the model in
 `avatars3d/blupi/` is now a clip library built by `tools/rd4_to_gltf/build_clip_library.py`

@@ -628,10 +628,11 @@ namespace GalaxyEggbert::CNA
                 }
                 if (blupiModelIsReal_)
                 {
-                    // Expressions per clip frame (see blupiFaces_' declaration).
-                    std::ifstream facesFile("avatars3d/blupi/faces.txt");
+                    // Expressions per clip frame and the clips facing the
+                    // viewer (see blupiFaces_' declaration).
+                    std::ifstream clipsFile("avatars3d/blupi/clips.txt");
                     std::string line;
-                    while (std::getline(facesFile, line))
+                    while (std::getline(clipsFile, line))
                     {
                         std::istringstream in(line);
                         std::string kind;
@@ -660,6 +661,12 @@ namespace GalaxyEggbert::CNA
                                 frames.push_back(face);
                             }
                             blupiClipFaces_[name] = std::move(frames);
+                        }
+                        else if (kind == "viewer")
+                        {
+                            std::string name;
+                            in >> name;
+                            blupiViewerClips_.insert(name);
                         }
                     }
                 }
@@ -3422,6 +3429,7 @@ namespace GalaxyEggbert::CNA
                 const float eyeHeight = crouchHeld ? kCrouchEyeHeight : kEyeHeight;
                 const float lookYOffset = lookUpHeld ? kLookUpTilt : 0.0f;
                 rawEye = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + eyeHeight, blupi_.GetZ());
+                chaseCamera_.Reset(blupi_.GetYaw()); // third person starts behind him
                 // Mouse-look pitch: positive offset (drag down) tilts the
                 // view down, standard non-inverted feel. Yaw offset is
                 // already folded into `yaw` above.
@@ -3449,10 +3457,37 @@ namespace GalaxyEggbert::CNA
                 const float elevation = std::clamp(kBaseElevation + lookPitchOffset_, -1.2f, 1.45f);
                 rawTarget = Microsoft::Xna::Framework::Vector3(
                     blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
+
+                // Orbit (ChaseCameraYaw, the real-Blupi plan's phase E, user
+                // decisions 2026-10-24): behind him while he moves, lagging on
+                // turns so he shows his side for a moment; on his nearer open
+                // side once he stands idle; on his right, the side the sprites
+                // showed, for clips that turn him toward their viewer. A side
+                // is open when a wall leaves the camera most of its distance.
+                {
+                    constexpr float kHalfPi = 1.57079632679f;
+                    constexpr float kOpenFraction = 0.6f;
+                    const auto sideOpen = [&](float orbitYaw)
+                    {
+                        const Microsoft::Xna::Framework::Vector3 direction(-std::sin(orbitYaw), 0.0f,
+                                                                           std::cos(orbitYaw));
+                        return RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, kChaseDistance) >=
+                               kChaseDistance * kOpenFraction;
+                    };
+                    GalaxyEggbert::Game::ChaseCameraInput chaseInput;
+                    chaseInput.blupiYaw = blupi_.GetYaw();
+                    chaseInput.idle = blupi_.GetAnimState() == BlupiController::AnimState::Stop &&
+                                      moveInput == 0.0f && turnInput == 0.0f;
+                    chaseInput.facesViewer = blupiModelIsReal_ && blupiViewerClips_.count(blupiActiveClipName_) != 0;
+                    chaseInput.rightOpen = sideOpen(blupi_.GetYaw() - kHalfPi);
+                    chaseInput.leftOpen = sideOpen(blupi_.GetYaw() + kHalfPi);
+                    chaseCamera_.Update(chaseInput, dt);
+                }
+                const float orbitYaw = chaseCamera_.GetYaw() + lookYawOffset_;
                 const Microsoft::Xna::Framework::Vector3 desiredOffset(
-                    -std::sin(yaw) * kChaseDistance * std::cos(elevation),
+                    -std::sin(orbitYaw) * kChaseDistance * std::cos(elevation),
                     kChaseDistance * std::sin(elevation),
-                    std::cos(yaw) * kChaseDistance * std::cos(elevation));
+                    std::cos(orbitYaw) * kChaseDistance * std::cos(elevation));
 
                 // Wall collision (plan.md CAM-005, found 2026-07-17): pull
                 // the eye in along the same direction if a solid block

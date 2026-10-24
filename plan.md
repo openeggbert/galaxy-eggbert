@@ -687,8 +687,10 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       **Clip library in the game 2026-10-24** (user-approved plan, phases B-D): every sprite icon
       matched to its scene frame (`match_icons.py`), one clip per `AnimState` built from those
       frames with per-frame expressions and the body-hung props (`build_clip_library.py`), Down
-      turns around (`NEXT.md` §3). Remaining: phase E (idle side camera, lagging camera on turns),
-      then phase A (vehicles, skateboard, Hide, front/back views).
+      turns around (`NEXT.md` §3). **Phase E done the same day:** the chase camera lags on
+      turns, shows his nearer open side when he stands idle and his right for clips that face
+      the sprites' viewer (`ChaseCameraYaw`). Remaining: phase A (vehicles, skateboard, Hide,
+      front/back views).
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 
