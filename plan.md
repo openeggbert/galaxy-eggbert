@@ -805,9 +805,13 @@ be converted one at a time.
 **Stage 4 — animated enemies** (clips per icon table, as Blupi's)
 - [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs
       icons 66-70 and 248-250) before converting them.
-- [ ] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`): icons 90-121 (both directions and the turns)
-      match only 0.66 mean: the render's wings and head differ from the sprites (front-facing
-      turn frames 0.26). Investigate the scene's joints/animation before converting.
+- [ ] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`, icons 90-121; 89 placements in the worlds):
+      with `yaw=15` and the camera choice 0.715 mean. The eyes (`oeil` groups) float about two
+      units in front of the beak and the wings miss their flap poses: the body free-form
+      (`Assistant 3D 1`, centred at y -6 with the tail at -12.9 and the eyes at -0.5) comes out
+      too short at the front, so check the free-form's envelopes/path scaling (`ex`, `sk`,
+      `evs`...) against this scene; the wings are the two `Assistant 3D` free-forms with
+      orientation tracks.
 - [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, icons 78-88): with `yaw=15` 0.918 mean, the
       turn (front) views fine, but in the side views the sprites' cylinder body between tail
       and head does not show (the head covers it) and the fins are darker; check the body
