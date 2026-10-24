@@ -694,8 +694,9 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       (turned matches), group `Scal`, cubes, holes and closed or blended sweeps in the converter.
       Follow-ups the same day: Clear4 from the saw scene (Ray Dream Studio 5 meshes), Clear2 and
       the tables' other invisible frames draw no model, per-vehicle turn lengths, the lollipop's
-      textures, parked vehicles as 3D models. Remaining for `069`: the saw half body's eye
-      (RDS 5 layered shader), the overcraft's closer match, cast shadows.
+      textures, parked vehicles as 3D models. Then the saw half body's eye and cast shadows in
+      the verifier. Next: replacing the remaining billboards with converted 3D objects, planned
+      in `assets-3d-analysis.md` (sources, converter gaps, order).
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 
