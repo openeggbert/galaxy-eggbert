@@ -668,6 +668,14 @@ namespace GalaxyEggbert::CNA
                             in >> name;
                             blupiViewerClips_.insert(name);
                         }
+                        else if (kind == "vehicle")
+                        {
+                            std::string name;
+                            in >> name;
+                            blupiVehicles_.push_back(
+                                content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
+                                    "blupi/vehicles/" + name + "/avatar"));
+                        }
                     }
                 }
                 blupiModelLoaded_ = true;
@@ -3941,21 +3949,45 @@ namespace GalaxyEggbert::CNA
                     }
                 }
 
-                for (const auto& part : blupiModel_->Parts)
+                const auto drawParts = [&](const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT& model,
+                                           Microsoft::Xna::Framework::Graphics::Texture2D* faceTexture)
                 {
-                    blupiEffect_->setTextureProperty(face != nullptr && part.Name == blupiFacePart_
-                                                         ? face
-                                                         : part.Texture);
-                    blupiEffect_->Apply();
-                    device.SetVertexBuffer(part.Part->getVertexBufferProperty());
-                    device.SetIndexBuffer(part.Part->getIndexBufferProperty());
-                    device.DrawIndexedPrimitives(
-                        Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
-                        part.Part->getVertexOffsetProperty(),
-                        0,
-                        part.Part->getNumVerticesProperty(),
-                        part.Part->getStartIndexProperty(),
-                        part.Part->getPrimitiveCountProperty());
+                    for (const auto& part : model.Parts)
+                    {
+                        blupiEffect_->setTextureProperty(faceTexture != nullptr && part.Name == blupiFacePart_
+                                                             ? faceTexture
+                                                             : part.Texture);
+                        blupiEffect_->Apply();
+                        device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                        device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                        device.DrawIndexedPrimitives(
+                            Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
+                            part.Part->getVertexOffsetProperty(),
+                            0,
+                            part.Part->getNumVerticesProperty(),
+                            part.Part->getStartIndexProperty(),
+                            part.Part->getPrimitiveCountProperty());
+                    }
+                };
+                drawParts(*blupiModel_, face);
+
+                // The vehicle he rides in this clip (helicopter, jeep, tank,
+                // overcraft, skateboard): its own model, built from the same
+                // Ray Dream frames in the same space (clips.txt "vehicle"
+                // lines), so it takes his world transform and clip time.
+                for (const auto& vehicle : blupiVehicles_)
+                {
+                    if (vehicle->Clips.find(blupiActiveClipName_) == vehicle->Clips.end())
+                    {
+                        continue;
+                    }
+                    vehicle->ComputeBoneTransformsEXT(
+                        blupiActiveClipName_,
+                        System::TimeSpan::FromSeconds(blupiClipTimeSeconds_),
+                        /*loop=*/true,
+                        boneTransforms);
+                    blupiEffect_->SetBoneTransforms(boneTransforms);
+                    drawParts(*vehicle, nullptr);
                 }
             }
 

@@ -761,13 +761,17 @@ namespace GalaxyEggbert::CNA
         // by tools/rd4_to_gltf/build_clip_library.py): one texture per
         // expression and, per clip, the expression of every frame at
         // BlupiController's kAnimFps, drawn on the part named blupiFacePart_;
-        // and the clips that turn him toward the sprites' viewer, which put
-        // the third-person camera on his right (chaseCamera_).
+        // the clips that turn him toward or away from the sprites' viewer,
+        // which put the third-person camera on his right (chaseCamera_);
+        // and the vehicles (blupiVehicles_).
         std::vector<Microsoft::Xna::Framework::Graphics::Texture2D> blupiFaces_;
         std::unordered_map<std::string, std::vector<int>> blupiClipFaces_;
         std::string blupiFacePart_;
         double blupiFaceRate_ = 8.0;
         std::unordered_set<std::string> blupiViewerClips_;
+        // The vehicles he rides (clips.txt "vehicle" lines): separate models
+        // with the vehicle clips' names, drawn with his transform and time.
+        std::vector<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>> blupiVehicles_;
 
         // Tracks which clip is currently playing so blupiClipTimeSeconds_
         // resets to 0 on a change instead of continuing from a position that
