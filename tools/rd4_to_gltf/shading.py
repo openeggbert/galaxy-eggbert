@@ -50,14 +50,30 @@ def primary_color(sh: rd4.Chunk | None) -> tuple[float, float, float] | str | No
     if ch.tag == "smap":
         return "texture"
     if ch.tag == "smix":
-        # Two colours mixed by a pattern (the invert sign's post: two golds by a wood grain,
-        # swod): their mean, the flat colour nearest the sprites' grain.
-        sub = ch.chunk("ssub")
-        cols = [c.floats("colr") for c in (sub.chunks("sclr") if sub is not None else []) if c.leaf("colr")]
-        if len(cols) >= 2:
-            r, g, b = np.mean(cols[:2], axis=0)
+        mixed = _mix_colour(ch)
+        if mixed is not None:
+            r, g, b = mixed
             return (round(float(r), 3), round(float(g), 3), round(float(b), 3))
     return None
+
+
+def _mix_colour(mix: rd4.Chunk):
+    """Flat colour of a mix shader (``smix``: two colours or mixes blended by a pattern such as
+    wood ``swod`` or marble ``smrb``): the mean of its colour inputs, mixes nested in it taken
+    the same way, inputs without a colour skipped. The invert sign's post (two golds by a wood
+    grain); the palm trunk (Explo/plante*: a dark brown and a mix of empty colours by marble)."""
+    sub = mix.chunk("ssub")
+    cols = []
+    for c in (sub.chunks() if sub is not None else []):
+        if c.tag == "sclr" and c.leaf("colr"):
+            cols.append(np.array(c.floats("colr")))
+        elif c.tag == "smix":
+            inner = _mix_colour(c)
+            if inner is not None:
+                cols.append(np.array(inner))
+        if len(cols) == 2:
+            break
+    return np.mean(cols, axis=0) if cols else None
 
 
 # Flat colours replaced while converting one object (build_object_library.py's ``recolour``):

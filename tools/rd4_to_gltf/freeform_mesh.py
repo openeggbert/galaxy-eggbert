@@ -251,8 +251,14 @@ def tessellate(master: rd4.Chunk) -> FreeformMesh:
     positions, uv, ring_of = [], [], []
     sizes = [len(loop.points) for loop in rings[0][2]]
     n = sum(sizes)
+    previous = None
     for r, (p, sc, section) in enumerate(rings):
         center, tan = path_at(p)
+        # A path that steps back on itself (the palm trunk's rings, Explo/plante*) keeps its
+        # frame: flipped, the section mirrors and the rings join crosswise into a thin twist.
+        if previous is not None and tan @ previous < 0:
+            tan = -tan
+        previous = tan
         ax = np.array([1.0, 0.0, 0.0]) - tan * tan[0]
         ax /= np.linalg.norm(ax)
         bx = np.cross(ax, tan)
