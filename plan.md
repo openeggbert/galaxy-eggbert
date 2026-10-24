@@ -824,6 +824,11 @@ be converted one at a time.
       a hollow dome (a ring section, outer 1.75 / inner 1.5; envelope 1 -> 0 over a path of
       1.25 with handles that make it a rounded cylinder), scaled 2.29 x 3.16 x 2.28 about its
       master origin with its hinge (`hp`) at the open rim; no reading found that shortens it.
+      Experiment: the jaws' deformer scaled 0.85 on X/Y/Z or all gives 0.908-0.928 (0.920
+      as is), so the jaws' size is not it. The best icon is the one at an exact key (79,
+      frame 0: 0.954); in-between frames score 0.85-0.93, and the jaws turn 71 degrees
+      (and one 180 degrees about a changing axis) between the scene's two keys: the
+      orientation tween (slerp here; Ray Dream may tween angles) is the next suspect.
 - [x] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): the star
       spins about the scene's vertical under a camera looking 6.7 degrees down; model space is
       now upright in the scene (its +Y the scene's vertical, +Z the camera's direction made
