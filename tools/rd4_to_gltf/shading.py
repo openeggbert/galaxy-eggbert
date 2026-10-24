@@ -110,6 +110,22 @@ def _find_image(scene: sc.Scene, refn: str) -> rd4.Chunk | None:
     return None
 
 
+def _border_connected(mask: np.ndarray) -> np.ndarray:
+    """The part of ``mask`` 4-connected to the image border."""
+    grown = np.zeros_like(mask)
+    grown[0], grown[-1], grown[:, 0], grown[:, -1] = mask[0], mask[-1], mask[:, 0], mask[:, -1]
+    while True:
+        nxt = grown.copy()
+        nxt[1:] |= grown[:-1]
+        nxt[:-1] |= grown[1:]
+        nxt[:, 1:] |= grown[:, :-1]
+        nxt[:, :-1] |= grown[:, 1:]
+        nxt &= mask
+        if (nxt == grown).all():
+            return grown
+        grown = nxt
+
+
 def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
     """The primary domain's texture map of ``obj``'s own shader, baked over its other domains."""
     sh = obj.chunk.chunk("sh") if obj.chunk is not None else None
@@ -142,6 +158,16 @@ def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
         if not isinstance(base, tuple):
             base = (1.0, 1.0, 1.0)
         rgb[(texels == 255).all(axis=-1)] = base
+        # Near-white background around a face drawn on a smaller sheet (blupi-ballon.rd4's face
+        # sits on a 254-white page that covers his back) is not part of the drawing either: the
+        # sprites never show his back, and Blupi is yellow all round. Near-white touching the
+        # image border becomes the surface colour; eye whites, enclosed in their outlines, stay.
+        near = (texels >= 250).all(axis=-1) & ~(texels == 255).all(axis=-1)
+        page = _border_connected(near)
+        if page.any():
+            rgb[page] = base
+            warnings.append(f"{obj.name}: {page.mean():.0%} of the texture is near-white page; "
+                            "shown as the surface colour")
     u0, v0, u1, v1 = primary.floats("bbox")
     h, w = texels.shape[:2]
     # Other domains lie on top of the primary one (they precede it in elms).
