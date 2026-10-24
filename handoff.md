@@ -18,11 +18,14 @@ _Last updated: 2026-10-24 (late evening)._
    `avatars3d/objects/README.md`), run the export there, then build, `ctest`, commit
    `avatars3d/objects` together with the big decor/grass entries of `objects.txt`, push.
    Compare IoU with `report.md` rows (palms 0.755-0.784, grass 0.65-0.69, others 0.87-1.0).
-2. **Blupi (`BB3D-008`):** the clip library `build-probe/rd4-blupi/library/blupi.glb` was
-   rebuilt (exit 0) with the converter *before* `cc8c391` (no free-form simplification; Blupi's
-   meshes are small, the DXF deviations are identical either way). Next: compare its
-   `clips.md` with the earlier matching numbers below, look at a face check image, export with
-   `avatars3d/blupi/README.md`'s commands, build, test, commit.
+2. **Blupi (`BB3D-008`):** a library built before `cc8c391` (exit 0) matched as well as or
+   better than every earlier one (jeep 0.949 -> 0.970, tank 0.893 -> 0.929, MarchOver 0.739 ->
+   0.940, Clear4 0.843 -> 0.983; its `clips.md`/`clips.txt` are kept in the session scratchpad
+   only). It is being rebuilt once more with `cc8c391` so the vehicles shrink 2-3 x (jeep
+   100 122 triangles); log `build-probe/rd4-blupi/library/build.log`, `clips.md` is written
+   last. Next: check `clips.md` against the numbers above, export with
+   `avatars3d/blupi/README.md`'s commands, build, test, commit. If the rebuild was lost,
+   re-run the `build_clip_library.py` command from that README (about an hour).
 
 ## Active work: billboards → 3D models (`plan.md` Phase 7B, `BB3D-*`)
 
