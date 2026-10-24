@@ -41,19 +41,6 @@
       ]
     },
     {
-      "name": "BLUPI_rd_ff0000",
-      "vertices": "BLUPI_rd_ff0000.verts.bin",
-      "indices": "BLUPI_rd_ff0000.idx.bin",
-      "vertexStride": 52,
-      "texture": "BLUPI_rd_ff0000.png",
-      "diffuseColor": [
-        1.0,
-        0.0,
-        0.0,
-        1.0
-      ]
-    },
-    {
       "name": "BLUPI_rd_tex_Corps_et_Cube",
       "vertices": "BLUPI_rd_tex_Corps_et_Cube.verts.bin",
       "indices": "BLUPI_rd_tex_Corps_et_Cube.idx.bin",
@@ -63,6 +50,19 @@
         1.0,
         1.0,
         1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "BLUPI_rd_ff0000",
+      "vertices": "BLUPI_rd_ff0000.verts.bin",
+      "indices": "BLUPI_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
         1.0
       ]
     },
@@ -102,6 +102,19 @@
         0.9818974516898041,
         0.19599417930148813,
         0.0447042609466385,
+        1.0
+      ]
+    },
+    {
+      "name": "BLUPI_rd_7f7f7f",
+      "vertices": "BLUPI_rd_7f7f7f.verts.bin",
+      "indices": "BLUPI_rd_7f7f7f.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_7f7f7f.png",
+      "diffuseColor": [
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
         1.0
       ]
     },

@@ -15,13 +15,26 @@
       ]
     },
     {
-      "name": "tank_rd_ff0000",
-      "vertices": "tank_rd_ff0000.verts.bin",
-      "indices": "tank_rd_ff0000.idx.bin",
+      "name": "tank_rd_7f7f7f",
+      "vertices": "tank_rd_7f7f7f.verts.bin",
+      "indices": "tank_rd_7f7f7f.idx.bin",
       "vertexStride": 52,
-      "texture": "tank_rd_ff0000.png",
+      "texture": "tank_rd_7f7f7f.png",
       "diffuseColor": [
-        1.0,
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
+        1.0
+      ]
+    },
+    {
+      "name": "tank_rd_810000",
+      "vertices": "tank_rd_810000.verts.bin",
+      "indices": "tank_rd_810000.idx.bin",
+      "vertexStride": 52,
+      "texture": "tank_rd_810000.png",
+      "diffuseColor": [
+        0.2224661538246206,
         0.0,
         0.0,
         1.0
