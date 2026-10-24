@@ -52,6 +52,10 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   sections' handedness mirrors the face texture: colour 0.906 / 0.907 says it barely
   matters), then export with the commands in `avatars3d/blupi/README.md`, build, test and
   commit. If interrupted: re-run those commands.
+- **Waiting for the user:** the charge (type 31) and the shield are billboards because their
+  sprites' sparks are effects; a model plus a sparks-only billboard is possible but needs a new
+  derived asset set (plan.md `BB3D-025`, `BB3D-039`). BigDecor size (2.25 blocks, original) vs
+  the 1-block billboards.
 - **Not checked live:** BigDecor models (no generated world has BigDecor; only editor
   worlds do). The draw path is shared with the objects, which were checked live.
 - **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing

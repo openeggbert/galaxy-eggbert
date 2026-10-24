@@ -794,9 +794,12 @@ be converted one at a time.
       flat colours; the lollipop pickup (26, `sucette.rd4`, 0.985) once a cylinder's texture
       `t` is the meridian fraction (caps 3/11 each, side 5/11: its disc shows the sprites'
       four-arm pinwheel) and the cylinder's caps are rings (a fan from one centre vertex
-      smeared the angle). The charge (31, object-m.png 238-243, a grey ball on a blue spring
-      with sparks): source not found yet (`Element/power.rds` is an icosahedron; the object-m
-      survey may find it).
+      smeared the angle). The charge (31, object-m.png 238-243) stays a billboard for now: its
+      ball and spring are `Decor/electro.rd4` (the object-m survey; ball and spring match
+      exactly, IoU 0.805 because the sprites' orbiting sparks, an effect, are a fifth of them),
+      but a model alone would lose the sparks that mark the power-up. [?] Option for the user:
+      the model plus a sparks-only billboard derived from the sprites (a new derived asset set,
+      needs approval).
 
 **Stage 4 — animated enemies** (clips per icon table, as Blupi's)
 - [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs
