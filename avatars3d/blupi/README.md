@@ -27,12 +27,15 @@ edit by hand; regenerate with the commands below.
   `DeathLocked.<cause>` and `PickupBusy.<kind>`; each is the state's sprite icon table played at
   `kAnimFps` (8 frames per second), interpolated linearly between the matched scene frames. States
   without a clip (vehicles, Hide, Bye, two death causes) show `Stop`.
-- Faces: `faces.txt` lists the face textures (`face_*.png`, the expressions of the scenes used)
-  and, per clip, the face of every frame; the game draws the part named on its `part` line with
-  that texture.
+- `clips.txt` lists the face textures (`face_*.png`, the expressions of the scenes used) and, per
+  clip, the face of every frame; the game draws the part named on its `part` line with that
+  texture. Its `viewer` lines name the clips that turn Blupi toward the sprites' viewer (his
+  right, where the original camera stood); the third-person camera goes to that side for them.
 - Units: metres at 0.05 m per Ray Dream unit, Y up, facing +Z, feet at y = 0. The game draws it at
   0.94714 so a block keeps its 64-pixel sprite size against him (`GalaxyEggbertGame.cpp`,
-  `kRealModelScale`), turned by `pi - yaw` to face the way `BlupiController` moves him.
+  `kRealModelScale`), turned by `pi - yaw` to face the way `BlupiController` moves him. Standing,
+  he is then 0.742 blocks from his feet to the top of his body and 0.80 with his eyelashes, as
+  in the sprites: 48 and 51 of a block's 64 pixels in `blupi.png`'s standing icon.
 - Triangles are clockwise, as XNA's default culling expects (`export_cna_avatar.py`;
   `upstream_bugs.md` UB-003).
 

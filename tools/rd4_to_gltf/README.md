@@ -186,9 +186,12 @@ python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/libra
   lollipop) join the skeleton and are hidden everywhere else. A frame shows its scene's props only
   if its icon matches at least as well with them (icon 2, a front view taken from
   `blupi-sucette.rd4`, has no lollipop).
-- Faces: each frame's expression is the body texture of its scene. `faces.txt` beside the .glb
+- `clips.txt` beside the .glb: each frame's expression is the body texture of its scene, so it
   lists `rate`, the `part` that wears the face, the face PNGs and, per clip, the face of every
-  frame; `export_cna_avatar.py` copies them and the game swaps that part's texture.
+  frame; and `viewer <clip>` for the clips with a frame turned more than 60 degrees toward
+  Blupi's right, the side the original camera saw (the squashed and inflated Blupi, the door
+  turn, the dynamite and lollipop scenes, ...). `export_cna_avatar.py` copies it with the faces;
+  the game swaps the face part's texture and puts the camera on his right for those clips.
 - Without `--skip-check` every clip frame is rendered from the .glb with the base camera and
   compared with its icon (`clips.md`).
 
