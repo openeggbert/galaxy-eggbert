@@ -941,6 +941,8 @@ namespace GalaxyEggbert::Game
         bool TriggerDeathLock(DeathCause cause, bool shouldRespawn) noexcept;
         [[nodiscard]] bool IsDeathLocked() const noexcept { return m_deathLocked; }
         [[nodiscard]] bool IsDeathHidden() const noexcept { return m_deathLossVoyageActive; }
+        // The cause the death-lock animation is showing (GetAnimIcon's DeathLocked variants).
+        [[nodiscard]] DeathCause GetDeathCause() const noexcept { return m_deathCause; }
         // True exactly once, the frame the lock (part 1) elapses and the life-loss-Voyage window
         // (part 2) begins. outShouldRespawn echoes the value passed into TriggerDeathLock().
         [[nodiscard]] bool ConsumeDeathLockResolved(bool& outShouldRespawn) noexcept;
@@ -965,6 +967,8 @@ namespace GalaxyEggbert::Game
         // pending pickup freeze outright, see its own .cpp implementation.
         bool TriggerPickupFreeze(PickupFreezeKind kind) noexcept;
         [[nodiscard]] bool IsPickupFrozen() const noexcept { return m_pickupFrozen; }
+        // The pickup the freeze animation is showing (GetAnimIcon's PickupBusy variants).
+        [[nodiscard]] PickupFreezeKind GetPickupFreezeKind() const noexcept { return m_pickupFreezeKind; }
         // True exactly once, the frame the freeze elapses. outKind echoes the value passed into
         // TriggerPickupFreeze().
         [[nodiscard]] bool ConsumePickupFreezeResolved(PickupFreezeKind& outKind) noexcept;

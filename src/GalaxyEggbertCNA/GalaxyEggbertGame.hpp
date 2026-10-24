@@ -30,6 +30,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace GalaxyEggbert::CNA
@@ -751,6 +752,15 @@ namespace GalaxyEggbert::CNA
         bool blupiModelLoaded_ = false;
         bool blupiModelIsReal_ = false;
 
+        // The real model's faces (avatars3d/blupi/faces.txt, written by
+        // tools/rd4_to_gltf/build_clip_library.py): one texture per expression
+        // and, per clip, the expression of every frame at BlupiController's
+        // kAnimFps; drawn on the part named blupiFacePart_.
+        std::vector<Microsoft::Xna::Framework::Graphics::Texture2D> blupiFaces_;
+        std::unordered_map<std::string, std::vector<int>> blupiClipFaces_;
+        std::string blupiFacePart_;
+        double blupiFaceRate_ = 8.0;
+
         // Tracks which clip is currently playing so blupiClipTimeSeconds_
         // resets to 0 on a change instead of continuing from a position that
         // may be past the new clip's own duration (clips have different
@@ -760,5 +770,11 @@ namespace GalaxyEggbert::CNA
         // starts a clip at a sensible position, not always frame 0.
         std::string blupiActiveClipName_;
         double blupiClipTimeSeconds_ = 0.0;
+
+        // Down-arrow turn-around in progress (see Update()): seconds left and
+        // the yaw it started from; Down's previous state, so one press turns once.
+        float turnAroundRemaining_ = 0.0f;
+        float turnAroundStartYaw_ = 0.0f;
+        bool turnAroundDownWasHeld_ = false;
     };
 }

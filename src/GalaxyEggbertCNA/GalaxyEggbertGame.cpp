@@ -1,5 +1,7 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <fstream>
+#include <sstream>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include "GalaxyEggbert/BlockTypes.hpp"
@@ -99,16 +101,75 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Real Blupi model clip mapping (avatars3d/blupi/, 2026-10-23): the
-        // model carries the original walk (marche-profil.rd4) and standing
-        // pose (stop-profil.rd4) so far, each played at kAnimFps like the
-        // sprite icons; every other state shows the standing pose until its
-        // own scene is converted (tools/rd4_to_gltf/README.md).
-        const std::string& BlupiAnimStateToClipName(BlupiController::AnimState state)
+        // Real Blupi model clip names (avatars3d/blupi/, 2026-10-24): one clip
+        // per AnimState, named after it, plus DeathLocked.<cause> and
+        // PickupBusy.<kind>, each built from the state's own sprite icon table
+        // at kAnimFps (tools/rd4_to_gltf/build_clip_library.py). The caller
+        // falls back to Stop for a state with no clip yet.
+        std::string BlupiClipName(const BlupiController& blupi)
         {
-            static const std::string kMarch = "March";
-            static const std::string kStop = "Stop";
-            return state == BlupiController::AnimState::March ? kMarch : kStop;
+            using S = BlupiController::AnimState;
+            switch (blupi.GetAnimState())
+            {
+                case S::Stop: return "Stop";
+                case S::March: return "March";
+                case S::Jump: return "Jump";
+                case S::Air: return "Air";
+                case S::Down: return "Down";
+                case S::Up: return "Up";
+                case S::StopEcrase: return "StopEcrase";
+                case S::MarchEcrase: return "MarchEcrase";
+                case S::Balloon: return "Balloon";
+                case S::Teleporting: return "Teleporting";
+                case S::Bye: return "Bye";
+                case S::StopHelico: return "StopHelico";
+                case S::MarchHelico: return "MarchHelico";
+                case S::StopJeep: return "StopJeep";
+                case S::MarchJeep: return "MarchJeep";
+                case S::StopTank: return "StopTank";
+                case S::MarchTank: return "MarchTank";
+                case S::StopSkate: return "StopSkate";
+                case S::MarchSkate: return "MarchSkate";
+                case S::JumpSkate: return "JumpSkate";
+                case S::AirSkate: return "AirSkate";
+                case S::StopOver: return "StopOver";
+                case S::MarchOver: return "MarchOver";
+                case S::StopNage: return "StopNage";
+                case S::MarchNage: return "MarchNage";
+                case S::StopSurf: return "StopSurf";
+                case S::MarchSurf: return "MarchSurf";
+                case S::Hide: return "Hide";
+                case S::Push: return "Push";
+                case S::Switch: return "Switch";
+                case S::TakeDynamite: return "TakeDynamite";
+                case S::PutDynamite: return "PutDynamite";
+                case S::FireTank: return "FireTank";
+                case S::TakeSkate: return "TakeSkate";
+                case S::DeposeSkate: return "DeposeSkate";
+                case S::Mockery: return "Mockery";
+                case S::Mockeryi: return "Mockeryi";
+                case S::Mockeryp: return "Mockeryp";
+                case S::DeathLocked:
+                    switch (blupi.GetDeathCause())
+                    {
+                        case BlupiController::DeathCause::Clear1: return "DeathLocked.Clear1";
+                        case BlupiController::DeathCause::Clear2: return "DeathLocked.Clear2";
+                        case BlupiController::DeathCause::Clear3: return "DeathLocked.Clear3";
+                        case BlupiController::DeathCause::Clear4: return "DeathLocked.Clear4";
+                        case BlupiController::DeathCause::Glu: return "DeathLocked.Glu";
+                        case BlupiController::DeathCause::Drown: return "DeathLocked.Drown";
+                    }
+                    break;
+                case S::PickupBusy:
+                    switch (blupi.GetPickupFreezeKind())
+                    {
+                        case BlupiController::PickupFreezeKind::Sucette: return "PickupBusy.Sucette";
+                        case BlupiController::PickupFreezeKind::Drink: return "PickupBusy.Drink";
+                        case BlupiController::PickupFreezeKind::Charge: return "PickupBusy.Charge";
+                    }
+                    break;
+            }
+            return "Stop";
         }
 
         // INFRA-006 (plan.md §7, `REMAKE-ANALYSIS.md` P1-2) handler-table
@@ -564,6 +625,43 @@ namespace GalaxyEggbert::CNA
                     fillLight.setDirectionProperty(Microsoft::Xna::Framework::Vector3(0.4f, -0.6f, 0.7f));
                     blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::One);
                     blupiEffect_->setSpecularPowerProperty(24.0f);
+                }
+                if (blupiModelIsReal_)
+                {
+                    // Expressions per clip frame (see blupiFaces_' declaration).
+                    std::ifstream facesFile("avatars3d/blupi/faces.txt");
+                    std::string line;
+                    while (std::getline(facesFile, line))
+                    {
+                        std::istringstream in(line);
+                        std::string kind;
+                        in >> kind;
+                        if (kind == "rate")
+                        {
+                            in >> blupiFaceRate_;
+                        }
+                        else if (kind == "part")
+                        {
+                            in >> blupiFacePart_;
+                        }
+                        else if (kind == "face")
+                        {
+                            std::string file;
+                            in >> file;
+                            blupiFaces_.emplace_back("avatars3d/blupi/" + file, device);
+                        }
+                        else if (kind == "clip")
+                        {
+                            std::string name;
+                            in >> name;
+                            std::vector<int> frames;
+                            for (int face = 0; in >> face;)
+                            {
+                                frames.push_back(face);
+                            }
+                            blupiClipFaces_[name] = std::move(frames);
+                        }
+                    }
                 }
                 blupiModelLoaded_ = true;
                 std::cout << "GalaxyEggbertCNA: third-person model loaded — "
@@ -1899,6 +1997,35 @@ namespace GalaxyEggbert::CNA
             {
                 moveInput = 1.0f;
                 jumpPressed = goldenTraceTick_ >= 40 && goldenTraceTick_ < 46;
+            }
+            // Down turns Blupi around instead of backing him up (user decision
+            // 2026-10-24): the original has no backing up; reversing direction
+            // plays its Turn (ACTION_TURN, 6 ticks at 20 Hz = 0.3 s) and then
+            // walks the new way. He stands while turning; with Down still held
+            // afterwards he walks on in the new direction. One press, one turn.
+            {
+                constexpr float kTurnAroundSeconds = 6.0f / 20.0f;
+                constexpr float kPi = 3.14159265358979f;
+                const bool downHeld = moveInput < 0.0f;
+                const bool canTurn = !blupi_.IsTeleporting() && !blupi_.IsBye() && !blupi_.IsDeathLocked() &&
+                                     !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying();
+                if (downHeld && !turnAroundDownWasHeld_ && turnAroundRemaining_ <= 0.0f && canTurn)
+                {
+                    turnAroundRemaining_ = kTurnAroundSeconds;
+                    turnAroundStartYaw_ = blupi_.GetYaw();
+                }
+                turnAroundDownWasHeld_ = downHeld;
+                if (turnAroundRemaining_ > 0.0f)
+                {
+                    turnAroundRemaining_ = std::max(0.0f, turnAroundRemaining_ - simDt);
+                    blupi_.SetYaw(turnAroundStartYaw_ + kPi * (1.0f - turnAroundRemaining_ / kTurnAroundSeconds));
+                    turnInput = 0.0f;
+                    moveInput = 0.0f;
+                }
+                else if (downHeld)
+                {
+                    moveInput = -moveInput;
+                }
             }
             const bool actionPressed = keys.IsKeyDown(Keys::Space) || padPlayInput.actionPressed;
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
@@ -3404,9 +3531,13 @@ namespace GalaxyEggbert::CNA
             // shorter new clip's own end.
             if (blupiModelLoaded_)
             {
-                const std::string& clipName = blupiModelIsReal_
-                    ? BlupiAnimStateToClipName(blupi_.GetAnimState())
+                std::string clipName = blupiModelIsReal_
+                    ? BlupiClipName(blupi_)
                     : BlupiAnimStateToPlaceholderClipName(blupi_.GetAnimState());
+                if (blupiModelIsReal_ && blupiModel_->Clips.find(clipName) == blupiModel_->Clips.end())
+                {
+                    clipName = "Stop";
+                }
                 if (clipName != blupiActiveClipName_)
                 {
                     blupiActiveClipName_ = clipName;
@@ -3761,9 +3892,25 @@ namespace GalaxyEggbert::CNA
                 device.setRasterizerStateProperty(
                     Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
 
+                // The real model's face for this frame of the active clip.
+                Microsoft::Xna::Framework::Graphics::Texture2D* face = nullptr;
+                if (const auto faces = blupiClipFaces_.find(blupiActiveClipName_);
+                    blupiModelIsReal_ && faces != blupiClipFaces_.end() && !faces->second.empty())
+                {
+                    const auto frame = static_cast<std::size_t>(blupiClipTimeSeconds_ * blupiFaceRate_)
+                        % faces->second.size();
+                    const int index = faces->second[frame];
+                    if (index >= 0 && index < static_cast<int>(blupiFaces_.size()))
+                    {
+                        face = &blupiFaces_[static_cast<std::size_t>(index)];
+                    }
+                }
+
                 for (const auto& part : blupiModel_->Parts)
                 {
-                    blupiEffect_->setTextureProperty(part.Texture);
+                    blupiEffect_->setTextureProperty(face != nullptr && part.Name == blupiFacePart_
+                                                         ? face
+                                                         : part.Texture);
                     blupiEffect_->Apply();
                     device.SetVertexBuffer(part.Part->getVertexBufferProperty());
                     device.SetIndexBuffer(part.Part->getIndexBufferProperty());
