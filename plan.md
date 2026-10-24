@@ -747,11 +747,11 @@ be converted one at a time.
       `Decor/tentacule` p01-p17, `smooth` a/a1/a2, `palais` a): they have no render settings
       (`RSet`), so no frame range; read as one still frame. They are shape libraries without
       cameras; the scenes that render them are `tenta.rds`, `goutte01-07.rds` (2026-10-24).
-- [~] `BB3D-006` Cameras. Done: the orthographic camera's frame offset `ofst` (right, up, in
+- [x] `BB3D-006` Cameras: the orthographic camera's frame offset `ofst` (right, up, in
       `size` units / zoom; `scene.camera_centre`), used by the renderer, the verifier and the
       clip library's camera alignment; it was the reason the creature scenes matched nothing.
-      Open: perspective `Caméra 1` (`proj { coni { foca, zoom } }`) for the scenes that have no
-      orthographic one (wasp, keys, robot?) — check first which sprites really need it.
+      Perspective cameras were not needed: every source found (wasp, keys, bulldozer
+      included) was rendered by an orthographic camera, which the builder now picks per scene.
 - [ ] `BB3D-008` Re-run the real Blupi's matching and clip library with the camera offset: the
       overcraft's scenes (`aero-*.rd4`) have `ofst -8.50,0.85`, which the library's camera
       alignment ignored; may explain the overcraft's 0.74-0.76. Regenerate `avatars3d/blupi`
