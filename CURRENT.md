@@ -61,8 +61,8 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 - Third person shows the real Blupi converted from the original Ray Dream scenes
   (`avatars3d/blupi/`, `tools/rd4_to_gltf/`) with a clip, expression, props and vehicle per
   animation state, and parked vehicles as 3D models; the overcraft matches its sprites only
-  roughly and the saw death's half body has no eye. First person still uses an invisible
-  collision point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
+  roughly. Enemies, pickups, effects and big decor are still billboards
+  (`assets-3d-analysis.md`). First person still uses an invisible collision point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
 - `tests/golden/` no longer matches `develop` with CNA `900d0db3b` (the trace runs one tick ahead);
   the references need regenerating once the CNA revision is settled.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not

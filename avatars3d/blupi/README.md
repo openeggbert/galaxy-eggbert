@@ -23,8 +23,9 @@ edit by hand; regenerate with the commands below.
   part moves rigidly with its bone, as in the original.
 - Parts, one per colour or texture: `BLUPI_rd_tex_Corps` (body with the face texture), the
   lollipop's striped `BLUPI_rd_tex_Sucette_Cylindre` and `BLUPI_rd_tex_Sucette_Groupe5_Cylindre`,
-  `BLUPI_rd_ffff00`, `BLUPI_rd_000000`, `BLUPI_rd_ff0000`, `BLUPI_rd_fc7a3b`, `BLUPI_rd_00ffff`. Each
-  part's colour is in its texture.
+  the saw death's half body with its half face `BLUPI_rd_tex_Corps_et_Cube`, `BLUPI_rd_ffff00`,
+  `BLUPI_rd_000000`, `BLUPI_rd_ff0000`, `BLUPI_rd_fc7a3b`, `BLUPI_rd_00ffff`. Each part's colour
+  is in its texture.
 - Clips: one per `BlupiController::AnimState`, named after it (`Stop`, `March`, `Jump`, ...), plus
   `DeathLocked.<cause>` and `PickupBusy.<kind>`; each is the state's sprite icon table played at
   `kAnimFps` (20 frames per second, as in the original), interpolated linearly between the matched

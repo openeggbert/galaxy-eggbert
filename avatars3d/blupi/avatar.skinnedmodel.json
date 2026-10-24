@@ -54,6 +54,19 @@
       ]
     },
     {
+      "name": "BLUPI_rd_tex_Corps_et_Cube",
+      "vertices": "BLUPI_rd_tex_Corps_et_Cube.verts.bin",
+      "indices": "BLUPI_rd_tex_Corps_et_Cube.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_tex_Corps_et_Cube.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
       "name": "BLUPI_rd_tex_Sucette_Cylindre",
       "vertices": "BLUPI_rd_tex_Sucette_Cylindre.verts.bin",
       "indices": "BLUPI_rd_tex_Sucette_Cylindre.idx.bin",

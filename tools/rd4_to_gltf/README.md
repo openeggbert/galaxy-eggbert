@@ -170,7 +170,8 @@ First run (2026-10-24, about 3.5 minutes): 243 frames from 54 scenes; of the 231
 actions, 87 matched confidently (score >= 0.85), 60 probably (>= 0.70) and 84 not. With the
 vehicle geometry, group scales and turned views (2026-10-24, 37 minutes): 259 frames from 56
 scenes; 114 confident, 71 probable, 46 unmatched. With the saw scene's meshes and the lollipop's
-textures (273 frames): 116 confident, 78 probable, 37 unmatched. Still unmatched: the vehicles' own turn
+textures (273 frames): 116 confident, 78 probable, 37 unmatched. With the saw's eye and cast
+shadows (about 80 minutes): 121 confident, 76 probable, 34 unmatched. Still unmatched: the vehicles' own turn
 icons, the overcraft (0.55-0.63: silhouette right, colours lighter than the sprites), frames with
 2D effects (Electro's glow, deaths Clear2/Clear4) and the ones rendered from scenes that are not
 in `speedyblupi-data`. Hide's tumbling small Blupi comes from `naissance.rd4`, where the `BLUPI`
@@ -233,9 +234,9 @@ Mockeryp 0.950, TakeDynamite 0.962, PutDynamite 0.966, Sucette 0.957, Drink 0.94
 Teleporting 0.944, Switch 0.946, Hide 0.921; StopHelico 0.981, MarchHelico 0.935,
 StopJeep/MarchJeep 0.951, StopTank 0.893, MarchTank 0.931, FireTank 0.878, StopSkate 0.950,
 MarchSkate 0.982, JumpSkate 0.979, AirSkate 0.914, TakeSkate/DeposeSkate 0.951, StopOver 0.764,
-MarchOver 0.738; the deaths with 2D effects lower (Clear1 0.781, Clear3 0.655, Glu 0.814) and
-Clear4 0.780 (the saw scene's half body, without its eye). Clear2 has no clip: every frame of it
-is invisible (the game draws no model on the tables' -1 frames).
+MarchOver 0.739; the deaths with 2D effects lower (Clear1 0.775, Clear3 0.655, Glu 0.814) and
+Clear4 0.843 (the saw scene's half body with its eye). Clear2 has no clip: every frame of it is
+invisible (the game draws no model on the tables' -1 frames).
 
 ## Not converted yet (next steps)
 

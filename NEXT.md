@@ -427,6 +427,24 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: the saw death's eye, cast shadows in the verifier, and the 3D-source analysis (2026-10-24)
+User request: finish the eye, the overcraft and the shadows, then analyse the 3D sources.
+- **Eye.** Ray Dream Studio 5 keeps the saw's half face as a texture map in a rectangle domain
+  (`srct`) over a plain yellow primary domain, on the mesh master's own surface coordinates
+  (along the path, around). The converter now places it (unflipped; the 7 other orientations
+  match worse): Clear4 mean IoU 0.780 -> 0.843, every frame matched.
+- **Shadows.** The scenes' spot light casts shadows (`shad 1`); the verifier and the matcher now
+  render them with a shadow map. Colour against the sprites: walk 0.900 -> 0.926, tank
+  0.784 -> 0.794, overcraft 0.728 -> 0.750. Matching: 121 confident, 76 probable, 34 unmatched
+  (was 116 / 78 / 37).
+- **Overcraft.** Still 0.74-0.76 per clip: the `aero` group turns through every scene, so the
+  sprites' yaws are matched only approximately (40-60 degree turned views); its skirt and deck
+  colours came closer with the shadows. Nothing else in the data explains the rest.
+- **Analysis.** `assets-3d-analysis.md`: the archive's 3D formats and what the converter reads,
+  what is converted (32 of 74 Blupi scenes and the vehicles; nothing else), and for every
+  billboard its source scene with match evidence. Objects and big decor can all become 3D models
+  from their Ray Dream scenes (after `vmda`/`COfl`/cone/star support); the effects have no source.
+
 ### feat: Blupi's saw death, invisible frames, turn lengths, lollipop and parked vehicles (2026-10-24)
 The follow-ups listed after phase A (user: continue):
 - **Clear4 (saw).** `blupi-scie.rds` (Ray Dream Studio 5) stores the cut half body as an
