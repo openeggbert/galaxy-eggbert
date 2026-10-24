@@ -756,10 +756,10 @@ be converted one at a time.
       overcraft's scenes (`aero-*.rd4`) have `ofst -8.50,0.85`, which the library's camera
       alignment ignored; may explain the overcraft's 0.74-0.76. Regenerate `avatars3d/blupi`
       (its README) and compare the per-clip IoU before committing.
-- [ ] `BB3D-007` Re-run the survey (`scenes.csv`) and the icon matching for every sheet the
-      objects use (`survey.py icons --sheet` element, object-m, explo; the sheets' grids are in
-      `survey.GRIDS`) with all of the above; record per object type the best scene and IoU in
-      `assets-3d-analysis.md`.
+- [x] `BB3D-007` Surveys run (`build-probe/rd4-survey/`): `scenes.csv` (all 528 scenes read),
+      `element_icons.csv`, `object-m_icons.csv` (found the charge's `Decor/electro.rd4`),
+      `explo_icons.csv` (folder `Explo`, with explo.png's icon squares). Their findings are in
+      the `BB3D-0xx` entries and `assets-3d-analysis.md`'s status section.
 
 **Stage 2 — game-side object models**
 - [x] `BB3D-010` Object model library (2026-10-24): `tools/rd4_to_gltf/objects.txt` lists the
@@ -802,8 +802,11 @@ be converted one at a time.
       needs approval).
 
 **Stage 4 — animated enemies** (clips per icon table, as Blupi's)
-- [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs
-      icons 66-70 and 248-250) before converting them.
+- [x] `BB3D-030` Types 32 and 33 need no model of their own: their icons come from the real
+      `table_blupih_*` / `table_blupit_*` tables (`ObjectIcons.cpp`), whatever the code names
+      say, and every icon is drawn by the model the icon-keyed table names: the bulldozer
+      (57-67), the helicopter (68), the moving mine (69-75), the creature (242-251); the
+      shield's ball and dots (271-275) stay billboards.
 - [x] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`, icons 90-121; 89 placements in the worlds):
       0.894 mean (0.597 for one front-facing turn icon) once free-form cross-sections are
       right-handed (its side profile had its head at the tail) and the scene's end key counts
