@@ -752,10 +752,14 @@ be converted one at a time.
       clip library's camera alignment; it was the reason the creature scenes matched nothing.
       Perspective cameras were not needed: every source found (wasp, keys, bulldozer
       included) was rendered by an orthographic camera, which the builder now picks per scene.
-- [ ] `BB3D-008` Re-run the real Blupi's matching and clip library with the camera offset: the
+- [x] `BB3D-008` Re-run the real Blupi's matching and clip library with the camera offset: the
       overcraft's scenes (`aero-*.rd4`) have `ofst -8.50,0.85`, which the library's camera
       alignment ignored; may explain the overcraft's 0.74-0.76. Regenerate `avatars3d/blupi`
-      (its README) and compare the per-clip IoU before committing.
+      (its README) and compare the per-clip IoU before committing. Done 2026-10-24
+      (`f4edbe8`): matching 145 confident / 61 probable / 25 unmatched icons (was 121 / 76 /
+      34); StopOver 0.764 -> 0.982, MarchOver 0.739 -> 0.940, Clear4 0.843 -> 0.983, tank
+      0.893 -> 0.929, jeep 0.949 -> 0.970, nothing worse by more than 0.016; vehicles 2-3 x
+      lighter; the red placeholder parts have their colours. Checked live (golden capture).
 - [x] `BB3D-007` Surveys run (`build-probe/rd4-survey/`): `scenes.csv` (all 528 scenes read),
       `element_icons.csv`, `object-m_icons.csv` (found the charge's `Decor/electro.rd4`),
       `explo_icons.csv` (folder `Explo`, with explo.png's icon squares). Their findings are in
@@ -816,7 +820,10 @@ be converted one at a time.
       about 15 % taller than in the sprites and covers the lighter body cylinder the sprites
       show between tail and head; the jaws (`bouche` groups, `Assistant 3D` free-forms with an
       `affi` deformer 2.29 x 3.16 x 2.28 and `ev 1 evs 1` envelopes) are the suspects; using
-      the top envelope on every side changed nothing.
+      the top envelope on every side changed nothing. Looked at again 2026-10-24: each jaw is
+      a hollow dome (a ring section, outer 1.75 / inner 1.5; envelope 1 -> 0 over a path of
+      1.25 with handles that make it a rounded cylinder), scaled 2.29 x 3.16 x 2.28 about its
+      master origin with its hinge (`hp`) at the open rim; no reading found that shortens it.
 - [x] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): the star
       spins about the scene's vertical under a camera looking 6.7 degrees down; model space is
       now upright in the scene (its +Y the scene's vertical, +Z the camera's direction made
@@ -864,8 +871,9 @@ be converted one at a time.
 **Stage 6 — big decor** (`explo.png` cells)
 - [x] `BB3D-050` Big decor (explo.png BigDecor cells; the icons the original worlds use:
       16-31, 36-47, 66-69, 87-89, 203). Done 2026-10-24, from `survey.py icons --sheet
-      explo.png --folders Explo` and trials: palms 16-19 (`plante1a-1d`, 0.76-0.78: thin
-      fronds), trees 20-22 (`plante2a-2c`, 0.96-0.97), grass 23-25 (`plante3a-3c`, 0.41-0.49:
+      explo.png --folders Explo` and trials: palms 16-19 (`plante1a-1d`, 0.825-0.856 since
+      blended sections are aligned, `fb80e3d`; the trunk was pinched), trees 20-22
+      (`plante2a-2c`, 0.973-0.982), grass 23-25 (`plante3a-3c`, 0.65-0.69 with `shift=6`:
       blades wider than the sprites'; envelope readings checked against blupi.dxf, not the
       cause), houses 26-27 (`maison` 1.000, `cabane` 0.993), machines 28-31 (`meca1-4`,
       0.98-1.00), toys 36-47 (`enfant01-08`, `10-13`, 0.98-1.00, with sphere/cone textures),
@@ -874,9 +882,10 @@ be converted one at a time.
       draws the object channel's marine animation there, as the original. Also 69 (the green
       spiky plant, `Decor/smooth/vase1.rds`, 0.995), 87 (the column, `Decor/palais/big0108.rds`,
       0.979), 88 (the fountain bowl, `Decor/palais/big02.rds`, 0.992). Open: procedural
-      textures (metal noise, wood grain) are flat colours. The game draws them standing on
-      their cell's floor at the original size (128/144 px = 2/2.25 blocks); not checked live
-      (no generated world has BigDecor).
+      textures (metal noise, wood grain, the palm's bark) are flat colours. The game draws
+      them standing on their cell's floor at the original size (128/144 px = 2/2.25 blocks).
+      Exported 2026-10-24 (`cf89da3`) and checked live under Xvfb: BigDecor records placed
+      around Blupi in a copy of `world999.vwr` (house, machine, grass on the floor).
 
 **Stage 7 — the other Blupis**
 - [x] `BB3D-060` Types 200-203 (the decoys spawned at run time, never placed in the worlds) show
