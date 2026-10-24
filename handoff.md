@@ -12,51 +12,37 @@ Approved 2026-10-24. Objects, big decor and the other Blupis get 3D models conve
 Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Background:
 `assets-3d-analysis.md`.
 
-- **Done:** the plan (`plan.md` Phase 7B); `tools/rd4_to_gltf/survey.py` (the archive survey and
-  the per-sheet icon matching, formerly throwaway scripts).
-- **Done (Stage 1):** `BB3D-001` cones (`primitives.cone`); `BB3D-002` flat surfaces (the
-  never-visible ground plane, built as nothing); `BB3D-003` mesh forms (`geometry.mesh_form`);
-  camera frame offset `ofst` (`scene.camera_centre`, part of `BB3D-006`); `BB3D-005`
-  (Studio 5 files without render settings read as still frames); `BB3D-004` (free-form and
-  `im` variants; `COFA`/`fogg`/`tx` left on purpose). `survey.py icons` takes every sheet's grid.
-- **Done (Stage 2-4):** `BB3D-010`/`011` the object model library and its game side
-  (`avatars3d/objects/`, `ObjectModelTable`, `VerifyObjectModelTable`); in game as 3D:
-  treasure, egg, exit, drink, ammo, projectile (`BB3D-020`-`023`), the creature with and
-  without eyes (`BB3D-038`, needed `xyzS`), the mines incl. the hanging one (`BB3D-034`), the
-  wasp (`BB3D-036`), the follow enemies (`BB3D-033`), the keys and secret exit (`BB3D-024`),
-  the dynamite, the moving mine (`BB3D-037`), the invert sign (cube textures), the bird
-  (`BB3D-031`, right-handed free-form sections, the scene's end key), the fish (`BB3D-032`,
-  head a little large), the bulldozer with its striped blade and icon 68 (`BB3D-035`), the
-  decoys (types 200-203: the mine in yellow and green, `BB3D-060`), the lollipop pickup
-  (meridian cylinder mapping, ring caps), the tentacle (17 scenes, `BB3D-040`): 47 models,
-  221 icons. explo.png icons are their cell's top-left 64/128/144-pixel square
-  (`survey.EXPLO_ICON_HEIGHTS`); the explo survey must be re-run with that (it was stopped). The game also draws BigDecor
-  cells whose explo.png icon has a model (none yet), standing on the cell's floor at the
-  original's size (144 px = 2.25 blocks, where the billboard is 1 block) - check with the
-  user that this size is wanted. The shield stays a billboard (its sparks are an effect). Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
-  icons, treasure, exit).
-- **Next:** Stage 6 big decor: `survey.py icons --sheet .../explo.png --folders Explo` was
-  running (results `build-probe/rd4-survey/explo_icons.csv`); turn its icon -> scene pairs into
-  `objects.txt` lines (one object per scene, `min_iou=` to leave poor icons as billboards) and
-  check each model's `compare.png` by eye: thin plants (palms) score IoU ~0.6 while looking
-  right. Then the fish's head (`BB3D-032`; envelopes and jaw rotation ruled out). Trial runs go
-  to `build-probe/rd4-objects-try` with a scratch objects file, so only verified objects enter
-  `tools/rd4_to_gltf/objects.txt` (results in `plan.md`).
-- **In progress `BB3D-008`** (Blupi's library with the converter's fixes): a library built
-  with `ofst` and `xyzS` (but the old left-handed sections) gave StopOver 0.764 -> 0.983,
-  MarchOver 0.739 -> 0.940, DeathLocked.Clear4 0.843 -> 0.982, the rest unchanged (copies in
-  the scratchpad `after-ofst-xyzs/`). A full re-run (matching ~70 min, then the library) with
-  the current converter (right-handed sections too) runs in the background; when it ends:
-  compare `build-probe/rd4-blupi/library/clips.md`, check the face in a few frames (the
-  sections' handedness mirrors the face texture: colour 0.906 / 0.907 says it barely
-  matters), then export with the commands in `avatars3d/blupi/README.md`, build, test and
-  commit. If interrupted: re-run those commands.
-- **Waiting for the user:** the charge (type 31) and the shield are billboards because their
-  sprites' sparks are effects; a model plus a sparks-only billboard is possible but needs a new
-  derived asset set (plan.md `BB3D-025`, `BB3D-039`). BigDecor size (2.25 blocks, original) vs
-  the 1-block billboards.
-- **Not checked live:** BigDecor models (no generated world has BigDecor; only editor
-  worlds do). The draw path is shared with the objects, which were checked live.
+- **State:** Phase 7B is nearly complete. In game as 3D models (`avatars3d/objects/`, built
+  from `tools/rd4_to_gltf/objects.txt`): every pickup but the charge and the shield, every
+  enemy, the decoys (200-203), the tentacle and all big decor the original worlds use (palms,
+  trees, grass, houses, machines, toys, pillars, plant, column, fountain, statue; BigDecor 203
+  is the object channel's marine animation, now drawn as such). Effects, the charge and the
+  shield stay billboards. Per-object results and open points: `plan.md` Phase 7B.
+- **Converter conventions found today** (all in `tools/rd4_to_gltf/README.md` with evidence):
+  cones; the flat surface is the unseen ground; mesh forms; Studio 5 `xyzS`; camera frame
+  `ofst`; right-handed free-form sections (blupi.dxf confirms); continuous sweep frames;
+  textures on cubes (4 x 3 cross), cylinders/spheres/cones (meridian fraction) and free-form
+  domains; explo.png icon squares and per-icon sprite offsets; flips about the sprite's centre
+  line; objects' model space upright in the scene.
+- **In progress `BB3D-008`:** Blupi's clip library rebuilt with the current converter (the
+  matching re-run gave 145 confident / 61 probable / 25 unmatched icons, was 121 / 76 / 34; a
+  library with `ofst` and `xyzS` gave StopOver 0.764 -> 0.983, MarchOver 0.739 -> 0.940,
+  Clear4 0.843 -> 0.982). When `build-probe/rd4-blupi/library/blupi.glb` is rebuilt: compare
+  `clips.md` with the scratchpad copies, check his face, export with the commands in
+  `avatars3d/blupi/README.md`, build, test, commit. If interrupted: re-run those commands.
+- **Open (no blocker):** the fish's head is ~15 % large (`BB3D-032`); the grass blades are wider
+  than the sprites' (`BB3D-050`); procedural textures (metal noise, wood grain) are flat
+  colours.
+- **Waiting for the user:** (1) the charge (type 31) and the shield stay billboards because
+  their sprites' sparks are effects; a model plus a sparks-only billboard derived from the
+  sprites is possible but is a new derived asset set (`BB3D-025`, `BB3D-039`). (2) BigDecor
+  models stand at the original's size (a 128/144-pixel icon = 2/2.25 blocks, as
+  mobile-eggbert's Pixmap draws it 1:1), where the billboards were 1 block; say if the old size
+  is wanted (`GalaxyEggbertGame.cpp`, the BigDecor loop of the object model pass).
+- **Not checked live:** BigDecor models (no generated world has BigDecor; only editor worlds
+  do). The draw path is shared with the objects, which were checked live under Xvfb.
+- **Found and fixed on the way:** the opened door's slide showed the treasure's icon
+  (`BB3D-042`); BigDecor icon 203 was drawn as a missing explo.png icon.
 - **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing
   still (`ChaseCameraYaw::kIdleDelaySeconds`, was 0.8 s).
 - **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-004`): all 528 scenes read; the
