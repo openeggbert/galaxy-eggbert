@@ -51,6 +51,9 @@ int main()
         check(near(camera.GetYaw(), moving.blupiYaw, 0.01f), "2 s later it is behind him again");
     }
 
+    check(std::fabs(ChaseCameraYaw::kIdleDelaySeconds - 3.0f) < 1e-6f,
+          "it waits 3 s of standing still before leaving his back");
+
     // Idle: the nearer side after the delay, his right on a tie.
     {
         ChaseCameraYaw camera;
@@ -74,13 +77,18 @@ int main()
         ChaseCameraYaw camera;
         camera.Reset(0.0f);
         ChaseCameraInput moving;
-        moving.blupiYaw = -0.6f; // he turned right; the camera still trails on his left
+        moving.blupiYaw = -0.6f; // he turned right; the camera trails on his left for a moment
         run(camera, moving, 0.1f);
         ChaseCameraInput idle = moving;
         idle.idle = true;
+        idle.rightOpen = false;
+        run(camera, idle, ChaseCameraYaw::kIdleDelaySeconds * 0.9f);
+        check(camera.GetSide() == ChaseCameraSide::Behind && near(camera.GetYaw(), -0.6f, 0.01f),
+              "during the 3 s wait it has caught up behind him");
         run(camera, idle, 5.0f);
         check(camera.GetSide() == ChaseCameraSide::Left && near(camera.GetYaw(), -0.6f + kPi / 2.0f, 0.01f),
-              "idle with the camera trailing on his left: it takes the nearer left side");
+              "idle with a wall on his right: it takes his left side");
+        idle.rightOpen = true;
         idle.leftOpen = false;
         run(camera, idle, 5.0f);
         check(camera.GetSide() == ChaseCameraSide::Right, "a wall on the left sends it to his right");

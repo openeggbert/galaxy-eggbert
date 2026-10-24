@@ -37,7 +37,8 @@ namespace GalaxyEggbert::Game
     class ChaseCameraYaw
     {
     public:
-        static constexpr float kIdleDelaySeconds = 0.8f;
+        // Three seconds standing still before it leaves his back (user request 2026-10-24).
+        static constexpr float kIdleDelaySeconds = 3.0f;
         static constexpr float kFollowPerSecond = 2.5f;
         static constexpr float kOrbitPerSecond = 1.5f;
 
