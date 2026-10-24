@@ -85,7 +85,14 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   triangles clockwise (and leaves them alone if a future converter already did), the placeholder
   fox's indices were turned once by hand, and the game sets `CullCounterClockwise` explicitly
   before drawing the model.
-- **Status:** open (2026-10-24), reported to the CNA session.
+- **Status: fixed** in libcna/cna `next` `f8e2b8cc6` (2026-10-24; local commit, not pushed yet,
+  pushes are the CNA owner's decision). `_write_index_buffer` writes every triangle as (a, c, b)
+  and refuses non-triangle-list primitives; `test_convert_avatar.py` pins the order. Re-verified
+  here the same day: with it, `export_cna_avatar.py` reports every part "already clockwise" and
+  produces files byte-identical to `avatars3d/blupi/`. Kept as is in CNA, by design: the example
+  quad built in code still draws with `CullNone`, and CNA's glTF `Model` importer deliberately keeps
+  glTF's counter-clockwise order (its `docs/gltf-conventions.md`, GLTF-423), so only the avatar
+  converter flips.
 
 ## Recorded elsewhere
 
