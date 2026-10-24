@@ -12,10 +12,11 @@ namespace GalaxyEggbert::Game
     // Which 3D object model draws which sprite icon (plan.md Phase 7B, BB3D-010). The models in
     // avatars3d/objects/<name>/ are converted from the Ray Dream scenes the sprites were rendered
     // from (tools/rd4_to_gltf/build_object_library.py); each one's icons.txt lists, per sprite
-    // icon it replaces, the time in its "Frames" clip, whether the icon is the mirrored render
-    // and the yaw it was turned by:
+    // icon it replaces, the time in its "Frames" clip, how the icon mirrors the render (0 not,
+    // 1 left-right, 2 upside down: the hanging mine is the mine's sprite flipped) and the yaw
+    // it was turned by:
     //
-    //     icon <sheet> <icon> <seconds> <mirrored 0|1> <yaw degrees> <iou>
+    //     icon <sheet> <icon> <seconds> <mirror 0|1|2> <yaw degrees> <iou>
     //
     // Sheets are named after their PNGs (element, object-m, explo, blupi, blupi1). The game keeps
     // choosing every object's icon exactly as before; an icon listed here is drawn as its model
@@ -25,9 +26,14 @@ namespace GalaxyEggbert::Game
     {
         int model = -1;           // the caller's index of the model the icons.txt came with
         float seconds = 0.0f;     // time in the model's "Frames" clip
-        bool mirrored = false;    // draw mirrored in X (after the yaw)
+        int mirror = 0;           // after the yaw: 0 none, 1 left-right, 2 upside down
         float yawDegrees = 0.0f;  // turn about +Y, +Z toward +X (XNA's CreateRotationY)
     };
+
+    // A flipped icon is the sprite image flipped about its centre line, which is half a pixel
+    // left of (above) the model's origin, the sprite camera's axis: x' = -x - kFlipShift left-
+    // right, y' = -y + kFlipShift upside down, in blocks (a sprite pixel is 1/64 block).
+    constexpr float kFlipShift = 1.0f / 64.0f;
 
     class ObjectModelTable
     {

@@ -34,12 +34,12 @@ namespace GalaxyEggbert::Game
             }
             std::string sheetName;
             int icon = -1;
-            int mirrored = 0;
             ObjectModelPose pose;
             pose.model = model;
             ObjectTextureSource sheet{};
-            if (kind != "icon" || !(in >> sheetName >> icon >> pose.seconds >> mirrored >> pose.yawDegrees) ||
-                !ParseSheet(sheetName, sheet) || icon < 0 || pose.seconds < 0.0f || (mirrored != 0 && mirrored != 1))
+            if (kind != "icon" || !(in >> sheetName >> icon >> pose.seconds >> pose.mirror >> pose.yawDegrees) ||
+                !ParseSheet(sheetName, sheet) || icon < 0 || pose.seconds < 0.0f || pose.mirror < 0 ||
+                pose.mirror > 2)
             {
                 if (error != nullptr)
                 {
@@ -47,7 +47,6 @@ namespace GalaxyEggbert::Game
                 }
                 return false;
             }
-            pose.mirrored = mirrored == 1;
             poses_[Key(sheet, icon)] = pose;
         }
         return true;

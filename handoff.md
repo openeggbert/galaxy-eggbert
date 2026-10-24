@@ -19,14 +19,16 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   camera frame offset `ofst` (`scene.camera_centre`, part of `BB3D-006`); `BB3D-005`
   (Studio 5 files without render settings read as still frames); `BB3D-004` (free-form and
   `im` variants; `COFA`/`fogg`/`tx` left on purpose). `survey.py icons` takes every sheet's grid.
-- **Done (Stage 2-3):** `BB3D-010`/`011` the object model library and its game side
-  (`avatars3d/objects/`, `ObjectModelTable`, `VerifyObjectModelTable`); `BB3D-020`-`023`
-  treasure, egg, exit, drink, ammo, projectile are 3D in game (checked live under Xvfb with
-  `--golden-capture`: models where the billboards were).
-- **Next:** add objects to `tools/rd4_to_gltf/objects.txt` and regenerate (commands in
-  `avatars3d/objects/README.md`): Stage 4 enemies (bird, fish, follow enemies, mines, creature
-  `creature1-5.rds` icons 247-251, ...), `BB3D-024`/`025` pickups; `BB3D-007` icon surveys to
-  find unknown sources (element done in the background: `build-probe/rd4-survey/element_icons.csv`).
+- **Done (Stage 2-4):** `BB3D-010`/`011` the object model library and its game side
+  (`avatars3d/objects/`, `ObjectModelTable`, `VerifyObjectModelTable`); in game as 3D:
+  treasure, egg, exit, drink, ammo, projectile (`BB3D-020`-`023`), the creature's icons
+  247-251 (`BB3D-038`, partly), the mines incl. the hanging one (`BB3D-034`). Checked live
+  under Xvfb with `--golden-capture` (world 999: eggs incl. flipped icons, treasure, exit).
+- **Next:** `BB3D-031` bird, `BB3D-032` fish, `BB3D-033` follow, `BB3D-036` wasp, the
+  creature's eyes (`BB3D-038`); trial runs go to `build-probe/rd4-objects-try` with a scratch
+  objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (first results
+  in `plan.md`). `BB3D-007` icon surveys find unknown sources (element survey running in the
+  background: `build-probe/rd4-survey/element_icons.csv`).
 - **Pending check:** `BB3D-008` (Blupi's library with the camera offset): the matching re-run
   was started in the background; compare `build-probe/rd4-blupi/library/clips.md` with
   the copy saved before (`clips.md` table, overcraft rows) after rebuilding the library.

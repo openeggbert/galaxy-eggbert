@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "mine_rd_ff0918",
+      "vertices": "mine_rd_ff0918.verts.bin",
+      "indices": "mine_rd_ff0918.idx.bin",
+      "vertexStride": 52,
+      "texture": "mine_rd_ff0918.png",
+      "diffuseColor": [
+        1.0,
+        0.0029411764705882353,
+        0.00926431084760073,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

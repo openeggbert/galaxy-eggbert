@@ -1,7 +1,13 @@
 # avatars3d/objects/<directory>/, one per line; export_objects.py
 ammo_munitions-glu
+creature_creature1
+creature_creature2
+creature_creature3
+creature_creature4
+creature_creature5
 drink_bouteille
 egg_oeuf
 exit_fleche
+mine_bombe
 projectile_balle-glu
 treasure_coffre

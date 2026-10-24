@@ -25,16 +25,18 @@ int main(int argc, char** argv)
         ObjectModelTable table;
         std::istringstream egg(
             "# egg: Blupi/oeuf.rd4\n"
-            "# icon <sheet> <icon> <seconds> <mirrored> <yaw degrees> <iou>\n"
+            "# icon <sheet> <icon> <seconds> <mirror> <yaw degrees> <iou>\n"
             "icon element 21 0.0000 0 10 0.991\n"
             "\n"
-            "icon element 24 0.0500 1 230 0.926\n");
+            "icon element 24 0.0500 1 230 0.926\n"
+            "icon element 48 0 2 0 1.000\n");
         check(table.AddModel(3, egg), "a model's icons.txt with comments and a blank line parses");
-        check(table.Size() == 2, "two icons listed");
+        check(table.Size() == 3, "three icons listed");
         const auto* pose = table.Find(ObjectTextureSource::Element, 24);
         check(pose != nullptr && pose->model == 3 && std::fabs(pose->seconds - 0.05f) < 1e-6f &&
-                  pose->mirrored && std::fabs(pose->yawDegrees - 230.0f) < 1e-4f,
-              "element icon 24: model 3 at 0.05 s, mirrored, yaw 230");
+                  pose->mirror == 1 && std::fabs(pose->yawDegrees - 230.0f) < 1e-4f,
+              "element icon 24: model 3 at 0.05 s, mirrored left-right, yaw 230");
+        check(table.Find(ObjectTextureSource::Element, 48)->mirror == 2, "element icon 48: upside down");
         check(table.Find(ObjectTextureSource::Element, 22) == nullptr,
               "an unlisted icon has no model (it stays a billboard)");
         check(table.Find(ObjectTextureSource::ObjectM, 21) == nullptr,
@@ -47,7 +49,7 @@ int main(int argc, char** argv)
         check(table.Find(ObjectTextureSource::ObjectM, 238) != nullptr, "object-m icons are looked up by sheet");
     }
 
-    for (const char* bad : {"icon element 21 0.0", "icon nosheet 21 0 0 0 1", "icon element 21 0 2 0 1",
+    for (const char* bad : {"icon element 21 0.0", "icon nosheet 21 0 0 0 1", "icon element 21 0 3 0 1",
                             "icon element -3 0 0 0 1", "clip Stop", "icon element 21 -1 0 0 1"})
     {
         ObjectModelTable table;

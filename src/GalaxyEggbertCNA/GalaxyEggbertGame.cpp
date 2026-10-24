@@ -4170,8 +4170,10 @@ namespace GalaxyEggbert::CNA
             // Objects with a converted 3D model (objectModelTable_, plan.md
             // Phase 7B): drawn where their billboard would be (skipped in the
             // billboard passes), posed at their icon's frame, turned by its
-            // yaw and mirrored for a mirrored icon. A model is in blocks with
-            // its sprite's view toward +Z, as the parked vehicles are.
+            // yaw and flipped as the icon is (left-right or upside down,
+            // about the sprite's centre line: kFlipShift). A model is in
+            // blocks with its sprite's view toward +Z, as the parked vehicles
+            // are.
             if (blupiEffect_ && !objectModels_.empty())
             {
                 constexpr float kDegrees = 3.14159265358979f / 180.0f;
@@ -4193,11 +4195,14 @@ namespace GalaxyEggbert::CNA
                         "Frames", System::TimeSpan::FromSeconds(pose->seconds), /*loop=*/false, boneTransforms);
                     // Mirroring turns the triangles' winding around.
                     device.setRasterizerStateProperty(
-                        pose->mirrored ? Microsoft::Xna::Framework::Graphics::RasterizerState::CullClockwise
-                                       : Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+                        pose->mirror != 0 ? Microsoft::Xna::Framework::Graphics::RasterizerState::CullClockwise
+                                          : Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
                     blupiEffect_->setWorldProperty(
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(pose->yawDegrees * kDegrees) *
-                        Microsoft::Xna::Framework::Matrix::CreateScale(pose->mirrored ? -1.0f : 1.0f, 1.0f, 1.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateScale(
+                            pose->mirror == 1 ? -1.0f : 1.0f, pose->mirror == 2 ? -1.0f : 1.0f, 1.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(
+                            pose->mirror == 1 ? -kFlipShift : 0.0f, pose->mirror == 2 ? kFlipShift : 0.0f, 0.0f) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(
                             obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ));
                     blupiEffect_->SetBoneTransforms(boneTransforms);

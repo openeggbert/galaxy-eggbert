@@ -5,7 +5,8 @@ sprites were rendered from, with a table of which pose draws which sprite icon.
 Every object of ``--objects`` (``objects.txt``: name, sheet, icons, scenes, options) is matched
 icon by icon against every distinct frame of its scenes, straight and mirrored, rendered with the
 scene's orthographic camera at the sheet's icon size (``survey.GRIDS``); with ``yaw=STEP`` also
-turned about the vertical every STEP degrees (the egg's sprites spin, its scene does not). Each
+turned about the vertical every STEP degrees (the egg's sprites spin, its scene does not); with
+``vflip=1`` also upside down (the hanging mine's icons are the mine's flipped vertically). Each
 scene that wins an icon becomes one model: one rigid joint per Ray Dream object the camera sees,
 and a clip ``Frames`` holding the scene's frames at 20 per second (frame k at k / 20 s).
 
@@ -13,10 +14,11 @@ Model space is the sprite's: +X its right, +Y up, +Z toward its camera, the orig
 axis (the icon's centre) at the depth of the object's middle, in blocks of the game (64 sprite
 pixels, as for Blupi: ``avatars3d/blupi/README.md``). The game draws a model where it would have
 drawn the icon's billboard: turned by the icon's yaw about +Y (+Z toward +X, XNA's
-``CreateRotationY``), then mirrored in X for a mirrored icon.
+``CreateRotationY``), then flipped as the icon is (1: left-right, 2: upside down; about the
+icon's centre line, half a pixel off the camera axis: ``mirror_matrix``).
 
 Writes ``<out>/<object>_<scene>/model.glb`` and beside it ``icons.txt`` (``icon <sheet> <icon>
-<seconds> <mirrored> <yaw degrees> <iou>`` per icon the model draws), ``compare.png`` (rows:
+<seconds> <mirror> <yaw degrees> <iou>`` per icon the model draws), ``compare.png`` (rows:
 sprite, the model rendered back as the game would draw it, overlap) and ``<out>/report.md``.
 ``export_objects.py`` turns them into the game's ``avatars3d/objects/<object>_<scene>/``.
 
@@ -60,6 +62,7 @@ class ObjectSpec:
     scenes: list[str]
     camera: str | None = None
     yaw_step: float = 0.0
+    vflip: bool = False
 
 
 @dataclass
@@ -70,7 +73,7 @@ class Match:
     colour: float
     scene: int
     frame: int
-    mirrored: bool
+    mirror: int  # 0 none, 1 left-right (X), 2 upside down (Y)
     yaw: float
 
 
@@ -116,7 +119,7 @@ def read_specs(path: Path) -> list[ObjectSpec]:
         fields = line.split()
         opts = dict(f.split("=", 1) for f in fields[4:])
         specs.append(ObjectSpec(fields[0], fields[1], parse_icons(fields[2]), fields[3].split(","),
-                                opts.get("camera"), float(opts.get("yaw", 0))))
+                                opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1"))
     return specs
 
 
@@ -186,23 +189,38 @@ def match_object(spec: ObjectSpec, setups: list[SceneSetup], icon_rgb, icon_mask
             for yaw in yaws:
                 renderer.view = (float(yaw), 0.0, 1.0) if yaw else None
                 rgb, cov = renderer.render(tick, size=size)
-                for mirrored in (False, True):
-                    rg, cv = (reflect(rgb), reflect(cov)) if mirrored else (rgb, cov)
+                for mirror in (0, 1, 2) if spec.vflip else (0, 1):
+                    rg, cv = reflect(rgb, mirror), reflect(cov, mirror)
                     iou, col = match_icons.scores(rg, cv, icon_rgb[wanted], icon_mask[wanted])
                     for k, icon in enumerate(spec.icons):
                         score = float(iou[k] * col[k])
                         if icon not in best or score > best[icon].score:
-                            best[icon] = Match(icon, score, float(iou[k]), float(col[k]), si, fi, mirrored,
+                            best[icon] = Match(icon, score, float(iou[k]), float(col[k]), si, fi, mirror,
                                                float(yaw))
     return best
 
 
-def reflect(img: np.ndarray) -> np.ndarray:
-    """An image mirrored about the camera axis, which passes through the centre of the middle
-    pixel (column size / 2), not the image's centre line: flipped, then one column right."""
-    out = np.zeros_like(img)
-    out[:, 1:] = img[:, ::-1][:, :-1]
-    return out
+def reflect(img: np.ndarray, mirror: int) -> np.ndarray:
+    """An image flipped as the original game flipped sprites (1: left-right, 2: upside down),
+    about its centre line: the hanging mine's icons 48-56 are exactly icons 12-20 flipped. The
+    camera axis passes through the centre of the middle pixel, so in model space that line is
+    half a pixel off the origin (``mirror_matrix``)."""
+    if mirror == 1:
+        return img[:, ::-1]
+    if mirror == 2:
+        return img[::-1]
+    return img
+
+
+def mirror_matrix(mirror: int) -> np.ndarray:
+    """4x4 of a sprite flip in model space (blocks; a pixel is 1/64): x' = -x - 1/64 left-right,
+    y' = -y + 1/64 upside down. The game applies the same (GalaxyEggbertGame.cpp)."""
+    m = np.eye(4)
+    if mirror == 1:
+        m[0, 0], m[0, 3] = -1.0, -1.0 / BLOCK_PX
+    elif mirror == 2:
+        m[1, 1], m[1, 3] = -1.0, 1.0 / BLOCK_PX
+    return m
 
 
 def part_name(index: int, o: sc.Obj) -> str:
@@ -247,14 +265,16 @@ def yaw_matrix(degrees: float) -> np.ndarray:
     return np.array([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]])
 
 
-def render_model(model: vs.Model, seconds: float, mirrored: bool, yaw: float, icon_px: int):
+def render_model(model: vs.Model, seconds: float, mirror: int, yaw: float, icon_px: int):
     """The model as the game draws it for an icon, seen by the sprite's camera."""
     turn = yaw_matrix(yaw)
+    flip = mirror_matrix(mirror)
     meshes = []
     for pos, nrm, tris, color, uv, tex in model.skinned(seconds):
         pos, nrm = pos @ turn.T, nrm @ turn.T
-        if mirrored:
-            pos, nrm, tris = pos * [-1, 1, 1], nrm * [-1, 1, 1], tris[:, ::-1]
+        if mirror:
+            pos = pos @ flip[:3, :3].T + flip[:3, 3]
+            nrm, tris = nrm @ flip[:3, :3].T, tris[:, ::-1]
         meshes.append((pos, nrm, tris, color, uv, tex))
     light = vs.Lighting(np.array([0.4, 0.6, 0.7]) / np.linalg.norm([0.4, 0.6, 0.7]))
     color, cover = vs.render(meshes, np.array([0.0, 0.0, 50.0]), np.array([1.0, 0.0, 0.0]),
@@ -301,14 +321,14 @@ def main(argv=None) -> int:
             warnings: list[str] = []
             build_model(spec, setup, icon_px, out / "model.glb", warnings)
             lines = [f"# {spec.name}: {spec.scenes[si]}, camera {setup.camera!r}; generated by build_object_library.py",
-                     "# icon <sheet> <icon> <seconds> <mirrored> <yaw degrees> <iou>"]
+                     "# icon <sheet> <icon> <seconds> <mirror 0/1 left-right/2 upside down> <yaw degrees> <iou>"]
             model = vs.Model(out / "model.glb")
             model.select_clip("Frames")
             tiles, checks = [], []
             for m in matches:
                 seconds = m.frame / FPS
-                lines.append(f"icon {spec.sheet} {m.icon} {seconds:.4f} {int(m.mirrored)} {m.yaw:g} {m.iou:.3f}")
-                rgb, cov = render_model(model, seconds, m.mirrored, m.yaw, icon_px)
+                lines.append(f"icon {spec.sheet} {m.icon} {seconds:.4f} {m.mirror} {m.yaw:g} {m.iou:.3f}")
+                rgb, cov = render_model(model, seconds, m.mirror, m.yaw, icon_px)
                 sm, rm = icon_mask[m.icon], cov > 0.5
                 checks.append(vs.iou(rm, sm))
                 bg = np.array([40, 90, 140]) / 255

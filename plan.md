@@ -794,17 +794,28 @@ be converted one at a time.
 **Stage 4 — animated enemies** (clips per icon table, as Blupi's)
 - [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs
       icons 66-70 and 248-250) before converting them.
-- [ ] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`, 0.77).
+- [ ] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`): icons 90-121 (both directions and the turns)
+      match only 0.66 mean: the render's wings and head differ from the sprites (front-facing
+      turn frames 0.26). Investigate the scene's joints/animation before converting.
 - [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, 0.89). With the cones its teeth render, but
       the body still differs from icons 78-83: the cylinder body and sphere head of the sprites
       do not show, the mouth's free-form (`bouche`/`Assistant 3D`) draws purple and green, the
       fins too dark; check the camera (`Caméra 1` perspective?) and the shaders first.
-- [ ] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, max 0.97).
-- [ ] `BB3D-034` Mines (2, 3, `bombe*.rd4`; spikes need `BB3D-001`).
+- [ ] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): 0.61 mean
+      as matched so far (no yaw); try `yaw`.
+- [x] `BB3D-034` Mines (2, 3): `Blupi/bombe.rd4` turned 10 degrees per icon (the sprites spin),
+      icons 12-20 IoU 0.88-0.98; the hanging mine's 48-56 are exactly 12-20 flipped upside
+      down (a sprite flip about the icon's centre line, half a pixel off the camera axis:
+      `kFlipShift`), drawn as the mine flipped. 18 icons, 0.943 mean (2026-10-24).
 - [ ] `BB3D-035` Bulldozer and flying robot (4, `robot-profil.rd4`, `tracks-profil.rd4`).
-- [ ] `BB3D-036` Wasp (44, `guepe*.rd4`; needs `BB3D-006`).
+- [ ] `BB3D-036` Wasp (44, `guepe*.rd4`, icons 195-207): IoU 0 with the game camera `Caméra
+      Jeu`: wrong camera or placement; try `camera=Caméra 2` / the perspective camera.
 - [ ] `BB3D-037` Spider (16, `bug*.rd4`).
-- [ ] `BB3D-038` Green blob creature (33, 54, `creature*.rds`; needs `BB3D-003`).
+- [~] `BB3D-038` Green blob creature (33, 54): icons 247-251 from `creature1-5.rds`, IoU
+      0.978-0.998, in game. Open: 242-246 (`creature1y.rds`, the creature with eyes, 0.85-0.91)
+      render the eyes black with a white cap instead of white with a black pupil, and their
+      tilt between frames does not show; check the eye spheres' shaders and the `oeil` group's
+      animation.
 
 **Stage 5 — animated decor objects**
 - [ ] `BB3D-040` Tentacle (53, `Decor/tentacule/*.rds`; needs `BB3D-003`/`005`).

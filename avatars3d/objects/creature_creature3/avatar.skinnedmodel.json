@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "creature_rd_00fd00",
+      "vertices": "creature_rd_00fd00.verts.bin",
+      "indices": "creature_rd_00fd00.idx.bin",
+      "vertexStride": 52,
+      "texture": "creature_rd_00fd00.png",
+      "diffuseColor": [
+        0.0,
+        0.9909246121188983,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

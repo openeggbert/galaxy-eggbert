@@ -17,12 +17,13 @@ Plan and status: `plan.md` Phase 7B (`BB3D-*`).
 - `index.txt`: the model directories, loaded in that order.
 - Per model: the CNA avatar files (`avatar.skinnedmodel.json`, `skeleton.bin`, parts, the clip
   `clips/Frames.clip.bin`) and `icons.txt`: per sprite icon the model replaces, `icon <sheet>
-  <icon> <seconds> <mirrored> <yaw degrees> <iou>`. The clip holds the scene's frames at 20 per
-  second; `iou` is how well that pose rendered with the scene's camera covers the icon.
+  <icon> <seconds> <mirror> <yaw degrees> <iou>` (mirror 0 none, 1 left-right, 2 upside down).
+  The clip holds the scene's frames at 20 per second; `iou` is how well that pose rendered with
+  the scene's camera covers the icon.
 - Model space is the sprite's: +X right, +Y up, +Z toward the sprite's camera, origin at the
   icon's centre, in blocks (64 sprite pixels, as Blupi's model). The game draws a model where it
-  would have drawn the icon's billboard, turned by the yaw about +Y, mirrored in X for a mirrored
-  icon (`GalaxyEggbertGame.cpp`, `ObjectModelTable`); icons not listed stay billboards.
+  would have drawn the icon's billboard, turned by the yaw about +Y, then mirrored as listed
+  (`GalaxyEggbertGame.cpp`, `ObjectModelTable`); icons not listed stay billboards.
 
 ## Regenerate
 

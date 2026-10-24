@@ -245,15 +245,24 @@ invisible (the game draws no model on the tables' -1 frames).
 ## Object models (billboard replacement)
 
 `build_object_library.py` turns the game's other objects into models the same way: per object of
-`objects.txt` (name, sprite sheet, icons, scenes, `yaw=STEP`, `camera=NAME`), every icon is
-matched against every distinct frame of its scenes (straight, mirrored about the camera axis,
-and with `yaw` turned about the vertical), and each winning scene becomes a model of rigid parts
+`objects.txt` (name, sprite sheet, icons, scenes, `yaw=STEP`, `vflip=1`, `camera=NAME`), every
+icon is matched against every distinct frame of its scenes (straight, flipped left-right, with
+`vflip` upside down, and with `yaw` turned about the vertical), and each winning scene becomes a
+model of rigid parts
 (parts moving together share a joint: the treasure's 91 objects need 34) with its frames as the
 clip `Frames` and an `icons.txt` naming each icon's frame, mirror and yaw. The model is checked
 by rendering it back exactly as the game draws it; `export_objects.py` writes
 `avatars3d/objects/` (its README has the commands). Results so far (`report.md`): treasure
 (`coffre.rd4`) IoU 0.960 mean, egg (`oeuf.rd4`, its sprites spin: matched with yaw) 0.953,
-exit arrow (`fleche.rd4`, yaw) 0.943, projectile 0.995, ammo 0.992, drink 0.871.
+exit arrow (`fleche.rd4`, yaw) 0.937, projectile 0.995, ammo 0.992, drink 0.871, the creature
+(`creature1-5.rds`) 0.978-0.998, the mine (`bombe.rd4`, spinning, and upside down for the
+hanging mine) 0.943.
+
+A flipped icon is the sprite image flipped about its centre line, as the original game flipped
+sprites: the hanging mine's icons 48-56 are exactly 12-20 flipped (IoU 1.000), and the rendered
+mine flipped that way matches them at 0.981 against 0.769 for a mirror about the camera axis
+(which passes through the middle pixel's centre, half a pixel off that line). The game flips a
+model about the same line (`ObjectModelTable.hpp`, `kFlipShift`).
 
 ## Archive survey
 
