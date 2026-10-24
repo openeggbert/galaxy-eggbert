@@ -184,6 +184,7 @@ class Obj:
     children: list["Obj"] = field(default_factory=list)
     chunk: Chunk | None = None
     mirror: np.ndarray | None = None  # parent-frame reflection of a mirrored, rotating object
+    xyz_scale: np.ndarray | None = None  # Studio 5's per-axis scale of the own geometry (xyzS)
 
     def __post_init__(self):
         if self.orie_track is not None and np.linalg.det(self.mat) < 0:
@@ -351,6 +352,7 @@ def read_obj(ch: Chunk) -> Obj:
         scal_track=scal,
         affi_tracks=affi_tracks,
         chunk=ch,
+        xyz_scale=np.array(parse_floats(ch.leaf("xyzS"))) if ch.leaf("xyzS") else None,
     )
     so = ch.chunk("so")
     if so is not None:
@@ -464,12 +466,21 @@ def child_frame(o: Obj, t: float | None) -> np.ndarray:
 
 
 def geometry_frame(o: Obj, t: float | None) -> np.ndarray:
-    """4x4 mapping the object's canonical master geometry to its parent's local coordinates."""
+    """4x4 mapping the object's canonical master geometry to its parent's local coordinates.
+
+    Ray Dream Studio 5's ``xyzS`` (a leaf of the object, beside ``tran``) scales the object's own
+    geometry along its local axes about its hot point: the creature's eyes (creature1y.rds) are
+    spheres scaled 0.79 x 0.35 x 1.11 into tall eyeballs and 0.47 x 0.35 x 0.46 into pupils,
+    and match icons 242-245 at 0.78-0.82 (0.68-0.71 as plain spheres, worse normalized)."""
     lin = o.orientation(t) @ o.joint_rotation(t)
     s = o.scale(t)
     hp = o.hot_point(t)
     deform = affine(o.deformer(t), o.affi_tra)
-    return affine(lin * s, o.position(t) - (lin * s) @ hp) @ deform
+    frame = affine(lin * s, o.position(t) - (lin * s) @ hp)
+    if o.xyz_scale is not None:
+        xyz = np.diag(o.xyz_scale)
+        frame = frame @ affine(xyz, hp - xyz @ hp)
+    return frame @ deform
 
 
 def world_frames(scene: Scene, t: float | None):

@@ -1,6 +1,7 @@
 # avatars3d/objects/<directory>/, one per line; export_objects.py
 ammo_munitions-glu
 creature_creature1
+creature_creature1y
 creature_creature2
 creature_creature3
 creature_creature4

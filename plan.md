@@ -826,11 +826,13 @@ be converted one at a time.
       wing's position is not among the scene's three frames).
 - [x] `BB3D-037` Type 16 (named spider in code) shows icons 69-77, the moving mine of
       `Blupi/bombe-move.rd4`: 9 icons, 0.984 mean.
-- [~] `BB3D-038` Green blob creature (33, 54): icons 247-251 from `creature1-5.rds`, IoU
-      0.978-0.998, in game. Open: 242-246 (`creature1y.rds`, the creature with eyes, 0.85-0.91)
-      render the eyes black with a white cap instead of white with a black pupil, and their
-      tilt between frames does not show; check the eye spheres' shaders and the `oeil` group's
-      animation.
+- [x] `BB3D-038` Green blob creature (33, 54): icons 247-251 from `creature1-5.rds` (IoU
+      0.978-0.998), 242-246 with its eyes from `creature1y.rds` (0.970 mean) once the
+      converter applies Studio 5's per-axis scale `xyzS` (its eyeballs are scaled spheres).
+- [ ] `BB3D-035` note (2026-10-24 trial): `Blupi/tracks-profil.rd4` with `yaw=15` matches the
+      bulldozer's icons 57-67 at 0.882 mean, but its blade is a plain yellow box where the
+      sprites have a curved blade with yellow-black hazard stripes; find the blade's real
+      scene/texture before accepting.
 
 **Stage 5 — animated decor objects**
 - [ ] `BB3D-040` Tentacle (53, `Decor/tentacule/*.rds`; needs `BB3D-003`/`005`).
