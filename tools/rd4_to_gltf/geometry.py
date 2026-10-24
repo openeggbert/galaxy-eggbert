@@ -192,6 +192,8 @@ def canonical_mesh(master: rd4.Chunk):
         return orient_outwards(primitives.cylinder()), None
     if kind == "cube":
         return orient_outwards(primitives.cube()), None
+    if kind == "co":
+        return orient_outwards(primitives.cone()), None
     raise NotImplementedError(f"master {master.string('nm')!r}: primitive {kind!r}")
 
 

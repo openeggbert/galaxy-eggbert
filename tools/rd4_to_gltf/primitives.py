@@ -10,6 +10,8 @@ SPHERE_RADIUS = 3.0
 CYLINDER_RADIUS = 3.0
 CYLINDER_HALF_HEIGHT = 2.5   # along local Z
 CUBE_HALF_SIZE = 2.5         # fitted to the helicopter sprites, see README.md
+CONE_RADIUS = 3.0            # base at local Z -2.5, apex at +2.5: the cylinder's box (README.md)
+CONE_HALF_HEIGHT = 2.5
 
 
 def sphere(segments: int = 32, rings: int = 16) -> Mesh:
@@ -51,6 +53,19 @@ def cylinder(segments: int = 32) -> Mesh:
         tris.append((j1, segments + j, segments + j1))
         tris.append((ct, j, j1))
         tris.append((cb, segments + j1, segments + j))
+    return Mesh(pos, np.array(tris))
+
+
+def cone(segments: int = 32) -> Mesh:
+    ang = 2 * np.pi * np.arange(segments) / segments
+    ring = np.c_[CONE_RADIUS * np.cos(ang), CONE_RADIUS * np.sin(ang), np.full(segments, -CONE_HALF_HEIGHT)]
+    pos = np.concatenate([ring, [[0, 0, CONE_HALF_HEIGHT], [0, 0, -CONE_HALF_HEIGHT]]])
+    apex, base = segments, segments + 1
+    tris = []
+    for j in range(segments):
+        j1 = (j + 1) % segments
+        tris.append((apex, j, j1))
+        tris.append((base, j1, j))
     return Mesh(pos, np.array(tris))
 
 

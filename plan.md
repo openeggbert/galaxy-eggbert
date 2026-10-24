@@ -726,7 +726,9 @@ stays a billboard. So behaviour, timing and icon selection stay the original's, 
 be converted one at a time.
 
 **Stage 1 — converter gaps (`tools/rd4_to_gltf`)**
-- [ ] `BB3D-001` Cone masters `co` (15 scenes: the mines' spikes and fuses, the fish's fins).
+- [x] `BB3D-001` Cone masters `co` (15 scenes: the mines' spikes, the fish's teeth). Base
+      radius 3 at local Z -2.5, apex at +2.5 (the cylinder's box): `bombe.rd4` against icons
+      12-20 mean IoU 0.844 (icon 12: 0.981); apex at -Z gives 0.629 (2026-10-24).
 - [ ] `BB3D-002` Flat surface masters `COfl` (87 scenes: big decor ground planes, signs).
 - [ ] `BB3D-003` Mesh-form masters `vmda` (83: creatures, tentacles, drops, lava, the palace).
 - [ ] `BB3D-004` Star masters `COFA` (2) and the 18 free-form `ex` variants that fail
@@ -765,7 +767,10 @@ be converted one at a time.
 - [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs
       icons 66-70 and 248-250) before converting them.
 - [ ] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`, 0.77).
-- [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, 0.89; fins need `BB3D-001`).
+- [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, 0.89). With the cones its teeth render, but
+      the body still differs from icons 78-83: the cylinder body and sphere head of the sprites
+      do not show, the mouth's free-form (`bouche`/`Assistant 3D`) draws purple and green, the
+      fins too dark; check the camera (`Caméra 1` perspective?) and the shaders first.
 - [ ] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, max 0.97).
 - [ ] `BB3D-034` Mines (2, 3, `bombe*.rd4`; spikes need `BB3D-001`).
 - [ ] `BB3D-035` Bulldozer and flying robot (4, `robot-profil.rd4`, `tracks-profil.rd4`).
