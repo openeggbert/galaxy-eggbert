@@ -828,8 +828,9 @@ be converted one at a time.
       as is), so the jaws' size is not it. The best icon is the one at an exact key (79,
       frame 0: 0.954); in-between frames score 0.85-0.93. The jaws' two orientation keys are
       quaternions turning about one fixed axis (71 degrees, key dot products 0.81 / 0.86), so
-      slerp and an angle tween agree: not the tween either. Not resolved; the body free-form
-      (`Assistant 3D 3`, `ev 1 evs 1`) and the two cylinders are untested.
+      slerp and an angle tween agree: not the tween either. Not resolved. Scaling the free-form
+      `Assistant 3D 3` (`ev 1 evs 1`) by 0.85-1.15 changes no icon (it is hidden inside); the
+      two cylinders are untested.
 - [x] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): the star
       spins about the scene's vertical under a camera looking 6.7 degrees down; model space is
       now upright in the scene (its +Y the scene's vertical, +Z the camera's direction made
