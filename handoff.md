@@ -4,28 +4,27 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-24 (late evening)._
+_Last updated: 2026-10-24 (night)._
 
 ## Resume here (exact state when last written)
 
-1. **Object library re-export pending.** Commit `cc8c391` changed the converter (free-forms
-   drop rings/points their neighbours reproduce; meshes split at 65 535 vertices, which had
-   stopped the export at the palms). A full rebuild of `build-probe/rd4-objects` was started
-   (log `build-probe/rd4-objects/build.log`). `avatars3d/objects/` in the worktree is a
-   *partial, failed* export from before the fix: do not commit it as is. When the rebuild has
-   finished (every object in `tools/rd4_to_gltf/objects.txt` has a line `... icons, IoU ...` in
-   the log; if the process is gone and the log is incomplete, re-run the command from
-   `avatars3d/objects/README.md`), run the export there, then build, `ctest`, commit
-   `avatars3d/objects` together with the big decor/grass entries of `objects.txt`, push.
-   Compare IoU with `report.md` rows (palms 0.755-0.784, grass 0.65-0.69, others 0.87-1.0).
-2. **Blupi (`BB3D-008`):** a library built before `cc8c391` (exit 0) matched as well as or
-   better than every earlier one (jeep 0.949 -> 0.970, tank 0.893 -> 0.929, MarchOver 0.739 ->
-   0.940, Clear4 0.843 -> 0.983; its `clips.md`/`clips.txt` are kept in the session scratchpad
-   only). It is being rebuilt once more with `cc8c391` so the vehicles shrink 2-3 x (jeep
-   100 122 triangles); log `build-probe/rd4-blupi/library/build.log`, `clips.md` is written
-   last. Next: check `clips.md` against the numbers above, export with
-   `avatars3d/blupi/README.md`'s commands, build, test, commit. If the rebuild was lost,
-   re-run the `build_clip_library.py` command from that README (about an hour).
+Nothing is half done: the worktree is committed and pushed (`develop`). Phase 7B is complete
+except the items listed under "Open" and "Waiting for the user" below. Last steps, 2026-10-24:
+
+- `cc8c391` converter: free-forms drop rings/points their neighbours reproduce (palm trunk
+  193 948 -> 6 340 triangles); materials over 65 535 vertices split into `_1`, `_2` meshes.
+- `fb80e3d` converter: blended free-form sections aligned before blending (palm trunks were
+  pinched; palms 0.76 -> 0.83-0.86, trees 0.96 -> 0.97-0.98).
+- `59ac0d0` converter: ASCII-only part names (CNA reads part file names without decoding
+  `\u` escapes, `upstream_bugs.md` UB-004; "Cône" crashed the game at load).
+- `cf89da3` all 82 object models re-exported, big decor included, checked live under Xvfb.
+- `f4edbe8` Blupi and his vehicles re-exported (`BB3D-008` done; numbers in `plan.md`).
+
+Next candidates (none blocking): the open items below. A live BigDecor check needs a world
+with BigDecor records (none of `worlds3d/` has any): a throwaway probe linking the
+`BigDecorRecord`/`Worlds` objects of `build-cna-opengl3` can add records to a *copy* of
+`worlds3d/world999.vwr` in `build-cna-opengl3/worlds3d/` (the golden capture loads 999); copy
+the original back afterwards.
 
 ## Active work: billboards → 3D models (`plan.md` Phase 7B, `BB3D-*`)
 
@@ -33,8 +32,8 @@ Approved 2026-10-24. Objects, big decor and the other Blupis get 3D models conve
 Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Background:
 `assets-3d-analysis.md`.
 
-- **State:** Phase 7B is nearly complete. In game as 3D models (`avatars3d/objects/`, built
-  from `tools/rd4_to_gltf/objects.txt`): every pickup but the charge and the shield, every
+- **State:** Phase 7B is complete apart from the open items. In game as 3D models
+  (`avatars3d/objects/`, built from `tools/rd4_to_gltf/objects.txt`): every pickup but the charge and the shield, every
   enemy, the decoys (200-203), the tentacle and all big decor the original worlds use (palms,
   trees, grass, houses, machines, toys, pillars, plant, column, fountain, statue; BigDecor 203
   is the object channel's marine animation, now drawn as such). Effects, the charge and the
@@ -45,25 +44,19 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   textures on cubes (4 x 3 cross), cylinders/spheres/cones (meridian fraction) and free-form
   domains; explo.png icon squares and per-icon sprite offsets; flips about the sprite's centre
   line; objects' model space upright in the scene.
-- **In progress `BB3D-008`:** Blupi's clip library rebuilt with the current converter (the
-  matching re-run gave 145 confident / 61 probable / 25 unmatched icons, was 121 / 76 / 34; a
-  library with `ofst` and `xyzS` gave StopOver 0.764 -> 0.983, MarchOver 0.739 -> 0.940,
-  Clear4 0.843 -> 0.982). When `build-probe/rd4-blupi/library/blupi.glb` is rebuilt: compare
-  `clips.md` with the scratchpad copies, check his face, export with the commands in
-  `avatars3d/blupi/README.md`, build, test, commit. If interrupted: re-run those commands.
-- **Open (no blocker):** the fish's head is ~15 % large (`BB3D-032`); the grass blades are wider
-  than the sprites' (`BB3D-050`); procedural textures (metal noise, wood grain) are flat
-  colours.
+- **Open (no blocker):** the fish's head is ~15 % large (`BB3D-032`, jaw analysis in the plan);
+  the grass blades are wider than the sprites' (`BB3D-050`, 0.65-0.69); procedural textures
+  (palm bark, metal noise, wood grain) are flat colours.
 - **Waiting for the user:** (1) the charge (type 31) and the shield stay billboards because
   their sprites' sparks are effects; a model plus a sparks-only billboard derived from the
   sprites is possible but is a new derived asset set (`BB3D-025`, `BB3D-039`). (2) BigDecor
   models stand at the original's size (a 128/144-pixel icon = 2/2.25 blocks, as
   mobile-eggbert's Pixmap draws it 1:1), where the billboards were 1 block; say if the old size
   is wanted (`GalaxyEggbertGame.cpp`, the BigDecor loop of the object model pass).
-- **Not checked live:** BigDecor models (no generated world has BigDecor; only editor worlds
-  do). The draw path is shared with the objects, which were checked live under Xvfb.
 - **Found and fixed on the way:** the opened door's slide showed the treasure's icon
-  (`BB3D-042`); BigDecor icon 203 was drawn as a missing explo.png icon.
+  (`BB3D-042`); BigDecor icon 203 was drawn as a missing explo.png icon; parts of a mix shader
+  with one colour were a red placeholder (now their colour: metal grey, the jeep's orange);
+  non-ASCII part names crashed the load (UB-004).
 - **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing
   still (`ChaseCameraYaw::kIdleDelaySeconds`, was 0.8 s).
 - **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-004`): all 528 scenes read; the
