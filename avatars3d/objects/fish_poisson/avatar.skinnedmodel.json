@@ -1,0 +1,63 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "fish_rd_00bffd",
+      "vertices": "fish_rd_00bffd.verts.bin",
+      "indices": "fish_rd_00bffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "fish_rd_00bffd.png",
+      "diffuseColor": [
+        0.0,
+        0.5225215539683921,
+        0.9909246121188983,
+        1.0
+      ]
+    },
+    {
+      "name": "fish_rd_000000",
+      "vertices": "fish_rd_000000.verts.bin",
+      "indices": "fish_rd_000000.idx.bin",
+      "vertexStride": 52,
+      "texture": "fish_rd_000000.png",
+      "diffuseColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "fish_rd_ffffff",
+      "vertices": "fish_rd_ffffff.verts.bin",
+      "indices": "fish_rd_ffffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "fish_rd_ffffff.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "fish_rd_ff0000",
+      "vertices": "fish_rd_ff0000.verts.bin",
+      "indices": "fish_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "fish_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

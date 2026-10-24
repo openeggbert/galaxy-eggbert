@@ -25,10 +25,10 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   without eyes (`BB3D-038`, needed `xyzS`), the mines incl. the hanging one (`BB3D-034`), the
   wasp (`BB3D-036`), the follow enemies (`BB3D-033`), the keys and secret exit (`BB3D-024`),
   the dynamite, the moving mine (`BB3D-037`), the invert sign (cube textures), the bird
-  (`BB3D-031`, right-handed free-form sections, the scene's end key): 24 models, 161 icons. Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
+  (`BB3D-031`, right-handed free-form sections, the scene's end key), the fish (`BB3D-032`,
+  head a little large): 25 models, 172 icons. Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
   icons, treasure, exit).
-- **Next:** the lollipop's cap mapping (`BB3D-025`), `BB3D-032` fish (body; retry with the new
-  conventions),
+- **Next:** the lollipop's cap mapping (`BB3D-025`), the fish's head (`BB3D-032`),
   `BB3D-035` bulldozer (blade), shield (`BB3D-025`), Stage 5 decor objects, Stage 6 big
   decor, Stage 7 other Blupis. Trial runs go to `build-probe/rd4-objects-try` with a scratch
   objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (results in

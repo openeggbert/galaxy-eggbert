@@ -809,10 +809,12 @@ be converted one at a time.
       0.894 mean (0.597 for one front-facing turn icon) once free-form cross-sections are
       right-handed (its side profile had its head at the tail) and the scene's end key counts
       as a frame (its raised wings), with `yaw=15` and the camera choice (2026-10-24).
-- [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, icons 78-88): with `yaw=15` 0.918 mean, the
-      turn (front) views fine, but in the side views the sprites' cylinder body between tail
-      and head does not show (the head covers it) and the fins are darker; check the body
-      cylinders' placement before accepting (trial: `build-probe/rd4-objects-try`).
+- [~] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, icons 78-88; 65 placements): in the library
+      at 0.920 mean with `yaw=15` (2026-10-24). Open: in the side views the head comes out
+      about 15 % taller than in the sprites and covers the lighter body cylinder the sprites
+      show between tail and head; the jaws (`bouche` groups, `Assistant 3D` free-forms with an
+      `affi` deformer 2.29 x 3.16 x 2.28 and `ev 1 evs 1` envelopes) are the suspects; using
+      the top envelope on every side changed nothing.
 - [x] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): the star
       spins about the scene's vertical under a camera looking 6.7 degrees down; model space is
       now upright in the scene (its +Y the scene's vertical, +Z the camera's direction made

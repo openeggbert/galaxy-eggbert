@@ -30,3 +30,5 @@ movingmine  element 69-77   Blupi/bombe-move.rd4
 # The bird: free-form sections are right-handed (its profile's head under its eyes), and its
 # raised wings are the scene's last key (the builder adds the end frame).
 bird        element 90-121  Blupi/oiseau.rd4 yaw=15
+# The fish (its head comes out somewhat larger than in the sprites: plan.md BB3D-032).
+fish        element 78-88   Blupi/poisson.rd4 yaw=15

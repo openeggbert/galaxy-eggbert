@@ -11,6 +11,7 @@ drink_bouteille
 dynamite_dynamite
 egg_oeuf
 exit_fleche
+fish_poisson
 follow_bombe-follow
 invert_panneau-invert
 key1_cle1
