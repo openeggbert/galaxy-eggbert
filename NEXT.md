@@ -427,6 +427,32 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: the real Blupi plays every animation state, with his expressions and props (2026-10-24)
+Phases C and D of the plan the user approved for the real Blupi (plan.md `069`): the model in
+`avatars3d/blupi/` is now a clip library built by `tools/rd4_to_gltf/build_clip_library.py`
+from the sprite-to-scene-frame matches (`match_icons.py`): one clip per `AnimState` (plus
+`DeathLocked.<cause>` and `PickupBusy.<kind>`), each the state's own icon table from
+`BlupiController.cpp` at `kAnimFps`, interpolated linearly between the matched Ray Dream frames.
+34 clips; mean silhouette IoU against their icons 0.94-0.99 for the walk, stand, jump, fall,
+crouch, push, swim, squashed, balloon, mockery and dynamite states (table in the tools README).
+- **Converter.** Shape joints: a part whose scale/deformer changes in some clip (the squashed and
+  inflated Blupi) or which a clip's scene lacks (the squashed Blupi's legs) is skinned to a leaf
+  joint carrying that frame as TRS. Props hung under Blupi (tongue, bottle, lollipop) join the
+  skeleton, hidden in every other clip and in frames whose icon does not show them. Mirrored
+  objects with rotation keys keep their mirror in the parent's frame (it was dropped: the
+  lollipop faced sideways). Scenes are lined up by their game camera frame by frame
+  (`genou-profil.rd4`'s camera moves).
+- **Game.** `BlupiClipName()` maps every state to its clip (`Stop` when a clip is missing);
+  `faces.txt` gives each clip frame's expression and the draw swaps the body texture to it. Down
+  turns Blupi around in 0.3 s (the original's Turn, 6 ticks at 20 Hz) instead of backing up, then
+  walks on while held; one press, one turn (user decision 2026-10-24).
+- Not built (no matching scene frame yet): the vehicles, Hide, Clear2/Clear4; front and back views
+  (Turn, Switch) still come from the nearest profile frames; the lollipop's spiral texture.
+Verified: a CPU replay of the exported CNA asset (CNA's matrix, quaternion and scale
+conventions) matches the .glb (IoU 0.9995-1.0); live under Xvfb on `build` (GLES3) he stands,
+walks, crouches, jumps, turns around on Down and turns to face the viewer with his face when
+entering a door; 94/94 CTest cases pass on `build-cna-opengl3`.
+
 ### fix: the real Blupi faces where he walks and draws right side out (2026-10-24)
 User report: his face "slides over his body" and he walks backwards or sideways. Two bugs:
 - **Winding.** CNA's avatar converter keeps glTF's counter-clockwise triangles, which XNA's default

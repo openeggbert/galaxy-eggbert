@@ -39,6 +39,45 @@
         0.0,
         1.0
       ]
+    },
+    {
+      "name": "BLUPI_rd_ff0000",
+      "vertices": "BLUPI_rd_ff0000.verts.bin",
+      "indices": "BLUPI_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "BLUPI_rd_fc7a3b",
+      "vertices": "BLUPI_rd_fc7a3b.verts.bin",
+      "indices": "BLUPI_rd_fc7a3b.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_fc7a3b.png",
+      "diffuseColor": [
+        0.9818974516898041,
+        0.19599417930148813,
+        0.0447042609466385,
+        1.0
+      ]
+    },
+    {
+      "name": "BLUPI_rd_00ffff",
+      "vertices": "BLUPI_rd_00ffff.verts.bin",
+      "indices": "BLUPI_rd_00ffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_00ffff.png",
+      "diffuseColor": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ]
     }
   ],
   "animations": [
@@ -47,8 +86,136 @@
       "clip": "clips/March.clip.bin"
     },
     {
+      "name": "Jump",
+      "clip": "clips/Jump.clip.bin"
+    },
+    {
+      "name": "Air",
+      "clip": "clips/Air.clip.bin"
+    },
+    {
+      "name": "Down",
+      "clip": "clips/Down.clip.bin"
+    },
+    {
+      "name": "Up",
+      "clip": "clips/Up.clip.bin"
+    },
+    {
+      "name": "StopEcrase",
+      "clip": "clips/StopEcrase.clip.bin"
+    },
+    {
+      "name": "MarchEcrase",
+      "clip": "clips/MarchEcrase.clip.bin"
+    },
+    {
+      "name": "Balloon",
+      "clip": "clips/Balloon.clip.bin"
+    },
+    {
+      "name": "Teleporting",
+      "clip": "clips/Teleporting.clip.bin"
+    },
+    {
+      "name": "StopSkate",
+      "clip": "clips/StopSkate.clip.bin"
+    },
+    {
+      "name": "MarchSkate",
+      "clip": "clips/MarchSkate.clip.bin"
+    },
+    {
+      "name": "JumpSkate",
+      "clip": "clips/JumpSkate.clip.bin"
+    },
+    {
+      "name": "AirSkate",
+      "clip": "clips/AirSkate.clip.bin"
+    },
+    {
+      "name": "StopNage",
+      "clip": "clips/StopNage.clip.bin"
+    },
+    {
+      "name": "MarchNage",
+      "clip": "clips/MarchNage.clip.bin"
+    },
+    {
+      "name": "StopSurf",
+      "clip": "clips/StopSurf.clip.bin"
+    },
+    {
+      "name": "MarchSurf",
+      "clip": "clips/MarchSurf.clip.bin"
+    },
+    {
+      "name": "Push",
+      "clip": "clips/Push.clip.bin"
+    },
+    {
+      "name": "Switch",
+      "clip": "clips/Switch.clip.bin"
+    },
+    {
+      "name": "TakeDynamite",
+      "clip": "clips/TakeDynamite.clip.bin"
+    },
+    {
+      "name": "PutDynamite",
+      "clip": "clips/PutDynamite.clip.bin"
+    },
+    {
+      "name": "TakeSkate",
+      "clip": "clips/TakeSkate.clip.bin"
+    },
+    {
+      "name": "DeposeSkate",
+      "clip": "clips/DeposeSkate.clip.bin"
+    },
+    {
+      "name": "Mockery",
+      "clip": "clips/Mockery.clip.bin"
+    },
+    {
+      "name": "Mockeryi",
+      "clip": "clips/Mockeryi.clip.bin"
+    },
+    {
+      "name": "Mockeryp",
+      "clip": "clips/Mockeryp.clip.bin"
+    },
+    {
       "name": "Stop",
       "clip": "clips/Stop.clip.bin"
+    },
+    {
+      "name": "DeathLocked.Clear1",
+      "clip": "clips/DeathLocked.Clear1.clip.bin"
+    },
+    {
+      "name": "DeathLocked.Clear3",
+      "clip": "clips/DeathLocked.Clear3.clip.bin"
+    },
+    {
+      "name": "DeathLocked.Glu",
+      "clip": "clips/DeathLocked.Glu.clip.bin"
+    },
+    {
+      "name": "DeathLocked.Drown",
+      "clip": "clips/DeathLocked.Drown.clip.bin"
+    },
+    {
+      "name": "PickupBusy.Sucette",
+      "clip": "clips/PickupBusy.Sucette.clip.bin"
+    },
+    {
+      "name": "PickupBusy.Drink",
+      "clip": "clips/PickupBusy.Drink.clip.bin"
+    },
+    {
+      "name": "PickupBusy.Charge",
+      "clip": "clips/PickupBusy.Charge.clip.bin"
     }
   ]
 }
