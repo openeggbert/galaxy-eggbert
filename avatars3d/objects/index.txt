@@ -6,11 +6,17 @@ creature_creature3
 creature_creature4
 creature_creature5
 drink_bouteille
+dynamite_dynamite
 egg_oeuf
 exit_fleche
 follow_bombe-follow
+key1_cle1
+key2_cle2
+key3_cle3
 mine_bombe
+movingmine_bombe-move
 projectile_balle-glu
+secretexit_cle
 treasure_coffre
 wasp_guepe
 wasp_guepe-tourne

@@ -13,7 +13,16 @@ drink       element 178     Blupi/bouteille.rd4
 creature    element 247-251 Blupi/creature1.rds,Blupi/creature2.rds,Blupi/creature3.rds,Blupi/creature4.rds,Blupi/creature5.rds
 # The mine spins in its sprites (yaw); the hanging mine's icons 48-56 are 12-20 upside down.
 mine        element 12-20,48-56 Blupi/bombe.rd4 yaw=5 vflip=1
-# The wasp's sprites come from its game camera's scenes seen by "Caméra 2" (IoU 0 with "Caméra Jeu").
-wasp        element 195-207 Blupi/guepe.rd4,Blupi/guepe-tourne.rd4 camera=2
+# The wasp's sprites were rendered by "Caméra 2" (IoU 0 with "Caméra Jeu"); the builder finds it.
+wasp        element 195-207 Blupi/guepe.rd4,Blupi/guepe-tourne.rd4
 # The follow enemies' spinning star; its camera looks 6.7 degrees down.
 follow      element 256-265 Blupi/bombe-follow.rd4 yaw=10
+# Pickups and doors' keys (sources found by survey.py icons, element_icons.csv). The lollipop
+# (sucette.rd4) and the invert sign (panneau-invert.rd4) wait for their textures (BB3D-025).
+key1        element 209-215 Blupi/cle1.rd4
+key2        element 216-222 Blupi/cle2.rd4
+key3        element 223-229 Blupi/cle3.rd4
+secretexit  element 122-128 Blupi/cle.rd4
+dynamite    element 252-253 Decor/dynamite.rd4
+# Type 16's icons 69-77: the moving mine.
+movingmine  element 69-77   Blupi/bombe-move.rd4

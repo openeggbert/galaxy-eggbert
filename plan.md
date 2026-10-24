@@ -785,11 +785,18 @@ be converted one at a time.
 - [x] `BB3D-023` Drink (30, `Blupi/bouteille.rd4`, 0.871; its cap renders red, grey in the
       sprite), ammo pack (29, `munitions-glu.rd4`, 0.992), enemy projectile (23,
       `balle-glu.rd4`, 0.995).
-- [ ] `BB3D-024` Keys and secret exit (49-51, 21, `cle*.rd4`; needs `BB3D-006`).
-- [ ] `BB3D-025` Shield (25, `shield1/2.rd4`), lollipop pickup (26, `sucette.rd4`), invert sign
-      (40, `panneau-invert.rd4`), dynamite (55, 56, `Decor/dynamite.rd4`), charge (31,
-      object-m.png icons 238-243, a grey ball on a blue spring with sparks: source not found
-      yet; `Element/power.rds` is an icosahedron, not it).
+- [x] `BB3D-024` Keys and secret exit (49-51, 21): `cle1/2/3.rd4` (red, green, blue keys,
+      icons 209-229) and `cle.rd4` (the gold key, 122-128), each 7 icons, 0.962 mean, with
+      `Caméra 2` (orthographic, no perspective needed; the builder now picks per scene the
+      orthographic camera that wins most icons).
+- [~] `BB3D-025` Done: dynamite (55, 56, `Decor/dynamite.rd4`, 0.975). Waiting for textures:
+      the lollipop pickup (26, `sucette.rd4`, silhouettes 0.985 but its disc shows a many-turn
+      spiral where the sprite has a four-arm swirl: check the cap mapping of this scene's
+      texture, `cnth 1 cntv 5 tile 1`), the invert sign (40, `panneau-invert.rd4`, 0.999 but
+      the picture on its board is a texture map on a cube, not converted yet). Shield (25,
+      `shield1/2.rd4`) matches only 0.5 (`Caméra Jeu`); charge (31, object-m.png 238-243, a
+      grey ball on a blue spring with sparks): source not found yet (`Element/power.rds` is an
+      icosahedron).
 
 **Stage 4 — animated enemies** (clips per icon table, as Blupi's)
 - [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs
@@ -813,7 +820,8 @@ be converted one at a time.
 - [x] `BB3D-036` Wasp (44, icons 195-207): rendered by `Caméra 2` (0 with `Caméra Jeu`);
       `guepe-tourne.rd4` 7 icons 0.959, `guepe.rd4` 6 icons 0.839 (two flap frames 0.62: the
       wing's position is not among the scene's three frames).
-- [ ] `BB3D-037` Spider (16, `bug*.rd4`).
+- [x] `BB3D-037` Type 16 (named spider in code) shows icons 69-77, the moving mine of
+      `Blupi/bombe-move.rd4`: 9 icons, 0.984 mean.
 - [~] `BB3D-038` Green blob creature (33, 54): icons 247-251 from `creature1-5.rds`, IoU
       0.978-0.998, in game. Open: 242-246 (`creature1y.rds`, the creature with eyes, 0.85-0.91)
       render the eyes black with a white cap instead of white with a black pupil, and their

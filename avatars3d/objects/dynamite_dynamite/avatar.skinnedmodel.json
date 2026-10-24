@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "dynamite_rd_ff0000",
+      "vertices": "dynamite_rd_ff0000.verts.bin",
+      "indices": "dynamite_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "dynamite_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "dynamite_rd_6e6e00",
+      "vertices": "dynamite_rd_6e6e00.verts.bin",
+      "indices": "dynamite_rd_6e6e00.idx.bin",
+      "vertexStride": 52,
+      "texture": "dynamite_rd_6e6e00.png",
+      "diffuseColor": [
+        0.15718158711848615,
+        0.15718158711848615,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

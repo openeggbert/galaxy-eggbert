@@ -23,10 +23,12 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   (`avatars3d/objects/`, `ObjectModelTable`, `VerifyObjectModelTable`); in game as 3D:
   treasure, egg, exit, drink, ammo, projectile (`BB3D-020`-`023`), the creature's icons
   247-251 (`BB3D-038`, partly), the mines incl. the hanging one (`BB3D-034`), the wasp
-  (`BB3D-036`), the follow enemies (`BB3D-033`). Checked live
+  (`BB3D-036`), the follow enemies (`BB3D-033`), the keys and secret exit (`BB3D-024`), the
+  dynamite, the moving mine (`BB3D-037`): 21 models, 116 icons. Checked live
   under Xvfb with `--golden-capture` (world 999: eggs incl. flipped icons, treasure, exit).
-- **Next:** `BB3D-031` bird, `BB3D-032` fish (body), the creature's eyes (`BB3D-038`),
-  `BB3D-035` bulldozer/robot, `BB3D-037` spider, `BB3D-024`/`025` pickups; trial runs go to `build-probe/rd4-objects-try` with a scratch
+- **Next:** textures on cubes and the lollipop's cap (`BB3D-025`: invert sign, lollipop),
+  `BB3D-031` bird, `BB3D-032` fish (body), the creature's eyes (`BB3D-038`), `BB3D-035`
+  bulldozer (`tracks-profil.rd4`, 0.64-0.84), shield; trial runs go to `build-probe/rd4-objects-try` with a scratch
   objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (first results
   in `plan.md`). `BB3D-007` icon surveys find unknown sources (element survey running in the
   background: `build-probe/rd4-survey/element_icons.csv`).

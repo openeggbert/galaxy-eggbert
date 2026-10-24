@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "secretexit_rd_ffca00",
+      "vertices": "secretexit_rd_ffca00.verts.bin",
+      "indices": "secretexit_rd_ffca00.idx.bin",
+      "vertexStride": 52,
+      "texture": "secretexit_rd_ffca00.png",
+      "diffuseColor": [
+        1.0,
+        0.5970697121666518,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

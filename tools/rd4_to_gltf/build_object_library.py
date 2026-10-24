@@ -3,8 +3,9 @@
 sprites were rendered from, with a table of which pose draws which sprite icon.
 
 Every object of ``--objects`` (``objects.txt``: name, sheet, icons, scenes, options) is matched
-icon by icon against every distinct frame of its scenes, straight and mirrored, rendered with the
-scene's orthographic camera at the sheet's icon size (``survey.GRIDS``); with ``yaw=STEP`` also
+icon by icon against every distinct frame of its scenes, straight and mirrored, rendered with each
+of the scene's orthographic cameras (keeping per scene the one that wins most icons, unless
+``camera=`` names one) at the sheet's icon size (``survey.GRIDS``); with ``yaw=STEP`` also
 turned about the vertical every STEP degrees (the egg's sprites spin, its scene does not); with
 ``vflip=1`` also upside down (the hanging mine's icons are the mine's flipped vertically). Each
 scene that wins an icon becomes one model: one rigid joint per Ray Dream object the camera sees,
@@ -150,19 +151,16 @@ def read_specs(path: Path) -> list[ObjectSpec]:
     return specs
 
 
-def ortho_camera(scene: sc.Scene, wanted: str | None) -> str:
-    """The camera the sprites were rendered with: ``wanted``, else the orthographic game camera."""
+def ortho_cameras(scene: sc.Scene, wanted: str | None) -> list[str]:
+    """The cameras the sprites may have been rendered with: ``wanted``, else every orthographic
+    one (the builder keeps, per scene, the one that wins most icons)."""
     if wanted:
-        return wanted
+        return [wanted]
     cams = [o for o, _p, _c, _g in sc.world_frames(scene, None) if o.kind == "ca"]
     iso = [o.name for o in cams if o.chunk.chunk("proj") is not None and o.chunk.chunk("proj").chunk("iso")]
-    for key in ("Jeu", "2"):
-        for name in iso:
-            if key in name:
-                return name
-    if iso:
-        return iso[0]
-    raise NotImplementedError("no orthographic camera")
+    if not iso:
+        raise NotImplementedError("no orthographic camera")
+    return iso
 
 
 def setup_scene(scene: sc.Scene, camera: str) -> SceneSetup:
@@ -333,11 +331,21 @@ def main(argv=None) -> int:
         grid = survey.GRIDS[spec.sheet]
         icon_px = grid[0]
         icon_rgb, icon_mask = survey.load_sheet(args.sheets / f"{spec.sheet}.png", grid)
-        setups = []
-        for s in spec.scenes:
+        # Every (scene, orthographic camera); then per scene the camera that wins most icons.
+        candidates, owner = [], []
+        for si, s in enumerate(spec.scenes):
             scene = sc.read_scene(rd4.parse_file(args.originals / s))
-            setups.append(setup_scene(scene, ortho_camera(scene, spec.camera)))
-        best = match_object(spec, setups, icon_rgb, icon_mask, icon_px)
+            for cam in ortho_cameras(scene, spec.camera):
+                candidates.append(setup_scene(scene, cam))
+                owner.append(si)
+        best = match_object(spec, candidates, icon_rgb, icon_mask, icon_px)
+        setups = []
+        for si in range(len(spec.scenes)):
+            mine = [k for k, o in enumerate(owner) if o == si]
+            wins = {k: sum(1 for m in best.values() if m.scene == k) for k in mine}
+            setups.append(candidates[max(mine, key=lambda k: (wins[k], -k))])
+        if len(candidates) > len(setups):
+            best = match_object(spec, setups, icon_rgb, icon_mask, icon_px)
         for si, setup in enumerate(setups):
             matches = sorted((m for m in best.values() if m.scene == si), key=lambda m: m.icon)
             if not matches:
@@ -379,6 +387,7 @@ def main(argv=None) -> int:
                   f"model check min {min(checks):.3f}")
             for w in warnings:
                 print("  warning:", w)
+    rows = {k: v for k, v in rows.items() if (args.out / k / "model.glb").exists()}
     report = ["| Object | Model | Icons | Mean IoU | Min IoU | Model check (min IoU) |",
               "|---|---|---|---|---|---|"] + [rows[k] for k in sorted(rows)]
     report_path.write_text("\n".join(report) + "\n")
