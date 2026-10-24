@@ -61,10 +61,12 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 - Third person shows the real Blupi converted from the original Ray Dream scenes
   (`avatars3d/blupi/`, `tools/rd4_to_gltf/`) with a clip, expression, props and vehicle per
   animation state, and parked vehicles as 3D models; the overcraft matches its sprites only
-  roughly. The treasure, egg, level exit, drink, ammo pack and enemy projectile are 3D models
-  converted the same way (`avatars3d/objects/`); the other enemies and pickups, big decor and the
-  other Blupis are still billboards, being converted (`plan.md` Phase 7B, `handoff.md`); effects
-  stay billboards. First person still uses an invisible collision point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
+  roughly. The game's objects are 3D models converted the same way (`avatars3d/objects/`,
+  `plan.md` Phase 7B): pickups (treasure, egg, exit, keys, secret exit, drink, ammo, dynamite,
+  invert sign, lollipop), enemies (mines, moving and hanging mines, bird, fish, wasp, bulldozer,
+  creature, follow star, decoys, enemy projectile) and the tentacle; big decor is next. Effects
+  and the shield (sparks) stay billboards. First person still uses an invisible collision
+  point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
 - `tests/golden/` no longer matches `develop` with CNA `900d0db3b` (the trace runs one tick ahead);
   the references need regenerating once the CNA revision is settled.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not
