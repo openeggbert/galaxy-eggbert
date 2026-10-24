@@ -4,7 +4,25 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-24 (evening)._
+_Last updated: 2026-10-24 (late evening)._
+
+## Resume here (exact state when last written)
+
+1. **Object library re-export pending.** Commit `cc8c391` changed the converter (free-forms
+   drop rings/points their neighbours reproduce; meshes split at 65 535 vertices, which had
+   stopped the export at the palms). A full rebuild of `build-probe/rd4-objects` was started
+   (log `build-probe/rd4-objects/build.log`). `avatars3d/objects/` in the worktree is a
+   *partial, failed* export from before the fix: do not commit it as is. When the rebuild has
+   finished (every object in `tools/rd4_to_gltf/objects.txt` has a line `... icons, IoU ...` in
+   the log; if the process is gone and the log is incomplete, re-run the command from
+   `avatars3d/objects/README.md`), run the export there, then build, `ctest`, commit
+   `avatars3d/objects` together with the big decor/grass entries of `objects.txt`, push.
+   Compare IoU with `report.md` rows (palms 0.755-0.784, grass 0.65-0.69, others 0.87-1.0).
+2. **Blupi (`BB3D-008`):** the clip library `build-probe/rd4-blupi/library/blupi.glb` was
+   rebuilt (exit 0) with the converter *before* `cc8c391` (no free-form simplification; Blupi's
+   meshes are small, the DXF deviations are identical either way). Next: compare its
+   `clips.md` with the earlier matching numbers below, look at a face check image, export with
+   `avatars3d/blupi/README.md`'s commands, build, test, commit.
 
 ## Active work: billboards → 3D models (`plan.md` Phase 7B, `BB3D-*`)
 
