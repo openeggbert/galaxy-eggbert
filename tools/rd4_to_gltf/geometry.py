@@ -163,7 +163,8 @@ class MeshUV:
 
 
 def canonical_mesh(master: rd4.Chunk):
-    """Generated canonical geometry of a master: (Mesh, FreeformMesh or None)."""
+    """Generated canonical geometry of a master: (Mesh, FreeformMesh or MeshUV or None), or None
+    for a master no sprite shows: the flat surface ``COfl`` (README.md, "Geometry")."""
     import freeform_mesh
     import primitives
     if master.tag == "ex":
@@ -194,6 +195,10 @@ def canonical_mesh(master: rd4.Chunk):
         return orient_outwards(primitives.cube()), None
     if kind == "co":
         return orient_outwards(primitives.cone()), None
+    if kind == "COfl":
+        # The scenes' ground plane, horizontal at Z -15 and seen edge-on by every orthographic
+        # camera: no sprite shows it, and the game's own ground replaces it.
+        return None
     raise NotImplementedError(f"master {master.string('nm')!r}: primitive {kind!r}")
 
 

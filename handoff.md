@@ -14,8 +14,9 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
 
 - **Done:** the plan (`plan.md` Phase 7B); `tools/rd4_to_gltf/survey.py` (the archive survey and
   the per-sheet icon matching, formerly throwaway scripts).
-- **Done (Stage 1):** `BB3D-001` cones (`primitives.cone`).
-- **Next:** `BB3D-002` (`COfl` flat surfaces), then `BB3D-003` (`vmda`).
+- **Done (Stage 1):** `BB3D-001` cones (`primitives.cone`); `BB3D-002` flat surfaces (the
+  never-visible ground plane, built as nothing).
+- **Next:** `BB3D-003` (`vmda` mesh-form masters).
 - **Survey baseline** (`build-probe/rd4-survey/scenes.csv`, 2026-10-24): 500 of 528 scenes read;
   masters not built: `COfl` 87 scenes, `vmda` 83, `ex` IndexError 18, `co` 15, `tx` 14,
   `COFA` 2, `im` ValueError 1, `fogg` 1; 28 RDS 5 files fail with AttributeError

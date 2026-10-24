@@ -729,7 +729,9 @@ be converted one at a time.
 - [x] `BB3D-001` Cone masters `co` (15 scenes: the mines' spikes, the fish's teeth). Base
       radius 3 at local Z -2.5, apex at +2.5 (the cylinder's box): `bombe.rd4` against icons
       12-20 mean IoU 0.844 (icon 12: 0.981); apex at -Z gives 0.629 (2026-10-24).
-- [ ] `BB3D-002` Flat surface masters `COfl` (87 scenes: big decor ground planes, signs).
+- [x] `BB3D-002` Flat surface masters `COfl` (87 scenes): the scenes' ground plane, horizontal at
+      Z -15 and edge-on to every orthographic camera in all 87, so no sprite shows it; the
+      converter now builds nothing for it instead of failing (2026-10-24).
 - [ ] `BB3D-003` Mesh-form masters `vmda` (83: creatures, tentacles, drops, lava, the palace).
 - [ ] `BB3D-004` Star masters `COFA` (2) and the 18 free-form `ex` variants that fail
       (`IndexError`); fog `fogg` (1) is skipped, text `tx` (14, menus only) is out of scope.

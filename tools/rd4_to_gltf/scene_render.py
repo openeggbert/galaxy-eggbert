@@ -40,7 +40,11 @@ class SceneRenderer:
     def _canonical(self, master: str):
         if master not in self.meshes:
             try:
-                mesh, ff = geometry.canonical_mesh(self.scene.masters[master])
+                canon = geometry.canonical_mesh(self.scene.masters[master])
+                if canon is None:
+                    self.meshes[master] = None
+                    return None
+                mesh, ff = canon
                 pos, nrm, tris, src = geometry.smooth_normals(mesh, return_index=True)
                 self.meshes[master] = (pos, nrm, tris, src, ff)
             except (NotImplementedError, KeyError, AttributeError, IndexError) as e:
