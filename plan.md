@@ -859,8 +859,20 @@ be converted one at a time.
       no object type uses (the splashes 14, 15, 35, 98-100 are effects).
 
 **Stage 6 — big decor** (`explo.png` cells)
-- [ ] `BB3D-050` Static models of the `Explo/` scenes (`cabane`, `maison`, `plante1a-3c`,
-      `enfant01-13`, `meca1-4`, `herbe`) drawn instead of the BigDecor billboards.
+- [~] `BB3D-050` Big decor (explo.png BigDecor cells; the icons the original worlds use:
+      16-31, 36-47, 66-69, 87-89, 203). Done 2026-10-24, from `survey.py icons --sheet
+      explo.png --folders Explo` and trials: palms 16-19 (`plante1a-1d`, 0.76-0.78: thin
+      fronds), trees 20-22 (`plante2a-2c`, 0.96-0.97), grass 23-25 (`plante3a-3c`, 0.41-0.49:
+      blades wider than the sprites'; envelope readings checked against blupi.dxf, not the
+      cause), houses 26-27 (`maison` 1.000, `cabane` 0.993), machines 28-31 (`meca1-4`,
+      0.98-1.00), toys 36-47 (`enfant01-08`, `10-13`, 0.98-1.00, with sphere/cone textures),
+      green pillars 66-68 (`Decor/smooth/colonne1-3`, 0.90-0.99 with per-icon offsets), the
+      Blupi statue 89 (`Decor/palais/statue.rds`, 0.991). 203 is not explo.png: the game now
+      draws the object channel's marine animation there, as the original. Open: 69 (a green
+      spiky plant), 87 (a column), 88 (a fountain bowl) - sources not found yet; procedural
+      textures (metal noise, wood grain) are flat colours. The game draws them standing on
+      their cell's floor at the original size (128/144 px = 2/2.25 blocks); not checked live
+      (no generated world has BigDecor).
 
 **Stage 7 — the other Blupis**
 - [x] `BB3D-060` Types 200-203 (the decoys spawned at run time, never placed in the worlds) show
