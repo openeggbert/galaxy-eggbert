@@ -34,13 +34,15 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (results in
   `plan.md`). Unknown sources: `survey.py icons` (element done:
   `build-probe/rd4-survey/element_icons.csv`; object-m and explo not run yet).
-- **Pending check:** `BB3D-008` (Blupi's library with the camera offset, and `xyzS`, which
-  `blupi-scie.rds`, Clear4's scene, uses, and the right-handed free-form sections): the
-  matching re-run (with `ofst`, before `xyzS` and the sections) gave 145 confident / 61
-  probable / 25 unmatched icons (was 121 / 76 / 34; the overcraft and the hanging bar now
-  match). Rebuild the clip library with the current converter and compare
-  `build-probe/rd4-blupi/library/clips.md` with the copy saved before (scratchpad
-  `before-ofst/`, overcraft and Clear4 rows); re-run the matching if Clear4 changes.
+- **In progress `BB3D-008`** (Blupi's library with the converter's fixes): a library built
+  with `ofst` and `xyzS` (but the old left-handed sections) gave StopOver 0.764 -> 0.983,
+  MarchOver 0.739 -> 0.940, DeathLocked.Clear4 0.843 -> 0.982, the rest unchanged (copies in
+  the scratchpad `after-ofst-xyzs/`). A full re-run (matching ~70 min, then the library) with
+  the current converter (right-handed sections too) runs in the background; when it ends:
+  compare `build-probe/rd4-blupi/library/clips.md`, check the face in a few frames (the
+  sections' handedness mirrors the face texture: colour 0.906 / 0.907 says it barely
+  matters), then export with the commands in `avatars3d/blupi/README.md`, build, test and
+  commit. If interrupted: re-run those commands.
 - **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing
   still (`ChaseCameraYaw::kIdleDelaySeconds`, was 0.8 s).
 - **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-004`): all 528 scenes read; the
