@@ -28,15 +28,15 @@
       ]
     },
     {
-      "name": "treasure_rd_ff0000",
-      "vertices": "treasure_rd_ff0000.verts.bin",
-      "indices": "treasure_rd_ff0000.idx.bin",
+      "name": "treasure_rd_7f7f7f",
+      "vertices": "treasure_rd_7f7f7f.verts.bin",
+      "indices": "treasure_rd_7f7f7f.idx.bin",
       "vertexStride": 52,
-      "texture": "treasure_rd_ff0000.png",
+      "texture": "treasure_rd_7f7f7f.png",
       "diffuseColor": [
-        1.0,
-        0.0,
-        0.0,
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
         1.0
       ]
     },

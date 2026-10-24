@@ -1,0 +1,167 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_cabane_rd_tex_p07_mur_ouest",
+      "vertices": "bd_cabane_rd_tex_p07_mur_ouest.verts.bin",
+      "indices": "bd_cabane_rd_tex_p07_mur_ouest.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_tex_p07_mur_ouest.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_tex_p08_mur_ouest",
+      "vertices": "bd_cabane_rd_tex_p08_mur_ouest.verts.bin",
+      "indices": "bd_cabane_rd_tex_p08_mur_ouest.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_tex_p08_mur_ouest.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_tex_p09_Facade",
+      "vertices": "bd_cabane_rd_tex_p09_Facade.verts.bin",
+      "indices": "bd_cabane_rd_tex_p09_Facade.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_tex_p09_Facade.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_tex_p10_Facade",
+      "vertices": "bd_cabane_rd_tex_p10_Facade.verts.bin",
+      "indices": "bd_cabane_rd_tex_p10_Facade.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_tex_p10_Facade.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_tex_p11_Toit",
+      "vertices": "bd_cabane_rd_tex_p11_Toit.verts.bin",
+      "indices": "bd_cabane_rd_tex_p11_Toit.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_tex_p11_Toit.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_tex_p12_Toit",
+      "vertices": "bd_cabane_rd_tex_p12_Toit.verts.bin",
+      "indices": "bd_cabane_rd_tex_p12_Toit.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_tex_p12_Toit.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_f7ac00",
+      "vertices": "bd_cabane_rd_f7ac00.verts.bin",
+      "indices": "bd_cabane_rd_f7ac00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_f7ac00.png",
+      "diffuseColor": [
+        0.9374824827715106,
+        0.41456802404539866,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_7ffdfd",
+      "vertices": "bd_cabane_rd_7ffdfd.verts.bin",
+      "indices": "bd_cabane_rd_7ffdfd.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_7ffdfd.png",
+      "diffuseColor": [
+        0.21404114048223255,
+        0.9909246121188983,
+        0.9909246121188983,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_878787",
+      "vertices": "bd_cabane_rd_878787.verts.bin",
+      "indices": "bd_cabane_rd_878787.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_878787.png",
+      "diffuseColor": [
+        0.24486433840410252,
+        0.24486433840410252,
+        0.24486433840410252,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_c7c6c7",
+      "vertices": "bd_cabane_rd_c7c6c7.verts.bin",
+      "indices": "bd_cabane_rd_c7c6c7.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_c7c6c7.png",
+      "diffuseColor": [
+        0.5737665108105048,
+        0.5655748382522566,
+        0.5770624335144318,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_7f7f7f",
+      "vertices": "bd_cabane_rd_7f7f7f.verts.bin",
+      "indices": "bd_cabane_rd_7f7f7f.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_7f7f7f.png",
+      "diffuseColor": [
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_cabane_rd_ff0000",
+      "vertices": "bd_cabane_rd_ff0000.verts.bin",
+      "indices": "bd_cabane_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_cabane_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

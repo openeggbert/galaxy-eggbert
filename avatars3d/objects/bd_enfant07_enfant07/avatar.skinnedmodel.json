@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_enfant07_rd_tex_p04_Sphere",
+      "vertices": "bd_enfant07_rd_tex_p04_Sphere.verts.bin",
+      "indices": "bd_enfant07_rd_tex_p04_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant07_rd_tex_p04_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant07_rd_3ec1ec",
+      "vertices": "bd_enfant07_rd_3ec1ec.verts.bin",
+      "indices": "bd_enfant07_rd_3ec1ec.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant07_rd_3ec1ec.png",
+      "diffuseColor": [
+        0.04928941756705957,
+        0.53507099108643,
+        0.8398461092288596,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
