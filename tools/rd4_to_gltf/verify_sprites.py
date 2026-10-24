@@ -144,6 +144,8 @@ class Model:
 
     def skinned(self, seconds: float):
         jm = self.pose(seconds)
+        # Normals by the inverse transpose: shape joints scale their parts unevenly.
+        nm = np.array([np.linalg.inv(m[:3, :3]).T for m in jm])
         out = []
         for p in self.prims:
             pos = np.zeros_like(p["pos"])
@@ -154,7 +156,7 @@ class Model:
                     continue
                 m = np.array(jm)[p["joints"][:, k]]
                 pos += w * (np.einsum("nij,nj->ni", m[:, :3, :3], p["pos"]) + m[:, :3, 3])
-                nrm += w * np.einsum("nij,nj->ni", m[:, :3, :3], p["nrm"])
+                nrm += w * np.einsum("nij,nj->ni", nm[p["joints"][:, k]], p["nrm"])
             nrm /= np.maximum(np.linalg.norm(nrm, axis=1, keepdims=True), 1e-12)
             out.append((pos, nrm, p["tris"], p["color"], p["uv"], p["tex"]))
         return out

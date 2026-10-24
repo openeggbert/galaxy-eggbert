@@ -59,7 +59,7 @@ def matrix_to_quat_xyzw(m: np.ndarray) -> np.ndarray:
 class Converter:
     def __init__(self, scene: sc.Scene, root_name: str, scale: float, warnings: list[str]):
         self.scene = scene
-        self.canonical: dict[str, tuple] = {}
+        self.canonical: dict[tuple, tuple] = {}
         self.scale = scale
         self.warnings = warnings
         self.offset = np.zeros(3)
@@ -87,6 +87,27 @@ class Converter:
 
         rec(root, -1)
         self.ancestors = _path_to(scene.universe, root)[:-1]
+        # Joints appended from other scenes (props, add_joint): their scene and the tick they are
+        # posed at, relative to their parent, in the bind pose.
+        self.scene_of: dict[int, sc.Scene] = {}
+        self.tick_of: dict[int, float] = {}
+        self.optional: set[str] = set()
+        # Extra Ray Dream world translation per tick, e.g. to line this scene's game camera up with
+        # another scene's (build_clip_library.py).
+        self.world_shift = lambda t: np.zeros(3)
+        self.scene_label = "scene"
+
+    def add_joint(self, o: sc.Obj, name: str, parent_index: int, scene: sc.Scene, tick: float) -> int:
+        """Append a joint from another scene (a prop) under ``parent_index``, posed relative to it
+        as in its own scene at ``tick``. A clip whose scene lacks it hides it, without a warning."""
+        i = len(self.joints)
+        self.joints.append(o)
+        self.names.append(name)
+        self.parent[i] = parent_index
+        self.scene_of[i] = scene
+        self.tick_of[i] = tick
+        self.optional.add(name)
+        return i
 
     # ---- frames -------------------------------------------------------------------
     def above_root(self, t: float | None) -> np.ndarray:
@@ -100,12 +121,16 @@ class Converter:
         """(child-space-to-world, geometry-to-world) per joint, in Ray Dream world units."""
         out = []
         base = self.above_root(t)
+        shift = self.world_shift(t)
+        if shift.any():
+            base = sc.affine(np.eye(3), shift) @ base
         worlds: list[np.ndarray] = []
         for i, o in enumerate(self.joints):
             p = self.parent[i]
             parent_world = base if p < 0 else worlds[p]
-            cw = parent_world @ sc.child_frame(o, t)
-            gw = parent_world @ sc.geometry_frame(o, t)
+            tt = self.tick_of.get(i, t)
+            cw = parent_world @ sc.child_frame(o, tt)
+            gw = parent_world @ sc.geometry_frame(o, tt)
             worlds.append(cw)
             out.append((cw, gw))
         return out
@@ -121,6 +146,16 @@ class Converter:
         m[:3, 3] = RD_TO_GLTF @ (cw[:3, 3] * self.scale) + self.offset
         return m, mirrored
 
+    def shape_world(self, gw: np.ndarray) -> np.ndarray:
+        """glTF-space matrix placing a part's canonical geometry (Ray Dream geometry frame: scale,
+        deformer, hot point), kept proper like the joints by moving a mirror into the geometry."""
+        m = np.eye(4)
+        m[:3, :3] = RD_TO_GLTF @ gw[:3, :3] * self.scale
+        m[:3, 3] = RD_TO_GLTF @ (gw[:3, 3] * self.scale) + self.offset
+        if np.linalg.det(m[:3, :3]) < 0:
+            m[:3, :3] = m[:3, :3] @ MIRROR
+        return m
+
     # ---- geometry -----------------------------------------------------------------
     def build_vertices(self, t_bind: float):
         """Bind-pose geometry grouped by material: {material key: [(pos, nrm, tris, joint, uv)]}.
@@ -134,15 +169,17 @@ class Converter:
         for i, o in enumerate(self.joints):
             if not o.master:
                 continue
-            if o.master not in self.canonical:
+            scene = self.scene_of.get(i, self.scene)
+            master = (id(scene), o.master)
+            if master not in self.canonical:
                 try:
-                    self.canonical[o.master] = geometry.canonical_mesh(self.scene.masters[o.master])
+                    self.canonical[master] = geometry.canonical_mesh(scene.masters[o.master])
                 except NotImplementedError as e:
-                    self.canonical[o.master] = None
-                    self.warnings.append(f"{o.name}: {e}; skipped")
-            if self.canonical[o.master] is None:
+                    self.canonical[master] = None
+                    self.warnings.append(f"{self.names[i]}: {e}; skipped")
+            if self.canonical[master] is None:
                 continue
-            mesh, ff = self.canonical[o.master]
+            mesh, ff = self.canonical[master]
             cw, gw = frames[i]
             # Canonical -> RD world -> glTF space.
             m = np.eye(4)
@@ -150,19 +187,19 @@ class Converter:
             m[:3, 3] = RD_TO_GLTF @ (gw[:3, 3] * self.scale) + self.offset
             pos, nrm, tris, src = geometry.smooth_normals(mesh, return_index=True)
             uv = None
-            key = shading.material_key(self.scene, o)
+            key = shading.material_key(scene, o)
             try:
-                tex = shading.texture_map(self.scene, o)
+                tex = shading.texture_map(scene, o)
             except NotImplementedError as e:
                 tex = None
-                self.warnings.append(f"{o.name}: texture not converted ({e}); flat colour used")
+                self.warnings.append(f"{self.names[i]}: texture not converted ({e}); flat colour used")
             if tex is not None and ff is None:
-                self.warnings.append(f"{o.name}: texture map on a primitive not converted")
+                self.warnings.append(f"{self.names[i]}: texture map on a primitive not converted")
             elif tex is not None:
                 self.warnings.extend(tex.warnings)
                 st = freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src]
                 pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0)
-                key = ("texture", o.name)
+                key = ("texture", self.names[i])
                 self.textures[key] = tex
             wpos = pos @ m[:3, :3].T + m[:3, 3]
             nm = np.linalg.inv(m[:3, :3]).T
@@ -179,15 +216,6 @@ class Converter:
         self.offset = np.array([0.0, -lowest, 0.0])
 
     # ---- animation ----------------------------------------------------------------
-    def check_supported_animation(self):
-        for o in self.joints:
-            if o.hotp_track is not None and _varies(o.hotp_track):
-                self.warnings.append(f"{o.name}: animated hot point ignored")
-            if o.scal_track is not None and _varies(o.scal_track):
-                self.warnings.append(f"{o.name}: animated scale ignored")
-            if any(tr is not None and _varies(tr) for tr in o.affi_tracks):
-                self.warnings.append(f"{o.name}: animated deformer ignored")
-
     def local_matrices(self, t: float) -> list[np.ndarray]:
         frames = self.rd_frames(t)
         worlds = [self.joint_world(cw)[0] for cw, _gw in frames]
@@ -213,30 +241,47 @@ class Converter:
 
     def write(self, path: Path, clips: list["Clip"], sample_fps: float, t_bind: float, extras: dict,
               frame_rate: float | None = None):
-        self.check_supported_animation()
         self.ground_offset(t_bind)
         b = gltf.GltfBuilder("galaxy-eggbert tools/rd4_to_gltf")
         bind_frames = self.rd_frames(t_bind)
         bind_world = [self.joint_world(cw)[0] for cw, _gw in bind_frames]
         bind_local = self.local_matrices(t_bind)
+        groups = self.build_vertices(t_bind)
+        with_geometry = sorted({item[3] for items in groups.values() for item in items})
+        bind_shape = {i: np.linalg.inv(bind_world[i]) @ self.shape_world(bind_frames[i][1]) for i in with_geometry}
+
+        # Every clip's poses on this skeleton. A part whose geometry frame (scale, deformer, hot
+        # point) changes in some pose, or which some pose's scene does not have, gets a shape
+        # joint: a leaf child of its joint carrying that frame, with the part skinned to it.
+        animations = []
+        for clip in clips:
+            poses = [(pose[0], *pose_on(self, pose[1], pose[2], bind_local, clip.name, *pose[3:]))
+                     for pose in clip.poses(self, sample_fps, frame_rate)]
+            animations.append((clip.name, poses))
+        shaped = [i for i in with_geometry
+                  if any(shapes[i] is None or not np.allclose(shapes[i], bind_shape[i], atol=1e-6)
+                         for _n, poses in animations for _s, _j, shapes in poses)]
 
         # Joint nodes.
         node_of = []
         for i, name in enumerate(self.names):
-            m = bind_local[i]
-            node = {"name": name, "translation": [float(x) for x in m[:3, 3]],
-                    "rotation": [float(x) for x in matrix_to_quat_xyzw(m[:3, :3])]}
-            node_of.append(b.add("nodes", node))
+            node_of.append(b.add("nodes", trs_node(name, bind_local[i])))
         for i in range(len(self.joints)):
             p = self.parent[i]
             if p >= 0:
                 b.doc["nodes"][node_of[p]].setdefault("children", []).append(node_of[i])
+        shape_node_of = {}
+        for i in shaped:
+            shape_node_of[i] = b.add("nodes", trs_node(f"{self.names[i]}.shape", bind_shape[i], scale=True))
+            b.doc["nodes"][node_of[i]].setdefault("children", []).append(shape_node_of[i])
+        skin_index = {i: i for i in range(len(self.joints))}
+        skin_index.update({i: len(self.joints) + k for k, i in enumerate(shaped)})
 
         # One skinned mesh per material, each named after its material: CNA's convert_avatar.py
         # names each part after its mesh and keeps no material colour (upstream_bugs.md UB-001,
         # UB-002), so the name is the only place the converted part's colour survives.
-        skin = b.add("skins", {"name": self.root.name, "joints": node_of, "skeleton": node_of[0]})
-        groups = self.build_vertices(t_bind)
+        skin = b.add("skins", {"name": self.root.name, "joints": node_of + [shape_node_of[i] for i in shaped],
+                               "skeleton": node_of[0]})
         materials = {}
         mesh_nodes = []
         for key, items in groups.items():
@@ -251,7 +296,7 @@ class Converter:
             tris, joints, base = [], [], 0
             for w, _n, t, i, _uv in items:
                 tris.append(t + base)
-                joints.append(np.full(len(w), i))
+                joints.append(np.full(len(w), skin_index[i]))
                 base += len(w)
             tris = np.concatenate(tris).astype(np.uint32)
             j = np.zeros((len(pos), 4), dtype=np.uint8)
@@ -274,14 +319,15 @@ class Converter:
             name = f"{self.root.name}_{b.doc['materials'][materials[key]]['name']}"
             mesh = b.add("meshes", {"name": name, "primitives": [primitive]})
             mesh_nodes.append(b.add("nodes", {"name": name, "mesh": mesh, "skin": skin}))
-        ibm = np.array([np.linalg.inv(m).T for m in bind_world], dtype=np.float32)  # column-major
+        binds = bind_world + [bind_world[i] @ bind_shape[i] for i in shaped]
+        ibm = np.array([np.linalg.inv(m).T for m in binds], dtype=np.float32)  # column-major
         b.doc["skins"][skin]["inverseBindMatrices"] = b.accessor(ibm.reshape(-1, 16), gltf.FLOAT)
 
         # Animation clips: each samples its own scene's keys onto this skeleton (joints matched by
         # name) with this scene's ground offset, so clips from scenes that place Blupi differently
         # keep that difference, as the sprites do.
-        for clip in clips:
-            clip.write_animation(b, self, node_of, sample_fps, frame_rate)
+        for name, poses in animations:
+            write_animation(b, name, node_of, shape_node_of, bind_shape, poses)
 
         b.doc["scenes"] = [{"name": self.root.name, "nodes": [node_of[0], *mesh_nodes]}]
         b.doc["scene"] = 0
@@ -293,7 +339,93 @@ class Converter:
                        "clips": [{"name": c.name, "scene": c.label, "ticks": [c.t0, c.t1]} for c in clips]})
         b.doc["asset"]["extras"] = {"rd4_to_gltf": extras}
         b.write(path)
-        return len(self.joints), len(mesh_nodes)
+        return len(self.joints) + len(shaped), len(mesh_nodes)
+
+
+def trs_node(name: str, m: np.ndarray, scale: bool = False) -> dict:
+    t, r, sc_ = decompose(m)
+    node = {"name": name, "translation": [float(x) for x in t], "rotation": [float(x) for x in r]}
+    if scale:
+        node["scale"] = [float(x) for x in sc_]
+    return node
+
+
+def decompose(m: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """(translation, rotation xyzw, scale) of an affine matrix without shear, as glTF composes
+    them (scale first, in the node's own axes). Ray Dream's deformer is a rotation times an axis
+    scale, so a geometry frame never shears."""
+    lin = m[:3, :3]
+    s = np.linalg.norm(lin, axis=0)
+    r = lin / np.where(s > 0, s, 1.0)
+    if np.abs(r.T @ r - np.eye(3)).max() > 1e-4 or np.linalg.det(r) < 0:
+        raise ValueError("sheared or mirrored transform cannot become glTF TRS")
+    return m[:3, 3], matrix_to_quat_xyzw(r), s
+
+
+# A part that a pose's scene does not have is shrunk to nothing on its shape joint.
+HIDDEN_SCALE = 1e-4
+
+
+def pose_on(main: "Converter", conv: "Converter", tick: float, bind_local: list[np.ndarray],
+            clip: str, hide: frozenset = frozenset()) -> tuple[list[np.ndarray], list[np.ndarray | None]]:
+    """One pose of ``conv``'s scene on ``main``'s skeleton: local joint matrices, and per joint
+    its geometry frame relative to the joint (None for a part the scene does not have, or one
+    named in ``hide``). Joints are matched by name; one the scene lacks keeps its bind pose
+    relative to its parent."""
+    conv.offset = main.offset
+    frames = conv.rd_frames(float(tick))
+    # Joints a converter took from other scenes (add_joint) are not in its own scene.
+    index = {n: k for k, n in enumerate(conv.names) if n not in hide and k not in conv.scene_of}
+    missing = [n for n in main.names if n not in index and n not in main.optional]
+    if missing:
+        main.warnings.append(f"clip {clip!r}: {conv.scene_label} has no {missing}; hidden")
+    worlds, local, shapes = [], [], []
+    for i, n in enumerate(main.names):
+        p = main.parent[i]
+        k = index.get(n)
+        if k is None:
+            w = bind_local[i] if p < 0 else worlds[p] @ bind_local[i]
+            shape = None
+        else:
+            cw, gw = frames[k]
+            w = conv.joint_world(cw)[0]
+            shape = np.linalg.inv(w) @ conv.shape_world(gw) if conv.joints[k].master else None
+        worlds.append(w)
+        local.append(w if p < 0 else np.linalg.inv(worlds[p]) @ w)
+        shapes.append(shape)
+    return local, shapes
+
+
+def write_animation(b: gltf.GltfBuilder, name: str, node_of: list[int], shape_node_of: dict[int, int],
+                    bind_shape: dict[int, np.ndarray], poses: list):
+    """One glTF animation from (seconds, local joint matrices, shapes) poses, LINEAR between them.
+    Every joint gets every channel, so a pose never inherits another clip's state."""
+    seconds = np.array([p[0] for p in poses], dtype=np.float32)
+    time_acc = b.accessor(seconds, gltf.FLOAT, minmax=True)
+    samplers, channels = [], []
+
+    def channel(node: int, mats: list[np.ndarray], with_scale: bool):
+        parts = [decompose(m) for m in mats]
+        quats = []
+        for _t, q, _s in parts:
+            if quats and q @ quats[-1] < 0:
+                q = -q
+            quats.append(q)
+        data = [("translation", np.array([t for t, _q, _s in parts], dtype=np.float32)),
+                ("rotation", np.array(quats, dtype=np.float32))]
+        if with_scale:
+            data.append(("scale", np.array([s_ for _t, _q, s_ in parts], dtype=np.float32)))
+        for path_name, values in data:
+            samplers.append({"input": time_acc, "output": b.accessor(values, gltf.FLOAT),
+                             "interpolation": "LINEAR"})
+            channels.append({"sampler": len(samplers) - 1, "target": {"node": node, "path": path_name}})
+
+    for i, node in enumerate(node_of):
+        channel(node, [local[i] for _s, local, _sh in poses], False)
+    hidden = np.diag([HIDDEN_SCALE] * 3 + [1.0])
+    for i, node in shape_node_of.items():
+        channel(node, [sh[i] if sh[i] is not None else bind_shape[i] @ hidden for _s, _l, sh in poses], True)
+    b.add("animations", {"name": name, "samplers": samplers, "channels": channels})
 
 
 class Clip:
@@ -302,14 +434,10 @@ class Clip:
     def __init__(self, name: str, conv: "Converter", label: str, t0: float, t1: float):
         self.name, self.conv, self.label, self.t0, self.t1 = name, conv, label, t0, t1
 
-    def write_animation(self, b: gltf.GltfBuilder, main: "Converter", node_of: list[int],
-                        sample_fps: float, frame_rate: float | None):
+    def poses(self, main: "Converter", sample_fps: float, frame_rate: float | None):
+        """[(seconds, converter, tick)] sampling the clip."""
         conv = self.conv
-        conv.offset = main.offset
-        index = {n: i for i, n in enumerate(conv.names)}
-        missing = [n for n in main.names if n not in index]
-        if missing:
-            main.warnings.append(f"clip {self.name!r}: joints {missing} not in {self.label}; bind pose kept")
+        conv.scene_label = self.label
         # Seconds per scene tick: real time, or one rendered frame per 1/frame_rate seconds.
         per_tick = 1.0 / sc.TICKS_PER_SECOND
         if frame_rate:
@@ -317,33 +445,24 @@ class Clip:
         if self.t1 > self.t0:
             n = max(2, int(round((self.t1 - self.t0) * per_tick * sample_fps)) + 1)
             ticks = np.linspace(self.t0, self.t1, n)
+            seconds = (ticks - self.t0) * per_tick
         else:
             ticks = np.array([self.t0, self.t0])
-        seconds = (ticks - self.t0) * per_tick
-        if self.t1 <= self.t0:
             seconds = np.array([0.0, 1.0 / (frame_rate or 1.0)])
-        locals_ = [conv.local_matrices(float(t)) for t in ticks]
-        time_acc = b.accessor(seconds.astype(np.float32), gltf.FLOAT, minmax=True)
-        samplers, channels = [], []
-        for i, name in enumerate(main.names):
-            if name not in index:
-                continue
-            k = index[name]
-            trs = np.array([m[k][:3, 3] for m in locals_], dtype=np.float32)
-            quats = []
-            for m in locals_:
-                q = matrix_to_quat_xyzw(m[k][:3, :3])
-                if quats and q @ quats[-1] < 0:
-                    q = -q
-                quats.append(q)
-            # Every joint gets both channels: a clip from another scene must not inherit the
-            # main scene's bind pose for joints it holds still.
-            for path_name, data in (("translation", trs), ("rotation", np.array(quats, dtype=np.float32))):
-                s_idx = len(samplers)
-                samplers.append({"input": time_acc, "output": b.accessor(data, gltf.FLOAT),
-                                 "interpolation": "LINEAR"})
-                channels.append({"sampler": s_idx, "target": {"node": node_of[i], "path": path_name}})
-        b.add("animations", {"name": self.name, "samplers": samplers, "channels": channels})
+        return [(float(s_), conv, float(t)) for s_, t in zip(seconds, ticks)]
+
+
+class PoseClip:
+    """An animation assembled from single poses of possibly different scenes: (seconds,
+    converter, tick[, joint names to hide])."""
+
+    def __init__(self, name: str, poses: list[tuple]):
+        self.name, self.poses_ = name, poses
+        self.label = ", ".join(sorted({p[1].scene_label for p in poses}))
+        self.t0 = self.t1 = 0.0
+
+    def poses(self, main, sample_fps, frame_rate):
+        return self.poses_
 
 
 def _path_to(node: sc.Obj, target: sc.Obj) -> list[sc.Obj]:
@@ -354,10 +473,6 @@ def _path_to(node: sc.Obj, target: sc.Obj) -> list[sc.Obj]:
         if p:
             return [node] + p
     return []
-
-
-def _varies(track: sc.Track) -> bool:
-    return any(not np.allclose(v, track.values[0]) for v in track.values)
 
 
 def main(argv=None) -> int:

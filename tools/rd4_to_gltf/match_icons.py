@@ -5,7 +5,8 @@ Renders each frame of each scene that contains Blupi (scene_render.py, the scene
 camera), compares it with all 60x60 icons of the sprite sheet, as rendered and mirrored (the
 sheet's left-facing icons are mirrored copies), and writes:
 
-* ``icons.csv`` — per icon: the best scene frame and its scores, and the runner-up;
+* ``icons.csv`` — per icon: the best scene frame and its scores, the runner-up, and the best
+  frame as rendered (not mirrored), the one a 3D pose can be taken from;
 * ``frames.csv`` — per scene frame: the best icon;
 * ``report.md`` — coverage per icon and per action of mobile-eggbert's ``table_blupi``;
 * ``icons/NNN.png`` — the icon next to its best render, for checking by eye.
@@ -125,6 +126,7 @@ def main(argv=None) -> int:
     # Score every frame, as rendered and mirrored, against every icon.
     best = [None] * n_icons      # (score, iou, colour, frame index, mirrored)
     second = [None] * n_icons
+    plain = [None] * n_icons     # best as rendered, not mirrored
     frame_best = []
     for fi, (_name, _k, _tick, rgb, cover) in enumerate(frames):
         top = None
@@ -135,6 +137,8 @@ def main(argv=None) -> int:
             score = iou * colour
             for icon in range(n_icons):
                 cand = (score[icon], iou[icon], colour[icon], fi, mirrored)
+                if not mirrored and (plain[icon] is None or cand[0] > plain[icon][0]):
+                    plain[icon] = cand
                 if best[icon] is None or cand[0] > best[icon][0]:
                     if best[icon] is not None and (second[icon] is None or best[icon][0] > second[icon][0]):
                         second[icon] = best[icon]
@@ -154,17 +158,20 @@ def main(argv=None) -> int:
     with open(args.out / "icons.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["icon", "status", "score", "iou", "colour", "scene", "frame", "tick", "mirrored",
-                    "runner_up", "runner_up_score"])
+                    "runner_up", "runner_up_score", "plain_scene", "plain_frame", "plain_tick",
+                    "plain_score"])
         for icon in range(n_icons):
             b = best[icon]
             if not icon_mask[icon].any():
-                w.writerow([icon, "empty", "", "", "", "", "", "", "", "", ""])
+                w.writerow([icon, "empty"] + [""] * 13)
                 continue
             name, k, tick, _rgb, _cov = frames[b[3]]
             status = "confident" if b[0] >= CONFIDENT else "probable" if b[0] >= PROBABLE else "unmatched"
+            pn, pk, pt, _r, _c = frames[plain[icon][3]]
             w.writerow([icon, status, f"{b[0]:.3f}", f"{b[1]:.3f}", f"{b[2]:.3f}", name, k, int(tick),
                         int(b[4]), label(second[icon]) if second[icon] else "",
-                        f"{second[icon][0]:.3f}" if second[icon] else ""])
+                        f"{second[icon][0]:.3f}" if second[icon] else "",
+                        pn, pk, int(pt), f"{plain[icon][0]:.3f}"])
     with open(args.out / "frames.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["scene", "frame", "tick", "best_icon", "score", "iou", "colour", "mirrored"])

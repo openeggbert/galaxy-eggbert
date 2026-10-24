@@ -5,6 +5,9 @@ Conventions established against marche-profil.rd4 (see README.md in this directo
 * World is Z-up. A 3x3 ``mat`` maps local to parent coordinates as ``M @ v`` (row-major text);
   cameras look down their local -Z with +Y up, like OpenGL.
 * ``ROTA w,x,y,z,spins`` orientation keys store the inverse rotation: ``mat == quat_to_matrix(q).T``.
+  A mirrored object (``det(mat) < 0``) keeps its mirror in the parent's frame: ``mat == L @ R``
+  at one of its keys, with ``L`` a reflection, and it is ``L @ R(t)`` at every time t (the left
+  arm, blupi-sucette.rd4's lollipop; checked against the sprites).
 * An object is placed by its hot point ``hp`` (local, after the ``affi`` deformer): the hot point
   lands on ``po`` in the parent, and the object rotates about it.
 * ``Scal`` scales the object's own geometry about its hot point. It does NOT scale children:
@@ -179,6 +182,14 @@ class Obj:
     affi_tracks: list              # [ScaX, ScaY, ScaZ] Track | None
     children: list["Obj"] = field(default_factory=list)
     chunk: Chunk | None = None
+    mirror: np.ndarray | None = None  # parent-frame reflection of a mirrored, rotating object
+
+    def __post_init__(self):
+        if self.orie_track is not None and np.linalg.det(self.mat) < 0:
+            # The key the stored matrix was saved at is the one where mat @ R^T is a reflection
+            # (symmetric); usually the first, not always (helico2-glu.rd4).
+            cands = [orthonormalize(self.mat) @ self.orientation(t).T for t in self.orie_track.times]
+            self.mirror = min(cands, key=lambda m: np.abs(m - m.T).max())
 
     # ---- evaluation -------------------------------------------------------------
     def position(self, t: float | None) -> np.ndarray:
@@ -192,7 +203,8 @@ class Obj:
     def orientation(self, t: float | None) -> np.ndarray:
         if t is not None and self.orie_track is not None:
             w, x, y, z = self.orie_track.sample(t)
-            return quat_to_matrix(w, x, y, z).T
+            r = quat_to_matrix(w, x, y, z).T
+            return r if self.mirror is None else self.mirror @ r
         return orthonormalize(self.mat)
 
     def hot_point(self, t: float | None) -> np.ndarray:

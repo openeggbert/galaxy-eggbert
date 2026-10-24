@@ -9,6 +9,9 @@ then fixes what it leaves for the game (upstream_bugs.md):
   turned clockwise, unless the converter has already done so.
 * UB-002 (fixed in newer CNA): each part gets its real colour or texture from the .glb.
 
+A ``faces.txt`` beside the .glb (build_clip_library.py) is copied along with the face PNGs it
+lists.
+
     python3 export_cna_avatar.py --glb blupi.glb --cna-home ../../libcna/cna --out avatars3d/blupi
 """
 
@@ -17,6 +20,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -92,6 +96,13 @@ def main(argv=None) -> int:
         image.save(args.out / part["texture"])
         winding = make_clockwise(args.out / part["indices"], indices[part["name"]])
         print(f"{part['name']}: texture {image.size[0]}x{image.size[1]}, triangles {winding}")
+    faces = args.glb.parent / "faces.txt"
+    if faces.exists():
+        shutil.copyfile(faces, args.out / "faces.txt")
+        for line in faces.read_text().splitlines():
+            if line.startswith("face "):
+                shutil.copyfile(args.glb.parent / line.split()[1], args.out / line.split()[1])
+        print(f"faces.txt and its faces copied")
     return 0
 
 

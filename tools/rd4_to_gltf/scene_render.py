@@ -21,6 +21,7 @@ import verify_sprites as vs
 class SceneRenderer:
     def __init__(self, scene: sc.Scene, camera: str = "Jeu"):
         self.scene = scene
+        self.exclude: set[int] = set()  # id() of objects not to draw (with their children)
         self.camera_name = camera
         self.meshes: dict[str, tuple | None] = {}
         self.textures: dict[str, tuple | None] = {}
@@ -71,7 +72,11 @@ class SceneRenderer:
 
     def frame_meshes(self, tick: float) -> list:
         out = []
-        for o, _p, _cw, gw in sc.world_frames(self.scene, tick):
+        skipped: set[int] = set()
+        for o, parent, _cw, gw in sc.world_frames(self.scene, tick):
+            if id(o) in self.exclude or id(parent) in skipped:
+                skipped.add(id(o))
+                continue
             if not o.master:
                 continue
             canon = self._canonical(o.master)

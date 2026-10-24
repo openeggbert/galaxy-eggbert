@@ -69,6 +69,12 @@ CNA's `tools/avatar_asset_pipeline/convert_avatar.py --embedded-clips`.
   joints without geometry; duplicate names get `.001`, `.002`, ... (`Paume.001` is the left palm).
 - Every part is skinned rigidly (weight 1.0) to its own joint, as in the original, where Blupi is
   built from separate rigid parts.
+- A part whose geometry frame (`Scal`, `affi` deformer, hot point) changes in some clip, or which
+  some clip's scene does not have, is skinned to a *shape joint* instead: a leaf child of its
+  joint named `<joint>.shape`, whose translation, rotation and (possibly uneven) scale carry that
+  frame. Ray Dream's deformer is a rotation times an axis scale, so the frame is exactly a glTF
+  TRS. A part missing from a clip's scene (the legs of the squashed `blupi-plat.rd4`) is shrunk to
+  nothing there. Without such clips there are no shape joints.
 - One mesh per material, named after it (`BLUPI_rd_ffff00`, `BLUPI_rd_tex_Corps`), all sharing one
   skin: CNA's converter keeps only the mesh name of each part, not its colour (`upstream_bugs.md`
   UB-001, UB-002).
@@ -90,6 +96,7 @@ Each was checked numerically, not assumed.
 | Lines split on LF only; a bare CR inside `TILE` values separates the `$FFFFFFFF` header | byte dump of `marche-profil.rd4` |
 | `mat` (row-major) maps local to parent as `M @ v`; Z up; cameras look down local −Z, +Y up | both cameras in `marche-profil.rd4` point at Blupi only under this reading |
 | `ROTA w,x,y,z,n` keys hold the inverse rotation: `mat == quat(w,x,y,z).T` | slerped keys reproduce the stored `mat` to 0.0009 |
+| A mirrored object (`det(mat) < 0`) with `ROTA` keys keeps its mirror in the parent's frame: `mat == L @ quat(q_k).T` at one key k (usually the first) with `L` a reflection, and the object is `L @ quat(q(t)).T` at every t | keys alone drop the mirror; with it `blupi-sucette.rd4`'s lollipop turns its face to the camera as in icons 234-236 (frame IoU 0.929 -> 0.963), `blupi-bouteille` 0.965 -> 0.981, `oups-profil` 0.960 -> 0.973; the mirror on the object's own side instead matches worse |
 | Keys without a tweener (`void`) are linear; 1800 ticks per second | every stored static value equals linear interpolation at tick 3000 |
 | Hot point `hp` (local, after the `affi` deformer) lands on `po`; the object rotates about it | DXF match below |
 | `Scal` scales only the object's own geometry; a child's `po` is in the parent's unscaled frame | arm segments: elbow at `hp - po` = 3.725 vs. segment length 3.741 |
@@ -149,11 +156,55 @@ ones are the vehicles (unsupported cube, torus and multi-section masters), the t
 (front views mid-turn, which a 3D model replaces with a real rotation), Hide (drawn at another
 scale), and frames with 2D effects added (Electro's glow).
 
+## Clip library (the game's model)
+
+`build_clip_library.py` turns the matches into the one model the game loads: one clip per
+`BlupiController::AnimState` (plus `DeathLocked.<cause>` and `PickupBusy.<kind>`), each the
+state's own icon table from `BlupiController.cpp` (read in place) played at `kAnimFps`:
+
+```bash
+B=../speedyblupi-data/originals/Blupi
+python3 tools/rd4_to_gltf/build_clip_library.py --scenes $B --base marche-profil.rd4 \
+    --icons build-probe/rd4-blupi/match/icons.csv \
+    --controller src/GalaxyEggbert/Game/BlupiController.cpp \
+    --sheet ../mobile-eggbert/Content/icons/blupi.png --out build-probe/rd4-blupi/library/blupi.glb
+python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/library/blupi.glb \
+    --cna-home ../../libcna/cna --out avatars3d/blupi
+```
+
+- Icon k of a table becomes a key at k / 8 s holding the pose of the scene frame it matched as
+  rendered (not mirrored; score >= 0.70), LINEAR in between, with a last key closing the loop. An
+  icon without a usable match holds the previous pose.
+- Every scene is shifted, frame by frame, so its game camera sits where `marche-profil.rd4`'s
+  does (depth excluded), which keeps each sprite's placement (`genou-profil.rd4`'s camera follows
+  Blupi down).
+- Joints are matched by name. `blupi-ballon.rd4` has no `BLUPI` group (its body is the root);
+  `blupi-plat.rd4` names both feet `Pied-d`, so a joint without a namesake takes the free base
+  joint of the same kind nearest to it in the body's frame. Parts a scene lacks (the squashed
+  Blupi's legs) are hidden; scale and deformer changes (squashed, inflated) ride on shape joints.
+- Props hung under Blupi in a used scene (the tongue of `pied-de-nez.rd4`, the bottle, the
+  lollipop) join the skeleton and are hidden everywhere else. A frame shows its scene's props only
+  if its icon matches at least as well with them (icon 2, a front view taken from
+  `blupi-sucette.rd4`, has no lollipop).
+- Faces: each frame's expression is the body texture of its scene. `faces.txt` beside the .glb
+  lists `rate`, the `part` that wears the face, the face PNGs and, per clip, the face of every
+  frame; `export_cna_avatar.py` copies them and the game swaps that part's texture.
+- Without `--skip-check` every clip frame is rendered from the .glb with the base camera and
+  compared with its icon (`clips.md`).
+
+Result (2026-10-24, 34 clips, 45 joints including 15 shape joints, 5 faces), mean silhouette IoU
+against the icons: March 0.981, Stop 0.970, Jump 0.979, Air 0.961, Down 0.946, Up 0.980, Push
+0.988, StopEcrase 0.965, MarchEcrase 0.950, Balloon 0.976, StopNage/MarchNage 0.980,
+StopSurf/MarchSurf 0.981, Drown 0.982, Mockery 0.971, Mockeryp 0.942, PutDynamite 0.966,
+TakeDynamite 0.912, Sucette 0.957, Drink 0.940; lower where the icons are front or back views
+(Teleporting, Switch, Charge, Mockeryi), carry a skateboard (Skate clips, 0.73-0.89) or 2D
+effects (deaths Clear1/Clear3/Glu). Not built, no matching scene frame: the vehicles (Helico, Jeep,
+Tank, Over, FireTank), Hide, Clear2 and Clear4; the game shows `Stop` for them.
+
 ## Not converted yet (next steps)
 
-- Other scenes and the icon <-> (scene, frame) mapping for all 87 `BlupiAction` states.
-- In the glTF export, an animated hot point, `Scal` or deformer (`plat`/squash scenes) is reported
-  as a warning and ignored (the scene renderer applies them).
-- Props and vehicles: cube and cone primitives, texture maps on primitives (the lollipop), several
-  cross-sections per sweep, curved and twisted sweep paths.
+- Vehicles and the skateboard: cube and cone primitives, the torus, several cross-sections per
+  sweep, curved and twisted sweep paths; texture maps on primitives (the lollipop's spiral).
+- Front and back views (Turn, Switch, Hide): match frames turned about the vertical axis, so a
+  clip can take a pose seen from another side.
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).
