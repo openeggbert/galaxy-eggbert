@@ -54,6 +54,32 @@
       ]
     },
     {
+      "name": "BLUPI_rd_tex_Sucette_Cylindre",
+      "vertices": "BLUPI_rd_tex_Sucette_Cylindre.verts.bin",
+      "indices": "BLUPI_rd_tex_Sucette_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_tex_Sucette_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "BLUPI_rd_tex_Sucette_Groupe5_Cylindre",
+      "vertices": "BLUPI_rd_tex_Sucette_Groupe5_Cylindre.verts.bin",
+      "indices": "BLUPI_rd_tex_Sucette_Groupe5_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "BLUPI_rd_tex_Sucette_Groupe5_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
       "name": "BLUPI_rd_fc7a3b",
       "vertices": "BLUPI_rd_fc7a3b.verts.bin",
       "indices": "BLUPI_rd_fc7a3b.idx.bin",
@@ -236,6 +262,10 @@
     {
       "name": "DeathLocked.Clear3",
       "clip": "clips/DeathLocked.Clear3.clip.bin"
+    },
+    {
+      "name": "DeathLocked.Clear4",
+      "clip": "clips/DeathLocked.Clear4.clip.bin"
     },
     {
       "name": "DeathLocked.Glu",

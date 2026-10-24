@@ -15,19 +15,22 @@ edit by hand; regenerate with the commands below.
 
 ## Contents
 
-- 45 bones (CNA's skinning takes up to 72): one per Ray Dream object of Blupi (body, nose, arm
+- 58 bones (CNA's skinning takes up to 72): one per Ray Dream object of Blupi (body, nose, arm
   segments, hands, legs, feet, eyelashes), the props of the scenes the clips use (`langue`, the
-  tongue; `Bouteille`, the bottle; `Sucette`, the lollipop), and `<bone>.shape` leaves carrying
+  tongue; `Bouteille`, the bottle; `Sucette`, the lollipop; `Corps et Cube`, the half body the
+  saw leaves in Clear4), and `<bone>.shape` leaves carrying
   the parts whose scale or deformer changes (squashed, inflated) or which some clips hide. Every
   part moves rigidly with its bone, as in the original.
-- Parts, one per colour: `BLUPI_rd_tex_Corps` (body with the face texture), `BLUPI_rd_ffff00`,
-  `BLUPI_rd_000000`, `BLUPI_rd_ff0000`, `BLUPI_rd_fc7a3b`, `BLUPI_rd_00ffff`. Each part's colour is
-  in its texture.
+- Parts, one per colour or texture: `BLUPI_rd_tex_Corps` (body with the face texture), the
+  lollipop's striped `BLUPI_rd_tex_Sucette_Cylindre` and `BLUPI_rd_tex_Sucette_Groupe5_Cylindre`,
+  `BLUPI_rd_ffff00`, `BLUPI_rd_000000`, `BLUPI_rd_ff0000`, `BLUPI_rd_fc7a3b`, `BLUPI_rd_00ffff`. Each
+  part's colour is in its texture.
 - Clips: one per `BlupiController::AnimState`, named after it (`Stop`, `March`, `Jump`, ...), plus
   `DeathLocked.<cause>` and `PickupBusy.<kind>`; each is the state's sprite icon table played at
   `kAnimFps` (20 frames per second, as in the original), interpolated linearly between the matched
   scene frames; a frame matched turned (front and back views, Hide's somersault) turns the whole
-  pose. States without a clip (Bye, two death causes) show `Stop`.
+  pose. States without a clip (Bye) show `Stop`; Clear2 is invisible throughout, as in the
+  original.
 - `clips.txt` lists the face textures (`face_*.png`, the expressions of the scenes used) and, per
   clip, the face of every frame; the game draws the part named on its `part` line with that
   texture. Its `viewer` lines name the clips that turn Blupi toward the sprites' viewer (his
@@ -42,7 +45,8 @@ edit by hand; regenerate with the commands below.
 - `vehicles/<name>/`: the helicopter, jeep, tank, overcraft and skateboard, each a model of its
   own with the vehicle clips' names (`StopJeep`, `MarchJeep`, ...), built from the same scene
   frames in the same space; the game draws the one whose clip is playing with Blupi's transform
-  and clip time. Listed in `clips.txt` (`vehicle` lines).
+  and clip time, and draws parked vehicle pickups with them too (standing pose). Listed in
+  `clips.txt` (`vehicle` lines).
 
 ## Regenerate
 

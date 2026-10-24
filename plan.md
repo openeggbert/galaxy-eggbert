@@ -692,8 +692,10 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       the sprites' viewer (`ChaseCameraYaw`). **Phase A done the same day:** vehicles and the
       skateboard as separate models drawn with Blupi, Hide's somersault, front and back views
       (turned matches), group `Scal`, cubes, holes and closed or blended sweeps in the converter.
-      Remaining for `069`: Clear2/Clear4 (no scene frame), the vehicles' turn animations, texture
-      maps on primitives (the lollipop's spiral), parked vehicles as 3D models.
+      Follow-ups the same day: Clear4 from the saw scene (Ray Dream Studio 5 meshes), Clear2 and
+      the tables' other invisible frames draw no model, per-vehicle turn lengths, the lollipop's
+      textures, parked vehicles as 3D models. Remaining for `069`: the saw half body's eye
+      (RDS 5 layered shader), the overcraft's closer match, cast shadows.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 

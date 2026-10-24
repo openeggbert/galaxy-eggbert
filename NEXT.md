@@ -427,6 +427,30 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: Blupi's saw death, invisible frames, turn lengths, lollipop and parked vehicles (2026-10-24)
+The follow-ups listed after phase A (user: continue):
+- **Clear4 (saw).** `blupi-scie.rds` (Ray Dream Studio 5) stores the cut half body as an
+  explicit triangle mesh (`im` master); the converter reads it (first triple = position: Clear4
+  icons IoU 0.71-0.87 per frame) and finds the unnamed body by role. The half body and its nose
+  are props hidden in every other clip; Clear4 mean IoU 0.780. Its eye is missing: the face sits
+  in an RDS 5 secondary texture domain not decoded yet.
+- **Invisible frames.** `BlupiController::GetRawAnimIcon()` keeps the tables' -1 entries
+  (Clear2 throughout, Clear3's tail, Teleporting's); the game draws no real model on them, as
+  the original draws nothing. `GetAnimIcon()` still shows the idle icon for the HUD indicator.
+- **Vehicle turns.** In 3D the model turns for real, so the Down turn-around now lasts as long
+  as the real Turn action of the mode: Turn 6 ticks, TurnJeep/TurnOver 7,
+  TurnHelico/TurnNage/TurnSurf 10, TurnTank 12, TurnSkate 14.
+- **Lollipop.** 32-bit bitmap tiles are three whole-tile planes (the earlier per-row reading
+  gave grey fringes); cylinder primitives take texture maps (angle around, axis or radius along,
+  repeats baked in), so the striped disc becomes the lollipop's spiral (icons 234/236: 0.963 /
+  0.934). Texture part names are file-name safe (`Sucette/Cylindre` broke CNA's converter).
+- **Parked vehicles.** Helicopter, jeep, skateboard, tank and overcraft pickups are drawn as the
+  vehicle models in their standing pose (floor of their cell, facing +X) instead of element.png
+  billboards. Seen live in `world999` (ghost mode): jeep, tank, overcraft and helicopter stand
+  on the floor with no billboard behind them.
+Matching now: 116 confident, 78 probable of 231 action icons. CPU replays of the exported CNA
+asset match the .glb (Clear4, Sucette, March, Hide: IoU 1.0); 95/95 CTest cases pass.
+
 ### feat: Blupi's vehicles, skateboard, Hide and front/back views (2026-10-24)
 Phase A of the real-Blupi plan (user request after phase E). Converter (`tools/rd4_to_gltf/`):
 - cube primitive (half-size 2.5, fitted to the helicopter sprites); free-form cross-sections of

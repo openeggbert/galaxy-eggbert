@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import io
+import re
 import sys
 from pathlib import Path
 
@@ -324,7 +325,9 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
                   canonical: dict, warnings: list[str]):
     """One object's master in glTF space, placed by its Ray Dream geometry frame ``gw``:
     (material key, TextureMap or None, positions, normals, triangles, texture coordinates or None),
-    or None when it has no supported master. A textured part's key is ("texture", label)."""
+    or None when it has no supported master. A textured part's key is ("texture", label) with the
+    label made file-name safe (CNA's converter names part files after it: "Sucette/Cylindre"
+    would be a path)."""
     if not o.master:
         return None
     master = (id(scene), o.master)
@@ -359,12 +362,12 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
             warnings.extend(tex.warnings)
             tex = dataclasses.replace(tex, image=baked[0])
             pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, baked[1], 1.0)
-            key = ("texture", label)
+            key = ("texture", re.sub(r"[^\w.-]", "_", label))
     elif tex is not None:
         warnings.extend(tex.warnings)
         st = freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src]
         pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0)
-        key = ("texture", label)
+        key = ("texture", re.sub(r"[^\w.-]", "_", label))
     wpos = pos @ m[:3, :3].T + m[:3, 3]
     nm = np.linalg.inv(m[:3, :3]).T
     wn = nrm @ nm.T

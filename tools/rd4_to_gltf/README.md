@@ -167,7 +167,8 @@ match is kept (`view_*` columns) and the clip library uses it when it beats the 
 First run (2026-10-24, about 3.5 minutes): 243 frames from 54 scenes; of the 231 icons used by
 actions, 87 matched confidently (score >= 0.85), 60 probably (>= 0.70) and 84 not. With the
 vehicle geometry, group scales and turned views (2026-10-24, 37 minutes): 259 frames from 56
-scenes; 114 confident, 71 probable, 46 unmatched. Still unmatched: the vehicles' own turn
+scenes; 114 confident, 71 probable, 46 unmatched. With the saw scene's meshes and the lollipop's
+textures (273 frames): 116 confident, 78 probable, 37 unmatched. Still unmatched: the vehicles' own turn
 icons, the overcraft (0.55-0.63: silhouette right, colours lighter than the sprites), frames with
 2D effects (Electro's glow, deaths Clear2/Clear4) and the ones rendered from scenes that are not
 in `speedyblupi-data`. Hide's tumbling small Blupi comes from `naissance.rd4`, where the `BLUPI`
@@ -222,16 +223,17 @@ Vehicle clips accept matches down to 0.55 (`VEHICLE_USABLE`): without cast shado
 overcraft's skirt lighter than in the sprites, their colours score lower while silhouette and
 pose still agree.
 
-Result (2026-10-24, 42 clips, 45 joints including 15 shape joints, 5 faces, 5 vehicles), mean
-silhouette IoU against the icons (vehicle clips rendered with their vehicle): March 0.981, Stop
-0.970, Jump 0.979, Air 0.961, Down 0.946, Up 0.980, Push 0.988, StopEcrase 0.965, MarchEcrase
-0.950, Balloon 0.976, StopNage/MarchNage 0.980, StopSurf/MarchSurf 0.981, Drown 0.982, Mockery
-0.971, Mockeryi 0.943, Mockeryp 0.950, TakeDynamite 0.962, PutDynamite 0.966, Sucette 0.957,
-Drink 0.940, Charge 0.950, Teleporting 0.944, Switch 0.946, Hide 0.921; StopHelico 0.981,
-MarchHelico 0.935, StopJeep/MarchJeep 0.951, StopTank 0.893, MarchTank 0.931, FireTank 0.878,
-StopSkate 0.950, MarchSkate 0.982, JumpSkate 0.979, AirSkate 0.914, TakeSkate/DeposeSkate 0.951,
-StopOver 0.764, MarchOver 0.738; the deaths with 2D effects lower (Clear1 0.781, Clear3 0.655,
-Glu 0.814). Not built, no matching scene frame: Clear2 and Clear4; the game shows `Stop`.
+Result (2026-10-24, 45 clips, 58 joints, 5 faces, 5 vehicles), mean silhouette IoU against the
+icons (vehicle clips rendered with their vehicle): March 0.981, Stop 0.970, Jump 0.979, Air
+0.961, Down 0.946, Up 0.980, Push 0.988, StopEcrase 0.965, MarchEcrase 0.950, Balloon 0.976,
+StopNage/MarchNage 0.980, StopSurf/MarchSurf 0.981, Drown 0.982, Mockery 0.971, Mockeryi 0.943,
+Mockeryp 0.950, TakeDynamite 0.962, PutDynamite 0.966, Sucette 0.957, Drink 0.940, Charge 0.950,
+Teleporting 0.944, Switch 0.946, Hide 0.921; StopHelico 0.981, MarchHelico 0.935,
+StopJeep/MarchJeep 0.951, StopTank 0.893, MarchTank 0.931, FireTank 0.878, StopSkate 0.950,
+MarchSkate 0.982, JumpSkate 0.979, AirSkate 0.914, TakeSkate/DeposeSkate 0.951, StopOver 0.764,
+MarchOver 0.738; the deaths with 2D effects lower (Clear1 0.781, Clear3 0.655, Glu 0.814) and
+Clear4 0.780 (the saw scene's half body, without its eye). Clear2 has no clip: every frame of it
+is invisible (the game draws no model on the tables' -1 frames).
 
 ## Not converted yet (next steps)
 
