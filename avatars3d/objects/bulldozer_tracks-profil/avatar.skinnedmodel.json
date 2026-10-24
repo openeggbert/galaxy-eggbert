@@ -15,15 +15,15 @@
       ]
     },
     {
-      "name": "bulldozer_rd_ff0000",
-      "vertices": "bulldozer_rd_ff0000.verts.bin",
-      "indices": "bulldozer_rd_ff0000.idx.bin",
+      "name": "bulldozer_rd_7f7f7f",
+      "vertices": "bulldozer_rd_7f7f7f.verts.bin",
+      "indices": "bulldozer_rd_7f7f7f.idx.bin",
       "vertexStride": 52,
-      "texture": "bulldozer_rd_ff0000.png",
+      "texture": "bulldozer_rd_7f7f7f.png",
       "diffuseColor": [
-        1.0,
-        0.0,
-        0.0,
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
         1.0
       ]
     },

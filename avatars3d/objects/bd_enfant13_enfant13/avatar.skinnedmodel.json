@@ -1,0 +1,128 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_enfant13_rd_tex_p05_Cylindre",
+      "vertices": "bd_enfant13_rd_tex_p05_Cylindre.verts.bin",
+      "indices": "bd_enfant13_rd_tex_p05_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_tex_p05_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_tex_p07_Cylindre",
+      "vertices": "bd_enfant13_rd_tex_p07_Cylindre.verts.bin",
+      "indices": "bd_enfant13_rd_tex_p07_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_tex_p07_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_fc7a3b",
+      "vertices": "bd_enfant13_rd_fc7a3b.verts.bin",
+      "indices": "bd_enfant13_rd_fc7a3b.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_fc7a3b.png",
+      "diffuseColor": [
+        0.9818974516898041,
+        0.19599417930148813,
+        0.0447042609466385,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_tex_p10_Cylindre",
+      "vertices": "bd_enfant13_rd_tex_p10_Cylindre.verts.bin",
+      "indices": "bd_enfant13_rd_tex_p10_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_tex_p10_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_tex_p12_Cylindre",
+      "vertices": "bd_enfant13_rd_tex_p12_Cylindre.verts.bin",
+      "indices": "bd_enfant13_rd_tex_p12_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_tex_p12_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_3ec1ec",
+      "vertices": "bd_enfant13_rd_3ec1ec.verts.bin",
+      "indices": "bd_enfant13_rd_3ec1ec.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_3ec1ec.png",
+      "diffuseColor": [
+        0.04928941756705957,
+        0.53507099108643,
+        0.8398461092288596,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_tex_p16_Cylindre",
+      "vertices": "bd_enfant13_rd_tex_p16_Cylindre.verts.bin",
+      "indices": "bd_enfant13_rd_tex_p16_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_tex_p16_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_00fd00",
+      "vertices": "bd_enfant13_rd_00fd00.verts.bin",
+      "indices": "bd_enfant13_rd_00fd00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_00fd00.png",
+      "diffuseColor": [
+        0.0,
+        0.9909246121188983,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant13_rd_tex_p18_Cylindre",
+      "vertices": "bd_enfant13_rd_tex_p18_Cylindre.verts.bin",
+      "indices": "bd_enfant13_rd_tex_p18_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant13_rd_tex_p18_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

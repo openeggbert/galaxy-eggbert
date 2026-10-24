@@ -1,0 +1,635 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_plante2b_rd_tex_p07_Branche",
+      "vertices": "bd_plante2b_rd_tex_p07_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p07_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p07_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p08_Branche",
+      "vertices": "bd_plante2b_rd_tex_p08_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p08_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p08_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p09_Branche",
+      "vertices": "bd_plante2b_rd_tex_p09_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p09_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p09_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p10_Branche",
+      "vertices": "bd_plante2b_rd_tex_p10_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p10_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p10_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p11_Branche",
+      "vertices": "bd_plante2b_rd_tex_p11_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p11_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p11_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p12_Branche",
+      "vertices": "bd_plante2b_rd_tex_p12_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p12_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p12_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p13_Branche",
+      "vertices": "bd_plante2b_rd_tex_p13_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p13_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p13_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p14_Branche",
+      "vertices": "bd_plante2b_rd_tex_p14_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p14_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p14_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p15_Branche",
+      "vertices": "bd_plante2b_rd_tex_p15_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p15_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p15_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p16_Branche",
+      "vertices": "bd_plante2b_rd_tex_p16_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p16_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p16_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p17_Branche",
+      "vertices": "bd_plante2b_rd_tex_p17_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p17_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p17_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p18_Branche",
+      "vertices": "bd_plante2b_rd_tex_p18_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p18_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p18_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p19_Branche",
+      "vertices": "bd_plante2b_rd_tex_p19_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p19_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p19_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p20_Branche",
+      "vertices": "bd_plante2b_rd_tex_p20_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p20_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p20_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p21_Branche",
+      "vertices": "bd_plante2b_rd_tex_p21_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p21_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p21_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p22_Branche",
+      "vertices": "bd_plante2b_rd_tex_p22_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p22_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p22_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p23_Branche",
+      "vertices": "bd_plante2b_rd_tex_p23_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p23_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p23_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p24_Branche",
+      "vertices": "bd_plante2b_rd_tex_p24_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p24_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p24_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p25_Branche",
+      "vertices": "bd_plante2b_rd_tex_p25_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p25_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p25_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p26_Branche",
+      "vertices": "bd_plante2b_rd_tex_p26_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p26_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p26_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p27_Branche",
+      "vertices": "bd_plante2b_rd_tex_p27_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p27_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p27_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p28_Branche",
+      "vertices": "bd_plante2b_rd_tex_p28_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p28_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p28_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p29_Tronc",
+      "vertices": "bd_plante2b_rd_tex_p29_Tronc.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p29_Tronc.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p29_Tronc.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p30_Branches",
+      "vertices": "bd_plante2b_rd_tex_p30_Branches.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p30_Branches.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p30_Branches.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p33_Branche",
+      "vertices": "bd_plante2b_rd_tex_p33_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p33_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p33_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p34_Branche",
+      "vertices": "bd_plante2b_rd_tex_p34_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p34_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p34_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p35_Branche",
+      "vertices": "bd_plante2b_rd_tex_p35_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p35_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p35_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p36_Branche",
+      "vertices": "bd_plante2b_rd_tex_p36_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p36_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p36_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p37_Branche",
+      "vertices": "bd_plante2b_rd_tex_p37_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p37_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p37_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p38_Branche",
+      "vertices": "bd_plante2b_rd_tex_p38_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p38_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p38_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p39_Branche",
+      "vertices": "bd_plante2b_rd_tex_p39_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p39_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p39_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p40_Branche",
+      "vertices": "bd_plante2b_rd_tex_p40_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p40_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p40_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p41_Branche",
+      "vertices": "bd_plante2b_rd_tex_p41_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p41_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p41_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p42_Branche",
+      "vertices": "bd_plante2b_rd_tex_p42_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p42_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p42_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p43_Branche",
+      "vertices": "bd_plante2b_rd_tex_p43_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p43_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p43_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p44_Branche",
+      "vertices": "bd_plante2b_rd_tex_p44_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p44_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p44_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p45_Branche",
+      "vertices": "bd_plante2b_rd_tex_p45_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p45_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p45_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p46_Branche",
+      "vertices": "bd_plante2b_rd_tex_p46_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p46_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p46_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p47_Branche",
+      "vertices": "bd_plante2b_rd_tex_p47_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p47_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p47_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p48_Branche",
+      "vertices": "bd_plante2b_rd_tex_p48_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p48_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p48_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p49_Branche",
+      "vertices": "bd_plante2b_rd_tex_p49_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p49_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p49_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p50_Branche",
+      "vertices": "bd_plante2b_rd_tex_p50_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p50_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p50_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p51_Branche",
+      "vertices": "bd_plante2b_rd_tex_p51_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p51_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p51_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p52_Branche",
+      "vertices": "bd_plante2b_rd_tex_p52_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p52_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p52_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p53_Branche",
+      "vertices": "bd_plante2b_rd_tex_p53_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p53_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p53_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p54_Branche",
+      "vertices": "bd_plante2b_rd_tex_p54_Branche.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p54_Branche.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p54_Branche.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p55_Tronc",
+      "vertices": "bd_plante2b_rd_tex_p55_Tronc.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p55_Tronc.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p55_Tronc.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante2b_rd_tex_p56_Branches",
+      "vertices": "bd_plante2b_rd_tex_p56_Branches.verts.bin",
+      "indices": "bd_plante2b_rd_tex_p56_Branches.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante2b_rd_tex_p56_Branches.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

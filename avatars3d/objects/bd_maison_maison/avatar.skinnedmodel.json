@@ -1,0 +1,232 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_maison_rd_tex_p06_mur_ouest",
+      "vertices": "bd_maison_rd_tex_p06_mur_ouest.verts.bin",
+      "indices": "bd_maison_rd_tex_p06_mur_ouest.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p06_mur_ouest.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p07_mur_ouest",
+      "vertices": "bd_maison_rd_tex_p07_mur_ouest.verts.bin",
+      "indices": "bd_maison_rd_tex_p07_mur_ouest.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p07_mur_ouest.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p08_Facade",
+      "vertices": "bd_maison_rd_tex_p08_Facade.verts.bin",
+      "indices": "bd_maison_rd_tex_p08_Facade.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p08_Facade.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p09_Facade",
+      "vertices": "bd_maison_rd_tex_p09_Facade.verts.bin",
+      "indices": "bd_maison_rd_tex_p09_Facade.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p09_Facade.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p10_Toit",
+      "vertices": "bd_maison_rd_tex_p10_Toit.verts.bin",
+      "indices": "bd_maison_rd_tex_p10_Toit.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p10_Toit.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p11_Toit",
+      "vertices": "bd_maison_rd_tex_p11_Toit.verts.bin",
+      "indices": "bd_maison_rd_tex_p11_Toit.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p11_Toit.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p12_Assistant_3D",
+      "vertices": "bd_maison_rd_tex_p12_Assistant_3D.verts.bin",
+      "indices": "bd_maison_rd_tex_p12_Assistant_3D.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p12_Assistant_3D.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_00fd00",
+      "vertices": "bd_maison_rd_00fd00.verts.bin",
+      "indices": "bd_maison_rd_00fd00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_00fd00.png",
+      "diffuseColor": [
+        0.0,
+        0.9909246121188983,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_810000",
+      "vertices": "bd_maison_rd_810000.verts.bin",
+      "indices": "bd_maison_rd_810000.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_810000.png",
+      "diffuseColor": [
+        0.2224661538246206,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_f7ac00",
+      "vertices": "bd_maison_rd_f7ac00.verts.bin",
+      "indices": "bd_maison_rd_f7ac00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_f7ac00.png",
+      "diffuseColor": [
+        0.9374824827715106,
+        0.41456802404539866,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_ffffff",
+      "vertices": "bd_maison_rd_ffffff.verts.bin",
+      "indices": "bd_maison_rd_ffffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_ffffff.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_542000",
+      "vertices": "bd_maison_rd_542000.verts.bin",
+      "indices": "bd_maison_rd_542000.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_542000.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.015127141596632167,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_ffcb00",
+      "vertices": "bd_maison_rd_ffcb00.verts.bin",
+      "indices": "bd_maison_rd_ffcb00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_ffcb00.png",
+      "diffuseColor": [
+        1.0,
+        0.59875496034275,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p67_Sphere",
+      "vertices": "bd_maison_rd_tex_p67_Sphere.verts.bin",
+      "indices": "bd_maison_rd_tex_p67_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p67_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_ffb600",
+      "vertices": "bd_maison_rd_ffb600.verts.bin",
+      "indices": "bd_maison_rd_ffb600.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_ffb600.png",
+      "diffuseColor": [
+        1.0,
+        0.4711124747253247,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_00b600",
+      "vertices": "bd_maison_rd_00b600.verts.bin",
+      "indices": "bd_maison_rd_00b600.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_00b600.png",
+      "diffuseColor": [
+        0.0,
+        0.4711124747253247,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_maison_rd_tex_p80_Sphere",
+      "vertices": "bd_maison_rd_tex_p80_Sphere.verts.bin",
+      "indices": "bd_maison_rd_tex_p80_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_maison_rd_tex_p80_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

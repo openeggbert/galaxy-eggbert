@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_meca4_rd_545454",
+      "vertices": "bd_meca4_rd_545454.verts.bin",
+      "indices": "bd_meca4_rd_545454.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_meca4_rd_545454.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.09065468189359736,
+        0.09065468189359736,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_meca4_rd_7f7f7f",
+      "vertices": "bd_meca4_rd_7f7f7f.verts.bin",
+      "indices": "bd_meca4_rd_7f7f7f.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_meca4_rd_7f7f7f.png",
+      "diffuseColor": [
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

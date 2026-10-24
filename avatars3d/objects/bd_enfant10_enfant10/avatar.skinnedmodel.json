@@ -1,0 +1,50 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_enfant10_rd_tex_p04_Sphere",
+      "vertices": "bd_enfant10_rd_tex_p04_Sphere.verts.bin",
+      "indices": "bd_enfant10_rd_tex_p04_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant10_rd_tex_p04_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant10_rd_tex_p05_Cylindre",
+      "vertices": "bd_enfant10_rd_tex_p05_Cylindre.verts.bin",
+      "indices": "bd_enfant10_rd_tex_p05_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant10_rd_tex_p05_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant10_rd_tex_p06_Cylindre",
+      "vertices": "bd_enfant10_rd_tex_p06_Cylindre.verts.bin",
+      "indices": "bd_enfant10_rd_tex_p06_Cylindre.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant10_rd_tex_p06_Cylindre.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

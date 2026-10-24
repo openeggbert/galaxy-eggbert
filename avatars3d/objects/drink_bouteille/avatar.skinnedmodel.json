@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "drink_rd_ff0000",
-      "vertices": "drink_rd_ff0000.verts.bin",
-      "indices": "drink_rd_ff0000.idx.bin",
+      "name": "drink_rd_7f7f7f",
+      "vertices": "drink_rd_7f7f7f.verts.bin",
+      "indices": "drink_rd_7f7f7f.idx.bin",
       "vertexStride": 52,
-      "texture": "drink_rd_ff0000.png",
+      "texture": "drink_rd_7f7f7f.png",
       "diffuseColor": [
-        1.0,
-        0.0,
-        0.0,
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
         1.0
       ]
     },

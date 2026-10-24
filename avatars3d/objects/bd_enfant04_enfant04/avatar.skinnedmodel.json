@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_enfant04_rd_tex_p04_Sphere",
+      "vertices": "bd_enfant04_rd_tex_p04_Sphere.verts.bin",
+      "indices": "bd_enfant04_rd_tex_p04_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant04_rd_tex_p04_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

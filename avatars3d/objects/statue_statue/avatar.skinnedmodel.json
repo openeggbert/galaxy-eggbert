@@ -1,0 +1,63 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "statue_rd_tex_p02_Corps",
+      "vertices": "statue_rd_tex_p02_Corps.verts.bin",
+      "indices": "statue_rd_tex_p02_Corps.idx.bin",
+      "vertexStride": 52,
+      "texture": "statue_rd_tex_p02_Corps.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "statue_rd_ffffff",
+      "vertices": "statue_rd_ffffff.verts.bin",
+      "indices": "statue_rd_ffffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "statue_rd_ffffff.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "statue_rd_000000",
+      "vertices": "statue_rd_000000.verts.bin",
+      "indices": "statue_rd_000000.idx.bin",
+      "vertexStride": 52,
+      "texture": "statue_rd_000000.png",
+      "diffuseColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "statue_rd_fdfdfd",
+      "vertices": "statue_rd_fdfdfd.verts.bin",
+      "indices": "statue_rd_fdfdfd.idx.bin",
+      "vertexStride": 52,
+      "texture": "statue_rd_fdfdfd.png",
+      "diffuseColor": [
+        0.9909246121188983,
+        0.9909246121188983,
+        0.9909246121188983,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

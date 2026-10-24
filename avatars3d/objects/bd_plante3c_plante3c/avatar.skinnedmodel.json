@@ -1,0 +1,440 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_plante3c_rd_tex_p07_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p07_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p07_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p07_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p08_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p08_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p08_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p08_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p09_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p09_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p09_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p09_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p10_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p10_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p10_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p10_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p11_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p11_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p11_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p11_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p12_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p12_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p12_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p12_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p13_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p13_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p13_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p13_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p14_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p14_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p14_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p14_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p15_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p15_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p15_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p15_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p16_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p16_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p16_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p16_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p17_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p17_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p17_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p17_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p19_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p19_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p19_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p19_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p20_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p20_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p20_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p20_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p21_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p21_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p21_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p21_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p22_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p22_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p22_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p22_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p23_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p23_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p23_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p23_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p24_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p24_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p24_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p24_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p25_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p25_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p25_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p25_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p26_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p26_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p26_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p26_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p27_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p27_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p27_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p27_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p28_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p28_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p28_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p28_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p29_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p29_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p29_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p29_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p31_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p31_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p31_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p31_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p32_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p32_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p32_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p32_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p33_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p33_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p33_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p33_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p34_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p34_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p34_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p34_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p35_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p35_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p35_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p35_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p36_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p36_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p36_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p36_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p37_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p37_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p37_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p37_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p38_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p38_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p38_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p38_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p39_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p39_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p39_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p39_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p40_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p40_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p40_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p40_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_plante3c_rd_tex_p41_Assistant_3D_1",
+      "vertices": "bd_plante3c_rd_tex_p41_Assistant_3D_1.verts.bin",
+      "indices": "bd_plante3c_rd_tex_p41_Assistant_3D_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_plante3c_rd_tex_p41_Assistant_3D_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_enfant03_rd_tex_p04_Cone",
+      "vertices": "bd_enfant03_rd_tex_p04_Cone.verts.bin",
+      "indices": "bd_enfant03_rd_tex_p04_Cone.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant03_rd_tex_p04_Cone.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant03_rd_4f53aa",
+      "vertices": "bd_enfant03_rd_4f53aa.verts.bin",
+      "indices": "bd_enfant03_rd_4f53aa.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant03_rd_4f53aa.png",
+      "diffuseColor": [
+        0.07932181648664352,
+        0.08787617689143362,
+        0.403762527524017,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant03_rd_00fd00",
+      "vertices": "bd_enfant03_rd_00fd00.verts.bin",
+      "indices": "bd_enfant03_rd_00fd00.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant03_rd_00fd00.png",
+      "diffuseColor": [
+        0.0,
+        0.9909246121188983,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant03_rd_tex_p07_Sphere",
+      "vertices": "bd_enfant03_rd_tex_p07_Sphere.verts.bin",
+      "indices": "bd_enfant03_rd_tex_p07_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant03_rd_tex_p07_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant03_rd_tex_p08_Sphere",
+      "vertices": "bd_enfant03_rd_tex_p08_Sphere.verts.bin",
+      "indices": "bd_enfant03_rd_tex_p08_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant03_rd_tex_p08_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant03_rd_tex_p09_Sphere",
+      "vertices": "bd_enfant03_rd_tex_p09_Sphere.verts.bin",
+      "indices": "bd_enfant03_rd_tex_p09_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant03_rd_tex_p09_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

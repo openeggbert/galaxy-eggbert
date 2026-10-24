@@ -1,0 +1,63 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bd_enfant01_rd_tex_p04_Cone",
+      "vertices": "bd_enfant01_rd_tex_p04_Cone.verts.bin",
+      "indices": "bd_enfant01_rd_tex_p04_Cone.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant01_rd_tex_p04_Cone.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant01_rd_tex_p05_Cone",
+      "vertices": "bd_enfant01_rd_tex_p05_Cone.verts.bin",
+      "indices": "bd_enfant01_rd_tex_p05_Cone.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant01_rd_tex_p05_Cone.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant01_rd_tex_p06_Sphere",
+      "vertices": "bd_enfant01_rd_tex_p06_Sphere.verts.bin",
+      "indices": "bd_enfant01_rd_tex_p06_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant01_rd_tex_p06_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bd_enfant01_rd_tex_p07_Sphere",
+      "vertices": "bd_enfant01_rd_tex_p07_Sphere.verts.bin",
+      "indices": "bd_enfant01_rd_tex_p07_Sphere.idx.bin",
+      "vertexStride": 52,
+      "texture": "bd_enfant01_rd_tex_p07_Sphere.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
