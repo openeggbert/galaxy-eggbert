@@ -1049,6 +1049,11 @@ namespace GalaxyEggbert::Game
         // different on each sheet.
         [[nodiscard]] AnimState GetAnimState() const noexcept { return m_animState; }
         [[nodiscard]] int GetAnimIcon() const noexcept;
+        // The icon as the real frame tables have it: -1 on the frames real
+        // mobile-eggbert draws nothing (Teleporting's, Clear2, Clear3's tail),
+        // where GetAnimIcon() shows the idle icon for the HUD indicator.
+        [[nodiscard]] int GetRawAnimIcon() const noexcept;
+        [[nodiscard]] bool IsAnimIconInvisible() const noexcept { return GetRawAnimIcon() < 0; }
 
         // Real one-shot sound cues SOUND-017/030/031 (added 2026-07-20) --
         // see UpdateAnim()'s own comment for the exact real trigger

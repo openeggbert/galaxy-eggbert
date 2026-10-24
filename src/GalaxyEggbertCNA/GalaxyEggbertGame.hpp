@@ -771,7 +771,17 @@ namespace GalaxyEggbert::CNA
         std::unordered_set<std::string> blupiViewerClips_;
         // The vehicles he rides (clips.txt "vehicle" lines): separate models
         // with the vehicle clips' names, drawn with his transform and time.
-        std::vector<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>> blupiVehicles_;
+        std::vector<std::pair<std::string, std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>>
+            blupiVehicles_;
+        // A vehicle pickup's model and standing clip when the real vehicle
+        // model replaces its billboard (kParkedVehicles); model is nullptr
+        // otherwise.
+        struct ParkedVehicleDraw
+        {
+            Microsoft::Xna::Framework::Graphics::SkinnedModelEXT* model = nullptr;
+            const char* clip = nullptr;
+        };
+        [[nodiscard]] ParkedVehicleDraw ParkedVehicleModel(GalaxyEggbert::Def::ObjectType type) const;
 
         // Tracks which clip is currently playing so blupiClipTimeSeconds_
         // resets to 0 on a change instead of continuing from a position that
@@ -783,9 +793,11 @@ namespace GalaxyEggbert::CNA
         std::string blupiActiveClipName_;
         double blupiClipTimeSeconds_ = 0.0;
 
-        // Down-arrow turn-around in progress (see Update()): seconds left and
-        // the yaw it started from; Down's previous state, so one press turns once.
+        // Down-arrow turn-around in progress (see Update()): seconds left, its
+        // length (TurnAroundSeconds) and the yaw it started from; Down's
+        // previous state, so one press turns once.
         float turnAroundRemaining_ = 0.0f;
+        float turnAroundDuration_ = 0.3f;
         float turnAroundStartYaw_ = 0.0f;
         bool turnAroundDownWasHeld_ = false;
     };

@@ -101,6 +101,68 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // The real model (avatars3d/blupi/, its vehicles too) is in metres
+        // at 0.05 m per Ray Dream unit. The original game camera draws
+        // 3.0309 px per unit (zoom 3.43654 x 60 px / frame height 68.03136)
+        // and a block is 64 px (DIMOBJX), so a block is 21.116 units =
+        // 1.0558 m, and the model keeps the sprites' size against blocks at
+        // 1 / 1.0558.
+        constexpr float kRealModelScale = 0.94714f;
+
+        // Vehicle pickups the real vehicle models replace when parked: the
+        // model (avatars3d/blupi/vehicles/<name>) and the clip whose first
+        // frame is its standing pose.
+        struct ParkedVehicle
+        {
+            GalaxyEggbert::Def::ObjectType type;
+            const char* model;
+            const char* clip;
+        };
+        constexpr ParkedVehicle kParkedVehicles[] = {
+            {GalaxyEggbert::Def::ObjectType::ObjectType13, "helico", "StopHelico"},
+            {GalaxyEggbert::Def::ObjectType::ObjectType19, "jeep", "StopJeep"},
+            {GalaxyEggbert::Def::ObjectType::ObjectType24, "skate", "StopSkate"},
+            {GalaxyEggbert::Def::ObjectType::ObjectType28, "tank", "StopTank"},
+            {GalaxyEggbert::Def::ObjectType::ObjectType46, "over", "StopOver"},
+        };
+
+        // How long reversing direction takes: the length of the real Turn
+        // action of the mode Blupi is in (table_blupi entries at 20 Hz:
+        // Turn 6, TurnJeep 7, TurnOver 7, TurnHelico 10, TurnNage 10,
+        // TurnSurf 10, TurnTank 12, TurnSkate 14). The 3D model turns for
+        // real over that time; the sprites' turn icons were views of it.
+        float TurnAroundSeconds(BlupiController::AnimState state)
+        {
+            using S = BlupiController::AnimState;
+            constexpr float kTick = 1.0f / 20.0f;
+            switch (state)
+            {
+                case S::StopJeep:
+                case S::MarchJeep:
+                case S::StopOver:
+                case S::MarchOver:
+                    return 7.0f * kTick;
+                case S::StopHelico:
+                case S::MarchHelico:
+                case S::StopNage:
+                case S::MarchNage:
+                case S::StopSurf:
+                case S::MarchSurf:
+                    return 10.0f * kTick;
+                case S::StopTank:
+                case S::MarchTank:
+                case S::FireTank:
+                    return 12.0f * kTick;
+                case S::StopSkate:
+                case S::MarchSkate:
+                case S::JumpSkate:
+                case S::AirSkate:
+                    return 14.0f * kTick;
+                default:
+                    return 6.0f * kTick;
+            }
+        }
+
         // Real Blupi model clip names (avatars3d/blupi/, 2026-10-24): one clip
         // per AnimState, named after it, plus DeathLocked.<cause> and
         // PickupBusy.<kind>, each built from the state's own sprite icon table
@@ -672,7 +734,8 @@ namespace GalaxyEggbert::CNA
                         {
                             std::string name;
                             in >> name;
-                            blupiVehicles_.push_back(
+                            blupiVehicles_.emplace_back(
+                                name,
                                 content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                                     "blupi/vehicles/" + name + "/avatar"));
                         }
@@ -1298,6 +1361,30 @@ namespace GalaxyEggbert::CNA
         }
         interaction_.RespawnPickupItem(worldRuntime_, pendingPickupX_, pendingPickupY_, pendingPickupZ_,
                                         pendingPickupType_);
+    }
+
+    GalaxyEggbertGame::ParkedVehicleDraw GalaxyEggbertGame::ParkedVehicleModel(
+        GalaxyEggbert::Def::ObjectType type) const
+    {
+        if (!blupiModelIsReal_)
+        {
+            return {};
+        }
+        for (const auto& parked : kParkedVehicles)
+        {
+            if (parked.type != type)
+            {
+                continue;
+            }
+            for (const auto& [name, model] : blupiVehicles_)
+            {
+                if (name == parked.model && model->Clips.count(parked.clip) != 0)
+                {
+                    return {model.get(), parked.clip};
+                }
+            }
+        }
+        return {};
     }
 
     void GalaxyEggbertGame::ApplyCheat(int cheatNumber)
@@ -2015,25 +2102,26 @@ namespace GalaxyEggbert::CNA
             }
             // Down turns Blupi around instead of backing him up (user decision
             // 2026-10-24): the original has no backing up; reversing direction
-            // plays its Turn (ACTION_TURN, 6 ticks at 20 Hz = 0.3 s) and then
-            // walks the new way. He stands while turning; with Down still held
-            // afterwards he walks on in the new direction. One press, one turn.
+            // plays its Turn (ACTION_TURN, 6 ticks at 20 Hz = 0.3 s, or the
+            // vehicle's own, TurnAroundSeconds) and then walks the new way. He
+            // stands while turning; with Down still held afterwards he walks on
+            // in the new direction. One press, one turn.
             {
-                constexpr float kTurnAroundSeconds = 6.0f / 20.0f;
                 constexpr float kPi = 3.14159265358979f;
                 const bool downHeld = moveInput < 0.0f;
                 const bool canTurn = !blupi_.IsTeleporting() && !blupi_.IsBye() && !blupi_.IsDeathLocked() &&
                                      !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying();
                 if (downHeld && !turnAroundDownWasHeld_ && turnAroundRemaining_ <= 0.0f && canTurn)
                 {
-                    turnAroundRemaining_ = kTurnAroundSeconds;
+                    turnAroundDuration_ = TurnAroundSeconds(blupi_.GetAnimState());
+                    turnAroundRemaining_ = turnAroundDuration_;
                     turnAroundStartYaw_ = blupi_.GetYaw();
                 }
                 turnAroundDownWasHeld_ = downHeld;
                 if (turnAroundRemaining_ > 0.0f)
                 {
                     turnAroundRemaining_ = std::max(0.0f, turnAroundRemaining_ - simDt);
-                    blupi_.SetYaw(turnAroundStartYaw_ + kPi * (1.0f - turnAroundRemaining_ / kTurnAroundSeconds));
+                    blupi_.SetYaw(turnAroundStartYaw_ + kPi * (1.0f - turnAroundRemaining_ / turnAroundDuration_));
                     turnInput = 0.0f;
                     moveInput = 0.0f;
                 }
@@ -3874,22 +3962,18 @@ namespace GalaxyEggbert::CNA
             // Real `Hide` during the death-lock's own life-loss-Voyage window
             // (death-VFX follow-up, `IsDeathHidden()`'s own comment) -- first-
             // person mode already renders no Blupi model at all, so this is
-            // the only render-side change needed.
+            // the only render-side change needed. Likewise the real frame
+            // tables' invisible frames (Clear2, Clear3's tail, Teleporting's
+            // -1 entries) draw no real model.
             if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
-                !blupi_.IsDeathHidden())
+                !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()))
             {
                 constexpr float kPlaceholderModelScale = 0.009095f;
                 constexpr float kPlaceholderModelYOffset = -0.5f;
                 constexpr float kPlaceholderModelDepthOffset = 0.6f;
-                // The real model (avatars3d/blupi/) is in metres at 0.05 m per
-                // Ray Dream unit. The original game camera draws 3.0309 px per
-                // unit (zoom 3.43654 x 60 px / frame height 68.03136) and a
-                // block is 64 px (DIMOBJX), so a block is 21.116 units =
-                // 1.0558 m, and the model keeps the sprites' size against
-                // blocks at 1 / 1.0558. Its feet are at local y = 0 like the
-                // fox's, so it shares kPlaceholderModelYOffset; it is centred
-                // on Blupi, so no depth offset.
-                constexpr float kRealModelScale = 0.94714f;
+                // The real model (kRealModelScale) has its feet at local y = 0
+                // like the fox's, so it shares kPlaceholderModelYOffset; it is
+                // centred on Blupi, so no depth offset.
                 const float modelScale = blupiModelIsReal_ ? kRealModelScale : kPlaceholderModelScale;
                 const float modelDepthOffset = blupiModelIsReal_ ? 0.0f : kPlaceholderModelDepthOffset;
                 // The real model faces +Z, while GetYaw() moves Blupi along
@@ -3975,7 +4059,7 @@ namespace GalaxyEggbert::CNA
                 // overcraft, skateboard): its own model, built from the same
                 // Ray Dream frames in the same space (clips.txt "vehicle"
                 // lines), so it takes his world transform and clip time.
-                for (const auto& vehicle : blupiVehicles_)
+                for (const auto& [vehicleName, vehicle] : blupiVehicles_)
                 {
                     if (vehicle->Clips.find(blupiActiveClipName_) == vehicle->Clips.end())
                     {
@@ -3988,6 +4072,53 @@ namespace GalaxyEggbert::CNA
                         boneTransforms);
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     drawParts(*vehicle, nullptr);
+                }
+            }
+
+            // Parked vehicles: a helicopter, jeep, skateboard, tank or
+            // overcraft pickup is drawn as its real vehicle model in the
+            // first frame of its standing clip instead of its element.png
+            // billboard (skipped there, ParkedVehicleModel), in both camera
+            // modes. It stands on the floor of its cell, facing +X, the way
+            // the sprites face right.
+            if (blupiEffect_ && blupiModelIsReal_ && !blupiVehicles_.empty())
+            {
+                constexpr float kHalfPi = 1.57079632679f;
+                std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
+                blupiEffect_->setViewProperty(camera_.View());
+                blupiEffect_->setProjectionProperty(camera_.Projection());
+                device.setRasterizerStateProperty(
+                    Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                {
+                    const auto parked = ParkedVehicleModel(obj.type);
+                    if (parked.model == nullptr || !obj.active ||
+                        !ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon).visible)
+                    {
+                        continue;
+                    }
+                    parked.model->ComputeBoneTransformsEXT(
+                        parked.clip, System::TimeSpan::FromSeconds(0.0), /*loop=*/false, boneTransforms);
+                    blupiEffect_->setWorldProperty(
+                        Microsoft::Xna::Framework::Matrix::CreateScale(kRealModelScale) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationY(kHalfPi) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(
+                            obj.currentX, obj.currentY - 0.5f, obj.currentZ));
+                    blupiEffect_->SetBoneTransforms(boneTransforms);
+                    for (const auto& part : parked.model->Parts)
+                    {
+                        blupiEffect_->setTextureProperty(part.Texture);
+                        blupiEffect_->Apply();
+                        device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                        device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                        device.DrawIndexedPrimitives(
+                            Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
+                            part.Part->getVertexOffsetProperty(),
+                            0,
+                            part.Part->getNumVerticesProperty(),
+                            part.Part->getStartIndexProperty(),
+                            part.Part->getPrimitiveCountProperty());
+                    }
                 }
             }
 
@@ -4121,7 +4252,8 @@ namespace GalaxyEggbert::CNA
                     ResolveObjectVisual(obj.type, objPhase, obj.visualIcon);
                 if (!obj.active || !visual.visible ||
                     visual.renderMode != ObjectRenderMode::Billboard ||
-                    visual.textureSource != ObjectTextureSource::Element)
+                    visual.textureSource != ObjectTextureSource::Element ||
+                    ParkedVehicleModel(obj.type).model != nullptr)
                 {
                     continue;
                 }

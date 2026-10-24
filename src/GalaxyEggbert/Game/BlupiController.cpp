@@ -1789,7 +1789,7 @@ namespace GalaxyEggbert::Game
         }
     }
 
-    int BlupiController::GetAnimIcon() const noexcept
+    int BlupiController::GetRawAnimIcon() const noexcept
     {
         switch (m_animState)
         {
@@ -1810,10 +1810,7 @@ namespace GalaxyEggbert::Game
             case AnimState::Balloon:
                 return kBalloonFrames[m_animPhase % (sizeof(kBalloonFrames) / sizeof(kBalloonFrames[0]))];
             case AnimState::Teleporting:
-            {
-                const int icon = kTeleportingFrames[m_animPhase % (sizeof(kTeleportingFrames) / sizeof(kTeleportingFrames[0]))];
-                return icon >= 0 ? icon : kStopFrames[0]; // -1 = real invisible frame, see kTeleportingFrames' own comment
-            }
+                return kTeleportingFrames[m_animPhase % (sizeof(kTeleportingFrames) / sizeof(kTeleportingFrames[0]))];
             case AnimState::DeathLocked:
             {
                 // Real per-cause hurt-sprite frame table, added 2026-07-16 (see kClear1Frames'
@@ -1841,7 +1838,7 @@ namespace GalaxyEggbert::Game
                         icon = kDrownFrames[m_animPhase % (sizeof(kDrownFrames) / sizeof(kDrownFrames[0]))];
                         break;
                 }
-                return icon >= 0 ? icon : kStopFrames[0]; // -1 = real invisible frame (Clear2/Clear3's tail)
+                return icon; // -1 = real invisible frame (Clear2, Clear3's tail)
             }
             case AnimState::PickupBusy:
             {
@@ -1916,6 +1913,14 @@ namespace GalaxyEggbert::Game
             default:
                 return kStopFrames[m_animPhase % (sizeof(kStopFrames) / sizeof(kStopFrames[0]))];
         }
+    }
+
+    int BlupiController::GetAnimIcon() const noexcept
+    {
+        // -1 = real invisible frame (see kTeleportingFrames' own comment); the HUD indicator has no
+        // "draw nothing" mechanism, so it shows the idle icon there instead.
+        const int icon = GetRawAnimIcon();
+        return icon >= 0 ? icon : kStopFrames[0];
     }
 
     bool BlupiController::AnimIconUsesElementSheet() const noexcept
