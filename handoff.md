@@ -21,20 +21,25 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   `im` variants; `COFA`/`fogg`/`tx` left on purpose). `survey.py icons` takes every sheet's grid.
 - **Done (Stage 2-4):** `BB3D-010`/`011` the object model library and its game side
   (`avatars3d/objects/`, `ObjectModelTable`, `VerifyObjectModelTable`); in game as 3D:
-  treasure, egg, exit, drink, ammo, projectile (`BB3D-020`-`023`), the creature's icons
-  247-251 (`BB3D-038`, partly), the mines incl. the hanging one (`BB3D-034`), the wasp
-  (`BB3D-036`), the follow enemies (`BB3D-033`), the keys and secret exit (`BB3D-024`), the
-  dynamite, the moving mine (`BB3D-037`), the invert sign (cube textures): 22 models,
-  124 icons. Checked live
-  under Xvfb with `--golden-capture` (world 999: eggs incl. flipped icons, treasure, exit).
-- **Next:** the lollipop's cap mapping (`BB3D-025`), `BB3D-031` bird, `BB3D-032` fish (body), the creature's eyes (`BB3D-038`), `BB3D-035`
-  bulldozer (`tracks-profil.rd4`, 0.64-0.84), shield; trial runs go to `build-probe/rd4-objects-try` with a scratch
-  objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (first results
-  in `plan.md`). `BB3D-007` icon surveys find unknown sources (element survey running in the
-  background: `build-probe/rd4-survey/element_icons.csv`).
-- **Pending check:** `BB3D-008` (Blupi's library with the camera offset): the matching re-run
-  was started in the background; compare `build-probe/rd4-blupi/library/clips.md` with
-  the copy saved before (`clips.md` table, overcraft rows) after rebuilding the library.
+  treasure, egg, exit, drink, ammo, projectile (`BB3D-020`-`023`), the creature with and
+  without eyes (`BB3D-038`, needed `xyzS`), the mines incl. the hanging one (`BB3D-034`), the
+  wasp (`BB3D-036`), the follow enemies (`BB3D-033`), the keys and secret exit (`BB3D-024`),
+  the dynamite, the moving mine (`BB3D-037`), the invert sign (cube textures): 23 models,
+  129 icons. Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
+  icons, treasure, exit).
+- **Next:** the lollipop's cap mapping (`BB3D-025`), `BB3D-031` bird, `BB3D-032` fish (body),
+  `BB3D-035` bulldozer (blade), shield (`BB3D-025`), Stage 5 decor objects, Stage 6 big
+  decor, Stage 7 other Blupis. Trial runs go to `build-probe/rd4-objects-try` with a scratch
+  objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (results in
+  `plan.md`). Unknown sources: `survey.py icons` (element done:
+  `build-probe/rd4-survey/element_icons.csv`; object-m and explo not run yet).
+- **Pending check:** `BB3D-008` (Blupi's library with the camera offset, and `xyzS`, which
+  `blupi-scie.rds`, Clear4's scene, uses): a matching re-run was started in the background
+  before `xyzS`; when it ends, rebuild the clip library and compare
+  `build-probe/rd4-blupi/library/clips.md` with the copy saved before (scratchpad
+  `before-ofst/`, overcraft and Clear4 rows); re-run the matching if Clear4 changes.
+- **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing
+  still (`ChaseCameraYaw::kIdleDelaySeconds`, was 0.8 s).
 - **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-004`): all 528 scenes read; the
   only masters not built are `tx` (14, menus), `COFA` (2, terrain tiles), `fogg` (1, the cloud).
 
