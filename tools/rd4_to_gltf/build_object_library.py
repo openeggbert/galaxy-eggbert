@@ -7,7 +7,8 @@ icon by icon against every distinct frame of its scenes, straight and mirrored, 
 of the scene's orthographic cameras (keeping per scene the one that wins most icons, unless
 ``camera=`` names one) at the sheet's icon size (``survey.GRIDS``); with ``yaw=STEP`` also
 turned about the vertical every STEP degrees (the egg's sprites spin, its scene does not); with
-``vflip=1`` also upside down (the hanging mine's icons are the mine's flipped vertically). Each
+``vflip=1`` also upside down (the hanging mine's icons are the mine's flipped vertically); with
+``recolour=R,G,B>R,G,B[;...]`` flat colours replaced (the decoy mines). Each
 scene that wins an icon becomes one model: one rigid joint per Ray Dream object the camera sees,
 and a clip ``Frames`` holding the scene's frames at 20 per second (frame k at k / 20 s).
 
@@ -50,6 +51,7 @@ import rd4  # noqa: E402
 import rd4_to_gltf  # noqa: E402
 import scene as sc  # noqa: E402
 import scene_render  # noqa: E402
+import shading  # noqa: E402
 import survey  # noqa: E402
 import verify_sprites as vs  # noqa: E402
 
@@ -68,6 +70,7 @@ class ObjectSpec:
     camera: str | None = None
     yaw_step: float = 0.0
     vflip: bool = False
+    recolour: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -146,8 +149,12 @@ def read_specs(path: Path) -> list[ObjectSpec]:
             continue
         fields = line.split()
         opts = dict(f.split("=", 1) for f in fields[4:])
+        recolour = {}
+        for pair in opts.get("recolour", "").split(";") if opts.get("recolour") else []:
+            src, dst = pair.split(">")
+            recolour[tuple(round(float(x), 3) for x in src.split(","))] = tuple(float(x) for x in dst.split(","))
         specs.append(ObjectSpec(fields[0], fields[1], parse_icons(fields[2]), fields[3].split(","),
-                                opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1"))
+                                opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1", recolour))
     return specs
 
 
@@ -333,6 +340,8 @@ def main(argv=None) -> int:
         for line in report_path.read_text().splitlines()[2:]:
             rows[line.split("|")[2].strip()] = line
     for spec in specs:
+        shading.COLOUR_MAP.clear()
+        shading.COLOUR_MAP.update(spec.recolour)
         grid = survey.GRIDS[spec.sheet]
         icon_px = grid[0]
         icon_rgb, icon_mask = survey.load_sheet(args.sheets / f"{spec.sheet}.png", grid)

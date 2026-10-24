@@ -851,9 +851,10 @@ be converted one at a time.
       `enfant01-13`, `meca1-4`, `herbe`) drawn instead of the BigDecor billboards.
 
 **Stage 7 — the other Blupis**
-- [ ] `BB3D-060` Types 200-203 (`blupi.png`/`blupi1.png` billboards): the real Blupi model
-      with recoloured textures (`originals/readme.txt`: yellow to orange 237,168,60, blue
-      63,194,237, green 38,233,46), playing the clip of their icons.
+- [x] `BB3D-060` Types 200-203 (the decoys spawned at run time, never placed in the worlds) show
+      blupi.png / blupi1.png icons 257-262: not Blupi but the spiky mine in Blupi's colours
+      (yellow on blupi.png, green on blupi1.png). `Blupi/bombe.rd4` turned (`yaw=5`) with
+      its red recoloured (`recolour=`): 0.957 each (2026-10-24).
 
 **Stage 8 — effects stay billboards** (decision 2026-10-24, nothing to do)
 - [x] `BB3D-090` Explosions (8-11), flashes and sparks (90-93), splashes (98-100, 14, 15, 35),

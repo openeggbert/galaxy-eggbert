@@ -1,7 +1,8 @@
 # Objects drawn as 3D models instead of sprite billboards (build_object_library.py, plan.md BB3D-*).
 # name  sheet  icons  scenes (comma-separated, under speedyblupi-data/originals)  [options]
 # Sheets: element, object-m, explo, blupi, blupi1 (mobile-eggbert/Content/icons/<sheet>.png).
-# Options: yaw=STEP (also try turned about the vertical), vflip=1 (also upside down), camera=PART (a part of the camera's name without spaces, e.g. 2 for "Caméra 2").
+# Options: yaw=STEP (also try turned about the vertical), vflip=1 (also upside down), camera=PART
+# (a part of the camera's name without spaces, e.g. 2 for "Caméra 2"), recolour=R,G,B>R,G,B[;...].
 treasure    element 0-11    Blupi/coffre.rd4
 egg         element 21-28   Blupi/oeuf.rd4    yaw=10
 exit        element 29-36   Blupi/fleche.rd4  yaw=10
@@ -36,3 +37,6 @@ fish        element 78-88   Blupi/poisson.rd4 yaw=15
 # domain of a free-form. Icon 68 (in type 32's tables) is the helicopter without Blupi.
 bulldozer   element 57-67   Blupi/tracks-profil.rd4 yaw=15
 helicopter  element 68      Blupi/helico-seul2.rd4
+# Types 200-203 (the decoys, blupi.png / blupi1.png icons 257-262): the mine in Blupi's colours.
+decoy       blupi   257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>1,1,0
+decoygreen  blupi1  257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>0.5,1,0

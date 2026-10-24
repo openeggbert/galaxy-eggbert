@@ -8,6 +8,8 @@ creature_creature2
 creature_creature3
 creature_creature4
 creature_creature5
+decoy_bombe
+decoygreen_bombe
 drink_bouteille
 dynamite_dynamite
 egg_oeuf

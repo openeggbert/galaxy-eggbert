@@ -60,15 +60,18 @@ def primary_color(sh: rd4.Chunk | None) -> tuple[float, float, float] | str | No
     return None
 
 
+# Flat colours replaced while converting one object (build_object_library.py's ``recolour``):
+# the decoy mines of blupi.png / blupi1.png are bombe.rd4's red mine in yellow and green.
+COLOUR_MAP: dict[tuple, tuple] = {}
+
+
 def material_key(scene: sc.Scene, obj: sc.Obj) -> tuple[float, float, float]:
     inst = primary_color(obj.chunk.chunk("sh") if obj.chunk is not None else None)
-    if isinstance(inst, tuple):
-        return inst
-    master = scene.masters.get(obj.master)
-    base = primary_color(master.chunk("sh") if master is not None else None)
-    if isinstance(base, tuple):
-        return base
-    return (1.0, 1.0, 1.0)
+    if not isinstance(inst, tuple):
+        master = scene.masters.get(obj.master)
+        inst = primary_color(master.chunk("sh") if master is not None else None)
+    key = inst if isinstance(inst, tuple) else (1.0, 1.0, 1.0)
+    return COLOUR_MAP.get(key, key)
 
 
 def _srgb_to_linear(c: float) -> float:

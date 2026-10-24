@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "decoygreen_rd_7fff00",
+      "vertices": "decoygreen_rd_7fff00.verts.bin",
+      "indices": "decoygreen_rd_7fff00.idx.bin",
+      "vertexStride": 52,
+      "texture": "decoygreen_rd_7fff00.png",
+      "diffuseColor": [
+        0.21404114048223255,
+        1.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
