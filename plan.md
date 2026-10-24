@@ -845,14 +845,18 @@ be converted one at a time.
       square: explo.png's icons are the top-left 64/128/144-pixel square of their 144-pixel
       cells (`survey.EXPLO_ICON_HEIGHTS`, mobile-eggbert's `table_explo_size`); `icons.txt`
       now carries the icon's size in pixels (2026-10-24).
-- [ ] `BB3D-041` Electric arc (38, `Decor/electro.rd4`, `eclair.rd4`).
+- [x] `BB3D-041` Type 38 stays a billboard: its icons (element.png 40-47, 266-267, and
+      blupi1.png early in its cycle) are a burnt black Blupi turning to smoke and the shield's
+      sparking ball, effects; `Decor/electro.rd4` turned out to be the charge's ball and spring.
 - [x] `BB3D-042` Door (22): not an object model. Type 22 is the opened door's slide
       (`InteractionSystem.cpp` `OpenDoorAt`); it showed element.png icon 0 (the treasure's
       first frame, now the 3D treasure) because the door's icon was not carried onto it. Fixed
       2026-10-24: it carries the door block's object-m.png icon in `visualIcon`, as the real
       `Decor::OpenDoor` sets `channel = Object; icon = m_decor[..].icon`
       (`VerifyInteractionSystem` checks it). The door tiles themselves are terrain.
-- [ ] `BB3D-043` Drops (`Decor/goutte/*.rds`) and the cloud puff (36, `Explo/nuage.rds`).
+- [x] `BB3D-043` Stay billboards: the cloud puff (36, element.png 179-186) is Ray Dream fog
+      (`Explo/nuage.rds`, `fogg`), volumetric, with no mesh; `Decor/goutte` are drop shapes
+      no object type uses (the splashes 14, 15, 35, 98-100 are effects).
 
 **Stage 6 — big decor** (`explo.png` cells)
 - [ ] `BB3D-050` Static models of the `Explo/` scenes (`cabane`, `maison`, `plante1a-3c`,
