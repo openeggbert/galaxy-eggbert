@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "drink_rd_ff0000",
+      "vertices": "drink_rd_ff0000.verts.bin",
+      "indices": "drink_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "drink_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "drink_rd_00ffff",
+      "vertices": "drink_rd_00ffff.verts.bin",
+      "indices": "drink_rd_00ffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "drink_rd_00ffff.png",
+      "diffuseColor": [
+        0.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

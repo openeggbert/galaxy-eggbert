@@ -740,6 +740,29 @@ namespace GalaxyEggbert::CNA
                                     "blupi/vehicles/" + name + "/avatar"));
                         }
                     }
+
+                    // The objects converted to 3D models (objectModelTable_):
+                    // lit like him, so only with the real model.
+                    std::ifstream objectIndex("avatars3d/objects/index.txt");
+                    for (std::string name; std::getline(objectIndex, name);)
+                    {
+                        if (name.empty() || name[0] == '#')
+                        {
+                            continue;
+                        }
+                        std::ifstream icons("avatars3d/objects/" + name + "/icons.txt");
+                        std::string error;
+                        if (!objectModelTable_.AddModel(static_cast<int>(objectModels_.size()), icons, &error))
+                        {
+                            std::cerr << "GalaxyEggbertCNA: avatars3d/objects/" << name
+                                      << "/icons.txt: bad line '" << error << "'" << std::endl;
+                        }
+                        objectModels_.push_back(
+                            content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
+                                "objects/" + name + "/avatar"));
+                    }
+                    std::cout << "GalaxyEggbertCNA: " << objectModels_.size() << " object model(s) draw "
+                              << objectModelTable_.Size() << " sprite icon(s) in 3D." << std::endl;
                 }
                 blupiModelLoaded_ = true;
                 std::cout << "GalaxyEggbertCNA: third-person model loaded — "
@@ -1385,6 +1408,28 @@ namespace GalaxyEggbert::CNA
             }
         }
         return {};
+    }
+
+    bool GalaxyEggbertGame::ObjectSprite(const MobileObjSpec& obj, ObjectTextureSource& sheet, int& icon) const
+    {
+        const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+        if (!obj.active || !visual.visible || visual.renderMode != ObjectRenderMode::Billboard ||
+            ParkedVehicleModel(obj.type).model != nullptr)
+        {
+            return false;
+        }
+        sheet = visual.textureSource;
+        icon = visual.icon;
+        // The patrol enemies' per-direction/turn icon tables (see the
+        // element.png billboard pass, the one place with their patrol state).
+        int patrolIcon = 0;
+        if (sheet == ObjectTextureSource::Element &&
+            TryGetPatrolIcon(obj.type, obj.posStartX > obj.posEndX, obj.patrolStep,
+                             static_cast<int>(obj.patrolTime), patrolIcon))
+        {
+            icon = patrolIcon;
+        }
+        return true;
     }
 
     void GalaxyEggbertGame::ApplyCheat(int cheatNumber)
@@ -4122,6 +4167,59 @@ namespace GalaxyEggbert::CNA
                 }
             }
 
+            // Objects with a converted 3D model (objectModelTable_, plan.md
+            // Phase 7B): drawn where their billboard would be (skipped in the
+            // billboard passes), posed at their icon's frame, turned by its
+            // yaw and mirrored for a mirrored icon. A model is in blocks with
+            // its sprite's view toward +Z, as the parked vehicles are.
+            if (blupiEffect_ && !objectModels_.empty())
+            {
+                constexpr float kDegrees = 3.14159265358979f / 180.0f;
+                std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
+                blupiEffect_->setViewProperty(camera_.View());
+                blupiEffect_->setProjectionProperty(camera_.Projection());
+                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                {
+                    ObjectTextureSource sheet{};
+                    int icon = 0;
+                    const ObjectModelPose* pose =
+                        ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
+                    if (pose == nullptr)
+                    {
+                        continue;
+                    }
+                    auto& model = *objectModels_[static_cast<std::size_t>(pose->model)];
+                    model.ComputeBoneTransformsEXT(
+                        "Frames", System::TimeSpan::FromSeconds(pose->seconds), /*loop=*/false, boneTransforms);
+                    // Mirroring turns the triangles' winding around.
+                    device.setRasterizerStateProperty(
+                        pose->mirrored ? Microsoft::Xna::Framework::Graphics::RasterizerState::CullClockwise
+                                       : Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+                    blupiEffect_->setWorldProperty(
+                        Microsoft::Xna::Framework::Matrix::CreateRotationY(pose->yawDegrees * kDegrees) *
+                        Microsoft::Xna::Framework::Matrix::CreateScale(pose->mirrored ? -1.0f : 1.0f, 1.0f, 1.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(
+                            obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ));
+                    blupiEffect_->SetBoneTransforms(boneTransforms);
+                    for (const auto& part : model.Parts)
+                    {
+                        blupiEffect_->setTextureProperty(part.Texture);
+                        blupiEffect_->Apply();
+                        device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                        device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                        device.DrawIndexedPrimitives(
+                            Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
+                            part.Part->getVertexOffsetProperty(),
+                            0,
+                            part.Part->getNumVerticesProperty(),
+                            part.Part->getStartIndexProperty(),
+                            part.Part->getPrimitiveCountProperty());
+                    }
+                }
+                device.setRasterizerStateProperty(
+                    Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+            }
+
             static bool terrainPixelPrinted = false;
             if (!terrainPixelPrinted)
             {
@@ -4270,6 +4368,10 @@ namespace GalaxyEggbert::CNA
                 {
                     icon = visual.icon;
                 }
+                if (objectModelTable_.Find(ObjectTextureSource::Element, icon) != nullptr)
+                {
+                    continue;  // drawn as its 3D model
+                }
                 const auto uv = GetElementIconUv(icon);
                 mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(
@@ -4311,6 +4413,10 @@ namespace GalaxyEggbert::CNA
                     visual.textureSource != ObjectTextureSource::ObjectM)
                 {
                     continue;
+                }
+                if (objectModelTable_.Find(ObjectTextureSource::ObjectM, visual.icon) != nullptr)
+                {
+                    continue;  // drawn as its 3D model
                 }
                 const auto uv = tileAtlas_.GetTileUv(visual.icon);
                 mesh.AddBillboard(
@@ -4360,6 +4466,10 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
+                if (objectModelTable_.Find(ObjectTextureSource::Explo, visual.icon) != nullptr)
+                {
+                    continue;  // drawn as its 3D model
+                }
                 const auto uv = GetExploIconUv(visual.icon);
                 mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(
@@ -4404,6 +4514,10 @@ namespace GalaxyEggbert::CNA
                      visual.textureSource != ObjectTextureSource::Blupi1))
                 {
                     continue;
+                }
+                if (objectModelTable_.Find(visual.textureSource, visual.icon) != nullptr)
+                {
+                    continue;  // drawn as its 3D model
                 }
                 const auto uv = GetBlupiIconUv(visual.icon);
                 auto& mesh = visual.textureSource == ObjectTextureSource::Blupi1

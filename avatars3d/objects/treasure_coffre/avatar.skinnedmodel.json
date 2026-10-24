@@ -1,0 +1,50 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "treasure_rd_ffca00",
+      "vertices": "treasure_rd_ffca00.verts.bin",
+      "indices": "treasure_rd_ffca00.idx.bin",
+      "vertexStride": 52,
+      "texture": "treasure_rd_ffca00.png",
+      "diffuseColor": [
+        1.0,
+        0.5970697121666518,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "treasure_rd_545454",
+      "vertices": "treasure_rd_545454.verts.bin",
+      "indices": "treasure_rd_545454.idx.bin",
+      "vertexStride": 52,
+      "texture": "treasure_rd_545454.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.09065468189359736,
+        0.09065468189359736,
+        1.0
+      ]
+    },
+    {
+      "name": "treasure_rd_ff0000",
+      "vertices": "treasure_rd_ff0000.verts.bin",
+      "indices": "treasure_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "treasure_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

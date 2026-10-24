@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "exit_rd_ff0000",
+      "vertices": "exit_rd_ff0000.verts.bin",
+      "indices": "exit_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "exit_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

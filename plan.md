@@ -762,22 +762,29 @@ be converted one at a time.
       `assets-3d-analysis.md`.
 
 **Stage 2 — game-side object models**
-- [ ] `BB3D-010` Object model library: a converter script (per object: scene(s), icon → frame
-      and view matched like `match_icons.py`) writing a `SkinnedModelEXT` per object under
-      `objects3d/<name>/` plus an `icons.txt` (sheet, icon → clip, time, yaw); the game loads
-      every library, draws listed icons as models (`blupiEffect_`-style skinned pass, same scale
-      convention as Blupi: a 64-pixel icon = one block) and skips their billboard. Decide and
-      document the world orientation of the sprites' camera (the original screen's view
-      direction) for objects.
-- [ ] `BB3D-011` Pure-logic verifier for the icon → pose table (parsing, every listed icon
-      resolves, unlisted icons fall back to the billboard) as a CTest case.
+- [x] `BB3D-010` Object model library (2026-10-24): `tools/rd4_to_gltf/objects.txt` lists the
+      objects; `build_object_library.py` matches every icon against every distinct frame of
+      the object's scenes (mirrored about the camera axis, optionally turned: `yaw=STEP`),
+      builds one rigid-part model per winning scene (parts moving together share a joint, CNA
+      takes 72) with its frames as clip `Frames`, and checks it by rendering it back as the
+      game draws it; `export_objects.py` writes `avatars3d/objects/<object>_<scene>/` with
+      `icons.txt` (icon -> seconds, mirrored, yaw) and `index.txt`. Model space: the sprite's
+      view toward +Z, origin at the icon's centre, in blocks (64 px). The game
+      (`ObjectSprite`, `objectModelTable_`) draws a listed icon's model where its billboard
+      was, turned by the yaw and mirrored, and skips the billboard; unlisted icons stay
+      billboards.
+- [x] `BB3D-011` `ObjectModelTable` (`src/GalaxyEggbert/Game/`) and the CTest case
+      `VerifyObjectModelTable`: parsing, lookups, the billboard fallback, rejected lines, and
+      that every model of the shipped `avatars3d/objects/index.txt` loads.
 
 **Stage 3 — static pickups** (one model, one or a few frames each)
-- [ ] `BB3D-020` Treasure (5, `Blupi/coffre.rd4`, IoU 0.93).
-- [ ] `BB3D-021` Extra-life egg (6, `Blupi/oeuf.rd4`, 0.84).
-- [ ] `BB3D-022` Level exit (7, `Blupi/fleche.rd4`, 0.77).
-- [ ] `BB3D-023` Drink (30, `Blupi/bouteille.rd4`, 0.87), ammo pack (29, `munitions-glu.rd4`,
-      0.99), enemy projectile (23, `balle-glu.rd4`, 0.99).
+- [x] `BB3D-020` Treasure (5, `Blupi/coffre.rd4`): 12 icons, IoU 0.960 mean, 0.945 min.
+- [x] `BB3D-021` Extra-life egg (6, `Blupi/oeuf.rd4`): the scene is still, the sprites spin;
+      matched turned (yaw): 8 icons, 0.953 mean, 0.919 min.
+- [x] `BB3D-022` Level exit (7, `Blupi/fleche.rd4`, turned): 8 icons, 0.943 mean, 0.903 min.
+- [x] `BB3D-023` Drink (30, `Blupi/bouteille.rd4`, 0.871; its cap renders red, grey in the
+      sprite), ammo pack (29, `munitions-glu.rd4`, 0.992), enemy projectile (23,
+      `balle-glu.rd4`, 0.995).
 - [ ] `BB3D-024` Keys and secret exit (49-51, 21, `cle*.rd4`; needs `BB3D-006`).
 - [ ] `BB3D-025` Shield (25, `shield1/2.rd4`), lollipop pickup (26, `sucette.rd4`), invert sign
       (40, `panneau-invert.rd4`), dynamite (55, 56, `Decor/dynamite.rd4`), charge (31,

@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "projectile_rd_00cf00",
+      "vertices": "projectile_rd_00cf00.verts.bin",
+      "indices": "projectile_rd_00cf00.idx.bin",
+      "vertexStride": 52,
+      "texture": "projectile_rd_00cf00.png",
+      "diffuseColor": [
+        0.0,
+        0.6243669853667839,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

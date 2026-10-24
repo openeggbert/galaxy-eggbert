@@ -242,6 +242,19 @@ MarchOver 0.739; the deaths with 2D effects lower (Clear1 0.775, Clear3 0.655, G
 Clear4 0.843 (the saw scene's half body with its eye). Clear2 has no clip: every frame of it is
 invisible (the game draws no model on the tables' -1 frames).
 
+## Object models (billboard replacement)
+
+`build_object_library.py` turns the game's other objects into models the same way: per object of
+`objects.txt` (name, sprite sheet, icons, scenes, `yaw=STEP`, `camera=NAME`), every icon is
+matched against every distinct frame of its scenes (straight, mirrored about the camera axis,
+and with `yaw` turned about the vertical), and each winning scene becomes a model of rigid parts
+(parts moving together share a joint: the treasure's 91 objects need 34) with its frames as the
+clip `Frames` and an `icons.txt` naming each icon's frame, mirror and yaw. The model is checked
+by rendering it back exactly as the game draws it; `export_objects.py` writes
+`avatars3d/objects/` (its README has the commands). Results so far (`report.md`): treasure
+(`coffre.rd4`) IoU 0.960 mean, egg (`oeuf.rd4`, its sprites spin: matched with yaw) 0.953,
+exit arrow (`fleche.rd4`, yaw) 0.943, projectile 0.995, ammo 0.992, drink 0.871.
+
 ## Archive survey
 
 `survey.py scenes` reads every scene of the archive and lists, per scene, whether it parses, its

@@ -18,12 +18,14 @@ import shading
 import verify_sprites as vs
 
 
-def view_transform(frames, view) -> np.ndarray:
-    """scene.view_matrix about Blupi's body (``Corps``); cameras and lights are not turned."""
+def view_transform(frames, view, centre=None) -> np.ndarray:
+    """scene.view_matrix about ``centre``, by default Blupi's body (``Corps``); cameras and lights
+    are not turned."""
     if view is None:
         return np.eye(4)
-    body = next(cw for o, _p, cw, _g in frames if sc.is_body(o))
-    return sc.view_matrix(body[:3, 3], view)
+    if centre is None:
+        centre = next(cw for o, _p, cw, _g in frames if sc.is_body(o))[:3, 3]
+    return sc.view_matrix(centre, view)
 
 
 class SceneRenderer:
@@ -31,6 +33,7 @@ class SceneRenderer:
         self.scene = scene
         self.exclude: set[int] = set()  # id() of objects not to draw (with their children)
         self.view = None                # (yaw, pitch, scale): see view_transform
+        self.view_centre = None         # what the view turns about (default: Blupi's body)
         self.shadows = True             # the scenes' light casts shadows (shad 1)
         self.camera_name = camera
         self.meshes: dict[str, tuple | None] = {}
@@ -96,7 +99,7 @@ class SceneRenderer:
         out = []
         skipped: set[int] = set()
         frames = sc.world_frames(self.scene, tick)
-        turn = view_transform(frames, self.view)
+        turn = view_transform(frames, self.view, self.view_centre)
         for o, parent, _cw, gw in frames:
             gw = turn @ gw
             if id(o) in self.exclude or id(parent) in skipped:

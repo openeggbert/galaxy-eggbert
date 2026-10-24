@@ -386,13 +386,17 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
 
 
 def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scale: float, offset: np.ndarray,
-                      warnings: list[str], extras: dict) -> tuple[int, int]:
+                      warnings: list[str], extras: dict, joint_of: list[int] | None = None) -> tuple[int, int]:
     """A model of rigid parts that are not Blupi (a vehicle): a root joint and under it one joint
     per part carrying the part's whole geometry frame (Ray Dream scale and deformer included, as
     on a shape joint). ``parts`` is [(name, scene, obj, bind frame gw)], ``clips`` is
     [(clip name, [(seconds, {part name: gw})])] in Ray Dream world units; a part missing from a
     pose is hidden there. Built in the same glTF space as Blupi's model (``scale``, ``offset``),
-    so the game draws both with the same transform and clip time."""
+    so the game draws both with the same transform and clip time. ``joint_of`` maps each part to
+    the part whose joint it rides (by default its own): parts that move together share a joint,
+    which keeps a many-part object within CNA's 72 bones."""
+    joint_of = list(range(len(parts))) if joint_of is None else joint_of
+    reps = sorted(set(joint_of))
     def shape(gw):
         m = np.eye(4)
         m[:3, :3] = RD_TO_GLTF @ gw[:3, :3] * scale
@@ -404,7 +408,8 @@ def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scal
     b = gltf.GltfBuilder("galaxy-eggbert tools/rd4_to_gltf")
     root = b.add("nodes", {"name": root_name})
     node_of, bind = [], []
-    for name, _scene, _o, gw in parts:
+    for r in reps:
+        name, _scene, _o, gw = parts[r]
         bind.append(shape(gw))
         node_of.append(b.add("nodes", trs_node(name, bind[-1], scale=True)))
     b.doc["nodes"][root]["children"] = list(node_of)
@@ -419,7 +424,7 @@ def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scal
         key, tex, wpos, wn, tris, uv = part
         if tex is not None:
             textures[key] = tex
-        groups.setdefault(key, []).append((wpos, wn, tris, k + 1, uv))
+        groups.setdefault(key, []).append((wpos, wn, tris, reps.index(joint_of[k]) + 1, uv))
     mesh_nodes = []
     materials = {}
     for key, items in groups.items():
@@ -464,7 +469,8 @@ def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scal
         seconds = np.array([sec for sec, _p in poses], dtype=np.float32)
         time_acc = b.accessor(seconds, gltf.FLOAT, minmax=True)
         samplers, channels = [], []
-        for k, (name, *_rest) in enumerate(parts):
+        for k, r in enumerate(reps):
+            name = parts[r][0]
             mats = [shape(pp[name]) if name in pp else bind[k] @ hidden for _sec, pp in poses]
             dec = [decompose(m) for m in mats]
             quats = []
@@ -486,7 +492,7 @@ def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scal
                    "clips": [c for c, _p in clips]})
     b.doc["asset"]["extras"] = {"rd4_to_gltf": extras}
     b.write(path)
-    return len(parts) + 1, len(mesh_nodes)
+    return len(reps) + 1, len(mesh_nodes)
 
 
 def trs_node(name: str, m: np.ndarray, scale: bool = False) -> dict:

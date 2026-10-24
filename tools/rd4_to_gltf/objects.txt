@@ -1,0 +1,9 @@
+# Objects drawn as 3D models instead of sprite billboards (build_object_library.py, plan.md BB3D-*).
+# name  sheet  icons  scenes (comma-separated, under speedyblupi-data/originals)  [camera=NAME]
+# Sheets: element, object-m, explo, blupi, blupi1 (mobile-eggbert/Content/icons/<sheet>.png).
+treasure    element 0-11    Blupi/coffre.rd4
+egg         element 21-28   Blupi/oeuf.rd4    yaw=10
+exit        element 29-36   Blupi/fleche.rd4  yaw=10
+projectile  element 176     Blupi/balle-glu.rd4
+ammo        element 177     Blupi/munitions-glu.rd4
+drink       element 178     Blupi/bouteille.rd4

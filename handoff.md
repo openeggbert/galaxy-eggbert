@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-24._
+_Last updated: 2026-10-24 (evening)._
 
 ## Active work: billboards → 3D models (`plan.md` Phase 7B, `BB3D-*`)
 
@@ -19,9 +19,17 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   camera frame offset `ofst` (`scene.camera_centre`, part of `BB3D-006`); `BB3D-005`
   (Studio 5 files without render settings read as still frames); `BB3D-004` (free-form and
   `im` variants; `COFA`/`fogg`/`tx` left on purpose). `survey.py icons` takes every sheet's grid.
-- **Next:** `BB3D-008` (re-run Blupi's library with the camera offset, the overcraft may
-  improve; matching re-run in progress), then `BB3D-007` (icon surveys of element,
-  object-m, explo).
+- **Done (Stage 2-3):** `BB3D-010`/`011` the object model library and its game side
+  (`avatars3d/objects/`, `ObjectModelTable`, `VerifyObjectModelTable`); `BB3D-020`-`023`
+  treasure, egg, exit, drink, ammo, projectile are 3D in game (checked live under Xvfb with
+  `--golden-capture`: models where the billboards were).
+- **Next:** add objects to `tools/rd4_to_gltf/objects.txt` and regenerate (commands in
+  `avatars3d/objects/README.md`): Stage 4 enemies (bird, fish, follow enemies, mines, creature
+  `creature1-5.rds` icons 247-251, ...), `BB3D-024`/`025` pickups; `BB3D-007` icon surveys to
+  find unknown sources (element done in the background: `build-probe/rd4-survey/element_icons.csv`).
+- **Pending check:** `BB3D-008` (Blupi's library with the camera offset): the matching re-run
+  was started in the background; compare `build-probe/rd4-blupi/library/clips.md` with
+  the copy saved before (`clips.md` table, overcraft rows) after rebuilding the library.
 - **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-004`): all 528 scenes read; the
   only masters not built are `tx` (14, menus), `COFA` (2, terrain tiles), `fogg` (1, the cloud).
 
@@ -83,6 +91,9 @@ read-only, never modified. Do not modify any sibling repository unless the user 
 bug found in one goes to `upstream_bugs.md` (English, `UB-NNN`).
 
 ## Gotchas
+
+- `tests/golden/` frames are stale since before Phase 7B (the whole frame differs; CURRENT.md
+  says why); `--golden-capture` still works as a live check, its output just won't byte-match.
 
 - `../../libcna/cna` is a live working tree another session edits: a build can break or crash
   mid-edit; rebuild after its header changes before suspecting this repository.

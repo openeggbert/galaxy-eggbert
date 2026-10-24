@@ -139,6 +139,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/BlupiController.cpp
         src/GalaxyEggbert/Game/CameraShake.cpp
         src/GalaxyEggbert/Game/ChaseCameraYaw.cpp
+        src/GalaxyEggbert/Game/ObjectModelTable.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
         src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         src/GalaxyEggbert/Game/Sound.cpp
@@ -705,6 +706,18 @@ target_include_directories(VerifyChaseCameraYaw PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# ObjectModelTable (plan.md BB3D-010/011): which converted 3D object model draws which sprite
+# icon, parsed from avatars3d/objects/*/icons.txt; checked without CNA.
+add_executable(VerifyObjectModelTable
+        tools/VerifyObjectModelTable.cpp
+        src/GalaxyEggbert/Game/ObjectModelTable.cpp
+)
+
+target_include_directories(VerifyObjectModelTable PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # WorldRuntime.hpp/.cpp are deliberately engine-agnostic (only
 # depend on GalaxyEggbert::Worlds/def, plain floats instead of a CNA/XNA
 # Vector3) — this tool links it without needing CNA at all, verifying
@@ -791,6 +804,9 @@ if(BUILD_TESTING)
     add_test(NAME VerifyCameraShake COMMAND VerifyCameraShake)
     # No file/working-directory dependency -- pure orbit-yaw state machine.
     add_test(NAME VerifyChaseCameraYaw COMMAND VerifyChaseCameraYaw)
+    # Reads the shipped avatars3d/objects/ (index.txt, manifests, icons.txt) from the source tree.
+    add_test(NAME VerifyObjectModelTable
+             COMMAND VerifyObjectModelTable ${CMAKE_CURRENT_SOURCE_DIR}/avatars3d/objects)
 endif()
 
 # =============================================================================

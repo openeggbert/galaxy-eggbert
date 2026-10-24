@@ -7,6 +7,7 @@
 #include <GalaxyEggbert/Game/CameraShake.hpp>
 #include <GalaxyEggbert/Game/ChaseCameraYaw.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
+#include <GalaxyEggbert/Game/ObjectModelTable.hpp>
 #include <GalaxyEggbert/Game/Sound.hpp>
 #include <GalaxyEggbert/Game/InteractionSystem.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
@@ -782,6 +783,19 @@ namespace GalaxyEggbert::CNA
             const char* clip = nullptr;
         };
         [[nodiscard]] ParkedVehicleDraw ParkedVehicleModel(GalaxyEggbert::Def::ObjectType type) const;
+
+        // Objects drawn as 3D models converted from the Ray Dream scenes
+        // their sprites were rendered from (avatars3d/objects/, plan.md
+        // Phase 7B): the models in index.txt's order, and which of them draws
+        // which sprite icon. An icon objectModelTable_ lists is drawn as its
+        // model instead of its billboard; any other icon stays a billboard.
+        std::vector<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>> objectModels_;
+        GalaxyEggbert::Game::ObjectModelTable objectModelTable_;
+        // The sheet and icon a MoveObject's billboard shows this frame, picked
+        // as the billboard passes pick them; false when it shows none (hidden,
+        // inactive, a cube, a parked vehicle, an invisible frame).
+        [[nodiscard]] bool ObjectSprite(const GalaxyEggbert::Game::MobileObjSpec& obj,
+                                        GalaxyEggbert::Game::ObjectTextureSource& sheet, int& icon) const;
 
         // Tracks which clip is currently playing so blupiClipTimeSeconds_
         // resets to 0 on a change instead of continuing from a position that

@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "egg_rd_ffffff",
+      "vertices": "egg_rd_ffffff.verts.bin",
+      "indices": "egg_rd_ffffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "egg_rd_ffffff.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

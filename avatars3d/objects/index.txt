@@ -1,0 +1,7 @@
+# avatars3d/objects/<directory>/, one per line; export_objects.py
+ammo_munitions-glu
+drink_bouteille
+egg_oeuf
+exit_fleche
+projectile_balle-glu
+treasure_coffre
