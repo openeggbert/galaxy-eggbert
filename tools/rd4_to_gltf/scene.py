@@ -407,7 +407,10 @@ def read_scene(root: Chunk) -> Scene:
         for m in ob.chunks():
             masters[m.string("nm")] = m
     universe = read_obj(sc.chunk("tr").chunks()[0])
-    anim = root.chunk("3DC").chunk("RSet").chunk("anim") if root.chunk("3DC") else None
+    # Some Studio 5 files (Decor/goutte, tentacule, smooth, palais) carry no render settings
+    # (RSet): a single still frame.
+    rset = root.chunk("3DC").chunk("RSet") if root.chunk("3DC") else None
+    anim = rset.chunk("anim") if rset else None
     begin = _time(anim.leaf("begT") if anim else None, 0.0)
     end = _time(anim.leaf("endT") if anim else None, 0.0)
     fps = anim.float("FSec", 1.0) if anim else 1.0

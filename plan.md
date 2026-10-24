@@ -737,8 +737,10 @@ be converted one at a time.
       With the camera offset below, `creature1-5.rds` match icons 247-251 at IoU 0.978-0.998.
 - [ ] `BB3D-004` Star masters `COFA` (2) and the 18 free-form `ex` variants that fail
       (`IndexError`); fog `fogg` (1) is skipped, text `tx` (14, menus only) is out of scope.
-- [ ] `BB3D-005` The 28 Ray Dream Studio 5 files that do not parse (`Decor/goutte`,
-      `Decor/tentacule`, `smooth`, `palais`).
+- [x] `BB3D-005` The 28 Ray Dream Studio 5 files that did not read (`Decor/goutte` g1-g7,
+      `Decor/tentacule` p01-p17, `smooth` a/a1/a2, `palais` a): they have no render settings
+      (`RSet`), so no frame range; read as one still frame. They are shape libraries without
+      cameras; the scenes that render them are `tenta.rds`, `goutte01-07.rds` (2026-10-24).
 - [~] `BB3D-006` Cameras. Done: the orthographic camera's frame offset `ofst` (right, up, in
       `size` units / zoom; `scene.camera_centre`), used by the renderer, the verifier and the
       clip library's camera alignment; it was the reason the creature scenes matched nothing.

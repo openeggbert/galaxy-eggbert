@@ -16,14 +16,13 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   the per-sheet icon matching, formerly throwaway scripts).
 - **Done (Stage 1):** `BB3D-001` cones (`primitives.cone`); `BB3D-002` flat surfaces (the
   never-visible ground plane, built as nothing); `BB3D-003` mesh forms (`geometry.mesh_form`);
-  camera frame offset `ofst` (`scene.camera_centre`, part of `BB3D-006`).
+  camera frame offset `ofst` (`scene.camera_centre`, part of `BB3D-006`); `BB3D-005`
+  (Studio 5 files without render settings read as still frames).
 - **Next:** `BB3D-008` (re-run Blupi's library with the camera offset, the overcraft may
-  improve), then `BB3D-005` (28 RDS 5 files), `BB3D-004` (`COFA`, `ex` IndexError).
-- **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-003`): 500 of 528 scenes read;
+  improve; matching re-run in progress), then `BB3D-004` (`COFA`, `ex` IndexError).
+- **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-005`): all 528 scenes read;
   masters not built: `ex` IndexError 18 scenes, `tx` 14 (menus, out of scope), `COFA` 2, `im`
-  ValueError 1 (`Element/power.rds`), `fogg` 1 (`Explo/nuage.rds`); 28 RDS 5 files fail with
-  AttributeError (`Decor/goutte` g1-7, `Decor/palais` a, `Decor/smooth` a/a1/a2,
-  `Decor/tentacule` p01-p17).
+  ValueError 1 (`Element/power.rds`), `fogg` 1 (`Explo/nuage.rds`).
 
 Regenerate the survey (about 25 s for scenes, much longer for icons):
 
