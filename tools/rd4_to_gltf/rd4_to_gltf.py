@@ -16,6 +16,7 @@ README.md for the verified conventions.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import io
 import sys
 from pathlib import Path
@@ -135,9 +136,13 @@ class Converter:
             worlds.append(cw)
             out.append((cw, gw))
         if view is not None:
-            turn = sc.view_matrix(out[self.names.index("Corps")][0][:3, 3], view)
+            turn = sc.view_matrix(out[self.body_index()][0][:3, 3], view)
             out = [(turn @ cw, turn @ gw) for cw, gw in out]
         return out
+
+    def body_index(self) -> int:
+        """Index of Blupi's body among the joints (scene.is_body)."""
+        return next(i for i, o in enumerate(self.joints) if sc.is_body(o) and i not in self.scene_of)
 
     def joint_world(self, cw: np.ndarray) -> tuple[np.ndarray, bool]:
         """Proper rigid glTF-space joint matrix for a Ray Dream child frame, and whether it was mirrored."""
@@ -345,8 +350,16 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
         tex = None
         warnings.append(f"{label}: texture not converted ({e}); flat colour used")
     if tex is not None and ff is None:
-        warnings.append(f"{label}: texture map on a primitive not converted")
-        tex = None
+        prim = scene.masters[o.master].chunk("prim")
+        baked = shading.primitive_texture(tex, prim.chunks()[0].tag if prim is not None else "", pos, nrm)
+        if baked is None:
+            warnings.append(f"{label}: texture map on a primitive not converted")
+            tex = None
+        else:
+            warnings.extend(tex.warnings)
+            tex = dataclasses.replace(tex, image=baked[0])
+            pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, baked[1], 1.0)
+            key = ("texture", label)
     elif tex is not None:
         warnings.extend(tex.warnings)
         st = freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src]

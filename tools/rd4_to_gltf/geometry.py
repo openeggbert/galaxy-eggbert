@@ -159,6 +159,12 @@ def canonical_mesh(master: rd4.Chunk):
     if master.tag == "ex":
         ff = freeform_mesh.tessellate(master)
         return Mesh(ff.positions, ff.triangles), ff
+    if master.tag == "im":
+        # An explicit triangle mesh (Ray Dream Studio 5's boolean results, blupi-scie.rds): one
+        # "ff" line per triangle, 3 x (position xyz, a second xyz, u v); the second triple is
+        # not the position (rendering it puts the half body nowhere near the sprites).
+        faces = np.array([rd4.parse_floats(f) for f in master.chunk("fl").leaves("ff")]).reshape(-1, 3, 8)
+        return orient_outwards(weld(faces[:, :, 0:3])), None
     prim = master.chunk("prim")
     kind = prim.chunks()[0].tag if prim is not None and prim.chunks() else master.tag
     if kind == "sp":

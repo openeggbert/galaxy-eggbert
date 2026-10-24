@@ -22,7 +22,7 @@ def view_transform(frames, view) -> np.ndarray:
     """scene.view_matrix about Blupi's body (``Corps``); cameras and lights are not turned."""
     if view is None:
         return np.eye(4)
-    body = next(cw for o, _p, cw, _g in frames if o.name == "Corps")
+    body = next(cw for o, _p, cw, _g in frames if sc.is_body(o))
     return sc.view_matrix(body[:3, 3], view)
 
 
@@ -47,17 +47,22 @@ class SceneRenderer:
                 self.skipped[master] = str(e) or type(e).__name__
         return self.meshes[master]
 
-    def _texture(self, obj: sc.Obj, ff):
+    def _texture(self, obj: sc.Obj, canon):
+        """(image, texture coordinates of the canonical mesh's output vertices) or None."""
         key = id(obj)
         if key not in self.textures:
             self.textures[key] = None
-            if ff is not None:
-                try:
-                    tex = shading.texture_map(self.scene, obj)
-                except NotImplementedError:
-                    tex = None
-                if tex is not None:
-                    self.textures[key] = (tex, freeform_mesh.texture_coordinates(ff, tex.quarter_turns))
+            pos, nrm, _tris, src, ff = canon
+            try:
+                tex = shading.texture_map(self.scene, obj)
+            except NotImplementedError:
+                tex = None
+            if tex is not None and ff is not None:
+                self.textures[key] = (tex.image, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src])
+            elif tex is not None:
+                prim = self.scene.masters[obj.master].chunk("prim")
+                self.textures[key] = shading.primitive_texture(
+                    tex, prim.chunks()[0].tag if prim is not None else "", pos, nrm)
         return self.textures[key]
 
     def camera(self, tick: float):
@@ -100,11 +105,10 @@ class SceneRenderer:
             wn = nrm @ np.linalg.inv(lin)
             wn /= np.maximum(np.linalg.norm(wn, axis=1, keepdims=True), 1e-12)
             t = tris[:, ::-1] if np.linalg.det(lin) < 0 else tris
-            tex = self._texture(o, ff)
+            tex = self._texture(o, canon)
             if tex is not None:
-                st = tex[1][src]
-                p2, n2, t2, uv = freeform_mesh.split_seam(wpos, wn, t, st, 1.0)
-                out.append((p2, n2, t2, np.ones(3), uv, tex[0].image.astype(float) / 255.0))
+                p2, n2, t2, uv = freeform_mesh.split_seam(wpos, wn, t, tex[1], 1.0)
+                out.append((p2, n2, t2, np.ones(3), uv, tex[0].astype(float) / 255.0))
             else:
                 out.append((wpos, wn, t, np.array(shading.material_key(self.scene, o))))
         return out

@@ -6,9 +6,9 @@ continued by ``MORE`` lines (256 x ``00RRGGBB``), ``tils W,H`` and a ``TDTA`` ch
 stream that runs across row boundaries. Older scenes (t.rd4) write the same data in lowercase
 ``ctab``/``tdta``/``tile`` leaves as raw bytes after a ``$`` and 8 hex digits of length, with no
 ``FFFFFFFF`` tile header. Tiles on the right and bottom edges are cropped to the
-image. Rows are ``ceil(width * dpth / 8)`` bytes, except 32-bit rows: three planes, all red bytes,
-then green, then blue (no alpha). The 32-bit layout is a best reading of the lollipop's stripe
-texture (blupi-sucette.rd4) and not yet checked against a render.
+image. Rows are ``ceil(width * dpth / 8)`` bytes, except 32-bit tiles: three planes for the whole
+tile, every red byte, then green, then blue (no alpha); only that reading gives the lollipop's
+stripe textures (blupi-sucette.rd4) clean, seamless stripes.
 """
 
 from __future__ import annotations
@@ -77,14 +77,14 @@ def decode(chunk: Chunk) -> np.ndarray:
         if raw[:4] != b"\xff\xff\xff\xff":
             raise ValueError(f"unexpected tile header {raw[:4].hex()}")
         if depth == 32:
-            row_bytes = cw * 3
-        else:
-            row_bytes = -(-cw * depth // 8)
+            # Three planes per tile: every red byte of the tile, then green, then blue.
+            px = np.frombuffer(unpackbits_stream(raw[4:], cw * ch * 3), dtype=np.uint8)
+            img[y0:y0 + ch, x0:x0 + cw] = px.reshape(3, ch, cw).transpose(1, 2, 0)
+            continue
+        row_bytes = -(-cw * depth // 8)
         px = np.frombuffer(unpackbits_stream(raw[4:], row_bytes * ch), dtype=np.uint8).reshape(ch, row_bytes)
         if depth == 1:
             px = np.unpackbits(px, axis=1)[:, :cw]
-        elif depth == 32:
-            px = px.reshape(ch, 3, cw).transpose(0, 2, 1)
         elif depth != 8:
             raise NotImplementedError(f"{depth}-bit bitmaps")
         img[y0:y0 + ch, x0:x0 + cw] = px

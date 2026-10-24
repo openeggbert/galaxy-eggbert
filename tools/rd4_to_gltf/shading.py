@@ -93,6 +93,8 @@ class TextureMap:
     domain: tuple            # primary domain bbox (u0, v0, u1, v1)
     quarter_turns: int       # rotc
     warnings: list
+    counts: tuple = (1, 1)   # cnth, cntv: repeats across and along (tile 1)
+    flips: tuple = (False, True)  # flph, flpv
 
 
 def _find_image(scene: sc.Scene, refn: str) -> rd4.Chunk | None:
@@ -194,8 +196,32 @@ def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
         else:
             inside = cv[:, None] ** 2 + best[None, :] ** 2 <= 1
         rgb[inside] = ch.floats("colr")
+    counts = (int(placement.get("cnth") or 1), int(placement.get("cntv") or 1)) \
+        if placement.get("tile") == "1" else (1, 1)
+    flips = (placement.get("flph") == "1", placement.get("flpv") == "1")
     return TextureMap((rgb * 255).round().astype(np.uint8), (u0, v0, u1, v1),
-                      int(placement.get("rotc") or 0), warnings)
+                      int(placement.get("rotc") or 0), warnings, counts, flips)
+
+
+def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals: np.ndarray):
+    """(image, (N, 2) texture coordinates) of a texture map on a cylinder primitive: around the
+    axis ``s`` = angle; the side's ``t`` runs along the axis, the caps' from the centre out, so
+    the lollipop's diagonal stripes wind into its spiral. The map's repeats are baked into the
+    image (so ``t`` stays in [0, 1]); flips apply. Only the lollipop uses this; the other
+    placements (rotc) are not read. Returns None for other primitives."""
+    if kind != "cyli":
+        return None
+    import primitives
+    x, y, z = positions.T
+    s = np.mod(np.arctan2(y, x) / (2 * np.pi), 1.0)
+    cap = np.abs(normals[:, 2]) > 0.5
+    t = np.where(cap, np.hypot(x, y) / primitives.CYLINDER_RADIUS,
+                 (z + primitives.CYLINDER_HALF_HEIGHT) / (2 * primitives.CYLINDER_HALF_HEIGHT))
+    flph, flpv = tex.flips
+    s = 1.0 - s if flph else s
+    t = 1.0 - t if flpv else t
+    cnth, cntv = tex.counts
+    return np.tile(tex.image, (cntv, cnth, 1)), np.stack([s, np.clip(t, 0.0, 1.0)], axis=1)
 
 
 def textured_material_json(name: str, texture: int) -> dict:

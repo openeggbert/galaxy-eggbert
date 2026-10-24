@@ -358,6 +358,12 @@ def read_obj(ch: Chunk) -> Obj:
     return obj
 
 
+def is_body(o: Obj) -> bool:
+    """Blupi's body: the object named "Corps", or in the saw scene (blupi-scie.rds) the unnamed
+    half body whose master, a boolean of the body and a cube, is "Corps et Cube"."""
+    return o.name == "Corps" or (not o.name and (o.master or "").startswith("Corps"))
+
+
 @dataclass
 class Scene:
     root: Chunk
@@ -366,6 +372,15 @@ class Scene:
     begin: float
     end: float
     fps: float
+
+    def body(self) -> Obj | None:
+        stack = [self.universe]
+        while stack:
+            o = stack.pop()
+            if is_body(o):
+                return o
+            stack.extend(o.children)
+        return None
 
     def find(self, name: str) -> Obj | None:
         stack = [self.universe]

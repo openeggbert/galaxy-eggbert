@@ -2,7 +2,7 @@
 """Build Blupi's clip library: one animation per game animation state, from the sprite icons.
 
 Every ``BlupiController::AnimState`` (and every death cause / pickup kind variant) plays a table
-of sprite icons at ``kAnimFps`` (``BlupiController.cpp``: ``GetAnimIcon`` and the ``k...Frames``
+of sprite icons at ``kAnimFps`` (``BlupiController.cpp``: ``GetRawAnimIcon`` and the ``k...Frames``
 tables, read in place). ``match_icons.py`` found which Ray Dream scene frame each icon was rendered
 from. Each clip here is that icon sequence turned into 3D poses: icon k becomes a key at k /
 frame_rate seconds holding the pose of its scene frame, LINEAR in between, with one more key
@@ -74,13 +74,13 @@ VEHICLES = {
 
 
 def controller_clips(path: Path) -> dict[str, list[int]]:
-    """{clip name: icon sequence} from BlupiController.cpp's GetAnimIcon and frame tables."""
+    """{clip name: icon sequence} from BlupiController.cpp's GetRawAnimIcon and frame tables."""
     text = path.read_text()
     tables = {}
     for name, body in re.findall(r"constexpr int (k\w+Frames)\[\]\s*=\s*\{(.*?)\};", text, flags=re.S):
         body = re.sub(r"//[^\n]*", "", body)
         tables[name] = [int(x) for x in re.findall(r"-?\d+", body)]
-    start = text.index("int BlupiController::GetAnimIcon() const noexcept")
+    start = text.index("int BlupiController::GetRawAnimIcon() const noexcept")
     body = text[start:text.index("bool BlupiController::AnimIconUsesElementSheet", start)]
     clips: dict[str, list[int]] = {}
     for state, table in re.findall(
@@ -115,7 +115,7 @@ def body_parent(scene: sc.Scene) -> sc.Obj:
     stack = [scene.universe]
     while stack:
         o = stack.pop()
-        if any(c.name == "Corps" for c in o.children):
+        if any(sc.is_body(c) for c in o.children):
             return o
         stack.extend(o.children)
     raise ValueError("no Corps")
@@ -131,7 +131,7 @@ def match_names(base: conv_mod.Converter, c: conv_mod.Converter):
     the same kind nearest to it in the body's frame: blupi-plat.rd4 names both feet "Pied-d"."""
     def body_local(conv):
         frames = conv.rd_frames(conv.scene.begin)
-        inv = np.linalg.inv(frames[conv.names.index("Corps")][0])
+        inv = np.linalg.inv(frames[conv.body_index()][0])
         return [(inv @ cw)[:3, 3] for cw, _gw in frames]
 
     free = [i for i, n in enumerate(base.names) if n not in c.names]
@@ -222,7 +222,7 @@ def vehicle_frames(c: conv_mod.Converter, body: set[str], names: dict[int, str],
     own = {id(o) for o, n in zip(c.joints, c.names) if n in body}
     frames = sc.world_frames(c.scene, tick)
     shift = sc.affine(np.eye(3), c.world_shift(tick))
-    corps = next(cw for o, _p, cw, _g in frames if o.name == "Corps")
+    corps = next(cw for o, _p, cw, _g in frames if sc.is_body(o))
     turn = sc.view_matrix((shift @ corps)[:3, 3], view) @ shift
     return {names[id(o)]: (turn @ gw, o) for o, _p, _cw, gw in frames
             if o.master and o.kind not in ("ca", "li") and id(o) not in own}
@@ -283,7 +283,13 @@ def main(argv=None) -> int:
     def face_of(name: str) -> int:
         c = converter(name)
         if name not in face_index:
-            tex = shading.texture_map(c.scene, c.scene.find("Corps"))
+            body_obj = c.scene.find("Corps")
+            tex = shading.texture_map(c.scene, body_obj) if body_obj is not None else None
+            if tex is None:
+                # No face of its own (the saw scene's half body): keep the base one, which is
+                # hidden there anyway.
+                face_index[name] = face_of(args.base)
+                return face_index[name]
             digest = hashlib.sha1(tex.image.tobytes()).hexdigest()[:10]
             file = f"face_{digest}.png"
             if file not in faces:

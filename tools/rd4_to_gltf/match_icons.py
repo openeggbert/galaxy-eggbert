@@ -115,7 +115,7 @@ def main(argv=None) -> int:
         except Exception as e:  # noqa: BLE001 - report every unreadable scene and go on
             problems.append(f"{path.name}: not read ({e})")
             continue
-        if scene.find("Corps") is None:
+        if scene.body() is None:
             continue
         renderer = scene_render.SceneRenderer(scene)
         renderers[path.name] = renderer

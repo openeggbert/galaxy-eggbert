@@ -121,6 +121,7 @@ or more.
 | Free form: sweep path through the `sap` points (`cv`, handles `cnc`/`cpc`), one cross-section (`st` + cubic `s3` segments) | table above |
 | Envelopes `t`/`b`/`l`/`r` scale the section's `b` axis (positive/negative side) and `a` axis (negative/positive); each is a cubic Bezier in (path position, scale) through `(p0, v0), (p0 + nc[1], nc[0]), (p1 − pc[1], pc[0]), (p1, v1)` | DXF ring positions fall exactly on 16 equal Bezier-parameter steps; ring radii within 0.002 |
 | Section `a` → +X, `b` → +Z for a path along +Y | eyelash (asymmetric section) and foot (unequal envelopes) |
+| Mesh masters (`im`, Ray Dream Studio 5 boolean results such as `blupi-scie.rds`'s half body "Corps et Cube"): one `ff` line per triangle, 3 x (position, a second triple, u, v); the first triple is the position | the saw scene's falling half matches Clear4's icons at frame IoU 0.71-0.87 that way, 0.31-0.44 with the second triple |
 | Cube primitive (`prim { cube }`, no parameters): half-size 2.5, a 5-unit cube like the cylinder's height | helicopter frames of `helico2.rd4` against icons 61-65: IoU 0.972 / 0.981 / 0.985 / 0.976 / 0.966 at half-size 2.3 / 2.4 / 2.5 / 2.6 / 2.7 |
 | A cross-section may hold several closed curves (`p2`, in nested `pg`/`pc` groups) of cubic `s3` and straight `s1` segments; curves inside others are holes (the tank's track loop, the wheel rims) | vehicle frames against their icons (below) |
 | A point without its own cross-section keeps the previous one; different cross-sections along the path blend into each other; a path ending where it starts (torus, tyre) is closed, without caps | the jeep's tyres and the overcraft's skirt are tori built this way |
@@ -132,7 +133,8 @@ outline).
 
 | Convention | Evidence |
 |---|---|
-| Bitmaps: `TILE` lines of PackBits streams, edge tiles cropped; 8-bit with a `CTAB` palette, 1-bit masks; 32-bit rows are R, G, B planes | the decoded face; the 32-bit layout is only a best reading of the lollipop texture |
+| Bitmaps: `TILE` lines of PackBits streams, edge tiles cropped; 8-bit with a `CTAB` palette, 1-bit masks; 32-bit tiles are three planes for the whole tile (every red byte, then green, then blue) | the decoded face; the lollipop's 32-bit textures decode to clean, seamless diagonal stripes only this way (per-row planes or interleaved bytes give fringed grey) |
+| A texture map on a cylinder primitive: `s` = angle about the axis; on the side `t` runs along the axis, on the caps from the centre out; `cnth`/`cntv` repeats (baked into the image), `flph`/`flpv` flips | the lollipop's striped disc turns into its spiral and matches icons 234-236 (frame IoU 0.963 / 0.934) |
 | Older scenes (`t.rd4`) write lowercase `ctab`/`tdta`/`tile` leaves: `$`, 8 hex digits of length, a CR, that many raw bytes (CR and LF included) and a closing `$`; tiles have no `FFFFFFFF` header | `t.rd4`'s face decodes to the same layout as the others |
 | The body's primary domain is a texture map (`smap`); `whit 1` makes pure white (255) transparent, showing the master's colour; near-white (254) eye whites stay | renders against sprites |
 | Texture `s` = surface `u` (control-polygon length from `st`) turned by `rotc` quarter turns; `t` = the vertex's fraction of the meridian length, flat end caps included | best of 64 orientation candidates against front and profile sprites, then the meridian rule fixed the face's height |
@@ -233,9 +235,9 @@ Glu 0.814). Not built, no matching scene frame: Clear2 and Clear4; the game show
 
 ## Not converted yet (next steps)
 
-- Texture maps on primitives (the lollipop's spiral) and procedural shaders (the skateboard's
-  wood shows its flat colour); cast shadows.
-- Twisted sweeps (none in the Blupi scenes).
-- Turn animations of the vehicles (TurnJeep, TurnTank, ...) and the death causes without a
-  scene frame (Clear2, Clear4): the game has no clip for them.
+- Ray Dream Studio 5's layered shaders (`scmp`/`ssub`) and secondary texture domains: the saw
+  scene's half body keeps its flat yellow (its face sits in an `srct` domain whose placement on
+  the mesh's own u, v is not decoded); procedural shaders (the skateboard's wood shows its flat
+  colour); cast shadows.
+- Texture maps on spheres and cubes (none in the Blupi scenes); twisted sweeps (none either).
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).
