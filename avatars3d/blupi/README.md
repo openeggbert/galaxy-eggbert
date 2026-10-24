@@ -25,8 +25,8 @@ edit by hand; regenerate with the commands below.
   in its texture.
 - Clips: one per `BlupiController::AnimState`, named after it (`Stop`, `March`, `Jump`, ...), plus
   `DeathLocked.<cause>` and `PickupBusy.<kind>`; each is the state's sprite icon table played at
-  `kAnimFps` (8 frames per second), interpolated linearly between the matched scene frames. States
-  without a clip (vehicles, Hide, Bye, two death causes) show `Stop`.
+  `kAnimFps` (20 frames per second, as in the original), interpolated linearly between the matched
+  scene frames. States without a clip (vehicles, Hide, Bye, two death causes) show `Stop`.
 - `clips.txt` lists the face textures (`face_*.png`, the expressions of the scenes used) and, per
   clip, the face of every frame; the game draws the part named on its `part` line with that
   texture. Its `viewer` lines name the clips that turn Blupi toward the sprites' viewer (his

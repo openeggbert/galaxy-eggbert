@@ -427,6 +427,23 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### fix: Blupi walks and animates at the original speed; the inflated Blupi's back is yellow (2026-10-24)
+User report: Blupi moves too fast, and the inflated Blupi is white from behind.
+- **Speed.** `BlupiController::kMoveSpeed` was 5.5 blocks/s ("3D tuning"); the original walks 8 px
+  per 20 Hz tick (`Tables::table_vitesse_march`, `Decor.cpp:3392-3404`), 2.5 blocks/s. Vehicle
+  speeds are multiples of it and now match their real px/tick figures too (Jeep 20 px/tick =
+  6.25 blocks/s). Jumps cover less ground (about 2.4 blocks at the unchanged jump speed and
+  gravity); hand-authored worlds with wider gaps need checking.
+- **Animation rate.** `kAnimFps` was 8; the original shows one `table_blupi` icon per 20 Hz tick
+  (`Decor.cpp:2370-2451`), which the one-shot durations already assumed (Mockery 92 icons =
+  4.6 s showed only 37 of them). At 20 the walk cycle is 0.3 s and 0.75 blocks long, as in the
+  sprites, so his feet no longer glide. The clip library is rebuilt at 20 frames per second.
+- **Balloon.** `blupi-ballon.rd4`'s face is drawn on a 254-white page that wraps round his back;
+  `whit 1` only clears pure white. Near-white touching the texture's border now becomes the
+  body colour (eye whites, enclosed in outlines, stay).
+`VerifyBlupiMovement`'s staircase and ghost walks run longer for the slower speed; 95/95 CTest
+cases pass; live, the walk cycle matches his pace.
+
 ### feat: the third-person camera shows Blupi from the side, as the sprites did (2026-10-24)
 Phase E of the real-Blupi plan (user decisions 2026-10-24). The chase camera's orbit yaw is now
 `GalaxyEggbert::Game::ChaseCameraYaw` (engine-agnostic, checked by `VerifyChaseCameraYaw`):

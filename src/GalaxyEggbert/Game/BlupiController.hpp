@@ -32,7 +32,11 @@ namespace GalaxyEggbert::Game
     class BlupiController
     {
     public:
-        static constexpr float kMoveSpeed = 5.5f; // established 3D tuning; locked by VerifyBlupiMovement
+        // Real walking speed: 8 px per 20 Hz tick once under way (Decor.cpp:3392-3404,
+        // Tables::table_vitesse_march = {2, 4, 6, 8}; the 4-tick ramp is not modeled) at 64 px
+        // per block, 8 * 20 / 64 = 2.5 blocks/s. It was 5.5 ("3D tuning") until 2026-10-24,
+        // when the real Blupi model showed him gliding (user report: he moves too fast).
+        static constexpr float kMoveSpeed = 2.5f;
         static constexpr float kTurnSpeed = 3.14159265f; // established 3D tuning: 180 deg/s
         static constexpr float kJumpSpeed = 12.0f; // real "-16, no Power, clear headroom" baseline -- see kJumpSpeedPowered's own comment
 
@@ -69,7 +73,10 @@ namespace GalaxyEggbert::Game
         static constexpr float kGravity   = 25.0f;
         static constexpr float kFallLimit = -10.0f;
         static constexpr float kStepLimit = 1.0f;
-        static constexpr float kAnimFps   = 8.0f; // established 3D animation cadence
+        // Real animation rate: one table_blupi icon per 20 Hz tick (Decor.cpp:2370-2451,
+        // m_blupiPhase++ every tick), which the one-shot durations below already assume
+        // (e.g. kMockeryDuration = 92 icons / 20). It was 8 until 2026-10-24.
+        static constexpr float kAnimFps   = 20.0f;
 
         // Crusher squash state (plan.md E3D-MIG-143, `m_blupiEcrase` per
         // mobile-eggbert-reference/12-hazards-and-interactables.md, verified

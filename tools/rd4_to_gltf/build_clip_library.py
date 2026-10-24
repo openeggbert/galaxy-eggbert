@@ -179,7 +179,7 @@ def main(argv=None) -> int:
     ap.add_argument("--icons", required=True, type=Path, help="icons.csv from match_icons.py")
     ap.add_argument("--controller", required=True, type=Path, help="BlupiController.cpp (read in place)")
     ap.add_argument("--sheet", required=True, type=Path, help="sprite sheet, for the per-clip check")
-    ap.add_argument("--frame-rate", type=float, default=8.0, help="icons per second (kAnimFps)")
+    ap.add_argument("--frame-rate", type=float, default=20.0, help="icons per second (kAnimFps)")
     ap.add_argument("--scale", type=float, default=0.05)
     ap.add_argument("--out", required=True, type=Path, help="output .glb; faces go beside it")
     ap.add_argument("--skip-check", action="store_true", help="do not render every clip frame against its icon")

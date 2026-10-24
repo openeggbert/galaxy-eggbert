@@ -36,7 +36,7 @@ python3 tools/rd4_to_gltf/verify_sprites.py --glb build-probe/rd4-blupi/blupi-ma
 ```
 
 `--clip NAME=SCENE[@FRAME]` (repeatable) puts several scenes' animations on the main scene's
-skeleton (`@FRAME`: one rendered frame as a static pose), and `--frame-rate 8` times them at the
+skeleton (`@FRAME`: one rendered frame as a static pose), and `--frame-rate 20` times them at the
 game's sprite cadence. `export_cna_avatar.py` turns the `.glb` into the game's CNA
 `SkinnedModelEXT` directory with each part's real colour or texture, its triangles turned
 clockwise for XNA's default culling (`upstream_bugs.md` UB-003).
@@ -172,7 +172,7 @@ python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/libra
     --cna-home ../../libcna/cna --out avatars3d/blupi
 ```
 
-- Icon k of a table becomes a key at k / 8 s holding the pose of the scene frame it matched as
+- Icon k of a table becomes a key at k / 20 s holding the pose of the scene frame it matched as
   rendered (not mirrored; score >= 0.70), LINEAR in between, with a last key closing the loop. An
   icon without a usable match holds the previous pose.
 - Every scene is shifted, frame by frame, so its game camera sits where `marche-profil.rd4`'s

@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     // so -90 deg (-pi/2 rad) faces -X.
     constexpr float kFaceWest = -1.57079633f;
     blupi.SetYaw(kFaceWest);
-    for (int i = 0; i < 400; ++i) // ~6.7 simulated seconds
+    for (int i = 0; i < 900; ++i) // 15 simulated seconds at the real 2.5 blocks/s walk
     {
         blupi.Step(world, 0.0f, 1.0f, false, false, false, dt);
     }
@@ -1720,7 +1720,7 @@ int main(int argc, char** argv)
         flyer.SetPosition(static_cast<float>(kGhostGroundX) - 50.0f, 0.5f, ghostBlockWorldZ + 3.0f);
         flyer.ToggleGhost(ghostWorld);
         flyer.SetYaw(0.0f); // facing -Z, straight toward/through the solid block's own column
-        for (int i = 0; i < 10; ++i)
+        for (int i = 0; i < 30; ++i) // 0.5 s at 4x the 2.5 blocks/s walk: 5 blocks
         {
             flyer.Step(ghostWorld, 0.0f, 1.0f, false, false, false, dt);
         }
