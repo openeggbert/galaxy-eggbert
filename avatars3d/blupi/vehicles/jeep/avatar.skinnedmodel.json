@@ -1,0 +1,80 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "jeep_rd_ff0000",
+      "vertices": "jeep_rd_ff0000.verts.bin",
+      "indices": "jeep_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "jeep_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "jeep_rd_000000",
+      "vertices": "jeep_rd_000000.verts.bin",
+      "indices": "jeep_rd_000000.idx.bin",
+      "vertexStride": 52,
+      "texture": "jeep_rd_000000.png",
+      "diffuseColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "jeep_rd_545454",
+      "vertices": "jeep_rd_545454.verts.bin",
+      "indices": "jeep_rd_545454.idx.bin",
+      "vertexStride": 52,
+      "texture": "jeep_rd_545454.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.09065468189359736,
+        0.09065468189359736,
+        1.0
+      ]
+    },
+    {
+      "name": "jeep_rd_ffffff",
+      "vertices": "jeep_rd_ffffff.verts.bin",
+      "indices": "jeep_rd_ffffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "jeep_rd_ffffff.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "jeep_rd_ffff00",
+      "vertices": "jeep_rd_ffff00.verts.bin",
+      "indices": "jeep_rd_ffff00.idx.bin",
+      "vertexStride": 52,
+      "texture": "jeep_rd_ffff00.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "StopJeep",
+      "clip": "clips/StopJeep.clip.bin"
+    },
+    {
+      "name": "MarchJeep",
+      "clip": "clips/MarchJeep.clip.bin"
+    }
+  ]
+}

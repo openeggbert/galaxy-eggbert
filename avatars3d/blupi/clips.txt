@@ -14,24 +14,34 @@ clip Up 0
 clip StopEcrase 1
 clip MarchEcrase 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1
 clip Balloon 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2 2
-clip Teleporting 3 3 0 0 0 0 4 4 3 3 4 4 4 4 0 0 3 0 0 4 3 4 4 0 3 0 0 4 3 4 4 0 3 3 3 4 0 4 4 0 3 3 3 4 0 4 4 0 0 0 3 3 0 0 4 0 3 3 3 4 4 4 4 4 4 4 4 3 3 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+clip Teleporting 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+clip StopHelico 0
+clip MarchHelico 0 0 0 0 0 0 0 0
+clip StopJeep 0 0 0 0 0 0 0 0
+clip MarchJeep 0 0 0 0 0 0 0 0
+clip StopTank 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+clip MarchTank 0 0 0 0 0 0 0 0
 clip StopSkate 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip MarchSkate 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip JumpSkate 0 0 0
 clip AirSkate 0 0 0 0 0 0 0 0
+clip StopOver 0
+clip MarchOver 0 0 0 0 0 0 0 0 0 0 0 0
 clip StopNage 0 0 0 0 0 0 0 0 0 0
 clip MarchNage 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip StopSurf 0 0 0 0 0 0 0 0 0 0 0 0
 clip MarchSurf 0 0 0 0 0 0 0 0 0 0 0 0
+clip Hide 0 0 0 0 0 0 0 0 0
 clip Push 0 0 0 0 0 0
-clip Switch 0 4 4 4 4 4 4 4 4 0
-clip TakeDynamite 3 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3
+clip Switch 0 0 0 0 0 0 0 0 0 0
+clip FireTank 0 0 0 0 0 0
+clip TakeDynamite 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip PutDynamite 3 3 3 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 3 3 3
-clip TakeSkate 0 0 0 0 0 0 3 3 3 3 0 0 0 0 0 0 0 0 0 0
-clip DeposeSkate 0 0 0 0 0 0 0 0 0 0 0 0 3 3 0 0 0 0 0 0
+clip TakeSkate 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+clip DeposeSkate 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip Mockery 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 4 4 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0
-clip Mockeryi 3 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 4 4 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0
-clip Mockeryp 3 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 3
+clip Mockeryi 0 0 0 0 0 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 4 4 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0
+clip Mockeryp 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
 clip Stop 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 4 4 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 4 4 0 0 0 0 0 0 0 0 0 0 0 0
 clip DeathLocked.Clear1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip DeathLocked.Clear3 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
@@ -39,12 +49,15 @@ clip DeathLocked.Glu 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip DeathLocked.Drown 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip PickupBusy.Sucette 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip PickupBusy.Drink 0 0 0 0
-clip PickupBusy.Charge 3 3 3 4 3 3 3 4 3 3 3 4 3 3 3 4 3 3 3 4 3 3 3 4 3 3 3 4 3 3 3 4 3 0 0 4 3 4 4 0 3 0 0 4 3 4 4 0 3 3 0 0 0 0 4 4 3 3 4 4 4 4 0 0
+clip PickupBusy.Charge 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 viewer StopEcrase
 viewer MarchEcrase
 viewer Balloon
 viewer Teleporting
 viewer StopSkate
+viewer MarchOver
+viewer Hide
+viewer Switch
 viewer TakeDynamite
 viewer PutDynamite
 viewer Mockeryi
@@ -53,3 +66,8 @@ viewer DeathLocked.Clear1
 viewer DeathLocked.Clear3
 viewer PickupBusy.Sucette
 viewer PickupBusy.Charge
+vehicle helico
+vehicle jeep
+vehicle tank
+vehicle over
+vehicle skate

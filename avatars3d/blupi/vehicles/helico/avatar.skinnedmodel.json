@@ -1,0 +1,67 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "helico_rd_00bffd",
+      "vertices": "helico_rd_00bffd.verts.bin",
+      "indices": "helico_rd_00bffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "helico_rd_00bffd.png",
+      "diffuseColor": [
+        0.0,
+        0.5225215539683921,
+        0.9909246121188983,
+        1.0
+      ]
+    },
+    {
+      "name": "helico_rd_ff0918",
+      "vertices": "helico_rd_ff0918.verts.bin",
+      "indices": "helico_rd_ff0918.idx.bin",
+      "vertexStride": 52,
+      "texture": "helico_rd_ff0918.png",
+      "diffuseColor": [
+        1.0,
+        0.0029411764705882353,
+        0.00926431084760073,
+        1.0
+      ]
+    },
+    {
+      "name": "helico_rd_ffff00",
+      "vertices": "helico_rd_ffff00.verts.bin",
+      "indices": "helico_rd_ffff00.idx.bin",
+      "vertexStride": 52,
+      "texture": "helico_rd_ffff00.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "helico_rd_bfbfbf",
+      "vertices": "helico_rd_bfbfbf.verts.bin",
+      "indices": "helico_rd_bfbfbf.idx.bin",
+      "vertexStride": 52,
+      "texture": "helico_rd_bfbfbf.png",
+      "diffuseColor": [
+        0.5225215539683921,
+        0.5225215539683921,
+        0.5225215539683921,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "StopHelico",
+      "clip": "clips/StopHelico.clip.bin"
+    },
+    {
+      "name": "MarchHelico",
+      "clip": "clips/MarchHelico.clip.bin"
+    }
+  ]
+}

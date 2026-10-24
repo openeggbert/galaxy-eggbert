@@ -118,6 +118,30 @@
       "clip": "clips/Teleporting.clip.bin"
     },
     {
+      "name": "StopHelico",
+      "clip": "clips/StopHelico.clip.bin"
+    },
+    {
+      "name": "MarchHelico",
+      "clip": "clips/MarchHelico.clip.bin"
+    },
+    {
+      "name": "StopJeep",
+      "clip": "clips/StopJeep.clip.bin"
+    },
+    {
+      "name": "MarchJeep",
+      "clip": "clips/MarchJeep.clip.bin"
+    },
+    {
+      "name": "StopTank",
+      "clip": "clips/StopTank.clip.bin"
+    },
+    {
+      "name": "MarchTank",
+      "clip": "clips/MarchTank.clip.bin"
+    },
+    {
       "name": "StopSkate",
       "clip": "clips/StopSkate.clip.bin"
     },
@@ -132,6 +156,14 @@
     {
       "name": "AirSkate",
       "clip": "clips/AirSkate.clip.bin"
+    },
+    {
+      "name": "StopOver",
+      "clip": "clips/StopOver.clip.bin"
+    },
+    {
+      "name": "MarchOver",
+      "clip": "clips/MarchOver.clip.bin"
     },
     {
       "name": "StopNage",
@@ -150,12 +182,20 @@
       "clip": "clips/MarchSurf.clip.bin"
     },
     {
+      "name": "Hide",
+      "clip": "clips/Hide.clip.bin"
+    },
+    {
       "name": "Push",
       "clip": "clips/Push.clip.bin"
     },
     {
       "name": "Switch",
       "clip": "clips/Switch.clip.bin"
+    },
+    {
+      "name": "FireTank",
+      "clip": "clips/FireTank.clip.bin"
     },
     {
       "name": "TakeDynamite",

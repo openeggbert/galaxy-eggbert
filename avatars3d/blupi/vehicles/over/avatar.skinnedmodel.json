@@ -1,0 +1,80 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "over_rd_00bffd",
+      "vertices": "over_rd_00bffd.verts.bin",
+      "indices": "over_rd_00bffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "over_rd_00bffd.png",
+      "diffuseColor": [
+        0.0,
+        0.5225215539683921,
+        0.9909246121188983,
+        1.0
+      ]
+    },
+    {
+      "name": "over_rd_e9e9e9",
+      "vertices": "over_rd_e9e9e9.verts.bin",
+      "indices": "over_rd_e9e9e9.idx.bin",
+      "vertexStride": 52,
+      "texture": "over_rd_e9e9e9.png",
+      "diffuseColor": [
+        0.8154008536838218,
+        0.8154008536838218,
+        0.8154008536838218,
+        1.0
+      ]
+    },
+    {
+      "name": "over_rd_3f3f3f",
+      "vertices": "over_rd_3f3f3f.verts.bin",
+      "indices": "over_rd_3f3f3f.idx.bin",
+      "vertexStride": 52,
+      "texture": "over_rd_3f3f3f.png",
+      "diffuseColor": [
+        0.05087608817155679,
+        0.05087608817155679,
+        0.05087608817155679,
+        1.0
+      ]
+    },
+    {
+      "name": "over_rd_bfbfbf",
+      "vertices": "over_rd_bfbfbf.verts.bin",
+      "indices": "over_rd_bfbfbf.idx.bin",
+      "vertexStride": 52,
+      "texture": "over_rd_bfbfbf.png",
+      "diffuseColor": [
+        0.5225215539683921,
+        0.5225215539683921,
+        0.5225215539683921,
+        1.0
+      ]
+    },
+    {
+      "name": "over_rd_ff0000",
+      "vertices": "over_rd_ff0000.verts.bin",
+      "indices": "over_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "over_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "StopOver",
+      "clip": "clips/StopOver.clip.bin"
+    },
+    {
+      "name": "MarchOver",
+      "clip": "clips/MarchOver.clip.bin"
+    }
+  ]
+}

@@ -427,6 +427,27 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### feat: Blupi's vehicles, skateboard, Hide and front/back views (2026-10-24)
+Phase A of the real-Blupi plan (user request after phase E). Converter (`tools/rd4_to_gltf/`):
+- cube primitive (half-size 2.5, fitted to the helicopter sprites); free-form cross-sections of
+  several curves with holes, straight `s1` segments, closed paths (tori: tyres, the overcraft's
+  skirt) and cross-sections that change along the path; the older binary bitmap leaves of
+  `t.rd4`;
+- a group's `Scal` scales its contents (the tank's `tracks` 1.15442 and the `BLUPI` inside it
+  0.86617): tank 0.774 → 0.943, jeep 0.898 → 0.952, skateboard 0.920 → 0.988 best frame IoU;
+- `match_icons.py` also tries every frame turned about Blupi's vertical (front views of the turn,
+  the switch's back view) and, for Hide's icons, pitched and scaled: 114 of 231 action icons
+  now match confidently, 71 probably (was 87 and 60). Hide is `naissance.rd4`'s small tumbling
+  Blupi; a clip frame matched turned turns the whole pose.
+Clip library: 42 clips (only Clear2/Clear4 missing), and the helicopter, jeep, tank, overcraft and
+skateboard as separate models (`avatars3d/blupi/vehicles/`, CNA skins up to 72 bones and the tank
+alone has 40 parts) with the vehicle clips' names, drawn by the game with Blupi's transform and
+clip time. Mean IoU with the vehicle drawn: helicopter 0.94-0.98, jeep 0.95, tank 0.88-0.93,
+skateboard 0.91-0.98, overcraft 0.74-0.76; Hide 0.92, Switch 0.95, Teleporting 0.94 (was 0.84).
+The camera's "viewer" clips now count turns away from the viewer too (Switch, Hide, MarchOver).
+Verified: CPU replays of the exported CNA vehicle assets match their .glb (IoU 1.0); the game
+loads all five; 95/95 CTest cases pass. Not seen live in a vehicle (no world puts one at hand).
+
 ### fix: Blupi walks and animates at the original speed; the inflated Blupi's back is yellow (2026-10-24)
 User report: Blupi moves too fast, and the inflated Blupi is white from behind.
 - **Speed.** `BlupiController::kMoveSpeed` was 5.5 blocks/s ("3D tuning"); the original walks 8 px

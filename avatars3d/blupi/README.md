@@ -15,18 +15,19 @@ edit by hand; regenerate with the commands below.
 
 ## Contents
 
-- 45 bones: one per Ray Dream object of Blupi (body, nose, arm segments, hands, legs, feet,
-  eyelashes), the props of the scenes the clips use (`langue`, the tongue; `Bouteille`, the
-  bottle; `Sucette`, the lollipop), and `<bone>.shape` leaves carrying the parts whose scale or
-  deformer changes (squashed, inflated) or which some clips hide. Every part moves rigidly with
-  its bone, as in the original.
+- 45 bones (CNA's skinning takes up to 72): one per Ray Dream object of Blupi (body, nose, arm
+  segments, hands, legs, feet, eyelashes), the props of the scenes the clips use (`langue`, the
+  tongue; `Bouteille`, the bottle; `Sucette`, the lollipop), and `<bone>.shape` leaves carrying
+  the parts whose scale or deformer changes (squashed, inflated) or which some clips hide. Every
+  part moves rigidly with its bone, as in the original.
 - Parts, one per colour: `BLUPI_rd_tex_Corps` (body with the face texture), `BLUPI_rd_ffff00`,
   `BLUPI_rd_000000`, `BLUPI_rd_ff0000`, `BLUPI_rd_fc7a3b`, `BLUPI_rd_00ffff`. Each part's colour is
   in its texture.
 - Clips: one per `BlupiController::AnimState`, named after it (`Stop`, `March`, `Jump`, ...), plus
   `DeathLocked.<cause>` and `PickupBusy.<kind>`; each is the state's sprite icon table played at
   `kAnimFps` (20 frames per second, as in the original), interpolated linearly between the matched
-  scene frames. States without a clip (vehicles, Hide, Bye, two death causes) show `Stop`.
+  scene frames; a frame matched turned (front and back views, Hide's somersault) turns the whole
+  pose. States without a clip (Bye, two death causes) show `Stop`.
 - `clips.txt` lists the face textures (`face_*.png`, the expressions of the scenes used) and, per
   clip, the face of every frame; the game draws the part named on its `part` line with that
   texture. Its `viewer` lines name the clips that turn Blupi toward the sprites' viewer (his
@@ -38,6 +39,10 @@ edit by hand; regenerate with the commands below.
   in the sprites: 48 and 51 of a block's 64 pixels in `blupi.png`'s standing icon.
 - Triangles are clockwise, as XNA's default culling expects (`export_cna_avatar.py`;
   `upstream_bugs.md` UB-003).
+- `vehicles/<name>/`: the helicopter, jeep, tank, overcraft and skateboard, each a model of its
+  own with the vehicle clips' names (`StopJeep`, `MarchJeep`, ...), built from the same scene
+  frames in the same space; the game draws the one whose clip is playing with Blupi's transform
+  and clip time. Listed in `clips.txt` (`vehicle` lines).
 
 ## Regenerate
 
@@ -52,4 +57,8 @@ python3 tools/rd4_to_gltf/build_clip_library.py --scenes $B --base marche-profil
     --sheet ../mobile-eggbert/Content/icons/blupi.png --out build-probe/rd4-blupi/library/blupi.glb
 python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/library/blupi.glb \
     --cna-home ../../libcna/cna --out avatars3d/blupi
+for v in helico jeep tank over skate; do
+    python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/library/vehicles/$v.glb \
+        --cna-home ../../libcna/cna --out avatars3d/blupi/vehicles/$v
+done
 ```

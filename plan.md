@@ -689,8 +689,11 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       frames with per-frame expressions and the body-hung props (`build_clip_library.py`), Down
       turns around (`NEXT.md` §3). **Phase E done the same day:** the chase camera lags on
       turns, shows his nearer open side when he stands idle and his right for clips that face
-      the sprites' viewer (`ChaseCameraYaw`). Remaining: phase A (vehicles, skateboard, Hide,
-      front/back views).
+      the sprites' viewer (`ChaseCameraYaw`). **Phase A done the same day:** vehicles and the
+      skateboard as separate models drawn with Blupi, Hide's somersault, front and back views
+      (turned matches), group `Scal`, cubes, holes and closed or blended sweeps in the converter.
+      Remaining for `069`: Clear2/Clear4 (no scene frame), the vehicles' turn animations, texture
+      maps on primitives (the lollipop's spiral), parked vehicles as 3D models.
 
 ### Phase 7 — Objects & decor rendering (`E3D-MIG-070`-`074`)
 

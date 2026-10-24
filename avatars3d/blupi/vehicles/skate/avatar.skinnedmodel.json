@@ -1,0 +1,70 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "skate_rd_ff0000",
+      "vertices": "skate_rd_ff0000.verts.bin",
+      "indices": "skate_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "skate_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "skate_rd_545454",
+      "vertices": "skate_rd_545454.verts.bin",
+      "indices": "skate_rd_545454.idx.bin",
+      "vertexStride": 52,
+      "texture": "skate_rd_545454.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.09065468189359736,
+        0.09065468189359736,
+        1.0
+      ]
+    },
+    {
+      "name": "skate_rd_7f7ffd",
+      "vertices": "skate_rd_7f7ffd.verts.bin",
+      "indices": "skate_rd_7f7ffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "skate_rd_7f7ffd.png",
+      "diffuseColor": [
+        0.21404114048223255,
+        0.21404114048223255,
+        0.9909246121188983,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "StopSkate",
+      "clip": "clips/StopSkate.clip.bin"
+    },
+    {
+      "name": "MarchSkate",
+      "clip": "clips/MarchSkate.clip.bin"
+    },
+    {
+      "name": "JumpSkate",
+      "clip": "clips/JumpSkate.clip.bin"
+    },
+    {
+      "name": "AirSkate",
+      "clip": "clips/AirSkate.clip.bin"
+    },
+    {
+      "name": "TakeSkate",
+      "clip": "clips/TakeSkate.clip.bin"
+    },
+    {
+      "name": "DeposeSkate",
+      "clip": "clips/DeposeSkate.clip.bin"
+    }
+  ]
+}
