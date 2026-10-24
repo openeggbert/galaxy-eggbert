@@ -10,6 +10,20 @@ Evidence: `build-probe/rd4-survey/` (regenerable): `scenes.csv` reads every `.rd
 orthographic cameras; `object_icons.txt` lists the icons, sheet and render mode of every
 MoveObject type (`ResolveObjectVisual`, phases 0-399).
 
+## Status (2026-10-24, evening)
+
+Most of the replacement below is done; `plan.md` Phase 7B (`BB3D-*`) tracks it item by item and
+`handoff.md` says where work stands. The converter now builds every master kind the objects use
+(cones, mesh forms, flat surfaces as the unseen ground, Studio 5 variants, `xyzS`), reads camera
+frame offsets, and maps textures on cubes, spheres, cones and free-form domains. In the game as
+3D models (`avatars3d/objects/`): every pickup but the charge and the shield, every enemy, the
+decoys, the tentacle and the big decor; the charge and the shield keep their billboards for
+their sparks, effects stay billboards. Corrections to sections 4 and 5: the charge's ball and
+spring are `Decor/electro.rd4` (not `Element/power.rds`); type 16's icons are the moving mine;
+the bulldozer is `tracks-profil.rd4`; the keys, wasp and others were rendered by orthographic
+`Caméra 2` cameras, so no perspective camera was needed; big decor's 66-69 and 87-89 come from
+`Decor/smooth` and `Decor/palais`.
+
 ## 1. What the game loads
 
 The real Blupi is **not** loaded as glTF. `tools/rd4_to_gltf` writes `.glb` files as the
