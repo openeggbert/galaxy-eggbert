@@ -2,8 +2,12 @@
 """Turn a .glb from rd4_to_gltf.py into the game's CNA SkinnedModelEXT avatar directory.
 
 Runs CNA's own converter (``tools/avatar_asset_pipeline/convert_avatar.py --embedded-clips``),
-then replaces the white placeholder texture it writes for every part with the part's real
-colour or texture from the .glb: CNA's converter keeps neither (upstream_bugs.md UB-002).
+then fixes what it leaves for the game (upstream_bugs.md):
+
+* UB-003: it keeps glTF's counter-clockwise front faces, which XNA's default
+  ``CullCounterClockwise`` culls, so the model would draw inside out. Every part's triangles are
+  turned clockwise, unless the converter has already done so.
+* UB-002 (fixed in newer CNA): each part gets its real colour or texture from the .glb.
 
     python3 export_cna_avatar.py --glb blupi.glb --cna-home ../../libcna/cna --out avatars3d/blupi
 """
@@ -49,6 +53,25 @@ def part_images(glb: Path) -> dict[str, Image.Image]:
     return out
 
 
+def glb_indices(glb: Path) -> dict[str, np.ndarray]:
+    """{mesh name: (T, 3) triangle indices} as stored in the .glb (counter-clockwise)."""
+    doc, blob = gltf.read_glb(glb)
+    return {m["name"]: gltf.read_accessor(doc, blob, m["primitives"][0]["indices"]).reshape(-1, 3)
+            for m in doc["meshes"]}
+
+
+def make_clockwise(idx_path: Path, ccw: np.ndarray) -> str:
+    """Rewrite a CNA part's 16-bit index file with clockwise triangles; returns what was done."""
+    tris = np.fromfile(idx_path, dtype="<u2").reshape(-1, 3)
+    if np.array_equal(tris, ccw):
+        tris[:, [1, 2]] = tris[:, [2, 1]]
+        tris.astype("<u2").tofile(idx_path)
+        return "turned clockwise"
+    if np.array_equal(tris, ccw[:, [0, 2, 1]]):
+        return "already clockwise"
+    raise SystemExit(f"{idx_path}: triangles differ from the .glb's; cannot tell their winding")
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--glb", required=True, type=Path)
@@ -61,12 +84,14 @@ def main(argv=None) -> int:
                     "--embedded-clips"], check=True)
     manifest = json.loads((args.out / "avatar.skinnedmodel.json").read_text())
     images = part_images(args.glb)
+    indices = glb_indices(args.glb)
     for part in manifest["parts"]:
         image = images.get(part["name"])
         if image is None:
             raise SystemExit(f"part {part['name']!r} has no mesh of that name in {args.glb}")
         image.save(args.out / part["texture"])
-        print(f"{part['texture']}: {image.size[0]}x{image.size[1]}")
+        winding = make_clockwise(args.out / part["indices"], indices[part["name"]])
+        print(f"{part['name']}: texture {image.size[0]}x{image.size[1]}, triangles {winding}")
     return 0
 
 

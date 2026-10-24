@@ -62,6 +62,31 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   the result is the same with either CNA (`avatars3d/blupi/`'s manifest already carries valid
   `diffuseColor` fields, which the older loader ignores).
 
+## UB-003 — CNA `convert_avatar.py`: avatars keep glTF's winding and draw inside out
+
+- **Repository / file:** libcna/cna (branch `next`, HEAD `8f08a82cc`),
+  `tools/avatar_asset_pipeline/convert_avatar.py`, `_write_index_buffer()`.
+- **Found:** 2026-10-24, from the user's report that the real Blupi's face "slides over his body"
+  and that he walks backwards or sideways.
+- **Problem:** glTF front faces are counter-clockwise; XNA's (and CNA's) default
+  `RasterizerState.CullCounterClockwise` culls exactly those, treating clockwise triangles as
+  front faces like XNA content. The converter copies glTF's index order unchanged, so a converted
+  avatar drawn with the default state shows the inside of its far side: a face painted on the front
+  appears mirrored from behind, the nose disappears behind it, and turning the model looks like
+  the face sliding around the body. CNA's own avatar example sidesteps it with
+  `RasterizerState::CullNone` (`modules/graphics/examples/skinned_model_attach_part_integration_test.cpp`,
+  "needs CullNone").
+- **Reproduction:** convert any closed glTF mesh and compute the signed volume of a part from its
+  `.verts.bin`/`.idx.bin`: it is positive (counter-clockwise outward). Galaxy Eggbert's
+  placeholder fox measured +66488 before the fix here.
+- **Suggested fix:** swap the last two indices of every triangle when writing `.idx.bin` (glTF
+  counter-clockwise to XNA clockwise), and drop the `CullNone` workaround from the example.
+- **Galaxy Eggbert workaround:** `tools/rd4_to_gltf/export_cna_avatar.py` turns each part's
+  triangles clockwise (and leaves them alone if a future converter already did), the placeholder
+  fox's indices were turned once by hand, and the game sets `CullCounterClockwise` explicitly
+  before drawing the model.
+- **Status:** open (2026-10-24), reported to the CNA session.
+
 ## Recorded elsewhere
 
 These upstream problems were found earlier and are documented in other files; they are listed

@@ -38,7 +38,8 @@ python3 tools/rd4_to_gltf/verify_sprites.py --glb build-probe/rd4-blupi/blupi-ma
 `--clip NAME=SCENE[@FRAME]` (repeatable) puts several scenes' animations on the main scene's
 skeleton (`@FRAME`: one rendered frame as a static pose), and `--frame-rate 8` times them at the
 game's sprite cadence. `export_cna_avatar.py` turns the `.glb` into the game's CNA
-`SkinnedModelEXT` directory with each part's real colour or texture.
+`SkinnedModelEXT` directory with each part's real colour or texture, its triangles turned
+clockwise for XNA's default culling (`upstream_bugs.md` UB-003).
 
 With `--reference-*`, the converter first prints how far Ray Dream's DXF vertices lie from the
 generated surfaces (canonical units; Blupi's parts are 3.4-10.4 across):

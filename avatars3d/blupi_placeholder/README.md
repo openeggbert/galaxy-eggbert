@@ -1,7 +1,10 @@
 # Placeholder third-person model (NOT Blupi)
 
 **Fallback only since 2026-10-23:** the game loads the real Blupi from `avatars3d/blupi/` and uses
-this fox only when that directory is missing.
+this fox only when that directory is missing. On 2026-10-24 `fox1.idx.bin`'s triangles were turned
+clockwise (each triangle's last two indices swapped): CNA's converter had kept glTF's
+counter-clockwise winding, which XNA's default culling treats as back faces, so the fox drew
+inside out (`upstream_bugs.md` UB-003).
 
 Temporary stand-in used by `GalaxyEggbertCNA`'s third-person camera mode
 (NEXT.md §3, 2026-07-09) until a real 3D Blupi model with real animations

@@ -427,6 +427,22 @@ move/animate (fixed 2026-07-20, see §3) — they were silently stationary befor
 
 Most recent first. Full history: `git log`.
 
+### fix: the real Blupi faces where he walks and draws right side out (2026-10-24)
+User report: his face "slides over his body" and he walks backwards or sideways. Two bugs:
+- **Winding.** CNA's avatar converter keeps glTF's counter-clockwise triangles, which XNA's default
+  `CullCounterClockwise` culls, so the model drew inside out: from behind, the inside of his front
+  showed the face mirrored, without the nose, sliding around as he turned (`upstream_bugs.md`
+  UB-003). `export_cna_avatar.py` now turns every part clockwise, the fox placeholder's indices
+  were turned too, and the draw sets `CullCounterClockwise` explicitly.
+- **Facing.** `BlupiController` moves along (sin yaw, 0, -cos yaw), while the model faces +Z and
+  `CreateRotationY(yaw)` turns +Z to (sin yaw, 0, cos yaw): the two agreed only at plus or minus
+  90 degrees. The real model is now drawn with `CreateRotationY(pi - yaw)`.
+Verified live under Xvfb on `build-cna-opengl3`: after turns of several sizes he always shows his
+back to the chase camera while standing and walking; orbiting the camera shows his side (nose,
+eye) and his front (centred nose, tongue on his left as in sprite icon 2); the fox fallback draws
+right side out; 94/94 CTest cases pass. A `CNA` replay of the asset's skeleton, clips and
+vertices (CNA's own matrix and quaternion conventions) also matched the `.glb`.
+
 ### feat: the real Blupi in third person, walking and standing (2026-10-23)
 At the user's request (plan.md `069`), the third-person model is now Blupi converted from the
 original Ray Dream scenes in `speedyblupi-data` by `tools/rd4_to_gltf/` (its README records every

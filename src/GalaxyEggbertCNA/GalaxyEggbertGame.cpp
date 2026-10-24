@@ -6,6 +6,7 @@
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
+#include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
 #include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
@@ -3717,6 +3718,14 @@ namespace GalaxyEggbert::CNA
                 constexpr float kRealModelScale = 0.94714f;
                 const float modelScale = blupiModelIsReal_ ? kRealModelScale : kPlaceholderModelScale;
                 const float modelDepthOffset = blupiModelIsReal_ ? 0.0f : kPlaceholderModelDepthOffset;
+                // The real model faces +Z, while GetYaw() moves Blupi along
+                // (sin yaw, 0, -cos yaw). CreateRotationY(a) turns +Z to
+                // (sin a, 0, cos a), so a = pi - yaw makes him face the way he
+                // walks; plain yaw agreed only at +-90 degrees and otherwise
+                // walked him sideways or backwards, the symmetric egg body
+                // showing the wrong turn as his face sliding around it.
+                constexpr float kPi = 3.14159265358979f;
+                const float modelYaw = blupiModelIsReal_ ? kPi - blupi_.GetYaw() : blupi_.GetYaw();
                 // No render-only Balloon offset here: Blupi's own physics
                 // now genuinely lift him while ballooned (BlupiController's
                 // kBalloonRiseSpeed, a direct port of the real
@@ -3730,7 +3739,7 @@ namespace GalaxyEggbert::CNA
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.0f, modelDepthOffset) *
-                    Microsoft::Xna::Framework::Matrix::CreateRotationY(blupi_.GetYaw()) *
+                    Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
                         blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset, blupi_.GetZ());
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
@@ -3743,6 +3752,14 @@ namespace GalaxyEggbert::CNA
                 blupiEffect_->setViewProperty(camera_.View());
                 blupiEffect_->setProjectionProperty(camera_.Projection());
                 blupiEffect_->SetBoneTransforms(boneTransforms);
+                // XNA's default culling, set explicitly so no earlier draw's state
+                // applies: the real model's triangles are clockwise like XNA
+                // content (tools/rd4_to_gltf/export_cna_avatar.py). Converted
+                // straight from glTF they were counter-clockwise, this state
+                // culled his front faces, and he drew inside out
+                // (upstream_bugs.md UB-003).
+                device.setRasterizerStateProperty(
+                    Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
 
                 for (const auto& part : blupiModel_->Parts)
                 {

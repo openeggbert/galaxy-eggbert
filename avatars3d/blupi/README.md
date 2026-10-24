@@ -24,7 +24,9 @@ below.
   - `Stop` — the standing pose (sprite icon 0), static.
 - Units: metres at 0.05 m per Ray Dream unit, Y up, facing +Z, feet at y = 0. The game draws it at
   0.94714 so a block keeps its 64-pixel sprite size against him (`GalaxyEggbertGame.cpp`,
-  `kRealModelScale`).
+  `kRealModelScale`), turned by `pi - yaw` to face the way `BlupiController` moves him.
+- Triangles are clockwise, as XNA's default culling expects (`export_cna_avatar.py`;
+  `upstream_bugs.md` UB-003).
 
 ## Regenerate
 
