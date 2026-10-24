@@ -4173,38 +4173,32 @@ namespace GalaxyEggbert::CNA
             // yaw and flipped as the icon is (left-right or upside down,
             // about the sprite's centre line: kFlipShift). A model is in
             // blocks with its sprite's view toward +Z, as the parked vehicles
-            // are.
+            // are. BigDecor cells with a model stand on their cell's floor:
+            // an explo.png icon is 144 game pixels, 2.25 blocks, drawn 1:1
+            // in the original (Pixmap.cpp), where the billboard is 1 block.
             if (blupiEffect_ && !objectModels_.empty())
             {
                 constexpr float kDegrees = 3.14159265358979f / 180.0f;
+                constexpr float kExploIconHalfBlocks = 144.0f / 64.0f / 2.0f;
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiEffect_->setViewProperty(camera_.View());
                 blupiEffect_->setProjectionProperty(camera_.Projection());
-                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z)
                 {
-                    ObjectTextureSource sheet{};
-                    int icon = 0;
-                    const ObjectModelPose* pose =
-                        ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
-                    if (pose == nullptr)
-                    {
-                        continue;
-                    }
-                    auto& model = *objectModels_[static_cast<std::size_t>(pose->model)];
+                    auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
                     model.ComputeBoneTransformsEXT(
-                        "Frames", System::TimeSpan::FromSeconds(pose->seconds), /*loop=*/false, boneTransforms);
+                        "Frames", System::TimeSpan::FromSeconds(pose.seconds), /*loop=*/false, boneTransforms);
                     // Mirroring turns the triangles' winding around.
                     device.setRasterizerStateProperty(
-                        pose->mirror != 0 ? Microsoft::Xna::Framework::Graphics::RasterizerState::CullClockwise
-                                          : Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+                        pose.mirror != 0 ? Microsoft::Xna::Framework::Graphics::RasterizerState::CullClockwise
+                                         : Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
                     blupiEffect_->setWorldProperty(
-                        Microsoft::Xna::Framework::Matrix::CreateRotationY(pose->yawDegrees * kDegrees) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationY(pose.yawDegrees * kDegrees) *
                         Microsoft::Xna::Framework::Matrix::CreateScale(
-                            pose->mirror == 1 ? -1.0f : 1.0f, pose->mirror == 2 ? -1.0f : 1.0f, 1.0f) *
+                            pose.mirror == 1 ? -1.0f : 1.0f, pose.mirror == 2 ? -1.0f : 1.0f, 1.0f) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                            pose->mirror == 1 ? -kFlipShift : 0.0f, pose->mirror == 2 ? kFlipShift : 0.0f, 0.0f) *
-                        Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                            obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ));
+                            pose.mirror == 1 ? -kFlipShift : 0.0f, pose.mirror == 2 ? kFlipShift : 0.0f, 0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(x, y, z));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     for (const auto& part : model.Parts)
                     {
@@ -4219,6 +4213,25 @@ namespace GalaxyEggbert::CNA
                             part.Part->getNumVerticesProperty(),
                             part.Part->getStartIndexProperty(),
                             part.Part->getPrimitiveCountProperty());
+                    }
+                };
+                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                {
+                    ObjectTextureSource sheet{};
+                    int icon = 0;
+                    const ObjectModelPose* pose =
+                        ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
+                    if (pose != nullptr)
+                    {
+                        drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
+                    }
+                }
+                for (const auto& cell : bigDecorCells_)
+                {
+                    const ObjectModelPose* pose = objectModelTable_.Find(ObjectTextureSource::Explo, cell.icon);
+                    if (pose != nullptr)
+                    {
+                        drawModel(*pose, cell.worldX, cell.worldY - 0.5f + kExploIconHalfBlocks, cell.worldZ);
                     }
                 }
                 device.setRasterizerStateProperty(
@@ -4568,6 +4581,10 @@ namespace GalaxyEggbert::CNA
             constexpr float kBigDecorSize = 1.0f;
             for (const auto& cell : bigDecorCells_)
             {
+                if (objectModelTable_.Find(ObjectTextureSource::Explo, cell.icon) != nullptr)
+                {
+                    continue;  // drawn as its 3D model
+                }
                 const auto iconUv = GetBigDecorIconUv(static_cast<int>(cell.icon));
                 mesh.AddBillboard(
                     Microsoft::Xna::Framework::Vector3(

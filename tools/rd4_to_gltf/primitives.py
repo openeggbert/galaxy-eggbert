@@ -39,21 +39,40 @@ def sphere(segments: int = 32, rings: int = 16) -> Mesh:
     return Mesh(np.array(pos), np.array(tris))
 
 
-def cylinder(segments: int = 32) -> Mesh:
+def cylinder(segments: int = 32, cap_rings: int = 6) -> Mesh:
+    """Side as one band; each cap as ``cap_rings`` concentric rings with its own centre vertex
+    per segment, so a texture's angle (``shading.primitive_texture``) is interpolated across
+    the cap instead of fanning from one centre vertex at angle 0 (the pickup lollipop's
+    pinwheel came out as two smeared arms)."""
     ang = 2 * np.pi * np.arange(segments) / segments
-    ring = np.stack([CYLINDER_RADIUS * np.cos(ang), CYLINDER_RADIUS * np.sin(ang)], axis=1)
-    top = np.c_[ring, np.full(segments, CYLINDER_HALF_HEIGHT)]
-    bot = np.c_[ring, np.full(segments, -CYLINDER_HALF_HEIGHT)]
-    pos = np.concatenate([top, bot, [[0, 0, CYLINDER_HALF_HEIGHT], [0, 0, -CYLINDER_HALF_HEIGHT]]])
-    ct, cb = 2 * segments, 2 * segments + 1
-    tris = []
+    mid = 2 * np.pi * (np.arange(segments) + 0.5) / segments
+    pos, tris = [], []
+
+    def ring(radius, z, angles):
+        start = len(pos)
+        pos.extend(np.c_[radius * np.cos(angles), radius * np.sin(angles), np.full(len(angles), z)])
+        return start
+
+    top = ring(CYLINDER_RADIUS, CYLINDER_HALF_HEIGHT, ang)
+    bot = ring(CYLINDER_RADIUS, -CYLINDER_HALF_HEIGHT, ang)
     for j in range(segments):
         j1 = (j + 1) % segments
-        tris.append((j, segments + j, j1))
-        tris.append((j1, segments + j, segments + j1))
-        tris.append((ct, j, j1))
-        tris.append((cb, segments + j1, segments + j))
-    return Mesh(pos, np.array(tris))
+        tris.append((top + j, bot + j, top + j1))
+        tris.append((top + j1, bot + j, bot + j1))
+    for z, outward in ((CYLINDER_HALF_HEIGHT, True), (-CYLINDER_HALF_HEIGHT, False)):
+        rings = [ring(CYLINDER_RADIUS * k / cap_rings, z, ang) for k in range(cap_rings, 0, -1)]
+        centre = ring(0.0, z, mid)
+        for outer, inner in zip(rings[:-1], rings[1:]):
+            for j in range(segments):
+                j1 = (j + 1) % segments
+                quad = [(outer + j, outer + j1, inner + j1), (outer + j, inner + j1, inner + j)]
+                tris.extend(quad if outward else [q[::-1] for q in quad])
+        inner = rings[-1]
+        for j in range(segments):
+            j1 = (j + 1) % segments
+            tri = (centre + j, inner + j, inner + j1)
+            tris.append(tri if outward else tri[::-1])
+    return Mesh(np.array(pos), np.array(tris))
 
 
 def cone(segments: int = 32) -> Mesh:

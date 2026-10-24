@@ -21,6 +21,7 @@ invert_panneau-invert
 key1_cle1
 key2_cle2
 key3_cle3
+lollipop_sucette
 mine_bombe
 movingmine_bombe-move
 projectile_balle-glu

@@ -448,18 +448,26 @@ def freeform_texture(scene: sc.Scene, obj: sc.Obj, ff):
 
 def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals: np.ndarray):
     """(image, (N, 2) texture coordinates) of a texture map on a cylinder primitive: around the
-    axis ``s`` = angle; the side's ``t`` runs along the axis, the caps' from the centre out, so
-    the lollipop's diagonal stripes wind into its spiral. The map's repeats are baked into the
-    image (so ``t`` stays in [0, 1]); flips apply. Only the lollipop uses this; the other
-    placements (rotc) are not read. Returns None for other primitives."""
+    axis ``s`` = angle; ``t`` is the meridian fraction of the canonical cylinder (radius 3,
+    height 5): the -Z cap from its centre out (0 to 3/11), the side along +Z (3/11 to 8/11),
+    the +Z cap back to its centre (to 1), as free-forms' end caps count. The pickup lollipop's
+    disc (sucette.rd4, ``cnth 2 cntv 2``) so shows the sprites' four-arm pinwheel twisting
+    about a quarter turn (icons 136-143 IoU x colour 0.821; 0.807 with ``t`` the cap's radius,
+    a tight many-turn spiral), the lollipop Blupi holds is unchanged (234-236: 0.850 / 0.851).
+    The map's repeats are baked into the image (so ``t`` stays in [0, 1]); flips apply; the
+    other placements (rotc) are not read. Returns None for other primitives."""
     if kind != "cyli":
         return None
     import primitives
     x, y, z = positions.T
     s = np.mod(np.arctan2(y, x) / (2 * np.pi), 1.0)
+    r, h = primitives.CYLINDER_RADIUS, primitives.CYLINDER_HALF_HEIGHT
+    length = 2 * r + 2 * h
+    rad = np.hypot(x, y)
     cap = np.abs(normals[:, 2]) > 0.5
-    t = np.where(cap, np.hypot(x, y) / primitives.CYLINDER_RADIUS,
-                 (z + primitives.CYLINDER_HALF_HEIGHT) / (2 * primitives.CYLINDER_HALF_HEIGHT))
+    top = cap & (normals[:, 2] > 0)
+    bottom = cap & ~top
+    t = np.where(bottom, rad / length, np.where(top, (length - rad) / length, (r + z + h) / length))
     flph, flpv = tex.flips
     s = 1.0 - s if flph else s
     t = 1.0 - t if flpv else t

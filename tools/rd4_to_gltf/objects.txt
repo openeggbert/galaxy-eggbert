@@ -18,14 +18,14 @@ mine        element 12-20,48-56 Blupi/bombe.rd4 yaw=5 vflip=1
 wasp        element 195-207 Blupi/guepe.rd4,Blupi/guepe-tourne.rd4
 # The follow enemies' spinning star; its camera looks 6.7 degrees down.
 follow      element 256-265 Blupi/bombe-follow.rd4 yaw=10
-# Pickups and doors' keys (sources found by survey.py icons, element_icons.csv). The lollipop
-# (sucette.rd4) waits for its disc's texture mapping (BB3D-025).
+# Pickups and doors' keys (sources found by survey.py icons, element_icons.csv).
 key1        element 209-215 Blupi/cle1.rd4
 key2        element 216-222 Blupi/cle2.rd4
 key3        element 223-229 Blupi/cle3.rd4
 secretexit  element 122-128 Blupi/cle.rd4
 dynamite    element 252-253 Decor/dynamite.rd4
 invert      element 187-194 Blupi/panneau-invert.rd4
+lollipop    element 136-143 Blupi/sucette.rd4
 # Type 16's icons 69-77: the moving mine.
 movingmine  element 69-77   Blupi/bombe-move.rd4
 # The bird: free-form sections are right-handed (its profile's head under its eyes), and its
