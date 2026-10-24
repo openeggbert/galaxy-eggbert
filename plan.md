@@ -843,7 +843,12 @@ be converted one at a time.
       cells (`survey.EXPLO_ICON_HEIGHTS`, mobile-eggbert's `table_explo_size`); `icons.txt`
       now carries the icon's size in pixels (2026-10-24).
 - [ ] `BB3D-041` Electric arc (38, `Decor/electro.rd4`, `eclair.rd4`).
-- [ ] `BB3D-042` Door (22, `Decor/porte*.rd4`).
+- [ ] `BB3D-042` Door (22): not an object model. Type 22 is the opened door's slide
+      (`InteractionSystem.cpp` `OpenDoorAt`), which shows element.png icon 0 because the
+      door's own icon is not carried onto it (`GetObjIcon` returns 0 for type 22) - a
+      pre-existing bug: the slide shows the treasure's first frame, now as the 3D treasure.
+      Fix separately: carry the door block's icon (object-m.png, `visualIcon`) as the original
+      `Decor::OpenDoor` does, then the door tiles' own 3D form is terrain work, not Phase 7B.
 - [ ] `BB3D-043` Drops (`Decor/goutte/*.rds`) and the cloud puff (36, `Explo/nuage.rds`).
 
 **Stage 6 — big decor** (`explo.png` cells)
