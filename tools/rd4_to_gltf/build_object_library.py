@@ -10,12 +10,16 @@ turned about the vertical every STEP degrees (the egg's sprites spin, its scene 
 scene that wins an icon becomes one model: one rigid joint per Ray Dream object the camera sees,
 and a clip ``Frames`` holding the scene's frames at 20 per second (frame k at k / 20 s).
 
-Model space is the sprite's: +X its right, +Y up, +Z toward its camera, the origin on the camera
-axis (the icon's centre) at the depth of the object's middle, in blocks of the game (64 sprite
-pixels, as for Blupi: ``avatars3d/blupi/README.md``). The game draws a model where it would have
-drawn the icon's billboard: turned by the icon's yaw about +Y (+Z toward +X, XNA's
+Model space stands upright in the scene and faces the sprite: +Y the scene's vertical, +Z the
+sprite camera's direction made horizontal (toward the camera), +X right; the origin on the camera
+axis (the icon's centre) at the depth of the object's middle; in blocks of the game (64 sprite
+pixels, as for Blupi: ``avatars3d/blupi/README.md``). An object its camera looks down at
+(bombe-follow.rd4) so stands upright in the game, and its spin about the scene's vertical stays a
+yaw; the model check renders with the camera's own tilt. The game draws a model where it would
+have drawn the icon's billboard: turned by the icon's yaw about +Y (+Z toward +X, XNA's
 ``CreateRotationY``), then flipped as the icon is (1: left-right, 2: upside down; about the
-icon's centre line, half a pixel off the camera axis: ``mirror_matrix``).
+icon's centre line, half a pixel off the camera axis: ``mirror_matrix``; the upside-down flip
+assumes a level camera, as the mine's is).
 
 Writes ``<out>/<object>_<scene>/model.glb`` and beside it ``icons.txt`` (``icon <sheet> <icon>
 <seconds> <mirror> <yaw degrees> <iou>`` per icon the model draws), ``compare.png`` (rows:
@@ -101,6 +105,29 @@ class SceneSetup:
         pos, _r, _u, back, _z, _h = self.camera_frame(tick)
         return pos + back * self.depth
 
+    def basis(self, tick: float) -> np.ndarray:
+        """3x3 whose columns are the model's +X, +Y, +Z in the scene: the scene's vertical, the
+        camera's direction made horizontal, and right of both."""
+        _pos, _right, _up, back, _z, _h = self.camera_frame(tick)
+        y = np.array([0.0, 0.0, 1.0])
+        z = back - (back @ y) * y
+        z /= np.linalg.norm(z)
+        return np.stack([np.cross(y, z), y, z], axis=1)
+
+    def model_camera(self, tick: float) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """The sprite camera's right, up and back in model space."""
+        _pos, right, up, back, _z, _h = self.camera_frame(tick)
+        b = self.basis(tick)
+        return b.T @ right, b.T @ up, b.T @ back
+
+    def turn(self, tick: float, yaw: float) -> np.ndarray:
+        """4x4 turning the scene by ``yaw`` degrees about its vertical through the origin, the
+        model's yaw about +Y (+Z toward +X)."""
+        b = self.basis(tick)
+        lin = b @ yaw_matrix(yaw) @ b.T
+        centre = self.origin(tick)
+        return sc.affine(lin, centre - lin @ centre)
+
 
 def parse_icons(text: str) -> list[int]:
     out = []
@@ -185,9 +212,8 @@ def match_object(spec: ObjectSpec, setups: list[SceneSetup], icon_rgb, icon_mask
         renderer.shadows = False
         for fi in setup.distinct:
             tick = setup.ticks[fi]
-            renderer.view_centre = setup.origin(tick)
             for yaw in yaws:
-                renderer.view = (float(yaw), 0.0, 1.0) if yaw else None
+                renderer.turn = setup.turn(tick, float(yaw)) if yaw else None
                 rgb, cov = renderer.render(tick, size=size)
                 for mirror in (0, 1, 2) if spec.vflip else (0, 1):
                     rg, cv = reflect(rgb, mirror), reflect(cov, mirror)
@@ -232,7 +258,7 @@ def build_model(spec: ObjectSpec, setup: SceneSetup, icon_px: int, path: Path, w
     def to_model(tick: float) -> np.ndarray:
         """RD world -> the sprite's space, written in RD axes (rd4_to_gltf.RD_TO_GLTF then gives
         +X right, +Y up, +Z toward the camera)."""
-        _pos, right, up, back, _z, _h = setup.camera_frame(tick)
+        right, up, back = setup.basis(tick).T
         lin = np.stack([-right, back, up])
         return sc.affine(lin, -lin @ setup.origin(tick))
 
@@ -265,8 +291,9 @@ def yaw_matrix(degrees: float) -> np.ndarray:
     return np.array([[c, 0.0, s], [0.0, 1.0, 0.0], [-s, 0.0, c]])
 
 
-def render_model(model: vs.Model, seconds: float, mirror: int, yaw: float, icon_px: int):
-    """The model as the game draws it for an icon, seen by the sprite's camera."""
+def render_model(model: vs.Model, seconds: float, mirror: int, yaw: float, icon_px: int, camera):
+    """The model as the game draws it for an icon, seen by the sprite's camera (``camera``:
+    its right, up and back in model space)."""
     turn = yaw_matrix(yaw)
     flip = mirror_matrix(mirror)
     meshes = []
@@ -277,8 +304,8 @@ def render_model(model: vs.Model, seconds: float, mirror: int, yaw: float, icon_
             nrm, tris = nrm @ flip[:3, :3].T, tris[:, ::-1]
         meshes.append((pos, nrm, tris, color, uv, tex))
     light = vs.Lighting(np.array([0.4, 0.6, 0.7]) / np.linalg.norm([0.4, 0.6, 0.7]))
-    color, cover = vs.render(meshes, np.array([0.0, 0.0, 50.0]), np.array([1.0, 0.0, 0.0]),
-                             np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0]), BLOCK_PX * SUPERSAMPLE,
+    right, up, back = camera
+    color, cover = vs.render(meshes, back * 50.0, right, up, back, BLOCK_PX * SUPERSAMPLE,
                              icon_px * SUPERSAMPLE, light, SUPERSAMPLE)
     return vs.downsample(color, cover, SUPERSAMPLE)
 
@@ -328,7 +355,8 @@ def main(argv=None) -> int:
             for m in matches:
                 seconds = m.frame / FPS
                 lines.append(f"icon {spec.sheet} {m.icon} {seconds:.4f} {m.mirror} {m.yaw:g} {m.iou:.3f}")
-                rgb, cov = render_model(model, seconds, m.mirror, m.yaw, icon_px)
+                rgb, cov = render_model(model, seconds, m.mirror, m.yaw, icon_px,
+                                        setup.model_camera(setup.ticks[m.frame]))
                 sm, rm = icon_mask[m.icon], cov > 0.5
                 checks.append(vs.iou(rm, sm))
                 bg = np.array([40, 90, 140]) / 255

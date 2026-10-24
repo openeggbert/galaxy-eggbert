@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "follow_rd_ff0918",
+      "vertices": "follow_rd_ff0918.verts.bin",
+      "indices": "follow_rd_ff0918.idx.bin",
+      "vertexStride": 52,
+      "texture": "follow_rd_ff0918.png",
+      "diffuseColor": [
+        1.0,
+        0.0029411764705882353,
+        0.00926431084760073,
+        1.0
+      ]
+    },
+    {
+      "name": "follow_rd_ff0000",
+      "vertices": "follow_rd_ff0000.verts.bin",
+      "indices": "follow_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "follow_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

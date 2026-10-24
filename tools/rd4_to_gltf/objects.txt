@@ -1,7 +1,7 @@
 # Objects drawn as 3D models instead of sprite billboards (build_object_library.py, plan.md BB3D-*).
-# name  sheet  icons  scenes (comma-separated, under speedyblupi-data/originals)  [camera=NAME]
+# name  sheet  icons  scenes (comma-separated, under speedyblupi-data/originals)  [options]
 # Sheets: element, object-m, explo, blupi, blupi1 (mobile-eggbert/Content/icons/<sheet>.png).
-# Options: yaw=STEP (also try turned about the vertical), vflip=1 (also upside down), camera=NAME.
+# Options: yaw=STEP (also try turned about the vertical), vflip=1 (also upside down), camera=PART (a part of the camera's name without spaces, e.g. 2 for "Caméra 2").
 treasure    element 0-11    Blupi/coffre.rd4
 egg         element 21-28   Blupi/oeuf.rd4    yaw=10
 exit        element 29-36   Blupi/fleche.rd4  yaw=10
@@ -13,3 +13,7 @@ drink       element 178     Blupi/bouteille.rd4
 creature    element 247-251 Blupi/creature1.rds,Blupi/creature2.rds,Blupi/creature3.rds,Blupi/creature4.rds,Blupi/creature5.rds
 # The mine spins in its sprites (yaw); the hanging mine's icons 48-56 are 12-20 upside down.
 mine        element 12-20,48-56 Blupi/bombe.rd4 yaw=5 vflip=1
+# The wasp's sprites come from its game camera's scenes seen by "Caméra 2" (IoU 0 with "Caméra Jeu").
+wasp        element 195-207 Blupi/guepe.rd4,Blupi/guepe-tourne.rd4 camera=2
+# The follow enemies' spinning star; its camera looks 6.7 degrees down.
+follow      element 256-265 Blupi/bombe-follow.rd4 yaw=10

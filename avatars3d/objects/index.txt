@@ -8,6 +8,9 @@ creature_creature5
 drink_bouteille
 egg_oeuf
 exit_fleche
+follow_bombe-follow
 mine_bombe
 projectile_balle-glu
 treasure_coffre
+wasp_guepe
+wasp_guepe-tourne

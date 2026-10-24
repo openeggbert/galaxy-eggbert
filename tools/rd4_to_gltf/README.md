@@ -256,7 +256,13 @@ by rendering it back exactly as the game draws it; `export_objects.py` writes
 (`coffre.rd4`) IoU 0.960 mean, egg (`oeuf.rd4`, its sprites spin: matched with yaw) 0.953,
 exit arrow (`fleche.rd4`, yaw) 0.937, projectile 0.995, ammo 0.992, drink 0.871, the creature
 (`creature1-5.rds`) 0.978-0.998, the mine (`bombe.rd4`, spinning, and upside down for the
-hanging mine) 0.943.
+hanging mine) 0.943, the wasp (`guepe-tourne.rd4` 0.959, `guepe.rd4` 0.839, with `Caméra 2`), the
+follow enemies' star (`bombe-follow.rd4`, spinning under a camera tilted 6.7 degrees) 0.870.
+
+Model space stands upright in the scene: +Y is the scene's vertical and +Z the camera's
+direction made horizontal, so an object its camera looks down at stands upright in the game and
+its spin stays a yaw; with +Y the camera's up instead, bombe-follow's star matches its turned
+icons at 0.734 against 0.870.
 
 A flipped icon is the sprite image flipped about its centre line, as the original game flipped
 sprites: the hanging mine's icons 48-56 are exactly 12-20 flipped (IoU 1.000), and the rendered

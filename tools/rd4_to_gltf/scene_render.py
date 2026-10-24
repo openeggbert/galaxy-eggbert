@@ -34,6 +34,7 @@ class SceneRenderer:
         self.exclude: set[int] = set()  # id() of objects not to draw (with their children)
         self.view = None                # (yaw, pitch, scale): see view_transform
         self.view_centre = None         # what the view turns about (default: Blupi's body)
+        self.turn = None                # a 4x4 applied to every object instead of ``view``
         self.shadows = True             # the scenes' light casts shadows (shad 1)
         self.camera_name = camera
         self.meshes: dict[str, tuple | None] = {}
@@ -99,7 +100,7 @@ class SceneRenderer:
         out = []
         skipped: set[int] = set()
         frames = sc.world_frames(self.scene, tick)
-        turn = view_transform(frames, self.view, self.view_centre)
+        turn = self.turn if self.turn is not None else view_transform(frames, self.view, self.view_centre)
         for o, parent, _cw, gw in frames:
             gw = turn @ gw
             if id(o) in self.exclude or id(parent) in skipped:

@@ -797,19 +797,22 @@ be converted one at a time.
 - [ ] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`): icons 90-121 (both directions and the turns)
       match only 0.66 mean: the render's wings and head differ from the sprites (front-facing
       turn frames 0.26). Investigate the scene's joints/animation before converting.
-- [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, 0.89). With the cones its teeth render, but
-      the body still differs from icons 78-83: the cylinder body and sphere head of the sprites
-      do not show, the mouth's free-form (`bouche`/`Assistant 3D`) draws purple and green, the
-      fins too dark; check the camera (`Caméra 1` perspective?) and the shaders first.
-- [ ] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): 0.61 mean
-      as matched so far (no yaw); try `yaw`.
+- [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, icons 78-88): with `yaw=15` 0.918 mean, the
+      turn (front) views fine, but in the side views the sprites' cylinder body between tail
+      and head does not show (the head covers it) and the fins are darker; check the body
+      cylinders' placement before accepting (trial: `build-probe/rd4-objects-try`).
+- [x] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): the star
+      spins about the scene's vertical under a camera looking 6.7 degrees down; model space is
+      now upright in the scene (its +Y the scene's vertical, +Z the camera's direction made
+      horizontal), so the spin is a yaw: 10 icons, 0.870 mean, 0.765 min.
 - [x] `BB3D-034` Mines (2, 3): `Blupi/bombe.rd4` turned 10 degrees per icon (the sprites spin),
       icons 12-20 IoU 0.88-0.98; the hanging mine's 48-56 are exactly 12-20 flipped upside
       down (a sprite flip about the icon's centre line, half a pixel off the camera axis:
       `kFlipShift`), drawn as the mine flipped. 18 icons, 0.943 mean (2026-10-24).
 - [ ] `BB3D-035` Bulldozer and flying robot (4, `robot-profil.rd4`, `tracks-profil.rd4`).
-- [ ] `BB3D-036` Wasp (44, `guepe*.rd4`, icons 195-207): IoU 0 with the game camera `Caméra
-      Jeu`: wrong camera or placement; try `camera=Caméra 2` / the perspective camera.
+- [x] `BB3D-036` Wasp (44, icons 195-207): rendered by `Caméra 2` (0 with `Caméra Jeu`);
+      `guepe-tourne.rd4` 7 icons 0.959, `guepe.rd4` 6 icons 0.839 (two flap frames 0.62: the
+      wing's position is not among the scene's three frames).
 - [ ] `BB3D-037` Spider (16, `bug*.rd4`).
 - [~] `BB3D-038` Green blob creature (33, 54): icons 247-251 from `creature1-5.rds`, IoU
       0.978-0.998, in game. Open: 242-246 (`creature1y.rds`, the creature with eyes, 0.85-0.91)
