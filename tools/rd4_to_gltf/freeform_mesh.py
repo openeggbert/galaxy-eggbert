@@ -32,6 +32,9 @@ import rd4
 
 PATH_STEPS = 16
 SECTION_STEPS = 8
+# Rings and section points that interpolating their neighbours reproduces within this fraction of
+# the master's size are dropped (_simplify); 0 keeps Ray Dream's full sampling.
+SIMPLIFY_TOLERANCE = 5e-4
 
 
 def _bezier(p0, p1, p2, p3, t):
@@ -272,6 +275,7 @@ def tessellate(master: rd4.Chunk) -> FreeformMesh:
             positions.extend(center + np.outer(a, ax) + np.outer(b, bx))
             uv.extend(np.stack([loop.us, np.full(len(loop.us), p)], axis=1))
         ring_of.extend([r] * n)
+    positions, uv, ring_of, rings, sizes, n = _simplify(positions, uv, rings, sizes, n)
     tris = []
     starts = np.concatenate([[0], np.cumsum(sizes)[:-1]])
     n_rings = len(rings)
@@ -293,6 +297,83 @@ def tessellate(master: rd4.Chunk) -> FreeformMesh:
                 tris.append(tuple(idx[::-1]) if flip else tuple(idx))
     mesh = FreeformMesh(np.array(positions), np.array(tris), np.array(uv), np.array(ring_of), perimeter)
     return _orient_outwards(mesh)
+
+
+def _chain_ends(count: int, fits, closed: bool) -> list[int]:
+    """Indices kept by a greedy pass: from each kept index the chain runs as far as ``fits(a, b)``
+    allows (every index between a and b reproduced by interpolating a and b)."""
+    kept, a = [0], 0
+    last = count if closed else count - 1
+    while a < last:
+        b = a + 1
+        while b + 1 <= last and fits(a, b + 1):
+            b += 1
+        if b < last or not closed:
+            kept.append(b)
+        a = b
+    return kept
+
+
+def _simplify(positions, uv, rings, sizes, n):
+    """Drop the rings and cross-section points that interpolating their kept neighbours
+    reproduces within SIMPLIFY_TOLERANCE of the master's size (positions) and of the
+    cross-section's perimeter (u). The shape and texture stay; the palm trunks (Explo/plante1*,
+    13 segments of 16 rings of 464 points) lose most of their 200 000 triangles, straight
+    stretches of a sweep their rings, straight runs of a cross-section their points."""
+    P = np.asarray(positions, dtype=float).reshape(len(rings), n, 3)
+    UV = np.asarray(uv, dtype=float).reshape(len(rings), n, 2)
+    tol = SIMPLIFY_TOLERANCE * float(np.linalg.norm(np.ptp(P.reshape(-1, 3), axis=0)))
+    if tol <= 0:
+        return positions, uv, list(np.repeat(np.arange(len(rings)), n)), rings, sizes, n
+    along = UV[:, 0, 1]
+    u_tol = SIMPLIFY_TOLERANCE * max(rings[0][2][0].perimeter, 1e-12)
+
+    def ring_fits(a, b):
+        span = along[b] - along[a]
+        if span <= 1e-12:
+            return False
+        f = ((along[a + 1:b] - along[a]) / span)[:, None, None]
+        mid = P[a] + f * (P[b] - P[a])
+        mid_u = UV[a, :, 0] + f[:, :, 0] * (UV[b, :, 0] - UV[a, :, 0])
+        return (np.linalg.norm(mid - P[a + 1:b], axis=2).max() <= tol
+                and np.abs(mid_u - UV[a + 1:b, :, 0]).max() <= u_tol)
+
+    # A closed path's last ring joins the first one as it is (its rings are not merged across).
+    keep_rings = _chain_ends(len(rings), ring_fits, False)
+    Pk, Uk = P[keep_rings], UV[keep_rings]
+    keep_points, new_sizes, starts = [], [], np.concatenate([[0], np.cumsum(sizes)[:-1]])
+    for start, size, loop in zip(starts, sizes, rings[0][2]):
+        period = loop.perimeter
+        idx = lambda k: start + k % size
+        u_of = lambda k: Uk[:, idx(k), 0] + (period if k >= size else 0.0)
+
+        def point_fits(a, b):
+            ua, ub = u_of(a), u_of(b)
+            span = ub - ua
+            if np.any(span <= 1e-12) or np.any(span > period / 4):
+                return False
+            for k in range(a + 1, b):
+                f = ((u_of(k) - ua) / span)[:, None]
+                mid = Pk[:, idx(a)] + f * (Pk[:, idx(b)] - Pk[:, idx(a)])
+                if np.linalg.norm(mid - Pk[:, idx(k)], axis=1).max() > tol:
+                    return False
+            return True
+
+        kept = _chain_ends(size, point_fits, True) if size > 4 else list(range(size))
+        keep_points.extend(start + k for k in kept)
+        new_sizes.append(len(kept))
+    keep_points = np.array(keep_points)
+    new_rings = []
+    for r in keep_rings:
+        p, scales, section = rings[r]
+        loops = []
+        for start, size, loop in zip(starts, sizes, section):
+            local = keep_points[(keep_points >= start) & (keep_points < start + size)] - start
+            loops.append(Loop(loop.points[local], loop.us[local], loop.perimeter))
+        new_rings.append((p, scales, loops))
+    m = len(keep_points)
+    return (list(Pk[:, keep_points].reshape(-1, 3)), list(Uk[:, keep_points].reshape(-1, 2)),
+            list(np.repeat(np.arange(len(keep_rings)), m)), new_rings, new_sizes, m)
 
 
 def _segments_cross(p, q, a, b) -> bool:

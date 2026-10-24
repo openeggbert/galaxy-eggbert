@@ -263,7 +263,9 @@ class Converter:
                                "skeleton": node_of[0]})
         materials = {}
         mesh_nodes = []
-        for key, items in groups.items():
+        chunks = [(key, k, chunk) for key, items in groups.items()
+                  for k, chunk in enumerate(split_items(items))]
+        for key, chunk_index, items in chunks:
             if key not in materials:
                 if key in self.textures:
                     material = shading.textured_material_json(key[1], self._add_image(b, self.textures[key]))
@@ -296,6 +298,8 @@ class Converter:
                 uv = np.concatenate([u for *_rest, u in items])
                 primitive["attributes"]["TEXCOORD_0"] = b.accessor(uv, gltf.FLOAT, gltf.ARRAY_BUFFER)
             name = f"{self.root.name}_{b.doc['materials'][materials[key]]['name']}"
+            if chunk_index:
+                name += f"_{chunk_index}"
             mesh = b.add("meshes", {"name": name, "primitives": [primitive]})
             mesh_nodes.append(b.add("nodes", {"name": name, "mesh": mesh, "skin": skin}))
         binds = bind_world + [bind_world[i] @ bind_shape[i] for i in shaped]
@@ -444,12 +448,17 @@ def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scal
         groups.setdefault(key, []).append((wpos, wn, tris, reps.index(joint_of[k]) + 1, uv))
     mesh_nodes = []
     materials = {}
+    chunks = []
     for key, items in groups.items():
-        if key in textures:
-            materials[key] = b.add("materials", shading.textured_material_json(
-                key[1], Converter._add_image(b, textures[key])))
-        else:
-            materials[key] = b.add("materials", shading.material_json(key))
+        for k, chunk in enumerate(split_items(items)):
+            chunks.append((key, k, chunk))
+    for key, chunk_index, items in chunks:
+        if key not in materials:
+            if key in textures:
+                materials[key] = b.add("materials", shading.textured_material_json(
+                    key[1], Converter._add_image(b, textures[key])))
+            else:
+                materials[key] = b.add("materials", shading.material_json(key))
         pos = np.concatenate([w for w, _n, _t, _i, _uv in items])
         nrm = np.concatenate([n for _w, n, _t, _i, _uv in items])
         tris, joints, base = [], [], 0
@@ -476,6 +485,8 @@ def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scal
             primitive["attributes"]["TEXCOORD_0"] = b.accessor(
                 np.concatenate([u for *_rest, u in items]), gltf.FLOAT, gltf.ARRAY_BUFFER)
         mesh_name = f"{root_name}_{b.doc['materials'][materials[key]]['name']}"
+        if chunk_index:
+            mesh_name += f"_{chunk_index}"
         mesh = b.add("meshes", {"name": mesh_name, "primitives": [primitive]})
         mesh_nodes.append(b.add("nodes", {"name": mesh_name, "mesh": mesh, "skin": skin}))
     ibm = np.array([np.eye(4)] + [np.linalg.inv(m).T for m in bind], dtype=np.float32)  # column-major
@@ -510,6 +521,43 @@ def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scal
     b.doc["asset"]["extras"] = {"rd4_to_gltf": extras}
     b.write(path)
     return len(reps) + 1, len(mesh_nodes)
+
+
+MAX_PART_VERTICES = 65535  # CNA's SkinnedModelEXT parts use 16-bit indices
+
+
+def split_items(items: list, limit: int = MAX_PART_VERTICES) -> list[list]:
+    """A material group's parts [(positions, normals, triangles, joint, uv)] in chunks of at most
+    ``limit`` vertices each (one mesh per chunk), a part larger than that split by triangles
+    (the palms of Explo/plante1*: their fronds are one material)."""
+    pieces = []
+    for w, n, t, i, uv in items:
+        if len(w) <= limit:
+            pieces.append((w, n, t, i, uv))
+            continue
+        start = 0
+        while start < len(t):
+            used: dict[int, int] = {}
+            end = start
+            while end < len(t) and len(used) + 3 <= limit:
+                for v in t[end]:
+                    used.setdefault(int(v), len(used))
+                end += 1
+            index = np.array(list(used.keys()))
+            remap = np.zeros(len(w), dtype=np.int64)
+            remap[index] = np.arange(len(index))
+            pieces.append((w[index], n[index], remap[t[start:end]], i, None if uv is None else uv[index]))
+            start = end
+    chunks, current, count = [], [], 0
+    for piece in pieces:
+        if current and count + len(piece[0]) > limit:
+            chunks.append(current)
+            current, count = [], 0
+        current.append(piece)
+        count += len(piece[0])
+    if current:
+        chunks.append(current)
+    return chunks
 
 
 def trs_node(name: str, m: np.ndarray, scale: bool = False) -> dict:

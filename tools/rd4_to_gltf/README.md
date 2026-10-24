@@ -77,7 +77,8 @@ CNA's `tools/avatar_asset_pipeline/convert_avatar.py --embedded-clips`.
   nothing there. Without such clips there are no shape joints.
 - One mesh per material, named after it (`BLUPI_rd_ffff00`, `BLUPI_rd_tex_Corps`), all sharing one
   skin: CNA's converter keeps only the mesh name of each part, not its colour (`upstream_bugs.md`
-  UB-001, UB-002).
+  UB-001, UB-002). A material with more than 65 535 vertices is split into meshes `_1`, `_2`, ...
+  of at most that many: CNA's parts have 16-bit indices.
 - The face is the body's texture map, embedded as PNG with "white is transparent" already turned
   into the body colour. Each scene embeds its own face (expression).
 - One animation per scene, sampled at 30 fps with LINEAR interpolation.
@@ -139,7 +140,11 @@ or more.
 | A point without its own cross-section keeps the previous one; different cross-sections along the path blend into each other; a path ending where it starts (torus, tyre) is closed, without caps | the jeep's tyres and the overcraft's skirt are tori built this way |
 
 `freeform_mesh.py` documents the rest (sampling, caps by ear clipping, holes bridged into their
-outline).
+outline). After sampling as Ray Dream does, the rings and cross-section points that interpolating
+their kept neighbours reproduces within 0.05 % of the master's size are dropped
+(`SIMPLIFY_TOLERANCE`): Blupi's DXF deviations above are unchanged to four decimals, the palm
+trunk (`Explo/plante1*`) goes from 193 948 to 6 340 triangles and its sprite IoU from 0.755 to
+0.758.
 
 ### Face texture
 
