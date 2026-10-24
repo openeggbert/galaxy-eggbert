@@ -35,14 +35,13 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   original's size (144 px = 2.25 blocks, where the billboard is 1 block) - check with the
   user that this size is wanted. The shield stays a billboard (its sparks are an effect). Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
   icons, treasure, exit).
-- **Next:** Stage 6 big decor: re-run `survey.py icons --sheet .../explo.png` (folders
-  `Explo,Decor,Back,Blupi,.`) or try the `Explo/` scenes directly in `objects-try`; then the
-  fish's head (`BB3D-032`), the charge's source (object-m survey). The
-  Blupi library re-run must be redone once more after this commit (cylinder caps and the
-  meridian mapping change the lollipop Blupi holds). Trial runs go to `build-probe/rd4-objects-try` with a scratch
-  objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (results in
-  `plan.md`). Unknown sources: `survey.py icons` (element done:
-  `build-probe/rd4-survey/element_icons.csv`; object-m and explo not run yet).
+- **Next:** Stage 6 big decor: `survey.py icons --sheet .../explo.png --folders Explo` was
+  running (results `build-probe/rd4-survey/explo_icons.csv`); turn its icon -> scene pairs into
+  `objects.txt` lines (one object per scene, `min_iou=` to leave poor icons as billboards) and
+  check each model's `compare.png` by eye: thin plants (palms) score IoU ~0.6 while looking
+  right. Then the fish's head (`BB3D-032`; envelopes and jaw rotation ruled out). Trial runs go
+  to `build-probe/rd4-objects-try` with a scratch objects file, so only verified objects enter
+  `tools/rd4_to_gltf/objects.txt` (results in `plan.md`).
 - **In progress `BB3D-008`** (Blupi's library with the converter's fixes): a library built
   with `ofst` and `xyzS` (but the old left-handed sections) gave StopOver 0.764 -> 0.983,
   MarchOver 0.739 -> 0.940, DeathLocked.Clear4 0.843 -> 0.982, the rest unchanged (copies in
