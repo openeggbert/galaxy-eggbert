@@ -78,3 +78,7 @@ bd_enfant13   explo   47      Explo/enfant13.rd4 shift=6
 bd_plante3a   explo   23      Explo/plante3a.rd4 shift=6
 bd_plante3b   explo   24      Explo/plante3b.rd4 shift=6
 bd_plante3c   explo   25      Explo/plante3c.rd4 shift=6
+# The green spiky plant (69), the column (87) and the fountain bowl (88).
+bd_vase1      explo   69      Decor/smooth/vase1.rds
+bd_big0108    explo   87      Decor/palais/big0108.rds
+bd_big02      explo   88      Decor/palais/big02.rds

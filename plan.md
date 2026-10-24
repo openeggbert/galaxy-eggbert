@@ -859,7 +859,7 @@ be converted one at a time.
       no object type uses (the splashes 14, 15, 35, 98-100 are effects).
 
 **Stage 6 — big decor** (`explo.png` cells)
-- [~] `BB3D-050` Big decor (explo.png BigDecor cells; the icons the original worlds use:
+- [x] `BB3D-050` Big decor (explo.png BigDecor cells; the icons the original worlds use:
       16-31, 36-47, 66-69, 87-89, 203). Done 2026-10-24, from `survey.py icons --sheet
       explo.png --folders Explo` and trials: palms 16-19 (`plante1a-1d`, 0.76-0.78: thin
       fronds), trees 20-22 (`plante2a-2c`, 0.96-0.97), grass 23-25 (`plante3a-3c`, 0.41-0.49:
@@ -868,8 +868,9 @@ be converted one at a time.
       0.98-1.00), toys 36-47 (`enfant01-08`, `10-13`, 0.98-1.00, with sphere/cone textures),
       green pillars 66-68 (`Decor/smooth/colonne1-3`, 0.90-0.99 with per-icon offsets), the
       Blupi statue 89 (`Decor/palais/statue.rds`, 0.991). 203 is not explo.png: the game now
-      draws the object channel's marine animation there, as the original. Open: 69 (a green
-      spiky plant), 87 (a column), 88 (a fountain bowl) - sources not found yet; procedural
+      draws the object channel's marine animation there, as the original. Also 69 (the green
+      spiky plant, `Decor/smooth/vase1.rds`, 0.995), 87 (the column, `Decor/palais/big0108.rds`,
+      0.979), 88 (the fountain bowl, `Decor/palais/big02.rds`, 0.992). Open: procedural
       textures (metal noise, wood grain) are flat colours. The game draws them standing on
       their cell's floor at the original size (128/144 px = 2/2.25 blocks); not checked live
       (no generated world has BigDecor).
