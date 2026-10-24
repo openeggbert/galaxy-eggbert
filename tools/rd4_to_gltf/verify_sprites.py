@@ -224,12 +224,69 @@ class Lighting:
         return self.ambient + self.diffuse * ndl, spec
 
 
-def render(meshes, cam_pos, right, up, back, px_per_unit, size, light, pixel=1):
+class ShadowMap:
+    """Depth from a point light over the given meshes, for cast shadows (the Blupi scenes' light
+    has ``shad 1``): a perspective view from the light towards the meshes' centre, fitted to them,
+    rasterized at ``size`` squared. ``lit(points)`` tells which world points the light reaches."""
+
+    def __init__(self, meshes, light_pos, size=384, bias=0.15):
+        self.light = np.asarray(light_pos, dtype=float)
+        pts = np.concatenate([m[0] for m in meshes])
+        centre = (pts.min(0) + pts.max(0)) / 2
+        f = centre - self.light
+        f /= np.linalg.norm(f)
+        r = np.cross(f, [0.0, 0.0, 1.0] if abs(f[2]) < 0.9 else [1.0, 0.0, 0.0])
+        r /= np.linalg.norm(r)
+        u = np.cross(r, f)
+        self.basis = np.stack([r, u, f])
+        rel = (pts - self.light) @ self.basis.T
+        tan = np.abs(rel[:, :2] / rel[:, 2:3]).max() * 1.02
+        self.scale = size / (2 * tan)
+        self.size, self.bias = size, bias
+        self.depth = np.full((size, size), np.inf)
+        ys, xs = np.mgrid[0:size, 0:size] + 0.5
+        for m in meshes:
+            q = (m[0] - self.light) @ self.basis.T
+            sx = size / 2 + q[:, 0] / q[:, 2] * self.scale
+            sy = size / 2 - q[:, 1] / q[:, 2] * self.scale
+            sz = np.linalg.norm(m[0] - self.light, axis=1)
+            for a, b, c in m[2]:
+                x0, x1 = int(max(0, np.floor(min(sx[a], sx[b], sx[c])))), int(min(size, np.ceil(max(sx[a], sx[b], sx[c]))))
+                y0, y1 = int(max(0, np.floor(min(sy[a], sy[b], sy[c])))), int(min(size, np.ceil(max(sy[a], sy[b], sy[c]))))
+                if x0 >= x1 or y0 >= y1:
+                    continue
+                px, py = xs[y0:y1, x0:x1], ys[y0:y1, x0:x1]
+                d = (sx[b] - sx[a]) * (sy[c] - sy[a]) - (sx[c] - sx[a]) * (sy[b] - sy[a])
+                if abs(d) < 1e-12:
+                    continue
+                l1 = ((sx[c] - px) * (sy[a] - py) - (sx[a] - px) * (sy[c] - py)) / d
+                l2 = ((sx[a] - px) * (sy[b] - py) - (sx[b] - px) * (sy[a] - py)) / d
+                l0 = 1 - l1 - l2
+                inside = (l0 >= 0) & (l1 >= 0) & (l2 >= 0)
+                z = l0 * sz[a] + l1 * sz[b] + l2 * sz[c]
+                sub = self.depth[y0:y1, x0:x1]
+                win = inside & (z < sub)
+                sub[win] = z[win]
+
+    def lit(self, points: np.ndarray) -> np.ndarray:
+        q = (points - self.light) @ self.basis.T
+        x = np.floor(self.size / 2 + q[:, 0] / q[:, 2] * self.scale).astype(int)
+        y = np.floor(self.size / 2 - q[:, 1] / q[:, 2] * self.scale).astype(int)
+        ok = (x >= 0) & (x < self.size) & (y >= 0) & (y < self.size)
+        out = np.ones(len(points), dtype=bool)
+        dist = np.linalg.norm(points - self.light, axis=1)
+        out[ok] = dist[ok] <= self.depth[y[ok], x[ok]] + self.bias
+        return out
+
+
+def render(meshes, cam_pos, right, up, back, px_per_unit, size, light, pixel=1, shadows=False):
     """Orthographic z-buffer render; the camera axis passes through the centre of the middle pixel
     (``pixel`` is the size of one output pixel in render samples). ``light`` is a Lighting or a
-    plain direction vector."""
+    plain direction vector. With ``shadows`` (a point Lighting), what the light cannot reach keeps
+    only the ambient part."""
     if not isinstance(light, Lighting):
         light = Lighting(light, ambient=0.35, diffuse=0.65, highlight=0.0)
+    shadow = ShadowMap(meshes, light.light) if shadows and light.point and meshes else None
     w = h = size
     depth = np.full((h, w), np.inf)
     color = np.zeros((h, w, 3))
@@ -265,6 +322,7 @@ def render(meshes, cam_pos, right, up, back, px_per_unit, size, light, pixel=1):
             sub[win] = z[win]
             if tex is None:
                 col = (l0[..., None] * lit[a] + l1[..., None] * lit[b] + l2[..., None] * lit[c])
+                albedo = np.broadcast_to(np.asarray(base, dtype=float), col.shape)
             else:
                 # Nearest texel (Ray Dream's texture maps here have interpolation off), wrapping.
                 su = l0 * uv[a, 0] + l1 * uv[b, 0] + l2 * uv[c, 0]
@@ -275,6 +333,15 @@ def render(meshes, cam_pos, right, up, back, px_per_unit, size, light, pixel=1):
                 sh_ = l0 * shade[a] + l1 * shade[b] + l2 * shade[c]
                 sp_ = l0 * spec[a] + l1 * spec[b] + l2 * spec[c]
                 col = tex[ty, tx] * sh_[..., None] + sp_[..., None]
+                albedo = tex[ty, tx]
+            if shadow is not None and win.any():
+                wp = (l0[win][:, None] * pos[a] + l1[win][:, None] * pos[b] + l2[win][:, None] * pos[c])
+                dark = ~shadow.lit(wp)
+                if dark.any():
+                    sel = col[win]
+                    sel[dark] = albedo[win][dark] * light.ambient
+                    col = col.copy()
+                    col[win] = sel
             color[y0:y1, x0:x1][win] = col[win]
             cover[y0:y1, x0:x1][win] = True
     return color, cover

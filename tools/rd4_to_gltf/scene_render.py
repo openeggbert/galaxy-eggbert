@@ -31,6 +31,7 @@ class SceneRenderer:
         self.scene = scene
         self.exclude: set[int] = set()  # id() of objects not to draw (with their children)
         self.view = None                # (yaw, pitch, scale): see view_transform
+        self.shadows = True             # the scenes' light casts shadows (shad 1)
         self.camera_name = camera
         self.meshes: dict[str, tuple | None] = {}
         self.textures: dict[str, tuple | None] = {}
@@ -57,7 +58,10 @@ class SceneRenderer:
                 tex = shading.texture_map(self.scene, obj)
             except NotImplementedError:
                 tex = None
-            if tex is not None and ff is not None:
+            if isinstance(ff, geometry.MeshUV):
+                baked = shading.mesh_texture(self.scene, obj, ff)
+                self.textures[key] = None if baked is None else (baked[0], baked[1][src])
+            elif tex is not None and ff is not None:
                 self.textures[key] = (tex.image, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src])
             elif tex is not None:
                 prim = self.scene.masters[obj.master].chunk("prim")
@@ -118,7 +122,7 @@ class SceneRenderer:
         pos, right, up, back, px_per_unit_per_px = self.camera(tick)
         px = px_per_unit_per_px * size
         color, cover = vs.render(self.frame_meshes(tick), pos, right, up, back, px * supersample,
-                                 size * supersample, self.lighting(tick), supersample)
+                                 size * supersample, self.lighting(tick), supersample, shadows=self.shadows)
         return vs.downsample(color, cover, supersample)
 
     def frame_ticks(self) -> list[float]:

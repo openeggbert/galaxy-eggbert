@@ -203,6 +203,54 @@ def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
                       int(placement.get("rotc") or 0), warnings, counts, flips)
 
 
+def _texels(scene: sc.Scene, obj: sc.Obj, smap: rd4.Chunk, base: tuple) -> np.ndarray | None:
+    """A texture map's image as (H, W, 3) floats with "whit 1" resolved to ``base``."""
+    data = _find_image(scene, smap.chunk("CMAp").chunk("MDTA").leaf("REFN"))
+    if data is None:
+        return None
+    decoded = rdimage.decode(data)
+    texels = decoded if decoded.ndim == 3 else rdimage.palette(data)[decoded]
+    rgb = texels.astype(np.float64) / 255.0
+    if smap.leaf("whit") == "1":
+        rgb[(texels == 255).all(axis=-1)] = base
+    return rgb
+
+
+def mesh_texture(scene: sc.Scene, obj: sc.Obj, uvmesh) -> tuple[np.ndarray, np.ndarray] | None:
+    """(image, (V, 2) texture coordinates) for a mesh master (geometry.MeshUV) whose shader keeps
+    a plain primary colour and a texture map in a rectangle domain (``srct``): the saw scene's
+    half body wears its half face that way (Ray Dream Studio 5). The rectangle's ``bbox`` is
+    (around, along, around, along) in the surface's own coordinates, like Ray Dream 4's domains;
+    the whole surface becomes one image, the texture inside the rectangle (unflipped: the eye
+    lands where Clear4's icons have it, the 7 other orientations do worse), the primary colour
+    elsewhere and on the cut faces."""
+    sh = obj.chunk.chunk("sh") if obj.chunk is not None else None
+    if sh is None or sh.chunk("elms") is None:
+        return None
+    rect = next((d for d in sh.chunk("elms").chunks() if d.tag == "srct" and _color_channel(d) is not None
+                 and _color_channel(d).tag == "smap"), None)
+    if rect is None:
+        return None
+    base = material_key(scene, obj)
+    image = _texels(scene, obj, _color_channel(rect), base)
+    if image is None:
+        return None
+    a0, p0, a1, p1 = rect.floats("bbox")
+    along_max, around_max = uvmesh.extent
+    h, w = image.shape[:2]
+    width, height = int(round(w * around_max / (a1 - a0))), int(round(h * along_max / (p1 - p0)))
+    canvas = np.empty((height, width, 3))
+    canvas[:] = base
+    x0, y0 = int(round(a0 / around_max * width)), int(round(p0 / along_max * height))
+    canvas[y0:y0 + h, x0:x0 + w] = image[:max(0, min(h, height - y0)), :max(0, min(w, width - x0))]
+    st = np.stack([uvmesh.uv[:, 1] / around_max, uvmesh.uv[:, 0] / along_max], axis=1)
+    # Cut faces take the primary colour from the canvas's corner, away from the rectangle.
+    corner = np.array([0.5 / width, 0.5 / height]) if (x0, y0) != (0, 0) else np.array([1 - 0.5 / width,
+                                                                                            1 - 0.5 / height])
+    st[uvmesh.domain != 0] = corner
+    return (canvas * 255).round().astype(np.uint8), st
+
+
 def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals: np.ndarray):
     """(image, (N, 2) texture coordinates) of a texture map on a cylinder primitive: around the
     axis ``s`` = angle; the side's ``t`` runs along the axis, the caps' from the centre out, so

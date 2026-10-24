@@ -121,7 +121,9 @@ or more.
 | Free form: sweep path through the `sap` points (`cv`, handles `cnc`/`cpc`), one cross-section (`st` + cubic `s3` segments) | table above |
 | Envelopes `t`/`b`/`l`/`r` scale the section's `b` axis (positive/negative side) and `a` axis (negative/positive); each is a cubic Bezier in (path position, scale) through `(p0, v0), (p0 + nc[1], nc[0]), (p1 − pc[1], pc[0]), (p1, v1)` | DXF ring positions fall exactly on 16 equal Bezier-parameter steps; ring radii within 0.002 |
 | Section `a` → +X, `b` → +Z for a path along +Y | eyelash (asymmetric section) and foot (unequal envelopes) |
-| Mesh masters (`im`, Ray Dream Studio 5 boolean results such as `blupi-scie.rds`'s half body "Corps et Cube"): one `ff` line per triangle, 3 x (position, a second triple, u, v); the first triple is the position | the saw scene's falling half matches Clear4's icons at frame IoU 0.71-0.87 that way, 0.31-0.44 with the second triple |
+| Mesh masters (`im`, Ray Dream Studio 5 boolean results such as `blupi-scie.rds`'s half body "Corps et Cube"): one `ff` line per triangle, 3 x (position, a second triple, u, v); the first triple is the position; `idls` gives each triangle's surface domain (0 = the swept body's own surface, u along the path, v around) | the saw scene's falling half matches Clear4's icons at frame IoU 0.71-0.87 that way, 0.31-0.44 with the second triple |
+| Ray Dream Studio 5 shaders nest the channels in `scmp`/`ssub`; the saw's half face is a texture map in a rectangle domain (`srct`, bbox = around, along, around, along like Ray Dream 4's domains) over a plain yellow primary domain, placed unflipped | the eye lands where Clear4's icons have it (colour 0.83-0.94 per frame); the 7 other orientations score worse |
+| The light casts shadows (`spot { shad 1 shdw 1 }`): the verifier renders them with a shadow map from the light's position; shadowed points keep only the ambient light | colour against the icons: walk 0.900 -> 0.926, tank 0.784 -> 0.794, overcraft 0.728 -> 0.750, jeep 0.888 -> 0.891 |
 | Cube primitive (`prim { cube }`, no parameters): half-size 2.5, a 5-unit cube like the cylinder's height | helicopter frames of `helico2.rd4` against icons 61-65: IoU 0.972 / 0.981 / 0.985 / 0.976 / 0.966 at half-size 2.3 / 2.4 / 2.5 / 2.6 / 2.7 |
 | A cross-section may hold several closed curves (`p2`, in nested `pg`/`pc` groups) of cubic `s3` and straight `s1` segments; curves inside others are holes (the tank's track loop, the wheel rims) | vehicle frames against their icons (below) |
 | A point without its own cross-section keeps the previous one; different cross-sections along the path blend into each other; a path ending where it starts (torus, tyre) is closed, without caps | the jeep's tyres and the overcraft's skirt are tori built this way |
@@ -237,9 +239,10 @@ is invisible (the game draws no model on the tables' -1 frames).
 
 ## Not converted yet (next steps)
 
-- Ray Dream Studio 5's layered shaders (`scmp`/`ssub`) and secondary texture domains: the saw
-  scene's half body keeps its flat yellow (its face sits in an `srct` domain whose placement on
-  the mesh's own u, v is not decoded); procedural shaders (the skateboard's wood shows its flat
-  colour); cast shadows.
+- Procedural shaders (the skateboard's wood shows its flat colour); texture maps in rectangle
+  domains of swept (free-form) parts (only the mesh masters' are read).
+- Masters still skipped: mesh-form models (`vmda`, 83 in the non-Blupi scenes), flat surfaces
+  (`COfl`), cones (`co`), stars (`COFA`), 3D text (`tx`), fog (`fogg`); 3ds Max (`max/`,
+  `Element/shield*.max`) and Amapi (`.a3d`) files are not Ray Dream at all.
 - Texture maps on spheres and cubes (none in the Blupi scenes); twisted sweeps (none either).
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).

@@ -352,7 +352,14 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
     except NotImplementedError as e:
         tex = None
         warnings.append(f"{label}: texture not converted ({e}); flat colour used")
-    if tex is not None and ff is None:
+    if isinstance(ff, geometry.MeshUV):
+        baked = shading.mesh_texture(scene, o, ff)
+        tex = None
+        if baked is not None:
+            tex = shading.TextureMap(baked[0], (0.0, 0.0, 1.0, 1.0), 0, [])
+            pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, baked[1][src], 1.0)
+            key = ("texture", re.sub(r"[^\w.-]", "_", label))
+    elif tex is not None and ff is None:
         prim = scene.masters[o.master].chunk("prim")
         baked = shading.primitive_texture(tex, prim.chunks()[0].tag if prim is not None else "", pos, nrm)
         if baked is None:

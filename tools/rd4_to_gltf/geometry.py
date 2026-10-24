@@ -152,6 +152,16 @@ def orient_outwards(mesh: Mesh) -> Mesh:
     return Mesh(p, t[:, ::-1].copy()) if vol < 0 else mesh
 
 
+@dataclass
+class MeshUV:
+    """Surface coordinates of a mesh master's vertices: ``uv`` as stored (along the path, around
+    the section, for the swept body's own surface), each vertex's surface ``domain`` (0 = that
+    surface, others the boolean's cut faces) and domain 0's ``extent`` (path, around)."""
+    uv: np.ndarray
+    domain: np.ndarray
+    extent: tuple
+
+
 def canonical_mesh(master: rd4.Chunk):
     """Generated canonical geometry of a master: (Mesh, FreeformMesh or None)."""
     import freeform_mesh
@@ -162,9 +172,18 @@ def canonical_mesh(master: rd4.Chunk):
     if master.tag == "im":
         # An explicit triangle mesh (Ray Dream Studio 5's boolean results, blupi-scie.rds): one
         # "ff" line per triangle, 3 x (position xyz, a second xyz, u v); the second triple is
-        # not the position (rendering it puts the half body nowhere near the sprites).
+        # not the position (rendering it puts the half body nowhere near the sprites). "idls"
+        # gives each triangle's surface domain, "uvls" each domain's u, v extent.
         faces = np.array([rd4.parse_floats(f) for f in master.chunk("fl").leaves("ff")]).reshape(-1, 3, 8)
-        return orient_outwards(weld(faces[:, :, 0:3])), None
+        ids = np.array([int(x) for x in master.chunk("idls").leaves("id")])
+        corners = np.concatenate([faces[:, :, 0:3].reshape(-1, 3), faces[:, :, 6:8].reshape(-1, 2),
+                                  np.repeat(ids, 3)[:, None]], axis=1)
+        uniq, inverse = np.unique(np.round(corners, 5), axis=0, return_inverse=True)
+        tris = inverse.ravel().reshape(-1, 3)
+        tris = tris[(tris[:, 0] != tris[:, 1]) & (tris[:, 1] != tris[:, 2]) & (tris[:, 0] != tris[:, 2])]
+        extent = next((tuple(c.floats("max")) for c in master.chunk("uvls").chunks("uvif") if c.leaf("id") == "0"),
+                      (1.0, 1.0))
+        return orient_outwards(Mesh(uniq[:, 0:3], tris)), MeshUV(uniq[:, 3:5], uniq[:, 5].astype(int), extent)
     prim = master.chunk("prim")
     kind = prim.chunks()[0].tag if prim is not None and prim.chunks() else master.tag
     if kind == "sp":
