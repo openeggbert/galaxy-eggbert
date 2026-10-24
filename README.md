@@ -15,7 +15,7 @@ built directly on **CNA** (a C++ reimplementation of the XNA 4.0 API), with the 
 **cna-engine** used as helpers beside CNA (camera, mesh builder for cubes/plates/billboards, GPU
 meshes, texture regions); they do not hide CNA and game code calls CNA directly. (Until 2026-10-20
 the helper library was easy-3d, which cna-engine replaced.) See [CURRENT.md](CURRENT.md) for verified current
-status, [NEXT.md](NEXT.md) for commands and detailed history, and [plan.md](plan.md) for research
+status, [handoff.md](handoff.md) for commands and where work stands, and [plan.md](plan.md) for research
 and the full historical task inventory.
 
 The former `GalaxyEggbertSimple3D` implementation was retired after CNA reached playable parity
@@ -216,4 +216,5 @@ live in [CURRENT.md](CURRENT.md).
 ## Progress
 
 See [CURRENT.md](CURRENT.md) for current build status, limitations, and active work; use
-[NEXT.md](NEXT.md) for commands and detailed recent history.
+[handoff.md](handoff.md) for commands and where work stands
+([NEXT.md](NEXT.md) is the frozen history up to 2026-10-24).

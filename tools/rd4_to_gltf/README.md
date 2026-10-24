@@ -238,6 +238,14 @@ MarchOver 0.739; the deaths with 2D effects lower (Clear1 0.775, Clear3 0.655, G
 Clear4 0.843 (the saw scene's half body with its eye). Clear2 has no clip: every frame of it is
 invisible (the game draws no model on the tables' -1 frames).
 
+## Archive survey
+
+`survey.py scenes` reads every scene of the archive and lists, per scene, whether it parses, its
+master kinds and the masters the converter cannot build; `survey.py icons --sheet <png>` matches
+every icon of a sprite sheet against renders of the scenes without Blupi (their own orthographic
+cameras), giving the scene each object's sprites were rendered from. Commands in the script's
+docstring; results feed `assets-3d-analysis.md` and `plan.md` Phase 7B (`BB3D-*`).
+
 ## Not converted yet (next steps)
 
 - Procedural shaders (the skateboard's wood shows its flat colour); texture maps in rectangle

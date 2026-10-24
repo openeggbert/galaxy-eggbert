@@ -6,15 +6,16 @@ Galaxy Eggbert is a faithful 3D remake of `mobile-eggbert` / *Speedy Blupi*. The
 is `GalaxyEggbertCNA`: CNA is the engine/API surface, and cna-engine's strict modules
 (`CnaEngine::Core`, `CnaEngine::Graphics` -- camera, mesh builder, GPU meshes, texture regions; XNA
 4.0 types only) are the helpers beside it. They must not hide CNA: game code calls CNA directly.
-cna-engine replaced the former helper library easy-3d on 2026-10-20 (`NEXT.md`).
+cna-engine replaced the former helper library easy-3d on 2026-10-20 (`NEXT.md` §3, frozen history).
 
 The retired pre-CNA implementation was removed from the live tree on 2026-07-25 after playable
 parity and explicit user approval (`E3D-MIG-110..112`, `CLEANUP-S3D-001`). Its last state is
 recoverable at git commit `4afd53e`. Do not resurrect that dependency path or add alternate engine
 targets.
 
-Read `CURRENT.md` first for verified current state, `NEXT.md` for detailed commands/history, and
-`plan.md` for the backlog. `easy3d.md` is the historical migration analysis, not current build
+Read `CURRENT.md` first for verified current state, `handoff.md` for where work stands, commands
+and how to continue, and `plan.md` for the backlog. `NEXT.md` is obsolete (frozen history since
+2026-10-24); do not add to it. `easy3d.md` is the historical migration analysis, not current build
 guidance.
 
 ## Faithful-remake rules
@@ -88,8 +89,8 @@ a proportional live/screenshot check. Do not claim visual parity from compilatio
 ## Working practices
 
 - Preserve unrelated user changes in a dirty worktree.
-- Keep changes scoped and update `CURRENT.md`, `NEXT.md`, or `plan.md` only where their documented
-  ownership requires it.
+- Keep changes scoped and update `CURRENT.md`, `handoff.md`, or `plan.md` only where their documented
+  ownership requires it; update `handoff.md` after every committed task.
 - Use `-j2` maximum for every build, including packaging and cross-builds.
 - Avoid redundant fresh build trees and compiler caches; SSD write volume matters on this
   workstation.

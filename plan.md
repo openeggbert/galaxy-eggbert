@@ -709,6 +709,90 @@ Standing rules from this era, still in force: no MeshCraft/mesh-import path
       link/copy); no invented mechanics, cross-check every behavior against
       `mobile-eggbert-reference/`; stop and ask before exposing internal `Decor` state.
 
+### Phase 7B — Billboards replaced by converted 3D models (`BB3D-001`-`099`)
+
+Approved 2026-10-24 ("ano pust se do tohoto"): replace the camera-facing billboards of objects,
+big decor and the other Blupis with 3D models converted from the Ray Dream scenes their sprites
+were rendered from (`speedyblupi-data/originals`), with the same pipeline as the real Blupi
+(`tools/rd4_to_gltf/`, `avatars3d/blupi/`). **Effects stay billboards** (user decision
+2026-10-24): they have no 3D source. Evidence and sources: `assets-3d-analysis.md`; survey data
+`build-probe/rd4-survey/` (regenerable, not committed). Work is pausable after any task: each
+task is committed on its own, and `handoff.md` says where work stopped and what to run next.
+
+Design (`BB3D-010`): the game keeps computing each object's icon exactly as now
+(`ResolveObjectVisual`, `TryGetPatrolIcon`); a per-sheet **icon → pose** table (model, clip,
+time, view yaw) replaces the billboard for every icon it lists, and an icon it does not list
+stays a billboard. So behaviour, timing and icon selection stay the original's, and objects can
+be converted one at a time.
+
+**Stage 1 — converter gaps (`tools/rd4_to_gltf`)**
+- [ ] `BB3D-001` Cone masters `co` (15 scenes: the mines' spikes and fuses, the fish's fins).
+- [ ] `BB3D-002` Flat surface masters `COfl` (87 scenes: big decor ground planes, signs).
+- [ ] `BB3D-003` Mesh-form masters `vmda` (83: creatures, tentacles, drops, lava, the palace).
+- [ ] `BB3D-004` Star masters `COFA` (2) and the 18 free-form `ex` variants that fail
+      (`IndexError`); fog `fogg` (1) is skipped, text `tx` (14, menus only) is out of scope.
+- [ ] `BB3D-005` The 28 Ray Dream Studio 5 files that do not parse (`Decor/goutte`,
+      `Decor/tentacule`, `smooth`, `palais`).
+- [ ] `BB3D-006` Perspective cameras in `scene_render`/`verify_sprites` (wasp, keys, robot
+      scenes render their sprites with `Caméra 1`).
+- [ ] `BB3D-007` Re-run the survey (`scenes.csv`) and the element icon matching
+      (`element_icons.csv`) with all of the above; record per object type the best scene and
+      IoU in `assets-3d-analysis.md`.
+
+**Stage 2 — game-side object models**
+- [ ] `BB3D-010` Object model library: a converter script (per object: scene(s), icon → frame
+      and view matched like `match_icons.py`) writing a `SkinnedModelEXT` per object under
+      `objects3d/<name>/` plus an `icons.txt` (sheet, icon → clip, time, yaw); the game loads
+      every library, draws listed icons as models (`blupiEffect_`-style skinned pass, same scale
+      convention as Blupi: a 64-pixel icon = one block) and skips their billboard. Decide and
+      document the world orientation of the sprites' camera (the original screen's view
+      direction) for objects.
+- [ ] `BB3D-011` Pure-logic verifier for the icon → pose table (parsing, every listed icon
+      resolves, unlisted icons fall back to the billboard) as a CTest case.
+
+**Stage 3 — static pickups** (one model, one or a few frames each)
+- [ ] `BB3D-020` Treasure (5, `Blupi/coffre.rd4`, IoU 0.93).
+- [ ] `BB3D-021` Extra-life egg (6, `Blupi/oeuf.rd4`, 0.84).
+- [ ] `BB3D-022` Level exit (7, `Blupi/fleche.rd4`, 0.77).
+- [ ] `BB3D-023` Drink (30, `Blupi/bouteille.rd4`, 0.87), ammo pack (29, `munitions-glu.rd4`,
+      0.99), enemy projectile (23, `balle-glu.rd4`, 0.99).
+- [ ] `BB3D-024` Keys and secret exit (49-51, 21, `cle*.rd4`; needs `BB3D-006`).
+- [ ] `BB3D-025` Shield (25, `shield1/2.rd4`), lollipop pickup (26, `sucette.rd4`), invert sign
+      (40, `panneau-invert.rd4`), dynamite (55, 56, `Decor/dynamite.rd4`), charge (31,
+      `Element/power.rds`).
+
+**Stage 4 — animated enemies** (clips per icon table, as Blupi's)
+- [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs
+      icons 66-70 and 248-250) before converting them.
+- [ ] `BB3D-031` Bird (20, `Blupi/oiseau.rd4`, 0.77).
+- [ ] `BB3D-032` Fish (17, `Blupi/poisson.rd4`, 0.89; fins need `BB3D-001`).
+- [ ] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, max 0.97).
+- [ ] `BB3D-034` Mines (2, 3, `bombe*.rd4`; spikes need `BB3D-001`).
+- [ ] `BB3D-035` Bulldozer and flying robot (4, `robot-profil.rd4`, `tracks-profil.rd4`).
+- [ ] `BB3D-036` Wasp (44, `guepe*.rd4`; needs `BB3D-006`).
+- [ ] `BB3D-037` Spider (16, `bug*.rd4`).
+- [ ] `BB3D-038` Green blob creature (33, 54, `creature*.rds`; needs `BB3D-003`).
+
+**Stage 5 — animated decor objects**
+- [ ] `BB3D-040` Tentacle (53, `Decor/tentacule/*.rds`; needs `BB3D-003`/`005`).
+- [ ] `BB3D-041` Electric arc (38, `Decor/electro.rd4`, `eclair.rd4`).
+- [ ] `BB3D-042` Door (22, `Decor/porte*.rd4`).
+- [ ] `BB3D-043` Drops (`Decor/goutte/*.rds`) and the cloud puff (36, `Explo/nuage.rds`).
+
+**Stage 6 — big decor** (`explo.png` cells)
+- [ ] `BB3D-050` Static models of the `Explo/` scenes (`cabane`, `maison`, `plante1a-3c`,
+      `enfant01-13`, `meca1-4`, `herbe`) drawn instead of the BigDecor billboards.
+
+**Stage 7 — the other Blupis**
+- [ ] `BB3D-060` Types 200-203 (`blupi.png`/`blupi1.png` billboards): the real Blupi model
+      with recoloured textures (`originals/readme.txt`: yellow to orange 237,168,60, blue
+      63,194,237, green 38,233,46), playing the clip of their icons.
+
+**Stage 8 — effects stay billboards** (decision 2026-10-24, nothing to do)
+- [x] `BB3D-090` Explosions (8-11), flashes and sparks (90-93), splashes (98-100, 14, 15, 35),
+      sparkle trails (27, 39, 57), particle bursts (41, 42), goo (34), the bridge being built
+      (52) keep their sprite billboards.
+
 ### Phase 8 — Sound (`E3D-MIG-080`-`089`)
 
 - [x] `080`/`081` `Sound` class, real `SoundEffect`/`SoundEffectInstance` CNA API, all 93 real

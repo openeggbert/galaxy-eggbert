@@ -1,8 +1,8 @@
 # Galaxy Eggbert — Current Truth
 
 _Last verified: 2026-10-20. Update this file whenever a change alters the current state, a known
-limitation, a supported build, or the actionable backlog. Keep historical detail in `NEXT.md` and
-`plan.md`, not here._
+limitation, a supported build, or the actionable backlog. Keep historical detail in `plan.md` (and the
+frozen `NEXT.md`), where work stands in `handoff.md`, not here._
 
 ## What this project is
 
@@ -54,7 +54,7 @@ verified native and WebGL 2 configurations:
 | `build-cna-webgl2` (`WEBGL2`) | Emscripten release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data`; a 12-second final-artifact headless-Chrome run creates a real WebGL 2 context, loads `world001`, and renders without an application error (2026-10-17, before cna-engine; since then only compiled with `em++`, not linked or run) |
 
 The deterministic golden-frame and behavioral-trace harnesses are manual `xvfb-run` checks, not
-default CTest cases. Full commands and sibling-repository pins live in `NEXT.md` §2 and §7.
+default CTest cases. Full commands and sibling-repository pins live in `handoff.md`.
 
 ## Known limitations
 
@@ -105,7 +105,8 @@ default CTest cases. Full commands and sibling-repository pins live in `NEXT.md`
 | Document | Use it for |
 |---|---|
 | `CURRENT.md` | Current status, tested baseline, active limitations, and actionable work |
-| `NEXT.md` | Commands, architecture notes, recent chronological write-ups, detailed constraints |
+| `handoff.md` | Where work stands, what to run next, commands, sibling pins, gotchas; updated after every task |
+| `NEXT.md` | Obsolete since 2026-10-24: frozen chronological write-ups and architecture notes up to then |
 | `plan.md` | Historical implementation log, research evidence, and the complete task inventory |
 | `README.md` | Project introduction and onboarding; it links here for current status |
 

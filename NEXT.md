@@ -1,5 +1,8 @@
 # NEXT.md — Galaxy Eggbert
 
+**Obsolete since 2026-10-24: frozen history, no longer updated. Where work stands, the commands
+and how to continue are in [`handoff.md`](handoff.md); the backlog is `plan.md`.**
+
 _Session paused 2026-07-23 (updated): since the note below was first written, a separate
 user-directed pass closed out the `INFRA-*` doc-audit follow-ups and `BUILD-009` (CI). Concretely:
 the P0-1 behavioral trace, `INFRA-003`'s programmatic reference-doc check, and `INFRA-005`'s merged
