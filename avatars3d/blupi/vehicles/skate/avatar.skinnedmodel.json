@@ -2,14 +2,14 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "skate_rd_ff0000",
-      "vertices": "skate_rd_ff0000.verts.bin",
-      "indices": "skate_rd_ff0000.idx.bin",
+      "name": "skate_rd_f7ac00",
+      "vertices": "skate_rd_f7ac00.verts.bin",
+      "indices": "skate_rd_f7ac00.idx.bin",
       "vertexStride": 52,
-      "texture": "skate_rd_ff0000.png",
+      "texture": "skate_rd_f7ac00.png",
       "diffuseColor": [
-        1.0,
-        0.0,
+        0.9374824827715106,
+        0.41456802404539866,
         0.0,
         1.0
       ]

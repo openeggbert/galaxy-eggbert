@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "jeep_rd_ff0000",
-      "vertices": "jeep_rd_ff0000.verts.bin",
-      "indices": "jeep_rd_ff0000.idx.bin",
+      "name": "jeep_rd_7f7f7f",
+      "vertices": "jeep_rd_7f7f7f.verts.bin",
+      "indices": "jeep_rd_7f7f7f.idx.bin",
       "vertexStride": 52,
-      "texture": "jeep_rd_ff0000.png",
+      "texture": "jeep_rd_7f7f7f.png",
       "diffuseColor": [
-        1.0,
-        0.0,
-        0.0,
+        0.21404114048223255,
+        0.21404114048223255,
+        0.21404114048223255,
         1.0
       ]
     },
@@ -22,6 +22,19 @@
       "texture": "jeep_rd_000000.png",
       "diffuseColor": [
         0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "jeep_rd_ff0000",
+      "vertices": "jeep_rd_ff0000.verts.bin",
+      "indices": "jeep_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "jeep_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
         0.0,
         0.0,
         1.0
@@ -41,15 +54,15 @@
       ]
     },
     {
-      "name": "jeep_rd_ffffff",
-      "vertices": "jeep_rd_ffffff.verts.bin",
-      "indices": "jeep_rd_ffffff.idx.bin",
+      "name": "jeep_rd_e9940e",
+      "vertices": "jeep_rd_e9940e.verts.bin",
+      "indices": "jeep_rd_e9940e.idx.bin",
       "vertexStride": 52,
-      "texture": "jeep_rd_ffffff.png",
+      "texture": "jeep_rd_e9940e.png",
       "diffuseColor": [
-        1.0,
-        1.0,
-        1.0,
+        0.8214726954576984,
+        0.2990637163428819,
+        0.004497480054103012,
         1.0
       ]
     },
