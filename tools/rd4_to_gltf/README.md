@@ -138,6 +138,7 @@ or more.
 | A mix shader (`smix`: two colours by a pattern such as wood, `swod`) is drawn in the mean of its two colours | the invert sign's post: gold, not the master's red |
 | A cross-section may hold several closed curves (`p2`, in nested `pg`/`pc` groups) of cubic `s3` and straight `s1` segments; curves inside others are holes (the tank's track loop, the wheel rims) | vehicle frames against their icons (below) |
 | A point without its own cross-section keeps the previous one; different cross-sections along the path blend into each other; a path ending where it starts (torus, tyre) is closed, without caps | the jeep's tyres and the overcraft's skirt are tori built this way |
+| Blended cross-sections correspond point to point after a cyclic shift that brings each one's points nearest the first section's (about their centres), not from their stored start points | the palm trunks (`Explo/plante1*`) mix circles starting at their top with stars starting at their left; unshifted every ring pinched to 0.49 between sections of radius 0.72 and 0.87, and the palms matched their icons at 0.758-0.789, shifted 0.825-0.856 (trees `plante2*` 0.957 -> 0.973-0.982; houses, the jeep's rims unchanged) |
 
 `freeform_mesh.py` documents the rest (sampling, caps by ear clipping, holes bridged into their
 outline). After sampling as Ray Dream does, the rings and cross-section points that interpolating

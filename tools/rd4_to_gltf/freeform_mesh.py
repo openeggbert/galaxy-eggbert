@@ -18,7 +18,7 @@ Decoded against Ray Dream's own DXF triangulation of Blupi (see README.md):
 A cross-section is one or more closed curves (``p2``, possibly nested in ``pg`` groups) of cubic
 (``s3``) and straight (``s1``) segments; curves inside others are holes. A point without its own
 cross-section (``oo 1``) keeps the previous one; between two different ones the shape blends
-linearly along the path (point by point, resampled to equal counts). A path that ends where it
+linearly along the path (point by point, resampled to equal counts and cyclically aligned). A path that ends where it
 starts (torus, tyre) is closed and has no caps. Twisted sweeps (``twst``) are not supported.
 """
 
@@ -161,7 +161,22 @@ def _common_topology(sections: list[list[Loop]]) -> list[list[Loop]]:
             src = _resample(sections[near][j], counts[j])
             loops.append(Loop(np.repeat(src.points.mean(axis=0)[None], counts[j], axis=0), src.us, src.perimeter))
         out.append(loops)
-    return out
+    return [out[0]] + [[_align(loop, ref) for loop, ref in zip(sec, out[0])] for sec in out[1:]]
+
+
+def _align(loop: Loop, ref: Loop) -> Loop:
+    """The loop's points rotated (cyclically, same direction) to correspond best to ``ref``'s,
+    both about their own centres. The palm trunk's sections (Explo/plante1*) start a quarter turn
+    apart (a circle at its top, a star at its left); blended point by point unrotated, every
+    ring pinched to 0.49 between sections of radius 0.72 and 0.87, where the sprites show none."""
+    a = loop.points - loop.points.mean(axis=0)
+    r = ref.points - ref.points.mean(axis=0)
+    n = len(a)
+    cost = [float(np.sum((np.roll(a, -s, axis=0) - r) ** 2)) for s in range(n)]
+    s = int(np.argmin(cost))
+    if s == 0 or cost[s] >= cost[0] - 1e-12:
+        return loop
+    return Loop(np.roll(loop.points, -s, axis=0), np.roll(loop.us, -s), loop.perimeter)
 
 
 def _blend(a: list[Loop], b: list[Loop], f: float) -> list[Loop]:
