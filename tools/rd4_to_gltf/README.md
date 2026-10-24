@@ -93,7 +93,9 @@ Each was checked numerically, not assumed.
 | Keys without a tweener (`void`) are linear; 1800 ticks per second | every stored static value equals linear interpolation at tick 3000 |
 | Hot point `hp` (local, after the `affi` deformer) lands on `po`; the object rotates about it | DXF match below |
 | `Scal` scales only the object's own geometry; a child's `po` is in the parent's unscaled frame | arm segments: elbow at `hp - po` = 3.725 vs. segment length 3.741 |
-| `link` joints rotate inside the `mat` base frame: `axis` (`XAXI`/`YAXI`/`ZAXI`, angle `AAVa`), `gene` (`AXVa..AZVa`, `ORDE 6`), `ball` (`matR`), `lock` | DXF match below; `ball` is read but not yet exercised |
+| `link` joints rotate inside the `mat` base frame: `axis` (`XAXI`/`YAXI`/`ZAXI`, angle `AAVa`), `gene` (`AXVa..AZVa`, `ORDE 6`), `ball` (`matR`), `lock` | DXF match below |
+| Animated `ball` joints: `ACom/matR` holds `ROTA` keys with the same inverse convention, `matR == quat(ROTA).T` | stored `matR` equals the keys at the stored time to 0.0001 in `saute-profil`, `nage`, `glu` (0.008 in `bye`) |
+| Tweener `twee { line { EASE a  EASO b } }` on a key: speed rises over [0, a], is constant to b, falls over [b, 1] of the segment; `void` = linear | the values seen: (0, 1) linear, (0.61, 1) speed-up, (0, 0.4) slow-down, (0.41, 0.61) both; frames of the scenes using it match their sprites (`blupi-plat`: MarchEcrase 0.876) |
 | `ORDE 6` composes Z·Y·X | only "Y before X" is verified (the stored poses have `AZVa` = 0); Z first is assumed from `ORDE 6` being the sixth permutation of XYZ |
 | Orthographic camera: frame is `size` / `zoom`; the image fits its height; the axis hits the centre of the middle pixel | best IoU at 0.8775–0.885 x zoom; 60 / 68.03 = 0.882 |
 
@@ -127,12 +129,31 @@ Only `rotc 3`, `flpv 1`, `flph 0`, one tile, is verified (every Blupi scene uses
 placements produce a warning. `srct`/`sovl` domains are baked over the texture; masked `srgn`
 domains are not converted.
 
+## Matching scene frames with sprite icons
+
+`match_icons.py` renders every frame of every scene containing Blupi straight from the scene
+(`scene_render.py`: its own kinematics, generated geometry, face, game camera and lighting; no
+glTF in between), compares each with every icon of the sprite sheet, as rendered and mirrored,
+and writes `icons.csv`, `frames.csv`, a per-action `report.md` (actions and icon sequences from
+mobile-eggbert's `table_blupi`, read in place) and `icons/NNN.png` (icon beside its best render):
+
+```bash
+python3 tools/rd4_to_gltf/match_icons.py --scenes ../speedyblupi-data/originals/Blupi \
+    --sheet ../mobile-eggbert/Content/icons/blupi.png --reference ../mobile-eggbert \
+    --out build-probe/rd4-blupi/match
+```
+
+First run (2026-10-24, about 3.5 minutes): 243 frames from 54 scenes; of the 231 icons used by
+actions, 87 match confidently (score >= 0.85), 60 probably (>= 0.70) and 84 not. The unmatched
+ones are the vehicles (unsupported cube, torus and multi-section masters), the turn icons
+(front views mid-turn, which a 3D model replaces with a real rotation), Hide (drawn at another
+scale), and frames with 2D effects added (Electro's glow).
+
 ## Not converted yet (next steps)
 
 - Other scenes and the icon <-> (scene, frame) mapping for all 87 `BlupiAction` states.
-- Animated `ball` joints and explicit tweeners (`twee`/`line`, `EASE`) stop the conversion with
-  an error; an animated hot point, `Scal` or deformer (`plat`/squash scenes) is reported as a
-  warning and ignored.
+- In the glTF export, an animated hot point, `Scal` or deformer (`plat`/squash scenes) is reported
+  as a warning and ignored (the scene renderer applies them).
 - Props and vehicles: cube and cone primitives, texture maps on primitives (the lollipop), several
   cross-sections per sweep, curved and twisted sweep paths.
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).

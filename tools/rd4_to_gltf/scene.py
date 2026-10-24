@@ -55,23 +55,46 @@ def axis_rotation(axis: int, angle: float) -> np.ndarray:
     return np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
 
 
+def ease(f: float, a: float, b: float) -> float:
+    """Ray Dream's linear tweener with easing (``twee { line { EASE a  EASO b } }``): the speed
+    rises from 0 over [0, a], stays constant over [a, b] and falls back to 0 over [b, 1].
+    ``(0, 1)`` is plain linear."""
+    v = 2.0 / (1.0 + b - a)
+    if f <= a:
+        return v * f * f / (2.0 * a) if a > 0 else 0.0
+    if f <= b:
+        return v * (a / 2.0 + (f - a))
+    if b >= 1.0:
+        return 1.0
+    g = f - b
+    return v * (a / 2.0 + (b - a) + g - g * g / (2.0 * (1.0 - b)))
+
+
 @dataclass
 class Track:
-    """Keyframes of one channel: times in ticks, values as float arrays."""
+    """Keyframes of one channel: times in ticks, values as float arrays, and per key the easing
+    (EASE, EASO) of the segment that starts there (None: linear)."""
     times: list[float]
     values: list[np.ndarray]
+    eases: list = field(default_factory=list)
+
+    def segment(self, t: float) -> tuple[int, float]:
+        for i in range(len(self.times) - 1):
+            t0, t1 = self.times[i], self.times[i + 1]
+            if t0 <= t <= t1:
+                f = 0.0 if t1 == t0 else (t - t0) / (t1 - t0)
+                if i < len(self.eases) and self.eases[i] is not None:
+                    f = ease(f, *self.eases[i])
+                return i, f
+        return len(self.times) - 2, 1.0
 
     def sample(self, t: float) -> np.ndarray:
         if t <= self.times[0]:
             return self.values[0]
         if t >= self.times[-1]:
             return self.values[-1]
-        for i in range(len(self.times) - 1):
-            t0, t1 = self.times[i], self.times[i + 1]
-            if t0 <= t <= t1:
-                f = 0.0 if t1 == t0 else (t - t0) / (t1 - t0)
-                return self.values[i] * (1 - f) + self.values[i + 1] * f
-        return self.values[-1]
+        i, f = self.segment(t)
+        return self.values[i] * (1 - f) + self.values[i + 1] * f
 
 
 def slerp(a: np.ndarray, b: np.ndarray, f: float) -> np.ndarray:
@@ -91,35 +114,36 @@ class QuatTrack(Track):
             return self.values[0]
         if t >= self.times[-1]:
             return self.values[-1]
-        for i in range(len(self.times) - 1):
-            t0, t1 = self.times[i], self.times[i + 1]
-            if t0 <= t <= t1:
-                f = 0.0 if t1 == t0 else (t - t0) / (t1 - t0)
-                return slerp(self.values[i], self.values[i + 1], f)
-        return self.values[-1]
+        i, f = self.segment(t)
+        return slerp(self.values[i], self.values[i + 1], f)
 
 
 def read_track(chunk: Chunk, quat: bool = False) -> Track | None:
-    times, values = [], []
-    tweeners = set()
+    """Keys are (time, value, tweener) triples; the tweener is ``void 0`` (linear) or
+    ``twee { line { EASE a  EASO b } }`` (see ``ease``)."""
+    times, values, eases = [], [], []
     for item in chunk.items:
         if isinstance(item, tuple):
             tag, v = item
             if tag == "time":
                 times.append(float(v))
+                eases.append(None)
             elif tag == "void":
-                tweeners.add("void")
+                pass
             elif len(values) < len(times):
                 values.append(np.array(parse_floats(v)))
+        elif item.tag == "twee":
+            line = item.chunk("line")
+            if line is None or len(item.chunks()) != 1:
+                raise NotImplementedError(f"tweener {[c.tag for c in item.chunks()]} in {chunk.tag}")
+            eases[-1] = (line.float("EASE", 0.0), line.float("EASO", 1.0))
         else:
-            tweeners.add(item.tag)
+            raise NotImplementedError(f"tweener {item.tag!r} in {chunk.tag}")
     if not times:
         return None
-    if tweeners - {"void"}:
-        raise NotImplementedError(f"tweeners {sorted(tweeners)} in {chunk.tag}")
     if quat:
-        return QuatTrack(times, [v[:4] / np.linalg.norm(v[:4]) for v in values])
-    return Track(times, values)
+        return QuatTrack(times, [v[:4] / np.linalg.norm(v[:4]) for v in values], eases)
+    return Track(times, values, eases)
 
 
 @dataclass
@@ -128,6 +152,7 @@ class Joint:
     axis: int = 0                  # for 'axis'
     order: int = 0                 # ORDE for 'gene'
     ball: np.ndarray = field(default_factory=lambda: np.eye(3))  # matR for 'ball'
+    ball_track: "QuatTrack | None" = None  # animated matR: ROTA keys, matR == quat(ROTA).T
     angles: np.ndarray = field(default_factory=lambda: np.zeros(3))
     slides: np.ndarray = field(default_factory=lambda: np.zeros(3))
     angle_tracks: list = field(default_factory=lambda: [None, None, None])
@@ -194,7 +219,10 @@ class Obj:
         if j is None or j.kind == "lock":
             return np.eye(3)
         if j.kind == "ball":
-            return j.ball
+            if t is not None and j.ball_track is not None:
+                w, x, y, z = j.ball_track.sample(t)
+                return quat_to_matrix(w, x, y, z).T
+            return orthonormalize(j.ball)
         if j.kind == "axis":
             a = j.angles[0]
             if t is not None and j.angle_tracks[0] is not None:
@@ -237,8 +265,10 @@ def _read_joint(link: Chunk | None) -> Joint | None:
     elif k.tag == "ball":
         if k.leaf("matR"):
             j.ball = np.array(k.floats("matR")).reshape(3, 3)
-        if ac and ac.chunks():
-            raise NotImplementedError("animated ball joints")
+        if ac and ac.chunk("matR"):
+            j.ball_track = read_track(ac.chunk("matR"), quat=True)
+        elif ac and ac.chunks():
+            raise NotImplementedError(f"ball joint tracks {[c.tag for c in ac.chunks()]}")
     elif k.tag == "gene":
         j.order = int(k.leaf("ORDE", "0"))
         j.angles = np.array([k.float(f"A{a}Va", 0.0) for a in "XYZ"])
