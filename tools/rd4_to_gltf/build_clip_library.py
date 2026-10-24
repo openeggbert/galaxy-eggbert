@@ -231,7 +231,7 @@ def vehicle_frames(c: conv_mod.Converter, body: set[str], names: dict[int, str],
 def game_camera(scene: sc.Scene, tick: float) -> np.ndarray:
     for o, _p, cw, _g in sc.world_frames(scene, tick):
         if o.kind == "ca" and "Jeu" in o.name:
-            return cw[:3, 3]
+            return sc.camera_centre(o, cw)
     raise ValueError("no game camera")
 
 

@@ -416,6 +416,19 @@ def read_scene(root: Chunk) -> Scene:
 
 # ---- forward kinematics -------------------------------------------------------------
 
+def camera_centre(cam: Obj, cw: np.ndarray) -> np.ndarray:
+    """Where an orthographic camera's frame is centred: its position moved by ``ofst`` (right,
+    up) in the units of ``size``, 1 / zoom scene units each. The creature scenes' camera has
+    one (creature1-5.rds against icons 247-251: IoU 0.978-0.998 with it, 0 without), as have
+    the overcraft's (aero-*.rd4) and many decor scenes. Perspective cameras are not moved."""
+    proj = cam.chunk.chunk("proj")
+    iso = proj.chunk("iso") if proj is not None else None
+    shift = cam.chunk.floats("ofst")
+    if iso is None or not shift:
+        return cw[:3, 3].copy()
+    return cw[:3, 3] + (cw[:3, 0] * shift[0] + cw[:3, 1] * shift[1]) / iso.float("zoom")
+
+
 def view_matrix(center: np.ndarray, view) -> np.ndarray:
     """4x4 turning objects for another view of Blupi about ``center`` (his body): ``yaw`` degrees
     about the vertical (world Z), then ``pitch`` degrees about the profile camera's horizontal

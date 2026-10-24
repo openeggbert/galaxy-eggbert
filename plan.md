@@ -732,13 +732,22 @@ be converted one at a time.
 - [x] `BB3D-002` Flat surface masters `COfl` (87 scenes): the scenes' ground plane, horizontal at
       Z -15 and edge-on to every orthographic camera in all 87, so no sprite shows it; the
       converter now builds nothing for it instead of failing (2026-10-24).
-- [ ] `BB3D-003` Mesh-form masters `vmda` (83: creatures, tentacles, drops, lava, the palace).
+- [x] `BB3D-003` Mesh-form masters `vmda` (83: creatures, tentacles, drops, lava, the palace):
+      a polygon mesh in `xprm/PmSt/Pmsh`, scene units, hot point as usual (`geometry.mesh_form`).
+      With the camera offset below, `creature1-5.rds` match icons 247-251 at IoU 0.978-0.998.
 - [ ] `BB3D-004` Star masters `COFA` (2) and the 18 free-form `ex` variants that fail
       (`IndexError`); fog `fogg` (1) is skipped, text `tx` (14, menus only) is out of scope.
 - [ ] `BB3D-005` The 28 Ray Dream Studio 5 files that do not parse (`Decor/goutte`,
       `Decor/tentacule`, `smooth`, `palais`).
-- [ ] `BB3D-006` Perspective cameras in `scene_render`/`verify_sprites` (wasp, keys, robot
-      scenes render their sprites with `Caméra 1`).
+- [~] `BB3D-006` Cameras. Done: the orthographic camera's frame offset `ofst` (right, up, in
+      `size` units / zoom; `scene.camera_centre`), used by the renderer, the verifier and the
+      clip library's camera alignment; it was the reason the creature scenes matched nothing.
+      Open: perspective `Caméra 1` (`proj { coni { foca, zoom } }`) for the scenes that have no
+      orthographic one (wasp, keys, robot?) — check first which sprites really need it.
+- [ ] `BB3D-008` Re-run the real Blupi's matching and clip library with the camera offset: the
+      overcraft's scenes (`aero-*.rd4`) have `ofst -8.50,0.85`, which the library's camera
+      alignment ignored; may explain the overcraft's 0.74-0.76. Regenerate `avatars3d/blupi`
+      (its README) and compare the per-clip IoU before committing.
 - [ ] `BB3D-007` Re-run the survey (`scenes.csv`) and the element icon matching
       (`element_icons.csv`) with all of the above; record per object type the best scene and
       IoU in `assets-3d-analysis.md`.

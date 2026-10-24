@@ -195,7 +195,7 @@ class Camera:
     def frame(self, tick: float):
         cw = next(cw for o, _p, cw, _g in sc.world_frames(self.scene, tick) if o is self.obj)
         r = self.c @ cw[:3, :3]
-        pos = self.c @ (cw[:3, 3] * self.scale) + self.offset
+        pos = self.c @ (sc.camera_centre(self.obj, cw) * self.scale) + self.offset
         return pos, r[:, 0], r[:, 1], r[:, 2]
 
 

@@ -15,12 +15,15 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
 - **Done:** the plan (`plan.md` Phase 7B); `tools/rd4_to_gltf/survey.py` (the archive survey and
   the per-sheet icon matching, formerly throwaway scripts).
 - **Done (Stage 1):** `BB3D-001` cones (`primitives.cone`); `BB3D-002` flat surfaces (the
-  never-visible ground plane, built as nothing).
-- **Next:** `BB3D-003` (`vmda` mesh-form masters).
-- **Survey baseline** (`build-probe/rd4-survey/scenes.csv`, 2026-10-24): 500 of 528 scenes read;
-  masters not built: `COfl` 87 scenes, `vmda` 83, `ex` IndexError 18, `co` 15, `tx` 14,
-  `COFA` 2, `im` ValueError 1, `fogg` 1; 28 RDS 5 files fail with AttributeError
-  (`Decor/goutte` g1-7, `Decor/palais` a, `Decor/smooth` a/a1/a2, `Decor/tentacule` p01-p17).
+  never-visible ground plane, built as nothing); `BB3D-003` mesh forms (`geometry.mesh_form`);
+  camera frame offset `ofst` (`scene.camera_centre`, part of `BB3D-006`).
+- **Next:** `BB3D-008` (re-run Blupi's library with the camera offset, the overcraft may
+  improve), then `BB3D-005` (28 RDS 5 files), `BB3D-004` (`COFA`, `ex` IndexError).
+- **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-003`): 500 of 528 scenes read;
+  masters not built: `ex` IndexError 18 scenes, `tx` 14 (menus, out of scope), `COFA` 2, `im`
+  ValueError 1 (`Element/power.rds`), `fogg` 1 (`Explo/nuage.rds`); 28 RDS 5 files fail with
+  AttributeError (`Decor/goutte` g1-7, `Decor/palais` a, `Decor/smooth` a/a1/a2,
+  `Decor/tentacule` p01-p17).
 
 Regenerate the survey (about 25 s for scenes, much longer for icons):
 

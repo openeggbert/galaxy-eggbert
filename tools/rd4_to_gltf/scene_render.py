@@ -84,7 +84,7 @@ class SceneRenderer:
         if iso is None:
             raise NotImplementedError(f"camera {o.name!r} is not orthographic")
         frame_height = o.chunk.floats("size")[1]
-        return cw[:3, 3], cw[:3, 0], cw[:3, 1], cw[:3, 2], iso.float("zoom") / frame_height
+        return sc.camera_centre(o, cw), cw[:3, 0], cw[:3, 1], cw[:3, 2], iso.float("zoom") / frame_height
 
     def lighting(self, tick: float) -> vs.Lighting:
         for o, _p, cw, _g in sc.world_frames(self.scene, tick):

@@ -162,6 +162,34 @@ class MeshUV:
     extent: tuple
 
 
+def mesh_form(master: rd4.Chunk) -> Mesh:
+    """A mesh form (``prim { vmda }``, Ray Dream Studio 5's polygon modeler): ``xprm/PmSt/Pmsh``
+    holds the vertices (``Vrts``: ``VerD`` with ``Posn``, ``Flag``, ``UV``) and the polygons
+    (``Pgns``: ``PgSz`` n then ``Pgon`` with n vertex indices; quads mostly, up to 36-gons),
+    positions in scene units. Polygons are triangulated in their own plane, keeping their
+    winding."""
+    import freeform_mesh
+    pm = master.chunk("xprm").chunk("PmSt").chunk("Pmsh")
+    pos = np.array([rd4.parse_floats(v.leaf("Posn")) for v in pm.chunk("Vrts").chunks("VerD")])
+    tris: list[tuple[int, int, int]] = []
+    for pgon in pm.chunk("Pgns").leaves("Pgon"):
+        idx = [int(x) for x in pgon.split(",")]
+        if len(idx) == 3:
+            tris.append(tuple(idx))
+            continue
+        pts = pos[idx]
+        # Newell's normal, then the polygon in its plane.
+        n = np.sum(np.cross(pts - pts.mean(0), np.roll(pts, -1, axis=0) - pts.mean(0)), axis=0)
+        if np.linalg.norm(n) < 1e-12:
+            continue
+        n /= np.linalg.norm(n)
+        u = np.cross(n, [1.0, 0.0, 0.0] if abs(n[0]) < 0.9 else [0.0, 1.0, 0.0])
+        u /= np.linalg.norm(u)
+        flat = np.stack([pts @ u, pts @ np.cross(n, u)], axis=1)
+        tris += [(idx[i], idx[j], idx[k]) for i, j, k in freeform_mesh.ear_clip(flat)]
+    return Mesh(pos, np.array(tris, dtype=int).reshape(-1, 3))
+
+
 def canonical_mesh(master: rd4.Chunk):
     """Generated canonical geometry of a master: (Mesh, FreeformMesh or MeshUV or None), or None
     for a master no sprite shows: the flat surface ``COfl`` (README.md, "Geometry")."""
@@ -195,6 +223,8 @@ def canonical_mesh(master: rd4.Chunk):
         return orient_outwards(primitives.cube()), None
     if kind == "co":
         return orient_outwards(primitives.cone()), None
+    if kind == "vmda":
+        return orient_outwards(mesh_form(master)), None
     if kind == "COfl":
         # The scenes' ground plane, horizontal at Z -15 and seen edge-on by every orthographic
         # camera: no sprite shows it, and the game's own ground replaces it.

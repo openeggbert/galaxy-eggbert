@@ -106,6 +106,7 @@ Each was checked numerically, not assumed.
 | Tweener `twee { line { EASE a  EASO b } }` on a key: speed rises over [0, a], is constant to b, falls over [b, 1] of the segment; `void` = linear | the values seen: (0, 1) linear, (0.61, 1) speed-up, (0, 0.4) slow-down, (0.41, 0.61) both; frames of the scenes using it match their sprites (`blupi-plat`: MarchEcrase 0.876) |
 | `ORDE 6` composes Z·Y·X | only "Y before X" is verified (the stored poses have `AZVa` = 0); Z first is assumed from `ORDE 6` being the sixth permutation of XYZ |
 | Orthographic camera: frame is `size` / `zoom`; the image fits its height; the axis hits the centre of the middle pixel | best IoU at 0.8775–0.885 x zoom; 60 / 68.03 = 0.882 |
+| `ofst x,y` on an orthographic camera shifts its frame right and up by `ofst / zoom` scene units (`scene.camera_centre`) | `creature1-5.rds`' Caméra 2 (`ofst 24.94,60.80`) against icons 247-251: IoU 0.998 / 0.995 / 0.998 / 0.989 / 0.978 with the shift, 0 without; 29 Blupi cameras have one (the overcraft's `aero-*.rd4`: −8.50, 0.85) |
 
 **DXF match:** forward kinematics of `stop-profil.rd4`'s stored pose reproduces the sphere and
 cylinder centres in `blupi.dxf` with an RMS error of 0.0011 units (zero offset); `ferme.rd4`, the
@@ -127,6 +128,7 @@ or more.
 | Cube primitive (`prim { cube }`, no parameters): half-size 2.5, a 5-unit cube like the cylinder's height | helicopter frames of `helico2.rd4` against icons 61-65: IoU 0.972 / 0.981 / 0.985 / 0.976 / 0.966 at half-size 2.3 / 2.4 / 2.5 / 2.6 / 2.7 |
 | Cone primitive (`prim { co }`, no parameters): base radius 3 at local Z −2.5, apex at +2.5, the cylinder's box | the mines of `bombe.rd4` (spikes) against icons 12-20: mean IoU 0.844 (icon 12: 0.981) with the apex at +Z, 0.629 with it at −Z; radius 2.5 / 3.5 or half-height 2 / 3 give 0.819-0.831 |
 | Flat surface (`prim { COfl }`, no parameters, one object "Flat Surface" per scene that has it) is the scene's ground plane: not drawn | in all 87 scenes with one it lies horizontal at Z −15 (two scaled 0.9 in X, one moved to −7, −5.5) and is exactly edge-on to every orthographic camera (normal · view direction 0.000), so no sprite shows it; the game's own ground replaces it |
+| Mesh form (`prim { vmda }`, Studio 5's polygon modeler): `xprm/PmSt/Pmsh` holds `Vrts` (`VerD`: `Posn`, `Flag`, `UV`) and `Pgns` (`PgSz` n, `Pgon` n indices; 98 % quads, a few n-gons up to 36), positions in the same units as the other masters, placed by the object's hot point like them; `CAng 80` in every file (the converter keeps its 60-degree crease) | the creatures above, with the object's `Scal` 0.125 and `hp` (0, 0, −81.51) |
 | A cross-section may hold several closed curves (`p2`, in nested `pg`/`pc` groups) of cubic `s3` and straight `s1` segments; curves inside others are holes (the tank's track loop, the wheel rims) | vehicle frames against their icons (below) |
 | A point without its own cross-section keeps the previous one; different cross-sections along the path blend into each other; a path ending where it starts (torus, tyre) is closed, without caps | the jeep's tyres and the overcraft's skirt are tori built this way |
 
@@ -252,8 +254,7 @@ docstring; results feed `assets-3d-analysis.md` and `plan.md` Phase 7B (`BB3D-*`
 
 - Procedural shaders (the skateboard's wood shows its flat colour); texture maps in rectangle
   domains of swept (free-form) parts (only the mesh masters' are read).
-- Masters still skipped: mesh-form models (`vmda`, 83 in the non-Blupi scenes), stars (`COFA`),
-  3D text (`tx`), fog (`fogg`); 3ds Max (`max/`, `Element/shield*.max`) and Amapi (`.a3d`) files
-  are not Ray Dream at all.
+- Masters still skipped: stars (`COFA`), 3D text (`tx`), fog (`fogg`); 3ds Max (`max/`,
+  `Element/shield*.max`) and Amapi (`.a3d`) files are not Ray Dream at all.
 - Texture maps on spheres and cubes (none in the Blupi scenes); twisted sweeps (none either).
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).
