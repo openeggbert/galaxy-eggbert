@@ -147,6 +147,7 @@ outline).
 |---|---|
 | Bitmaps: `TILE` lines of PackBits streams, edge tiles cropped; 8-bit with a `CTAB` palette, 1-bit masks; 32-bit tiles are three planes for the whole tile (every red byte, then green, then blue) | the decoded face; the lollipop's 32-bit textures decode to clean, seamless diagonal stripes only this way (per-row planes or interleaved bytes give fringed grey) |
 | A texture map on a cylinder primitive: `s` = angle about the axis; `t` the meridian fraction of the canonical cylinder (radius 3, height 5): the -Z cap from its centre out (0 to 3/11), the side along +Z (to 8/11), the +Z cap back to its centre; `cnth`/`cntv` repeats (baked into the image), `flph`/`flpv` flips | the pickup lollipop (`sucette.rd4`) shows the sprites' four-arm pinwheel, icons 136-143 IoU x colour 0.821 (0.807 with `t` the cap's radius over the whole map: a tight many-turn spiral); the lollipop Blupi holds, icons 234-236, 0.850 / 0.851 |
+| Texture maps on spheres and cones take the same rule: `s` the angle, `t` the meridian fraction (a sphere's latitude from its -Z pole; a cone's base from its centre out, then its side to the apex). Poles, apexes and cap centres are a vertex per segment, so the angle is not fanned from one vertex | the toys of `Explo/enfant01-13` (dotted, striped and checked balls and cones) match their sprites' patterns, colour 0.886 over five of them (0.775 with `t` reversed) |
 | Older scenes (`t.rd4`) write lowercase `ctab`/`tdta`/`tile` leaves: `$`, 8 hex digits of length, a CR, that many raw bytes (CR and LF included) and a closing `$`; tiles have no `FFFFFFFF` header | `t.rd4`'s face decodes to the same layout as the others |
 | The body's primary domain is a texture map (`smap`); `whit 1` makes pure white (255) transparent, showing the master's colour; near-white (254) eye whites stay | renders against sprites |
 | Texture `s` = surface `u` (control-polygon length from `st`) turned by `rotc` quarter turns; `t` = the vertex's fraction of the meridian length, flat end caps included | best of 64 orientation candidates against front and profile sprites, then the meridian rule fixed the face's height |
@@ -287,6 +288,6 @@ docstring; results feed `assets-3d-analysis.md` and `plan.md` Phase 7B (`BB3D-*`
   domains of swept (free-form) parts (only the mesh masters' are read).
 - Masters still skipped: stars (`COFA`), 3D text (`tx`), fog (`fogg`); 3ds Max (`max/`,
   `Element/shield*.max`) and Amapi (`.a3d`) files are not Ray Dream at all.
-- Texture maps on spheres; twisted sweeps (none in the Blupi scenes). Procedural patterns are flat
-  colours (`smix` the mean of its two).
+- Twisted sweeps (none in the archive's objects). Procedural patterns (wood, marble, spots) are
+  flat colours (`smix` the mean of its inputs).
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).

@@ -30,9 +30,14 @@ int main(int argc, char** argv)
             "\n"
             "icon element 24 0.0500 1 230 0.926\n"
             "icon element 48 0 2 0 1.000\n"
-            "icon explo 70 0 0 0 0.9 64\n");
+            "icon explo 70 0 0 0 0.9 64\n"
+            "icon explo 67 0 0 0 0.99 144 -8 2\n");
         check(table.AddModel(3, egg), "a model's icons.txt with comments and a blank line parses");
-        check(table.Size() == 4, "four icons listed");
+        check(table.Size() == 5, "five icons listed");
+        check(table.Find(ObjectTextureSource::Explo, 67)->offsetX == -8 &&
+                  table.Find(ObjectTextureSource::Explo, 67)->offsetY == 2 &&
+                  table.Find(ObjectTextureSource::Explo, 70)->offsetX == 0,
+              "the sprite's offset in its cell, when given");
         check(table.Find(ObjectTextureSource::Explo, 70)->iconPixels == 64 &&
                   table.Find(ObjectTextureSource::Element, 21)->iconPixels == 0,
               "the icon's size in pixels, when given");

@@ -3,7 +3,7 @@
 # Sheets: element, object-m, explo, blupi, blupi1 (mobile-eggbert/Content/icons/<sheet>.png).
 # Options: yaw=STEP (also try turned about the vertical), vflip=1 (also upside down), camera=PART
 # (a part of the camera's name without spaces, e.g. 2 for "Caméra 2"), recolour=R,G,B>R,G,B[;...],
-# min_iou=X (icons matching worse stay billboards).
+# min_iou=X (icons matching worse stay billboards), shift=N (each icon's offset within +-N pixels).
 treasure    element 0-11    Blupi/coffre.rd4
 egg         element 21-28   Blupi/oeuf.rd4    yaw=10
 exit        element 29-36   Blupi/fleche.rd4  yaw=10
@@ -43,3 +43,7 @@ decoy       blupi   257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>1,1,0
 decoygreen  blupi1  257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>0.5,1,0
 # The tentacle (type 53, explo.png icons 70-86, 64 game pixels each): one Studio 5 scene per icon.
 tentacle    explo   70-86   Decor/tentacule/tenta01.rds,Decor/tentacule/tenta02.rds,Decor/tentacule/tenta03.rds,Decor/tentacule/tenta04.rds,Decor/tentacule/tenta05.rds,Decor/tentacule/tenta06.rds,Decor/tentacule/tenta07.rds,Decor/tentacule/tenta08.rds,Decor/tentacule/tenta09.rds,Decor/tentacule/tenta10.rds,Decor/tentacule/tenta11.rds,Decor/tentacule/tenta12.rds,Decor/tentacule/tenta13.rds,Decor/tentacule/tenta14.rds,Decor/tentacule/tenta15.rds,Decor/tentacule/tenta16.rds,Decor/tentacule/tenta17.rds
+# Big decor (explo.png, BigDecor cells): the Blupi statue (icon 89).
+statue      explo   89      Decor/palais/statue.rds
+# The green pillars (icons 66-68, 144 pixels), each sprite placed a few pixels off its cell's centre.
+pillar      explo   66-68   Decor/smooth/colonne1.rds,Decor/smooth/colonne2.rds,Decor/smooth/colonne3.rds shift=10

@@ -5,6 +5,7 @@
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include "GalaxyEggbert/BlockTypes.hpp"
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
@@ -4197,7 +4198,9 @@ namespace GalaxyEggbert::CNA
                         Microsoft::Xna::Framework::Matrix::CreateScale(
                             pose.mirror == 1 ? -1.0f : 1.0f, pose.mirror == 2 ? -1.0f : 1.0f, 1.0f) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                            pose.mirror == 1 ? -kFlipShift : 0.0f, pose.mirror == 2 ? kFlipShift : 0.0f, 0.0f) *
+                            (pose.mirror == 1 ? -kFlipShift : 0.0f) + static_cast<float>(pose.offsetX) / 64.0f,
+                            (pose.mirror == 2 ? kFlipShift : 0.0f) - static_cast<float>(pose.offsetY) / 64.0f,
+                            0.0f) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(x, y, z));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     for (const auto& part : model.Parts)
@@ -4579,9 +4582,27 @@ namespace GalaxyEggbert::CNA
             const auto cameraUp = invView.getUpProperty();
 
             auto mesh = MakeTexturedMeshBuilder();
+            auto marineMesh = MakeTexturedMeshBuilder();
             constexpr float kBigDecorSize = 1.0f;
             for (const auto& cell : bigDecorCells_)
             {
+                if (cell.icon == GalaxyEggbert::BlockTypes::Marine)
+                {
+                    // BigDecor icon 203 is not an explo.png icon: the original
+                    // draws the object channel's marine animation there
+                    // (Decor.cpp: `num2 = table_marine[m_time / ScaleDiv(3) % 11];
+                    // channel = Object`), the Marine block's animation.
+                    float u = 0.0f, v = 0.0f, us = 0.0f, vs = 0.0f;
+                    GalaxyEggbert::BlockTypes::tileUV(
+                        GalaxyEggbert::ResolveBlockAnimationIcon(GalaxyEggbert::BlockTypes::Marine,
+                                                                 worldRuntime_.GetAnimPhase()),
+                        u, v, us, vs);
+                    marineMesh.AddBillboard(
+                        Microsoft::Xna::Framework::Vector3(cell.worldX, cell.worldY, cell.worldZ),
+                        Microsoft::Xna::Framework::Vector2(kBigDecorSize, kBigDecorSize), cameraRight, cameraUp,
+                        CnaEngine::Graphics::UvRect{u, v, u + us, v + vs});
+                    continue;
+                }
                 if (objectModelTable_.Find(ObjectTextureSource::Explo, cell.icon) != nullptr)
                 {
                     continue;  // drawn as its 3D model
@@ -4602,6 +4623,14 @@ namespace GalaxyEggbert::CNA
                 bigDecorEffect_->Projection = camera_.Projection();
                 bigDecorEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 bigDecorMeshRenderer_->Draw(device, *bigDecorEffect_);
+            }
+            if (objectMPngEffect_ && !marineMesh.Mesh().Empty())
+            {
+                bigDecorMarineMeshRenderer_ = UploadTexturedMesh(device, marineMesh.Mesh());
+                objectMPngEffect_->View = camera_.View();
+                objectMPngEffect_->Projection = camera_.Projection();
+                objectMPngEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                bigDecorMarineMeshRenderer_->Draw(device, *objectMPngEffect_);
             }
         }
         } // phase_ != Wait && phase_ != Init (3D world render guard above)

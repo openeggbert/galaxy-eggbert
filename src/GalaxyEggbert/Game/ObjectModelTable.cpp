@@ -52,6 +52,13 @@ namespace GalaxyEggbert::Game
             if (in >> iou && in >> pixels && pixels > 0)
             {
                 pose.iconPixels = pixels;
+                int dx = 0;
+                int dy = 0;
+                if (in >> dx >> dy)
+                {
+                    pose.offsetX = dx;
+                    pose.offsetY = dy;
+                }
             }
             poses_[Key(sheet, icon)] = pose;
         }

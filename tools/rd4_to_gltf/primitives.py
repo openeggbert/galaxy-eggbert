@@ -15,28 +15,36 @@ CONE_HALF_HEIGHT = 2.5
 
 
 def sphere(segments: int = 32, rings: int = 16) -> Mesh:
-    pos = [[0.0, 0.0, SPHERE_RADIUS]]
+    """Latitude rings between the poles; each pole is a vertex per segment (at the segment's
+    middle angle) so a texture's longitude is not fanned from one vertex (cylinder())."""
+    ang = 2 * np.pi * np.arange(segments) / segments
+    mid = 2 * np.pi * (np.arange(segments) + 0.5) / segments
+    pos = list(np.c_[np.zeros(segments), np.zeros(segments), np.full(segments, SPHERE_RADIUS)])
     for i in range(1, rings):
         th = np.pi * i / rings
-        for j in range(segments):
-            ph = 2 * np.pi * j / segments
-            pos.append([SPHERE_RADIUS * np.sin(th) * np.cos(ph), SPHERE_RADIUS * np.sin(th) * np.sin(ph),
-                        SPHERE_RADIUS * np.cos(th)])
-    pos.append([0.0, 0.0, -SPHERE_RADIUS])
+        pos.extend(np.c_[SPHERE_RADIUS * np.sin(th) * np.cos(ang), SPHERE_RADIUS * np.sin(th) * np.sin(ang),
+                         np.full(segments, SPHERE_RADIUS * np.cos(th))])
+    bottom = len(pos)
+    pos.extend(np.c_[np.zeros(segments), np.zeros(segments), np.full(segments, -SPHERE_RADIUS)])
     tris = []
     for j in range(segments):
-        tris.append((0, 1 + j, 1 + (j + 1) % segments))
+        tris.append((j, segments + j, segments + (j + 1) % segments))
     for i in range(rings - 2):
-        a, b = 1 + i * segments, 1 + (i + 1) * segments
+        a, b = segments + i * segments, segments + (i + 1) * segments
         for j in range(segments):
             j1 = (j + 1) % segments
             tris.append((a + j, b + j, a + j1))
             tris.append((a + j1, b + j, b + j1))
-    last = len(pos) - 1
-    base = 1 + (rings - 2) * segments
+    base = segments + (rings - 2) * segments
     for j in range(segments):
-        tris.append((base + j, last, base + (j + 1) % segments))
-    return Mesh(np.array(pos), np.array(tris))
+        tris.append((base + j, bottom + j, base + (j + 1) % segments))
+    pos = np.array(pos)
+    # The pole vertices sit at their segment's middle angle (an infinitesimal step off the axis
+    # keeps their longitude).
+    eps = 1e-6
+    pos[:segments, 0], pos[:segments, 1] = eps * np.cos(mid), eps * np.sin(mid)
+    pos[bottom:, 0], pos[bottom:, 1] = eps * np.cos(mid), eps * np.sin(mid)
+    return Mesh(pos, np.array(tris))
 
 
 def cylinder(segments: int = 32, cap_rings: int = 6) -> Mesh:
@@ -75,17 +83,32 @@ def cylinder(segments: int = 32, cap_rings: int = 6) -> Mesh:
     return Mesh(np.array(pos), np.array(tris))
 
 
-def cone(segments: int = 32) -> Mesh:
+def cone(segments: int = 32, cap_rings: int = 6) -> Mesh:
+    """Side from the base ring to an apex vertex per segment, base as concentric rings with a
+    centre vertex per segment (cylinder()), so texture angles are not fanned."""
     ang = 2 * np.pi * np.arange(segments) / segments
-    ring = np.c_[CONE_RADIUS * np.cos(ang), CONE_RADIUS * np.sin(ang), np.full(segments, -CONE_HALF_HEIGHT)]
-    pos = np.concatenate([ring, [[0, 0, CONE_HALF_HEIGHT], [0, 0, -CONE_HALF_HEIGHT]]])
-    apex, base = segments, segments + 1
-    tris = []
+    mid = 2 * np.pi * (np.arange(segments) + 0.5) / segments
+    eps = 1e-6
+    pos, tris = [], []
+
+    def ring(radius, z, angles):
+        start = len(pos)
+        pos.extend(np.c_[radius * np.cos(angles), radius * np.sin(angles), np.full(len(angles), z)])
+        return start
+
+    base = ring(CONE_RADIUS, -CONE_HALF_HEIGHT, ang)
+    apex = ring(eps, CONE_HALF_HEIGHT, mid)
     for j in range(segments):
-        j1 = (j + 1) % segments
-        tris.append((apex, j, j1))
-        tris.append((base, j1, j))
-    return Mesh(pos, np.array(tris))
+        tris.append((apex + j, base + j, base + (j + 1) % segments))
+    rings = [base] + [ring(CONE_RADIUS * k / cap_rings, -CONE_HALF_HEIGHT, ang) for k in range(cap_rings - 1, 0, -1)]
+    centre = ring(eps, -CONE_HALF_HEIGHT, mid)
+    for outer, inner in zip(rings[:-1], rings[1:]):
+        for j in range(segments):
+            j1 = (j + 1) % segments
+            tris.extend([(outer + j1, outer + j, inner + j1), (inner + j1, outer + j, inner + j)])
+    for j in range(segments):
+        tris.append((rings[-1] + (j + 1) % segments, rings[-1] + j, centre + j))
+    return Mesh(np.array(pos), np.array(tris))
 
 
 def cube(half: float | None = None) -> Mesh:

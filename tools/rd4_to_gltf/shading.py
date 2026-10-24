@@ -463,27 +463,40 @@ def freeform_texture(scene: sc.Scene, obj: sc.Obj, ff):
 
 
 def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals: np.ndarray):
-    """(image, (N, 2) texture coordinates) of a texture map on a cylinder primitive: around the
+    """(image, (N, 2) texture coordinates) of a texture map on a cylinder, sphere or cone: around the
     axis ``s`` = angle; ``t`` is the meridian fraction of the canonical cylinder (radius 3,
     height 5): the -Z cap from its centre out (0 to 3/11), the side along +Z (3/11 to 8/11),
     the +Z cap back to its centre (to 1), as free-forms' end caps count. The pickup lollipop's
     disc (sucette.rd4, ``cnth 2 cntv 2``) so shows the sprites' four-arm pinwheel twisting
     about a quarter turn (icons 136-143 IoU x colour 0.821; 0.807 with ``t`` the cap's radius,
     a tight many-turn spiral), the lollipop Blupi holds is unchanged (234-236: 0.850 / 0.851).
-    The map's repeats are baked into the image (so ``t`` stays in [0, 1]); flips apply; the
-    other placements (rotc) are not read. Returns None for other primitives."""
-    if kind != "cyli":
-        return None
+    Spheres and cones take the same rule: a sphere's latitude from its -Z pole, a cone's base
+    from its centre then its side to the apex. The map's repeats are baked into the image (so
+    ``t`` stays in [0, 1]); flips apply; the other placements (rotc) are not read. Returns None
+    for cubes (``cube_texture``) and other primitives."""
     import primitives
     x, y, z = positions.T
     s = np.mod(np.arctan2(y, x) / (2 * np.pi), 1.0)
-    r, h = primitives.CYLINDER_RADIUS, primitives.CYLINDER_HALF_HEIGHT
-    length = 2 * r + 2 * h
     rad = np.hypot(x, y)
-    cap = np.abs(normals[:, 2]) > 0.5
-    top = cap & (normals[:, 2] > 0)
-    bottom = cap & ~top
-    t = np.where(bottom, rad / length, np.where(top, (length - rad) / length, (r + z + h) / length))
+    if kind == "cyli":
+        r, h = primitives.CYLINDER_RADIUS, primitives.CYLINDER_HALF_HEIGHT
+        length = 2 * r + 2 * h
+        cap = np.abs(normals[:, 2]) > 0.5
+        top = cap & (normals[:, 2] > 0)
+        bottom = cap & ~top
+        t = np.where(bottom, rad / length, np.where(top, (length - rad) / length, (r + z + h) / length))
+    elif kind == "sp":
+        # Latitude from the -Z pole, the sphere's meridian fraction.
+        t = np.arccos(np.clip(-z / primitives.SPHERE_RADIUS, -1.0, 1.0)) / np.pi
+    elif kind == "co":
+        # The cone's meridian: its base from the centre out, then the side up to the apex.
+        r, h = primitives.CONE_RADIUS, primitives.CONE_HALF_HEIGHT
+        slant = np.hypot(r, 2 * h)
+        base = normals[:, 2] < -0.5
+        side_t = (r + (1.0 - rad / r) * slant) / (r + slant)
+        t = np.where(base, rad / (r + slant), side_t)
+    else:
+        return None
     flph, flpv = tex.flips
     s = 1.0 - s if flph else s
     t = 1.0 - t if flpv else t

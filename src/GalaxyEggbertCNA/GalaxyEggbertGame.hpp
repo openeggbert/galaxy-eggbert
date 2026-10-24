@@ -724,6 +724,7 @@ namespace GalaxyEggbert::CNA
         std::vector<BigDecorCell> bigDecorCells_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> bigDecorEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> bigDecorMeshRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> bigDecorMarineMeshRenderer_;
 
         // Platform-lift/crate UniformCube object path (NEXT.md §8 task 3,
         // mobile-eggbert-reference/15-3d-render-mapping-design.md §5's two
