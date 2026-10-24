@@ -9,7 +9,8 @@ of the scene's orthographic cameras (keeping per scene the one that wins most ic
 per-icon heights; one size per object); with ``yaw=STEP`` also
 turned about the vertical every STEP degrees (the egg's sprites spin, its scene does not); with
 ``vflip=1`` also upside down (the hanging mine's icons are the mine's flipped vertically); with
-``recolour=R,G,B>R,G,B[;...]`` flat colours replaced (the decoy mines). Each
+``recolour=R,G,B>R,G,B[;...]`` flat colours replaced (the decoy mines); with ``min_iou=X`` icons
+matching worse are left out (they stay billboards). Each
 scene that wins an icon becomes one model: one rigid joint per Ray Dream object the camera sees,
 and a clip ``Frames`` holding the scene's frames at 20 per second (frame k at k / 20 s).
 
@@ -72,6 +73,7 @@ class ObjectSpec:
     yaw_step: float = 0.0
     vflip: bool = False
     recolour: dict = field(default_factory=dict)
+    min_iou: float = 0.0
 
 
 @dataclass
@@ -155,7 +157,8 @@ def read_specs(path: Path) -> list[ObjectSpec]:
             src, dst = pair.split(">")
             recolour[tuple(round(float(x), 3) for x in src.split(","))] = tuple(float(x) for x in dst.split(","))
         specs.append(ObjectSpec(fields[0], fields[1], parse_icons(fields[2]), fields[3].split(","),
-                                opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1", recolour))
+                                opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1", recolour,
+                                float(opts.get("min_iou", 0))))
     return specs
 
 
@@ -366,6 +369,10 @@ def main(argv=None) -> int:
             setups.append(candidates[max(mine, key=lambda k: (wins[k], -k))])
         if len(candidates) > len(setups):
             best = match_object(spec, setups, icon_rgb, icon_mask, icon_px)
+        dropped = sorted(i for i, m in best.items() if m.iou < spec.min_iou)
+        if dropped:
+            print(f"{spec.name}: icons {dropped} below min_iou {spec.min_iou} stay billboards")
+        best = {i: m for i, m in best.items() if m.iou >= spec.min_iou}
         for si, setup in enumerate(setups):
             matches = sorted((m for m in best.values() if m.scene == si), key=lambda m: m.icon)
             if not matches:
