@@ -129,6 +129,8 @@ or more.
 | Cone primitive (`prim { co }`, no parameters): base radius 3 at local Z −2.5, apex at +2.5, the cylinder's box | the mines of `bombe.rd4` (spikes) against icons 12-20: mean IoU 0.844 (icon 12: 0.981) with the apex at +Z, 0.629 with it at −Z; radius 2.5 / 3.5 or half-height 2 / 3 give 0.819-0.831 |
 | Flat surface (`prim { COfl }`, no parameters, one object "Flat Surface" per scene that has it) is the scene's ground plane: not drawn | in all 87 scenes with one it lies horizontal at Z −15 (two scaled 0.9 in X, one moved to −7, −5.5) and is exactly edge-on to every orthographic camera (normal · view direction 0.000), so no sprite shows it; the game's own ground replaces it |
 | Mesh form (`prim { vmda }`, Studio 5's polygon modeler): `xprm/PmSt/Pmsh` holds `Vrts` (`VerD`: `Posn`, `Flag`, `UV`) and `Pgns` (`PgSz` n, `Pgon` n indices; 98 % quads, a few n-gons up to 36), positions in the same units as the other masters, placed by the object's hot point like them; `CAng 80` in every file (the converter keeps its 60-degree crease) | the creatures above, with the object's `Scal` 0.125 and `hp` (0, 0, −81.51) |
+| A texture map on a cube primitive: the surface is a 4 x 3 cross (`shading.cube_surface_coordinates`): sides -Y, +X, +Y, -X in the middle row (u 0-4, v 1-2), top above +X, bottom below; +X is the face toward the cameras; v runs down on -X. The primary domain's image spans its `bbox` and repeats, `srct`/`sovl` domains lie on top with their colour or image (white texels show what is beneath with `whit 1`); an image's first row is at the domain's low v unless `flpv 1` | `Decor/techno02.rd4`'s screen and the switch's picture sit at u 1-2 on the camera's face; the invert sign (`panneau-invert.rd4`) shows its upside-down Blupi on both board faces in icons 187-194 only so (front colour 0.850 against 0.815 the other way up) |
+| A mix shader (`smix`: two colours by a pattern such as wood, `swod`) is drawn in the mean of its two colours | the invert sign's post: gold, not the master's red |
 | A cross-section may hold several closed curves (`p2`, in nested `pg`/`pc` groups) of cubic `s3` and straight `s1` segments; curves inside others are holes (the tank's track loop, the wheel rims) | vehicle frames against their icons (below) |
 | A point without its own cross-section keeps the previous one; different cross-sections along the path blend into each other; a path ending where it starts (torus, tyre) is closed, without caps | the jeep's tyres and the overcraft's skirt are tori built this way |
 
@@ -284,5 +286,6 @@ docstring; results feed `assets-3d-analysis.md` and `plan.md` Phase 7B (`BB3D-*`
   domains of swept (free-form) parts (only the mesh masters' are read).
 - Masters still skipped: stars (`COFA`), 3D text (`tx`), fog (`fogg`); 3ds Max (`max/`,
   `Element/shield*.max`) and Amapi (`.a3d`) files are not Ray Dream at all.
-- Texture maps on spheres and cubes (none in the Blupi scenes); twisted sweeps (none either).
+- Texture maps on spheres; twisted sweeps (none in the Blupi scenes). Procedural patterns are flat
+  colours (`smix` the mean of its two).
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).

@@ -789,11 +789,15 @@ be converted one at a time.
       icons 209-229) and `cle.rd4` (the gold key, 122-128), each 7 icons, 0.962 mean, with
       `Caméra 2` (orthographic, no perspective needed; the builder now picks per scene the
       orthographic camera that wins most icons).
-- [~] `BB3D-025` Done: dynamite (55, 56, `Decor/dynamite.rd4`, 0.975). Waiting for textures:
-      the lollipop pickup (26, `sucette.rd4`, silhouettes 0.985 but its disc shows a many-turn
-      spiral where the sprite has a four-arm swirl: check the cap mapping of this scene's
-      texture, `cnth 1 cntv 5 tile 1`), the invert sign (40, `panneau-invert.rd4`, 0.999 but
-      the picture on its board is a texture map on a cube, not converted yet). Shield (25,
+- [~] `BB3D-025` Done: dynamite (55, 56, `Decor/dynamite.rd4`, 0.975); the invert sign (40,
+      `panneau-invert.rd4`, 0.999) with the converter's new cube texture atlas (its wood and
+      its upside-down Blupi on both faces) and mix shaders as flat colours (its gold post).
+      Open: the lollipop pickup (26, `sucette.rd4`, silhouettes 0.985): its disc shows tight
+      spirals where the sprite has a four-arm pinwheel twisting about a quarter turn. Trials
+      (`scratchpad lolly_cap.py`, not kept): a cap taking only a quarter of the cylinder's v
+      and the angle repeated twice looks like the sprite, but the colour score barely moves
+      (0.776 against 0.770); find stronger evidence (the texture tile's stripe slope, the
+      Blupi-held lollipop's icons 234-236) before changing `primitive_texture`. Shield (25,
       `shield1/2.rd4`) matches only 0.5 (`Caméra Jeu`); charge (31, object-m.png 238-243, a
       grey ball on a blue spring with sparks): source not found yet (`Element/power.rds` is an
       icosahedron).

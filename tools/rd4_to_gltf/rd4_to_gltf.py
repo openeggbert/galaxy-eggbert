@@ -321,6 +321,11 @@ class Converter:
         return len(self.joints) + len(shaped), len(mesh_nodes)
 
 
+def _prim_kind(scene: sc.Scene, o: sc.Obj) -> str:
+    prim = scene.masters[o.master].chunk("prim")
+    return prim.chunks()[0].tag if prim is not None and prim.chunks() else ""
+
+
 def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale: float, offset: np.ndarray,
                   canonical: dict, warnings: list[str]):
     """One object's master in glTF space, placed by its Ray Dream geometry frame ``gw``:
@@ -358,6 +363,13 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
         if baked is not None:
             tex = shading.TextureMap(baked[0], (0.0, 0.0, 1.0, 1.0), 0, [])
             pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, baked[1][src], 1.0)
+            key = ("texture", re.sub(r"[^\w.-]", "_", label))
+    elif ff is None and _prim_kind(scene, o) == "cube":
+        baked = shading.cube_texture(scene, o, pos, nrm)
+        tex = None
+        if baked is not None:
+            tex = shading.TextureMap(baked[0], (0.0, 0.0, 1.0, 1.0), 0, [])
+            uv = baked[1]
             key = ("texture", re.sub(r"[^\w.-]", "_", label))
     elif tex is not None and ff is None:
         prim = scene.masters[o.master].chunk("prim")

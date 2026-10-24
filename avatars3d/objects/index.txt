@@ -10,6 +10,7 @@ dynamite_dynamite
 egg_oeuf
 exit_fleche
 follow_bombe-follow
+invert_panneau-invert
 key1_cle1
 key2_cle2
 key3_cle3

@@ -49,6 +49,14 @@ def primary_color(sh: rd4.Chunk | None) -> tuple[float, float, float] | str | No
         return (round(r, 3), round(g, 3), round(b, 3))
     if ch.tag == "smap":
         return "texture"
+    if ch.tag == "smix":
+        # Two colours mixed by a pattern (the invert sign's post: two golds by a wood grain,
+        # swod): their mean, the flat colour nearest the sprites' grain.
+        sub = ch.chunk("ssub")
+        cols = [c.floats("colr") for c in (sub.chunks("sclr") if sub is not None else []) if c.leaf("colr")]
+        if len(cols) >= 2:
+            r, g, b = np.mean(cols[:2], axis=0)
+            return (round(float(r), 3), round(float(g), 3), round(float(b), 3))
     return None
 
 
@@ -203,6 +211,16 @@ def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
                       int(placement.get("rotc") or 0), warnings, counts, flips)
 
 
+def _white_texels(scene: sc.Scene, smap: rd4.Chunk) -> np.ndarray | None:
+    """(H, W) mask of a texture map's pure white texels."""
+    data = _find_image(scene, smap.chunk("CMAp").chunk("MDTA").leaf("REFN"))
+    if data is None:
+        return None
+    decoded = rdimage.decode(data)
+    texels = decoded if decoded.ndim == 3 else rdimage.palette(data)[decoded]
+    return (texels == 255).all(axis=-1)
+
+
 def _texels(scene: sc.Scene, obj: sc.Obj, smap: rd4.Chunk, base: tuple) -> np.ndarray | None:
     """A texture map's image as (H, W, 3) floats with "whit 1" resolved to ``base``."""
     data = _find_image(scene, smap.chunk("CMAp").chunk("MDTA").leaf("REFN"))
@@ -249,6 +267,108 @@ def mesh_texture(scene: sc.Scene, obj: sc.Obj, uvmesh) -> tuple[np.ndarray, np.n
                                                                                             1 - 0.5 / height])
     st[uvmesh.domain != 0] = corner
     return (canvas * 255).round().astype(np.uint8), st
+
+
+CUBE_ATLAS_PX = 128      # atlas pixels per unit of the cube's surface coordinates
+# An image's first row lies at a domain's low v (flpv 0): the invert sign's picture shows Blupi
+# upside down as in icon 187 only so (colour 0.850 against 0.815).
+CUBE_IMAGE_ROWS_UP = False
+
+
+def cube_surface_coordinates(positions: np.ndarray, normals: np.ndarray) -> np.ndarray:
+    """(N, 2) Ray Dream surface coordinates (u in [0, 4], v in [0, 3]) of a cube primitive's
+    vertices, one face per vertex by its normal: the four sides form the middle row, -Y, +X, +Y,
+    -X (u 0-1, 1-2, 2-3, 3-4; each seen from outside, u to the right, v up along +Z except on
+    -X, where v runs down), the top (+Z) above +X (v 2-3) and the bottom below it (v 0-1). +X at
+    u 1-2 is the face toward the scenes' cameras: Decor/techno02.rd4's screen and the switch's
+    picture lie there. The -X face's downward v is fitted to the invert sign: its two pictures
+    (+X unflipped, -X ``flpv 1``) both show Blupi upside down in icons 187-194, as the sprites'
+    front and back views do."""
+    import primitives
+    h = primitives.CUBE_HALF_SIZE
+    x, y, z = (positions / h).T          # -1..1
+    ax = np.argmax(np.abs(normals), axis=1)
+    sign = np.sign(normals[np.arange(len(normals)), ax])
+    u = np.zeros(len(positions))
+    v = np.zeros(len(positions))
+    side = ax != 2
+    s = np.select([(ax == 0) & (sign > 0), (ax == 1) & (sign > 0), (ax == 0) & (sign < 0), (ax == 1) & (sign < 0)],
+                  [y, -x, -y, x])
+    k = np.select([(ax == 0) & (sign > 0), (ax == 1) & (sign > 0), (ax == 0) & (sign < 0), (ax == 1) & (sign < 0)],
+                  [1, 2, 3, 0])
+    u[side] = (k + (s + 1) / 2)[side]
+    v[side] = (1 + np.where(k == 3, 1 - z, z + 1) / 2)[side]
+    top = (ax == 2) & (sign > 0)
+    bottom = (ax == 2) & (sign < 0)
+    u[top | bottom] = 1 + (y[top | bottom] + 1) / 2
+    v[top] = 2 + (1 - x[top]) / 2
+    v[bottom] = (1 + x[bottom]) / 2
+    return np.stack([u, v], axis=1)
+
+
+def cube_texture(scene: sc.Scene, obj: sc.Obj, positions: np.ndarray, normals: np.ndarray):
+    """(image, (N, 2) texture coordinates) of a cube primitive whose shader has a texture map in
+    any domain, or None: the whole surface (``cube_surface_coordinates``) becomes one atlas,
+    the primary domain's colour or image first (an image spans the domain's ``bbox`` and repeats
+    beyond it), then the rectangle (``srct``) and oval (``sovl``) domains on top, each its colour
+    or its image stretched over its ``bbox`` (the invert sign's picture on both board faces)."""
+    sh = obj.chunk.chunk("sh") if obj.chunk is not None else None
+    if sh is None or sh.chunk("elms") is None:
+        return None
+    domains = sh.chunk("elms").chunks()
+    channels = [(d, _color_channel(d)) for d in domains]
+    if not any(ch is not None and ch.tag == "smap" for _d, ch in channels):
+        return None
+    base = material_key(scene, obj)
+    base = base if isinstance(base, tuple) else (1.0, 1.0, 1.0)
+    w, h = 4 * CUBE_ATLAS_PX, 3 * CUBE_ATLAS_PX
+    us = (np.arange(w) + 0.5) / CUBE_ATLAS_PX
+    vs = 3.0 - (np.arange(h) + 0.5) / CUBE_ATLAS_PX       # row 0 at the top (v = 3)
+    atlas = np.empty((h, w, 3))
+    atlas[:] = base
+
+    def paint(domain, ch, mask_fn, repeat):
+        u0, v0, u1, v1 = domain.floats("bbox")
+        fu = (us - u0) / (u1 - u0)
+        fv = (vs - v0) / (v1 - v0)
+        inside = mask_fn(fu[None, :], fv[:, None])
+        if ch.tag == "sclr":
+            atlas[inside] = ch.floats("colr")
+            return
+        if ch.tag != "smap":
+            return
+        img = _texels(scene, obj, ch, base)
+        if img is None:
+            return
+        # "whit 1": white texels let the surface beneath show (the sign's wood around its picture).
+        white = _white_texels(scene, ch) if ch.leaf("whit") == "1" and domain.tag != "sprm" else None
+        minf = ch.chunk("MInf")
+        flph = minf is not None and minf.leaf("flph") == "1"
+        flpv = minf is not None and minf.leaf("flpv") == "1"
+        ih, iw = img.shape[:2]
+        cu = np.mod(fu, 1.0) if repeat else np.clip(fu, 0.0, 1.0 - 1e-9)
+        cv = np.mod(fv, 1.0) if repeat else np.clip(fv, 0.0, 1.0 - 1e-9)
+        cu = 1.0 - cu if flph else cu
+        cv = 1.0 - cv if (flpv != CUBE_IMAGE_ROWS_UP) else cv
+        cols = np.minimum((cu * iw).astype(int), iw - 1)
+        rows = np.minimum((cv * ih).astype(int), ih - 1)
+        sampled = img[rows[:, None], cols[None, :]]
+        if white is not None:
+            inside = inside & ~white[rows[:, None], cols[None, :]]
+        atlas[inside] = sampled[inside]
+
+    full = lambda fu, fv: np.ones((len(fv), fu.shape[1]), dtype=bool)
+    rect = lambda fu, fv: (fu >= 0) & (fu <= 1) & (fv >= 0) & (fv <= 1)
+    oval = lambda fu, fv: (2 * fu - 1) ** 2 + (2 * fv - 1) ** 2 <= 1
+    for d, ch in channels:
+        if d.tag == "sprm" and ch is not None:
+            paint(d, ch, full, True)
+    for d, ch in reversed(channels):         # earlier domains lie on top
+        if d.tag in ("srct", "sovl") and ch is not None:
+            paint(d, ch, rect if d.tag == "srct" else oval, False)
+    uv = cube_surface_coordinates(positions, normals)
+    st = np.stack([uv[:, 0] / 4.0, (3.0 - uv[:, 1]) / 3.0], axis=1)
+    return (atlas * 255).round().clip(0, 255).astype(np.uint8), st
 
 
 def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals: np.ndarray):

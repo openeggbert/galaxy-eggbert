@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "invert_rd_f7ac00",
+      "vertices": "invert_rd_f7ac00.verts.bin",
+      "indices": "invert_rd_f7ac00.idx.bin",
+      "vertexStride": 52,
+      "texture": "invert_rd_f7ac00.png",
+      "diffuseColor": [
+        0.9374824827715106,
+        0.41456802404539866,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "invert_rd_tex_p05_Cube",
+      "vertices": "invert_rd_tex_p05_Cube.verts.bin",
+      "indices": "invert_rd_tex_p05_Cube.idx.bin",
+      "vertexStride": 52,
+      "texture": "invert_rd_tex_p05_Cube.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

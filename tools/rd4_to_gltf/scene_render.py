@@ -66,9 +66,13 @@ class SceneRenderer:
                 tex = shading.texture_map(self.scene, obj)
             except NotImplementedError:
                 tex = None
+            prim = self.scene.masters[obj.master].chunk("prim")
+            kind = prim.chunks()[0].tag if prim is not None and prim.chunks() else ""
             if isinstance(ff, geometry.MeshUV):
                 baked = shading.mesh_texture(self.scene, obj, ff)
                 self.textures[key] = None if baked is None else (baked[0], baked[1][src])
+            elif kind == "cube":
+                self.textures[key] = shading.cube_texture(self.scene, obj, pos, nrm)
             elif tex is not None and ff is not None:
                 self.textures[key] = (tex.image, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src])
             elif tex is not None:
