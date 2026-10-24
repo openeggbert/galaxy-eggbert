@@ -11,6 +11,12 @@ closing the loop. Icons without a usable match hold the previous pose.
 Every scene is moved, frame by frame, so that its game camera sits where the base scene's does:
 a sprite shows Blupi relative to that camera, so poses from different scenes keep their sprite
 placement (a jump frame drawn higher stays higher; genou-profil.rd4's camera follows him down).
+An icon best matched by a turned view of its frame (match_icons.py: front and back views, Hide's
+small somersault) takes that turn: the whole pose turns about his body.
+
+Vehicle clips (VEHICLES) also write ``vehicles/<name>.glb`` beside the .glb: every object of their
+scenes that is not Blupi's body, as rigid parts with the same clips, in the same space, for the
+game to draw with Blupi's transform and clip time.
 
 Each frame's face is the body texture of the scene it comes from. ``clips.txt`` beside the
 .glb gives the frame rate (``rate``), the part that wears the face (``part``), the face PNGs
@@ -49,6 +55,22 @@ import shading  # noqa: E402
 import verify_sprites as vs  # noqa: E402
 
 USABLE = 0.70
+# Vehicle frames score lower on colour alone (no cast shadows here, the overcraft's skirt renders
+# lighter than its grey sprite) while their silhouettes and poses still match by eye, and without
+# them the vehicle would not show at all.
+VEHICLE_USABLE = 0.55
+VIEW_MARGIN = 0.02
+
+# Vehicles are separate models (CNA's skinning takes 72 bones; the tank alone has about 40
+# parts) drawn with Blupi's transform and clip: every object of these clips' scenes that is not
+# part of Blupi's body.
+VEHICLES = {
+    "helico": ["StopHelico", "MarchHelico"],
+    "jeep": ["StopJeep", "MarchJeep"],
+    "tank": ["StopTank", "MarchTank", "FireTank"],
+    "over": ["StopOver", "MarchOver"],
+    "skate": ["StopSkate", "MarchSkate", "JumpSkate", "AirSkate", "TakeSkate", "DeposeSkate"],
+}
 
 
 def controller_clips(path: Path) -> dict[str, list[int]]:
@@ -71,12 +93,21 @@ def controller_clips(path: Path) -> dict[str, list[int]]:
     return clips
 
 
-def load_matches(path: Path) -> dict[int, tuple[str, float, float]]:
-    """{icon: (scene file, tick, score)} for icons whose as-rendered match is usable."""
+def load_matches(path: Path) -> dict[int, tuple]:
+    """{icon: (scene file, tick, score, view)} for icons whose not-mirrored match may be usable
+    (VEHICLE_USABLE; ordinary clips need USABLE). The
+    view is (yaw, pitch, scale) when a turned view (match_icons.py) beats the plain frame by
+    VIEW_MARGIN, else None."""
     out = {}
     for row in csv.DictReader(open(path)):
-        if row.get("plain_score") and float(row["plain_score"]) >= USABLE:
-            out[int(row["icon"])] = (row["plain_scene"], float(row["plain_tick"]), float(row["plain_score"]))
+        plain = float(row["plain_score"]) if row.get("plain_score") else 0.0
+        view = float(row["view_score"]) if row.get("view_score") else 0.0
+        turn = (float(row["view_yaw"]), float(row["view_pitch"]), float(row["view_scale"])) \
+            if row.get("view_yaw") else (0.0, 0.0, 1.0)
+        if view > plain + VIEW_MARGIN and view >= VEHICLE_USABLE and turn != (0.0, 0.0, 1.0):
+            out[int(row["icon"])] = (row["view_scene"], float(row["view_tick"]), view, turn)
+        elif plain >= VEHICLE_USABLE:
+            out[int(row["icon"])] = (row["plain_scene"], float(row["plain_tick"]), plain, None)
     return out
 
 
@@ -146,8 +177,9 @@ def add_props(base: conv_mod.Converter, c: conv_mod.Converter):
 
 
 def viewer_clips(glb: Path, frame_rate: float, threshold_deg: float = 60.0) -> list[str]:
-    """Clips with a frame where Blupi faces more than ``threshold_deg`` toward his right (glTF
-    -X, toward the original profile camera): his nose against his body, seen from above."""
+    """Clips with a frame where Blupi turns more than ``threshold_deg`` toward or away from his
+    right (glTF -X, where the original profile camera stood): his nose against his body, seen
+    from above. The game's camera takes that side for them, so he shows it what the sprites did."""
     model = vs.Model(glb)
     doc = model.doc
     names = [doc["nodes"][j]["name"] for j in model.skin["joints"]]
@@ -159,10 +191,41 @@ def viewer_clips(glb: Path, frame_rate: float, threshold_deg: float = 60.0) -> l
         for k in range(int(round(end * frame_rate))):
             jm = model.pose(k / frame_rate)
             f = (jm[nose] @ np.linalg.inv(model.ibm[nose]))[:3, 3] - (jm[body] @ np.linalg.inv(model.ibm[body]))[:3, 3]
-            if np.degrees(np.arctan2(-f[0], f[2])) > threshold_deg:
+            if abs(np.degrees(np.arctan2(-f[0], f[2]))) > threshold_deg:
                 out.append(anim["name"])
                 break
     return out
+
+
+def object_names(scene: sc.Scene) -> dict[int, str]:
+    """{id(object): path name} for every object, e.g. "tracks/chenille/roue/jante.001"; an unnamed
+    object takes its master's name. The same hierarchy gives the same names in every scene."""
+    names: dict[int, str] = {}
+
+    def rec(o: sc.Obj, prefix: str):
+        seen: dict[str, int] = {}
+        for c in o.children:
+            own = f"{prefix}{c.name or c.master or 'object'}"
+            n = seen.get(own, 0)
+            seen[own] = n + 1
+            names[id(c)] = own if n == 0 else f"{own}.{n:03d}"
+            rec(c, names[id(c)] + "/")
+    rec(scene.universe, "")
+    return names
+
+
+def vehicle_frames(c: conv_mod.Converter, body: set[str], names: dict[int, str], tick: float,
+                   view) -> dict[str, tuple[np.ndarray, sc.Obj]]:
+    """{path name: (geometry frame, object)} of every object with a master in ``c``'s scene that
+    is not Blupi's body (joints named in ``body``), lined up like ``c``'s poses (camera shift,
+    view)."""
+    own = {id(o) for o, n in zip(c.joints, c.names) if n in body}
+    frames = sc.world_frames(c.scene, tick)
+    shift = sc.affine(np.eye(3), c.world_shift(tick))
+    corps = next(cw for o, _p, cw, _g in frames if o.name == "Corps")
+    turn = sc.view_matrix((shift @ corps)[:3, 3], view) @ shift
+    return {names[id(o)]: (turn @ gw, o) for o, _p, _cw, gw in frames
+            if o.master and o.kind not in ("ca", "li") and id(o) not in own}
 
 
 def game_camera(scene: sc.Scene, tick: float) -> np.ndarray:
@@ -241,33 +304,45 @@ def main(argv=None) -> int:
             r = renderers.setdefault(m[0], scene_render.SceneRenderer(c.scene))
             row, col = divmod(icon, 10)
             sprite = sheet[row * 60:(row + 1) * 60, col * 60:(col + 1) * 60, 3] > 127
+            r.view = m[3]
             r.exclude = set()
             with_props = vs.iou(r.render(m[1])[1] > 0.5, sprite)
             r.exclude = {id(o) for o, n in zip(c.joints, c.names) if n in props}
             without = vs.iou(r.render(m[1])[1] > 0.5, sprite)
+            r.view = None
             shows_props[icon] = with_props >= without
         return frozenset() if shows_props[icon] else props
 
     matches = load_matches(args.icons)
     clips = controller_clips(args.controller)
+    body = set(base.names)
+    vehicle_of = {clip: v for v, names in VEHICLES.items() for clip in names}
+    vehicle_poses: dict[str, list] = {v: [] for v in VEHICLES}   # [(clip, [(seconds, {part: gw})])]
+    scene_names: dict[str, dict[int, str]] = {}
+    part_source: dict[str, dict] = {}   # vehicle: {part: (scene, object, bind frame)}, first seen
     pose_clips, clip_faces, report = [], {}, []
     for name, icons in clips.items():
         poses, face_seq, sources = [], [], []
+        vehicle = vehicle_of.get(name)
         last = None
         fallbacks = 0
+        usable = {i: m for i, m in matches.items() if m[2] >= (VEHICLE_USABLE if vehicle else USABLE)}
         for k, icon in enumerate(icons):
-            source = icon if icon in matches else None
+            source = icon if icon in usable else None
             if source is None:
                 fallbacks += 1
                 source = last
             if source is None:
                 # Nothing usable yet: borrow the first usable icon later in the sequence.
-                source = next((i for i in icons[k:] if i in matches), None)
+                source = next((i for i in icons[k:] if i in usable), None)
             if source is None:
                 break
             last = source
-            m = matches[source]
-            poses.append((k / args.frame_rate, converter(m[0]), m[1], hidden_props(source, m)))
+            m = usable[source]
+            c = converter(m[0])
+            # In a vehicle clip every prop is part of the vehicle model instead.
+            hide = props_of[m[0]] if vehicle else hidden_props(source, m)
+            poses.append((k / args.frame_rate, c, m[1], hide, m[3]))
             face_seq.append(face_of(m[0]))
             sources.append((icon, m))
         if len(poses) != len(icons) or not poses:
@@ -275,6 +350,15 @@ def main(argv=None) -> int:
             continue
         poses.append((len(icons) / args.frame_rate, *poses[0][1:]))
         pose_clips.append(conv_mod.PoseClip(name, poses))
+        if vehicle:
+            vposes = []
+            for sec, c, tick, _hide, view in poses:
+                names = scene_names.setdefault(c.scene_label, object_names(c.scene))
+                frames = vehicle_frames(c, body, names, tick, view)
+                for part, (gw, obj) in frames.items():
+                    part_source.setdefault(vehicle, {}).setdefault(part, (c.scene, obj, gw))
+                vposes.append((sec, {part: gw for part, (gw, _o) in frames.items()}))
+            vehicle_poses[vehicle].append((name, vposes))
         clip_faces[name] = face_seq
         scenes = sorted({m[0] for _i, m in sources})
         report.append((name, len(icons), len(icons) - fallbacks, fallbacks, ", ".join(scenes)))
@@ -286,6 +370,18 @@ def main(argv=None) -> int:
     props = sorted(base.optional)
     joints, meshes = base.write(args.out, pose_clips, 30.0, base_scene.begin,
                                 {"scene": args.base, "library": True}, args.frame_rate)
+    vehicles = []
+    for v, vclips in vehicle_poses.items():
+        if not vclips:
+            continue
+        # Parts in order of first appearance; each bound where it first appears.
+        parts = [(part, scene, obj, gw) for part, (scene, obj, gw) in part_source[v].items()]
+        out = args.out.parent / "vehicles" / f"{v}.glb"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        vj, vm = conv_mod.write_parts_model(out, v, parts, vclips, base.scale, base.offset, warnings,
+                                            {"vehicle": v, "library": True})
+        vehicles.append(v)
+        print(f"Wrote {out}: {vj} joints, {vm} meshes, clips {', '.join(c for c, _p in vclips)}")
     viewer = viewer_clips(args.out, args.frame_rate)
     clips_txt = [f"# Blupi's clips: faces per frame ({args.frame_rate:g} frames per second) and the clips "
                  "facing the viewer; generated by tools/rd4_to_gltf/build_clip_library.py"]
@@ -293,6 +389,7 @@ def main(argv=None) -> int:
     clips_txt += [f"face {f}" for f in faces]
     clips_txt += [f"clip {name} " + " ".join(str(i) for i in seq) for name, seq in clip_faces.items()]
     clips_txt += [f"viewer {name}" for name in viewer]
+    clips_txt += [f"vehicle {v}" for v in vehicles]
     (args.out.parent / "clips.txt").write_text("\n".join(clips_txt) + "\n")
     print(f"Wrote {args.out}: {joints} joints, {meshes} meshes, {len(pose_clips)} clips, {len(faces)} faces; "
           f"props: {', '.join(props) or 'none'}; facing the viewer: {', '.join(viewer) or 'none'}")
@@ -306,18 +403,26 @@ def main(argv=None) -> int:
     extras = model.doc["asset"]["extras"]["rd4_to_gltf"]
     cam = vs.Camera(base_scene, "Jeu", extras)
     px = cam.zoom * vs.ICON / cam.frame_height / extras["scale"]
+    vmodels: dict[str, vs.Model] = {}
     lines = ["| Clip | Icons | Matched | Held | Mean IoU | Min IoU | Scenes |", "|---|---|---|---|---|---|---|"]
     for name, n, matched, held, scenes in report:
         if matched == 0:
             lines.append(f"| {name} | {n} | 0 | {held} | - | - | {scenes} |")
             continue
         model.select_clip(name)
+        vehicle = vehicle_of.get(name)
+        if vehicle in vehicles:
+            vmodel = vmodels.setdefault(vehicle, vs.Model(args.out.parent / "vehicles" / f"{vehicle}.glb"))
+            vmodel.select_clip(name)
         ious = []
         pos, right, up, back = cam.frame(base_scene.begin)
         for k, icon in enumerate(clips[name]):
             if icon < 0:
                 continue
-            color, cover = vs.render(model.skinned(k / args.frame_rate), pos, right, up, back,
+            meshes = model.skinned(k / args.frame_rate)
+            if vehicle in vehicles:
+                meshes = meshes + vmodel.skinned(k / args.frame_rate)
+            color, cover = vs.render(meshes, pos, right, up, back,
                                      px * vs.SUPERSAMPLE, vs.ICON * vs.SUPERSAMPLE, cam.light(base_scene.begin),
                                      vs.SUPERSAMPLE)
             _c, a = vs.downsample(color, cover, vs.SUPERSAMPLE)

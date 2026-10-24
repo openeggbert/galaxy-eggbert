@@ -12,6 +12,7 @@ Text is Latin-1 with CRLF line endings (plus stray bare CRs, see parse_text).
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -65,12 +66,32 @@ def parse_floats(v: str) -> list[float]:
     return [float(x) for x in v.split(",") if x.strip()]
 
 
+# Leaves whose value is "$" + 8 hex digits of length, a CR, that many raw bytes (which may contain
+# CR and LF) and a closing "$" (the older lowercase bitmap chunks, e.g. t.rd4's tdta/tile, ctab).
+BINARY_TAGS = {"tile", "ctab"}
+_BINARY = re.compile(r"[ \t]*(tile|ctab) \$([0-9A-Fa-f]{8})")
+
+
 def parse_text(text: str) -> Chunk:
     root = Chunk("<root>")
     stack = [root]
     # Lines end in CRLF; a bare CR also appears inside TILE values (after the $FFFFFFFF tile
     # header), so split on LF only and drop every CR.
-    for raw in text.split("\n"):
+    pos = 0
+    while pos < len(text):
+        end = text.find("\n", pos)
+        if end < 0:
+            end = len(text)
+        binary = _BINARY.match(text, pos)
+        if binary is not None:
+            start = binary.end() + (text[binary.end():binary.end() + 1] == "\r")
+            length = int(binary.group(2), 16)
+            stack[-1].items.append((binary.group(1), "$" + binary.group(2) + text[start:start + length]))
+            end = text.find("\n", start + length)
+            pos = len(text) if end < 0 else end + 1
+            continue
+        raw = text[pos:end]
+        pos = end + 1
         line = raw.replace("\r", "").strip()
         if not line:
             continue

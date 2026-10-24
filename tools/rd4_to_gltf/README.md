@@ -100,6 +100,7 @@ Each was checked numerically, not assumed.
 | Keys without a tweener (`void`) are linear; 1800 ticks per second | every stored static value equals linear interpolation at tick 3000 |
 | Hot point `hp` (local, after the `affi` deformer) lands on `po`; the object rotates about it | DXF match below |
 | `Scal` scales only the object's own geometry; a child's `po` is in the parent's unscaled frame | arm segments: elbow at `hp - po` = 3.725 vs. segment length 3.741 |
+| A group's `Scal` scales its contents (it has no geometry of its own) | `tank.rd4`'s `tracks` group is 1.15442 and the `BLUPI` group inside it 0.86617, its inverse; best frame IoU against the icons: tank 0.774 → 0.943, jeep 0.898 → 0.952, skateboard 0.920 → 0.988 (scaling only a group's direct geometric children: 0.684 / 0.932 / 0.900) |
 | `link` joints rotate inside the `mat` base frame: `axis` (`XAXI`/`YAXI`/`ZAXI`, angle `AAVa`), `gene` (`AXVa..AZVa`, `ORDE 6`), `ball` (`matR`), `lock` | DXF match below |
 | Animated `ball` joints: `ACom/matR` holds `ROTA` keys with the same inverse convention, `matR == quat(ROTA).T` | stored `matR` equals the keys at the stored time to 0.0001 in `saute-profil`, `nage`, `glu` (0.008 in `bye`) |
 | Tweener `twee { line { EASE a  EASO b } }` on a key: speed rises over [0, a], is constant to b, falls over [b, 1] of the segment; `void` = linear | the values seen: (0, 1) linear, (0.61, 1) speed-up, (0, 0.4) slow-down, (0.41, 0.61) both; frames of the scenes using it match their sprites (`blupi-plat`: MarchEcrase 0.876) |
@@ -120,14 +121,19 @@ or more.
 | Free form: sweep path through the `sap` points (`cv`, handles `cnc`/`cpc`), one cross-section (`st` + cubic `s3` segments) | table above |
 | Envelopes `t`/`b`/`l`/`r` scale the section's `b` axis (positive/negative side) and `a` axis (negative/positive); each is a cubic Bezier in (path position, scale) through `(p0, v0), (p0 + nc[1], nc[0]), (p1 − pc[1], pc[0]), (p1, v1)` | DXF ring positions fall exactly on 16 equal Bezier-parameter steps; ring radii within 0.002 |
 | Section `a` → +X, `b` → +Z for a path along +Y | eyelash (asymmetric section) and foot (unequal envelopes) |
+| Cube primitive (`prim { cube }`, no parameters): half-size 2.5, a 5-unit cube like the cylinder's height | helicopter frames of `helico2.rd4` against icons 61-65: IoU 0.972 / 0.981 / 0.985 / 0.976 / 0.966 at half-size 2.3 / 2.4 / 2.5 / 2.6 / 2.7 |
+| A cross-section may hold several closed curves (`p2`, in nested `pg`/`pc` groups) of cubic `s3` and straight `s1` segments; curves inside others are holes (the tank's track loop, the wheel rims) | vehicle frames against their icons (below) |
+| A point without its own cross-section keeps the previous one; different cross-sections along the path blend into each other; a path ending where it starts (torus, tyre) is closed, without caps | the jeep's tyres and the overcraft's skirt are tori built this way |
 
-`freeform_mesh.py` documents the rest (sampling, caps by ear clipping).
+`freeform_mesh.py` documents the rest (sampling, caps by ear clipping, holes bridged into their
+outline).
 
 ### Face texture
 
 | Convention | Evidence |
 |---|---|
 | Bitmaps: `TILE` lines of PackBits streams, edge tiles cropped; 8-bit with a `CTAB` palette, 1-bit masks; 32-bit rows are R, G, B planes | the decoded face; the 32-bit layout is only a best reading of the lollipop texture |
+| Older scenes (`t.rd4`) write lowercase `ctab`/`tdta`/`tile` leaves: `$`, 8 hex digits of length, a CR, that many raw bytes (CR and LF included) and a closing `$`; tiles have no `FFFFFFFF` header | `t.rd4`'s face decodes to the same layout as the others |
 | The body's primary domain is a texture map (`smap`); `whit 1` makes pure white (255) transparent, showing the master's colour; near-white (254) eye whites stay | renders against sprites |
 | Texture `s` = surface `u` (control-polygon length from `st`) turned by `rotc` quarter turns; `t` = the vertex's fraction of the meridian length, flat end caps included | best of 64 orientation candidates against front and profile sprites, then the meridian rule fixed the face's height |
 | The primary domain's `bbox` is not the texture extent: some scenes store `0,0,2,2` | `blupi-ouf4.rd4` faces were off-centre until the period came from the section itself |
@@ -150,11 +156,20 @@ python3 tools/rd4_to_gltf/match_icons.py --scenes ../speedyblupi-data/originals/
     --out build-probe/rd4-blupi/match
 ```
 
+Every frame is also tried turned about the vertical through Blupi's body (`--yaw-step`, 45
+degrees, refined to 5.6 on each icon's best frame), not mirrored: the turn's front views
+(icons 1-3), the switch's back view (268-269) and the vehicles' slight yaws. The `--tumble` icons
+(Hide's, 276-284) are also tried pitched about the camera's horizontal axis and scaled. A turned
+match is kept (`view_*` columns) and the clip library uses it when it beats the plain frame.
+
 First run (2026-10-24, about 3.5 minutes): 243 frames from 54 scenes; of the 231 icons used by
-actions, 87 match confidently (score >= 0.85), 60 probably (>= 0.70) and 84 not. The unmatched
-ones are the vehicles (unsupported cube, torus and multi-section masters), the turn icons
-(front views mid-turn, which a 3D model replaces with a real rotation), Hide (drawn at another
-scale), and frames with 2D effects added (Electro's glow).
+actions, 87 matched confidently (score >= 0.85), 60 probably (>= 0.70) and 84 not. With the
+vehicle geometry, group scales and turned views (2026-10-24, 37 minutes): 259 frames from 56
+scenes; 114 confident, 71 probable, 46 unmatched. Still unmatched: the vehicles' own turn
+icons, the overcraft (0.55-0.63: silhouette right, colours lighter than the sprites), frames with
+2D effects (Electro's glow, deaths Clear2/Clear4) and the ones rendered from scenes that are not
+in `speedyblupi-data`. Hide's tumbling small Blupi comes from `naissance.rd4`, where the `BLUPI`
+group is scaled 0.635.
 
 ## Clip library (the game's model)
 
@@ -195,19 +210,32 @@ python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/libra
 - Without `--skip-check` every clip frame is rendered from the .glb with the base camera and
   compared with its icon (`clips.md`).
 
-Result (2026-10-24, 34 clips, 45 joints including 15 shape joints, 5 faces), mean silhouette IoU
-against the icons: March 0.981, Stop 0.970, Jump 0.979, Air 0.961, Down 0.946, Up 0.980, Push
-0.988, StopEcrase 0.965, MarchEcrase 0.950, Balloon 0.976, StopNage/MarchNage 0.980,
-StopSurf/MarchSurf 0.981, Drown 0.982, Mockery 0.971, Mockeryp 0.942, PutDynamite 0.966,
-TakeDynamite 0.912, Sucette 0.957, Drink 0.940; lower where the icons are front or back views
-(Teleporting, Switch, Charge, Mockeryi), carry a skateboard (Skate clips, 0.73-0.89) or 2D
-effects (deaths Clear1/Clear3/Glu). Not built, no matching scene frame: the vehicles (Helico, Jeep,
-Tank, Over, FireTank), Hide, Clear2 and Clear4; the game shows `Stop` for them.
+Vehicle clips (`VEHICLES`: helicopter, jeep, tank, overcraft, skateboard) also write
+`vehicles/<name>.glb`: every object of their frames' scenes that is not Blupi's body, as rigid
+parts (one joint each under a root, carrying the part's whole geometry frame, hidden by scaling
+where a frame's scene lacks it) with the same clips, in the same space as Blupi. They are
+separate models because CNA's skinning takes 72 bones and the tank alone has 40 parts; the game
+draws a vehicle with Blupi's transform and clip time. `clips.txt` names them (`vehicle <name>`).
+Vehicle clips accept matches down to 0.55 (`VEHICLE_USABLE`): without cast shadows, and with the
+overcraft's skirt lighter than in the sprites, their colours score lower while silhouette and
+pose still agree.
+
+Result (2026-10-24, 42 clips, 45 joints including 15 shape joints, 5 faces, 5 vehicles), mean
+silhouette IoU against the icons (vehicle clips rendered with their vehicle): March 0.981, Stop
+0.970, Jump 0.979, Air 0.961, Down 0.946, Up 0.980, Push 0.988, StopEcrase 0.965, MarchEcrase
+0.950, Balloon 0.976, StopNage/MarchNage 0.980, StopSurf/MarchSurf 0.981, Drown 0.982, Mockery
+0.971, Mockeryi 0.943, Mockeryp 0.950, TakeDynamite 0.962, PutDynamite 0.966, Sucette 0.957,
+Drink 0.940, Charge 0.950, Teleporting 0.944, Switch 0.946, Hide 0.921; StopHelico 0.981,
+MarchHelico 0.935, StopJeep/MarchJeep 0.951, StopTank 0.893, MarchTank 0.931, FireTank 0.878,
+StopSkate 0.950, MarchSkate 0.982, JumpSkate 0.979, AirSkate 0.914, TakeSkate/DeposeSkate 0.951,
+StopOver 0.764, MarchOver 0.738; the deaths with 2D effects lower (Clear1 0.781, Clear3 0.655,
+Glu 0.814). Not built, no matching scene frame: Clear2 and Clear4; the game shows `Stop`.
 
 ## Not converted yet (next steps)
 
-- Vehicles and the skateboard: cube and cone primitives, the torus, several cross-sections per
-  sweep, curved and twisted sweep paths; texture maps on primitives (the lollipop's spiral).
-- Front and back views (Turn, Switch, Hide): match frames turned about the vertical axis, so a
-  clip can take a pose seen from another side.
+- Texture maps on primitives (the lollipop's spiral) and procedural shaders (the skateboard's
+  wood shows its flat colour); cast shadows.
+- Twisted sweeps (none in the Blupi scenes).
+- Turn animations of the vehicles (TurnJeep, TurnTank, ...) and the death causes without a
+  scene frame (Clear2, Clear4): the game has no clip for them.
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).

@@ -11,7 +11,8 @@ Conventions established against marche-profil.rd4 (see README.md in this directo
 * An object is placed by its hot point ``hp`` (local, after the ``affi`` deformer): the hot point
   lands on ``po`` in the parent, and the object rotates about it.
 * ``Scal`` scales the object's own geometry about its hot point. It does NOT scale children:
-  a child's ``po`` is in the parent's local frame in unscaled units.
+  a child's ``po`` is in the parent's local frame in unscaled units. A group's ``Scal`` scales
+  its contents.
 * A ``link`` joint rotates the object about its hot point, inside its ``mat`` base frame.
 * Key interpolation without an explicit tweener (``void``) is linear; scene time runs at
   1800 ticks per second.
@@ -400,6 +401,17 @@ def read_scene(root: Chunk) -> Scene:
 
 # ---- forward kinematics -------------------------------------------------------------
 
+def view_matrix(center: np.ndarray, view) -> np.ndarray:
+    """4x4 turning objects for another view of Blupi about ``center`` (his body): ``yaw`` degrees
+    about the vertical (world Z), then ``pitch`` degrees about the profile camera's horizontal
+    axis (world Y), then a uniform ``scale``; ``view`` is (yaw, pitch, scale) or None."""
+    if view is None:
+        return np.eye(4)
+    yaw, pitch, scale = view
+    lin = scale * axis_rotation(1, np.radians(pitch)) @ axis_rotation(2, np.radians(yaw))
+    return affine(lin, center - lin @ center)
+
+
 def affine(lin: np.ndarray, tra: np.ndarray) -> np.ndarray:
     m = np.eye(4)
     m[:3, :3] = lin
@@ -408,8 +420,14 @@ def affine(lin: np.ndarray, tra: np.ndarray) -> np.ndarray:
 
 
 def child_frame(o: Obj, t: float | None) -> np.ndarray:
-    """4x4 mapping this object's local (child-space) coordinates to its parent's local coordinates."""
+    """4x4 mapping this object's local (child-space) coordinates to its parent's local coordinates.
+
+    A group's ``Scal`` scales its contents (it has no geometry of its own): the tank's ``tracks``
+    group is 1.15442 and the ``BLUPI`` group inside it 0.86617, its inverse. An object's ``Scal``
+    scales only its own geometry (geometry_frame)."""
     lin = o.orientation(t) @ o.joint_rotation(t)
+    if o.kind == "gr":
+        lin = lin * o.scale(t)
     hp = o.hot_point(t)
     return affine(lin, o.position(t) - lin @ hp)
 

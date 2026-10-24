@@ -3,7 +3,9 @@
 A bitmap chunk carries ``w``, ``h``, ``dpth`` (1, 8 or 32 bits), an optional ``CTAB`` palette
 continued by ``MORE`` lines (256 x ``00RRGGBB``), ``tils W,H`` and a ``TDTA`` chunk with one
 ``TILE $...$`` line per tile in row-major order. Each tile is ``FFFFFFFF`` followed by one PackBits
-stream that runs across row boundaries. Tiles on the right and bottom edges are cropped to the
+stream that runs across row boundaries. Older scenes (t.rd4) write the same data in lowercase
+``ctab``/``tdta``/``tile`` leaves as raw bytes after a ``$`` and 8 hex digits of length, with no
+``FFFFFFFF`` tile header. Tiles on the right and bottom edges are cropped to the
 image. Rows are ``ceil(width * dpth / 8)`` bytes, except 32-bit rows: three planes, all red bytes,
 then green, then blue (no alpha). The 32-bit layout is a best reading of the lollipop's stripe
 texture (blupi-sucette.rd4) and not yet checked against a render.
@@ -31,10 +33,19 @@ def unpackbits_stream(data: bytes, size: int) -> bytes:
     return bytes(out[:size]).ljust(size, b"\0")
 
 
+def _binary(value: str) -> bytes:
+    """Raw bytes of an older-format binary leaf ("$" + 8 hex digits of length + the bytes)."""
+    return value[9:].encode("latin-1")
+
+
 def palette(chunk: Chunk) -> np.ndarray | None:
     text = chunk.leaf("CTAB")
     if text is None:
-        return None
+        old = chunk.leaf("ctab")
+        if old is None:
+            return None
+        raw = _binary(old)
+        return np.frombuffer(raw, dtype=np.uint8).reshape(-1, 4)[:, 1:4].copy()
     text += "".join(chunk.leaves("MORE"))
     raw = bytes.fromhex(text)
     entries = np.frombuffer(raw, dtype=np.uint8).reshape(-1, 4)
@@ -46,7 +57,10 @@ def decode(chunk: Chunk) -> np.ndarray:
     w, h = int(chunk.leaf("w")), int(chunk.leaf("h"))
     depth = int(chunk.leaf("dpth"))
     tw, th = (int(x) for x in chunk.leaf("tils").split(","))
-    tiles = chunk.chunk("TDTA").leaves("TILE")
+    # Current format: TDTA/TILE hex text with an FFFFFFFF header; older (t.rd4): tdta/tile raw
+    # length-prefixed bytes without it.
+    old_format = chunk.chunk("TDTA") is None
+    tiles = chunk.chunk("tdta").leaves("tile") if old_format else chunk.chunk("TDTA").leaves("TILE")
     cols = -(-w // tw)
     rows = -(-h // th)
     if len(tiles) != cols * rows:
@@ -56,7 +70,10 @@ def decode(chunk: Chunk) -> np.ndarray:
         r, c = divmod(k, cols)
         x0, y0 = c * tw, r * th
         cw, ch = min(tw, w - x0), min(th, h - y0)
-        raw = bytes.fromhex(tile.strip("$"))
+        if old_format:
+            raw = b"\xff\xff\xff\xff" + _binary(tile)
+        else:
+            raw = bytes.fromhex(tile.strip("$"))
         if raw[:4] != b"\xff\xff\xff\xff":
             raise ValueError(f"unexpected tile header {raw[:4].hex()}")
         if depth == 32:

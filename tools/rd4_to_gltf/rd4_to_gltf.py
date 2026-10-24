@@ -117,8 +117,9 @@ class Converter:
             m = m @ sc.child_frame(o, t)
         return m
 
-    def rd_frames(self, t: float | None) -> list[tuple[np.ndarray, np.ndarray]]:
-        """(child-space-to-world, geometry-to-world) per joint, in Ray Dream world units."""
+    def rd_frames(self, t: float | None, view=None) -> list[tuple[np.ndarray, np.ndarray]]:
+        """(child-space-to-world, geometry-to-world) per joint, in Ray Dream world units; ``view``
+        turns them about Blupi's body (scene.view_matrix)."""
         out = []
         base = self.above_root(t)
         shift = self.world_shift(t)
@@ -133,6 +134,9 @@ class Converter:
             gw = parent_world @ sc.geometry_frame(o, tt)
             worlds.append(cw)
             out.append((cw, gw))
+        if view is not None:
+            turn = sc.view_matrix(out[self.names.index("Corps")][0][:3, 3], view)
+            out = [(turn @ cw, turn @ gw) for cw, gw in out]
         return out
 
     def joint_world(self, cw: np.ndarray) -> tuple[np.ndarray, bool]:
@@ -167,46 +171,13 @@ class Converter:
         groups: dict[tuple, list] = {}
         self.textures: dict[tuple, shading.TextureMap] = {}
         for i, o in enumerate(self.joints):
-            if not o.master:
+            part = part_geometry(self.scene_of.get(i, self.scene), o, self.names[i], frames[i][1],
+                                 self.scale, self.offset, self.canonical, self.warnings)
+            if part is None:
                 continue
-            scene = self.scene_of.get(i, self.scene)
-            master = (id(scene), o.master)
-            if master not in self.canonical:
-                try:
-                    self.canonical[master] = geometry.canonical_mesh(scene.masters[o.master])
-                except NotImplementedError as e:
-                    self.canonical[master] = None
-                    self.warnings.append(f"{self.names[i]}: {e}; skipped")
-            if self.canonical[master] is None:
-                continue
-            mesh, ff = self.canonical[master]
-            cw, gw = frames[i]
-            # Canonical -> RD world -> glTF space.
-            m = np.eye(4)
-            m[:3, :3] = RD_TO_GLTF @ gw[:3, :3] * self.scale
-            m[:3, 3] = RD_TO_GLTF @ (gw[:3, 3] * self.scale) + self.offset
-            pos, nrm, tris, src = geometry.smooth_normals(mesh, return_index=True)
-            uv = None
-            key = shading.material_key(scene, o)
-            try:
-                tex = shading.texture_map(scene, o)
-            except NotImplementedError as e:
-                tex = None
-                self.warnings.append(f"{self.names[i]}: texture not converted ({e}); flat colour used")
-            if tex is not None and ff is None:
-                self.warnings.append(f"{self.names[i]}: texture map on a primitive not converted")
-            elif tex is not None:
-                self.warnings.extend(tex.warnings)
-                st = freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src]
-                pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0)
-                key = ("texture", self.names[i])
+            key, tex, wpos, wn, tris, uv = part
+            if tex is not None:
                 self.textures[key] = tex
-            wpos = pos @ m[:3, :3].T + m[:3, 3]
-            nm = np.linalg.inv(m[:3, :3]).T
-            wn = nrm @ nm.T
-            wn /= np.linalg.norm(wn, axis=1, keepdims=True)
-            if np.linalg.det(m[:3, :3]) < 0:
-                tris = tris[:, ::-1]
             groups.setdefault(key, []).append((wpos, wn, tris, i, uv))
         return groups
 
@@ -344,10 +315,161 @@ class Converter:
         return len(self.joints) + len(shaped), len(mesh_nodes)
 
 
+def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale: float, offset: np.ndarray,
+                  canonical: dict, warnings: list[str]):
+    """One object's master in glTF space, placed by its Ray Dream geometry frame ``gw``:
+    (material key, TextureMap or None, positions, normals, triangles, texture coordinates or None),
+    or None when it has no supported master. A textured part's key is ("texture", label)."""
+    if not o.master:
+        return None
+    master = (id(scene), o.master)
+    if master not in canonical:
+        try:
+            canonical[master] = geometry.canonical_mesh(scene.masters[o.master])
+        except NotImplementedError as e:
+            canonical[master] = None
+            warnings.append(f"{label}: {e}; skipped")
+    if canonical[master] is None:
+        return None
+    mesh, ff = canonical[master]
+    # Canonical -> RD world -> glTF space.
+    m = np.eye(4)
+    m[:3, :3] = RD_TO_GLTF @ gw[:3, :3] * scale
+    m[:3, 3] = RD_TO_GLTF @ (gw[:3, 3] * scale) + offset
+    pos, nrm, tris, src = geometry.smooth_normals(mesh, return_index=True)
+    uv = None
+    key = shading.material_key(scene, o)
+    try:
+        tex = shading.texture_map(scene, o)
+    except NotImplementedError as e:
+        tex = None
+        warnings.append(f"{label}: texture not converted ({e}); flat colour used")
+    if tex is not None and ff is None:
+        warnings.append(f"{label}: texture map on a primitive not converted")
+        tex = None
+    elif tex is not None:
+        warnings.extend(tex.warnings)
+        st = freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src]
+        pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0)
+        key = ("texture", label)
+    wpos = pos @ m[:3, :3].T + m[:3, 3]
+    nm = np.linalg.inv(m[:3, :3]).T
+    wn = nrm @ nm.T
+    # Degenerate faces (a loop collapsed to a point) have no normal; keep them finite.
+    wn /= np.maximum(np.linalg.norm(wn, axis=1, keepdims=True), 1e-12)
+    if np.linalg.det(m[:3, :3]) < 0:
+        tris = tris[:, ::-1]
+    return key, tex, wpos, wn, tris, uv
+
+
+def write_parts_model(path: Path, root_name: str, parts: list, clips: list, scale: float, offset: np.ndarray,
+                      warnings: list[str], extras: dict) -> tuple[int, int]:
+    """A model of rigid parts that are not Blupi (a vehicle): a root joint and under it one joint
+    per part carrying the part's whole geometry frame (Ray Dream scale and deformer included, as
+    on a shape joint). ``parts`` is [(name, scene, obj, bind frame gw)], ``clips`` is
+    [(clip name, [(seconds, {part name: gw})])] in Ray Dream world units; a part missing from a
+    pose is hidden there. Built in the same glTF space as Blupi's model (``scale``, ``offset``),
+    so the game draws both with the same transform and clip time."""
+    def shape(gw):
+        m = np.eye(4)
+        m[:3, :3] = RD_TO_GLTF @ gw[:3, :3] * scale
+        m[:3, 3] = RD_TO_GLTF @ (gw[:3, 3] * scale) + offset
+        if np.linalg.det(m[:3, :3]) < 0:
+            m[:3, :3] = m[:3, :3] @ MIRROR
+        return m
+
+    b = gltf.GltfBuilder("galaxy-eggbert tools/rd4_to_gltf")
+    root = b.add("nodes", {"name": root_name})
+    node_of, bind = [], []
+    for name, _scene, _o, gw in parts:
+        bind.append(shape(gw))
+        node_of.append(b.add("nodes", trs_node(name, bind[-1], scale=True)))
+    b.doc["nodes"][root]["children"] = list(node_of)
+    skin = b.add("skins", {"name": root_name, "joints": [root] + node_of, "skeleton": root})
+    canonical: dict = {}
+    groups: dict[tuple, list] = {}
+    textures: dict[tuple, shading.TextureMap] = {}
+    for k, (name, scene, o, gw) in enumerate(parts):
+        part = part_geometry(scene, o, name, gw, scale, offset, canonical, warnings)
+        if part is None:
+            continue
+        key, tex, wpos, wn, tris, uv = part
+        if tex is not None:
+            textures[key] = tex
+        groups.setdefault(key, []).append((wpos, wn, tris, k + 1, uv))
+    mesh_nodes = []
+    materials = {}
+    for key, items in groups.items():
+        if key in textures:
+            materials[key] = b.add("materials", shading.textured_material_json(
+                key[1], Converter._add_image(b, textures[key])))
+        else:
+            materials[key] = b.add("materials", shading.material_json(key))
+        pos = np.concatenate([w for w, _n, _t, _i, _uv in items])
+        nrm = np.concatenate([n for _w, n, _t, _i, _uv in items])
+        tris, joints, base = [], [], 0
+        for w, _n, t, i, _uv in items:
+            tris.append(t + base)
+            joints.append(np.full(len(w), i))
+            base += len(w)
+        j = np.zeros((len(pos), 4), dtype=np.uint8)
+        j[:, 0] = np.concatenate(joints)
+        wts = np.zeros((len(pos), 4), dtype=np.float32)
+        wts[:, 0] = 1.0
+        primitive = {
+            "attributes": {
+                "POSITION": b.accessor(pos, gltf.FLOAT, gltf.ARRAY_BUFFER, minmax=True),
+                "NORMAL": b.accessor(nrm, gltf.FLOAT, gltf.ARRAY_BUFFER),
+                "JOINTS_0": b.accessor(j, gltf.UBYTE, gltf.ARRAY_BUFFER),
+                "WEIGHTS_0": b.accessor(wts, gltf.FLOAT, gltf.ARRAY_BUFFER),
+            },
+            "indices": b.accessor(np.concatenate(tris).astype(np.uint32).ravel(), gltf.UINT,
+                                  gltf.ELEMENT_ARRAY_BUFFER),
+            "material": materials[key],
+        }
+        if key in textures:
+            primitive["attributes"]["TEXCOORD_0"] = b.accessor(
+                np.concatenate([u for *_rest, u in items]), gltf.FLOAT, gltf.ARRAY_BUFFER)
+        mesh_name = f"{root_name}_{b.doc['materials'][materials[key]]['name']}"
+        mesh = b.add("meshes", {"name": mesh_name, "primitives": [primitive]})
+        mesh_nodes.append(b.add("nodes", {"name": mesh_name, "mesh": mesh, "skin": skin}))
+    ibm = np.array([np.eye(4)] + [np.linalg.inv(m).T for m in bind], dtype=np.float32)  # column-major
+    b.doc["skins"][skin]["inverseBindMatrices"] = b.accessor(ibm.reshape(-1, 16), gltf.FLOAT)
+
+    hidden = np.diag([HIDDEN_SCALE] * 3 + [1.0])
+    for clip_name, poses in clips:
+        seconds = np.array([sec for sec, _p in poses], dtype=np.float32)
+        time_acc = b.accessor(seconds, gltf.FLOAT, minmax=True)
+        samplers, channels = [], []
+        for k, (name, *_rest) in enumerate(parts):
+            mats = [shape(pp[name]) if name in pp else bind[k] @ hidden for _sec, pp in poses]
+            dec = [decompose(m) for m in mats]
+            quats = []
+            for _t, q, _s in dec:
+                if quats and q @ quats[-1] < 0:
+                    q = -q
+                quats.append(q)
+            for path_name, values in (("translation", [t for t, _q, _s in dec]), ("rotation", quats),
+                                      ("scale", [s_ for _t, _q, s_ in dec])):
+                samplers.append({"input": time_acc, "output": b.accessor(np.array(values, dtype=np.float32),
+                                                                        gltf.FLOAT), "interpolation": "LINEAR"})
+                channels.append({"sampler": len(samplers) - 1, "target": {"node": node_of[k], "path": path_name}})
+        b.add("animations", {"name": clip_name, "samplers": samplers, "channels": channels})
+
+    b.doc["scenes"] = [{"name": root_name, "nodes": [root, *mesh_nodes]}]
+    b.doc["scene"] = 0
+    extras = dict(extras)
+    extras.update({"scale": scale, "offset": [float(x) for x in offset], "rd_to_gltf": RD_TO_GLTF.tolist(),
+                   "clips": [c for c, _p in clips]})
+    b.doc["asset"]["extras"] = {"rd4_to_gltf": extras}
+    b.write(path)
+    return len(parts) + 1, len(mesh_nodes)
+
+
 def trs_node(name: str, m: np.ndarray, scale: bool = False) -> dict:
     t, r, sc_ = decompose(m)
     node = {"name": name, "translation": [float(x) for x in t], "rotation": [float(x) for x in r]}
-    if scale:
+    if scale or np.abs(sc_ - 1.0).max() > 1e-4:
         node["scale"] = [float(x) for x in sc_]
     return node
 
@@ -369,13 +491,13 @@ HIDDEN_SCALE = 1e-4
 
 
 def pose_on(main: "Converter", conv: "Converter", tick: float, bind_local: list[np.ndarray],
-            clip: str, hide: frozenset = frozenset()) -> tuple[list[np.ndarray], list[np.ndarray | None]]:
+            clip: str, hide: frozenset = frozenset(), view=None) -> tuple[list[np.ndarray], list[np.ndarray | None]]:
     """One pose of ``conv``'s scene on ``main``'s skeleton: local joint matrices, and per joint
     its geometry frame relative to the joint (None for a part the scene does not have, or one
-    named in ``hide``). Joints are matched by name; one the scene lacks keeps its bind pose
-    relative to its parent."""
+    named in ``hide``), seen as ``view`` (Converter.rd_frames). Joints are matched by name; one
+    the scene lacks keeps its bind pose relative to its parent."""
     conv.offset = main.offset
-    frames = conv.rd_frames(float(tick))
+    frames = conv.rd_frames(float(tick), view)
     # Joints a converter took from other scenes (add_joint) are not in its own scene.
     index = {n: k for k, n in enumerate(conv.names) if n not in hide and k not in conv.scene_of}
     missing = [n for n in main.names if n not in index and n not in main.optional]
@@ -408,6 +530,8 @@ def write_animation(b: gltf.GltfBuilder, name: str, node_of: list[int], shape_no
 
     def channel(node: int, mats: list[np.ndarray], with_scale: bool):
         parts = [decompose(m) for m in mats]
+        # A turned view may scale the whole Blupi (Hide): then the root carries a scale too.
+        with_scale = with_scale or any(np.abs(sc_ - 1.0).max() > 1e-4 for _t, _q, sc_ in parts)
         quats = []
         for _t, q, _s in parts:
             if quats and q @ quats[-1] < 0:

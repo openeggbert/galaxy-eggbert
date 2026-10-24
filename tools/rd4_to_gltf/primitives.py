@@ -9,6 +9,7 @@ from geometry import Mesh
 SPHERE_RADIUS = 3.0
 CYLINDER_RADIUS = 3.0
 CYLINDER_HALF_HEIGHT = 2.5   # along local Z
+CUBE_HALF_SIZE = 2.5         # fitted to the helicopter sprites, see README.md
 
 
 def sphere(segments: int = 32, rings: int = 16) -> Mesh:
@@ -50,4 +51,14 @@ def cylinder(segments: int = 32) -> Mesh:
         tris.append((j1, segments + j, segments + j1))
         tris.append((ct, j, j1))
         tris.append((cb, segments + j1, segments + j))
+    return Mesh(pos, np.array(tris))
+
+
+def cube(half: float | None = None) -> Mesh:
+    h = CUBE_HALF_SIZE if half is None else half
+    pos = np.array([[x, y, z] for x in (-h, h) for y in (-h, h) for z in (-h, h)], dtype=float)
+    quads = [(0, 1, 3, 2), (4, 6, 7, 5), (0, 4, 5, 1), (2, 3, 7, 6), (0, 2, 6, 4), (1, 5, 7, 3)]
+    tris = []
+    for a, b, c, d in quads:
+        tris += [(a, b, c), (a, c, d)]
     return Mesh(pos, np.array(tris))

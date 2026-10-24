@@ -5,8 +5,10 @@ Renders each frame of each scene that contains Blupi (scene_render.py, the scene
 camera), compares it with all 60x60 icons of the sprite sheet, as rendered and mirrored (the
 sheet's left-facing icons are mirrored copies), and writes:
 
-* ``icons.csv`` — per icon: the best scene frame and its scores, the runner-up, and the best
-  frame as rendered (not mirrored), the one a 3D pose can be taken from;
+* ``icons.csv`` — per icon: the best scene frame and its scores, the runner-up, the best frame as
+  rendered (not mirrored), the one a 3D pose can be taken from, and the best not mirrored but
+  seen from another side (``view_yaw`` degrees about the vertical: front and back views; for the
+  ``--tumble`` icons also ``view_pitch`` and ``view_scale``: Hide's small somersaulting Blupi);
 * ``frames.csv`` — per scene frame: the best icon;
 * ``report.md`` — coverage per icon and per action of mobile-eggbert's ``table_blupi``;
 * ``icons/NNN.png`` — the icon next to its best render, for checking by eye.
@@ -90,6 +92,10 @@ def main(argv=None) -> int:
     ap.add_argument("--sheet", required=True, type=Path)
     ap.add_argument("--reference", required=True, type=Path, help="mobile-eggbert checkout (read only)")
     ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--yaw-step", type=float, default=45.0,
+                    help="degrees between turned views of every frame (0: none)")
+    ap.add_argument("--tumble", default="276,277,278,279,280,281,282,283,284",
+                    help="icons to search also pitched and scaled (default: Hide's)")
     args = ap.parse_args(argv)
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "icons").mkdir(exist_ok=True)
@@ -97,6 +103,7 @@ def main(argv=None) -> int:
     icon_rgb, icon_mask = load_icons(args.sheet)
     n_icons = len(icon_rgb)
     frames = []       # (scene, frame index, tick, rgb, cover)
+    renderers: dict[str, scene_render.SceneRenderer] = {}
     problems = []
     t_start = time.time()
     for path in sorted(list(args.scenes.glob("*.rd4")) + list(args.scenes.glob("*.rds"))):
@@ -111,6 +118,7 @@ def main(argv=None) -> int:
         if scene.find("Corps") is None:
             continue
         renderer = scene_render.SceneRenderer(scene)
+        renderers[path.name] = renderer
         try:
             for k, tick in enumerate(renderer.frame_ticks()):
                 rgb, cover = renderer.render(tick)
@@ -150,6 +158,67 @@ def main(argv=None) -> int:
                 top = (score[j], iou[j], colour[j], j, mirrored)
         frame_best.append(top)
 
+    # Turned views: Blupi seen from other sides (the turn's front views, the switch's back view, the
+    # overcraft's yaw) are the scene frames turned about the vertical through his body. Every
+    # frame is rendered every --yaw-step degrees (not mirrored: a pose must stay a real 3D one);
+    # each icon's best is then refined to an eighth of the step on its frame.
+    view = [None] * n_icons  # (score, iou, colour, frame index, (yaw, pitch, scale))
+    best_view: dict[int, tuple] = {}
+    for icon in range(n_icons):
+        if plain[icon] is not None:
+            view[icon] = (*plain[icon][:4], (0.0, 0.0, 1.0))
+    def try_view(fi, v, only=None):
+        name, _k, tick, _rgb, _cov = frames[fi]
+        renderer = renderers[name]
+        renderer.view = v
+        rgb, cover = renderer.render(tick)
+        renderer.view = None
+        iou, colour = scores(rgb, cover, icon_rgb, icon_mask)
+        score = iou * colour
+        better = score > np.array([x[0] if x else -1 for x in view])
+        if only is not None:
+            better &= np.isin(np.arange(n_icons), only)
+        for icon in np.nonzero(better)[0]:
+            view[icon] = (score[icon], iou[icon], colour[icon], fi, v)
+
+    if args.yaw_step > 0:
+        yaws = [y for y in np.arange(args.yaw_step, 360.0, args.yaw_step)]
+
+        for fi in range(len(frames)):
+            for yaw in yaws:
+                try_view(fi, (float(yaw), 0.0, 1.0))
+        step = args.yaw_step / 2
+        while step >= args.yaw_step / 8:
+            for fi, (yaw, _p, _s) in sorted({(v[3], v[4]) for v in view if v is not None and v[4][0] != 0.0}):
+                for d in (-step, step):
+                    try_view(fi, ((yaw + d) % 360.0, 0.0, 1.0))
+            step /= 2
+        print(f"turned views done in {time.time() - t_start:.0f} s", flush=True)
+    if args.tumble:
+        # Icons drawn smaller and tumbling (Hide: 276-284, a small Blupi somersaulting toward the
+        # viewer): the standing and front views (the frames and yaws best matching icons 0 and 2)
+        # are pitched every 30 degrees about the camera's horizontal axis and scaled 0.4-0.9,
+        # then refined per icon.
+        icons = [int(i) for i in args.tumble.split(",")]
+        seeds = sorted({(view[i][3], view[i][4][0]) for i in (0, 2) if view[i] is not None})
+        for fi, yaw in seeds:
+            for pitch in np.arange(0.0, 360.0, 30.0):
+                for scale in np.arange(0.4, 0.95, 0.1):
+                    try_view(fi, (yaw, float(pitch), float(round(scale, 2))), only=icons)
+        for dp, ds in ((15.0, 0.05), (7.5, 0.025)):
+            for icon in icons:
+                fi, (yaw, pitch, scale) = view[icon][3], view[icon][4]
+                for p in (-dp, 0.0, dp):
+                    for d in (-ds, 0.0, ds):
+                        if p or d:
+                            try_view(fi, (yaw, (pitch + p) % 360.0, scale + d), only=[icon])
+        print(f"tumbling views done in {time.time() - t_start:.0f} s", flush=True)
+    for icon in range(n_icons):
+        if view[icon] is not None and view[icon][4] != (0.0, 0.0, 1.0) and \
+                (best[icon] is None or view[icon][0] > best[icon][0]):
+            best[icon] = (*view[icon][:4], False)
+            best_view[icon] = view[icon][4]
+
     def label(entry):
         _s, _i, _c, fi, mirrored = entry
         name, k, tick, _rgb, _cov = frames[fi]
@@ -159,19 +228,22 @@ def main(argv=None) -> int:
         w = csv.writer(f)
         w.writerow(["icon", "status", "score", "iou", "colour", "scene", "frame", "tick", "mirrored",
                     "runner_up", "runner_up_score", "plain_scene", "plain_frame", "plain_tick",
-                    "plain_score"])
+                    "plain_score", "view_scene", "view_frame", "view_tick", "view_yaw", "view_pitch",
+                    "view_scale", "view_score"])
         for icon in range(n_icons):
             b = best[icon]
             if not icon_mask[icon].any():
-                w.writerow([icon, "empty"] + [""] * 13)
+                w.writerow([icon, "empty"] + [""] * 20)
                 continue
             name, k, tick, _rgb, _cov = frames[b[3]]
             status = "confident" if b[0] >= CONFIDENT else "probable" if b[0] >= PROBABLE else "unmatched"
             pn, pk, pt, _r, _c = frames[plain[icon][3]]
+            vn, vk, vt, _r, _c = frames[view[icon][3]]
             w.writerow([icon, status, f"{b[0]:.3f}", f"{b[1]:.3f}", f"{b[2]:.3f}", name, k, int(tick),
                         int(b[4]), label(second[icon]) if second[icon] else "",
                         f"{second[icon][0]:.3f}" if second[icon] else "",
-                        pn, pk, int(pt), f"{plain[icon][0]:.3f}"])
+                        pn, pk, int(pt), f"{plain[icon][0]:.3f}",
+                        vn, vk, int(vt), *(f"{x:g}" for x in view[icon][4]), f"{view[icon][0]:.3f}"])
     with open(args.out / "frames.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["scene", "frame", "tick", "best_icon", "score", "iou", "colour", "mirrored"])
@@ -185,7 +257,11 @@ def main(argv=None) -> int:
         if not icon_mask[icon].any():
             continue
         _s, _i, _c, fi, mirrored = best[icon]
-        _n, _k, _t, rgb, cover = frames[fi]
+        name, _k, tick, rgb, cover = frames[fi]
+        if icon in best_view:
+            renderers[name].view = best_view[icon]
+            rgb, cover = renderers[name].render(tick)
+            renderers[name].view = None
         if mirrored:
             rgb, cover = rgb[:, ::-1], cover[:, ::-1]
         a = icon_mask[icon][..., None]
