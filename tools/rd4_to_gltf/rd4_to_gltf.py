@@ -212,7 +212,9 @@ class Converter:
 
     def ground_offset(self, t_bind: float):
         groups = self.build_vertices(t_bind)
-        lowest = min(float(item[0][:, 1].min()) for g in groups.values() for item in g)
+        # Props taken from other scenes (add_joint) hang wherever their bind pose puts them.
+        lowest = min(float(item[0][:, 1].min()) for g in groups.values() for item in g
+                     if item[3] not in self.scene_of)
         self.offset = np.array([0.0, -lowest, 0.0])
 
     # ---- animation ----------------------------------------------------------------
