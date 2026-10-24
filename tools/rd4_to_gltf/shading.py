@@ -9,6 +9,8 @@ domains and the remaining channels (highlight, shininess, bump, ...) are not con
 
 from __future__ import annotations
 
+import re
+import unicodedata
 from dataclasses import dataclass
 
 import numpy as np
@@ -504,9 +506,17 @@ def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals
     return np.tile(tex.image, (cntv, cnth, 1)), np.stack([s, np.clip(t, 0.0, 1.0)], axis=1)
 
 
+def ascii_name(name: str) -> str:
+    """``name`` in ASCII letters, digits and ``_.-`` ("Cône" -> "Cone"). Part file names come
+    from material names, and CNA reads a part's file names raw, without decoding the ``\\u``
+    escapes its converter writes for other characters (upstream_bugs.md UB-004)."""
+    plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^A-Za-z0-9_.-]", "_", plain)
+
+
 def textured_material_json(name: str, texture: int) -> dict:
     return {
-        "name": f"rd_tex_{name.replace(' ', '_')}",
+        "name": f"rd_tex_{ascii_name(name)}",
         "pbrMetallicRoughness": {
             "baseColorTexture": {"index": texture},
             "metallicFactor": 0.0,

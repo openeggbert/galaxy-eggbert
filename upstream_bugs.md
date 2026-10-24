@@ -94,6 +94,25 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   glTF's counter-clockwise order (its `docs/gltf-conventions.md`, GLTF-423), so only the avatar
   converter flips.
 
+## UB-004 — CNA: `.skinnedmodel.json` part file names are read without decoding JSON escapes
+
+- **Repository:** `../../libcna/cna` (seen at `ba707082e`, 2026-10-24).
+- **Observed:** a part named after a Ray Dream texture "Cône" made the game abort at load:
+  `ContentLoadException: Cannot open binary file: .../bd_enfant01_enfant01/bd_enfant01_rd_tex_p04_C/u00f4ne.verts.bin`.
+  CNA's own `tools/avatar_asset_pipeline/convert_avatar.py` writes the manifest with Python's
+  `json.dump` defaults, so non-ASCII characters become `\u00f4` escapes, while the files on
+  disk keep the real name (`..._Cône.verts.bin`). The skinned-model reader takes the part's
+  `vertices`/`indices`/`texture` strings with `ExtractJsonStringField`
+  (`modules/content/src/Xna/BuiltinContentLoaders.cpp`), which returns the raw characters
+  between the quotes without decoding escapes; the backslash then reads as a path separator.
+  CNA's real JSON parser (`CNA/Internal/Json.hpp`) does decode `\uXXXX`.
+- **Reproduce:** convert any glTF whose mesh name has a non-ASCII character with
+  `convert_avatar.py`, load the directory with `SkinnedModelEXT`.
+- **Workaround here:** the converter gives materials, and so meshes and part files, ASCII-only
+  names (`shading.ascii_name`: "Cône" -> "Cone"), 2026-10-24.
+- **Fix upstream (suggested):** read those fields with `ParseJson` (or decode escapes in
+  `ExtractJsonStringField`), or have `convert_avatar.py` write `ensure_ascii=False`.
+
 ## Recorded elsewhere
 
 These upstream problems were found earlier and are documented in other files; they are listed
