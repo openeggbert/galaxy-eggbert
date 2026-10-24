@@ -832,7 +832,9 @@ be converted one at a time.
       icons 12-20 IoU 0.88-0.98; the hanging mine's 48-56 are exactly 12-20 flipped upside
       down (a sprite flip about the icon's centre line, half a pixel off the camera axis:
       `kFlipShift`), drawn as the mine flipped. 18 icons, 0.943 mean (2026-10-24).
-- [ ] `BB3D-035` Bulldozer and flying robot (4, `robot-profil.rd4`, `tracks-profil.rd4`).
+- [x] `BB3D-035` (first listing) Bulldozer and flying robot: the bulldozer is done (below);
+      `Blupi/robot-profil.rd4` is the best source of no element.png icon in the survey
+      (`build-probe/rd4-survey/element_icons.csv`), so no object draws a robot (2026-10-24).
 - [x] `BB3D-036` Wasp (44, icons 195-207): rendered by `Caméra 2` (0 with `Caméra Jeu`);
       `guepe.rd4` 8 icons 0.955 (its flap's last pose is the scene's end key),
       `guepe-tourne.rd4` 5 icons 0.961.
