@@ -837,7 +837,11 @@ be converted one at a time.
       only the ball (0.544); the orange sparks around it, most of the sprite, are an effect.
 
 **Stage 5 — animated decor objects**
-- [ ] `BB3D-040` Tentacle (53, `Decor/tentacule/*.rds`; needs `BB3D-003`/`005`).
+- [x] `BB3D-040` Tentacle (53, explo.png icons 70-86): one Studio 5 scene per icon
+      (`Decor/tentacule/tenta01-17.rds`), 0.973-0.994, once icons are compared in their own
+      square: explo.png's icons are the top-left 64/128/144-pixel square of their 144-pixel
+      cells (`survey.EXPLO_ICON_HEIGHTS`, mobile-eggbert's `table_explo_size`); `icons.txt`
+      now carries the icon's size in pixels (2026-10-24).
 - [ ] `BB3D-041` Electric arc (38, `Decor/electro.rd4`, `eclair.rd4`).
 - [ ] `BB3D-042` Door (22, `Decor/porte*.rd4`).
 - [ ] `BB3D-043` Drops (`Decor/goutte/*.rds`) and the cloud puff (36, `Explo/nuage.rds`).

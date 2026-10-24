@@ -28,13 +28,16 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   (`BB3D-031`, right-handed free-form sections, the scene's end key), the fish (`BB3D-032`,
   head a little large), the bulldozer with its striped blade and icon 68 (`BB3D-035`), the
   decoys (types 200-203: the mine in yellow and green, `BB3D-060`), the lollipop pickup
-  (meridian cylinder mapping, ring caps): 30 models, 204 icons. The game also draws BigDecor
+  (meridian cylinder mapping, ring caps), the tentacle (17 scenes, `BB3D-040`): 47 models,
+  221 icons. explo.png icons are their cell's top-left 64/128/144-pixel square
+  (`survey.EXPLO_ICON_HEIGHTS`); the explo survey must be re-run with that (it was stopped). The game also draws BigDecor
   cells whose explo.png icon has a model (none yet), standing on the cell's floor at the
   original's size (144 px = 2.25 blocks, where the billboard is 1 block) - check with the
   user that this size is wanted. The shield stays a billboard (its sparks are an effect). Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
   icons, treasure, exit).
-- **Next:** Stage 6 big decor (explo.png survey running: `build-probe/rd4-survey/explo.log`),
-  Stage 5 decor objects (tentacle on explo.png 70-86), the fish's head (`BB3D-032`). The
+- **Next:** Stage 6 big decor: re-run `survey.py icons --sheet .../explo.png` (folders
+  `Explo,Decor,Back,Blupi,.`) or try the `Explo/` scenes directly in `objects-try`; then the
+  fish's head (`BB3D-032`), the charge's source (object-m survey). The
   Blupi library re-run must be redone once more after this commit (cylinder caps and the
   meridian mapping change the lollipop Blupi holds). Trial runs go to `build-probe/rd4-objects-try` with a scratch
   objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (results in

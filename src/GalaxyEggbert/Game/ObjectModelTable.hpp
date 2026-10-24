@@ -16,7 +16,7 @@ namespace GalaxyEggbert::Game
     // 1 left-right, 2 upside down: the hanging mine is the mine's sprite flipped) and the yaw
     // it was turned by:
     //
-    //     icon <sheet> <icon> <seconds> <mirror 0|1|2> <yaw degrees> <iou>
+    //     icon <sheet> <icon> <seconds> <mirror 0|1|2> <yaw degrees> [<iou> [<icon pixels>]]
     //
     // Sheets are named after their PNGs (element, object-m, explo, blupi, blupi1). The game keeps
     // choosing every object's icon exactly as before; an icon listed here is drawn as its model
@@ -28,6 +28,7 @@ namespace GalaxyEggbert::Game
         float seconds = 0.0f;     // time in the model's "Frames" clip
         int mirror = 0;           // after the yaw: 0 none, 1 left-right, 2 upside down
         float yawDegrees = 0.0f;  // turn about +Y, +Z toward +X (XNA's CreateRotationY)
+        int iconPixels = 0;       // the icon's square in game pixels (64 a block), 0 if not given
     };
 
     // A flipped icon is the sprite image flipped about its centre line, which is half a pixel

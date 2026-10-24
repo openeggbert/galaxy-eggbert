@@ -4173,13 +4173,13 @@ namespace GalaxyEggbert::CNA
             // yaw and flipped as the icon is (left-right or upside down,
             // about the sprite's centre line: kFlipShift). A model is in
             // blocks with its sprite's view toward +Z, as the parked vehicles
-            // are. BigDecor cells with a model stand on their cell's floor:
-            // an explo.png icon is 144 game pixels, 2.25 blocks, drawn 1:1
-            // in the original (Pixmap.cpp), where the billboard is 1 block.
+            // are. BigDecor cells with a model stand on their cell's floor at
+            // the original's size: an explo.png icon is 64, 128 or 144 game
+            // pixels (icons.txt), drawn 1:1 in the original (Pixmap.cpp),
+            // where the billboard is 1 block.
             if (blupiEffect_ && !objectModels_.empty())
             {
                 constexpr float kDegrees = 3.14159265358979f / 180.0f;
-                constexpr float kExploIconHalfBlocks = 144.0f / 64.0f / 2.0f;
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiEffect_->setViewProperty(camera_.View());
                 blupiEffect_->setProjectionProperty(camera_.Projection());
@@ -4231,7 +4231,8 @@ namespace GalaxyEggbert::CNA
                     const ObjectModelPose* pose = objectModelTable_.Find(ObjectTextureSource::Explo, cell.icon);
                     if (pose != nullptr)
                     {
-                        drawModel(*pose, cell.worldX, cell.worldY - 0.5f + kExploIconHalfBlocks, cell.worldZ);
+                        const float halfBlocks = static_cast<float>(pose->iconPixels > 0 ? pose->iconPixels : 128) / 128.0f;
+                        drawModel(*pose, cell.worldX, cell.worldY - 0.5f + halfBlocks, cell.worldZ);
                     }
                 }
                 device.setRasterizerStateProperty(

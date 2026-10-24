@@ -38,6 +38,20 @@ GRIDS = {"element": (60, 60, 0), "blupi": (60, 60, 0), "blupi1": (60, 60, 0),
          "explo": (144, 144, 0), "object-m": (64, 65, 1)}
 
 
+# explo.png's icons are not its 144-pixel cells: each is the top-left square of its cell, as
+# tall as mobile-eggbert's Tables::table_explo_size says (64, 128 or 144 game pixels, drawn 1:1;
+# Pixmap.cpp), the sprite's camera frame rendered at that height and cropped to a centred
+# square (the tentacle's pixels lie in the cell's top-left 64 x 64, the big decor's in 128 x 128).
+EXPLO_ICON_HEIGHTS = [128] * 60 + [64] * 6 + [144] * 3 + [128] + [64] * 17 + [128] * 3 + [64] * 10
+
+
+def icon_size(sheet: str, icon: int) -> int:
+    """Pixel size of an icon's square: the sheet's grid, or explo.png's per-icon heights."""
+    if sheet == "explo":
+        return EXPLO_ICON_HEIGHTS[icon] if 0 <= icon < len(EXPLO_ICON_HEIGHTS) else GRIDS[sheet][0]
+    return GRIDS[sheet][0]
+
+
 def load_sheet(sheet: Path, grid: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray]:
     """(rgb (n, size, size, 3), mask (n, size, size)) of every icon of a sheet, row-major."""
     size, pitch, origin = grid
@@ -100,6 +114,10 @@ def survey_icons(originals: Path, sheet: Path, out: Path, folders: list[str], ma
             if r["status"] == "ok" and r["blupi"] == "0" and r["folder"] in folders]
     icon_rgb, icon_mask = load_sheet(sheet, grid)
     best: list[tuple | None] = [None] * len(icon_rgb)
+    # Icons are compared in their own square (explo.png: per-icon sizes), one render per size.
+    sizes: dict[int, list[int]] = {}
+    for i in range(len(icon_rgb)):
+        sizes.setdefault(icon_size(sheet.stem, i) if sheet.stem in GRIDS else grid[0], []).append(i)
     for r in rows:
         path = originals / r["file"] if r["folder"] == "." else originals / r["folder"] / r["file"]
         s = sc.read_scene(rd4.parse_file(path))
@@ -113,14 +131,17 @@ def survey_icons(originals: Path, sheet: Path, out: Path, folders: list[str], ma
                 continue
             try:
                 for k, t in enumerate(ticks[:max_frames]):
-                    rgb, cov = renderer.render(t, size=grid[0])
-                    for mirrored in (False, True):
-                        rg, cv = (rgb[:, ::-1], cov[:, ::-1]) if mirrored else (rgb, cov)
-                        iou, col = match_icons.scores(rg, cv, icon_rgb, icon_mask)
-                        score = iou * col
-                        current = np.array([b[0] if b else -1.0 for b in best])
-                        for i in np.nonzero(score > current)[0]:
-                            best[i] = (score[i], iou[i], col[i], f"{r['folder']}/{r['file']}", k, cam, mirrored)
+                    for size, members in sizes.items():
+                        rgb, cov = renderer.render(t, size=size)
+                        for mirrored in (False, True):
+                            rg, cv = (rgb[:, ::-1], cov[:, ::-1]) if mirrored else (rgb, cov)
+                            iou, col = match_icons.scores(rg, cv, icon_rgb[members][:, :size, :size],
+                                                          icon_mask[members][:, :size, :size])
+                            score = iou * col
+                            current = np.array([best[i][0] if best[i] else -1.0 for i in members])
+                            for j in np.nonzero(score > current)[0]:
+                                best[members[j]] = (score[j], iou[j], col[j], f"{r['folder']}/{r['file']}", k, cam,
+                                                    mirrored)
             except Exception as e:  # noqa: BLE001 -- keep surveying the other scenes
                 print("skip", r["file"], cam, type(e).__name__, e)
         print(r["file"], flush=True)

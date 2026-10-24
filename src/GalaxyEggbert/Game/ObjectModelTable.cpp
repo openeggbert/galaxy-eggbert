@@ -47,6 +47,12 @@ namespace GalaxyEggbert::Game
                 }
                 return false;
             }
+            float iou = 0.0f;
+            int pixels = 0;
+            if (in >> iou && in >> pixels && pixels > 0)
+            {
+                pose.iconPixels = pixels;
+            }
             poses_[Key(sheet, icon)] = pose;
         }
         return true;

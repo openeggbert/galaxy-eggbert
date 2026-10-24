@@ -40,3 +40,5 @@ helicopter  element 68      Blupi/helico-seul2.rd4
 # Types 200-203 (the decoys, blupi.png / blupi1.png icons 257-262): the mine in Blupi's colours.
 decoy       blupi   257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>1,1,0
 decoygreen  blupi1  257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>0.5,1,0
+# The tentacle (type 53, explo.png icons 70-86, 64 game pixels each): one Studio 5 scene per icon.
+tentacle    explo   70-86   Decor/tentacule/tenta01.rds,Decor/tentacule/tenta02.rds,Decor/tentacule/tenta03.rds,Decor/tentacule/tenta04.rds,Decor/tentacule/tenta05.rds,Decor/tentacule/tenta06.rds,Decor/tentacule/tenta07.rds,Decor/tentacule/tenta08.rds,Decor/tentacule/tenta09.rds,Decor/tentacule/tenta10.rds,Decor/tentacule/tenta11.rds,Decor/tentacule/tenta12.rds,Decor/tentacule/tenta13.rds,Decor/tentacule/tenta14.rds,Decor/tentacule/tenta15.rds,Decor/tentacule/tenta16.rds,Decor/tentacule/tenta17.rds
