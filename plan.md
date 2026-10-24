@@ -786,8 +786,8 @@ be converted one at a time.
 - [x] `BB3D-021` Extra-life egg (6, `Blupi/oeuf.rd4`): the scene is still, the sprites spin;
       matched turned (yaw): 8 icons, 0.953 mean, 0.919 min.
 - [x] `BB3D-022` Level exit (7, `Blupi/fleche.rd4`, turned): 8 icons, 0.943 mean, 0.903 min.
-- [x] `BB3D-023` Drink (30, `Blupi/bouteille.rd4`, 0.871; its cap renders red, grey in the
-      sprite), ammo pack (29, `munitions-glu.rd4`, 0.992), enemy projectile (23,
+- [x] `BB3D-023` Drink (30, `Blupi/bouteille.rd4`, 0.871; its cap, a mix of one grey and a
+      texture map, rendered in the red placeholder until 2026-10-24, now grey as in the sprite), ammo pack (29, `munitions-glu.rd4`, 0.992), enemy projectile (23,
       `balle-glu.rd4`, 0.995).
 - [x] `BB3D-024` Keys and secret exit (49-51, 21): `cle1/2/3.rd4` (red, green, blue keys,
       icons 209-229) and `cle.rd4` (the gold key, 122-128), each 7 icons, 0.962 mean, with
