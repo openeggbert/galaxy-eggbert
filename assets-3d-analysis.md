@@ -81,7 +81,8 @@ what their icons show:
   archive's root;
 - keys and the secret exit (types 49-51, 21): `cle*.rd4`; shield (25): `shield1/2.rd4`; lollipop
   pickup (26): `sucette.rd4`; invert sign (40): `panneau-invert.rd4`; dynamite (55, 56):
-  `Decor/dynamite.rd4`; charge (31): `Element/power.rds`;
+  `Decor/dynamite.rd4`; charge (31, object-m.png 238-243): not found yet (`Element/power.rds`,
+  first named here, is an icosahedron);
 - tentacle (53): `Decor/tentacule/*.rds`; electric arc (38): `Decor/electro.rd4`, `eclair.rd4`;
   door (22): `Decor/porte*.rd4`; drops and splashes: `Decor/goutte/*.rds`; cloud puff (36):
   `Explo/nuage.rds`.

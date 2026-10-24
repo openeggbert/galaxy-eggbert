@@ -4,10 +4,10 @@
 it parses, whether it contains Blupi, its object and frame counts, its master kinds, the masters
 the converter cannot build (``tag:exception``) and its cameras.
 
-``icons`` renders every parsed scene without Blupi (of ``--folders``) with each of its cameras,
-the first ``--frames`` frames, straight and mirrored, and keeps for every icon of ``--sheet`` the
-best render by IoU x colour score; it writes ``<sheet>_icons.csv`` (icon, score, IoU, colour,
-scene, frame, camera, mirrored). Cameras the renderer does not take (perspective) are skipped.
+``icons`` renders every parsed scene without Blupi (of ``--folders``) with each of its
+orthographic cameras, the first ``--frames`` frames, straight and mirrored, at the sheet's icon
+size (``GRIDS``), and keeps for every icon of ``--sheet`` the best render by IoU x colour score;
+it writes ``<sheet>_icons.csv`` (icon, score, IoU, colour, scene, frame, camera, mirrored).
 
     python3 tools/rd4_to_gltf/survey.py scenes --originals ../speedyblupi-data/originals \\
         --out build-probe/rd4-survey
@@ -23,12 +23,30 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 
 import geometry
 import match_icons
 import rd4
 import scene as sc
 import scene_render
+
+
+# Icon grids of the sprite sheets (icon size, pitch, first icon's offset), as the game reads them
+# (ObjectIcons.cpp, BlockTypes.hpp tileUV).
+GRIDS = {"element": (60, 60, 0), "blupi": (60, 60, 0), "blupi1": (60, 60, 0),
+         "explo": (144, 144, 0), "object-m": (64, 65, 1)}
+
+
+def load_sheet(sheet: Path, grid: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray]:
+    """(rgb (n, size, size, 3), mask (n, size, size)) of every icon of a sheet, row-major."""
+    size, pitch, origin = grid
+    img = np.array(Image.open(sheet).convert("RGBA")).astype(np.float64) / 255.0
+    cols = (img.shape[1] - origin + pitch - size) // pitch
+    rows = (img.shape[0] - origin + pitch - size) // pitch
+    tiles = np.stack([img[origin + r * pitch:origin + r * pitch + size, origin + c * pitch:origin + c * pitch + size]
+                      for r in range(rows) for c in range(cols)])
+    return tiles[..., :3], tiles[..., 3] > 0.5
 
 
 def folder_of(path: Path, originals: Path) -> str:
@@ -76,10 +94,11 @@ def survey_scenes(originals: Path, out: Path) -> None:
     print(f"{len(files)} scenes -> {out / 'scenes.csv'}")
 
 
-def survey_icons(originals: Path, sheet: Path, out: Path, folders: list[str], max_frames: int) -> None:
+def survey_icons(originals: Path, sheet: Path, out: Path, folders: list[str], max_frames: int,
+                 grid: tuple[int, int, int]) -> None:
     rows = [r for r in csv.DictReader(open(out / "scenes.csv"))
             if r["status"] == "ok" and r["blupi"] == "0" and r["folder"] in folders]
-    icon_rgb, icon_mask = match_icons.load_icons(sheet)
+    icon_rgb, icon_mask = load_sheet(sheet, grid)
     best: list[tuple | None] = [None] * len(icon_rgb)
     for r in rows:
         path = originals / r["file"] if r["folder"] == "." else originals / r["folder"] / r["file"]
@@ -94,7 +113,7 @@ def survey_icons(originals: Path, sheet: Path, out: Path, folders: list[str], ma
                 continue
             try:
                 for k, t in enumerate(ticks[:max_frames]):
-                    rgb, cov = renderer.render(t)
+                    rgb, cov = renderer.render(t, size=grid[0])
                     for mirrored in (False, True):
                         rg, cv = (rgb[:, ::-1], cov[:, ::-1]) if mirrored else (rgb, cov)
                         iou, col = match_icons.scores(rg, cv, icon_rgb, icon_mask)
@@ -124,13 +143,17 @@ def main() -> None:
     ap.add_argument("--folders", default="Blupi,.,Element,Icon",
                     help="comma-separated folders whose scenes the icons survey renders")
     ap.add_argument("--frames", type=int, default=24, help="frames rendered per scene and camera")
+    ap.add_argument("--grid", help="icon size,pitch,offset of the sheet (default: by its name, GRIDS)")
     a = ap.parse_args()
     if a.what == "scenes":
         survey_scenes(a.originals, a.out)
     else:
         if a.sheet is None:
             ap.error("icons needs --sheet")
-        survey_icons(a.originals, a.sheet, a.out, a.folders.split(","), a.frames)
+        grid = tuple(int(x) for x in a.grid.split(",")) if a.grid else GRIDS.get(a.sheet.stem)
+        if grid is None:
+            ap.error(f"no known grid for {a.sheet.name}; pass --grid")
+        survey_icons(a.originals, a.sheet, a.out, a.folders.split(","), a.frames, grid)
 
 
 if __name__ == "__main__":

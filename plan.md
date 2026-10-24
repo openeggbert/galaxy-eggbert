@@ -735,8 +735,14 @@ be converted one at a time.
 - [x] `BB3D-003` Mesh-form masters `vmda` (83: creatures, tentacles, drops, lava, the palace):
       a polygon mesh in `xprm/PmSt/Pmsh`, scene units, hot point as usual (`geometry.mesh_form`).
       With the camera offset below, `creature1-5.rds` match icons 247-251 at IoU 0.978-0.998.
-- [ ] `BB3D-004` Star masters `COFA` (2) and the 18 free-form `ex` variants that fail
-      (`IndexError`); fog `fogg` (1) is skipped, text `tx` (14, menus only) is out of scope.
+- [x] `BB3D-004` The 18 failing free-forms: a path whose first point has no cross-section
+      takes the first one defined (`Explo/maison.rd4`'s chair), a stray start point without
+      segments is not a loop (`Decor/meca*`). Explicit meshes (`im`) without normals or
+      texture coordinates (`nr 0`, `uv 0`: `Element/power.rds`) read; the "second triple" of
+      `blupi-scie.rds` is the normal (`nr 1`). Left on purpose: stars `COFA` (only the terrain
+      tiles `Decor/enfant16/17`, drawn as voxels), fog `fogg` (`Explo/nuage.rds`, volumetric,
+      the cloud puff stays a billboard), 3D text `tx` (menus). All big decor scenes now build;
+      their procedural textures (palm trunk, metal) are still missing (`BB3D-050`).
 - [x] `BB3D-005` The 28 Ray Dream Studio 5 files that did not read (`Decor/goutte` g1-g7,
       `Decor/tentacule` p01-p17, `smooth` a/a1/a2, `palais` a): they have no render settings
       (`RSet`), so no frame range; read as one still frame. They are shape libraries without
@@ -750,9 +756,10 @@ be converted one at a time.
       overcraft's scenes (`aero-*.rd4`) have `ofst -8.50,0.85`, which the library's camera
       alignment ignored; may explain the overcraft's 0.74-0.76. Regenerate `avatars3d/blupi`
       (its README) and compare the per-clip IoU before committing.
-- [ ] `BB3D-007` Re-run the survey (`scenes.csv`) and the element icon matching
-      (`element_icons.csv`) with all of the above; record per object type the best scene and
-      IoU in `assets-3d-analysis.md`.
+- [ ] `BB3D-007` Re-run the survey (`scenes.csv`) and the icon matching for every sheet the
+      objects use (`survey.py icons --sheet` element, object-m, explo; the sheets' grids are in
+      `survey.GRIDS`) with all of the above; record per object type the best scene and IoU in
+      `assets-3d-analysis.md`.
 
 **Stage 2 — game-side object models**
 - [ ] `BB3D-010` Object model library: a converter script (per object: scene(s), icon → frame
@@ -774,7 +781,8 @@ be converted one at a time.
 - [ ] `BB3D-024` Keys and secret exit (49-51, 21, `cle*.rd4`; needs `BB3D-006`).
 - [ ] `BB3D-025` Shield (25, `shield1/2.rd4`), lollipop pickup (26, `sucette.rd4`), invert sign
       (40, `panneau-invert.rd4`), dynamite (55, 56, `Decor/dynamite.rd4`), charge (31,
-      `Element/power.rds`).
+      object-m.png icons 238-243, a grey ball on a blue spring with sparks: source not found
+      yet; `Element/power.rds` is an icosahedron, not it).
 
 **Stage 4 — animated enemies** (clips per icon table, as Blupi's)
 - [ ] `BB3D-030` Check types 32 and 33 against mobile-eggbert (code names "blupih"/"blupit" vs

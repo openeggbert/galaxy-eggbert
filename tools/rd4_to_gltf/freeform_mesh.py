@@ -90,7 +90,9 @@ def _section(pv: rd4.Chunk) -> list[Loop]:
         for it in c.items:
             if isinstance(it, rd4.Chunk):
                 if it.tag == "p2":
-                    loops.append(_loop(it))
+                    loop = _loop(it)
+                    if len(loop.points) >= 3:  # a stray start point without segments (Decor/meca*)
+                        loops.append(loop)
                 else:
                     walk(it)
     walk(pv)
@@ -180,12 +182,17 @@ def tessellate(master: rd4.Chunk) -> FreeformMesh:
     for s in saps:
         if s.chunk("cs") is not None and s.chunk("cs").leaf("twst", "0") != "0":
             raise NotImplementedError("twisted sweeps")
-    # A point's cross-section, or the previous one's ("oo 1": same as before).
+    # A point's cross-section, or the previous one's ("oo 1": same as before). Points before the
+    # first one with a section take that section (maison.rd4's chair "Seat" starts without one).
     sections = []
     for s in saps:
         cs = s.chunk("cs")
         pv = cs.chunk("pv") if cs is not None else None
-        sections.append(_orient(_section(pv)) if pv is not None else sections[-1])
+        sections.append(_orient(_section(pv)) if pv is not None else sections[-1] if sections and sections[-1] else None)
+    first = next((sec for sec in sections if sec is not None), None)
+    if first is None:
+        raise NotImplementedError("free-form without a cross-section")
+    sections = [first if sec is None else sec for sec in sections]
     distinct = list({id(sec): sec for sec in sections}.values())
     if len(distinct) > 1:
         unified = dict(zip((id(sec) for sec in distinct), _common_topology(distinct)))
