@@ -1,0 +1,50 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "bird_rd_ffffff",
+      "vertices": "bird_rd_ffffff.verts.bin",
+      "indices": "bird_rd_ffffff.idx.bin",
+      "vertexStride": 52,
+      "texture": "bird_rd_ffffff.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bird_rd_000000",
+      "vertices": "bird_rd_000000.verts.bin",
+      "indices": "bird_rd_000000.idx.bin",
+      "vertexStride": 52,
+      "texture": "bird_rd_000000.png",
+      "diffuseColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "bird_rd_00bffd",
+      "vertices": "bird_rd_00bffd.verts.bin",
+      "indices": "bird_rd_00bffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "bird_rd_00bffd.png",
+      "diffuseColor": [
+        0.0,
+        0.5225215539683921,
+        0.9909246121188983,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

@@ -166,6 +166,11 @@ def ortho_cameras(scene: sc.Scene, wanted: str | None) -> list[str]:
 def setup_scene(scene: sc.Scene, camera: str) -> SceneSetup:
     renderer = scene_render.SceneRenderer(scene, camera)
     ticks = renderer.frame_ticks()
+    # The scene's end too: Ray Dream renders up to before it, but the bird's raised wings
+    # (icons 96, 97, 104, 105) are its last key's pose (IoU 0.83-0.95 there, 0.67-0.72 at the
+    # last rendered frame).
+    if scene.end > ticks[-1] + 1e-6:
+        ticks = ticks + [scene.end]
     setup = SceneSetup(scene, camera, ticks, [])
     seen = set()
     for f, tick in enumerate(ticks):

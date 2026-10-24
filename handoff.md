@@ -24,18 +24,21 @@ Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Backgr
   treasure, egg, exit, drink, ammo, projectile (`BB3D-020`-`023`), the creature with and
   without eyes (`BB3D-038`, needed `xyzS`), the mines incl. the hanging one (`BB3D-034`), the
   wasp (`BB3D-036`), the follow enemies (`BB3D-033`), the keys and secret exit (`BB3D-024`),
-  the dynamite, the moving mine (`BB3D-037`), the invert sign (cube textures): 23 models,
-  129 icons. Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
+  the dynamite, the moving mine (`BB3D-037`), the invert sign (cube textures), the bird
+  (`BB3D-031`, right-handed free-form sections, the scene's end key): 24 models, 161 icons. Checked live under Xvfb with `--golden-capture` (world 999: eggs incl. flipped
   icons, treasure, exit).
-- **Next:** the lollipop's cap mapping (`BB3D-025`), `BB3D-031` bird, `BB3D-032` fish (body),
+- **Next:** the lollipop's cap mapping (`BB3D-025`), `BB3D-032` fish (body; retry with the new
+  conventions),
   `BB3D-035` bulldozer (blade), shield (`BB3D-025`), Stage 5 decor objects, Stage 6 big
   decor, Stage 7 other Blupis. Trial runs go to `build-probe/rd4-objects-try` with a scratch
   objects file, so only verified objects enter `tools/rd4_to_gltf/objects.txt` (results in
   `plan.md`). Unknown sources: `survey.py icons` (element done:
   `build-probe/rd4-survey/element_icons.csv`; object-m and explo not run yet).
 - **Pending check:** `BB3D-008` (Blupi's library with the camera offset, and `xyzS`, which
-  `blupi-scie.rds`, Clear4's scene, uses): a matching re-run was started in the background
-  before `xyzS`; when it ends, rebuild the clip library and compare
+  `blupi-scie.rds`, Clear4's scene, uses, and the right-handed free-form sections): the
+  matching re-run (with `ofst`, before `xyzS` and the sections) gave 145 confident / 61
+  probable / 25 unmatched icons (was 121 / 76 / 34; the overcraft and the hanging bar now
+  match). Rebuild the clip library with the current converter and compare
   `build-probe/rd4-blupi/library/clips.md` with the copy saved before (scratchpad
   `before-ofst/`, overcraft and Clear4 rows); re-run the matching if Clear4 changes.
 - **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing

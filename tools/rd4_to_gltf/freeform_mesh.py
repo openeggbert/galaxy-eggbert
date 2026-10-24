@@ -257,7 +257,11 @@ def tessellate(master: rd4.Chunk) -> FreeformMesh:
         ax /= np.linalg.norm(ax)
         bx = np.cross(ax, tan)
         for loop in section:
-            a = loop.points[:, 0] * np.where(loop.points[:, 0] < 0, sc["l"], sc["r"])
+            # The section's x, its y and the path's tangent form a right-handed frame: the
+            # bird's body (oiseau.rd4), a side profile swept through its thickness, has its head
+            # under its eyes only so (side icons 90-105 IoU 0.854 against 0.742); Blupi's
+            # symmetric sections do not tell (marche-profil 0.9806 either way).
+            a = -loop.points[:, 0] * np.where(loop.points[:, 0] < 0, sc["l"], sc["r"])
             b = loop.points[:, 1] * np.where(loop.points[:, 1] > 0, sc["t"], sc["b"])
             positions.extend(center + np.outer(a, ax) + np.outer(b, bx))
             uv.extend(np.stack([loop.us, np.full(len(loop.us), p)], axis=1))

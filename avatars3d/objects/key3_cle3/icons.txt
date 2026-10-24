@@ -6,4 +6,4 @@ icon element 225 0.1000 0 0 0.945
 icon element 226 0.1500 0 0 0.946
 icon element 227 0.2000 0 0 0.945
 icon element 228 0.2500 0 0 0.961
-icon element 229 0.0000 0 0 0.976
+icon element 229 0.3000 0 0 0.978

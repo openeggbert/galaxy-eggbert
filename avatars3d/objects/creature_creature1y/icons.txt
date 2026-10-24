@@ -4,4 +4,4 @@ icon element 242 0.0000 0 0 0.990
 icon element 243 0.0500 0 0 0.993
 icon element 244 0.1000 0 0 0.999
 icon element 245 0.1500 0 0 0.994
-icon element 246 0.1000 1 0 0.877
+icon element 246 0.2000 0 0 0.998

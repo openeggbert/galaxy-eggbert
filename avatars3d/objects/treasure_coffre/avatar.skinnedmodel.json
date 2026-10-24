@@ -39,6 +39,19 @@
         0.0,
         1.0
       ]
+    },
+    {
+      "name": "treasure_rd_810000",
+      "vertices": "treasure_rd_810000.verts.bin",
+      "indices": "treasure_rd_810000.idx.bin",
+      "vertexStride": 52,
+      "texture": "treasure_rd_810000.png",
+      "diffuseColor": [
+        0.2224661538246206,
+        0.0,
+        0.0,
+        1.0
+      ]
     }
   ],
   "animations": [

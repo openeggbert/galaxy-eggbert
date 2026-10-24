@@ -27,3 +27,6 @@ dynamite    element 252-253 Decor/dynamite.rd4
 invert      element 187-194 Blupi/panneau-invert.rd4
 # Type 16's icons 69-77: the moving mine.
 movingmine  element 69-77   Blupi/bombe-move.rd4
+# The bird: free-form sections are right-handed (its profile's head under its eyes), and its
+# raised wings are the scene's last key (the builder adds the end frame).
+bird        element 90-121  Blupi/oiseau.rd4 yaw=15
