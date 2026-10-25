@@ -4,15 +4,17 @@ every treasure, key and egg and to the exit?
 
 Searches the voxel grid with moves Blupi certainly has (BlupiController): walk to a neighbour
 cell, step off an edge and fall, jump (up to two blocks up, or across a gap of up to two cells,
-needing headroom), ride a platform lift between its two ends. Hub doors (the bars 182/183)
-count as open: they open as the player progresses. In a hub every sign must be reachable too.
-Block classes come from
-tools/data/blocks.csv (BlockDefinitionRegistry; DumpBlockDefinitions keeps it current): a cell
-is free when it holds air, water, a fan or a teleporter, or a block whose collision mask is
-empty; it is a floor when the block below is solid. Cells holding or standing on a hazard
-(lava, spikes, crusher, saw, blitz, drip) and cells next to mines and enemies are avoided. A
-world can be more reachable than this says (dynamite, vehicles, crates, springs, teleporters
-are not modelled yet); when it says reachable, the route exists.
+needing headroom, the arc's columns free at the apex's feet and head), ride a platform lift
+between its two ends, take a teleporter (standing under one of its pillars he arrives one cell
++Z of the cell under the other pillar of the same icon, as WorldRuntime::FindTeleportDestination
+places him). Hub doors (the bars 182/183) count as open: they open as the player progresses. In
+a hub every sign must be reachable too. Block classes come from tools/data/blocks.csv
+(BlockDefinitionRegistry; DumpBlockDefinitions keeps it current): a cell is free when it holds
+air, water, a fan or a teleporter, or a block whose collision mask is empty; it is a floor when
+the block below is solid. Cells holding or standing on a hazard (lava, spikes, crusher, saw,
+blitz, drip) and cells next to mines and enemies are avoided. A world can be more reachable than
+this says (dynamite, vehicles, crates, springs are not modelled yet); when it says reachable,
+the route exists.
 
     python3 tools/levelcheck.py worlds3d/world011.vwr [...]
 """
@@ -121,8 +123,25 @@ def lift_links(grid: Grid):
     return links
 
 
+def teleport_links(grid: Grid):
+    """Under a teleporter pillar -> one cell +Z of the cell under its partner (same icon)."""
+    pillars = collections.defaultdict(list)
+    for p, icon in grid.cells.items():
+        if grid.blocks.get(icon, grid.blocks[0])["teleporter"]:
+            pillars[icon].append(p)
+    links = collections.defaultdict(set)
+    for cells in pillars.values():
+        for a in cells:
+            for b in cells:
+                if a != b:
+                    links[(a[0], a[1] - 1, a[2])].add((b[0], b[1] - 1, b[2] + 1))
+    return links
+
+
 def reachable(grid: Grid, start):
     links = lift_links(grid)
+    for cell, targets in teleport_links(grid).items():
+        links[cell] |= targets
     seen = {start}
     queue = collections.deque([start])
     axis = [(1, 0), (-1, 0), (0, 1), (0, -1)]
@@ -144,7 +163,10 @@ def reachable(grid: Grid, start):
             for dx, dz in axis:
                 for dist in (1, 2):
                     tx, tz = x + dx * dist, z + dz * dist
-                    path_ok = all(grid.free((x + dx * k, y + up + 1, z + dz * k)) for k in range(1, dist + 1))
+                    # At the apex his feet are at y + up: the arc's columns need room there and
+                    # a cell above (a wall three high between two floors is no jump).
+                    path_ok = all(grid.free((x + dx * k, y + h, z + dz * k))
+                                  for k in range(1, dist + 1) for h in (up, up + 1))
                     if not path_ok:
                         continue
                     for ty in range(y + up, y - 6, -1):
