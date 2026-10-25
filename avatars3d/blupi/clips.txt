@@ -33,6 +33,8 @@ clip StopSurf 0 0 0 0 0 0 0 0 0 0 0 0
 clip MarchSurf 0 0 0 0 0 0 0 0 0 0 0 0
 clip Hide 0 0 0 0 0 0 0 0 0
 clip Push 0 0 0 0 0 0
+clip StopPop 0 0 0 0 0 0
+clip Pop 0 0 0 0 0 0
 clip Bye 0 0 0 0 0 0 0 0 0 0 0 0
 clip Switch 0 0 0 0 0 0 0 0 0 0
 clip FireTank 0 0 0 0 0 0

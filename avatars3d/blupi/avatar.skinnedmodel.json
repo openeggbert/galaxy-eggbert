@@ -242,6 +242,14 @@
       "clip": "clips/Push.clip.bin"
     },
     {
+      "name": "StopPop",
+      "clip": "clips/StopPop.clip.bin"
+    },
+    {
+      "name": "Pop",
+      "clip": "clips/Pop.clip.bin"
+    },
+    {
       "name": "Bye",
       "clip": "clips/Bye.clip.bin"
     },
