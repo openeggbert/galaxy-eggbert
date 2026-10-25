@@ -1,5 +1,9 @@
 #pragma once
 
+#include <GalaxyEggbert/HintZoneRecord.hpp>
+
+#include <vector>
+
 namespace GalaxyEggbert::Game
 {
     // Real mobile-eggbert training-hint lookup (plan.md HUD-024), verified
@@ -39,4 +43,14 @@ namespace GalaxyEggbert::Game
     [[nodiscard]] const char* FindTrainingHint(int mission, int gridX, int gridZ,
                                                int treasuresCollected,
                                                bool inAnyVehicle, bool hasDynamite) noexcept;
+
+    // The same lookup for a 3D world that places its hints itself
+    // (HintZoneRecord.hpp, 2026-10-25): the zones containing Blupi's cell
+    // stand in for the records' 2D rects, scanned in the table's record order
+    // whatever order @p zones has; the first whose
+    // record's gate is open wins (and, as above, an empty text still stops the
+    // scan). A record index the mission's table does not have is skipped.
+    [[nodiscard]] const char* FindTrainingHintInZones(int mission, const std::vector<HintZoneRecord>& zones,
+                                                      int gridX, int gridY, int gridZ, int treasuresCollected,
+                                                      bool inAnyVehicle, bool hasDynamite) noexcept;
 }

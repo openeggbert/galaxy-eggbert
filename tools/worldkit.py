@@ -3,7 +3,7 @@
 
 Writes the native format exactly as `src/GalaxyEggbert/Worlds/World.cpp` and `Chunk.cpp` do
 (`World Format.md`: header v2, chunk payload `VCH1` v2, palette + bit-packed indices, sparse
-`BMD1` records for MoveObjects (type 1) and BigDecor (type 3)), so the game, the editor and
+`BMD1` records for MoveObjects (type 1), BigDecor (type 3) and hint zones (type 4)), so the game, the editor and
 `tools/vwr_inspect.py` read the result like any other world. Coordinates are the raw grid's
 (0-99 on every axis, Y up), the ones `.vwr` files, the editor and `vwr_inspect.py` use.
 
@@ -32,6 +32,7 @@ TABLE_ENTRY_SIZE = 20
 CHUNK_EMPTY = 0x0001
 MOVE_OBJECT_TYPE = 1
 BIG_DECOR_TYPE = 3
+HINT_ZONE_TYPE = 4
 
 
 class ObjectType:
@@ -159,6 +160,18 @@ class World:
         if icon == 0:
             raise ValueError("BigDecor icon 0 means none")
         self._record(x, y, z, BIG_DECOR_TYPE, struct.pack("<H", icon))
+
+    def hint_zone(self, record: int, x0: int, y0: int, z0: int, x1: int, y1: int, z1: int):
+        """Where training hint `record` of the mission's table (TrainingHints.cpp) shows: the
+        inclusive box, raw cells (HintZoneRecord.hpp). The text and gate stay the original's."""
+        xa, xb = sorted((x0, x1))
+        ya, yb = sorted((y0, y1))
+        za, zb = sorted((z0, z1))
+        size = (xb - xa + 1, yb - ya + 1, zb - za + 1)
+        if not 0 <= record < 256 or any(not 0 < v < 256 for v in size):
+            raise ValueError("hint zone record or size out of range")
+        self._check(xb, yb, zb)
+        self._record(xa, ya, za, HINT_ZONE_TYPE, bytes([record, *size]))
 
     # ---- serialization (World.cpp / Chunk.cpp) --------------------------------------------
     def _chunk_payload(self, cx: int, cy: int, cz: int) -> bytes | None:

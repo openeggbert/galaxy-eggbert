@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 #include <GalaxyEggbert/Def/ObjectType.hpp>
+#include <GalaxyEggbert/HintZoneRecord.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -347,6 +348,10 @@ namespace GalaxyEggbert::Game
             return bigDecorCells_;
         }
 
+        // The world's training-hint zones (HintZoneRecord.hpp), raw grid
+        // cells, in record order; empty for worlds that have none.
+        [[nodiscard]] const std::vector<HintZoneRecord>& GetHintZones() const { return hintZones_; }
+
         // MoveObject records (pickups, enemies, platform lifts, crates) --
         // from a mobile-eggbert .txt file's MoveObject: lines, OR from a
         // hand-authored `.vwr` world's embedded GalaxyEggbert::MoveObjectRecord
@@ -367,6 +372,7 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Worlds::World> world_;
         std::vector<std::uint16_t> bigDecor_;
         std::vector<BigDecorSpec> bigDecorCells_;
+        std::vector<HintZoneRecord> hintZones_;
         std::vector<MobileObjSpec> mobileObjects_;
         int spawnTileX_ = 0;
         int spawnTileY_ = 1;

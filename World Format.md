@@ -311,6 +311,29 @@ two-byte non-zero object-m.png icon, and derives its exact X/Y/Z anchor from
 the surrounding sparse metadata record. It represents Eggbert 2's
 non-colliding BigDecor billboard layer rather than a solid voxel.
 
+### Hint zones (metadata type 4, 2026-10-25)
+
+`GalaxyEggbert::HintZoneRecord` (`include/GalaxyEggbert/HintZoneRecord.hpp`) places one of a
+mission's training hints in a 3D world. Mobile Eggbert ties each hint of its tables
+(`Tables::table_training1-4`, ported in `TrainingHints.cpp`) to a column/row range of its 2D map,
+which means nothing in Galaxy's new 3D layouts; the world now says where each hint applies,
+while the hint's text and gate (treasure count, vehicle, dynamite) stay the original's.
+
+| Size | Field | Meaning |
+| ---: | --- | --- |
+| 1 | recordIndex | index into the mission's hint table |
+| 1 | sizeX | box size in cells, at least 1 |
+| 1 | sizeY | |
+| 1 | sizeZ | |
+
+The record is anchored at the box's minimum corner; the box spans that cell plus `size - 1`
+on each axis, inside the world. A world with any hint zone uses them (scanned in the table's
+record order, first open gate wins, as the original scans its rects); a world without keeps the
+2D rects. Compatibility: additive, no version change — readers that predate type 4 keep the record
+in the chunk and ignore it, and every existing world (none has type 4) reads as before.
+`tools/worldkit.py` writes zones (`World.hint_zone`), `tools/vwr_inspect.py` lists them, and
+`VerifyShippedWorlds` checks they survive load → save → load.
+
 ## World File `VWR1`
 
 The world file contains:

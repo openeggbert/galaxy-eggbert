@@ -1,5 +1,6 @@
 #include "TrainingHints.hpp"
 
+#include <algorithm>
 #include <cstddef>
 
 namespace GalaxyEggbert::Game
@@ -131,6 +132,49 @@ namespace GalaxyEggbert::Game
                 return (record.text[0] != '\0') ? record.text : nullptr;
             }
             return nullptr;
+        }
+    }
+
+    namespace
+    {
+        template <std::size_t N>
+        const char* ScanZones(const TrainingHintRecord (&table)[N], const std::vector<HintZoneRecord>& zones,
+                              int gridX, int gridY, int gridZ, int treasuresCollected, bool inAnyVehicle,
+                              bool hasDynamite) noexcept
+        {
+            // In the table's own order, as the original scans its records.
+            for (std::size_t index = 0; index < N; ++index)
+            {
+                const bool inside = std::any_of(zones.begin(), zones.end(), [&](const HintZoneRecord& zone)
+                {
+                    return zone.recordIndex == index && zone.Contains(gridX, gridY, gridZ);
+                });
+                if (!inside || !GateOpen(table[index].gate, treasuresCollected, inAnyVehicle, hasDynamite))
+                {
+                    continue;
+                }
+                return (table[index].text[0] != '\0') ? table[index].text : nullptr;
+            }
+            return nullptr;
+        }
+    }
+
+    const char* FindTrainingHintInZones(int mission, const std::vector<HintZoneRecord>& zones, int gridX, int gridY,
+                                        int gridZ, int treasuresCollected, bool inAnyVehicle,
+                                        bool hasDynamite) noexcept
+    {
+        switch (mission)
+        {
+            case 11:
+                return ScanZones(kTraining1, zones, gridX, gridY, gridZ, treasuresCollected, inAnyVehicle, hasDynamite);
+            case 12:
+                return ScanZones(kTraining2, zones, gridX, gridY, gridZ, treasuresCollected, inAnyVehicle, hasDynamite);
+            case 13:
+                return ScanZones(kTraining3, zones, gridX, gridY, gridZ, treasuresCollected, inAnyVehicle, hasDynamite);
+            case 14:
+                return ScanZones(kTraining4, zones, gridX, gridY, gridZ, treasuresCollected, inAnyVehicle, hasDynamite);
+            default:
+                return nullptr;
         }
     }
 

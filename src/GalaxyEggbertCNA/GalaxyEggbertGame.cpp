@@ -4792,9 +4792,17 @@ namespace GalaxyEggbert::CNA
                 // session).
                 const int hintGridX = static_cast<int>(std::lround(blupi_.GetX())) + WorldRuntime::kWorldCenterX;
                 const int hintGridZ = static_cast<int>(std::lround(blupi_.GetZ())) + WorldRuntime::kWorldCenterZ;
-                const char* trainingHint = FindTrainingHint(
-                    worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
-                    interaction_.TreasuresCollected(), blupi_.IsInVehicle(), interaction_.DynamiteCount() > 0);
+                // A 3D world that places its own hint zones (HintZoneRecord)
+                // uses them; otherwise the original tables' 2D rects apply.
+                const int hintGridY = static_cast<int>(std::floor(blupi_.GetY()));
+                const auto& hintZones = worldRuntime_.GetHintZones();
+                const char* trainingHint = hintZones.empty()
+                    ? FindTrainingHint(worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
+                                       interaction_.TreasuresCollected(), blupi_.IsInVehicle(),
+                                       interaction_.DynamiteCount() > 0)
+                    : FindTrainingHintInZones(worldRuntime_.GetMissionNumber(), hintZones, hintGridX, hintGridY,
+                                              hintGridZ, interaction_.TreasuresCollected(), blupi_.IsInVehicle(),
+                                              interaction_.DynamiteCount() > 0);
                 // Real treasure-counter hub gate (SCORE-017, Decor.cpp:1236)
                 // -- same "mission != 1 && mission % 10 != 0" expression
                 // already used for the Pause-menu showRestart gate above.

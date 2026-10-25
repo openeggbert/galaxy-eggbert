@@ -50,7 +50,7 @@ namespace
                 for (std::uint16_t x = 0; x < n; ++x)
                     if (a.getBlock(x, y, z) != b.getBlock(x, y, z))
                         return false;
-        for (std::uint16_t type = 1; type <= 3; ++type)
+        for (std::uint16_t type = 1; type <= 4; ++type)
             if (!SameMetadata(a, b, type))
                 return false;
         return true;

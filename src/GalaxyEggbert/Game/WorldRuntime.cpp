@@ -299,6 +299,8 @@ namespace GalaxyEggbert::Game
             hasExplicitSpawnPoint_ = false;
         }
 
+        hintZones_ = CollectHintZones(*world_);
+
         bigDecorCells_.clear();
         for (const auto& record : CollectBigDecor(*world_))
         {

@@ -28,6 +28,7 @@ CHUNK_EMPTY = 0x0001
 MOVE_OBJECT_TYPE = 1      # MoveObjectRecord.hpp, kMoveObjectMetadataType
 PLATE_ROTATION_TYPE = 2   # PlateRotationMetadata.hpp
 BIG_DECOR_TYPE = 3        # BigDecorRecord.hpp, kBigDecorMetadataType
+HINT_ZONE_TYPE = 4        # HintZoneRecord.hpp, kHintZoneMetadataType
 
 
 def packed_index(words: list[int], i: int, bits: int) -> int:
@@ -96,7 +97,7 @@ def read_world(path: Path) -> dict:
     world = {"path": path, "version": version, "chunk_size": chunk_size, "per_axis": per_axis,
              "flags": flags, "sky": sky, "mission": mission,
              "spawn": (sx - 1, sy - 1, sz - 1) if sx and sy and sz else None,
-             "blocks": {}, "objects": [], "bigdecor": [], "plates": 0, "other_meta": collections.Counter(),
+             "blocks": {}, "objects": [], "bigdecor": [], "hints": [], "plates": 0, "other_meta": collections.Counter(),
              "sha1": hashlib.sha1(data).hexdigest()[:10], "bytes": len(data)}
     for k in range(chunk_count):
         off, size, cx, cy, cz, cflags = struct.unpack_from("<QIHHHH", data, table_offset + k * TABLE_ENTRY_SIZE)
@@ -117,6 +118,8 @@ def read_world(path: Path) -> dict:
                 world["objects"].append(decode_move_object(payload))
             elif mtype == BIG_DECOR_TYPE:
                 world["bigdecor"].append((pos(local), struct.unpack_from("<H", payload)[0] if len(payload) >= 2 else None))
+            elif mtype == HINT_ZONE_TYPE and len(payload) == 4:
+                world["hints"].append((payload[0], pos(local), tuple(payload[1:4])))
             elif mtype == PLATE_ROTATION_TYPE:
                 world["plates"] += 1
             else:
@@ -172,6 +175,8 @@ def main(argv=None) -> int:
             print(f"  object type {o['type']} at ({s[0]:.2f}, {s[1]:.2f}, {s[2]:.2f}){moving}{icon}")
         for p, icon in w["bigdecor"]:
             print(f"  bigdecor icon {icon} at {p}")
+        for record, p, size in sorted(w["hints"]):
+            print(f"  hint zone record {record} at {p} size {size}")
         if w["plates"]:
             print(f"  plate rotation records: {w['plates']}")
         for mtype, n in w["other_meta"].items():

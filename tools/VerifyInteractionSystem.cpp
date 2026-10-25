@@ -3809,6 +3809,30 @@ int main(int argc, char** argv)
     // vehicle, dynamite) and the "matched but empty text" case.
     {
         using std::string;
+        // A 3D world's own hint zones (HintZoneRecord, 2026-10-25): the
+        // original record's text and gate, the world's box.
+        {
+            const std::vector<GalaxyEggbert::HintZoneRecord> zones = {
+                {1, 10, 5, 10, 3, 2, 3},   // record 1, "Press Jump", gate treasures == 0
+                {0, 10, 5, 10, 3, 2, 3},   // record 0 over the same box: scanned first
+                {21, 40, 5, 40, 2, 2, 2},  // record 21, "Join the red arrow."
+            };
+            const char* first = FindTrainingHintInZones(11, zones, 11, 5, 11, 0, false, false);
+            check(first != nullptr && string(first) == "Use the directional wheel [Move].",
+                  "hint zones: overlapping zones are scanned in record order");
+            const char* exit = FindTrainingHintInZones(11, zones, 41, 6, 41, 1, false, false);
+            check(exit != nullptr && string(exit) == "Join the red arrow.",
+                  "hint zones: a zone gives its record's original text");
+            check(FindTrainingHintInZones(11, zones, 41, 7, 41, 1, false, false) == nullptr &&
+                      FindTrainingHintInZones(11, zones, 20, 5, 20, 0, false, false) == nullptr,
+                  "hint zones: outside every box (above, beside) there is no hint");
+            const std::vector<GalaxyEggbert::HintZoneRecord> gated = {{1, 10, 5, 10, 3, 2, 3}};
+            check(FindTrainingHintInZones(11, gated, 11, 5, 11, 1, false, false) == nullptr,
+                  "hint zones: the original record's gate still applies (treasures == 0)");
+            const std::vector<GalaxyEggbert::HintZoneRecord> unknown = {{99, 10, 5, 10, 3, 2, 3}};
+            check(FindTrainingHintInZones(11, unknown, 11, 5, 11, 0, false, false) == nullptr,
+                  "hint zones: a record index the table lacks is skipped");
+        }
         // Mission 11: unconditional hint in range [1,3].
         {
             const char* hint = FindTrainingHint(11, 2, 10, 0, false, false);
