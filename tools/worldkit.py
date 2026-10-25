@@ -3,7 +3,7 @@
 
 Writes the native format exactly as `src/GalaxyEggbert/Worlds/World.cpp` and `Chunk.cpp` do
 (`World Format.md`: header v2, chunk payload `VCH1` v2, palette + bit-packed indices, sparse
-`BMD1` records for MoveObjects (type 1), BigDecor (type 3) and hint zones (type 4)), so the game, the editor and
+`BMD1` records for MoveObjects (type 1), plate rotations (type 2), BigDecor (type 3) and hint zones (type 4)), so the game, the editor and
 `tools/vwr_inspect.py` read the result like any other world. Coordinates are the raw grid's
 (0-99 on every axis, Y up), the ones `.vwr` files, the editor and `vwr_inspect.py` use.
 
@@ -31,6 +31,7 @@ HEADER_SIZE = 40
 TABLE_ENTRY_SIZE = 20
 CHUNK_EMPTY = 0x0001
 MOVE_OBJECT_TYPE = 1
+PLATE_ROTATION_TYPE = 2
 BIG_DECOR_TYPE = 3
 HINT_ZONE_TYPE = 4
 
@@ -155,6 +156,11 @@ class World:
                               stop_end, icon)
         self._record(int(x // 1), int(y // 1), int(z // 1), MOVE_OBJECT_TYPE, payload)
 
+    def rotate_plate(self, x: int, y: int, z: int):
+        """Turn the flat plate at (x, y, z) -- a hub sign, a saw -- 90 degrees, to face along X
+        instead of Z (PlateRotationMetadata.hpp, metadata type 2)."""
+        self._record(x, y, z, PLATE_ROTATION_TYPE, bytes([1]))
+
     def bigdecor(self, icon: int, x: int, y: int, z: int):
         """A BigDecor cell (explo.png icon, BigDecorRecord.hpp)."""
         if icon == 0:
@@ -251,6 +257,7 @@ class World:
 LETTERS = {
     "A": [".###.", "#...#", "#...#", "#####", "#...#", "#...#", "#...#"],
     "B": ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
+    "D": ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
     "E": ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
     "G": [".####", "#....", "#....", "#.###", "#...#", "#...#", ".####"],
     "L": ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],

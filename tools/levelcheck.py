@@ -4,7 +4,9 @@ every treasure, key and egg and to the exit?
 
 Searches the voxel grid with moves Blupi certainly has (BlupiController): walk to a neighbour
 cell, step off an edge and fall, jump (up to two blocks up, or across a gap of up to two cells,
-needing headroom), ride a platform lift between its two ends. Block classes come from
+needing headroom), ride a platform lift between its two ends. Hub doors (the bars 182/183)
+count as open: they open as the player progresses. In a hub every sign must be reachable too.
+Block classes come from
 tools/data/blocks.csv (BlockDefinitionRegistry; DumpBlockDefinitions keeps it current): a cell
 is free when it holds air, water, a fan or a teleporter, or a block whose collision mask is
 empty; it is a floor when the block below is solid. Cells holding or standing on a hazard
@@ -73,7 +75,8 @@ class Grid:
         if not (0 <= x < SIZE and 0 <= y < SIZE and 0 <= z < SIZE) or p in self.solid_objects:
             return False
         b = self.info(p)
-        return b["icon"] == 0 or b["water"] or b["teleporter"] or b["fan"] or b["collision_mask"] == 0
+        return (b["icon"] == 0 or b["water"] or b["teleporter"] or b["fan"] or b["collision_mask"] == 0 or
+                b["hub_door"] != 0)
 
     def floor(self, p) -> bool:
         x, y, z = p
@@ -178,6 +181,12 @@ def check(path: Path, blocks) -> bool:
         report.append(f"{kind} at {cell}: {'reachable' if got else 'NOT REACHABLE'}")
         if not got and kind != "egg":
             ok = False
+    for cell, raw in sorted(world["blocks"].items()):
+        if blocks.get(raw >> 4, blocks[0])["world_select"] > 0:
+            near = {(cell[0] + dx, cell[1], cell[2] + dz) for dx in (-1, 0, 1) for dz in (-1, 0, 1)}
+            got = bool(near & reach)
+            report.append(f"sign {raw >> 4} at {cell}: {'reachable' if got else 'NOT REACHABLE'}")
+            ok = ok and got
     exits = [o for o in world["objects"] if o.get("type") in EXITS]
     if not exits and world["mission"] % 10 != 0 and world["mission"] not in (0, 1):
         report.append("no exit")

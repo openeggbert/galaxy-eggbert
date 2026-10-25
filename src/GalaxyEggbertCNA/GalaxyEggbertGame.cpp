@@ -1026,6 +1026,7 @@ namespace GalaxyEggbert::CNA
                                static_cast<float>(hubArrival->cell.z - WorldRuntime::kWorldCenterZ));
             blupi_.SetYaw(hubArrival->yaw);
         }
+        chaseCamera_.Reset(blupi_.GetYaw()); // a new world starts with the camera behind him
 
         saveData_.SetMissionNumber(missionNumber);
         saveData_.Save();
@@ -1677,6 +1678,7 @@ namespace GalaxyEggbert::CNA
                 blupi_.SetPosition(startSpawnX_ - WorldRuntime::kWorldCenterX, startSpawnY_,
                                    startSpawnZ_ - WorldRuntime::kWorldCenterZ);
                 blupi_.SetYaw(startYawDegrees_ * 3.14159265f / 180.0f);
+                chaseCamera_.Reset(blupi_.GetYaw());
             }
         }
 

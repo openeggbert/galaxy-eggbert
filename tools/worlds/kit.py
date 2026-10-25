@@ -83,3 +83,34 @@ def line(x0, z0, x1, z1):
 
 def rect(x0, z0, x1, z1):
     return [(x, z) for x in range(min(x0, x1), max(x0, x1) + 1) for z in range(min(z0, z1), max(z0, z1) + 1)]
+
+
+# Hub tiles (include/GalaxyEggbert/BlockTypes.hpp).
+HUB_DOOR = 182
+GOLD_DOOR = 183
+MISSION_SIGN1 = 174      # ...181
+WORLD_SIGNS = {**{n: 157 + n for n in range(1, 9)}, 9: 309, 10: 411, 11: 412, 12: 413}
+SHOWCASE_SIGN = 414      # Galaxy's own portal to world999
+
+
+def sign_niche(w: World, x, y, z, facing, icon, rng: random.Random, door=False, block=MACHINE_FLOOR):
+    """A hub sign in a niche one cell high, opening toward `facing` (dx, dz). With `door` the
+    niche is two deep and its doorway holds a blue bar (HubDoor), which the hub opens once the
+    previous mission is won (HubDoors.hpp); Blupi then arrives just outside it. Walls, roof
+    and floor are filled in where missing, so it can be cut into a wall or stand alone."""
+    dx, dz = facing
+    cells = [(x, z)] + ([(x + dx, z + dz)] if door else [])
+    for cx, cz in cells:
+        w.clear(cx, y, cz)
+        for sx, sz, sy in ((cx - dz, cz + dx, y), (cx + dz, cz - dx, y), (cx, cz, y + 1), (cx, cz, y - 1),
+                           (cx - dz, cz + dx, y + 1), (cx + dz, cz - dx, y + 1)):
+            if w.get(sx, sy, sz) == 0:
+                w.set(sx, sy, sz, rng.choice(MACHINE_FACES) if rng.random() < 0.3 else block)
+    if w.get(x - dx, y, z - dz) == 0:
+        w.set(x - dx, y, z - dz, block)
+    w.set(x, y, z, icon)
+    if dx != 0:
+        w.rotate_plate(x, y, z)      # signboards face Z unless turned
+    if door:
+        w.set(x + dx, y, z + dz, HUB_DOOR)
+
