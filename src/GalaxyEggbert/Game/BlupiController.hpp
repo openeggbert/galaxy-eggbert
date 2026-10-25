@@ -74,7 +74,13 @@ namespace GalaxyEggbert::Game
 
         static constexpr float kGravity   = 25.0f;
         static constexpr float kFallLimit = -10.0f;
-        static constexpr float kStepLimit = 1.0f;
+        // Not a step-up: real Decor::TestPath() has none, so a one-tile step
+        // stops Blupi until he jumps onto it (user report 2026-10-25: he
+        // walked up steps by himself; this was 1.0, a whole block, until then).
+        // What is left is a tolerance of 4 of a block's 64 pixels, so seams
+        // between surfaces of almost equal height (a lift's top, a sub-cell
+        // floor) cannot snag him.
+        static constexpr float kStepLimit = 4.0f / 64.0f;
         // Real animation rate: one table_blupi icon per 20 Hz tick (Decor.cpp:2370-2451,
         // m_blupiPhase++ every tick), which the one-shot durations below already assume
         // (e.g. kMockeryDuration = 92 icons / 20). It was 8 until 2026-10-24.

@@ -53,11 +53,13 @@ int main(int argc, char** argv)
     blupi.Step(world, 0.0f, 0.0f, false, false, false, dt);
     check(blupi.IsOnGround(), "spawns grounded on the ground floor");
 
-    // 2. Walk west (-X) toward and up the 10-step staircase (world x from
-    // -21 down to -30, world z band [-5,4] -- spawn z=0 is inside it).
-    // Expect Y to climb via step-up traversal. Tank controls move along the
-    // current facing direction, so face west (-X) first: yaw=0 faces -Z,
-    // so -90 deg (-pi/2 rad) faces -X.
+    // 2. Walk west (-X) toward the 10-step staircase (world x from -21 down
+    // to -30, world z band [-5,4] -- spawn z=0 is inside it). Tank controls
+    // move along the current facing direction, so face west (-X) first:
+    // yaw=0 faces -Z, so -90 deg (-pi/2 rad) faces -X. Walking alone stops
+    // at the first step, as real Decor::TestPath() does (no step-up since
+    // 2026-10-25, kStepLimit's own comment); jumping while walking climbs
+    // it one step at a time.
     constexpr float kFaceWest = -1.57079633f;
     blupi.SetYaw(kFaceWest);
     for (int i = 0; i < 900; ++i) // 15 simulated seconds at the real 2.5 blocks/s walk
@@ -66,7 +68,19 @@ int main(int argc, char** argv)
     }
     std::cout << "After walking west: x=" << blupi.GetX() << " y=" << blupi.GetY()
               << " z=" << blupi.GetZ() << " onGround=" << blupi.IsOnGround() << std::endl;
-    check(blupi.GetY() >= 8.0f, "climbed the staircase via step-up traversal (Y >= 8)");
+    check(blupi.GetY() < 1.5f && blupi.IsOnGround(),
+          "walking alone does not climb the staircase's first step (no step-up)");
+    for (int i = 0; i < 900; ++i)
+    {
+        blupi.Step(world, 0.0f, 1.0f, /*jumpPressed=*/true, false, false, dt);
+    }
+    for (int i = 0; i < 120; ++i) // land
+    {
+        blupi.Step(world, 0.0f, 0.0f, false, false, false, dt);
+    }
+    std::cout << "After jumping west: x=" << blupi.GetX() << " y=" << blupi.GetY()
+              << " z=" << blupi.GetZ() << " onGround=" << blupi.IsOnGround() << std::endl;
+    check(blupi.GetY() >= 8.0f, "climbed the staircase by jumping from step to step (Y >= 8)");
     check(blupi.IsOnGround(), "stands on top of the staircase/platform, not falling through it");
 
     // 3. Keep walking west into the room's far wall (world x=-45) -- should
@@ -1819,13 +1833,11 @@ int main(int argc, char** argv)
     // walking INTO the block horizontally, never tested. Two synthetic
     // setups on a fresh isolated floor (not the shared `world`, to avoid
     // any interaction with real placed content): a single-height
-    // grass-topped block (expected to be climbed via the existing
-    // kStepLimit step-up mechanic, same as any other curb-height obstacle
-    // -- NOT a bug, this engine's designed terrain-traversal behavior) and
-    // a 3-tall grass-topped wall (taller than kStepLimit, so it must
-    // genuinely block like any other wall). Both confirmed correct via a
-    // standalone repro before writing this -- included as a real,
-    // permanent regression lock, not just a one-off investigation.
+    // grass-topped block, which blocks walking and is climbed by jumping
+    // (no step-up since 2026-10-25, kStepLimit's own comment), and a
+    // 3-tall grass-topped wall, which blocks like any other wall --
+    // included as a real, permanent regression lock, not just a one-off
+    // investigation.
     {
         GalaxyEggbert::Worlds::World grassWallWorld;
         for (int x = 45; x <= 60; ++x)
@@ -1838,17 +1850,21 @@ int main(int argc, char** argv)
         }
         grassWallWorld.setBlock(55, 1, 50, GalaxyEggbert::Worlds::Block::make(107));
 
-        BlupiController stepUpWalker;
-        stepUpWalker.SetPosition(0.0f, 1.0f, 0.0f);
-        stepUpWalker.SetYaw(1.57079633f); // face east (+X), toward the block at render X=5
+        BlupiController stepWalker;
+        stepWalker.SetPosition(0.0f, 1.0f, 0.0f);
+        stepWalker.SetYaw(1.57079633f); // face east (+X), toward the block at render X=5
         for (int i = 0; i < 300; ++i)
         {
-            stepUpWalker.Step(grassWallWorld, 0.0f, 1.0f, false, false, false, dt);
+            stepWalker.Step(grassWallWorld, 0.0f, 1.0f, false, false, false, dt);
         }
-        check(stepUpWalker.GetX() > 5.0f,
-              "a single-height grass-topped block (icon 107) is climbed via step-up, not a wall to "
-              "be blocked by -- matches this engine's own kStepLimit traversal, not the "
-              "\"walkable-through\" bug report");
+        check(stepWalker.GetX() < 5.0f && stepWalker.GetY() < 1.5f,
+              "a single-height grass-topped block (icon 107) blocks walking: no step-up");
+        for (int i = 0; i < 300; ++i)
+        {
+            stepWalker.Step(grassWallWorld, 0.0f, 1.0f, /*jumpPressed=*/true, false, false, dt);
+        }
+        check(stepWalker.GetX() > 5.0f,
+              "jumping while walking gets over the single-height block");
     }
     {
         GalaxyEggbert::Worlds::World grassTallWallWorld;
