@@ -1,6 +1,7 @@
 #include "EditorPaletteRenderer.hpp"
 
 #include <GalaxyEggbert/Game/QuadBatch.hpp>
+#include <GalaxyEggbert/Game/TextMetrics.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
@@ -24,7 +25,6 @@ namespace GalaxyEggbert::Editor
         constexpr int kButtonSheetIconOffset = 6;
         constexpr float kGlyphCellPx = 32.0f;
         constexpr int kGlyphColumns = 16;
-        constexpr float kGlyphAdvance = 17.0f;
         constexpr float kTextScale = 0.5f;
         constexpr float kSelectionPadding = 3.0f;
         constexpr int kSkyRegionCount = 32;
@@ -46,12 +46,7 @@ namespace GalaxyEggbert::Editor
 
         float LabelWidth(const char* message)
         {
-            int length = 0;
-            while (message[length] != '\0')
-            {
-                ++length;
-            }
-            return static_cast<float>(length) * kGlyphAdvance * kTextScale;
+            return GalaxyEggbert::Game::TextMetrics::Width(message) * kTextScale;
         }
 
         void AppendLabel(
@@ -61,7 +56,7 @@ namespace GalaxyEggbert::Editor
             float penX = left;
             for (const char* c = message; *c != '\0'; ++c)
             {
-                const int rank = static_cast<int>(static_cast<unsigned char>(*c));
+                const int rank = GalaxyEggbert::Game::TextMetrics::GlyphIndex(*c);
                 const int column = rank % kGlyphColumns;
                 const int row = rank / kGlyphColumns;
                 const float glyphSize = kGlyphCellPx * kTextScale;
@@ -72,7 +67,7 @@ namespace GalaxyEggbert::Editor
                     static_cast<float>(column + 1) * kGlyphCellPx / sheetWidth,
                     static_cast<float>(row + 1) * kGlyphCellPx / sheetHeight,
                 });
-                penX += kGlyphAdvance * kTextScale;
+                penX += GalaxyEggbert::Game::TextMetrics::Advance(*c) * kTextScale;
             }
         }
     }

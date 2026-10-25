@@ -2,6 +2,8 @@
 
 #include "CustomWorldStorage.hpp"
 
+#include <GalaxyEggbert/Game/TextMetrics.hpp>
+
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
 
@@ -27,18 +29,16 @@ namespace GalaxyEggbert::Editor
         // build a shared text system.
         constexpr float kGlyphCellPx = 32.0f;
         constexpr int kGlyphCols = 16;
-        constexpr float kGlyphAdvance = 17.0f;
         constexpr float kLabelScale = 0.5f;
 
         void AppendLabel(std::vector<GalaxyEggbert::Game::QuadBatch::Quad>& quads, const std::string& text,
                          float leftX, float topY, float scale, float textSheetW, float textSheetH)
         {
             const float cellPx = kGlyphCellPx * scale;
-            const float advance = kGlyphAdvance * scale;
             float penX = leftX;
             for (const char c : text)
             {
-                const int rank = static_cast<int>(static_cast<unsigned char>(c));
+                const int rank = GalaxyEggbert::Game::TextMetrics::GlyphIndex(c);
                 const int col = rank % kGlyphCols;
                 const int row = rank / kGlyphCols;
                 GalaxyEggbert::Game::QuadBatch::Quad q;
@@ -51,7 +51,7 @@ namespace GalaxyEggbert::Editor
                 q.u1 = (static_cast<float>(col + 1) * kGlyphCellPx) / textSheetW;
                 q.v1 = (static_cast<float>(row + 1) * kGlyphCellPx) / textSheetH;
                 quads.push_back(q);
-                penX += advance;
+                penX += GalaxyEggbert::Game::TextMetrics::Advance(c) * scale;
             }
         }
     }

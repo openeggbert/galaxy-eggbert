@@ -1,4 +1,5 @@
 #include "InputPad.hpp"
+#include "TextMetrics.hpp"
 
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
@@ -111,13 +112,10 @@ namespace GalaxyEggbert::Game
 
         // text.png: 32px glyph cells, 16 columns, glyph index == ASCII
         // code for the printable range (same convention Hud.cpp already
-        // documents -- read off the asset, not mobile-eggbert's own
-        // table_char). Fixed advance approximation (the real font is
-        // proportional via table_char_width, deliberately not
-        // transcribed).
+        // documents); the advances are the real proportional widths
+        // (TextMetrics.hpp).
         constexpr float kGlyphCellPx = 32.0f;
         constexpr int kGlyphCols = 16;
-        constexpr float kGlyphAdvance = 17.0f;
         constexpr float kPauseLabelScale = 0.7f; // real DrawTextUnderButton() scale
         constexpr float kPauseLabelYOffset = 2.0f; // real "buttonRect.Bottom + 2"
         constexpr float kSetupLabelScale = 0.7f; // real DrawTextRightButton() scale
@@ -546,13 +544,12 @@ namespace GalaxyEggbert::Game
         }
         const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
         const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
-        const float cellPx = kGlyphCellPx * kPauseLabelScale * viewportScale;
-        const float advance = kGlyphAdvance * kPauseLabelScale * viewportScale;
-        const float totalAdvance = static_cast<float>(text.size()) * advance;
-        float penX = centerX - totalAdvance * 0.5f;
+        const float glyphScale = kPauseLabelScale * viewportScale;
+        const float cellPx = kGlyphCellPx * glyphScale;
+        float penX = centerX - TextMetrics::Width(text) * glyphScale * 0.5f;
         for (const char c : text)
         {
-            const int rank = static_cast<int>(static_cast<unsigned char>(c));
+            const int rank = TextMetrics::GlyphIndex(c);
             const int gcol = rank % kGlyphCols;
             const int grow = rank / kGlyphCols;
             Quad q;
@@ -565,7 +562,7 @@ namespace GalaxyEggbert::Game
             q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
             q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
             quads.push_back(q);
-            penX += advance;
+            penX += TextMetrics::Advance(c) * glyphScale;
         }
     }
 
@@ -578,13 +575,13 @@ namespace GalaxyEggbert::Game
         }
         const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
         const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
-        const float cellPx = kGlyphCellPx * kSetupLabelScale * viewportScale;
-        const float advance = kGlyphAdvance * kSetupLabelScale * viewportScale;
+        const float glyphScale = kSetupLabelScale * viewportScale;
+        const float cellPx = kGlyphCellPx * glyphScale;
         const float topY = centerY - kSetupLabelYNudge * viewportScale;
         float penX = leftX;
         for (const char c : text)
         {
-            const int rank = static_cast<int>(static_cast<unsigned char>(c));
+            const int rank = TextMetrics::GlyphIndex(c);
             const int gcol = rank % kGlyphCols;
             const int grow = rank / kGlyphCols;
             Quad q;
@@ -597,7 +594,7 @@ namespace GalaxyEggbert::Game
             q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
             q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
             quads.push_back(q);
-            penX += advance;
+            penX += TextMetrics::Advance(c) * glyphScale;
         }
     }
 
@@ -610,12 +607,12 @@ namespace GalaxyEggbert::Game
         }
         const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
         const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
-        const float cellPx = kGlyphCellPx * labelScale * viewportScale;
-        const float advance = kGlyphAdvance * labelScale * viewportScale;
+        const float glyphScale = labelScale * viewportScale;
+        const float cellPx = kGlyphCellPx * glyphScale;
         float penX = leftX;
         for (const char c : text)
         {
-            const int rank = static_cast<int>(static_cast<unsigned char>(c));
+            const int rank = TextMetrics::GlyphIndex(c);
             const int gcol = rank % kGlyphCols;
             const int grow = rank / kGlyphCols;
             Quad q;
@@ -628,7 +625,7 @@ namespace GalaxyEggbert::Game
             q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
             q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
             quads.push_back(q);
-            penX += advance;
+            penX += TextMetrics::Advance(c) * glyphScale;
         }
     }
 
