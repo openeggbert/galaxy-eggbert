@@ -4,31 +4,29 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-25._
+_Last updated: 2026-10-25 (evening, restored baseline)._
 
 ## Resume here (exact state when last written)
 
-Nothing is half done: the worktree is committed (`develop`). 2026-10-25: the 13 commits from
-`52ccd53` to `4700bfd` were rewritten to drop a `Co-Authored-By: Claude` trailer (messages only;
-trees, authors and dates unchanged; the rule is now in `CLAUDE.md`). The force push of
-`develop` is left to the user: until then `origin/develop` still holds the old hashes, so do not
-pull or push. Phase 7B is complete except the items listed under "Open" and "Waiting for the
-user" below. Last steps, 2026-10-24:
+2026-10-25 evening: the owner reverted the earlier campaign and restarted it on the restored
+`develop` (`00ba088`) with a new brief; the active plan is `plans/GALAXY_EGGBERT_COMPLETION.md`
+(read it first: direction, art fidelity, defects D1-D12, milestones). Commits since the
+restore: turning 135°/s (`c2cb216`), full-screen menu bars (`8ba5e34`), third person default +
+F3 (`aabc4f8`), `--mission N` (`13a6d74`), crash fix (`8260eaf`), `--spawn` (`bdbeeae`),
+`tools/vwr_inspect.py` (`76db7a3`), no step-up (`c317f94`), proportional text (`21cccb3`), Bye
+icons (`4572099`), converter: outward caps (`94ce688`), whole-body poses and end keys
+(`d660085`). Not pushed (push only when asked).
 
-- `52ccd53` converter: free-forms drop rings/points their neighbours reproduce (palm trunk
-  193 948 -> 6 340 triangles); materials over 65 535 vertices split into `_1`, `_2` meshes.
-- `d2a6976` converter: blended free-form sections aligned before blending (palm trunks were
-  pinched; palms 0.76 -> 0.83-0.86, trees 0.96 -> 0.97-0.98).
-- `cb355ce` converter: ASCII-only part names (CNA reads part file names without decoding
-  `\u` escapes, `upstream_bugs.md` UB-004; "Cône" crashed the game at load).
-- `6cd48ed` all 82 object models re-exported, big decor included, checked live under Xvfb.
-- `7f11e0f` Blupi and his vehicles re-exported (`BB3D-008` done; numbers in `plan.md`).
+In flight (outputs under `build-probe/`, nothing in `avatars3d/` changed yet):
+- `build-probe/qa-blupi/match-full/` and `match-whole2/`: Blupi's full re-match with end keys
+  (~80 min). Then rebuild the library with `--whole-icons build-probe/qa-blupi/match-whole2/icons.csv`
+  (README command), export, check Stop/Bye/Push live, replace `avatars3d/blupi/`.
+- `build-probe/qa-objects-all/`: all object models with the cap fix; check winding, then
+  `export_objects.py` into `avatars3d/objects/` and look at `world999`'s exhibition live.
 
-Next candidates (none blocking): the open items below. A live BigDecor check needs a world
-with BigDecor records (none of `worlds3d/` has any): a throwaway probe linking the
-`BigDecorRecord`/`Worlds` objects of `build-cna-opengl3` can add records to a *copy* of
-`worlds3d/world999.vwr` in `build-cna-opengl3/worlds3d/` (the golden capture loads 999); copy
-the original back afterwards.
+Live checks: `tools/qa_live.sh build-cna-opengl3 <out> <steps> [--mission N --spawn x,y,z,yaw]`
+runs from `build-probe/qa-run/` so the owner's `build-cna-opengl3/savedata.txt` and
+`customworlds/` are never touched. The owner plays from `build-cna-opengl3/`.
 
 ## Active work: billboards → 3D models (`plan.md` Phase 7B, `BB3D-*`)
 
@@ -132,7 +130,8 @@ bug found in one goes to `upstream_bugs.md` (English, `UB-NNN`).
   mid-edit; rebuild after its header changes before suspecting this repository.
 - VirtualBox VM `xp` (Ray Dream Studio) is free to use but must never get network access: keep its
   NIC unattached, never NAT or bridged.
-- Commit each discrete task and push to `origin/develop` right after (standing approval).
+- Commit each discrete task; push only when the owner asks (the standing push approval is
+  suspended since 2026-10-25).
 - Effects (explosions, splashes, sparkles, bursts, goo, the bridge being built) stay billboards
   (decision 2026-10-24).
 - Types 32 and 33: the code's names ("blupih"/"blupit") do not match their icons; check against

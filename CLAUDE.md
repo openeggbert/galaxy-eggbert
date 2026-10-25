@@ -14,7 +14,9 @@ recoverable at git commit `4afd53e`. Do not resurrect that dependency path or ad
 targets.
 
 Read `CURRENT.md` first for verified current state, `handoff.md` for where work stands, commands
-and how to continue, and `plan.md` for the backlog. `NEXT.md` is obsolete (frozen history since
+and how to continue, and `plans/GALAXY_EGGBERT_COMPLETION.md` for the active completion plan
+(direction, art fidelity, inventories, milestones); `plan.md` is the historical log and detailed
+task inventory. `NEXT.md` is obsolete (frozen history since
 2026-10-24); do not add to it. `easy3d.md` is the historical migration analysis, not current build
 guidance.
 
@@ -24,7 +26,9 @@ guidance.
   mechanics from plausibility.
 - `../mobile-eggbert` is read-only: never modify it, even temporarily. Copying code/data tables,
   enum values, byte layouts, or sprite-frame tables into this repository requires explicit
-  per-instance user approval.
+  user approval; since 2026-10-25 a standing approval covers small data tables needed for
+  fidelity (glyph widths, animation and timing tables), citing the source. Larger code still
+  needs asking.
 - Reusing approved media assets by their existing paths is allowed where already established.
   Do not add new copied asset sets without approval.
 - Preserve real numeric IDs (`ObjectType`, block icons, sound channels); they encode reference
@@ -33,7 +37,11 @@ guidance.
   must not introduce new gameplay behavior. Its palette/order and interaction should follow the
   Eggbert 2 editor where specified, with documented Galaxy-only additions such as background
   selection.
-- Real 3D worlds are hand-authored. Do not add a flat automatic 2D-to-3D world converter.
+- Real 3D worlds are hand-authored as original tile-based 3D designs. Mobile Eggbert's maps
+  give identity, theme and mechanics only: no 2D-to-3D conversion or extrusion, no 2.5D.
+- Models and animations come from the original Ray Dream sources (`../speedyblupi-data`)
+  whenever they can be recovered; never a modernized redesign
+  (`plans/GALAXY_EGGBERT_COMPLETION.md` §2).
 
 ## Repository boundaries
 

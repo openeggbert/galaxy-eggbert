@@ -1,5 +1,10 @@
 # Galaxy Eggbert — Plan
 
+> **2026-10-25: the active plan is `plans/GALAXY_EGGBERT_COMPLETION.md`.** This file is the
+> historical log and detailed task inventory. Its §0 "Current Status Snapshot" dates from
+> 2026-07-10 and is stale (it predates the real Blupi model, the converted objects and
+> cna-engine); trust `CURRENT.md`, the completion plan and the code over its checkboxes.
+
 **Galaxy Eggbert is a faithful 3D remake of mobile-eggbert. Nothing more.** Before adding any
 task to this plan, verify the feature exists in mobile-eggbert. Do not add invented mechanics
 (coins, time bonuses, coyote time, combo multipliers, etc.) — see `CLAUDE.md` for the full rule

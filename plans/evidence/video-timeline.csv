@@ -1,0 +1,186 @@
+start_s,end_s,hh:mm:ss,phase,mission,event,confidence,evidence_file
+0.00,4.40,0:00:00.00,boot,-,desktop window with debugger panel before the game window,high,build-probe/video-evidence/events/f1_boot_menu_setup_2fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile1
+4.40,8.65,0:00:04.40,wait,-,"WAIT/loading screen (machine background, progress bar)",high,build-probe/video-evidence/events/f1_boot_menu_setup_2fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile3
+8.65,13.15,0:00:08.65,menu,-,"main menu: SPEEDY BLUPI title, Player A/B/C (A: main gates 0/12, secondary 0/52, Blupi 3), Setup, Play",high,build-probe/video-evidence/events/f_menu_10.5.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile4
+13.15,19.40,0:00:13.15,setup,-,"MainSetup: Sound effects, Jump button on the right, Automatic zoom on action, Accelerometer (toggled on/off), Player A erase progress",high,build-probe/video-evidence/events/f_menu_15.5.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile5
+19.40,21.95,0:00:19.40,menu,-,"main menu; Play pressed 0:00:20.0 (Youpie zoom-in), blank blue 0:00:21.0",high,build-probe/video-evidence/events/f1_boot_menu_setup_2fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile7
+20.00,21.50,0:00:20.00,event_menu,-,"Play pressed: Youpie zoom, blank blue, then main hub",high,build-probe/video-evidence/events/f1_boot_menu_setup_2fps.jpg
+21.95,25.00,0:00:21.95,main_hub,001,main hub start beside world-1 monitor,high,build-probe/video-evidence/events/f1_boot_menu_setup_2fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile8
+25.00,28.65,0:00:25.00,world_hub,010,"W1 hub, signs 1-4; bye at sign 1",high(mapping); boundary +-1s,build-probe/video-evidence/events/f1_boot_menu_setup_2fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile8
+28.65,106.45,0:00:28.65,level,011,tutorial (move/jump hints); 0/2 -> 2/2 at 0:01:34.5; 'Join the red arrow'; win pose 0:01:43.90-0:01:46.40,high,build-probe/video-evidence/events/d1_win011_to_hub_2fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile8
+103.90,106.40,0:01:43.90,event_win,011,"WIN at red-arrow exit: front-facing two-arm V cheer, animated 1.85 s + frozen 0.65 s; hard cut to hub 1:46.45; no win screen",high,build-probe/video-evidence/events/d2_win011_anim_10fps.jpg
+106.45,109.80,0:01:46.45,world_hub,010,start beside door 2; door bar slides up; bye at sign 2 from 0:01:47.8,high,build-probe/video-evidence/events/c4_door_hub1_after011_10fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile14
+106.50,107.70,0:01:46.50,event_door,010,hub door (thin cyan bar from ceiling) retracts upward as hub loads after win (camera scrolling),medium,build-probe/video-evidence/events/c4_door_hub1_after011_10fps.jpg
+107.80,110.00,0:01:47.80,event_bye,010,BYE in W1 hub at sign 2 (10 fps sampling): ~2.0-2.2 s to cut,medium,build-probe/video-evidence/events/c4_door_hub1_after011_10fps.jpg
+109.80,192.10,0:01:49.80,level,012,"crate tutorial: push, pull, stack 2 then 3 boxes on red dot; exit on top of stack, win 0:03:09.5-0:03:11.5",high,build-probe/video-evidence/events/b1_crate012_2fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile15
+111.70,115.50,0:01:51.70,event_push,012,"crate PUSH: side profile, body tilted ~20-30 deg forward into the box, near arm on the box, legs stepping",high,build-probe/video-evidence/events/b3_push_pose_2x.jpg
+119.20,121.80,0:01:59.20,event_pull,012,"crate PULL: faces the box, body leaning back ~20-30 deg, arms forward gripping, steps backward, box follows",high,build-probe/video-evidence/events/b4_pull_2x_5fps.jpg
+192.10,197.90,0:03:12.10,world_hub,010,start right of door 3; door bar slides up 0:03:12.2-0:03:13.8,high,build-probe/video-evidence/events/c6_door_hub1_after012_5fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile21
+192.20,193.80,0:03:12.20,event_door,010,hub door 3 slides up into ceiling block ~1.6 s visible,medium,build-probe/video-evidence/events/c6_door_hub1_after012_5fps.jpg
+197.90,289.50,0:03:17.90,level,013,"helicopter, swim (plunge), skateboard tutorial; 0/3 -> 3/3 at 0:03:54",high(mapping); boundary +-1s,build-probe/video-evidence/events/i1_swim013_1fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile22
+205.00,217.00,0:03:25.00,event_helicopter,013,personal helicopter (backpack rotor); 'Leave the helicopter ... it dislikes water!',high,build-probe/video-evidence/events/i1_swim013_1fps.jpg
+208.00,216.00,0:03:28.00,event_swim,013,"SWIM: prone horizontal body, blue water tint, air gauge bottom-left",high,build-probe/video-evidence/events/i6_swim013_zoom_000331.jpg
+264.00,284.00,0:04:24.00,event_skate,013,"SKATEBOARD: take, ride through fire bursts, 'Your skate dislikes water! Jump!', leave",high,build-probe/video-evidence/events/i2_skate013_1fps.jpg
+289.50,295.85,0:04:49.50,world_hub,010,W1 hub signs 1-4,high(mapping); boundary +-1s,build-probe/video-evidence/events/i2_skate013_1fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile29
+295.85,371.40,0:04:55.85,level,014,"dynamite tutorial; 0/0; golden key at the end, win 0:06:09.0-0:06:11.25",high,build-probe/video-evidence/events/c7_mainhub_after014_4fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile30
+371.40,377.40,0:06:11.40,main_hub,001,arrives beside world-1 monitor; walks to W12 monitor; bye 0:06:15.40-0:06:17.35,high,build-probe/video-evidence/events/a3_bye_main_20fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile36
+375.40,377.35,0:06:15.40,event_bye,001,"BYE in main hub: front-facing one-arm wave; animated to 6:16.75, frozen 6:16.80-6:17.35; hard cut 6:17.40 (2.0 s = 40 video frames)",high,build-probe/video-evidence/events/a3_bye_main_20fps.jpg
+377.40,380.70,0:06:17.40,world_hub,120,"W12 hub (brick), signs 1-5; bye at sign 1 0:06:18.65-0:06:20.65",high,build-probe/video-evidence/events/a4_bye_hub12_20fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile37
+378.65,380.65,0:06:18.65,event_bye,120,"BYE in W12 hub at sign 1: animated to 6:20.05, frozen 0.6 s; hard cut 6:20.70 (2.05 s)",high,build-probe/video-evidence/events/a4_bye_hub12_20fps.jpg
+380.70,473.25,0:06:20.70,level,121,0/4 -> 4/4; exit arrow on cupboards near start; win 0:07:50.75-0:07:53.0,high,build-probe/video-evidence/events/c2_hub12_return_after121_4fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile38
+390.00,390.05,0:06:30.00,event_hud,121,"HUD: pause X top-right, wheel bottom-left, action + jump buttons right, lives row + treasure n/total bottom centre",high,build-probe/video-evidence/events/g_hud_level121_0630.jpg
+473.25,476.55,0:07:53.25,world_hub,120,start beside door 2; bye 0:07:54.5-0:07:56.25,high,build-probe/video-evidence/events/c3_door_slide_hub12_10fps.jpg;build-probe/video-evidence/sheets/sheet_001.jpg#tile45
+474.50,476.50,0:07:54.50,event_bye,120,BYE in W12 hub at sign 2 (4 fps sampling): ~2.0 s to cut,medium,build-probe/video-evidence/events/c2_hub12_return_after121_4fps.jpg
+476.55,959.85,0:07:56.55,level,122,0/10 -> 10/10 at 0:15:45,high,build-probe/video-evidence/sheets/sheet_001.jpg#tile45
+959.85,964.05,0:15:59.85,world_hub,120,W12 hub,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_002.jpg#tile37
+964.05,1215.65,0:16:04.05,level,123,0/15 -> 15/15 at 0:19:15,high,build-probe/video-evidence/sheets/sheet_002.jpg#tile37
+1215.65,1219.25,0:20:15.65,world_hub,120,W12 hub signs 1-4,high,build-probe/video-evidence/sheets/sheet_003.jpg#tile10
+1219.25,1742.20,0:20:19.25,level,124,0/17 -> 17/17 at 0:27:50.9; much water; teleport at 0:28:48.2,high,build-probe/video-evidence/sheets/sheet_003.jpg#tile11
+1728.20,1728.25,0:28:48.20,event_teleport,124,camera jump inside 124 (teleport assumed; world has 6 teleporter tiles),low,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg
+1742.20,1745.85,0:29:02.20,world_hub,120,W12 hub signs 4-5,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_004.jpg#tile6
+1745.85,1887.60,0:29:05.85,level,125,0/0; key -> main hub,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_004.jpg#tile6
+1887.60,1894.50,0:31:27.60,main_hub,001,main hub,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_004.jpg#tile19
+1894.50,1898.50,0:31:34.50,world_hub,110,W11 hub (cyan),medium,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_004.jpg#tile19
+1898.50,2071.50,0:31:38.50,level,111,0/4 -> 4/4 at 0:33:32; exit 0:34:29-0:34:31,high(mapping); boundary +-1s,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_004.jpg#tile19
+2071.50,2075.40,0:34:31.50,world_hub,110,W11 hub signs 1-3,medium,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_004.jpg#tile33
+2075.40,2283.95,0:34:35.40,level,112,0/2 -> 2/2 at 0:36:27,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_004.jpg#tile34
+2283.95,2287.35,0:38:03.95,world_hub,110,W11 hub signs 2-3,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_005.jpg#tile3
+2287.35,2715.20,0:38:07.35,level,113,0/1 -> 1/1 at 0:41:02; light-blue sky background,high,build-probe/video-evidence/sheets/sheet_005.jpg#tile4
+2715.20,2718.80,0:45:15.20,world_hub,110,W11 hub signs 1-5,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_005.jpg#tile39
+2718.80,3551.70,0:45:18.80,level,114,0/14 -> 14/14 at 0:59:08; pause at 0:49:37.6,high,build-probe/video-evidence/events/k2_114end_1fps.jpg;build-probe/video-evidence/sheets/sheet_005.jpg#tile39
+2977.55,2977.60,0:49:37.55,event_pause,114,pause screen seen on a keyframe (template match),medium,build-probe/video-evidence/sheets/sheet_006.jpg
+3551.70,3555.45,0:59:11.70,world_hub,110,W11 hub signs 4-5,high,build-probe/video-evidence/events/k2_114end_1fps.jpg;build-probe/video-evidence/sheets/sheet_007.jpg#tile10
+3555.45,4355.45,0:59:15.45,level,115,0/11 -> 11/11 at 1:06:15; key -> main hub,high,build-probe/video-evidence/sheets/sheet_007.jpg#tile11
+4355.45,4366.05,1:12:35.45,main_hub,001,main hub,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_008.jpg#tile27
+4366.05,4370.55,1:12:46.05,world_hub,030,"W3 hub (sky, houses, trees), signs 1-3",high,build-probe/video-evidence/sheets/sheet_008.jpg#tile29
+4370.55,4542.55,1:12:50.55,level,031,0/3 -> 3/3 at 1:15:07,high,build-probe/video-evidence/sheets/sheet_008.jpg#tile30
+4542.55,4546.05,1:15:42.55,world_hub,030,W3 hub,high,build-probe/video-evidence/sheets/sheet_008.jpg#tile44
+4546.05,4843.45,1:15:46.05,level,032,0/0 green grass + cobble,high,build-probe/video-evidence/sheets/sheet_008.jpg#tile45
+4843.45,4850.50,1:20:43.45,world_hub,030,W3 hub signs 2-4,high,build-probe/video-evidence/sheets/sheet_009.jpg#tile23
+4850.50,5134.25,1:20:50.50,level,033,0/10 -> 10/10 at 1:24:43,high,build-probe/video-evidence/sheets/sheet_009.jpg#tile24
+5134.25,5139.05,1:25:34.25,world_hub,030,W3 hub,high,build-probe/video-evidence/events/k3_transitions_A_1fps.jpg;build-probe/video-evidence/sheets/sheet_009.jpg#tile47
+5139.05,5686.85,1:25:39.05,level,034,0/5 -> 5/5 at 1:34:43; teleporters; key -> main hub,high,build-probe/video-evidence/events/j1_pause_main_hub_check_2fps.jpg;build-probe/video-evidence/sheets/sheet_009.jpg#tile48
+5686.85,5689.90,1:34:46.85,main_hub,001,main hub; walks into W3 monitor again by mistake,high,build-probe/video-evidence/events/j1_pause_main_hub_check_2fps.jpg;build-probe/video-evidence/sheets/sheet_010.jpg#tile48
+5689.90,5691.50,1:34:49.90,world_hub,030,W3 hub (accidental re-entry),high,build-probe/video-evidence/events/j1_pause_main_hub_check_2fps.jpg;build-probe/video-evidence/sheets/sheet_011.jpg#tile1
+5691.50,5694.50,1:34:51.50,pause,030,pause in a world hub: 4 buttons Home/Back/Setup/Continue (no Restart); Back -> main hub,high(mapping); boundary +-1s,build-probe/video-evidence/events/j1_pause_main_hub_check_2fps.jpg;build-probe/video-evidence/sheets/sheet_011.jpg#tile1
+5694.50,5701.70,1:34:54.50,main_hub,001,main hub; walks to W4 monitor,high(mapping); boundary +-1s,build-probe/video-evidence/events/j1_pause_main_hub_check_2fps.jpg;build-probe/video-evidence/sheets/sheet_011.jpg#tile2
+5701.70,5705.10,1:35:01.70,world_hub,040,"W4 hub (cheese + leaves), sign 1",high,build-probe/video-evidence/events/j1_pause_main_hub_check_2fps.jpg;build-probe/video-evidence/sheets/sheet_011.jpg#tile4
+5705.10,5845.90,1:35:05.10,level,041,0/7 -> 7/7 at 1:37:22,high,build-probe/video-evidence/sheets/sheet_011.jpg#tile5
+5845.90,5850.20,1:37:25.90,world_hub,040,W4 hub signs 1-3,high,build-probe/video-evidence/sheets/sheet_011.jpg#tile17
+5850.20,6167.60,1:37:30.20,level,042,0/15 -> 15/15 at 1:42:42,high,build-probe/video-evidence/sheets/sheet_011.jpg#tile18
+6167.60,6172.70,1:42:47.60,world_hub,040,W4 hub signs 1-4,high,build-probe/video-evidence/sheets/sheet_011.jpg#tile43
+6172.70,6534.50,1:42:52.70,level,043,0/12 -> 12/12 at 1:48:30,high,build-probe/video-evidence/sheets/sheet_011.jpg#tile45
+6534.50,6539.00,1:48:54.50,world_hub,040,W4 hub signs 2-5,high,build-probe/video-evidence/sheets/sheet_012.jpg#tile25
+6539.00,6946.15,1:48:59.00,level,044,0/22 -> 22/22 at 1:55:25.9,high,build-probe/video-evidence/sheets/sheet_012.jpg#tile27
+6946.15,6959.35,1:55:46.15,world_hub,040,W4 hub signs 3-6 (13 s),high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_013.jpg#tile11
+6959.35,7541.05,1:55:59.35,level,045,0/11 -> 11/11 at 2:05:06,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_013.jpg#tile13
+7541.05,7545.25,2:05:41.05,world_hub,040,W4 hub signs 4-6,high,build-probe/video-evidence/sheets/sheet_014.jpg#tile12
+7545.25,9068.70,2:05:45.25,level,046,0/0; personal helicopter; ~9 lives lost (10 -> 1); key -> main hub,high,build-probe/video-evidence/events/i4_air046_1fps.jpg;build-probe/video-evidence/sheets/sheet_014.jpg#tile13
+8280.00,8304.00,2:18:00.00,event_helicopter,046,helicopter hovering ~25 s with exhaust puffs,high,build-probe/video-evidence/events/i5_heli046_zoom_021810.jpg
+8434.40,8436.40,2:20:34.40,event_death,046,DEATH by red mine: black charred silhouette + explosion + smoke rings; respawn ~8-9 s later,high,build-probe/video-evidence/events/e5_death046_022034_5fps.jpg
+9068.70,9075.85,2:31:08.70,main_hub,001,main hub,high,build-probe/video-evidence/sheets/sheet_016.jpg#tile40
+9075.85,9079.55,2:31:15.85,world_hub,090,W9 hub (brown rock),high,build-probe/video-evidence/sheets/sheet_016.jpg#tile41
+9079.55,9378.80,2:31:19.55,level,091,0/0,high,build-probe/video-evidence/sheets/sheet_016.jpg#tile42
+9378.80,9382.60,2:36:18.80,world_hub,090,W9 hub signs 1-2,high,build-probe/video-evidence/sheets/sheet_017.jpg#tile19
+9382.60,9857.10,2:36:22.60,level,092,0/1 -> 1/1 at 2:43:53,high,build-probe/video-evidence/sheets/sheet_017.jpg#tile20
+9857.10,9860.55,2:44:17.10,world_hub,090,W9 hub signs 1-3,high,build-probe/video-evidence/sheets/sheet_018.jpg#tile11
+9860.55,10232.00,2:44:20.55,level,093,0/2 -> 2/2 at 2:48:40,high,build-probe/video-evidence/sheets/sheet_018.jpg#tile12
+10232.00,10235.35,2:50:32.00,world_hub,090,W9 hub,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_018.jpg#tile42
+10235.35,10439.30,2:50:35.35,level,094,0/4 -> 4/4 at 2:53:44,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_018.jpg#tile43
+10439.30,10444.00,2:53:59.30,world_hub,090,W9 hub signs 4-5,high,build-probe/video-evidence/sheets/sheet_019.jpg#tile13
+10444.00,11002.20,2:54:04.00,level,095,0/1 -> 1/1 at 3:03:06; key -> main hub,high,build-probe/video-evidence/sheets/sheet_019.jpg#tile14
+11002.20,11007.20,3:03:22.20,main_hub,001,main hub,high,build-probe/video-evidence/sheets/sheet_020.jpg#tile12
+11007.20,11011.05,3:03:27.20,world_hub,020,W2 hub (light grey + mosaic),high,build-probe/video-evidence/sheets/sheet_020.jpg#tile13
+11011.05,11128.15,3:03:31.05,level,021,0/6 -> 6/6 at 3:05:22,high,build-probe/video-evidence/sheets/sheet_020.jpg#tile14
+11128.15,11131.70,3:05:28.15,world_hub,020,W2 hub,high,build-probe/video-evidence/sheets/sheet_020.jpg#tile24
+11131.70,11567.90,3:05:31.70,level,022,0/8 -> 8/8 at 3:11:47,high,build-probe/video-evidence/sheets/sheet_020.jpg#tile25
+11567.90,11571.25,3:12:47.90,world_hub,020,W2 hub,high,build-probe/video-evidence/sheets/sheet_021.jpg#tile14
+11571.25,11876.60,3:12:51.25,level,023,0/2 -> 2/2 at 3:15:46,high,build-probe/video-evidence/sheets/sheet_021.jpg#tile15
+11876.60,11880.15,3:17:56.60,world_hub,020,W2 hub signs 3-5,high,build-probe/video-evidence/events/j2_pause_024_2fps.jpg;build-probe/video-evidence/sheets/sheet_021.jpg#tile40
+11880.15,12445.05,3:18:00.15,level,024,0/5 -> 5/5 at 3:26:30; pause 3:18:01.5-3:18:11.0; swimming 3:22:20-3:23:48,high,build-probe/video-evidence/events/j2_pause_024_2fps.jpg;build-probe/video-evidence/sheets/sheet_021.jpg#tile41
+11881.50,11891.00,3:18:01.50,event_pause,024,"PAUSE: Youpie spins in ~1 s, 5 buttons; Continue: Youpie zooms out ~0.5 s",high,build-probe/video-evidence/events/j2_pause_024_2fps.jpg
+12445.05,12448.65,3:27:25.05,world_hub,020,W2 hub,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_022.jpg#tile40
+12448.65,12982.55,3:27:28.65,level,025,0/4 -> 4/4 at 3:36:10; key -> main hub,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_022.jpg#tile41
+12982.55,12997.40,3:36:22.55,main_hub,001,main hub,high,build-probe/video-evidence/sheets/sheet_023.jpg#tile37
+12997.40,13001.70,3:36:37.40,world_hub,070,"W7 hub (coloured balls, lollipops)",high,build-probe/video-evidence/sheets/sheet_023.jpg#tile39
+13001.70,13315.20,3:36:41.70,level,071,0/0; pause 3:36:43.1,high,build-probe/video-evidence/events/i7_jeep071_scan_0p33fps.jpg;build-probe/video-evidence/sheets/sheet_023.jpg#tile40
+13003.15,13003.20,3:36:43.15,event_pause,071,pause screen seen on a keyframe right after level start,medium,build-probe/video-evidence/events/i7_jeep071_scan_0p33fps.jpg
+13315.20,13318.50,3:41:55.20,world_hub,070,W7 hub,high,build-probe/video-evidence/sheets/sheet_024.jpg#tile19
+13318.50,13384.05,3:41:58.50,level,072,0/6 -> 6/6 at 3:43:01; win 3:43:01.5-3:43:03.5,high,build-probe/video-evidence/events/c8_072end_hub_073_2fps.jpg;build-probe/video-evidence/sheets/sheet_024.jpg#tile20
+13384.05,13387.85,3:43:04.05,world_hub,070,W7 hub signs 1-5; start beside door 3,high,build-probe/video-evidence/events/c8_072end_hub_073_2fps.jpg;build-probe/video-evidence/sheets/sheet_024.jpg#tile25
+13387.85,13529.10,3:43:07.85,level,073,0/4,high,build-probe/video-evidence/events/c8_072end_hub_073_2fps.jpg;build-probe/video-evidence/sheets/sheet_024.jpg#tile26
+13529.10,13532.55,3:45:29.10,world_hub,070,W7 hub,high,build-probe/video-evidence/sheets/sheet_024.jpg#tile38
+13532.55,13698.55,3:45:32.55,level,074,0/9,high,build-probe/video-evidence/sheets/sheet_024.jpg#tile39
+13698.55,13702.15,3:48:18.55,world_hub,070,W7 hub,medium,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_025.jpg#tile4
+13702.15,14059.50,3:48:22.15,level,075,0/7 -> 7/7 at 3:52:32; key -> main hub,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_025.jpg#tile5
+14059.50,14067.35,3:54:19.50,main_hub,001,main hub,high,build-probe/video-evidence/sheets/sheet_025.jpg#tile34
+14067.35,14070.90,3:54:27.35,world_hub,100,W10 hub (grey cobble),high,build-probe/video-evidence/sheets/sheet_025.jpg#tile35
+14070.90,14329.35,3:54:30.90,level,101,0/6 -> 6/6 at 3:58:48,high,build-probe/video-evidence/sheets/sheet_025.jpg#tile36
+14329.35,14334.10,3:58:49.35,world_hub,100,W10 hub,high,build-probe/video-evidence/sheets/sheet_026.jpg#tile10
+14334.10,14591.15,3:58:54.10,level,102,0/3 -> 3/3 at 4:03:05; teleporter 4:02:52-4:02:58,high,build-probe/video-evidence/events/k1_102end_1fps.jpg;build-probe/video-evidence/sheets/sheet_026.jpg#tile11
+14572.00,14578.00,4:02:52.00,event_teleport,102,TELEPORTER in a cyan riveted cage ~6 s,medium,build-probe/video-evidence/events/k1_102end_1fps.jpg
+14591.15,14595.10,4:03:11.15,world_hub,100,W10 hub signs 1-4,high,build-probe/video-evidence/events/k1_102end_1fps.jpg;build-probe/video-evidence/sheets/sheet_026.jpg#tile34
+14595.10,14937.35,4:03:15.10,level,103,0/1 -> 1/1 at 4:07:42,high,build-probe/video-evidence/sheets/sheet_026.jpg#tile35
+14937.35,14941.00,4:08:57.35,world_hub,100,W10 hub,high,build-probe/video-evidence/sheets/sheet_027.jpg#tile17
+14941.00,15218.95,4:09:01.00,level,104,0/6 -> 6/6 at 4:12:46; jeeps over mines 4:10:22-4:10:40,high,build-probe/video-evidence/events/i10_jeep104_zoom.jpg;build-probe/video-evidence/sheets/sheet_027.jpg#tile18
+15022.50,15040.00,4:10:22.50,event_jeep,104,JEEP: Blupi seated in red jeep drives over red mines that explode in a chain,high,build-probe/video-evidence/events/i10_jeep104_zoom.jpg
+15218.95,15223.20,4:13:38.95,world_hub,100,W10 hub,high,build-probe/video-evidence/sheets/sheet_027.jpg#tile42
+15223.20,15601.55,4:13:43.20,level,105,0/7 -> 7/7 at 4:19:45,high,build-probe/video-evidence/sheets/sheet_027.jpg#tile43
+15601.55,15605.90,4:20:01.55,world_hub,100,W10 hub,high,build-probe/video-evidence/sheets/sheet_028.jpg#tile28
+15605.90,16071.65,4:20:05.90,level,106,0/16 -> 16/16 at 4:27:48,high,build-probe/video-evidence/sheets/sheet_028.jpg#tile29
+16071.65,16080.50,4:27:51.65,world_hub,100,W10 hub,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_029.jpg#tile24
+16080.50,16310.70,4:28:00.50,level,107,0/1 -> 1/1 at 4:31:44; pause 4:28:30.5; key -> main hub,high(mapping); boundary +-1s,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_029.jpg#tile24
+16110.50,16110.55,4:28:30.50,event_pause,107,pause screen seen on a keyframe (template match),medium,build-probe/video-evidence/sheets/sheet_026.jpg
+16310.70,16329.90,4:31:50.70,main_hub,001,main hub,high,build-probe/video-evidence/sheets/sheet_029.jpg#tile47
+16329.90,16340.85,4:32:09.90,world_hub,050,W5 hub (black + grey mechanics),high,build-probe/video-evidence/sheets/sheet_030.jpg#tile1
+16340.85,16634.95,4:32:20.85,level,051,0/2 -> 2/2 at 4:34:02; teleporter 4:35:00.75-4:35:07.0,medium,build-probe/video-evidence/events/i14_tele051_zoom_4fps.jpg;build-probe/video-evidence/sheets/sheet_030.jpg#tile1
+16500.75,16507.00,4:35:00.75,event_teleport,051,"TELEPORTER: cyan funnel emitter beam + sparks on Blupi ~5.3 s, empty 0.75 s, hard cut to destination (6.25 s)",high,build-probe/video-evidence/events/i14_tele051_zoom_4fps.jpg
+16634.95,16638.85,4:37:14.95,world_hub,050,W5 hub,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_030.jpg#tile27
+16638.85,16876.90,4:37:18.85,level,052,0/12 -> 12/12 at 4:39:55,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_030.jpg#tile27
+16876.90,16894.40,4:41:16.90,world_hub,050,W5 hub (16 s),high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_030.jpg#tile47
+16894.40,17621.65,4:41:34.40,level,053,0/21 -> 21/21 at 4:51:28,high,build-probe/video-evidence/events/k3_transitions_B_1fps.jpg;build-probe/video-evidence/sheets/sheet_031.jpg#tile1
+17621.65,17626.20,4:53:41.65,world_hub,050,W5 hub,high,build-probe/video-evidence/sheets/sheet_032.jpg#tile15
+17626.20,17877.00,4:53:46.20,level,054,0/0 sky + mechanics,high,build-probe/video-evidence/sheets/sheet_032.jpg#tile16
+17877.00,17884.85,4:57:57.00,world_hub,050,W5 hub,high,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_032.jpg#tile38
+17884.85,18161.15,4:58:04.85,level,055,0/7 -> 7/7 at 5:02:07; fire death 5:00:39.75,high,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_032.jpg#tile39
+18039.75,18043.25,5:00:39.75,event_death,055,DEATH in burning floor: charred black Blupi in rising brown smoke; respawn at 5:00:43.25 (~3.5 s),high,build-probe/video-evidence/events/e6_death055_lava_4fps.jpg
+18161.15,18164.60,5:02:41.15,world_hub,050,W5 hub,high,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_033.jpg#tile14
+18164.60,18503.10,5:02:44.60,level,056,0/12 -> 12/12 at 5:08:12; enemy blue tanks,high,build-probe/video-evidence/events/i3_vehicle056_1fps.jpg;build-probe/video-evidence/sheets/sheet_033.jpg#tile15
+18503.10,18508.10,5:08:23.10,world_hub,050,W5 hub,high,build-probe/video-evidence/sheets/sheet_033.jpg#tile43
+18508.10,18898.25,5:08:28.10,level,057,0/3 -> 3/3 at 5:13:35,high,build-probe/video-evidence/sheets/sheet_033.jpg#tile44
+18898.25,18910.20,5:14:58.25,world_hub,050,W5 hub; pause at 5:15:05.2,high,build-probe/video-evidence/sheets/sheet_034.jpg#tile29
+18905.25,18905.30,5:15:05.25,event_pause,050,pause screen in W5 hub seen on a keyframe (template match),medium,build-probe/video-evidence/sheets/sheet_030.jpg
+18910.20,19323.20,5:15:10.20,level,058,0/10 -> 10/10 at 5:21:12; key -> main hub,high,build-probe/video-evidence/sheets/sheet_034.jpg#tile31
+19323.20,19329.80,5:22:03.20,main_hub,001,main hub,high,build-probe/video-evidence/sheets/sheet_035.jpg#tile17
+19329.80,19333.50,5:22:09.80,world_hub,060,W6 hub (green slime),high,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_035.jpg#tile18
+19333.50,19948.70,5:22:13.50,level,061,0/7 -> 7/7 at 5:32:01,high(mapping); boundary +-1s,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_035.jpg#tile18
+19948.70,19952.15,5:32:28.70,world_hub,060,W6 hub,high(mapping); boundary +-1s,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_036.jpg#tile21
+19952.15,20675.80,5:32:32.15,level,062,0/6 -> 6/6 at 5:37:19,high,build-probe/video-evidence/sheets/sheet_036.jpg#tile22
+20675.80,20679.25,5:44:35.80,world_hub,060,W6 hub,high,build-probe/video-evidence/sheets/sheet_037.jpg#tile32
+20679.25,20893.55,5:44:39.25,level,063,0/0 red circuit + slime,high,build-probe/video-evidence/sheets/sheet_037.jpg#tile33
+20893.55,20909.00,5:48:13.55,world_hub,060,W6 hub (15 s),high,build-probe/video-evidence/sheets/sheet_038.jpg#tile3
+20909.00,21251.65,5:48:29.00,level,064,0/10 -> 10/10 at 5:53:54,high,build-probe/video-evidence/sheets/sheet_038.jpg#tile5
+21251.65,21255.05,5:54:11.65,world_hub,060,W6 hub,high(mapping); boundary +-1s,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_038.jpg#tile33
+21255.05,21838.50,5:54:15.05,level,065,0/1 -> 1/1 at 5:54:40,high,build-probe/video-evidence/sheets/sheet_038.jpg#tile34
+21838.50,21842.50,6:03:58.50,world_hub,060,W6 hub,high,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_039.jpg#tile34
+21842.50,22057.15,6:04:02.50,level,066,0/0; key -> main hub,high,build-probe/video-evidence/events/k3_transitions_C_1fps.jpg;build-probe/video-evidence/sheets/sheet_039.jpg#tile35
+22057.15,22065.95,6:07:37.15,main_hub,001,main hub,high,build-probe/video-evidence/sheets/sheet_040.jpg#tile5
+22065.95,22070.05,6:07:45.95,world_hub,080,"W8 hub (sky + cyan), signs 1-4",high,build-probe/video-evidence/sheets/sheet_040.jpg#tile6
+22070.05,22283.40,6:07:50.05,level,081,0/0 sky,high,build-probe/video-evidence/sheets/sheet_040.jpg#tile7
+22283.40,22287.35,6:11:23.40,world_hub,080,W8 hub (from scene cuts only),medium,build-probe/video-evidence/sheets/sheet_040.jpg#tile24
+22287.35,22467.80,6:11:27.35,level,082,0/8 -> 8/8 at 6:14:04,high,build-probe/video-evidence/sheets/sheet_040.jpg#tile24
+22467.80,22472.65,6:14:27.80,world_hub,080,W8 hub,high,build-probe/video-evidence/sheets/sheet_040.jpg#tile39
+22472.65,22726.25,6:14:32.65,level,083,0/3 -> 3/3 at 6:18:04,high,build-probe/video-evidence/sheets/sheet_040.jpg#tile40
+22726.25,22730.80,6:18:46.25,world_hub,080,W8 hub,high,build-probe/video-evidence/sheets/sheet_041.jpg#tile13
+22730.80,23031.85,6:18:50.80,level,084,0/0; key on floating platforms; win 6:23:49.25-6:23:51.5,high,build-probe/video-evidence/events/h1_084end_to_199_4fps.jpg;build-probe/video-evidence/sheets/sheet_041.jpg#tile14
+23031.85,23044.75,6:23:51.85,main_hub,001,main hub after all 12 worlds; red exit arrow in a plant; WIN pose 6:24:01.80-6:24:04.70,high,build-probe/video-evidence/events/h4_199_entry_pose_10fps.jpg;build-probe/video-evidence/sheets/sheet_041.jpg#tile38
+23041.80,23044.70,6:24:01.80,event_win,001,WIN pose on main-hub exit arrow (not bye) -> world 199; animated 1.8 s + frozen 1.1 s,high,build-probe/video-evidence/events/h4_199_entry_pose_10fps.jpg
+23044.75,24824.20,6:24:04.75,level,199,final world 0/0 (no treasure counter goal); death 6:39:25.4; BLUPI statue 6:53:28-6:53:39; final exit 6:53:40-6:53:43.5,high,build-probe/video-evidence/events/h2_199_end_2fps.jpg;build-probe/video-evidence/sheets/sheet_041.jpg#tile40
+23965.40,23970.50,6:39:25.40,event_death,199,"DEATH by blue bird: fireball, translucent winged Blupi floats up and fades, respawn with sparkle 6:39:30.6 (~5.1 s)",high,build-probe/video-evidence/events/e2_death_199_0639_10fps.jpg
+24820.00,24823.50,6:53:40.00,event_win,199,final exit (red arrow in star-block frame) -> WIN screen 6:53:44.2,high,build-probe/video-evidence/events/h5_199_end_fullres_quad.jpg
+24824.20,24838.60,6:53:44.20,win,199,"WIN screen (green, pulsing Youpie Blupi) ~14 s; no credits",high,build-probe/video-evidence/events/h2_199_end_2fps.jpg;build-probe/video-evidence/sheets/sheet_044.jpg#tile40
+24838.60,24842.10,6:53:58.60,menu,-,"main menu; Player A now main gates 12/12, secondary 52/52, Blupi 6",high,build-probe/video-evidence/events/h_full_24871.5.jpg;build-probe/video-evidence/sheets/sheet_044.jpg#tile43
+24842.10,24863.30,6:54:02.10,main_hub,001,main hub again; walks to exit arrow,high,build-probe/video-evidence/events/h2_199_end_2fps.jpg;build-probe/video-evidence/sheets/sheet_044.jpg#tile44
+24863.30,24864.90,6:54:23.30,level,199,world 199 again (briefly),high,build-probe/video-evidence/events/h2_199_end_2fps.jpg;build-probe/video-evidence/sheets/sheet_044.jpg#tile46
+24864.90,24870.45,6:54:24.90,pause,199,pause (5 buttons Home/Back/Setup/Restart/Continue); Home,high,build-probe/video-evidence/events/h5_199_end_fullres_quad.jpg;build-probe/video-evidence/sheets/sheet_044.jpg#tile47
+24870.45,24873.00,6:54:30.45,menu,-,main menu; window closed; end of video,high,build-probe/video-evidence/events/h_full_24871.5.jpg;build-probe/video-evidence/sheets/sheet_044.jpg#tile48

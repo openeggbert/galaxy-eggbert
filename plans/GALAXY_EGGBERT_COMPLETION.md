@@ -1,0 +1,248 @@
+# Galaxy Eggbert — completion plan
+
+_Started 2026-10-25 on the restored `develop` baseline (`00ba088`). This is the active execution
+plan; keep it truthful and update it with every milestone. `CURRENT.md` holds the verified
+state, `handoff.md` where work stands, `plan.md` the historical log and the detailed task
+inventory (its Phase 7B `BB3D-*` items stay the per-object record)._
+
+Status legend: **done** (in the tree, tested, checked live when visual) · **partial** ·
+**open** · **blocked** (named blocker) · **not convertible** (proven).
+
+## 1. Direction (owner, 2026-10-25)
+
+The owner reverted a misguided campaign (a 2.5D side-view conversion of the 2D maps, then a
+rewrite toward camera-relative controls; branches `preserve/2.5d-side-view-2026-10-25` and
+`true-3d-correction`, kept only as notes, never merged). The brief that replaced it:
+
+- **Finish the existing game.** Galaxy Eggbert is a genuinely 3D, tile/voxel-based remake on
+  CNA + cna-engine. Keep its voxel world, `.vwr` format lineage, 3D editor, yaw ("tank")
+  controls, camera, physics, registries and save data. Fix a system only for a specific
+  reproduced defect, with a focused change and a regression test.
+- **Worlds are original 3D tile designs.** Mobile Eggbert's 78 worlds give each world's
+  identity, theme, mechanics, difficulty and progression — never its 2D geometry. No extrusion,
+  no lane lock, no row-to-row mapping.
+- **Gameplay follows Mobile Eggbert's C++ code** (`../mobile-eggbert`, read only), adapted to
+  3D only where a 2D rule cannot apply, as a small documented decision.
+- **Models and animations come from the original sources** (`../speedyblupi-data`, Ray Dream
+  `.rd4`/`.rds` first), see §2 and §7.
+- **Repository boundaries.** Writable: this repository; `cna-engine` only for a demonstrated
+  defect or a broadly reusable helper, separately tested and committed. Read only: `cna`
+  (defects go to `upstream_bugs.md`, `UB-NNN`), `mobile-eggbert`, `blupi_recon`,
+  `free-eggbert`, `speedyblupi-data`. Push only when asked.
+- **Data tables.** Since 2026-10-25 the owner's standing approval covers porting small
+  Mobile Eggbert data tables needed for fidelity (glyph widths, animation and timing tables),
+  citing the source; larger code still needs asking.
+
+## 2. Creative vision and Original Art Fidelity (permanent requirement)
+
+_Imagine Daniel Roux had made Speedy Blupi as a fully 3D game in 1998._ Galaxy Eggbert should
+feel like that hypothetical game, completed with the existing Galaxy technology — not a modern
+reinterpretation. A longtime player should recognise Blupi, the vehicles, objects, enemies and
+mechanisms at once and feel the world has come alive in three dimensions.
+
+**Worlds versus models.** Worlds are creatively re-designed as 3D tile levels. Object designs
+stay faithful to the originals: original geometry, silhouettes, proportions, colours, textures,
+expressions, animation poses, the low-polygon style. Higher polygon counts, PBR materials or
+extra detail are not fidelity.
+
+**Asset policy (source first).** For every game object: (1) find its original 3D source in
+`speedyblupi-data`; (2) check for an existing conversion; (3) keep a faithful one; (4) fix the
+converter when a conversion is missing or defective; (5) convert to the runtime format (CNA
+`SkinnedModelEXT`, with `.glb` as the intermediate); (6) preserve geometry, proportions,
+materials, UVs, axes, scale, animation; (7) render and compare against the sprites, the
+original game and the gameplay video — a successful conversion is not a visual check; (8)
+integrate, replacing billboards only after verification. Where no source can be recovered,
+build a modest reconstruction from sprites/footage, never an extravagant replacement. Effects
+(explosions, splashes, sparks, glows) may stay billboards (decision of 2026-10-24).
+
+**Validation criteria for a model:** silhouette IoU against its sprites (`build_object_library`
+reports, `compare.png`); consistent outward winding (no face lost to back-face culling — check
+added 2026-10-25, §7.2); correct scale against Blupi and a 64-pixel block; checked live from
+several angles in the running game; animation frames against the sprite tables. For Blupi's
+clips: every frame against its icon (`clips.md`), no hidden parts in a normal pose, and a live
+check of the state.
+
+## 3. Protected baseline (do not regress)
+
+- `GalaxyEggbertCNA` on CNA + cna-engine; no other engine or renderer.
+- Voxel world: 100³ cells in 10³ chunks, block = 12-bit type + 4-bit metadata, numeric block
+  ids (object-m.png icons), `BlockDefinitionRegistry`, `ObjectDefinitionRegistry`,
+  `InteractionSystem` free of controller/camera/graphics.
+- `.vwr` v2 (`VWR1` magic, header v2, chunk payload `VCH1` v2, sparse `BMD1` records:
+  MoveObject type 1, plate rotation type 2, BigDecor type 3). See §6.
+- 3D editor (raycast editing, palette in Eggbert order, undo/redo, box fill, object editing,
+  sky region, save/play-test loop) and per-gamer custom worlds.
+- Controls: yaw turning with Left/Right, Up/Down forward/back, Ctrl jump, Space action,
+  Shift crouch/look-up; first/third-person views (third person default, F3 since 2026-10-25).
+- Real Blupi model (`avatars3d/blupi/`, 45 clips, 5 vehicles) and 82 object models
+  (`avatars3d/objects/`), converter `tools/rd4_to_gltf/`.
+- Sound channels, ObjectType ids, save file `savedata.txt` (3 gamers), menus (Wait, Init,
+  Setup, Pause, Resume, Win/Lost), hub progression and door unlocks.
+
+## 4. Audit of the restored baseline (2026-10-25)
+
+| Area | Found |
+|---|---|
+| Repository | `develop` = `origin/develop` = `00ba088`, clean. Native build `build-cna-opengl3/` (OPENGL33, Release, Ninja, ccache). Siblings: cna `e4e721e69` (live tree, another session edits it), cna-engine `f68e7c3`, easy-gl `f4d6afa`, meta-gl `dd3b300`, sharp-runtime `4e146b90`. |
+| Build/tests | Builds; **96/96** CTest pass. Golden frames stale since Phase 7B (known). |
+| Live run | Wait → Init (copied Mobile Eggbert `init.png`, an X-icon editor button) → hub → missions works under Xvfb. Default view was first person. |
+| Worlds | 79 `.vwr`: `world001` (flat 18×18 plaza, 12 world portals + demo portal), 12 theme hubs (flat plazas with numbered portals and gated doors, 373-437 blocks, ≤3 heights), **65 placeholders** (every mission and 199: an identical 11×11 floor with one exit, generated by `tools/GenerateSampleWorld3D.cpp`), `world999` (the mechanics showcase, 6 843 blocks, 14 heights, 100 objects). Inventory: `plans/inventory/worlds.md` (`tools/world_inventory.py`). |
+| Format | `.vwr` v2 as documented in `World Format.md`; v1 worlds no longer load (deliberate 2026-07-09 cutover). |
+| Assets | Blupi: 58 bones, 45 clips, 5 vehicles; Bye had no clip. Objects: 82 models drawing 256 icons; effects, charge, shield remain billboards. 27 of 83 converted models had inward-facing caps (§7.2). |
+| Editor | Browser lists `customworlds/gamerN/custom_NNN.vwr` (up to 999), "New World", play-test loop; entered from the main menu's X icon. |
+| Saves | `savedata.txt` and `customworlds/` relative to the working directory. **The owner plays from `build-cna-opengl3/`**: its files there are real user data (they include `slot01/02.vwr` written by the reverted build). Live checks run from `build-probe/qa-run/` (`tools/qa_live.sh`). |
+| References | `../mobile-eggbert` (C++ port; `worlds/` 78 `.txt`), runnable original `~/Downloads/SpeedyBlupi2013Linux`, gameplay video (§9.3), `speedyblupi-data/originals` (528 Ray Dream scenes, 44 `.max`, 6 `.a3d`). |
+
+## 5. Defects reported by the owner (2026-10-25)
+
+| # | Report | Cause found | Status |
+|---|---|---|---|
+| D1 | Standing Blupi shows only his right half | `Stop` (and Mockery, Mockeryi, Switch, Teleporting, Charge) took poses from `blupi-scie.rds`, the saw death's half Blupi | tools fixed (`d660085`); asset rebuild in progress |
+| D2 | Exit arrow has transparent/missing sides | free-form end caps wound inwards, culled by the game (27 models) | tools fixed (`94ce688`); object re-export in progress |
+| D3 | Hole on top of walking Blupi's head | same as D2: his body's pole caps | with D2 |
+| D4 | Blupi walks up a one-block step | engine-invented step-up (`kStepLimit` 1 block); `Decor::TestPath` has none | **done** `c317f94` |
+| D5 | Third person should be default; C is a cheat letter | — | **done** `aabc4f8` (F3 toggles) |
+| D6 | Turning a bit slower | — | **done** `c2cb216` (135°/s) |
+| D7 | 3D world visible beside Pause/Setup | 640×480 images drawn centred only; original stretches a corner patch | **done** `8ba5e34` |
+| D8 | Game aborted after Play ("Unknown animation clip") | regression of D5: model drawn before a clip was chosen | **done** `8260eaf` |
+| D9 | Gaps between letters in menu text | fixed 17 px advance instead of `Text::table_width` | **done** `21cccb3` |
+| D10 | Bye freezes on its first frame at a world portal, leaves too early | no Bye icon table/clip, so Stop's first frame showed | icons **done** `4572099`; 3D clip with the rebuild |
+| D11 | Many exhibition models in world999 look wrong compared with Mobile Eggbert | partly D2; the rest needs per-object comparison | open (§7.3) |
+| D12 | "Player A: Erase progress" runs off the Setup screen | layout check against the original pending | open |
+
+## 6. Native world format: evolution policy
+
+Current: `.vwr` v2 (§3). The format is not frozen, but grows only for a demonstrated need.
+
+Rules: additive, versioned, deterministic; new readers load every committed world and every
+user world; old executables may refuse newer files only if documented; no silent
+reinterpretation of bytes; malformed input is rejected; fixtures and round-trip tests for
+legacy load, upgraded load, load→save→load equality, editor edit→save→play→reopen, unknown
+optional records, multi-chunk boundaries, and every profile's slots. Backups of user worlds
+before any migration; migrations opt-in.
+
+Candidates (investigate when a world or the editor needs them; none implemented yet):
+
+| Need | Today | Possible extension |
+|---|---|---|
+| Portal destinations beyond "marker icon → mission arithmetic" | hub markers encode targets implicitly | optional per-marker metadata record (target mission, arrival cell) |
+| Arrival point next to the door last used (video: Blupi arrives beside the door he opened) | single spawn | per-door arrival cells (sparse record) |
+| Music per world | Mobile Eggbert header `music=`; Galaxy has none | the v2 header has no free field (all 40 bytes used): an optional world-metadata record |
+| Object orientation / yaw for 3D placement | MoveObject has none | optional yaw in a new MoveObject payload size (decoder already accepts 45/47 bytes) |
+| Larger or non-cubic worlds | 100³ fixed | `chunksX/Y/Z` header v3 (`World Format.md` "Recommended Future World Header") |
+
+## 7. Original Art Fidelity and Asset Conversion
+
+### 7.1 Inventory
+
+- Source survey: `build-probe/rd4-survey/scenes.csv` (all 528 Ray Dream scenes read; masters not
+  built: `tx` 3D text (menus), `COFA` stars, `fogg` fog). `.max` (44: menus, Blupi variants,
+  shields) and `.a3d` (6: creatures, drill) are not readable without proprietary tools; the
+  creatures also exist as `.rds`. **To produce:** `plans/inventory/assets.md`, one row per source
+  (path, format, use, convert status, `.glb`, runtime directory, game object, checks, limits).
+- In the game: Blupi (`avatars3d/blupi/`), 5 vehicles, 82 object models (pickups, enemies,
+  decoys, tentacle, big decor). Billboards kept by decision: effects, charge (31), shield (25).
+
+### 7.2 Corrections in progress (2026-10-25)
+
+- Inward caps on free-forms (D2/D3), now fixed in the converter; consistency check:
+  every welded edge must be traversed once in each direction (to be added to the converters'
+  own checks). All 83 models are being re-exported and re-checked.
+- Half-body poses (D1): `--whole-icons` rule.
+- Bye clip (D10): end-key frames (`match_icons.py`), `kByeFrames`; full re-match running.
+
+### 7.3 Open items
+
+- Per-object live comparison with Mobile Eggbert (video/original game) for every exhibition
+  object of `world999` (D11), recorded per object: source, IoU, live view, verdict.
+- `BB3D-032` fish head ~15 % large; `BB3D-050` grass blades wide; procedural textures flat.
+- Push/Pull: Push has a clip (`pousse-profil.rd4`, IoU 0.988); live check of the crate push
+  pending; Pull has no state in Galaxy yet (the video shows it in 012) — parity item.
+- Win cheer (table_blupi 13, `gagne.rd4`): no Galaxy state yet — parity item.
+
+## 8. Blupi animation coverage
+
+Original actions (`BlupiAction.hpp`, 88) vs Galaxy (`BlupiController::AnimState`, clips in
+`avatars3d/blupi/clips.txt`). Built and wired: Stop, March, Jump, Air, Down, Up, Push, the
+squashed pair, Balloon, Teleporte, Hide, Switch, the vehicles (helicopter, jeep, tank incl.
+fire, skateboard incl. take/put, overcraft), swimming and surface, Mockery ×3, dynamite
+take/put, deaths Clear1/3/4, Glu, Drown, pickups Sucette/Drink/Charge. Bye: icons done, clip
+pending. **Missing states** (to verify against `Decor.cpp` before adding): Win (13), Turn
+(3) and the vehicle turns, Vertigo (8), Recede/Advance (9/10, pull), Set (12), Suspend family
+(31-34, hanging bar), JumpAie (36), Ouf1a-5 (44-48, 65), Electro (57), HelicoGlu (58), Pop
+(28/29), Clear2/5-8, SlowdownSkate (85).
+
+## 9. Campaign content
+
+### 9.1 Structure
+
+78 identities: `world001` main hub, 12 theme hubs (`world010`…`world120`), 64 missions
+(4, 5, 4, 6, 8, 6, 5, 4, 5, 7, 5, 5 per world) and the bonus `world199`; plus `world999`, the
+Galaxy showcase (kept; seeds editor slot 1, §10). Table: `plans/inventory/worlds.md`.
+
+### 9.2 Authoring process
+
+Per world, before building: a short **3D design brief** (identity, signature mechanics and
+objects from the reference and the video, teaching goal, 3D layout idea using several X/Z
+directions and real heights, route to the exit, secrets), stored under `plans/briefs/`.
+Build with deliberate authoring tooling inside Galaxy (reusable architecture kits allowed;
+cloned terrain with renamed spawns not allowed), then: loads, edits, saves; critical objects
+present; a reachable route to the exit (scripted reachability check); no softlock; portals
+and progression work; live screenshots. Order: one representative mission as the quality
+reference → main hub and one theme hub with its missions → the rest in batches.
+
+### 9.3 Gameplay video
+
+`/rv/big/my-blupi-videos-on-youtube/Speedy_Blupi_for_Windows_Phone/20241215 Speedy_Blupi_for_Windows_Phone_gameplay_all_levels.mp4`
+(806×516, 20 fps, 6 h 54 min). `plans/evidence/video-timeline.csv` is a per-mission timeline
+recovered from the reverted branch; spot-checked 2026-10-25 against frames extracted here (win
+of 011 at 1:43.9, hub at 1:46.5, Bye at sign 2 at ~1:48, level 012 at 1:49.8: all match).
+Use it as an index; verify each claim against extracted frames before relying on it.
+
+## 10. Editor and UI
+
+- **10 slots × 3 gamers** (open): slot N = `customworlds/gamerG/custom_00N.vwr` for N = 1-10
+  (existing files keep their slot). Files beyond 10 (and the reverted build's `slotNN.vwr`) stay
+  untouched and are listed as "older worlds" to open or copy into a free slot — never deleted
+  or hidden. Slot 1 of a gamer is seeded once from `worlds3d/world999.vwr` only when empty
+  (copy, never a link). Create/edit/save/play-test/delete with confirmation; tests per gamer.
+- **Title screen** (open): a Galaxy Eggbert scene (CNA-rendered or composed from Galaxy's own
+  assets), not Mobile Eggbert's `init.png`; legible original UI.
+- **Editor entry** (open): a labelled "3D World Editor" button instead of the X icon.
+- **Transparency** (open): verify the menu panels' alpha against the original (pad.png boxes).
+- Done 2026-10-25: proportional text (D9), full-screen backgrounds (D7).
+
+## 11. Mechanic parity (to fill per mechanic)
+
+Columns: mechanic · reference (`Decor.cpp` location) · Galaxy location · difference · class
+(A missing gameplay, B missing/incorrect 3D interpretation, C visual/animation, D intended 3D
+adaptation) · evidence/test · priority. Known rows so far:
+
+| Mechanic | Class | State |
+|---|---|---|
+| Step onto a one-tile ledge | A (was wrong) | done D4 |
+| Bye at world select | C | icons done, clip pending |
+| Win cheer at the exit, then straight to the hub (video §d) | A/C | open: Galaxy shows a Win screen |
+| Arrival beside the last door in a hub (video §a) | A | open |
+| Hub door slides up after a win (video §c) | C | open |
+| Crate pull (Recede/Advance) | A | open |
+
+## 12. QA gates and tools
+
+- Build `-j2` in `build-cna-opengl3/`; `ctest --test-dir build-cna-opengl3 -j2`.
+- Live: `tools/qa_live.sh <build> <out> <steps> [--mission N] [--spawn x,y,z,yaw]` — isolated
+  saves, window-cropped screenshots, fails on an error in the log.
+- Worlds: `tools/vwr_inspect.py`, `tools/world_inventory.py`.
+- Models: converter reports, winding consistency check (§7.2), live views.
+- No claim of visual parity from compilation alone.
+
+## 13. Milestones
+
+| | Milestone | State |
+|---|---|---|
+| A | Protect and understand: audit, captures, this plan, inventories | done (this document; asset manifest still to write) |
+| B | Representative multi-height tile mission on existing systems | open |
+| C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress |
+| D | Hub network and the 64 missions + 199 | open |
+| E | Editor slots, demo seed, title screen, editor entry, transparency | open |
+| F | Stabilisation and completion audit | open |

@@ -1,8 +1,9 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-10-20. Update this file whenever a change alters the current state, a known
-limitation, a supported build, or the actionable backlog. Keep historical detail in `plan.md` (and the
-frozen `NEXT.md`), where work stands in `handoff.md`, not here._
+_Last verified: 2026-10-25 (audit of the restored `develop`, `plans/GALAXY_EGGBERT_COMPLETION.md`
+§4). Update this file whenever a change alters the current state, a known limitation, a supported
+build, or the actionable backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`),
+where work stands in `handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
 
 ## What this project is
 
@@ -13,6 +14,13 @@ and remains available in git history at commit `4afd53e`.
 
 The in-game 3D world editor is the one approved exception to the faithful-remake rule: it may add
 content-authoring UX, but not new gameplay mechanics.
+
+## Content state (2026-10-25)
+
+- Of the 79 `.vwr` worlds only `world999` (the mechanics showcase) has real content. The main
+  hub and the 12 theme hubs are flat portal plazas; **all 64 missions and the bonus world 199
+  are placeholders** (one 11×11 floor with an exit). Authoring them as original 3D tile worlds
+  is the main open work (`plans/GALAXY_EGGBERT_COMPLETION.md` §9, `plans/inventory/worlds.md`).
 
 ## Shipped, working state
 
@@ -58,6 +66,10 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 
 ## Known limitations
 
+- Controls since 2026-10-25: third person is the default view, F3 toggles first person (was C),
+  turning is 135°/s, and Blupi no longer walks up one-block steps — he jumps, as in
+  `Decor::TestPath`. Menus fill the bars beside their 640×480 images and text uses the
+  original proportional glyph widths.
 - Third person shows the real Blupi converted from the original Ray Dream scenes
   (`avatars3d/blupi/`, `tools/rd4_to_gltf/`) with a clip, expression, props and vehicle per
   animation state, and parked vehicles as 3D models (re-exported 2026-10-24: the overcraft now
@@ -82,7 +94,9 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 
 ### Active and explicitly approved
 
-- None. The approved editor menu completion work is finished.
+- The completion campaign (`plans/GALAXY_EGGBERT_COMPLETION.md`): owner-reported defects D1-D12
+  (§5), then milestones B-F (representative mission, model/animation parity, hubs and missions,
+  editor slots and title screen, stabilisation).
 
 ### Needs user direction or visual judgement
 
