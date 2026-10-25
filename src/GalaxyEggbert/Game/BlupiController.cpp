@@ -198,6 +198,12 @@ namespace GalaxyEggbert::Game
             93, 93, 94, 94, 95, 95, 96, 96, 97, 97, 98, 98};
         constexpr int kHideFrames[] = {276, 277, 278, 279, 280, 281, 282, 283, 284};
         constexpr int kPushFrames[] = {49, 50, 51, 52, 53, 54};
+        // Real table_blupi Bye record (id 30, Tables.cpp; transcribed
+        // 2026-10-25 under the owner's standing approval for small data
+        // tables): the front-facing wave of the world-select farewell,
+        // looping for the whole kByeDuration freeze. Without it Bye showed
+        // Stop's first frame (user report: the farewell froze).
+        constexpr int kByeFrames[] = {25, 25, 29, 29, 46, 46, 47, 47, 46, 46, 29, 29};
         constexpr int kSwitchFrames[] = {0, 268, 268, 269, 269, 269, 269, 268, 268, 0};
         constexpr int kFireTankFrames[] = {251, 251, 238, 238, 238, 238};
         constexpr int kTakeDynamiteFrames[] = {
@@ -1891,6 +1897,8 @@ namespace GalaxyEggbert::Game
                 return kHideFrames[m_animPhase % (sizeof(kHideFrames) / sizeof(kHideFrames[0]))];
             case AnimState::Push:
                 return kPushFrames[m_animPhase % (sizeof(kPushFrames) / sizeof(kPushFrames[0]))];
+            case AnimState::Bye:
+                return kByeFrames[m_animPhase % (sizeof(kByeFrames) / sizeof(kByeFrames[0]))];
             case AnimState::Switch:
                 return kSwitchFrames[m_animPhase % (sizeof(kSwitchFrames) / sizeof(kSwitchFrames[0]))];
             case AnimState::FireTank:

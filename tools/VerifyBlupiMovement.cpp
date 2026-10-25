@@ -8,6 +8,7 @@
 #include <cmath>
 #include <filesystem>
 #include <iostream>
+#include <set>
 
 // Scripted, non-interactive verification of BlupiController's grid
 // collision (plan.md E3D-MIG-060): loads a world and drives Step() with
@@ -2119,12 +2120,23 @@ int main(int argc, char** argv)
         check(!bye.TriggerBye(), "TriggerBye() is a no-op (returns false) while already Bye");
 
         int stepsToResumeBye = 0;
+        std::set<int> byeIcons;
+        bool byeStateShown = true;
         while (bye.IsBye() && stepsToResumeBye < 200)
         {
             bye.Step(world, 0.0f, 0.0f, false, false, false, dt);
             ++stepsToResumeBye;
+            if (bye.IsBye())
+            {
+                byeStateShown = byeStateShown && bye.GetAnimState() == BlupiController::AnimState::Bye;
+                byeIcons.insert(bye.GetAnimIcon());
+            }
         }
         check(stepsToResumeBye < 200, "Bye resolves within a bounded time");
+        // Real table_blupi Bye (id 30): 25, 29, 46, 47 -- the wave, not
+        // Stop's idle icon 0 (kByeFrames, 2026-10-25).
+        check(byeStateShown && byeIcons == std::set<int>{25, 29, 46, 47},
+              "the farewell plays the real Bye wave (icons 25, 29, 46, 47)");
         check(!bye.IsBye(), "Bye ends on its own after kByeDuration");
 
         // 2 of the real gate's 7 exclusion conditions, representative
