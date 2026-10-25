@@ -242,6 +242,10 @@
       "clip": "clips/Push.clip.bin"
     },
     {
+      "name": "Bye",
+      "clip": "clips/Bye.clip.bin"
+    },
+    {
       "name": "Switch",
       "clip": "clips/Switch.clip.bin"
     },

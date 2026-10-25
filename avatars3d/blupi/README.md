@@ -15,7 +15,7 @@ edit by hand; regenerate with the commands below.
 
 ## Contents
 
-- 58 bones (CNA's skinning takes up to 72): one per Ray Dream object of Blupi (body, nose, arm
+- 56 bones (CNA's skinning takes up to 72): one per Ray Dream object of Blupi (body, nose, arm
   segments, hands, legs, feet, eyelashes), the props of the scenes the clips use (`langue`, the
   tongue; `Bouteille`, the bottle; `Sucette`, the lollipop; `Corps et Cube`, the half body the
   saw leaves in Clear4), and `<bone>.shape` leaves carrying
@@ -30,8 +30,9 @@ edit by hand; regenerate with the commands below.
   `DeathLocked.<cause>` and `PickupBusy.<kind>`; each is the state's sprite icon table played at
   `kAnimFps` (20 frames per second, as in the original), interpolated linearly between the matched
   scene frames; a frame matched turned (front and back views, Hide's somersault) turns the whole
-  pose. States without a clip (Bye) show `Stop`; Clear2 is invisible throughout, as in the
-  original.
+  pose. A state whose icons the saw death's half-body scenes match better still takes the
+  best whole-body frame within 0.05 of it (`--whole-icons`), so Stop and the others built from
+  them keep both halves of Blupi. Clear2 is invisible throughout, as in the original.
 - `clips.txt` lists the face textures (`face_*.png`, the expressions of the scenes used) and, per
   clip, the face of every frame; the game draws the part named on its `part` line with that
   texture. Its `viewer` lines name the clips that turn Blupi toward the sprites' viewer (his
@@ -56,8 +57,13 @@ B=../speedyblupi-data/originals/Blupi
 python3 tools/rd4_to_gltf/match_icons.py --scenes $B \
     --sheet ../mobile-eggbert/Content/icons/blupi.png --reference ../mobile-eggbert \
     --out build-probe/rd4-blupi/match
+python3 tools/rd4_to_gltf/match_icons.py --scenes $B \
+    --sheet ../mobile-eggbert/Content/icons/blupi.png --reference ../mobile-eggbert \
+    --exclude blupi-scie.rds,blupi-demi.rds --yaw-step 0 --tumble "" \
+    --out build-probe/rd4-blupi/match-whole
 python3 tools/rd4_to_gltf/build_clip_library.py --scenes $B --base marche-profil.rd4 \
     --icons build-probe/rd4-blupi/match/icons.csv \
+    --whole-icons build-probe/rd4-blupi/match-whole/icons.csv \
     --controller src/GalaxyEggbert/Game/BlupiController.cpp \
     --sheet ../mobile-eggbert/Content/icons/blupi.png --out build-probe/rd4-blupi/library/blupi.glb
 python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/library/blupi.glb \
