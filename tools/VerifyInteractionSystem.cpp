@@ -2235,6 +2235,22 @@ int main(int argc, char** argv)
               "the follower's blocked-path self-destruct spawns an ObjectType9 debris flash at its position");
     }
 
+    // 14c. In 3D a homing follower closes in along Z too (open air high above the sample world).
+    {
+        MobileObjSpec homing;
+        homing.type = GalaxyEggbert::Def::ObjectType::ObjectType97;
+        homing.posStartX = homing.posEndX = homing.currentX = 0.0f;
+        homing.posStartY = homing.posEndY = homing.currentY = 60.0f;
+        homing.posStartZ = homing.posEndZ = homing.currentZ = -20.0f;
+        homing.phase = 0.0f;
+        world.GetMobileObjectsMutable().push_back(homing);
+        const std::size_t index = world.GetMobileObjects().size() - 1;
+        for (int i = 0; i < 60; ++i)
+            interaction.Update(dt, world, 0.0f, 60.0f, -10.0f, 0.0f, sound);
+        const auto& after = world.GetMobileObjects()[index];
+        check(after.currentZ > -20.0f + 0.2f, "a homing follower closes in on Blupi along Z as well");
+    }
+
     // 15. WorldRuntime::IsTempPassableAtPhase() (plan.md E3D-MIG-146) --
     // real IsPassIcon/IsBlocIcon(324) cycle: solid for buckets 0-17,
     // passable only for buckets 18-19 of a 20-value cycle at 4 phase

@@ -1443,11 +1443,8 @@ namespace GalaxyEggbert::Game
             // Decor.cpp:8025-8064) -- once awake, steps X and Y
             // independently (Chebyshev-style, NOT a normalized diagonal)
             // toward Blupi's live position every frame at
-            // kFollowerHomingSpeed. currentZ is deliberately left
-            // untouched -- real mobile-eggbert has no Z axis at all, only
-            // X (horizontal) and Y (vertical) exist in the source this is
-            // ported from, matching blupih/blupit's own shots, which never
-            // touch Z either. Collapses posStart/posEnd to the new
+            // kFollowerHomingSpeed -- and, in 3D (2026-10-25), Z the same way,
+            // or a follower at another depth could never reach him. Collapses posStart/posEnd to the new
             // position every successful step (matching the real source's
             // own `posStart = posEnd = end`), which naturally makes the
             // generic patrol-turn block below a no-op for this object (its
@@ -1489,9 +1486,12 @@ namespace GalaxyEggbert::Game
                 else if (endX > blupiX) endX = std::max(endX - stepAmount, blupiX);
                 if (endY < blupiY) endY = std::min(endY + stepAmount, blupiY);
                 else if (endY > blupiY) endY = std::max(endY - stepAmount, blupiY);
+                float endZ = obj.currentZ;
+                if (endZ < blupiZ) endZ = std::min(endZ + stepAmount, blupiZ);
+                else if (endZ > blupiZ) endZ = std::max(endZ - stepAmount, blupiZ);
 
                 int fgx, fgy, fgz;
-                ToGridCell(world, endX, endY, obj.currentZ, fgx, fgy, fgz);
+                ToGridCell(world, endX, endY, endZ, fgx, fgy, fgz);
                 if (IsSolidAt(world, fgx, fgy, fgz))
                 {
                     obj.active = false;
@@ -1503,7 +1503,7 @@ namespace GalaxyEggbert::Game
                 }
                 obj.currentX = obj.posStartX = obj.posEndX = endX;
                 obj.currentY = obj.posStartY = obj.posEndY = endY;
-                obj.posStartZ = obj.posEndZ = obj.currentZ;
+                obj.currentZ = obj.posStartZ = obj.posEndZ = endZ;
             }
 
             // Real shared patrol-turn mechanic (plan.md E3D-MIG-131) --
