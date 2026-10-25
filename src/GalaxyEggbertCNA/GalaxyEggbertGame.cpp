@@ -2816,8 +2816,12 @@ namespace GalaxyEggbert::CNA
             // The real cosmetic emitter tile (icon 304, sits one cell
             // above 305, times a zap sound cue only) is NOT implemented --
             // audio-only polish, not the hazard itself.
+            // Lightning and saws catch Blupi in his own cell (Decor::IsBlitz/IsScie(m_blupiPos)),
+            // as well as under his feet where worlds lay them as floor.
+            const auto blockHere = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
+            const auto blockUnder = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
             if (!blupi_.IsInvincible() &&
-                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Blitz &&
+                (blockUnder == GalaxyEggbert::BlockTypes::Blitz || blockHere == GalaxyEggbert::BlockTypes::Blitz) &&
                 WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Clear1, m_blupiRestart=true (Decor.cpp:5541-5547).
@@ -2858,7 +2862,7 @@ namespace GalaxyEggbert::CNA
             // authored; TryActivateSwitch() below is what flips it between
             // the two.
             if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
-                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Saw)
+                (blockUnder == GalaxyEggbert::BlockTypes::Saw || blockHere == GalaxyEggbert::BlockTypes::Saw))
             {
                 const float deathX = blupi_.GetX();
                 const float deathY = blupi_.GetY();
