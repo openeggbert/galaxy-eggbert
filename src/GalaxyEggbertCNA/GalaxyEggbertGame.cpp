@@ -4022,7 +4022,13 @@ namespace GalaxyEggbert::CNA
             // the only render-side change needed. Likewise the real frame
             // tables' invisible frames (Clear2, Clear3's tail, Teleporting's
             // -1 entries) draw no real model.
+            // The clip is chosen in Update()'s Play block, so a frame drawn
+            // before the first Play tick (a mission just loaded from the
+            // menu) has none yet: skip the model until it has one. Starting
+            // in third person made this reachable (2026-10-25, the game
+            // aborted with "Unknown animation clip").
             if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
+                blupiModel_->Clips.count(blupiActiveClipName_) != 0 &&
                 !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()))
             {
                 constexpr float kPlaceholderModelScale = 0.009095f;
