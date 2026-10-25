@@ -176,6 +176,12 @@ int main()
             std::cerr << "render-mode mismatch for block icon " << icon << '\n';
             Check(false, "block render mode matches the pre-registry classification");
         }
+        // Cross-billboard sprites are mostly alpha-0 texels (87-94 % for 53-60): drawn in the
+        // opaque pass they show as black cards.
+        if (definition.renderMode == BlockRenderMode::TripleCrossBillboard)
+        {
+            Check(definition.alphaBlend, "cross-billboard blocks draw in the transparent pass");
+        }
 
         if (icon == 0)
         {

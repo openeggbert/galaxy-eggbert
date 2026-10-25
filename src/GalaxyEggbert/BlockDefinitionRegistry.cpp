@@ -107,6 +107,15 @@ namespace GalaxyEggbert
         {
             definitions_[static_cast<std::size_t>(icon)].alphaBlend = true;
         }
+        // The cross-billboard sprites (small machine parts 53-60, 63/64) are mostly alpha-0
+        // texels; drawn opaque they showed as black cards round the part (2026-10-25).
+        for (auto& definition : definitions_)
+        {
+            if (definition.renderMode == BlockRenderMode::TripleCrossBillboard)
+            {
+                definition.alphaBlend = true;
+            }
+        }
         for (const int icon : {107, 108, 109})
         {
             definitions_[static_cast<std::size_t>(icon)].grassTop = true;
