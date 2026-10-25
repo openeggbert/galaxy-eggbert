@@ -487,26 +487,55 @@ namespace GalaxyEggbert::Game
 
     std::optional<std::uint16_t> WorldRuntime::TryConsumeFan(float blupiX, float blupiY, float blupiZ)
     {
-        const int blocksPerAxis = static_cast<int>(world_->blocksPerAxis());
-        const int gx = std::clamp(static_cast<int>(std::lround(blupiX)) + kWorldCenterX, 0, blocksPerAxis - 1);
-        const int gz = std::clamp(static_cast<int>(std::lround(blupiZ)) + kWorldCenterZ, 0, blocksPerAxis - 1);
-        const int gy = static_cast<int>(std::lround(blupiY)) + 1; // one cell above, matching GetBlockTypeAbove()
-        if (gy < 0 || gy >= blocksPerAxis)
+        // Decor::IsVentillo(), in 3D: Blupi touches a fan at its mouth, the side it blows from --
+        // left (126) toward -X, right (129) toward +X, up (132) toward +Y, down (135) toward -Y --
+        // and the fan goes with the column of wind tiles in front of it (110, 114, 118, 122 and
+        // their frames).
+        struct FanMouth { std::uint16_t fan; int dx, dy; std::uint16_t wind; };
+        static constexpr FanMouth kFans[] = {
+            {GalaxyEggbert::BlockTypes::FanLeft, -1, 0, 110},
+            {GalaxyEggbert::BlockTypes::FanRight, 1, 0, 114},
+            {GalaxyEggbert::BlockTypes::FanUp, 0, 1, 118},
+            {GalaxyEggbert::BlockTypes::FanDown, 0, -1, 122},
+        };
+        const int n = static_cast<int>(world_->blocksPerAxis());
+        const int gx = static_cast<int>(std::lround(blupiX)) + kWorldCenterX;
+        const int gy = static_cast<int>(std::lround(blupiY));
+        const int gz = static_cast<int>(std::lround(blupiZ)) + kWorldCenterZ;
+        const auto iconAt = [&](int x, int y, int z) -> std::uint16_t
         {
-            return std::nullopt;
-        }
-
-        const auto icon = world_->getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                            static_cast<std::uint16_t>(gz))
-                               .type();
-        if (!GalaxyEggbert::BlockTypes::isFan(icon))
+            if (x < 0 || y < 0 || z < 0 || x >= n || y >= n || z >= n)
+            {
+                return 0;
+            }
+            return world_->getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                    static_cast<std::uint16_t>(z))
+                .type();
+        };
+        for (const auto& mouth : kFans)
         {
-            return std::nullopt;
+            // The fan sits one cell behind Blupi, against the way it blows.
+            const int fx = gx - mouth.dx;
+            const int fy = gy - mouth.dy;
+            if (iconAt(fx, fy, gz) != mouth.fan)
+            {
+                continue;
+            }
+            world_->setBlock(static_cast<std::uint16_t>(fx), static_cast<std::uint16_t>(fy),
+                             static_cast<std::uint16_t>(gz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+            for (int x = fx + mouth.dx, y = fy + mouth.dy;; x += mouth.dx, y += mouth.dy)
+            {
+                const auto icon = iconAt(x, y, gz);
+                if (icon < mouth.wind || icon > mouth.wind + 3)
+                {
+                    break;
+                }
+                world_->setBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                 static_cast<std::uint16_t>(gz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+            }
+            return mouth.fan;
         }
-
-        world_->setBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                          static_cast<std::uint16_t>(gz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
-        return icon;
+        return std::nullopt;
     }
 
     bool WorldRuntime::FindTeleportDestination(std::uint16_t icon, float blupiX, float blupiY, float blupiZ,

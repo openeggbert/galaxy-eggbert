@@ -135,11 +135,12 @@ inline bool isSpring(uint16_t bt) { return GalaxyEggbert::GetBlockDefinition(bt)
 constexpr uint16_t Temp = 324;
 
 // Ventilator fan tiles — base frames only (127-128, 130-131, 133-134, 136-137 are passable Air).
-// Fan blows Blupi: kills on contact unless shielded (mobile-eggbert IsVentillo → BlupiDead).
+// Touching a fan at its mouth kills Blupi unless shielded (IsVentillo -> BlupiDead,
+// WorldRuntime::TryConsumeFan()).
 constexpr uint16_t FanLeft  = 126;  // blows in -X direction
 constexpr uint16_t FanRight = 129;  // blows in +X direction
-constexpr uint16_t FanUp    = 132;  // blows in -Z direction (2D: up = -Y)
-constexpr uint16_t FanDown  = 135;  // blows in +Z direction (2D: down = +Y)
+constexpr uint16_t FanUp    = 132;  // blows upward (+Y)
+constexpr uint16_t FanDown  = 135;  // blows downward (-Y)
 
 inline bool isFan(uint16_t bt) {
     return GalaxyEggbert::GetBlockDefinition(bt).fanDirection !=
