@@ -433,6 +433,27 @@ namespace GalaxyEggbert::Game
         // (standard XNA SpriteBatch convention in this Y-down space).
         // AppendRotatedQuadUv (plan.md EDITOR-106): moved to the shared QuadBatch.
         using QuadBatch::AppendRotatedQuadUv;
+
+        // Real Pixmap::DrawBackground(): before the centred 640x480 image the
+        // original stretches the image's top-left 10x10 corner
+        // (`GetSrcRectangle(bitmap, 10, 10, 10, 10, 0, 0)`) over the whole
+        // viewport, so the bars beside a 4:3 image on a wider screen take the
+        // image's own edge colour instead of showing what lies under it (the
+        // paused 3D world, user report 2026-10-25). Every background drawn
+        // here is 640x480, the reference space.
+        QuadBatch::Quad BackgroundBarsQuad(int viewportW, int viewportH)
+        {
+            QuadBatch::Quad q;
+            q.x0 = 0.0f;
+            q.y0 = 0.0f;
+            q.x1 = static_cast<float>(viewportW);
+            q.y1 = static_cast<float>(viewportH);
+            q.u0 = 0.0f;
+            q.v0 = 0.0f;
+            q.u1 = 10.0f / kRefW;
+            q.v1 = 10.0f / kRefH;
+            return q;
+        }
     }
 
     void InputPad::LoadContent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
@@ -916,7 +937,7 @@ namespace GalaxyEggbert::Game
         background.v0 = 0.0f;
         background.u1 = 1.0f;
         background.v1 = 1.0f;
-        std::vector<Quad> backgroundQuads{background};
+        std::vector<Quad> backgroundQuads{BackgroundBarsQuad(viewportW, viewportH), background};
 
         // Real entrance flourish / exit fades (plan.md MENU-088/089) --
         // see ComputePauseResumeCharacterAnim()'s own comment for the
@@ -1059,7 +1080,7 @@ namespace GalaxyEggbert::Game
         background.v0 = 0.0f;
         background.u1 = 1.0f;
         background.v1 = 1.0f;
-        std::vector<Quad> backgroundQuads{background};
+        std::vector<Quad> backgroundQuads{BackgroundBarsQuad(viewportW, viewportH), background};
 
         // Real per-phase animation (see InputPad.hpp's class comment for
         // the exact real formulas this ports): Win pulses forever between
@@ -1199,7 +1220,7 @@ namespace GalaxyEggbert::Game
         background.v0 = 0.0f;
         background.u1 = 1.0f;
         background.v1 = 1.0f;
-        std::vector<Quad> backgroundQuads{background};
+        std::vector<Quad> backgroundQuads{BackgroundBarsQuad(viewportW, viewportH), background};
 
         // Real speedyblupi.png slide-in + 2 rotating gear.png decorations
         // (plan.md MENU-088/089, MENU-059/060) -- see
@@ -1364,7 +1385,7 @@ namespace GalaxyEggbert::Game
         background.v0 = 0.0f;
         background.u1 = 1.0f;
         background.v1 = 1.0f;
-        std::vector<Quad> backgroundQuads{background};
+        std::vector<Quad> backgroundQuads{BackgroundBarsQuad(viewportW, viewportH), background};
 
         // Real: Resume's entry flourish/exit fade is bit-for-bit Pause's
         // own (confirmed via research) -- Resume->Play (Continue) never
@@ -1618,7 +1639,7 @@ namespace GalaxyEggbert::Game
         background.v0 = 0.0f;
         background.u1 = 1.0f;
         background.v1 = 1.0f;
-        std::vector<Quad> backgroundQuads{background};
+        std::vector<Quad> backgroundQuads{BackgroundBarsQuad(viewportW, viewportH), background};
 
         // Real non-linear waitTable lookup, not a linear ramp -- see this
         // file's own kWaitTable comment.
@@ -1746,7 +1767,7 @@ namespace GalaxyEggbert::Game
         background.v0 = 0.0f;
         background.u1 = 1.0f;
         background.v1 = 1.0f;
-        std::vector<Quad> backgroundQuads{background};
+        std::vector<Quad> backgroundQuads{BackgroundBarsQuad(viewportW, viewportH), background};
 
         const float t = std::min(phaseTimeSeconds / kInitEntryDurationSeconds, 1.0f);
         const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
