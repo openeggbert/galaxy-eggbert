@@ -109,6 +109,7 @@ check of the state.
 | D10 | Bye freezes on its first frame at a world portal, leaves too early | no Bye icon table/clip, so Stop's first frame showed | icons **done** `4572099`; 3D clip with the rebuild |
 | D11 | Many exhibition models in world999 look wrong compared with Mobile Eggbert | partly D2; the rest needs per-object comparison | open (§7.3) |
 | D12 | "Player A: Erase progress" runs off the Setup screen | layout check against the original pending | open |
+| D13 | Blupi on the skateboard loses a life on a mine; in Mobile Eggbert the skateboard destroys the mine ("just an example" of vehicle/enemy interactions to audit) | to verify in `Decor.cpp` (vehicle vs. enemy contact) and audit every vehicle × enemy pair | open (parity §11) |
 
 ## 6. Native world format: evolution policy
 
@@ -159,6 +160,8 @@ Candidates (investigate when a world or the editor needs them; none implemented 
 - Push/Pull: Push has a clip (`pousse-profil.rd4`, IoU 0.988); live check of the crate push
   pending; Pull has no state in Galaxy yet (the video shows it in 012) — parity item.
 - Win cheer (table_blupi 13, `gagne.rd4`): no Galaxy state yet — parity item.
+- Saw death's half body (`Corps et Cube`, a CSG prop in Clear4 only) still has 119 + 76
+  inconsistently wound triangles after the cap fix: a second converter case (CSG), to find.
 
 ## 8. Blupi animation coverage
 
@@ -226,6 +229,7 @@ adaptation) · evidence/test · priority. Known rows so far:
 | Arrival beside the last door in a hub (video §a) | A | open |
 | Hub door slides up after a win (video §c) | C | open |
 | Crate pull (Recede/Advance) | A | open |
+| Vehicle × enemy contact (skateboard vs. mine, D13; then every vehicle and enemy) | A | open |
 
 ## 12. QA gates and tools
 
