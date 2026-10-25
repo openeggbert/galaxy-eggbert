@@ -538,7 +538,8 @@ namespace GalaxyEggbert::Game
         void DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds,
                      int selectedGamer, const std::array<InitGamerInfo, 3>& gamers,
-                     GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
+                     GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
+                     bool overTitleScene = false);
 
     private:
         // Alias, not a redeclaration (plan.md EDITOR-106): the real

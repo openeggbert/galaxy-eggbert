@@ -465,6 +465,15 @@ namespace GalaxyEggbert::CNA
         // updated comments) route back to the editor instead of the real
         // hub when this is active.
         void LoadCustomWorldForPlayTest(const std::filesystem::path& path);
+        // Galaxy Eggbert's title scene (2026-10-25, owner: an original title
+        // screen instead of Mobile Eggbert's init.png): worlds3d/title.vwr, a
+        // tile-built diorama with the real Blupi, drawn behind the main menu.
+        // LoadTitleScene() is requested whenever the menu (Init) opens and
+        // done at the next Update(); UpdateTitleScene() animates the world,
+        // Blupi's idle clip and a slowly swaying camera. Without the file the
+        // menu keeps the original's art.
+        void LoadTitleScene();
+        void UpdateTitleScene(float dt);
 
         // Real vehicle motor sound crossfade (plan.md SOUND-007/008, `BlupiController::
         // HasVehicleMotor()`/`IsVehicleMotorHigh()`, found 2026-07-17) -- ports
@@ -619,6 +628,9 @@ namespace GalaxyEggbert::CNA
         // real saveData_ checkpoint (a sandbox world has no real mission
         // number to persist).
         bool editorPlayTestActive_ = false;
+        bool titleSceneRequested_ = false;
+        bool titleSceneActive_ = false;
+        float titleSceneTime_ = 0.0f;
         std::filesystem::path editorPlayTestWorldPath_;
 
         // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- real

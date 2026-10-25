@@ -1788,7 +1788,8 @@ namespace GalaxyEggbert::Game
 
     void InputPad::DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                              int viewportH, float phaseTimeSeconds, int selectedGamer,
-                             const std::array<InitGamerInfo, 3>& gamers, GalaxyEggbert::Def::GamePhase fadeOutPhase)
+                             const std::array<InitGamerInfo, 3>& gamers, GalaxyEggbert::Def::GamePhase fadeOutPhase,
+                             bool overTitleScene)
     {
         if (!loaded_)
         {
@@ -1975,10 +1976,16 @@ namespace GalaxyEggbert::Game
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
-        FlushQuads(device, *initBgEffect_, initBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
-        FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, titleQuads, viewportW, viewportH,
-                   titleOpacity);
-        if (!charMesh.Mesh().Empty())
+        // Over Galaxy's 3D title scene the menu is only its panels, buttons
+        // and labels; Mobile Eggbert's init.png, title and blupiyoupie art
+        // remain the fallback without the scene.
+        if (!overTitleScene)
+        {
+            FlushQuads(device, *initBgEffect_, initBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
+            FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, titleQuads, viewportW, viewportH,
+                       titleOpacity);
+        }
+        if (!overTitleScene && !charMesh.Mesh().Empty())
         {
             blupiyoupieEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             blupiyoupieEffect_->View = Microsoft::Xna::Framework::Matrix::getIdentityProperty();

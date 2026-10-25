@@ -884,6 +884,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::LoadMission(int missionNumber)
     {
+        titleSceneActive_ = false;
         char path[64];
         std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
         if (!worldRuntime_.LoadFromVwrFile(path))
@@ -968,6 +969,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::LoadCustomWorldForEditing(const std::filesystem::path& path)
     {
+        titleSceneActive_ = false;
         if (!worldRuntime_.LoadFromVwrFile(path.string()))
         {
             std::cout << "GalaxyEggbertCNA: LoadCustomWorldForEditing(" << path
@@ -1001,6 +1003,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::LoadCustomWorldForPlayTest(const std::filesystem::path& path)
     {
+        titleSceneActive_ = false;
         if (!worldRuntime_.LoadFromVwrFile(path.string()))
         {
             std::cout << "GalaxyEggbertCNA: LoadCustomWorldForPlayTest(" << path
@@ -1037,6 +1040,72 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: LoadCustomWorldForPlayTest(" << path << "): loaded." << std::endl;
     }
 
+    void GalaxyEggbertGame::LoadTitleScene()
+    {
+        titleSceneRequested_ = false;
+        if (!std::filesystem::exists("worlds3d/title.vwr") || !worldRuntime_.LoadFromVwrFile("worlds3d/title.vwr"))
+        {
+            titleSceneActive_ = false;
+            return;
+        }
+        RebuildWorldPresentation();
+        blupi_ = BlupiController();
+        if (worldRuntime_.HasExplicitSpawnPoint())
+        {
+            blupi_.SetPosition(worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
+                               worldRuntime_.GetSpawnRenderZ());
+        }
+        // Facing the camera, which stands on the -Z side of the scene
+        // (BlupiController moves along (sin yaw, -cos yaw): yaw 0 is -Z).
+        blupi_.SetYaw(0.0f);
+        titleSceneActive_ = true;
+        titleSceneTime_ = 0.0f;
+    }
+
+    void GalaxyEggbertGame::UpdateTitleScene(float dt)
+    {
+        titleSceneTime_ += dt;
+        worldRuntime_.Update(dt);
+        if (terrainRenderer_)
+        {
+            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
+        }
+        // Blupi idles (Stop's real fidget cycle) where he stands.
+        blupi_.Step(worldRuntime_.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
+        if (blupiModelLoaded_)
+        {
+            std::string clipName = blupiModelIsReal_ ? BlupiClipName(blupi_)
+                                                     : BlupiAnimStateToPlaceholderClipName(blupi_.GetAnimState());
+            if (blupiModel_->Clips.find(clipName) == blupiModel_->Clips.end())
+            {
+                clipName = "Stop";
+            }
+            if (clipName != blupiActiveClipName_)
+            {
+                blupiActiveClipName_ = clipName;
+                blupiClipTimeSeconds_ = 0.0;
+            }
+            blupiClipTimeSeconds_ += static_cast<double>(dt);
+        }
+        // The camera stands 5 blocks in front of Blupi at his eye height and
+        // looks 3.5 degrees up, so he fills the lower middle of the screen
+        // and the tile-built title (worlds3d/title.vwr, 56 blocks behind him)
+        // the band above the menu panels; it sways 7 degrees either way over
+        // 14 seconds (tools/worlds/title.py frames the scene for this).
+        constexpr float kSwayRadians = 0.12f;
+        constexpr float kSwayPeriodSeconds = 14.0f;
+        constexpr float kDistance = 5.0f;
+        constexpr float kHeight = 1.0f;
+        constexpr float kLookUp = 0.061f; // tan(3.5 degrees)
+        const float sway = kSwayRadians * std::sin(titleSceneTime_ * 6.2831853f / kSwayPeriodSeconds);
+        const Microsoft::Xna::Framework::Vector3 target(blupi_.GetX(), blupi_.GetY() + kHeight + 40.0f * kLookUp,
+                                                        blupi_.GetZ() + 40.0f - kDistance);
+        const Microsoft::Xna::Framework::Vector3 eye(blupi_.GetX() + kDistance * std::sin(sway), blupi_.GetY() + kHeight,
+                                                     blupi_.GetZ() - kDistance * std::cos(sway));
+        camera_.SetLookAt(eye, target);
+        cameraTarget_ = target;
+    }
+
     void GalaxyEggbertGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
     {
         // Real Game1::SetPhase() (2026-07-13, plan.md MENU-088/089, see
@@ -1066,6 +1135,10 @@ namespace GalaxyEggbert::CNA
         // (Game1.cpp:979-1058) -- this engine's own equivalent is just the
         // 2 key-debounce trackers below.
         phase_ = next;
+        if (next == GalaxyEggbert::Def::GamePhase::Init)
+        {
+            titleSceneRequested_ = true;
+        }
         fadeOutPhase_ = GalaxyEggbert::Def::GamePhase::None;
         pauseKeyWasDown_ = false;
         phaseReturnKeyWasDown_ = false;
@@ -2106,6 +2179,15 @@ namespace GalaxyEggbert::CNA
                 }
                 phaseReturnKeyWasDown_ = returnPressed;
             }
+        }
+
+        if (titleSceneRequested_)
+        {
+            LoadTitleScene();
+        }
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Init && titleSceneActive_)
+        {
+            UpdateTitleScene(dt);
         }
 
         if (phase_ != GalaxyEggbert::Def::GamePhase::Play)
@@ -3822,7 +3904,9 @@ namespace GalaxyEggbert::CNA
         // no world is loaded yet while browsing -- so it's skipped too;
         // once a world is actually being edited, IsBrowsing() is false and
         // this block draws it same as any other phase.
-        if (phase_ != GalaxyEggbert::Def::GamePhase::Wait && phase_ != GalaxyEggbert::Def::GamePhase::Init &&
+        // The menu (Init) shows the world when it is Galaxy's title scene.
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Wait &&
+            (phase_ != GalaxyEggbert::Def::GamePhase::Init || titleSceneActive_) &&
             !(phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing()))
         {
         // Real background image backdrop (NEXT.md §3, 2026-07-09) -- one
@@ -4782,7 +4866,8 @@ namespace GalaxyEggbert::CNA
                         saveData_.GetSecondaryGatesForGamer(g)};
                 }
                 inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                   phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_);
+                                   phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,
+                                   /*overTitleScene=*/titleSceneActive_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
