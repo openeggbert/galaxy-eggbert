@@ -1966,6 +1966,37 @@ int main(int argc, char** argv)
         }
     }
 
+    // 11b. The same shooter patrolling along Z (3D, 2026-10-25) shoots along Z, not X.
+    {
+        constexpr int kGX = 30, kGY = 1, kNearWallGZ = 20, kMidGZ = 26, kFarWallGZ = 31;
+        auto& mutableWorld = world.GetWorldMutable();
+        for (int gz = kNearWallGZ + 1; gz < kFarWallGZ; ++gz)
+            mutableWorld.setBlock(kGX, kGY, static_cast<std::uint16_t>(gz), Worlds::Block::make(BlockTypes::Air));
+        mutableWorld.setBlock(kGX, kGY, kNearWallGZ, Worlds::Block::make(BlockTypes::Ground));
+        mutableWorld.setBlock(kGX, kGY, kFarWallGZ, Worlds::Block::make(BlockTypes::Ground));
+        const float btX = static_cast<float>(kGX) - WorldRuntime::kWorldCenterX;
+        const float btZ = static_cast<float>(kMidGZ) - WorldRuntime::kWorldCenterZ;
+        MobileObjSpec blupit;
+        blupit.type = GalaxyEggbert::Def::ObjectType::ObjectType33;
+        blupit.posStartX = blupit.posEndX = btX;
+        blupit.posStartY = blupit.posEndY = static_cast<float>(kGY);
+        blupit.posStartZ = btZ; blupit.posEndZ = btZ + 0.001f;
+        blupit.currentX = btX; blupit.currentY = static_cast<float>(kGY); blupit.currentZ = btZ;
+        world.GetMobileObjectsMutable().push_back(blupit);
+        for (int i = 0; i < 70; ++i)
+            interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound);
+        bool shotAlongZ = false, shotAlongX = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.posStartX == btX && obj.posStartZ == btZ)
+            {
+                shotAlongZ = shotAlongZ || (obj.posEndZ != btZ && obj.posEndX == btX);
+                shotAlongX = shotAlongX || obj.posEndX != btX;
+            }
+        }
+        check(shotAlongZ && !shotAlongX, "a creature patrolling along Z shoots along Z");
+    }
+
     // 12. Large creature (ObjectType54) turn-dwell-gated lethality (plan.md
     // E3D-MIG-136) -- verified against Decor.cpp:5867-5913. Injected
     // directly with patrolStep manually forced to each phase (rather than

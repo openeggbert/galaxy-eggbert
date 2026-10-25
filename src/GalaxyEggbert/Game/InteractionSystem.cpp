@@ -731,17 +731,19 @@ namespace GalaxyEggbert::Game
         // if/else condition and pass it here). Just the raycast+spawn+sound
         // half of the real ObjectStart call, mirroring FireBlupihShot's
         // shape for the horizontal case.
-        void FireBlupitShot(const MobileObjSpec& obj, float dirXSign, const Worlds::World& world,
+        // A creature's shot, along its patrol's axis (X or Z, whichever it walks along: in 3D a
+        // creature can patrol along Z) toward `dirSign`.
+        void FireBlupitShot(const MobileObjSpec& obj, float dirSign, bool alongZ, const Worlds::World& world,
                              Sound& sound, std::vector<MobileObjSpec>& pendingSpawns)
         {
             int gx, gy, gz;
             ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, gx, gy, gz);
-            const int dirSign = (dirXSign > 0.0f) ? 1 : -1;
-            const int dist = SearchAirDistance(world, gx, gy, gz, dirSign, 0, 0);
+            const int sign = (dirSign > 0.0f) ? 1 : -1;
+            const int dist = SearchAirDistance(world, gx, gy, gz, alongZ ? 0 : sign, 0, alongZ ? sign : 0);
             sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
             if (dist > 0)
             {
-                pendingSpawns.push_back(MakeBullet(obj, dirXSign, 0.0f, 0.0f, dist));
+                pendingSpawns.push_back(MakeBullet(obj, alongZ ? 0.0f : dirSign, 0.0f, alongZ ? dirSign : 0.0f, dist));
             }
         }
 
@@ -1533,16 +1535,18 @@ namespace GalaxyEggbert::Game
                     }
                     else if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33)
                     {
-                        const bool aboutToWalkRight =
-                            (obj.posStartX < obj.posEndX && prevPatrolStep == 1) ||
-                            (obj.posStartX > obj.posEndX && prevPatrolStep == 3);
+                        const bool alongZ = std::fabs(obj.posEndZ - obj.posStartZ) > std::fabs(obj.posEndX - obj.posStartX);
+                        const float start = alongZ ? obj.posStartZ : obj.posStartX;
+                        const float end = alongZ ? obj.posEndZ : obj.posEndX;
+                        const bool aboutToWalkPositive =
+                            (start < end && prevPatrolStep == 1) || (start > end && prevPatrolStep == 3);
                         if (CrossedTick(prevPatrolTime, dtTicks, 3.0f))
                         {
-                            FireBlupitShot(obj, aboutToWalkRight ? -1.0f : 1.0f, world, sound, pendingSpawns);
+                            FireBlupitShot(obj, aboutToWalkPositive ? -1.0f : 1.0f, alongZ, world, sound, pendingSpawns);
                         }
                         if (CrossedTick(prevPatrolTime, dtTicks, 21.0f))
                         {
-                            FireBlupitShot(obj, aboutToWalkRight ? 1.0f : -1.0f, world, sound, pendingSpawns);
+                            FireBlupitShot(obj, aboutToWalkPositive ? 1.0f : -1.0f, alongZ, world, sound, pendingSpawns);
                         }
                     }
                 }
