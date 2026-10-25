@@ -109,7 +109,7 @@ check of the state.
 | D10 | Bye freezes on its first frame at a world portal, leaves too early | no Bye icon table/clip, so Stop's first frame showed | **done**: icons `4572099`, clip `78757b1` |
 | D11 | Many exhibition models in world999 look wrong compared with Mobile Eggbert | partly D2; the rest needs per-object comparison | open (§7.3) |
 | D12 | "Player A: Erase progress" runs off the Setup screen | one line where the original has two | **done** `9d88278` |
-| D13 | Blupi on the skateboard loses a life on a mine; in Mobile Eggbert the skateboard destroys the mine ("just an example" of vehicle/enemy interactions to audit) | to verify in `Decor.cpp` (vehicle vs. enemy contact) and audit every vehicle × enemy pair | open (parity §11) |
+| D13 | Blupi on the skateboard loses a life on a mine; in Mobile Eggbert the skateboard destroys the mine ("just an example" of vehicle/enemy interactions to audit) | `Decor.cpp:5782-5824`: hazards 2/3/4/16/17/20/96/97 always destroyed, Blupi dies unless in jeep, tank or on the skateboard | **done** `149ec32` |
 
 Found while building mission 011 (live, 2026-10-25):
 
@@ -120,6 +120,11 @@ Found while building mission 011 (live, 2026-10-25):
 | D16 | Walls, steps and edges merge into one flat colour | terrain drawn unlit: all faces equally bright | **done** `eeb9624` (one directional light + ambient, `TerrainLighting.hpp`) |
 | D17 | Partly transparent machine cubes (15-31) would show black holes in 3D | their 2D tiles let the backdrop through | worlds use the opaque 1-14 (`tools/worlds/kit.py`); renderer unchanged |
 | D18 | Chase camera pulled tight behind Blupi next to walls loses the view | wall collision brings the eye to Blupi's back | open; levels keep open sides (no 1-wide tunnels) |
+| D19 | Hubs: world pictures as mission signs, sign icons as doors, worlds 9-12 shown as copies of 1-4, no door slide, no gold bars, no golden-key ending | Galaxy's 2026-07-17 scheme | **done** `2f57bbc` (original's signs/doors/arrivals, `HubDoors.hpp`) |
+| D20 | Opened doors and collapsed bridges stay drawn | terrain mesh never rebuilt in play | **done** `2f57bbc` (`World::blockRevision()`) |
+| D21 | Crates 2D-era: X-only push, floor test at y 0, Blupi walks through them, no pull | — | **done** `1598ebc`, `fd67b3f`, clips `d098a0b` (solid, X/Z push with support, StopPop/Pop pull) |
+| D22 | The game crashes when Blupi dives in deep water | camera raymarch counted water as a wall, eye on target, LookAt threw | **done** `f42d58a` |
+| D23 | The dynamite blast misses what is in front of or behind the stick | 2D blast, half a cell in Z | **done** `d6e9bce` |
 
 ## 6. Native world format: evolution policy
 
@@ -257,6 +262,6 @@ adaptation) · evidence/test · priority. Known rows so far:
 | A | Protect and understand: audit, captures, this plan, inventories | done (this document; asset manifest still to write) |
 | B | Representative multi-height tile mission on existing systems | done: mission 011 `4986391` (`plans/briefs/world011.md`) |
 | C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress: D1-D3, D10 done; parity matrix open |
-| D | Hub network and the 64 missions + 199 | open |
+| D | Hub network and the 64 missions + 199 | in progress: main hub, world 1 complete (001, 010-014); worlds 2-12 and 199 open |
 | E | Editor slots, demo seed, title screen, editor entry, transparency | done: `7eac7d5`, `6917fc9`, `e3a1042`, `fb48872` |
 | F | Stabilisation and completion audit | open |

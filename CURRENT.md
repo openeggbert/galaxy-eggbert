@@ -17,12 +17,14 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Content state (2026-10-25)
 
-- Of the 80 `.vwr` worlds, `world999` (the mechanics showcase), `title.vwr` (the title scene)
-  and **mission 011** (the first lesson, `plans/briefs/world011.md`, built by
-  `tools/worlds/world011.py`) have real content. The main hub and the 12 theme hubs are flat
-  portal plazas; **the other 63 missions and the bonus world 199 are placeholders** (one 11×11
-  floor with an exit). Authoring them as original 3D tile worlds is the main open work
-  (`plans/GALAXY_EGGBERT_COMPLETION.md` §9, `plans/inventory/worlds.md`).
+- Real content: `world999` (showcase), `title.vwr`, the **main hub** `world001` and **all of world 1**
+  (`world010` hub, missions 011-014, briefs in `plans/briefs/`, scripts in `tools/worlds/`). The 11
+  other theme hubs are placeholder plazas (migrated to the original's sign/door icons); **missions
+  21-125 and the bonus world 199 are placeholders** (an 11×11 floor with an exit). Authoring them is
+  the main open work (`plans/GALAXY_EGGBERT_COMPLETION.md` §9, `plans/inventory/worlds.md`).
+- Hubs work as the original's (`HubDoors.hpp`): mission bars slide up once the previous mission is
+  won, gold bars in the main hub per completed world, the golden key ends a world. Crates are solid,
+  pushed along X or Z and pulled (crouch + Down); the dynamite blast and mine contacts are 3D.
 - Terrain, its grass and the cube objects are lit (one directional light + ambient,
   `TerrainLighting.hpp`); lifts are drawn as their tile's bar and stem; cross-billboard machine
   parts are alpha-blended (D14-D16 in the plan).

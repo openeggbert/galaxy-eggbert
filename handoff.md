@@ -13,24 +13,18 @@ _Last updated: 2026-10-25 (late evening, restored baseline)._
 (read it first: direction, art fidelity, defects D1-D18, milestones). Not pushed (push only
 when asked).
 
-Done since the restore (details and hashes: the plan's §5 and §13): turning speed, menu bars,
-third person + F3, `--mission`/`--spawn` QA flags (`--spawn` yaw is in **degrees**), no
-step-up, proportional text, Bye icons, converter cap and whole-body fixes, objects re-exported,
-straight-alpha UI, the original's menu/HUD/pause/setup geometry, Galaxy's 3D title scene, ten
-editor slots with the showcase seed, hint zones in `.vwr` (metadata type 4), `worldkit.py` /
-`tools/worlds/kit.py` / `levelcheck.py` / `VerifyShippedWorlds`, and (latest)
-- renderer: cross-billboard props alpha-blended (`70be115`), lifts drawn as bar + stem
-  (`7f02216`), terrain lit by one directional light + ambient (`eeb9624`);
-- **mission 011** (`4986391`): the first lesson as a 3D machine spiral, all 22 hints as zones;
-  brief `plans/briefs/world011.md`; script `tools/worlds/world011.py`.
+Done since the restore (details and hashes: the plan's §5 defects D1-D23 and §13): controls,
+menus, title scene, editor slots, hint zones, world tooling (`worldkit.py`, `tools/worlds/kit.py`,
+`levelcheck.py`, `VerifyShippedWorlds`), renderer (props, lifts, lighting, signs, door bars), Blupi
+rebuilt (whole body, Bye, StopPop/Pop), hubs as the original's (signs, doors, gold bars, golden
+key, arrivals), 3D crates (solid, push X/Z, pull), 3D dynamite, D13 (vehicles run over mines),
+no underwater camera crash, and **the main hub plus all of world 1** (`world001`, `world010`,
+missions 011-014; briefs in `plans/briefs/`, scripts in `tools/worlds/`).
 
-Blupi rebuilt from the full re-match and replaced (`78757b1`): whole in Stop, closed head, Bye
-clip. QA with candidate avatars: `QA_LIVE_AVATARS=<absolute dir holding blupi/, objects/,
-blupi_placeholder/>` (e.g. a symlink tree like `build-probe/qa-blupi/avatars3d-candidate/`).
-
-Next: milestone D — the main hub `world001` and world 1's hub `world010` with missions 012-014
-(briefs first, `plans/briefs/`), then the other worlds in batches; D11 (per-object exhibition
-comparison) and D13 (vehicle × enemy contacts) alongside.
+Next: milestone D, worlds 2-12 and 199 — hub then missions per world, each from the original's
+map, hints, objects and the video, authored with the kit, checked with `levelcheck.py` (a
+`--solved` variant where crates or dynamite gate the route) and live. Expect 2D-era mechanics
+like D21/D23 to surface; fix them in the engine with tests before relying on them.
 
 Live checks: `tools/qa_live.sh build-cna-opengl3 <out> <steps> [--mission N --spawn x,y,z,yaw]`
 runs from `build-probe/qa-run/` so the owner's `build-cna-opengl3/savedata.txt` and
