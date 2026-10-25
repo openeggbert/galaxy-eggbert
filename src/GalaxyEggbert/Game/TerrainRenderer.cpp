@@ -410,9 +410,9 @@ namespace GalaxyEggbert::Game
         {
             m_rotatedPlatePositions.insert(PackPlatePositionKey(pos[0], pos[1], pos[2]));
         }
-        auto staticMesh = MakeTexturedMeshBuilder();
-        auto transparentStaticMesh = MakeTexturedMeshBuilder();
-        auto grassMesh = MakeTexturedMeshBuilder();
+        auto staticMesh = MakeLitTexturedMeshBuilder();
+        auto transparentStaticMesh = MakeLitTexturedMeshBuilder();
+        auto grassMesh = MakeLitTexturedMeshBuilder();
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -545,18 +545,18 @@ namespace GalaxyEggbert::Game
         // terrain, so this was never reachable until now.
         if (!staticMesh.Mesh().Empty())
         {
-            m_staticRenderer = UploadTexturedMesh(device, staticMesh.Mesh());
+            m_staticRenderer = UploadLitTexturedMesh(device, staticMesh.Mesh());
         }
 
         if (!transparentStaticMesh.Mesh().Empty())
         {
             m_transparentStaticRenderer =
-                UploadTexturedMesh(device, transparentStaticMesh.Mesh());
+                UploadLitTexturedMesh(device, transparentStaticMesh.Mesh());
         }
 
         if (!grassMesh.Mesh().Empty())
         {
-            m_grassRenderer = UploadTexturedMesh(device, grassMesh.Mesh());
+            m_grassRenderer = UploadLitTexturedMesh(device, grassMesh.Mesh());
         }
 
         Update(device, 0);
@@ -570,8 +570,8 @@ namespace GalaxyEggbert::Game
         // plain cubes collect in `cubes` and follow all of them in the
         // buffer (see the floor cube's comment below for why that order
         // matters).
-        auto mesh = MakeTexturedMeshBuilder();
-        auto cubes = MakeTexturedMeshBuilder();
+        auto mesh = MakeLitTexturedMeshBuilder();
+        auto cubes = MakeLitTexturedMeshBuilder();
         const auto icon107Uv = m_tileAtlas->GetTileUv(107);
         for (const auto& block : blocks)
         {
@@ -689,7 +689,7 @@ namespace GalaxyEggbert::Game
 
         CnaEngine::Graphics::MeshData combined = mesh.Take();
         combined.Append(cubes.Mesh());
-        return UploadTexturedMesh(device, combined);
+        return UploadLitTexturedMesh(device, combined);
     }
 
     void TerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)

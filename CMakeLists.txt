@@ -671,6 +671,15 @@ target_include_directories(VerifyTileUvBounds PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# TerrainLighting.hpp is header-only and engine-agnostic, like LiftVisual.hpp above.
+add_executable(VerifyTerrainLighting
+        tools/VerifyTerrainLighting.cpp
+)
+
+target_include_directories(VerifyTerrainLighting PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # INFRA-004 (plan.md §7): UnverifiedRenderMapping.hpp is a header-only data
 # table (no CNA/graphics dependency), same engine-independent precedent as
 # VerifyTileUvBounds above.
@@ -824,6 +833,7 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- tileUV() is a pure header-only
     # function of a BlockTypes icon id (plan.md TEST-004).
     add_test(NAME VerifyTileUvBounds COMMAND VerifyTileUvBounds)
+    add_test(NAME VerifyTerrainLighting COMMAND VerifyTerrainLighting)
     # No file/working-directory dependency -- GetObjIcon() is a pure function
     # of (ObjectType, phase) (plan.md INFRA-003).
     add_test(NAME VerifyGetObjIcon COMMAND VerifyGetObjIcon)

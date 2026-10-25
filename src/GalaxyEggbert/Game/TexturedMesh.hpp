@@ -22,6 +22,15 @@ namespace GalaxyEggbert::Game
             {CnaEngine::Graphics::VertexAttribute::Position, CnaEngine::Graphics::VertexAttribute::TexCoord0});
     }
 
+    // The same with face normals, for what is drawn lit: the terrain and the cube objects
+    // standing in it (TerrainLighting.hpp). Upload with UploadLitTexturedMesh().
+    [[nodiscard]] inline CnaEngine::Graphics::MeshBuilder MakeLitTexturedMeshBuilder()
+    {
+        return CnaEngine::Graphics::MeshBuilder({CnaEngine::Graphics::VertexAttribute::Position,
+                                                 CnaEngine::Graphics::VertexAttribute::Normal,
+                                                 CnaEngine::Graphics::VertexAttribute::TexCoord0});
+    }
+
     [[nodiscard]] inline CnaEngine::Graphics::BuilderVertex TexturedVertex(
         const Microsoft::Xna::Framework::Vector3& position, const Microsoft::Xna::Framework::Vector2& uv)
     {
@@ -60,5 +69,13 @@ namespace GalaxyEggbert::Game
     {
         return std::make_unique<CnaEngine::Graphics::GpuMesh>(
             CnaEngine::Graphics::GpuMesh::Upload(device, mesh, CnaEngine::Graphics::VertexLayout::PositionTexture()));
+    }
+
+    // Uploads a MakeLitTexturedMeshBuilder() mesh (VertexPositionNormalTexture).
+    [[nodiscard]] inline std::unique_ptr<CnaEngine::Graphics::GpuMesh> UploadLitTexturedMesh(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const CnaEngine::Graphics::MeshData& mesh)
+    {
+        return std::make_unique<CnaEngine::Graphics::GpuMesh>(CnaEngine::Graphics::GpuMesh::Upload(
+            device, mesh, CnaEngine::Graphics::VertexLayout::PositionNormalTexture()));
     }
 }

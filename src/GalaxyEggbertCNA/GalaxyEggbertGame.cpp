@@ -9,6 +9,7 @@
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
 #include <GalaxyEggbert/Game/LiftVisual.hpp>
+#include <GalaxyEggbert/Game/TerrainLighting.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
 #include <Microsoft/Xna/Framework/Color.hpp>
@@ -370,6 +371,24 @@ namespace GalaxyEggbert::CNA
         // correct behavior here even though it would be wrong for
         // BlupiController's own `IsSolidAt`). Returns the safe distance
         // along `direction` (a unit vector), always `<= maxDistance`.
+        // TerrainLighting.hpp's light on an effect that draws the terrain, its grass or the cube
+        // objects in it (their meshes carry normals: MakeLitTexturedMeshBuilder()).
+        void ApplyTerrainLighting(Microsoft::Xna::Framework::Graphics::BasicEffect& effect)
+        {
+            using Microsoft::Xna::Framework::Vector3;
+            const auto& light = GalaxyEggbert::Game::kTerrainLight;
+            effect.setLightingEnabledProperty(true);
+            effect.setAmbientLightColorProperty(Vector3(light.ambient, light.ambient, light.ambient));
+            effect.setSpecularColorProperty(Vector3::Zero);
+            auto& key = effect.getDirectionalLight0Property();
+            key.setEnabledProperty(true);
+            key.setDiffuseColorProperty(Vector3(light.diffuse, light.diffuse, light.diffuse));
+            key.setDirectionProperty(Vector3::Normalize(Vector3(light.directionX, light.directionY, light.directionZ)));
+            key.setSpecularColorProperty(Vector3::Zero);
+            effect.getDirectionalLight1Property().setEnabledProperty(false);
+            effect.getDirectionalLight2Property().setEnabledProperty(false);
+        }
+
         float RaymarchWallDistance(const GalaxyEggbert::Worlds::World& world,
                                    const Microsoft::Xna::Framework::Vector3& origin,
                                    const Microsoft::Xna::Framework::Vector3& direction, float maxDistance)
@@ -521,6 +540,7 @@ namespace GalaxyEggbert::CNA
         terrainEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         terrainEffect_->VertexColorEnabled = false;
         terrainEffect_->setTextureEnabledProperty(true);
+        ApplyTerrainLighting(*terrainEffect_);
         terrainEffect_->setTextureProperty(&terrainTexture_);
 
         // Icon 107's grass-top overlay (NEXT.md §8 task 3) — genuinely
@@ -534,6 +554,7 @@ namespace GalaxyEggbert::CNA
         grassEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         grassEffect_->VertexColorEnabled = false;
         grassEffect_->setTextureEnabledProperty(true);
+        ApplyTerrainLighting(*grassEffect_);
         grassEffect_->setTextureProperty(&grassTexture_);
 
         // Real mobile-eggbert bottom HUD + the interim animation-state
@@ -619,6 +640,7 @@ namespace GalaxyEggbert::CNA
             objectCubeEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
             objectCubeEffect_->VertexColorEnabled = false;
             objectCubeEffect_->setTextureEnabledProperty(true);
+            ApplyTerrainLighting(*objectCubeEffect_);
             objectCubeEffect_->setTextureProperty(&terrainTexture_);
 
             int cubeObjectCount = 0;
@@ -3987,7 +4009,7 @@ namespace GalaxyEggbert::CNA
                 // construction from mesh data), so a fresh mesh is
                 // the only way to reflect a new icon/UV per frame -- cheap
                 // here since there are only a handful of cube objects.
-                auto cubeMesh = MakeTexturedMeshBuilder();
+                auto cubeMesh = MakeLitTexturedMeshBuilder();
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
                 {
                     const auto visual = ResolveObjectVisual(
@@ -4019,7 +4041,7 @@ namespace GalaxyEggbert::CNA
 
                 if (!cubeMesh.Mesh().Empty())
                 {
-                    objectCubeMeshRenderer_ = UploadTexturedMesh(device, cubeMesh.Mesh());
+                    objectCubeMeshRenderer_ = UploadLitTexturedMesh(device, cubeMesh.Mesh());
                     objectCubeEffect_->View = camera_.View();
                     objectCubeEffect_->Projection = camera_.Projection();
                     objectCubeEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
