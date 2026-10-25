@@ -4423,7 +4423,7 @@ namespace GalaxyEggbert::CNA
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiEffect_->setViewProperty(camera_.View());
                 blupiEffect_->setProjectionProperty(camera_.Projection());
-                const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z)
+                const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f)
                 {
                     auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
                     model.ComputeBoneTransformsEXT(
@@ -4440,6 +4440,7 @@ namespace GalaxyEggbert::CNA
                             (pose.mirror == 1 ? -kFlipShift : 0.0f) + static_cast<float>(pose.offsetX) / 64.0f,
                             (pose.mirror == 2 ? kFlipShift : 0.0f) - static_cast<float>(pose.offsetY) / 64.0f,
                             0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationY(turnRadians) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(x, y, z));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     for (const auto& part : model.Parts)
@@ -4465,7 +4466,18 @@ namespace GalaxyEggbert::CNA
                         ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
                     if (pose != nullptr)
                     {
-                        drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
+                        // A sprite only faces left or right, along X, by its travel along X. One
+                        // patrolling mainly along Z is turned from that facing to its real one.
+                        const float dx = obj.posEndX - obj.posStartX;
+                        const float dz = obj.posEndZ - obj.posStartZ;
+                        float turn = 0.0f;
+                        if (std::fabs(dz) > std::fabs(dx))
+                        {
+                            const float spriteFacing = obj.posStartX > obj.posEndX ? 3.14159265f : 0.0f;
+                            turn = std::atan2(-dz, dx) - spriteFacing;
+                        }
+                        drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
+                                  turn);
                     }
                 }
                 for (const auto& cell : bigDecorCells_)
