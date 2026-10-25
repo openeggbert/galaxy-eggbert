@@ -37,7 +37,9 @@ namespace GalaxyEggbert::Game
         // per block, 8 * 20 / 64 = 2.5 blocks/s. It was 5.5 ("3D tuning") until 2026-10-24,
         // when the real Blupi model showed him gliding (user report: he moves too fast).
         static constexpr float kMoveSpeed = 2.5f;
-        static constexpr float kTurnSpeed = 3.14159265f; // established 3D tuning: 180 deg/s
+        // 135 deg/s since 2026-10-25 (user request: turning with Left/Right a little slower);
+        // it was 180 deg/s, the first 3D tuning.
+        static constexpr float kTurnSpeed = 0.75f * 3.14159265f;
         static constexpr float kJumpSpeed = 12.0f; // real "-16, no Power, clear headroom" baseline -- see kJumpSpeedPowered's own comment
 
         // Jump-height headroom modulation (plan.md TILE-041, real
