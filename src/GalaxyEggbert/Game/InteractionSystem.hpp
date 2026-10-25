@@ -245,7 +245,11 @@ namespace GalaxyEggbert::Game
                     // pull it (crouching, facing it: BlupiController's StopPop/Pop). A held crate
                     // follows him a cell at a time as he backs away (Decor.cpp's Pop,
                     // TestPushCaisse(bPop)).
-                    float blupiMoveDZ = 0.0f, bool blupiHoldingCrate = false);
+                    float blupiMoveDZ = 0.0f, bool blupiHoldingCrate = false,
+                    // Riding the jeep, the tank or the skateboard: a mine or a small enemy he runs
+                    // into is destroyed and he lives (Decor.cpp:5782-5824: BlupiDead only when
+                    // !m_blupiJeep && !m_blupiTank && !m_blupiSkate).
+                    bool blupiArmoredVehicle = false);
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.

@@ -828,7 +828,8 @@ namespace GalaxyEggbert::Game
                                       bool blupiCanGrantCloud, bool blupiCanGrantHide,
                                       bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
-                                      bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate)
+                                      bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
+                                      bool blupiArmoredVehicle)
     {
         events_.clear();
         crateBeingPushedThisFrame_ = false;
@@ -1710,19 +1711,28 @@ namespace GalaxyEggbert::Game
                     else
                     {
                         obj.active = false;
-                        events_.push_back(Event{EventKind::Died});
-                        // Real LoseLife()/respawn now deferred to the death-lock/life-loss-Voyage
-                        // resolution point (death-VFX follow-up) -- shouldRespawn=false, confirmed
-                        // no `m_blupiRestart=true` near this real site (Decor.cpp:5782-5815).
-                        const bool isClear2 = RollClear2Coinflip();
-                        Event deathLockEvent{EventKind::DeathLockRequested};
-                        deathLockEvent.deathLockKind = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
-                        deathLockEvent.deathLockShouldRespawn = false;
-                        ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
-                        if (isClear2)
+                        if (blupiArmoredVehicle)
                         {
-                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel74);
-                            RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
+                            // Run over in the jeep, the tank or on the skateboard: only the
+                            // hazard goes (the real site's channel 10, shake and flash below).
+                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                        }
+                        else
+                        {
+                            events_.push_back(Event{EventKind::Died});
+                            // Real LoseLife()/respawn now deferred to the death-lock/life-loss-Voyage
+                            // resolution point (death-VFX follow-up) -- shouldRespawn=false, confirmed
+                            // no `m_blupiRestart=true` near this real site (Decor.cpp:5782-5815).
+                            const bool isClear2 = RollClear2Coinflip();
+                            Event deathLockEvent{EventKind::DeathLockRequested};
+                            deathLockEvent.deathLockKind = isClear2 ? PendingDeathKind::Clear2 : PendingDeathKind::Clear1;
+                            deathLockEvent.deathLockShouldRespawn = false;
+                            ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
+                            if (isClear2)
+                            {
+                                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel74);
+                                RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
+                            }
                         }
                         // Real camera shake (plan.md CAM-008/009, Decor.cpp
                         // ~5782-5814, confirmed via direct source read) --

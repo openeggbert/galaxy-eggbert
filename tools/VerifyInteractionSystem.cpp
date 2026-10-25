@@ -4231,6 +4231,15 @@ int main(int argc, char** argv)
         placeCrate(55, 2, 55); // on the step, pushed +X onto the next crate
         placeCrate(56, 1, 55);
         placeCrate(52, 1, 42); // pulled
+        for (const float mineX : {42.0f, 44.0f}) // run over on the skateboard / walked into
+        {
+            GalaxyEggbert::MoveObjectRecord mine;
+            mine.type = GalaxyEggbert::Def::ObjectType::ObjectType2;
+            mine.posStartX = mine.posEndX = mineX;
+            mine.posStartY = mine.posEndY = 1.0f;
+            mine.posStartZ = mine.posEndZ = 58.0f;
+            GalaxyEggbert::PlaceMoveObject(crateWorld, mine);
+        }
         const std::filesystem::path cratePath = "VerifyInteractionSystem-crates.vwr";
         crateWorld.saveToFile(cratePath);
         WorldRuntime crates;
@@ -4268,6 +4277,23 @@ int main(int argc, char** argv)
             pullX -= 0.02f;
         }
         check(crateAt(51, 1, 42), "a held crate follows Blupi a cell as he backs away");
+
+        // D13: in the jeep, the tank or on the skateboard a mine is destroyed and Blupi lives.
+        const auto mineActive = [&](float rawX)
+        {
+            for (const auto& obj : crates.GetMobileObjects())
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 && std::fabs(obj.currentX + 50.0f - rawX) < 0.01f)
+                    return obj.active;
+            return false;
+        };
+        crateInteraction.Update(dt, crates, 42.0f - 50.0f, 1.0f, 8.0f, 0.0f, sound, false, false, 0, 0, false, true,
+                                true, true, true, false, false, false, true, false, false, 0.0f, false,
+                                /*blupiArmoredVehicle=*/true);
+        check(!mineActive(42.0f) && !hasEvent(crateInteraction, InteractionSystem::EventKind::Died),
+              "on the skateboard (jeep, tank) a mine is destroyed and Blupi lives (D13)");
+        crateInteraction.Update(dt, crates, 44.0f - 50.0f, 1.0f, 8.0f, 0.0f, sound);
+        check(!mineActive(44.0f) && hasEvent(crateInteraction, InteractionSystem::EventKind::Died),
+              "on foot the same mine kills him");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

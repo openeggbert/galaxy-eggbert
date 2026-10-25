@@ -3459,7 +3459,10 @@ namespace GalaxyEggbert::CNA
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
                                  firePressed, canFire, cloudActive, canGrantInvert, actionPressedEdge,
-                                 canPushCrate, crateIntentDZ, holdingCrate_);
+                                 canPushCrate, crateIntentDZ, holdingCrate_,
+                                 blupi_.GetVehicleMode() == BlupiController::VehicleMode::Jeep ||
+                                     blupi_.GetVehicleMode() == BlupiController::VehicleMode::Tank ||
+                                     blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard);
             RefreshTerrainMeshIfChanged();
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
