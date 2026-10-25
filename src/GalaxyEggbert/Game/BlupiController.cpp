@@ -845,6 +845,7 @@ namespace GalaxyEggbert::Game
         m_invertTimer = 0.0f;
         m_nage = false;
         m_surf = false;
+        m_waterExitJump = false;
         m_suspended = false;
         m_ghost = false;
         m_deathLocked = true;
@@ -1471,18 +1472,21 @@ namespace GalaxyEggbert::Game
             dz = -std::cos(m_yaw) * horizontalSpeed * dt;
         }
 
-        // Nage (fully submerged, plan.md E3D-MIG-148): Jump swims upward
-        // instead of the normal ground jump, and works regardless of
-        // m_onGround (mid-water, not resting on anything) -- a natural
-        // adaptation for "swimming up", see kSwimUpSpeed's own comment.
-        // Takes precedence over the normal ground jump below since a
-        // ground-jump impulse doesn't make sense while submerged.
-        if (m_nage && jumpPressed)
+        // Out of the water (kSurfFloatHeight's comment): Jump at the surface, with open air
+        // above his head, makes the weak jump. Swimming itself is the vertical speed below.
+        const bool jumpPowered = m_secretPower == GalaxyEggbert::Def::SecretPower::Power;
+        const int waterCell = static_cast<int>(std::lround(m_y));
+        const int blocksPerAxisHere = static_cast<int>(world.blocksPerAxis());
+        if (m_surf && jumpPressed && !m_waterExitJump &&
+            !IsSolidAt(world, ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxisHere),
+                       waterCell + 1,
+                       ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxisHere)))
         {
-            m_velocityY = kSwimUpSpeed;
+            m_velocityY = jumpPowered ? kJumpSpeedReducedPowered : kJumpSpeedReduced;
+            m_waterExitJump = true;
             m_onGround = false;
         }
-        else if (m_onGround && jumpPressed && !m_ecrase && !m_balloon &&
+        else if (m_onGround && jumpPressed && !m_ecrase && !m_balloon && !m_nage && !m_surf &&
                  (m_vehicleMode == VehicleMode::None || m_vehicleMode == VehicleMode::Skateboard))
         {
             // Real Decor.cpp:2913-2947 ground-jump gate: excludes every
@@ -1595,6 +1599,9 @@ namespace GalaxyEggbert::Game
         // matching the real source's own "uses the shared ground gravity/
         // Air path" note for Skateboard (and this session's decision not
         // to model Jeep/Tank's own real airborne-heavy-fall nuance).
+        // Afloat: at the surface, neither diving nor jumping out (kSurfFloatHeight's comment).
+        const bool afloat = m_surf && !crouchHeld && !m_waterExitJump;
+        const float floatLine = static_cast<float>(waterCell) + kSurfFloatHeight;
         if (m_vehicleMode == VehicleMode::Helicopter || m_vehicleMode == VehicleMode::Overcraft)
         {
             const bool isHelicopter = (m_vehicleMode == VehicleMode::Helicopter);
@@ -1645,13 +1652,32 @@ namespace GalaxyEggbert::Game
                 m_velocityY = std::max(m_velocityY - kBalloonRiseAccel * dt, targetRise);
             }
         }
+        else if ((m_nage || m_surf) && !m_waterExitJump)
+        {
+            // Swimming (kSurfFloatHeight's comment): no gravity. Afloat at the surface he is held
+            // on the float line: falling in, he falls on to it (clamped after the move); below
+            // it he rises to it.
+            if (afloat && m_y > floatLine)
+            {
+                m_velocityY = std::max(m_velocityY - kGravity * dt, kFallLimit);
+            }
+            else if (afloat)
+            {
+                m_velocityY = std::min(kSwimSpeed, (floatLine - m_y) / dt);
+            }
+            else
+            {
+                const float target = (jumpPressed || lookUpHeld) ? kSwimSpeed
+                                     : crouchHeld                ? -kSwimSpeed
+                                     : moving                    ? 0.0f
+                                                                 : kSwimDriftSpeed;
+                m_velocityY = m_velocityY < target ? std::min(m_velocityY + kSwimAccel * dt, target)
+                                                   : std::max(m_velocityY - kSwimAccel * dt, target);
+            }
+        }
         else
         {
-            // Nage (plan.md E3D-MIG-148): a slow floaty sink instead of a
-            // free-fall drop while genuinely submerged (kNageGravityMultiplier's
-            // own comment).
-            const float effectiveGravity = m_nage ? kGravity * kNageGravityMultiplier : kGravity;
-            m_velocityY = std::max(m_velocityY - effectiveGravity * dt, kFallLimit);
+            m_velocityY = std::max(m_velocityY - kGravity * dt, kFallLimit);
         }
         // Real Decor::TestPath() equivalent, MERGED across all 3 axes in one
         // call (INFRA-005 follow-up, 2026-07-22, plan.md §7,
@@ -1717,6 +1743,11 @@ namespace GalaxyEggbert::Game
             }
         }
 
+        if (afloat && m_y >= floatLine && newY < floatLine)
+        {
+            newY = floatLine;
+            m_velocityY = 0.0f;
+        }
         m_x = newX;
         m_z = newZ;
         m_y = newY;
@@ -1729,6 +1760,10 @@ namespace GalaxyEggbert::Game
         // otherwise reuse the merged result directly, same as before.
         m_onGround = steppedUp ? IsPointSolid(world, newX, newY - 0.05f, newZ, tempPassable, false)
                                : moveResult.onGround;
+        if (m_waterExitJump && (m_velocityY <= 0.0f || m_onGround))
+        {
+            m_waterExitJump = false;
+        }
 
         // Vertigo (Decor.cpp ~4880-4935, 5040-5050): standing still at a ledge with his front
         // foot over the void and the back one on the ground, Blupi teeters for 16 ticks, then

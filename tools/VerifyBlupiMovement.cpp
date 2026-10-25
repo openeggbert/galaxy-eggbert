@@ -1251,16 +1251,12 @@ int main(int argc, char** argv)
               "the lag is roughly the FIFO's 10-slot capacity, proving the oldest entry is what's used, "
               "not just the immediately-prior one");
 
-        // Water Surf/Nage/drowning (plan.md E3D-MIG-148) -- a shallow
-        // 1-layer pool (Ground at y=0, Water1 at y=1) and a deep 2-layer
-        // pool (Ground at y=0, Water1 at y=1 AND y=2) elsewhere in the same
-        // synthetic world. Water is now non-solid for collision (see
-        // GroundHeightAt's own comment), so Blupi sinks through any depth
-        // of water to the real floor beneath it -- the tile(s) at/above his
-        // resting position then determine Surf vs Nage, matching real
-        // mobile-eggbert's per-tile-independent collision well enough for
-        // this purpose, the same technique already used for the teleporter
-        // pillar and fan head.
+        // Water Surf/Nage/drowning (plan.md E3D-MIG-148; swimming as the original's since
+        // 2026-10-26, BlupiController::kSurfFloatHeight) -- a shallow 1-layer pool (Ground at
+        // y=0, Water1 at y=1) and a deep 2-layer pool (Ground at y=0, Water1 at y=1 AND y=2)
+        // elsewhere in the same synthetic world. Water is non-solid for collision; the tile(s)
+        // at/above Blupi decide Surf vs Nage. Falling in he stops afloat at the surface; he
+        // goes under only by diving (crouch).
         constexpr std::uint16_t kShallowX = 80, kShallowZ = 80;
         synthetic.setBlock(kShallowX, 0, kShallowZ, Worlds::Block::make(BlockTypes::Ground));
         synthetic.setBlock(kShallowX, 1, kShallowZ, Worlds::Block::make(BlockTypes::Water1));
@@ -1270,32 +1266,47 @@ int main(int argc, char** argv)
         synthetic.setBlock(kDeepX, 1, kDeepZ, Worlds::Block::make(BlockTypes::Water1));
         synthetic.setBlock(kDeepX, 2, kDeepZ, Worlds::Block::make(BlockTypes::Water1));
 
-        const auto stepWithWaterDetection = [](BlupiController& c, const Worlds::World& w, float stepDt)
+        const auto stepInWater = [](BlupiController& c, const Worlds::World& w, float stepDt, float move,
+                                    bool jump, bool crouch)
         {
             const auto blockAt = c.GetBlockTypeAt(w);
             const auto blockAbove = c.GetBlockTypeAbove(w);
             const bool surf = BlockTypes::isWater(blockAt) && !BlockTypes::isWater(blockAbove);
             const bool nage = BlockTypes::isWater(blockAt) && BlockTypes::isWater(blockAbove);
-            c.Step(w, 0.0f, 0.0f, false, false, false, stepDt, false, surf, nage);
+            c.Step(w, 0.0f, move, jump, crouch, false, stepDt, false, surf, nage);
+        };
+        const auto stepWithWaterDetection = [&stepInWater](BlupiController& c, const Worlds::World& w, float stepDt)
+        {
+            stepInWater(c, w, stepDt, 0.0f, false, false);
+        };
+        const auto diveWithWaterDetection = [&stepInWater](BlupiController& c, const Worlds::World& w, float stepDt)
+        {
+            stepInWater(c, w, stepDt, 0.0f, false, true);
         };
 
         BlupiController inShallow;
         inShallow.SetPosition(static_cast<float>(kShallowX) - 50.0f, 20.0f, static_cast<float>(kShallowZ) - 50.0f);
         for (int i = 0; i < 200; ++i) stepWithWaterDetection(inShallow, synthetic, dt);
-        check(inShallow.IsOnGround() && std::fabs(inShallow.GetY() - 1.0f) < 0.01f,
-              "Blupi sinks through a shallow 1-layer water pool and rests on the real floor beneath it");
+        check(!inShallow.IsOnGround() &&
+                  std::fabs(inShallow.GetY() - (1.0f + BlupiController::kSurfFloatHeight)) < 0.01f,
+              "falling into a shallow 1-layer pool Blupi floats at the surface (the original's surf band), "
+              "above its floor");
         check(inShallow.IsSurf() && !inShallow.IsNage(),
-              "standing in a shallow 1-layer pool is Surf (dry above), not Nage");
+              "afloat in a shallow 1-layer pool is Surf (dry above), not Nage");
         check(inShallow.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the breath gauge stays full while merely Surf, not Nage");
 
         BlupiController inDeep;
         inDeep.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
         for (int i = 0; i < 200; ++i) stepWithWaterDetection(inDeep, synthetic, dt);
-        check(inDeep.IsOnGround() && std::fabs(inDeep.GetY() - 1.0f) < 0.01f,
-              "Blupi sinks through a deep 2-layer water pool and rests on the real floor beneath it");
-        check(inDeep.IsNage() && !inDeep.IsSurf(),
-              "standing beneath 2 layers of water is Nage (water above too), not merely Surf");
+        check(inDeep.IsSurf() && std::fabs(inDeep.GetY() - (2.0f + BlupiController::kSurfFloatHeight)) < 0.01f,
+              "falling into a deep 2-layer pool Blupi stops afloat at its surface, not sinking");
+        for (int i = 0; i < 200; ++i) diveWithWaterDetection(inDeep, synthetic, dt);
+        check(inDeep.IsOnGround() && std::fabs(inDeep.GetY() - 1.0f) < 0.01f && inDeep.IsNage() && !inDeep.IsSurf(),
+              "diving (crouch) he swims down to the pool's floor, beneath 2 layers of water: Nage");
+        for (int i = 0; i < 300; ++i) stepWithWaterDetection(inDeep, synthetic, dt);
+        check(inDeep.IsSurf() && std::fabs(inDeep.GetY() - (2.0f + BlupiController::kSurfFloatHeight)) < 0.01f,
+              "left alone under water he drifts up and floats at the surface again (the original's -1 a tick)");
 
         // Gauge countdown + drowning -- run enough simulated time to
         // exhaust the full 100-level gauge (the real ~25s), confirming
@@ -1307,7 +1318,7 @@ int main(int argc, char** argv)
         int drownedFrame = -1;
         for (int i = 0; i < 700 && !drownedOnce; ++i) // 700 * 0.05s = 35s, comfortably past ~25s + fall time
         {
-            stepWithWaterDetection(drowning, synthetic, kDrownDt);
+            diveWithWaterDetection(drowning, synthetic, kDrownDt);
             if (drowning.JustDrowned())
             {
                 drownedOnce = true;
@@ -1328,7 +1339,7 @@ int main(int argc, char** argv)
         shieldedSwimmer.TriggerShield();
         for (int i = 0; i < 300; ++i) // 300 * 0.05s = 15s
         {
-            stepWithWaterDetection(shieldedSwimmer, synthetic, kDrownDt);
+            diveWithWaterDetection(shieldedSwimmer, synthetic, kDrownDt);
         }
         check(!shieldedSwimmer.JustDrowned() && shieldedSwimmer.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the water gauge never depletes while Shield is active (real !m_blupiShield gate)");
@@ -1349,6 +1360,69 @@ int main(int argc, char** argv)
         resurfacer.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, true, false);
         check(resurfacer.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the gauge resets to full the instant Nage ends (Surf), matching the real 'gauge hidden' behavior");
+
+        // Out of the water (2026-10-26, Decor.cpp:5336-5357; reported by the world authoring:
+        // he bobbed in front of a bank and never got out). A channel along X at z 88: floor at
+        // y 0, water at y 1-2 (surface cell 2) for x 70-72, then a bank. Bank A at x 73-78 stands
+        // a block above the water (top 3): he jumps out of the surface onto it. Bank B (z 91)
+        // is level with the water's floor of cell 2 (top 2): he swims straight out onto it.
+        {
+            constexpr std::uint16_t kChannelZ = 88, kLowBankZ = 91;
+            for (const std::uint16_t z : {kChannelZ, kLowBankZ})
+            {
+                for (std::uint16_t x = 70; x <= 72; ++x)
+                {
+                    synthetic.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                    synthetic.setBlock(x, 1, z, Worlds::Block::make(BlockTypes::Water1));
+                    synthetic.setBlock(x, 2, z, Worlds::Block::make(BlockTypes::Water1));
+                }
+            }
+            for (std::uint16_t x = 73; x <= 78; ++x) // banks wide enough to land and stand on
+            {
+                for (std::uint16_t y = 0; y <= 2; ++y)
+                {
+                    synthetic.setBlock(x, y, kChannelZ, Worlds::Block::make(BlockTypes::Ground));
+                }
+                for (std::uint16_t y = 0; y <= 1; ++y)
+                {
+                    synthetic.setBlock(x, y, kLowBankZ, Worlds::Block::make(BlockTypes::Ground));
+                }
+            }
+            constexpr float kFacingPlusX = 1.57079632679f;
+            const float floatY = 2.0f + BlupiController::kSurfFloatHeight;
+
+            BlupiController stuck;
+            stuck.SetPosition(71.0f - 50.0f, floatY, static_cast<float>(kChannelZ) - 50.0f);
+            stuck.SetYaw(kFacingPlusX);
+            for (int i = 0; i < 120; ++i) stepInWater(stuck, synthetic, dt, 1.0f, false, false);
+            check(stuck.IsSurf() && std::fabs(stuck.GetY() - floatY) < 0.01f && stuck.GetX() < 73.0f - 50.0f - 0.3f,
+                  "swimming into a bank a block above the water he stays afloat in front of it (no step-up)");
+
+            BlupiController climber;
+            climber.SetPosition(71.0f - 50.0f, floatY, static_cast<float>(kChannelZ) - 50.0f);
+            climber.SetYaw(kFacingPlusX);
+            for (int i = 0; i < 90; ++i) stepInWater(climber, synthetic, dt, 1.0f, true, false);
+            for (int i = 0; i < 30; ++i) stepInWater(climber, synthetic, dt, 0.0f, false, false);
+            check(climber.IsOnGround() && std::fabs(climber.GetY() - 3.0f) < 0.01f &&
+                      climber.GetX() > 73.0f - 50.0f - 0.5f && !climber.IsSurf() && !climber.IsNage(),
+                  "Jump at the surface makes the weak jump out, onto the bank a block above the water");
+
+            BlupiController wader;
+            wader.SetPosition(71.0f - 50.0f, floatY, static_cast<float>(kLowBankZ) - 50.0f);
+            wader.SetYaw(kFacingPlusX);
+            for (int i = 0; i < 90; ++i) stepInWater(wader, synthetic, dt, 1.0f, false, false);
+            for (int i = 0; i < 30; ++i) stepInWater(wader, synthetic, dt, 0.0f, false, false);
+            check(wader.IsOnGround() && std::fabs(wader.GetY() - 2.0f) < 0.01f && wader.GetX() > 73.0f - 50.0f - 0.5f,
+                  "onto a bank no higher than the float line he swims straight out");
+
+            BlupiController diver;
+            diver.SetPosition(71.0f - 50.0f, 1.0f, static_cast<float>(kChannelZ) - 50.0f);
+            diver.SetYaw(kFacingPlusX);
+            for (int i = 0; i < 150; ++i) stepInWater(diver, synthetic, dt, 1.0f, true, false);
+            for (int i = 0; i < 30; ++i) stepInWater(diver, synthetic, dt, 0.0f, false, false);
+            check(diver.IsOnGround() && std::fabs(diver.GetY() - 3.0f) < 0.01f,
+                  "holding Jump from the bottom he swims up and jumps out at the surface, onto the bank");
+        }
 
         // Secret powers (plan.md E3D-MIG-170) -- trigger gates, the shared
         // gauge's real per-power decrement rate, expiry, and the real

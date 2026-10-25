@@ -278,22 +278,20 @@ namespace GalaxyEggbert::Game
         static constexpr int kWaterGaugeRedThreshold = 25;
         static constexpr float kWaterGaugeTickSeconds = 5.0f / 20.0f;
 
-        // Nage (fully submerged) gravity -- an approximation (unlike
-        // kWaterGaugeTickSeconds above, no exact "buoyancy" constant is
-        // documented in the reference), giving a slow, floaty sink instead
-        // of a normal free-fall drop, the same approximation shape already
-        // used for kBalloonGravityMultiplier. jumpPressed while Nage applies
-        // a modest constant upward kick (kSwimUpSpeed, also not a
-        // transcribed value -- real mobile-eggbert's continuous 2D swim
-        // input has no direct equivalent to derive an exact constant from)
-        // instead of a normal ground jump, a natural adaptation for
-        // "swimming up" rather than "jumping off solid ground". The real
-        // "Jump near the surface launches you clear of the water" nuance
-        // (-16/-12, gated on a specific sub-tile depth band) is NOT modeled
-        // -- no sub-tile position exists in this engine's single-point
-        // collision, same simplification already applied to spikes/fans.
-        static constexpr float kNageGravityMultiplier = 0.3f;
-        static constexpr float kSwimUpSpeed = kJumpSpeed * 0.4f;
+        // Swimming, as the original's (2026-10-26, Decor.cpp:4542-4573 Nage, 4656-4692 Surf,
+        // 5336-5357 out of the water; ticks of 1/20 s, 64 pixels a block). In the water there is
+        // no gravity: Jump or RightShift swims up, LeftShift down, the speed easing by one pixel
+        // a tick toward five a tick; with neither Blupi drifts up a pixel a tick while he stands
+        // still and holds his depth while he swims along. At the surface (Surf) he floats with
+        // his feet 46 of the surface tile's 64 pixels below its top (IsSurfWater's band) and
+        // stays there until he dives; Jump there, with open dry air above his head, makes the
+        // weak jump (-12, -16 powered) out of the water, onto a bank up to about a block above
+        // the water. Until 2026-10-26 full gravity pulled him off the surface, so he bobbed in
+        // front of a bank and never got out.
+        static constexpr float kSwimSpeed = 5.0f * 20.0f / 64.0f;
+        static constexpr float kSwimDriftSpeed = 1.0f * 20.0f / 64.0f;
+        static constexpr float kSwimAccel = 1.0f * 20.0f * 20.0f / 64.0f;
+        static constexpr float kSurfFloatHeight = 18.0f / 64.0f;
 
         // Secret powers (plan.md E3D-MIG-170/172, real m_blupiShield/Power/
         // Cloud/Hide + shared m_blupiTimeShield, verified directly against
@@ -1430,6 +1428,9 @@ namespace GalaxyEggbert::Game
         // Remembered so GetAnimIcon()'s DeathLocked case can select the real per-cause hurt-sprite
         // frame array (added 2026-07-16, same table_blupi transcription as kClear1Frames etc.).
         DeathCause m_deathCause = DeathCause::Clear1;
+        // The weak jump out of the water is under way (kSurfFloatHeight's comment): gravity, not
+        // the surface hold, until its top.
+        bool m_waterExitJump = false;
 
         bool m_pickupFrozen = false;
         float m_pickupFreezeTimer = 0.0f;
