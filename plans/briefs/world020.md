@@ -16,10 +16,10 @@ round the mound with one jump per tier.
   (48, 1, 66) facing it.
 - Sign 2 in tier 2's east riser (58, 3, 50), sign 3 in tier 3's west riser (45, 5, 50), sign 4
   in tier 4's east riser (52, 7, 50), sign 5 in a shrine on the top tier (52, 9, 50) opening
-  west. Each gated sign sits two deep, the bar in the doorway under a lintel; the niches open
-  along X, since a door bar blocks along X only (the 2D tile mask extruded through Z: crossed
-  along Z, Blupi walks past it at the side of the cell). After a win Blupi arrives on the
-  terrace just outside the bar that opened.
+  west. Each gated sign sits two deep, the bar in the doorway under a lintel, the niches opening
+  east and west over the terraces. After a win Blupi arrives on the terrace just outside the
+  bar that opened. (Found while building it: a bar crossed along Z could be walked past at the
+  side of its cell; fixed in 66a1330, a bar now closes its whole cell.)
 - Windows (391) and trims on the south faces of the tiers and the north wall, where those
   tiles show their picture; grass beds with palms and plants in the courtyard corners,
   fountains before the mound and columns on the tiers' corners (BigDecor models).

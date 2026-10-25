@@ -16,11 +16,12 @@ tiles only, for the scripts world020.py ... world025.py.
   399/76/375, the girder 201, cobwebs 401-403, the bars 51/138, the window panel 245 -- none is
   used. The arch 400 (a dark archway on its Z faces) has no collision: only as a blind arch
   with stone behind it. Columns, fountains, palms and the statue are BigDecor models.
-- Door bars (182, 334-336, 421-440) block the middle of their cell along X only (the 2D tile
-  mask extruded through Z): a door is crossed along X, never along Z, or Blupi walks past it.
-- A saw kills the Blupi standing on it: saws are floor cells (its blade stands up out of the
-  floor). A switch is the floor cell Blupi stands on when he presses Action, and it reaches
-  the saws of its own row along X (same height and Z, 20 cells either way).
+- A door bar (182, 334-336, 421-440) closes its whole cell (since 66a1330; before, only the
+  middle of the cell along X).
+- A saw kills Blupi in its cell or standing on it (1bb048e). Drawn as a stone block with the
+  blade above, it reads best as a floor cell, the blade standing up out of the floor. A switch
+  is the floor cell Blupi stands on when he presses Action, and it reaches the saws of its own
+  row along X (same height and Z, 20 cells either way: Decor::ActiveSwitch's 2D window).
 """
 
 from __future__ import annotations
@@ -92,11 +93,8 @@ def parapet(w: World, cells, y, rng: random.Random, gaps=()):
 
 def sign_niche(w: World, x, y, z, facing, icon, rng: random.Random, door=False, block=STONE):
     """kit.sign_niche in palace stone: a hub sign in a niche one cell high opening toward
-    `facing` (dx, dz); with `door` two deep with the blue bar in the doorway. Gated niches
-    must face along X (door bars block along X only)."""
+    `facing` (dx, dz); with `door` two deep with the blue bar in the doorway."""
     dx, dz = facing
-    if door and dx == 0:
-        raise ValueError("a gated niche must open along X")
     cells = [(x, z)] + ([(x + dx, z + dz)] if door else [])
     for cx, cz in cells:
         w.clear(cx, y, cz)
@@ -114,7 +112,7 @@ def sign_niche(w: World, x, y, z, facing, icon, rng: random.Random, door=False, 
 
 
 def gate(w: World, x, y, z, door: int, height=1):
-    """A door tile in a doorway crossed along X, `height` cells high (a key or treasure door
-    stops Blupi only in his walking cell; above it is the lintel)."""
+    """A door tile in a doorway, `height` cells high (a door stops Blupi in his walking cell;
+    above it goes the lintel, so he cannot jump over it)."""
     for k in range(height):
         w.set(x, y + k, z, door)
