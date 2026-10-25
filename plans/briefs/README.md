@@ -61,7 +61,10 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
   move in step (put several side by side for a wide platform).
 - Vehicles: helicopter (13, RightShift up / LeftShift down), jeep, tank, skateboard (24),
   overcraft; taken and left with Action (Space). Jeep, tank and skateboard run over mines.
-- Water: swimming at the surface and diving (air gauge ≈ 25 s).
+- Water: Blupi floats at the surface (feet ≈ 0.28 into the top water cell), dives with LeftShift,
+  swims up with Ctrl/RightShift and drifts back up when idle (air gauge ≈ 25 s while under). He
+  gets out by jumping at the surface onto a bank whose top is at most one block above the water's
+  top cell (open air above him), or swims straight onto a bank no higher than that.
 - Hubs: world signs and mission signs in niches (`sign_niche`); mission N > 1 behind a blue bar
   (182) one or two cells from its sign — it opens when mission N − 1 is won, and Blupi then
   arrives just outside it. Each world's last mission ends with the golden key (ObjectType21).

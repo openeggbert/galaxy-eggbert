@@ -133,6 +133,7 @@ Found while building mission 011 (live, 2026-10-25):
 | D29 | A win screen after every mission; no Win cheer, no Turn | — | **done** `018c0a6`, `65d2f05` (cheer then straight on; the screen only after 199; clips with the next model rebuild) |
 | D30 | After Lost Blupi restarts at (0, 1, 0), not the world's spawn | — | **done** `018c0a6` |
 | D31 | Sprite tiles drawn as opaque cubes/plates: black where the sprite is clear (doors 334-336, treasure doors 421+, pillars 399/76/375, girder 201, bars 51/138, balustrade 398, plate decor, cobwebs) | — | **done** (TileCoverage: alpha-test cutout pass, faint tiles blended; stone walls under a quarter clear stay opaque) |
+| D32 | Blupi cannot leave deep water onto a bank (bobs at the surface, sinks back) | full gravity while Surf, a kick while Nage | **done** `762d254` (swimming as Decor.cpp: no gravity, float band, dive, drift up, the weak jump out) |
 
 ## 6. Native world format: evolution policy
 
