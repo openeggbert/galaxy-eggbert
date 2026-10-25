@@ -235,6 +235,7 @@ namespace GalaxyEggbert::CNA
                 case S::Ouf1b: return "Ouf1b";
                 case S::Ouf3: return "Ouf3";
                 case S::Ouf4: return "Ouf4";
+                case S::Ouf2: return "Ouf2";
                 case S::Switch: return "Switch";
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";
@@ -3389,11 +3390,22 @@ namespace GalaxyEggbert::CNA
                     // immediately (unaffected by Voyage), so that's the
                     // real distinguishing signal now.
                     const int persoBefore = interaction_.PersoCount();
-                    if (interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                               blupi_.IsOnGround(), blupiCanUseHands) &&
-                        interaction_.PersoCount() < persoBefore)
+                    const bool persoUsed = interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
+                                                                 blupi_.GetZ(), blupi_.IsOnGround(),
+                                                                 blupiCanUseHands);
+                    if (persoUsed && interaction_.PersoCount() < persoBefore)
                     {
+                        // Putting the decoy down: Ouf2, held (Decor.cpp:4833-4840).
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
+                        blupi_.TriggerOneShotAnim(BlupiController::AnimState::Ouf2,
+                                                   BlupiController::kOuf2Duration);
+                    }
+                    else if (!persoUsed && persoBefore > 0 && blupiCanUseHands)
+                    {
+                        // It cannot go down here: his shrug, Ouf3 (Decor.cpp:4843-4848).
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel27);
+                        blupi_.TriggerReaction(BlupiController::AnimState::Ouf3,
+                                               BlupiController::kOuf3Duration);
                     }
                     ResolvePendingVoyage();
                 }

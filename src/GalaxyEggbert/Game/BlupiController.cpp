@@ -235,6 +235,8 @@ namespace GalaxyEggbert::Game
         constexpr int kOuf3Frames[] = {135, 135, 136, 136, 137, 137, 231, 231, 231, 231, 230, 230,
                                        231, 231, 231, 231, 230, 230, 231, 231, 231, 231, 230, 230,
                                        231, 231, 231, 231, 137, 137, 136, 136, 135, 135};
+        constexpr int kOuf2Frames[] = {1, 1, 227, 227, 228, 228, 229, 229, 228, 228, 227, 227, 226, 226, 227, 227,
+                                       228, 228, 229, 229, 228, 228, 227, 227, 226, 226, 227, 227, 228, 228, 1, 1};
         constexpr int kOuf4Frames[] = {0, 0, 135, 135, 136, 136, 137, 137, 232, 233, 232, 233, 232, 233,
                                        232, 233, 232, 233, 232, 233, 232, 233, 232, 233, 232, 233, 232,
                                        233, 232, 233, 232, 233, 137, 137, 136, 136, 135, 135, 0, 0};
@@ -1838,9 +1840,7 @@ namespace GalaxyEggbert::Game
         {
             const auto startReaction = [this](AnimState reaction, float duration)
             {
-                m_reaction = reaction;
-                m_reactionTimer = duration;
-                m_reactionStarted = true;
+                TriggerReaction(reaction, duration);
             };
             if (m_reactionTimer > 0.0f)
             {
@@ -2164,6 +2164,8 @@ namespace GalaxyEggbert::Game
                 return kOuf3Frames[m_animPhase % (sizeof(kOuf3Frames) / sizeof(kOuf3Frames[0]))];
             case AnimState::Ouf4:
                 return kOuf4Frames[m_animPhase % (sizeof(kOuf4Frames) / sizeof(kOuf4Frames[0]))];
+            case AnimState::Ouf2:
+                return kOuf2Frames[m_animPhase % (sizeof(kOuf2Frames) / sizeof(kOuf2Frames[0]))];
             case AnimState::Bye:
                 return kByeFrames[m_animPhase % (sizeof(kByeFrames) / sizeof(kByeFrames[0]))];
             case AnimState::Switch:

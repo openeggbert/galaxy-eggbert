@@ -1517,6 +1517,23 @@ int main(int argc, char** argv)
                 pusher.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, false, false, /*pushingCrate=*/true);
             pusher.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(pusher.GetAnimState() == BlupiController::AnimState::Ouf1b, "after a long push, standing: Ouf1b");
+
+            // The decoy (Decor.cpp:4833-4848): put down, Ouf2 holding him; cannot, the Ouf3 shrug.
+            BlupiController decoy;
+            decoy.SetPosition(62.0f - 50.0f, 1.0f, 95.0f - 50.0f);
+            for (int i = 0; i < 10; ++i) decoy.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(decoy.TriggerOneShotAnim(BlupiController::AnimState::Ouf2, BlupiController::kOuf2Duration),
+                  "putting a decoy down plays Ouf2");
+            const float decoyX = decoy.GetX();
+            decoy.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            check(decoy.GetAnimState() == BlupiController::AnimState::Ouf2 && decoy.GetX() == decoyX,
+                  "Ouf2 holds him (the original drops his focus)");
+            for (int i = 0; i < 120; ++i) decoy.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            decoy.TriggerReaction(BlupiController::AnimState::Ouf3, BlupiController::kOuf3Duration);
+            decoy.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(decoy.GetAnimState() == BlupiController::AnimState::Ouf3 &&
+                      hasEvent(decoy, BlupiController::EventKind::ReactionStarted),
+                  "a decoy that cannot go down: the Ouf3 shrug");
         }
 
         // Secret powers (plan.md E3D-MIG-170) -- trigger gates, the shared

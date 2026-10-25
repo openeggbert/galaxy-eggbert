@@ -590,8 +590,10 @@ namespace GalaxyEggbert::Game
             // original keeps his focus): JumpAie (36) rubs the head he bumped on a ceiling in a
             // fast jump; the "phews" after effort or a close call: Ouf1a (44) after a swim, Ouf1b
             // (45) after a long push, Ouf3 (47) after a long pull, Ouf4 (48) after an enemy
-            // passed close by (ArmOuf()). kJumpAieSpeed's comment has when each plays.
-            JumpAie, Ouf1a, Ouf1b, Ouf3, Ouf4
+            // passed close by (ArmOuf()). kJumpAieSpeed's comment has when each plays. Ouf3 is
+            // also his shrug when a decoy cannot be put down (TriggerReaction()), and Ouf2 (46)
+            // putting one down, held (TriggerOneShotAnim(), Decor.cpp:4833-4848).
+            JumpAie, Ouf1a, Ouf1b, Ouf3, Ouf4, Ouf2
         };
 
         // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -1203,6 +1205,7 @@ namespace GalaxyEggbert::Game
         static constexpr float kOuf1Duration = 29.0f / 20.0f;
         static constexpr float kOuf3Duration = 34.0f / 20.0f;
         static constexpr float kOuf4Duration = 40.0f / 20.0f;
+        static constexpr float kOuf2Duration = 32.0f / 20.0f;
         static constexpr float kOuf1After = 50.0f / 20.0f;
         static constexpr float kOuf3After = 60.0f / 20.0f;
         static constexpr float kOuf4Within = 10.0f / 20.0f;
@@ -1214,6 +1217,14 @@ namespace GalaxyEggbert::Game
             m_oufTime = 0.0f;
         }
         [[nodiscard]] bool IsReactionPlaying() const noexcept { return m_reactionTimer > 0.0f; }
+        // Starts a reaction now (cut short by moving, like the others): the caller's causes, as
+        // the shrug (Ouf3) when a decoy cannot be put down.
+        void TriggerReaction(AnimState reaction, float duration) noexcept
+        {
+            m_reaction = reaction;
+            m_reactionTimer = duration;
+            m_reactionStarted = true;
+        }
 
     private:
         // Whole-block coarse solidity (non-air only -- deliberately NOT
