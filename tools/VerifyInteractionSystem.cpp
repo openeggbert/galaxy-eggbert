@@ -4294,6 +4294,45 @@ int main(int argc, char** argv)
         crateInteraction.Update(dt, crates, 44.0f - 50.0f, 1.0f, 8.0f, 0.0f, sound);
         check(!mineActive(44.0f) && hasEvent(crateInteraction, InteractionSystem::EventKind::Died),
               "on foot the same mine kills him");
+
+        // The dynamite blast in 3D: a crate a cell in front of the stick (along Z) goes, with the
+        // crates linked to it; Blupi two cells away along Z is safe, one cell away is not.
+        {
+            GalaxyEggbert::Game::InteractionSystem blastInteraction;
+            const auto addObject = [&](GalaxyEggbert::Def::ObjectType type, float rawX, float y, float rawZ, float phase)
+            {
+                MobileObjSpec spec;
+                spec.type = type;
+                spec.active = true;
+                spec.currentX = spec.posStartX = spec.posEndX = rawX - 50.0f;
+                spec.currentY = spec.posStartY = spec.posEndY = y;
+                spec.currentZ = spec.posStartZ = spec.posEndZ = rawZ - 50.0f;
+                spec.phase = phase;
+                crates.GetMobileObjectsMutable().push_back(spec);
+            };
+            addObject(GalaxyEggbert::Def::ObjectType::ObjectType12, 47.0f, 1.0f, 46.0f, 0.0f);
+            addObject(GalaxyEggbert::Def::ObjectType::ObjectType12, 47.0f, 2.0f, 46.0f, 0.0f);
+            addObject(GalaxyEggbert::Def::ObjectType::ObjectType56, 47.0f, 1.0f, 47.0f, 45.0f);
+            bool died = false;
+            for (int i = 0; i < 120; ++i)
+            {
+                crates.Update(dt);
+                blastInteraction.Update(dt, crates, 47.0f - 50.0f, 1.0f, 49.0f - 50.0f, 0.0f, sound);
+                died = died || hasEvent(blastInteraction, InteractionSystem::EventKind::Died);
+            }
+            check(!crateAt(47, 1, 46) && !crateAt(47, 2, 46),
+                  "a dynamite blast destroys the crates a cell in front of the stick, and those stacked on them");
+            check(!died, "two cells away along Z, Blupi is out of the blast");
+            addObject(GalaxyEggbert::Def::ObjectType::ObjectType56, 47.0f, 1.0f, 47.0f, 45.0f);
+            died = false;
+            for (int i = 0; i < 120; ++i)
+            {
+                crates.Update(dt);
+                blastInteraction.Update(dt, crates, 47.0f - 50.0f, 1.0f, 48.0f - 50.0f, 0.0f, sound);
+                died = died || hasEvent(blastInteraction, InteractionSystem::EventKind::Died);
+            }
+            check(died, "a cell away along Z, the blast kills him");
+        }
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

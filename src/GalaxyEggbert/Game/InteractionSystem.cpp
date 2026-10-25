@@ -1223,12 +1223,18 @@ namespace GalaxyEggbert::Game
                                         WorldRuntime::kWorldCenterX;
                         const int wx1 = static_cast<int>(std::round(centerX + kBlastHalfExtent)) +
                                         WorldRuntime::kWorldCenterX;
-                        const int wz = static_cast<int>(std::round(centerZ)) + WorldRuntime::kWorldCenterZ;
+                        // In 3D each blast reaches as far along Z as along X and Y (the
+                        // original's blasts are a 2D pattern; 2026-10-25): crates, saws and Blupi
+                        // in front of or behind the stick are caught too, not just in its slice.
+                        const int wz0 = static_cast<int>(std::round(centerZ - kBlastHalfExtent)) +
+                                        WorldRuntime::kWorldCenterZ;
+                        const int wz1 = static_cast<int>(std::round(centerZ + kBlastHalfExtent)) +
+                                        WorldRuntime::kWorldCenterZ;
                         const int wy = static_cast<int>(std::round(centerY)) < 0
                                            ? 0
                                            : static_cast<int>(std::round(centerY));
                         const int axis = static_cast<int>(world.blocksPerAxis());
-                        if (wy >= 0 && wy < axis && wz >= 0 && wz < axis)
+                        for (int wz = std::max(0, wz0); wy >= 0 && wy < axis && wz <= std::min(axis - 1, wz1); ++wz)
                         {
                             for (int wx = std::max(0, wx0); wx <= std::min(axis - 1, wx1); ++wx)
                             {
@@ -1269,7 +1275,7 @@ namespace GalaxyEggbert::Game
                             }
                             if (std::fabs(victim.currentX - centerX) > kBlastHalfExtent + 0.5f ||
                                 std::fabs(victim.currentY - centerY) > kBlastHalfExtent + 0.5f ||
-                                std::fabs(victim.currentZ - centerZ) > 0.5f)
+                                std::fabs(victim.currentZ - centerZ) > kBlastHalfExtent + 0.5f)
                             {
                                 continue;
                             }
@@ -1293,7 +1299,7 @@ namespace GalaxyEggbert::Game
                                         {
                                             if (std::fabs(other.currentX - member->currentX) < 1.5f &&
                                                 std::fabs(other.currentY - member->currentY) < 1.5f &&
-                                                std::fabs(other.currentZ - member->currentZ) < 0.5f)
+                                                std::fabs(other.currentZ - member->currentZ) < 1.5f)
                                             {
                                                 touches = true;
                                                 break;
@@ -1323,7 +1329,7 @@ namespace GalaxyEggbert::Game
                         // superBlupi don't exist in this engine yet.
                         if (!blupiInvincible && std::fabs(blupiX - centerX) <= kBlastHalfExtent + 0.5f &&
                             std::fabs(blupiY - centerY) <= kBlastHalfExtent + 0.5f &&
-                            std::fabs(blupiZ - centerZ) <= 0.5f)
+                            std::fabs(blupiZ - centerZ) <= kBlastHalfExtent + 0.5f)
                         {
                             events_.push_back(Event{EventKind::Died});
                             // Real LoseLife()/respawn deferred to the death-lock resolution point
