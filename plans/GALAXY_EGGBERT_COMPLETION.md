@@ -118,7 +118,7 @@ Found while building mission 011 (live, 2026-10-25):
 | D14 | Small machine parts (icons 53-60, 63/64) show as black cards | cross-billboards (87-94 % transparent) drawn in the opaque terrain pass | **done** `70be115` |
 | D15 | Every platform lift is a black box | lift = one cube of icon 29, a bar over a stem with its lower 44 % transparent | **done** `7f02216` (bar + stem, `LiftVisual.hpp`) |
 | D16 | Walls, steps and edges merge into one flat colour | terrain drawn unlit: all faces equally bright | **done** `eeb9624` (one directional light + ambient, `TerrainLighting.hpp`) |
-| D17 | Partly transparent machine cubes (15-31) would show black holes in 3D | their 2D tiles let the backdrop through | worlds use the opaque 1-14 (`tools/worlds/kit.py`); renderer unchanged |
+| D17 | Partly transparent machine cubes (15-31) would show black holes in 3D | their 2D tiles let the backdrop through | **done** `2b7c60d` (cut out like the other sprite tiles, D31); walls still built of the opaque 1-14 (`tools/worlds/kit.py`) |
 | D18 | Chase camera pulled tight behind Blupi next to walls loses the view | wall collision brings the eye to Blupi's back | open; levels keep open sides (no 1-wide tunnels) |
 | D19 | Hubs: world pictures as mission signs, sign icons as doors, worlds 9-12 shown as copies of 1-4, no door slide, no gold bars, no golden-key ending | Galaxy's 2026-07-17 scheme | **done** `2f57bbc` (original's signs/doors/arrivals, `HubDoors.hpp`) |
 | D20 | Opened doors and collapsed bridges stay drawn | terrain mesh never rebuilt in play | **done** `2f57bbc` (`World::blockRevision()`) |
@@ -180,9 +180,9 @@ Candidates (investigate when a world or the editor needs them; none implemented 
 - Per-object live comparison with Mobile Eggbert (video/original game) for every exhibition
   object of `world999` (D11), recorded per object: source, IoU, live view, verdict.
 - `BB3D-032` fish head ~15 % large; `BB3D-050` grass blades wide; procedural textures flat.
-- Push/Pull: Push has a clip (`pousse-profil.rd4`, IoU 0.988); live check of the crate push
-  pending; Pull has no state in Galaxy yet (the video shows it in 012) — parity item.
-- Win cheer (table_blupi 13, `gagne.rd4`): no Galaxy state yet — parity item.
+- Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
+  Recede/Advance clips; checked live in 012).
+- Win cheer: done (D29, Win clip `3415d3f`).
 - Saw death's half body (`Corps et Cube`, a CSG prop in Clear4 only) still has 119 + 76
   inconsistently wound triangles after the cap fix: a second converter case (CSG), to find.
 
@@ -192,11 +192,11 @@ Original actions (`BlupiAction.hpp`, 88) vs Galaxy (`BlupiController::AnimState`
 `avatars3d/blupi/clips.txt`). Built and wired: Stop, March, Jump, Air, Down, Up, Push, the
 squashed pair, Balloon, Teleporte, Hide, Switch, the vehicles (helicopter, jeep, tank incl.
 fire, skateboard incl. take/put, overcraft), swimming and surface, Mockery ×3, dynamite
-take/put, deaths Clear1/3/4, Glu, Drown, pickups Sucette/Drink/Charge. Bye: icons done, clip
-pending. **Missing states** (to verify against `Decor.cpp` before adding): Win (13), Turn
-(3) and the vehicle turns, Vertigo (8), Recede/Advance (9/10, pull), Set (12), Suspend family
-(31-34, hanging bar), JumpAie (36), Ouf1a-5 (44-48, 65), Electro (57), HelicoGlu (58), Pop
-(28/29), Clear2/5-8, SlowdownSkate (85).
+take/put, deaths Clear1/3/4, Glu, Drown, pickups Sucette/Drink/Charge, Bye, Win (13), Turn
+(3), Vertigo (8), Recede/Advance (9/10, pull), Pop/StopPop (28/29) (2026-10-25/26).
+**Missing states** (to verify against `Decor.cpp` before adding): the vehicle turns, Set (12),
+Suspend family (31-34, hanging bar), JumpAie (36), Ouf1a-5 (44-48, 65), Electro (57),
+HelicoGlu (58), Clear2/5-8, SlowdownSkate (85).
 
 ## 9. Campaign content
 
@@ -247,12 +247,12 @@ adaptation) · evidence/test · priority. Known rows so far:
 | Mechanic | Class | State |
 |---|---|---|
 | Step onto a one-tile ledge | A (was wrong) | done D4 |
-| Bye at world select | C | icons done, clip pending |
-| Win cheer at the exit, then straight to the hub (video §d) | A/C | open: Galaxy shows a Win screen |
-| Arrival beside the last door in a hub (video §a) | A | open |
+| Bye at world select | C | done (`78757b1`) |
+| Win cheer at the exit, then straight to the hub (video §d) | A/C | done D29 |
+| Arrival beside the last door in a hub (video §a) | A | done D19 (ArrivalPastDoor / ArrivalBesideSign) |
 | Hub door slides up after a win (video §c) | C | open |
-| Crate pull (Recede/Advance) | A | open |
-| Vehicle × enemy contact (skateboard vs. mine, D13; then every vehicle and enemy) | A | open |
+| Crate pull (Recede/Advance) | A | done D21 |
+| Vehicle × enemy contact (skateboard vs. mine, D13; then every vehicle and enemy) | A | mines done D13; every other vehicle × enemy pair open |
 
 ## 12. QA gates and tools
 
