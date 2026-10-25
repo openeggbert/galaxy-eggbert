@@ -509,22 +509,17 @@ namespace GalaxyEggbert::Game
                     // call site for the full history).
                     //
                     // The tile's own texels pick the pass (TileCoverage.hpp).
-                    // DirectionalCube faces show chosen parts of their tile and
-                    // stay in the opaque mesh.
                     auto* mesh = &staticMesh;
-                    if (definition.renderMode != GalaxyEggbert::BlockRenderMode::DirectionalCube)
+                    switch (CoverageOf(tileCoverage, icon))
                     {
-                        switch (CoverageOf(tileCoverage, icon))
-                        {
-                        case TileCoverage::Cutout:
-                            mesh = &cutoutMesh;
-                            break;
-                        case TileCoverage::Translucent:
-                            mesh = &transparentStaticMesh;
-                            break;
-                        case TileCoverage::Opaque:
-                            break;
-                        }
+                    case TileCoverage::Cutout:
+                        mesh = &cutoutMesh;
+                        break;
+                    case TileCoverage::Translucent:
+                        mesh = &transparentStaticMesh;
+                        break;
+                    case TileCoverage::Opaque:
+                        break;
                     }
                     if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh))
                     {
