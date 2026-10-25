@@ -4,25 +4,36 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-25 (evening, restored baseline)._
+_Last updated: 2026-10-25 (late evening, restored baseline)._
 
 ## Resume here (exact state when last written)
 
 2026-10-25 evening: the owner reverted the earlier campaign and restarted it on the restored
 `develop` (`00ba088`) with a new brief; the active plan is `plans/GALAXY_EGGBERT_COMPLETION.md`
-(read it first: direction, art fidelity, defects D1-D12, milestones). Commits since the
-restore: turning 135°/s (`c2cb216`), full-screen menu bars (`8ba5e34`), third person default +
-F3 (`aabc4f8`), `--mission N` (`13a6d74`), crash fix (`8260eaf`), `--spawn` (`bdbeeae`),
-`tools/vwr_inspect.py` (`76db7a3`), no step-up (`c317f94`), proportional text (`21cccb3`), Bye
-icons (`4572099`), converter: outward caps (`94ce688`), whole-body poses and end keys
-(`d660085`). Not pushed (push only when asked).
+(read it first: direction, art fidelity, defects D1-D18, milestones). Not pushed (push only
+when asked).
 
-In flight (outputs under `build-probe/`, nothing in `avatars3d/` changed yet):
-- `build-probe/qa-blupi/match-full/` and `match-whole2/`: Blupi's full re-match with end keys
-  (~80 min). Then rebuild the library with `--whole-icons build-probe/qa-blupi/match-whole2/icons.csv`
-  (README command), export, check Stop/Bye/Push live, replace `avatars3d/blupi/`.
-- `build-probe/qa-objects-all/`: all object models with the cap fix; check winding, then
-  `export_objects.py` into `avatars3d/objects/` and look at `world999`'s exhibition live.
+Done since the restore (details and hashes: the plan's §5 and §13): turning speed, menu bars,
+third person + F3, `--mission`/`--spawn` QA flags (`--spawn` yaw is in **degrees**), no
+step-up, proportional text, Bye icons, converter cap and whole-body fixes, objects re-exported,
+straight-alpha UI, the original's menu/HUD/pause/setup geometry, Galaxy's 3D title scene, ten
+editor slots with the showcase seed, hint zones in `.vwr` (metadata type 4), `worldkit.py` /
+`tools/worlds/kit.py` / `levelcheck.py` / `VerifyShippedWorlds`, and (latest)
+- renderer: cross-billboard props alpha-blended (`70be115`), lifts drawn as bar + stem
+  (`7f02216`), terrain lit by one directional light + ambient (`eeb9624`);
+- **mission 011** (`4986391`): the first lesson as a 3D machine spiral, all 22 hints as zones;
+  brief `plans/briefs/world011.md`; script `tools/worlds/world011.py`.
+
+In flight: the Blupi model rebuild from the full re-match (`build-probe/qa-blupi/match-full/`,
+`match-whole2/`): `build_clip_library.py ... --whole-icons build-probe/qa-blupi/match-whole2/icons.csv
+--out build-probe/qa-blupi/lib-final/blupi.glb` (running), then export to
+`build-probe/qa-blupi/cna-final/`, check Stop (whole body), the head (closed), Bye at a portal
+and Push live with `QA_LIVE_AVATARS=build-probe/qa-blupi/cna-final`, replace `avatars3d/blupi/`
+and add the `--whole-icons` step to its README.
+
+Next: milestone D — the main hub `world001` and world 1's hub `world010` with missions 012-014
+(briefs first, `plans/briefs/`), then the other worlds in batches; D11 (per-object exhibition
+comparison) and D13 (vehicle × enemy contacts) alongside.
 
 Live checks: `tools/qa_live.sh build-cna-opengl3 <out> <steps> [--mission N --spawn x,y,z,yaw]`
 runs from `build-probe/qa-run/` so the owner's `build-cna-opengl3/savedata.txt` and

@@ -1,7 +1,7 @@
 # Galaxy Eggbert — Current Truth
 
 _Last verified: 2026-10-25 (audit of the restored `develop`, `plans/GALAXY_EGGBERT_COMPLETION.md`
-§4). Update this file whenever a change alters the current state, a known limitation, a supported
+§4; mission 011 and the renderer fixes D14-D16 the same evening). Update this file whenever a change alters the current state, a known limitation, a supported
 build, or the actionable backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`),
 where work stands in `handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
 
@@ -17,10 +17,15 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Content state (2026-10-25)
 
-- Of the 79 `.vwr` worlds only `world999` (the mechanics showcase) has real content. The main
-  hub and the 12 theme hubs are flat portal plazas; **all 64 missions and the bonus world 199
-  are placeholders** (one 11×11 floor with an exit). Authoring them as original 3D tile worlds
-  is the main open work (`plans/GALAXY_EGGBERT_COMPLETION.md` §9, `plans/inventory/worlds.md`).
+- Of the 80 `.vwr` worlds, `world999` (the mechanics showcase), `title.vwr` (the title scene)
+  and **mission 011** (the first lesson, `plans/briefs/world011.md`, built by
+  `tools/worlds/world011.py`) have real content. The main hub and the 12 theme hubs are flat
+  portal plazas; **the other 63 missions and the bonus world 199 are placeholders** (one 11×11
+  floor with an exit). Authoring them as original 3D tile worlds is the main open work
+  (`plans/GALAXY_EGGBERT_COMPLETION.md` §9, `plans/inventory/worlds.md`).
+- Terrain, its grass and the cube objects are lit (one directional light + ambient,
+  `TerrainLighting.hpp`); lifts are drawn as their tile's bar and stem; cross-billboard machine
+  parts are alpha-blended (D14-D16 in the plan).
 
 ## Shipped, working state
 

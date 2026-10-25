@@ -98,7 +98,7 @@ check of the state.
 | # | Report | Cause found | Status |
 |---|---|---|---|
 | D1 | Standing Blupi shows only his right half | `Stop` (and Mockery, Mockeryi, Switch, Teleporting, Charge) took poses from `blupi-scie.rds`, the saw death's half Blupi | tools fixed (`d660085`); asset rebuild in progress |
-| D2 | Exit arrow has transparent/missing sides | free-form end caps wound inwards, culled by the game (27 models) | tools fixed (`94ce688`); object re-export in progress |
+| D2 | Exit arrow has transparent/missing sides | free-form end caps wound inwards, culled by the game (27 models) | **done** `94ce688`, objects re-exported `b1b0669` |
 | D3 | Hole on top of walking Blupi's head | same as D2: his body's pole caps | with D2 |
 | D4 | Blupi walks up a one-block step | engine-invented step-up (`kStepLimit` 1 block); `Decor::TestPath` has none | **done** `c317f94` |
 | D5 | Third person should be default; C is a cheat letter | — | **done** `aabc4f8` (F3 toggles) |
@@ -108,8 +108,18 @@ check of the state.
 | D9 | Gaps between letters in menu text | fixed 17 px advance instead of `Text::table_width` | **done** `21cccb3` |
 | D10 | Bye freezes on its first frame at a world portal, leaves too early | no Bye icon table/clip, so Stop's first frame showed | icons **done** `4572099`; 3D clip with the rebuild |
 | D11 | Many exhibition models in world999 look wrong compared with Mobile Eggbert | partly D2; the rest needs per-object comparison | open (§7.3) |
-| D12 | "Player A: Erase progress" runs off the Setup screen | layout check against the original pending | open |
+| D12 | "Player A: Erase progress" runs off the Setup screen | one line where the original has two | **done** `9d88278` |
 | D13 | Blupi on the skateboard loses a life on a mine; in Mobile Eggbert the skateboard destroys the mine ("just an example" of vehicle/enemy interactions to audit) | to verify in `Decor.cpp` (vehicle vs. enemy contact) and audit every vehicle × enemy pair | open (parity §11) |
+
+Found while building mission 011 (live, 2026-10-25):
+
+| # | Defect | Cause | Status |
+|---|---|---|---|
+| D14 | Small machine parts (icons 53-60, 63/64) show as black cards | cross-billboards (87-94 % transparent) drawn in the opaque terrain pass | **done** `70be115` |
+| D15 | Every platform lift is a black box | lift = one cube of icon 29, a bar over a stem with its lower 44 % transparent | **done** `7f02216` (bar + stem, `LiftVisual.hpp`) |
+| D16 | Walls, steps and edges merge into one flat colour | terrain drawn unlit: all faces equally bright | **done** `eeb9624` (one directional light + ambient, `TerrainLighting.hpp`) |
+| D17 | Partly transparent machine cubes (15-31) would show black holes in 3D | their 2D tiles let the backdrop through | worlds use the opaque 1-14 (`tools/worlds/kit.py`); renderer unchanged |
+| D18 | Chase camera pulled tight behind Blupi next to walls loses the view | wall collision brings the eye to Blupi's back | open; levels keep open sides (no 1-wide tunnels) |
 
 ## 6. Native world format: evolution policy
 
@@ -245,8 +255,8 @@ adaptation) · evidence/test · priority. Known rows so far:
 | | Milestone | State |
 |---|---|---|
 | A | Protect and understand: audit, captures, this plan, inventories | done (this document; asset manifest still to write) |
-| B | Representative multi-height tile mission on existing systems | open |
+| B | Representative multi-height tile mission on existing systems | done: mission 011 `4986391` (`plans/briefs/world011.md`) |
 | C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress |
 | D | Hub network and the 64 missions + 199 | open |
-| E | Editor slots, demo seed, title screen, editor entry, transparency | open |
+| E | Editor slots, demo seed, title screen, editor entry, transparency | done: `7eac7d5`, `6917fc9`, `e3a1042`, `fb48872` |
 | F | Stabilisation and completion audit | open |
