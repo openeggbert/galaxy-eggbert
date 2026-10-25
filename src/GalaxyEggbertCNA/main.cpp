@@ -1,5 +1,6 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <cstdlib>
 #include <cstring>
 
 int main(int argc, char** argv)
@@ -21,6 +22,12 @@ int main(int argc, char** argv)
         if (std::strcmp(argv[i], "--golden-capture-trace") == 0)
         {
             game->EnableGoldenTraceMode();
+        }
+        // Development/QA: start straight in mission N (see
+        // EnableStartMission()'s own comment).
+        if (std::strcmp(argv[i], "--mission") == 0 && i + 1 < argc)
+        {
+            game->EnableStartMission(std::atoi(argv[++i]));
         }
     }
     game->Run();

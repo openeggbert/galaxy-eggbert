@@ -101,6 +101,11 @@ namespace GalaxyEggbert::CNA
         // well-known file, exit" shape as the screenshot mode.
         void EnableGoldenTraceMode() noexcept { goldenTraceMode_ = true; }
 
+        // Development/QA start (2026-10-25): `--mission N` skips the menus
+        // and starts mission N in Play, the way PauseRestart loads one
+        // (LoadMission()), so live checks reach a world without driving the
+        // menus. Not a player-facing feature.
+        void EnableStartMission(int missionNumber) noexcept { startMission_ = missionNumber; }
 
         GetTypeNameHPP()
 
@@ -529,6 +534,8 @@ namespace GalaxyEggbert::CNA
         // one line per tick, written out in one shot on completion.
         bool goldenTraceMode_ = false;
         bool goldenTraceArmed_ = false;
+        // `--mission N` (EnableStartMission()); 0 means a normal start.
+        int startMission_ = 0;
         bool goldenTraceWritten_ = false;
         int goldenTraceTick_ = 0;
         std::string goldenTraceLines_;

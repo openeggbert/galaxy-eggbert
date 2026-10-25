@@ -1525,6 +1525,15 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // `--mission N` (EnableStartMission()): one-time, the same way the
+        // capture modes above load their fixed world.
+        if (startMission_ != 0)
+        {
+            SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
+            LoadMission(startMission_);
+            startMission_ = 0;
+        }
+
         // Real `phaseTime` (see phaseTimeSeconds_'s own member comment) --
         // incremented unconditionally every Update() tick, regardless of
         // phase, matching the real source's own `phaseTime++` placement.
