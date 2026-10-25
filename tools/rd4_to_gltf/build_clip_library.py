@@ -29,7 +29,11 @@ swaps the face part's texture and moves the camera to that side.
         --base marche-profil.rd4 --icons build-probe/rd4-blupi/match/icons.csv \\
         --controller src/GalaxyEggbert/Game/BlupiController.cpp \\
         --sheet ../mobile-eggbert/Content/icons/blupi.png \\
+        --whole-icons build-probe/rd4-blupi/match-whole/icons.csv \\
         --out build-probe/rd4-blupi/library/blupi.glb
+
+``--whole-icons`` is ``match_icons.py``'s output without the half-body saw scenes
+(``--exclude blupi-scie.rds,blupi-demi.rds --yaw-step 0 --tumble ""``): see WHOLE_MARGIN.
 """
 
 from __future__ import annotations
@@ -60,6 +64,11 @@ USABLE = 0.70
 # them the vehicle would not show at all.
 VEHICLE_USABLE = 0.55
 VIEW_MARGIN = 0.02
+# A frame from a scene that lacks some of Blupi's own parts (blupi-scie.rds, the saw death: his
+# right half only, which the side camera cannot tell from a whole Blupi) gives way to the best
+# frame of a scene with all of them (--whole-icons) when that one is usable and scores at most
+# this much lower. The saw death's own icons have no such frame and keep the half body.
+WHOLE_MARGIN = 0.05
 
 # Vehicles are separate models (CNA's skinning takes 72 bones; the tank alone has about 40
 # parts) drawn with Blupi's transform and clip: every object of these clips' scenes that is not
@@ -246,6 +255,9 @@ def main(argv=None) -> int:
     ap.add_argument("--scale", type=float, default=0.05)
     ap.add_argument("--out", required=True, type=Path, help="output .glb; faces go beside it")
     ap.add_argument("--skip-check", action="store_true", help="do not render every clip frame against its icon")
+    ap.add_argument("--whole-icons", type=Path,
+                    help="icons.csv of match_icons.py run without the scenes lacking Blupi's parts "
+                         "(--exclude); see WHOLE_MARGIN")
     args = ap.parse_args(argv)
     args.out.parent.mkdir(parents=True, exist_ok=True)
 
@@ -320,6 +332,22 @@ def main(argv=None) -> int:
         return frozenset() if shows_props[icon] else props
 
     matches = load_matches(args.icons)
+    if args.whole_icons:
+        whole = load_matches(args.whole_icons)
+
+        def lacking(name: str) -> list[str]:
+            c = converter(name)
+            return [n for n in base.names if n not in c.names]
+
+        for icon, m in list(matches.items()):
+            w = whole.get(icon)
+            if w is None or w[0] == m[0] or w[2] < USABLE or w[2] < m[2] - WHOLE_MARGIN:
+                continue
+            missing = lacking(m[0])
+            if missing and not lacking(w[0]):
+                print(f"icon {icon}: {m[0]} ({m[2]:.3f}) has no {missing}; "
+                      f"using {w[0]} ({w[2]:.3f}) instead")
+                matches[icon] = w
     clips = controller_clips(args.controller)
     body = set(base.names)
     vehicle_of = {clip: v for v, names in VEHICLES.items() for clip in names}

@@ -96,7 +96,15 @@ def main(argv=None) -> int:
                     help="degrees between turned views of every frame (0: none)")
     ap.add_argument("--tumble", default="276,277,278,279,280,281,282,283,284",
                     help="icons to search also pitched and scaled (default: Hide's)")
+    ap.add_argument("--no-end-keys", dest="end_keys", action="store_false",
+                    help="match only the frames Ray Dream rendered, not also each scene's last key "
+                         "(Bye's icon 47 was drawn from bye.rd4's last key, which is not a "
+                         "rendered frame)")
+    ap.add_argument("--exclude", default="",
+                    help="comma-separated scene files to leave out (the half-body saw scenes, for "
+                         "build_clip_library.py --whole-icons)")
     args = ap.parse_args(argv)
+    excluded = {n for n in args.exclude.split(",") if n}
     args.out.mkdir(parents=True, exist_ok=True)
     (args.out / "icons").mkdir(exist_ok=True)
 
@@ -107,6 +115,8 @@ def main(argv=None) -> int:
     problems = []
     t_start = time.time()
     for path in sorted(list(args.scenes.glob("*.rd4")) + list(args.scenes.glob("*.rds"))):
+        if path.name in excluded:
+            continue
         try:
             root = rd4.parse_file(path)
             if root.chunk("sc") is None:
@@ -120,7 +130,10 @@ def main(argv=None) -> int:
         renderer = scene_render.SceneRenderer(scene)
         renderers[path.name] = renderer
         try:
-            for k, tick in enumerate(renderer.frame_ticks()):
+            ticks = renderer.frame_ticks()
+            if args.end_keys and scene.end > ticks[-1] + 1e-6:
+                ticks = ticks + [scene.end]
+            for k, tick in enumerate(ticks):
                 rgb, cover = renderer.render(tick)
                 frames.append((path.name, k, tick, rgb, cover))
         except Exception as e:  # noqa: BLE001
@@ -128,7 +141,7 @@ def main(argv=None) -> int:
             continue
         for master, why in renderer.skipped.items():
             problems.append(f"{path.name}: master {master!r} skipped ({why})")
-        print(f"{path.name}: {len(renderer.frame_ticks())} frame(s)", flush=True)
+        print(f"{path.name}: {len(ticks)} frame(s)", flush=True)
     print(f"rendered {len(frames)} frames in {time.time() - t_start:.0f} s", flush=True)
 
     # Score every frame, as rendered and mirrored, against every icon.
