@@ -304,9 +304,13 @@ def tessellate(master: rd4.Chunk) -> FreeformMesh:
                 tris.append((a1, b0, b1))
     # Flat end caps (fl 1 on the first cross-section), triangulated in the section's 2D plane
     # (the eyelash's section is a concave crescent, so a centre fan would not do; holes are
-    # bridged into their outline).
+    # bridged into their outline). A cap keeps its section's winding, which faces the way the
+    # side band above faces at the last ring and against it at the first, so the first ring's
+    # cap is the one turned. It was the other way until 2026-10-25: every cap faced inwards,
+    # which only culling shows (the game's; the sprite checks draw both sides): the exit arrow
+    # lost its faces and Blupi's body had holes at both poles (user reports).
     if saps[0].chunk("cs").leaf("fl", "0") == "1" and not closed:
-        for r, flip in ((0, True), (n_rings - 1, False)):
+        for r, flip in ((0, False), (n_rings - 1, True)):
             for tri in cap(rings[r][2]):
                 idx = [r * n + int(k) for k in tri]
                 tris.append(tuple(idx[::-1]) if flip else tuple(idx))
