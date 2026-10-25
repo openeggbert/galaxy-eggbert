@@ -1271,11 +1271,21 @@ namespace GalaxyEggbert::Game
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
             };
-            const auto appendLabel = [&](const Rect& r, const char* text)
+            const auto appendLabel = [&](const Rect& r, const std::string& text)
             {
-                const float rightX = refToScreenX(r.x1);
+                const float leftX = refToScreenX(r.x1) + kSetupLabelXOffset * scale;
                 const float centerY = refToScreenY((r.y0 + r.y1) * 0.5f);
-                AppendLeftAlignedLabel(labelQuads, text, rightX + kSetupLabelXOffset, centerY, scale);
+                // Real DrawTextRightButton(): a two-line label starts 20
+                // above the button's centre (12 above the one-line
+                // position) and its second line is 24 lower.
+                const auto newline = text.find('\n');
+                if (newline == std::string::npos)
+                {
+                    AppendLeftAlignedLabel(labelQuads, text, leftX, centerY, scale);
+                    return;
+                }
+                AppendLeftAlignedLabel(labelQuads, text.substr(0, newline), leftX, centerY - 12.0f * scale, scale);
+                AppendLeftAlignedLabel(labelQuads, text.substr(newline + 1), leftX, centerY + 12.0f * scale, scale);
             };
 
             // Real icon SWAP (not just opacity) for the 3 toggle-style
@@ -1298,11 +1308,12 @@ namespace GalaxyEggbert::Game
             appendLabel(kSetupAccelRect, "Accelerometer");
             if (showReset)
             {
-                // Real 2-line label ("Player {0} :\nErase progress")
-                // collapsed to one line -- see class comment.
-                const std::string resetLabel = "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) +
-                                               ": Erase progress";
-                appendLabel(kSetupResetRect, resetLabel.c_str());
+                // Real TX_BUTTON_SETUP_RESET, two lines ("Player {0} :\nErase
+                // progress"); it was collapsed to one line, which ran off the
+                // screen (2026-10-25).
+                const std::string resetLabel =
+                    "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) + " :\nErase progress";
+                appendLabel(kSetupResetRect, resetLabel);
             }
             // SetupReturn has no real label at all in the source (same as WinLostReturn).
         }
