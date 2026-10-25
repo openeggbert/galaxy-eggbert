@@ -95,3 +95,7 @@ a proportional live/screenshot check. Do not claim visual parity from compilatio
 - Avoid redundant fresh build trees and compiler caches; SSD write volume matters on this
   workstation.
 - Commit discrete completed tasks. Push only when the user explicitly requests it.
+- Never add AI attribution to commit messages or PR bodies: no `Co-Authored-By: Claude ...`
+  trailer, no "Generated with Claude Code" line. Attribution is deliberately disabled in the
+  Claude Code settings, so nothing in your context asks for one; do not add it from habit, also
+  not after a context compaction (13 commits of 2026-10-24 got it that way and were rewritten).
