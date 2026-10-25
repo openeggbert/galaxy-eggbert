@@ -9,7 +9,8 @@
 # are written there, never into the build directory, where they are the player's own data.
 #
 # QA_LIVE_AVATARS=<dir> uses that directory as avatars3d/ (to look at re-exported models before
-# they replace the committed ones).
+# they replace the committed ones). QA_LIVE_RUN=<dir> runs from that directory instead of
+# build-probe/qa-run/ (its own savedata.txt), so two sessions can run checks at once.
 #
 # Steps, one per line ("#" comments allowed):
 #   sleep <seconds>          wait
@@ -35,7 +36,7 @@ if [[ -z "${QA_LIVE_INNER:-}" ]]; then
     QA_LIVE_INNER=1 exec xvfb-run -a -s "-screen 0 1280x720x24" "$0" "$build" "$out" "$steps" "$@"
 fi
 
-run="$repo/build-probe/qa-run"
+run="${QA_LIVE_RUN:-$repo/build-probe/qa-run}"
 mkdir -p "$run"
 for d in Content avatars3d textures3d worlds3d; do
     ln -sfn "$repo/$d" "$run/$d"
