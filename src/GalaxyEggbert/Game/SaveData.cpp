@@ -56,6 +56,10 @@ namespace GalaxyEggbert::Game
                 {
                     gamers_[gamer].missionNumber = std::atoi(value.c_str());
                 }
+                else if (field == "lastWorld")
+                {
+                    gamers_[gamer].lastWorld = std::atoi(value.c_str());
+                }
                 else if (field == "hasProgress")
                 {
                     gamers_[gamer].hasProgress = (value == "1");
@@ -86,6 +90,7 @@ namespace GalaxyEggbert::Game
         {
             out << "gamer" << gamer << ".lives=" << gamers_[gamer].lives << "\n";
             out << "gamer" << gamer << ".missionNumber=" << gamers_[gamer].missionNumber << "\n";
+            out << "gamer" << gamer << ".lastWorld=" << gamers_[gamer].lastWorld << "\n";
             out << "gamer" << gamer << ".hasProgress=" << (gamers_[gamer].hasProgress ? "1" : "0") << "\n";
             out << "gamer" << gamer << ".doorsUnlocked=";
             for (bool unlocked : gamers_[gamer].doorsUnlocked)

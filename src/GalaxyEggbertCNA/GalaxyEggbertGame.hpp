@@ -197,6 +197,7 @@ namespace GalaxyEggbert::CNA
         // E3D-MIG-054). Lazily constructed in LoadContent() since it needs a
         // live GraphicsDevice.
         std::unique_ptr<GalaxyEggbert::Game::TerrainRenderer> terrainRenderer_;
+        std::uint32_t terrainRevision_ = 0; // World::blockRevision() terrainRenderer_ was built from
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> terrainEffect_;
 
         // object-m.png, loaded directly via CNA's own Texture2D (no
@@ -420,6 +421,10 @@ namespace GalaxyEggbert::CNA
         // (which handles `blupi_`'s spawn/`saveData_`'s load itself, at its
         // own point in the boot sequence) and `LoadMission()` below.
         void RebuildWorldPresentation();
+
+        // Builds the terrain mesh again when the world's blocks changed since it was built
+        // (`Worlds::World::blockRevision()`): doors opened in play, hub doors at load.
+        void RefreshTerrainMeshIfChanged();
 
         // Loads `worlds3d/world{missionNumber:03d}.vwr`, rebuilds the
         // terrain/background presentation, resets `blupi_`/`interaction_`

@@ -2279,8 +2279,8 @@ int main(int argc, char** argv)
     }
 
     // WorldSelect hub-navigation marker contact detection (live bug report,
-    // found/fixed 2026-07-21) -- WorldSelect1-12/ProgressDoor2-8/DemoPortal
-    // (icons 158-177) have a genuinely all-zero real per-icon quarter-cell
+    // found/fixed 2026-07-21) -- hub signs
+    // (BlockTypes.hpp) have a genuinely all-zero real per-icon quarter-cell
     // mask (same category as Lava/Crusher/Saw, DecorQuartTable.hpp),
     // so INFRA-005's sub-tile-precision wall collision correctly does NOT
     // treat them as solid -- Blupi walks straight through at his normal

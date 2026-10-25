@@ -128,7 +128,11 @@ void World::setBlock(std::uint16_t x,
     const auto localY = static_cast<std::uint8_t>(y % VoxelConfig::ChunkSize);
     const auto localZ = static_cast<std::uint8_t>(z % VoxelConfig::ChunkSize);
 
-    chunk(chunkX, chunkY, chunkZ).setBlock(localX, localY, localZ, blockValue);
+    auto& target = chunk(chunkX, chunkY, chunkZ);
+    if (target.getBlock(localX, localY, localZ).rawValue() != blockValue.rawValue()) {
+        ++blockRevision_;
+    }
+    target.setBlock(localX, localY, localZ, blockValue);
 }
 
 void World::setBlockExtraMetadata(std::uint16_t x,

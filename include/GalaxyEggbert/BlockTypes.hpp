@@ -65,16 +65,13 @@ constexpr uint16_t GoldPillar = 183;
 // render it correctly as an open grate.
 constexpr uint16_t Platform = 200;   // floating platform
 
-// Real hub-screen world-select markers (`Decor::IsWorld()`, icons 158-165,
-// plan.md `170`/`TILE-057`) -- these 8 constants used to be named `Sp0`-`Sp7`
-// under an earlier, now-debunked "GalaxyEggbert::Def::SecretPower 0-7" hypothesis (the real
-// GalaxyEggbert::Def::SecretPower enum only has 5 values and comes from unrelated MoveObject
-// pickups instead, see `170`'s own writeup). Renamed 2026-07-17 once put to
-// actual use for the hub/mission-progression system: touching one selects
-// world/level N (1-8), the real destination computed contextually by
-// `WorldRuntime::ComputeWorldSelectTarget()` depending on the CURRENT
-// mission (same real marker range means "pick a world" from the global hub,
-// or "pick a level" from a world hub -- exactly mirroring real source).
+// Hub signs (`Decor::IsWorld()`, `Tables::world_terminal`): touching one makes Blupi wave
+// Bye and go to sign N's destination, `WorldRuntime::ComputeWorldSelectTarget()`: world N's hub
+// from the main hub (mission 1), mission N of this world from a world hub. Each world's sign
+// has a second icon, shown once the world is completed (`Decor::AdaptDoors()`, mission 1):
+// 158-165 -> 166-173 (worlds 1-8), 309 -> 310 (world 9), 411-415 -> 416-420 (worlds 10-14).
+// 174-181 are the numbered mission signs of the world hubs, 184 the sign back to the main hub.
+// (Until 2026-10-25 Galaxy used 166-169 as worlds 9-12 and 170-176 as invented door tiles.)
 constexpr uint16_t WorldSelect1 = 158;
 constexpr uint16_t WorldSelect2 = 159;
 constexpr uint16_t WorldSelect3 = 160;
@@ -83,18 +80,16 @@ constexpr uint16_t WorldSelect5 = 162;
 constexpr uint16_t WorldSelect6 = 163;
 constexpr uint16_t WorldSelect7 = 164;
 constexpr uint16_t WorldSelect8 = 165;
-// Real source's own icons 166-173 are a SECOND bank of the same 8 markers
-// (the "unlocked" cosmetic-icon-swap variant, `Decor::AdaptDoors()`'s
-// `m_mission==1` branch -- confirmed NOT a real access gate, just a visual
-// reveal of a per-world hidden-gold flag, see plan.md SCORE-013's full
-// writeup). Not modeled here (no cosmetic swap), so this engine reuses
-// 166-169 as 4 genuinely NEW indices (9-12) instead, extending the real
-// 8-world-marker range to the full 12 real world hubs this session's
-// content actually needs (found 2026-07-17).
-constexpr uint16_t WorldSelect9  = 166;
-constexpr uint16_t WorldSelect10 = 167;
-constexpr uint16_t WorldSelect11 = 168;
-constexpr uint16_t WorldSelect12 = 169;
+constexpr uint16_t WorldDone1 = 166;   // ...to 173: worlds 1-8 completed
+constexpr uint16_t WorldSelect9 = 309;
+constexpr uint16_t WorldDone9 = 310;
+constexpr uint16_t WorldSelect10 = 411; // ...to 415: worlds 10-14
+constexpr uint16_t WorldDone10 = 416;   // ...to 420
+constexpr uint16_t MissionSign1 = 174;  // ...to 181: missions 1-8 of a world hub
+constexpr uint16_t ReturnSign = 184;    // back to the main hub
+// Galaxy's own portal to its showcase world999 (user-requested 2026-07-17, not in the
+// original): the original's spare world-13 sign, a blank frame (Galaxy has 12 worlds).
+constexpr uint16_t DemoPortal = 414;
 
 inline bool isWorldSelect(uint16_t bt) {
     return GalaxyEggbert::GetBlockDefinition(bt).worldSelectIndex > 0;
@@ -103,45 +98,12 @@ inline int worldSelectIndex(uint16_t bt) {
     return GalaxyEggbert::GetBlockDefinition(bt).worldSelectIndex;
 }
 
-// Real per-world sublevel-select door gate (`Decor::AdaptDoors()`'s
-// `m_mission % 10 == 0` branch, `SearchDoor()`/icon `182`, found
-// 2026-07-17): within a world hub, sublevel-select marker index N (2-8;
-// index 1 is always ungated) sits behind a real solid door tile that opens
-// once the PREVIOUS sublevel has been completed (`Decor::OpenDoorsWin()`'s
-// `m_doors[mission+1]=1`). This engine keys the same real per-mission
-// unlock flag directly (`SaveData::IsMissionDoorUnlocked()`) rather than
-// porting the real 200-entry `m_doors[]` array's exact indexing scheme.
-// icons 170-176 are a free, previously-unused range (distinct from real
-// source's own icon 182 -- this engine doesn't need to match that exact
-// value, only the gating BEHAVIOR).
-constexpr uint16_t ProgressDoor2 = 170;
-constexpr uint16_t ProgressDoor3 = 171;
-constexpr uint16_t ProgressDoor4 = 172;
-constexpr uint16_t ProgressDoor5 = 173;
-constexpr uint16_t ProgressDoor6 = 174;
-constexpr uint16_t ProgressDoor7 = 175;
-constexpr uint16_t ProgressDoor8 = 176;
+// Hub doors (`Decor::SearchDoor()`, `SearchGold()`, `AdaptDoors()`): in a world hub a blue bar
+// (182) one or two cells beside mission sign N slides up once mission N-1 is won; in the main
+// hub one gold bar (183) slides up per completed world. See Game/HubDoors.hpp.
+constexpr uint16_t HubDoor = 182;
+constexpr uint16_t GoldDoor = 183;
 
-inline bool isProgressDoor(uint16_t bt) {
-    return GalaxyEggbert::GetBlockDefinition(bt).progressDoorIndex > 0;
-}
-inline int progressDoorIndex(uint16_t bt) {
-    return GalaxyEggbert::GetBlockDefinition(bt).progressDoorIndex;
-}
-
-// Engine-specific (NOT a real mobile-eggbert concept): a dedicated portal
-// in the global hub leading to `world999.vwr`, this engine's own quarantined
-// mechanics-showcase/test world (found 2026-07-17, user-requested --
-// mobile-eggbert's real 78-world structure gets a genuine 79th world here,
-// purely for this engine's own development/testing use, never confused
-// with a real mission number). Always leads to mission 999 directly,
-// unlike `WorldSelect`'s contextual `N*10`/`X0+N` reinterpretation.
-constexpr uint16_t DemoPortal = 177;
-
-constexpr uint16_t Marker   = 309;
-constexpr uint16_t Tile411  = 411;
-constexpr uint16_t Tile412  = 412;
-constexpr uint16_t Tile413  = 413;
 
 // Hazard tiles — same rule: value = icon index. Gameplay checks use these.
 constexpr uint16_t Lava     =  68;   // kills Blupi on contact (anim group 68–72)

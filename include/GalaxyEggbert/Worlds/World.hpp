@@ -128,6 +128,12 @@ public:
                   Block block);
 
     /**
+     * @brief Counts setBlock() calls that changed a block: a renderer that remembers the value
+     *        it built from can tell when the blocks changed since (a door opened in play).
+     */
+    [[nodiscard]] std::uint32_t blockRevision() const noexcept { return blockRevision_; }
+
+    /**
      * @brief Provides read-only access to one chunk by chunk-grid coordinates.
      *
      * @param chunkX Chunk X coordinate in range <tt>[0, chunksPerAxis())</tt>.
@@ -248,6 +254,7 @@ private:
     std::uint16_t spawnX_ = 0;
     std::uint16_t spawnY_ = 0;
     std::uint16_t spawnZ_ = 0;
+    std::uint32_t blockRevision_ = 0;
 
     /**
      * @brief Converts chunk-grid coordinates to a linear vector index.

@@ -69,7 +69,7 @@ namespace GalaxyEggbert::Editor
                                   {5, 6, 26, 25, 30, 29, 31, 200, 55},
                                   {7, 10, 75, 74, 89, 88, 93, 92, 87}),
             FreeMixedMenuCategory("Keys and progression",
-                                  {0, Door1, ProgressDoor2, Teleport1, 202, Spring, Temp, Bridge, 0, 0},
+                                  {0, Door1, HubDoor, Teleport1, 202, Spring, Temp, Bridge, 0, 0},
                                   {49, 0, 0, 0, 0, 0, 0, 0, 12, 12},
                                   {125, 126, 144, 124, 56, 70, 123, 141, 17, 76},
                                   {0, 0, 0, 0, 0, 0, 0, 0, 0, -1}),

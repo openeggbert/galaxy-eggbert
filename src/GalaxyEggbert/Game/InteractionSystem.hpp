@@ -530,6 +530,14 @@ namespace GalaxyEggbert::Game
         // TotalTreasures() above.
         [[nodiscard]] bool HasBlitzEmitterPair() const noexcept { return blitzEmitterPresent_ == 1; }
         [[nodiscard]] bool ExitReached() const noexcept { return exitReached_; }
+        // The exit reached was the golden key (ObjectType21, the original's `m_bFoundCle`):
+        // winning it completes the world (Decor::OpenGoldsWin()) and returns to the main hub.
+        [[nodiscard]] bool ExitWasGoldenKey() const noexcept { return exitWasGoldenKey_; }
+
+        // Opens the door block at raw cell (gx, gy, gz): the block becomes air and a slide
+        // (ObjectType22, sound 33) carries its icon up one cell, as Decor::OpenDoor() does. Used
+        // for the hubs' doors when a hub loads (Decor::AdaptDoors()).
+        static void OpenDoor(WorldRuntime& worldRuntime, int gx, int gy, int gz, Sound& sound);
         [[nodiscard]] int Key1Count() const noexcept { return keys1_; }
         [[nodiscard]] int Key2Count() const noexcept { return keys2_; }
         [[nodiscard]] int Key3Count() const noexcept { return keys3_; }
@@ -882,6 +890,7 @@ namespace GalaxyEggbert::Game
         // fraction of the cost.
         int blitzEmitterPresent_ = -1;
         bool exitReached_ = false;
+        bool exitWasGoldenKey_ = false;
         bool exitContactActive_ = false; // debounces the exit-touch sound/check to once per contact
         int keys1_ = 0;
         int keys2_ = 0;

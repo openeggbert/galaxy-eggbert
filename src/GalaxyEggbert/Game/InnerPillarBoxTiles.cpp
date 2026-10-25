@@ -31,6 +31,22 @@ namespace GalaxyEggbert::Game
             return;
         }
 
+        if (icon == 182 || icon == 183)
+        {
+            // The hub doors (BlockTypes::HubDoor/GoldDoor): a bar whose opaque shaft is the
+            // tile's columns 26-37; outside it the tile is transparent, so every face samples
+            // the shaft only.
+            const float du = tileUv.u1 - tileUv.u0;
+            const CnaEngine::Graphics::UvRect shaft{tileUv.u0 + du * (26.0f / 64.0f), tileUv.v0,
+                                                    tileUv.u0 + du * (38.0f / 64.0f), tileUv.v1};
+            for (auto& face : outFaces)
+            {
+                face.visible = true;
+                face.uv = shaft;
+            }
+            return;
+        }
+
         if (icon == 384 || icon == 385)
         {
             // BlockTypes::Switch/SwitchOff: "uvnitř kvádr s texturou na

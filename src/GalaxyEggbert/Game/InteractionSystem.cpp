@@ -693,6 +693,11 @@ namespace GalaxyEggbert::Game
         constexpr float kFollowerHomingSpeed = 20.0f / 64.0f;
     }
 
+    void InteractionSystem::OpenDoor(WorldRuntime& worldRuntime, int gx, int gy, int gz, Sound& sound)
+    {
+        OpenDoorAt(worldRuntime, gx, gy, gz, sound);
+    }
+
     void InteractionSystem::Update(float dt, WorldRuntime& worldRuntime,
                                       float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
                                       Sound& sound, bool blupiCrouching, bool blupiBallooned,
@@ -1788,6 +1793,7 @@ namespace GalaxyEggbert::Game
                         if (treasuresCollected_ >= totalTreasures_)
                         {
                             exitReached_ = true;
+                            exitWasGoldenKey_ = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType21;
                             sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel14);
                         }
                         else

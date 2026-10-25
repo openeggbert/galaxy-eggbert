@@ -85,8 +85,7 @@ namespace GalaxyEggbert
         BlockFanDirection fanDirection = BlockFanDirection::None;
         std::int8_t doorKeyType = -1;
         std::int8_t teleporterIndex = -1;
-        std::int8_t worldSelectIndex = -1;
-        std::int8_t progressDoorIndex = -1;
+        std::int16_t worldSelectIndex = -1; // Decor::IsWorld(): 1-14, 199 for the return sign
     };
 
     class BlockDefinitionRegistry final

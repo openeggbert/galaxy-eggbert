@@ -314,6 +314,9 @@ namespace GalaxyEggbert::Game
         // hub already (mission%10==0), back goes to the global hub (1);
         // otherwise it's the same `mission/10*10`. Static/pure so a tool can
         // test the arithmetic directly, same reasoning as IsBlitzActiveAtPhase().
+        // The return sign (index 199) leads from a world hub to the main hub, as in the
+        // original; in the main hub, index 13 (BlockTypes::DemoPortal, Galaxy's own) leads
+        // to the showcase, world 999.
         [[nodiscard]] static int ComputeWorldSelectTarget(int currentMission, int selectIndex) noexcept;
         [[nodiscard]] static int ComputeMissionBack(int currentMission) noexcept;
 

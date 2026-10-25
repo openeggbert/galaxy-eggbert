@@ -38,7 +38,7 @@ namespace
         using GalaxyEggbert::BlockRenderMode;
         if (icon == 0) return BlockRenderMode::Air;
         if (icon >= 378 && icon <= 383) return BlockRenderMode::GroundAnchoredPlate;
-        if (IsOneOf(icon, {76, 384, 385})) return BlockRenderMode::InnerPillarBox;
+        if (IsOneOf(icon, {76, 182, 183, 384, 385})) return BlockRenderMode::InnerPillarBox;
         if (icon == 202) return BlockRenderMode::ThinBar;
         if (IsOneOf(icon, {
                 77, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120,
@@ -50,6 +50,8 @@ namespace
             })) return BlockRenderMode::InnerFlatPlate;
         if (IsOneOf(icon, {53, 54, 55, 56, 57, 58, 59, 60, 63, 64}))
             return BlockRenderMode::TripleCrossBillboard;
+        if ((icon >= 158 && icon <= 181) || (icon >= 410 && icon <= 420) || IsOneOf(icon, {184, 309, 310}))
+            return BlockRenderMode::InnerFlatPlate; // hub signboards
         if (IsOneOf(icon, {
                 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
                 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 44, 45,
@@ -235,10 +237,25 @@ int main()
           "fan direction is centralized");
     Check(GetBlockDefinition(BlockTypes::Door3).doorKeyType == 51,
           "door key is centralized");
-    Check(GetBlockDefinition(BlockTypes::WorldSelect12).worldSelectIndex == 12,
-          "world selector index is centralized");
-    Check(GetBlockDefinition(BlockTypes::ProgressDoor8).progressDoorIndex == 8,
-          "progress-door index is centralized");
+    // Hub signs as Decor::IsWorld() reads them: 158-165, 166-173 and 174-181 -> 1-8,
+    // 309/310 -> 9, 411-415 and 416-420 -> 10-14, 184 -> 199; nothing else is a sign.
+    {
+        bool signsOk = true;
+        for (int icon = 0; icon <= BlockDefinitionRegistry::MaxObjectMIcon; ++icon)
+        {
+            int expected = -1;
+            if (icon >= 158 && icon <= 181) expected = (icon - 158) % 8 + 1;
+            if (icon == 309 || icon == 310) expected = 9;
+            if (icon >= 411 && icon <= 420) expected = (icon - 411) % 5 + 10;
+            if (icon == 184) expected = 199;
+            if (GetBlockDefinition(static_cast<std::uint16_t>(icon)).worldSelectIndex != expected)
+            {
+                std::cerr << "sign index mismatch for icon " << icon << '\n';
+                signsOk = false;
+            }
+        }
+        Check(signsOk, "hub sign indices are the original's (Decor::IsWorld)");
+    }
     Check(ResolveBlockAnimationIcon(BlockTypes::Lava, 0) == 68 &&
               ResolveBlockAnimationIcon(BlockTypes::Lava, 2) == 69 &&
               ResolveBlockAnimationIcon(BlockTypes::Temp, 72) == -1,

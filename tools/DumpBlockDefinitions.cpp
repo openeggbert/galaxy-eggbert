@@ -21,7 +21,7 @@ namespace
         using namespace GalaxyEggbert;
         std::ostringstream out;
         out << "icon,render,collision_mask,solid,water,teleporter,fan,spring,bridge,door_key,hazard,"
-               "world_select,progress_door,animated\n";
+               "world_select,hub_door,animated\n";
         for (std::uint16_t icon = 0; icon <= BlockDefinitionRegistry::MaxObjectMIcon; ++icon)
         {
             const auto& d = GetBlockDefinition(icon);
@@ -33,7 +33,8 @@ namespace
                 << d.water << ',' << BlockTypes::isTeleporter(icon) << ',' << BlockTypes::isFan(icon) << ','
                 << d.spring << ',' << d.bridge << ',' << static_cast<int>(d.doorKeyType) << ','
                 << static_cast<int>(d.hazard) << ',' << static_cast<int>(d.worldSelectIndex) << ','
-                << static_cast<int>(d.progressDoorIndex) << ',' << d.animation.IsAnimated() << '\n';
+                << (icon == BlockTypes::HubDoor ? 1 : icon == BlockTypes::GoldDoor ? 2 : 0) << ','
+                << d.animation.IsAnimated() << '\n';
         }
         return out.str();
     }

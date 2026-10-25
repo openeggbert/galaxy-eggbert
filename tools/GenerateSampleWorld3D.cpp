@@ -60,8 +60,8 @@ namespace
         }
 
         // Marker 1 sits inside the plaza itself, clear of spawn.
-        world.setBlock(53, 1, 50, Block::make(BlockTypes::WorldSelect1));
-        std::cout << "GenerateSampleWorld3D: " << outPath << " marker 1 (icon " << BlockTypes::WorldSelect1
+        world.setBlock(53, 1, 50, Block::make(BlockTypes::MissionSign1));
+        std::cout << "GenerateSampleWorld3D: " << outPath << " marker 1 (icon " << BlockTypes::MissionSign1
                   << ") -> mission " << (missionNumber + 1) << " (always open)" << std::endl;
 
         if (sublevelCount >= 2)
@@ -82,7 +82,7 @@ namespace
 
             for (int i = 2; i <= sublevelCount; ++i)
             {
-                const auto markerIcon = static_cast<std::uint16_t>(BlockTypes::WorldSelect1 + (i - 1));
+                const auto markerIcon = static_cast<std::uint16_t>(BlockTypes::MissionSign1 + (i - 1));
                 const int markerX = 59 + 3 * (i - 2);
                 world.setBlock(static_cast<std::uint16_t>(markerX), 1, 50, Block::make(markerIcon));
 
@@ -90,7 +90,7 @@ namespace
                 // corridor width, with a single door-gap tile at z=50 --
                 // same shape as world999.vwr's own doors demo.
                 const int wallX = markerX - 1;
-                const auto doorIcon = static_cast<std::uint16_t>(BlockTypes::ProgressDoor2 + (i - 2));
+                const auto doorIcon = BlockTypes::HubDoor;
                 world.setBlock(static_cast<std::uint16_t>(wallX), 1, 49, Block::make(BlockTypes::BrickWall));
                 world.setBlock(static_cast<std::uint16_t>(wallX), 2, 49, Block::make(BlockTypes::BrickWall));
                 world.setBlock(static_cast<std::uint16_t>(wallX), 1, 50, Block::make(doorIcon));
@@ -831,7 +831,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
         // showcase -- a stray exhibited WorldSelect/DemoPortal specimen
         // would silently double as a working (if undiscoverable) portal.
         if (icon == BlockTypes::Teleport1 || BlockTypes::isWorldSelect(static_cast<std::uint16_t>(icon)) ||
-            BlockTypes::isProgressDoor(static_cast<std::uint16_t>(icon)) || icon == BlockTypes::DemoPortal)
+            icon == BlockTypes::HubDoor || icon == BlockTypes::GoldDoor)
         {
             continue;
         }
@@ -968,10 +968,12 @@ void GenerateGlobalHub(const std::filesystem::path& outPath)
         const int col = i % 6;
         const int x = 44 + col * 2;
         const int z = 44 + row * 2;
-        world.setBlock(static_cast<std::uint16_t>(x), 1, static_cast<std::uint16_t>(z),
-                       Block::make(static_cast<std::uint16_t>(BlockTypes::WorldSelect1 + i)));
+        const auto signIcon = static_cast<std::uint16_t>(i < 8 ? BlockTypes::WorldSelect1 + i
+                                                         : i == 8 ? BlockTypes::WorldSelect9
+                                                                  : BlockTypes::WorldSelect10 + (i - 9));
+        world.setBlock(static_cast<std::uint16_t>(x), 1, static_cast<std::uint16_t>(z), Block::make(signIcon));
         std::cout << "GenerateSampleWorld3D: " << outPath << " marker " << (i + 1) << " (icon "
-                  << (BlockTypes::WorldSelect1 + i) << ") -> mission " << ((i + 1) * 10) << std::endl;
+                  << signIcon << ") -> mission " << ((i + 1) * 10) << std::endl;
     }
 
     // The engine-specific DemoPortal, on its own row, clearly separated

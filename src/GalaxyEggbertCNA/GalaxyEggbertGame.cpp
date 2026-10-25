@@ -8,6 +8,7 @@
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
+#include <GalaxyEggbert/HubDoors.hpp>
 #include <GalaxyEggbert/Game/LiftVisual.hpp>
 #include <GalaxyEggbert/Game/TerrainLighting.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
@@ -26,6 +27,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -903,6 +905,19 @@ namespace GalaxyEggbert::CNA
         }
 
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_);
+        terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
+    }
+
+    void GalaxyEggbertGame::RefreshTerrainMeshIfChanged()
+    {
+        // Blocks changed in play (a door opened, a hub door slid away): the terrain mesh is
+        // built from the blocks, so build it again.
+        if (terrainRenderer_ && worldRuntime_.GetWorld().blockRevision() != terrainRevision_)
+        {
+            terrainRenderer_ =
+                std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), tileAtlas_);
+            terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
+        }
     }
 
     void GalaxyEggbertGame::LoadMission(int missionNumber)
@@ -919,46 +934,68 @@ namespace GalaxyEggbert::CNA
 
         RebuildWorldPresentation();
 
-        // Real AdaptDoors() hub-level door gate (plan.md hub/mission-
-        // progression system, found 2026-07-17, `Decor.cpp:11588-11621`):
-        // applied at LOAD time, before the level is ever shown -- matches
-        // real source exactly (`AdaptDoors()` runs inside `StartMission()`,
-        // never live while already playing). Scans the freshly-loaded
-        // world for any `ProgressDoor2..8` tile; each one gates sublevel-
-        // select marker N in THIS hub (mission `missionNumber+N`), opened
-        // once the PRECEDING sublevel has been won (`saveData_::
-        // IsMissionDoorUnlocked(missionNumber+N)`, set by the win-exit
-        // handler below -- mirrors real `m_doors[mission+1]=1`). No
-        // animated slide-open needed here (the real one only plays live,
-        // the instant a door's condition becomes newly true while
-        // standing right there -- this unlock always happened in an
-        // earlier visit/session, so the door is simply already-open by
-        // the time this level is shown, matching the real `AdaptDoors()`
-        // pre-load timing exactly).
+        // The hubs (Decor::AdaptDoors(), MainSwitchInitialize(), HubDoors.hpp): the doors that
+        // are open slide up as the hub appears (sound 33, as in the original and the video), the
+        // signs of completed worlds change, and Blupi starts past the last door opened in a world
+        // hub, or beside the sign of the world he last played in the main hub.
+        if (missionNumber != 1)
+        {
+            saveData_.SetLastWorld(missionNumber / 10);
+        }
+        std::optional<GalaxyEggbert::HubArrival> hubArrival;
+        if (missionNumber == 1)
         {
             auto& terrain = worldRuntime_.GetWorldMutable();
-            const auto axis = terrain.blocksPerAxis();
-            for (std::uint16_t x = 0; x < axis; ++x)
+            int completedWorlds = 0;
+            for (int world = 0; world < 20; ++world)
             {
-                for (std::uint16_t y = 0; y < axis; ++y)
+                completedWorlds += saveData_.IsMissionDoorUnlocked(180 + world) ? 1 : 0;
+            }
+            const auto golds = GalaxyEggbert::FindGoldDoors(terrain);
+            for (int i = 0; i < completedWorlds && i < static_cast<int>(golds.size()); ++i)
+            {
+                InteractionSystem::OpenDoor(worldRuntime_, golds[i].x, golds[i].y, golds[i].z, sound_);
+            }
+            for (int world = 1; world <= 14; ++world)
+            {
+                if (!saveData_.IsMissionDoorUnlocked(180 + world))
                 {
-                    for (std::uint16_t z = 0; z < axis; ++z)
+                    continue;
+                }
+                for (const auto& sign : GalaxyEggbert::FindWorldSigns(terrain, world))
+                {
+                    const auto x = static_cast<std::uint16_t>(sign.x);
+                    const auto y = static_cast<std::uint16_t>(sign.y);
+                    const auto z = static_cast<std::uint16_t>(sign.z);
+                    terrain.setBlock(x, y, z, GalaxyEggbert::Worlds::Block::make(
+                                                  GalaxyEggbert::CompletedWorldSignIcon(terrain.getBlock(x, y, z).type())));
+                }
+            }
+            const auto lastWorldSigns = GalaxyEggbert::FindWorldSigns(terrain, saveData_.GetLastWorld());
+            if (!lastWorldSigns.empty())
+            {
+                hubArrival = GalaxyEggbert::ArrivalBesideSign(terrain, lastWorldSigns.front());
+            }
+        }
+        else if (missionNumber % 10 == 0)
+        {
+            for (int sign = 1; sign <= 8; ++sign)
+            {
+                if (!saveData_.IsMissionDoorUnlocked(missionNumber + sign))
+                {
+                    continue;
+                }
+                for (const auto& door : GalaxyEggbert::FindMissionDoors(worldRuntime_.GetWorld(), sign))
+                {
+                    InteractionSystem::OpenDoor(worldRuntime_, door.door.x, door.door.y, door.door.z, sound_);
+                    if (const auto arrival = GalaxyEggbert::ArrivalPastDoor(worldRuntime_.GetWorld(), door.door, door.sign))
                     {
-                        const auto block = terrain.getBlock(x, y, z).type();
-                        if (!GalaxyEggbert::BlockTypes::isProgressDoor(block))
-                        {
-                            continue;
-                        }
-                        const int doorIndex = GalaxyEggbert::BlockTypes::progressDoorIndex(block);
-                        const int targetMission = missionNumber + doorIndex;
-                        if (saveData_.IsMissionDoorUnlocked(targetMission))
-                        {
-                            terrain.setBlock(x, y, z, GalaxyEggbert::Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
-                        }
+                        hubArrival = arrival;
                     }
                 }
             }
         }
+        RefreshTerrainMeshIfChanged();
 
         // Real PlayPrepare() (Decor.cpp:381-429): every mission load resets
         // vehicle mode, all 4 secret powers, Invert, Ghost, keys, dynamite
@@ -981,6 +1018,13 @@ namespace GalaxyEggbert::CNA
         else
         {
             blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+        }
+        if (hubArrival)
+        {
+            blupi_.SetPosition(static_cast<float>(hubArrival->cell.x - WorldRuntime::kWorldCenterX),
+                               static_cast<float>(hubArrival->cell.y),
+                               static_cast<float>(hubArrival->cell.z - WorldRuntime::kWorldCenterZ));
+            blupi_.SetYaw(hubArrival->yaw);
         }
 
         saveData_.SetMissionNumber(missionNumber);
@@ -2178,11 +2222,22 @@ namespace GalaxyEggbert::CNA
                             // uses `OpenGoldsWin()` instead, a different,
                             // cosmetic-only flag this engine doesn't model.
                             const int currentMission = worldRuntime_.GetMissionNumber();
-                            if (currentMission % 10 != 0)
+                            if (interaction_.ExitWasGoldenKey() && currentMission != 1 && currentMission != 199)
                             {
-                                saveData_.UnlockMissionDoor(currentMission + 1);
+                                // The golden key ends the world (Decor::OpenGoldsWin(),
+                                // m_doors[180 + world]): back to the main hub, where one more
+                                // gold bar opens and the world's sign changes.
+                                saveData_.UnlockMissionDoor(180 + currentMission / 10);
+                                LoadMission(1);
                             }
-                            LoadMission(WorldRuntime::ComputeWinExitTarget(currentMission));
+                            else
+                            {
+                                if (currentMission % 10 != 0)
+                                {
+                                    saveData_.UnlockMissionDoor(currentMission + 1);
+                                }
+                                LoadMission(WorldRuntime::ComputeWinExitTarget(currentMission));
+                            }
                         }
                         else
                         {
@@ -2925,19 +2980,6 @@ namespace GalaxyEggbert::CNA
                     }
                     return;
                 }
-                // Engine-specific demo/test-world portal (plan.md hub/
-                // mission system, found 2026-07-17, user-requested) --
-                // NOT a real mobile-eggbert concept: leads directly to
-                // mission 999 (`worlds3d/world999.vwr`, this session's
-                // quarantined mechanics showcase, formerly world001.vwr's
-                // own content before the global hub was cleaned up to
-                // match real mobile-eggbert's structure). Same contact-
-                // trigger/no-debounce reasoning as WorldSelect above.
-                if (groundBlock == GalaxyEggbert::BlockTypes::DemoPortal)
-                {
-                    LoadMission(999);
-                    return;
-                }
             }
 
             // Teleporter (plan.md E3D-MIG-147, icons 330-333, verified
@@ -3378,6 +3420,7 @@ namespace GalaxyEggbert::CNA
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
                                  firePressed, canFire, cloudActive, canGrantInvert, actionPressedEdge,
                                  canPushCrate);
+            RefreshTerrainMeshIfChanged();
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
             // recorded a this-frame voyage request (InteractionSystem has

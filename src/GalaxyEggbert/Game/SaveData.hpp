@@ -77,6 +77,9 @@ namespace GalaxyEggbert::Game
     {
         int lives = 3; // matches InteractionSystem's own real GameData-derived default
         int missionNumber = 0;
+        // The world last played (GameData's lastWorld, 1-based): the main hub starts Blupi
+        // beside its sign (Decor::MainSwitchInitialize()).
+        int lastWorld = 1;
         bool hasProgress = false;
         // Real per-sublevel door-unlock flags (plan.md hub/mission-progression
         // system, found 2026-07-17, `Decor::AdaptDoors()`'s `m_doors[]` --
@@ -145,6 +148,9 @@ namespace GalaxyEggbert::Game
 
         [[nodiscard]] int GetMissionNumber() const noexcept { return gamers_[selectedGamer_].missionNumber; }
         void SetMissionNumber(int missionNumber) noexcept { gamers_[selectedGamer_].missionNumber = missionNumber; }
+
+        [[nodiscard]] int GetLastWorld() const noexcept { return gamers_[selectedGamer_].lastWorld; }
+        void SetLastWorld(int world) noexcept { gamers_[selectedGamer_].lastWorld = world; }
 
         [[nodiscard]] bool GetHasProgress() const noexcept { return gamers_[selectedGamer_].hasProgress; }
         void SetHasProgress(bool hasProgress) noexcept { gamers_[selectedGamer_].hasProgress = hasProgress; }

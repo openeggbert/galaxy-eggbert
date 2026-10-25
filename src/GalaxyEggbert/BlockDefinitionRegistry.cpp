@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <initializer_list>
+#include <vector>
 
 namespace GalaxyEggbert
 {
@@ -89,7 +90,7 @@ namespace GalaxyEggbert
             332, 333, 364, 365, 366, 390, 391, 392, 393, 394, 395, 396, 397,
             400,
         });
-        SetRenderMode(definitions_, BlockRenderMode::InnerPillarBox, {76, 384, 385});
+        SetRenderMode(definitions_, BlockRenderMode::InnerPillarBox, {76, 182, 183, 384, 385});
         SetRenderMode(definitions_, BlockRenderMode::ThinBar, {202});
         SetRenderMode(definitions_, BlockRenderMode::InnerFlatPlate, {
             77, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
@@ -106,6 +107,20 @@ namespace GalaxyEggbert
         for (const int icon : {30, 31, 202, 330, 331, 332, 333})
         {
             definitions_[static_cast<std::size_t>(icon)].alphaBlend = true;
+        }
+        // The hub signs (158-181, 184, 309/310, 410-420) are signboards on a post with
+        // transparency round them: flat plates (turnable with a plate rotation record), drawn
+        // alpha-blended, not cubes with black where the sprite is clear (2026-10-25).
+        {
+            std::vector<int> signs;
+            for (int icon = 158; icon <= 181; ++icon) signs.push_back(icon);
+            for (int icon = 410; icon <= 420; ++icon) signs.push_back(icon);
+            for (const int icon : {184, 309, 310}) signs.push_back(icon);
+            for (const int icon : signs)
+            {
+                definitions_[static_cast<std::size_t>(icon)].renderMode = BlockRenderMode::InnerFlatPlate;
+                definitions_[static_cast<std::size_t>(icon)].alphaBlend = true;
+            }
         }
         // The cross-billboard sprites (small machine parts 53-60, 63/64) are mostly alpha-0
         // texels; drawn opaque they showed as black cards round the part (2026-10-25).
@@ -234,16 +249,23 @@ namespace GalaxyEggbert
             definitions_[static_cast<std::size_t>(icon)].teleporterIndex =
                 static_cast<std::int8_t>(icon - Teleport1 + 1);
         }
-        for (int icon = WorldSelect1; icon <= WorldSelect12; ++icon)
+        // Hub signs, as `Decor::IsWorld()` reads them (BlockTypes.hpp).
+        const auto setSigns = [this](int first, int count, int firstIndex)
         {
-            definitions_[static_cast<std::size_t>(icon)].worldSelectIndex =
-                static_cast<std::int8_t>(icon - WorldSelect1 + 1);
-        }
-        for (int icon = ProgressDoor2; icon <= ProgressDoor8; ++icon)
-        {
-            definitions_[static_cast<std::size_t>(icon)].progressDoorIndex =
-                static_cast<std::int8_t>(icon - ProgressDoor2 + 2);
-        }
+            for (int i = 0; i < count; ++i)
+            {
+                definitions_[static_cast<std::size_t>(first + i)].worldSelectIndex =
+                    static_cast<std::int16_t>(firstIndex + i);
+            }
+        };
+        setSigns(WorldSelect1, 8, 1);
+        setSigns(WorldDone1, 8, 1);
+        setSigns(MissionSign1, 8, 1);
+        setSigns(WorldSelect9, 1, 9);
+        setSigns(WorldDone9, 1, 9);
+        setSigns(WorldSelect10, 5, 10);
+        setSigns(WorldDone10, 5, 10);
+        definitions_[ReturnSign].worldSelectIndex = 199;
     }
 
     const BlockDefinition& BlockDefinitionRegistry::Get(std::uint16_t type) const noexcept

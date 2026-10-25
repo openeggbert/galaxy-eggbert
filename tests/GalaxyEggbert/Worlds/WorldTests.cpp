@@ -321,4 +321,15 @@ TEST(WorldSerializationTests, LoadRejectsChunkCountMismatch) {
     removeFileNoThrow(filePath);
 }
 
+TEST(WorldTests, BlockRevisionCountsBlockChanges) {
+    World world;
+    const auto start = world.blockRevision();
+    world.setBlock(1, 2, 3, Block::make(10));
+    world.setBlock(1, 2, 3, Block::make(10)); // the same block again: no change
+    world.setBlock(1, 2, 3, Block::make(0));
+    EXPECT_EQ(world.blockRevision(), start + 2);
+    world.setMissionNumber(11); // not a block
+    EXPECT_EQ(world.blockRevision(), start + 2);
+}
+
 } // namespace GalaxyEggbert::Worlds
