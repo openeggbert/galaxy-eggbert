@@ -1532,6 +1532,12 @@ namespace GalaxyEggbert::CNA
             SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
             LoadMission(startMission_);
             startMission_ = 0;
+            if (startSpawnSet_)
+            {
+                blupi_.SetPosition(startSpawnX_ - WorldRuntime::kWorldCenterX, startSpawnY_,
+                                   startSpawnZ_ - WorldRuntime::kWorldCenterZ);
+                blupi_.SetYaw(startYawDegrees_ * 3.14159265f / 180.0f);
+            }
         }
 
         // Real `phaseTime` (see phaseTimeSeconds_'s own member comment) --

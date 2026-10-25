@@ -106,6 +106,17 @@ namespace GalaxyEggbert::CNA
         // (LoadMission()), so live checks reach a world without driving the
         // menus. Not a player-facing feature.
         void EnableStartMission(int missionNumber) noexcept { startMission_ = missionNumber; }
+        // `--spawn x,y,z` with `--mission`: Blupi starts at that raw-grid cell
+        // (the coordinates `.vwr` files and tools/vwr_inspect.py use), facing
+        // `--yaw` degrees, instead of the world's own spawn.
+        void EnableStartSpawn(float x, float y, float z, float yawDegrees) noexcept
+        {
+            startSpawnSet_ = true;
+            startSpawnX_ = x;
+            startSpawnY_ = y;
+            startSpawnZ_ = z;
+            startYawDegrees_ = yawDegrees;
+        }
 
         GetTypeNameHPP()
 
@@ -536,6 +547,8 @@ namespace GalaxyEggbert::CNA
         bool goldenTraceArmed_ = false;
         // `--mission N` (EnableStartMission()); 0 means a normal start.
         int startMission_ = 0;
+        bool startSpawnSet_ = false;
+        float startSpawnX_ = 0.0f, startSpawnY_ = 0.0f, startSpawnZ_ = 0.0f, startYawDegrees_ = 0.0f;
         bool goldenTraceWritten_ = false;
         int goldenTraceTick_ = 0;
         std::string goldenTraceLines_;

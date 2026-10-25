@@ -1,5 +1,6 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
@@ -28,6 +29,15 @@ int main(int argc, char** argv)
         if (std::strcmp(argv[i], "--mission") == 0 && i + 1 < argc)
         {
             game->EnableStartMission(std::atoi(argv[++i]));
+        }
+        if (std::strcmp(argv[i], "--spawn") == 0 && i + 1 < argc)
+        {
+            float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
+            const int read = std::sscanf(argv[++i], "%f,%f,%f,%f", &x, &y, &z, &yaw);
+            if (read >= 3)
+            {
+                game->EnableStartSpawn(x, y, z, yaw);
+            }
         }
     }
     game->Run();
