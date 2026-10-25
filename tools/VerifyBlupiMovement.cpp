@@ -2385,6 +2385,28 @@ int main(int argc, char** argv)
         check(holder.GetAnimState() == BlupiController::AnimState::Pop, "backing away with it is Pop");
     }
 
+    // Turning round (table_blupi 3) and the exit's Win cheer (13, 40 ticks).
+    {
+        Worlds::World flat;
+        for (std::uint16_t x = 45; x <= 55; ++x)
+            for (std::uint16_t z = 45; z <= 55; ++z)
+                flat.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        BlupiController turner;
+        turner.SetPosition(0.0f, 1.0f, 0.0f);
+        turner.SetTurning(true);
+        turner.Step(flat, 0.0f, 0.0f, false, false, false, dt);
+        check(turner.GetAnimState() == BlupiController::AnimState::Turn, "turning round on the spot plays Turn");
+        turner.SetTurning(false);
+        check(turner.TriggerOneShotAnim(BlupiController::AnimState::Win, BlupiController::kWinDuration),
+              "the Win cheer starts");
+        turner.Step(flat, 0.0f, 1.0f, false, false, false, dt);
+        check(turner.GetAnimState() == BlupiController::AnimState::Win && std::fabs(turner.GetZ()) < 1e-4f,
+              "during the Win cheer Blupi stands still, cheering");
+        for (int i = 0; i < static_cast<int>(BlupiController::kWinDuration / dt) + 2; ++i)
+            turner.Step(flat, 0.0f, 0.0f, false, false, false, dt);
+        check(!turner.IsOneShotAnimPlaying(), "the cheer ends after 40 ticks");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

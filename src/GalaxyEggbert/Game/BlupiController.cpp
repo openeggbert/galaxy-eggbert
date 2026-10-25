@@ -220,6 +220,8 @@ namespace GalaxyEggbert::Game
         constexpr int kPopFrames[] = {126, 125, 124, 123, 122, 121};
         // table_blupi Win (13): the cheer at the exit.
         constexpr int kWinFrames[] = {41, 41, 42, 42, 43, 43};
+        // table_blupi Turn (3): turning round.
+        constexpr int kTurnFrames[] = {1, 1, 2, 2, 3, 3};
         // Real table_blupi Bye record (id 30, Tables.cpp; transcribed
         // 2026-10-25 under the owner's standing approval for small data
         // tables): the front-facing wave of the world-select farewell,
@@ -1788,6 +1790,7 @@ namespace GalaxyEggbert::Game
                                   : IsInVehicle() ? vehicleAnimState()
                                   : pushingCrate  ? AnimState::Push
                                   : holdingCrate  ? (moving ? AnimState::Pop : AnimState::StopPop)
+                                  : m_turning && m_onGround && !moving ? AnimState::Turn
                                   : m_mockeryActive ? m_mockeryVariant
                                   : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
@@ -1938,6 +1941,8 @@ namespace GalaxyEggbert::Game
                 return kPopFrames[m_animPhase % (sizeof(kPopFrames) / sizeof(kPopFrames[0]))];
             case AnimState::Win:
                 return kWinFrames[m_animPhase % (sizeof(kWinFrames) / sizeof(kWinFrames[0]))];
+            case AnimState::Turn:
+                return kTurnFrames[m_animPhase % (sizeof(kTurnFrames) / sizeof(kTurnFrames[0]))];
             case AnimState::Bye:
                 return kByeFrames[m_animPhase % (sizeof(kByeFrames) / sizeof(kByeFrames[0]))];
             case AnimState::Switch:

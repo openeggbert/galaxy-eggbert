@@ -210,6 +210,7 @@ namespace GalaxyEggbert::CNA
                 case S::StopPop: return "StopPop";
                 case S::Pop: return "Pop";
                 case S::Win: return "Win";
+                case S::Turn: return "Turn";
                 case S::Switch: return "Switch";
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";
@@ -2457,6 +2458,7 @@ namespace GalaxyEggbert::CNA
                                              : 0.0f;
                 holdingCrate_ = crate != nullptr && (holdingCrate_ || crateGap < 1.1f);
             }
+            blupi_.SetTurning(turnAroundRemaining_ > 0.0f && !blupi_.IsInVehicle());
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);

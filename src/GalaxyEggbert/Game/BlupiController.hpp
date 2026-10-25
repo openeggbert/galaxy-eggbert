@@ -574,7 +574,10 @@ namespace GalaxyEggbert::Game
             StopPop, Pop,
             // The cheer at the exit (table_blupi 13, ACTION_WIN): both arms up, facing the viewer,
             // for kWinDuration before the next world loads.
-            Win
+            Win,
+            // Turning round on the spot (table_blupi 3, ACTION_TURN), while the caller turns him
+            // (SetTurning()).
+            Turn
         };
 
         // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -1156,6 +1159,10 @@ namespace GalaxyEggbert::Game
         // DecorDetect() counts crates. The caller sets them every frame before Step().
         void SetCrateCells(std::vector<std::array<int, 3>> cells) { m_crateCells = std::move(cells); }
 
+        // Whether the caller is turning him round on foot this frame (Down's turn-around): shows
+        // AnimState::Turn while he stands.
+        void SetTurning(bool turning) noexcept { m_turning = turning; }
+
         // Holding a crate (Step()'s holdingCrate: crouching, a crate right in front): Blupi
         // cannot turn or step forward, and backs away at the original's Pop speed, 4 px a tick.
         static constexpr float kPullSpeed = 4.0f * 20.0f / 64.0f;
@@ -1175,6 +1182,7 @@ namespace GalaxyEggbert::Game
         // whole-block sub-tile lookup on top of this, not through it.
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
         std::vector<std::array<int, 3>> m_crateCells;
+        bool m_turning = false;
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
         // precise sub-tile solidity for a specific continuous-space point,
