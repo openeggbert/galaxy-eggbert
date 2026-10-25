@@ -211,6 +211,8 @@ namespace GalaxyEggbert::CNA
                 case S::Pop: return "Pop";
                 case S::Win: return "Win";
                 case S::Turn: return "Turn";
+                case S::Vertigo: return "Vertigo";
+                case S::Recede: return "Recede";
                 case S::Switch: return "Switch";
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";
@@ -2554,6 +2556,9 @@ namespace GalaxyEggbert::CNA
                         break;
                     case BlupiController::EventKind::DownReleaseSoundFired:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel20);
+                        break;
+                    case BlupiController::EventKind::VertigoStarted:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel6);
                         break;
                 }
             }

@@ -2407,6 +2407,31 @@ int main(int argc, char** argv)
         check(!turner.IsOneShotAnimPlaying(), "the cheer ends after 40 ticks");
     }
 
+    // Vertigo: standing still with his front foot over a ledge, Blupi teeters (16 ticks), then
+    // steps back from it (Recede).
+    {
+        Worlds::World ledge;
+        for (std::uint16_t x = 40; x <= 50; ++x)
+            for (std::uint16_t z = 45; z <= 55; ++z)
+                ledge.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        BlupiController teeter;
+        teeter.SetPosition(0.42f, 1.0f, 0.0f); // raw 50.42: the floor ends at 50.5
+        teeter.SetYaw(1.5707963f);             // facing +X, over the edge
+        teeter.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+        check(teeter.GetAnimState() == BlupiController::AnimState::Vertigo &&
+                  hasEvent(teeter, BlupiController::EventKind::VertigoStarted),
+              "at a ledge Blupi teeters (Vertigo, with its sound)");
+        const float startX = teeter.GetX();
+        bool receded = false;
+        for (int i = 0; i < 70; ++i)
+        {
+            teeter.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+            receded = receded || teeter.GetAnimState() == BlupiController::AnimState::Recede;
+        }
+        check(receded && teeter.GetX() < startX - 0.1f && teeter.GetAnimState() == BlupiController::AnimState::Stop,
+              "then he steps back from the edge and stands");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

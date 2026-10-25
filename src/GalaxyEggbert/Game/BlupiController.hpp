@@ -577,7 +577,10 @@ namespace GalaxyEggbert::Game
             Win,
             // Turning round on the spot (table_blupi 3, ACTION_TURN), while the caller turns him
             // (SetTurning()).
-            Turn
+            Turn,
+            // Standing at a ledge with his front foot over the void: he teeters (table_blupi 8,
+            // ACTION_VERTIGO, 16 ticks), then steps back from it (9, ACTION_RECEDE, 3 ticks).
+            Vertigo, Recede
         };
 
         // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -1086,6 +1089,7 @@ namespace GalaxyEggbert::Game
             DownEntrySoundFired,
             UpEntrySoundFired,
             DownReleaseSoundFired,
+            VertigoStarted, // the original's channel 6 as he starts to teeter
         };
         struct Event
         {
@@ -1183,6 +1187,9 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
         std::vector<std::array<int, 3>> m_crateCells;
         bool m_turning = false;
+        float m_vertigoTimer = 0.0f;   // teetering at a ledge (AnimState::Vertigo)
+        float m_recedeTimer = 0.0f;    // stepping back from it (AnimState::Recede)
+        bool m_vertigoStarted = false; // VertigoStarted is due this frame
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
         // precise sub-tile solidity for a specific continuous-space point,

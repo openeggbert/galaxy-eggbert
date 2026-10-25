@@ -222,6 +222,9 @@ namespace GalaxyEggbert::Game
         constexpr int kWinFrames[] = {41, 41, 42, 42, 43, 43};
         // table_blupi Turn (3): turning round.
         constexpr int kTurnFrames[] = {1, 1, 2, 2, 3, 3};
+        // table_blupi Vertigo (8) and Recede (9): teetering at a ledge, stepping back from it.
+        constexpr int kVertigoFrames[] = {0, 169, 26, 170, 27, 171, 28, 172};
+        constexpr int kRecedeFrames[] = {5, 6, 7, 8, 9, 10};
         // Real table_blupi Bye record (id 30, Tables.cpp; transcribed
         // 2026-10-25 under the owner's standing approval for small data
         // tables): the front-facing wave of the world-select farewell,
@@ -1723,6 +1726,49 @@ namespace GalaxyEggbert::Game
         m_onGround = steppedUp ? IsPointSolid(world, newX, newY - 0.05f, newZ, tempPassable, false)
                                : moveResult.onGround;
 
+        // Vertigo (Decor.cpp ~4880-4935, 5040-5050): standing still at a ledge with his front
+        // foot over the void and the back one on the ground, Blupi teeters for 16 ticks, then
+        // steps back 4 px a tick for 3 ticks. Walking, jumping or a vehicle cuts it short.
+        {
+            constexpr float kFoot = 0.15f;                   // the original's feet, +/-5 of 60 px, a little wider
+            constexpr float kRecedeSpeed = 4.0f * 20.0f / 64.0f;
+            const bool standing = m_onGround && !moving && !IsInVehicle() && !m_balloon && !m_ecrase && !m_nage &&
+                                  !m_surf && !holdingCrate && !pushingCrate;
+            const float fx = std::sin(m_yaw);
+            const float fz = -std::cos(m_yaw);
+            if (!standing)
+            {
+                m_vertigoTimer = 0.0f;
+                m_recedeTimer = 0.0f;
+            }
+            else if (m_recedeTimer > 0.0f)
+            {
+                m_recedeTimer -= dt;
+                const float bx = m_x - fx * kRecedeSpeed * dt;
+                const float bz = m_z - fz * kRecedeSpeed * dt;
+                if (!IsPointSolid(world, bx, m_y + 0.05f, bz, tempPassable, true) &&
+                    IsPointSolid(world, bx, m_y - 0.05f, bz, tempPassable, false))
+                {
+                    m_x = bx;
+                    m_z = bz;
+                }
+            }
+            else if (m_vertigoTimer > 0.0f)
+            {
+                m_vertigoTimer -= dt;
+                if (m_vertigoTimer <= 0.0f)
+                {
+                    m_recedeTimer = 3.0f / 20.0f;
+                }
+            }
+            else if (!IsPointSolid(world, m_x + fx * kFoot, m_y - 0.05f, m_z + fz * kFoot, tempPassable, false) &&
+                     IsPointSolid(world, m_x - fx * kFoot, m_y - 0.05f, m_z - fz * kFoot, tempPassable, false))
+            {
+                m_vertigoTimer = 16.0f / 20.0f;
+                m_vertigoStarted = true;
+            }
+        }
+
         UpdateAnim(moving, crouchHeld, lookUpHeld, dt, pushingCrate, holdingCrate);
     }
 
@@ -1740,6 +1786,11 @@ namespace GalaxyEggbert::Game
         // modeling here). Cleared every call; the caller consumes
         // EventsThisFrame() once per frame (INFRA-007, plan.md §7).
         m_eventsThisFrame.clear();
+        if (m_vertigoStarted)
+        {
+            m_eventsThisFrame.push_back(Event{EventKind::VertigoStarted});
+            m_vertigoStarted = false;
+        }
 
         // Vehicle-mode Stop/March selection (plan.md BLUPI-037/038/047/058/
         // 069/084/088/091/094, found 2026-07-18) -- each mode has its own
@@ -1791,6 +1842,8 @@ namespace GalaxyEggbert::Game
                                   : pushingCrate  ? AnimState::Push
                                   : holdingCrate  ? (moving ? AnimState::Pop : AnimState::StopPop)
                                   : m_turning && m_onGround && !moving ? AnimState::Turn
+                                  : m_recedeTimer > 0.0f ? AnimState::Recede
+                                  : m_vertigoTimer > 0.0f ? AnimState::Vertigo
                                   : m_mockeryActive ? m_mockeryVariant
                                   : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
@@ -1943,6 +1996,10 @@ namespace GalaxyEggbert::Game
                 return kWinFrames[m_animPhase % (sizeof(kWinFrames) / sizeof(kWinFrames[0]))];
             case AnimState::Turn:
                 return kTurnFrames[m_animPhase % (sizeof(kTurnFrames) / sizeof(kTurnFrames[0]))];
+            case AnimState::Vertigo:
+                return kVertigoFrames[m_animPhase % (sizeof(kVertigoFrames) / sizeof(kVertigoFrames[0]))];
+            case AnimState::Recede:
+                return kRecedeFrames[m_animPhase % (sizeof(kRecedeFrames) / sizeof(kRecedeFrames[0]))];
             case AnimState::Bye:
                 return kByeFrames[m_animPhase % (sizeof(kByeFrames) / sizeof(kByeFrames[0]))];
             case AnimState::Switch:
