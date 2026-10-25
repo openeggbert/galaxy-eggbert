@@ -746,6 +746,18 @@ endif()
 
 # Same engine-agnostic-parser rationale as VerifyMoveObjectTypesCna above,
 # for BigDecor: section parsing (NEXT.md §8 task 3) instead of MoveObject:.
+# BlockDefinitionRegistry as CSV for the Python world tools; the CTest keeps
+# the committed tools/data/blocks.csv in step with the C++ table.
+add_executable(DumpBlockDefinitions
+        tools/DumpBlockDefinitions.cpp
+        src/GalaxyEggbert/BlockDefinitionRegistry.cpp
+)
+
+target_include_directories(DumpBlockDefinitions PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # Every shipped world loads, carries its file's mission number and survives
 # load -> save -> load (plans/GALAXY_EGGBERT_COMPLETION.md §6).
 add_executable(VerifyShippedWorlds
@@ -804,6 +816,7 @@ if(BUILD_TESTING)
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     # Writes its round-trip copy into the build directory (its default cwd).
     add_test(NAME VerifyShippedWorlds COMMAND VerifyShippedWorlds ${CMAKE_SOURCE_DIR}/worlds3d)
+    add_test(NAME VerifyBlockDefinitionsCsv COMMAND DumpBlockDefinitions --check ${CMAKE_SOURCE_DIR}/tools/data/blocks.csv)
     # No file/working-directory dependency -- AnimDivisor() is a pure
     # function of a BlockTypes icon id (plan.md TEST-007).
     add_test(NAME VerifyTerrainAnimDivisor COMMAND VerifyTerrainAnimDivisor)
