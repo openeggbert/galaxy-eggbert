@@ -522,11 +522,9 @@ namespace GalaxyEggbert::Game
         // real grant site's own `m_blupiPosMagic = m_blupiPos` (confirmed
         // at multiple real grant sites, e.g. `Decor.cpp:6022`) -- call it
         // at Shield/Power's own grant sites, same idiom as
-        // `SpawnInvertBurst()`'s grant-site call. Real distance check
-        // ignores Z (matching every other 2D-source-derived check this
-        // session, e.g. follower homing) -- only X/Y accumulate toward the
-        // 40px threshold, though the spawned marker still uses Blupi's
-        // full 3D position. Hide's own real afterimage trail
+        // `SpawnInvertBurst()`'s grant-site call. The distance toward the
+        // 40px threshold is the original's Manhattan distance, over X, Y
+        // and Z in 3D. Hide's own real afterimage trail
         // (`ObjectType58`, a snapshot of Blupi's OWN current sprite, not a
         // fixed icon) is NOT modeled here -- blocked on the same "no
         // visible Blupi model/animation" gap as Pollution puff's

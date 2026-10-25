@@ -2952,8 +2952,8 @@ int main(int argc, char** argv)
         check(shieldCountAfterSmallMove == 1,
               "the tracker resets on spawn -- a second below-threshold move doesn't drop another marker yet");
 
-        // Z is ignored by the real distance check -- moving only in Z
-        // never drops a marker.
+        // In 3D the distance covers Z as well -- moving only along Z drops a
+        // marker too.
         WorldRuntime zOnlyWorld;
         InteractionSystem zOnlyInteraction;
         zOnlyInteraction.ResetMagicTrail(0.0f, 1.0f, 0.0f);
@@ -2966,7 +2966,7 @@ int main(int argc, char** argv)
                 ++zOnlyCount;
             }
         }
-        check(zOnlyCount == 0, "the real distance check ignores world Z -- moving only in Z never drops a marker");
+        check(zOnlyCount == 1, "moving only along Z drops a marker too (the distance covers all three axes)");
 
         // Power: same mechanic, different type/table.
         WorldRuntime powerWorld;

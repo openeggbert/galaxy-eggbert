@@ -2818,11 +2818,11 @@ namespace GalaxyEggbert::Game
             return;
         }
 
-        // Real Manhattan distance check ignores Z (Decor.cpp:5204-5237,
-        // same 2D-source-only convention as every other real X/Y-only
-        // check this session).
+        // The original's Manhattan distance (Decor.cpp:5204-5237), over all three axes in 3D, so
+        // walking along Z leaves a trail too.
         constexpr float kThreshold = 40.0f / 64.0f;
-        const float dist = std::fabs(blupiX - magicTrailLastX_) + std::fabs(blupiY - magicTrailLastY_);
+        const float dist = std::fabs(blupiX - magicTrailLastX_) + std::fabs(blupiY - magicTrailLastY_) +
+                           std::fabs(blupiZ - magicTrailLastZ_);
         if (dist < kThreshold)
         {
             return;
