@@ -198,6 +198,7 @@ namespace GalaxyEggbert::CNA
         // live GraphicsDevice.
         std::unique_ptr<GalaxyEggbert::Game::TerrainRenderer> terrainRenderer_;
         std::uint32_t terrainRevision_ = 0; // World::blockRevision() terrainRenderer_ was built from
+        bool holdingCrate_ = false;        // crouching with a crate in front, to pull it (StopPop/Pop)
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> terrainEffect_;
 
         // object-m.png, loaded directly via CNA's own Texture2D (no

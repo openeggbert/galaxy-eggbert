@@ -10,9 +10,11 @@
 #include <CnaEngine/Graphics/Camera.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
 #include <cmath>
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -4201,6 +4203,71 @@ int main(int argc, char** argv)
         check(bridgeWorld.GetWorld().getBlock(88, 0, 97).type() == GalaxyEggbert::BlockTypes::Bridge,
               "after the full 157-tick sequence, the bridge cell is restored to the original Bridge icon");
         check(countBridgeObjsHere() == 0, "the construction object self-deletes once its phase reaches 157");
+    }
+
+    // Crates in 3D (2026-10-25): pushed along X or Z by where Blupi walks; never into a wall,
+    // never over a gap (TestPushOneCaisse's support), onto a crate level with them (stacking);
+    // pulled toward him while he holds one and backs away (Pop).
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        GW::World crateWorld;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            for (std::uint16_t z = 40; z <= 60; ++z)
+                crateWorld.setBlock(x, 0, z, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        crateWorld.setBlock(50, 1, 52, GW::Block::make(GalaxyEggbert::BlockTypes::Ground)); // a wall
+        crateWorld.setBlock(46, 0, 45, GW::Block::make(GalaxyEggbert::BlockTypes::Air));    // a gap
+        crateWorld.setBlock(55, 1, 55, GW::Block::make(GalaxyEggbert::BlockTypes::Ground)); // a step
+        const auto placeCrate = [&](float x, float y, float z)
+        {
+            GalaxyEggbert::MoveObjectRecord crate;
+            crate.type = GalaxyEggbert::Def::ObjectType::ObjectType12;
+            crate.posStartX = crate.posEndX = x;
+            crate.posStartY = crate.posEndY = y;
+            crate.posStartZ = crate.posEndZ = z;
+            GalaxyEggbert::PlaceMoveObject(crateWorld, crate);
+        };
+        placeCrate(50, 1, 50); // pushed +Z into the wall
+        placeCrate(45, 1, 45); // pushed +X toward the gap
+        placeCrate(55, 2, 55); // on the step, pushed +X onto the next crate
+        placeCrate(56, 1, 55);
+        placeCrate(52, 1, 42); // pulled
+        const std::filesystem::path cratePath = "VerifyInteractionSystem-crates.vwr";
+        crateWorld.saveToFile(cratePath);
+        WorldRuntime crates;
+        check(crates.LoadFromVwrFile(cratePath.string()), "crate test world loads");
+        std::filesystem::remove(cratePath);
+        InteractionSystem crateInteraction;
+        const auto crateAt = [&](float rawX, float rawY, float rawZ)
+        {
+            for (const auto& obj : crates.GetMobileObjects())
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType12 &&
+                    std::fabs(obj.currentX + 50.0f - rawX) < 0.01f && std::fabs(obj.currentY - rawY) < 0.01f &&
+                    std::fabs(obj.currentZ + 50.0f - rawZ) < 0.01f)
+                    return true;
+            return false;
+        };
+        const auto push = [&](float rawX, float y, float rawZ, float dx, float dz)
+        {
+            crateInteraction.Update(dt, crates, rawX - 50.0f, y, rawZ - 50.0f, dx, sound, false, false, 0, 0, false, true,
+                                    true, true, true, false, false, false, true, false, true, dz, false);
+        };
+        push(50, 1, 49.25f, 0.0f, 0.05f);
+        check(crateAt(50, 1, 51), "a crate is pushed along Z by Blupi walking +Z into it");
+        push(50, 1, 50.25f, 0.0f, 0.05f);
+        check(crateAt(50, 1, 51), "a crate does not go into a wall");
+        push(44.25f, 1, 45, 0.05f, 0.0f);
+        check(crateAt(45, 1, 45), "a crate is not pushed over a gap (it needs support)");
+        push(54.25f, 2, 55, 0.05f, 0.0f);
+        check(crateAt(56, 2, 55), "a crate is pushed off a step onto a crate level with it (stacking)");
+        // Pull: Blupi at raw x 51.25 faces +X, the crate at 52, and backs away along -X.
+        float pullX = 51.25f;
+        for (int i = 0; i < 80 && crateAt(52, 1, 42); ++i)
+        {
+            crateInteraction.Update(dt, crates, pullX - 50.0f, 1.0f, -8.0f, 0.0f, sound, false, false, 1, 0, false,
+                                    true, true, true, true, false, false, false, true, false, true, 0.0f, true);
+            pullX -= 0.02f;
+        }
+        check(crateAt(51, 1, 42), "a held crate follows Blupi a cell as he backs away");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

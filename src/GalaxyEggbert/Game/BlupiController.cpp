@@ -15,6 +15,23 @@ namespace GalaxyEggbert::Game
         constexpr int kWorldCenterX = WorldRuntime::kWorldCenterX;
         constexpr int kWorldCenterZ = WorldRuntime::kWorldCenterZ;
 
+        // The crate cells of the Step() running now (SetCrateCells()), for the static solidity
+        // checks below; null outside Step().
+        thread_local const std::vector<std::array<int, 3>>* g_crateCells = nullptr;
+
+        bool IsCrateCell(int gx, int gy, int gz)
+        {
+            return g_crateCells != nullptr &&
+                   std::any_of(g_crateCells->begin(), g_crateCells->end(), [&](const std::array<int, 3>& c)
+                   { return c[0] == gx && c[1] == gy && c[2] == gz; });
+        }
+
+        struct CrateCellsScope
+        {
+            explicit CrateCellsScope(const std::vector<std::array<int, 3>>& cells) { g_crateCells = &cells; }
+            ~CrateCellsScope() { g_crateCells = nullptr; }
+        };
+
         int ClampGrid(int v, int blocksPerAxis)
         {
             return std::clamp(v, 0, blocksPerAxis - 1);
@@ -198,6 +215,9 @@ namespace GalaxyEggbert::Game
             93, 93, 94, 94, 95, 95, 96, 96, 97, 97, 98, 98};
         constexpr int kHideFrames[] = {276, 277, 278, 279, 280, 281, 282, 283, 284};
         constexpr int kPushFrames[] = {49, 50, 51, 52, 53, 54};
+        // table_blupi StopPop (28) and Pop (29), Tables.cpp: holding a crate, pulling it.
+        constexpr int kStopPopFrames[] = {122, 122, 122, 125, 125, 125};
+        constexpr int kPopFrames[] = {126, 125, 124, 123, 122, 121};
         // Real table_blupi Bye record (id 30, Tables.cpp; transcribed
         // 2026-10-25 under the owner's standing approval for small data
         // tables): the front-facing wave of the world-select farewell,
@@ -266,6 +286,11 @@ namespace GalaxyEggbert::Game
         // IsPointSolid()'s own comment on checkSubcell for the full
         // reasoning). HasJumpHeadroom()/GetBarreCellType()/ToggleGhost()
         // only ever needed this same whole-block coarseness to begin with.
+        // A crate's cell is solid like a block (SetCrateCells()).
+        if (IsCrateCell(gx, gy, gz))
+        {
+            return true;
+        }
         return !world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
                                static_cast<std::uint16_t>(gz)).isAir();
     }
@@ -289,6 +314,10 @@ namespace GalaxyEggbert::Game
         // introduces or should try to "fix") -- floor(y), not floor(y+0.5).
         const int gy = ClampGrid(static_cast<int>(std::floor(y)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::floor(gzf + 0.5f)), blocksPerAxis);
+        if (IsCrateCell(gx, gy, gz))
+        {
+            return true; // a whole cube, no sub-cell mask
+        }
         if (!IsSolidAt(world, gx, gy, gz))
         {
             return false;
@@ -963,8 +992,10 @@ namespace GalaxyEggbert::Game
 
     void BlupiController::Step(const Worlds::World& world, float turnInput, float moveInput,
                                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
-                                  bool tempPassable, bool inSurfWater, bool inDeepWater, bool pushingCrate)
+                                  bool tempPassable, bool inSurfWater, bool inDeepWater, bool pushingCrate,
+                                  bool holdingCrate)
     {
+        const CrateCellsScope crateCells(m_crateCells);
         // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
         // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)
         // { BlupiGhostStep(); return; }`, before even teleporting. Real
@@ -1269,8 +1300,8 @@ namespace GalaxyEggbert::Game
         // Tank controls: turning changes yaw directly; movement is always along
         // the current facing direction, never a free strafe. 0 rad = facing
         // -Z, matching the forward vector the CNA camera derives from
-        // GetYaw() (sin(yaw), 0, -cos(yaw)).
-        if (turnInput != 0.0f)
+        // GetYaw() (sin(yaw), 0, -cos(yaw)). Holding a crate, he keeps facing it.
+        if (turnInput != 0.0f && !holdingCrate)
         {
             m_yaw += turnInput * kTurnSpeed * dt;
         }
@@ -1360,7 +1391,7 @@ namespace GalaxyEggbert::Game
         }
         else
         {
-            horizontalSpeed = moveInput * effectiveMoveSpeed;
+            horizontalSpeed = holdingCrate ? std::min(moveInput, 0.0f) * kPullSpeed : moveInput * effectiveMoveSpeed;
             // Invert/Mirror (plan.md PICKUP-011, real `Decor::SetSpeedX`:
             // "if (m_blupiInvert) speed = -speed") -- negates normal ground
             // movement only; vehicles use their own separate real speed
@@ -1688,10 +1719,11 @@ namespace GalaxyEggbert::Game
         m_onGround = steppedUp ? IsPointSolid(world, newX, newY - 0.05f, newZ, tempPassable, false)
                                : moveResult.onGround;
 
-        UpdateAnim(moving, crouchHeld, lookUpHeld, dt, pushingCrate);
+        UpdateAnim(moving, crouchHeld, lookUpHeld, dt, pushingCrate, holdingCrate);
     }
 
-    void BlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate)
+    void BlupiController::UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate,
+                                     bool holdingCrate)
     {
         // Real SOUND-017/030/031 one-shot cues (plan.md, added 2026-07-20):
         // ch7/ch21 fire once, real Config::ScaleTime(4)=4 ticks=0.2s after
@@ -1753,6 +1785,7 @@ namespace GalaxyEggbert::Game
                                   : m_surf        ? (moving ? AnimState::MarchSurf : AnimState::StopSurf)
                                   : IsInVehicle() ? vehicleAnimState()
                                   : pushingCrate  ? AnimState::Push
+                                  : holdingCrate  ? (moving ? AnimState::Pop : AnimState::StopPop)
                                   : m_mockeryActive ? m_mockeryVariant
                                   : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
@@ -1897,6 +1930,10 @@ namespace GalaxyEggbert::Game
                 return kHideFrames[m_animPhase % (sizeof(kHideFrames) / sizeof(kHideFrames[0]))];
             case AnimState::Push:
                 return kPushFrames[m_animPhase % (sizeof(kPushFrames) / sizeof(kPushFrames[0]))];
+            case AnimState::StopPop:
+                return kStopPopFrames[m_animPhase % (sizeof(kStopPopFrames) / sizeof(kStopPopFrames[0]))];
+            case AnimState::Pop:
+                return kPopFrames[m_animPhase % (sizeof(kPopFrames) / sizeof(kPopFrames[0]))];
             case AnimState::Bye:
                 return kByeFrames[m_animPhase % (sizeof(kByeFrames) / sizeof(kByeFrames[0]))];
             case AnimState::Switch:

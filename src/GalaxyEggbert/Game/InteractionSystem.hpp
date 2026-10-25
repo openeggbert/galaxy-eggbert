@@ -239,7 +239,20 @@ namespace GalaxyEggbert::Game
                     // !IsInVehicle() && !IsEcrased() and passes it in, same convention as
                     // blupiCanGrantShield/Power/etc. Default true so every existing call site
                     // (synthetic tests included) keeps pushing crates unless it opts in.
-                    bool blupiCanPushCrate = true);
+                    bool blupiCanPushCrate = true,
+                    // Blupi's Z displacement this frame (crates are pushed along X or Z, whichever
+                    // he walks into them along), and whether he holds the crate in front of him to
+                    // pull it (crouching, facing it: BlupiController's StopPop/Pop). A held crate
+                    // follows him a cell at a time as he backs away (Decor.cpp's Pop,
+                    // TestPushCaisse(bPop)).
+                    float blupiMoveDZ = 0.0f, bool blupiHoldingCrate = false);
+
+        // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
+        // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.
+        // facingX/Z: his facing direction (sin yaw, -cos yaw).
+        [[nodiscard]] static const MobileObjSpec* CrateInFront(const WorldRuntime& worldRuntime, float blupiX,
+                                                               float blupiY, float blupiZ, float facingX,
+                                                               float facingZ) noexcept;
 
         // INFRA-007 (plan.md §7): all 14 of this class's former *ThisFrame() signals (Died
         // through DeathLockRequested below) are carried by one typed per-frame event queue

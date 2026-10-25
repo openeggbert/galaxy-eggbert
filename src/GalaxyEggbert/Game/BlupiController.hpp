@@ -568,7 +568,10 @@ namespace GalaxyEggbert::Game
             // immediately interrupts it, same as `TriggerMockery()` below.
             // Earlier `plan.md` notes on this session had the direction
             // backwards ("enemy mocks Blupi") -- corrected 2026-07-18.
-            Mockery, Mockeryi, Mockeryp
+            Mockery, Mockeryi, Mockeryp,
+            // Holding a crate to pull it (table_blupi 28/29, Decor.cpp's StopPop/Pop): crouched,
+            // facing the crate; Pop walks backward pulling it.
+            StopPop, Pop
         };
 
         // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -1143,7 +1146,16 @@ namespace GalaxyEggbert::Game
         void Step(const Worlds::World& world, float turnInput, float moveInput,
                   bool jumpPressed, bool crouchHeld, bool lookUpHeld, float dt,
                   bool tempPassable = false, bool inSurfWater = false, bool inDeepWater = false,
-                  bool pushingCrate = false);
+                  bool pushingCrate = false, bool holdingCrate = false);
+
+        // The cells the crates (ObjectType12) occupy, raw grid: solid for Blupi like blocks for
+        // the next Step()s -- he can't walk through a crate and stands on one, as the original's
+        // DecorDetect() counts crates. The caller sets them every frame before Step().
+        void SetCrateCells(std::vector<std::array<int, 3>> cells) { m_crateCells = std::move(cells); }
+
+        // Holding a crate (Step()'s holdingCrate: crouching, a crate right in front): Blupi
+        // cannot turn or step forward, and backs away at the original's Pop speed, 4 px a tick.
+        static constexpr float kPullSpeed = 4.0f * 20.0f / 64.0f;
 
     private:
         // Whole-block coarse solidity (non-air only -- deliberately NOT
@@ -1156,6 +1168,7 @@ namespace GalaxyEggbert::Game
         // resolver (IsPointSolid/ResolveMove) does its own finer-than-
         // whole-block sub-tile lookup on top of this, not through it.
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
+        std::vector<std::array<int, 3>> m_crateCells;
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
         // precise sub-tile solidity for a specific continuous-space point,
@@ -1314,7 +1327,8 @@ namespace GalaxyEggbert::Game
         // separate DecorDetect landing-rect check aren't modeled.
         enum class BarreCellType { None, Hanging, LandingAvailable };
         [[nodiscard]] static BarreCellType GetBarreCellType(const Worlds::World& world, int gx, int gy, int gz);
-        void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate = false);
+        void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate = false,
+                        bool holdingCrate = false);
 
         float m_x = 0.0f;
         float m_y = 1.0f;

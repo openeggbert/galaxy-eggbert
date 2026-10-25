@@ -179,6 +179,103 @@ namespace GalaxyEggbert::Game
             {GalaxyEggbert::Def::ObjectType::ObjectType55, InteractionSystem::VoyageKind::Dynamite, 252, 505.0f, 414.0f, true, false}, // dynamite, Decor.cpp:6123-6125
         };
 
+        bool IsCrate(const MobileObjSpec& obj)
+        {
+            return obj.active && GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle;
+        }
+
+        // A crate occupies raw cell (gx, gy, gz)?
+        bool CrateAtCell(const std::vector<MobileObjSpec>& objects, int gx, int gy, int gz,
+                         const std::vector<MobileObjSpec*>& except)
+        {
+            for (const auto& other : objects)
+            {
+                if (!IsCrate(other) || std::find(except.begin(), except.end(), &other) != except.end())
+                {
+                    continue;
+                }
+                if (static_cast<int>(std::lround(other.currentX)) + WorldRuntime::kWorldCenterX == gx &&
+                    static_cast<int>(std::lround(other.currentY)) == gy &&
+                    static_cast<int>(std::lround(other.currentZ)) + WorldRuntime::kWorldCenterZ == gz)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Moves `seed` and every crate linked to it (touching, at or above its row; for a pull
+        // only those stacked right on it, SearchLinkCaisse(bPop)) one cell along `axis` (0: X,
+        // 2: Z) by `dir`, if every destination is free of solid blocks and other crates and the
+        // seed row's destinations stand on a block or a crate (Decor::TestPushCaisse()).
+        bool MoveCrateGroup(WorldRuntime& worldRuntime, std::vector<MobileObjSpec>& objects, MobileObjSpec& seed,
+                            int axis, float dir, bool pulled)
+        {
+            const auto& world = worldRuntime.GetWorld();
+            const auto along = [axis](const MobileObjSpec& o) { return axis == 0 ? o.currentX : o.currentZ; };
+            const auto across = [axis](const MobileObjSpec& o) { return axis == 0 ? o.currentZ : o.currentX; };
+            std::vector<MobileObjSpec*> linked{&seed};
+            for (bool added = true; added;)
+            {
+                added = false;
+                for (auto& other : objects)
+                {
+                    if (!IsCrate(other) || std::find(linked.begin(), linked.end(), &other) != linked.end() ||
+                        other.currentY < seed.currentY - 0.5f || std::fabs(across(other) - across(seed)) > 0.5f ||
+                        (pulled && std::fabs(along(other) - along(seed)) > 0.5f))
+                    {
+                        continue;
+                    }
+                    for (auto* member : linked)
+                    {
+                        if (std::fabs(along(other) - along(*member)) < 1.5f &&
+                            std::fabs(other.currentY - member->currentY) < 1.5f)
+                        {
+                            linked.push_back(&other);
+                            added = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            const int axisCells = static_cast<int>(world.blocksPerAxis());
+            for (auto* member : linked)
+            {
+                const int gx = static_cast<int>(std::lround(member->currentX + (axis == 0 ? dir : 0.0f))) +
+                               WorldRuntime::kWorldCenterX;
+                const int gy = static_cast<int>(std::lround(member->currentY));
+                const int gz = static_cast<int>(std::lround(member->currentZ + (axis == 2 ? dir : 0.0f))) +
+                               WorldRuntime::kWorldCenterZ;
+                if (gx < 0 || gz < 0 || gy < 1 || gx >= axisCells || gz >= axisCells || gy >= axisCells)
+                {
+                    return false;
+                }
+                const auto at = [&](int y) {
+                    return world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
+                                          static_cast<std::uint16_t>(gz));
+                };
+                const auto& here = GetBlockDefinition(at(gy).type());
+                if (!at(gy).isAir() && here.collisionMask != 0)
+                {
+                    return false;
+                }
+                if (CrateAtCell(objects, gx, gy, gz, linked))
+                {
+                    return false;
+                }
+                if (std::fabs(member->currentY - seed.currentY) < 0.5f && at(gy - 1).isAir() &&
+                    !CrateAtCell(objects, gx, gy - 1, gz, linked))
+                {
+                    return false;
+                }
+            }
+            for (auto* member : linked)
+            {
+                (axis == 0 ? member->currentX : member->currentZ) += dir;
+            }
+            return true;
+        }
+
         // Opens a door tile (plan.md E3D-MIG-160/162, real `Decor::OpenDoor`,
         // ~11667): removes the tile from the terrain grid (becomes passable)
         // and spawns a transient ObjectType22 at that cell (real
@@ -693,6 +790,31 @@ namespace GalaxyEggbert::Game
         constexpr float kFollowerHomingSpeed = 20.0f / 64.0f;
     }
 
+    const MobileObjSpec* InteractionSystem::CrateInFront(const WorldRuntime& worldRuntime, float blupiX, float blupiY,
+                                                         float blupiZ, float facingX, float facingZ) noexcept
+    {
+        const bool alongX = std::fabs(facingX) > std::fabs(facingZ);
+        if (std::fabs(std::fabs(facingX) - std::fabs(facingZ)) < 0.2f)
+        {
+            return nullptr; // facing diagonally: no crate is in front
+        }
+        const float sign = alongX ? (facingX > 0.0f ? 1.0f : -1.0f) : (facingZ > 0.0f ? 1.0f : -1.0f);
+        for (const auto& obj : worldRuntime.GetMobileObjects())
+        {
+            if (!IsCrate(obj) || std::fabs(obj.currentY - blupiY) >= 0.5f)
+            {
+                continue;
+            }
+            const float ahead = (alongX ? obj.currentX - blupiX : obj.currentZ - blupiZ) * sign;
+            const float aside = alongX ? obj.currentZ - blupiZ : obj.currentX - blupiX;
+            if (ahead > 0.3f && ahead < 2.2f && std::fabs(aside) < 0.6f)
+            {
+                return &obj;
+            }
+        }
+        return nullptr;
+    }
+
     void InteractionSystem::OpenDoor(WorldRuntime& worldRuntime, int gx, int gy, int gz, Sound& sound)
     {
         OpenDoorAt(worldRuntime, gx, gy, gz, sound);
@@ -706,7 +828,7 @@ namespace GalaxyEggbert::Game
                                       bool blupiCanGrantCloud, bool blupiCanGrantHide,
                                       bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
-                                      bool blupiCanPushCrate)
+                                      bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate)
     {
         events_.clear();
         crateBeingPushedThisFrame_ = false;
@@ -948,144 +1070,66 @@ namespace GalaxyEggbert::Game
                 continue;
             }
 
-            // Crate push (ObjectType12) -- faithful to mobile-eggbert
-            // TestPushCaisse. X-axis only,
-            // matching that reference exactly (mobile-eggbert is a 2D side-
-            // scroller; X is its only horizontal movement axis, so a
-            // Z-axis push was never a real mechanic to begin with). Real
-            // gate also excludes every vehicle mode + Balloon/Ecrase
-            // (Decor.cpp:6130-6132, found 2026-07-16) -- blupiCanPushCrate
-            // (vehicle+Ecrase) and blupiBallooned (already an existing
-            // parameter) together cover it.
+            // Crates (ObjectType12), as Decor.cpp moves them, in 3D: pushed along X or Z,
+            // whichever axis Blupi walks into one along (Push), and pulled toward him while he
+            // holds it (crouching, facing it) and backs away (Pop). A crate moves a whole cell at
+            // a time, with every crate linked to it at or above its row (SearchLinkCaisse), and
+            // only when every destination is free of blocks and other crates and the seed row's
+            // destinations have support under them (TestPushOneCaisse): crates never fall, they
+            // stack by being pushed off a ledge onto a crate level with it. The real gate also
+            // excludes every vehicle mode + Balloon/Ecrase (Decor.cpp:6130-6132):
+            // blupiCanPushCrate and blupiBallooned.
             if (GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle &&
                 blupiCanPushCrate && !blupiBallooned)
             {
-                const float relX = obj.currentX - blupiX;
-                const float relZ = obj.currentZ - blupiZ;
-                const float distX = std::fabs(relX);
-                const float distZ = std::fabs(relZ);
-                if (distZ < 0.6f && distX > 0.3f && distX < 1.1f)
+                if (std::fabs(obj.currentY - blupiY) < 0.5f)
                 {
-                    const float pushDir = (relX > 0.0f) ? 1.0f : -1.0f;
-                    if (blupiMoveDX * pushDir > 0.01f)
+                    const float relX = obj.currentX - blupiX;
+                    const float relZ = obj.currentZ - blupiZ;
+                    int axis = -1; // 0: X, 2: Z
+                    float dir = 0.0f;
+                    bool pulled = false;
+                    // Walking at it within reach keeps the Push pose (the original stays in Push
+                    // while he marches into a crate); it moves once he touches it.
+                    const bool towardX = std::fabs(relZ) < 0.6f && std::fabs(relX) > 0.3f && std::fabs(relX) < 1.9f &&
+                                         blupiMoveDX * relX > 0.0f && std::fabs(blupiMoveDX) > 0.001f;
+                    const bool towardZ = std::fabs(relX) < 0.6f && std::fabs(relZ) > 0.3f && std::fabs(relZ) < 1.9f &&
+                                         blupiMoveDZ * relZ > 0.0f && std::fabs(blupiMoveDZ) > 0.001f;
+                    if (towardX || towardZ)
                     {
-                        // Linked crates (plan.md E3D-MIG-150, real
-                        // Decor::SearchLinkCaisse ~9397): flood-fill outward
-                        // from the seed (pushed) crate, adding any other
-                        // crate whose box touches an already-linked one (1
-                        // grid unit in X or Y, same Z column -- this
-                        // engine's crates only ever occupy a single Z per
-                        // real mobile-eggbert's own X/Y-only geometry),
-                        // restricted to crates AT OR ABOVE the seed's own
-                        // row (Y) -- "you push the stack, not the floor it
-                        // rests on", matching the real restriction exactly.
-                        std::vector<MobileObjSpec*> linked;
-                        linked.push_back(&obj);
-                        bool addedAny = true;
-                        while (addedAny)
+                        crateBeingPushedThisFrame_ = true;
+                    }
+                    if (towardX && std::fabs(relX) < 1.1f)
+                    {
+                        axis = 0;
+                        dir = relX > 0.0f ? 1.0f : -1.0f;
+                    }
+                    else if (towardZ && std::fabs(relZ) < 1.1f)
+                    {
+                        axis = 2;
+                        dir = relZ > 0.0f ? 1.0f : -1.0f;
+                    }
+                    else if (blupiHoldingCrate &&
+                             CrateInFront(worldRuntime, blupiX, blupiY, blupiZ, static_cast<float>(blupiFacingDX),
+                                          static_cast<float>(blupiFacingDZ)) == &obj)
+                    {
+                        // Held: once Blupi has backed a cell away, the crate takes that cell.
+                        const bool alongX = blupiFacingDX != 0;
+                        const float gap = alongX ? std::fabs(relX) : std::fabs(relZ);
+                        if (gap >= 1.9f)
                         {
-                            addedAny = false;
-                            for (auto& other : objects)
-                            {
-                                if (!other.active ||
-                                    GetObjectDefinition(other.type).semanticKind !=
-                                        ObjectSemanticKind::StaticObstacle) continue;
-                                if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
-                                if (other.currentY < obj.currentY - 0.5f) continue;
-                                if (std::fabs(other.currentZ - obj.currentZ) > 0.5f) continue;
-                                bool touches = false;
-                                for (auto* member : linked)
-                                {
-                                    if (std::fabs(other.currentX - member->currentX) < 1.5f &&
-                                        std::fabs(other.currentY - member->currentY) < 1.5f)
-                                    {
-                                        touches = true;
-                                        break;
-                                    }
-                                }
-                                if (touches)
-                                {
-                                    linked.push_back(&other);
-                                    addedAny = true;
-                                }
-                            }
+                            axis = alongX ? 0 : 2;
+                            dir = alongX ? (relX > 0.0f ? -1.0f : 1.0f) : (relZ > 0.0f ? -1.0f : 1.0f);
+                            pulled = true;
                         }
-
-                        // TestPushCaisse (~9321): every linked member must
-                        // clear at its own proposed destination -- floor
-                        // support (real: two lower-corner edge strips) is
-                        // only re-checked for members at the seed's own row
-                        // (the row being actively pushed); members stacked
-                        // ABOVE that row skip the floor test entirely and
-                        // only need the general non-collision check, same
-                        // as the real source. A stack moves atomically:
-                        // any one member blocked cancels the whole push.
-                        bool allClear = true;
-                        for (auto* member : linked)
-                        {
-                            const float destX = member->currentX + pushDir;
-                            const int wx = static_cast<int>(std::round(destX)) + WorldRuntime::kWorldCenterX;
-                            const int wz = static_cast<int>(std::round(member->currentZ)) + WorldRuntime::kWorldCenterZ;
-                            const int axis = static_cast<int>(world.blocksPerAxis());
-                            if (wx < 0 || wx >= axis || wz < 0 || wz >= axis)
-                            {
-                                allClear = false;
-                                break;
-                            }
-
-                            const bool isSeedRow = std::fabs(member->currentY - obj.currentY) < 0.5f;
-                            if (isSeedRow)
-                            {
-                                const bool hasFloor = !world.getBlock(static_cast<std::uint16_t>(wx), 0,
-                                                                       static_cast<std::uint16_t>(wz))
-                                                            .isAir();
-                                if (!hasFloor)
-                                {
-                                    allClear = false;
-                                    break;
-                                }
-                            }
-
-                            bool occupied = false;
-                            for (const auto& other : objects)
-                            {
-                                if (!other.active ||
-                                    GetObjectDefinition(other.type).semanticKind !=
-                                        ObjectSemanticKind::StaticObstacle) continue;
-                                if (std::find(linked.begin(), linked.end(), &other) != linked.end()) continue;
-                                if (std::fabs(other.currentX - destX) < 0.5f &&
-                                    std::fabs(other.currentY - member->currentY) < 0.5f &&
-                                    std::fabs(other.currentZ - member->currentZ) < 0.5f)
-                                {
-                                    occupied = true;
-                                    break;
-                                }
-                            }
-                            if (occupied)
-                            {
-                                allClear = false;
-                                break;
-                            }
-                        }
-
-                        if (allClear)
-                        {
-                            for (auto* member : linked)
-                            {
-                                member->currentX += pushDir;
-                            }
-                            // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147
-                            // start, `:3637` stop on leaving `GalaxyEggbert::Def::BlupiAction::Push`) -- ch38, not
-                            // "electric arc (long)" as plan.md's own SOUND-048 entry claimed.
-                            // This class has no direct sound-instance-lifetime access (its own
-                            // `sound` parameter is fire-and-forget `Play()` only), so the actual
-                            // start/stop loop control lives in the caller
-                            // (`GalaxyEggbertGame::wasPushingCrate_`) -- this flag is the
-                            // signal it acts on. Deliberately still a plain bool, NOT part of
-                            // `events_` (INFRA-007, plan.md §7) -- this is continuous per-frame
-                            // state the caller edge-detects itself, not a one-shot event.
-                            crateBeingPushedThisFrame_ = true;
-                        }
+                    }
+                    // The crate-push loop sound (ch38, Decor.cpp:6138/6147 start, :3637 stop on
+                    // leaving Push) follows crateBeingPushedThisFrame_ in the caller
+                    // (GalaxyEggbertGame::wasPushingCrate_; this class's `sound` is fire-and-
+                    // forget); a pull plays the original's ch39 once per step.
+                    if (axis >= 0 && MoveCrateGroup(worldRuntime, objects, obj, axis, dir, pulled) && pulled)
+                    {
+                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel39);
                     }
                 }
                 continue;

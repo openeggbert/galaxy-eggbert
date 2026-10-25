@@ -2343,6 +2343,48 @@ int main(int argc, char** argv)
               "the one-cell-below/IsOnGround()-gated check never fires)");
     }
 
+    // Crates (2026-10-25): solid for Blupi like blocks (SetCrateCells(), the original's DecorDetect
+    // counting crates), and held to be pulled (StopPop/Pop: no turning, no step forward, backing
+    // away at kPullSpeed).
+    {
+        Worlds::World crateWorld;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            for (std::uint16_t z = 40; z <= 60; ++z)
+                crateWorld.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        const std::vector<std::array<int, 3>> crates{{52, 1, 50}, {54, 1, 50}};
+
+        BlupiController walker;
+        walker.SetPosition(0.0f, 1.0f, 0.0f); // raw (50, 1, 50)
+        walker.SetYaw(1.5707963f);            // facing +X
+        walker.SetCrateCells(crates);
+        for (int i = 0; i < 90; ++i)
+            walker.Step(crateWorld, 0.0f, 1.0f, false, false, false, dt);
+        check(walker.GetX() + 50.0f < 51.6f, "walking into a crate stops in front of it (crates are solid)");
+
+        BlupiController lander;
+        lander.SetPosition(4.0f, 4.0f, 0.0f); // above the crate at raw (54, 1, 50)
+        lander.SetCrateCells(crates);
+        for (int i = 0; i < 90; ++i)
+            lander.Step(crateWorld, 0.0f, 0.0f, false, false, false, dt);
+        check(lander.IsOnGround() && std::fabs(lander.GetY() - 2.0f) < 0.05f, "Blupi lands and stands on a crate");
+
+        BlupiController holder;
+        holder.SetPosition(1.25f, 1.0f, 0.0f); // raw 51.25, facing the crate at 52
+        holder.SetYaw(1.5707963f);
+        holder.SetCrateCells(crates);
+        for (int i = 0; i < 30; ++i)
+            holder.Step(crateWorld, 1.0f, 1.0f, false, true, false, dt, false, false, false, false, true);
+        check(std::fabs(holder.GetX() - 1.25f) < 0.01f && std::fabs(holder.GetYaw() - 1.5707963f) < 1e-4f,
+              "holding a crate, Blupi neither turns nor steps forward");
+        check(holder.GetAnimState() == BlupiController::AnimState::StopPop, "holding still is StopPop");
+        const float before = holder.GetX();
+        for (int i = 0; i < 60; ++i)
+            holder.Step(crateWorld, 0.0f, -1.0f, false, true, false, dt, false, false, false, false, true);
+        check(std::fabs((before - holder.GetX()) - BlupiController::kPullSpeed * 60.0f * dt) < 0.05f,
+              "holding a crate, Blupi backs away at the original's pull speed");
+        check(holder.GetAnimState() == BlupiController::AnimState::Pop, "backing away with it is Pop");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

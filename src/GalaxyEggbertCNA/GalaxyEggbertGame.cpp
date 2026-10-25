@@ -207,6 +207,8 @@ namespace GalaxyEggbert::CNA
                 case S::MarchSurf: return "MarchSurf";
                 case S::Hide: return "Hide";
                 case S::Push: return "Push";
+                case S::StopPop: return "StopPop";
+                case S::Pop: return "Pop";
                 case S::Switch: return "Switch";
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";
@@ -2404,9 +2406,34 @@ namespace GalaxyEggbert::CNA
             // deliberately reads LAST frame's own result -- a one-frame lag,
             // imperceptible for animation purposes and the same category of
             // simplification as this engine's existing camera-smoothing lag.
+            // Crates are solid for Blupi (SetCrateCells()), and he holds one to pull it while he
+            // crouches facing it (Decor.cpp's StopPop/Pop): taken when it is right in front of
+            // him, kept while he backs away with it, let go when he stops crouching.
+            {
+                std::vector<std::array<int, 3>> crateCells;
+                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                {
+                    if (obj.active && GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle)
+                    {
+                        crateCells.push_back({static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX,
+                                              static_cast<int>(std::lround(obj.currentY)),
+                                              static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ});
+                    }
+                }
+                blupi_.SetCrateCells(std::move(crateCells));
+                const bool canHold = crouchHeld && blupi_.IsOnGround() && !blupi_.IsInVehicle() &&
+                                     !blupi_.IsBallooned() && !blupi_.IsEcrased();
+                const auto* crate = canHold ? InteractionSystem::CrateInFront(
+                                                  worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                                  std::sin(blupi_.GetYaw()), -std::cos(blupi_.GetYaw()))
+                                            : nullptr;
+                const float crateGap = crate ? std::hypot(crate->currentX - blupi_.GetX(), crate->currentZ - blupi_.GetZ())
+                                             : 0.0f;
+                holdingCrate_ = crate != nullptr && (holdingCrate_ || crateGap < 1.1f);
+            }
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
-                        wasPushingCrate_);
+                        wasPushingCrate_, holdingCrate_);
 
             // INFRA-002's behavioral-trace capture (plan.md §7) -- one line
             // per tick, POST-step so it reflects this frame's real result.
@@ -3416,12 +3443,17 @@ namespace GalaxyEggbert::CNA
             // every vehicle mode + Ecrase (Balloon is covered separately by the existing
             // blupi_.IsBallooned() argument just below).
             const bool canPushCrate = !blupi_.IsInVehicle() && !blupi_.IsEcrased();
+            // Crates move by where Blupi walks, not by how far he got: a crate is solid, so walking
+            // into one does not move him (the original pushes while he marches into it).
+            const bool walking = blupi_.IsOnGround() && !holdingCrate_ && moveInput > 0.0f;
+            const float crateIntentDX = walking ? std::sin(blupi_.GetYaw()) * moveInput * simDt : 0.0f;
+            const float crateIntentDZ = walking ? -std::cos(blupi_.GetYaw()) * moveInput * simDt : 0.0f;
             interaction_.Update(simDt, worldRuntime_, interactionBlupiX, interactionBlupiY, interactionBlupiZ,
-                                 blupi_.GetX() - blupiXBeforeStep, sound_, crouchHeld,
+                                 crateIntentDX, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
                                  firePressed, canFire, cloudActive, canGrantInvert, actionPressedEdge,
-                                 canPushCrate);
+                                 canPushCrate, crateIntentDZ, holdingCrate_);
             RefreshTerrainMeshIfChanged();
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
