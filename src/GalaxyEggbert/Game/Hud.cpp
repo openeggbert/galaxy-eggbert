@@ -290,7 +290,13 @@ namespace GalaxyEggbert::Game
                 messageQuads.push_back(q);
                 penX += TextMetrics::Advance(c) * kMessageScale;
             }
-            device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+            // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
+            // straight alpha, while AlphaBlend expects the premultiplied colours
+            // CNA's (and XNA's) content pipeline produces, which Mobile Eggbert
+            // draws. With AlphaBlend every translucent pixel came out too bright:
+            // the menu's dark blue button panel showed whitish (user report,
+            // 2026-10-25).
+            device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
             FlushQuads(device, *textEffect_, textRenderer_, messageQuads, viewportW, viewportH, 1.0f);
             device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
             return;
@@ -660,7 +666,7 @@ namespace GalaxyEggbert::Game
         // Alpha blending for the icon sheets' real alpha channels; the
         // panel additionally gets the real 0.6 opacity via BasicEffect's
         // Alpha. Panel first so the text draws on top of it.
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, padQuads, viewportW, viewportH, kPanelOpacity);
         // Reuses padEffect_ (same pad.png texture/shader) but its own
         // dedicated renderer/mesh buffer, at the real, distinct 1.0 opacity

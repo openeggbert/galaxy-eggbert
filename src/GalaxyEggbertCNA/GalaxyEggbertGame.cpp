@@ -4355,7 +4355,13 @@ namespace GalaxyEggbert::CNA
         // last billboard batch below (BigDecor) so it doesn't affect the
         // unrelated 2D SpriteBatch HUD indicator or any future opaque draw
         // call after this point.
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
+        // straight alpha, while AlphaBlend expects the premultiplied colours
+        // CNA's (and XNA's) content pipeline produces, which Mobile Eggbert
+        // draws. With AlphaBlend every translucent pixel came out too bright:
+        // the menu's dark blue button panel showed whitish (user report,
+        // 2026-10-25).
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
 
         // Billboard rendering for worldRuntime_'s parsed MoveObjects
         // (15-3d-render-mapping-design.md §5/§7, first pass 2026-07-06) —

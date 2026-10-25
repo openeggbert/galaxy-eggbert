@@ -852,7 +852,13 @@ namespace GalaxyEggbert::Game
         appendIconQuad(activeControl_ == kPlayControlPause ? pressedQuads : normalQuads,
                         kPlayPauseRect.x0, kPlayPauseRect.y0, kPlayPauseRect.x1, kPlayPauseRect.y1, kIconPlayPause);
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
+        // straight alpha, while AlphaBlend expects the premultiplied colours
+        // CNA's (and XNA's) content pipeline produces, which Mobile Eggbert
+        // draws. With AlphaBlend every translucent pixel came out too bright:
+        // the menu's dark blue button panel showed whitish (user report,
+        // 2026-10-25).
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPlayPressedAlpha);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
@@ -1003,7 +1009,7 @@ namespace GalaxyEggbert::Game
             appendLabel(4, true, "Continue");
         }
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         if (!charMesh.Mesh().Empty())
         {
@@ -1129,7 +1135,7 @@ namespace GalaxyEggbert::Game
         auto& bgEffect = won ? *winBgEffect_ : *lostBgEffect_;
         auto& bgRenderer = won ? winBgRenderer_ : lostBgRenderer_;
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, bgEffect, bgRenderer, backgroundQuads, viewportW, viewportH, 1.0f);
         if (!charMesh.Mesh().Empty())
         {
@@ -1301,7 +1307,7 @@ namespace GalaxyEggbert::Game
             // SetupReturn has no real label at all in the source (same as WinLostReturn).
         }
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *setupBgEffect_, setupBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, speedyQuads, viewportW, viewportH,
                    anim.speedyOpacity);
@@ -1429,7 +1435,7 @@ namespace GalaxyEggbert::Game
             appendLabel(kResumeContinueRect, "Continue");
         }
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *pauseBgEffect_, pauseBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         if (!charMesh.Mesh().Empty())
         {
@@ -1607,7 +1613,7 @@ namespace GalaxyEggbert::Game
                                 refToScreenY(kCheatButtonH + kCheatLabelYOffset), scale);
         }
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
@@ -1683,7 +1689,7 @@ namespace GalaxyEggbert::Game
             jaugeQuads.push_back(q);
         }
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *waitBgEffect_, waitBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *jaugeEffect_, jaugeRenderer_, jaugeQuads, viewportW, viewportH, 1.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
@@ -1918,7 +1924,7 @@ namespace GalaxyEggbert::Game
                           kIconInitEditor);
         }
 
-        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *initBgEffect_, initBgRenderer_, backgroundQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *speedyblupiEffect_, speedyblupiRenderer_, titleQuads, viewportW, viewportH,
                    titleOpacity);
