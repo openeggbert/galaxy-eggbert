@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-25 (late evening, restored baseline)._
+_Last updated: 2026-10-26 (after midnight: sprite-tile cutout, Win/Turn/Vertigo/Recede clips)._
 
 ## Resume here (exact state when last written)
 
@@ -20,6 +20,11 @@ rebuilt (whole body, Bye, StopPop/Pop), hubs as the original's (signs, doors, go
 key, arrivals), 3D crates (solid, push X/Z, pull), 3D dynamite, D13 (vehicles run over mines),
 no underwater camera crash, and **the main hub plus all of world 1** (`world001`, `world010`,
 missions 011-014; briefs in `plans/briefs/`, scripts in `tools/worlds/`).
+
+2026-10-26: sprite tiles (doors, treasure doors, pillars, girders, bars, plate decor) render cut
+out, cobwebs blended (`73c85a6`, D31, `TileCoverage.hpp`); Blupi's Win/Turn/Vertigo/Recede clips
+installed (`3415d3f`). Worlds 2 and 3 are being authored by two background sessions (commits
+`feat(worlds): ...`); `qa_live.sh` takes `QA_LIVE_WORLDS=<dir>` for probe worlds.
 
 Next: milestone D, worlds 2-12 and 199 — hub then missions per world, each from the original's
 map, hints, objects and the video, authored with the kit, checked with `levelcheck.py` (a
