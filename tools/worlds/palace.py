@@ -12,10 +12,13 @@ tiles only, for the scripts world020.py ... world025.py.
 3D rules, from how the tiles render and collide (checked live 2026-10-25):
 - The white tiles show their picture on the +Z face only, the other faces plain white: trims
   and windows read on south facades.
-- Tiles with transparent areas drawn as cubes show black there: the balustrade 398, pillars
-  399/76/375, the girder 201, cobwebs 401-403, the bars 51/138, the window panel 245 -- none is
-  used. The arch 400 (a dark archway on its Z faces) has no collision: only as a blind arch
-  with stone behind it. Columns, fountains, palms and the statue are BigDecor models.
+- Sprite tiles render cut out (73c85a6): the balustrade 398, pillars 399/76/375, the girder 201,
+  the bars 138, the doors; cobwebs 401-403 are blended. They have no collision sideways but
+  are solid underfoot and overhead (Blupi stands on them, bumps his head on them), as in the
+  original: a balustrade is a balcony's edge Blupi can walk through and stand on, not a rail.
+  Directional cubes with holes (the bars 51, the window panel 245) still show black: unused.
+  The arch 400 (a dark archway on its Z faces) has no collision: a blind arch with stone behind
+  it. Columns, fountains, palms and the statue are BigDecor models.
 - A door bar (182, 334-336, 421-440) closes its whole cell (since 66a1330; before, only the
   middle of the cell along X).
 - A saw kills Blupi in its cell or standing on it (1bb048e). Drawn as a stone block with the
@@ -52,6 +55,9 @@ WATER = 92                   # the surface
 RED_DOOR, GREEN_DOOR, BLUE_DOOR = 334, 335, 336   # keys 49, 50, 51
 BLITZ_EMITTER = 304
 BLITZ = 305
+BALUSTRADE = 398
+PILLAR = 399
+COBWEBS = (401, 402, 403)
 
 
 def treasure_door(n: int) -> int:
