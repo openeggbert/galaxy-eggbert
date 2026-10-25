@@ -66,6 +66,11 @@ namespace GalaxyEggbert::Game
         float timeStopEndTicks = 40.0f;
         int patrolStep = 1; // 1=dwell@start, 2=advance, 3=dwell@end, 4=recede
         float patrolTime = 0.0f; // ticks elapsed within the current patrolStep
+        // A glue ball (ObjectType23) Blupi fired himself, from the tank or the helicopter: it
+        // never hits him. The original starts his shots outside his own rect (35 px ahead, or
+        // below him); here contact is a sphere round him, which a shot leaving from his
+        // position would touch at once.
+        bool firedByBlupi = false;
     };
 
     struct BigDecorSpec

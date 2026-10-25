@@ -149,6 +149,7 @@ namespace GalaxyEggbert::CNA
                     return 7.0f * kTick;
                 case S::StopHelico:
                 case S::MarchHelico:
+                case S::HelicoGlu:
                 case S::StopNage:
                 case S::MarchNage:
                 case S::StopSurf:
@@ -168,11 +169,27 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // The clip for a state the model has none for yet: the Stop of the vehicle he rides, so
+        // the vehicle is still drawn (it is drawn only with a clip it has), else Stop.
+        std::string MissingClipFallback(const BlupiController& blupi)
+        {
+            switch (blupi.GetVehicleMode())
+            {
+                case BlupiController::VehicleMode::Helicopter: return "StopHelico";
+                case BlupiController::VehicleMode::Jeep: return "StopJeep";
+                case BlupiController::VehicleMode::Tank: return "StopTank";
+                case BlupiController::VehicleMode::Skateboard: return "StopSkate";
+                case BlupiController::VehicleMode::Overcraft: return "StopOver";
+                case BlupiController::VehicleMode::None: break;
+            }
+            return "Stop";
+        }
+
         // Real Blupi model clip names (avatars3d/blupi/, 2026-10-24): one clip
         // per AnimState, named after it, plus DeathLocked.<cause> and
         // PickupBusy.<kind>, each built from the state's own sprite icon table
         // at kAnimFps (tools/rd4_to_gltf/build_clip_library.py). The caller
-        // falls back to Stop for a state with no clip yet.
+        // falls back to MissingClipFallback() for a state with no clip yet.
         std::string BlupiClipName(const BlupiController& blupi)
         {
             using S = BlupiController::AnimState;
@@ -217,6 +234,7 @@ namespace GalaxyEggbert::CNA
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";
                 case S::FireTank: return "FireTank";
+                case S::HelicoGlu: return "HelicoGlu";
                 case S::TakeSkate: return "TakeSkate";
                 case S::DeposeSkate: return "DeposeSkate";
                 case S::Mockery: return "Mockery";
@@ -1194,7 +1212,7 @@ namespace GalaxyEggbert::CNA
                                                      : BlupiAnimStateToPlaceholderClipName(blupi_.GetAnimState());
             if (blupiModel_->Clips.find(clipName) == blupiModel_->Clips.end())
             {
-                clipName = "Stop";
+                clipName = MissingClipFallback(blupi_);
             }
             if (clipName != blupiActiveClipName_)
             {
@@ -3460,11 +3478,13 @@ namespace GalaxyEggbert::CNA
             // "F" is this engine's own keyboard pick (no real keyboard
             // binding exists to match -- WP7 touch-only). Level state, not
             // edge-triggered (see InteractionSystem::Update()'s own
-            // comment for why). Gated to Tank only -- Helicopter's own
-            // real firing branch was not independently confirmed this
-            // session, a documented gap, not modeled here.
+            // comment for why). The tank fires ahead; the helicopter drops
+            // glue, only in the air (2026-10-26, Decor.cpp:3694-3708: flag2,
+            // no ground under him and no lift).
             const bool firePressed = keys.IsKeyDown(Keys::F);
-            const bool canFire = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Tank;
+            const bool inHelicopter = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Helicopter;
+            const bool canFire = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Tank ||
+                                 (inHelicopter && !blupi_.IsOnGround() && !interaction_.IsRidingLift());
             // Captured before Update() so the Lost transition below can
             // detect the exact frame GameOverCount() increments (plan.md
             // HUD-023's own real trigger, Decor.cpp:6374-6435).
@@ -3508,7 +3528,8 @@ namespace GalaxyEggbert::CNA
                                  canPushCrate, crateIntentDZ, holdingCrate_,
                                  blupi_.GetVehicleMode() == BlupiController::VehicleMode::Jeep ||
                                      blupi_.GetVehicleMode() == BlupiController::VehicleMode::Tank ||
-                                     blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard);
+                                     blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard,
+                                 inHelicopter);
             RefreshTerrainMeshIfChanged();
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
@@ -3566,6 +3587,17 @@ namespace GalaxyEggbert::CNA
             {
                 blupi_.TriggerOneShotAnim(BlupiController::AnimState::FireTank,
                                            BlupiController::kFireTankDuration);
+            }
+            // The helicopter's glue drop: HelicoGlu holds him while the ball leaves, and the
+            // helicopter kicks up as it goes (Decor.cpp:3067, -10 a tick: its climbing speed).
+            if (FindInteractionEvent(InteractionSystem::EventKind::GlueDropStarted))
+            {
+                blupi_.TriggerOneShotAnim(BlupiController::AnimState::HelicoGlu,
+                                           BlupiController::kHelicoGluDuration);
+            }
+            if (FindInteractionEvent(InteractionSystem::EventKind::GlueDropped))
+            {
+                blupi_.KickUp(BlupiController::kHelicopterAscendSpeed);
             }
 
             // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147 start, `:3637`
@@ -4001,7 +4033,7 @@ namespace GalaxyEggbert::CNA
                     : BlupiAnimStateToPlaceholderClipName(blupi_.GetAnimState());
                 if (blupiModelIsReal_ && blupiModel_->Clips.find(clipName) == blupiModel_->Clips.end())
                 {
-                    clipName = "Stop";
+                    clipName = MissingClipFallback(blupi_);
                 }
                 if (clipName != blupiActiveClipName_)
                 {

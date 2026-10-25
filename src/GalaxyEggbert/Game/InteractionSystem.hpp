@@ -249,7 +249,11 @@ namespace GalaxyEggbert::Game
                     // Riding the jeep, the tank or the skateboard: a mine or a small enemy he runs
                     // into is destroyed and he lives (Decor.cpp:5782-5824: BlupiDead only when
                     // !m_blupiJeep && !m_blupiTank && !m_blupiSkate).
-                    bool blupiArmoredVehicle = false);
+                    bool blupiArmoredVehicle = false,
+                    // Flying the helicopter (in the air: the caller's blupiCanFire): Fire drops a
+                    // glue ball straight down instead of the tank's shot ahead, 8 ticks after the
+                    // press, Blupi held meanwhile (Decor.cpp:3058-3080 HelicoGlu, 3694-3708).
+                    bool blupiDropsGlue = false);
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.
@@ -309,6 +313,11 @@ namespace GalaxyEggbert::Game
             // one frame a Tank bullet actually launched, NOT the empty-clip "click" case (ch53) --
             // the caller fires TriggerOneShotAnim(FireTank, ...) itself.
             TankFired,
+            // The helicopter's glue drop (blupiDropsGlue): Fire started it (the caller plays
+            // HelicoGlu), and, kGlueDropDelaySeconds later, the ball left (the caller kicks the
+            // helicopter up).
+            GlueDropStarted,
+            GlueDropped,
             // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31) -- fires the one
             // frame that pickup's real gate passed and the world object was actually removed; the
             // caller then calls the matching BlupiController::TriggerX() (its own internal gate
@@ -1000,6 +1009,8 @@ namespace GalaxyEggbert::Game
         // an actual shot (see Update()'s own class comment).
         static constexpr float kFireCooldownSeconds = 0.5f;
         float fireCooldownTimer_ = 0.0f;
+        static constexpr float kGlueDropDelaySeconds = 8.0f / 20.0f;
+        float glueDropTimer_ = 0.0f; // > 0: a helicopter glue ball about to leave
         static constexpr int kPersoCap = 5; // real m_blupiPerso cap
         int persoCount_ = 0;
         bool crateBeingPushedThisFrame_ = false; // reset at the top of every Update() call; NOT part of events_ (see its own comment)

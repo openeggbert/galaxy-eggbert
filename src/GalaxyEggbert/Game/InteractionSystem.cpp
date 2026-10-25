@@ -831,7 +831,7 @@ namespace GalaxyEggbert::Game
                                       bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
                                       bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
-                                      bool blupiArmoredVehicle)
+                                      bool blupiArmoredVehicle, bool blupiDropsGlue)
     {
         events_.clear();
         crateBeingPushedThisFrame_ = false;
@@ -1574,6 +1574,10 @@ namespace GalaxyEggbert::Game
             // sound approximation.
             if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23)
             {
+                if (obj.firedByBlupi)
+                {
+                    continue;
+                }
                 const float bdx = obj.currentX - blupiX;
                 const float bdy = obj.currentY - blupiY;
                 const float bdz = obj.currentZ - blupiZ;
@@ -2122,9 +2126,40 @@ namespace GalaxyEggbert::Game
         // full real-behavior citation. Cooldown ticks down every frame
         // regardless of input; only reset on an actual shot.
         fireCooldownTimer_ = std::max(0.0f, fireCooldownTimer_ - dt);
-        if (blupiFirePressed && blupiCanFire && fireCooldownTimer_ <= 0.0f)
+        if (glueDropTimer_ > 0.0f)
         {
-            if (bulletCount_ > 0)
+            // The helicopter's glue ball leaves (Decor.cpp:3060-3075): straight down from under
+            // him, one bullet, the cooldown, and the kick up (the caller's).
+            glueDropTimer_ -= dt;
+            if (glueDropTimer_ <= 0.0f && bulletCount_ > 0)
+            {
+                int gx, gy, gz;
+                ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
+                const int dist = SearchAirDistance(world, gx, gy, gz, 0, -1, 0);
+                --bulletCount_;
+                fireCooldownTimer_ = kFireCooldownSeconds;
+                events_.push_back(Event{EventKind::GlueDropped});
+                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
+                if (dist > 0)
+                {
+                    MobileObjSpec blupiPos{};
+                    blupiPos.currentX = blupiX;
+                    blupiPos.currentY = blupiY;
+                    blupiPos.currentZ = blupiZ;
+                    MobileObjSpec ball = MakeBullet(blupiPos, 0.0f, -1.0f, 0.0f, dist);
+                    ball.firedByBlupi = true;
+                    pendingSpawns.push_back(ball);
+                }
+            }
+        }
+        else if (blupiFirePressed && blupiCanFire && fireCooldownTimer_ <= 0.0f)
+        {
+            if (bulletCount_ > 0 && blupiDropsGlue)
+            {
+                glueDropTimer_ = kGlueDropDelaySeconds;
+                events_.push_back(Event{EventKind::GlueDropStarted});
+            }
+            else if (bulletCount_ > 0)
             {
                 int gx, gy, gz;
                 ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
@@ -2139,8 +2174,10 @@ namespace GalaxyEggbert::Game
                     blupiPos.currentX = blupiX;
                     blupiPos.currentY = blupiY;
                     blupiPos.currentZ = blupiZ;
-                    pendingSpawns.push_back(MakeBullet(blupiPos, static_cast<float>(blupiFacingDX), 0.0f,
-                                                        static_cast<float>(blupiFacingDZ), dist));
+                    MobileObjSpec shot = MakeBullet(blupiPos, static_cast<float>(blupiFacingDX), 0.0f,
+                                                    static_cast<float>(blupiFacingDZ), dist);
+                    shot.firedByBlupi = true;
+                    pendingSpawns.push_back(shot);
                 }
             }
             else

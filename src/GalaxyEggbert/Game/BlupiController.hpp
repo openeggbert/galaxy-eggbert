@@ -253,6 +253,9 @@ namespace GalaxyEggbert::Game
         static constexpr float kTakeSkateDuration = 20.0f / 20.0f;
         static constexpr float kDeposeSkateDuration = 20.0f / 20.0f;
         static constexpr float kFireTankDuration = 6.0f / 20.0f;
+        // HelicoGlu (table_blupi 58, 14 frames): the helicopter drops a glue ball
+        // (InteractionSystem, blupiDropsGlue).
+        static constexpr float kHelicoGluDuration = 14.0f / 20.0f;
 
         // Real Mockery(63)/Mockeryi(64)/Mockeryp(83) durations (same
         // frameCount/20.0f conversion) and the real 300-tick (15s)
@@ -541,6 +544,10 @@ namespace GalaxyEggbert::Game
             // of the real 0.5s fire cooldown, which gates re-firing, not
             // the cosmetic recoil pose.
             FireTank,
+            // HelicoGlu (`table_blupi` ID 58, 2026-10-26): the helicopter drops a glue ball
+            // (Decor.cpp:3058-3080, 3694-3708). Fired from the caller with
+            // `InteractionSystem::EventKind::GlueDropStarted`, like FireTank.
+            HelicoGlu,
             // TakeSkate/DeposeSkate (`table_blupi` IDs 42/43, 20 frames each
             // = 1.0s, wired 2026-07-19): real mount/dismount pose, the only
             // vehicle with a dedicated one (checked the reference doc for
@@ -919,6 +926,10 @@ namespace GalaxyEggbert::Game
         // before/after-Step() way teleport/Bye completion is detected.
         bool TriggerOneShotAnim(AnimState state, float durationSeconds) noexcept;
         [[nodiscard]] bool IsOneShotAnimPlaying() const noexcept { return m_oneShotAnimActive; }
+
+        // The helicopter's kick up as its glue ball leaves (Decor.cpp:3067,
+        // m_blupiVitesseY -= 10): added to his vertical speed, blocks a second.
+        void KickUp(float speed) noexcept { m_velocityY += speed; }
 
         // Real Mockery/Mockeryi/Mockeryp (see the AnimState enum's own
         // comment) -- deliberately NOT a freeze, unlike every TriggerX()

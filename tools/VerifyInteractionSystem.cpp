@@ -990,6 +990,19 @@ int main(int argc, char** argv)
               "firing while in a Tank consumes exactly 1 bullet");
         check(hasEvent(interaction, InteractionSystem::EventKind::TankFired),
               "the TankFired event fires the exact frame a bullet actually launches");
+        {
+            // 20 frames: past the shot leaving his contact sphere, still inside the cooldown
+            // the next checks rely on.
+            bool diedOfOwnShot = false;
+            for (int i = 0; i < 20; ++i)
+            {
+                interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
+                                    false, false, 1, 0, false, true, true, true, true,
+                                    false, true);
+                diedOfOwnShot = diedOfOwnShot || hasEvent(interaction, InteractionSystem::EventKind::Died);
+            }
+            check(!diedOfOwnShot, "the tank's own shot leaves without hitting Blupi");
+        }
 
         interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound,
                             false, false, 1, 0, false, true, true, true, true,
@@ -1032,6 +1045,71 @@ int main(int argc, char** argv)
         check(interaction.BulletCount() == 0, "firing with no ammo left does not underflow BulletCount()");
         check(!hasEvent(interaction, InteractionSystem::EventKind::TankFired),
               "the TankFired event does not fire on the empty-clip click, no real recoil pose then");
+    }
+
+    // 3.72. The helicopter's glue drop (2026-10-26, Decor.cpp:3058-3080 HelicoGlu, 3694-3708):
+    // Fire in the air starts it, the ball leaves 8 ticks later straight down from under him
+    // (one bullet, the cooldown), and it never hits him. A fresh pack at the fire test spot
+    // refills the bullets; the helicopter flies three blocks above it.
+    {
+        MobileObjSpec pack;
+        pack.type = GalaxyEggbert::Def::ObjectType::ObjectType29;
+        pack.active = true;
+        pack.currentX = pack.posStartX = pack.posEndX = fireTestX;
+        pack.currentY = pack.posStartY = pack.posEndY = fireTestY;
+        pack.currentZ = pack.posStartZ = pack.posEndZ = fireTestZ;
+        world.GetMobileObjectsMutable().push_back(pack);
+        interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound);
+        for (int i = 0; i < 40; ++i)
+        {
+            interaction.Update(dt, world, fireTestX, fireTestY, fireTestZ, 0.0f, sound);
+        }
+        check(interaction.BulletCount() == 10, "a fresh pack refills the bullets for the helicopter test");
+
+        const float hx = fireTestX, hy = fireTestY + 3.0f, hz = fireTestZ;
+        const auto flyHelicopter = [&](bool fire)
+        {
+            interaction.Update(dt, world, hx, hy, hz, 0.0f, sound, false, false, 1, 0, false, true, true, true, true,
+                               fire, /*blupiCanFire=*/true, false, true, false, true, 0.0f, false, false,
+                               /*blupiDropsGlue=*/true);
+        };
+        const auto countOwnBalls = [&world]()
+        {
+            int n = 0;
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                n += obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.firedByBlupi &&
+                             obj.posEndY < obj.posStartY && std::fabs(obj.posEndX - obj.posStartX) < 0.01f &&
+                             std::fabs(obj.posEndZ - obj.posStartZ) < 0.01f
+                         ? 1
+                         : 0;
+            }
+            return n;
+        };
+        const int ballsBefore = countOwnBalls();
+        flyHelicopter(true);
+        check(hasEvent(interaction, InteractionSystem::EventKind::GlueDropStarted) &&
+                  !hasEvent(interaction, InteractionSystem::EventKind::TankFired) && interaction.BulletCount() == 10,
+              "Fire in the helicopter starts the glue drop (HelicoGlu), no tank shot, no bullet yet");
+        int framesToDrop = 0;
+        bool dropped = false, diedOfOwnBall = false, startedAgain = false;
+        for (int i = 1; i <= 60 && !dropped; ++i)
+        {
+            flyHelicopter(true);
+            dropped = hasEvent(interaction, InteractionSystem::EventKind::GlueDropped);
+            startedAgain = startedAgain || hasEvent(interaction, InteractionSystem::EventKind::GlueDropStarted);
+            framesToDrop = i;
+        }
+        check(dropped && framesToDrop >= 22 && framesToDrop <= 26 && !startedAgain,
+              "the ball leaves 8 ticks (0.4 s) after Fire, holding Fire starts no second drop meanwhile");
+        check(interaction.BulletCount() == 9, "the drop costs one bullet");
+        for (int i = 0; i < 20; ++i)
+        {
+            flyHelicopter(false);
+            diedOfOwnBall = diedOfOwnBall || hasEvent(interaction, InteractionSystem::EventKind::Died);
+        }
+        check(countOwnBalls() == ballsBefore + 1, "the glue ball falls straight down from under him");
+        check(!diedOfOwnBall, "his own glue ball never hits him");
     }
 
     // 3.74. Types 201-203 (plan.md PICKUP-069, found 2026-07-16, real Decor.cpp:6088-6115) --
