@@ -134,6 +134,7 @@ Found while building mission 011 (live, 2026-10-25):
 | D30 | After Lost Blupi restarts at (0, 1, 0), not the world's spawn | — | **done** `018c0a6` |
 | D31 | Sprite tiles drawn as opaque cubes/plates: black where the sprite is clear (doors 334-336, treasure doors 421+, pillars 399/76/375, girder 201, bars 51/138, balustrade 398, plate decor, cobwebs) | — | **done** (TileCoverage: alpha-test cutout pass, faint tiles blended; stone walls under a quarter clear stay opaque) |
 | D32 | Blupi cannot leave deep water onto a bank (bobs at the surface, sinks back) | full gravity while Surf, a kick while Nage | **done** `762d254` (swimming as Decor.cpp: no gravity, float band, dive, drift up, the weak jump out) |
+| D33 | The tank's own glue shot killed Blupi | contact is a sphere round him; the shot left from his position (the original starts it 35 px ahead) | **done** `85bc1ae` (his own shots never hit him) |
 
 ## 6. Native world format: evolution policy
 
@@ -195,9 +196,13 @@ squashed pair, Balloon, Teleporte, Hide, Switch, the vehicles (helicopter, jeep,
 fire, skateboard incl. take/put, overcraft), swimming and surface, Mockery ×3, dynamite
 take/put, deaths Clear1/3/4, Glu, Drown, pickups Sucette/Drink/Charge, Bye, Win (13), Turn
 (3), Vertigo (8), Recede/Advance (9/10, pull), Pop/StopPop (28/29) (2026-10-25/26).
-**Missing states** (to verify against `Decor.cpp` before adding): the vehicle turns, Set (12),
-Suspend family (31-34, hanging bar), JumpAie (36), Ouf1a-5 (44-48, 65), Electro (57),
-HelicoGlu (58), Clear2/5-8, SlowdownSkate (85).
+HelicoGlu (58, the helicopter's glue drop, `85bc1ae`), JumpAie (36) and Ouf1a/1b/3/4 (44, 45,
+47, 48, `ec84d42`; clips with the next library rebuild). Checked against `Decor.cpp` and not
+added, being dead code there: the Suspend family (31-34; `m_blupiSuspend` is never set), Ouf5
+(65, its only cause is Suspend), Electro (57) and Clear5-8 (78-81; never assigned), Set (12;
+never referenced). The vehicle turns are the host turning the 3D model for the length of
+each Turn action (`TurnAroundSeconds`). **Open:** Ouf2 (46) with the Perso decoy, StopJump/
+StopMarch landing poses (61/60), SlowdownSkate (85).
 
 ## 9. Campaign content
 
@@ -254,6 +259,9 @@ adaptation) · evidence/test · priority. Known rows so far:
 | Hub door slides up after a win (video §c) | C | open |
 | Crate pull (Recede/Advance) | A | done D21 |
 | Vehicle × enemy contact (skateboard vs. mine, D13; then every vehicle and enemy) | A | mines done D13; every other vehicle × enemy pair open |
+| Helicopter glue drop (HelicoGlu, Decor.cpp:3694-3708, 3058-3080) | A | done `85bc1ae` |
+| Swimming, surface float, the jump out of the water (Decor.cpp:4542-4692, 5336-5357) | A | done D32 |
+| Reactions: JumpAie, Ouf1a/1b/3/4 | C | done `ec84d42` (clips pending) |
 
 ## 12. QA gates and tools
 

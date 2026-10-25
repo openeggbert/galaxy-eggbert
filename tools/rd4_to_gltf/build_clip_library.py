@@ -74,7 +74,7 @@ WHOLE_MARGIN = 0.05
 # parts) drawn with Blupi's transform and clip: every object of these clips' scenes that is not
 # part of Blupi's body.
 VEHICLES = {
-    "helico": ["StopHelico", "MarchHelico"],
+    "helico": ["StopHelico", "MarchHelico", "HelicoGlu"],
     "jeep": ["StopJeep", "MarchJeep"],
     "tank": ["StopTank", "MarchTank", "FireTank"],
     "over": ["StopOver", "MarchOver"],
