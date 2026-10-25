@@ -125,6 +125,13 @@ Found while building mission 011 (live, 2026-10-25):
 | D21 | Crates 2D-era: X-only push, floor test at y 0, Blupi walks through them, no pull | — | **done** `1598ebc`, `fd67b3f`, clips `d098a0b` (solid, X/Z push with support, StopPop/Pop pull) |
 | D22 | The game crashes when Blupi dives in deep water | camera raymarch counted water as a wall, eye on target, LookAt threw | **done** `f42d58a` |
 | D23 | The dynamite blast misses what is in front of or behind the stick | 2D blast, half a cell in Z | **done** `d6e9bce` |
+| D24 | A fan kills only when right above Blupi's head, whatever way it blows; its wind stays | simplified IsVentillo | **done** `39d3f16` (contact at the mouth, wind column cleared) |
+| D25 | A creature patrolling along Z shoots sideways | shots along X only | **done** `393a2a3` |
+| D26 | Enemies patrolling along Z move sideways | sprite yaw faces ±X | **done** `1e139d2` |
+| D27 | A follower at another depth never reaches Blupi | homing in X/Y only | **done** `4f0f062` |
+| D28 | Walking along Z leaves no Shield/Power trail | distance in X/Y only | **done** `3cb27fa` |
+| D29 | A win screen after every mission; no Win cheer, no Turn | — | **done** `018c0a6`, `65d2f05` (cheer then straight on; the screen only after 199; clips with the next model rebuild) |
+| D30 | After Lost Blupi restarts at (0, 1, 0), not the world's spawn | — | **done** `018c0a6` |
 
 ## 6. Native world format: evolution policy
 
