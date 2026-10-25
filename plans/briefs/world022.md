@@ -41,5 +41,6 @@ every lift has the original's timing.
   climbed from it (treasure 3, 0/8 → 1/8); the court crate pushed to the gallery and the gallery
   climbed; Blupi carried across the lava trench on the lift; the lift tower's piers and lifts;
   the top landing's crate and bar 7; the saw passage, the library aisles, the green door.
-- Open (engine): Blupi cannot climb out of water two deep — at the surface he sinks back
-  (reported 2026-10-26); until that is fixed the pool's treasure cannot be brought out.
+- The pool: Blupi dives to its treasure (1/8) and jumps out onto the gallery. (Found while
+  building it: he could not leave deep water, sinking back at the surface; fixed in 762d254,
+  he now floats at the surface and makes the weak jump out, as in the original.)
