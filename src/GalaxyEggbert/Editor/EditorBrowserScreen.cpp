@@ -13,12 +13,16 @@ namespace GalaxyEggbert::Editor
 {
     namespace
     {
-        constexpr float kRowHeight = 36.0f;
-        constexpr float kRowWidth = 320.0f;
+        constexpr float kRowHeight = 34.0f;
+        constexpr float kRowWidth = 340.0f;
         constexpr float kRowX0 = 200.0f;
-        constexpr float kRowY0 = 20.0f;
-        constexpr float kRowGap = 6.0f;
-        constexpr float kDeleteButtonSize = 28.0f;
+        constexpr float kRowY0 = 70.0f;
+        constexpr float kRowGap = 4.0f;
+        constexpr float kDeleteButtonSize = 26.0f;
+        constexpr float kOlderX0 = 570.0f;
+        constexpr float kOlderWidth = 210.0f;
+        constexpr float kOlderY0 = 108.0f;
+        constexpr int kOlderRowsShown = 9;
 
         // Same text.png glyph convention InputPad.cpp's own label
         // methods already document (32px cells, 16 columns, glyph index ==
@@ -59,44 +63,46 @@ namespace GalaxyEggbert::Editor
     void EditorBrowserScreen::Refresh(int gamerSlot)
     {
         gamerSlot_ = gamerSlot;
-        worlds_ = ListCustomWorlds(gamerSlot);
-        // Newest first -- last_write_time-derived recency, since there's
-        // no free-text name to sort by (see this class's own header
-        // comment on why renaming isn't supported yet).
-        std::sort(worlds_.begin(), worlds_.end(), [](const std::filesystem::path& a, const std::filesystem::path& b)
+        slotUsed_.assign(kCustomWorldSlotCount, false);
+        std::error_code ec;
+        for (int slot = 1; slot <= kCustomWorldSlotCount; ++slot)
         {
-            std::error_code ecA, ecB;
-            const auto timeA = std::filesystem::last_write_time(a, ecA);
-            const auto timeB = std::filesystem::last_write_time(b, ecB);
-            return timeA > timeB;
-        });
+            slotUsed_[static_cast<std::size_t>(slot - 1)] = std::filesystem::exists(SlotWorldPath(gamerSlot, slot), ec);
+        }
+        older_ = ListOlderCustomWorlds(gamerSlot);
         armedDeleteIndex_ = -1;
     }
 
-    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::RowRect(int index) const noexcept
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::SlotRect(int slotIndex) noexcept
     {
-        const float y0 = kRowY0 + static_cast<float>(index) * (kRowHeight + kRowGap);
+        const float y0 = kRowY0 + static_cast<float>(slotIndex) * (kRowHeight + kRowGap);
         return {kRowX0, y0, kRowX0 + kRowWidth, y0 + kRowHeight};
     }
 
-    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::DeleteButtonRect(int index) const noexcept
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::DeleteButtonRect(int slotIndex) noexcept
     {
-        const GalaxyEggbert::Game::QuadBatch::Rect row = RowRect(index);
+        const GalaxyEggbert::Game::QuadBatch::Rect row = SlotRect(slotIndex);
         const float y0 = row.y0 + (kRowHeight - kDeleteButtonSize) * 0.5f;
         return {row.x1 - kDeleteButtonSize - 4.0f, y0, row.x1 - 4.0f, y0 + kDeleteButtonSize};
     }
 
-    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::BackButtonRect(
-        int /*viewportWidth*/, int /*viewportHeight*/) const noexcept
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::OlderRect(int index) noexcept
     {
-        return {20.0f, kRowY0, 170.0f, kRowY0 + kRowHeight};
+        const float y0 = kOlderY0 + static_cast<float>(index) * (kRowHeight + kRowGap);
+        return {kOlderX0, y0, kOlderX0 + kOlderWidth, y0 + kRowHeight};
+    }
+
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::BackButtonRect() noexcept
+    {
+        return {20.0f, 20.0f, 170.0f, 20.0f + kRowHeight};
     }
 
     EditorBrowserScreen::UpdateResult EditorBrowserScreen::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
-        int viewportWidth, int viewportHeight, bool backPressed)
+        int /*viewportWidth*/, int /*viewportHeight*/, bool backPressed)
     {
         using ButtonState = Microsoft::Xna::Framework::Input::ButtonState;
+        using GalaxyEggbert::Game::QuadBatch::InRect;
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
         const float mx = static_cast<float>(mouse.getXProperty());
         const float my = static_cast<float>(mouse.getYProperty());
@@ -113,51 +119,49 @@ namespace GalaxyEggbert::Editor
         }
         if (!mouseDown && mouseWasDown_)
         {
-            if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, BackButtonRect(viewportWidth, viewportHeight)))
+            int armed = -1;
+            if (InRect(mx, my, BackButtonRect()))
             {
                 result.action = Action::Back;
-                armedDeleteIndex_ = -1;
             }
-            else if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, RowRect(0)))
+            for (int i = 0; i < kCustomWorldSlotCount && result.action == Action::None; ++i)
             {
-                result.action = Action::New;
-                armedDeleteIndex_ = -1;
-            }
-            else
-            {
-                bool handled = false;
-                for (std::size_t i = 0; i < worlds_.size(); ++i)
+                const auto path = SlotWorldPath(gamerSlot_, i + 1);
+                if (slotUsed_[static_cast<std::size_t>(i)] && InRect(mx, my, DeleteButtonRect(i)))
                 {
-                    const int rowIndex = static_cast<int>(i) + 1;
-                    if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, DeleteButtonRect(rowIndex)))
+                    if (armedDeleteIndex_ == i)
                     {
-                        if (armedDeleteIndex_ == static_cast<int>(i))
-                        {
-                            std::error_code ec;
-                            std::filesystem::remove(worlds_[i], ec);
-                            Refresh(gamerSlot_);
-                        }
-                        else
-                        {
-                            armedDeleteIndex_ = static_cast<int>(i);
-                        }
-                        handled = true;
-                        break;
+                        std::error_code ec;
+                        std::filesystem::remove(path, ec);
+                        Refresh(gamerSlot_);
                     }
-                    if (GalaxyEggbert::Game::QuadBatch::InRect(mx, my, RowRect(rowIndex)))
+                    else
+                    {
+                        armed = i;
+                    }
+                    break;
+                }
+                if (InRect(mx, my, SlotRect(i)))
+                {
+                    result.action = slotUsed_[static_cast<std::size_t>(i)] ? Action::Open : Action::New;
+                    result.path = path;
+                }
+            }
+            for (int i = 0; i < static_cast<int>(older_.size()) && i < kOlderRowsShown &&
+                            result.action == Action::None; ++i)
+            {
+                if (InRect(mx, my, OlderRect(i)))
+                {
+                    const auto copy = CopyIntoFreeSlot(gamerSlot_, older_[static_cast<std::size_t>(i)]);
+                    slotsFull_ = copy.empty();
+                    if (!copy.empty())
                     {
                         result.action = Action::Open;
-                        result.path = worlds_[i];
-                        armedDeleteIndex_ = -1;
-                        handled = true;
-                        break;
+                        result.path = copy;
                     }
                 }
-                if (!handled)
-                {
-                    armedDeleteIndex_ = -1;
-                }
             }
+            armedDeleteIndex_ = armed;
         }
         mouseWasDown_ = mouseDown;
         return result;
@@ -207,36 +211,52 @@ namespace GalaxyEggbert::Editor
         {
             flatQuads.push_back({r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 1.0f, 1.0f});
         };
-        addFlat(BackButtonRect(viewportWidth, viewportHeight));
-        addFlat(RowRect(0)); // "+ New World" row
-        for (std::size_t i = 0; i < worlds_.size(); ++i)
+        addFlat(BackButtonRect());
+        for (int i = 0; i < kCustomWorldSlotCount; ++i)
         {
-            addFlat(RowRect(static_cast<int>(i) + 1));
-            addFlat(DeleteButtonRect(static_cast<int>(i) + 1));
+            addFlat(SlotRect(i));
+            if (slotUsed_[static_cast<std::size_t>(i)])
+            {
+                addFlat(DeleteButtonRect(i));
+            }
+        }
+        const int olderShown = std::min(static_cast<int>(older_.size()), kOlderRowsShown);
+        for (int i = 0; i < olderShown; ++i)
+        {
+            addFlat(OlderRect(i));
         }
         GalaxyEggbert::Game::QuadBatch::FlushQuads(device, *flatEffect_, flatRenderer_, flatQuads, viewportWidth, viewportHeight, 0.5f);
 
         const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
         const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
         std::vector<GalaxyEggbert::Game::QuadBatch::Quad> labelQuads;
+        const auto label = [&](const std::string& text, float x, float y)
         {
-            const GalaxyEggbert::Game::QuadBatch::Rect back = BackButtonRect(viewportWidth, viewportHeight);
-            AppendLabel(labelQuads, "< Main Menu", back.x0 + 8.0f, back.y0 + 8.0f,
-                        kLabelScale, textSheetW, textSheetH);
+            AppendLabel(labelQuads, text, x, y, kLabelScale, textSheetW, textSheetH);
+        };
+        label("< Main Menu", BackButtonRect().x0 + 8.0f, BackButtonRect().y0 + 8.0f);
+        label(std::string("3D World Editor - Player ") + static_cast<char>('A' + gamerSlot_), kRowX0, 28.0f);
+        for (int i = 0; i < kCustomWorldSlotCount; ++i)
+        {
+            const auto row = SlotRect(i);
+            const bool used = slotUsed_[static_cast<std::size_t>(i)];
+            label(std::to_string(i + 1) + (used ? "   World " + std::to_string(i + 1) : "   (empty) - new world"),
+                  row.x0 + 8.0f, row.y0 + 7.0f);
+            if (used)
+            {
+                const auto del = DeleteButtonRect(i);
+                label(armedDeleteIndex_ == i ? "!" : "X", del.x0 + 6.0f, del.y0 + 2.0f);
+            }
         }
+        if (!older_.empty())
         {
-            const GalaxyEggbert::Game::QuadBatch::Rect row0 = RowRect(0);
-            AppendLabel(labelQuads, "+ New World", row0.x0 + 8.0f, row0.y0 + 8.0f, kLabelScale, textSheetW,
-                       textSheetH);
+            label("Older worlds", kOlderX0, kOlderY0 - 30.0f);
+            label(slotsFull_ ? "(no free slot)" : "(click: copy to a slot)", kOlderX0, kOlderY0 - 16.0f);
         }
-        for (std::size_t i = 0; i < worlds_.size(); ++i)
+        for (int i = 0; i < olderShown; ++i)
         {
-            const GalaxyEggbert::Game::QuadBatch::Rect row = RowRect(static_cast<int>(i) + 1);
-            AppendLabel(labelQuads, worlds_[i].stem().string(), row.x0 + 8.0f, row.y0 + 8.0f, kLabelScale,
-                       textSheetW, textSheetH);
-            const GalaxyEggbert::Game::QuadBatch::Rect del = DeleteButtonRect(static_cast<int>(i) + 1);
-            const char* deleteLabel = (armedDeleteIndex_ == static_cast<int>(i)) ? "!" : "X";
-            AppendLabel(labelQuads, deleteLabel, del.x0 + 6.0f, del.y0 + 2.0f, kLabelScale, textSheetW, textSheetH);
+            const auto row = OlderRect(i);
+            label(older_[static_cast<std::size_t>(i)].stem().string(), row.x0 + 8.0f, row.y0 + 7.0f);
         }
         GalaxyEggbert::Game::QuadBatch::FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportWidth, viewportHeight, 1.0f);
 

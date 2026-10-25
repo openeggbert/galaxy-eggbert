@@ -1988,12 +1988,13 @@ namespace GalaxyEggbert::CNA
                     {
                         LoadCustomWorldForEditing(request.openPath);
                     }
-                    else if (request.shouldCreateNew)
+                    else if (request.shouldCreateNew && !request.createPath.empty())
                     {
-                        const std::filesystem::path newPath =
-                            GalaxyEggbert::Editor::NextNewWorldPath(saveData_.GetSelectedGamer());
-                        GalaxyEggbert::Editor::CreateEditorStarterWorld().saveToFile(newPath);
-                        LoadCustomWorldForEditing(newPath);
+                        // A new world in the empty slot the player clicked.
+                        std::error_code ec;
+                        std::filesystem::create_directories(request.createPath.parent_path(), ec);
+                        GalaxyEggbert::Editor::CreateEditorStarterWorld().saveToFile(request.createPath);
+                        LoadCustomWorldForEditing(request.createPath);
                     }
                 }
                 else

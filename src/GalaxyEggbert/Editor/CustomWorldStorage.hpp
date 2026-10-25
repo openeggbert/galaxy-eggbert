@@ -24,11 +24,35 @@ namespace GalaxyEggbert::Editor
     // that has never created a world).
     [[nodiscard]] std::vector<std::filesystem::path> ListCustomWorlds(int gamerSlot);
 
-    // A fresh, not-yet-used path for a new world in @p gamerSlot's own
-    // directory ("custom_NNN.vwr", first unused NNN starting at 1) --
-    // creates the directory if it doesn't exist yet, but does NOT create
-    // the file itself; the caller still saves a real World there.
+    // Each gamer has ten custom-world slots (owner, 2026-10-25). Slot n (1-10)
+    // is "custom_00n.vwr" ("custom_010.vwr" for 10) in CustomWorldsDir(), the
+    // names the first ten worlds already had, so existing worlds keep their
+    // slots.
+    constexpr int kCustomWorldSlotCount = 10;
+
+    // Slot @p slot's (1-10) file, which may not exist yet.
+    [[nodiscard]] std::filesystem::path SlotWorldPath(int gamerSlot, int slot);
+
+    // Every other .vwr in CustomWorldsDir(): custom_011.vwr and up from the
+    // time worlds were numbered to 999, and any other name. They are kept and
+    // listed by the editor, never deleted or hidden; CopyIntoFreeSlot() brings
+    // one into a slot (the original stays untouched).
+    [[nodiscard]] std::vector<std::filesystem::path> ListOlderCustomWorlds(int gamerSlot);
+
+    // The first free slot's path, creating the directory if needed but not the
+    // file; empty when all ten slots hold a world.
     [[nodiscard]] std::filesystem::path NextNewWorldPath(int gamerSlot);
+
+    // Copies @p source into the first free slot; returns the slot's path, or
+    // empty when every slot is taken or the copy failed.
+    [[nodiscard]] std::filesystem::path CopyIntoFreeSlot(int gamerSlot, const std::filesystem::path& source);
+
+    // Seeds slot 1 with @p showcase (worlds3d/world999.vwr) the first time a
+    // gamer opens the editor, and only if slot 1 is empty: a marker file
+    // (".demo-seeded") records that it happened, so a deleted or edited slot 1
+    // is never seeded again and nothing is overwritten. Returns true when it
+    // copied the showcase.
+    bool SeedShowcaseSlot(int gamerSlot, const std::filesystem::path& showcase);
 
     // The first scene a new Galaxy 3D editor world opens with. It is a
     // compact playable tutorial rather than an all-air volume: a 3x3 Rock

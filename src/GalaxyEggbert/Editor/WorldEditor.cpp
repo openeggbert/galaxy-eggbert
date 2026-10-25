@@ -1,5 +1,7 @@
 #include "WorldEditor.hpp"
 
+#include "CustomWorldStorage.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <optional>
@@ -32,6 +34,9 @@ namespace GalaxyEggbert::Editor
     {
         gamerSlot_ = gamerSlot;
         browsing_ = true;
+        // The showcase world fills an empty slot 1 once per gamer (owner,
+        // 2026-10-25; CustomWorldStorage::SeedShowcaseSlot()).
+        (void)SeedShowcaseSlot(gamerSlot, "worlds3d/world999.vwr");
         browserScreen_.Refresh(gamerSlot);
     }
 
@@ -50,6 +55,7 @@ namespace GalaxyEggbert::Editor
         else if (result.action == EditorBrowserScreen::Action::New)
         {
             request.shouldCreateNew = true;
+            request.createPath = result.path;
         }
         else if (result.action == EditorBrowserScreen::Action::Back)
         {

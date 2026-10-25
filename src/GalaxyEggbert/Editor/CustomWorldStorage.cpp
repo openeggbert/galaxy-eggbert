@@ -47,26 +47,85 @@ namespace GalaxyEggbert::Editor
         return worlds;
     }
 
+    std::filesystem::path SlotWorldPath(int gamerSlot, int slot)
+    {
+        char name[32];
+        std::snprintf(name, sizeof(name), "custom_%03d.vwr", slot);
+        return CustomWorldsDir(gamerSlot) / name;
+    }
+
+    std::vector<std::filesystem::path> ListOlderCustomWorlds(int gamerSlot)
+    {
+        std::vector<std::filesystem::path> older;
+        for (const auto& path : ListCustomWorlds(gamerSlot))
+        {
+            bool isSlot = false;
+            for (int slot = 1; slot <= kCustomWorldSlotCount && !isSlot; ++slot)
+            {
+                isSlot = path.filename() == SlotWorldPath(gamerSlot, slot).filename();
+            }
+            if (!isSlot)
+            {
+                older.push_back(path);
+            }
+        }
+        return older;
+    }
+
     std::filesystem::path NextNewWorldPath(int gamerSlot)
     {
-        const std::filesystem::path dir = CustomWorldsDir(gamerSlot);
         std::error_code ec;
-        std::filesystem::create_directories(dir, ec);
-
-        for (int n = 1; n <= 999; ++n)
+        std::filesystem::create_directories(CustomWorldsDir(gamerSlot), ec);
+        for (int slot = 1; slot <= kCustomWorldSlotCount; ++slot)
         {
-            char name[32];
-            std::snprintf(name, sizeof(name), "custom_%03d.vwr", n);
-            const std::filesystem::path candidate = dir / name;
+            const std::filesystem::path candidate = SlotWorldPath(gamerSlot, slot);
             if (!std::filesystem::exists(candidate))
             {
                 return candidate;
             }
         }
-        // Exhausted 1-999 (999 custom worlds in one gamer slot) -- fall
-        // back to a timestamp-free sequential overflow name rather than
-        // silently reusing/overwriting an existing one.
-        return dir / "custom_overflow.vwr";
+        // All ten slots are taken: there is no new world to create (never
+        // reuse or overwrite one).
+        return {};
+    }
+
+    std::filesystem::path CopyIntoFreeSlot(int gamerSlot, const std::filesystem::path& source)
+    {
+        const std::filesystem::path target = NextNewWorldPath(gamerSlot);
+        if (target.empty())
+        {
+            return {};
+        }
+        std::error_code ec;
+        if (!std::filesystem::copy_file(source, target, std::filesystem::copy_options::none, ec))
+        {
+            return {};
+        }
+        return target;
+    }
+
+    bool SeedShowcaseSlot(int gamerSlot, const std::filesystem::path& showcase)
+    {
+        const std::filesystem::path dir = CustomWorldsDir(gamerSlot);
+        const std::filesystem::path marker = dir / ".demo-seeded";
+        std::error_code ec;
+        if (std::filesystem::exists(marker, ec) || !std::filesystem::exists(showcase, ec))
+        {
+            return false;
+        }
+        std::filesystem::create_directories(dir, ec);
+        const std::filesystem::path slotOne = SlotWorldPath(gamerSlot, 1);
+        bool copied = false;
+        if (!std::filesystem::exists(slotOne, ec))
+        {
+            copied = std::filesystem::copy_file(showcase, slotOne, std::filesystem::copy_options::none, ec);
+        }
+        if (std::FILE* file = std::fopen(marker.string().c_str(), "w"))
+        {
+            std::fputs(copied ? "slot 1 seeded from the showcase world\n" : "slot 1 was taken; not seeded\n", file);
+            std::fclose(file);
+        }
+        return copied;
     }
 
     GalaxyEggbert::Worlds::World CreateEditorStarterWorld()

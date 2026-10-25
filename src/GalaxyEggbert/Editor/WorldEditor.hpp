@@ -40,7 +40,8 @@ namespace GalaxyEggbert::Editor
         {
             bool shouldOpen = false;
             std::filesystem::path openPath; // valid when shouldOpen
-            bool shouldCreateNew = false;    // CustomWorldStorage::NextNewWorldPath(gamerSlot) is the target
+            bool shouldCreateNew = false;    // a new world in the empty slot createPath
+            std::filesystem::path createPath;
             bool shouldReturnToMenu = false;
         };
 

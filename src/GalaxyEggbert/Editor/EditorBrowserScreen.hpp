@@ -13,14 +13,14 @@
 
 namespace GalaxyEggbert::Editor
 {
-    // Per-gamer-slot world list/create/open/delete screen (plan.md
-    // EDITOR-107) -- the entry point into the editor from the Init menu's
-    // new Editor button. Deliberately simple: no free-text renaming (no
-    // text-input widget exists anywhere in this codebase yet, a documented
-    // gap, not silently invented around); worlds are distinguished by
-    // CustomWorldStorage's own generated filename and a
-    // std::filesystem::last_write_time-derived recency order (newest
-    // first -- see Refresh()).
+    // The editor's world screen for one gamer (plan.md EDITOR-107), entered
+    // from the main menu's 3D World Editor button: the gamer's ten slots
+    // (CustomWorldStorage, owner 2026-10-25) as numbered rows -- an occupied
+    // slot opens, an empty one creates a new world there, and an occupied one
+    // can be deleted with two clicks -- and, beside them, the gamer's older
+    // worlds (files outside the ten slots), which are never deleted or hidden:
+    // clicking one copies it into the first free slot and opens the copy. No
+    // free-text renaming (no text-input widget exists in this codebase yet).
     class EditorBrowserScreen
     {
     public:
@@ -29,12 +29,12 @@ namespace GalaxyEggbert::Editor
         struct UpdateResult
         {
             Action action = Action::None;
-            std::filesystem::path path; // valid when action == Open
+            std::filesystem::path path; // the world to open (Open) or create (New)
         };
 
-        // Rescans CustomWorldStorage::ListCustomWorlds(gamerSlot) from
-        // disk -- call once when entering the browser and again after any
-        // create/delete, not every frame.
+        // Rescans the gamer's slots and older worlds from disk -- call once
+        // when entering the browser and again after any create/delete, not
+        // every frame.
         void Refresh(int gamerSlot);
 
         // Edge-triggered on release, matching InputPad's own click idiom.
@@ -49,16 +49,21 @@ namespace GalaxyEggbert::Editor
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                  int viewportWidth, int viewportHeight);
 
+        // Screen rects, public for the tests (raw 800x480 pixels like the rest of
+        // the editor UI): slot rows 0-9, the older worlds' rows, Back.
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect SlotRect(int slotIndex) noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect DeleteButtonRect(int slotIndex) noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect OlderRect(int index) noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect() noexcept;
+
     private:
-        [[nodiscard]] GalaxyEggbert::Game::QuadBatch::Rect RowRect(int index) const noexcept;
-        [[nodiscard]] GalaxyEggbert::Game::QuadBatch::Rect DeleteButtonRect(int index) const noexcept;
-        [[nodiscard]] GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect(
-            int viewportWidth, int viewportHeight) const noexcept;
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 
         int gamerSlot_ = 0;
-        std::vector<std::filesystem::path> worlds_;
-        int armedDeleteIndex_ = -1; // -1 = no row's delete currently armed
+        std::vector<bool> slotUsed_;                 // per slot 1-10 (index 0-9)
+        std::vector<std::filesystem::path> older_;
+        int armedDeleteIndex_ = -1; // the slot index whose delete is armed, -1 none
+        bool slotsFull_ = false;    // an older world was clicked with no slot free
         bool mouseWasDown_ = false;
         bool backWasDown_ = false;
 
