@@ -13,6 +13,7 @@
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
+#include <Microsoft/Xna/Framework/Graphics/CompareFunction.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
 
 #include <cmath>
@@ -364,8 +365,10 @@ namespace GalaxyEggbert::Game
         // known via ConfigureDirectionalCubeFaces, so they COULD occlude on
         // their opaque faces), but that's extra complexity for a case this
         // task doesn't need yet (§8's own note: "not needed at the current
-        // ~2700-block scale").
-        bool IsOccluderBlock(const Worlds::World& world, int blocksPerAxis, int x, int y, int z)
+        // ~2700-block scale"). A tile with clear texels (TileCoverage) hides
+        // nothing behind it either.
+        bool IsOccluderBlock(const Worlds::World& world, int blocksPerAxis, int x, int y, int z,
+                             const std::vector<TileCoverage>& tileCoverage)
         {
             if (x < 0 || y < 0 || z < 0 || x >= blocksPerAxis || y >= blocksPerAxis || z >= blocksPerAxis)
             {
@@ -393,13 +396,14 @@ namespace GalaxyEggbert::Game
                 return false;
             }
 
-            return true;
+            return CoverageOf(tileCoverage, icon) == TileCoverage::Opaque;
         }
     }
 
     TerrainRenderer::TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                          const Worlds::World& world,
-                                         const TileAtlas& tileAtlas)
+                                         const TileAtlas& tileAtlas,
+                                         const std::vector<TileCoverage>& tileCoverage)
         : m_tileAtlas(&tileAtlas)
     {
         // Icons 108/109's DirectionalCube entry reuses icon 107's own side
@@ -412,6 +416,7 @@ namespace GalaxyEggbert::Game
         }
         auto staticMesh = MakeLitTexturedMeshBuilder();
         auto transparentStaticMesh = MakeLitTexturedMeshBuilder();
+        auto cutoutMesh = MakeLitTexturedMeshBuilder();
         auto grassMesh = MakeLitTexturedMeshBuilder();
         double sumX = 0.0;
         double sumY = 0.0;
@@ -502,8 +507,26 @@ namespace GalaxyEggbert::Game
                     // RebuildAnimatedRenderer() instead (see
                     // GroundAnchoredPlate mode's own comment above and that
                     // call site for the full history).
-                    if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
-                                              staticMesh))
+                    //
+                    // The tile's own texels pick the pass (TileCoverage.hpp).
+                    // DirectionalCube faces show chosen parts of their tile and
+                    // stay in the opaque mesh.
+                    auto* mesh = &staticMesh;
+                    if (definition.renderMode != GalaxyEggbert::BlockRenderMode::DirectionalCube)
+                    {
+                        switch (CoverageOf(tileCoverage, icon))
+                        {
+                        case TileCoverage::Cutout:
+                            mesh = &cutoutMesh;
+                            break;
+                        case TileCoverage::Translucent:
+                            mesh = &transparentStaticMesh;
+                            break;
+                        case TileCoverage::Opaque:
+                            break;
+                        }
+                    }
+                    if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh))
                     {
                         continue;
                     }
@@ -511,18 +534,18 @@ namespace GalaxyEggbert::Game
                     using CnaEngine::Graphics::BoxFace;
                     CnaEngine::Graphics::BoxFaces faces;
                     faces[static_cast<int>(BoxFace::PositiveZ)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z + 1), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z + 1, tileCoverage), tileUv};
                     faces[static_cast<int>(BoxFace::NegativeZ)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z - 1), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y, z - 1, tileCoverage), tileUv};
                     faces[static_cast<int>(BoxFace::PositiveX)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x + 1, y, z), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x + 1, y, z, tileCoverage), tileUv};
                     faces[static_cast<int>(BoxFace::NegativeX)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x - 1, y, z), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x - 1, y, z, tileCoverage), tileUv};
                     faces[static_cast<int>(BoxFace::PositiveY)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y + 1, z), tileUv};
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y + 1, z, tileCoverage), tileUv};
                     faces[static_cast<int>(BoxFace::NegativeY)] =
-                        {!IsOccluderBlock(world, blocksPerAxis, x, y - 1, z), tileUv};
-                    AddCenteredBox(staticMesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
+                        {!IsOccluderBlock(world, blocksPerAxis, x, y - 1, z, tileCoverage), tileUv};
+                    AddCenteredBox(*mesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
                 }
             }
         }
@@ -546,6 +569,16 @@ namespace GalaxyEggbert::Game
         if (!staticMesh.Mesh().Empty())
         {
             m_staticRenderer = UploadLitTexturedMesh(device, staticMesh.Mesh());
+        }
+
+        if (!cutoutMesh.Mesh().Empty())
+        {
+            m_cutoutRenderer = UploadBakedLitTexturedMesh(device, cutoutMesh.Take());
+            m_cutoutEffect = std::make_unique<Microsoft::Xna::Framework::Graphics::AlphaTestEffect>(device);
+            m_cutoutEffect->setVertexColorEnabledProperty(true);
+            m_cutoutEffect->setAlphaFunctionProperty(
+                Microsoft::Xna::Framework::Graphics::CompareFunction::GreaterEqual);
+            m_cutoutEffect->setReferenceAlphaProperty(kCutoutReferenceAlpha);
         }
 
         if (!transparentStaticMesh.Mesh().Empty())
@@ -712,6 +745,16 @@ namespace GalaxyEggbert::Game
         {
             m_staticRenderer->Draw(device, effect);
         }
+        if (m_cutoutRenderer)
+        {
+            // Opaque where drawn, so it writes depth like the static mesh;
+            // the clear texels are discarded by the alpha test.
+            m_cutoutEffect->setWorldProperty(effect.getWorldProperty());
+            m_cutoutEffect->setViewProperty(effect.getViewProperty());
+            m_cutoutEffect->setProjectionProperty(effect.getProjectionProperty());
+            m_cutoutEffect->setTextureProperty(effect.getTextureProperty());
+            m_cutoutRenderer->Draw(device, *m_cutoutEffect);
+        }
         if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
@@ -769,6 +812,7 @@ namespace GalaxyEggbert::Game
     {
         return (m_staticRenderer ? m_staticRenderer->VertexCount() : 0) +
                (m_transparentStaticRenderer ? m_transparentStaticRenderer->VertexCount() : 0) +
+               (m_cutoutRenderer ? m_cutoutRenderer->VertexCount() : 0) +
                (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->VertexCount() : 0) +
                (m_grassRenderer ? m_grassRenderer->VertexCount() : 0);
@@ -778,6 +822,7 @@ namespace GalaxyEggbert::Game
     {
         return (m_staticRenderer ? m_staticRenderer->PrimitiveCount() : 0) +
                (m_transparentStaticRenderer ? m_transparentStaticRenderer->PrimitiveCount() : 0) +
+               (m_cutoutRenderer ? m_cutoutRenderer->PrimitiveCount() : 0) +
                (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0) +
                (m_grassRenderer ? m_grassRenderer->PrimitiveCount() : 0);

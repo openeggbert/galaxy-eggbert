@@ -192,6 +192,8 @@ namespace GalaxyEggbert::CNA
 
         // Maps block types to object-m.png UV rects (plan.md E3D-MIG-053).
         GalaxyEggbert::Game::TileAtlas tileAtlas_;
+        // Per object-m.png icon: drawn opaque, cut out or blended (TileCoverage.hpp).
+        std::vector<GalaxyEggbert::Game::TileCoverage> tileCoverage_;
 
         // Static (non-animated) terrain mesh for the loaded world (plan.md
         // E3D-MIG-054). Lazily constructed in LoadContent() since it needs a

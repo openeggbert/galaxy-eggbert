@@ -1,10 +1,13 @@
 #pragma once
 
 #include "TileAtlas.hpp"
+#include "TileCoverage.hpp"
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
+
+#include <Microsoft/Xna/Framework/Graphics/AlphaTestEffect.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -25,19 +28,24 @@ namespace GalaxyEggbert::Game
     // 30/31) and a fifth for the water subset (Water1/Water2 -- animated AND
     // alpha-blended), the latter two rebuilt whenever Update() is given a
     // new animation phase (plan.md E3D-MIG-054/055). One 1x1x1 cube per
-    // block, textured via TileAtlas.
+    // block, textured via TileAtlas. Since 2026-10-26 the static blocks whose tile is a
+    // hard-edged sprite (TileCoverage::Cutout: doors, pillars, girders, flat-plate decor) are a
+    // sixth mesh drawn with an alpha test, and the faint ones (TileCoverage::Translucent:
+    // cobwebs) join the alpha-blended static mesh.
     class TerrainRenderer
     {
     public:
         TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                           const Worlds::World& world,
-                          const TileAtlas& tileAtlas);
+                          const TileAtlas& tileAtlas,
+                          const std::vector<TileCoverage>& tileCoverage = {});
 
         // Rebuilds the animated-tile mesh for animPhase (no-op if unchanged
         // since the last call). Call once per frame with
         // WorldRuntime::GetAnimPhase(). No effect on the static mesh.
         void Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase);
 
+        // The cutout pass takes @p effect's World/View/Projection and texture.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
 
@@ -86,6 +94,9 @@ namespace GalaxyEggbert::Game
 
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_staticRenderer;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_transparentStaticRenderer;
+        // Lit by vertex colour (AlphaTestEffect has no lights: BakeTerrainLighting()).
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_cutoutRenderer;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::AlphaTestEffect> m_cutoutEffect;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_animRenderer;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_waterRenderer;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_grassRenderer;

@@ -29,9 +29,11 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
 - Training hints exist only for missions 11–14 (`src/GalaxyEggbert/Game/TrainingHints.cpp`); place
   them as hint zones (`World.hint_zone`).
 - Tile classes: `tools/data/blocks.csv` (render mode, collision mask, hazard, sign, door).
-  Tiles 15–31 and 49–60 have transparent parts: fine as props/plates, not as wall cubes. Check a
-  tile's look in `Content/icons/object-m.png` (icon i at x = 1 + (i % 20)·65, y = 1 + (i // 20)·65,
-  64 × 64).
+  Tiles 15–31 and 49–60 have transparent parts: fine as props/plates, not as wall cubes. Since
+  2026-10-26 a sprite tile (a quarter or more clear: doors, treasure doors, pillars, girders,
+  bars, cobwebs) is drawn cut out, so it shows the scene behind it, not black; a tile with only
+  small gaps (stone walls) stays opaque. Check a tile's look in `Content/icons/object-m.png`
+  (icon i at x = 1 + (i % 20)·65, y = 1 + (i // 20)·65, 64 × 64).
 
 ## Tools
 

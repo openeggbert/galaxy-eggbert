@@ -4,6 +4,10 @@
 #include <CnaEngine/Graphics/MeshBuilder.hpp>
 #include <CnaEngine/Graphics/VertexLayouts.hpp>
 
+#include <GalaxyEggbert/Game/TerrainLighting.hpp>
+
+#include <Microsoft/Xna/Framework/Color.hpp>
+
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Vector2.hpp>
 #include <Microsoft/Xna/Framework/Vector3.hpp>
@@ -69,6 +73,23 @@ namespace GalaxyEggbert::Game
     {
         return std::make_unique<CnaEngine::Graphics::GpuMesh>(
             CnaEngine::Graphics::GpuMesh::Upload(device, mesh, CnaEngine::Graphics::VertexLayout::PositionTexture()));
+    }
+
+    // Uploads a MakeLitTexturedMeshBuilder() mesh for an effect without lights (AlphaTestEffect,
+    // the terrain's cutout pass): each vertex coloured with the brightness kTerrainLight gives
+    // its normal, so it is lit as UploadLitTexturedMesh()'s meshes are (VertexPositionColorTexture).
+    [[nodiscard]] inline std::unique_ptr<CnaEngine::Graphics::GpuMesh> UploadBakedLitTexturedMesh(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, CnaEngine::Graphics::MeshData mesh)
+    {
+        mesh.colors.resize(mesh.positions.size());
+        for (std::size_t i = 0; i < mesh.normals.size() && i < mesh.colors.size(); ++i)
+        {
+            const auto& normal = mesh.normals[i];
+            const float brightness = TerrainFaceBrightness(normal.X, normal.Y, normal.Z);
+            mesh.colors[i] = Microsoft::Xna::Framework::Color(brightness, brightness, brightness, 1.0f);
+        }
+        return std::make_unique<CnaEngine::Graphics::GpuMesh>(CnaEngine::Graphics::GpuMesh::Upload(
+            device, mesh, CnaEngine::Graphics::VertexLayout::PositionColorTexture()));
     }
 
     // Uploads a MakeLitTexturedMeshBuilder() mesh (VertexPositionNormalTexture).

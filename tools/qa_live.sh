@@ -11,6 +11,8 @@
 # QA_LIVE_AVATARS=<dir> uses that directory as avatars3d/ (to look at re-exported models before
 # they replace the committed ones). QA_LIVE_RUN=<dir> runs from that directory instead of
 # build-probe/qa-run/ (its own savedata.txt), so two sessions can run checks at once.
+# QA_LIVE_WORLDS=<dir> uses that directory as worlds3d/ (probe worlds beside symlinks to the
+# shipped ones).
 #
 # Steps, one per line ("#" comments allowed):
 #   sleep <seconds>          wait
@@ -43,6 +45,9 @@ for d in Content avatars3d textures3d worlds3d; do
 done
 if [[ -n "${QA_LIVE_AVATARS:-}" ]]; then
     ln -sfn "$(cd "$QA_LIVE_AVATARS" && pwd)" "$run/avatars3d"
+fi
+if [[ -n "${QA_LIVE_WORLDS:-}" ]]; then
+    ln -sfn "$(cd "$QA_LIVE_WORLDS" && pwd)" "$run/worlds3d"
 fi
 # A hard link, not a symlink: CNA resolves its content roots (avatars3d/) against the executable's
 # real directory, which a symlink would make the build directory again. Relinked every run,

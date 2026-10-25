@@ -681,6 +681,16 @@ target_include_directories(VerifyTerrainLighting PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# TileCoverage.hpp is header-only and engine-agnostic, like TerrainLighting.hpp above.
+add_executable(VerifyTileCoverage
+        tools/VerifyTileCoverage.cpp
+)
+
+target_include_directories(VerifyTileCoverage PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # INFRA-004 (plan.md §7): UnverifiedRenderMapping.hpp is a header-only data
 # table (no CNA/graphics dependency), same engine-independent precedent as
 # VerifyTileUvBounds above.
@@ -835,6 +845,7 @@ if(BUILD_TESTING)
     # function of a BlockTypes icon id (plan.md TEST-004).
     add_test(NAME VerifyTileUvBounds COMMAND VerifyTileUvBounds)
     add_test(NAME VerifyTerrainLighting COMMAND VerifyTerrainLighting)
+    add_test(NAME VerifyTileCoverage COMMAND VerifyTileCoverage)
     # No file/working-directory dependency -- GetObjIcon() is a pure function
     # of (ObjectType, phase) (plan.md INFRA-003).
     add_test(NAME VerifyGetObjIcon COMMAND VerifyGetObjIcon)

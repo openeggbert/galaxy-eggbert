@@ -539,7 +539,6 @@ namespace GalaxyEggbert::CNA
         // Static terrain mesh for the loaded world (plan.md E3D-MIG-054) —
         // one box per non-air cell, textured via TileAtlas.
         auto& device = getGraphicsDeviceProperty();
-        RebuildWorldPresentation();
 
         // object-m.png was already copied next to this binary at build time
         // (plan.md E3D-MIG-030); loaded directly via CNA's own Texture2D —
@@ -549,6 +548,21 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: terrain texture loaded — "
                   << terrainTexture_.getWidthProperty() << "x"
                   << terrainTexture_.getHeightProperty() << " px." << std::endl;
+        {
+            // Which tiles are sprites on clear texels, for the terrain's passes (TileCoverage.hpp).
+            const int width = terrainTexture_.getWidthProperty();
+            const int height = terrainTexture_.getHeightProperty();
+            std::vector<Microsoft::Xna::Framework::Color> texels(static_cast<std::size_t>(width) *
+                                                                 static_cast<std::size_t>(height));
+            terrainTexture_.GetData(texels.data(), static_cast<int>(texels.size()));
+            std::vector<std::uint8_t> alpha(texels.size());
+            for (std::size_t i = 0; i < texels.size(); ++i)
+            {
+                alpha[i] = texels[i].getAProperty();
+            }
+            tileCoverage_ = GalaxyEggbert::Game::ClassifyTileSheet(alpha.data(), width, height);
+        }
+        RebuildWorldPresentation();
 
         terrainEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         terrainEffect_->VertexColorEnabled = false;
@@ -915,7 +929,7 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_);
+        terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_, tileCoverage_);
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
     }
 
@@ -947,7 +961,8 @@ namespace GalaxyEggbert::CNA
         if (terrainRenderer_ && worldRuntime_.GetWorld().blockRevision() != terrainRevision_)
         {
             terrainRenderer_ =
-                std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), tileAtlas_);
+                std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), tileAtlas_,
+                                                  tileCoverage_);
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         }
     }
