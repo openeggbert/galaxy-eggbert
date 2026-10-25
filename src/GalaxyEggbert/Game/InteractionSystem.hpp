@@ -318,6 +318,9 @@ namespace GalaxyEggbert::Game
             // helicopter up).
             GlueDropStarted,
             GlueDropped,
+            // A patrolling enemy (ObjectType2) passed close by without touching him: the caller
+            // arms his Ouf4 (BlupiController::ArmOuf()).
+            EnemyNearMiss,
             // Secret power pickups (plan.md E3D-MIG-170, ObjectType25/26/30/31) -- fires the one
             // frame that pickup's real gate passed and the world object was actually removed; the
             // caller then calls the matching BlupiController::TriggerX() (its own internal gate
@@ -959,8 +962,9 @@ namespace GalaxyEggbert::Game
         // below (INFRA-007, plan.md §7) to preserve the exact "only one such request can be
         // pending at a time, a later one silently replaces an earlier same-frame one" behavior the
         // pre-queue flat member representation gave for free via plain assignment (see
-        // EventKind::VoyageRequested/DeathLockRequested's own comments). NOT used for any of the
-        // other 11 Kinds -- those never had a single-flat-member representation to begin with.
+        // EventKind::VoyageRequested/DeathLockRequested's own comments), and for EnemyNearMiss
+        // (one a frame, however many enemies pass). NOT used for the other Kinds -- those never
+        // had a single-flat-member representation to begin with.
         void ReplaceEvent(EventKind kind, Event newEvent);
         // Records a this-frame voyage request (see the public API comment
         // above for the world/fixed-point split). Called from the pickup

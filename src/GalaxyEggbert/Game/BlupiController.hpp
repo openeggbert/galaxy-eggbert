@@ -585,7 +585,13 @@ namespace GalaxyEggbert::Game
             Turn,
             // Standing at a ledge with his front foot over the void: he teeters (table_blupi 8,
             // ACTION_VERTIGO, 16 ticks), then steps back from it (9, ACTION_RECEDE, 3 ticks).
-            Vertigo, Recede
+            Vertigo, Recede,
+            // His reactions, standing (Decor.cpp, 2026-10-26), cut short as soon as he moves (the
+            // original keeps his focus): JumpAie (36) rubs the head he bumped on a ceiling in a
+            // fast jump; the "phews" after effort or a close call: Ouf1a (44) after a swim, Ouf1b
+            // (45) after a long push, Ouf3 (47) after a long pull, Ouf4 (48) after an enemy
+            // passed close by (ArmOuf()). kJumpAieSpeed's comment has when each plays.
+            JumpAie, Ouf1a, Ouf1b, Ouf3, Ouf4
         };
 
         // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -1099,6 +1105,8 @@ namespace GalaxyEggbert::Game
             UpEntrySoundFired,
             DownReleaseSoundFired,
             VertigoStarted, // the original's channel 6 as he starts to teeter
+            HeadBumped,     // channel 40: a fast jump met a ceiling (JumpAie follows on landing)
+            ReactionStarted, // a reaction began: GetAnimState() says which (its sound)
         };
         struct Event
         {
@@ -1183,6 +1191,30 @@ namespace GalaxyEggbert::Game
         // The Win cheer's length: the original moves on at m_blupiPhase == 40 (Decor.cpp:6411).
         static constexpr float kWinDuration = 40.0f / 20.0f;
 
+        // The reactions (AnimState JumpAie, Ouf*; Decor.cpp:2950-2957, 2999-3005, 3083-3102,
+        // 6251-6323). JumpAie: a ceiling met while still rising faster than 14 of the jump's 16
+        // px a tick (not on the skateboard) plays on landing, for 30 ticks. An Ouf is armed by
+        // its cause (in the water: Ouf1a; starting a push: Ouf1b; pulling: Ouf3; an enemy
+        // passing close: Ouf4, ArmOuf()), counts the time since, is disarmed by walking on (not
+        // in the water), and plays when he next stands idle if that time fits its window: Ouf1a
+        // and Ouf1b after more than 50 ticks, Ouf3 after more than 60, Ouf4 within 10.
+        static constexpr float kJumpAieSpeed = kJumpSpeed * (14.0f / 16.0f);
+        static constexpr float kJumpAieDuration = 30.0f / 20.0f;
+        static constexpr float kOuf1Duration = 29.0f / 20.0f;
+        static constexpr float kOuf3Duration = 34.0f / 20.0f;
+        static constexpr float kOuf4Duration = 40.0f / 20.0f;
+        static constexpr float kOuf1After = 50.0f / 20.0f;
+        static constexpr float kOuf3After = 60.0f / 20.0f;
+        static constexpr float kOuf4Within = 10.0f / 20.0f;
+
+        // Arms an Ouf from a cause this class cannot see (Ouf4: InteractionSystem's near miss).
+        void ArmOuf(AnimState ouf) noexcept
+        {
+            m_oufArmed = ouf;
+            m_oufTime = 0.0f;
+        }
+        [[nodiscard]] bool IsReactionPlaying() const noexcept { return m_reactionTimer > 0.0f; }
+
     private:
         // Whole-block coarse solidity (non-air only -- deliberately NOT
         // sub-tile-aware, see IsPointSolid()'s own comment on checkSubcell
@@ -1199,6 +1231,14 @@ namespace GalaxyEggbert::Game
         float m_vertigoTimer = 0.0f;   // teetering at a ledge (AnimState::Vertigo)
         float m_recedeTimer = 0.0f;    // stepping back from it (AnimState::Recede)
         bool m_vertigoStarted = false; // VertigoStarted is due this frame
+        AnimState m_reaction = AnimState::Stop; // the reaction playing (kJumpAieSpeed's comment)
+        float m_reactionTimer = 0.0f;
+        AnimState m_oufArmed = AnimState::Stop; // Stop: none armed
+        float m_oufTime = 0.0f;
+        bool m_jumpAieArmed = false;  // bumped his head, JumpAie on landing
+        bool m_headBumped = false;    // HeadBumped is due this frame
+        bool m_reactionStarted = false; // ReactionStarted is due this frame
+        bool m_wasPushingCrate = false;
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
         // precise sub-tile solidity for a specific continuous-space point,

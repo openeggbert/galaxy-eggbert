@@ -230,6 +230,11 @@ namespace GalaxyEggbert::CNA
                 case S::Turn: return "Turn";
                 case S::Vertigo: return "Vertigo";
                 case S::Recede: return "Recede";
+                case S::JumpAie: return "JumpAie";
+                case S::Ouf1a: return "Ouf1a";
+                case S::Ouf1b: return "Ouf1b";
+                case S::Ouf3: return "Ouf3";
+                case S::Ouf4: return "Ouf4";
                 case S::Switch: return "Switch";
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";
@@ -2593,6 +2598,27 @@ namespace GalaxyEggbert::CNA
                     case BlupiController::EventKind::VertigoStarted:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel6);
                         break;
+                    case BlupiController::EventKind::HeadBumped:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel40);
+                        break;
+                    case BlupiController::EventKind::ReactionStarted:
+                        // Decor.cpp:6258/6275 (ch46, Ouf1b's at its 4th tick), 6291 (ch48), 6301 (ch49).
+                        switch (blupi_.GetAnimState())
+                        {
+                            case BlupiController::AnimState::Ouf1a:
+                            case BlupiController::AnimState::Ouf1b:
+                                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel46);
+                                break;
+                            case BlupiController::AnimState::Ouf3:
+                                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel48);
+                                break;
+                            case BlupiController::AnimState::Ouf4:
+                                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel49);
+                                break;
+                            default:
+                                break;
+                        }
+                        break;
                 }
             }
             jumpKeyWasDown_ = jumpPressed;
@@ -3598,6 +3624,14 @@ namespace GalaxyEggbert::CNA
             if (FindInteractionEvent(InteractionSystem::EventKind::GlueDropped))
             {
                 blupi_.KickUp(BlupiController::kHelicopterAscendSpeed);
+            }
+            // A patrolling enemy passed close by (Decor.cpp:5639-5645): Ouf4 if he stops soon,
+            // on foot, out of the water, unshielded.
+            if (FindInteractionEvent(InteractionSystem::EventKind::EnemyNearMiss) && !blupi_.IsInVehicle() &&
+                !blupi_.IsBallooned() && !blupi_.IsEcrased() && !blupi_.IsNage() && !blupi_.IsSurf() &&
+                !blupi_.IsShielded())
+            {
+                blupi_.ArmOuf(BlupiController::AnimState::Ouf4);
             }
 
             // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147 start, `:3637`

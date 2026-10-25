@@ -1424,6 +1424,101 @@ int main(int argc, char** argv)
                   "holding Jump from the bottom he swims up and jumps out at the surface, onto the bank");
         }
 
+        // His reactions (2026-10-26, BlupiController::kJumpAieSpeed's comment): JumpAie after a
+        // fast jump meets a ceiling, the Oufs after a swim, a long push, a close call.
+        {
+            const auto hasEvent = [](const BlupiController& c, BlupiController::EventKind kind)
+            {
+                for (const auto& e : c.EventsThisFrame())
+                {
+                    if (e.kind == kind) return true;
+                }
+                return false;
+            };
+            // A floor at y 0 (x 60-64, z 95) under a ceiling at y 4: a powered jump bumps it.
+            for (std::uint16_t x = 60; x <= 64; ++x)
+            {
+                synthetic.setBlock(x, 0, 95, Worlds::Block::make(BlockTypes::Ground));
+                synthetic.setBlock(x, 4, 95, Worlds::Block::make(BlockTypes::Ground));
+            }
+            BlupiController bumper;
+            bumper.SetPosition(62.0f - 50.0f, 1.0f, 95.0f - 50.0f);
+            for (int i = 0; i < 10; ++i) bumper.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            bumper.TriggerPower();
+            bool bumped = false, aie = false, aieStarted = false;
+            for (int i = 0; i < 120; ++i)
+            {
+                bumper.Step(synthetic, 0.0f, 0.0f, i < 2, false, false, dt);
+                bumped = bumped || hasEvent(bumper, BlupiController::EventKind::HeadBumped);
+                aie = aie || (bumper.IsOnGround() && bumper.GetAnimState() == BlupiController::AnimState::JumpAie);
+                aieStarted = aieStarted || hasEvent(bumper, BlupiController::EventKind::ReactionStarted);
+            }
+            check(bumped && aie && aieStarted,
+                  "a powered jump that meets a ceiling fast bumps his head (ch40) and he rubs it on landing (JumpAie)");
+            for (int i = 0; i < 60; ++i) bumper.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(bumper.GetAnimState() == BlupiController::AnimState::Stop, "JumpAie ends after its 30 ticks");
+
+            BlupiController plain;
+            plain.SetPosition(62.0f - 50.0f, 1.0f, 95.0f - 50.0f);
+            for (int i = 0; i < 10; ++i) plain.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            bool plainBumped = false;
+            for (int i = 0; i < 120; ++i)
+            {
+                plain.Step(synthetic, 0.0f, 0.0f, i < 2, false, false, dt);
+                plainBumped = plainBumped || hasEvent(plain, BlupiController::EventKind::HeadBumped);
+            }
+            check(!plainBumped, "an ordinary jump has slowed down before it reaches that ceiling: no bump");
+
+            // Ouf1a: out of the channel's water (x 70-72, z 88) onto its bank after a swim.
+            const float floatY = 2.0f + BlupiController::kSurfFloatHeight;
+            const auto swimThenClimb = [&](float swimSeconds)
+            {
+                BlupiController swimmer; // close to the bank, so he is still rising over its edge
+                swimmer.SetPosition(72.0f - 50.0f, floatY, 88.0f - 50.0f);
+                swimmer.SetYaw(1.57079632679f);
+                for (int i = 0; i < static_cast<int>(swimSeconds / dt); ++i)
+                    stepInWater(swimmer, synthetic, dt, 0.0f, false, false);
+                // Tap Jump to leap out; over the bank (x 22.6, its edge at 22.5) let go of forward, so he lands
+                // standing (landing with forward held is walking on, which disarms it, as the
+                // original's March does).
+                for (int i = 0; i < 60 && swimmer.GetX() < 73.0f - 50.0f - 0.4f; ++i)
+                    stepInWater(swimmer, synthetic, dt, 1.0f, i < 3, false);
+                bool phew = false;
+                for (int i = 0; i < 60; ++i)
+                {
+                    stepInWater(swimmer, synthetic, dt, 0.0f, false, false);
+                    phew = phew || swimmer.GetAnimState() == BlupiController::AnimState::Ouf1a;
+                }
+                return phew;
+            };
+            check(swimThenClimb(3.0f), "out of the water after a swim of more than 50 ticks he says phew (Ouf1a)");
+            check(!swimThenClimb(0.5f), "after a dip shorter than that, no Ouf1a");
+
+            // Ouf4: armed by the caller's near miss, played only if he stands idle within 10 ticks.
+            BlupiController near;
+            near.SetPosition(62.0f - 50.0f, 1.0f, 95.0f - 50.0f);
+            for (int i = 0; i < 10; ++i) near.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            near.ArmOuf(BlupiController::AnimState::Ouf4);
+            near.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(near.GetAnimState() == BlupiController::AnimState::Ouf4, "a close call, standing: Ouf4");
+            near.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            check(near.GetAnimState() != BlupiController::AnimState::Ouf4, "moving cuts a reaction short");
+            near.ArmOuf(BlupiController::AnimState::Ouf4);
+            for (int i = 0; i < 40; ++i) near.Step(synthetic, 0.0f, 0.0f, false, true, false, dt);
+            near.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(near.GetAnimState() != BlupiController::AnimState::Ouf4,
+                  "a close call more than 10 ticks before he stands idle gives no Ouf4");
+
+            // Ouf1b: a push of more than 50 ticks, then standing.
+            BlupiController pusher;
+            pusher.SetPosition(62.0f - 50.0f, 1.0f, 95.0f - 50.0f);
+            for (int i = 0; i < 10; ++i) pusher.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            for (int i = 0; i < 180; ++i)
+                pusher.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, false, false, /*pushingCrate=*/true);
+            pusher.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(pusher.GetAnimState() == BlupiController::AnimState::Ouf1b, "after a long push, standing: Ouf1b");
+        }
+
         // Secret powers (plan.md E3D-MIG-170) -- trigger gates, the shared
         // gauge's real per-power decrement rate, expiry, and the real
         // hazard-immunity gate (IsInvincible() == Shield || Hide).

@@ -225,6 +225,19 @@ namespace GalaxyEggbert::Game
         // table_blupi Vertigo (8) and Recede (9): teetering at a ledge, stepping back from it.
         constexpr int kVertigoFrames[] = {0, 169, 26, 170, 27, 171, 28, 172};
         constexpr int kRecedeFrames[] = {5, 6, 7, 8, 9, 10};
+        // table_blupi JumpAie (36), Ouf1a/Ouf1b (44/45, one table), Ouf3 (47), Ouf4 (48): his
+        // reactions (BlupiController::kJumpAieSpeed's comment).
+        constexpr int kJumpAieFrames[] = {135, 177, 177, 178, 178, 179, 179, 180, 180, 179, 179,
+                                          178, 178, 179, 179, 180, 180, 179, 179, 178, 178, 179,
+                                          179, 180, 180, 179, 179, 178, 178, 177, 177, 135};
+        constexpr int kOuf1Frames[] = {1, 1, 222, 222, 222, 222, 223, 223, 224, 224, 225, 225, 225, 225, 225,
+                                       224, 223, 222, 222, 222, 223, 223, 224, 224, 225, 225, 225, 1, 1};
+        constexpr int kOuf3Frames[] = {135, 135, 136, 136, 137, 137, 231, 231, 231, 231, 230, 230,
+                                       231, 231, 231, 231, 230, 230, 231, 231, 231, 231, 230, 230,
+                                       231, 231, 231, 231, 137, 137, 136, 136, 135, 135};
+        constexpr int kOuf4Frames[] = {0, 0, 135, 135, 136, 136, 137, 137, 232, 233, 232, 233, 232, 233,
+                                       232, 233, 232, 233, 232, 233, 232, 233, 232, 233, 232, 233, 232,
+                                       233, 232, 233, 232, 233, 137, 137, 136, 136, 135, 135, 0, 0};
         // Real table_blupi Bye record (id 30, Tables.cpp; transcribed
         // 2026-10-25 under the owner's standing approval for small data
         // tables): the front-facing wave of the world-select farewell,
@@ -848,6 +861,9 @@ namespace GalaxyEggbert::Game
         m_nage = false;
         m_surf = false;
         m_waterExitJump = false;
+        m_reactionTimer = 0.0f;
+        m_oufArmed = AnimState::Stop;
+        m_jumpAieArmed = false;
         m_suspended = false;
         m_ghost = false;
         m_deathLocked = true;
@@ -1745,6 +1761,13 @@ namespace GalaxyEggbert::Game
             }
         }
 
+        // A fast jump met a ceiling (kJumpAieSpeed's comment): ouch, and JumpAie on landing.
+        if (moveResult.blockedY && m_velocityY > kJumpAieSpeed && m_vehicleMode == VehicleMode::None && !m_nage &&
+            !m_surf)
+        {
+            m_jumpAieArmed = true;
+            m_headBumped = true;
+        }
         if (afloat && m_y >= floatLine && newY < floatLine)
         {
             newY = floatLine;
@@ -1810,6 +1833,84 @@ namespace GalaxyEggbert::Game
             }
         }
 
+        // His reactions (kJumpAieSpeed's comment): cut short as soon as he moves or leaves the
+        // ground; the Oufs armed by their causes and played when he next stands idle.
+        {
+            const auto startReaction = [this](AnimState reaction, float duration)
+            {
+                m_reaction = reaction;
+                m_reactionTimer = duration;
+                m_reactionStarted = true;
+            };
+            if (m_reactionTimer > 0.0f)
+            {
+                m_reactionTimer = moving || !m_onGround ? 0.0f : m_reactionTimer - dt;
+            }
+            if (m_jumpAieArmed && m_onGround)
+            {
+                m_jumpAieArmed = false;
+                if (!moving)
+                {
+                    startReaction(AnimState::JumpAie, kJumpAieDuration);
+                }
+            }
+            const bool inWater = m_surf || m_nage;
+            if (inWater && m_oufArmed != AnimState::Ouf1a)
+            {
+                ArmOuf(AnimState::Ouf1a);
+            }
+            if (pushingCrate && !m_wasPushingCrate)
+            {
+                ArmOuf(AnimState::Ouf1b);
+            }
+            m_wasPushingCrate = pushingCrate;
+            if (holdingCrate && moving && m_oufArmed != AnimState::Ouf3)
+            {
+                ArmOuf(AnimState::Ouf3);
+            }
+            // Walking on disarms it (the original's March; jumping and falling do not).
+            if (moving && (m_onGround || IsInVehicle()) && !pushingCrate && !holdingCrate && !inWater)
+            {
+                m_oufArmed = AnimState::Stop;
+            }
+            if (m_oufArmed != AnimState::Stop)
+            {
+                m_oufTime += dt;
+            }
+            const bool idle = m_onGround && !moving && !IsInVehicle() && !m_balloon && !m_ecrase && !inWater &&
+                              !pushingCrate && !holdingCrate && !crouchHeld && !lookUpHeld && !m_turning &&
+                              m_vertigoTimer <= 0.0f && m_recedeTimer <= 0.0f && !m_mockeryActive &&
+                              m_reactionTimer <= 0.0f;
+            if (idle && m_oufArmed != AnimState::Stop)
+            {
+                switch (m_oufArmed)
+                {
+                    case AnimState::Ouf1a:
+                    case AnimState::Ouf1b:
+                        if (m_oufTime > kOuf1After)
+                        {
+                            startReaction(m_oufArmed, kOuf1Duration);
+                        }
+                        break;
+                    case AnimState::Ouf3:
+                        if (m_oufTime > kOuf3After)
+                        {
+                            startReaction(m_oufArmed, kOuf3Duration);
+                        }
+                        break;
+                    case AnimState::Ouf4:
+                        if (m_oufTime < kOuf4Within)
+                        {
+                            startReaction(m_oufArmed, kOuf4Duration);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                m_oufArmed = AnimState::Stop;
+            }
+        }
+
         UpdateAnim(moving, crouchHeld, lookUpHeld, dt, pushingCrate, holdingCrate);
     }
 
@@ -1832,6 +1933,13 @@ namespace GalaxyEggbert::Game
             m_eventsThisFrame.push_back(Event{EventKind::VertigoStarted});
             m_vertigoStarted = false;
         }
+        if (m_headBumped)
+        {
+            m_eventsThisFrame.push_back(Event{EventKind::HeadBumped});
+            m_headBumped = false;
+        }
+        const bool reactionStarted = m_reactionStarted;
+        m_reactionStarted = false;
 
         // Vehicle-mode Stop/March selection (plan.md BLUPI-037/038/047/058/
         // 069/084/088/091/094, found 2026-07-18) -- each mode has its own
@@ -1886,11 +1994,16 @@ namespace GalaxyEggbert::Game
                                   : m_recedeTimer > 0.0f ? AnimState::Recede
                                   : m_vertigoTimer > 0.0f ? AnimState::Vertigo
                                   : m_mockeryActive ? m_mockeryVariant
+                                  : m_reactionTimer > 0.0f ? m_reaction
                                   : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
                                   : lookUpHeld    ? AnimState::Up
                                   : moving        ? AnimState::March
                                                   : AnimState::Stop;
+        if (reactionStarted && newState == m_reaction)
+        {
+            m_eventsThisFrame.push_back(Event{EventKind::ReactionStarted});
+        }
         if (newState != m_animState)
         {
             if (m_animState == AnimState::Down && newState == AnimState::Stop)
@@ -2041,6 +2154,16 @@ namespace GalaxyEggbert::Game
                 return kVertigoFrames[m_animPhase % (sizeof(kVertigoFrames) / sizeof(kVertigoFrames[0]))];
             case AnimState::Recede:
                 return kRecedeFrames[m_animPhase % (sizeof(kRecedeFrames) / sizeof(kRecedeFrames[0]))];
+            case AnimState::JumpAie:
+                return kJumpAieFrames[m_animPhase % (sizeof(kJumpAieFrames) / sizeof(kJumpAieFrames[0]))];
+            case AnimState::Ouf1a:
+                return kOuf1Frames[m_animPhase % (sizeof(kOuf1Frames) / sizeof(kOuf1Frames[0]))];
+            case AnimState::Ouf1b:
+                return kOuf1Frames[m_animPhase % (sizeof(kOuf1Frames) / sizeof(kOuf1Frames[0]))];
+            case AnimState::Ouf3:
+                return kOuf3Frames[m_animPhase % (sizeof(kOuf3Frames) / sizeof(kOuf3Frames[0]))];
+            case AnimState::Ouf4:
+                return kOuf4Frames[m_animPhase % (sizeof(kOuf4Frames) / sizeof(kOuf4Frames[0]))];
             case AnimState::Bye:
                 return kByeFrames[m_animPhase % (sizeof(kByeFrames) / sizeof(kByeFrames[0]))];
             case AnimState::Switch:

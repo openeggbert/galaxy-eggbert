@@ -1715,7 +1715,17 @@ namespace GalaxyEggbert::Game
                 const float hdx = obj.currentX - blupiX;
                 const float hdy = obj.currentY - blupiY;
                 const float hdz = obj.currentZ - blupiZ;
-                if (!blupiInvincible && hdx * hdx + hdy * hdy + hdz * hdz < kHazardContactRadius * kHazardContactRadius)
+                const float hd2 = hdx * hdx + hdy * hdy + hdz * hdz;
+                // A patrolling enemy passing close without touching (Decor.cpp:9763-9767,
+                // MoveObjectDetect's rect 20 px wider for ObjectType2): his "phew" (Ouf4, armed by
+                // the caller).
+                constexpr float kNearMissRadius = kHazardContactRadius + 20.0f / 64.0f;
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 &&
+                    hd2 >= kHazardContactRadius * kHazardContactRadius && hd2 < kNearMissRadius * kNearMissRadius)
+                {
+                    ReplaceEvent(EventKind::EnemyNearMiss, Event{EventKind::EnemyNearMiss});
+                }
+                if (!blupiInvincible && hd2 < kHazardContactRadius * kHazardContactRadius)
                 {
                     if (blupiBallooned &&
                         GetObjectDefinition(obj.type).balloonPoppableHazard)
