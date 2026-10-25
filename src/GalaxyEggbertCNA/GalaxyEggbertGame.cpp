@@ -209,6 +209,7 @@ namespace GalaxyEggbert::CNA
                 case S::Push: return "Push";
                 case S::StopPop: return "StopPop";
                 case S::Pop: return "Pop";
+                case S::Win: return "Win";
                 case S::Switch: return "Switch";
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";
@@ -915,6 +916,27 @@ namespace GalaxyEggbert::CNA
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
     }
 
+    void GalaxyEggbertGame::AdvanceAfterWin()
+    {
+        // Where a won mission leads (Decor.cpp:6411-6434, Game1::Update): the golden key ends
+        // the world (Decor::OpenGoldsWin(), m_doors[180 + world]) and goes back to the main hub,
+        // where one more gold bar opens and the world's sign changes; any other win opens the
+        // next mission's bar in the world's hub (OpenDoorsWin(), m_doors[mission + 1]) and goes
+        // there; mission 1's exit leads to 199 (ComputeWinExitTarget()).
+        const int currentMission = worldRuntime_.GetMissionNumber();
+        if (interaction_.ExitWasGoldenKey() && currentMission != 1 && currentMission != 199)
+        {
+            saveData_.UnlockMissionDoor(180 + currentMission / 10);
+            LoadMission(1);
+            return;
+        }
+        if (currentMission % 10 != 0)
+        {
+            saveData_.UnlockMissionDoor(currentMission + 1);
+        }
+        LoadMission(WorldRuntime::ComputeWinExitTarget(currentMission));
+    }
+
     void GalaxyEggbertGame::RefreshTerrainMeshIfChanged()
     {
         // Blocks changed in play (a door opened, a hub door slid away): the terrain mesh is
@@ -930,6 +952,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::LoadMission(int missionNumber)
     {
         titleSceneActive_ = false;
+        winCheerActive_ = false;
         char path[64];
         std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
         if (!worldRuntime_.LoadFromVwrFile(path))
@@ -2230,23 +2253,7 @@ namespace GalaxyEggbert::CNA
                             // real source's `else` branch (hub/global-hub wins)
                             // uses `OpenGoldsWin()` instead, a different,
                             // cosmetic-only flag this engine doesn't model.
-                            const int currentMission = worldRuntime_.GetMissionNumber();
-                            if (interaction_.ExitWasGoldenKey() && currentMission != 1 && currentMission != 199)
-                            {
-                                // The golden key ends the world (Decor::OpenGoldsWin(),
-                                // m_doors[180 + world]): back to the main hub, where one more
-                                // gold bar opens and the world's sign changes.
-                                saveData_.UnlockMissionDoor(180 + currentMission / 10);
-                                LoadMission(1);
-                            }
-                            else
-                            {
-                                if (currentMission % 10 != 0)
-                                {
-                                    saveData_.UnlockMissionDoor(currentMission + 1);
-                                }
-                                LoadMission(WorldRuntime::ComputeWinExitTarget(currentMission));
-                            }
+                            AdvanceAfterWin();
                         }
                         else
                         {
@@ -2260,7 +2267,15 @@ namespace GalaxyEggbert::CNA
                             // here -- do NOT call LoadMission() on this path,
                             // it would wrongly wipe the current mission's
                             // in-progress treasure/key state.
-                            blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                            if (worldRuntime_.HasExplicitSpawnPoint())
+                            {
+                                blupi_.SetPosition(worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
+                                                   worldRuntime_.GetSpawnRenderZ());
+                            }
+                            else
+                            {
+                                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                            }
                         }
                         SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                     }
@@ -3574,7 +3589,7 @@ namespace GalaxyEggbert::CNA
                 }
                 SetPhase(GalaxyEggbert::Def::GamePhase::Lost);
             }
-            else if (interaction_.ExitReached())
+            else if (interaction_.ExitReached() && !winCheerActive_)
             {
                 if (!editorPlayTestActive_)
                 {
@@ -3583,7 +3598,36 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetHasProgress(true);
                     saveData_.Save();
                 }
-                SetPhase(GalaxyEggbert::Def::GamePhase::Win);
+                // The original's exit (Decor.cpp:6160-6180, 6411; Game1::Update): Blupi leaves
+                // his helicopter, cheers facing the viewer for 40 ticks and the next world loads
+                // (the hub, or the main hub after a golden key) -- no win screen, as the video
+                // shows. Only the true ending (199's exit) has the Win screen; play-tests and the
+                // showcase keep it to get back to the editor or the menu.
+                const int mission = worldRuntime_.GetMissionNumber();
+                if (!editorPlayTestActive_ && mission != 199 && mission != 999)
+                {
+                    if (blupi_.IsInVehicle())
+                    {
+                        blupi_.TriggerDismount();
+                    }
+                    winCheerActive_ = true;
+                    if (blupi_.TriggerOneShotAnim(BlupiController::AnimState::Win, BlupiController::kWinDuration))
+                    {
+                        const float dx = camera_.Position().X - blupi_.GetX();
+                        const float dz = camera_.Position().Z - blupi_.GetZ();
+                        blupi_.SetYaw(std::atan2(dx, -dz));
+                    }
+                }
+                else
+                {
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Win);
+                }
+            }
+            if (winCheerActive_ && !blupi_.IsOneShotAnimPlaying())
+            {
+                winCheerActive_ = false;
+                AdvanceAfterWin();
+                return;
             }
 
             // Platform lift riding (plan.md E3D-MIG-152): IsRidingLift()

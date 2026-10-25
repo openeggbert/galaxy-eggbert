@@ -199,6 +199,7 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<GalaxyEggbert::Game::TerrainRenderer> terrainRenderer_;
         std::uint32_t terrainRevision_ = 0; // World::blockRevision() terrainRenderer_ was built from
         bool holdingCrate_ = false;        // crouching with a crate in front, to pull it (StopPop/Pop)
+        bool winCheerActive_ = false;      // the Win cheer at the exit plays; then AdvanceAfterWin()
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> terrainEffect_;
 
         // object-m.png, loaded directly via CNA's own Texture2D (no
@@ -426,6 +427,10 @@ namespace GalaxyEggbert::CNA
         // Builds the terrain mesh again when the world's blocks changed since it was built
         // (`Worlds::World::blockRevision()`): doors opened in play, hub doors at load.
         void RefreshTerrainMeshIfChanged();
+
+        // After a won mission: unlocks what it opens and loads where it leads (the hub, the main
+        // hub after a golden key, 199 after the main hub's exit).
+        void AdvanceAfterWin();
 
         // Loads `worlds3d/world{missionNumber:03d}.vwr`, rebuilds the
         // terrain/background presentation, resets `blupi_`/`interaction_`

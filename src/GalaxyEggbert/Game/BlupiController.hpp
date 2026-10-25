@@ -571,7 +571,10 @@ namespace GalaxyEggbert::Game
             Mockery, Mockeryi, Mockeryp,
             // Holding a crate to pull it (table_blupi 28/29, Decor.cpp's StopPop/Pop): crouched,
             // facing the crate; Pop walks backward pulling it.
-            StopPop, Pop
+            StopPop, Pop,
+            // The cheer at the exit (table_blupi 13, ACTION_WIN): both arms up, facing the viewer,
+            // for kWinDuration before the next world loads.
+            Win
         };
 
         // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -1156,6 +1159,9 @@ namespace GalaxyEggbert::Game
         // Holding a crate (Step()'s holdingCrate: crouching, a crate right in front): Blupi
         // cannot turn or step forward, and backs away at the original's Pop speed, 4 px a tick.
         static constexpr float kPullSpeed = 4.0f * 20.0f / 64.0f;
+
+        // The Win cheer's length: the original moves on at m_blupiPhase == 40 (Decor.cpp:6411).
+        static constexpr float kWinDuration = 40.0f / 20.0f;
 
     private:
         // Whole-block coarse solidity (non-air only -- deliberately NOT
