@@ -668,6 +668,7 @@ add_executable(VerifyTileUvBounds
 
 target_include_directories(VerifyTileUvBounds PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 # INFRA-004 (plan.md §7): UnverifiedRenderMapping.hpp is a header-only data

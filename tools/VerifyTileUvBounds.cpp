@@ -1,5 +1,7 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Game/LiftVisual.hpp>
 
+#include <cmath>
 #include <iostream>
 
 // Scripted verification of BlockTypes::tileUV() (plan.md TEST-004) --
@@ -52,6 +54,30 @@ int main()
     // is excluded there instead of guessing a fix in tileUV()/kPassable
     // itself.
     check(!fitsInAtlas(440), "Icon 440 is the known, confirmed exception (does NOT fit in the atlas)");
+
+    // The lift (icon 29) is drawn as its tile's bar and stem (LiftVisual.hpp): the bar's top
+    // is the old cube's top, where Blupi stands; the stem hangs right under it; both sample
+    // only the tile's opaque rows (0-35), never its empty lower part.
+    {
+        const auto parts = GalaxyEggbert::Game::LiftVisualParts();
+        const auto& bar = parts[0];
+        const auto& stem = parts[1];
+        check(std::abs(bar.centerYOffset + bar.height * 0.5f - 0.5f) < kEpsilon && bar.width == 1.0f,
+              "The lift's bar is full width and flush with its cell's top");
+        check(std::abs(stem.centerYOffset + stem.height * 0.5f - (bar.centerYOffset - bar.height * 0.5f)) < kEpsilon &&
+                  stem.width < bar.width,
+              "The lift's stem hangs directly under the bar, narrower");
+        bool uvOk = true;
+        for (const auto& part : parts)
+        {
+            uvOk = uvOk && part.u0 >= 0.0f && part.u1 <= 1.0f && part.u0 < part.u1 && part.v0 >= 0.0f &&
+                   part.v0 < part.v1 && part.v1 <= 36.0f / 64.0f + kEpsilon;
+        }
+        check(uvOk, "The lift's parts sample only the opaque rows of its tile");
+        check(std::abs((stem.u1 - stem.u0) - stem.width) < kEpsilon && std::abs((bar.v1 - bar.v0) - bar.height) < kEpsilon &&
+                  std::abs((stem.v1 - stem.v0) - stem.height) < kEpsilon,
+              "The lift's parts keep the tile's own proportions");
+    }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;

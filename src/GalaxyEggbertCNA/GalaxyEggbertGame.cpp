@@ -8,6 +8,7 @@
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include "GalaxyEggbert/Worlds/Block.hpp"
 
+#include <GalaxyEggbert/Game/LiftVisual.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
 #include <Microsoft/Xna/Framework/Color.hpp>
@@ -3996,11 +3997,24 @@ namespace GalaxyEggbert::CNA
                     {
                         continue;
                     }
-                    AddCenteredBox(cubeMesh,
-                                   Microsoft::Xna::Framework::Vector3(
-                                       obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
-                                   Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
-                                   tileAtlas_.GetTileUv(visual.icon));
+                    const Microsoft::Xna::Framework::Vector3 center(
+                        obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
+                    const auto tileUv = tileAtlas_.GetTileUv(visual.icon);
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1)
+                    {
+                        // The lift's bar and stem, not a cube of its mostly transparent tile.
+                        const float du = tileUv.u1 - tileUv.u0;
+                        const float dv = tileUv.v1 - tileUv.v0;
+                        for (const auto& part : LiftVisualParts())
+                        {
+                            AddCenteredBox(cubeMesh, center + Microsoft::Xna::Framework::Vector3(0.0f, part.centerYOffset, 0.0f),
+                                           Microsoft::Xna::Framework::Vector3(part.width, part.height, part.width),
+                                           CnaEngine::Graphics::UvRect{tileUv.u0 + part.u0 * du, tileUv.v0 + part.v0 * dv,
+                                                                       tileUv.u0 + part.u1 * du, tileUv.v0 + part.v1 * dv});
+                        }
+                        continue;
+                    }
+                    AddCenteredBox(cubeMesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), tileUv);
                 }
 
                 if (!cubeMesh.Mesh().Empty())
