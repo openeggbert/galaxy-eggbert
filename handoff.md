@@ -4,21 +4,25 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-24 (night)._
+_Last updated: 2026-10-25._
 
 ## Resume here (exact state when last written)
 
-Nothing is half done: the worktree is committed and pushed (`develop`). Phase 7B is complete
-except the items listed under "Open" and "Waiting for the user" below. Last steps, 2026-10-24:
+Nothing is half done: the worktree is committed (`develop`). 2026-10-25: the 13 commits from
+`52ccd53` to `4700bfd` were rewritten to drop a `Co-Authored-By: Claude` trailer (messages only;
+trees, authors and dates unchanged; the rule is now in `CLAUDE.md`). The force push of
+`develop` is left to the user: until then `origin/develop` still holds the old hashes, so do not
+pull or push. Phase 7B is complete except the items listed under "Open" and "Waiting for the
+user" below. Last steps, 2026-10-24:
 
-- `cc8c391` converter: free-forms drop rings/points their neighbours reproduce (palm trunk
+- `52ccd53` converter: free-forms drop rings/points their neighbours reproduce (palm trunk
   193 948 -> 6 340 triangles); materials over 65 535 vertices split into `_1`, `_2` meshes.
-- `fb80e3d` converter: blended free-form sections aligned before blending (palm trunks were
+- `d2a6976` converter: blended free-form sections aligned before blending (palm trunks were
   pinched; palms 0.76 -> 0.83-0.86, trees 0.96 -> 0.97-0.98).
-- `59ac0d0` converter: ASCII-only part names (CNA reads part file names without decoding
+- `cb355ce` converter: ASCII-only part names (CNA reads part file names without decoding
   `\u` escapes, `upstream_bugs.md` UB-004; "Cône" crashed the game at load).
-- `cf89da3` all 82 object models re-exported, big decor included, checked live under Xvfb.
-- `f4edbe8` Blupi and his vehicles re-exported (`BB3D-008` done; numbers in `plan.md`).
+- `6cd48ed` all 82 object models re-exported, big decor included, checked live under Xvfb.
+- `7f11e0f` Blupi and his vehicles re-exported (`BB3D-008` done; numbers in `plan.md`).
 
 Next candidates (none blocking): the open items below. A live BigDecor check needs a world
 with BigDecor records (none of `worlds3d/` has any): a throwaway probe linking the

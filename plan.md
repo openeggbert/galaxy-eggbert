@@ -756,7 +756,7 @@ be converted one at a time.
       overcraft's scenes (`aero-*.rd4`) have `ofst -8.50,0.85`, which the library's camera
       alignment ignored; may explain the overcraft's 0.74-0.76. Regenerate `avatars3d/blupi`
       (its README) and compare the per-clip IoU before committing. Done 2026-10-24
-      (`f4edbe8`): matching 145 confident / 61 probable / 25 unmatched icons (was 121 / 76 /
+      (`7f11e0f`): matching 145 confident / 61 probable / 25 unmatched icons (was 121 / 76 /
       34); StopOver 0.764 -> 0.982, MarchOver 0.739 -> 0.940, Clear4 0.843 -> 0.983, tank
       0.893 -> 0.929, jeep 0.949 -> 0.970, nothing worse by more than 0.016; vehicles 2-3 x
       lighter; the red placeholder parts have their colours. Checked live (golden capture).
@@ -881,7 +881,7 @@ be converted one at a time.
 - [x] `BB3D-050` Big decor (explo.png BigDecor cells; the icons the original worlds use:
       16-31, 36-47, 66-69, 87-89, 203). Done 2026-10-24, from `survey.py icons --sheet
       explo.png --folders Explo` and trials: palms 16-19 (`plante1a-1d`, 0.825-0.856 since
-      blended sections are aligned, `fb80e3d`; the trunk was pinched), trees 20-22
+      blended sections are aligned, `d2a6976`; the trunk was pinched), trees 20-22
       (`plante2a-2c`, 0.973-0.982), grass 23-25 (`plante3a-3c`, 0.65-0.69 with `shift=6`:
       blades wider than the sprites'; envelope readings checked against blupi.dxf, not the
       cause), houses 26-27 (`maison` 1.000, `cabane` 0.993), machines 28-31 (`meca1-4`,
@@ -893,7 +893,7 @@ be converted one at a time.
       0.979), 88 (the fountain bowl, `Decor/palais/big02.rds`, 0.992). Open: procedural
       textures (metal noise, wood grain, the palm's bark) are flat colours. The game draws
       them standing on their cell's floor at the original size (128/144 px = 2/2.25 blocks).
-      Exported 2026-10-24 (`cf89da3`) and checked live under Xvfb: BigDecor records placed
+      Exported 2026-10-24 (`6cd48ed`) and checked live under Xvfb: BigDecor records placed
       around Blupi in a copy of `world999.vwr` (house, machine, grass on the floor).
 
 **Stage 7 — the other Blupis**
