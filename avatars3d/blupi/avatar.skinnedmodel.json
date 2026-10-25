@@ -250,6 +250,22 @@
       "clip": "clips/Pop.clip.bin"
     },
     {
+      "name": "Win",
+      "clip": "clips/Win.clip.bin"
+    },
+    {
+      "name": "Turn",
+      "clip": "clips/Turn.clip.bin"
+    },
+    {
+      "name": "Vertigo",
+      "clip": "clips/Vertigo.clip.bin"
+    },
+    {
+      "name": "Recede",
+      "clip": "clips/Recede.clip.bin"
+    },
+    {
       "name": "Bye",
       "clip": "clips/Bye.clip.bin"
     },

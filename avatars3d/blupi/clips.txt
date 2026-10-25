@@ -35,6 +35,10 @@ clip Hide 0 0 0 0 0 0 0 0 0
 clip Push 0 0 0 0 0 0
 clip StopPop 0 0 0 0 0 0
 clip Pop 0 0 0 0 0 0
+clip Win 0 0 0 0 0 0
+clip Turn 0 0 0 0 0 0
+clip Vertigo 0 0 0 0 0 0 0 0
+clip Recede 0 0 0 0 0 0
 clip Bye 0 0 0 0 0 0 0 0 0 0 0 0
 clip Switch 0 0 0 0 0 0 0 0 0 0
 clip FireTank 0 0 0 0 0 0
@@ -60,6 +64,8 @@ viewer Balloon
 viewer Teleporting
 viewer StopSkate
 viewer Hide
+viewer Win
+viewer Turn
 viewer Bye
 viewer Switch
 viewer TakeDynamite
