@@ -39,7 +39,7 @@ class ObjectType:
     """`include/GalaxyEggbert/Def/ObjectType.hpp` ids used when authoring worlds."""
     LIFT = 1
     MINE = 2
-    MINE_PATROL = 3
+    HANGING_MINE = 3      # hangs from above; a crouching Blupi passes under it (Decor.cpp MoveObjectDetect)
     BULLDOZER = 4
     TREASURE = 5
     EGG = 6
