@@ -411,9 +411,14 @@ namespace GalaxyEggbert::CNA
                 {
                     continue; // out of bounds -- treat as open air
                 }
-                if (!world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                     static_cast<std::uint16_t>(gz))
-                         .isAir())
+                // Water and blocks nothing collides with (machine parts, signs) leave the view
+                // open: the camera follows Blupi under water. (Treating water as a wall pulled
+                // the eye onto the look-at point and Camera::LookAt threw, 2026-10-25.)
+                const auto type = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                                 static_cast<std::uint16_t>(gz))
+                                      .type();
+                const auto& block = GalaxyEggbert::GetBlockDefinition(type);
+                if (type != 0 && !block.water && block.collisionMask != 0)
                 {
                     return std::max(0.0f, traveled - kStep);
                 }
@@ -3852,6 +3857,10 @@ namespace GalaxyEggbert::CNA
                     const auto direction = desiredOffset * (1.0f / desiredDistance);
                     safeDistance = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
                 }
+                // Never onto the target itself (Camera::LookAt rejects that): at least a short
+                // way back even when a wall stands right behind him.
+                constexpr float kMinChaseDistance = 0.3f;
+                safeDistance = std::max(safeDistance, std::min(kMinChaseDistance, desiredDistance));
                 rawEye = rawTarget + desiredOffset * (desiredDistance > 0.001f ? safeDistance / desiredDistance : 1.0f);
             }
 
