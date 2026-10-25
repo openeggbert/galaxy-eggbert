@@ -768,10 +768,11 @@ namespace GalaxyEggbert::CNA
                 blupiModelLoaded_ = true;
                 std::cout << "GalaxyEggbertCNA: third-person model loaded — "
                           << (blupiModelIsReal_ ? "avatars3d/blupi/" : "avatars3d/blupi_placeholder/")
-                          << " ('C' toggles first-/third-person)." << std::endl;
+                          << " (F3 toggles third-/first-person)." << std::endl;
             }
             else
             {
+                cameraMode_ = CameraMode::FirstPerson;
                 std::cout << "GalaxyEggbertCNA: no third-person model found ("
                           << blupiModelManifest
                           << " not found) — third-person camera mode unavailable, staying first-person."
@@ -3479,13 +3480,14 @@ namespace GalaxyEggbert::CNA
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
             }
 
-            // Camera-mode toggle (2026-07-09, NEXT.md §3) -- "C", edge-
-            // detected (same pattern as demo_avatar's Space-toggle) so a
-            // held key doesn't flip modes every frame. Only actually
-            // switches to third-person if a model loaded successfully
+            // Camera-mode toggle (2026-07-09, NEXT.md §3) -- F3 since
+            // 2026-10-25 (was "C"; letters are typed cheats), edge-detected
+            // (same pattern as demo_avatar's Space-toggle) so a held key
+            // doesn't flip modes every frame. Only actually switches to
+            // third-person if a model loaded successfully
             // (blupiModelLoaded_) -- otherwise silently stays first-person,
             // there being nothing to show in third-person.
-            const bool cameraModeKeyDown = keys.IsKeyDown(Keys::C);
+            const bool cameraModeKeyDown = keys.IsKeyDown(Keys::F3);
             if (cameraModeKeyDown && !cameraModeKeyWasDown_ && blupiModelLoaded_)
             {
                 cameraMode_ = (cameraMode_ == CameraMode::FirstPerson)
@@ -3495,7 +3497,7 @@ namespace GalaxyEggbert::CNA
             cameraModeKeyWasDown_ = cameraModeKeyDown;
 
             // F11 fullscreen toggle (2026-07-10, user request), edge-
-            // detected like "C" above.
+            // detected like F3 above.
             const bool fullscreenKeyDown = keys.IsKeyDown(Keys::F11);
             if (fullscreenKeyDown && !fullscreenKeyWasDown_ && graphics_)
             {

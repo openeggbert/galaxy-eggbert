@@ -41,15 +41,14 @@ namespace GalaxyEggbert::CNA
     // Direct CNA + cna-engine target: loads a hand-authored .vwr world, renders
     // real textured/animated 3D terrain, and moves an invisible,
     // collision-only Blupi placeholder through it (see NEXT.md for current
-    // status). Two camera modes now exist (2026-07-09): first-person
-    // (default, unchanged since 2026-07-05 -- Blupi's current animation
-    // state shown via a small 2D indicator in the screen's bottom-right
-    // corner instead of an in-world sprite) and third-person, showing a
-    // real GPU-skinned 3D model via CNA's SkinnedModelEXT/SkinnedEffect
-    // APIs (see ../cna/docs/skinned-model-ext.md) -- currently
-    // a temporary placeholder model (avatars3d/blupi_placeholder/, see its
-    // own README.md), not yet a real Blupi model. "C" toggles between modes
-    // ("C" is the project's established switch-camera key).
+    // status). Two camera modes exist (2026-07-09): third-person, the
+    // default since 2026-10-25 (user request), showing the real Blupi
+    // converted from the Ray Dream scenes (avatars3d/blupi/) through CNA's
+    // SkinnedModelEXT/SkinnedEffect APIs (see ../cna/docs/skinned-model-ext.md),
+    // and first-person, Blupi's animation state shown via a small 2D
+    // indicator in the screen's bottom-right corner. F3 toggles between
+    // them: it was "C" until 2026-10-25, but letters are typed cheats
+    // ("ghost", "quick").
     class GalaxyEggbertGame final : public Microsoft::Xna::Framework::Game
     {
     public:
@@ -102,14 +101,17 @@ namespace GalaxyEggbert::CNA
         // well-known file, exit" shape as the screenshot mode.
         void EnableGoldenTraceMode() noexcept { goldenTraceMode_ = true; }
 
+
         GetTypeNameHPP()
 
     private:
-        // Camera mode (2026-07-09, NEXT.md §3) -- toggled by "C", edge-
+        // Camera mode (2026-07-09, NEXT.md §3) -- toggled by F3, edge-
         // detected the same way as the demo_avatar example's Space-toggle
         // (cameraModeKeyWasDown_ below) so a held key doesn't rapid-fire.
+        // Third-person by default; LoadContent() falls back to first-person
+        // when no Blupi model loads.
         enum class CameraMode : std::uint8_t { FirstPerson, ThirdPersonModel };
-        CameraMode cameraMode_ = CameraMode::FirstPerson;
+        CameraMode cameraMode_ = CameraMode::ThirdPersonModel;
         bool cameraModeKeyWasDown_ = false;
         // Drives terrainEffect_'s View/Projection every frame. Its view is
         // always XNA's CreateLookAt of its position and cameraTarget_ (set
@@ -223,7 +225,7 @@ namespace GalaxyEggbert::CNA
 
         // Real mobile-eggbert sound playback (2026-07-10, see Sound.hpp).
         // jumpKeyWasDown_ edge-detects the jump key the same way
-        // cameraModeKeyWasDown_ edge-detects "C" above; stepSoundTimer_
+        // cameraModeKeyWasDown_ edge-detects F3 above; stepSoundTimer_
         // paces footstep sounds while marching (reset whenever Blupi isn't
         // marching, so it doesn't fire immediately on the next step).
         GalaxyEggbert::Game::Sound sound_;
