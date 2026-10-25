@@ -8,6 +8,9 @@
 # repository's Content/, avatars3d/, textures3d/ and worlds3d/: savedata.txt and customworlds/
 # are written there, never into the build directory, where they are the player's own data.
 #
+# QA_LIVE_AVATARS=<dir> uses that directory as avatars3d/ (to look at re-exported models before
+# they replace the committed ones).
+#
 # Steps, one per line ("#" comments allowed):
 #   sleep <seconds>          wait
 #   shot <name>              save <out-dir>/<name>.png, cropped to the game window
@@ -19,7 +22,7 @@
 set -u
 
 if [[ $# -lt 3 ]]; then
-    sed -n '2,20p' "$0" >&2
+    sed -n '2,24p' "$0" >&2
     exit 2
 fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -37,7 +40,14 @@ mkdir -p "$run"
 for d in Content avatars3d textures3d worlds3d; do
     ln -sfn "$repo/$d" "$run/$d"
 done
-ln -sfn "$build/GalaxyEggbertCNA" "$run/GalaxyEggbertCNA"
+if [[ -n "${QA_LIVE_AVATARS:-}" ]]; then
+    ln -sfn "$(cd "$QA_LIVE_AVATARS" && pwd)" "$run/avatars3d"
+fi
+# A hard link, not a symlink: CNA resolves its content roots (avatars3d/) against the executable's
+# real directory, which a symlink would make the build directory again. Relinked every run,
+# since the linker replaces the binary with a new file.
+rm -f "$run/GalaxyEggbertCNA"
+ln "$build/GalaxyEggbertCNA" "$run/GalaxyEggbertCNA"
 
 cd "$run"
 SDL_VIDEODRIVER=x11 ./GalaxyEggbertCNA "$@" > "$out/game.log" 2>&1 &
