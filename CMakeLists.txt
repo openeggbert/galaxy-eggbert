@@ -745,6 +745,25 @@ endif()
 
 # Same engine-agnostic-parser rationale as VerifyMoveObjectTypesCna above,
 # for BigDecor: section parsing (NEXT.md §8 task 3) instead of MoveObject:.
+# Every shipped world loads, carries its file's mission number and survives
+# load -> save -> load (plans/GALAXY_EGGBERT_COMPLETION.md §6).
+add_executable(VerifyShippedWorlds
+        tools/VerifyShippedWorlds.cpp
+        src/GalaxyEggbert/Game/WorldRuntime.cpp
+        src/GalaxyEggbert/Game/ObjectIcons.cpp
+        src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
+        ${GE_SHARED_SOURCES}
+)
+
+target_include_directories(VerifyShippedWorlds PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+if(EMSCRIPTEN)
+    target_link_options(VerifyShippedWorlds PRIVATE -sNODERAWFS=1)
+endif()
+
 add_executable(VerifyBigDecorParsingCna
         tools/VerifyBigDecorParsingCna.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
@@ -782,6 +801,8 @@ if(BUILD_TESTING)
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     add_test(NAME VerifyBigDecorParsingCna COMMAND VerifyBigDecorParsingCna
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    # Writes its round-trip copy into the build directory (its default cwd).
+    add_test(NAME VerifyShippedWorlds COMMAND VerifyShippedWorlds ${CMAKE_SOURCE_DIR}/worlds3d)
     # No file/working-directory dependency -- AnimDivisor() is a pure
     # function of a BlockTypes icon id (plan.md TEST-007).
     add_test(NAME VerifyTerrainAnimDivisor COMMAND VerifyTerrainAnimDivisor)
