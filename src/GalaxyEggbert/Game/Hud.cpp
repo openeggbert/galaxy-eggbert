@@ -369,7 +369,11 @@ namespace GalaxyEggbert::Game
         // constant one (mobile-eggbert-reference/08-animations.md §2's own
         // "Channel selection" note) -- animIconUsesElementSheet tells us
         // which of the two this frame's icon actually indexes into (see
-        // BlupiController::AnimIconUsesElementSheet()'s own comment).
+        // BlupiController::AnimIconUsesElementSheet()'s own comment). A
+        // negative icon hides it: the caller passes -1 in third person,
+        // where the 3D Blupi is visible and the indicator only covered the
+        // Jump button (2026-10-25).
+        if (animIcon >= 0)
         {
             Quad q;
             q.x1 = static_cast<float>(viewportW) - kAnimIndicatorMargin * scale;

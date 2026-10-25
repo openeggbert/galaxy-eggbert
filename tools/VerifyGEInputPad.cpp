@@ -99,11 +99,12 @@ int main()
         InputPad pad;
         InputPad::PlayInput in;
 
-        // Real PlayAction rect: (550,310)-(620,380).
-        (void)pad.UpdatePlay(mouse(580, 340, true), kViewportW, kViewportH, in);
+        // Real PlayAction rect (GetButtonRect(), jump on the right):
+        // (W-1.2*96, H-2.6*96)-(W-0.2*96, H-1.6*96) = (524.8,230.4)-(620.8,326.4).
+        (void)pad.UpdatePlay(mouse(572, 278, true), kViewportW, kViewportH, in);
         check(!in.actionPressed, "Action: not yet fired on the press frame itself");
 
-        (void)pad.UpdatePlay(mouse(580, 340, true), kViewportW, kViewportH, in);
+        (void)pad.UpdatePlay(mouse(572, 278, true), kViewportW, kViewportH, in);
         check(!in.actionPressed, "Action: not fired while still held");
 
         // Release, dragged off the button first -- real semantics fire
@@ -336,6 +337,32 @@ int main()
         (void)pad.UpdateInit(mouse(550, 201, true), kViewportW, kViewportH);
         const auto stillHeld = pad.UpdateInit(mouse(550, 201, true), kViewportW, kViewportH);
         check(!stillHeld.editorPressed, "Init: InitEditor does not fire while still held (only on release)");
+    }
+    {
+        // Play controls at 800x480 hug the screen's corners as in the
+        // original: Pause (733,19)-(781,67), Jump (685,365)-(781,461).
+        InputPad pad;
+        InputPad::PlayInput in;
+        (void)pad.UpdatePlay(mouse(757, 43, true), 800, 480, in);
+        (void)pad.UpdatePlay(mouse(757, 43, false), 800, 480, in);
+        const bool paused = in.pausePressed;
+        (void)pad.UpdatePlay(mouse(733, 413, true), 800, 480, in);
+        check(paused && in.jumpHeld, "Play: Pause and Jump stand in the screen's right corners at 800x480");
+        (void)pad.UpdatePlay(mouse(733, 413, false), 800, 480, in);
+    }
+    {
+        // Pause at 800x480: five 140-pixel buttons from the image origin's
+        // x - 29.4, so Menu spans (50.6,308)-(190.6,448) and Continue
+        // (610.6,308)-(750.6,448), reaching into the side bars.
+        InputPad pad;
+        auto press = pad.UpdatePause(mouse(70, 380, true), 800, 480, true, true);
+        auto release = pad.UpdatePause(mouse(70, 380, false), 800, 480, true, true);
+        auto press2 = pad.UpdatePause(mouse(740, 380, true), 800, 480, true, true);
+        auto release2 = pad.UpdatePause(mouse(740, 380, false), 800, 480, true, true);
+        (void)press;
+        (void)press2;
+        check(release.menuPressed && release2.continuePressed,
+              "Pause: the real 140-pixel buttons span x 50-750 at 800x480");
     }
     {
         // The real buttons stand against the screen's edges, not the centred

@@ -57,26 +57,102 @@ namespace GalaxyEggbert::Game
         // possible). D-pad hit-square half-extent 70 happens to equal the
         // real source's own 140px hit-radius/2 coincidentally (both are
         // "70" in their respective unit systems, not a derived value).
-        constexpr float kDPadCenterX = 80.0f, kDPadCenterY = 400.0f;
-        constexpr float kDPadHitHalf = 70.0f;
-        constexpr float kDPadRingSize = 100.0f;
-        constexpr float kDPadThumbSize = 50.0f;
-        constexpr float kDPadThreshold = 20.0f; // reference-space px per axis for the discrete -1/0/+1 read
-        constexpr float kDPadThumbMaxOffset = kDPadHitHalf - kDPadThumbSize * 0.5f;
+        // Rect/InRect (plan.md EDITOR-106): the shared QuadBatch hit-testing
+        // primitive, also used by the editor UI.
+        using Rect = QuadBatch::Rect;
+        using QuadBatch::InRect;
 
-        constexpr float kJumpX0 = 550.0f, kJumpY0 = 390.0f, kJumpX1 = 620.0f, kJumpY1 = 460.0f;
-        constexpr float kActionX0 = 550.0f, kActionY0 = 310.0f, kActionX1 = 620.0f, kActionY1 = 380.0f;
-        constexpr float kPlayPauseX0 = 580.0f, kPlayPauseY0 = 10.0f, kPlayPauseX1 = 630.0f, kPlayPauseY1 = 60.0f;
+        // Real InputPad::GetButtonRect() positions every button in SCREEN
+        // pixels, from buttonSizeFactor1 = height / 5 and buttonSizeFactor2 =
+        // height * 140 / 480: the Play controls and Setup against the screen's
+        // edges, Pause/Resume/WinLostReturn from the 640x480 image's origin.
+        // These were approximations in the centred 640x480 space until
+        // 2026-10-25 (90-pixel Pause buttons from x 55, the Play controls 70-80
+        // pixels inside the screen's corners on an 800-wide window); every rect
+        // below is now the original's, in screen pixels, scaled with the
+        // window's height like the rest of this class.
+        struct ScreenMetrics
+        {
+            float w, h, s, f1, f2, originX;
+        };
 
-        // Pause-row layout: 5 buttons, 90x90, 20px gap, left-aligned at
-        // X=55, spanning Y [310,400] -- proportionally adapted the same
-        // way (see InputPad.hpp), preserving the real left-to-right
-        // order (Menu, Back, Setup, Restart, Continue).
-        constexpr float kPauseButtonSize = 90.0f;
-        constexpr float kPauseButtonGap = 20.0f;
-        constexpr float kPauseRowX0 = 55.0f;
-        constexpr float kPauseRowY0 = 310.0f;
-        constexpr float kPauseRowY1 = kPauseRowY0 + kPauseButtonSize;
+        ScreenMetrics Metrics(int viewportW, int viewportH) noexcept
+        {
+            const float w = static_cast<float>(viewportW);
+            const float h = static_cast<float>(viewportH);
+            const float s = h / kRefH;
+            return ScreenMetrics{w, h, s, h / 5.0f, h * 140.0f / 480.0f, (w - kRefW * s) * 0.5f};
+        }
+
+        // Play (the original's default "jump button on the right" layout): the
+        // stick ring at (100, height-100), touch area GetPadBounds(center, 140),
+        // ring and knob drawn GetPadBounds(center, 70); Jump and Action in the
+        // bottom-right corner; Pause in the top-right one.
+        constexpr float kDPadRadius = 140.0f;      // real padRadius: the touch area's half size
+        constexpr float kDPadDrawRadius = 70.0f;   // real padRadius / 2: ring and knob
+        constexpr float kDPadThreshold = 20.0f;    // pixels per axis for the discrete -1/0/+1 read
+
+        Microsoft::Xna::Framework::Vector2 DPadCenter(const ScreenMetrics& m) noexcept
+        {
+            return {100.0f * m.s, m.h - 100.0f * m.s};
+        }
+
+        Rect PlayJumpRect(const ScreenMetrics& m) noexcept
+        {
+            return Rect{m.w - m.f1 * 1.2f, m.h - m.f1 * 1.2f, m.w - m.f1 * 0.2f, m.h - m.f1 * 0.2f};
+        }
+
+        Rect PlayActionRect(const ScreenMetrics& m) noexcept
+        {
+            return Rect{m.w - m.f1 * 1.2f, m.h - m.f1 * 2.6f, m.w - m.f1 * 0.2f, m.h - m.f1 * 1.6f};
+        }
+
+        Rect PlayPauseRect(const ScreenMetrics& m) noexcept
+        {
+            return Rect{m.w - m.f1 * 0.7f, m.f1 * 0.2f, m.w - m.f1 * 0.2f, m.f1 * 0.7f};
+        }
+
+        // Pause: Menu, Back, Setup, Restart, Continue, one buttonSizeFactor2
+        // wide each, from the image origin's x - 0.21 * buttonSizeFactor2.
+        Rect PauseButtonRect(int index, const ScreenMetrics& m) noexcept
+        {
+            const float x0 = m.originX + m.f2 * (-0.21f + static_cast<float>(index));
+            return Rect{x0, m.f2 * 2.2f, x0 + m.f2, m.f2 * 3.2f};
+        }
+
+        // Resume: Menu and Continue, from x + 1.29 * buttonSizeFactor2.
+        Rect ResumeButtonRect(int index, const ScreenMetrics& m) noexcept
+        {
+            const float x0 = m.originX + m.f2 * (1.29f + static_cast<float>(index));
+            return Rect{x0, m.f2 * 2.2f, x0 + m.f2, m.f2 * 3.2f};
+        }
+
+        Rect WinLostReturnRect(const ScreenMetrics& m) noexcept
+        {
+            return Rect{m.originX + m.w - m.f1 * 2.2f, m.f1 * 0.2f, m.originX + m.w - m.f1 * 1.2f, m.f1 * 1.2f};
+        }
+
+        // Setup: Sounds/Jump/Zoom/Accel stacked in the left column, Reset at
+        // x 450 on Sounds' row, Return in the bottom-right corner.
+        Rect SetupColumnRect(float top, float bottom, const ScreenMetrics& m) noexcept
+        {
+            return Rect{20.0f * m.s, m.h - 20.0f * m.s - m.f2 * top, 20.0f * m.s + m.f2 * 0.5f,
+                        m.h - 20.0f * m.s - m.f2 * bottom};
+        }
+        Rect SetupSoundsRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(2.0f, 1.5f, m); }
+        Rect SetupJumpRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(1.5f, 1.0f, m); }
+        Rect SetupZoomRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(1.0f, 0.5f, m); }
+        Rect SetupAccelRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(0.5f, 0.0f, m); }
+        Rect SetupResetRect(const ScreenMetrics& m) noexcept
+        {
+            const Rect row = SetupSoundsRect(m);
+            return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
+        }
+        Rect SetupReturnRect(const ScreenMetrics& m) noexcept
+        {
+            return Rect{m.w - 20.0f * m.s - m.f2 * 0.8f, m.h - 20.0f * m.s - m.f2 * 0.8f, m.w - 20.0f * m.s,
+                        m.h - 20.0f * m.s};
+        }
 
         // Real Pause background/character (pause.png, blupiyoupie.png):
         // pause.png is an exact 640x480 match for the reference space;
@@ -100,17 +176,6 @@ namespace GalaxyEggbert::Game
         constexpr float kLostGrowDurationSeconds = 5.0f;
         constexpr float kLostSpinMaxDegrees = 360.0f * 6.0f;
 
-        // Real WinLostReturn button (icon 3, shared with PlayPause but a
-        // DIFFERENT, bigger, less corner-flush rect -- confirmed via
-        // `InputPad.cpp`'s own real formula: Left/Right = drawBoundsWidth
-        // - bsf1*2.2/1.2, Top/Bottom = bsf1*0.2/1.2, where
-        // bsf1=drawBoundsHeight/5. In this engine's 640x480 reference
-        // space, bsf1=96, giving (428.8,19.2)-(524.8,115.2).
-        constexpr float kWinLostReturnX0 = 640.0f - 96.0f * 2.2f;
-        constexpr float kWinLostReturnY0 = 96.0f * 0.2f;
-        constexpr float kWinLostReturnX1 = 640.0f - 96.0f * 1.2f;
-        constexpr float kWinLostReturnY1 = 96.0f * 1.2f;
-
         // text.png: 32px glyph cells, 16 columns, glyph index == ASCII
         // code for the printable range (same convention Hud.cpp already
         // documents); the advances are the real proportional widths
@@ -123,36 +188,6 @@ namespace GalaxyEggbert::Game
         constexpr float kSetupLabelXOffset = 10.0f; // real "buttonRect.Right + 10"
         constexpr float kSetupLabelYNudge = 8.0f; // real "(Top+Bottom)/2 - 8" single-line case
 
-        // PlaySetup screen (plan.md MENU-058..069), verified directly
-        // against `InputPad.cpp`'s own real formula: bsf2 =
-        // drawBoundsHeight*140/480, which is EXACTLY 140 at
-        // drawBoundsHeight=480 (this engine's own reference height) --
-        // these rects are used here completely unadapted (see
-        // InputPad.hpp's UpdateSetup()/DrawSetup() class comment).
-        // Left column (leftXForButtonsInLeftColumn=20,
-        // rightXForButtonsInLeftColumn=20+70=90): Sounds/Jump/Zoom/Accel
-        // stacked bottom-up. Reset sits at the same row as Sounds, further
-        // right. Return is a big bottom-right corner button.
-        constexpr float kSetupLeftColX0 = 20.0f, kSetupLeftColX1 = 90.0f;
-        constexpr float kSetupSoundsY0 = 180.0f, kSetupSoundsY1 = 250.0f;
-        constexpr float kSetupJumpY0 = 250.0f, kSetupJumpY1 = 320.0f;
-        constexpr float kSetupZoomY0 = 320.0f, kSetupZoomY1 = 390.0f;
-        constexpr float kSetupAccelY0 = 390.0f, kSetupAccelY1 = 460.0f;
-        constexpr float kSetupResetX0 = 450.0f, kSetupResetX1 = 520.0f;
-        constexpr float kSetupResetY0 = 180.0f, kSetupResetY1 = 250.0f;
-        constexpr float kSetupReturnX0 = 508.0f, kSetupReturnX1 = 620.0f;
-        constexpr float kSetupReturnY0 = 348.0f, kSetupReturnY1 = 460.0f;
-
-        // Resume screen (plan.md MENU-040..045): 2 real buttons, verified
-        // against `InputPad.cpp`'s own bsf2=140-at-this-reference-height
-        // formula (same "no adaptation needed" situation as Setup above),
-        // NOT reused from Pause's own Menu/Continue rects (a different
-        // real position, since Resume's row sits lower-center rather than
-        // Pause's own bottom row).
-        constexpr float kResumeMenuX0 = 180.6f, kResumeMenuX1 = 320.6f;
-        constexpr float kResumeContinueX0 = 320.6f, kResumeContinueX1 = 460.6f;
-        constexpr float kResumeRowY0 = 308.0f, kResumeRowY1 = 448.0f;
-
         // Real icon indices (Pixmap.cpp): Sounds/Jump/Zoom/Accel really
         // SWAP icon 13 (selected/on) vs 21 (not selected/off) -- a
         // DIFFERENT "state" convention from every other button in this
@@ -164,34 +199,6 @@ namespace GalaxyEggbert::Game
         constexpr int kIconSetupToggleOff = 21;
         constexpr int kIconSetupReset = 20;
         constexpr int kIconSetupReturn = 8;
-
-        // Rect/InRect (plan.md EDITOR-106): moved to the shared QuadBatch
-        // so the editor UI can reuse the exact same hit-testing primitive.
-        // Every existing kXxxRect/InRect(...) use below is unaffected --
-        // QuadBatch::Rect is structurally/behaviorally identical.
-        using Rect = QuadBatch::Rect;
-        using QuadBatch::InRect;
-
-        constexpr Rect kJumpRect{kJumpX0, kJumpY0, kJumpX1, kJumpY1};
-        constexpr Rect kActionRect{kActionX0, kActionY0, kActionX1, kActionY1};
-        constexpr Rect kPlayPauseRect{kPlayPauseX0, kPlayPauseY0, kPlayPauseX1, kPlayPauseY1};
-        constexpr Rect kDPadHitRect{kDPadCenterX - kDPadHitHalf, kDPadCenterY - kDPadHitHalf,
-                                     kDPadCenterX + kDPadHitHalf, kDPadCenterY + kDPadHitHalf};
-        constexpr Rect kWinLostReturnRect{kWinLostReturnX0, kWinLostReturnY0, kWinLostReturnX1, kWinLostReturnY1};
-        constexpr Rect kSetupSoundsRect{kSetupLeftColX0, kSetupSoundsY0, kSetupLeftColX1, kSetupSoundsY1};
-        constexpr Rect kSetupJumpRect{kSetupLeftColX0, kSetupJumpY0, kSetupLeftColX1, kSetupJumpY1};
-        constexpr Rect kSetupZoomRect{kSetupLeftColX0, kSetupZoomY0, kSetupLeftColX1, kSetupZoomY1};
-        constexpr Rect kSetupAccelRect{kSetupLeftColX0, kSetupAccelY0, kSetupLeftColX1, kSetupAccelY1};
-        constexpr Rect kSetupResetRect{kSetupResetX0, kSetupResetY0, kSetupResetX1, kSetupResetY1};
-        constexpr Rect kSetupReturnRect{kSetupReturnX0, kSetupReturnY0, kSetupReturnX1, kSetupReturnY1};
-        constexpr Rect kResumeMenuRect{kResumeMenuX0, kResumeRowY0, kResumeMenuX1, kResumeRowY1};
-        constexpr Rect kResumeContinueRect{kResumeContinueX0, kResumeRowY0, kResumeContinueX1, kResumeRowY1};
-
-        Rect PauseButtonRect(int index)
-        {
-            const float x0 = kPauseRowX0 + static_cast<float>(index) * (kPauseButtonSize + kPauseButtonGap);
-            return Rect{x0, kPauseRowY0, x0 + kPauseButtonSize, kPauseRowY1};
-        }
 
         // Logical control indices, local to this file -- Play and Pause
         // reuse the same activeControl_ member but are never both live in
@@ -755,16 +762,18 @@ namespace GalaxyEggbert::Game
         // tools/VerifyGEInputPad.cpp).
         using Microsoft::Xna::Framework::Input::ButtonState;
 
-        const float scale = static_cast<float>(viewportH) / kRefH;
-        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
-        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        const float mouseX = static_cast<float>(mouse.getXProperty());
+        const float mouseY = static_cast<float>(mouse.getYProperty());
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
 
-        const bool overDPad = InRect(mouseRefX, mouseRefY, kDPadHitRect);
-        const bool overJump = InRect(mouseRefX, mouseRefY, kJumpRect);
-        const bool overAction = InRect(mouseRefX, mouseRefY, kActionRect);
-        const bool overPause = InRect(mouseRefX, mouseRefY, kPlayPauseRect);
+        const auto padCenter = DPadCenter(m);
+        const float padHalf = kDPadRadius * m.s;
+        const bool overDPad = InRect(mouseX, mouseY, Rect{padCenter.X - padHalf, padCenter.Y - padHalf,
+                                                          padCenter.X + padHalf, padCenter.Y + padHalf});
+        const bool overJump = InRect(mouseX, mouseY, PlayJumpRect(m));
+        const bool overAction = InRect(mouseX, mouseY, PlayActionRect(m));
+        const bool overPause = InRect(mouseX, mouseY, PlayPauseRect(m));
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -785,14 +794,17 @@ namespace GalaxyEggbert::Game
         // a fixed initial grab offset).
         if (mouseDown && activeControl_ == kPlayControlDPad)
         {
-            const float dx = mouseRefX - kDPadCenterX;
-            const float dy = mouseRefY - kDPadCenterY;
-            outInput.turnInput = dx > kDPadThreshold ? 1.0f : (dx < -kDPadThreshold ? -1.0f : 0.0f);
+            const float dx = mouseX - padCenter.X;
+            const float dy = mouseY - padCenter.Y;
+            const float threshold = kDPadThreshold * m.s;
+            outInput.turnInput = dx > threshold ? 1.0f : (dx < -threshold ? -1.0f : 0.0f);
             // Screen Y increases downward; dragging the thumb UP (negative
             // dy) should read as "forward" (+1), matching a physical D-pad.
-            outInput.moveInput = dy < -kDPadThreshold ? 1.0f : (dy > kDPadThreshold ? -1.0f : 0.0f);
-            dpadDragOffsetX_ = std::clamp(dx, -kDPadThumbMaxOffset, kDPadThumbMaxOffset);
-            dpadDragOffsetY_ = std::clamp(dy, -kDPadThumbMaxOffset, kDPadThumbMaxOffset);
+            outInput.moveInput = dy < -threshold ? 1.0f : (dy > threshold ? -1.0f : 0.0f);
+            // Real knob: drawn at the touch point (padTouchPos), which stays
+            // within the touch area. Stored in reference pixels.
+            dpadDragOffsetX_ = std::clamp(dx, -padHalf, padHalf) / m.s;
+            dpadDragOffsetY_ = std::clamp(dy, -padHalf, padHalf) / m.s;
         }
         else
         {
@@ -822,10 +834,7 @@ namespace GalaxyEggbert::Game
             return;
         }
 
-        const float scale = static_cast<float>(viewportH) / kRefH;
-        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
-        const auto refToScreenY = [&](float y) { return y * scale; };
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
 
         const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
         const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
@@ -836,33 +845,35 @@ namespace GalaxyEggbert::Game
         const auto appendIconQuad = [&](std::vector<Quad>& bucket, float x0, float y0, float x1, float y1, int icon)
         {
             Quad q;
-            q.x0 = refToScreenX(x0);
-            q.y0 = refToScreenY(y0);
-            q.x1 = refToScreenX(x1);
-            q.y1 = refToScreenY(y1);
+            q.x0 = x0;
+            q.y0 = y0;
+            q.x1 = x1;
+            q.y1 = y1;
             PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
             bucket.push_back(q);
         };
 
         // D-pad: ring always centered; thumb offset by the live drag (zero
         // when not actively dragging, snapping back to center).
-        appendIconQuad(normalQuads,
-                        kDPadCenterX - kDPadRingSize * 0.5f, kDPadCenterY - kDPadRingSize * 0.5f,
-                        kDPadCenterX + kDPadRingSize * 0.5f, kDPadCenterY + kDPadRingSize * 0.5f,
-                        kIconDPadRing);
-        const float thumbCx = kDPadCenterX + dpadDragOffsetX_;
-        const float thumbCy = kDPadCenterY + dpadDragOffsetY_;
+        const auto padCenter = DPadCenter(m);
+        const float drawHalf = kDPadDrawRadius * m.s;
+        appendIconQuad(normalQuads, padCenter.X - drawHalf, padCenter.Y - drawHalf, padCenter.X + drawHalf,
+                       padCenter.Y + drawHalf, kIconDPadRing);
+        const float thumbCx = padCenter.X + dpadDragOffsetX_ * m.s;
+        const float thumbCy = padCenter.Y + dpadDragOffsetY_ * m.s;
         appendIconQuad(activeControl_ == kPlayControlDPad ? pressedQuads : normalQuads,
-                        thumbCx - kDPadThumbSize * 0.5f, thumbCy - kDPadThumbSize * 0.5f,
-                        thumbCx + kDPadThumbSize * 0.5f, thumbCy + kDPadThumbSize * 0.5f,
-                        kIconDPadThumb);
+                       thumbCx - drawHalf, thumbCy - drawHalf, thumbCx + drawHalf, thumbCy + drawHalf,
+                       kIconDPadThumb);
 
-        appendIconQuad(activeControl_ == kPlayControlJump ? pressedQuads : normalQuads,
-                        kJumpRect.x0, kJumpRect.y0, kJumpRect.x1, kJumpRect.y1, kIconPlayJump);
-        appendIconQuad(activeControl_ == kPlayControlAction ? pressedQuads : normalQuads,
-                        kActionRect.x0, kActionRect.y0, kActionRect.x1, kActionRect.y1, kIconPlayAction);
-        appendIconQuad(activeControl_ == kPlayControlPause ? pressedQuads : normalQuads,
-                        kPlayPauseRect.x0, kPlayPauseRect.y0, kPlayPauseRect.x1, kPlayPauseRect.y1, kIconPlayPause);
+        const auto appendRect = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
+        {
+            appendIconQuad(bucket, r.x0, r.y0, r.x1, r.y1, icon);
+        };
+        appendRect(activeControl_ == kPlayControlJump ? pressedQuads : normalQuads, PlayJumpRect(m), kIconPlayJump);
+        appendRect(activeControl_ == kPlayControlAction ? pressedQuads : normalQuads, PlayActionRect(m),
+                   kIconPlayAction);
+        appendRect(activeControl_ == kPlayControlPause ? pressedQuads : normalQuads, PlayPauseRect(m),
+                   kIconPlayPause);
 
         // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
         // straight alpha, while AlphaBlend expects the premultiplied colours
@@ -885,19 +896,18 @@ namespace GalaxyEggbert::Game
         // Same reasoning as UpdatePlay() above -- not gated on loaded_.
         using Microsoft::Xna::Framework::Input::ButtonState;
 
-        const float scale = static_cast<float>(viewportH) / kRefH;
-        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
-        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        const float mouseX = static_cast<float>(mouse.getXProperty());
+        const float mouseY = static_cast<float>(mouse.getYProperty());
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
 
         // Unconditional: Menu/Setup/Continue. Conditional: Back/Restart --
         // real visibility rules (mission!=1; mission!=1 && mission%10!=0).
-        const bool overMenu = InRect(mouseRefX, mouseRefY, PauseButtonRect(0));
-        const bool overBack = showBack && InRect(mouseRefX, mouseRefY, PauseButtonRect(1));
-        const bool overSetup = InRect(mouseRefX, mouseRefY, PauseButtonRect(2));
-        const bool overRestart = showRestart && InRect(mouseRefX, mouseRefY, PauseButtonRect(3));
-        const bool overContinue = InRect(mouseRefX, mouseRefY, PauseButtonRect(4));
+        const bool overMenu = InRect(mouseX, mouseY, PauseButtonRect(0, m));
+        const bool overBack = showBack && InRect(mouseX, mouseY, PauseButtonRect(1, m));
+        const bool overSetup = InRect(mouseX, mouseY, PauseButtonRect(2, m));
+        const bool overRestart = showRestart && InRect(mouseX, mouseY, PauseButtonRect(3, m));
+        const bool overContinue = InRect(mouseX, mouseY, PauseButtonRect(4, m));
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -939,6 +949,7 @@ namespace GalaxyEggbert::Game
         const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
         const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
         const auto refToScreenY = [&](float y) { return y * scale; };
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
 
         // Real pause.png is an exact 640x480 match for the reference
         // space -- a direct full-screen quad, no cropping/UV math needed.
@@ -961,7 +972,9 @@ namespace GalaxyEggbert::Game
         auto charMesh = MakeTexturedMeshBuilder();
         if (anim.visible)
         {
-            AppendRotatedQuadUv(charMesh, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
+            // Real Pixmap::DrawIcon() adds no image origin: the character's
+            // centre is in screen pixels.
+            AppendRotatedQuadUv(charMesh, anim.centerX * scale, refToScreenY(anim.centerY),
                                 anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
@@ -988,9 +1001,9 @@ namespace GalaxyEggbert::Game
                 {
                     return;
                 }
-                const Rect r = PauseButtonRect(index);
-                const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
-                const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
+                const Rect r = PauseButtonRect(index, m);
+                const float centerX = (r.x0 + r.x1) * 0.5f;
+                const float topY = r.y1 + kPauseLabelYOffset * scale;
                 AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
             };
 
@@ -1000,12 +1013,12 @@ namespace GalaxyEggbert::Game
                 {
                     return;
                 }
-                const Rect r = PauseButtonRect(index);
+                const Rect r = PauseButtonRect(index, m);
                 Quad q;
-                q.x0 = refToScreenX(r.x0);
-                q.y0 = refToScreenY(r.y0);
-                q.x1 = refToScreenX(r.x1);
-                q.y1 = refToScreenY(r.y1);
+                q.x0 = r.x0;
+                q.y0 = r.y0;
+                q.x1 = r.x1;
+                q.y1 = r.y1;
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
             };
@@ -1045,13 +1058,12 @@ namespace GalaxyEggbert::Game
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
 
-        const float scale = static_cast<float>(viewportH) / kRefH;
-        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
-        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        const float mouseX = static_cast<float>(mouse.getXProperty());
+        const float mouseY = static_cast<float>(mouse.getYProperty());
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
 
-        const bool overReturn = InRect(mouseRefX, mouseRefY, kWinLostReturnRect);
+        const bool overReturn = InRect(mouseX, mouseY, WinLostReturnRect(m));
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -1083,6 +1095,7 @@ namespace GalaxyEggbert::Game
         const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
         const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
         const auto refToScreenY = [&](float y) { return y * scale; };
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
 
         // Real win.png/lost.png are exact 640x480 matches for the
         // reference space, same as pause.png.
@@ -1125,7 +1138,7 @@ namespace GalaxyEggbert::Game
         if (halfWRef > 0.0f && halfHRef > 0.0f)
         {
             AppendRotatedQuadUv(charMesh,
-                                refToScreenX(kCharacterCenterX), refToScreenY(kWinLostCharacterCenterY),
+                                kCharacterCenterX * scale, refToScreenY(kWinLostCharacterCenterY),
                                 halfWRef * scale, halfHRef * scale, rotationDegrees,
                                 0.0f, 0.0f, 1.0f, 1.0f);
         }
@@ -1135,11 +1148,12 @@ namespace GalaxyEggbert::Game
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         {
+            const Rect r = WinLostReturnRect(m);
             Quad q;
-            q.x0 = refToScreenX(kWinLostReturnRect.x0);
-            q.y0 = refToScreenY(kWinLostReturnRect.y0);
-            q.x1 = refToScreenX(kWinLostReturnRect.x1);
-            q.y1 = refToScreenY(kWinLostReturnRect.y1);
+            q.x0 = r.x0;
+            q.y0 = r.y0;
+            q.x1 = r.x1;
+            q.y1 = r.y1;
             PadIconUv(kIconPlayPause, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
             (activeControl_ == kWinLostControlReturn ? pressedQuads : normalQuads).push_back(q);
         }
@@ -1170,18 +1184,17 @@ namespace GalaxyEggbert::Game
 
         using Microsoft::Xna::Framework::Input::ButtonState;
 
-        const float scale = static_cast<float>(viewportH) / kRefH;
-        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
-        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        const float mouseX = static_cast<float>(mouse.getXProperty());
+        const float mouseY = static_cast<float>(mouse.getYProperty());
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
 
-        const bool overSounds = InRect(mouseRefX, mouseRefY, kSetupSoundsRect);
-        const bool overJump = InRect(mouseRefX, mouseRefY, kSetupJumpRect);
-        const bool overZoom = InRect(mouseRefX, mouseRefY, kSetupZoomRect);
-        const bool overAccel = InRect(mouseRefX, mouseRefY, kSetupAccelRect);
-        const bool overReset = showReset && InRect(mouseRefX, mouseRefY, kSetupResetRect);
-        const bool overReturn = InRect(mouseRefX, mouseRefY, kSetupReturnRect);
+        const bool overSounds = InRect(mouseX, mouseY, SetupSoundsRect(m));
+        const bool overJump = InRect(mouseX, mouseY, SetupJumpRect(m));
+        const bool overZoom = InRect(mouseX, mouseY, SetupZoomRect(m));
+        const bool overAccel = InRect(mouseX, mouseY, SetupAccelRect(m));
+        const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
+        const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -1223,6 +1236,10 @@ namespace GalaxyEggbert::Game
         const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
         const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
         const auto refToScreenY = [&](float y) { return y * scale; };
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        // Real Pixmap::DrawIcon() adds no image origin: the title and gears
+        // are in screen pixels.
+        const auto screenX = [&](float x) { return x * scale; };
 
         // Real setup.png is an exact 640x480 match for the reference
         // space, same as pause.png/win.png/lost.png. Never fades.
@@ -1245,9 +1262,9 @@ namespace GalaxyEggbert::Game
         const auto anim = ComputeSetupFadeAnim(phaseTimeSeconds, exiting);
 
         Quad speedyQuad;
-        speedyQuad.x0 = refToScreenX(anim.speedyLeft);
+        speedyQuad.x0 = screenX(anim.speedyLeft);
         speedyQuad.y0 = refToScreenY(0.0f);
-        speedyQuad.x1 = refToScreenX(anim.speedyRight);
+        speedyQuad.x1 = screenX(anim.speedyRight);
         speedyQuad.y1 = refToScreenY(160.0f);
         speedyQuad.u0 = 0.0f;
         speedyQuad.v0 = 0.0f;
@@ -1256,9 +1273,9 @@ namespace GalaxyEggbert::Game
         std::vector<Quad> speedyQuads{speedyQuad};
 
         auto gearMesh = MakeTexturedMeshBuilder();
-        AppendRotatedQuadUv(gearMesh, refToScreenX(kGear1CenterX), refToScreenY(kGear1CenterY),
+        AppendRotatedQuadUv(gearMesh, screenX(kGear1CenterX), refToScreenY(kGear1CenterY),
                             kGear1Half * scale, kGear1Half * scale, anim.gearRotation1, 0.0f, 0.0f, 1.0f, 1.0f);
-        AppendRotatedQuadUv(gearMesh, refToScreenX(kGear2CenterX), refToScreenY(kGear2CenterY),
+        AppendRotatedQuadUv(gearMesh, screenX(kGear2CenterX), refToScreenY(kGear2CenterY),
                             kGear2Half * scale, kGear2Half * scale, anim.gearRotation2, 0.0f, 0.0f, 1.0f, 1.0f);
 
         const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
@@ -1276,17 +1293,17 @@ namespace GalaxyEggbert::Game
             const auto appendButton = [&](const Rect& r, int icon, int controlId)
             {
                 Quad q;
-                q.x0 = refToScreenX(r.x0);
-                q.y0 = refToScreenY(r.y0);
-                q.x1 = refToScreenX(r.x1);
-                q.y1 = refToScreenY(r.y1);
+                q.x0 = r.x0;
+                q.y0 = r.y0;
+                q.x1 = r.x1;
+                q.y1 = r.y1;
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
             };
             const auto appendLabel = [&](const Rect& r, const std::string& text)
             {
-                const float leftX = refToScreenX(r.x1) + kSetupLabelXOffset * scale;
-                const float centerY = refToScreenY((r.y0 + r.y1) * 0.5f);
+                const float leftX = r.x1 + kSetupLabelXOffset * scale;
+                const float centerY = (r.y0 + r.y1) * 0.5f;
                 // Real DrawTextRightButton(): a two-line label starts 20
                 // above the button's centre (12 above the one-line
                 // position) and its second line is 24 lower.
@@ -1304,20 +1321,20 @@ namespace GalaxyEggbert::Game
             // buttons -- Jump/Zoom/Accel have no real state tracked in
             // this engine (no meaningful desktop equivalent, see class
             // comment), so they always render the "off" icon.
-            appendButton(kSetupSoundsRect, soundsOn ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlSounds);
-            appendButton(kSetupJumpRect, kIconSetupToggleOff, kSetupControlJump);
-            appendButton(kSetupZoomRect, kIconSetupToggleOff, kSetupControlZoom);
-            appendButton(kSetupAccelRect, kIconSetupToggleOff, kSetupControlAccel);
+            appendButton(SetupSoundsRect(m), soundsOn ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlSounds);
+            appendButton(SetupJumpRect(m), kIconSetupToggleOff, kSetupControlJump);
+            appendButton(SetupZoomRect(m), kIconSetupToggleOff, kSetupControlZoom);
+            appendButton(SetupAccelRect(m), kIconSetupToggleOff, kSetupControlAccel);
             if (showReset)
             {
-                appendButton(kSetupResetRect, kIconSetupReset, kSetupControlReset);
+                appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);
             }
-            appendButton(kSetupReturnRect, kIconSetupReturn, kSetupControlReturn);
+            appendButton(SetupReturnRect(m), kIconSetupReturn, kSetupControlReturn);
 
-            appendLabel(kSetupSoundsRect, "Sound effects");
-            appendLabel(kSetupJumpRect, "Jump button on the right");
-            appendLabel(kSetupZoomRect, "Automatic zoom on action");
-            appendLabel(kSetupAccelRect, "Accelerometer");
+            appendLabel(SetupSoundsRect(m), "Sound effects");
+            appendLabel(SetupJumpRect(m), "Jump button on the right");
+            appendLabel(SetupZoomRect(m), "Automatic zoom on action");
+            appendLabel(SetupAccelRect(m), "Accelerometer");
             if (showReset)
             {
                 // Real TX_BUTTON_SETUP_RESET, two lines ("Player {0} :\nErase
@@ -1325,7 +1342,7 @@ namespace GalaxyEggbert::Game
                 // screen (2026-10-25).
                 const std::string resetLabel =
                     "Player " + std::string(1, static_cast<char>('A' + selectedGamer)) + " :\nErase progress";
-                appendLabel(kSetupResetRect, resetLabel);
+                appendLabel(SetupResetRect(m), resetLabel);
             }
             // SetupReturn has no real label at all in the source (same as WinLostReturn).
         }
@@ -1355,14 +1372,13 @@ namespace GalaxyEggbert::Game
 
         using Microsoft::Xna::Framework::Input::ButtonState;
 
-        const float scale = static_cast<float>(viewportH) / kRefH;
-        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
-        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        const float mouseX = static_cast<float>(mouse.getXProperty());
+        const float mouseY = static_cast<float>(mouse.getYProperty());
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
 
-        const bool overMenu = InRect(mouseRefX, mouseRefY, kResumeMenuRect);
-        const bool overContinue = InRect(mouseRefX, mouseRefY, kResumeContinueRect);
+        const bool overMenu = InRect(mouseX, mouseY, ResumeButtonRect(0, m));
+        const bool overContinue = InRect(mouseX, mouseY, ResumeButtonRect(1, m));
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -1398,6 +1414,7 @@ namespace GalaxyEggbert::Game
         const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
         const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
         const auto refToScreenY = [&](float y) { return y * scale; };
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
 
         // Real background is pause.png -- the SAME image as Pause
         // (confirmed via `Game1.cpp`'s shared `case Phase::Pause: case
@@ -1423,7 +1440,7 @@ namespace GalaxyEggbert::Game
         auto charMesh = MakeTexturedMeshBuilder();
         if (anim.visible)
         {
-            AppendRotatedQuadUv(charMesh, refToScreenX(anim.centerX), refToScreenY(anim.centerY),
+            AppendRotatedQuadUv(charMesh, anim.centerX * scale, refToScreenY(anim.centerY),
                                 anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
@@ -1438,24 +1455,24 @@ namespace GalaxyEggbert::Game
             const auto appendButton = [&](const Rect& r, int icon, int controlId)
             {
                 Quad q;
-                q.x0 = refToScreenX(r.x0);
-                q.y0 = refToScreenY(r.y0);
-                q.x1 = refToScreenX(r.x1);
-                q.y1 = refToScreenY(r.y1);
+                q.x0 = r.x0;
+                q.y0 = r.y0;
+                q.x1 = r.x1;
+                q.y1 = r.y1;
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 (activeControl_ == controlId ? pressedQuads : normalQuads).push_back(q);
             };
             const auto appendLabel = [&](const Rect& r, const char* text)
             {
-                const float centerX = refToScreenX((r.x0 + r.x1) * 0.5f);
-                const float topY = refToScreenY(r.y1 + kPauseLabelYOffset);
+                const float centerX = (r.x0 + r.x1) * 0.5f;
+                const float topY = r.y1 + kPauseLabelYOffset * scale;
                 AppendCenteredLabel(labelQuads, text, centerX, topY, scale);
             };
 
-            appendButton(kResumeMenuRect, kIconPauseMenu, kResumeControlMenu);
-            appendButton(kResumeContinueRect, kIconPauseContinue, kResumeControlContinue);
-            appendLabel(kResumeMenuRect, "Home");
-            appendLabel(kResumeContinueRect, "Continue");
+            appendButton(ResumeButtonRect(0, m), kIconPauseMenu, kResumeControlMenu);
+            appendButton(ResumeButtonRect(1, m), kIconPauseContinue, kResumeControlContinue);
+            appendLabel(ResumeButtonRect(0, m), "Home");
+            appendLabel(ResumeButtonRect(1, m), "Continue");
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
