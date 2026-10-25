@@ -97,16 +97,16 @@ check of the state.
 
 | # | Report | Cause found | Status |
 |---|---|---|---|
-| D1 | Standing Blupi shows only his right half | `Stop` (and Mockery, Mockeryi, Switch, Teleporting, Charge) took poses from `blupi-scie.rds`, the saw death's half Blupi | tools fixed (`d660085`); asset rebuild in progress |
+| D1 | Standing Blupi shows only his right half | `Stop` (and Mockery, Mockeryi, Switch, Teleporting, Charge) took poses from `blupi-scie.rds`, the saw death's half Blupi | **done**: tools `d660085`, Blupi rebuilt `78757b1` |
 | D2 | Exit arrow has transparent/missing sides | free-form end caps wound inwards, culled by the game (27 models) | **done** `94ce688`, objects re-exported `b1b0669` |
-| D3 | Hole on top of walking Blupi's head | same as D2: his body's pole caps | with D2 |
+| D3 | Hole on top of walking Blupi's head | same as D2: his body's pole caps | **done** `78757b1` |
 | D4 | Blupi walks up a one-block step | engine-invented step-up (`kStepLimit` 1 block); `Decor::TestPath` has none | **done** `c317f94` |
 | D5 | Third person should be default; C is a cheat letter | — | **done** `aabc4f8` (F3 toggles) |
 | D6 | Turning a bit slower | — | **done** `c2cb216` (135°/s) |
 | D7 | 3D world visible beside Pause/Setup | 640×480 images drawn centred only; original stretches a corner patch | **done** `8ba5e34` |
 | D8 | Game aborted after Play ("Unknown animation clip") | regression of D5: model drawn before a clip was chosen | **done** `8260eaf` |
 | D9 | Gaps between letters in menu text | fixed 17 px advance instead of `Text::table_width` | **done** `21cccb3` |
-| D10 | Bye freezes on its first frame at a world portal, leaves too early | no Bye icon table/clip, so Stop's first frame showed | icons **done** `4572099`; 3D clip with the rebuild |
+| D10 | Bye freezes on its first frame at a world portal, leaves too early | no Bye icon table/clip, so Stop's first frame showed | **done**: icons `4572099`, clip `78757b1` |
 | D11 | Many exhibition models in world999 look wrong compared with Mobile Eggbert | partly D2; the rest needs per-object comparison | open (§7.3) |
 | D12 | "Player A: Erase progress" runs off the Setup screen | one line where the original has two | **done** `9d88278` |
 | D13 | Blupi on the skateboard loses a life on a mine; in Mobile Eggbert the skateboard destroys the mine ("just an example" of vehicle/enemy interactions to audit) | to verify in `Decor.cpp` (vehicle vs. enemy contact) and audit every vehicle × enemy pair | open (parity §11) |
@@ -159,8 +159,8 @@ Candidates (investigate when a world or the editor needs them; none implemented 
 - Inward caps on free-forms (D2/D3), now fixed in the converter; consistency check:
   every welded edge must be traversed once in each direction (to be added to the converters'
   own checks). All 83 models are being re-exported and re-checked.
-- Half-body poses (D1): `--whole-icons` rule.
-- Bye clip (D10): end-key frames (`match_icons.py`), `kByeFrames`; full re-match running.
+- Half-body poses (D1): `--whole-icons` rule; Bye clip (D10): end-key frames, `kByeFrames`.
+  Blupi rebuilt from the full re-match and replaced (`78757b1`), checked offline and live.
 
 ### 7.3 Open items
 
@@ -256,7 +256,7 @@ adaptation) · evidence/test · priority. Known rows so far:
 |---|---|---|
 | A | Protect and understand: audit, captures, this plan, inventories | done (this document; asset manifest still to write) |
 | B | Representative multi-height tile mission on existing systems | done: mission 011 `4986391` (`plans/briefs/world011.md`) |
-| C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress |
+| C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress: D1-D3, D10 done; parity matrix open |
 | D | Hub network and the 64 missions + 199 | open |
 | E | Editor slots, demo seed, title screen, editor entry, transparency | done: `7eac7d5`, `6917fc9`, `e3a1042`, `fb48872` |
 | F | Stabilisation and completion audit | open |

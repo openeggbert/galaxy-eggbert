@@ -24,12 +24,9 @@ editor slots with the showcase seed, hint zones in `.vwr` (metadata type 4), `wo
 - **mission 011** (`4986391`): the first lesson as a 3D machine spiral, all 22 hints as zones;
   brief `plans/briefs/world011.md`; script `tools/worlds/world011.py`.
 
-In flight: the Blupi model rebuild from the full re-match (`build-probe/qa-blupi/match-full/`,
-`match-whole2/`): `build_clip_library.py ... --whole-icons build-probe/qa-blupi/match-whole2/icons.csv
---out build-probe/qa-blupi/lib-final/blupi.glb` (running), then export to
-`build-probe/qa-blupi/cna-final/`, check Stop (whole body), the head (closed), Bye at a portal
-and Push live with `QA_LIVE_AVATARS=build-probe/qa-blupi/cna-final`, replace `avatars3d/blupi/`
-and add the `--whole-icons` step to its README.
+Blupi rebuilt from the full re-match and replaced (`78757b1`): whole in Stop, closed head, Bye
+clip. QA with candidate avatars: `QA_LIVE_AVATARS=<absolute dir holding blupi/, objects/,
+blupi_placeholder/>` (e.g. a symlink tree like `build-probe/qa-blupi/avatars3d-candidate/`).
 
 Next: milestone D — the main hub `world001` and world 1's hub `world010` with missions 012-014
 (briefs first, `plans/briefs/`), then the other worlds in batches; D11 (per-object exhibition
