@@ -2327,6 +2327,13 @@ namespace GalaxyEggbert::CNA
                 moveInput = 1.0f;
                 jumpPressed = goldenTraceTick_ >= 40 && goldenTraceTick_ < 46;
             }
+            const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
+            // Holding a crate (crouching, one right in front) is the one time he backs up: Down
+            // pulls it (the original's Pop) instead of turning him round.
+            const bool pullingStance =
+                crouchHeld && (holdingCrate_ || InteractionSystem::CrateInFront(
+                                                    worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                                    std::sin(blupi_.GetYaw()), -std::cos(blupi_.GetYaw())) != nullptr);
             // Down turns Blupi around instead of backing him up (user decision
             // 2026-10-24): the original has no backing up; reversing direction
             // plays its Turn (ACTION_TURN, 6 ticks at 20 Hz = 0.3 s, or the
@@ -2337,7 +2344,7 @@ namespace GalaxyEggbert::CNA
                 constexpr float kPi = 3.14159265358979f;
                 const bool downHeld = moveInput < 0.0f;
                 const bool canTurn = !blupi_.IsTeleporting() && !blupi_.IsBye() && !blupi_.IsDeathLocked() &&
-                                     !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying();
+                                     !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying() && !pullingStance;
                 if (downHeld && !turnAroundDownWasHeld_ && turnAroundRemaining_ <= 0.0f && canTurn)
                 {
                     turnAroundDuration_ = TurnAroundSeconds(blupi_.GetAnimState());
@@ -2352,13 +2359,12 @@ namespace GalaxyEggbert::CNA
                     turnInput = 0.0f;
                     moveInput = 0.0f;
                 }
-                else if (downHeld)
+                else if (downHeld && !pullingStance)
                 {
                     moveInput = -moveInput;
                 }
             }
             const bool actionPressed = keys.IsKeyDown(Keys::Space) || padPlayInput.actionPressed;
-            const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
             const bool wasOnGround = blupi_.IsOnGround();
             const bool wasEcrased = blupi_.IsEcrased();
