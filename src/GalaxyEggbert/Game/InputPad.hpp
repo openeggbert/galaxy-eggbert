@@ -10,6 +10,7 @@
 #include <Microsoft/Xna/Framework/Input/KeyboardState.hpp>
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -527,9 +528,16 @@ namespace GalaxyEggbert::Game
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;
+        // What a gamer slot's button shows (Game1::DrawButtonGamerText()).
+        struct InitGamerInfo
+        {
+            int lives = 3;
+            int mainGates = 0;
+            int secondaryGates = 0;
+        };
         void DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds,
-                     int selectedGamer, int livesA, int livesB, int livesC,
+                     int selectedGamer, const std::array<InitGamerInfo, 3>& gamers,
                      GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 
     private:
@@ -608,6 +616,7 @@ namespace GalaxyEggbert::Game
         Microsoft::Xna::Framework::Graphics::Texture2D initBgTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D speedyblupiTexture_;
         Microsoft::Xna::Framework::Graphics::Texture2D gearTexture_;
+        Microsoft::Xna::Framework::Graphics::Texture2D buttonTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> pauseBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiyoupieEffect_;
@@ -620,6 +629,7 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> initBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> speedyblupiEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> gearEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> buttonEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> padRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> padPressedRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> pauseBgRenderer_;
@@ -633,6 +643,7 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> initBgRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> speedyblupiRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> gearRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> buttonRenderer_;
         bool loaded_ = false;
 
         // Edge-trigger press tracking: which logical button (if any) the

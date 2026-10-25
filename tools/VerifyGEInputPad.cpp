@@ -322,18 +322,32 @@ int main()
     }
     {
         // Not a real mobile-eggbert button (plan.md EDITOR-107) -- opens
-        // the in-game 3D world editor's browser. Rect (20,90)-(90,160).
+        // the in-game 3D world editor's browser. It sits in the original's
+        // InitBuy/InitRanking slot: (W-125,166)-(W-55,236), centre (550,201)
+        // at this 640-wide viewport.
         InputPad pad;
-        (void)pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
-        const auto release = pad.UpdateInit(mouse(55, 125, false), kViewportW, kViewportH);
+        (void)pad.UpdateInit(mouse(550, 201, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(550, 201, false), kViewportW, kViewportH);
         check(release.editorPressed && release.gamerSelected == -1 && !release.playPressed,
               "Init: InitEditor fires editorPressed on release, not a gamer selection or Play");
     }
     {
         InputPad pad;
-        (void)pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
-        const auto stillHeld = pad.UpdateInit(mouse(55, 125, true), kViewportW, kViewportH);
+        (void)pad.UpdateInit(mouse(550, 201, true), kViewportW, kViewportH);
+        const auto stillHeld = pad.UpdateInit(mouse(550, 201, true), kViewportW, kViewportH);
         check(!stillHeld.editorPressed, "Init: InitEditor does not fire while still held (only on release)");
+    }
+    {
+        // The real buttons stand against the screen's edges, not the centred
+        // 640x480 background: at 800x480 GamerA is still at x 20-90 and Play
+        // at x 640-780.
+        InputPad pad;
+        (void)pad.UpdateInit(mouse(55, 201, true), 800, 480);
+        const auto gamer = pad.UpdateInit(mouse(55, 201, false), 800, 480);
+        (void)pad.UpdateInit(mouse(710, 370, true), 800, 480);
+        const auto play = pad.UpdateInit(mouse(710, 370, false), 800, 480);
+        check(gamer.gamerSelected == 0 && play.playPressed,
+              "Init: buttons are placed from the screen's edges (800x480: GamerA x 20-90, Play x 640-780)");
     }
 
     // --- Cheat gesture: real 10-tap sequence (12,22,32,12,11,21,22,21,

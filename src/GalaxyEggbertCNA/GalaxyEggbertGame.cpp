@@ -4773,10 +4773,15 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
             {
+                std::array<InputPad::InitGamerInfo, 3> gamers;
+                for (int g = 0; g < 3; ++g)
+                {
+                    gamers[static_cast<std::size_t>(g)] = InputPad::InitGamerInfo{
+                        saveData_.GetLivesForGamer(g), saveData_.GetMainGatesForGamer(g),
+                        saveData_.GetSecondaryGatesForGamer(g)};
+                }
                 inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                   phaseTimeSeconds_, saveData_.GetSelectedGamer(),
-                                   saveData_.GetLivesForGamer(0), saveData_.GetLivesForGamer(1),
-                                   saveData_.GetLivesForGamer(2), fadeOutPhase_);
+                                   phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {

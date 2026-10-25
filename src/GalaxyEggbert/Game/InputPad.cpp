@@ -7,6 +7,7 @@
 #include <Microsoft/Xna/Framework/Matrix.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
@@ -48,7 +49,7 @@ namespace GalaxyEggbert::Game
 
         // Real DrawInfo/Init panel opacity is 0.6 (same value as Hud.cpp's
         // own kPanelOpacity and the same real panel icon).
-        constexpr float kInitPanelOpacity = 0.6f;
+        constexpr float kInitPanelOpacity = 0.3f; // real DrawButtonsBackground() opacity
 
         // Play on-screen control layout (proportionally adapted into the
         // existing 640x480 reference space -- see InputPad.hpp's class
@@ -304,39 +305,53 @@ namespace GalaxyEggbert::Game
         constexpr float kInitEntryDurationSeconds = 1.0f;
         constexpr float kInitCharacterCenterX = 468.0f, kInitCharacterCenterY = 280.0f;
 
-        // Real 3 gamer-slot buttons (A/B/C) + InitSetup, stacked in a
-        // column at X=[20,90], plus InitPlay -- verified against
-        // `InputPad.cpp`'s own real `buttonSizeFactor2=
-        // drawBoundsHeight*140/480` formula, EXACTLY 140 at this engine's
-        // own 480 reference height (same "no adaptation needed"
-        // situation as PlaySetup's own row, confirmed via research);
-        // InitPlay's own real Left/Right/Top/Bottom (480/620/300/440)
-        // likewise need no adaptation at this reference size.
-        constexpr float kInitGamerColX0 = 20.0f, kInitGamerColX1 = 90.0f;
-        constexpr float kInitGamerAY0 = 166.0f, kInitGamerAY1 = 236.0f;
-        constexpr float kInitGamerBY0 = 236.0f, kInitGamerBY1 = 306.0f;
-        constexpr float kInitGamerCY0 = 306.0f, kInitGamerCY1 = 376.0f;
-        constexpr float kInitSetupY0 = 390.0f, kInitSetupY1 = 460.0f;
-        constexpr float kInitPlayX0 = 480.0f, kInitPlayY0 = 300.0f;
-        constexpr float kInitPlayX1 = 620.0f, kInitPlayY1 = 440.0f;
+        // Real Init layout (InputPad::GetButtonRect() and
+        // Game1::DrawButtonsBackground()): unlike the 640x480 backgrounds,
+        // the buttons stand against the SCREEN's edges -- the gamer column 20
+        // pixels from its left, Play 20 from its right -- with
+        // buttonSizeFactor2 = height * 140 / 480 (70-pixel gamer/Setup
+        // buttons, a 140-pixel Play button), over two pad.png icon-15 panels
+        // at 0.3 opacity. They were laid out in the centred 640x480 space
+        // until 2026-10-25, 80 pixels right of the original on an 800-wide
+        // window. The 3D world editor's button (not a mobile-eggbert button,
+        // plan.md EDITOR-107) takes the slot the original gives
+        // InitBuy/InitRanking, above Play, with the right panel at the
+        // height the original uses when that slot is shown.
+        struct InitLayout
+        {
+            Rect gamer[3];
+            Rect setup, play, editor;
+            Rect leftPanel, rightPanel;
+            float scale;
+        };
 
-        // Not a real mobile-eggbert button (plan.md EDITOR-107): opens the
-        // in-game 3D world editor's browser. Placed in the same left
-        // column as the gamer slots/Setup, in the otherwise-empty space
-        // above GamerA's row -- same 70px row height as Setup below it.
-        constexpr float kInitEditorY0 = 90.0f, kInitEditorY1 = 160.0f;
+        InitLayout ComputeInitLayout(int viewportW, int viewportH) noexcept
+        {
+            const float w = static_cast<float>(viewportW);
+            const float h = static_cast<float>(viewportH);
+            const float s = h / kRefH;
+            const float f2 = 140.0f * s;
+            const float left0 = 20.0f * s;
+            const float left1 = left0 + f2 * 0.5f;
+            const auto column = [&](float top, float bottom)
+            {
+                return Rect{left0, h - 20.0f * s - f2 * top, left1, h - 20.0f * s - f2 * bottom};
+            };
+            InitLayout l{};
+            l.gamer[0] = column(2.1f, 1.6f);
+            l.gamer[1] = column(1.6f, 1.1f);
+            l.gamer[2] = column(1.1f, 0.6f);
+            l.setup = column(0.5f, 0.0f);
+            l.play = Rect{w - 20.0f * s - f2, h - 40.0f * s - f2, w - 20.0f * s, h - 40.0f * s};
+            l.editor = Rect{w - 20.0f * s - f2 * 0.75f, h - 20.0f * s - f2 * 2.1f,
+                            w - 20.0f * s - f2 * 0.25f, h - 20.0f * s - f2 * 1.6f};
+            l.leftPanel = Rect{10.0f * s, h - 325.0f * s, 260.0f * s, h - 10.0f * s};
+            l.rightPanel = Rect{w - 170.0f * s, h - 325.0f * s, w - 10.0f * s, h - 10.0f * s};
+            l.scale = s;
+            return l;
+        }
 
-        // Semi-transparent background panels behind the gamer-slot rows /
-        // action buttons (plan.md MENU-014/015) -- pure cosmetic decoration,
-        // no functional value (real source has these purely for visual
-        // legibility of the text/icons drawn on top). Reuses the same
-        // pad.png icon-15 panel convention already established by
-        // Hud.cpp's DrawInfo panels (kPanelIcon there). Panel width
-        // extends to cover the gamer row's own text labels (title/gates/
-        // lives), not just the icon.
         constexpr int kInitPanelIcon = 15; // pad.png, same convention as Hud's DrawInfo panel
-        constexpr float kInitGamerPanelX0 = 12.0f, kInitGamerPanelX1 = 400.0f;
-        constexpr float kInitButtonPanelMargin = 8.0f;
 
         // Real icon indices (`Pixmap.cpp`'s pad.png dispatch): GamerA=4/16
         // (unselected/selected), GamerB=5/17, GamerC=6/18, InitSetup=19
@@ -351,22 +366,23 @@ namespace GalaxyEggbert::Game
         constexpr int kIconInitGamerCOff = 6, kIconInitGamerCSel = 18;
         constexpr int kIconInitSetup = 19;
         constexpr int kIconInitPlay = 7;
-        // Placeholder icon (plan.md EDITOR-107) -- pad.png icon 14 has no
-        // real mobile-eggbert meaning at all (unused by every other real
-        // screen in this class); picked only because it's free, not
-        // because its actual appearance was confirmed to suit "3D world
-        // editor" -- a cosmetic detail refinable once the user can look at
-        // a screenshot, same category as other deliberately-deferred
-        // visual-judgment items in this project.
-        constexpr int kIconInitEditor = 14;
+        // The editor's button (plan.md EDITOR-107): pad.png's blank button
+        // face (icon 21) with the Eggbert editor's own tools icon (button.png
+        // icon 55, the crossed wrench and screwdriver) on it, labelled
+        // "3D World Editor". It was pad.png's X (icon 14) until 2026-10-25,
+        // which read as "close" (owner).
+        constexpr int kIconInitEditorFace = 21;
+        constexpr int kButtonIconInitEditor = 55;
+        constexpr float kButtonCellPx = 40.0f; // button.png: 40-pixel cells, 6 columns
+        constexpr int kButtonCols = 6;
+        constexpr float kInitEditorIconFraction = 0.6f;
 
         // Real per-slot text (`Game1::DrawButtonGamerText()`/
         // `MyResource`): "Player {letter}" (scale 0.7) + "Main gates :
         // {n}/12" + "Secondary gates : {n}/52" + "Blupi : {lives}" (scale
-        // 0.45), offset from the button's own top-right corner. Door
-        // counts are static "0/12"/"0/52" text (see DrawInit()'s own
-        // header comment for why -- this engine has no per-gamer
-        // door-flags array).
+        // 0.45), offset from the button's own top-right corner. The gate
+        // counts are the gamer's own (GameData::GetGamerInfo(): doors 0-179
+        // secondary, 180-199 main; SaveData::GetGateCountsForGamer()).
         constexpr float kGamerTitleScale = 0.7f;
         constexpr float kGamerBodyScale = 0.45f;
         constexpr float kGamerTextXOffset = 5.0f;
@@ -374,13 +390,6 @@ namespace GalaxyEggbert::Game
         constexpr float kGamerMDoorsYOffset = 25.0f;
         constexpr float kGamerSDoorsYOffset = 39.0f;
         constexpr float kGamerLivesYOffset = 53.0f;
-
-        constexpr Rect kInitGamerARect{kInitGamerColX0, kInitGamerAY0, kInitGamerColX1, kInitGamerAY1};
-        constexpr Rect kInitGamerBRect{kInitGamerColX0, kInitGamerBY0, kInitGamerColX1, kInitGamerBY1};
-        constexpr Rect kInitGamerCRect{kInitGamerColX0, kInitGamerCY0, kInitGamerColX1, kInitGamerCY1};
-        constexpr Rect kInitSetupRect{kInitGamerColX0, kInitSetupY0, kInitGamerColX1, kInitSetupY1};
-        constexpr Rect kInitPlayRect{kInitPlayX0, kInitPlayY0, kInitPlayX1, kInitPlayY1};
-        constexpr Rect kInitEditorRect{kInitGamerColX0, kInitEditorY0, kInitGamerColX1, kInitEditorY1};
 
         constexpr int kInitControlGamerA = 0;
         constexpr int kInitControlGamerB = 1;
@@ -459,7 +468,7 @@ namespace GalaxyEggbert::Game
         using Microsoft::Xna::Framework::Graphics::BasicEffect;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
 
-        const char* kPaths[12] = {
+        const char* kPaths[13] = {
             "Content/icons/pad.png",
             "Content/backgrounds/pause.png",
             "Content/backgrounds/blupiyoupie.png",
@@ -472,6 +481,7 @@ namespace GalaxyEggbert::Game
             "Content/backgrounds/init.png",
             "Content/backgrounds/speedyblupi.png",
             "Content/backgrounds/gear.png",
+            "Content/icons/button.png",
         };
         for (const char* path : kPaths)
         {
@@ -494,6 +504,7 @@ namespace GalaxyEggbert::Game
         initBgTexture_ = Texture2D(kPaths[9], device);
         speedyblupiTexture_ = Texture2D(kPaths[10], device);
         gearTexture_ = Texture2D(kPaths[11], device);
+        buttonTexture_ = Texture2D(kPaths[12], device);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -515,6 +526,7 @@ namespace GalaxyEggbert::Game
         initBgEffect_ = makeEffect(initBgTexture_);
         speedyblupiEffect_ = makeEffect(speedyblupiTexture_);
         gearEffect_ = makeEffect(gearTexture_);
+        buttonEffect_ = makeEffect(buttonTexture_);
         loaded_ = true;
     }
 
@@ -1713,18 +1725,17 @@ namespace GalaxyEggbert::Game
 
         using Microsoft::Xna::Framework::Input::ButtonState;
 
-        const float scale = static_cast<float>(viewportH) / kRefH;
-        const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        const float mouseRefX = (static_cast<float>(mouse.getXProperty()) - offsetX) / scale;
-        const float mouseRefY = static_cast<float>(mouse.getYProperty()) / scale;
+        const InitLayout layout = ComputeInitLayout(viewportW, viewportH);
+        const float mouseX = static_cast<float>(mouse.getXProperty());
+        const float mouseY = static_cast<float>(mouse.getYProperty());
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
 
-        const bool overGamerA = InRect(mouseRefX, mouseRefY, kInitGamerARect);
-        const bool overGamerB = InRect(mouseRefX, mouseRefY, kInitGamerBRect);
-        const bool overGamerC = InRect(mouseRefX, mouseRefY, kInitGamerCRect);
-        const bool overSetup = InRect(mouseRefX, mouseRefY, kInitSetupRect);
-        const bool overPlay = InRect(mouseRefX, mouseRefY, kInitPlayRect);
-        const bool overEditor = InRect(mouseRefX, mouseRefY, kInitEditorRect);
+        const bool overGamerA = InRect(mouseX, mouseY, layout.gamer[0]);
+        const bool overGamerB = InRect(mouseX, mouseY, layout.gamer[1]);
+        const bool overGamerC = InRect(mouseX, mouseY, layout.gamer[2]);
+        const bool overSetup = InRect(mouseX, mouseY, layout.setup);
+        const bool overPlay = InRect(mouseX, mouseY, layout.play);
+        const bool overEditor = InRect(mouseX, mouseY, layout.editor);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -1759,8 +1770,8 @@ namespace GalaxyEggbert::Game
     }
 
     void InputPad::DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                             int viewportH, float phaseTimeSeconds, int selectedGamer, int livesA, int livesB,
-                             int livesC, GalaxyEggbert::Def::GamePhase fadeOutPhase)
+                             int viewportH, float phaseTimeSeconds, int selectedGamer,
+                             const std::array<InitGamerInfo, 3>& gamers, GalaxyEggbert::Def::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1841,10 +1852,16 @@ namespace GalaxyEggbert::Game
             charOpacity = (1.0f - t) * (1.0f - t);
         }
 
+        // Real Pixmap::DrawIcon() scales its rect by the zoom but does not
+        // add the 640x480 image's origin (only text does): the title's 80-720
+        // and the character's centre 468 are screen pixels, so screenX() here,
+        // not refToScreenX() (they stood 80 pixels too far right on an
+        // 800-wide window until 2026-10-25).
+        const auto screenX = [&](float x) { return x * scale; };
         Quad titleQuad;
-        titleQuad.x0 = refToScreenX(titleLeft);
+        titleQuad.x0 = screenX(titleLeft);
         titleQuad.y0 = refToScreenY(titleTop);
-        titleQuad.x1 = refToScreenX(titleRight);
+        titleQuad.x1 = screenX(titleRight);
         titleQuad.y1 = refToScreenY(titleBottom);
         titleQuad.u0 = 0.0f;
         titleQuad.v0 = 0.0f;
@@ -1856,7 +1873,7 @@ namespace GalaxyEggbert::Game
         if (charHalfW > 0.0f && charHalfH > 0.0f)
         {
             AppendRotatedQuadUv(charMesh,
-                                refToScreenX(kInitCharacterCenterX), refToScreenY(kInitCharacterCenterY),
+                                screenX(kInitCharacterCenterX), refToScreenY(kInitCharacterCenterY),
                                 charHalfW * scale, charHalfH * scale, charRotation, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
@@ -1867,72 +1884,77 @@ namespace GalaxyEggbert::Game
         std::vector<Quad> labelQuads;
         std::vector<Quad> panelQuads;
 
+        std::vector<Quad> editorIconQuads;
+
         // Real: buttons are hidden entirely while an exit fade is active.
         if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
         {
+            const InitLayout layout = ComputeInitLayout(viewportW, viewportH);
+            const float s = layout.scale;
             const auto appendIconQuad = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
             {
-                Quad q;
-                q.x0 = refToScreenX(r.x0);
-                q.y0 = refToScreenY(r.y0);
-                q.x1 = refToScreenX(r.x1);
-                q.y1 = refToScreenY(r.y1);
+                Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
                 PadIconUv(icon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
                 bucket.push_back(q);
             };
-
-            const auto appendPanel = [&](float x0, float y0, float x1, float y1)
+            for (const Rect& r : {layout.leftPanel, layout.rightPanel})
             {
-                Quad q;
-                q.x0 = refToScreenX(x0);
-                q.y0 = refToScreenY(y0);
-                q.x1 = refToScreenX(x1);
-                q.y1 = refToScreenY(y1);
-                PadIconUv(kInitPanelIcon, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
-                panelQuads.push_back(q);
-            };
-            appendPanel(kInitGamerPanelX0, kInitGamerAY0, kInitGamerPanelX1, kInitGamerAY1);
-            appendPanel(kInitGamerPanelX0, kInitGamerBY0, kInitGamerPanelX1, kInitGamerBY1);
-            appendPanel(kInitGamerPanelX0, kInitGamerCY0, kInitGamerPanelX1, kInitGamerCY1);
-            appendPanel(kInitGamerColX0 - kInitButtonPanelMargin, kInitSetupY0 - kInitButtonPanelMargin,
-                        kInitGamerColX1 + kInitButtonPanelMargin, kInitSetupY1 + kInitButtonPanelMargin);
-            appendPanel(kInitPlayX0 - kInitButtonPanelMargin, kInitPlayY0 - kInitButtonPanelMargin,
-                        kInitPlayX1 + kInitButtonPanelMargin, kInitPlayY1 + kInitButtonPanelMargin);
-            appendPanel(kInitGamerColX0 - kInitButtonPanelMargin, kInitEditorY0 - kInitButtonPanelMargin,
-                        kInitGamerColX1 + kInitButtonPanelMargin, kInitEditorY1 + kInitButtonPanelMargin);
+                appendIconQuad(panelQuads, r, kInitPanelIcon);
+            }
 
-            const auto appendGamerRow = [&](const Rect& r, int control, int iconOff, int iconSel, bool selected,
-                                            char letter, int lives)
+            const auto appendGamerRow = [&](int gamer, int control, int iconOff, int iconSel, char letter)
             {
+                const Rect& r = layout.gamer[gamer];
                 appendIconQuad(activeControl_ == control ? pressedQuads : normalQuads, r,
-                              selected ? iconSel : iconOff);
+                              selectedGamer == gamer ? iconSel : iconOff);
 
-                const float textLeft = refToScreenX(r.x1 + kGamerTextXOffset);
+                const float textLeft = r.x1 + kGamerTextXOffset * s;
+                const InitGamerInfo& info = gamers[static_cast<std::size_t>(gamer)];
                 std::string title = "Player ";
                 title += letter;
-                AppendGamerLabel(labelQuads, title, textLeft, refToScreenY(r.y0 + kGamerTitleYOffset),
-                                kGamerTitleScale, scale);
-                AppendGamerLabel(labelQuads, "Main gates : 0/12", textLeft, refToScreenY(r.y0 + kGamerMDoorsYOffset),
-                                kGamerBodyScale, scale);
-                AppendGamerLabel(labelQuads, "Secondary gates : 0/52", textLeft,
-                                refToScreenY(r.y0 + kGamerSDoorsYOffset), kGamerBodyScale, scale);
-                AppendGamerLabel(labelQuads, "Blupi : " + std::to_string(lives), textLeft,
-                                refToScreenY(r.y0 + kGamerLivesYOffset), kGamerBodyScale, scale);
+                AppendGamerLabel(labelQuads, title, textLeft, r.y0 + kGamerTitleYOffset * s, kGamerTitleScale, s);
+                AppendGamerLabel(labelQuads, "Main gates : " + std::to_string(info.mainGates) + "/12", textLeft,
+                                r.y0 + kGamerMDoorsYOffset * s, kGamerBodyScale, s);
+                AppendGamerLabel(labelQuads, "Secondary gates : " + std::to_string(info.secondaryGates) + "/52",
+                                textLeft, r.y0 + kGamerSDoorsYOffset * s, kGamerBodyScale, s);
+                AppendGamerLabel(labelQuads, "Blupi : " + std::to_string(info.lives), textLeft,
+                                r.y0 + kGamerLivesYOffset * s, kGamerBodyScale, s);
             };
+            appendGamerRow(0, kInitControlGamerA, kIconInitGamerAOff, kIconInitGamerASel, 'A');
+            appendGamerRow(1, kInitControlGamerB, kIconInitGamerBOff, kIconInitGamerBSel, 'B');
+            appendGamerRow(2, kInitControlGamerC, kIconInitGamerCOff, kIconInitGamerCSel, 'C');
 
-            appendGamerRow(kInitGamerARect, kInitControlGamerA, kIconInitGamerAOff, kIconInitGamerASel,
-                          selectedGamer == 0, 'A', livesA);
-            appendGamerRow(kInitGamerBRect, kInitControlGamerB, kIconInitGamerBOff, kIconInitGamerBSel,
-                          selectedGamer == 1, 'B', livesB);
-            appendGamerRow(kInitGamerCRect, kInitControlGamerC, kIconInitGamerCOff, kIconInitGamerCSel,
-                          selectedGamer == 2, 'C', livesC);
-
-            appendIconQuad(activeControl_ == kInitControlSetup ? pressedQuads : normalQuads, kInitSetupRect,
+            appendIconQuad(activeControl_ == kInitControlSetup ? pressedQuads : normalQuads, layout.setup,
                           kIconInitSetup);
-            appendIconQuad(activeControl_ == kInitControlPlay ? pressedQuads : normalQuads, kInitPlayRect,
+            appendIconQuad(activeControl_ == kInitControlPlay ? pressedQuads : normalQuads, layout.play,
                           kIconInitPlay);
-            appendIconQuad(activeControl_ == kInitControlEditor ? pressedQuads : normalQuads, kInitEditorRect,
-                          kIconInitEditor);
+            appendIconQuad(activeControl_ == kInitControlEditor ? pressedQuads : normalQuads, layout.editor,
+                          kIconInitEditorFace);
+
+            // Real labels: TX_BUTTON_PLAY under Play, TX_BUTTON_SETUP right of
+            // Setup (Game1::DrawButtonsText()); the editor's label under its
+            // button, on two lines like the original's two-line labels.
+            AppendCenteredLabel(labelQuads, "Play", (layout.play.x0 + layout.play.x1) * 0.5f,
+                                layout.play.y1 + kPauseLabelYOffset * s, s);
+            AppendLeftAlignedLabel(labelQuads, "Setup", layout.setup.x1 + kSetupLabelXOffset * s,
+                                   (layout.setup.y0 + layout.setup.y1) * 0.5f, s);
+            const float editorCenterX = (layout.editor.x0 + layout.editor.x1) * 0.5f;
+            AppendCenteredLabel(labelQuads, "3D World", editorCenterX, layout.editor.y1 + kPauseLabelYOffset * s, s);
+            AppendCenteredLabel(labelQuads, "Editor", editorCenterX, layout.editor.y1 + (kPauseLabelYOffset + 22.0f) * s,
+                                s);
+
+            const float iconHalf = (layout.editor.x1 - layout.editor.x0) * kInitEditorIconFraction * 0.5f;
+            const float iconCenterY = (layout.editor.y0 + layout.editor.y1) * 0.5f;
+            const float buttonSheetW = static_cast<float>(buttonTexture_.getWidthProperty());
+            const float buttonSheetH = static_cast<float>(buttonTexture_.getHeightProperty());
+            const int col = kButtonIconInitEditor % kButtonCols;
+            const int row = kButtonIconInitEditor / kButtonCols;
+            editorIconQuads.push_back(Quad{editorCenterX - iconHalf, iconCenterY - iconHalf,
+                                           editorCenterX + iconHalf, iconCenterY + iconHalf,
+                                           static_cast<float>(col) * kButtonCellPx / buttonSheetW,
+                                           static_cast<float>(row) * kButtonCellPx / buttonSheetH,
+                                           static_cast<float>(col + 1) * kButtonCellPx / buttonSheetW,
+                                           static_cast<float>(row + 1) * kButtonCellPx / buttonSheetH});
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
@@ -1953,6 +1975,7 @@ namespace GalaxyEggbert::Game
         FlushQuads(device, *padEffect_, padRenderer_, panelQuads, viewportW, viewportH, kInitPanelOpacity);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *buttonEffect_, buttonRenderer_, editorIconQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }

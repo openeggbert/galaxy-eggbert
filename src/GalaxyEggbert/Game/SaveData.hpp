@@ -127,6 +127,18 @@ namespace GalaxyEggbert::Game
         // below operate on).
         [[nodiscard]] int GetLivesForGamer(int gamer) const noexcept { return gamers_[gamer].lives; }
         [[nodiscard]] bool GetHasProgressForGamer(int gamer) const noexcept { return gamers_[gamer].hasProgress; }
+        // Real GameData::GetGamerInfo(): secondary gates are the opened doors
+        // 0-179, main gates 180-199.
+        [[nodiscard]] int GetSecondaryGatesForGamer(int gamer) const noexcept
+        {
+            const auto& doors = gamers_[gamer].doorsUnlocked;
+            return static_cast<int>(std::count(doors.begin(), doors.begin() + 180, true));
+        }
+        [[nodiscard]] int GetMainGatesForGamer(int gamer) const noexcept
+        {
+            const auto& doors = gamers_[gamer].doorsUnlocked;
+            return static_cast<int>(std::count(doors.begin() + 180, doors.end(), true));
+        }
 
         [[nodiscard]] int GetLives() const noexcept { return gamers_[selectedGamer_].lives; }
         void SetLives(int lives) noexcept { gamers_[selectedGamer_].lives = lives; }
