@@ -2407,6 +2407,27 @@ int main(int argc, char** argv)
         check(!turner.IsOneShotAnimPlaying(), "the cheer ends after 40 ticks");
     }
 
+    // A door bar closes its whole cell in 3D: crossed along Z, Blupi cannot slip past at its side
+    // (the world-2 author's report, 2026-10-26).
+    {
+        Worlds::World gate;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            for (std::uint16_t z = 40; z <= 60; ++z)
+                gate.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            for (std::uint16_t y = 1; y <= 3; ++y)
+                gate.setBlock(x, y, 50, Worlds::Block::make(BlockTypes::Ground));
+        for (const std::uint16_t door : {BlockTypes::HubDoor, BlockTypes::Door1, std::uint16_t{422}})
+        {
+            gate.setBlock(45, 1, 50, Worlds::Block::make(door));
+            BlupiController walker;
+            walker.SetPosition(-5.38f, 1.0f, 3.0f); // raw x 44.62, the side of the door's cell
+            for (int i = 0; i < 120; ++i)
+                walker.Step(gate, 0.0f, 1.0f, false, false, false, dt);
+            check(walker.GetZ() + 50.0f > 50.4f, "a door bar crossed along Z blocks Blupi at the side of its cell too");
+        }
+    }
+
     // Vertigo: standing still with his front foot over a ledge, Blupi teeters (16 ticks), then
     // steps back from it (Recede).
     {

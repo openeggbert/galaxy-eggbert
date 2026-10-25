@@ -340,6 +340,10 @@ namespace GalaxyEggbert::Game
         {
             return false;
         }
+        if (GalaxyEggbert::BlockTypes::isDoorBar(blockType))
+        {
+            return true; // the whole cell, not the 2D bar's middle columns (BlockTypes::isDoorBar)
+        }
         if (GalaxyEggbert::BlockTypes::isTeleporter(blockType) ||
             GalaxyEggbert::BlockTypes::isFan(blockType) ||
             GalaxyEggbert::BlockTypes::isWater(blockType))

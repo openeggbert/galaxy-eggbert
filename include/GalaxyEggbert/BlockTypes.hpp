@@ -202,6 +202,12 @@ constexpr uint16_t Door3    = 336;
 inline bool isDoor(uint16_t bt)      {
     return GalaxyEggbert::GetBlockDefinition(bt).doorKeyType >= 0;
 }
+// The bars that close a way until something opens them: the hub doors (182, 183), the key
+// doors (334-336) and the treasure doors (421-440). Their 2D mask is a bar down the cell's
+// middle; in 3D they close the whole cell, or Blupi could slip past at its side along Z.
+inline bool isDoorBar(uint16_t bt) {
+    return bt == HubDoor || bt == GoldDoor || (bt >= Door1 && bt <= Door3) || (bt >= 421 && bt <= 440);
+}
 inline int  doorKeyType(uint16_t bt) {
     return GalaxyEggbert::GetBlockDefinition(bt).doorKeyType;
 }
