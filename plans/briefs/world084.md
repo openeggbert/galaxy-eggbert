@@ -52,9 +52,12 @@ corridor's lightning, the hall's pool, curtain and lava lifts, the drop, the win
 the rows of mines, the chain over the pool. Played live: walking onto the corridor's rods, hanging
 across the pit and stepping off; the hall's curtain flickering, then gone (D51); the whole chain from the platform's
 first lift — out and up, across onto the second, onto the third, up, onto the fourth, onto the
-stand — and the golden key, after which the main hub loads. Not played through: the whole mission
-in one run, a walk through a curtain in its off phase, the wind hall's rods, the lift pairs of
-the hall.
+stand — and the golden key, after which the main hub loads. Played through in one run by
+`tools/autoplay/world084.txt`: both curtains walked through in their off phase, the hall's lift
+pairs, the wind hall's shuttle and rods, the birds let pass at each crossing, the rows of mines,
+the chain to the key. Ten eggs are taken (at ten an egg is not taken, the original's
+MAX_EGG_COUNT); the egg on its stand by the birds is left (its jump rises into the bird a cell
+above the walk).
 
 Since 2026-10-27 every pool's water is level with its banks' top blocks (the weak jump out of the
 water clears no more, as the original's -12 px/tick: the three pools were a block below their

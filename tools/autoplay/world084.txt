@@ -1,0 +1,205 @@
+# Mission 084 played through (plans/briefs/world084.md): world 8's golden key.
+wait 30
+expect mission = 84
+expect lives = 3
+# The catwalk (walk 60, lanes x 9-11) north: the egg by the start; the first row of mines
+# (z 87) passed in lane 11 under its hanging mine, the second (z 84) in lane 10.
+go 11 90 until eggs = 1
+until eggs = 1 max 120
+go 11 88.5
+go 11 86.2
+go 10 85.4
+go 10 81
+# The two pits of lava (z 75-79, 65-69), each crossed on a lift three wide that carries him
+# three north; boarded at the start of its dwell at the south end, left at the north end. The
+# egg between them.
+go 10 80.2 tol 0.1
+face 0
+lift 10 60 75 max 400
+lift 10 60 79 max 400
+go 10 78.5 tol 0.15
+lift 10 60 75 max 300
+go 10 73.5
+go 9 72 until eggs = 2
+until eggs = 2 max 120
+go 10 70.2 tol 0.1
+face 0
+lift 10 60 65 max 400
+lift 10 60 69 max 400
+go 10 68.5 tol 0.15
+lift 10 60 65 max 300
+go 10 63.6 tol 0.15
+# The one-wide bridge (x 10, z 60-62): its two mines (z 62, 60) bob two up and down in turn;
+# each passed while it waits up, the cell between them (z 61) safe.
+near 10 62 62 0.1 max 400
+go 10 61 tol 0.1
+near 10 62 60 0.1 max 400
+go 10 58.4 tol 0.15
+# The lift down (x 9-10, z 56-57, twelve cells) to the corridor (walk 48), boarded at the start
+# of its dwell at the top.
+lift 9 48 56 max 600
+lift 9 60 56 max 600
+go 9.5 56.5 tol 0.15
+lift 9 48 56 max 400
+expect y <= 48.05
+# The corridor (walk 48, z 55-57) east: between its two mines (x 15) in lane 56; through the
+# curtain of lightning (x 20) just after a flash ends; under the hanging mine (24 49 56); the
+# egg; across the pit (x 28-33) hanging from its rods (z 56) over the sweeping mines; down the
+# hole (x 38-40) into the hall (walk 36).
+go 18.9 56 tol 0.15
+face 90
+until blitz = 52 max 400
+go 22 56
+go 26 57 until eggs = 3
+until eggs = 3 max 120
+go 26.6 56 tol 0.15
+face 90
+go 35 56 max 600
+expect y >= 47.95
+go 39.5 56
+until ground = 1
+expect y <= 36.05
+# The hall (walk 36, x 36-44) north: the egg by the hole; the pool (z 45-52) on its shuttle
+# (x 39-41) carrying him six north, boarded at the start of its dwell at the south end.
+go 42 58 until eggs = 4
+until eggs = 4 max 120
+go 40 53.2 tol 0.1
+face 0
+lift 40 36 45 max 600
+lift 40 36 52 max 600
+go 40 51.5 tol 0.15
+lift 40 36 45 max 400
+go 40 43.5
+# The eggs on their pedestals (37 38, 43 34), a jump up onto each.
+go 37 39.6 tol 0.1
+face 0
+go 37 38 jump 1.4 tol 0.2 until eggs = 5
+until eggs = 5 max 120
+go 37 36
+go 43 35.6 tol 0.1
+face 0
+go 43 34 jump 1.4 tol 0.2 until eggs = 6
+until eggs = 6 max 120
+# Through the curtain of lightning across the hall (z 29) just after a flash ends.
+go 40 30.4 tol 0.1
+face 0
+until blitz = 52 max 400
+go 40 26.2 tol 0.1
+# The field of lava (z 4-25): two pairs of lifts (x 39-41) meeting midway, in step, a rest
+# (z 12-13) between the pairs, the dwells 1.5 s. The first boarded at the start of its dwell at
+# the south end, across onto the second where they wait side by side, the second back to its
+# start by the rest (its egg); the third the same way to the fourth (z 4-5), which carries him
+# east through the wall; up off it onto the east ledge (walk 38): an egg.
+face 0
+lift 40 36 20 max 600
+lift 40 36 25 max 600
+go 40 24.4 tol 0.15
+lift 40 36 20 max 300
+go 40 18.6 tol 0.15
+lift 40 36 14 max 300
+go 40 12.4 tol 0.15
+until eggs = 7 max 60
+lift 40 36 6 max 600
+lift 40 36 11 max 600
+go 40 10.4 tol 0.15
+lift 40 36 6 max 300
+go 40 4.6 tol 0.15
+lift 48 36 4 max 300
+go 50.5 4.6 jump 2.2 tol 0.3 max 300
+until ground = 1
+expect y >= 37.95
+go 53 3 until eggs = 8
+until eggs = 8 max 120
+# East off the ledge's far end down through the roof of the wind hall (walk 24, z 3-9).
+go 53 5
+go 58 5
+until ground = 1
+expect y <= 24.05
+# The pool (x 61-71) on its shuttle (z 5-7) carrying him nine east, boarded at the start of its
+# dwell at the west end; off onto the one cell of floor (x 72), across the trench of lava (x
+# 73-79) hanging from its rods (z 6), the fan's wind behind him; the egg, round the mine (84 24
+# 8), and down the stair south (walk 22, 20) to the causeway (walk 18).
+go 60.3 6 tol 0.1
+face 90
+lift 71 24 6 max 600
+lift 61 24 6 max 600
+go 61.6 6 tol 0.15
+lift 71 24 6 max 400
+go 72 6 tol 0.15
+go 81 6 max 600
+expect y >= 23.95
+go 86 4 until eggs = 9
+until eggs = 9 max 120
+go 86 8.5
+go 86 11.6
+until ground = 1
+expect y <= 18.05
+# The birds' causeway (walk 18) over the tray of lava: south (x 84-86), west (z 22-24), south (x
+# 79-81), east (z 34-36), south (x 86-88) to the rows of mines. Each bird flying at his height
+# across his way is let pass: once it has turned at the far end of its run he waits for it to
+# go by the crossing heading away, then crosses before it comes back. The two flying a cell
+# above the walk (z 20, 33) cannot touch a walker. The mines at the corners (79 22, 88 36)
+# stand clear of his line. The egg on its stand (89 19) is left: its jump rises into the bird
+# over z 20.
+go 85 14.5 tol 0.15
+face 180
+near 82 18 16 0.3 lane x max 400
+near 86 18 16 0.3 lane x max 200
+go 85 23 tol 0.2
+go 84.4 23 tol 0.1
+face 270
+near 83 18 21 0.3 lane z max 400
+near 83 18 24 0.3 lane z max 200
+go 80.5 23 tol 0.2
+go 80.5 27.6 tol 0.1
+face 180
+near 77 18 29 0.3 lane x max 400
+near 82 18 29 0.3 lane x max 200
+go 80.5 36.2 tol 0.2
+go 82.6 36.2 tol 0.1
+face 90
+near 84 18 38 0.3 lane z max 400
+near 84 18 35 0.3 lane z max 200
+go 86.8 36.2 tol 0.2
+go 86.8 41.5
+expect y >= 17.95
+# The rows of mines on the pipe walkway (walk 18, lanes z 43-45) west: each row (x 81, 78, 75,
+# 72, 69, 66) passed in its free lane (45, 43, 44, 45, 43, 44), the lane changed halfway
+# between rows; the first egg between them is his tenth, and at ten an egg is not taken (the
+# original's MAX_EGG_COUNT), so the second stays where it is.
+go 87 44
+go 84 45 tol 0.1
+go 79.5 45 tol 0.1
+go 79.5 43 tol 0.1
+until eggs = 10 max 60
+go 76.5 43 tol 0.1
+go 76.5 44 tol 0.1
+go 73.5 44 tol 0.1
+go 73.5 45 tol 0.1
+go 70.5 45 tol 0.1
+go 70.5 43 tol 0.1
+go 67.5 43 tol 0.1
+go 67.5 44 tol 0.1
+go 63 44
+# The chain to the golden key from the walkway's west platform (under its hanging mine, clear
+# of its mines): four lifts in step, two seconds at each end. The first (x 56-57) out south and
+# up at once to wait beside the second (z 55-56), which carries him east to its start beside the
+# third (x 64-65), which lifts him four to wait beside the fourth (z 57-58), which carries him
+# south to its start by the key's stand (walk 26).
+go 56.5 45.6 tol 0.1
+face 180
+lift 56 22 53 max 600
+lift 56 18 48 max 600
+go 56.5 47.5 tol 0.15
+lift 56 22 53 max 400
+go 56.5 55.5 tol 0.15
+lift 63 22 55 max 400
+go 64.5 55.5 tol 0.15
+lift 64 26 55 max 400
+go 64.5 57.5 tol 0.15
+lift 64 26 64 max 400
+go 64.5 66 until exit = 1 max 300
+expect eggs = 10
+until mission = 1 max 900
+expect phase = Play
+wait 60
