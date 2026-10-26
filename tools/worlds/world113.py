@@ -101,8 +101,9 @@ def main(argv) -> int:
         w.place(O.FISH, 62, WALK - 3, 50, end=(67, WALK - 3, 50), advance=45, recede=45, stop_start=47,
                 stop_end=47)
     carve(71, LOW, 47, 76, WALK + 3, 53)
-    lifts(72, 73, WALK - 1, 49, 50, (0, LOW - WALK, 0), 40, 30)
-    carve(72, LOW - 1, 49, 73, LOW - 1, 50)
+    # The lift stands against the pool room's floor (x 70), so Blupi walks straight onto it.
+    lifts(71, 72, WALK - 1, 49, 50, (0, LOW - WALK, 0), 40, 30)
+    carve(71, LOW - 1, 49, 72, LOW - 1, 50)
     w.place(O.EGG, 75, LOW, 52)
     carve(77, LOW, 49, 90, LOW + 2, 51)
     lightning(79, LOW, LOW + 2, 49, 51)
@@ -130,8 +131,9 @@ def main(argv) -> int:
     # From the cage's west side a lift up to the high way (walk 28), a corridor back west over the
     # whole loop, a third curtain of lightning across it, and a hole down onto the start ledge.
     carve(77, LOW, 55, 79, HIGHWAY + 2, 57)
-    lifts(78, 78, LOW - 1, 55, 57, (0, HIGHWAY - LOW, 0), 90, 30)
-    carve(78, LOW - 1, 55, 78, LOW - 1, 57)
+    # Against the high way's floor (x 76) at the top; reached along the shaft's floor below.
+    lifts(77, 77, LOW - 1, 55, 57, (0, HIGHWAY - LOW, 0), 90, 30)
+    carve(77, LOW - 1, 55, 77, LOW - 1, 57)
     carve(8, HIGHWAY, 55, 79, HIGHWAY + 2, 57)
     lightning(40, HIGHWAY, HIGHWAY + 2, 55, 57)
     for x, z in ((60, 55), (30, 57), (20, 56)):

@@ -29,5 +29,8 @@ mines hanging above and lying below; then the long way back to the exit. Five eg
 
 **Checks**: `levelcheck.py`: stage 1 reaches the treasure, five eggs and the exit; the real world
 stops at the first hanging mines. `VerifyShippedWorlds`. Live (`--mission 113`, direct view F3):
-the gallery's lifts, the ferry room, the pool, the low passage's mines, the high way. Not played
-through: the cage's bridges, the lightning crossings, the swim.
+the gallery's lifts, the ferry room, the pool, the low passage's mines, the high way. Played
+through from the spawn to hub 110 by `tools/autoplay/world113.txt` (every lift, the three curtains
+between strikes, the swim, the cage's bridges). 2026-10-27: the shaft's lift and the lift up to the
+high way stood a cell off the floors they serve (a gap to jump from the lift); both now stand
+against them.
