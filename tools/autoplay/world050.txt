@@ -1,0 +1,38 @@
+# World 5 played as a chain from its hub (plans/briefs/world050.md): each mission's sign in hub
+# 050, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 058 ends in the main hub.
+wait 30
+expect mission = 50
+# Sign 1, open, ahead of the start (49, 11, 52).
+go 49 52 until mission = 51 max 600
+until mission = 51 max 600
+include world051.txt
+# Past bar 2: sign 2 (38, 14, 49).
+go 38 49 until mission = 52 max 900
+until mission = 52 max 600
+include world052.txt
+# Past bar 3: sign 3 (44, 17, 43).
+go 44 43 until mission = 53 max 900
+until mission = 53 max 600
+include world053.txt
+# Past bar 4: sign 4 (44, 20, 56).
+go 44 56 until mission = 54 max 900
+until mission = 54 max 600
+include world054.txt
+# Past bar 5: sign 5 (50, 23, 46).
+go 50 46 until mission = 55 max 900
+until mission = 55 max 600
+include world055.txt
+# Past bar 6: sign 6 (55, 26, 43).
+go 55 43 until mission = 56 max 900
+until mission = 56 max 600
+include world056.txt
+# Past bar 7: sign 7 (61, 29, 49).
+go 61 49 until mission = 57 max 900
+until mission = 57 max 600
+include world057.txt
+# Past bar 8: sign 8 (55, 32, 56).
+go 55 56 until mission = 58 max 900
+until mission = 58 max 600
+include world058.txt
+expect mission = 1
