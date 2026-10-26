@@ -1,0 +1,263 @@
+# Mission 071 played through (plans/briefs/world071.md): the tower climbed to the jeep, the jeep
+# through the cleft's mines, the chasm's lifts, the ramp, the pole tops, the bars over the lava
+# trench, the garden, the shaft down to the lower hall, its lifts and the lattice to the arrow;
+# eight eggs.
+wait 30
+expect mission = 71
+# A: the tower's stair of ledges (each two up) to the jeep on its top (walk 44): L1 and L2 in
+# lane x 17, L3-L5 along row z 86 (the hanging mines hang over row 85, the mines stand in row
+# 87), L6 in lane x 8 and the top from L6's row z 82.
+go 17 77
+go 17 80.4 tol 0.1
+go 17 83 jump 2.2
+until ground = 1
+expect y >= 31.9
+go 17 83.4 tol 0.1
+go 17 86 jump 2.2
+until ground = 1
+expect y >= 33.9
+go 17.4 86 tol 0.1
+face 270
+go 15.2 86 jump 2.3
+until ground = 1
+expect y >= 35.9
+go 14.4 86 tol 0.1
+go 12.2 86 jump 2.3
+until ground = 1
+expect y >= 37.9
+go 10.4 86 tol 0.1
+go 8.2 86 jump 2.3
+until ground = 1
+expect y >= 39.9
+go 8 85.4 tol 0.1
+face 0
+go 8 83 jump 2.3
+until ground = 1
+expect y >= 41.9
+go 8.6 82 tol 0.1
+face 90
+go 11 82 jump 2.3
+until ground = 1
+expect y >= 43.9
+# The jeep (13, 44, 81): off the top's north edge onto the court, north through the cleft over
+# its fifteen mines (the jeep runs them over) to the chasm.
+go 12.2 81 tol 0.15
+hold 2 action
+wait 30
+go 14 76 max 600
+until ground = 1
+go 16 66 max 600
+go 16 56 tol 0.3 max 600
+wait 40
+hold 2 action
+wait 30
+# C: the chasm (z 47-51) on its lifts (40 ticks, 40 dwelling): on at its south end, off at its
+# north end onto the landing and its egg (14, 45).
+go 16 52.6 tol 0.1
+lift 16 30 47 max 400
+lift 16 30 51 max 400
+go 16 51 tol 0.15
+lift 16 30 47 max 400
+go 15 45.6
+go 14 45 until eggs = 1 max 300
+until eggs = 1 max 200
+# D: the ramp's four steps (two up each), each jumped in a lane clear of the mines hovering over
+# its takeoff row: x 18, 14.3, 17.5, 15.5. The egg at the top (16, 27).
+go 18 44
+go 18 42.4 tol 0.1
+face 0
+go 18 40 jump 2.2
+until ground = 1
+expect y >= 31.9
+go 14.3 40
+go 14.3 39.4 tol 0.1
+face 0
+go 14.3 37 jump 2.2
+until ground = 1
+expect y >= 33.9
+go 17.5 37
+go 17.5 36.4 tol 0.1
+face 0
+go 17.5 34 jump 2.2
+until ground = 1
+expect y >= 35.9
+go 15.5 34
+go 15.5 33.4 tol 0.1
+face 0
+go 15.5 31 jump 2.2
+until ground = 1
+expect y >= 37.9
+go 16 27 until eggs = 2 max 300
+until eggs = 2 max 200
+# E: the pole tops, cap to cap (a cell apart) clear of the caps under the hanging mines.
+go 20 30
+go 22 31
+face 90
+go 24 31 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 26 31 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 28 31 jump 2.1 tol 0.1
+until ground = 1
+face 0
+go 28 29 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 30 29 jump 2.1 tol 0.1
+until ground = 1
+face 0
+go 30 27 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 32 27 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 34 27 jump 2.1 tol 0.1
+until ground = 1
+face 180
+go 34 29 jump 2.1 tol 0.1
+until ground = 1
+face 180
+go 34 31 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 36 31 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 38 31 jump 2.1 tol 0.1
+until ground = 1
+face 180
+go 38 33 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 40 33 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 42 33 jump 2.1 tol 0.1
+until ground = 1
+face 0
+go 42 31 jump 2.1 tol 0.1
+until ground = 1
+face 90
+go 44 31 jump 2.1 tol 0.1
+until ground = 1
+expect y >= 37.9
+# F: east along the corridor; off the edge of the lava trench (x 47-53) he hangs from its bars
+# and moves along them to the far floor (x 54), into the garden.
+go 46 31
+go 57 31 max 900
+expect y >= 37.9
+# G: the garden (walk 38): up its two mounds (walk 40, 42) to the egg (68, 23).
+go 64 28
+go 64 27.4 tol 0.1
+face 0
+go 64 25 jump 2.2
+until ground = 1
+expect y >= 39.9
+go 64 23
+face 90
+go 66.8 23 jump 2.4
+until ground = 1
+expect y >= 41.9
+go 68 23 until eggs = 3 max 300
+until eggs = 3 max 200
+# Off the mound and down the shaft (x 70-72, z 36-38) between its mines into the lower hall.
+go 70 27
+go 75 30
+go 75 37
+go 71 37 max 600
+until ground = 1 max 600
+expect y <= 6.1
+# H: the trench of lava on its two pairs of lifts (30 ticks, 40 dwelling): the east pair from
+# x 67 to the island (x 62-63), the west pair from x 61 to the west floor.
+go 67.7 37 tol 0.1
+lift 64 6 37 max 400
+lift 67 6 37 max 400
+go 67 37 tol 0.15
+lift 64 6 37 max 400
+go 62.5 36
+go 62.5 24.5
+go 61.7 24.5 tol 0.1
+lift 58 6 24 max 400
+lift 61 6 24 max 400
+go 61 24.5 tol 0.15
+lift 58 6 24 max 400
+go 56 24.5
+# V1 (x 52-53, z 30, a hole in the floor while it is up) up to P1 (walk 10).
+go 55.5 31.6
+go 52.5 31.6
+go 52.5 31.3 tol 0.1
+lift 52 10 30 max 400
+lift 52 6 30 max 400
+go 52.5 30 tol 0.15
+until y >= 9.99 max 400
+wait 5
+go 52.5 28
+# Jumps to P2 (walk 12) west and P3 (walk 14) north, its egg (47, 24).
+go 51.6 28 tol 0.1
+face 270
+go 49.5 28 jump 2.2
+until ground = 1
+expect y >= 11.9
+go 49 26.6 tol 0.1
+face 0
+go 49 24.5 jump 2.2
+until ground = 1
+expect y >= 13.9
+go 47 24 until eggs = 4 max 300
+until eggs = 4 max 200
+# North off P3 onto the bars over the lava basin, along them to P4 (walk 14) and its egg (50, 12).
+go 49 22
+go 49 14 max 600
+expect y >= 13.9
+go 50 12 until eggs = 5 max 300
+until eggs = 5 max 200
+# H1 (z 12-13) east from P4 over the gap to P5 (walk 14), 30 ticks, 40 dwelling.
+go 50.7 12.5 tol 0.1
+lift 54 14 12 max 400
+lift 51 14 12 max 400
+go 51 12.5 tol 0.15
+lift 54 14 12 max 400
+go 56 12.5
+# V2 (56, 15) up to P6 (walk 17) and its three eggs (54, 55, 57; z 18).
+go 56 14.3 tol 0.1
+lift 56 17 15 max 400
+lift 56 14 15 max 400
+go 56 15 tol 0.15
+until y >= 16.99 max 400
+wait 5
+go 57 17.5
+go 57 18 until eggs = 6 max 300
+go 55 18 until eggs = 7 max 300
+go 54 18 until eggs = 8 max 300
+until eggs = 8 max 200
+# V3 (52, 17) up to P7 (walk 20); H2 (z 16) west over the lava to P8 (walk 20).
+go 53.3 17 tol 0.1
+lift 52 20 17 max 400
+lift 52 17 17 max 400
+go 52 17 tol 0.15
+until y >= 19.99 max 400
+wait 5
+go 50 16.5
+go 49.3 16 tol 0.1
+lift 44 20 16 max 400
+lift 48 20 16 max 400
+go 48 16 tol 0.15
+lift 44 20 16 max 400
+go 42 16.5
+# Two jumps up to the arrow (45, 24, 12): north onto P9 (walk 22), east onto its platform.
+go 42 15.4 tol 0.1
+face 0
+go 42 13 jump 2.2
+until ground = 1
+expect y >= 21.9
+go 42.4 12 tol 0.1
+face 90
+go 45 12 jump 2.4 until exit = 1 max 300
+until exit = 1 max 300
+expect eggs = 8
+until mission = 70 max 900
+expect phase = Play
+wait 60
