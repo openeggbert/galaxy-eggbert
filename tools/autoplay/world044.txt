@@ -1,0 +1,290 @@
+# Mission 044 played through (plans/briefs/world044.md).
+wait 30
+expect mission = 44
+# A, the hub (walk 20): round the red arrow (50, 50; it counts only with all 22) to the north
+# lift (58, 39), jumped onto as it waits at the bottom, ridden up into E's tunnel (walk 24).
+go 52 51
+go 55.5 46
+go 57.8 43.5
+go 58 40.4 tol 0.1
+lift 58 21 39 max 600
+go 58 39 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 20.95
+until y >= 23.98 max 300
+go 58 36.5
+expect y >= 23.95
+# E (walk 24): its two treasures; the lift in the bay south-west of it (48, 37; 50 ticks) up
+# to M, the top room (walk 29), over the hub: its two treasures.
+go 58 31
+go 61 30 tol 0.15
+until treasures = 1 max 200
+go 52 26 tol 0.15
+until treasures = 2 max 200
+go 50 32.5
+go 48 33.5
+go 48 35.6 tol 0.1
+lift 48 25 37 max 600
+go 48 37 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 24.95
+until y >= 28.98 max 400
+go 48 39.6
+expect y >= 28.95
+go 48 44 tol 0.15
+until treasures = 3 max 200
+go 54 49 tol 0.15
+until treasures = 4 max 200
+# Back down M's lift (into its shaft while it waits at the bottom) to E; west to the lift down
+# to D (45, 22) the same way.
+go 48 41
+go 48 38.8 tol 0.1
+lift 48 25 37 max 600
+go 48 34.6
+until ground = 1
+expect y <= 24.05
+go 50 32.5
+go 52 27
+go 49 23.5
+go 46.8 22 tol 0.1
+lift 45 21 22 max 600
+go 43.4 22
+until ground = 1
+expect y <= 20.05
+# D (walk 20): two treasures and the egg; the lift down to C (28, 24) the same way.
+go 40 23 tol 0.15
+until treasures = 5 max 200
+go 38 19.4 tol 0.15
+until eggs = 1 max 200
+go 33 19 tol 0.15
+until treasures = 6 max 200
+go 31 23
+go 29.8 24 tol 0.1
+lift 28 17 24 max 600
+go 26.4 24
+until ground = 1
+expect y <= 16.05
+# C (walk 16): two treasures; the lift up to B (27, 41), jumped onto at the bottom.
+go 25 35 tol 0.15
+until treasures = 7 max 200
+go 19 29 tol 0.15
+until treasures = 8 max 200
+go 22.5 33
+go 23 38
+go 24 41
+go 25.6 41 tol 0.1
+lift 27 17 41 max 600
+go 27 41 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 16.95
+until y >= 19.98 max 300
+go 29.6 41
+expect y >= 19.95
+# B (walk 20): its treasure.
+go 32 50 tol 0.15
+until treasures = 9 max 200
+# The tunnel south-west to L: over the row of three mines lying along it (x 23, z 52-54) in
+# one jump westward where its ceiling is high enough (z 54), beside the low mine (24, 55).
+go 25.5 50.6
+go 25 53.4
+go 24.05 54 tol 0.05
+face 270
+go 20.5 54 jump 3.6 tol 0.2
+until ground = 1
+expect x <= 22.5
+go 21 56
+# L (walk 20): its treasure; the drop south (20, 71) into N, the deep pocket (walk 12): its
+# treasure and helicopter, flown back up the drop's shaft into L.
+go 18 63 tol 0.15
+until treasures = 10 max 200
+go 20.5 66
+go 20 70.5
+until ground = 1 max 300
+expect y <= 12.05
+go 19 82 tol 0.15
+until treasures = 11 max 200
+go 20.6 78.2 tol 0.15
+hold 6 action
+wait 30
+go 20 72.5 tol 0.3
+go 20 71.3 tol 0.2
+wait 30
+hold 165 lookup
+wait 60
+expect y >= 20.1
+go 20.5 68 tol 0.3
+hold 40 crouch
+until ground = 1 max 200
+hold 6 action
+wait 30
+# Back to the hub on foot: L, the jump east over the row (z 54), B, the tunnel east past its
+# low mine (41, 48) on its south side, A.
+go 20.5 62
+go 21 56
+go 21.95 54 tol 0.05
+face 90
+go 25.3 54 jump 3.5 tol 0.2
+until ground = 1
+expect x >= 23.9
+go 25.5 51
+go 30 47
+go 37 47.3
+go 41 49.3
+go 45 50
+# A again, its east tunnel past the low mine (62, 49) on its south side, down the drop (65, 49)
+# to G (walk 16): its floor treasure, its ledge (walk 20) by the ledge's lift (77, 49).
+go 47 51.5
+go 52.5 51.5
+go 56 50.2
+go 63.4 50.2
+go 65 49.5
+until ground = 1 max 300
+expect y <= 16.05
+go 74 41.2 tol 0.15
+until treasures = 12 max 200
+go 77 46
+go 77 47.6 tol 0.1
+lift 77 17 49 max 600
+go 77 49 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 16.95
+face 90
+until y >= 19.98 max 300
+go 79 49 tol 0.15
+expect y >= 19.95
+until treasures = 13 max 200
+# Down off the ledge, to the lift up to F (75, 34), jumped onto at the bottom: F (walk 20).
+go 78.3 48.2
+go 76.4 47.4
+until ground = 1
+expect y <= 16.05
+go 75.5 45
+go 75 38
+go 75 35.6 tol 0.1
+lift 75 17 34 max 600
+go 75 34 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 16.95
+until y >= 19.98 max 300
+go 75 31.5
+expect y >= 19.95
+# F's ledge (walk 23) by its own lift (76, 27; 30 ticks).
+go 75 28.6
+go 76 28.6 tol 0.1
+lift 76 21 27 max 600
+go 76 27 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 20.95
+face 90
+until y >= 22.98 max 300
+go 78 27 tol 0.15
+expect y >= 22.95
+until treasures = 14 max 200
+# Off the ledge, back down F's lift to G (into its shaft while it waits at the bottom), G's
+# drop south (73, 56) to H (walk 12).
+go 78 26.2
+go 75.6 25.8
+until ground = 1
+expect y <= 20.05
+go 75 31
+go 75 32.6 tol 0.1
+lift 75 17 34 max 600
+go 75 36.4
+until ground = 1
+expect y <= 16.05
+go 75.5 45
+go 74 51
+go 73 56.3
+until ground = 1 max 300
+expect y <= 12.05
+# H: its floor treasure, its ledge (walk 16) by the ledge's lift (71, 68).
+go 67 63 tol 0.15
+until treasures = 15 max 200
+go 69.6 68 tol 0.1
+lift 71 13 68 max 600
+go 71 68 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 12.95
+face 90
+until y >= 15.98 max 300
+go 73 68 tol 0.15
+expect y >= 15.95
+until treasures = 16 max 200
+# Off the ledge to the lift up to I (72, 73), jumped onto at the bottom: I (walk 16).
+go 73 67.2
+go 70.6 66.6
+until ground = 1
+expect y <= 12.05
+go 71.5 69.5
+go 72 71.6 tol 0.1
+lift 72 13 73 max 600
+go 72 73 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 12.95
+until y >= 15.98 max 300
+go 72 75.5
+expect y >= 15.95
+go 72 82 tol 0.15
+until treasures = 17 max 200
+go 79 79 tol 0.15
+until treasures = 18 max 200
+# The lift up to J (65, 80), jumped onto at the bottom: J (walk 20).
+go 70 80
+go 66.4 80 tol 0.1
+lift 65 17 80 max 600
+go 65 80 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 16.95
+until y >= 19.98 max 300
+go 62.5 80
+expect y >= 19.95
+# J: its two treasures, then round the invert pickup (52, 76) to the lift up to K (45, 75).
+go 59 75 tol 0.15
+until treasures = 19 max 200
+go 51 79 tol 0.15
+until treasures = 20 max 200
+go 49 76.2
+go 46.4 75 tol 0.1
+lift 45 21 75 max 600
+go 45 75 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 20.95
+until y >= 23.98 max 300
+go 43.5 75
+expect y >= 23.95
+# K (walk 24): its floor treasure, its ledge (walk 28) by the ledge's lift (36, 77).
+go 39 71 tol 0.15
+until treasures = 21 max 200
+go 38.5 76
+go 37.4 77 tol 0.1
+lift 36 25 77 max 600
+go 36 77 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 24.95
+face 270
+until y >= 27.98 max 300
+go 34 77 tol 0.15
+expect y >= 27.95
+until treasures = 22 max 200
+# Down, back down J's lift (into its shaft while it waits at the bottom), and the tunnel north
+# to the hub past the row of mines lying across it (51-53, 66) at its east side (x 54).
+go 34 75.2
+until ground = 1
+expect y <= 24.05
+go 40 75
+go 43.6 75 tol 0.1
+lift 45 21 75 max 600
+go 47.4 75
+until ground = 1
+expect y <= 20.05
+go 50 75.6
+go 53.6 72
+go 54 67.5
+go 54 65
+go 52.5 61
+go 51.5 56
+go 50 50 until exit = 1
+expect treasures = 22
+until mission = 40 max 900
+expect phase = Play
+wait 120
