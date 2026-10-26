@@ -1,0 +1,30 @@
+# World 6 played as a chain from its hub (plans/briefs/world060.md): each mission's sign in hub
+# 060, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 066 ends in the main hub.
+wait 30
+expect mission = 60
+# Sign 1, open, ahead of the start (32, 5, 58).
+go 32 58 until mission = 61 max 600
+until mission = 61 max 600
+include world061.txt
+# Past bar 2: sign 2 (31, 5, 47).
+go 31 47 until mission = 62 max 900
+until mission = 62 max 600
+include world062.txt
+# Past bar 3: sign 3 (40, 5, 31).
+go 40 31 until mission = 63 max 900
+until mission = 63 max 600
+include world063.txt
+# Past bar 4: sign 4 (50, 5, 31).
+go 50 31 until mission = 64 max 900
+until mission = 64 max 600
+include world064.txt
+# Past bar 5: sign 5 (60, 5, 31).
+go 60 31 until mission = 65 max 900
+until mission = 65 max 600
+include world065.txt
+# Past bar 6: sign 6 (69, 5, 44).
+go 69 44 until mission = 66 max 900
+until mission = 66 max 600
+include world066.txt
+expect mission = 1
