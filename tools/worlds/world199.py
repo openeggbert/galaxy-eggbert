@@ -229,14 +229,15 @@ def main(argv) -> int:
     put(village, O.EGG, 11, 1)
     put(village, O.EGG, 11, 11)
 
-    # South, the cheese (green door): a row of crushers across it (cross in their open phase), two
-    # mines bobbing, the blue key and a second green key at its far end.
+    # South, the cheese (green door): a row of crushers in its floor across it (cross in their
+    # open phase: a crusher squashes him standing on it), two mines bobbing, the blue key and a
+    # second green key at its far end.
     cheese_room = Room("S", 57, LOW)
     enclave(cheese_room, "cheese", GREEN_DOOR)
     for u in range(0, 13):
         x, z = cheese_room.at(u, 6)
         if not calm:
-            w.set(x, LOW + 2, z, CRUSHER)
+            w.set(x, LOW - 1, z, CRUSHER)
     for u in (3, 9):
         x, z = cheese_room.at(u, 9)
         bob(x, LOW, z, 2, 16)

@@ -38,6 +38,12 @@ stops at the first doors. `VerifyShippedWorlds`. Live (`--mission 199`, direct v
 every part): the ring and the plaza, each enclave in its material (the machine's lift and key, the
 library's bookcases, the village's houses and mines, the cheese's crushers, the toys' tower and a
 follow star, the palace's saws and birds, the rock's lava, the finale's star blocks and inner door).
-Played live: walking into the red arrow from inside the finale's frame shows the win screen. Not
-played through: the tour in one run (thirty minutes in the original), the keys' doors here (key
-doors played in 102 and 107).
+Played live: walking into the red arrow from inside the finale's frame shows the win screen.
+Played through in one run by `tools/autoplay/world199.txt` (each key spent on one door): the
+machine's red key, the library (red door) for a green key, the cheese (green door) for a blue
+and a second green key, the finale's outer blue door, the village (green door) for a second
+blue key, the inner blue door and the red arrow; the win screen. The other enclaves (toys,
+palace, rock) are spare routes it does not take.
+
+The cheese's crushers lie in its floor (they had hung two cells above it, where a crusher, which
+squashes Blupi standing on it, did nothing; found by the playthrough).

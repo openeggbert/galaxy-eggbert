@@ -1,0 +1,181 @@
+# World 199, the grand tour, played through (plans/briefs/world199.md): the keys spent one door
+# each, so the way is the machine's red key, the library (red door) for a green key, the cheese
+# (green door) for a blue key and a second green, the finale's outer blue door, the village
+# (green door) for a second blue key, the finale's inner blue door and the red arrow.
+wait 30
+expect mission = 199
+# From the ring's north-east corner (walk 30) south along its east arm and down off its inner
+# edge onto the plaza's floor (walk 20), clear of the sleeping follow star at (61, 42).
+go 65 46
+go 62.4 46
+until ground = 1
+expect y <= 20.05
+# East: the machine (walk 20, x 70-82): the pit of lava (x 74-78) on its lift (z 42-44)
+# carrying him three east, boarded at the start of its dwell at the west end; the red key and
+# the two eggs beyond; back the same way.
+go 66 43.5
+go 72.9 43 tol 0.1
+face 90
+lift 78 20 43 max 600
+lift 74 20 43 max 600
+go 74.6 43 tol 0.15
+lift 78 20 43 max 300
+go 80 43
+go 81 43 until keys = 1
+until keys = 1 max 120
+go 81 38 until eggs = 1
+until eggs = 1 max 120
+go 81 48 until eggs = 2
+until eggs = 2 max 120
+go 79.2 43 tol 0.1
+face 270
+lift 74 20 43 max 600
+lift 78 20 43 max 600
+go 77.4 43 tol 0.15
+lift 74 20 43 max 300
+go 72 43
+expect y >= 19.95
+# North under the ring's east arm and west under its north arm (z 35.5) to the library's red
+# door (x 42-44, z 32), open with the red key; its stair of bookcases (rows two deep, walk 22,
+# 24, 26) jumped up from the floor: the green key and two eggs on the top row, one on the first.
+go 66 43.5
+go 65.2 35.5
+go 43 35.5
+go 43 33.6 tol 0.15
+face 0
+wait 30
+go 43 28.4 tol 0.1
+go 43 26.6 jump 1.9 tol 0.3
+until ground = 1
+expect y >= 21.95
+go 43 24.6 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 23.95
+go 43 22.6 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 25.95
+go 43 22 until keys = 1
+until keys = 1 max 120
+go 40 22 until eggs = 3
+until eggs = 3 max 120
+go 48 22 until eggs = 4
+until eggs = 4 max 120
+go 47 23
+go 47 25
+until ground = 1
+go 47 26 until eggs = 5
+until eggs = 5 max 120
+go 47 29
+until ground = 1
+expect y <= 20.05
+# Out of the library and round the plaza's west and south sides under the ring (an egg in each
+# corner), outside the follow stars' waking reach (39 64, 55 64), to the cheese's green door
+# (x 56-58, z 68): the green key opens it. The row of crushers in the cheese's floor (z 76)
+# crossed each way just as they stop (the field crush 3); the green and blue keys at its far
+# end, either side of the two bobbing mines' line (z 79).
+go 43 33.6
+go 43 35.5
+go 36 36 until eggs = 6
+until eggs = 6 max 120
+go 35.3 40
+go 35.3 63
+go 36 64 until eggs = 7
+until eggs = 7 max 120
+go 36.5 66.3 tol 0.15
+go 57 66.3 tol 0.15
+face 180
+go 57 67.6 tol 0.15
+wait 30
+go 57 70.5
+go 52 72 until eggs = 8
+until eggs = 8 max 120
+go 57 75.2 tol 0.1
+face 180
+until crush = 3 max 120
+go 57 80.5 tol 0.15
+go 54.3 81 until keys = 1
+until keys = 1 max 120
+go 57 82 until eggs = 9
+until eggs = 9 max 120
+go 59.7 81 until keys = 2
+until keys = 2 max 120
+go 57 76.8 tol 0.1
+face 0
+until crush = 3 max 120
+go 57 70.5
+go 57 66.5
+expect y <= 20.05
+# Back up to the ring by the south lift (x 49-50, z 61-62), boarded from the north side of its
+# well at the start of its dwell at the bottom; from its top a jump over the cell between it and
+# the ring's south arm (z 64-66). West along the arm to the finale's outer blue door (x 42-44,
+# z 68): the blue key opens it.
+go 52 66.3 tol 0.15
+go 49.5 63.4 tol 0.1
+face 0
+lift 49 30 61 max 600
+lift 49 20 61 max 600
+go 49.5 61.6 tol 0.15
+lift 49 30 61 max 400
+face 180
+go 49.5 64.6 jump 2.2 tol 0.3 max 300
+until ground = 1
+expect y >= 29.95
+go 43 65
+go 43 67.6 tol 0.15
+wait 30
+go 43 70.5
+expect keys = 1
+# Back out and down off the arm's inner edge to the floor, west to the village's green door
+# (x 32, z 56-58): the second green key opens it. Along the village's south side (z 62, clear of
+# its mines) to its west end; the blue key lies at the end of the street (18, 58) that the enemy
+# Blupi walks (x 20-28), firing both ways along it at each end: taken once he has turned at the
+# west end and fired, as he walks away east. He is let turn at the east end and fire before
+# Blupi comes in, and the passage is walked at its south side, out of the shots' line.
+go 43 65
+go 43 62.4
+until ground = 1
+expect y <= 20.05
+go 40 61.6
+go 37 58
+go 35 56.4
+go 33.6 56.4 tol 0.15
+face 270
+wait 30
+near 28 20 58 0.2 lane x max 900
+wait 90
+go 30.4 56.4
+go 29.4 61.8 until eggs = 10
+until eggs = 10 max 120
+go 19.4 62.2 tol 0.15
+near 20 20 58 0.2 lane x max 900
+wait 90
+go 18.2 58.1 tol 0.1 until keys = 1
+until keys = 1 max 120
+go 18.6 61.8
+go 29.4 61.8
+go 30.4 56.4
+go 34 56.4
+expect y <= 20.05
+# Up the west lift (x 37-38, z 49-50) from under the ring's west arm, off at its top west onto
+# the arm (walk 30); south and east round the ring to the finale, through its hall to the inner
+# blue door (x 42-44, z 76): the blue key opens it; the red arrow in its frame of star blocks.
+go 35.8 52
+go 35.8 49.5 tol 0.1
+face 90
+lift 37 30 49 max 600
+lift 37 20 49 max 600
+go 37.6 49.5 tol 0.15
+lift 37 30 49 max 400
+face 270
+go 35.2 49.5 tol 0.15
+expect y >= 29.95
+go 35 65
+go 43 65
+go 43 67.6
+go 43 75.2 tol 0.15
+wait 30
+go 43 78
+go 43 81 until exit = 1 max 600
+until phase = Win max 600
+wait 120
+expect phase = Win
