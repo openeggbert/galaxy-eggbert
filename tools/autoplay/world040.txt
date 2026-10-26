@@ -1,0 +1,30 @@
+# World 4 played as a chain from its hub (plans/briefs/world040.md): each mission's sign in hub
+# 040, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 046 ends in the main hub.
+wait 30
+expect mission = 40
+# Sign 1, open, ahead of the start (48, 5, 39).
+go 48 39 until mission = 41 max 600
+until mission = 41 max 600
+include world041.txt
+# Past bar 2: sign 2 (52, 5, 38).
+go 52 38 until mission = 42 max 900
+until mission = 42 max 600
+include world042.txt
+# Past bar 3: sign 3 (62, 5, 48).
+go 62 48 until mission = 43 max 900
+until mission = 43 max 600
+include world043.txt
+# Past bar 4: sign 4 (62, 5, 52).
+go 62 52 until mission = 44 max 900
+until mission = 44 max 600
+include world044.txt
+# Past bar 5: sign 5 (52, 5, 62).
+go 52 62 until mission = 45 max 900
+until mission = 45 max 600
+include world045.txt
+# Past bar 6: sign 6 (48, 5, 62).
+go 48 62 until mission = 46 max 900
+until mission = 46 max 600
+include world046.txt
+expect mission = 1

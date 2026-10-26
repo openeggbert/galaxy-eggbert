@@ -19,11 +19,11 @@ expect y <= 8.05
 # of every 240 (from 216); each way across in one solid spell. The blue key on the ledge.
 go 20.6 39 tol 0.15
 face 270
-until tick >= 1434
+until mtick >= 1434
 go 15.2 39 tol 0.15
 expect y >= 7.95
 face 90
-until tick >= 1669
+until mtick >= 1669
 go 20.6 39 tol 0.15
 expect y >= 7.95
 # The middle's egg, then east over the lava pit (x 24-29) on the sliding lifts (36 ticks,

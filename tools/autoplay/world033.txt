@@ -38,7 +38,7 @@ go 60.5 47
 go 57 51
 go 44.5 51
 go 44.5 47.5 tol 0.1
-until tick >= 4150
+until mtick >= 4150
 go 40 47.5
 expect y <= 5.05
 # The west wing: its treasure in the south-west corner, then the stair (z 39-41), three steps
@@ -122,12 +122,12 @@ go 60.6 47
 # and x 47 (96 ticks to and fro): pass each along the bridge's north edge (z 46) while it is
 # out over the void, the treasure (50, 47) between them.
 go 54.2 46 tol 0.1
-until tick >= 11285
+until mtick >= 11285
 go 52 46
 expect y <= 19.05
 go 50 47 tol 0.1
 go 48.2 46 tol 0.1
-until tick >= 11530
+until mtick >= 11530
 go 44 46
 expect y <= 19.05
 until treasures = 9 max 200

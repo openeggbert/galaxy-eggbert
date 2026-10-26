@@ -6,7 +6,7 @@ go 10 82.5
 go 22 82
 # Its cycle is 660 ticks (60 at x 24, 270 east, 60 at x 30, 270 back): follow it east through
 # the gate (x 26-28) and step aside onto z 83 while it waits at x 30.
-until tick >= 830
+until mtick >= 830
 go 28.6 82 tol 0.1
 go 29.4 83
 go 36 83
@@ -22,7 +22,7 @@ expect y >= 9.9
 # it along the mountain's foot (z 74.4) while it is out over the ledge.
 go 41 77
 go 56.5 74.4 tol 0.1
-until tick >= 1931
+until mtick >= 1931
 go 60 74.4
 go 75.5 75
 # L2 up the east face, heading -Z: two steps up (z 65.5, z 57.5).
@@ -92,11 +92,11 @@ expect y <= 8.1
 # ticks of every 300; the three mines of the gate (z 44) ride up and down every 240 ticks
 # (their clock, measured, runs 123 ticks ahead of the mission's here): pass each in its gap.
 go 48 36.6 tol 0.1
-until tick >= 7712
+until mtick >= 7712
 go 48 42 tol 0.1
-until tick >= 7877
+until mtick >= 7877
 go 48 48.6 tol 0.1
-until tick >= 8292
+until mtick >= 8292
 go 48 52
 # The blue key in its alcove (x 51-53), then the blue door (48, 60) into the exit room.
 go 50 55
@@ -108,7 +108,7 @@ go 46.4 62.4 tol 0.1
 # G: the exit room. Its two mines slide across it (z 64 and z 67, 180 ticks to and fro, in
 # opposite directions): down its west side (x 46.4) where each turns once a cycle, between
 # them, to the red arrow.
-until tick >= 8957
+until mtick >= 8957
 go 46.4 68.6 tol 0.1
 go 50 69 until exit = 1
 until mission = 30 max 900

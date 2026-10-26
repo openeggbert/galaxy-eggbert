@@ -1,0 +1,22 @@
+# World 3 played as a chain from its hub (plans/briefs/world030.md): each mission's sign in hub
+# 030, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 034 ends in the main hub.
+wait 30
+expect mission = 30
+# Sign 1, open, ahead of the start (44, 5, 47).
+go 44 47 until mission = 31 max 600
+until mission = 31 max 600
+include world031.txt
+# Past bar 2: sign 2 (48, 7, 43).
+go 48 43 until mission = 32 max 900
+until mission = 32 max 600
+include world032.txt
+# Past bar 3: sign 3 (52, 9, 40).
+go 52 40 until mission = 33 max 900
+until mission = 33 max 600
+include world033.txt
+# Past bar 4: sign 4 (56, 11, 37).
+go 56 37 until mission = 34 max 900
+until mission = 34 max 600
+include world034.txt
+expect mission = 1
