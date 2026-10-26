@@ -2528,6 +2528,7 @@ namespace GalaxyEggbert::CNA
                 holdingCrate_ = crate != nullptr && (holdingCrate_ || crateGap < 1.1f);
             }
             blupi_.SetTurning(turnAroundRemaining_ > 0.0f && !blupi_.IsInVehicle());
+            blupi_.SetRidingLift(interaction_.IsRidingLift());
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);

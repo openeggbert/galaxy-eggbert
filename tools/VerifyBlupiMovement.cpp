@@ -1427,6 +1427,57 @@ int main(int argc, char** argv)
                   "holding Jump from the bottom he swims up and jumps out at the surface, onto the bank");
         }
 
+        // The wind (Decor.cpp:2771-2798, BlupiController::kWindSideSpeed): a floor at y 0 along X
+        // (x 70-79, z 99); wind toward -X (110) over x 72-77 at y 1; at x 79 a column of updraught
+        // (118) from y 1 to y 8, and a wind tile at y 3 over x 71 to fall through.
+        {
+            for (std::uint16_t x = 70; x <= 79; ++x)
+            {
+                synthetic.setBlock(x, 0, 99, Worlds::Block::make(BlockTypes::Ground));
+            }
+            for (std::uint16_t x = 72; x <= 77; ++x)
+            {
+                synthetic.setBlock(x, 1, 99, Worlds::Block::make(110));
+            }
+            for (std::uint16_t y = 1; y <= 8; ++y)
+            {
+                synthetic.setBlock(79, y, 99, Worlds::Block::make(118));
+            }
+            BlupiController blown;
+            blown.SetPosition(76.0f - 50.0f, 1.0f, 99.0f - 50.0f);
+            for (int i = 0; i < 60; ++i) blown.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(blown.GetX() < 76.0f - 50.0f - 2.0f && blown.GetX() > 76.0f - 50.0f - 3.2f,
+                  "standing in wind toward -X he is pushed along it, 9 px a tick");
+            BlupiController walker;
+            walker.SetPosition(75.0f - 50.0f, 1.0f, 99.0f - 50.0f);
+            walker.SetYaw(1.57079632679f);
+            for (int i = 0; i < 3; ++i) walker.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(walker.IsInWind() && walker.GetAnimState() == BlupiController::AnimState::Vertigo,
+                  "in the wind, standing, he teeters (the original's Vertigo)");
+            const float before = walker.GetX();
+            for (int i = 0; i < 30; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            check(walker.GetX() < before && walker.GetAnimState() == BlupiController::AnimState::Push,
+                  "walking against it he loses ground, leaning into it (Push)");
+            BlupiController lifted;
+            lifted.SetPosition(79.0f - 50.0f, 1.0f, 99.0f - 50.0f);
+            float topY = 0.0f;
+            for (int i = 0; i < 60; ++i)
+            {
+                lifted.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                topY = std::max(topY, lifted.GetY());
+            }
+            const float heldY = lifted.GetY();
+            for (int i = 0; i < 60; ++i) lifted.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(topY > 2.5f && std::fabs(lifted.GetY() - heldY) < 0.2f,
+                  "an updraught lifts him off the floor and holds him there");
+            synthetic.setBlock(71, 3, 99, Worlds::Block::make(110));
+            BlupiController faller;
+            faller.SetPosition(71.0f - 50.0f, 5.0f, 99.0f - 50.0f);
+            for (int i = 0; i < 90; ++i) faller.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(faller.IsOnGround() && std::fabs(faller.GetY() - 1.0f) < 0.05f,
+                  "a wind tile is no floor: he falls through it to the floor below");
+        }
+
         // His height (BlupiController::kHeadHeight, 2026-10-26): a ceiling stops his head, not
         // his feet; he still walks through a one-block gap. A floor at y 0 (x 66-70, z 97) with a
         // ceiling at y 4 (a three-high tunnel) and, at x 70, one at y 2 (a one-high gap).

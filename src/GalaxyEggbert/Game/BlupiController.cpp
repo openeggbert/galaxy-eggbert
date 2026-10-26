@@ -367,6 +367,7 @@ namespace GalaxyEggbert::Game
         }
         if (GalaxyEggbert::BlockTypes::isTeleporter(blockType) ||
             GalaxyEggbert::BlockTypes::isFan(blockType) ||
+            GalaxyEggbert::BlockTypes::isWind(blockType) ||
             GalaxyEggbert::BlockTypes::isWater(blockType))
         {
             return false;
@@ -1728,7 +1729,27 @@ namespace GalaxyEggbert::Game
         // header comment): thin WorldSelect/DemoPortal markers stay
         // correctly non-solid on horizontal contact, while thin Lava/
         // Crusher/Saw/Blitz/Drip still read as solid GROUND to stand on.
-        const float dy = m_velocityY * dt;
+        // The wind at his middle (kWindSideSpeed's comment), not on a lift nor in the jeep, the
+        // tank or on the skateboard.
+        std::uint16_t wind = 0;
+        if (!m_ridingLift && m_vehicleMode != VehicleMode::Jeep && m_vehicleMode != VehicleMode::Tank &&
+            m_vehicleMode != VehicleMode::Skateboard)
+        {
+            const int blocks = static_cast<int>(world.blocksPerAxis());
+            const int wx = static_cast<int>(std::lround(m_x)) + kWorldCenterX;
+            const int wy = static_cast<int>(std::floor(m_y + 28.0f / 64.0f));
+            const int wz = static_cast<int>(std::lround(m_z)) + kWorldCenterZ;
+            if (wx >= 0 && wy >= 0 && wz >= 0 && wx < blocks && wy < blocks && wz < blocks)
+            {
+                wind = world.getBlock(static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(wy),
+                                      static_cast<std::uint16_t>(wz))
+                           .type();
+            }
+        }
+        m_inWind = GalaxyEggbert::BlockTypes::isWind(wind);
+        dx += wind == 110 ? -kWindSideSpeed * dt : wind == 114 ? kWindSideSpeed * dt : 0.0f;
+        const float windDy = wind == 118 ? kWindVerticalSpeed * dt : wind == 122 ? -kWindVerticalSpeed * dt : 0.0f;
+        const float dy = m_velocityY * dt + windDy;
         const bool wasOnGroundBeforeMove = m_onGround; // landing this frame: StopJump
         const float velocityYBeforeMove = m_velocityY;  // ... from a real fall, not a settle
         const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, dy, dz, tempPassable,
@@ -2008,7 +2029,7 @@ namespace GalaxyEggbert::Game
         // idle. Airborne itself splits Jump (ascending) vs Air (falling/
         // apex) by velocity sign -- see the AnimState enum's own comment
         // for the 3D velocity-sign adaptation.
-        const AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
+        AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
                                   : m_bye ? AnimState::Bye
                                   : m_oneShotAnimActive ? m_oneShotAnimState
                                   : m_pickupFrozen ? AnimState::PickupBusy
@@ -2031,6 +2052,14 @@ namespace GalaxyEggbert::Game
                                   : lookUpHeld    ? AnimState::Up
                                   : moving        ? AnimState::March
                                                   : AnimState::Stop;
+        // In the wind he struggles (Decor.cpp:2128-2138): standing, he teeters; walking, he
+        // leans into it.
+        if (m_inWind && m_vehicleMode != VehicleMode::Helicopter && m_vehicleMode != VehicleMode::Overcraft)
+        {
+            newState = newState == AnimState::Stop    ? AnimState::Vertigo
+                       : newState == AnimState::March ? AnimState::Push
+                                                      : newState;
+        }
         if (reactionStarted && newState == m_reaction)
         {
             m_eventsThisFrame.push_back(Event{EventKind::ReactionStarted});

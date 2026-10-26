@@ -147,6 +147,13 @@ inline bool isFan(uint16_t bt) {
            GalaxyEggbert::BlockFanDirection::None;
 }
 
+// Wind tiles (110-125): the air a fan blows, 110 toward -X, 114 toward +X, 118 up and 122 down
+// (each with its three frames). They push Blupi (Decor.cpp:2771-2798) and are pass icons,
+// nothing to stand on (2026-10-26).
+inline bool isWind(uint16_t bt) {
+    return bt >= 110 && bt <= 125;
+}
+
 // Blitz tile — electric floor, kills Blupi 25 % of ticks (animPhase % 4 == 0).
 // Icon 305 is a solid floor with an active-kill phase (same pattern as Crusher).
 constexpr uint16_t Blitz    = 305;

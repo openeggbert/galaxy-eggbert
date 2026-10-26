@@ -1199,6 +1199,19 @@ namespace GalaxyEggbert::Game
         // AnimState::Turn while he stands.
         void SetTurning(bool turning) noexcept { m_turning = turning; }
 
+        // Whether he stands on a platform lift this frame (the caller's InteractionSystem knows):
+        // the wind does not push him there (Decor.cpp:2773, m_blupiTransport).
+        void SetRidingLift(bool riding) noexcept { m_ridingLift = riding; }
+        [[nodiscard]] bool IsInWind() const noexcept { return m_inWind; }
+
+        // The wind's push (Decor.cpp:2771-2798): 9 px a tick along X (his walk is 8, so he
+        // loses ground walking against it), 20 px a tick up or down, the original's fastest
+        // fall, so an updraught holds a falling Blupi where he is. In this engine's units the
+        // sideways push is real time; the vertical one matches kFallLimit as the original's
+        // matches its fall.
+        static constexpr float kWindSideSpeed = 9.0f * 20.0f / 64.0f;
+        static constexpr float kWindVerticalSpeed = 10.0f;
+
         // Holding a crate (Step()'s holdingCrate: crouching, a crate right in front): Blupi
         // cannot turn or step forward, and backs away at the original's Pop speed, 4 px a tick.
         static constexpr float kPullSpeed = 4.0f * 20.0f / 64.0f;
@@ -1268,6 +1281,8 @@ namespace GalaxyEggbert::Game
         bool m_wasPushingCrate = false;
         float m_marchSeconds = 0.0f; // walking on foot without a break (StopMarch)
         float m_moveInput = 0.0f;    // this Step()'s movement input (SlowdownSkate)
+        bool m_ridingLift = false;   // SetRidingLift()
+        bool m_inWind = false;       // a wind tile at his middle this frame
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
         // precise sub-tile solidity for a specific continuous-space point,
