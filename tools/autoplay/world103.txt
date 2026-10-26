@@ -1,0 +1,132 @@
+# Mission 103 played through (plans/briefs/world103.md): the gallery's lifts over lava, the
+# flooded dip dived under its curtain, the shaft's seven lifts in step, the hall's six lifts over
+# its pools of lava, the treasure and the drop to the exit.
+wait 30
+expect mission = 103
+# The gallery (walk 6, z 80-86), lane z 83. The first trench: lift A (x 19-20) carries him three
+# east to meet lift B (x 24-25 at its end), B back to x 26-27; off onto the floor beyond. (Each
+# lift is waited for by its leading cube at its end: the other cube passes through that cell's
+# neighbour on the way.)
+go 14 84.6 until eggs = 1 max 600
+go 18.3 83 tol 0.1
+lift 19 6 83 max 900
+go 19.5 83 tol 0.15
+lift 23 6 83 max 300
+go 24.5 83 tol 0.15
+lift 27 6 83 max 300
+go 28.5 83
+# Past the flooded side pit (x 33-36, z 81-85) along z 86, the egg (31, 81) first.
+go 31 81.4 until eggs = 2 max 300
+go 32 86
+go 37.5 86
+go 39 83
+# The second trench (x 41-46): one lift (x 41-42) three east, then a jump off it over the last
+# cell of lava onto the floor at x 47.
+go 40.3 83 tol 0.1
+lift 41 6 83 max 900
+go 41.5 83 tol 0.15
+lift 45 6 83 max 300
+go 44.8 83 tol 0.15
+go 47.6 83 jump 2.6 tol 0.3
+until ground = 1
+expect x >= 47
+# The flooded dip (x 53-66, water y 1-5 level with the floor): dived along z 83.5 (the fish keep
+# to z 81, 82 and 85) under the curtain of stone (x 59-60, down to y 3), up on its far side and
+# out onto the floor at x 67.
+go 52.6 83.5 tol 0.15
+go 58 83.5 with crouch max 600
+go 61.6 83.5 tol 0.2 with crouch max 600
+go 66.5 83.5 tol 0.2 with lookup max 600
+until y >= 5.2 max 300
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1
+expect x >= 66.9
+# The shaft (x 80-87): seven lifts (2 x 2 at z 82-83) in two columns, p (x 81-82) and q (x 83-84),
+# all in step: each meets the next side by side at its top or its foot; he steps across each time
+# (feet 6 -> 9 -> 12 -> 15 -> 18 -> 21 -> 24 -> 27), then west off the last onto the hall (walk 27).
+go 78 81.4 until eggs = 3 max 300
+go 80.3 82.5 tol 0.1
+lift 81 6 82 max 900
+go 81.5 82.5 tol 0.15
+lift 83 9 82 max 600
+go 83.5 82.5 tol 0.15
+lift 81 12 82 max 600
+go 81.5 82.5 tol 0.15
+lift 83 15 82 max 600
+go 83.5 82.5 tol 0.15
+lift 81 18 82 max 600
+go 81.5 82.5 tol 0.15
+lift 83 21 82 max 600
+go 83.5 82.5 tol 0.15
+lift 81 24 82 max 600
+go 81.5 82.5 tol 0.15
+until y >= 26.95 max 600
+wait 6
+go 78.5 82.5
+expect y >= 26.9
+# The hall of pools (walk 27, east to west): six pools of lava (x0 .. x0 + 2 for x0 = 73, 68, ...,
+# 48), a lift on each starting at its east side (x0 + 2) and carrying him two cells to its west
+# side (x0), off onto the next pillar (boarded as it comes back, at the start of its dwell); the
+# eggs on two pillars (66, 81) and (56, 85).
+go 76.3 83 tol 0.1
+lift 73 27 83 max 900
+lift 75 27 83 max 300
+go 75 83 tol 0.15
+lift 73 27 83 max 300
+go 71.6 83 tol 0.2
+go 71.3 83 tol 0.1
+lift 68 27 83 max 900
+lift 70 27 83 max 300
+go 70 83 tol 0.15
+lift 68 27 83 max 300
+go 66.6 83 tol 0.2
+go 66.5 81.5 until eggs = 4 max 300
+go 66.5 83
+go 66.3 83 tol 0.1
+lift 63 27 83 max 900
+lift 65 27 83 max 300
+go 65 83 tol 0.15
+lift 63 27 83 max 300
+go 61.6 83 tol 0.2
+go 61.3 83 tol 0.1
+lift 58 27 83 max 900
+lift 60 27 83 max 300
+go 60 83 tol 0.15
+lift 58 27 83 max 300
+go 56.6 83 tol 0.2
+go 56.5 84.5 until eggs = 5 max 300
+go 56.5 83
+go 56.3 83 tol 0.1
+lift 53 27 83 max 900
+lift 55 27 83 max 300
+go 55 83 tol 0.15
+lift 53 27 83 max 300
+go 51.6 83 tol 0.2
+go 51.3 83 tol 0.1
+lift 48 27 83 max 900
+lift 50 27 83 max 300
+go 50 83 tol 0.15
+lift 48 27 83 max 300
+go 46.6 83 tol 0.2
+# The pool of water (x 32-38) swum across at its surface (the fish two and three below), out on
+# its west side; the treasure (27, 83); the drop beside it (x 23-25) to the exit's chamber (walk
+# 15), the egg (25, 78) and the exit (21, 78).
+go 39.4 83 tol 0.15
+go 31.6 83 tol 0.2 max 600
+until y >= 26.2 max 300
+face 270
+hold 8 up jump
+hold 30 up
+until ground = 1
+go 27 83 until treasures = 1 max 600
+until treasures = 1 max 200
+go 24 83
+until ground = 1
+expect y <= 15.1
+go 25 78.5 until eggs = 6 max 600
+go 21 78 until exit = 1 max 600
+until mission = 100 max 900
+expect phase = Play
+wait 60
