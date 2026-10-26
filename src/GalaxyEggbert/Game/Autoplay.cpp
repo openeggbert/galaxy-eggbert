@@ -128,7 +128,7 @@ namespace GalaxyEggbert::Game
                 static const std::pair<const char*, Field> kFields[] = {
                     {"x", Field::X},         {"y", Field::Y},         {"z", Field::Z},
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mission", Field::Mission},
-                    {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives},
+                    {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys},
                     {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz},
                     {"phase", Field::Phase}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
@@ -177,6 +177,17 @@ namespace GalaxyEggbert::Game
                         {
                             return false;
                         }
+                        continue;
+                    }
+                    if (option == "lane")
+                    {
+                        std::string axis;
+                        if (!(words >> axis) || (axis != "x" && axis != "z") ||
+                            (command.kind != Kind::Clear && command.kind != Kind::Near))
+                        {
+                            return false;
+                        }
+                        command.lane = axis[0];
                         continue;
                     }
                     if (allowGo && option == "until")
@@ -321,6 +332,7 @@ namespace GalaxyEggbert::Game
         case Field::Treasures: value = static_cast<float>(state.treasures); break;
         case Field::Eggs: value = static_cast<float>(state.eggs); break;
         case Field::Lives: value = static_cast<float>(state.lives); break;
+        case Field::Keys: value = static_cast<float>(state.keys); break;
         case Field::Ground: value = state.onGround ? 1.0f : 0.0f; break;
         case Field::Dead: value = state.dead ? 1.0f : 0.0f; break;
         case Field::Exit: value = state.exitReached ? 1.0f : 0.0f; break;
@@ -367,10 +379,10 @@ namespace GalaxyEggbert::Game
             Write(state, "mission " + std::to_string(state.mission));
         }
         if (havePrevious_ && (state.treasures != previous_.treasures || state.eggs != previous_.eggs ||
-                              state.lives != previous_.lives))
+                              state.lives != previous_.lives || state.keys != previous_.keys))
         {
-            std::snprintf(line, sizeof(line), "treasures %d eggs %d lives %d", state.treasures, state.eggs,
-                          state.lives);
+            std::snprintf(line, sizeof(line), "treasures %d eggs %d lives %d keys %d", state.treasures, state.eggs,
+                          state.lives, state.keys);
             Write(state, line);
         }
         if (!state.crates.empty() && (!havePrevious_ || state.crates != previous_.crates))
@@ -489,6 +501,15 @@ namespace GalaxyEggbert::Game
             {
                 const bool any = std::any_of(state.enemies.begin(), state.enemies.end(), [&](const std::array<float, 3>& at) {
                     const float dx = at[0] - command.x, dy = at[1] - command.y, dz = at[2] - command.z;
+                    constexpr float kRow = 0.6f;
+                    if (command.lane == 'x')
+                    {
+                        return std::fabs(dy) < kRow && std::fabs(dz) < kRow && std::fabs(dx) < command.radius;
+                    }
+                    if (command.lane == 'z')
+                    {
+                        return std::fabs(dy) < kRow && std::fabs(dx) < kRow && std::fabs(dz) < command.radius;
+                    }
                     return dx * dx + dy * dy + dz * dz < command.radius * command.radius;
                 });
                 done = command.kind == Kind::Clear ? !any : any;

@@ -21,17 +21,20 @@
 //   lift X Y Z [max N]         no keys until a lift would carry him standing at (X, Y, Z): its
 //                              platform is there (within 0.05), Y being his feet's height on it
 //   crate X Y Z [max N]        no keys until a crate stands in cell (X, Y, Z) (within 0.05)
-//   clear X Y Z R [max N]      no keys until no enemy (fish, mine, bird, ...) is within R of
-//                              (X, Y, Z): time a dive past a patrol
-//   near X Y Z R [max N]       no keys until an enemy is within R of (X, Y, Z): catch a patrol
-//                              at one end of its run, to go as it turns away
+//   clear X Y Z R [lane x|z] [max N]
+//                              no keys until no enemy (fish, mine, bird, ...) is within R of
+//                              (X, Y, Z): time a dive past a patrol; with `lane x` only the enemies
+//                              in that row along X count (within 0.6 of Y and Z), R along it
+//   near X Y Z R [lane x|z] [max N]
+//                              no keys until an enemy is within R of (X, Y, Z): catch a patrol at
+//                              one end of its run, to go as it turns away
 //   expect COND                record a pass or a failure
 //   log TEXT                   write TEXT to the trace
 //   trace N                    write the position every tick for the next N ticks (else every 60)
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
-// COND is FIELD OP VALUE, FIELD one of x y z yaw tick mission treasures eggs lives ground dead
+// COND is FIELD OP VALUE, FIELD one of x y z yaw tick mission treasures eggs lives keys ground dead
 // exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
 // it strikes on the even ticks of 0-49) phase, OP one of = != < <= > >=; phase takes a name
 // (Play, Win, Lost, Pause, Init, ...). A
@@ -61,6 +64,7 @@ namespace GalaxyEggbert::Game
         int treasures = 0;
         int eggs = 0;
         int lives = 0;
+        int keys = 0; // the coloured keys held
         // Every active lift, as where a rider stands on it: raw x, feet y, raw z.
         std::vector<std::array<float, 3>> lifts;
         // Every crate: raw x, y (its cell), raw z. The trace records them whenever one moves.
@@ -93,7 +97,7 @@ namespace GalaxyEggbert::Game
 
     private:
         enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, End };
-        enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Ground, Dead, Exit, Blitz, Phase };
+        enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Keys, Ground, Dead, Exit, Blitz, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {
@@ -112,6 +116,7 @@ namespace GalaxyEggbert::Game
             float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
             float jumpAt = -1.0f;
             float radius = 0.0f;
+            char lane = 0; // 'x', 'z' or 0 (a sphere)
             float tolerance = 0.25f;
             Condition condition;
             bool hasCondition = false;

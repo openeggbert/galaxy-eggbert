@@ -207,7 +207,7 @@ int main()
         }
         const std::string log = autoplay.TakeLog();
         check(Contains(log, "t=0 phase Play") && Contains(log, "t=0 mission 11") &&
-                  Contains(log, "t=70 treasures 1 eggs 0 lives 3") && Contains(log, "t=100 phase Win") &&
+                  Contains(log, "t=70 treasures 1 eggs 0 lives 3 keys 0") && Contains(log, "t=100 phase Win") &&
                   Contains(log, "t=60 at "),
               "the trace records phases, the mission, pickups and the position every second");
     }
@@ -320,6 +320,28 @@ int main()
             }
         }
         check(caught == 58, "near waits until an enemy is within R (tick " + std::to_string(caught) + ")");
+    }
+
+    {
+        Autoplay autoplay;
+        std::string error;
+        check(autoplay.Parse("clear 50 20 67 12 lane x max 10\n", error), "clear ... lane x parses");
+        AutoplayState state;
+        // A mine of the next lane (z 69) right beside the point does not count; one in the lane
+        // 13 away neither.
+        state.enemies = {{50.0f, 20.0f, 69.0f}, {63.0f, 20.0f, 67.0f}};
+        autoplay.Step(state);
+        check(autoplay.Passed(), "clear ... lane x counts only the enemies in that row");
+        Autoplay busy;
+        busy.Parse("clear 50 20 67 12 lane x max 10\n", error);
+        AutoplayState inLane;
+        inLane.enemies = {{55.0f, 20.0f, 67.0f}};
+        for (int t = 0; t < 12; ++t)
+        {
+            inLane.tick = t;
+            busy.Step(inLane);
+        }
+        check(busy.Finished() && !busy.Passed(), "an enemy 5 along the lane keeps it waiting");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

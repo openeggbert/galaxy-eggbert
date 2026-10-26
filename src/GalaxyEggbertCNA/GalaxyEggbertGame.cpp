@@ -1062,6 +1062,7 @@ namespace GalaxyEggbert::CNA
         state.treasures = interaction_.TreasuresCollected();
         state.eggs = interaction_.LifeEggCount();
         state.lives = interaction_.Lives();
+        state.keys = interaction_.Key1Count() + interaction_.Key2Count() + interaction_.Key3Count();
         for (const auto& object : worldRuntime_.GetMobileObjects())
         {
             if (object.active && GetObjectDefinition(object.type).semanticKind == ObjectSemanticKind::Lift)
