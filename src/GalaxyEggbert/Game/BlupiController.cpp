@@ -203,6 +203,7 @@ namespace GalaxyEggbert::Game
             182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182, 182};
         constexpr int kJumpSkateFrames[] = {210, 211, 212};
         constexpr int kAirSkateFrames[]  = {213, 213, 214, 214, 215, 215, 214, 214};
+        constexpr int kSlowdownSkateFrames[] = {211}; // table_blupi 85
         constexpr int kStopOverFrames[]  = {315};
         constexpr int kMarchOverFrames[] = {
             296, 297, 298, 299, 300, 301, 302, 301, 300, 299, 298, 297};
@@ -1031,6 +1032,7 @@ namespace GalaxyEggbert::Game
                                   bool holdingCrate)
     {
         const CrateCellsScope crateCells(m_crateCells);
+        m_moveInput = moveInput;
         // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
         // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)
         // { BlupiGhostStep(); return; }`, before even teleporting. Real
@@ -1984,6 +1986,10 @@ namespace GalaxyEggbert::Game
                     {
                         return m_velocityY > 0.0f ? AnimState::JumpSkate : AnimState::AirSkate;
                     }
+                    if (moving && m_moveInput == 0.0f && std::fabs(m_vehicleSpeed) > kMoveSpeed * (5.0f / 8.0f))
+                    {
+                        return AnimState::SlowdownSkate;
+                    }
                     return moving ? AnimState::MarchSkate : AnimState::StopSkate;
                 case VehicleMode::Overcraft:  return moving ? AnimState::MarchOver   : AnimState::StopOver;
                 default: return moving ? AnimState::March : AnimState::Stop;
@@ -2147,6 +2153,8 @@ namespace GalaxyEggbert::Game
                 return kJumpSkateFrames[m_animPhase % (sizeof(kJumpSkateFrames) / sizeof(kJumpSkateFrames[0]))];
             case AnimState::AirSkate:
                 return kAirSkateFrames[m_animPhase % (sizeof(kAirSkateFrames) / sizeof(kAirSkateFrames[0]))];
+            case AnimState::SlowdownSkate:
+                return kSlowdownSkateFrames[m_animPhase % (sizeof(kSlowdownSkateFrames) / sizeof(kSlowdownSkateFrames[0]))];
             case AnimState::StopOver:
                 return kStopOverFrames[m_animPhase % (sizeof(kStopOverFrames) / sizeof(kStopOverFrames[0]))];
             case AnimState::MarchOver:

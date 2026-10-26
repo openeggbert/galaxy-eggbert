@@ -507,6 +507,9 @@ namespace GalaxyEggbert::Game
             // icon pair, selected by `m_velocityY` sign in `vehicleAnimState()`
             // exactly like the base Jump/Air split below.
             JumpSkate, AirSkate,
+            // SlowdownSkate (`table_blupi` ID 85, 2026-10-26, Decor.cpp:2254-2257): gliding on
+            // with no direction held while still faster than 5 px a tick (of the board's 15).
+            SlowdownSkate,
             StopOver, MarchOver,
             // Swim/Surf Stop/March pairs (plan.md BLUPI-040/041/043/044,
             // found 2026-07-18) -- same shape as the vehicle pairs above,
@@ -1258,6 +1261,7 @@ namespace GalaxyEggbert::Game
         bool m_reactionStarted = false; // ReactionStarted is due this frame
         bool m_wasPushingCrate = false;
         float m_marchSeconds = 0.0f; // walking on foot without a break (StopMarch)
+        float m_moveInput = 0.0f;    // this Step()'s movement input (SlowdownSkate)
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
         // precise sub-tile solidity for a specific continuous-space point,

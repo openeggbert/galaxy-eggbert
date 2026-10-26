@@ -163,6 +163,7 @@ namespace GalaxyEggbert::CNA
                 case S::MarchSkate:
                 case S::JumpSkate:
                 case S::AirSkate:
+                case S::SlowdownSkate:
                     return 14.0f * kTick;
                 default:
                     return 6.0f * kTick;
@@ -216,6 +217,7 @@ namespace GalaxyEggbert::CNA
                 case S::MarchSkate: return "MarchSkate";
                 case S::JumpSkate: return "JumpSkate";
                 case S::AirSkate: return "AirSkate";
+                case S::SlowdownSkate: return "SlowdownSkate";
                 case S::StopOver: return "StopOver";
                 case S::MarchOver: return "MarchOver";
                 case S::StopNage: return "StopNage";

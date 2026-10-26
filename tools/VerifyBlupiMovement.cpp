@@ -1536,6 +1536,22 @@ int main(int argc, char** argv)
                   "stopping after a walk shows the StopMarch pose");
             check(stopAfterWalking(10) == BlupiController::AnimState::Stop, "after a step or two, straight to Stop");
 
+            // SlowdownSkate (Decor.cpp:2254-2257): letting go while the skateboard still glides fast.
+            {
+                BlupiController skater;
+                skater.SetPosition(60.0f - 50.0f, 1.0f, 95.0f - 50.0f);
+                skater.SetYaw(1.57079632679f);
+                for (int i = 0; i < 10; ++i) skater.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                check(skater.TriggerMount(BlupiController::VehicleMode::Skateboard, false, false), "mounts the skateboard");
+                for (int i = 0; i < 30; ++i) skater.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+                check(skater.GetAnimState() == BlupiController::AnimState::MarchSkate, "skating with Up held: MarchSkate");
+                skater.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                check(skater.GetAnimState() == BlupiController::AnimState::SlowdownSkate,
+                      "letting go at speed: SlowdownSkate while it glides on");
+                for (int i = 0; i < 120; ++i) skater.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                check(skater.GetAnimState() == BlupiController::AnimState::StopSkate, "once it has slowed: StopSkate");
+            }
+
             // The decoy (Decor.cpp:4833-4848): put down, Ouf2 holding him; cannot, the Ouf3 shrug.
             BlupiController decoy;
             decoy.SetPosition(62.0f - 50.0f, 1.0f, 95.0f - 50.0f);

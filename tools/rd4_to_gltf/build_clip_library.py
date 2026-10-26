@@ -78,7 +78,7 @@ VEHICLES = {
     "jeep": ["StopJeep", "MarchJeep"],
     "tank": ["StopTank", "MarchTank", "FireTank"],
     "over": ["StopOver", "MarchOver"],
-    "skate": ["StopSkate", "MarchSkate", "JumpSkate", "AirSkate", "TakeSkate", "DeposeSkate"],
+    "skate": ["StopSkate", "MarchSkate", "JumpSkate", "AirSkate", "SlowdownSkate", "TakeSkate", "DeposeSkate"],
 }
 
 
