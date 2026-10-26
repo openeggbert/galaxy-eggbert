@@ -1879,8 +1879,9 @@ namespace GalaxyEggbert::CNA
         if (autoplay_ && !autoplay_->Finished())
         {
             StepAutoplay();
-            // Drawing is most of a tick's time and changes nothing in play: every fourth frame.
-            if (autoplayTick_ % 4 != 0)
+            // Drawing is most of a tick's time (software rendering under Xvfb) and changes
+            // nothing in play: one frame in 30.
+            if (autoplayTick_ % 30 != 0)
             {
                 SuppressDraw();
             }
