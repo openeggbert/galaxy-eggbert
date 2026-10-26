@@ -150,6 +150,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/TrainingHints.cpp
         src/GalaxyEggbert/Game/InputPad.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
+        src/GalaxyEggbert/Game/Autoplay.cpp
         src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
@@ -630,6 +631,18 @@ target_include_directories(VerifyTerrainAnimDivisor PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# The QA autoplay (Autoplay.hpp/.cpp, milestone F) is engine-independent: its script parser and
+# steering are checked against a stand-in for Blupi.
+add_executable(VerifyAutoplay
+        tools/VerifyAutoplay.cpp
+        src/GalaxyEggbert/Game/Autoplay.cpp
+)
+
+target_include_directories(VerifyAutoplay PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
 # INFRA-003 (plan.md §7): ObjectIcons.hpp/.cpp is engine-agnostic (only
 # depends on Def/ObjectType.hpp, see GenerateSampleWorld3D's own comment
 # above) -- a data-integrity regression test for its 34 historical "Fixed"
@@ -844,6 +857,7 @@ if(BUILD_TESTING)
     # No file/working-directory dependency -- AnimDivisor() is a pure
     # function of a BlockTypes icon id (plan.md TEST-007).
     add_test(NAME VerifyTerrainAnimDivisor COMMAND VerifyTerrainAnimDivisor)
+    add_test(NAME VerifyAutoplay COMMAND VerifyAutoplay)
     # No file/working-directory dependency -- tileUV() is a pure header-only
     # function of a BlockTypes icon id (plan.md TEST-004).
     add_test(NAME VerifyTileUvBounds COMMAND VerifyTileUvBounds)

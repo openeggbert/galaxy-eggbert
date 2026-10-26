@@ -14,6 +14,7 @@
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
 #include <GalaxyEggbert/Game/SaveData.hpp>
+#include <GalaxyEggbert/Game/Autoplay.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/Def/GamePhase.hpp>
@@ -26,9 +27,11 @@
 #include <Microsoft/Xna/Framework/Graphics/SkinnedEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
 #include <Microsoft/Xna/Framework/GraphicsDeviceManager.hpp>
+#include <Microsoft/Xna/Framework/Input/KeyboardState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <cstdint>
+#include <cstdio>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -117,6 +120,12 @@ namespace GalaxyEggbert::CNA
             startSpawnZ_ = z;
             startYawDegrees_ = yawDegrees;
         }
+        // `--autoplay <script>` with `--mission`: the QA autoplay (Autoplay.hpp) plays instead of
+        // the keyboard and mouse, one fixed 1/60 s step per Update() as fast as the machine runs,
+        // writes `autoplay_trace.txt` and exits when the script ends (code 0 when it passed). False
+        // when the script cannot be read or parsed.
+        bool EnableAutoplay(const std::string& scriptPath);
+        [[nodiscard]] int AutoplayExitCode() const noexcept { return autoplayExitCode_; }
 
         GetTypeNameHPP()
 
@@ -573,6 +582,19 @@ namespace GalaxyEggbert::CNA
         bool startSpawnSet_ = false;
         float startSpawnX_ = 0.0f, startSpawnY_ = 0.0f, startSpawnZ_ = 0.0f, startYawDegrees_ = 0.0f;
         bool goldenTraceWritten_ = false;
+        // `--autoplay` (EnableAutoplay()): the script, the keys it holds this tick, its trace file.
+        std::unique_ptr<GalaxyEggbert::Game::Autoplay> autoplay_;
+        Microsoft::Xna::Framework::Input::KeyboardState autoplayKeys_;
+        std::FILE* autoplayTrace_ = nullptr;
+        int autoplayTick_ = 0;
+        int autoplayExitCode_ = 0;
+        // Live keyboard and mouse are ignored by the capture modes and the autoplay.
+        [[nodiscard]] bool SuppressLiveInput() const noexcept
+        {
+            return goldenCaptureMode_ || goldenTraceMode_ || autoplay_ != nullptr;
+        }
+        [[nodiscard]] Microsoft::Xna::Framework::Input::KeyboardState CurrentKeyboardState() const;
+        void StepAutoplay();
         int goldenTraceTick_ = 0;
         std::string goldenTraceLines_;
 

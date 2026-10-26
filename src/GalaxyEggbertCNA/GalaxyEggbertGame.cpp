@@ -10,6 +10,7 @@
 
 #include <GalaxyEggbert/HubDoors.hpp>
 #include <GalaxyEggbert/Game/LiftVisual.hpp>
+#include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
 #include <GalaxyEggbert/Game/TerrainLighting.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
@@ -1015,6 +1016,93 @@ namespace GalaxyEggbert::CNA
         return cheatShowSecret_ || phase_ == GalaxyEggbert::Def::GamePhase::Editor;
     }
 
+    bool GalaxyEggbertGame::EnableAutoplay(const std::string& scriptPath)
+    {
+        std::ifstream in(scriptPath);
+        if (!in)
+        {
+            std::cout << "GalaxyEggbertCNA: --autoplay: cannot read " << scriptPath << std::endl;
+            return false;
+        }
+        std::stringstream text;
+        text << in.rdbuf();
+        auto autoplay = std::make_unique<GalaxyEggbert::Game::Autoplay>();
+        std::string error;
+        if (!autoplay->Parse(text.str(), error))
+        {
+            std::cout << "GalaxyEggbertCNA: --autoplay: " << scriptPath << ": " << error << std::endl;
+            return false;
+        }
+        autoplayTrace_ = std::fopen("autoplay_trace.txt", "wb");
+        if (!autoplayTrace_)
+        {
+            std::cout << "GalaxyEggbertCNA: --autoplay: cannot write autoplay_trace.txt" << std::endl;
+            return false;
+        }
+        autoplay_ = std::move(autoplay);
+        // Each Update() steps the game by a fixed 1/60 s (see Update()'s dt), so the run is the
+        // same tick for tick however fast it goes; unthrottled it goes as fast as the machine draws.
+        setIsFixedTimeStepProperty(false);
+        return true;
+    }
+
+    Microsoft::Xna::Framework::Input::KeyboardState GalaxyEggbertGame::CurrentKeyboardState() const
+    {
+        return autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput());
+    }
+
+    void GalaxyEggbertGame::StepAutoplay()
+    {
+        using Microsoft::Xna::Framework::Input::Keys;
+        constexpr float kDegreesPerRadian = 57.2957795f;
+        GalaxyEggbert::Game::AutoplayState state;
+        state.tick = autoplayTick_++;
+        state.x = blupi_.GetX() + WorldRuntime::kWorldCenterX;
+        state.y = blupi_.GetY();
+        state.z = blupi_.GetZ() + WorldRuntime::kWorldCenterZ;
+        state.yawDegrees = blupi_.GetYaw() * kDegreesPerRadian;
+        state.onGround = blupi_.IsOnGround();
+        state.dead = blupi_.IsDeathLocked();
+        state.exitReached = interaction_.ExitReached();
+        state.phase = phase_;
+        state.mission = worldRuntime_.GetMissionNumber();
+        state.treasures = interaction_.TreasuresCollected();
+        state.eggs = interaction_.LifeEggCount();
+        state.lives = interaction_.Lives();
+        for (const auto& object : worldRuntime_.GetMobileObjects())
+        {
+            if (object.active && GetObjectDefinition(object.type).semanticKind == ObjectSemanticKind::Lift)
+            {
+                state.lifts.push_back({object.currentX + WorldRuntime::kWorldCenterX,
+                                       LiftRiderCenterY(object.currentY),
+                                       object.currentZ + WorldRuntime::kWorldCenterZ});
+            }
+        }
+        const GalaxyEggbert::Game::AutoplayKeys keys = autoplay_->Step(state);
+        std::unordered_set<Keys> down;
+        if (keys.up) down.insert(Keys::Up);
+        if (keys.down) down.insert(Keys::Down);
+        if (keys.left) down.insert(Keys::Left);
+        if (keys.right) down.insert(Keys::Right);
+        if (keys.jump) down.insert(Keys::LeftControl);
+        if (keys.action) down.insert(Keys::Space);
+        if (keys.crouch) down.insert(Keys::LeftShift);
+        if (keys.lookUp) down.insert(Keys::RightShift);
+        autoplayKeys_ = Microsoft::Xna::Framework::Input::KeyboardState(down);
+        const std::string lines = autoplay_->TakeLog();
+        std::fputs(lines.c_str(), autoplayTrace_);
+        std::fflush(autoplayTrace_);
+        if (autoplay_->Finished())
+        {
+            std::fclose(autoplayTrace_);
+            autoplayTrace_ = nullptr;
+            autoplayExitCode_ = autoplay_->Passed() ? 0 : 1;
+            std::cout << "GalaxyEggbertCNA: autoplay " << (autoplay_->Passed() ? "passed" : "FAILED") << " after "
+                      << state.tick << " ticks (autoplay_trace.txt)." << std::endl;
+            Exit();
+        }
+    }
+
     void GalaxyEggbertGame::LoadMission(int missionNumber)
     {
         titleSceneActive_ = false;
@@ -1785,7 +1873,17 @@ namespace GalaxyEggbert::CNA
         // Real `phaseTime` (see phaseTimeSeconds_'s own member comment) --
         // incremented unconditionally every Update() tick, regardless of
         // phase, matching the real source's own `phaseTime++` placement.
-        const float dt = static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
+        if (autoplay_ && !autoplay_->Finished())
+        {
+            StepAutoplay();
+            // Drawing is most of a tick's time and changes nothing in play: every fourth frame.
+            if (autoplayTick_ % 4 != 0)
+            {
+                SuppressDraw();
+            }
+        }
+        const float dt = autoplay_ ? 1.0f / 60.0f
+                                   : static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
         phaseTimeSeconds_ += dt;
 
         // Real fade-out phase-transition commit (plan.md MENU-088/089) --
@@ -1828,7 +1926,7 @@ namespace GalaxyEggbert::CNA
         {
             using Microsoft::Xna::Framework::Input::ButtonState;
             using Microsoft::Xna::Framework::Input::Keys;
-            const auto phaseKeys = ReadKeyboardState(goldenCaptureMode_ || goldenTraceMode_);
+            const auto phaseKeys = CurrentKeyboardState();
             const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
 
             bool mousePausePressed = false;
@@ -1839,7 +1937,7 @@ namespace GalaxyEggbert::CNA
             bool mouseBackPressed = false;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 inputPadClaimedMouse = inputPad_.UpdatePlay(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
                 mousePausePressed = padPlayInput.pausePressed;
@@ -1955,7 +2053,7 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 // Real conditional visibility: Back/Restart hidden on
                 // mission 1 (can't go "back" from/replay the very first
                 // level); Restart additionally hidden on decade-boundary
@@ -1982,7 +2080,7 @@ namespace GalaxyEggbert::CNA
                 // SetupReset" difference (see InputPad::UpdateSetup()'s
                 // own class comment) is the only distinction made here.
                 const bool isMainSetup = phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 const auto setupInput = inputPad_.UpdateSetup(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup);
                 if (setupInput.soundsToggled)
@@ -2042,7 +2140,7 @@ namespace GalaxyEggbert::CNA
                 // Real Init / gamer-select menu (2026-07-13, plan.md
                 // MENU-006..020) -- see InputPad::UpdateInit()/
                 // DrawInit()'s own class comment for full detail.
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 const auto initInput = inputPad_.UpdateInit(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 if (initInput.gamerSelected >= 0)
@@ -2104,7 +2202,7 @@ namespace GalaxyEggbert::CNA
                 // InputPad::UpdateResume()'s class comment for the
                 // adapted-trigger reasoning; this is just the two real
                 // buttons' behavior once already in the phase.
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 const auto resumeInput = inputPad_.UpdateResume(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 if (resumeInput.continuePressed)
@@ -2143,7 +2241,7 @@ namespace GalaxyEggbert::CNA
                 // see WorldEditor's own class comment. IsBrowsing()
                 // distinguishes the per-gamer-slot world browser (no World
                 // loaded yet) from actively editing one.
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 if (worldEditor_.IsBrowsing())
                 {
                     const auto request = worldEditor_.UpdateBrowsing(
@@ -2284,7 +2382,7 @@ namespace GalaxyEggbert::CNA
                 // engine's own Space-key pick -- edge-triggered already
                 // (see UpdateWinLost()), so no separate debounce needed
                 // for the mouse path.
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 const bool mouseReturnPressed = inputPad_.UpdateWinLost(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || mouseReturnPressed;
@@ -2393,7 +2491,7 @@ namespace GalaxyEggbert::CNA
             // interactive-object system in GalaxyEggbertCNA yet. LShift
             // crouches and RShift looks up.
             using Microsoft::Xna::Framework::Input::Keys;
-            const auto keys = ReadKeyboardState(goldenCaptureMode_ || goldenTraceMode_);
+            const auto keys = CurrentKeyboardState();
             float turnInput = 0.0f;
             float moveInput = 0.0f;
             if (keys.IsKeyDown(Keys::Left))  turnInput -= 1.0f;
@@ -3932,7 +4030,7 @@ namespace GalaxyEggbert::CNA
             // since both features read the same left-mouse-button state.
             {
                 using Microsoft::Xna::Framework::Input::ButtonState;
-                const auto mouse = ReadMouseState(goldenCaptureMode_ || goldenTraceMode_);
+                const auto mouse = ReadMouseState(SuppressLiveInput());
                 const int mouseX = mouse.getXProperty();
                 const int mouseY = mouse.getYProperty();
                 const bool lookHeld =

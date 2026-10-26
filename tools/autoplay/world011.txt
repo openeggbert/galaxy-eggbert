@@ -1,0 +1,96 @@
+# Mission 011 played through (plans/briefs/world011.md).
+wait 30
+expect mission = 11
+# A: walk to the pillar, jump onto it for treasure 1.
+go 65 56
+go 65 54 jump 1.2
+until treasures = 1 max 120
+# Down off the pillar, over the two mine pits (z 51, 47) and the water (z 43-42).
+go 64 53.2
+until ground = 1
+go 64 49.5 jump 2.4
+until ground = 1
+go 64 49.6
+go 64 45.5 jump 2.4
+until ground = 1
+go 64 45.6
+go 64 40.5 jump 3.4
+until ground = 1
+go 64 34
+# B: elevator 1 (x 58) up the wall, down into the trough, elevator 2 (x 53) jumped onto and off.
+go 59.2 34
+go 58.8 34 tol 0.1
+lift 58 10 34 max 400
+go 58 34 tol 0.15
+until y >= 12.95 max 300
+go 56.5 34
+go 54.5 34
+until ground = 1
+go 54.3 34 tol 0.1
+lift 53 10 34 max 400
+go 53 34 jump 1.3 tol 0.15
+until y >= 11.95 max 300
+go 51.5 34 jump 1.4
+until ground = 1
+# Down to the walkway, under the hanging mines, over the last mine pit (x 41).
+go 49 34
+go 42.6 34
+go 39.5 34 jump 2.9
+until ground = 1
+go 34 34
+# C: three chasms on the moving platforms (z 41-45, 49-53, 56-61, then a jump to z 63).
+go 34 40.3 tol 0.1
+lift 34 10 41 max 600
+go 34 41 tol 0.15
+lift 34 10 45 max 300
+go 34 47.5
+go 34 48.3 tol 0.1
+lift 34 10 49 max 600
+# Its ends hold it 3 ticks only: step on as it arrives, then walk to its front edge before
+# it stops, so his feet leave it in time.
+hold 17 up
+until z >= 52.0 max 300
+go 34 55.3 tol 0.1
+lift 34 10 56 max 600
+go 34 56 tol 0.15
+lift 34 10 61 max 400
+go 34 63.6 jump 2.4
+until ground = 1
+go 34 66
+# D: up onto the upper path (2 high) and along it over the tunnel of mines for the two eggs.
+go 42 65
+go 42 62.6 jump 1.8
+until ground = 1
+expect y >= 11.9
+go 46 62.6
+go 46 66
+go 48 66
+until eggs = 2 max 120
+# The paired lifts over the moat: A from the path up to the top, across onto B, B down.
+go 50.5 61.3 tol 0.1
+lift 50 12 60 max 600
+go 50.5 60 tol 0.15
+lift 50 14 58 max 400
+go 50.5 57 tol 0.15
+lift 50 12 55 max 400
+go 50.5 53.5
+# The tower's terrace round to treasure 2 behind it.
+go 56 53
+go 56 41
+go 50 41
+until treasures = 2 max 120
+# The elevator up its east face to the red arrow on the roof.
+go 56 41
+go 56 48.2
+go 55.7 49 tol 0.1
+lift 55 12 49 max 600
+go 55 49 tol 0.15
+lift 55 18 49 max 400
+go 53 49
+# The red arrow: the win cheer, then straight to the world's hub (D29).
+go 50 47 until exit = 1
+expect treasures = 2
+until mission = 10 max 900
+expect lives = 5
+expect phase = Play
+wait 120

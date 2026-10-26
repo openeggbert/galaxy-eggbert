@@ -30,6 +30,12 @@ int main(int argc, char** argv)
         {
             game->EnableStartMission(std::atoi(argv[++i]));
         }
+        // QA: play mission --mission N by a script (EnableAutoplay()'s own comment).
+        if (std::strcmp(argv[i], "--autoplay") == 0 && i + 1 < argc && !game->EnableAutoplay(argv[++i]))
+        {
+            delete game;
+            return 2;
+        }
         if (std::strcmp(argv[i], "--spawn") == 0 && i + 1 < argc)
         {
             float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
@@ -41,6 +47,7 @@ int main(int argc, char** argv)
         }
     }
     game->Run();
+    const int exitCode = game->AutoplayExitCode();
     delete game;
-    return 0;
+    return exitCode;
 }
