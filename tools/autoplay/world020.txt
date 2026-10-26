@@ -1,0 +1,26 @@
+# World 2 played as a chain from its hub (plans/briefs/world020.md): each mission's sign in hub
+# 020, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 025 ends in the main hub.
+wait 30
+expect mission = 20
+# Sign 1, open, ahead of the start (50, 1, 62).
+go 50 62 until mission = 21 max 600
+until mission = 21 max 600
+include world021.txt
+# Past bar 2: sign 2 (58, 3, 50).
+go 58 50 until mission = 22 max 900
+until mission = 22 max 600
+include world022.txt
+# Past bar 3: sign 3 (45, 5, 50).
+go 45 50 until mission = 23 max 900
+until mission = 23 max 600
+include world023.txt
+# Past bar 4: sign 4 (52, 7, 50).
+go 52 50 until mission = 24 max 900
+until mission = 24 max 600
+include world024.txt
+# Past bar 5: sign 5 (52, 9, 50).
+go 52 50 until mission = 25 max 900
+until mission = 25 max 600
+include world025.txt
+expect mission = 1

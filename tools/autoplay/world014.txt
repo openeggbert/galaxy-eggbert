@@ -43,6 +43,6 @@ expect y <= 1.05
 # The golden key completes world 1: the cheer, then the main hub.
 go 51 44 until exit = 1
 until mission = 1 max 900
-expect lives = 6
+expect lives >= 6
 expect phase = Play
 wait 120

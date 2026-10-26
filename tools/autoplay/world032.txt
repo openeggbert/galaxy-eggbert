@@ -112,6 +112,6 @@ until tick >= 8957
 go 46.4 68.6 tol 0.1
 go 50 69 until exit = 1
 until mission = 30 max 900
-expect lives = 7
+expect lives >= 7
 expect phase = Play
 wait 120

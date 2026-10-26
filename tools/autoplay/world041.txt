@@ -169,6 +169,6 @@ hold 90 crouch
 until exit = 1 max 200
 expect treasures = 7
 until mission = 40 max 900
-expect lives = 8
+expect lives >= 8
 expect phase = Play
 wait 120

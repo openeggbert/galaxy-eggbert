@@ -1,0 +1,23 @@
+# World 1 played as a chain from its hub (plans/briefs/world010.md): each mission's sign in hub
+# 010, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 014 ends in the main hub.
+wait 30
+expect mission = 10
+# Sign 1, open, in the gallery's face (55, 1, 45).
+go 55 47
+go 55 45 until mission = 11 max 600
+until mission = 11 max 600
+include world011.txt
+# Past bar 2: sign 2 on the upper floor (55, 3, 41).
+go 55 41 until mission = 12 max 900
+until mission = 12 max 600
+include world012.txt
+# Past bar 3: sign 3 on the lower floor (45, 1, 44).
+go 45 44 until mission = 13 max 900
+until mission = 13 max 600
+include world013.txt
+# Past bar 4: sign 4 on the upper floor (45, 3, 41).
+go 45 41 until mission = 14 max 900
+until mission = 14 max 600
+include world014.txt
+expect mission = 1

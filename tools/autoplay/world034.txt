@@ -203,6 +203,6 @@ expect y >= 29.95
 go 48 78 until exit = 1
 expect treasures = 5
 until mission = 1 max 900
-expect lives = 7
+expect lives >= 7
 expect phase = Play
 wait 120

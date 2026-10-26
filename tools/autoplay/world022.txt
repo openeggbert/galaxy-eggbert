@@ -178,6 +178,6 @@ face -90
 go 32 13 until exit = 1
 expect treasures = 8
 until mission = 20 max 900
-expect lives = 10
+expect lives >= 10
 expect phase = Play
 wait 120

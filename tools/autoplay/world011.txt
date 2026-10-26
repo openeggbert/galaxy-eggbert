@@ -91,6 +91,6 @@ go 53 49
 go 50 47 until exit = 1
 expect treasures = 2
 until mission = 10 max 900
-expect lives = 5
+expect lives >= 5
 expect phase = Play
 wait 120
