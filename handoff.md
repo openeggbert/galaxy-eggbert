@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-26 (worlds 5, 8, 10-12 and 199 complete, D47-D54)._
+_Last updated: 2026-10-27 (all worlds but 7 complete, D47-D54, water exits)._
 
 ## Resume here (exact state when last written)
 
@@ -55,7 +55,10 @@ hub 100 and missions 101-107 (`b8fb27e`, `f0a8333`, `ce2917b`, `c01c06a`, `a8636
 edge (D54, `fc230a3`: walking off at the cell's boundary he used to drop past the ledge). Blupi jumps off lifts (D52, `6ed7942`); crumbling bridges hold him as
 the original's table does (D53, `7bb9415`); a terrain over a buffer's limit is split (D47's rest,
 `7b96caf`); the editor's dead speed field is gone (`2a91ca6`). World 12 by this session, complete: hub 120 and missions 121-125 (`52b36e9`, `d8240bb`, `85b71cb`,
-`f4276da`, `dce9f47` and 125's). World 199, the grand tour, by this session (its red arrow shows the win screen live). Left: worlds 7 and 9 (their agents).
+`f4276da`, `dce9f47` and 125's). World 199, the grand tour, by this session (its red arrow shows the win screen live). World 9 is complete (its agent: hub 090, missions 091-095, `0813bec`..`1684214`). The weak jump
+out of the water clears only a bank level with the water's top cell (the guide said one above):
+`tools/watercheck.py` finds water without a way out; 045, 057 and 084 had such pools, fixed
+(`53f7de1`, `7450970`). Left: world 7 (its agent).
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 
