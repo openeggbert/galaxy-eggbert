@@ -6,6 +6,7 @@
 #include <GalaxyEggbert/Worlds/Block.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace GalaxyEggbert::Game
@@ -1349,22 +1350,20 @@ namespace GalaxyEggbert::Game
             // the sequence (icons 367-372 and the -1 "no tile" sentinel are
             // non-solid per real `table_decor_quart`/this engine's own
             // `BlockTypes::isMobileTransparent()`, already confirmed to
-            // agree). Real per-mobile-eggbert's exact frame-by-frame
-            // `table_bridge` array is not transcribed here (no pre-approved
-            // in-repo source for it, unlike blupi's own tables) -- this
-            // instead reproduces the DOCUMENTED aggregate shape from
-            // mobile-eggbert-reference/14-crates-lifts-bridges-effects.md:
-            // 28 ticks ascending through icons 365-372, 112 ticks holding
-            // the -1 sentinel, 17 ticks descending back through 372..365
-            // ending at the original 364 -- with this engine's own
-            // reasonable uniform pacing within each of those 3 documented
-            // windows, not a copied per-tick table.
+            // agree). The original's own table (Tables.cpp:1473, D53): the
+            // bridge shakes 365/366 and holds him for 16 ticks, crumbles
+            // through 367-372, is gone until tick 140 and comes back.
             if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52)
             {
-                constexpr float kAscendTicks = 28.0f;
-                constexpr float kHoldTicks = 112.0f;
-                constexpr float kDescendTicks = 17.0f;
-                constexpr float kTotalTicks = kAscendTicks + kHoldTicks + kDescendTicks; // 157
+                static constexpr std::array<std::int16_t, 157> kBridgeTable = [] {
+                    std::array<std::int16_t, 157> table{};
+                    for (int t = 0; t < 157; ++t) table[t] = -1;
+                    for (int t = 0; t < 16; ++t) table[t] = static_cast<std::int16_t>(t % 2 == 0 ? 365 : 366);
+                    for (int t = 16; t < 28; ++t) table[t] = static_cast<std::int16_t>(367 + (t - 16) / 2);
+                    for (int t = 140; t < 156; ++t) table[t] = static_cast<std::int16_t>(372 - (t - 140) / 2);
+                    table[156] = 364;
+                    return table;
+                }();
                 constexpr float kProgressSoundTick = 137.0f;
 
                 const float prevPhase = obj.phase - dt * 20.0f;
@@ -1373,22 +1372,8 @@ namespace GalaxyEggbert::Game
                     sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel73);
                 }
 
-                int icon;
-                if (obj.phase < kAscendTicks)
-                {
-                    const int step = static_cast<int>(obj.phase * 8.0f / kAscendTicks);
-                    icon = 365 + std::clamp(step, 0, 7);
-                }
-                else if (obj.phase < kAscendTicks + kHoldTicks)
-                {
-                    icon = -1; // real "no tile" sentinel -- fromMobileIconId() maps this to Air
-                }
-                else
-                {
-                    const float descendPhase = obj.phase - (kAscendTicks + kHoldTicks);
-                    const int step = static_cast<int>(descendPhase * 9.0f / kDescendTicks);
-                    icon = 372 - std::clamp(step, 0, 8); // 372 down to 364
-                }
+                const int tick = std::clamp(static_cast<int>(obj.phase), 0, 156);
+                const int icon = kBridgeTable[static_cast<std::size_t>(tick)];
 
                 const int gx = static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX;
                 const int gz = static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ;
@@ -1402,7 +1387,7 @@ namespace GalaxyEggbert::Game
                         Worlds::Block::make(GalaxyEggbert::BlockTypes::fromMobileIconId(icon)));
                 }
 
-                if (obj.phase >= kTotalTicks)
+                if (obj.phase >= 157.0f)
                 {
                     obj.active = false;
                 }

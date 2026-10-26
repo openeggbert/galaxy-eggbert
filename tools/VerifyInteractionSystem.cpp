@@ -4391,13 +4391,32 @@ int main(int argc, char** argv)
         bridgeInteraction.Update(dt, bridgeWorld, bridgeX, bridgeY, bridgeZ, 0.0f, sound);
         check(countBridgeObjsHere() == 1, "standing on the Bridge tile spawns exactly one ObjectType52");
 
+        // D53: the original's table_bridge holds him 16 ticks (365/366 shaking) before it
+        // crumbles: at tick 12 the cell is still solid, by tick 20 it is not.
+        for (int i = 0; i < 12; ++i)
+        {
+            bridgeWorld.Update(dt);
+            bridgeInteraction.Update(dt, bridgeWorld, bridgeX, bridgeY, bridgeZ, 0.0f, sound);
+        }
+        const bool holdsAtTick12 = !bridgeWorld.GetWorld().getBlock(88, 0, 97).isAir() &&
+                                   !GalaxyEggbert::BlockTypes::isMobileTransparent(
+                                       bridgeWorld.GetWorld().getBlock(88, 0, 97).type());
+        for (int i = 0; i < 8; ++i)
+        {
+            bridgeWorld.Update(dt);
+            bridgeInteraction.Update(dt, bridgeWorld, bridgeX, bridgeY, bridgeZ, 0.0f, sound);
+        }
+        const auto atTick20 = bridgeWorld.GetWorld().getBlock(88, 0, 97).type();
+        check(holdsAtTick12 && (atTick20 == 0 || GalaxyEggbert::BlockTypes::isMobileTransparent(atTick20)),
+              "a crumbling bridge holds Blupi 16 ticks before it gives way (table_bridge, D53)");
+
         // Advance to well within the documented 112-tick hollow window
         // (ticks 28-139) -- the cell must have genuinely lost its ground
         // collision (Air), not just changed its render icon. obj.phase only
         // advances via WorldRuntime::Update() itself (the real game loop
         // calls this every frame before InteractionSystem::Update(), same
         // convention as the dynamite-fuse test above), not a no-op skip.
-        for (int i = 0; i < 80; ++i)
+        for (int i = 0; i < 60; ++i)
         {
             bridgeWorld.Update(dt);
             bridgeInteraction.Update(dt, bridgeWorld, bridgeX, bridgeY, bridgeZ, 0.0f, sound);
