@@ -1,0 +1,71 @@
+# Mission 013 played through (plans/briefs/world013.md).
+wait 30
+expect mission = 13
+expect lives = 3
+# A. The hangar: take a helicopter (Space), climb to the window (RightShift; held T s and let
+# go, it rises 3.125 T cells) and fly through it onto the pool hall's ledge (walk 6).
+go 44 60.8
+hold 2 action
+wait 20
+hold 100 lookup
+wait 60
+face 0
+go 46 52.5
+wait 40
+hold 120 crouch
+until ground = 1 max 200
+expect y >= 5.95
+# It dislikes water: leave it on the ledge.
+hold 2 action
+wait 30
+# B. Off the ledge into the pool, dive (LeftShift) under the curtain (z 39, water y 1-2) into
+# pool C, surface and jump out onto the shaft's floor (walk 5).
+go 46 48
+hold 100 crouch
+go 46 35
+hold 60 lookup
+go 46 31.2
+go 46 29 jump 2
+until ground = 1
+expect y >= 4.95
+# C. The second helicopter, up the shaft for the three treasures (y 10, 14, 18).
+go 44 26.9
+hold 2 action
+wait 20
+hold 96 lookup
+wait 70
+go 42 24
+until treasures = 1 max 200
+hold 77 lookup
+wait 70
+go 54 21
+until treasures = 2 max 200
+hold 77 lookup
+wait 70
+go 48 28
+until treasures = 3 max 200
+# Up onto the cliff of D (walk 21), land and leave the helicopter there.
+hold 67 lookup
+wait 70
+go 48 15
+wait 40
+hold 120 crouch
+until ground = 1 max 200
+expect y >= 20.95
+hold 2 action
+wait 30
+# D. West through the door into the skate room for a skateboard, then east along the tunnel:
+# over the mines at x 64-65 and 80-81 (the skateboard runs them over), jumping the water
+# trenches at x 70-71 and 86-87, to the red arrow.
+go 34.9 14 tol 0.1
+hold 2 action
+wait 30
+go 57 14
+go 75 14 jump 6.2
+go 91 14 jump 5.8
+go 95 14 until exit = 1
+expect treasures = 3
+until mission = 10 max 900
+expect lives = 3
+expect phase = Play
+wait 120
