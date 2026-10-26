@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-26 (night: world 6 to mission 063, D42)._
+_Last updated: 2026-10-26 (night: world 6 to mission 064, D42-D45)._
 
 ## Resume here (exact state when last written)
 
@@ -30,8 +30,10 @@ Blupi's reactions JumpAie/Ouf* with clips, the camera over obstacles and after t
 session) and world 2 (020-025); worlds 4 and 5 are being authored by two background sessions.
 World agents' reports name the engine problems they met; each was fixed with a test (D32-D37).
 Later still: the wind pushes Blupi (D39), 347 is plain slime (D40); world 6 by this session:
-hub 060, missions 061-063 (`b083d7b`, `5162e0e`, `955008a`); a switched-off saw (379) now
-stands still and is harmless (D42, `0cf3ce2`). Open: D41 (empty-mask decor is a floor to the
+hub 060, missions 061-064 (`b083d7b`, `5162e0e`, `955008a`, `237c771`); a switched-off saw
+(379) now stands still and is harmless (D42, `0cf3ce2`); lifts keep their ticks and dwell (D43,
+`3b0a861`: timed lifts authored before it need a live re-check); follow stars ignore a hidden
+Blupi (D44, `d115903`); a jump from under a bar catches it (D45, `7c49172`). Open: D41 (empty-mask decor is a floor to the
 vertical test; worlds keep girders, poles, grates out of walking cells). `--spawn` yaw: 0 faces
 -Z, 90 +X; the chase camera orbits to his side after 3 s idle, so F3 (direct view) shows the
 facing in scripted shots.
