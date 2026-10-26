@@ -1,0 +1,145 @@
+# Mission 021 played through (plans/briefs/world021.md).
+wait 30
+expect mission = 21
+expect lives = 3
+# Tower 1: treasure 1 in the middle arch of its foot.
+go 34 73
+go 34 71 max 200 until treasures = 1
+until treasures = 1 max 120
+# Up its tiers (walk 3, 5, 7) on the east side, clear of the balcony's saws (34 68, 36 66).
+go 34 72.6
+go 36 72.6
+face 0
+go 36 70.6 jump 1.5
+until ground = 1
+expect y >= 2.95
+go 36 68.8 jump 1.5
+until ground = 1
+expect y >= 4.95
+go 35.2 68.8
+face 0
+go 35.2 66.8 jump 1.5
+until ground = 1
+expect y >= 6.95
+go 34 66 until treasures = 2
+until treasures = 2 max 120
+# Down off the tiers' south-east corners.
+go 35.2 67.2
+go 37 69
+go 40 72
+until ground = 1
+go 41 60
+# Tower 3 (z 40-50): up two tiers, treasure 4 between four saws: jump onto it diagonally.
+go 36 52
+face 0
+go 36 49.6 jump 1.5
+until ground = 1
+go 36 47.8 jump 1.5
+until ground = 1
+expect y >= 4.95
+go 35 46 tol 0.08
+face -45
+go 34 45 jump 2 tol 0.08
+until ground = 1
+until treasures = 3 max 120
+face 135
+go 35 46 jump 2 tol 0.08
+until ground = 1
+expect y >= 4.95
+# The lift (38, feet 5 -> 9) from the top's east edge up to the slim column: treasure 5 on
+# its south cell, a saw on its north one (z 46).
+go 37 46
+go 37 45 tol 0.1
+face 90
+lift 38 5 45 max 400
+go 38 45 tol 0.15
+until y >= 8.95 max 300
+go 39 45 tol 0.15
+until treasures = 4 max 120
+go 41 45
+until ground = 1
+expect y <= 1.05
+# Tower 2 (x 57-67, z 55-65): its first tier's egg, then the kiosk on the second tier behind
+# the bar marked 2 (open since treasure 2), the saws before its door (x 60) passed along x 61.
+go 61 53.4
+face 180
+go 61 55.6 jump 1.5
+until ground = 1
+expect y >= 2.95
+go 66 56 until eggs = 1
+until eggs = 1 max 120
+go 61.1 55.8
+face 180
+go 61.1 57.8 jump 1.6
+until ground = 1
+expect y >= 4.95
+go 61.1 60 tol 0.08
+face 90
+go 63 60 until treasures = 5
+until treasures = 5 max 120
+# Out of the kiosk, down off the tower's north side.
+go 61.1 60 tol 0.1
+go 61.1 57.4
+go 61.1 53
+until ground = 1
+expect y <= 1.05
+# The gatehouse (x 46-54, z 36-40): in from the west through the bar marked 5, its egg, then
+# north through the facade into the court.
+go 44 42
+go 44.5 38 tol 0.1
+face 90
+go 50 38 until eggs = 2
+until eggs = 2 max 120
+go 50 31
+# The court's fountain: an egg on the plinth beside it.
+go 57.6 24
+face -90
+go 56 24 jump 1.5 until eggs = 3
+until eggs = 3 max 120
+# The staircase up the court's east side (two-block steps, walk 3, 5, 7, 9; saws at 71 26 and
+# 73 21), the east wall's top (walk 10) and the north-east tower (walk 12): treasure 6.
+go 73 32.6
+face 0
+go 73 30.6 jump 1.5
+until ground = 1
+expect y >= 2.95
+go 73 28.3
+go 73 26.6 jump 1.5
+until ground = 1
+expect y >= 4.95
+go 72 24.4
+face 0
+go 72 22.6 jump 1.5
+until ground = 1
+expect y >= 6.95
+go 72 20.4
+go 72 19 jump 1.5 tol 0.1
+until ground = 1
+expect y >= 8.95
+go 74 19 tol 0.1
+face 90
+go 75.3 19 jump 1.4
+until ground = 1
+expect y >= 9.95
+face 0
+go 75.5 17.4 jump 1.6
+until ground = 1
+expect y >= 11.95
+go 72 14 until treasures = 6
+until treasures = 6 max 120
+# Off the tower's west side down into the court, west to the arrow's room through the bar
+# marked 6 (36 1 23), and onto the red arrow's plinth.
+go 71 17
+go 66 17
+until ground = 1
+expect y <= 1.05
+go 38 23
+go 37.6 23 tol 0.1
+face -90
+go 31.6 23
+go 30 23 jump 1.4 until exit = 1
+expect treasures = 6
+until mission = 20 max 900
+expect lives = 6
+expect phase = Play
+wait 120
