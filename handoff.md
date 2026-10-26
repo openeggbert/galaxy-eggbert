@@ -75,6 +75,15 @@ Mission 011 is played through in one run (`81b51f0`): `GalaxyEggbertCNA --missio
 with a fresh save, printing the trace; exit 0 = passed. Write a mission's script a section at a
 time, rerunning; `trace N` logs every tick. A lift holds Blupi while his feet strip touches it,
 as the original's (`MoveObjectStepLine`): on a lift with a 3-tick dwell ride at its front edge.
+Later on 2026-10-27: playthroughs of worlds 1, 2 and 12 (12 also as a chain from hub 120 through
+all five missions to the main hub: `tools/autoplay/world120.txt`, a hub's script is its world's
+chain) and the first of worlds 3-5 (background agents: worlds 3-4, 5-6). `tools/autoplay_all.sh
+build-cna-opengl3` replays them all (run it after any gameplay change). Autoplay commands added on
+the way: crate, clear/near (time patrols), `with KEY` (swim, dive), `tol 0 ... until`, include, the
+fields exit and blitz; the run draws one frame in 30. Found and fixed: D55 (penetration recovery
+tested his feet and sank him through floors, `1b8c144`), and world defects in 013, 025, 121, 122,
+123 (crates cannot stack on a flat floor: one crate's climb), 124 (wind at the feet's cell).
+`levelcheck.py` swims and reports traps (candidates still open in 052, 054, 062).
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 

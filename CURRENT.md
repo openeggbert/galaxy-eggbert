@@ -23,9 +23,10 @@ content-authoring UX, but not new gameplay mechanics.
   **bonus world 199**: briefs in `plans/briefs/`, scripts in `tools/worlds/`, every lesson checked
   with `levelcheck.py`/`flightcheck.py` stages and live at its key moments. The campaign's structure:
   `tools/campaigncheck.py`; water Blupi cannot leave: `tools/watercheck.py`; inventories
-  `plans/inventory/worlds.md` and `plans/inventory/assets.md`. Mission 011 is played through
-  from the spawn to its hub in one run by the QA autoplay (`tools/autoplay.sh`,
-  `tools/autoplay/world011.txt`); the other missions have no playthrough yet.
+  `plans/inventory/worlds.md` and `plans/inventory/assets.md`. Playthroughs by the QA autoplay
+  (`tools/autoplay.sh`, scripts in `tools/autoplay/`, all replayed by `tools/autoplay_all.sh`):
+  worlds 1, 2 and 12 from spawn to hub (world 12 also as one chain through its hub), and missions
+  of worlds 3-5 as their scripts land; the rest have none yet.
 - Hubs work as the original's (`HubDoors.hpp`): mission bars slide up once the previous mission is
   won, gold bars in the main hub per completed world, the golden key ends a world. Crates are solid,
   pushed along X or Z and pulled (crouch + Down); the dynamite blast and mine contacts are 3D.
