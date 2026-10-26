@@ -1,4 +1,7 @@
-# Mission 066 played through (plans/briefs/world066.md).
+# Mission 066 played through (plans/briefs/world066.md), all three eggs: east through the lower
+# wind tunnel, back west through the upper one to the middle and upper storeys, and from their
+# teleporter 1 to the east cave. The storeys are the other way to the east cave, not an addition
+# to the stair from the lava cells (x 80-81, z 65 -> 63), which this route leaves out.
 wait 30
 expect mission = 66
 # The start corridor (walk 20, one wide, three high: a jump carries him under two blocks): over
@@ -41,8 +44,7 @@ go 67.2 61.8 jump 3.2 tol 0.3
 go 68.3 62 until eggs = 2
 until eggs = 2 max 120
 # East out of the wind: the two saws in the floor (x 71, 73) jumped, one jump each, landing
-# between them; up the stair (x 77-78, z 63-64) to the corridor of lava cells (z 65, walk 26), east
-# up the second stair (x 80-81, z 65 -> 63) onto the east cave's west ledge (walk 32).
+# between them; up the stair (x 77-78, z 63-64) to the corridor of lava cells (z 65, walk 26).
 go 72.2 62 jump 1.85 tol 0.08
 until ground = 1
 go 75 62 jump 3 tol 0.2
@@ -58,17 +60,136 @@ expect y >= 23.95
 go 77.5 65 jump 1.5 tol 0.2
 until ground = 1
 expect y >= 25.95
-go 78.8 65 tol 0.1
-face 90
-go 80.3 65 jump 1.5 tol 0.2
+# West along the corridor of lava cells: each of its three (x 74, 72, 70) jumped under its knob,
+# to the side way (x 67, z 63-64) north to the upper wind tunnel, out of the wind at its edge.
+face 270
+go 75.5 65 tol 0.05
+go 73 65 jump 1.9 tol 0.1
+until ground = 1
+expect y >= 25.95
+go 71 65 jump 2 tol 0.1
+until ground = 1
+expect y >= 25.95
+go 69 65 jump 2 tol 0.1
+until ground = 1
+expect y >= 25.95
+go 67 65 tol 0.05
+face 0
+go 67 62.6 tol 0.05
+# The upper wind tunnel (z 62, walk 26, two high, blowing west; its fan at x 69): in as the
+# bulldozer comes to rest at its west end (x 56), so that it sets off east toward him and is jumped
+# as it comes; with the wind he runs at twice his pace along the north wall (z 61.55, half a cell
+# off the mines' line), one jump over each of the mines at x 63 and 60, the bulldozer and the mine
+# at x 52, to the tunnel's west end (x 50).
+clear 56 26 62 0.02 lane x max 1000
+near 56 26 62 0.02 lane x max 1000
+wait 35
+hold 25 up
+face 270
+go 61.5 61.55 jump 2.6 tol 0.1
+until ground = 1
+go 58.5 61.55 jump 2.6 tol 0.1
+until ground = 1
+go 55.6 61.55 jump 2.8 tol 0.1
+until ground = 1
+go 50.6 61.55 jump 2.6 tol 0.1
+until ground = 1
+wait 30
+expect x <= 50.5
+# North out of the tunnel (x 50) into the middle storey's room B1 (walk 26), along its south side
+# (z 56), never on the blupit's lane (z 52, where its shots fly between x 40 and 49), to the mouth
+# of the bulldozer's corridor (z 53, one wide, three high).
+go 50 56 tol 0.1
+go 41 56 tol 0.2
+go 40.2 53 tol 0.1
+go 39 52.55 tol 0.05
+# The bulldozer's corridor (x 30-39): the bulldozer jumped as it comes east toward him (it set off
+# from its west end, x 33, and is past x 36.2), along the north wall (z 52.55); on west to the gap.
+near 33 26 53 0.02 lane x max 1000
+clear 33 26 53 0.02 lane x max 200
+near 36.2 26 53 0.03 lane x max 300
+go 30.4 52.55 jump 7.5 tol 0.05
+expect x <= 30.5
+# The gap (x 26-29) on the lift: at the corridor's edge (x 29.6) for the lift's stop at its east end
+# (its far end first); onto it, walked to its west part while it carries him (so that he can step
+# off in its short stop), off at its west end onto the trench room's floor (x 25).
+go 29.6 52.55 tol 0.03
+lift 26 26 53 max 300
+lift 29 26 53 max 300
+hold 32 up
+lift 26 26 53 max 300
+go 24 52.55 tol 0.1
+expect x <= 24.2
+expect y >= 25.95
+# The trench of five mines (x 15-19, walk 25) and the crate at its end (x 20): a jump up from its
+# east edge (x 21.3) catches the bars over it (y 27, x 14-21); hanging, west along them over the
+# mines, off their end (x 13.5) onto the floor by the stair.
+go 21.3 53 tol 0.05
+hold 6 jump
+wait 40
+expect y >= 26.95
+go 12.8 53 tol 0.1
+until ground = 1
+expect y >= 25.95
+# The stair north (x 10-11, z 52-50, two up each) to the upper corridor (z 46, walk 32).
+go 10.5 53.2 tol 0.1
+face 0
+go 10.5 52 jump 1.5 tol 0.2
 until ground = 1
 expect y >= 27.95
-face 0
-go 80.5 64 jump 1.5 tol 0.2
+go 10.5 51 jump 1.5 tol 0.2
 until ground = 1
 expect y >= 29.95
-go 80.5 63 jump 1.5 tol 0.2
+go 10.5 50 jump 1.5 tol 0.2
 until ground = 1
+expect y >= 31.95
+go 11.3 46 tol 0.05
+# The upper corridor east (one wide, three high: a jump carries him under two blocks), along its
+# north wall (z 45.55): over the cell under teleporter 1 (x 12), the trap (x 16) and the still mine
+# (x 21); the moving mine (x 26-30) jumped as it comes back west toward him (it was at its west end
+# 69 ticks before he sets off from x 23.5); the traps (x 32, 34), landing between them; the egg at
+# the corridor's east end (x 46) under the drips.
+face 90
+go 13.3 45.55 jump 2.2 tol 0.1
+until ground = 1
+expect x >= 12.6
+go 15.3 45.55 tol 0.05
+go 17.2 45.55 jump 1.9 tol 0.1
+until ground = 1
+go 20.1 45.55 tol 0.05
+go 21.9 45.55 jump 1.8 tol 0.1
+until ground = 1
+go 23.5 45.55 tol 0.05
+near 26 32 46 0.05 lane x max 600
+wait 69
+go 31.2 45.55 jump 4 tol 0.05
+go 33 45.55 jump 1.8 tol 0.1
+until ground = 1
+go 35 45.55 jump 1.8 tol 0.1
+until ground = 1
+go 45.6 46 tol 0.1
+until eggs = 3 max 200
+# Back west: the traps (x 34, 32); the moving mine jumped as it comes east toward him (106 ticks
+# after it turned at its east end, x 30), the still mine and the trap (x 16); under teleporter 1
+# (x 12), which takes him to teleporter 2 on the east cave's west ledge (walk 32), one cell south
+# of it (81, 58).
+face 270
+go 34.7 45.55 tol 0.05
+go 33 45.55 jump 1.8 tol 0.1
+until ground = 1
+go 31 45.55 jump 1.8 tol 0.1
+until ground = 1
+expect x >= 30.6
+near 30 32 46 0.05 lane x max 600
+wait 106
+go 25 45.55 jump 3.8 tol 0.05
+go 20.1 45.55 jump 1.8 tol 0.1
+until ground = 1
+go 16.7 45.55 tol 0.05
+go 15 45.55 jump 1.8 tol 0.1
+until ground = 1
+go 12 46 tol 0.05 until x >= 80 max 900
+expect z >= 57.9
 expect y >= 31.95
 go 82.5 61 tol 0.1
 face 90
