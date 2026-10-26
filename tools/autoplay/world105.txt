@@ -1,0 +1,75 @@
+# Mission 105 played through (plans/briefs/world105.md): a helicopter from the start ledge over
+# the bottomless cavern to its six islands' treasures, the east passage and chamber on foot for
+# the seventh, then the exit in the middle island's hut.
+wait 30
+expect mission = 105
+# A helicopter on the start ledge (15, 47); up to cruise at 30.5, between the birds' heights
+# (26, 28 below, 34 above) and well under the roof's mines (40).
+go 14.2 47 tol 0.1
+hold 2 action
+wait 20
+go 14.5 47 tol 0 with lookup until y >= 29 max 600
+# Each island's treasure: over it at cruise height, then straight down onto it, then back up.
+go 24 30 tol 0.3 max 900
+go 24 30 tol 0 with crouch until treasures = 1 max 600
+until treasures = 1 max 200
+go 24 30 tol 0 with lookup until y >= 29 max 600
+go 40 26 tol 0.3 max 900
+go 40 26 tol 0 with crouch until treasures = 2 max 600
+until treasures = 2 max 200
+go 40 26 tol 0 with lookup until y >= 29 max 600
+go 56 34 tol 0.3 max 900
+go 56 34 tol 0 with crouch until treasures = 3 max 600
+until treasures = 3 max 200
+go 56 34 tol 0 with lookup until y >= 29 max 600
+go 63 56 tol 0.3 max 900
+go 63 56 tol 0 with crouch until treasures = 4 max 600
+until treasures = 4 max 200
+go 63 56 tol 0 with lookup until y >= 29 max 600
+go 28 72 tol 0.3 max 900
+go 28 72 tol 0 with crouch until treasures = 5 max 600
+until treasures = 5 max 200
+# The highest island (walk 32): up to 33.5 and down onto its treasure (46, 64).
+go 28 72 tol 0 with lookup until y >= 32 max 600
+go 46 64 tol 0.3 max 900
+go 46 64 tol 0 with crouch until treasures = 6 max 600
+until treasures = 6 max 200
+# Over to the ledge on the east wall (walk 20) and down onto it, out of the helicopter.
+go 46 64 tol 0 with lookup until y >= 32.5 max 300
+go 66 48 tol 0.3 max 900
+go 66 48 tol 0 with crouch until ground = 1 max 600
+hold 2 action
+wait 20
+# The east passage (x 70-76, z 46-50): crouching under the mines that hang at his head, each
+# curtain of lightning (x 72, 75) crossed just after a strike.
+go 69.3 48 tol 0.1
+go 71.3 48 tol 0.1 with crouch max 300
+until blitz = 52 max 400
+go 76.6 48 tol 0.2 with crouch max 600
+# The chamber (walk 20): the wasp's lane (x 84, z 42-54) crossed as it reaches its south end,
+# treasure 7 (86, 48); back over the lane the same way (the bulldozer keeps to z 44).
+go 82.6 48 tol 0.15
+near 84 21 54 0.3 lane z max 900
+go 86 48 until treasures = 7 max 300
+until treasures = 7 max 200
+go 85.4 48 tol 0.15
+near 84 21 54 0.3 lane z max 900
+go 77.4 48
+# Back through the passage just after a strike, to the helicopter on the ledge.
+go 76.7 48 tol 0.1 with crouch max 300
+until blitz = 52 max 400
+go 71.4 48 tol 0.2 with crouch max 600
+go 67 48
+go 66.8 48 tol 0.1
+hold 2 action
+wait 20
+# Over to the middle island (walk 18), down beside its hut's west door, out, in to the exit.
+go 66 48 tol 0 with lookup until y >= 29 max 600
+go 33 49.5 tol 0.3 max 900
+go 32.6 49.5 tol 0 with crouch until ground = 1 max 600
+hold 2 action
+wait 20
+go 36 50 until exit = 1 max 600
+until mission = 100 max 900
+expect phase = Play
+wait 60
