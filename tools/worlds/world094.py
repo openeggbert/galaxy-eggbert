@@ -182,6 +182,10 @@ def main(argv) -> int:
     w.place(O.TREASURE, 35, DEEP + 6, 12)
     w.place(O.EGG, 32, DEEP, 38)
     # T2, the middle room: two rows of three mines across the way (jump each), the treasure beyond.
+    #    The way is a corridor three wide between two banks (x 51, 55), so the rows bar it (in the
+    #    open room they could be walked round); open to the north.
+    for x in (51, 55):
+        mass(x, DEEP, 26, x, 21, 40)
     for z in (28, 33):
         for x in (52, 53, 54):
             mine(w, x, DEEP, z)

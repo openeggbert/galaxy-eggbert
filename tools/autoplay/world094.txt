@@ -136,14 +136,34 @@ until ground = 1
 expect y >= 17.9
 go 67 32 until treasures = 1 max 300
 until treasures = 1 max 200
-# Down off the pillar's west side; T2 (53, 38) round its rows of mines (z 28, 33); west through
-# the passage (z 31-40) to the west room: its egg (32, 38) and T1 up its steps (walk 12, 14, 16)
-# at (35, 12).
+# Down off the pillar's west side; T2 (53, 38) at the end of its corridor (x 52-54, between
+# banks, open to the north), over its two rows of mines (z 28, 33) with a jump each way, each
+# taken a cell before the row; round the corridor's west bank (x 47-50) and west through the
+# passage (z 31-40) to the west room: its egg (32, 38) and T1 up its steps (walk 12, 14, 16) at
+# (35, 12).
 go 65 32.5
 until ground = 1
-go 57 37
+go 58 24
+go 53 24
+go 53 26.8 tol 0.1
+face 180
+go 53 30.4 jump 3.6 tol 0.3
+until ground = 1
+go 53 31.8 tol 0.1
+go 53 35.4 jump 3.6 tol 0.3
+until ground = 1
 go 53 38 until treasures = 2 max 300
 until treasures = 2 max 200
+go 53 34.2 tol 0.1
+face 0
+go 53 30.6 jump 3.6 tol 0.3
+until ground = 1
+go 53 29.2 tol 0.1
+go 53 25.6 jump 3.6 tol 0.3
+until ground = 1
+go 53 24
+go 48.5 24
+go 48.5 36
 go 44 36
 go 32 38 until eggs = 4 max 600
 until eggs = 4 max 200
@@ -166,8 +186,9 @@ until treasures = 3 max 200
 go 37.6 15.5
 go 43.4 18
 go 44 36
-go 58 37.5
-go 58 30
+go 48.5 36
+go 48.5 24
+go 58 24
 go 72 14
 go 87 10 until eggs = 5 max 900
 until eggs = 5 max 200
