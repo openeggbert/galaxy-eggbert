@@ -32,7 +32,8 @@
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
 // COND is FIELD OP VALUE, FIELD one of x y z yaw tick mission treasures eggs lives ground dead
-// exit (1 once the mission's exit is reached) phase, OP one of = != < <= > >=; phase takes a name
+// exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
+// it strikes on the even ticks of 0-49) phase, OP one of = != < <= > >=; phase takes a name
 // (Play, Win, Lost, Pause, Init, ...). A
 // command that runs out of ticks, or Blupi dying, ends the run as a failure.
 
@@ -54,6 +55,7 @@ namespace GalaxyEggbert::Game
         bool onGround = false;
         bool dead = false;
         bool exitReached = false;
+        int blitz = 0;
         Def::GamePhase phase = Def::GamePhase::None;
         int mission = 0;
         int treasures = 0;
@@ -91,7 +93,7 @@ namespace GalaxyEggbert::Game
 
     private:
         enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, End };
-        enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Ground, Dead, Exit, Phase };
+        enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Ground, Dead, Exit, Blitz, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {

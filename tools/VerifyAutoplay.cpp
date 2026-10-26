@@ -89,6 +89,7 @@ int main()
         check(!autoplay.Parse("hold 5 up sideways\n", error), "an unknown key fails to parse");
         check(!autoplay.Parse("until phase = Flying\n", error), "an unknown phase fails to parse");
         check(!autoplay.Parse("go 3\n", error), "go without its Z fails to parse");
+        check(autoplay.Parse("until blitz = 52\n", error), "the lightning's cycle is a field (blitz)");
         check(autoplay.Parse("# a comment\n\nwait 3 # trailing\ngo 1 2 jump 0.5 tol 0.1 max 99\n"
                              "until phase = Win max 30\nexpect treasures >= 2\nlog hello\nend\n",
                              error),
