@@ -142,10 +142,11 @@ def south(w: World, rng: random.Random):
             mine(w, x, WALK, z)
     w.place(O.EGG, 46, TERRACE + 1, 66)
     w.place(O.EGG, 48, TERRACE + 1, 66)
-    # Lifts A (from the path) and B (from the terrace) rise together and meet at the top.
+    # Lifts A (from the path) and B (from the terrace) rise together and meet at the top, where
+    # they wait 30 ticks, long enough to step across in 3D (D43; the original's 10 are not).
     for x in (50, 51):
-        lift(w, (x, TERRACE, 60), (x, TERRACE + 2, 58), ticks=30, stop=10)
-        lift(w, (x, TERRACE, 55), (x, TERRACE + 2, 57), ticks=30, stop=10)
+        lift(w, (x, TERRACE, 60), (x, TERRACE + 2, 58), ticks=30, stop=30)
+        lift(w, (x, TERRACE, 55), (x, TERRACE + 2, 57), ticks=30, stop=30)
     w.hint_zone(17, 38, WALK - 1, 64, 44, WALK + 1, 68)
     w.hint_zone(18, 44, TERRACE, 61, 50, TERRACE + 3, 68)
     w.hint_zone(19, 47, TERRACE, 55, 53, TERRACE + 5, 63)

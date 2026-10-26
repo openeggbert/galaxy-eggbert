@@ -20,7 +20,8 @@ are plain slime (only 373 is the spike trap): a fall costs the climb back, not a
   24 ticks, 3 dwell, all in step) at walk 17, 19 and 21, each one column further west, then the
   ledge at walk 23 with treasure 1. Each step up is a two-block jump onto the neighbouring column.
 - Out of the ledge's north end behind door "1" (421): the chasm P (x 24–76, z 21–40). From the
-  landing G (walk 23) two shuttles meet in the middle (18 ticks, opposite phases) to island I1
+  landing G (walk 23) two shuttles meet in the middle (18 ticks, opposite phases; they wait 30 ticks
+  there, not the original's 3, to step across in 3D: D43, stepped across live) to island I1
   (treasure 2); a lift moving across X and Z at once to island I2 (treasure 3, a mine in its far
   corner); a lift rising as it goes to the east ledge E (walk 25). The chasm's floor is twelve
   blocks down; a stair of two-block steps beside G leads back up.

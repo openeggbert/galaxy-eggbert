@@ -115,8 +115,10 @@ def main(argv) -> int:
         w.fill(64, 23, 27, 65, 23, 27, MACHINE_FLOOR)
         w.fill(66, 24, 27, 67, 24, 27, MACHINE_FLOOR)
     else:
-        lift(w, (30, 22, 32), (35, 22, 32), ticks=18, stop=3)
-        lift(w, (41, 22, 32), (36, 22, 32), ticks=18, stop=3)
+        # The two meet side by side: the original's 3-tick dwell is too short to step across in
+        # 3D, so they wait 30 ticks there (D43).
+        lift(w, (30, 22, 32), (35, 22, 32), ticks=18, stop=30)
+        lift(w, (41, 22, 32), (36, 22, 32), ticks=18, stop=30)
         lift(w, (46, 22, 31), (55, 22, 26), ticks=36, stop=3)
         lift(w, (60, 22, 27), (67, 24, 27), ticks=24, stop=3)
     w.place(O.TREASURE, 43, 23, 31)

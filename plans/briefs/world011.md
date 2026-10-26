@@ -26,7 +26,7 @@ original's mine pits were. Raw cells, Y up.
 | North walkway, heading −X | z 32–36, x 38–60 | Elevator 1 at x 58 up a 3-high wall (6); trough, elevator 2 at x 53 jumped onto and off onto wall 2 (7); gantry x 44–48 with nine hanging mines 2 above the lane (9); mine pit x 41 |
 | West walkway, heading +Z | x 32–36, z 38–62 | Three chasms crossed on 3-wide platforms: 40 ticks (12, 13), 24 ticks / 3 stop "faster" (14), 60 ticks stopping one cell short — jump (15, 16) |
 | South walkway, heading +X | z 64–68, x 38–52 | Fork (17): the lower lane runs into a 1-high tunnel of six mines; the upper path (2 up) runs over it with the two eggs (18) |
-| Paired lifts | x 50–51 over the moat z 55–60 | Lift A rises from the path, lift B from the terrace; both meet at the top: step across (19) |
+| Paired lifts | x 50–51 over the moat z 55–60 | Lift A rises from the path, lift B from the terrace; both meet at the top and wait 30 ticks there (D43): step across (19) |
 | Tower | terrace x 43–57, z 40–54 (walk 12); tower x 46–54, z 43–51, roof walk 18 | Treasure 2 behind the tower at (50, 12, 41) (20); elevator up the east face; the red arrow on the roof (21) |
 
 Timings are the original's (`stepAdvance`/`timeStop` ticks). Records 5, 8, 10 and 11 have no text
