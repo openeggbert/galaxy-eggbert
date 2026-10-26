@@ -3,6 +3,7 @@
 #include <GalaxyEggbert/Game/InteractionSystem.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
+#include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
 #include <GalaxyEggbert/Game/Sound.hpp>
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
@@ -96,13 +97,14 @@ int main(int argc, char** argv)
     const float liftStartY = patrollingLift ? patrollingLift->currentY : -1.0f;
     check(patrollingLift != nullptr, "found the patrolling platform lift (ObjectType1) in the sample world");
 
-    for (int i = 0; i < 30; ++i)
+    // Its record keeps the default timing (40-tick dwell, then 60 ticks to the far end).
+    for (int i = 0; i < 150; ++i)
     {
         interaction.Update(dt, world, 999.0f, 999.0f, 999.0f, 0.0f, sound); // Blupi far away
     }
     const auto* liftAfter = findPatrollingLift();
     const float liftYAfter = liftAfter ? liftAfter->currentY : liftStartY;
-    std::cout << "Lift Y after 0.5s: " << liftYAfter << " (started at " << liftStartY << ")" << std::endl;
+    std::cout << "Lift Y after 2.5s: " << liftYAfter << " (started at " << liftStartY << ")" << std::endl;
     check(std::fabs(liftYAfter - liftStartY) > 0.05f, "platform lift patrols (currentY changed)");
 
     // 1.5. Platform lift riding (plan.md E3D-MIG-152) -- position Blupi
@@ -128,6 +130,66 @@ int main(int argc, char** argv)
     else
     {
         check(false, "found the patrolling lift for the riding test");
+    }
+
+    // 1.6. Lift timing (D43): a lift follows the original's step machine (Decor::
+    // MoveObjectStepLine) -- dwell timeStopStart, advance over stepAdvance ticks, dwell
+    // timeStopEnd, recede over stepRecede -- so two lifts with the same ticks and different
+    // travel lengths move in step and meet as authored.
+    {
+        WorldRuntime liftWorld;
+        liftWorld.LoadFromVwrFile(worldPath);
+        auto& objects = liftWorld.GetMobileObjectsMutable();
+        objects.clear();
+        const auto addLift = [&objects](float x, float startY, float endY)
+        {
+            MobileObjSpec lift;
+            lift.type = GalaxyEggbert::Def::ObjectType::ObjectType1;
+            lift.posStartX = lift.posEndX = lift.currentX = x;
+            lift.posStartZ = lift.posEndZ = lift.currentZ = 0.0f;
+            lift.posStartY = lift.currentY = startY;
+            lift.posEndY = endY;
+            lift.stepAdvanceTicks = lift.stepRecedeTicks = 20.0f;
+            lift.timeStopStartTicks = lift.timeStopEndTicks = 10.0f;
+            objects.push_back(lift);
+        };
+        addLift(0.0f, 5.0f, 9.0f);   // four up
+        addLift(1.0f, 5.0f, 10.0f);  // five up, the same ticks
+        InteractionSystem liftInteraction;
+        float elapsed = 0.0f;
+        const auto runTo = [&](float seconds)
+        {
+            while (elapsed + 1e-4f < seconds)
+            {
+                liftInteraction.Update(dt, liftWorld, 999.0f, 999.0f, 999.0f, 0.0f, sound);
+                elapsed += dt;
+            }
+        };
+        const auto y = [&liftWorld](std::size_t i) { return liftWorld.GetMobileObjects()[i].currentY; };
+        runTo(0.4f);
+        check(std::fabs(y(0) - 5.0f) < 0.01f && std::fabs(y(1) - 5.0f) < 0.01f,
+              "a lift dwells timeStopStart ticks before it leaves (10 ticks = 0.5 s)");
+        runTo(1.0f);
+        check(std::fabs(y(0) - 7.0f) < 0.1f && std::fabs(y(1) - 7.5f) < 0.1f,
+              "half way through its 20-tick advance, each lift is half way, whatever its length");
+        runTo(1.75f);
+        check(std::fabs(y(0) - 9.0f) < 0.01f && std::fabs(y(1) - 10.0f) < 0.01f,
+              "both reach their ends together and dwell there (timeStopEnd)");
+        runTo(2.5f);
+        std::cout << "Lifts at 2.5 s: " << y(0) << ", " << y(1) << std::endl;
+        // Each phase change restarts the tick count (as the original's `time = 0`), so a
+        // frame of slack per phase.
+        check(std::fabs(y(0) - 7.0f) < 0.25f && std::fabs(y(1) - 7.5f) < 0.3f,
+              "then recede over stepRecede ticks");
+
+        // Riding: Blupi on the second lift while it rises is carried to its new stand height.
+        runTo(3.5f);   // back at the start, dwelling
+        runTo(3.75f);  // rising again
+        const float before = y(1);
+        liftInteraction.Update(dt, liftWorld, 1.0f, LiftRiderCenterY(before), 0.0f, 0.0f, sound);
+        check(liftInteraction.IsRidingLift() &&
+                  std::fabs(liftInteraction.RideStandY() - LiftRiderCenterY(y(1))) < 0.01f && y(1) > before,
+              "a rider stands on the rising lift's new top");
     }
 
     // 2. Pickup collection -- walk Blupi's simulated position onto each of

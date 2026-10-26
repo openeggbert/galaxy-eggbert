@@ -41,25 +41,19 @@ namespace GalaxyEggbert::Game
         // InteractionSystem). current{X,Y,Z} start equal to posStart and
         // move independently for patrolling platforms (ObjectType1/47/48)
         // and pushed crates (ObjectType12); rendering uses these, not
-        // posStart, so movement is actually visible. direction is the
-        // patrol direction (+1 = heading toward posEnd, -1 = heading back
-        // toward posStart), matching Decor::MoveObjectStepLine's four-phase
-        // patrol. active is false once a
+        // posStart, so movement is actually visible. active is false once a
         // one-shot pickup (egg/key) has been collected -- posStart/posEnd
         // stay untouched either way, since they're the object's real path
         // bounds, not its current position.
         float currentX = 0.0f, currentY = 0.0f, currentZ = 0.0f;
-        float direction = 1.0f;
         bool active = true;
 
         // Real shared patrol-turn timing (2026-07-11, plan.md E3D-MIG-131,
         // `Decor::MoveObjectStepLine` -- see InteractionSystem.cpp's
         // AdvancePatrolStep() for the state machine that uses these).
         // Ticks are at the real 20Hz reference rate, same convention as
-        // `phase` above. Does NOT apply to platform lifts/crates (types 1/
-        // 12/47/48), which keep their own existing speed-based ping-pong
-        // patrol in InteractionSystem -- these fields are only consumed
-        // for every other MoveObject type.
+        // `phase` above. Platform lifts (1/47/48) follow them too, as the
+        // original's (D43); `speed` no longer moves anything.
         float stepAdvanceTicks = 60.0f;
         float stepRecedeTicks = 60.0f;
         float timeStopStartTicks = 40.0f;

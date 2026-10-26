@@ -149,8 +149,7 @@ namespace GalaxyEggbert::Game
                 spec.posEndZ = static_cast<float>(pey) / kMobileTileSize - kWorldCenterZ;
                 spec.speed = std::max(0.5f, static_cast<float>(stepAdv) / 3.0f);
                 // Real patrol-timing fields (plan.md E3D-MIG-131), used by
-                // every MoveObject type except platform lifts/crates (which
-                // keep the speed-based ping-pong `spec.speed` above feeds).
+                // every patrolling MoveObject type, lifts included (D43).
                 // Real files always have all 4 present (01-world-file-format.md
                 // §4's full field list) -- 1/1/0/0 (stepAdv/stepRec's real
                 // minimum/timeStop's real default) if sscanf somehow didn't

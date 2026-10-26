@@ -1013,29 +1013,14 @@ namespace GalaxyEggbert::Game
                 continue;
             }
 
-            // Platform lift patrol (ObjectType1/47/48): ping-pong between
-            // posStart and posEnd at `speed` units/sec using the established
-            // target-select/distance-flip/move-toward-target shape.
+            // Platform lift patrol (ObjectType1/47/48): the original's step machine for every
+            // MoveObject (Decor::MoveObjectStepLine, lifts included) -- dwell timeStopStart,
+            // advance over stepAdvance ticks, dwell timeStopEnd, recede over stepRecede -- so
+            // lifts keep their authored timing and dwell, and lifts with the same ticks move in
+            // step (D43; they used to ping-pong at `speed` with no dwell).
             if (GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::Lift)
             {
-                const float targetX = (obj.direction > 0.0f) ? obj.posEndX : obj.posStartX;
-                const float targetY = (obj.direction > 0.0f) ? obj.posEndY : obj.posStartY;
-                const float targetZ = (obj.direction > 0.0f) ? obj.posEndZ : obj.posStartZ;
-                const float dx = targetX - obj.currentX;
-                const float dy = targetY - obj.currentY;
-                const float dz = targetZ - obj.currentZ;
-                const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-                if (dist < 0.05f)
-                {
-                    obj.direction = -obj.direction;
-                }
-                else
-                {
-                    const float step = obj.speed * dt / std::max(dist, 0.001f);
-                    obj.currentX += dx * step;
-                    obj.currentY += dy * step;
-                    obj.currentZ += dz * step;
-                }
+                AdvancePatrolStep(obj, dt);
 
                 // Platform lift riding (plan.md E3D-MIG-152): this is the
                 // exact lift Blupi was standing on before the patrol step
