@@ -184,7 +184,14 @@ Candidates (investigate when a world or the editor needs them; none implemented 
 ### 7.3 Open items
 
 - Per-object live comparison with Mobile Eggbert (video/original game) for every exhibition
-  object of `world999` (D11), recorded per object: source, IoU, live view, verdict.
+  object of `world999` (D11), recorded per object: source, IoU, live view, verdict. 2026-10-26:
+  the silhouette match against each object's own sprites (`avatars3d/objects/*/icons.txt`, the
+  library's IoU per icon) is 0.88-1.00 for 76 of the 82 models. The weakest, to look at first:
+  the bird (min 0.60, mean 0.88: some wing frames), the plants 3a-c (0.65-0.69), the follow
+  star (min 0.77), the plants 1a-d (0.83-0.86), the fish (min 0.85, BB3D-032) and the drink
+  (0.88). Silhouettes do not measure colour: the flat procedural textures remain. The live
+  exhibition (rows z 27-54, x 78-96; stand at x 76.5) shows no model gross enough to name
+  without the owner's list.
 - `BB3D-032` fish head ~15 % large; `BB3D-050` grass blades wide; procedural textures flat.
 - Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
   Recede/Advance clips; checked live in 012).
