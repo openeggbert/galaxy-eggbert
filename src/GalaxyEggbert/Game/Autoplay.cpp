@@ -17,6 +17,7 @@ namespace GalaxyEggbert::Game
         // Farther off course than this he turns on the spot instead of walking.
         constexpr float kWalkConeDegrees = 30.0f;
         constexpr float kSteerDeadZoneDegrees = 2.0f;
+        constexpr float kSteerRadius = 0.15f;
         constexpr int kPositionEveryTicks = 60;
 
         constexpr const char* kPhaseNames[] = {"None",     "First",     "Wait",   "Init",    "Play",
@@ -241,9 +242,9 @@ namespace GalaxyEggbert::Game
                     return fail("needs X Y Z [max N]");
                 }
             }
-            else if (verb == "clear")
+            else if (verb == "clear" || verb == "near")
             {
-                command.kind = Kind::Clear;
+                command.kind = verb == "clear" ? Kind::Clear : Kind::Near;
                 if (!(words >> command.x >> command.y >> command.z >> command.radius) || !readOptions(false))
                 {
                     return fail("needs X Y Z R [max N]");
@@ -459,10 +460,18 @@ namespace GalaxyEggbert::Game
                 {
                     keys = command.keys;
                     constexpr float kDegrees = 57.2957795f;
-                    const float error = WrapDegrees(std::atan2(dx, -dz) * kDegrees - state.yawDegrees);
-                    keys.up = distance > command.tolerance && std::fabs(error) <= kWalkConeDegrees;
-                    keys.right = error > kSteerDeadZoneDegrees;
-                    keys.left = error < -kSteerDeadZoneDegrees;
+                    // Right at the point of a `go ... tol 0 ... until` (held against a wall) he
+                    // neither turns nor walks: the bearing to it is noise there. With a tolerance
+                    // he steers until it is met, as ever.
+                    const float steerRadius =
+                        command.tolerance > 0.0f ? std::min(kSteerRadius, command.tolerance) : kSteerRadius;
+                    if (distance > steerRadius)
+                    {
+                        const float error = WrapDegrees(std::atan2(dx, -dz) * kDegrees - state.yawDegrees);
+                        keys.up = distance > command.tolerance && std::fabs(error) <= kWalkConeDegrees;
+                        keys.right = error > kSteerDeadZoneDegrees;
+                        keys.left = error < -kSteerDeadZoneDegrees;
+                    }
                     if (jumpTicksLeft_ > 0)
                     {
                         keys.jump = true;
@@ -475,11 +484,15 @@ namespace GalaxyEggbert::Game
                 done = Holds(command.condition, state);
                 break;
             case Kind::Clear:
-                done = std::none_of(state.enemies.begin(), state.enemies.end(), [&](const std::array<float, 3>& at) {
+            case Kind::Near:
+            {
+                const bool any = std::any_of(state.enemies.begin(), state.enemies.end(), [&](const std::array<float, 3>& at) {
                     const float dx = at[0] - command.x, dy = at[1] - command.y, dz = at[2] - command.z;
                     return dx * dx + dy * dy + dz * dz < command.radius * command.radius;
                 });
+                done = command.kind == Kind::Clear ? !any : any;
                 break;
+            }
             case Kind::Lift:
             case Kind::Crate:
             {

@@ -111,6 +111,20 @@ int main()
     }
 
     {
+        const Run run = Play("go 2 0 tol 0.05\n", 600);
+        check(std::hypot(run.state.x - 2.0f, run.state.z) <= 0.05f && Contains(run.log, "RESULT pass"),
+              "go ... tol 0.05 still walks right up to its point");
+    }
+
+    {
+        // Held at a point it cannot pass (the stand-in has no walls: it reaches it), with no
+        // tolerance: it stops turning there instead of spinning on the spot.
+        const Run run = Play("go 3 0 tol 0 until tick >= 600\n", 700);
+        check(std::hypot(run.state.x - 3.0f, run.state.z) < 0.2f && std::fabs(run.state.yawDegrees - 90.0f) < 30.0f,
+              "go ... tol 0 settles at its point without spinning (yaw " + std::to_string(run.state.yawDegrees) + ")");
+    }
+
+    {
         const Run run = Play("go 5 0 until x >= 2\nwait 1\n", 2000);
         check(run.state.x >= 2.0f && run.state.x < 2.2f && Contains(run.log, "RESULT pass"),
               "go ... until COND stops as soon as COND holds");
@@ -285,6 +299,26 @@ int main()
             }
         }
         check(cleared == 30, "clear waits until no enemy is within R (tick " + std::to_string(cleared) + ")");
+    }
+
+    {
+        Autoplay autoplay;
+        std::string error;
+        autoplay.Parse("near 65 19 50 0.12\nwait 1\n", error);
+        AutoplayState state;
+        int caught = -1;
+        for (int t = 0; t < 100 && caught < 0; ++t)
+        {
+            state.tick = t;
+            // A mine bobbing up from y 16 at 0.05 a tick: within 0.12 of y 19 from tick 58.
+            state.enemies = {{65.0f, 16.0f + 0.05f * t, 50.0f}};
+            autoplay.Step(state);
+            if (Contains(autoplay.TakeLog(), "line 2: wait 1"))
+            {
+                caught = t;
+            }
+        }
+        check(caught == 58, "near waits until an enemy is within R (tick " + std::to_string(caught) + ")");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

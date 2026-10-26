@@ -23,6 +23,8 @@
 //   crate X Y Z [max N]        no keys until a crate stands in cell (X, Y, Z) (within 0.05)
 //   clear X Y Z R [max N]      no keys until no enemy (fish, mine, bird, ...) is within R of
 //                              (X, Y, Z): time a dive past a patrol
+//   near X Y Z R [max N]       no keys until an enemy is within R of (X, Y, Z): catch a patrol
+//                              at one end of its run, to go as it turns away
 //   expect COND                record a pass or a failure
 //   log TEXT                   write TEXT to the trace
 //   trace N                    write the position every tick for the next N ticks (else every 60)
@@ -88,7 +90,7 @@ namespace GalaxyEggbert::Game
         std::string TakeLog();
 
     private:
-        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Expect, Log, Trace, End };
+        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, End };
         enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Ground, Dead, Exit, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
