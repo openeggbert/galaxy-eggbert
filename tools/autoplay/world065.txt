@@ -1,0 +1,185 @@
+# Mission 065 played through (plans/briefs/world065.md).
+wait 30
+expect mission = 65
+# The start hall (walk 30): its lift (x 41-42, z 58-59; six up, a 3-tick stop) stepped on as it
+# arrives, Up held north against its shaft, off at the top into the west region (walk 36).
+go 41.5 61
+go 41.5 59.9 tol 0.08
+face 0
+lift 41 36 58 max 600
+lift 41 30 58 max 600
+go 41.5 59.2 tol 0.1
+until y >= 31 max 300
+go 41.5 56 max 300
+expect y >= 35.95
+# The closet of the key room's switch: down its hole (x 29-33, z 52) in the region's floor, the
+# stair's two steps, the switch (33, 52) pressed: the band of saws in the key room stops; back up
+# the stair onto the region (clear of the moving mine along z 54).
+go 38.5 52
+go 35 50.5
+go 28.4 50.5
+go 28.4 52 tol 0.1
+face 90
+go 29.4 52 tol 0.1
+until ground = 1 max 120
+expect y <= 34.05
+go 30.4 52 tol 0.1
+until ground = 1 max 120
+go 33 52 tol 0.12
+until ground = 1 max 120
+expect y <= 30.05
+hold 2 action
+wait 20
+go 31.4 52 tol 0.1
+face 270
+go 30 52 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 31.95
+go 29 52 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 33.95
+go 27.8 52 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 35.95
+# The north corridor (walk 36): up the passage (x 44-45) and east along z 29, past the mines
+# (48, 28), (51, 27) and the two shafts' mines (x 54, 58, z 28); the pit's lift (z 27, x 61 -> 63)
+# boarded as it arrives at its west end and left at its east end.
+go 27.8 50.6 tol 0.15
+go 34 49.5
+go 43 44
+go 44.5 37
+go 44.5 29.1
+go 59.5 29.1
+go 60.3 27 tol 0.1
+face 90
+lift 63 36 27 max 600
+lift 61 36 27 max 600
+go 61 27 tol 0.15
+lift 63 36 27 max 300
+go 64.5 27.5 tol 0.15
+go 65 28 tol 0.1
+face 0
+# The saw gate: north past the front's mine rising and falling at (65, 26) while it is high, up
+# the passage (x 65), the switch (64, 22) at its mouth pressed: the gate's saws stop; west over
+# them, up the step (z 21) onto the landing (z 20) before the cage's curtain.
+go 65 27.3 tol 0.1
+near 65 36 26 0.2 max 300
+wait 30
+go 65 25.2
+go 65 22.2 tol 0.15
+go 64 22 tol 0.1
+hold 2 action
+wait 20
+go 57 22
+go 55.5 22 tol 0.1
+face 0
+go 55.5 21 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 37.95
+go 55.5 20 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 39.95
+go 55.5 20.15 tol 0.08
+# The cage: through its curtain (z 19) in a quiet half (blitz 50-99), the green key, the egg,
+# back out through the curtain in another quiet half.
+until blitz = 50 max 400
+go 55.5 18 tol 0.2
+go 49 17 until keys >= 1
+go 50 14 until eggs = 1
+until eggs = 1 max 120
+go 55.5 17.85 tol 0.08
+until blitz = 50 max 400
+go 55.5 20.2 tol 0.1
+# Back: down the step into the corridor, east over the stopped saws, south down the passage past
+# the front's mine while it is high, the pit's lift back west, the north corridor back.
+go 55.5 22.5
+go 64.8 22.2 tol 0.15
+go 65 24.7 tol 0.1
+near 65 36 26 0.2 max 300
+wait 30
+go 65 27.6 tol 0.15
+go 64.3 27 tol 0.1
+face 270
+lift 61 36 27 max 600
+lift 63 36 27 max 600
+go 63 27 tol 0.15
+lift 61 36 27 max 300
+go 59.5 28.5
+go 59.5 29.1 tol 0.15
+go 44.5 29.1
+go 44.5 37
+# The region's lift down to the start hall: walked onto at its top, ridden down.
+go 41.5 56
+go 41.5 57.4 tol 0.08
+face 180
+lift 41 36 58 max 600
+go 41.5 58.5 tol 0.15
+until y <= 30.05 max 300
+until ground = 1 max 120
+go 42.5 60.5
+# The green door (x 42-43, z 57) opened with the green key; the key room: under its low ceiling
+# over the stopped saws (z 52) to the red key, back out into the hall.
+go 43.2 58.5
+go 43.2 56
+go 38.5 54
+go 38 49 until keys = 1
+until keys = 1 max 240
+go 43.2 55
+go 43.2 58.5
+# The red door (x 39, z 62) opened with the red key; the west wing: its switch (36, 62) pressed
+# (the wing's and the east passage's saws stop), over the mine (33, 62), down the shaft at its # into the treasure's pocket (walk 22).
+go 43.2 60.6
+go 40.5 62
+go 36 62 tol 0.1
+hold 2 action
+wait 20
+go 31 62 jump 2.9 tol 0.2
+until ground = 1
+go 22 62 until y <= 29
+until ground = 1 max 300
+expect y <= 22.05
+# The pocket: the treasure in its north-west, back up its stair of four steps (z 60, x 25-28)
+# into the wing.
+go 15 58 until treasures = 1
+until treasures = 1 max 120
+go 23.6 60 tol 0.1
+face 90
+go 25 60 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 23.95
+go 26 60 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 25.95
+go 27 60 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 27.95
+go 28 60 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 29.95
+go 28 61.9 tol 0.1
+face 90
+# East along the wing over the mine (33, 62) and its stopped saws, through the hall and the
+# passage's stopped saws to door "1" (x 57), open with the treasure.
+go 36 62 jump 3.9 tol 0.2
+until ground = 1
+go 52 62
+go 58 62.5
+# The lava bridges (z 62-63): along lane 63, a block from the moving mine sweeping lane 62, without
+# stopping on the crumbling planks; down the hole (x 72-73) into the funnel (walk 5).
+go 58.5 63 tol 0.1
+go 71 63 tol 0.2
+go 72.5 62.5 until y <= 28
+until ground = 1 max 300
+expect y <= 5.05
+# The funnel: its two eggs, onto the pedestal (69, 62) to the red arrow, then the hub.
+go 74 58 until eggs = 2
+go 74 66 until eggs = 3
+until eggs = 3 max 120
+go 70.6 62.3
+go 70.6 62 tol 0.1
+face 270
+go 69 62 jump 1.5 until exit = 1
+expect treasures = 1
+until mission = 60 max 900
+expect phase = Play
+wait 60
