@@ -1,0 +1,208 @@
+# Mission 094 played through (plans/briefs/world094.md): the start's steps, the causeway's lava
+# gaps, the crumbling bridges, the pools cave's key, the stair back, the red door, the crates
+# stacked under the teleporter, the caverns' four treasures (the pillar, round the mines, the
+# west steps, the bulldozer's trench) and the arrow; five eggs.
+wait 30
+expect mission = 94
+# A, the start cave: north up the three steps (two up each, walk 16, 18, 20) to the terrace.
+go 14 76.4 tol 0.1
+face 0
+go 14 74 jump 2.2 tol 0.15
+until ground = 1
+go 14 73.4 tol 0.1
+go 14 71 jump 2.2 tol 0.15
+until ground = 1
+go 14 70.4 tol 0.1
+go 14 68 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 19.9
+# F, the forks terrace: along the causeway (z 53-55) over its lava, its two gaps (x 22, 31)
+# jumped from their last cell; the egg (36, 54).
+go 14 58
+go 15 54
+go 21.3 54 tol 0.05
+face 90
+go 24 54 jump 9 tol 0.15 max 200
+until ground = 1
+go 30.3 54 tol 0.05
+go 33 54 jump 9 tol 0.15 max 200
+until ground = 1
+go 36 54 until eggs = 1 max 300
+until eggs = 1 max 200
+# B, the bridges (z 53-54): over the first (x 41-47) without stopping to the rest pillar
+# (x 48-49) and its egg (48, 55); over the second (x 50-58) under its two hanging mines to the
+# door ledge (walk 20).
+go 39.5 53.5
+go 48.5 53.5 max 300
+go 48 55 until eggs = 2 max 300
+until eggs = 2 max 200
+go 48.6 53.5 tol 0.15
+go 60 53.5 max 300
+expect y >= 19.9
+# K, the pools cave (walk 10) under the ledge's south edge: down into it, east along z 57.15 past
+# its lava strips to the egg (72, 59); the key on the island in its ring of lava (65, 68), the
+# ring jumped there and back.
+go 62 55
+go 62 58 max 300
+until ground = 1
+expect y <= 10.1
+go 62.5 57.15
+go 68 57.15
+go 72 59 until eggs = 3 max 600
+until eggs = 3 max 200
+go 68.8 59.5
+go 68.8 64
+go 68.6 68 tol 0.1
+face 270
+go 65.5 68 jump 3.2 tol 0.15 max 200
+until ground = 1
+until keys = 1 max 200
+go 66.4 68 tol 0.1
+face 90
+go 69 68 jump 2.8 tol 0.15 max 200
+until ground = 1
+expect y <= 10.1
+# Back up the stair of two-high steps along the south side (z 71-72, walk 12 ... 20), west
+# along the shelf, north along x 56.5 onto the ledge's south-west corner.
+go 73.6 70
+go 73.6 71.5 tol 0.1
+face 270
+go 72 71.5 jump 2.0 tol 0.15
+until ground = 1
+go 71.4 71.5 tol 0.1
+go 70 71.5 jump 2.0 tol 0.15
+until ground = 1
+go 69.4 71.5 tol 0.1
+go 68 71.5 jump 2.0 tol 0.15
+until ground = 1
+go 67.4 71.5 tol 0.1
+go 66 71.5 jump 2.0 tol 0.15
+until ground = 1
+go 65.4 71.5 tol 0.1
+go 64 71.5 jump 2.0 tol 0.15
+until ground = 1
+expect y >= 19.9
+go 57 71.5
+go 56.6 58
+go 59.3 57.6
+go 59.6 55
+expect y >= 19.9
+# D: east through the red door (69, 50), opened with the key. T, the teleporter room: the floor
+# crate (76, 51) pushed east to the ledge's foot under the teleporter (81, 51); the ledge's crate
+# (82, 21, 51) pushed west off the ledge onto it; from the ledge onto the lump (81, 52, walk 22)
+# and north onto the stack, under the teleporter, to the caverns.
+go 64 50
+go 72 50.5
+expect keys = 0
+go 74.4 51 tol 0.1
+face 90
+go 79.6 51 max 600
+crate 81 20 51 max 120
+go 79.6 49
+go 81 49
+face 90
+go 83 49 jump 1.6 tol 0.15
+until ground = 1
+expect y >= 20.9
+go 84.6 50
+go 84.6 51 tol 0.1
+face 270
+go 82.6 51 max 600
+crate 81 21 51 max 120
+go 82.4 52.2 tol 0.1
+face 270
+go 81 52 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 21.9
+go 81 51 until x <= 65 max 600
+until x <= 65 max 900
+expect y <= 10.1
+# C, the treasure caverns (walk 10), arrived by the partner (60, 21). T4 on the pillar
+# (x 66-68, z 31-34, walk 18): up the blocks beside it (z 35-36, walk 12, 14, 16) and north onto it.
+go 61 30
+go 62.4 35.5 tol 0.1
+face 90
+go 63.5 35.5 jump 1.5 tol 0.15
+until ground = 1
+go 65.5 35.5 jump 2.4 tol 0.15
+until ground = 1
+go 67.5 35.5 jump 2.4 tol 0.15
+until ground = 1
+expect y >= 15.9
+go 67.5 35.3 tol 0.1
+face 0
+go 67 33 jump 2.6 tol 0.15
+until ground = 1
+expect y >= 17.9
+go 67 32 until treasures = 1 max 300
+until treasures = 1 max 200
+# Down off the pillar's west side; T2 (53, 38) round its rows of mines (z 28, 33); west through
+# the passage (z 31-40) to the west room: its egg (32, 38) and T1 up its steps (walk 12, 14, 16)
+# at (35, 12).
+go 65 32.5
+until ground = 1
+go 57 37
+go 53 38 until treasures = 2 max 300
+until treasures = 2 max 200
+go 44 36
+go 32 38 until eggs = 4 max 600
+until eggs = 4 max 200
+go 43.4 18
+go 43.4 13 tol 0.1
+face 270
+go 41.5 13 jump 1.8 tol 0.15
+until ground = 1
+go 40.4 13 tol 0.1
+go 38.5 13 jump 1.8 tol 0.15
+until ground = 1
+go 37.4 13 tol 0.1
+go 35.5 12.5 jump 1.8 tol 0.15
+until ground = 1
+expect y >= 15.9
+go 35 12 until treasures = 3 max 300
+until treasures = 3 max 200
+# East: back through the passage, across the middle room, through the east bank's passage
+# (z 8-17) to the east room: its egg (87, 10).
+go 37.6 15.5
+go 43.4 18
+go 44 36
+go 58 37.5
+go 58 30
+go 72 14
+go 87 10 until eggs = 5 max 900
+until eggs = 5 max 200
+# T3 at the end of the bulldozer's trench (x 84, z 18-38; it drives z 22-36, 2.3 cells a second,
+# about 60 waiting at each end): followed south as it drives away, into the alcove (85, 32) as it
+# comes back, south to the treasure (84, 38) beyond its end once it has passed north; back
+# behind it as it drives north again into the alcove (85, 26), out once it has passed south.
+go 84 16.8 tol 0.1
+face 180
+near 84 10 22 0.05 lane z max 1200
+clear 84 10 22 0.05 lane z max 200
+near 84 10 26 0.05 lane z max 300
+go 84 31.2 tol 0.1 max 600
+go 85 32 tol 0.1 max 200
+near 84 10 32 0.3 lane z max 300
+clear 84 10 32 1.3 lane z max 300
+go 84 32.5 tol 0.1
+go 84 38 until treasures = 4 max 600
+until treasures = 4 max 200
+near 84 10 36 0.05 lane z max 1200
+clear 84 10 36 0.05 lane z max 200
+go 84 26 tol 0.1 max 600
+go 85 26 tol 0.1 max 200
+near 84 10 22 0.05 lane z max 600
+clear 84 10 22 0.05 lane z max 200
+near 84 10 26 0.3 lane z max 300
+clear 84 10 26 1.3 lane z max 300
+go 84 25.5 tol 0.1
+go 84 16.5 max 600
+# The red arrow in the alcove of the caverns' north side (60, 6), open with the four treasures.
+go 76 12
+go 60 8
+go 60 6 until exit = 1 max 300
+expect treasures = 4
+expect eggs = 5
+until mission = 90 max 900
+expect phase = Play
+wait 60
