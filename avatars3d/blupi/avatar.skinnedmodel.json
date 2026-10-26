@@ -210,6 +210,10 @@
       "clip": "clips/AirSkate.clip.bin"
     },
     {
+      "name": "SlowdownSkate",
+      "clip": "clips/SlowdownSkate.clip.bin"
+    },
+    {
       "name": "StopOver",
       "clip": "clips/StopOver.clip.bin"
     },

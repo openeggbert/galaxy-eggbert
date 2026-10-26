@@ -25,6 +25,7 @@ clip StopSkate 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip MarchSkate 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 clip JumpSkate 0 0 0
 clip AirSkate 0 0 0 0 0 0 0 0
+clip SlowdownSkate 0
 clip StopOver 0
 clip MarchOver 0 0 0 0 0 0 0 0 0 0 0 0
 clip StopNage 0 0 0 0 0 0 0 0 0 0
