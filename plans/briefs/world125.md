@@ -24,4 +24,6 @@ mines (3), a bird (20), a pool with a fish (17), a bulldozer (4), crates (12), f
 **Checks**: `flightcheck.py --mine-margin 0`: the real world and stage 1 reach the golden key and
 the four eggs. `VerifyShippedWorlds`. Live (`--mission 125`, direct view F3): the start ledge's
 helicopters, the corridor of lightning and its hanging mines, the pool, a ledge's mines, the
-pillar, the hall's floor. Not played through: the flight to the key.
+pillar, the hall's floor. Played through from the spawn to the main hub by
+`tools/autoplay/world125.txt` (a helicopter from the start ledge, high over the cave, straight down
+onto the key inside its ring of mines).
