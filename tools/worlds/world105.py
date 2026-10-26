@@ -128,7 +128,9 @@ def main(argv) -> int:
     # From a ledge on the east wall a passage three wide and three high: mines hang from its roof
     # at Blupi's head (walk in, never jump), two curtains of lightning across it; the chamber: a
     # bulldozer pushing to and fro, a wasp, treasure 7, two eggs, two helicopters.
-    island(64, 44, 69, 52, 20)
+    # The ledge reaches the passage's mouth at x 70, the hall's last column (it stopped at 69, a
+    # gap of one into the bottomless hall).
+    island(64, 44, 70, 52, 20)
     carve(w, 70, 20, 46, 76, 22, 50)
     for x in range(70, 77):
         for z in (46, 50) if x % 2 == 0 else (48,):

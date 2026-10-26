@@ -30,4 +30,8 @@ lava floor of that size would be rebuilt every tick).
 treasures, eleven eggs and the exit (on foot, the ferry, flights; flights keep off the birds'
 patrols and the mines). `VerifyShippedWorlds`. Live (`--mission 105`, direct view F3): the start
 ledge, the ferry and the hut's island, a parked helicopter, an island's treasure, the east passage
-with its mines and emitters, the chamber's treasure. Not played through: the flights, the ferry.
+with its mines and emitters, the chamber's treasure. Played through from the spawn to hub 100
+by `tools/autoplay/world105.txt` (a helicopter to the six islands at cruise height between the
+birds, the east passage crouching between strikes, the chamber past the wasp, the hut). 2026-10-27:
+the east ledge stopped a cell short of the passage's mouth (x 70, the hall's last column), a gap
+into the bottomless hall; it now reaches it.
