@@ -209,7 +209,9 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   star (min 0.77), the plants 1a-d (0.83-0.86), the fish (min 0.85, BB3D-032) and the drink
   (0.88). Silhouettes do not measure colour: the flat procedural textures remain. The live
   exhibition (rows z 27-54, x 78-96; stand at x 76.5) shows no model gross enough to name
-  without the owner's list.
+  without the owner's list. 2026-10-27: plant 3a's compare sheet (sprite, model, overlap) shows the
+  model faithful; its 0.65 comes from the thin leaves and the sprite cut at the icon's bottom edge,
+  not from a wrong shape. The owner will send the list of models that look wrong (D11).
 - `BB3D-032` fish head ~15 % large; `BB3D-050` grass blades wide; procedural textures flat.
 - Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
   Recede/Advance clips; checked live in 012).
