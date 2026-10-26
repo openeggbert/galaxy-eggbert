@@ -10,9 +10,13 @@ These pieces place those tiles only, for the scripts world050.py ... world058.py
 - 78-84 are full cubes (UniformCube), the same picture on every face: the station's mass.
 - 201 (the girder) is a cut-out lattice cube with no collision sideways but solid underfoot
   and overhead; 200 (pillars) and 63/64 (plate edges) are walk-through props.
-- 347 is a plain slime edge tile in the original (Tables::table_adapt_decor) but Galaxy maps it
-  to the spike trap's animation and hazard (BlockDefinitionRegistry.cpp): never used as slime
-  here. The spike trap of the original is 373 (Decor::IsPiege), placed as a floor cell.
+- 347 is a plain slime edge tile (Tables::table_adapt_decor; Galaxy since ecc5605); the spike
+  trap is 373 only (Decor::IsPiege), placed as a floor cell.
+- Wind (110-125) pushes Blupi as Decor.cpp:2771 (Galaxy since be3ec9c): 110 toward -X, 114 +X,
+  118 up, 122 down, not on a lift or in a vehicle; wind tiles are pass icons. A fan's mouth (the
+  cell it blows into) kills and blows the fan away with its wind (Decor::IsVentillo).
+- Other tiles with an empty collision mask (pillars 76, cobwebs, girders) still count as solid
+  underfoot and overhead in Galaxy: never a design that needs Blupi to fall through them.
 """
 
 from __future__ import annotations
@@ -25,7 +29,8 @@ from kit import World
 METAL = (82, 83, 81, 80, 78, 79)
 METAL_WEIGHTS = (155, 136, 82, 73, 62, 54)
 GRILLE = 84
-PARTS = (85, 86, 88, 89, 90)        # machine parts drawn on plates (directional, partly solid)
+PARTS = (85, 86, 88, 89, 90)        # machine parts on plates: cut-out sprites (85/86 walk-through),
+                                     # only on a face with plates behind it, never a one-thick wall
 BALL = 87                            # the plate with a steel ball
 GIRDER = 201
 PILLARS = 200
@@ -95,3 +100,51 @@ def girder_mast(w: World, x, z, y0, y1):
 def lift_ticks(cells: int) -> int:
     """The original's lift pace in world 5's hub: ten ticks a cell (80 for 8, 60 for 6)."""
     return 10 * cells
+
+
+# BigDecor (explo.png icons; avatars3d/objects/index.txt): leafy plants, the water weed of the
+# brick cisterns, ball machines.
+PLANTS = (23, 24, 25)
+WATER_WEED = 203
+BALL_MACHINES = (28, 29, 30, 31)
+STONE_PILLAR = 76            # cut-out stone column (walk-through sideways)
+COBWEBS = (401, 402, 403)
+BLUE_PANEL = 10              # the blue dotted panel of the station's machine shafts
+FAN_LEFT = 126               # blows -X; its mouth (the -X side) kills (Decor::IsVentillo)
+WIND_LEFT = 110              # the wind in front of a FAN_LEFT: pushes Blupi toward -X
+TELEPORTERS = (330, 331, 332, 333)
+
+
+def treasure_door(n: int) -> int:
+    """The golden bar that opens once n treasures are collected (Decor::OpenDoorsTresor)."""
+    if not 1 <= n <= 20:
+        raise ValueError("treasure doors need 1-20 treasures")
+    return 420 + n
+
+
+def brick(w: World, x0, y0, z0, x1, y1, z1, rng: random.Random, chance=0.12):
+    """A solid box of brick with its worn variants mixed in."""
+    for x in range(min(x0, x1), max(x0, x1) + 1):
+        for y in range(min(y0, y1), max(y0, y1) + 1):
+            for z in range(min(z0, z1), max(z0, z1) + 1):
+                w.set(x, y, z, rng.choice(BRICK_FACES) if rng.random() < chance else BRICK)
+
+
+def water(w: World, x0, y0, z0, x1, y1, z1):
+    """Deep water (91) up to y1 - 1 under a surface row (92) at y1."""
+    w.fill(x0, y0, z0, x1, y1 - 1, z1, DEEP_WATER)
+    w.fill(x0, y1, z0, x1, y1, z1, WATER)
+
+
+def shell(w: World, x0, y0, z0, x1, y1, z1, fill, floor=True, roof=True):
+    """The walls (and floor and roof) of a box drawn with `fill(x0, y0, z0, x1, y1, z1)`; its
+    inside is carved to air."""
+    fill(x0, y0, z0, x1, y1, z0)
+    fill(x0, y0, z1, x1, y1, z1)
+    fill(x0, y0, z0, x0, y1, z1)
+    fill(x1, y0, z0, x1, y1, z1)
+    if floor:
+        fill(x0, y0, z0, x1, y0, z1)
+    if roof:
+        fill(x0, y1, z0, x1, y1, z1)
+    w.fill(x0 + 1, y0 + (1 if floor else 0), z0 + 1, x1 - 1, y1 - (1 if roof else 0), z1 - 1, 0)
