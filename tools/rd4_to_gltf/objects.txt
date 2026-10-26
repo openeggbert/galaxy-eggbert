@@ -18,7 +18,7 @@ mine        element 12-20,48-56 Blupi/bombe.rd4 yaw=5 vflip=1
 # The wasp's sprites were rendered by "Caméra 2" (IoU 0 with "Caméra Jeu"); the builder finds it.
 wasp        element 195-207 Blupi/guepe.rd4,Blupi/guepe-tourne.rd4
 # The follow enemies' spinning star; its camera looks 6.7 degrees down.
-follow      element 256-265 Blupi/bombe-follow.rd4 yaw=10
+follow      element 256-265 Blupi/bombe-follow.rd4 yaw=5
 # Pickups and doors' keys (sources found by survey.py icons, element_icons.csv).
 key1        element 209-215 Blupi/cle1.rd4
 key2        element 216-222 Blupi/cle2.rd4
@@ -34,7 +34,7 @@ movingmine  element 69-77   Blupi/bombe-move.rd4
 # headings between 15-degree steps (icon 112: 0.91 at a 15-degree step, 0.97 at 40 degrees).
 bird        element 90-121  Blupi/oiseau.rd4 yaw=5
 # The fish (its head comes out somewhat larger than in the sprites: plan.md BB3D-032).
-fish        element 78-88   Blupi/poisson.rd4 yaw=15
+fish        element 78-88   Blupi/poisson.rd4 yaw=5
 # The bulldozer (types 4 and 32): its blade's hazard stripes are a texture map in a rectangle
 # domain of a free-form. Icon 68 (in type 32's tables) is the helicopter without Blupi.
 bulldozer   element 57-67   Blupi/tracks-profil.rd4 yaw=15

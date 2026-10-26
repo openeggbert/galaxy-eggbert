@@ -214,7 +214,9 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   mean 0.90, min 0.67: its turning frames now pick the right heading, e.g. icon 112 0.91 -> 0.97;
   the rest are thin wings and legs a pixel off at 60 pixels, not a wrong shape: compare sheet
   and live in 084), the plants 3a-c (0.65-0.69), the follow
-  star (min 0.77), the plants 1a-d (0.83-0.86), the fish (min 0.85, BB3D-032) and the drink
+  star (min 0.77; every 5 degrees: mean 0.87 -> 0.93, min 0.87), the plants 1a-d (0.83-0.86), the
+  fish (min 0.85; every 5 degrees: mean 0.92 -> 0.94, min 0.93; its head still comes out rounder
+  and larger than the sprites', BB3D-032, a shape of the free-form conversion) and the drink
   (0.88). Silhouettes do not measure colour: the flat procedural textures remain. The live
   exhibition (rows z 27-54, x 78-96; stand at x 76.5) shows no model gross enough to name
   without the owner's list. 2026-10-27: plant 3a's compare sheet (sprite, model, overlap) shows the
