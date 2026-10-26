@@ -64,11 +64,17 @@ complete: `tools/campaigncheck.py` (the main hub, 12 hubs, 64 missions and 199) 
 `tools/watercheck.py` pass. D48 is now fixed in cna-engine (`2a93b7e`, owner's request: no
 cna-engine workarounds in Galaxy), Galaxy's interim plate code removed (`ae7b0a8`). The flight
 barrier 214 is drawn only by the ShowSecret cheat and in the editor (owner, `aa50281`).
-Next: milestone F, the completion audit; D11 waits for the owner's list of models that look wrong;
+Next: milestone F, the completion audit (playthroughs of the other missions); D11 waits for the owner's list of models that look wrong;
 D41 is done: decor is neither a floor nor a ceiling (only 024 needed a change).
 The saw death's half body no longer shows through its cut (`0cff927`: the converter winds Ray Dream's
 boolean masters consistently, `geometry.orient_consistently`; only its two parts re-exported, every
 other clip pixel-identical; checked live in a probe of 065).
+Mission 011 is played through in one run (`81b51f0`): `GalaxyEggbertCNA --mission N --autoplay
+<script>` plays by a script (`Autoplay.hpp` documents its commands; `VerifyAutoplay`), and
+`tools/autoplay.sh build-cna-opengl3 tools/autoplay/world011.txt 11` runs it under Xvfb in 21 s
+with a fresh save, printing the trace; exit 0 = passed. Write a mission's script a section at a
+time, rerunning; `trace N` logs every tick. A lift holds Blupi while his feet strip touches it,
+as the original's (`MoveObjectStepLine`): on a lift with a 3-tick dwell ride at its front edge.
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 

@@ -318,6 +318,9 @@ adaptation) · evidence/test · priority. Known rows so far:
 - Build `-j2` in `build-cna-opengl3/`; `ctest --test-dir build-cna-opengl3 -j2`.
 - Live: `tools/qa_live.sh <build> <out> <steps> [--mission N] [--spawn x,y,z,yaw]` — isolated
   saves, window-cropped screenshots, fails on an error in the log.
+- Playthroughs: `tools/autoplay.sh <build> tools/autoplay/worldNNN.txt N` plays mission N by its
+  script (`--autoplay`, `src/GalaxyEggbert/Game/Autoplay.hpp`: go, jump, wait for lifts, expect),
+  deterministic tick for tick, and fails on a death, a timeout or a failed expectation.
 - Worlds: `tools/vwr_inspect.py`, `tools/world_inventory.py`.
 - Models: converter reports, winding consistency check (§7.2), live views.
 - No claim of visual parity from compilation alone.
@@ -331,4 +334,4 @@ adaptation) · evidence/test · priority. Known rows so far:
 | C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress: D1-D3, D10 done; parity matrix open |
 | D | Hub network and the 64 missions + 199 | done 2026-10-27: the main hub, the 12 hubs, the 64 missions and 199 (each world's brief in `plans/briefs/`; `tools/campaigncheck.py`, `tools/watercheck.py`, `VerifyShippedWorlds`) |
 | E | Editor slots, demo seed, title screen, editor entry, transparency | done: `7eac7d5`, `6917fc9`, `e3a1042`, `fb48872` |
-| F | Stabilisation and completion audit | in progress (2026-10-27): the suite 109/109; every one of the 79 worlds loaded live, walked a moment and closed with no error in its log (`qa_live.sh`, `build-probe/sweep/`); `campaigncheck.py`, `watercheck.py`, `VerifyShippedWorlds` pass; D41-D54 closed; inventories regenerated. Open: no mission played through in one run; D11 (the owner's list of models that look wrong) |
+| F | Stabilisation and completion audit | in progress (2026-10-27): the suite 109/109; every one of the 79 worlds loaded live, walked a moment and closed with no error in its log (`qa_live.sh`, `build-probe/sweep/`); `campaigncheck.py`, `watercheck.py`, `VerifyShippedWorlds` pass; D41-D54 closed; inventories regenerated. 2026-10-27: mission 011 played through in one run by `tools/autoplay/world011.txt` (spawn to hub 010, both treasures and eggs, every lift; `81b51f0`). Open: the other missions' playthroughs; D11 (the owner's list of models that look wrong) |
