@@ -1,0 +1,124 @@
+# Mission 123 played through (plans/briefs/world123.md): the library's fifteen treasures, the
+# stack of bookcases climbed row by row, a crate pushed over the causeway to the high shelf, the
+# lift up to the east wing, back to the exit by the spawn.
+wait 30
+expect mission = 123
+# The west hall (walk 7): the egg (39, 74) and treasure (38, 63) in the east aisle.
+go 39 74
+go 38 63 until treasures = 1
+until treasures = 1 max 200
+# Up the stack of bookcases, each row two above the last: walk 9 (treasure (20, 66)), 11
+# ((30, 61)), 13 ((16, 57)), 15 ((28, 53)), 17 ((22, 48)).
+go 33 68.6
+face 0
+go 33 66.5 jump 1.6 tol 0.2
+until ground = 1
+go 20 66 until treasures = 2
+until treasures = 2 max 200
+go 20 64.6
+face 0
+go 20 62.5 jump 1.6 tol 0.2
+until ground = 1
+go 30 61 until treasures = 3
+until treasures = 3 max 200
+go 30 60.6
+face 0
+go 30 58.5 jump 1.6 tol 0.2
+until ground = 1
+go 16 57 until treasures = 4
+until treasures = 4 max 200
+go 16 56.6
+face 0
+go 16 54.5 jump 1.6 tol 0.2
+until ground = 1
+go 28 53 until treasures = 5
+until treasures = 5 max 200
+go 28 52.6
+face 0
+go 28 50.5 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 16.9
+go 22 48 until treasures = 6
+until treasures = 6 max 200
+# Down off its north side to the floor, treasure (8, 30) in the hall's north end.
+go 22 45
+until ground = 1
+go 8 30 until treasures = 7
+until treasures = 7 max 200
+# Through door "2" (x 41, open at two treasures) into the middle hall. Its crate (46, 64) along
+# -Z to the causeway's row (z 55), along +X over the causeway to x 58, along -Z to the high
+# shelf's foot (58, 47); onto it and up onto the shelf (walk 10) for its three treasures.
+go 38 55
+go 43 55
+# Round the other two crates (44, 64) and (45, 66) along x 47.
+go 47 56
+go 47 65.3
+go 46 65.3
+face 0
+go 46 56.4 max 900
+crate 46 7 55 max 60
+go 44.6 56.4
+go 44.6 55
+face 90
+go 56.6 55 max 1200
+crate 58 7 55 max 60
+go 56.6 56.4
+go 58 56.4
+face 0
+go 58 48.4 max 900
+crate 58 7 47 max 60
+go 58 47 jump 1.4 tol 0.15
+until ground = 1
+go 58 45.4 jump 1.6
+until ground = 1
+expect y >= 9.9
+go 57 41 until treasures = 8
+until treasures = 8 max 200
+go 60 43 until treasures = 9
+until treasures = 9 max 200
+go 62 45 until treasures = 10
+until treasures = 10 max 200
+# Down off the shelf, through door "4" (x 63) into the east wing; up its lift (2 x 2 at x 66-67,
+# z 54-55) to the gallery (walk 17).
+go 62 48
+until ground = 1
+go 62 55
+go 64.6 55
+lift 66 7 54 max 600
+go 66.5 54.5 tol 0.15
+until y >= 16.9 max 600
+go 69 55
+go 72 55
+# The gallery's three treasures in front of its bookcases, door "9" north to the last room's two.
+go 75 46 until treasures = 11
+until treasures = 11 max 200
+go 81 46 until treasures = 12
+until treasures = 12 max 200
+go 87 46 until treasures = 13
+until treasures = 13 max 200
+go 89 41
+go 89 36
+go 86 28 until treasures = 14
+until treasures = 14 max 200
+go 89 27.5
+go 92 28 until treasures = 15
+until treasures = 15 max 200
+# Back down the lift, west through the middle hall over the causeway and door "2", round the
+# stack of bookcases to the exit.
+go 89 36
+go 89 41
+go 72 55
+go 68.5 54.5
+lift 66 17 54 max 600
+go 66.5 54.5 tol 0.15
+until y <= 7.1 max 600
+go 64.6 55
+go 56 55
+go 42 55
+go 38 55
+go 38 70
+go 9 72
+go 7 75 until exit = 1
+until mission = 120 max 900
+expect phase = Play
+wait 60
