@@ -280,6 +280,16 @@ namespace GalaxyEggbert
         setSigns(WorldSelect10, 5, 10);
         setSigns(WorldDone10, 5, 10);
         definitions_[ReturnSign].worldSelectIndex = 199;
+
+        // Decor (D41): empty-mask tiles with no role, everything else above being set.
+        for (std::uint16_t icon = 1; icon <= MaxObjectMIcon; ++icon)
+        {
+            auto& d = definitions_[icon];
+            d.decor = d.collisionMask == 0 && d.hazard == BlockHazardKind::None && !d.water && !d.spring &&
+                      !d.bridge && !d.switchBlock && d.doorKeyType < 0 && d.teleporterIndex <= 0 &&
+                      d.fanDirection == BlockFanDirection::None && d.renderMode != BlockRenderMode::GroundAnchoredPlate &&
+                      d.animation.baseIcon != Temp && !isDoorBar(icon) && !isWind(icon) && !isBarre(icon);
+        }
     }
 
     const BlockDefinition& BlockDefinitionRegistry::Get(std::uint16_t type) const noexcept

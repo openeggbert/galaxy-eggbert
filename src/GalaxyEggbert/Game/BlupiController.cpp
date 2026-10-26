@@ -336,8 +336,10 @@ namespace GalaxyEggbert::Game
         {
             return true;
         }
-        return !world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                               static_cast<std::uint16_t>(gz)).isAir();
+        // Decor is neither a floor nor a ceiling (D41): the original's empty quarter-cell mask.
+        const auto block = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                          static_cast<std::uint16_t>(gz));
+        return !block.isAir() && !GalaxyEggbert::GetBlockDefinition(block.type()).decor;
     }
 
     bool BlupiController::IsPointSolid(const Worlds::World& world, float x, float y, float z, bool tempPassable,

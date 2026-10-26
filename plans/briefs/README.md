@@ -32,8 +32,10 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
   Tiles 15–31 and 49–60 have transparent parts: fine as props/plates, not as wall cubes. Since
   2026-10-26 a sprite tile (a quarter or more clear: doors, treasure doors, pillars, girders,
   bars, cobwebs) is drawn cut out, so it shows the scene behind it, not black; a tile with only
-  small gaps (stone walls) stays opaque. A tile whose collision mask is empty (185, the
-  backgrounds) is walk-through as in the original: no walls of it. Check a tile's look in `Content/icons/object-m.png`
+  small gaps (stone walls) stays opaque. A tile whose collision mask is empty and that has no
+  role (185, the backgrounds, pillars, girders, poles, props, signs: `BlockDefinition::decor`) is
+  passable as in the original, sideways and since D41 up and down too: no walls, floors or
+  ceilings of it (lava, saws, switches, bridges, springs and the Temp saucers stay floors). Check a tile's look in `Content/icons/object-m.png`
   (icon i at x = 1 + (i % 20)·65, y = 1 + (i // 20)·65, 64 × 64).
 
 ## Tools

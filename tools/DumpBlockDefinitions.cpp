@@ -26,9 +26,9 @@ namespace
         {
             const auto& d = GetBlockDefinition(icon);
             // Standing-surface solidity as BlupiController::IsPointSolid() decides it without
-            // sub-cell precision: any block but air, teleporters, fans and water.
+            // sub-cell precision: any block but air, teleporters, fans, water and decor (D41).
             const bool solid = icon != 0 && !BlockTypes::isTeleporter(icon) && !BlockTypes::isFan(icon) &&
-                               !BlockTypes::isWater(icon);
+                               !BlockTypes::isWater(icon) && !d.decor;
             out << icon << ',' << static_cast<int>(d.renderMode) << ',' << d.collisionMask << ',' << solid << ','
                 << d.water << ',' << BlockTypes::isTeleporter(icon) << ',' << BlockTypes::isFan(icon) << ','
                 << d.spring << ',' << d.bridge << ',' << static_cast<int>(d.doorKeyType) << ','

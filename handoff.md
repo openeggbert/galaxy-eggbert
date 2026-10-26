@@ -35,8 +35,8 @@ world 6 is complete. World 4 is complete too (its agent, through 046). A switche
 (379) now stands still and is harmless (D42, `0cf3ce2`); lifts keep their ticks and dwell (D43,
 `3b0a861`; the pre-D43 worlds' lift meetings re-checked, 011 and 061 lengthened, `89b12c0`); follow stars ignore a hidden
 Blupi (D44, `d115903`); a jump from under a bar catches it (D45, `7c49172`); the overcraft (46,
-not a balloon: `worldkit` OVERCRAFT) hovers within 1.25 cells of the ground (D46, `4cdd48b`). Open: D41 (empty-mask decor is a floor to the
-vertical test; worlds keep girders, poles, grates out of walking cells). `--spawn` yaw: 0 faces
+not a balloon: `worldkit` OVERCRAFT) hovers within 1.25 cells of the ground (D46, `4cdd48b`). Empty-mask decor is
+passable both ways, as the original's (D41, done 2026-10-27; only 024 stood on it, rebuilt). `--spawn` yaw: 0 faces
 -Z, 90 +X; the chase camera orbits to his side after 3 s idle, so F3 (direct view) shows the
 facing in scripted shots.
 World 8 by this session, complete: hub 080 and missions 081-084 (`6441258`, `7705ef6`,
@@ -64,7 +64,7 @@ complete: `tools/campaigncheck.py` (the main hub, 12 hubs, 64 missions and 199) 
 cna-engine workarounds in Galaxy), Galaxy's interim plate code removed (`ae7b0a8`). The flight
 barrier 214 is drawn only by the ShowSecret cheat and in the editor (owner, `aa50281`).
 Next: milestone F, the completion audit; D11 waits for the owner's list of models that look wrong;
-D41 (empty-mask decor as floors) is audited but open.
+D41 is done: decor is neither a floor nor a ceiling (only 024 needed a change).
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 
