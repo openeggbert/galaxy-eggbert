@@ -148,3 +148,17 @@ def shell(w: World, x0, y0, z0, x1, y1, z1, fill, floor=True, roof=True):
     if roof:
         fill(x0, y1, z0, x1, y1, z1)
     w.fill(x0 + 1, y0 + (1 if floor else 0), z0 + 1, x1 - 1, y1 - (1 if roof else 0), z1 - 1, 0)
+
+
+COLUMNS = (66, 67, 68)       # BigDecor stone columns (pillar_colonne1-3)
+VASE = 69
+HANGING = 3                  # the plate with the red light
+
+
+def slime(w: World, x0, y0, z0, x1, y1, z1, rng: random.Random, edge=0.15):
+    """A solid mass of green slime (341-346, with the edge tiles 347-363 mixed in, all full
+    cubes in 3D; Tables::table_adapt_decor's slime row)."""
+    for x in range(min(x0, x1), max(x0, x1) + 1):
+        for y in range(min(y0, y1), max(y0, y1) + 1):
+            for z in range(min(z0, z1), max(z0, z1) + 1):
+                w.set(x, y, z, rng.choice(SLIME_EDGES[:3] + (347,)) if rng.random() < edge else rng.choice(SLIME))
