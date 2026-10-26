@@ -1,0 +1,212 @@
+# Mission 042 played through (plans/briefs/world042.md).
+wait 30
+expect mission = 42
+# A: the crater. Over the row of mines across the notch's mouth (z 79) in its free lane
+# (x 16, no mine hanging above), up its two steps to treasure 1 and the egg.
+go 16 81
+go 16 80.1 tol 0.1
+go 16 77.6 jump 2.2
+until ground = 1
+expect y >= 12.95
+go 16 76.5 tol 0.1
+go 16 74.5 jump 1.9
+until ground = 1
+expect y >= 14.95
+go 16 74 tol 0.15
+until treasures = 1 max 200
+go 14.2 75 tol 0.15
+until eggs = 1 max 200
+# Back down and over the row again; door 1 (23, 85), open now, and the tunnel under its
+# hanging mine to the landing (walk 12) over the basin.
+go 16 75.6
+go 16 77.9 tol 0.1
+go 16 81.5 jump 3.6
+until ground = 1
+expect y <= 12.05
+go 21 85
+go 26.5 85
+# B: down into the basin (walk 6) for treasure 2, back up its steps (x 26-27: walk 8, 10).
+go 28.6 86
+until ground = 1 max 200
+expect y <= 6.05
+go 36 88 tol 0.15
+until treasures = 2 max 200
+go 29 91.5
+go 28.5 91.5 tol 0.1
+go 26.5 91.5 jump 1.9
+until ground = 1
+expect y >= 7.95
+go 26.5 91.3 tol 0.1
+go 26.5 89.5 jump 1.9
+until ground = 1
+expect y >= 9.95
+go 26.5 89.3 tol 0.1
+go 26.5 87.5 jump 1.9
+until ground = 1
+expect y >= 11.95
+# The stair of six bobbing stones (x 29-30, 32-33, ... 44-45; z 84-85), each a jump from the
+# last's far edge as the next one reaches its low end (level with the one he stands on, in
+# counter-step), up to the house island (walk 18).
+go 27.3 84.5 tol 0.1
+face 90
+lift 29 12 84 max 300
+go 30 84.5 jump 2.8
+until ground = 1
+go 30.3 84.5 tol 0.1
+lift 32 13 84 max 300
+go 33 84.5 jump 2.8
+until ground = 1
+go 33.3 84.5 tol 0.1
+lift 35 14 84 max 300
+go 36 84.5 jump 2.8
+until ground = 1
+go 36.3 84.5 tol 0.1
+lift 38 15 84 max 300
+go 39 84.5 jump 2.8
+until ground = 1
+go 39.3 84.5 tol 0.1
+lift 41 16 84 max 300
+go 42 84.5 jump 2.8
+until ground = 1
+go 42.3 84.5 tol 0.1
+lift 44 17 84 max 300
+go 45 84.5 jump 2.8
+until ground = 1
+go 45.3 84.5 tol 0.1
+go 47.5 84.5 jump 2.4
+until ground = 1
+expect y >= 17.95
+# C: the house island's egg, door 2 (58, 85) in its ridge, open with two.
+go 55 88 tol 0.15
+until eggs = 2 max 200
+go 56.5 85
+# D: the causeway east, its five rows of three mines (x 62, 66, 70, 74, 78) jumped one at a
+# time, from a cell before each.
+go 60.6 85
+go 64 85 jump 3.0
+until ground = 1
+go 68 85 jump 3.0
+until ground = 1
+go 72 85 jump 3.0
+until ground = 1
+go 76 85 jump 3.0
+until ground = 1
+go 80 85 jump 3.0
+until ground = 1
+expect y >= 17.95
+# E: the tower hall: treasure 3 and the two eggs on its floor, the egg in the niche behind
+# the walk-through cheese (88-90, 89).
+go 86 85
+go 90 86 tol 0.15
+until treasures = 3 max 200
+go 93 87 tol 0.15
+until eggs = 3 max 200
+go 93 85 tol 0.15
+until eggs = 4 max 200
+go 89 88
+go 89 90 tol 0.15
+until eggs = 5 max 200
+go 89 87
+# The relay up the north wall: onto the step at the first lift's foot (walk 19), onto the lift
+# at its bottom, then forward the whole way: each rest holds him until his lift's top, the
+# next lift waits at its bottom (counter-step), up to the landing (walk 53).
+go 85 74.6
+go 85 72.6 jump 1.6
+until ground = 1
+expect y >= 18.95
+lift 85 19 71 max 600
+go 85 70.8 tol 0.15
+face 90
+go 94.3 70.6 max 3000
+expect y >= 52.95
+# G: out north onto the avenue (walk 53); its five necks of three mines (z 62, 58, 54, 50,
+# 46) jumped from a cell before each, along its middle (x 92); the egg in the fourth bay.
+go 93 68
+go 92 64
+go 92 60 jump 3.0
+until ground = 1
+go 92 56 jump 3.0
+until ground = 1
+go 92 52 jump 3.0
+until ground = 1
+go 94 51 tol 0.15
+until eggs = 6 max 200
+go 92 51.4 tol 0.1
+go 92 48 jump 3.0
+until ground = 1
+go 92 44 jump 3.0
+until ground = 1
+expect y >= 52.95
+# H: the pyramid round (78, 21). Up its south face a step at a time: treasures on steps 1, 3
+# and 5 (z 28, 26, 24).
+go 92 38
+go 78 30
+go 78 29.6 tol 0.1
+go 78 28 jump 1.6
+until ground = 1
+expect y >= 53.95
+until treasures = 4 max 200
+go 78 27 jump 1.2
+until ground = 1
+go 78 26 jump 1.2
+until ground = 1
+expect y >= 55.95
+until treasures = 5 max 200
+go 78 25 jump 1.2
+until ground = 1
+go 78 24 jump 1.2
+until ground = 1
+expect y >= 57.95
+until treasures = 6 max 200
+# Round step 5 (the ring three out, walk 58) for its other three, down to step 3 (five out) on
+# the west face and round it, down to step 1 (seven out) on the east face and round it.
+go 81 24
+go 81 21 tol 0.15
+until treasures = 7 max 200
+go 81 18
+go 78 18 tol 0.15
+until treasures = 8 max 200
+go 75 18
+go 75 21 tol 0.15
+until treasures = 9 max 200
+go 73 21 tol 0.15
+until treasures = 10 max 200
+expect y <= 56.05
+go 73 16
+go 78 16 tol 0.15
+until treasures = 11 max 200
+go 83 16
+go 83 21 tol 0.15
+until treasures = 12 max 200
+go 85 21 tol 0.15
+until treasures = 13 max 200
+expect y <= 54.05
+go 85 14
+go 78 14 tol 0.15
+until treasures = 14 max 200
+go 71 14
+go 71 21 tol 0.15
+until treasures = 15 max 200
+# Round to the south face, up it again to step 5, the jump into door 15 (78, 59, 23), open
+# with fifteen, the fall down the shaft into the exit hall (walk 43), the red arrow.
+go 71 28
+go 77 28
+go 78 28 tol 0.1
+go 78 27 jump 1.2
+until ground = 1
+go 78 26 jump 1.2
+until ground = 1
+go 78 25 jump 1.2
+until ground = 1
+go 78 24 jump 1.2
+until ground = 1
+expect y >= 57.95
+go 78 21 jump 3.5
+until ground = 1 max 400
+expect y <= 43.05
+go 78 16 until exit = 1
+expect treasures = 15
+until mission = 40 max 900
+expect lives = 9
+expect phase = Play
+wait 120
