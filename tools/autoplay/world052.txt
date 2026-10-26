@@ -1,0 +1,226 @@
+# Mission 052 played through (plans/briefs/world052.md).
+wait 30
+expect mission = 52
+# S1 (walk 35): north along x 57, clear of the star under the ceiling (56, 37, 53), onto the lift
+# (56, 50) at its foot, up into the pocket for its two treasures.
+go 57 54
+go 57 50 tol 0.1
+face 270
+lift 56 39 50 max 600
+lift 56 35 50 max 600
+go 56 50 tol 0.1
+until y >= 38.95 max 300
+go 55 48 until treasures = 1
+until treasures = 1 max 120
+go 55 51.8
+go 57 52 until treasures = 2
+until treasures = 2 max 120
+# Back down the lift's hole once it is at its foot, north through the door "2".
+go 56 51.35 tol 0.1
+face 0
+lift 56 39 50 max 600
+lift 56 35 50 max 600
+go 56 50 tol 0.1
+until ground = 1 max 120
+expect y <= 35.05
+go 56 47
+go 56 44.5
+until ground = 1 max 300
+expect y <= 31.05
+# S2 (walk 31): west along z 45, under and beside the four stars asleep under the ceiling
+# (51-54, 33, 44; two cells and more away), onto the lift (49, 44) from the east, up into the
+# pocket: its treasures along z 45 and z 43, off the lift's hole.
+go 54 45
+go 50.3 44.6 tol 0.1
+face 270
+lift 49 35 44 max 600
+lift 49 31 44 max 600
+go 49 44 tol 0.1
+until y >= 34.95 max 300
+go 49 45.2
+go 53 45 until treasures = 3
+until treasures = 3 max 120
+go 49.5 45.2
+go 48 43
+go 46 43 until treasures = 4
+until treasures = 4 max 120
+# Down the lift's hole once it is at its foot, west through the door "4", the drop to S3.
+go 48 43.4
+go 48.3 44 tol 0.1
+face 90
+lift 49 35 44 max 600
+lift 49 31 44 max 600
+go 49 44 tol 0.1
+until ground = 1 max 120
+expect y <= 31.05
+go 47 44
+go 44.5 44
+until ground = 1 max 300
+expect y <= 27.05
+# S3 (walk 27): south along x 45 (off the star (43, 25, 47) at the pit's corner), down the pit's
+# hole (44, 50), its treasure (44, 23, 52); back onto the step (44, 49), out west and south along
+# x 43 (off the star (45, 25, 52)) through the door "5", the drop to S4.
+go 45 45.5
+go 45 50 tol 0.1
+go 44 50 tol 0.1 until y <= 26
+until ground = 1 max 300
+expect y <= 23.05
+go 44 52 until treasures = 5
+until treasures = 5 max 120
+go 44 50.6 tol 0.1
+face 0
+go 44 49 jump 1.6 tol 0.15
+until ground = 1
+expect y >= 24.95
+face 270
+go 43 49 jump 1.4 tol 0.15
+until ground = 1
+expect y >= 26.95
+go 43 53
+go 44 56
+until ground = 1 max 300
+expect y <= 23.05
+# S4 (walk 23): the pit's stars sleep under its floor (y 21). Two of them are woken from right
+# above, so they rise into the floor and burst: (48, 21, 57) and (51, 21, 55), the ones the drop
+# down the hole (50, 56) and the climb out by the step (49, 56) pass.
+go 47 56
+go 48 57 tol 0.1
+clear 48 21.3 57 0.8 max 600
+go 51 57
+go 51 55 tol 0.1
+clear 51 21.3 55 0.8 max 600
+# Down the hole, the treasure (52, 19, 56), back onto the step and out west.
+go 50.6 56
+go 50 56 tol 0.1 until y <= 22
+until ground = 1 max 300
+expect y <= 19.05
+go 52 56 until treasures = 6
+until treasures = 6 max 120
+go 50.4 56 tol 0.1
+face 270
+go 49 56 jump 1.6 tol 0.15
+until ground = 1
+expect y >= 20.95
+go 48 56 jump 1.4 tol 0.15
+until ground = 1
+expect y >= 22.95
+# East along z 55 past the burst stars, through the door "6", the drop to S5.
+go 48.6 55
+go 53 55
+go 56 56
+until ground = 1 max 300
+expect y <= 19.05
+# S5 (walk 19): north along x 56 between the pit's stars (55/57, 17, 47/52), down the hole
+# (56, 50), the treasure (56, 15, 52), back by the step (56, 49) and out north.
+go 56 51.4 tol 0.1
+go 56 50 tol 0.1 until y <= 18
+until ground = 1 max 300
+expect y <= 15.05
+go 56 52 until treasures = 7
+until treasures = 7 max 120
+go 56 50.4 tol 0.1
+face 0
+go 56 49 jump 1.6 tol 0.15
+until ground = 1
+expect y >= 16.95
+go 56 48 jump 1.4 tol 0.15
+until ground = 1
+expect y >= 18.95
+# Through the door "7" onto the hangar's ledge (walk 19), into the helicopter (57, 19, 35).
+go 56 40
+go 57 36.2
+go 57 36 tol 0.1
+face 0
+hold 2 action
+wait 30
+# The hangar. In the helicopter Up/Down (lookup/crouch) ramp the climb and the descent slowly
+# and he coasts a while after the keys are let go: from rest a hold of N ticks rises about
+# 0.00087 N^2 (N up to 60; 0.052 a tick beyond), a `go` let go at tol T from about 3 T away
+# stops at the point. The column's treasure (50, 21, 27) from the north-east at walk 21, landed
+# on at (50.6, 27.2), clear of its three stars (49, 22, 26), (52, 22, 29), (50, 23, 29).
+hold 50 lookup
+wait 80
+go 53 25 tol 0.9
+wait 40
+go 50.6 27.2 tol 1.0
+wait 40
+go 50.6 27.2 tol 0 with crouch until ground = 1 max 200
+until treasures = 8 max 120
+# Off the column to the south-west, down to the floor, up to 16.2 at (46, 27): below the stars at
+# the alcove's mouth (42, 18, 25), (42, 18, 29), (43, 19, 27); up to walk 17 at x 41.7 and into
+# the alcove for its treasure (39, 17, 27).
+go 49 28.5 tol 0.5
+wait 40
+go 49 28.5 tol 0 with crouch until ground = 1 max 600
+go 46 27 tol 0.6
+wait 40
+go 46 27 tol 0.1
+hold 100 lookup
+wait 100
+go 42.0 27 tol 0.7
+wait 40
+hold 32 lookup
+wait 60
+go 39.6 27 tol 0.6
+wait 40
+go 39.6 27 tol 0 with crouch until ground = 1 max 200
+until treasures = 9 max 120
+# Out of the alcove, straight down by its face, up to 14.6 and over the pen's corner (56, 24),
+# down into it, the treasure (58, 11, 22) between its two stars (57, 13, 21), (59, 13, 23).
+go 41.8 27 tol 0.9
+wait 40
+go 41.8 27 tol 0 with crouch until ground = 1 max 400
+hold 69 lookup
+wait 100
+go 56.4 23.6 tol 0.95
+wait 40
+go 56.4 23.6 tol 0 with crouch until ground = 1 max 400
+go 58 22 tol 0.5 until treasures = 10
+until treasures = 10 max 120
+# Back to the corner, up, over to the door "10" (x 49-51, z 39), open with ten.
+go 56.4 23.6 tol 0.5
+wait 30
+go 56.4 23.6 tol 0.15
+hold 69 lookup
+wait 100
+go 50 37 tol 0.95
+wait 40
+go 50 37 tol 0 with crouch until ground = 1 max 400
+# Through the tunnel over the water at its mouth (z 47) into the well's foot; out of the
+# helicopter for the last two treasures in the far corners, each past its two stars at y 13:
+# along x 47.8 to (47, 53), along x 52.2 to (53, 53).
+go 50 48.5 tol 0.5
+wait 40
+hold 2 action
+wait 30
+go 47.8 49.5
+go 47.8 51.3 tol 0.15
+go 47.25 52.6 tol 0.15 until treasures = 11
+until treasures = 11 max 120
+go 47.8 51.3 tol 0.15
+go 48 50
+go 52.2 50
+go 52.2 51.3 tol 0.15
+go 52.75 52.6 tol 0.15 until treasures = 12
+until treasures = 12 max 120
+go 52.2 51.3 tol 0.15
+go 51 50
+go 50 49.4 tol 0.15
+hold 2 action
+wait 30
+# Into the helicopter again, to the well's north-west corner and straight up it, clear of the
+# two stars in its middle (50, 22, 50), (49, 30, 49), above its rim; over to the south wall and
+# down onto the arrow (50, 38, 53) on the ledge. The star above it (50, 40, 52) wakes on the way
+# down but is far too slow to reach him before the arrow.
+go 47.3 47.3 tol 0.5
+wait 40
+go 47.3 47.3 tol 0 with lookup until y >= 41 max 900
+wait 60
+expect y >= 42.2
+go 50 53.2 tol 0.95
+wait 40
+go 50 53.2 tol 0 with crouch until exit = 1 max 300
+expect treasures = 12
+until mission = 50 max 900
+expect phase = Play
+wait 60
