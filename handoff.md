@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-26 (worlds 5, 8 and 10 complete, D47-D53)._
+_Last updated: 2026-10-26 (worlds 5, 8, 10 and 11 complete, D47-D54)._
 
 ## Resume here (exact state when last written)
 
@@ -50,9 +50,11 @@ original hides 214 in play, a question for the owner). Of a row of crates Blupi 
 touching him (D50, `26dbadd`). The lightning 305 shows only while it strikes (D51, `15bc7a9`).
 Worlds 7 and 9 are being authored by two background sessions. World 10 by this session, complete:
 hub 100 and missions 101-107 (`b8fb27e`, `f0a8333`, `ce2917b`, `c01c06a`, `a8636e8`, `035f254`,
-`1f42f11`, `dde3c6a`). Blupi jumps off lifts (D52, `6ed7942`); crumbling bridges hold him as
+`1f42f11`, `dde3c6a`). World 11 by this session, complete: hub 110 and missions 111-115 (`34745ee`,
+`f017378`, `e17e780`, `f30ea6a`, `0e27a76` and 115's). A lift holds Blupi while a foot is on its
+edge (D54, `fc230a3`: walking off at the cell's boundary he used to drop past the ledge). Blupi jumps off lifts (D52, `6ed7942`); crumbling bridges hold him as
 the original's table does (D53, `7bb9415`); a terrain over a buffer's limit is split (D47's rest,
-`7b96caf`); the editor's dead speed field is gone (`2a91ca6`). Then worlds 11, 12 and 199.
+`7b96caf`); the editor's dead speed field is gone (`2a91ca6`). Then world 12 and 199.
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 
