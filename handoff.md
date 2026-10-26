@@ -117,8 +117,13 @@ parity matrix is `plans/inventory/model_parity.md` (`tools/model_parity.py`): 75
 match every icon at 0.85 or better, the 7 below are faithful by their compare sheets. To re-export
 one object: `build_object_library.py ... --only NAME --out build-probe/rd4-objects-probe`, then
 `export_cna_avatar.py` into `avatars3d/objects/<dir>/` and copy its `icons.txt` (the full
-`export_objects.py` would remove every directory its library lacks). Open: D11 (the owner's
-list), BB3D-032 (the fish's head), the flat procedural textures.
+`export_objects.py` would remove every directory its library lacks). Objects are toned to their
+sprites (owner's choice): `tone=A,B` in `objects.txt` (37 objects), fitted by
+`tools/rd4_to_gltf/calibrate_tone.py <library> --objects tools/rd4_to_gltf/objects.txt` from a
+build's compare sheets; colour error 37.6 -> 14.0 on those models. A new object: build it
+without a tone, run the calibration, add the suggested `tone=`, build again and compare. Open:
+D11 (the owner's list), BB3D-032 (the fish's head), the flat procedural textures (a bake was
+tried and did not help), the vehicles' tone (Blupi's clip library, not toned).
 
 Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
 variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.
