@@ -179,7 +179,10 @@ namespace GalaxyEggbert
         {
             std::uint16_t base = icon;
             if (icon >= 68 && icon <= 72) base = Lava;
-            else if (icon == 347 || icon == 373 || icon == 374) base = Spike;
+            // Not 347: placed, it is a plain slime tile of world 6's autotiled set
+            // (Tables::table_adapt_decor; 533 placements in the original's worlds), only a frame
+            // of the trap's animation. The trap is 373 (Decor::IsPiege, 2026-10-26).
+            else if (icon == 373 || icon == 374) base = Spike;
             else if (icon >= 317 && icon <= 323) base = Crusher;
             else if (icon >= 378 && icon <= 383) base = Saw;
             else if (icon >= 92 && icon <= 95) base = Water1;
@@ -210,7 +213,6 @@ namespace GalaxyEggbert
             definitions_[static_cast<std::size_t>(icon)].hazard = BlockHazardKind::Lava;
         }
         definitions_[Spike].hazard = BlockHazardKind::Spike;
-        definitions_[347].hazard = BlockHazardKind::Spike;
         definitions_[374].hazard = BlockHazardKind::Spike;
         definitions_[Crusher].hazard = BlockHazardKind::Crusher;
         for (int icon = 318; icon <= 323; ++icon)
