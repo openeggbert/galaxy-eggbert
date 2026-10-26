@@ -1,0 +1,196 @@
+# Mission 083 played through (plans/briefs/world083.md).
+wait 30
+expect mission = 83
+expect lives = 3
+# The start hall (walk 30): north to the stair at its west end (x 10-13), steps two up and two
+# deep (walk 32, 34, 36, 38) to the ledge of treasure 1 (walk 40).
+go 11.5 61
+face 0
+go 11.5 58.6 jump 1.4 tol 0.3
+until ground = 1
+expect y >= 31.95
+go 11.5 56.6 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 33.95
+go 11.5 54.6 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 35.95
+go 11.5 52.6 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 37.95
+go 11.5 50.6 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 39.95
+go 11 50 until treasures = 1
+until treasures = 1 max 120
+# Down the stair again and east along the hall's north rim (z 60) past the pool to door "1"
+# (x 31, z 66-67), open with one treasure, onto the ledge over the cavern (walk 30).
+go 11.5 60
+until ground = 1
+expect y <= 30.05
+go 28 60 tol 0.15
+go 29 66.5
+go 34.6 66.5 tol 0.15
+expect y >= 29.95
+# The cavern: off the ledge east onto the saucer (x 36, walk 23) and the first platform (walk
+# 22), as the saucers come back.
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+go 38.6 66.5 tol 0.3
+until ground = 1
+expect y >= 21.95
+# East over the saucers (x 42-43 level, x 45 a step down) to the second platform (walk 20).
+go 41.3 66.5 tol 0.15
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+go 43.3 66.5 tol 0.3
+go 45 66.5 jump 1.7 tol 0.3 max 300
+until ground = 1
+go 47.8 66.5 jump 2.45 tol 0.3 max 300
+until ground = 1
+expect y >= 19.95
+# North (-Z) along x 49: down onto the two saucers (walk 19), over the gap (z 61) onto the third
+# platform (walk 18).
+go 49 64.4 tol 0.1
+face 0
+until temp = 19 max 600
+until temp = 0 max 60
+go 49 62.4 tol 0.2
+go 49 59.6 jump 2.1 tol 0.3 max 300
+until ground = 1
+expect y >= 17.95
+# East over the saucers (x 52-53 level, x 55 a step down), then north-east onto the strip of
+# saucers along Z (x 56, z 62-65), and north-east again down onto the fourth platform (walk 16):
+# longer than the saucers stay, so started late enough that the hop onto the strip is in the air
+# while they are gone (the delays 24-60 pass).
+go 51.3 59.5 tol 0.15
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+wait 42
+go 53.3 59.5 tol 0.3
+go 55 59.5 jump 1.75 tol 0.3 max 300
+until ground = 1
+go 56 62.6 jump 2.4 tol 0.3 max 300
+until ground = 1
+go 56 65.2 tol 0.2
+go 57.8 66.8 jump 2.3 tol 0.3 max 300
+until ground = 1
+expect y >= 15.95
+# Over the gap (x 62, a saucer a step down in it) onto the last platform (walk 16), the foot of
+# the lift column (x 66-67, z 66-67).
+go 61.3 68.5 tol 0.15
+face 90
+go 63.6 68.5 jump 2.35 tol 0.3 max 300
+until ground = 1
+expect y >= 15.95
+# The lift up the column (fifteen cells, half a second at each end): boarded from beside it as it
+# reaches the bottom, walking on east against the rooms' face all the way up, so he walks off it
+# into the block of rooms (walk 31) as it stops.
+go 65.2 66.6 tol 0.15
+face 90
+lift 66 31 66 max 900
+lift 66 16 66 max 900
+go 68.8 66.6 max 900
+expect y >= 30.95
+# The block of rooms: north round the shaft of the rising mine (x 68-70, z 62) and west of the
+# sweeping mine's run (x 72-78, z 58), east along the north wall to treasure 2 (76 31 57).
+go 70.8 64
+go 70.8 56.3
+go 76 56.4 until treasures = 2
+until treasures = 2 max 120
+# East out of the block (x 80-81, z 60-64), east of the sweeper's run and north of the mine
+# (79 31 64), into the east shafts (walk 31); along their south side (z 64.3), clear of the
+# shafts' rising mines (x 84 and 86, z 63), to the pocket under the gallery: treasure 3.
+go 79.6 56.4
+go 79.6 61.5
+go 81 64.3
+go 88.5 64.3
+go 91 65 until treasures = 3
+until treasures = 3 max 120
+# Back west to the lift moving across and up at once (x 81-82, z 62 -> x 86-87, z 60, walk 31
+# -> 36), boarded from beside it as it returns, off onto the gallery (walk 36).
+go 88 64.3
+go 81.5 64.3
+go 81.5 63.1 tol 0.1
+face 0
+lift 86 36 60 max 600
+lift 81 31 62 max 600
+go 81.5 62 tol 0.15
+lift 86 36 60 max 300
+go 89 60
+expect y >= 35.95
+# Door "3" (x 89-90, z 57), open with three treasures, north into the arrow's hall: the bridge's
+# saucers (x 89-90, walk 36, lava on either side) north from rest to rest (z 50, 44, 38) to its
+# far end (z 26-29), each stretch walked as the saucers come back.
+go 89.5 58.2 tol 0.15
+face 0
+wait 30
+go 89.5 57.4 tol 0.1
+until temp = 19 max 600
+until temp = 0 max 60
+go 89.5 50 tol 0.2
+expect y >= 35.95
+until temp = 19 max 600
+until temp = 0 max 60
+go 89.5 44 tol 0.2
+expect y >= 35.95
+until temp = 19 max 600
+until temp = 0 max 60
+go 89.5 38 tol 0.2
+go 89.5 37.7 tol 0.1
+until temp = 19 max 600
+until temp = 0 max 60
+go 89.5 29 tol 0.3
+expect y >= 35.95
+# The egg at the far end's east side.
+go 91 27 until eggs = 1
+until eggs = 1 max 120
+# The stair of saucers up to the arrow's ledge (walk 50): six saucers two by two, each two above
+# the last, north, east, south and west round the hall's corner. In one showing of the saucers
+# he makes three hops at most, and none may stand on a saucer while they are gone: the hops onto
+# the third and the fifth are started a set time after the field temp reaches 16, so that he is
+# in the air while they vanish (the waits 2-22 and 4-22 ticks pass), the others follow at once.
+go 88.5 26.4 tol 0.1
+face 0
+until temp = 19 max 600
+until temp = 0 max 60
+go 88.5 24.6 jump 1.8 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 37.95
+go 88.5 22.6 jump 2 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 39.95
+go 88.5 22 tol 0.1
+face 90
+until temp = 16 max 300
+wait 12
+go 90.6 22 jump 2.1 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 41.95
+go 90.6 22 tol 0.1
+go 92.6 22 jump 2 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 43.95
+go 92.5 22 tol 0.1
+face 180
+until temp = 16 max 300
+wait 13
+go 92.5 24.6 jump 2.6 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 45.95
+go 92.5 25 tol 0.1
+face 270
+go 90.4 25 jump 2.1 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 47.95
+go 88.4 25.5 jump 2 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 49.95
+go 87 26 until exit = 1 max 300
+expect treasures = 3
+until mission = 80 max 900
+expect phase = Play
+wait 60

@@ -34,5 +34,8 @@ arrow; warning panels (48).
 pit's floor back to the gallery); stage 1 stops at door "3". `VerifyShippedWorlds`. Live
 (`--mission 83`, spawns in each part, direct view F3): the hall and its pool, the climb, door "1",
 the cavern's platforms and saucers, the rooms with their mines and treasure 2, door "3", the saucer
-stair. The first build of this world crashed the game on load (the terrain's vertex buffer passed
+stair. Played through by `tools/autoplay/world083.txt` (the three treasures, the egg, the
+arrow): round the pool by the hall's north rim (the shuttle is not needed), treasure 3 by the floor
+of the east shafts south of their mines, the lift moving across and up at once boarded from
+beside its start, each run over saucers timed to the field `temp`. The first build of this world crashed the game on load (the terrain's vertex buffer passed
 the graphics limit), which led to D47: closed machine cubes now hide the faces between them.
