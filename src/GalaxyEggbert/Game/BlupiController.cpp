@@ -368,7 +368,8 @@ namespace GalaxyEggbert::Game
         if (GalaxyEggbert::BlockTypes::isTeleporter(blockType) ||
             GalaxyEggbert::BlockTypes::isFan(blockType) ||
             GalaxyEggbert::BlockTypes::isWind(blockType) ||
-            GalaxyEggbert::BlockTypes::isWater(blockType))
+            GalaxyEggbert::BlockTypes::isWater(blockType) ||
+            GalaxyEggbert::BlockTypes::isBarre(blockType))
         {
             return false;
         }
@@ -572,7 +573,7 @@ namespace GalaxyEggbert::Game
         const auto icon = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
                                           static_cast<std::uint16_t>(gz))
                                .type();
-        if (icon != 138 && icon != 202)
+        if (!GalaxyEggbert::BlockTypes::isBarre(icon))
         {
             return BarreCellType::None;
         }

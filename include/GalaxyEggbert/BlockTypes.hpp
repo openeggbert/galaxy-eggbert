@@ -154,6 +154,12 @@ inline bool isWind(uint16_t bt) {
     return bt >= 110 && bt <= 125;
 }
 
+// Bars and ropes (138, 202): Blupi hangs from them (Decor::GetTypeBarre), they never stop him,
+// so a jump from under one rises into it and catches it.
+inline bool isBarre(uint16_t bt) {
+    return bt == 138 || bt == 202;
+}
+
 // Blitz tile — electric floor, kills Blupi 25 % of ticks (animPhase % 4 == 0).
 // Icon 305 is a solid floor with an active-kill phase (same pattern as Crusher).
 constexpr uint16_t Blitz    = 305;

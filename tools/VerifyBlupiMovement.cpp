@@ -496,6 +496,27 @@ int main(int argc, char** argv)
                 jumper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
             }
             check(jumper.IsSuspended(), "the same bar cell becomes grabbable again once the grace timer expires");
+
+            // A bar overhead (one above his walking cell, as the original's bars over a corridor):
+            // a jump from under it rises into it and catches it -- the bar never stops his head.
+            Worlds::World overheadWorld;
+            for (std::uint16_t z = 68; z <= 72; ++z)
+            {
+                overheadWorld.setBlock(kBarreX, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                overheadWorld.setBlock(kBarreX, 2, z, Worlds::Block::make(static_cast<std::uint16_t>(138)));
+                overheadWorld.setBlock(kBarreX, 4, z, Worlds::Block::make(BlockTypes::Ground)); // a ceiling
+            }
+            BlupiController reacher;
+            reacher.SetPosition(barreWorldX, 1.0f, 70.0f - 50.0f);
+            reacher.Step(overheadWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(!reacher.IsSuspended() && reacher.IsOnGround(), "sanity: standing under the bar, not hanging");
+            reacher.Step(overheadWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+            for (int i = 0; i < 60 && !reacher.IsSuspended(); ++i)
+            {
+                reacher.Step(overheadWorld, 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(reacher.IsSuspended() && std::fabs(reacher.GetY() - 2.0f) < 1e-4f,
+                  "a jump from under an overhead bar catches it (he hangs in the bar's cell)");
         }
 
         // Crusher squash state (plan.md E3D-MIG-143) -- TriggerCrush()/
