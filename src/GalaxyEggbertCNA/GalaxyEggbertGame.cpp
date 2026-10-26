@@ -3603,7 +3603,7 @@ namespace GalaxyEggbert::CNA
                                  blupi_.GetVehicleMode() == BlupiController::VehicleMode::Jeep ||
                                      blupi_.GetVehicleMode() == BlupiController::VehicleMode::Tank ||
                                      blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard,
-                                 inHelicopter);
+                                 inHelicopter, blupi_.IsHidden());
             RefreshTerrainMeshIfChanged();
 
             // Voyage (plan.md `158`) -- a pickup touched above may have

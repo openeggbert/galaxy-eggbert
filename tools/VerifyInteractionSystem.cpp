@@ -132,6 +132,46 @@ int main(int argc, char** argv)
         check(false, "found the patrolling lift for the riding test");
     }
 
+    // 1.55. Followers and the drink (D44): while Blupi is hidden a dormant follower (96) does not
+    // wake (Decor::MoveObjectFollow returns while m_blupiHide) and an awake one (97) does not home
+    // (Decor.cpp:8026's `!m_blupiHide`); once seen again, they do.
+    {
+        WorldRuntime followWorld;
+        followWorld.LoadFromVwrFile(worldPath);
+        auto& objects = followWorld.GetMobileObjectsMutable();
+        objects.clear();
+        const auto addFollower = [&objects](GalaxyEggbert::Def::ObjectType type, float x)
+        {
+            MobileObjSpec follower;
+            follower.type = type;
+            follower.posStartX = follower.posEndX = follower.currentX = x;
+            follower.posStartY = follower.posEndY = follower.currentY = 20.0f;
+            follower.posStartZ = follower.posEndZ = follower.currentZ = 0.0f;
+            objects.push_back(follower);
+        };
+        addFollower(GalaxyEggbert::Def::ObjectType::ObjectType96, 0.0f);   // 1.2 from Blupi
+        addFollower(GalaxyEggbert::Def::ObjectType::ObjectType97, 4.2f);   // 3 from Blupi
+        InteractionSystem followInteraction;
+        const auto step = [&](bool hidden)
+        {
+            for (int i = 0; i < 30; ++i)
+            {
+                followInteraction.Update(dt, followWorld, 1.2f, 20.0f, 0.0f, 0.0f, sound, false, false, 0, 0,
+                                         /*blupiInvincible=*/hidden, true, true, true, true, false, false, false,
+                                         true, false, true, 0.0f, false, false, false, /*blupiHidden=*/hidden);
+            }
+        };
+        step(true);
+        const auto& hidden = followWorld.GetMobileObjects();
+        check(hidden[0].type == GalaxyEggbert::Def::ObjectType::ObjectType96,
+              "a dormant follower does not wake while Blupi is hidden");
+        check(std::fabs(hidden[1].currentX - 4.2f) < 1e-4f, "an awake follower does not home while Blupi is hidden");
+        step(false);
+        const auto& seen = followWorld.GetMobileObjects();
+        check(seen[0].type == GalaxyEggbert::Def::ObjectType::ObjectType97 && seen[1].currentX < 4.1f,
+              "seen again, the dormant one wakes and the awake one homes");
+    }
+
     // 1.6. Lift timing (D43): a lift follows the original's step machine (Decor::
     // MoveObjectStepLine) -- dwell timeStopStart, advance over stepAdvance ticks, dwell
     // timeStopEnd, recede over stepRecede -- so two lifts with the same ticks and different

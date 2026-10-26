@@ -253,7 +253,11 @@ namespace GalaxyEggbert::Game
                     // Flying the helicopter (in the air: the caller's blupiCanFire): Fire drops a
                     // glue ball straight down instead of the tank's shot ahead, 8 ticks after the
                     // press, Blupi held meanwhile (Decor.cpp:3058-3080 HelicoGlu, 3694-3708).
-                    bool blupiDropsGlue = false);
+                    bool blupiDropsGlue = false,
+                    // Under the drink's Hide no follower sees him: a dormant one does not wake
+                    // (Decor::MoveObjectFollow returns while m_blupiHide) and an awake one stops
+                    // homing (Decor.cpp:8026's `!m_blupiHide`).
+                    bool blupiHidden = false);
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.

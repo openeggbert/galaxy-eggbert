@@ -831,7 +831,7 @@ namespace GalaxyEggbert::Game
                                       bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
                                       bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
-                                      bool blupiArmoredVehicle, bool blupiDropsGlue)
+                                      bool blupiArmoredVehicle, bool blupiDropsGlue, bool blupiHidden)
     {
         events_.clear();
         crateBeingPushedThisFrame_ = false;
@@ -1412,7 +1412,7 @@ namespace GalaxyEggbert::Game
             // (real channel 92) exactly once at the transition. Does NOT
             // `continue` -- a follower that wakes this exact frame also
             // takes its first homing step this same frame, below.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 && !blupiHidden)
             {
                 const float fwdx = obj.currentX - blupiX;
                 const float fwdy = obj.currentY - blupiY;
@@ -1462,7 +1462,7 @@ namespace GalaxyEggbert::Game
             // through (no `continue`) on a successful step, since that
             // check is exactly how a follower that catches up to Blupi is
             // supposed to kill him.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97 && !blupiHidden)
             {
                 float endX = obj.currentX;
                 float endY = obj.currentY;
