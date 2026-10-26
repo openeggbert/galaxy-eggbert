@@ -1,0 +1,17 @@
+# Mission 125 played through (plans/briefs/world125.md): no treasure; a helicopter from the start
+# ledge over the cave to the golden key in its ring of bobbing mines, then the main hub.
+wait 30
+expect mission = 125
+# A helicopter on the start ledge's east edge (18, 20, 49): Action beside it mounts it.
+go 17.3 49
+hold 2 action
+wait 30
+# Up above the corridor's tube (its top walk 26), the pool and every patrol (the bird at 28).
+go 20 49 tol 0 with lookup until y >= 35 max 900
+# East over the cave to above the key's pillar (86, 50), then straight down onto the key: the
+# bobbing mines stand at least 2.8 from it.
+go 86 50 tol 0.2 max 1800
+go 86 50 tol 0 with crouch until exit = 1 max 900
+until mission = 1 max 900
+expect phase = Play
+wait 60
