@@ -1,0 +1,146 @@
+# Mission 101 played through (plans/briefs/world101.md): crates pushed into steps, walls of crates
+# blown with the sticks of dynamite, the six treasures and the stair up to the exit. A stick
+# blasts two and a half seconds after it is put down, up to some four cells either way along X
+# and one along Y and Z: put down a cell or two before a wall, then walk five cells away.
+wait 30
+expect mission = 101
+# The hall (walk 6): its crate (48, 50) pushed north to the gallery's foot (48, 46), onto it, up
+# onto the gallery (walk 9); treasure 2 at its east end, a stick.
+go 48 52
+go 48 51.4 tol 0.1
+face 0
+go 48 47.4 max 900
+crate 48 6 46 max 60
+go 48 46 jump 1.4 tol 0.15
+until ground = 1
+go 48 44.4 jump 1.6
+until ground = 1
+expect y >= 8.9
+go 55 41.5 until treasures = 1 max 600
+until treasures = 1 max 200
+go 51 41.5
+go 51 41 tol 0.3
+# West along the gallery into the tunnel (z 41-43): the stick down before its wall of crates
+# (x 38) with his back to it (putting it down holds him 26 ticks, as the original's PutDynamite;
+# turning round would take as long again), then straight back east out of the blast.
+go 44 42
+go 39.6 42 tol 0.15
+face 90
+hold 2 action
+go 46 42
+wait 120
+go 38 42
+# The west cave (walk 9): treasure 1 (24, 38), the egg (29, 46), a stick (26, 45).
+go 29 46 until eggs = 1 max 600
+go 26 45
+go 24 38.2 tol 0.1 until treasures = 2 max 600
+until treasures = 2 max 200
+expect dynamite = 1
+# Back east to the gallery and down off its front into the hall (beside the crate), into the east
+# tunnel (z 50-52): the stick down before its plug of nine crates (x 62), back west.
+go 44 42
+go 52 44
+go 52 47
+until ground = 1
+go 56 51
+go 60.4 51 tol 0.15
+face 270
+hold 2 action
+go 54 51
+wait 120
+expect dynamite = 0
+# Beyond the plug the two sticks (65, 50) and (65, 52): one. The pit room: down into its basin
+# (walk 4) and round its heap of crates along z 48, out up its east side, along the corridor to
+# the treasure caves' corridor (x 81-83, walk 6).
+go 65 50 until dynamite = 1 max 600
+go 67.4 48
+go 69 48
+until ground = 1
+go 76 48
+go 77.6 48 jump 1.4
+until ground = 1
+expect y >= 5.9
+go 79 51
+go 82 51.5
+# The east cave's wall of crates (x 84, z 51-53): the stick down before its middle facing north,
+# away along the corridor out of the blast (the crate at (82, 55) south is kept for the ledge);
+# treasure 4 (89, 52) behind it.
+go 82.6 52 tol 0.15
+face 0
+hold 2 action
+go 82.6 47
+wait 120
+go 82.6 52
+go 89 52 until treasures = 3 max 600
+until treasures = 3 max 200
+# The south cave, open: treasure 3 (88, 64), in lane x 83.3 past the crate.
+go 84 52
+go 83.3 54
+go 83.3 62
+go 88 64 until treasures = 4 max 600
+until treasures = 4 max 200
+# The crate (82, 55) pushed to the ledge's foot (81, 58): along +Z from its north side, along -X
+# from its east side; onto it and up onto the ledge (walk 9) for treasure 6 (79, 58).
+go 83.3 54
+go 82 53.6
+face 180
+go 82 56.6 max 600
+crate 82 6 58 max 60
+go 83.4 56.6
+go 83.4 58
+face 270
+go 82.4 58 max 600
+crate 81 6 58 max 60
+go 81 58 jump 1.4 tol 0.15
+until ground = 1
+go 79.6 58 jump 1.6
+until ground = 1
+expect y >= 8.9
+go 79 58 until treasures = 5 max 300
+until treasures = 5 max 200
+# Down off the ledge, back west through the pit's basin for the last stick beyond the plug
+# (65, 52), and east again.
+go 82.5 60
+until ground = 1
+go 82.5 51.5
+go 79 51
+go 77.4 48
+go 76 48
+until ground = 1
+go 68.5 48
+go 66.4 48 jump 1.4
+until ground = 1
+go 65 52 until dynamite = 1 max 600
+go 67.4 48
+go 69 48
+until ground = 1
+go 76 48
+go 77.6 48 jump 1.4
+until ground = 1
+go 79 51
+go 82.5 50
+# The north cave's wall (x 84, z 38-40): the stick down before its middle facing south, away
+# along the corridor; treasure 5 (90, 37) and the egg (87, 41) behind it.
+go 82.6 39 tol 0.15
+face 180
+hold 2 action
+go 82.6 45
+wait 120
+go 82.6 39
+go 87 41 until eggs = 2 max 600
+go 90 37.4 tol 0.1 until treasures = 6 max 600
+until treasures = 6 max 200
+# The stair at the corridor's north end (walk 8, 10, 12) and the exit (82, 31).
+go 84 39
+go 82 37
+go 82 35 jump 1.4 tol 0.2
+until ground = 1
+go 82 34 jump 1.2 tol 0.2
+until ground = 1
+go 82 33 jump 1.2 tol 0.2
+until ground = 1
+expect y >= 11.9
+go 82 31 until exit = 1 max 600
+until mission = 100 max 900
+expect phase = Play
+wait 60

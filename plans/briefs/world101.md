@@ -30,7 +30,9 @@ side cave, two by the heap. Six treasures in the caves on the right, two eggs, t
 **Checks**: `levelcheck.py`: the solved variant reaches the six treasures, both eggs and the exit;
 the real world stops in the hall (the gallery needs the pushed crate). `VerifyShippedWorlds`. Live
 (`--mission 101`, direct view F3 at spawns in each part): the hall's crates, the gallery's sticks,
-the west wall, the plug, the pit's heap, the corridor's walls and ledge crate, the stair. Played
+the west wall, the plug, the pit's heap, the corridor's walls and ledge crate, the stair. Played through from the spawn to hub 100 by `tools/autoplay/world101.txt` (the crate to the
+gallery, four sticks for the west wall, the plug and both caves' walls, put down with his back to
+each wall as `PutDynamite` holds him 26 ticks, the ledge's crate, the stair). Played
 live: the crate pushed to the gallery's foot, the jumps onto it and the gallery; a stick carried
 into the west tunnel, put down, and the wall gone after the blast (the stick's flight to the HUD
 on pickup takes a few seconds before it can be put down). Not played through: the whole mission.
