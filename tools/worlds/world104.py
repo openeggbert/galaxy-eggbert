@@ -54,8 +54,10 @@ def main(argv) -> int:
 
     # ---- the start cave (walk 30) ----
     # Spawn mid-cave. A ledge three up in its north-west corner holds treasure 1: push a crate of
-    # the heap to its foot. South, a passage down in steps, two mines hanging in its walking
-    # cells (crouch under them), treasure 2 at its end.
+    # the heap to its foot. South, a passage down a step, two mines hanging in its walking cells
+    # (crouch under them), treasure 2 at its end. The mines hang over level stretches, the step
+    # between them: a crouching Blupi cannot jump, so a mine over a step's foot made the way back
+    # up a trap (it was three steps, one at each mine).
     carve(w, 4, TOP, 42, 16, TOP + 4, 56)
     w.spawn = (10, TOP, 52)
     w.fill(4, TOP, 42, 6, TOP + 2, 44, STONE)
@@ -63,13 +65,13 @@ def main(argv) -> int:
     crate((10, TOP, 46), (7, TOP, 44))
     crate((11, TOP, 46), (11, TOP, 46))
     crate((10, TOP, 47), (10, TOP, 47))
-    for k, z in enumerate(range(57, 64)):
-        floor = TOP - 1 - (k // 2)
-        x0, x1 = (7, 7) if z in (59, 61) else (6, 8)                  # one wide where they hang
+    for z in range(57, 64):
+        floor = TOP - 1 - (0 if z <= 60 else 1)                          # walk 30, then 29
+        x0, x1 = (7, 7) if z in (59, 62) else (6, 8)                  # one wide where they hang
         carve(w, x0, floor + 1, z, x1, floor + 3, z)
-    hanging(7, TOP - 1, 59)
-    hanging(7, TOP - 2, 61)
-    w.place(O.TREASURE, 7, TOP - 3, 63)
+    hanging(7, TOP, 59)
+    hanging(7, TOP - 1, 62)
+    w.place(O.TREASURE, 7, TOP - 1, 63)
     fork_alcove(w, 16, TOP, 44, (1, 0))
 
     # ---- the garage and the corridor of mines (walk 30) ----
@@ -149,6 +151,9 @@ def main(argv) -> int:
         inner = (x + (1 if x == 85 else -1 if x == 93 else 0), z + (1 if z == 41 else -1 if z == 53 else 0))
         for cx, cz in ((x, z), inner):
             w.set(cx, walk - 1, cz, STONE)
+    # The ramp's first corner beside the door: (85, 53)'s inner cell is (86, 52), so (86, 53) had
+    # no floor at the top and a walker in the door's east lane fell through to the foot.
+    w.set(86, LOW - 1, 53, STONE)
     w.fill(87, 1, 43, 91, LOW + 3, 51, STONE)                            # the central pillar
     mines([(85, 16, 47), (90, 13, 41), (93, 9, 48), (89, 6, 53)])
     w.place(O.EXIT, 86, 3, 46)

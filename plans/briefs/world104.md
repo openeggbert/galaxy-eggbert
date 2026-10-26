@@ -14,8 +14,11 @@ eggs, forty-four mines, seven crates, seven lifts.
 
 **3D design**: one mass of cobble.
 - The start cave (walk 30): spawn (10, 30, 52). A ledge three up in its north-west corner,
-  treasure 1: push a crate of the heap to its foot. South a passage down in steps, one wide where
-  two mines hang in the walking cells (crouch under them), treasure 2 at its end.
+  treasure 1: push a crate of the heap to its foot. South a passage down a step, one wide where
+  two mines hang in the walking cells (crouch under them), treasure 2 at its end. The mines hang
+  over level stretches with the step between them (2026-10-27: built as three steps, one at each
+  mine, it was a trap: a crouching Blupi cannot jump the steps back up, standing he meets the
+  mines).
 - The garage east of the cave: six jeeps, two eggs. The corridor of mines (z 49–51): four blocks of
   mines two deep across it (no jump clears one, the jeep drives through setting them off), a step
   down, a block of four more in a passage two wide.
@@ -38,5 +41,7 @@ at spawns in each part): the start cave's heap and ledge, the corridor of mines,
 ladder, the pit with its bobbing lift and the pillar, the lower gallery, the spiral. Played live:
 a jeep taken in the garage and driven down the corridor, the mines going off ahead of it. The
 ladder's first jumps led to D52 (a jump from a lift was cancelled at once), fixed; a jump from a
-lift onto a ledge two high played live after it. Not played through: the whole ladder, the
-bobbing lift's jumps, the spiral by jeep.
+lift onto a ledge two high played live after it. Played through from the spawn to hub 100 by
+`tools/autoplay/world104.txt` (both crate steps, the passage both ways crouching, the jeeps, the
+bobbing lift's jumps, the whole ladder, the spiral on foot). 2026-10-27: the spiral's first corner
+(86, 53) had no floor at the top, a fall to its foot; floored.
