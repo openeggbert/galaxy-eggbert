@@ -1,0 +1,72 @@
+# Mission 012 played through (plans/briefs/world012.md).
+wait 30
+expect mission = 12
+expect lives = 3
+# 1. Push the crate four cells -Z to the red dot under T1 (it stops at T1's face), climb it.
+go 48 63.1 max 400
+go 48 62 jump 1.4
+until ground = 1
+expect y >= 1.95
+go 48 59.5 jump 3
+until ground = 1
+expect y >= 3.95
+# 2. Into the alcove (z 50), hold the crate (54) and pull it two cells -X to the red dot.
+go 52 52
+go 52 50 tol 0.1
+go 52.95 50 tol 0.08
+face 90
+hold 10 crouch
+# Backing 2.3 cells: the crate follows at each 1.9 gap, 54 -> 53 -> 52, and no third time.
+hold 110 crouch down
+wait 10
+expect x <= 50.7
+go 52 50 jump 1.4
+until ground = 1
+expect y >= 4.95
+go 52 47.5 jump 3
+until ground = 1
+expect y >= 6.95
+# 3. The floor crate two cells -Z to the red dot under T3, the shelf's crate pushed -X onto it.
+go 48 42
+go 48 39.4 tol 0.1 max 300
+go 51 39.4
+face 0
+go 51 38 jump 1.3
+until ground = 1
+expect y >= 7.95
+go 49.4 38 tol 0.1 max 300
+go 48 38 jump 1.5
+until ground = 1
+expect y >= 8.95
+go 48 35.5 jump 3
+until ground = 1
+expect y >= 10.95
+# 4. Three crates onto the red dot under T4: along the floor (-Z), off the one-block shelf (+X),
+#    off the two-block shelf (-X).
+go 52 30
+go 52 27.4 tol 0.1 max 300
+go 49.6 27.4
+face 0
+go 49.6 26 jump 1.3
+until ground = 1
+expect y >= 11.95
+go 50.6 26 tol 0.1 max 300
+go 50.6 27.6
+go 54.5 27.6
+face 0
+go 54.5 26 jump 1.3
+until ground = 1
+expect y >= 12.95
+go 53.4 26 tol 0.1 max 300
+go 52 26 jump 1.5
+until ground = 1
+expect y >= 13.95
+go 52 23.5 jump 3
+until ground = 1
+expect y >= 15.95
+# The red arrow on T4 (no treasures here): the win cheer, then the world's hub.
+go 49 18 until exit = 1
+until mission = 10 max 900
+expect lives = 3
+expect phase = Play
+wait 120
