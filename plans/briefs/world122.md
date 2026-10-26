@@ -23,4 +23,7 @@ two inverts (40), twelve eggs; the exit by Blupi's start.
 **Checks**: `levelcheck.py`: the solved variant reaches the ten treasures, twelve eggs and the exit;
 the real world stops at the first mines and crates. `VerifyShippedWorlds`. Live (`--mission 122`,
 direct view F3): the shaft and its stair, the bottom gallery's crate and mines, a treasure's
-pocket, the middle gallery, the top gallery. Not played through: the loops, the crates, the drink.
+pocket, the middle gallery, the top gallery. Played through from the spawn to hub 120 by
+`tools/autoplay/world122.txt` (the ten treasures, all three loops; the drink and inverts left).
+2026-10-27: the stair's steps stood one lower than designed (walk 7 ... 21, a jump up at each
+landing); now 8 ... 22, level with the galleries' passages.

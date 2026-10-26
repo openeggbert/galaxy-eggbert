@@ -53,7 +53,7 @@ def main(argv) -> int:
     carve(46, FLOORS[0], 46, 54, FLOORS[2] + 3, 54)
     stair = [(46, 52), (46, 50), (46, 48), (46, 46), (48, 46), (50, 46), (52, 46), (54, 46)]
     for k, (x, z) in enumerate(stair):
-        top = FLOORS[0] + 1 + 2 * k                                       # walk 8 ... 22
+        top = FLOORS[0] + 2 + 2 * k                                       # walk 8 ... 22
         w.fill(x, FLOORS[0], z, x + 1, top - 1, z + 1, BRICK)
     w.spawn = (50, FLOORS[0], 51)
     w.place(O.EXIT, 52, FLOORS[0], 53)
