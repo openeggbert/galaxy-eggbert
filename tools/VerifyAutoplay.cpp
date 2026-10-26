@@ -207,7 +207,7 @@ int main()
         }
         const std::string log = autoplay.TakeLog();
         check(Contains(log, "t=0 phase Play") && Contains(log, "t=0 mission 11") &&
-                  Contains(log, "t=70 treasures 1 eggs 0 lives 3 keys 0") && Contains(log, "t=100 phase Win") &&
+                  Contains(log, "t=70 treasures 1 eggs 0 lives 3 keys 0 dynamite 0") && Contains(log, "t=100 phase Win") &&
                   Contains(log, "t=60 at "),
               "the trace records phases, the mission, pickups and the position every second");
     }
@@ -246,8 +246,8 @@ int main()
             autoplay.Step(state);
             log += autoplay.TakeLog();
         }
-        check(autoplay.Passed() && Contains(log, "t=20 crates (32.00 10.00 45.00)") &&
-                  Contains(log, "t=0 crates (33.00 10.00 45.00)") && Contains(log, "t=20 PASS script complete"),
+        check(autoplay.Passed() && Contains(log, "t=20 crate (33.00 10.00 45.00) -> (32.00 10.00 45.00)") &&
+                  Contains(log, "t=0 crates 1") && Contains(log, "t=20 PASS script complete"),
               "crate waits for a crate in a cell; the trace records each crate move");
     }
 

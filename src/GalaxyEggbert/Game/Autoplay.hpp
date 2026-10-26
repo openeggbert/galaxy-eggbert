@@ -34,7 +34,7 @@
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
-// COND is FIELD OP VALUE, FIELD one of x y z yaw tick mission treasures eggs lives keys ground dead
+// COND is FIELD OP VALUE, FIELD one of x y z yaw tick mission treasures eggs lives keys dynamite ground dead
 // exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
 // it strikes on the even ticks of 0-49) phase, OP one of = != < <= > >=; phase takes a name
 // (Play, Win, Lost, Pause, Init, ...). A
@@ -65,6 +65,7 @@ namespace GalaxyEggbert::Game
         int eggs = 0;
         int lives = 0;
         int keys = 0; // the coloured keys held
+        int dynamite = 0; // the stick carried (0 or 1)
         // Every active lift, as where a rider stands on it: raw x, feet y, raw z.
         std::vector<std::array<float, 3>> lifts;
         // Every crate: raw x, y (its cell), raw z. The trace records them whenever one moves.
@@ -97,7 +98,7 @@ namespace GalaxyEggbert::Game
 
     private:
         enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, End };
-        enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Keys, Ground, Dead, Exit, Blitz, Phase };
+        enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Ground, Dead, Exit, Blitz, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {

@@ -128,7 +128,7 @@ namespace GalaxyEggbert::Game
                 static const std::pair<const char*, Field> kFields[] = {
                     {"x", Field::X},         {"y", Field::Y},         {"z", Field::Z},
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mission", Field::Mission},
-                    {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys},
+                    {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite},
                     {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz},
                     {"phase", Field::Phase}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
@@ -333,6 +333,7 @@ namespace GalaxyEggbert::Game
         case Field::Eggs: value = static_cast<float>(state.eggs); break;
         case Field::Lives: value = static_cast<float>(state.lives); break;
         case Field::Keys: value = static_cast<float>(state.keys); break;
+        case Field::Dynamite: value = static_cast<float>(state.dynamite); break;
         case Field::Ground: value = state.onGround ? 1.0f : 0.0f; break;
         case Field::Dead: value = state.dead ? 1.0f : 0.0f; break;
         case Field::Exit: value = state.exitReached ? 1.0f : 0.0f; break;
@@ -379,21 +380,31 @@ namespace GalaxyEggbert::Game
             Write(state, "mission " + std::to_string(state.mission));
         }
         if (havePrevious_ && (state.treasures != previous_.treasures || state.eggs != previous_.eggs ||
-                              state.lives != previous_.lives || state.keys != previous_.keys))
+                              state.lives != previous_.lives || state.keys != previous_.keys ||
+                              state.dynamite != previous_.dynamite))
         {
-            std::snprintf(line, sizeof(line), "treasures %d eggs %d lives %d keys %d", state.treasures, state.eggs,
-                          state.lives, state.keys);
+            std::snprintf(line, sizeof(line), "treasures %d eggs %d lives %d keys %d dynamite %d", state.treasures,
+                          state.eggs, state.lives, state.keys, state.dynamite);
             Write(state, line);
         }
-        if (!state.crates.empty() && (!havePrevious_ || state.crates != previous_.crates))
+        // Crates: how many at the start and whenever some are blown up; each one that moves.
+        if (!state.crates.empty() && (!havePrevious_ || state.crates.size() != previous_.crates.size()))
         {
-            std::string crates = "crates";
-            for (const auto& crate : state.crates)
+            Write(state, "crates " + std::to_string(state.crates.size()));
+        }
+        else if (havePrevious_ && state.crates != previous_.crates)
+        {
+            for (std::size_t i = 0; i < state.crates.size(); ++i)
             {
-                std::snprintf(line, sizeof(line), " (%.2f %.2f %.2f)", crate[0], crate[1], crate[2]);
-                crates += line;
+                const auto& was = previous_.crates[i];
+                const auto& now = state.crates[i];
+                if (was != now)
+                {
+                    std::snprintf(line, sizeof(line), "crate (%.2f %.2f %.2f) -> (%.2f %.2f %.2f)", was[0], was[1],
+                                  was[2], now[0], now[1], now[2]);
+                    Write(state, line);
+                }
             }
-            Write(state, crates);
         }
         if (!havePrevious_ || state.tick % kPositionEveryTicks == 0 || traceTicksLeft_ > 0)
         {
