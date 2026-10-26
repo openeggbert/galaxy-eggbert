@@ -1,0 +1,208 @@
+# Mission 074 played through (plans/briefs/world074.md): a skateboard up the street and down the
+# lava stair over their mines, the pit's rods, the tower's five treasures, the door "5", the pits'
+# rods, the east relay, a skateboard over the upper corridor's mines, the bars over its lava
+# floor, the eggs' ledge, a skateboard through the door "7" and the west corridor's mines, the
+# swim to the pool's pillars, the west relay and the pavilion's jumps to the arrow.
+wait 30
+expect mission = 74
+# A: onto the start's west table (one up) for its skateboard (18, 11, 76).
+go 20 75.3
+face 270
+go 17.6 75.3 jump 2.0 tol 0.15
+until ground = 1
+expect y >= 10.9
+hold 2 action
+wait 30
+# B: north up the street on it (x 19-21) over both rows of mines (z 60-63, 44-46).
+go 20 70 max 600
+go 20 36 max 900
+# C: east down the lava stair (z 32-34), each cell of lava jumped (x 25, 29, 33), through the
+# foot corridor's block of mines (x 38-40), off the skateboard before its pit.
+go 20 33.4 tol 0.3 max 300
+go 27.3 33 jump 3.6 max 300
+go 31.3 33 jump 3.2 max 300
+go 36 33 jump 3.8 max 300
+go 40 33 tol 0.3 max 300
+wait 40
+hold 2 action
+wait 30
+# Off the pit's edge onto its rods, hanging along them to the far floor (x 47), into the tower.
+go 41.5 33
+go 48 33 max 600
+expect y >= 6.9
+# D: the tower's stair of five steps round its newel (walk 8 ... 12), a treasure on each, then
+# east through the door "5" (x 58), open with the five.
+go 50.5 33
+go 50.5 32.4 tol 0.1
+face 0
+go 50.5 30 jump 1.6 tol 0.15
+until ground = 1
+until treasures = 1 max 200
+go 51 30 tol 0.1
+face 90
+go 53 30 jump 1.6 tol 0.15
+until ground = 1
+until treasures = 2 max 200
+go 54 30 tol 0.1
+face 90
+go 56 30 jump 1.6 tol 0.15
+until ground = 1
+until treasures = 3 max 200
+go 56 31 tol 0.1
+face 180
+go 56 33 jump 1.6 tol 0.15
+until ground = 1
+until treasures = 4 max 200
+go 56 34 tol 0.1
+face 180
+go 56 36 jump 1.6 tol 0.15
+until ground = 1
+until treasures = 5 max 200
+expect y >= 11.9
+# E: east along z 36 over the two pits on their rods; F, the east relay (40 ticks, 40 dwelling):
+# pair A (x 72-73) up from the pits' level to meet pair B (x 74-75) coming down; B back up to
+# meet pair C (x 72-73), C up to the landing L2 (walk 24).
+go 58.5 36
+go 70 36 max 900
+expect y >= 11.9
+go 70.6 36 tol 0.1
+lift 73 16 36 max 400
+lift 73 12 36 max 400
+go 73 36 tol 0.15
+lift 73 16 36 max 400
+go 74 36 tol 0.15
+lift 74 20 36 max 400
+go 73 36 tol 0.15
+lift 73 24 36 max 400
+wait 5
+go 73 39
+expect y >= 23.9
+# G, the upper storey (walk 24): a skateboard from L2's east table (75, 25, 40), south along the
+# corridor over its mines (z 44-46), off it before the lava floor.
+go 73.6 40.5
+face 90
+go 74.8 40.5 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 24.9
+hold 2 action
+wait 30
+go 73 42 max 300
+go 73 45.2 tol 0.3 max 300
+wait 40
+hold 2 action
+wait 30
+# The lava floor: from under the first bar (z 48) a jump catches it; hanging along to the island
+# (z 53, no bar over it: he drops) and its treasure; from under the next bar (z 54) along to
+# z 60 and the treasure at the corridor's end (73, 61).
+go 73 48 tol 0.05
+go 73 53.4 jump 9 max 300
+until ground = 1
+until treasures = 6 max 200
+go 73 54 tol 0.05
+go 73 60.6 jump 9 max 400
+until ground = 1
+go 73 61 until treasures = 7 max 300
+until treasures = 7 max 200
+# The corner room: up onto the shelf (walk 26, z 65), up onto the eggs' ledge (walk 28, z 66),
+# its three eggs; back down onto the shelf for a skateboard.
+go 75 63.6 tol 0.1
+face 180
+go 75 65 jump 1.8 tol 0.15
+until ground = 1
+expect y >= 25.9
+go 75 66 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 27.9
+until eggs = 1 max 200
+go 74 66 until eggs = 2 max 300
+go 76 66 until eggs = 3 max 300
+until eggs = 3 max 200
+go 75 66 tol 0.15
+go 75 65 tol 0.15 max 300
+until ground = 1
+hold 2 action
+wait 30
+# West on it through the door "7" (x 70), open with seven treasures, over the west corridor's
+# mines (x 64-66) to the balcony over the pool court; off it there.
+go 73 63 max 300
+go 61 63 max 600
+go 59.5 63 tol 0.3 max 300
+wait 40
+hold 2 action
+wait 30
+expect x >= 55.6
+# H: down the two terraces (walk 21, 18) to the court's east bank (walk 15); swim west to the
+# pillar (42, 58) and out onto it (its top level with the water's) for treasure 8.
+go 49 62
+go 46.6 58
+until ground = 1
+expect y <= 15.1
+go 46.4 58 tol 0.1
+face 270
+go 44.8 58 max 300
+until y >= 14.27 max 300
+go 42.4 58 tol 0 with lookup until x <= 42.8 max 600
+face 270
+hold 8 up jump
+go 42 58 tol 0.1 max 200
+until ground = 1 max 300
+until treasures = 8 max 200
+expect y >= 14.9
+# Into the water again, south-west to the pillar (37, 50) and out onto it for treasure 9; on west
+# out onto the west bank (x 28-33).
+go 41 57
+until y <= 14.3 max 300
+go 38 51 with lookup max 600
+go 37.4 50 tol 0 with lookup until x <= 37.8 max 600
+face 270
+hold 8 up jump
+go 37 50 tol 0.1 max 200
+until ground = 1 max 300
+until treasures = 9 max 200
+expect y >= 14.9
+go 36 50
+until y <= 14.3 max 300
+go 33.4 50 tol 0 with lookup until x <= 33.8 max 600
+face 270
+hold 8 up jump
+go 32.5 50 tol 0.1 max 200
+until ground = 1 max 300
+expect y >= 14.9
+# The egg in the court's corner (29, 45).
+go 29 45 until eggs = 4 max 600
+until eggs = 4 max 200
+# I, the west relay (40 ticks, 40 dwelling): pair D (x 30) up from the court to meet pair E
+# (x 29, 31) coming down; E back up to meet pair F (x 30), F up to the landing DL (walk 27).
+go 30 50.5
+go 30 51.2 tol 0.1
+lift 30 19 52 max 400
+lift 30 15 52 max 400
+go 30 52 tol 0.15
+lift 30 19 52 max 400
+go 29 52 tol 0.15
+lift 29 23 52 max 400
+go 30 52 tol 0.15
+lift 30 27 52 max 400
+wait 5
+go 30 50.5
+expect y >= 26.9
+# J, the pavilion: two jumps west (walk 29, 31) onto the arrow's platform (walk 33).
+go 29.4 50 tol 0.1
+face 270
+go 27 50 jump 2.5 tol 0.15
+until ground = 1
+expect y >= 28.9
+go 26.4 50 tol 0.1
+go 24 50 jump 2.5 tol 0.15
+until ground = 1
+expect y >= 30.9
+go 23.4 50 tol 0.1
+go 21 50 jump 2.5 tol 0.15
+until ground = 1
+expect y >= 32.9
+go 19 49 until exit = 1 max 300
+expect treasures = 9
+expect eggs = 4
+until mission = 70 max 900
+expect phase = Play
+wait 60
