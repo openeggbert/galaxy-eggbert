@@ -1,0 +1,208 @@
+# Mission 062 played through (plans/briefs/world062.md).
+wait 30
+expect mission = 62
+# U1, the machine start room (walk 21), east into the tunnel T1 and its eggs; through the
+# curtain of lightning (x 37) in its quiet half (blitz 50-99).
+go 23 31
+go 31 31 tol 0.2
+go 34 31 tol 0.2
+go 35.6 31 tol 0.1
+until blitz = 50 max 400
+go 41 31 tol 0.2
+go 44.5 31
+# U2, the lava gallery: over the crumbling bridge (z 31) onto the island, treasure 1 and its
+# egg, east over the other bridge to the east rim; round to the south rim (off the hole in it at
+# x 58-60, z 40-43), onto the shuttle (one
+# up) as it arrives at the rim, off it as it reaches the pillar in the lava (walk 23): treasure
+# 6; back onto it when it next comes, off its front edge at the rim. Each jump onto it timed
+# to land while it stops.
+go 46.3 31 tol 0.1
+face 90
+go 51.5 31
+go 53 31 tol 0.2
+go 53 29.3 tol 0.2
+go 54.5 31
+go 60.6 31
+go 60.6 39.2
+go 57.2 39.2
+go 56 40.35 tol 0.1
+face 0
+lift 56 22 39 max 600
+lift 56 22 36 max 600
+wait 70
+go 56 39 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 21.95
+lift 56 22 36 max 300
+go 56 35 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 22.95
+until treasures = 2 max 120
+face 180
+lift 56 22 36 max 300
+lift 56 22 39 max 300
+wait 75
+go 56 36.4 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 21.95
+until z >= 38.4 max 300
+go 56 40.4
+wait 20
+expect y <= 21.05
+expect z >= 39.6
+# U3 north of the gallery: its corridor (x 51-55) with three rows of saws right across it (z 18,
+# 15, 12), each jumped; the room at its end: the green key and treasure 2, its egg.
+go 57.2 39.3 tol 0.15
+go 60.6 39.2
+go 60.6 23.2
+go 60 23 tol 0.2
+go 53 22.4
+go 53 20
+go 53 16.3 jump 2.54 tol 0.25
+until ground = 1
+go 53 16.5 tol 0.1
+go 53 13.3 jump 2.54 tol 0.25
+until ground = 1
+go 53 13.5 tol 0.1
+go 53 10.3 jump 2.54 tol 0.25
+until ground = 1
+expect z <= 11.5
+go 50 7.5
+go 47 6 tol 0.2
+until keys = 1 max 120
+go 53 7 tol 0.2
+go 59 6 tol 0.2
+until treasures = 3 max 120
+# Back south over the saws, round the gallery's east rim and down its hole (x 58-60, z 40-43)
+# to the lower level's hub L1 (walk 11) and its three eggs, clear of the drip (56, 52).
+go 53 9.5
+go 53 10.8 tol 0.1
+face 180
+go 53 13.7 jump 2.54 tol 0.25
+until ground = 1
+go 53 16.7 jump 2.54 tol 0.25
+until ground = 1
+go 53 19.7 jump 2.54 tol 0.25
+until ground = 1
+expect z >= 18.6
+go 53 22.4
+go 60.6 23.2
+go 60.6 39.2
+go 59 41
+until ground = 1 max 300
+expect y <= 11.05
+go 59 45
+go 60 47 tol 0.2
+go 50 46 tol 0.2
+go 48 54 tol 0.2
+# L3 behind the green door (53, 57): a corridor one wide; its creature walks between x 54 and 59
+# and rests at each end, deadly only while it rests: in as it leaves x 59 westward, through it as
+# it walks, treasure 4 (60, 11, 60) beyond it; out as it leaves x 54 eastward.
+go 53 55
+go 53 59.3 tol 0.1
+near 59 11 60 0.2 max 2400
+near 58 11 60 0.2 max 1200
+go 53 60 tol 0.1
+go 60.3 60 tol 0.15
+until treasures = 4 max 120
+near 54 11 60 0.2 max 2400
+near 55 11 60 0.2 max 1200
+go 53 60 tol 0.1
+go 53 56
+# L1's west doorway (43, 49), where its creature rests at one end of its walk (x 44-52): through
+# it once the creature has come to rest at the other end (x 52). L2's corridor: three columns of
+# moving mines (x 36, 38, 40) rising and falling in turn: each passed as its mines reach the top,
+# waiting between columns.
+go 48 53
+near 44 11 49 0.2 max 2400
+near 52 11 49 0.2 max 1200
+go 45 49.2
+go 41 49 tol 0.1
+near 40 14 49 0.15 max 300
+go 39 49 tol 0.1
+near 38 14 49 0.15 max 300
+go 37 49 tol 0.1
+near 36 14 49 0.15 max 300
+go 34.5 49
+# The room: its egg, over the strip of spike traps (x 28) in a jump each way, the blue key
+# (25, 44), the egg (25, 51) and treasure 3 (25, 54).
+go 32 43.4 tol 0.2
+go 29.6 44 tol 0.1
+face 270
+go 26.6 44 jump 2.5 tol 0.25
+until ground = 1
+go 25 44 tol 0.2
+until keys = 1 max 120
+go 25 51 tol 0.2
+go 25 54 tol 0.2
+until treasures = 5 max 120
+go 26.4 54.2 tol 0.1
+face 90
+go 29.4 54.2 jump 2.5 tol 0.25
+until ground = 1
+expect x >= 28.6
+# Through the blue door (30, 57) onto the ledge over the first pool, into it; down and east
+# along the flooded channel (y 3-5, x 35-50) into the second pool, up and out onto its bank
+# (walk 7, level with its water): treasure 6 and the egg. Back the same way under water, up the
+# first pool to its step (walk 9, level with that water), a jump onto the ledge, the door.
+go 30 56.3
+go 30 58
+go 30 59.4
+until y <= 8.6 max 200
+go 34.5 60 tol 0.3 with crouch until y <= 4.4 max 400
+go 51 60 tol 0.3 with crouch max 900
+go 56 60 tol 0 with lookup until y >= 6.28 max 400
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1 max 120
+expect y >= 6.95
+go 58 60 tol 0.2
+go 57.2 58.3 tol 0.2
+until treasures = 6 max 120
+go 56 59.5
+until y <= 6.6 max 200
+go 50 60 tol 0.3 with crouch until y <= 4.4 max 400
+go 34 60 tol 0.3 with crouch max 900
+go 32 58.9 tol 0 with lookup until y >= 8.28 max 400
+face 0
+hold 8 up jump
+hold 30 up
+until ground = 1 max 120
+expect y >= 8.95
+face 270
+go 30.6 58 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 10.95
+go 30 56
+# Back east through the mines' corridor and L1's doorway (as the creature has come to rest at
+# x 52), up the lift (46, 43; 40 ticks) to the gallery's south rim, round to the exit door in its
+# east wall (x 63, z 27-29), open with six, the arrow (75, 21, 28).
+go 33 50
+go 35 49 tol 0.1
+near 36 14 49 0.15 max 300
+go 37 49 tol 0.1
+near 38 14 49 0.15 max 300
+go 39 49 tol 0.1
+near 40 14 49 0.15 max 300
+go 41.5 49 tol 0.1
+near 44 11 49 0.2 max 2400
+near 52 11 49 0.2 max 1200
+go 45 49.5
+go 46 45
+go 46 44.35 tol 0.1
+face 0
+lift 46 21 43 max 900
+lift 46 11 43 max 900
+go 46 43 tol 0.1
+until y >= 20.95 max 400
+go 46 40.3
+expect y >= 20.95
+go 55.4 40.3
+go 57.2 39.3 tol 0.15
+go 60.6 39.2
+go 60.6 28
+go 75 28 until exit = 1
+until mission = 60 max 900
+expect phase = Play
+wait 60
