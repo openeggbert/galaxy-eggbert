@@ -98,6 +98,8 @@ def main(argv) -> int:
     w.place(O.EGG, 78, WALK, 81)
     carve(w, 80, WALK, 79, 87, TOP + 4, 87)
     carve(w, 81, WALK - 1, 82, 82, WALK - 1, 83)                         # the first lift's foot
+    # The top's landing (x 80, walk 27) beside the last lift, so he steps off it onto the hall.
+    w.fill(80, TOP - 1, 81, 80, TOP - 1, 84, STONE)
     p, q = (81, 82), (83, 84)
     for k, (cols, start, end) in enumerate(((p, 5, 8), (q, 11, 8), (p, 11, 14), (q, 17, 14),
                                             (p, 17, 20), (q, 23, 20), (p, 23, 26))):

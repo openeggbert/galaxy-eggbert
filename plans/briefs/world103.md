@@ -30,5 +30,8 @@ foot; a hall at the top where six lifts each carry him across a pool of lava fro
 the water's bottoms; the real world reaches those three (a fall into the water lands on them) and
 stops at the dip (it cannot swim). `VerifyShippedWorlds`. Live (`--mission 103`, direct view F3 at
 spawns in each part): the trenches' lifts, the dip and its curtain, the shaft's lifts, the pools'
-lifts and the eggs on the pillars, the pool and the treasure by the drop. Not played through: the
-swims, the shaft's relay (the same in-step relay as 084's chain, played there), the pools' lifts.
+lifts and the eggs on the pillars, the pool and the treasure by the drop. Played through from the
+spawn to hub 100 by `tools/autoplay/world103.txt` (the trenches' lifts, a jump off the second's,
+the dive under the curtain, the shaft's relay, the pools' lifts, the swim, the drop). 2026-10-27:
+the shaft's top had no floor between its last lift (x 81) and the hall (x 79); a landing at x 80
+now joins them.
