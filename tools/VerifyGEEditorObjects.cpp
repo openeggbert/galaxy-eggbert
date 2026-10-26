@@ -198,19 +198,23 @@ int main()
                objects[0].posEndZ != objects[0].posStartZ),
           "T assigns the selected object a patrol target");
 
+    // The first field is the advance's ticks, not the record's speed, which nothing reads
+    // since D43 (lifts keep their ticks).
     const float speedBefore = objects.front().speed;
+    const float stepAdvanceBefore = objects.front().stepAdvanceTicks;
     pressKey(Keys::OemPlus);
-    check(CollectMoveObjects(world).front().speed > speedBefore,
-          "plus increases the selected object's active numeric field");
+    check(CollectMoveObjects(world).front().stepAdvanceTicks > stepAdvanceBefore &&
+              CollectMoveObjects(world).front().speed == speedBefore,
+          "plus increases the selected object's active numeric field, its advance ticks first");
     pressKey(Keys::OemMinus);
-    check(std::fabs(CollectMoveObjects(world).front().speed - speedBefore) < 0.0001f,
-          "minus restores the previous speed");
+    check(std::fabs(CollectMoveObjects(world).front().stepAdvanceTicks - stepAdvanceBefore) < 0.0001f,
+          "minus restores the previous advance ticks");
 
     pressKey(Keys::Tab);
-    const float stepAdvanceBefore =
-        CollectMoveObjects(world).front().stepAdvanceTicks;
+    const float stepRecedeBefore =
+        CollectMoveObjects(world).front().stepRecedeTicks;
     pressKey(Keys::OemPlus);
-    check(CollectMoveObjects(world).front().stepAdvanceTicks > stepAdvanceBefore,
+    check(CollectMoveObjects(world).front().stepRecedeTicks > stepRecedeBefore,
           "Tab changes which object field plus edits");
 
     click(30, 30);

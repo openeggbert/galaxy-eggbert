@@ -10,8 +10,6 @@ namespace GalaxyEggbert::Editor
 {
     namespace
     {
-        constexpr float kMinObjectSpeed = 0.25f;
-        constexpr float kObjectSpeedStep = 0.25f;
         constexpr float kObjectTicksStep = 5.0f;
 
         std::optional<MoveObjectRecord> FindMoveObjectAnchoredAt(
@@ -130,14 +128,6 @@ namespace GalaxyEggbert::Editor
         MoveObjectRecord updated = record;
         switch (activeField_)
         {
-            case EditableField::Speed:
-            {
-                const float value = std::max(
-                    kMinObjectSpeed, record.speed + sign * kObjectSpeedStep);
-                if (value == record.speed) return std::nullopt;
-                updated.speed = value;
-                break;
-            }
             case EditableField::StepAdvanceTicks:
             {
                 const float value = std::max(

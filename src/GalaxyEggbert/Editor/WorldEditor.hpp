@@ -266,17 +266,18 @@ namespace GalaxyEggbert::Editor
         EditorHighlightRenderer selectionHighlightRenderer_;
 
         // Which field Tab cycles through and OemPlus/OemMinus adjust --
-        // order matches MoveObjectRecord's own declared field order.
+        // order matches MoveObjectRecord's own declared field order. Not the
+        // record's speed: since D43 every patrol keeps its authored ticks and
+        // nothing reads speed (it stays in the record for the file format).
         enum class EditableField
         {
-            Speed,
             StepAdvanceTicks,
             StepRecedeTicks,
             TimeStopStartTicks,
             TimeStopEndTicks,
         };
-        static constexpr int kEditableFieldCount = 5;
-        EditableField activeField_ = EditableField::Speed;
+        static constexpr int kEditableFieldCount = 4;
+        EditableField activeField_ = EditableField::StepAdvanceTicks;
 
         // Returns @p record with activeField_'s value nudged by @p sign
         // (+1.0f/-1.0f), clamped to a sane floor -- or std::nullopt if the
