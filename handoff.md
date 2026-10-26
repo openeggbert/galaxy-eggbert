@@ -109,6 +109,16 @@ D59: walking past sticks of dynamite took two, any stick on contact; now, as the
 stick per press of Action while none is carried or flying (`c4a539f`; the seven scripts that
 take sticks press Action). levelcheck reports traps in 052 and 054 that the wasp's balloon
 leaves; 066's blupit can be walked round (B1 wider than its line of fire, left). Open: D11.
+Milestone F is done (the suite 110/110; `tools/qa_sweep.sh` loads all 79 worlds live, 79/79;
+campaigncheck, watercheck; the campaign in one run). Milestone C: every turning object (bird,
+fish, follow star, egg, exit arrow, bulldozer) is now matched to its icons every 5 degrees
+(`tools/rd4_to_gltf/objects.txt`; only the icon-to-pose tables change, the meshes stay), and the
+parity matrix is `plans/inventory/model_parity.md` (`tools/model_parity.py`): 75 of 82 models
+match every icon at 0.85 or better, the 7 below are faithful by their compare sheets. To re-export
+one object: `build_object_library.py ... --only NAME --out build-probe/rd4-objects-probe`, then
+`export_cna_avatar.py` into `avatars3d/objects/<dir>/` and copy its `icons.txt` (the full
+`export_objects.py` would remove every directory its library lacks). Open: D11 (the owner's
+list), BB3D-032 (the fish's head), the flat procedural textures.
 
 Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
 variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.
