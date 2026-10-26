@@ -270,7 +270,7 @@ adaptation) · evidence/test · priority. Known rows so far:
 | Arrival beside the last door in a hub (video §a) | A | done D19 (ArrivalPastDoor / ArrivalBesideSign) |
 | Hub door slides up after a win (video §c) | C | done (every opened door of a hub slides up on arrival: `OpenDoorAt`, ObjectType22, as `Decor::AdaptDoors`/`OpenDoor`) |
 | Crate pull (Recede/Advance) | A | done D21 |
-| Vehicle × enemy contact (skateboard vs. mine, D13; then every vehicle and enemy) | A | mines done D13; every other vehicle × enemy pair open |
+| Vehicle × enemy contact (skateboard vs. mine, D13; then every vehicle and enemy) | A | done: Galaxy's generic contact list (2/3/4/16/17/20/96/97) is Decor.cpp:5782's; jeep/tank/skateboard destroy them, the others die; bullets (23), the wasp (44) and the big creature (54) have their own branches, as the original |
 | Helicopter glue drop (HelicoGlu, Decor.cpp:3694-3708, 3058-3080) | A | done `85bc1ae` |
 | Swimming, surface float, the jump out of the water (Decor.cpp:4542-4692, 5336-5357) | A | done D32 |
 | Reactions: JumpAie, Ouf1a/1b/3/4 | C | done `ec84d42` (clips pending) |
