@@ -1,0 +1,28 @@
+# World 7 played as a chain from its hub (plans/briefs/world070.md): each mission's sign in hub
+# 70, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 075 ends in the main hub.
+wait 30
+expect mission = 70
+# Sign 1, open, in the west tower's first block's east face (42, 5, 47), ahead on his left.
+go 43.5 47
+go 42 47 until mission = 71 max 600
+until mission = 71 max 600
+include world071.txt
+# Back in the hub outside bar 2, now open: sign 2 in the east tower's west face (59, 5, 47).
+expect x = 57
+go 59 47 until mission = 72 max 600
+until mission = 72 max 600
+include world072.txt
+# Past bar 3: sign 3 in W2's east face over W1 (38, 9, 45).
+go 38 45 until mission = 73 max 600
+until mission = 73 max 600
+include world073.txt
+# Past bar 4: sign 4 in E2's west face over E1 (62, 9, 45).
+go 62 45 until mission = 74 max 600
+until mission = 74 max 600
+include world074.txt
+# Past bar 5: sign 5 in W3's east face over W2 (35, 13, 43).
+go 35 43 until mission = 75 max 600
+until mission = 75 max 600
+include world075.txt
+expect mission = 1
