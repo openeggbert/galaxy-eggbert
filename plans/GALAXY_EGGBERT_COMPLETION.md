@@ -227,11 +227,14 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   baked into the free-form's atlas with an approximate seeded noise. It did not bring the model
   nearer its sprite: mean colour error on the trunk 27.7 -> 32.1, luminance spread 15.4 -> 19.6
   against the sprite's 21.9. The sprite's bark grain comes from the shader's bump channel (a
-  blend by spots), and the model is lighter overall (mean 156 vs 133 red): Ray Dream's lighting
-  (highlights, metal reflection), not the colour pattern, is most of the difference, also on
-  the keys, the chest and the bulldozer. Without Ray Dream's noise the patterns cannot be
-  reproduced; the prototype was not kept. Matching the sprites' tone is a lighting question
-  for the owner.
+  blend by spots), and this trunk comes out lighter (mean 156 vs 133 red). Without Ray Dream's
+  noise the patterns cannot be reproduced; the prototype was not kept. Across all 82 models the
+  tone is not off as a rule: the model/sprite luminance ratio on the compare sheets has median
+  1.05 (quartiles 0.99-1.20); its spread (0.69-1.48) follows each scene's own lights, which the
+  sprites were rendered with and the sheets are not (the wasp scores 0.69 from one scene and
+  1.33 from the other). Strong colours come out more saturated than in the sprites (the
+  pillars' green 9,205,9 against 45,115,45), Ray Dream's shading greying them; matching that is
+  a choice of the game's lighting, left to the owner.
 - Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
   Recede/Advance clips; checked live in 012).
 - Win cheer: done (D29, Win clip `3415d3f`).
