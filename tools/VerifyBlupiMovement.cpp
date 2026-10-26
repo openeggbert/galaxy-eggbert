@@ -1966,6 +1966,32 @@ int main(int argc, char** argv)
                 }
                 check(jumped && rider.GetY() > 5.5f, "Blupi jumps off a lift (its snap does not cancel the jump)");
             }
+            // D55: a lift's interpolated top leaves him a hair into the floor he steps onto;
+            // penetration recovery (BlupiAdjust) must not take that for being stuck in solid and
+            // push him down through the block (it did: 1.5625 a frame through 025's key tower).
+            {
+                Worlds::World tower;
+                for (int y = 10; y <= 18; ++y)
+                {
+                    tower.setBlock(50, static_cast<std::uint16_t>(y), 50, Worlds::Block::make(396));
+                }
+                BlupiController stander;
+                stander.SetPosition(0.0f, 19.0f - 1e-4f, 0.0f);
+                stander.RideLift(0.0f, 19.0f - 1e-4f, 0.0f);
+                float lowest = 99.0f;
+                for (int i = 0; i < 30; ++i)
+                {
+                    stander.Step(tower, 0.0f, 0.0f, false, false, false, dt);
+                    lowest = std::min(lowest, stander.GetY());
+                }
+                check(lowest > 18.9f, "standing a hair into a floor he stays on it, not pushed down through it (D55)");
+                BlupiController capped;
+                capped.SetPosition(0.0f, 9.5f, 0.0f);
+                capped.Step(tower, 0.0f, 0.0f, false, false, false, dt);
+                check(capped.GetY() <= 10.0f - 49.0f / 64.0f + 0.01f,
+                      "a head caught in the block above is still pushed down clear of it (BlupiAdjust)");
+            }
+
             BlupiController heliRider;
             heliRider.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliRider.HasVehicleHazardImmunity(),

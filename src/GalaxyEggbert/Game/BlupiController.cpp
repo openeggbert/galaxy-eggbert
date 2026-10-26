@@ -536,25 +536,36 @@ namespace GalaxyEggbert::Game
     void BlupiController::RecoverFromPenetration(const Worlds::World& world, float& x, float& y, float& z,
                                                     bool tempPassable)
     {
-        if (!IsPointSolid(world, x, y, z, tempPassable))
+        // The original's box (BlupiRect) runs from 2 px above his feet to 49 px above them (pos.Y +
+        // 11 to + 58 of a 60 px Blupi), so feet resting on a floor, or a hair into it (a lift's
+        // interpolated top), are not caught; the downward phase tests only its top edge: it frees
+        // a head caught in a ceiling. Testing the feet themselves pushed a Blupi standing a hair
+        // into a floor down 50 steps a frame, through solid walls (D55, 025's key tower).
+        constexpr float kBoxBottom = 2.0f / 64.0f;
+        constexpr float kBoxTop = 49.0f / 64.0f;
+        const auto boxSolid = [&]() {
+            return IsPointSolid(world, x, y + kBoxBottom, z, tempPassable) ||
+                   IsPointSolid(world, x, y + kBoxTop, z, tempPassable);
+        };
+        if (!boxSolid())
         {
             return;
         }
         constexpr float kStep = 2.0f / 64.0f; // real BlupiAdjust()'s 2px step, converted at 64px/block
         constexpr int kMaxIterations = 50; // real BlupiAdjust()'s own bound, every phase
-        // Real phase order: down, right, left, right-again, left-again (the
-        // last 2 only differ from the first 2 by which RECT vertical band
-        // they test -- meaningless for a point, see this function's own
-        // header comment) -- collapses to 3 real distinct attempts.
-        for (int i = 0; i < kMaxIterations && IsPointSolid(world, x, y, z, tempPassable); ++i)
+        // Real phase order: down (the box's top edge), right, left, right-again, left-again (the
+        // last 2 only differ from the first 2 by which RECT vertical band they test --
+        // meaningless for a point, see this function's own header comment) -- collapses to 3 real
+        // distinct attempts.
+        for (int i = 0; i < kMaxIterations && IsPointSolid(world, x, y + kBoxTop, z, tempPassable); ++i)
         {
             y -= kStep;
         }
-        for (int i = 0; i < kMaxIterations && IsPointSolid(world, x, y, z, tempPassable); ++i)
+        for (int i = 0; i < kMaxIterations && boxSolid(); ++i)
         {
             x += kStep;
         }
-        for (int i = 0; i < kMaxIterations && IsPointSolid(world, x, y, z, tempPassable); ++i)
+        for (int i = 0; i < kMaxIterations && boxSolid(); ++i)
         {
             x -= kStep;
         }
