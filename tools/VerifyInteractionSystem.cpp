@@ -123,6 +123,15 @@ int main(int argc, char** argv)
         check(liftNow != nullptr && std::fabs(interaction.RideStandY() - (liftNow->currentY + 1.0f)) < 0.01f,
               "RideStandY() matches the lift's own new stand height after its patrol step this frame");
 
+        // D54: walking off, at the cell's very boundary (half a cell from its centre) and with a
+        // foot still on its edge, he still rides it, not falling between it and the ledge beside.
+        {
+            const auto* liftEdge = findPatrollingLift();
+            interaction.Update(dt, world, liftEdge->currentX, liftEdge->currentY + 1.0f,
+                               liftEdge->currentZ - 0.55f, 0.0f, sound);
+            check(interaction.IsRidingLift(), "at the edge of a lift's cube, a foot still on it, Blupi rides it (D54)");
+        }
+
         // Positioned far from the lift -- riding should not be reported.
         interaction.Update(dt, world, rideBlupiX + 20.0f, rideBlupiY, rideBlupiZ, 0.0f, sound);
         check(!interaction.IsRidingLift(), "IsRidingLift() is false when Blupi is nowhere near the lift");

@@ -867,8 +867,12 @@ namespace GalaxyEggbert::Game
             {
                 continue;
             }
+            // Over its cube or with a foot still on its edge (kFootReach, the vertigo test's foot):
+            // walking off at the cell's boundary he would otherwise be neither on the lift nor over
+            // the ledge beside it for a frame, sink below the ledge's top and drop (D54).
+            constexpr float kFootReach = 0.5f + 0.15f;
             const float liftStandY = LiftRiderCenterY(candidate.currentY);
-            if (std::fabs(blupiX - candidate.currentX) < 0.5f && std::fabs(blupiZ - candidate.currentZ) < 0.5f &&
+            if (std::fabs(blupiX - candidate.currentX) < kFootReach && std::fabs(blupiZ - candidate.currentZ) < kFootReach &&
                 std::fabs(blupiY - liftStandY) < 0.2f)
             {
                 riddenLift = &candidate;
