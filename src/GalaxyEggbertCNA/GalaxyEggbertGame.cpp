@@ -2459,8 +2459,21 @@ namespace GalaxyEggbert::CNA
             // BlupiController::IsSurf()/IsNage()'s own comment.
             // Real gate (Decor.cpp:5284-5285, found 2026-07-16) also excludes every vehicle mode +
             // Balloon/Ecrase entirely -- while riding/ballooned/squashed, water tiles never
-            // trigger Surf/Nage at all (a vehicle drives straight over/through them instead).
-            // This engine had no such exclusion; water detection ran unconditionally.
+            // trigger Surf/Nage at all. This engine had no such exclusion; water detection ran
+            // unconditionally. A vehicle that meets water is wrecked first, Blupi going into the water on foot
+            // (Decor.cpp:5415-5435, 2026-10-26, reported by the world authoring: the helicopter
+            // flew through water, the skateboard rode over it, against 013's "it dislikes
+            // water!"): the vehicle is gone, an explosion, a small shake, channel 10. (The
+            // helicopter's spinning ByeBye debris is not drawn.)
+            if (blupi_.IsInVehicle() && !blupi_.IsOneShotAnimPlaying() && !blupi_.IsTeleporting() &&
+                !blupi_.IsDeathLocked() &&
+                GalaxyEggbert::BlockTypes::isWater(blupi_.GetBlockTypeAt(worldRuntime_.GetWorld())))
+            {
+                interaction_.SpawnWreck(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                blupi_.TriggerDismount();
+                cameraShake_.Trigger(CameraShakeType::Small);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+            }
             const bool canEnterWater = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased();
             const auto waterBlockAt = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
             const auto waterBlockAbove = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());

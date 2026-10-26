@@ -2514,6 +2514,27 @@ namespace GalaxyEggbert::Game
         sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel75);
     }
 
+    void InteractionSystem::SpawnWreck(WorldRuntime& worldRuntime, float x, float y, float z)
+    {
+        MobileObjSpec spec;
+        spec.type = GalaxyEggbert::Def::ObjectType::ObjectType9;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = x;
+        spec.currentY = spec.posStartY = spec.posEndY = y;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
     void InteractionSystem::SpawnFanHitFlash(WorldRuntime& worldRuntime, float x, float y, float z)
     {
         MobileObjSpec spec;

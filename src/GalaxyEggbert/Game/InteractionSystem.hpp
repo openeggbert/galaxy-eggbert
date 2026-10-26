@@ -433,6 +433,10 @@ namespace GalaxyEggbert::Game
         // in that check), same reasoning as `SpawnInvertBurst()` above.
         void SpawnFanHitFlash(WorldRuntime& worldRuntime, float x, float y, float z);
 
+        // A wrecked vehicle's explosion (ObjectType9, Decor.cpp:5427: a vehicle that meets
+        // water), called by the game class, which wrecks it.
+        void SpawnWreck(WorldRuntime& worldRuntime, float x, float y, float z);
+
         // Teleporter arc (plan.md VISUAL-010, ObjectType92) -- despite
         // Def/ObjectType.hpp's own "spawned when Blupi uses a charged attack"
         // doc comment, the ONLY real spawn site is the teleporter-trigger
