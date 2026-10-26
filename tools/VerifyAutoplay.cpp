@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -205,6 +207,36 @@ int main()
             }
         }
         check(arrived == 30, "lift waits until a lift stands at its point (tick " + std::to_string(arrived) + ")");
+    }
+
+    {
+        // include: a scratch tree in the working directory (the build directory under ctest).
+        namespace fs = std::filesystem;
+        const fs::path root = "autoplay_include_check";
+        fs::create_directories(root / "sub");
+        std::ofstream(root / "main.txt") << "wait 2\ninclude sub/part.txt\nend\n";
+        std::ofstream(root / "sub" / "part.txt") << "hold 3 up\ninclude more.txt\n";
+        std::ofstream(root / "sub" / "more.txt") << "log deep\n";
+        std::ofstream(root / "bad.txt") << "include sub/broken.txt\n";
+        std::ofstream(root / "sub" / "broken.txt") << "wait 1\njump 3\n";
+        Autoplay autoplay;
+        std::string error;
+        const bool loaded = autoplay.Load((root / "main.txt").string(), error);
+        AutoplayState state;
+        int up = 0;
+        for (int t = 0; t < 20 && !autoplay.Finished(); ++t)
+        {
+            state.tick = t;
+            up += autoplay.Step(state).up ? 1 : 0;
+        }
+        const std::string log = autoplay.TakeLog();
+        check(loaded && up == 3 && Contains(log, "part.txt:1: hold 3 up") && Contains(log, "log deep") &&
+                  autoplay.Passed(),
+              "include runs another script's commands in place, its path relative to the including file");
+        Autoplay bad;
+        const bool badLoaded = bad.Load((root / "bad.txt").string(), error);
+        check(!badLoaded && Contains(error, "broken.txt:2"), "an error in an included file names it (" + error + ")");
+        fs::remove_all(root);
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

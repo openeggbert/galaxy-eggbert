@@ -23,6 +23,7 @@
 //   log TEXT                   write TEXT to the trace
 //   trace N                    write the position every tick for the next N ticks (else every 60)
 //   end                        stop here
+//   include FILE               FILE's commands here (its path relative to this script's directory)
 //
 // COND is FIELD OP VALUE, FIELD one of x y z yaw tick mission treasures eggs lives ground dead
 // exit (1 once the mission's exit is reached) phase, OP one of = != < <= > >=; phase takes a name
@@ -32,6 +33,7 @@
 #include <GalaxyEggbert/Def/GamePhase.hpp>
 
 #include <array>
+#include <filesystem>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -64,8 +66,10 @@ namespace GalaxyEggbert::Game
     class Autoplay
     {
     public:
-        // Reads a script; false with `error` naming the line when it does not parse.
+        // Reads a script; false with `error` naming the line when it does not parse. Parse()'s
+        // includes resolve against the current directory, Load()'s against the file's own.
         bool Parse(std::string_view text, std::string& error);
+        bool Load(const std::string& path, std::string& error);
 
         // One tick: the keys to hold now, given the game's state after the previous tick.
         AutoplayKeys Step(const AutoplayState& state);
@@ -89,6 +93,7 @@ namespace GalaxyEggbert::Game
         {
             Kind kind = Kind::Wait;
             int line = 0;
+            std::string source;
             std::string text;
             int ticks = 0;
             AutoplayKeys keys;
@@ -97,7 +102,16 @@ namespace GalaxyEggbert::Game
             float tolerance = 0.25f;
             Condition condition;
             bool hasCondition = false;
+
+            [[nodiscard]] std::string Where() const
+            {
+                return (source.empty() ? "line " : source + ":") + std::to_string(line);
+            }
         };
+
+        static bool ReadFile(const std::filesystem::path& path, std::string& text);
+        bool ParseInto(std::string_view text, const std::string& source, const std::filesystem::path& directory,
+                       int depth, std::string& error);
 
         [[nodiscard]] static bool Holds(const Condition& condition, const AutoplayState& state);
         void Write(const AutoplayState& state, const std::string& text);

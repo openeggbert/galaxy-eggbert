@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iterator>
 #include <cstdio>
+#include <fstream>
 #include <sstream>
 
 namespace GalaxyEggbert::Game
@@ -57,6 +58,38 @@ namespace GalaxyEggbert::Game
     bool Autoplay::Parse(std::string_view text, std::string& error)
     {
         commands_.clear();
+        return ParseInto(text, "", std::filesystem::current_path(), 0, error);
+    }
+
+    bool Autoplay::Load(const std::string& path, std::string& error)
+    {
+        commands_.clear();
+        std::string text;
+        if (!ReadFile(path, text))
+        {
+            error = "cannot read " + path;
+            return false;
+        }
+        const std::filesystem::path file(path);
+        return ParseInto(text, file.filename().string(), file.parent_path(), 0, error);
+    }
+
+    bool Autoplay::ReadFile(const std::filesystem::path& path, std::string& text)
+    {
+        std::ifstream in(path);
+        if (!in)
+        {
+            return false;
+        }
+        std::stringstream buffer;
+        buffer << in.rdbuf();
+        text = buffer.str();
+        return true;
+    }
+
+    bool Autoplay::ParseInto(std::string_view text, const std::string& source, const std::filesystem::path& directory,
+                             int depth, std::string& error)
+    {
         std::istringstream lines{std::string(text)};
         std::string raw;
         int lineNumber = 0;
@@ -73,6 +106,7 @@ namespace GalaxyEggbert::Game
             }
             Command command;
             command.line = lineNumber;
+            command.source = source;
             command.text = body.substr(body.find_first_not_of(" \t"));
             while (!command.text.empty() && (command.text.back() == ' ' || command.text.back() == '\t' ||
                                              command.text.back() == '\r'))
@@ -81,7 +115,7 @@ namespace GalaxyEggbert::Game
             }
             command.ticks = kDefaultMaxTicks;
             const auto fail = [&](const std::string& why) {
-                error = "line " + std::to_string(lineNumber) + ": " + why + ": " + command.text;
+                error = command.Where() + ": " + why + ": " + command.text;
                 return false;
             };
             const auto readCondition = [&](Condition& condition) {
@@ -222,6 +256,26 @@ namespace GalaxyEggbert::Game
             {
                 command.kind = Kind::End;
             }
+            else if (verb == "include")
+            {
+                // Another script's commands in place of this line, its path relative to this one.
+                std::string name;
+                std::string included;
+                if (!(words >> name))
+                {
+                    return fail("needs a file");
+                }
+                const std::filesystem::path path = directory / name;
+                if (depth >= 8 || !ReadFile(path, included))
+                {
+                    return fail(depth >= 8 ? "includes nested too deep" : "cannot read " + path.string());
+                }
+                if (!ParseInto(included, path.filename().string(), path.parent_path(), depth + 1, error))
+                {
+                    return false;
+                }
+                continue;
+            }
             else
             {
                 return fail("unknown command '" + verb + "'");
@@ -338,7 +392,7 @@ namespace GalaxyEggbert::Game
                 jumpTicksLeft_ = 0;
                 if (command.kind != Kind::Log && command.kind != Kind::Expect && command.kind != Kind::Trace)
                 {
-                    Write(state, "line " + std::to_string(command.line) + ": " + command.text);
+                    Write(state, command.Where() + ": " + command.text);
                 }
             }
             const int elapsed = state.tick - commandStartTick_;
@@ -431,8 +485,8 @@ namespace GalaxyEggbert::Game
             }
             if (command.kind != Kind::Wait && command.kind != Kind::Hold && elapsed >= command.ticks)
             {
-                Fail(state, "timeout after " + std::to_string(elapsed) + " ticks: line " +
-                                std::to_string(command.line) + ": " + command.text);
+                Fail(state, "timeout after " + std::to_string(elapsed) + " ticks: " + command.Where() + ": " +
+                                command.text);
                 return AutoplayKeys{};
             }
             return keys;

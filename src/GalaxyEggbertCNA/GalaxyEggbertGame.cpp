@@ -1018,17 +1018,9 @@ namespace GalaxyEggbert::CNA
 
     bool GalaxyEggbertGame::EnableAutoplay(const std::string& scriptPath)
     {
-        std::ifstream in(scriptPath);
-        if (!in)
-        {
-            std::cout << "GalaxyEggbertCNA: --autoplay: cannot read " << scriptPath << std::endl;
-            return false;
-        }
-        std::stringstream text;
-        text << in.rdbuf();
         auto autoplay = std::make_unique<GalaxyEggbert::Game::Autoplay>();
         std::string error;
-        if (!autoplay->Parse(text.str(), error))
+        if (!autoplay->Load(scriptPath, error))
         {
             std::cout << "GalaxyEggbertCNA: --autoplay: " << scriptPath << ": " << error << std::endl;
             return false;

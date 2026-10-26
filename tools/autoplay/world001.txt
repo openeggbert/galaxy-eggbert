@@ -1,0 +1,14 @@
+# The main hub to world 1's hub and on into mission 011 (plans/briefs/world001.md, world010.md).
+wait 30
+expect mission = 1
+# A new game starts beside world 1's sign, in the bottom tier's niche at (55, 1, 73).
+expect x = 55
+go 55 73 until mission = 10
+until mission = 10 max 600
+expect phase = Play
+# Hub 010: mission 1's sign, open, in the gallery's face at (55, 1, 45).
+wait 30
+go 55 47
+go 55 45 until mission = 11
+until mission = 11 max 600
+expect lives = 3
