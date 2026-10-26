@@ -97,6 +97,9 @@ def main(argv) -> int:
             lift(w, (x, 7, z), (x, WALK - 1, z), ticks=120, stop=30)
     carve(64, 7, 92, 65, 7, 93)
     panel(64, WALK - 2, 88, 66, WALK - 1, 91)                             # its landing, walk 20
+    # The way from the landing back north to the first terrace (walk 20) over the lower terraces'
+    # east ends: without its floor the red key's floor was a trap.
+    panel(64, WALK - 2, 72, 66, WALK - 1, 87)
     carve(64, WALK, 70, 66, WALK + 2, 91)
 
     # ---- west, behind the red door: the skate track (walk 20) and the green key ----
