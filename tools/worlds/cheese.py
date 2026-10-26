@@ -92,12 +92,17 @@ def bubble(w: World, cx, floor, cz, rx, height, rz, rng: random.Random, below=1)
                         w.set(x, y, z, rng.choice(CHEESE))
 
 
-def tube(w: World, a, b, r=1.5, floor=None):
-    """A round tunnel of radius r from cell a to cell b (any direction); with `floor` (a
-    walking level) the cells under it stay cheese, so the tunnel walks flat."""
+def tube(w: World, a, b, r=2.6, floor=None):
+    """A round tunnel of radius r from cell a to cell b (any direction). With `floor` (a
+    walking level) a and b are cells Blupi walks through: the axis runs r - 1.1 above them and
+    the cells under the floor stay cheese, so the default tunnel walks on a floor five wide
+    and is five high -- room for a jump and for the chase camera above him (in a three-high
+    tunnel a jump takes the camera into the ceiling)."""
     (ax, ay, az), (bx, by, bz) = a, b
+    if floor is not None:
+        ay, by = ay + r - 1.1, by + r - 1.1
     n = max(abs(bx - ax), abs(by - ay), abs(bz - az), 1) * 2
-    for i in range(n + 1):
+    for i in range(int(n) + 1):
         t = i / n
         cx, cy, cz = ax + (bx - ax) * t, ay + (by - ay) * t, az + (bz - az) * t
         for x, y, z in _cells_in_ellipsoid(cx, cy, cz, r, r, r):
@@ -115,6 +120,16 @@ def pit_surface(w: World, cells, rng: random.Random, count, rmin=1.2, rmax=2.6, 
         for p in _cells_in_ellipsoid(cx, cy, cz, r, r, r):
             if keep is None or not keep(*p):
                 w.clear(*p)
+
+
+def hang(w: World, x, y, z):
+    """A mine (ObjectType 3) hanging from the first ceiling above cell (x, y, z)."""
+    from kit import mine
+    while w.get(x, y + 1, z) == 0:
+        y += 1
+        if y > 98:
+            raise ValueError(f"no ceiling above ({x}, {z})")
+    mine(w, x, y, z, hanging=True)
 
 
 def helicopters(w: World, cells):
