@@ -1,0 +1,27 @@
+# World 12 played as a chain from its hub (plans/briefs/world120.md): each mission's sign in hub
+# 120, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 125 ends in the main hub.
+wait 30
+expect mission = 120
+# Sign 1, open, at the ground floor's east end (59, 21, 54).
+go 59 54 until mission = 121 max 600
+until mission = 121 max 600
+include world121.txt
+# Back in the hub past bar 2, now slid up: sign 2 on the first floor's east end (59, 23, 49).
+expect x = 57
+go 59 49 until mission = 122 max 600
+until mission = 122 max 600
+include world122.txt
+# Past bar 3: sign 3 on the top floor (50, 25, 43).
+go 50 43 until mission = 123 max 600
+until mission = 123 max 600
+include world123.txt
+# Past bar 4: sign 4 at the ground floor's west end (41, 21, 54).
+go 41 54 until mission = 124 max 900
+until mission = 124 max 600
+include world124.txt
+# Past bar 5: sign 5 on the first floor's west end (41, 23, 49).
+go 41 49 until mission = 125 max 900
+until mission = 125 max 600
+include world125.txt
+expect mission = 1
