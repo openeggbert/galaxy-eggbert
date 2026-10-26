@@ -1,0 +1,175 @@
+# Mission 055 played through (plans/briefs/world055.md).
+wait 30
+expect mission = 55
+# A, the start shaft (walk 10): the wasp sweeping its floor (z 71) gives a balloon; up four,
+# held at the niche's height with crouch, drifted into the west niche (x 17-19, y 14-16) and
+# let down there for treasure 1 (18, 14, 71).
+go 23 71.6 tol 0.1
+until y >= 10.2 max 600
+go 23 71.6 tol 0 until y >= 14.4 max 400
+go 18.4 71 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 13.95
+until treasures = 1 max 120
+# Out, down to the floor, the next balloon into the east niche (x 27-29) for treasure 2.
+go 21 71.6
+until ground = 1 max 300
+go 23 71.6 tol 0.1
+until y >= 10.2 max 600
+go 23 71.6 tol 0 until y >= 14.4 max 400
+go 27.6 71 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 13.95
+go 28.2 71 tol 0.15
+until treasures = 2 max 120
+# Out, down, a third balloon up to the corridor in the north wall (walk 18, under the hanging
+# mines at the roof), drifted into it; over its three mines (z 64), through the door "2" and
+# down the drop (z 55-58) to walk 4.
+go 25 71.6
+until ground = 1 max 300
+go 23 71.6 tol 0.1
+until y >= 10.2 max 600
+go 23 69 tol 0 with jump until y >= 18.4 max 600
+go 23 66.2 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 17.95
+go 23 62.8 jump 2.0 tol 0.2
+until ground = 1
+go 23 57
+until ground = 1 max 300
+expect y <= 4.05
+# B1 (walk 4 up to 14): the low corridor north to its foot, its wasp (z 42); the balloon drifted
+# to (23, 38.6), between the corner ledges' mines and north of the block in the middle, up to
+# its mouth north (walk 14), into the passage.
+go 23 46
+go 23 42.6 tol 0.1
+until y >= 4.2 max 600
+go 23 38.6 tol 0 with jump until y >= 14.4 max 600
+go 23 36.2 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 13.95
+# B2 (walk 14 up to 24): its wasp (z 28); the balloon drifted to (25, 25.4), clear of the mines
+# sweeping across at z 27 and z 29 (a plate juts out of the wall at x 23), up to its mouth east
+# (walk 24) into the inverts' corridor.
+go 23 30.5
+go 23 28.6 tol 0.1
+until y >= 14.2 max 600
+go 25 25.4 tol 0 with jump until y >= 24.4 max 600
+go 27.8 28 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 23.95
+# C, the inverts' corridor (z 27-29, walk 24): an invert lies in each narrows (x 30 and 52, one
+# cell wide): taken in passing, it turns his walking round for 15 s: he stops as he takes it and
+# waits it out. Between them he weaves through the nine mines (columns x 34, 36, 39, 42, 45, 48)
+# for treasures 3 (39, 27) and 4 (48, 28).
+go 28.4 28 tol 0.1
+go 30 28 tol 0.1 until x >= 29.3
+hold 1 up
+wait 920
+go 31.5 28
+go 34 27
+go 35 27.5
+go 36 28
+go 37.5 27.5
+go 39 27 tol 0.15
+go 40.5 27.5
+go 42 28
+go 43.5 27.5
+go 45 27
+go 46.5 27.5
+go 48 28 tol 0.15
+go 50.5 28
+go 52 28 tol 0.1 until x >= 51.3
+hold 1 up
+wait 920
+expect treasures = 4
+go 55 28
+# D, the ledge shaft: through the door "4" onto the landing (walk 24), down the spiral of ledges
+# two at a time, stepping off each where its mine is not: the north ledge (22), off its east end
+# at x 63 onto the east one (20) past the mine (62, 20, 28), off its south end at z 31 onto the
+# south one (18) past (60, 18, 30), treasure 5 (57, 18, 31); off the south ledge round its mine
+# into the open middle (x 60, z 28) down to the floor (12).
+go 59.4 26.5
+go 62.8 26.5
+go 63 28.4
+until ground = 1 max 200
+expect y <= 20.05
+go 62.6 30.9
+go 60.2 31
+until ground = 1 max 200
+expect y <= 18.05
+go 57 31 until treasures = 5
+go 58.5 29.7
+go 59.3 29.3 tol 0.15
+go 60.2 28.3
+until ground = 1 max 200
+expect y <= 12.05
+until treasures = 5 max 60
+# E, the lightning corridor (x 58-60, walk 12): three curtains two deep (z 21-22, 16-17, 11-12),
+# each crossed in one off half of its 5 s cycle (blitz 50-99), past the mines (59, 19), (58, 14),
+# (60, 14).
+go 59 25
+go 59 23.65 tol 0.1
+until blitz = 50 max 400
+go 58 20.35 tol 0.15
+go 58 18.35 tol 0.1
+until blitz = 50 max 400
+go 59 15.35 tol 0.15
+go 59 13.35 tol 0.1
+until blitz = 50 max 400
+go 59 10 tol 0.2
+# F, the lava hall (walk 12): treasure 6 on the shelf in the south-east corner (x 50-53, z 13-14,
+# walk 15) from the lift beside it (49, 14) as it arrives at its foot.
+go 57 10
+go 52 10.5
+go 49 12.5
+go 49 13.35 tol 0.1
+face 180
+lift 49 15 14 max 600
+lift 49 12 14 max 600
+go 49 14 tol 0.1
+until y >= 14.95 max 400
+go 51 14 until treasures = 6
+until treasures = 6 max 120
+go 51.5 12
+until ground = 1 max 200
+expect y <= 12.05
+# Into an overcraft (54, 12, 12) and over the lava (x 38-48) with Up (lookup) held, which keeps
+# it hovering over it; let down past it, treasure 7 (32, 12, 7), out of the overcraft by the
+# door "7" (x 29, z 9-11).
+go 53.3 12 tol 0.1
+face 90
+hold 2 action
+wait 20
+go 34 10 tol 1.0 with lookup max 900
+wait 60
+expect x <= 36.5
+go 32 7.3 tol 0.5 until treasures = 7 max 600
+wait 60
+until treasures = 7 max 120
+go 30.6 10 tol 0.5
+wait 60
+hold 2 action
+wait 30
+# G, the pool hall (walk 6): west through the door and the passage, down its drop; the egg
+# (19, 4); the pool across the hall (x 14-17, one deep, level with the floor) swum across along
+# z 10, out onto the west bank, the arrow (10, 6, 10).
+go 27 10
+go 24 10
+until ground = 1 max 300
+expect y <= 6.05
+go 19.5 5
+go 19 4.3 tol 0.2
+go 19 9.6
+go 18.5 10
+go 14.3 10 tol 0.15 max 400
+wait 30
+face 270
+hold 8 up jump
+hold 30 up
+until ground = 1
+expect x <= 13.6
+go 10 10 until exit = 1
+until mission = 50 max 900
+expect phase = Play
+wait 60
