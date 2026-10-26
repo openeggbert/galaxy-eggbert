@@ -1,0 +1,209 @@
+# Mission 073 played through (plans/briefs/world073.md): the lift hall's two treasures and egg,
+# the door "2", the river's rafts, the lollipop's jumps (treasure 3), a skateboard through the skate
+# corridor, the lifts up to the upper corridor, its two bulldozers jumped, the shuttles over its
+# gap, the eggs, the climb in the sky (treasure 4) to the arrow.
+wait 30
+expect mission = 73
+# B, the lift hall over lava: L1 (60 ticks, 40 dwelling) from the start shore up to P1 (walk 11),
+# boarded by a step down onto it.
+go 50 84.4 tol 0.1
+lift 50 11 83 max 400
+lift 50 7 83 max 400
+go 50 83 tol 0.15
+until y >= 10.99 max 400
+wait 5
+go 50 81
+# L2 (53, 77) down to the low pocket P2 (walk 8) and treasure 1, and back up.
+go 52.4 77 tol 0.1
+lift 53 8 77 max 400
+lift 53 11 77 max 400
+go 53 77 tol 0.15
+lift 53 8 77 max 400
+go 55 77 until treasures = 1 max 300
+until treasures = 1 max 200
+go 54.4 77 tol 0.1
+lift 53 11 77 max 400
+lift 53 8 77 max 400
+go 53 77 tol 0.15
+lift 53 11 77 max 400
+go 51 77
+# L3 (50, 75) from P1's north edge up to P3 (walk 15).
+go 50 76.4 tol 0.1
+lift 50 15 75 max 400
+lift 50 10 75 max 400
+go 50 75 tol 0.15
+until y >= 14.99 max 400
+wait 5
+go 50 73
+# L4 (47, 71, 60 ticks) down to the pocket P4 (walk 10) and its egg, and back up.
+go 47.6 71 tol 0.1
+lift 47 10 71 max 400
+lift 47 15 71 max 400
+go 47 71 tol 0.15
+lift 47 10 71 max 400
+go 45 71 until eggs = 1 max 300
+until eggs = 1 max 200
+go 46.4 71 tol 0.1
+lift 47 15 71 max 400
+lift 47 10 71 max 400
+go 47 71 tol 0.15
+lift 47 15 71 max 400
+go 49 71
+# L5 (50, 69, 18 ticks) from P3's north edge up to the north ledge N (walk 18) and treasure 2.
+go 50 70.4 tol 0.1
+lift 50 18 69 max 400
+lift 50 14 69 max 400
+go 50 69 tol 0.15
+until y >= 17.99 max 400
+wait 5
+go 50 67.5
+go 44 67 until treasures = 2 max 300
+until treasures = 2 max 200
+# The door "2" (x 49-51, z 65), open with both treasures, to the river.
+go 50 66.5
+go 49.5 61
+# C, the river: three rafts (two lifts in step, 20 ticks, 40 dwelling), each a step down from
+# the island it leaves (walk 18, 17, 16) and level with the next.
+go 49.5 59.6 tol 0.1
+lift 49 17 56 max 400
+lift 49 17 58 max 400
+go 49.5 58 tol 0.15
+lift 49 17 56 max 400
+go 51.5 54.5
+go 51.5 53.6 tol 0.1
+lift 51 16 50 max 400
+lift 51 16 52 max 400
+go 51.5 52 tol 0.15
+lift 51 16 50 max 400
+go 48.5 48.5
+go 48.5 47.6 tol 0.1
+lift 48 15 44 max 400
+lift 48 15 46 max 400
+go 48.5 46 tol 0.15
+lift 48 15 44 max 400
+go 49.5 42.6
+# D: the lollipop (50, 42) licked; its high jumps onto the landing (walk 20, treasure 3) and the
+# shelf (walk 25).
+go 50 42.5 tol 0.1
+hold 6 action
+wait 90
+face 0
+go 50 39.5 jump 3.2 tol 0.15
+until ground = 1
+expect y >= 19.9
+go 47 37 until treasures = 3 max 300
+until treasures = 3 max 200
+go 48 37
+go 48 36.6 tol 0.1
+face 0
+go 48 33 jump 3.8 tol 0.15
+until ground = 1
+expect y >= 24.9
+# A skateboard (49, 34); off the shelf onto the landing, east into the skate corridor K (walk 20)
+# along z 38: over its first row of mines (x 59-63, run over), jumping the lava cells x 68 and
+# x 73, over the second row (x 78-82); off the skateboard before its east end.
+go 49 33.2 tol 0.1
+hold 2 action
+wait 30
+go 49 37.5 max 300
+until ground = 1
+expect y <= 20.1
+go 54 38 max 300
+go 71 38 jump 4.4 max 600
+go 76 38 jump 4.2 max 600
+go 84 38 tol 0.3 max 600
+wait 40
+hold 2 action
+wait 30
+# E: E1 (89, 38) up to the ledge EL (walk 24), E2 (89, 35) up to FL (walk 28), each boarded by a
+# step down onto it.
+go 88.4 38 tol 0.1
+lift 89 24 38 max 400
+lift 89 19 38 max 400
+go 89 38 tol 0.15
+until y >= 23.99 max 400
+wait 5
+go 90.6 36.5
+go 90.4 35 tol 0.1
+lift 89 28 35 max 400
+lift 89 23 35 max 400
+go 89 35 tol 0.15
+until y >= 27.99 max 400
+wait 5
+go 87 35
+go 85 38
+# F, the upper corridor west (walk 28). Bulldozer 1 drives the stretch one wide (x 76-81)
+# between x 80 and x 78 (a cell in 90 ticks, about 64 waiting at each end): followed west as it
+# drives away, a cell behind, and jumped from 0.8 behind it as it stops at x 78.
+go 82.6 38 tol 0.1
+face 270
+near 80 28 38 0.02 lane x max 600
+clear 80 28 38 0.02 lane x max 200
+near 79 28 38 0.02 lane x max 200
+go 78.8 38 tol 0.03 max 200
+near 78 28 38 0.02 lane x max 200
+go 76 38 jump 9 max 300
+until ground = 1
+go 74.4 38 tol 0.1
+# The gap (x 70-73) over lava on its two shuttles meeting in the middle: down onto the east one
+# at x 73, across onto the west one as they meet, off it at x 70 onto the west part (walk 27).
+lift 72 27 38 max 400
+lift 73 27 38 max 400
+go 73 38 tol 0.15
+lift 72 27 38 max 400
+go 71 38 tol 0.15
+lift 70 27 38 max 400
+go 67.6 38 tol 0.1
+# Bulldozer 2 in the stretch x 61-66 (between x 65 and x 62): followed west, jumped as it stops
+# at x 62 (four high here: a full jump). The two eggs (58, 59; z 38).
+near 65 27 38 0.02 lane x max 800
+clear 65 27 38 0.02 lane x max 200
+near 63 27 38 0.02 lane x max 400
+go 63 38 tol 0.03 max 200
+go 59 38 jump 9 max 300
+until ground = 1
+go 58 38 until eggs = 3 max 300
+until eggs = 3 max 200
+# F2 north to the balcony G1 (walk 27); G, the climb in the open sky. Ga (58, 18) up to G2
+# (walk 30); Gb (60, 15) down to G2b (walk 27) and treasure 4, and back up.
+go 58 37
+go 58 19.4 tol 0.1
+lift 58 30 18 max 400
+lift 58 26 18 max 400
+go 58 18 tol 0.15
+until y >= 29.99 max 400
+wait 5
+go 58.5 16
+go 59.4 15 tol 0.1
+lift 60 27 15 max 400
+lift 60 30 15 max 400
+go 60 15 tol 0.15
+lift 60 27 15 max 400
+go 62 15 until treasures = 4 max 300
+until treasures = 4 max 200
+go 60.6 15 tol 0.1
+lift 60 30 15 max 400
+lift 60 27 15 max 400
+go 60 15 tol 0.15
+lift 60 30 15 max 400
+go 58 15
+# Gc (56, 15) up to G3 (walk 33), Gd (54, 12) up to G4 (walk 36) and the arrow (54, 9).
+go 56.6 15 tol 0.1
+lift 56 33 15 max 400
+lift 56 29 15 max 400
+go 56 15 tol 0.15
+until y >= 32.99 max 400
+wait 5
+go 54 14.5
+go 54 12.6 tol 0.1
+lift 54 36 12 max 400
+lift 54 32 12 max 400
+go 54 12 tol 0.15
+until y >= 35.99 max 400
+wait 5
+go 54 9 until exit = 1 max 300
+expect treasures = 4
+expect eggs = 3
+until mission = 70 max 900
+expect phase = Play
+wait 60
