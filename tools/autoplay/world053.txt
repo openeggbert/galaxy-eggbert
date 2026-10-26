@@ -1,0 +1,377 @@
+# Mission 053 played through (plans/briefs/world053.md).
+wait 30
+expect mission = 53
+# A, the start hall (walk 11): the four stars by the masts sleep unless he comes within two
+# cells; the eggs in the south-west and north-east corners, the lift (26, 84) up to the ledge.
+go 23.5 92.3
+go 21 93 until eggs = 1
+until eggs = 1 max 120
+go 26 92
+go 26 85.6
+go 28.6 83.4
+go 31 82 until eggs = 2
+until eggs = 2 max 120
+go 27 85.4
+go 26 85.4 tol 0.1
+face 0
+lift 26 14 84 max 600
+lift 26 11 84 max 600
+go 26 84 tol 0.1
+until y >= 13.95 max 300
+go 26 82.6
+# B, the gates (z 76, 71): pass each when its mine is at the top of its ride.
+go 26 77.2 tol 0.1
+near 26 16 76 0.15 max 400
+go 26 72.2 tol 0.1
+near 26 16 71 0.15 max 400
+go 26 66.5
+# C, the lava crossing: lift A (lane x 25-26) from the south bank's edge (z 61) four north, lift
+# B from the north bank (z 51) five south, in step: they meet at their ends side by side (A at
+# 57, B at 56) and stop together. The stars two above the lane wake as he passes under them but
+# are far too slow to follow.
+go 25 62 tol 0.15
+go 25 61.65 tol 0.1
+face 0
+lift 25 14 57 max 600
+lift 25 14 61 max 600
+go 25 61 tol 0.15
+lift 25 14 57 max 300
+go 25 56 tol 0.15
+lift 25 14 51 max 300
+go 25 49.4
+expect y >= 13.95
+# D, the ferry over the wasp pit (lifts x 25-26 from z 45 to 40, a 3-tick stop at each end):
+# step on as it arrives, walk off its front edge as it reaches the far bank.
+go 25.5 45.65 tol 0.1
+face 0
+lift 25 14 40 max 600
+lift 25 14 45 max 600
+go 25.5 45 tol 0.15
+until z <= 40.75 max 300
+go 25.5 38.6
+expect y >= 13.95
+# E, the balloon shaft: into it by its doorway (z 30), where the wasp sweeping z 28 touches him:
+# the balloon rises (faster with jump held) up the column (24, 25.6), clear of the corner mines and
+# the block with its mines in the middle, then drifts north over the vault's floor and lets him
+# down there (walk 26).
+go 25 31
+go 24 29.2
+go 24 25.6 tol 0.1
+face 0
+until y >= 14.2 max 300
+go 24 25.6 tol 0 with jump until y >= 26.3 max 700
+go 24 23.4 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 25.95
+# F, the vault (walk 26). The stars wake within two cells and home on him at a third of a cell
+# a second, bursting on anything solid: he takes each treasure and moves on; those he wakes
+# trail him and burst on the walls and tiers. The south-west alcove (13, 19), its egg (13, 20):
+# in along z 20.3 past the star at its mouth (15, 26, 19), out along z 17.75.
+go 17.5 21
+go 16.6 20.3 tol 0.1
+go 13.4 20.3 tol 0.15
+go 13.3 19.2 tol 0.15 until treasures = 1
+go 13.5 18 tol 0.15
+go 16.5 17.75 tol 0.2
+# The north-west alcove (13, 10): in along z 11.25 past its star (15, 26, 10), out along z 8.75.
+go 17 12
+go 16.6 11.25 tol 0.1
+go 13.4 11.25 tol 0.15
+go 13.3 10.3 tol 0.15 until treasures = 2
+go 13.5 8.8 tol 0.15
+go 17 8.75 tol 0.2
+# The dais: tier 1 (walk 28), 2 (30), 3 (32). Its north-west corner (33, 11) from the floor west of
+# it: jump on, turn round (Down), jump back down; its star (34, 28, 12) follows him down into the
+# tier and bursts.
+go 31.4 11 tol 0.1
+face 90
+go 33.1 11 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 27.95
+hold 36 down
+until ground = 1
+expect treasures = 3
+expect y <= 26.05
+# Onto tier 1 by its west edge (z 14), onto tier 2's north-west corner (36, 14) and straight back
+# down to tier 1 (its star (37, 30, 15) bursts into tier 2).
+go 31.4 14 tol 0.1
+face 90
+go 33.2 14 jump 1.5 tol 0.15
+until ground = 1
+go 34.6 14 tol 0.1
+face 90
+go 36.1 14 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 29.95
+hold 36 down
+until ground = 1
+expect y <= 28.05
+# Tier 3's treasure (40, 32, 18) along z 18 from the west, on east and down: its stars (40, 32, 16),
+# (40, 32, 20) wake and come down after him into the tiers.
+go 34.6 18 tol 0.1
+face 90
+go 36.2 18 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 29.95
+go 37.4 18 tol 0.1
+go 39.2 18 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 31.95
+go 41.3 18 tol 0.1
+go 43 18 tol 0.15
+until ground = 1
+go 45.2 18 tol 0.15
+until ground = 1
+expect y <= 28.05
+expect treasures = 5
+# Tier 2's south-east corner (44, 22) from tier 1 east of it, and back.
+go 45.2 22 tol 0.1
+face 270
+go 43.9 22 jump 1.3 tol 0.15
+until ground = 1
+expect y >= 29.95
+hold 36 down
+until ground = 1
+expect y <= 28.05
+# Tier 1's south-east corner (47, 25) from the floor east of it (its star (46, 28, 24)).
+go 48.6 22 tol 0.15
+until ground = 1
+go 48.6 25 tol 0.1
+face 270
+go 46.9 25 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 27.95
+hold 36 down
+until ground = 1
+expect y <= 26.05
+expect treasures = 7
+# Its north-east corner (47, 11) from the floor east of it: the star floating off the corner
+# (48, 28, 10) wakes and trails him from here.
+go 48.6 11.3 tol 0.1
+face 270
+go 46.9 11.3 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 27.95
+hold 36 down
+until ground = 1
+expect y <= 26.05
+# The south alcoves, each a treasure behind a star asleep at its mouth: in along one side past
+# the star, the treasure, out along the other side while it is still near the mouth. (34, 35),
+# the star (34, 26, 33).
+go 48.6 27.5
+go 35.3 27.5
+go 35.3 34.3 tol 0.15
+go 34.5 34.7 tol 0.15
+go 32.85 34.5 tol 0.15
+go 32.85 31 tol 0.2
+expect treasures = 9
+# (50, 35) and its egg (51, 35), the star (50, 26, 33).
+go 37 27.5
+go 47.5 27.5
+go 48.85 30
+go 48.85 34.3 tol 0.15
+go 49.5 34.8 tol 0.15
+go 51 34.9 tol 0.15
+go 51.15 32 tol 0.2
+expect treasures = 10
+# Tier 1's south-west corner (33, 25) from the floor west of it (its star (35, 28, 25) bursts into
+# the tier; the one floating off the corner (32, 28, 26) trails him).
+go 48 27.3
+go 30.5 27.3
+go 31.4 24.6 tol 0.1
+face 90
+go 33.1 24.6 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 27.95
+hold 36 down
+until ground = 1
+expect y <= 26.05
+expect treasures = 11
+# Across tier 1 (along z 23.5, south of tier 2) to its east side, down, onto the step (x 50-51,
+# z 28-31, walk 28) and up onto the gallery (walk 30) at z 31.5, clear of its star (54, 30, 29).
+go 31.4 20 tol 0.1
+face 90
+go 33.2 20 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 27.95
+go 34 23.5
+go 46.5 23.5
+go 48.6 23.5
+until ground = 1
+go 48.6 31 tol 0.1
+face 90
+go 50.2 31 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 27.95
+go 51.1 31 tol 0.1
+go 52.6 31.5 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 29.95
+# The gallery's south treasure (56, 30, 30), its four eggs along x 57, its north treasure
+# (56, 30, 8), both away from the stars (54, 30, 29) and (54, 30, 9).
+go 55.5 31.6
+go 56.3 30.6 tol 0.15
+go 57 28
+go 57 13 until eggs = 8
+go 57 8.5
+go 56.4 7.5 tol 0.15
+until treasures = 13 max 120
+# G, the door "13" (x 53-55, z 4) onto the corridor of stars (z 1-3, walk 30). The drink (twenty
+# seconds unseen) does not last there and back (about 74 cells), so it is left: each curtain of
+# stars is woken from just east of it, he steps back through the door into the
+# gallery, and homing on him they run into the corridor's south wall and burst (they trail him
+# east along the corridor, then turn towards him: at most 2.5 cells, under 500 ticks).
+go 54 5.5
+go 54 2
+go 49.6 2 tol 0.1
+go 54 2.2
+go 54 5 tol 0.15
+wait 650
+go 54 2
+go 40.6 2 tol 0.1
+go 54 2.2
+go 54 5 tol 0.15
+wait 650
+go 54 2
+go 31.6 2 tol 0.1
+go 54 2.2
+go 54 5 tol 0.15
+wait 650
+go 54 2
+go 22.6 2 tol 0.1
+go 54 2.2
+go 54 5 tol 0.15
+wait 650
+# The fourteenth treasure at the corridor's west end, back to the gallery.
+go 54 2
+go 16 2 until treasures = 14
+until treasures = 14 max 120
+go 54 2.2
+go 54 5.5
+# Along the gallery to the door "14" in its east wall (x 58, z 18-20), open with fourteen.
+go 57 7.5
+go 57 19
+go 60 19
+# H, the door "14" (x 58) onto the crusher passage (z 18-20, walk 30): through the one-cell gap
+# over the crusher (x 64, z 19); squashed, he cannot jump for ten seconds: he waits it out.
+go 63 19
+go 66 19
+go 70 20.5
+wait 620
+# The lava slope: five terraces heading south, each two below the last, a strip of lava across
+# each (one cell, three past the drop): drop, jump the strip, walk on to the next drop.
+go 72 23.5
+until ground = 1
+expect y <= 28.05
+go 72 27.2 jump 2.2 tol 0.25
+until ground = 1
+go 72 28.6
+until ground = 1
+expect y <= 26.05
+go 72 32.2 jump 2.2 tol 0.25
+until ground = 1
+go 72 33.6
+until ground = 1
+expect y <= 24.05
+go 72 37.2 jump 2.2 tol 0.25
+until ground = 1
+go 72 38.6
+until ground = 1
+expect y <= 22.05
+go 72 42.2 jump 2.2 tol 0.25
+until ground = 1
+go 72 43.6
+until ground = 1
+expect y <= 20.05
+# The foot's three gates (z 47, 51, 55): through the gap x 71 as its mine reaches the top.
+go 71 45.8 tol 0.1
+near 71 22 47 0.15 max 300
+go 71 49.8 tol 0.1
+near 71 22 51 0.15 max 300
+go 71 53.8 tol 0.1
+near 71 22 55 0.15 max 300
+go 71.5 56.2 tol 0.15
+# The treasure hall (walk 20): over the crushers in its doorway (squashed: ten seconds, no jump,
+# half speed), waited out clear of the stars.
+go 71.5 60.3 tol 0.15
+wait 620
+# Seven treasures along z 62; two columns of four stars stacked at x 67 and 73 over the row. The
+# two lowest of a column wake as he takes the treasure beside it: he takes it and goes round the
+# column's south side to the next, west to east, the woken stars trailing behind him.
+go 70 61.4 tol 0.15
+go 64.5 60
+go 64 61.4 tol 0.15
+go 65.35 62 tol 0.1
+go 66 64.6 tol 0.2
+go 68 64.6 tol 0.2
+go 68.65 62 tol 0.1
+go 70.5 62.4 tol 0.2
+go 71.35 62 tol 0.1
+go 72 64.6 tol 0.2
+go 74 64.6 tol 0.2
+go 74.65 62 tol 0.1
+go 76 62 tol 0.15
+# Out over the crushers again to the foot's last row (69.6, 56.3): homing on him the four woken
+# stars run into the hall's north wall beside the doorway (x 71-73) and burst. Back in, the
+# squash waited out once more.
+go 76 59.3
+go 72 59.3
+go 72 56.6
+go 69.6 56.3 tol 0.15
+wait 1000
+go 72 56.6
+go 72 60.3 tol 0.15
+wait 620
+until treasures = 21 max 120
+# The lift at the hall's east end (82, 62; seven up, a 3-tick stop): from beside it as it
+# arrives, up past the alcove behind it, off onto the ledge (walk 27) and its two eggs.
+go 81.35 62 tol 0.1
+face 90
+lift 82 27 62 max 600
+lift 82 20 62 max 600
+go 82 62 tol 0.1
+until y >= 24 max 300
+go 84.5 62 max 300
+expect y >= 26.95
+go 88 66 tol 0.2
+go 86 61
+go 88 58 tol 0.2
+go 86 63
+go 87.4 67
+# The last corridor (x 85-87, z 68-80): past the mine (85, 70) along x 87.4, past the mine
+# (87, 77) along x 84.6; the stars (86, 27, 70/76/79) wake and trail him, and burst on its west
+# wall once he turns west into the antechamber.
+go 87.4 71.5
+go 84.6 73
+go 84.6 80.6
+# West along the antechamber: homing on him the corridor's stars burst on its west wall and on
+# the antechamber's north wall.
+go 82 81.6
+go 79.5 82 tol 0.2
+wait 400
+# The cage of the arrow: from its doorway (82, 84) wake the stars of its north row one at a time
+# and step back and aside, so that homing on him they burst on the cage's wall beside the
+# doorway: (82, 27, 86) from the doorway's middle, (81, 27, 86) from its west side, then aside
+# west; (83, 27, 86) from its east side, then aside east.
+go 82 82.8
+go 82 84.1 tol 0.05
+go 82 82.6 tol 0.2
+go 80 82.3 tol 0.2
+wait 400
+go 81.6 82.8 tol 0.1
+go 81.6 84.3 tol 0.05
+go 81.6 82.6 tol 0.2
+go 79.5 82.3 tol 0.2
+wait 400
+go 82.4 82.8 tol 0.1
+go 82.4 84.3 tol 0.05
+go 82.4 82.6 tol 0.2
+go 85 82.3 tol 0.2
+wait 400
+# Through the doorway to the arrow; the side stars woken on the way are too far to reach him.
+go 82 83.2 tol 0.1
+go 82 88 until exit = 1
+expect treasures = 21
+until mission = 50 max 900
+expect phase = Play
+wait 60
