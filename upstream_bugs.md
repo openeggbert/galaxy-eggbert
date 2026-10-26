@@ -113,6 +113,30 @@ it and add the fixing commit; remove the workaround only after re-verifying.
 - **Fix upstream (suggested):** read those fields with `ParseJson` (or decode escapes in
   `ExtractJsonStringField`), or have `convert_avatar.py` write `ensure_ascii=False`.
 
+## UB-005 — cna-engine: `AddPlate` and `AddCrossedPlates` draw their region upside down, one side mirrored
+
+- **Repository:** `../../libcna/cna-engine` (branch `develop`, HEAD `f68e7c3`; `MeshBuilder.cpp` last
+  changed in `e56fa0f`).
+- **File:** `src/Graphics/MeshBuilder.cpp`, `MeshBuilder::AddPlate` and `AddCrossedPlates`.
+- **Found:** 2026-10-26, from a report of world 7's author that the digits of the hub signs read
+  mirrored; live, the signs also stood upside down (the post on top).
+- **Problem:** both build the corners bottom-left, bottom-right, top-right, top-left and give them
+  `(u0, v0)`, `(u1, v0)`, `(u1, v1)`, `(u0, v1)`. In XNA's convention v grows downwards (as
+  `AddBox` uses it: its top-left corner takes `(u0, v0)`), so the region's top edge lands at the
+  plate's bottom. And `AddDoubleSidedQuad` gives both sides the same texture coordinates, so the
+  side seen from the other way shows the region mirrored left to right, although the header says
+  "the texture is never mirrored". Seen from the side that reads unmirrored, a plate is turned
+  upside down; from the other side it is rotated 180 degrees.
+- **Reproduction:** `AddPlate(center, 1, 1, PlateAxis::Z, region)`; on its triangles the vertex
+  with the larger Y has the larger v. `tools/VerifyTileFaces.cpp` prints `INFO: cna-engine's own
+  AddPlate still does not (UB-005)` while the defect stands.
+- **Workaround here:** `AddUprightPlate` and `AddUprightCrossedPlates`
+  (`src/GalaxyEggbert/Game/TexturedMesh.hpp`) build one single-sided quad per side from
+  `AddVertex`/`AddQuad`, each upright and unmirrored for its own viewer (D48). The saw keeps
+  `AddPlate`, as its owner settled it.
+- **Fix upstream (suggested):** give the top corners v0 and the bottom ones v1, and in
+  `AddDoubleSidedQuad` (or in the plates) swap u0 and u1 on the reversed side.
+
 ## Recorded elsewhere
 
 These upstream problems were found earlier and are documented in other files; they are listed

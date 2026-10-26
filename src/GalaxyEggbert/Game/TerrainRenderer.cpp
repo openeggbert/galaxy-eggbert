@@ -288,14 +288,14 @@ namespace GalaxyEggbert::Game
 
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerFlatPlate)
             {
-                mesh.AddPlate(center, kInnerFlatPlateWidth, kInnerFlatPlateHeight,
-                              GetInnerFlatPlateAxis(lookupIcon, plateRotated), tileUv);
+                AddUprightPlate(mesh, center, kInnerFlatPlateWidth, kInnerFlatPlateHeight,
+                                GetInnerFlatPlateAxis(lookupIcon, plateRotated), tileUv);
                 return true;
             }
 
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::TripleCrossBillboard)
             {
-                mesh.AddCrossedPlates(center, kTripleCrossWidth, kTripleCrossHeight, 3, tileUv);
+                AddUprightCrossedPlates(mesh, center, kTripleCrossWidth, kTripleCrossHeight, 3, tileUv);
                 return true;
             }
 

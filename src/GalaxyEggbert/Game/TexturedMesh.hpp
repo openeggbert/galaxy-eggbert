@@ -12,6 +12,8 @@
 #include <Microsoft/Xna/Framework/Vector2.hpp>
 #include <Microsoft/Xna/Framework/Vector3.hpp>
 
+#include <cmath>
+#include <cstdint>
 #include <memory>
 
 namespace GalaxyEggbert::Game
@@ -42,6 +44,75 @@ namespace GalaxyEggbert::Game
         vertex.position = position;
         vertex.texCoord0 = uv;
         return vertex;
+    }
+
+    // A vertical plate `width` x `height` centered on `center` that reads upright and unmirrored
+    // from both sides: one single-sided quad per side, each with the region's top-left corner at
+    // its own viewer's top left. `right` (unit, horizontal) is the plate's width direction as
+    // seen from its first side. MeshBuilder::AddPlate/AddCrossedPlates put the region's top
+    // edge at the bottom and show one side mirrored (upstream_bugs.md UB-005, D48).
+    inline void AddUprightPlate(CnaEngine::Graphics::MeshBuilder& mesh,
+                                const Microsoft::Xna::Framework::Vector3& center,
+                                const Microsoft::Xna::Framework::Vector3& right, float width, float height,
+                                const CnaEngine::Graphics::UvRect& uv)
+    {
+        using Microsoft::Xna::Framework::Vector2;
+        using Microsoft::Xna::Framework::Vector3;
+        const Vector3 up = Vector3::UnitY * (height * 0.5f);
+        for (const float side : {1.0f, -1.0f})
+        {
+            const Vector3 across = right * (side * width * 0.5f);
+            const Vector3 normal = Vector3::Normalize(Vector3::Cross(across, up));
+            const auto corner = [&](const Vector3& position, float u, float v)
+            {
+                CnaEngine::Graphics::BuilderVertex vertex;
+                vertex.position = position;
+                vertex.normal = normal;
+                vertex.texCoord0 = Vector2(u, v);
+                return mesh.AddVertex(vertex);
+            };
+            const std::uint32_t topLeft = corner(center - across + up, uv.u0, uv.v0);
+            const std::uint32_t topRight = corner(center + across + up, uv.u1, uv.v0);
+            const std::uint32_t bottomRight = corner(center + across - up, uv.u1, uv.v1);
+            const std::uint32_t bottomLeft = corner(center - across - up, uv.u0, uv.v1);
+            mesh.AddQuad(topLeft, topRight, bottomRight, bottomLeft);
+        }
+    }
+
+    // MeshBuilder::AddPlate's shape (PlateAxis says which way it faces) drawn as above; a
+    // horizontal (Y) plate keeps AddPlate, whose region lies as a box's top face does.
+    inline void AddUprightPlate(CnaEngine::Graphics::MeshBuilder& mesh,
+                                const Microsoft::Xna::Framework::Vector3& center, float width, float height,
+                                CnaEngine::Graphics::PlateAxis axis, const CnaEngine::Graphics::UvRect& uv)
+    {
+        switch (axis)
+        {
+            case CnaEngine::Graphics::PlateAxis::Z:
+                AddUprightPlate(mesh, center, Microsoft::Xna::Framework::Vector3::UnitX, width, height, uv);
+                break;
+            case CnaEngine::Graphics::PlateAxis::X:
+                AddUprightPlate(mesh, center, Microsoft::Xna::Framework::Vector3::UnitZ, width, height, uv);
+                break;
+            case CnaEngine::Graphics::PlateAxis::Y:
+                mesh.AddPlate(center, width, height, axis, uv);
+                break;
+        }
+    }
+
+    // MeshBuilder::AddCrossedPlates' shape (`planes` plates turned 180/planes degrees apart
+    // about +Y) drawn upright and unmirrored.
+    inline void AddUprightCrossedPlates(CnaEngine::Graphics::MeshBuilder& mesh,
+                                        const Microsoft::Xna::Framework::Vector3& center, float width, float height,
+                                        int planes, const CnaEngine::Graphics::UvRect& uv)
+    {
+        constexpr float pi = 3.14159265358979323846f;
+        for (int i = 0; i < planes; ++i)
+        {
+            const float radians = static_cast<float>(i) * pi / static_cast<float>(planes);
+            AddUprightPlate(mesh, center,
+                            Microsoft::Xna::Framework::Vector3(std::cos(radians), 0.0f, std::sin(radians)), width,
+                            height, uv);
+        }
     }
 
     // A box of `size` centered on `center`: the corner arithmetic every cube
