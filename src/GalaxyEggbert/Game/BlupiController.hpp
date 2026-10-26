@@ -593,7 +593,11 @@ namespace GalaxyEggbert::Game
             // passed close by (ArmOuf()). kJumpAieSpeed's comment has when each plays. Ouf3 is
             // also his shrug when a decoy cannot be put down (TriggerReaction()), and Ouf2 (46)
             // putting one down, held (TriggerOneShotAnim(), Decor.cpp:4833-4848).
-            JumpAie, Ouf1a, Ouf1b, Ouf3, Ouf4, Ouf2
+            JumpAie, Ouf1a, Ouf1b, Ouf3, Ouf4, Ouf2,
+            // The original's short poses between moves (Decor.cpp:2989-2998, 3194-3203,
+            // 3616-3626), played in the reactions' slot: StopMarch (60, 3 ticks) as he stops after
+            // walking at least 10 ticks, StopJump (61, 5 ticks) as he lands.
+            StopMarch, StopJump
         };
 
         // Real `GalaxyEggbert::Def::SecretPower` (plan.md E3D-MIG-170): the underlying game enum
@@ -1206,6 +1210,9 @@ namespace GalaxyEggbert::Game
         static constexpr float kOuf3Duration = 34.0f / 20.0f;
         static constexpr float kOuf4Duration = 40.0f / 20.0f;
         static constexpr float kOuf2Duration = 32.0f / 20.0f;
+        static constexpr float kStopMarchDuration = 3.0f / 20.0f;
+        static constexpr float kStopJumpDuration = 5.0f / 20.0f;
+        static constexpr float kStopMarchAfter = 10.0f / 20.0f; // walking at least this long
         static constexpr float kOuf1After = 50.0f / 20.0f;
         static constexpr float kOuf3After = 60.0f / 20.0f;
         static constexpr float kOuf4Within = 10.0f / 20.0f;
@@ -1250,6 +1257,7 @@ namespace GalaxyEggbert::Game
         bool m_headBumped = false;    // HeadBumped is due this frame
         bool m_reactionStarted = false; // ReactionStarted is due this frame
         bool m_wasPushingCrate = false;
+        float m_marchSeconds = 0.0f; // walking on foot without a break (StopMarch)
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
         // precise sub-tile solidity for a specific continuous-space point,

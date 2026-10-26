@@ -235,6 +235,9 @@ namespace GalaxyEggbert::Game
         constexpr int kOuf3Frames[] = {135, 135, 136, 136, 137, 137, 231, 231, 231, 231, 230, 230,
                                        231, 231, 231, 231, 230, 230, 231, 231, 231, 231, 230, 230,
                                        231, 231, 231, 231, 137, 137, 136, 136, 135, 135};
+        // table_blupi StopMarch (60) and StopJump (61).
+        constexpr int kStopMarchFrames[] = {19, 18, 19};
+        constexpr int kStopJumpFrames[] = {34, 35, 34, 34, 33};
         constexpr int kOuf2Frames[] = {1, 1, 227, 227, 228, 228, 229, 229, 228, 228, 227, 227, 226, 226, 227, 227,
                                        228, 228, 229, 229, 228, 228, 227, 227, 226, 226, 227, 227, 228, 228, 1, 1};
         constexpr int kOuf4Frames[] = {0, 0, 135, 135, 136, 136, 137, 137, 232, 233, 232, 233, 232, 233,
@@ -1720,6 +1723,8 @@ namespace GalaxyEggbert::Game
         // correctly non-solid on horizontal contact, while thin Lava/
         // Crusher/Saw/Blitz/Drip still read as solid GROUND to stand on.
         const float dy = m_velocityY * dt;
+        const bool wasOnGroundBeforeMove = m_onGround; // landing this frame: StopJump
+        const float velocityYBeforeMove = m_velocityY;  // ... from a real fall, not a settle
         const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, dy, dz, tempPassable,
                                                    /*checkSubcellHorizontal=*/true, /*checkSubcellVertical=*/false);
 
@@ -1844,8 +1849,24 @@ namespace GalaxyEggbert::Game
             };
             if (m_reactionTimer > 0.0f)
             {
-                m_reactionTimer = moving || !m_onGround ? 0.0f : m_reactionTimer - dt;
+                m_reactionTimer = moving || !m_onGround || crouchHeld || lookUpHeld ? 0.0f : m_reactionTimer - dt;
             }
+            // The poses between moves, on foot and out of the water: landing, and stopping after
+            // a walk (a reaction already playing goes on).
+            const bool onFoot = !IsInVehicle() && !m_nage && !m_surf && !m_balloon && !m_ecrase;
+            constexpr float kLandingSpeed = 2.0f; // blocks a second: a fall, not a placed Blupi settling
+            if (onFoot && m_onGround && !wasOnGroundBeforeMove && velocityYBeforeMove < -kLandingSpeed && !moving &&
+                !crouchHeld && !lookUpHeld && m_reactionTimer <= 0.0f)
+            {
+                startReaction(AnimState::StopJump, kStopJumpDuration);
+            }
+            if (onFoot && m_onGround && !moving && !crouchHeld && !lookUpHeld && m_marchSeconds >= kStopMarchAfter &&
+                m_reactionTimer <= 0.0f)
+            {
+                startReaction(AnimState::StopMarch, kStopMarchDuration);
+            }
+            m_marchSeconds = onFoot && m_onGround && moving && !pushingCrate && !holdingCrate ? m_marchSeconds + dt
+                                                                                               : 0.0f;
             if (m_jumpAieArmed && m_onGround)
             {
                 m_jumpAieArmed = false;
@@ -2166,6 +2187,10 @@ namespace GalaxyEggbert::Game
                 return kOuf4Frames[m_animPhase % (sizeof(kOuf4Frames) / sizeof(kOuf4Frames[0]))];
             case AnimState::Ouf2:
                 return kOuf2Frames[m_animPhase % (sizeof(kOuf2Frames) / sizeof(kOuf2Frames[0]))];
+            case AnimState::StopMarch:
+                return kStopMarchFrames[m_animPhase % (sizeof(kStopMarchFrames) / sizeof(kStopMarchFrames[0]))];
+            case AnimState::StopJump:
+                return kStopJumpFrames[m_animPhase % (sizeof(kStopJumpFrames) / sizeof(kStopJumpFrames[0]))];
             case AnimState::Bye:
                 return kByeFrames[m_animPhase % (sizeof(kByeFrames) / sizeof(kByeFrames[0]))];
             case AnimState::Switch:

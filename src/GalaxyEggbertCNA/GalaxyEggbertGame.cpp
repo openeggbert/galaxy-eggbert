@@ -236,6 +236,8 @@ namespace GalaxyEggbert::CNA
                 case S::Ouf3: return "Ouf3";
                 case S::Ouf4: return "Ouf4";
                 case S::Ouf2: return "Ouf2";
+                case S::StopMarch: return "StopMarch";
+                case S::StopJump: return "StopJump";
                 case S::Switch: return "Switch";
                 case S::TakeDynamite: return "TakeDynamite";
                 case S::PutDynamite: return "PutDynamite";

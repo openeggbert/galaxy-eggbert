@@ -210,8 +210,11 @@ int main(int argc, char** argv)
             ++stepsToLand;
         }
         check(anim.IsOnGround(), "lands again after the jump arc completes");
+        check(anim.GetAnimState() == BlupiController::AnimState::StopJump && anim.GetAnimIcon() == 34,
+              "landing shows the original's StopJump pose (table_blupi 61, icon 34)");
+        for (int i = 0; i < 20; ++i) anim.Step(world, 0.0f, 0.0f, false, false, false, dt);
         check(anim.GetAnimState() == BlupiController::AnimState::Stop,
-              "back on the ground and idle returns to the Stop anim state, not stuck in Air");
+              "back on the ground and idle returns to the Stop anim state after it, not stuck in Air");
     }
 
     // GetDisplayAnimIcon() (BLUPI-079, added 2026-07-20) -- real
@@ -1517,6 +1520,21 @@ int main(int argc, char** argv)
                 pusher.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false, false, false, /*pushingCrate=*/true);
             pusher.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(pusher.GetAnimState() == BlupiController::AnimState::Ouf1b, "after a long push, standing: Ouf1b");
+
+            // StopMarch (Decor.cpp:3616-3626): stopping after a walk of at least 10 ticks.
+            const auto stopAfterWalking = [&](int frames)
+            {
+                BlupiController walker;
+                walker.SetPosition(60.0f - 50.0f, 1.0f, 95.0f - 50.0f);
+                walker.SetYaw(1.57079632679f);
+                for (int i = 0; i < 10; ++i) walker.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                for (int i = 0; i < frames; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+                walker.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                return walker.GetAnimState();
+            };
+            check(stopAfterWalking(40) == BlupiController::AnimState::StopMarch,
+                  "stopping after a walk shows the StopMarch pose");
+            check(stopAfterWalking(10) == BlupiController::AnimState::Stop, "after a step or two, straight to Stop");
 
             // The decoy (Decor.cpp:4833-4848): put down, Ouf2 holding him; cannot, the Ouf3 shrug.
             BlupiController decoy;
