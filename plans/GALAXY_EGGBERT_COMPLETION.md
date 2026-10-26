@@ -259,7 +259,7 @@ adaptation) · evidence/test · priority. Known rows so far:
 | Bye at world select | C | done (`78757b1`) |
 | Win cheer at the exit, then straight to the hub (video §d) | A/C | done D29 |
 | Arrival beside the last door in a hub (video §a) | A | done D19 (ArrivalPastDoor / ArrivalBesideSign) |
-| Hub door slides up after a win (video §c) | C | open |
+| Hub door slides up after a win (video §c) | C | done (every opened door of a hub slides up on arrival: `OpenDoorAt`, ObjectType22, as `Decor::AdaptDoors`/`OpenDoor`) |
 | Crate pull (Recede/Advance) | A | done D21 |
 | Vehicle × enemy contact (skateboard vs. mine, D13; then every vehicle and enemy) | A | mines done D13; every other vehicle × enemy pair open |
 | Helicopter glue drop (HelicoGlu, Decor.cpp:3694-3708, 3058-3080) | A | done `85bc1ae` |
