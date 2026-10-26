@@ -151,11 +151,11 @@ def main(argv) -> int:
     carve(33, 14, 54, 33, 16, 56)
     carve(34, 14, 54, 34, 16, 56)
     # The water pit (x 9-28, wall to wall) three below the shelves, its surface at y 11; a bank
-    #    at its east end to climb out (one above the water, then a jump onto the shelf).
+    #    at its east end to climb out (level with the water, then a jump onto the shelf).
     carve(9, 11, 48, 28, 13, 59)
     w.fill(9, 10, 48, 28, 10, 59, 82)
     w.fill(9, 11, 48, 28, 11, 59, WATER)
-    plates(28, 11, 48, 28, 12, 50)                     # the bank, walk 13
+    plates(28, 11, 48, 28, 11, 50)                     # the bank, walk 12
     # The ferry: three pairs of lifts, each 2 x 3, all 100 ticks (the original's), in step: A
     #    from the east shelf west, B east to meet it, C west to the far shelf from where B starts.
     #    Step from A onto B where they meet, from B onto C where they start. They wait 40 ticks

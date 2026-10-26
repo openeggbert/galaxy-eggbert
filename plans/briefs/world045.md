@@ -64,3 +64,5 @@ ten mines lying (four of them the road's pinch points), four hanging, six invert
   pit); a hangar helicopter flown out over the balcony and down into the core; the cage walked
   into past its crushers (Blupi squashed, then through the grating) and its treasure taken; the
   exit corridor's crushers; the egg pool dived into; the attic's walk-through wall.
+
+2026-10-27 (`tools/watercheck.py`, world 7's agent's measurement of the weak jump out of the water): the grotto's pool's water now reaches its banks' top (it was a block below and trapped a Blupi who dived for the eggs); climbed out live, the staged checks unchanged.

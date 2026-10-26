@@ -53,3 +53,5 @@ lollipop; 22 lifts (the original's 10, as pairs and platforms).
   scripted runs drift over a 14-second cycle, so the steps were checked one at a time); the
   lollipop licked and the jump onto the tree; the arrow on the tree ends the mission (probe
   without treasures).
+
+2026-10-27 (`tools/watercheck.py`, world 7's agent's measurement of the weak jump out of the water): the ferry pit's bank is now level with the water (it stood a block above and trapped a Blupi who fell in); climbed out live, the staged checks unchanged.

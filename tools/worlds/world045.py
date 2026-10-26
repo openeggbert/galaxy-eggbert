@@ -251,8 +251,8 @@ def pool(w: World, rng: random.Random):
     carve(w, 64, 26, 8, 76, 30, 10)
     cheese(w, 64, 8, 8, 76, 25, 11, rng)                    # the landing in the mouth
     carve(w, 67, 23, 4, 73, 25, 7)
-    w.fill(67, 23, 4, 73, 23, 7, DEEP_WATER)
-    w.fill(67, 24, 4, 73, 24, 7, WATER)
+    w.fill(67, 23, 4, 73, 24, 7, DEEP_WATER)
+    w.fill(67, 25, 4, 73, 25, 7, WATER)                      # level with the banks: climb out
     for x in (69, 70, 71):
         w.place(O.EGG, x, 23, 5)
     helicopters(w, [(65, 26, 6), (66, 26, 9), (75, 26, 6), (74, 26, 9)])
