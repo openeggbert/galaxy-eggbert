@@ -23,6 +23,9 @@ cave.
 - The middle storey (walk 26), up a stair from the corridor's east end: B1 with the blupit shooting
   along it; west the bulldozer's corridor (one wide, jump it); the gap crossed on a lift (18 ticks);
   the trench of five mines with the crate at its end, the bars over it (a jump catches them, D45).
+  (Fixed 2026-10-26: the stair's shaft was dug into the room's floor at z 56, leaving a pit six
+  deep at its top (x 48–49) with no way out, between the stair, the room and the upper tunnel's
+  exit; the stair now steps up onto the floor.)
 - The upper corridor (walk 32), up a stair from the trench room: traps to jump, a still mine and a
   moving one, the egg at its east end under two drips, teleporter 1 over its west end.
 - The lower wind tunnel (walk 20), entered from the start corridor beside its fan, blows Blupi east

@@ -74,7 +74,7 @@ def main(argv) -> int:
     # Up a stair at the corridor's east end: B1, a blupit shooting along the room; west the
     # bulldozer's corridor; a gap crossed on a lift; the trench of five mines (and a crate at its
     # end), the only way over it hanging from the bars above.
-    carve(48, 20, 56, 49, 28, 59)
+    carve(48, 20, 57, 49, 28, 59)                                     # its top step the room's floor
     slime(w, 48, 20, 58, 49, 21, 58)                                  # walk 22
     slime(w, 48, 20, 57, 49, 23, 57)                                  # walk 24
     carve(40, 26, 50, 49, 29, 56)
