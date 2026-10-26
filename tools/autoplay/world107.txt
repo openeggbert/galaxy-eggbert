@@ -1,0 +1,131 @@
+# Mission 107 played through (plans/briefs/world107.md): up the tower to the red key (the
+# lollipop's high jump, the low passage, the great lift, the stair of ledges), down the chute, the
+# red door and the treasure, the golden key.
+wait 30
+expect mission = 107
+# The chamber (walk 4): the lift (x 48-49, z 47-48) across and up at once to the first ledge
+# (walk 10, z 42-44); boarded at the start of its dwell.
+go 47 49.4
+go 48.5 49.4 tol 0.1
+lift 48 10 45 max 900
+lift 48 4 47 max 600
+go 48.5 47.5 tol 0.15
+lift 48 10 45 max 600
+wait 6
+go 48.5 43.4
+# The lollipop (39, 43) at the ledge's west end, the wasp's lane (z 44) kept to z 42.6 and crossed
+# when it is far; on it, Action; then the high jump north onto the tower's floor (walk 14).
+go 44 42.6
+clear 41 10 44 3 lane x max 900
+go 39.6 42.6
+go 39 43 tol 0.15
+hold 2 action
+wait 40
+go 39 42.4 tol 0.1
+face 0
+go 39 40.4 jump 2.5 tol 0.3
+until ground = 1
+expect y >= 13.9
+# The tower's floor (walk 14): between its bobbing mines (42, 33), (46, 38), (44, 35), (48, 32) to
+# the wall's low passage (x 50-54, z 34-36) and through it crouching under the six mines hanging
+# in its walking cells; the great lift (x 57, z 34-36) up round the column to walk 32, boarded at
+# the start of its dwell, off north onto the landing.
+go 40 37
+go 49 36.6
+go 49.6 35 tol 0.15
+go 55.6 35 tol 0.2 with crouch max 600
+go 55.8 35 tol 0.1
+lift 57 32 35 max 900
+lift 57 14 35 max 900
+go 57 35 tol 0.15
+until y >= 31.95 max 900
+wait 6
+go 57 32.7 tol 0.15
+expect y >= 31.9
+# The stair of ledges (walk 34 -> 56): twelve ledges two up each round the column, a gap of one
+# between each and the next; each jumped with a run-up, taking off at the ledge's edge, the ways
+# kept off the mines on the ledges at walk 38 (56, 39) and 44 (61, 31); then up onto the top room
+# (walk 58).
+go 61 32.6 tol 0.15
+face 180
+go 61 35 jump 1.55 tol 0.3
+until ground = 1
+expect y >= 33.9
+go 61 34.4 tol 0.15
+face 180
+go 61 38.7 jump 2.25 tol 0.3
+until ground = 1
+expect y >= 35.9
+go 61.6 39.5 tol 0.15
+face 270
+go 57.8 39.5 jump 1.75 tol 0.3
+until ground = 1
+expect y >= 37.9
+go 57.8 40.7 tol 0.15
+go 55.0 40.7 tol 0.15
+face 0
+go 55.2 35.6 jump 1.95 tol 0.3
+until ground = 1
+expect y >= 39.9
+go 55.5 35.8 tol 0.15
+face 0
+go 55.5 31.6 jump 1.95 tol 0.3
+until ground = 1
+expect y >= 41.9
+go 56.0 32.3 tol 0.15
+face 90
+go 60.4 32.3 jump 1.95 tol 0.3
+until ground = 1
+expect y >= 43.9
+go 62 32.3 tol 0.15
+go 62 30.6 tol 0.15
+face 180
+go 62 34.6 jump 2.15 tol 0.3
+until ground = 1
+expect y >= 45.9
+go 61 34.4 tol 0.15
+face 180
+go 61 38.7 jump 2.25 tol 0.3
+until ground = 1
+expect y >= 47.9
+go 61.6 39.5 tol 0.15
+face 270
+go 57.8 39.5 jump 1.75 tol 0.3
+until ground = 1
+expect y >= 49.9
+go 57.8 40.7 tol 0.15
+go 55.0 40.7 tol 0.15
+face 0
+go 55.2 35.6 jump 1.95 tol 0.3
+until ground = 1
+expect y >= 51.9
+go 55.5 35.8 tol 0.15
+face 0
+go 55.5 31.6 jump 1.95 tol 0.3
+until ground = 1
+expect y >= 53.9
+go 56.0 32.3 tol 0.15
+face 90
+go 60.4 32.3 jump 1.95 tol 0.3
+until ground = 1
+expect y >= 55.9
+go 61 30.6 tol 0.15
+face 180
+go 61 34.5 jump 3.0 tol 0.3
+until ground = 1
+expect y >= 57.9
+# The top room: the red key (58, 46), down its chute (x 60-61, z 44-45) to the chamber; the red
+# door (x 63) takes the key, the treasure behind it (65, 50); the golden key (40, 52).
+go 58 46 until keys = 1 max 600
+until keys = 1 max 200
+go 60.5 44.5
+until ground = 1
+expect y <= 4.1
+go 62 50
+go 65 50 until treasures = 1 max 600
+until treasures = 1 max 200
+go 62 50
+go 40 52 until exit = 1 max 900
+until mission = 1 max 900
+expect phase = Play
+wait 60
