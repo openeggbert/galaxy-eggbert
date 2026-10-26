@@ -1,0 +1,174 @@
+# Mission 041 played through (plans/briefs/world041.md).
+wait 30
+expect mission = 41
+# A: the cellar. Crate A (28, 78) west to x 23, north beside the bench to z 70, west to
+# (22, 70) under the shelf's west end.
+go 31 79
+go 29.6 78
+face 270
+go 24.4 78 max 900
+crate 23 10 78 max 60
+go 24.6 79.6
+go 23 79.6
+face 0
+go 23 71.4 max 900
+crate 23 10 70 max 60
+go 24.6 71.4
+go 24.6 70
+face 270
+go 23.4 70 max 900
+crate 22 10 70 max 60
+# Crate B along the bench (x 22, walk 11) north off its end onto A: up onto the bench behind
+# it from the south, then walk it north.
+go 24.5 72
+go 24.5 79.4
+go 22 79.4
+face 0
+go 22 76.95 jump 2.6 tol 0.1
+until ground = 1
+expect y >= 10.95
+go 22 71.4 max 900
+crate 22 11 70 max 120
+# Up the stack (walk 12) onto the shelf (walk 14); the first helicopter (24, 67).
+go 22 70 jump 1.4 tol 0.15
+until ground = 1
+expect y >= 11.95
+go 22 68 jump 2.1 tol 0.15
+until ground = 1
+expect y >= 13.95
+go 24 67 tol 0.1
+hold 6 action
+wait 30
+# B: fly to the chimney's axis (25.5, 67.5) and up it into the loft (walk 28).
+go 25.5 67.5 tol 0.2
+hold 345 lookup
+until y >= 31.4 max 120
+# Across to the ledge in the loft's west side (x 21-24, z 61-63, walk 31), down onto it:
+# treasure 1.
+go 23.2 62.2 tol 0.4
+hold 60 crouch
+until treasures = 1 max 200
+# Over to the loft's east side, down, off the helicopter (Action), and east through door 1
+# (37, 64), open now, into the tunnel.
+hold 20 lookup
+go 34.3 64 tol 0.4
+hold 90 crouch
+expect y <= 28.05
+hold 6 action
+wait 30
+go 39 64
+# C: the tunnel, past its hanging mine (42, 62) on its south side, down from its mouth onto
+# the great cave's floor (walk 22).
+go 44.5 64
+go 48.3 59.7
+go 50 58.5
+until ground = 1 max 300
+expect y <= 22.05
+# D: a floor helicopter (53, 60), taken.
+go 53 60 tol 0.3
+hold 6 action
+wait 30
+# Its five ledges (each lit from above, clear of the mines hanging under them): south-west
+# (walk 27) treasure and egg.
+hold 115 lookup
+wait 60
+go 52.2 65.2 tol 0.35
+hold 100 crouch
+until ground = 1 max 200
+go 52 65.1 tol 0.25
+until treasures = 2 max 200
+go 52.9 65.9 tol 0.2
+until eggs = 1 max 200
+# The middle ledge on its column (walk 32), a mine hanging two above it.
+hold 100 lookup
+wait 60
+go 60.2 58.2 tol 0.35
+hold 100 crouch
+until ground = 1 max 200
+go 60 58.1 tol 0.25
+until treasures = 3 max 200
+go 60.8 57.2 tol 0.2
+until eggs = 2 max 200
+# South-east (walk 31), low under the mine hanging from the dome at (64, 34, 61); its
+# treasure beside a lying mine (66, 64).
+hold 24 lookup
+wait 40
+go 67.2 65.2 tol 0.35
+hold 100 crouch
+until ground = 1 max 200
+go 67.1 65.1 tol 0.2
+until treasures = 4 max 200
+# East (walk 34): treasure and egg.
+hold 70 lookup
+wait 60
+go 68.9 52.3 tol 0.35
+hold 100 crouch
+until ground = 1 max 200
+go 69 52.1 tol 0.2
+until treasures = 5 max 200
+go 68.1 52.9 tol 0.2
+until eggs = 3 max 200
+# North-west (walk 36): its treasure beside a lying mine (57, 49).
+hold 55 lookup
+wait 60
+go 55.9 47.9 tol 0.35
+hold 100 crouch
+until ground = 1 max 200
+go 55.9 47.9 tol 0.2
+until treasures = 6 max 200
+# Door 6's landing (walk 38): down, off, through the door (60, 45), open with six.
+hold 55 lookup
+wait 60
+go 60 47.2 tol 0.3
+hold 100 crouch
+until ground = 1 max 200
+expect y >= 37.95
+hold 6 action
+wait 30
+go 60 43.5
+# E: the corridor. A landing helicopter, one up over the water (y 39); before each gate of
+# rising and falling mines (z 35, 30, 25) wait for its mines at the top, then on past it.
+go 60 42.6 tol 0.3
+hold 6 action
+wait 30
+hold 34 lookup
+wait 40
+go 60 37.6 tol 0.3
+near 60 43 35 0.3 max 400
+go 60 32.6 tol 0.3
+near 60 43 30 0.3 max 400
+go 60 27.6 tol 0.3
+near 60 43 25 0.3 max 400
+go 60 20.6 tol 0.3
+hold 60 crouch
+until ground = 1 max 200
+expect y >= 37.95
+# F: the far landing. Treasure 7; off the helicopter for the alcove's two eggs either side of
+# its hanging mine (62, 19); back on, up the shaft to the exit chamber (walk 52), the arrow.
+go 59 19 tol 0.2
+until treasures = 7 max 200
+hold 6 action
+wait 30
+go 61 18
+go 61.9 18 tol 0.1
+until eggs = 4 max 200
+go 61 18.2
+go 61 19.8
+go 61.9 20 tol 0.1
+until eggs = 5 max 200
+go 60.5 19.5
+go 60 20.6 tol 0.15
+hold 6 action
+wait 30
+go 60 19.5 tol 0.3
+hold 290 lookup
+wait 60
+expect y >= 52.5
+go 60 16.4 tol 0.3
+hold 90 crouch
+until exit = 1 max 200
+expect treasures = 7
+until mission = 40 max 900
+expect lives = 8
+expect phase = Play
+wait 120
