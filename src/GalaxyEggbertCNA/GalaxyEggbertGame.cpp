@@ -1057,6 +1057,7 @@ namespace GalaxyEggbert::CNA
         state.dead = blupi_.IsDeathLocked();
         state.exitReached = interaction_.ExitReached();
         state.blitz = ((worldRuntime_.GetAnimPhase() % 100) + 100) % 100;
+        state.temp = (((worldRuntime_.GetAnimPhase() / 4) % 20) + 20) % 20;
         state.phase = phase_;
         state.mission = worldRuntime_.GetMissionNumber();
         state.treasures = interaction_.TreasuresCollected();

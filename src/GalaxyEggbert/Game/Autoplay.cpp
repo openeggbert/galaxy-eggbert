@@ -129,7 +129,7 @@ namespace GalaxyEggbert::Game
                     {"x", Field::X},         {"y", Field::Y},         {"z", Field::Z},
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mission", Field::Mission},
                     {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite},
-                    {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz},
+                    {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp},
                     {"phase", Field::Phase}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
                                                                   {"<=", Op::Le}, {">", Op::Gt},  {">=", Op::Ge}};
@@ -338,6 +338,7 @@ namespace GalaxyEggbert::Game
         case Field::Dead: value = state.dead ? 1.0f : 0.0f; break;
         case Field::Exit: value = state.exitReached ? 1.0f : 0.0f; break;
         case Field::Blitz: value = static_cast<float>(state.blitz); break;
+        case Field::Temp: value = static_cast<float>(state.temp); break;
         case Field::Phase: value = static_cast<float>(Def::ToRaw(state.phase)); break;
         }
         switch (condition.op)
