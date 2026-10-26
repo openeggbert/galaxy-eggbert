@@ -45,6 +45,8 @@ clip Ouf1b 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
 clip Ouf3 3 3 3 3 3 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 3 3 3 3 3
 clip Ouf4 0 0 3 3 3 3 3 3 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 3 3 3 3 3 3 0 0
 clip Ouf2 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0
+clip StopMarch 0 0 0
+clip StopJump 0 0 0 0 0
 clip Bye 0 0 0 0 0 0 0 0 0 0 0 0
 clip Switch 0 0 0 0 0 0 0 0 0 0
 clip FireTank 0 0 0 0 0 0

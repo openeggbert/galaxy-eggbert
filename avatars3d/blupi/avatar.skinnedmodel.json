@@ -290,6 +290,14 @@
       "clip": "clips/Ouf2.clip.bin"
     },
     {
+      "name": "StopMarch",
+      "clip": "clips/StopMarch.clip.bin"
+    },
+    {
+      "name": "StopJump",
+      "clip": "clips/StopJump.clip.bin"
+    },
+    {
       "name": "Bye",
       "clip": "clips/Bye.clip.bin"
     },
