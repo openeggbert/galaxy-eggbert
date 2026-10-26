@@ -236,14 +236,14 @@ Use it as an index; verify each claim against extracted frames before relying on
 
 ## 10. Editor and UI
 
-- **10 slots × 3 gamers** (open): slot N = `customworlds/gamerG/custom_00N.vwr` for N = 1-10
+- **10 slots × 3 gamers** (done `7eac7d5`): slot N = `customworlds/gamerG/custom_00N.vwr` for N = 1-10
   (existing files keep their slot). Files beyond 10 (and the reverted build's `slotNN.vwr`) stay
   untouched and are listed as "older worlds" to open or copy into a free slot — never deleted
   or hidden. Slot 1 of a gamer is seeded once from `worlds3d/world999.vwr` only when empty
   (copy, never a link). Create/edit/save/play-test/delete with confirmation; tests per gamer.
-- **Title screen** (open): a Galaxy Eggbert scene (CNA-rendered or composed from Galaxy's own
+- **Title screen** (done `6917fc9`, `worlds3d/title.vwr`): a Galaxy Eggbert scene (CNA-rendered or composed from Galaxy's own
   assets), not Mobile Eggbert's `init.png`; legible original UI.
-- **Editor entry** (open): a labelled "3D World Editor" button instead of the X icon.
+- **Editor entry** (done `e3a1042`): a labelled "3D World Editor" button instead of the X icon.
 - **Transparency** (open): verify the menu panels' alpha against the original (pad.png boxes).
 - Done 2026-10-25: proportional text (D9), full-screen backgrounds (D7).
 
