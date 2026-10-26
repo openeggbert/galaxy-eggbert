@@ -128,6 +128,15 @@ namespace GalaxyEggbert::Game
         // anchor to -- confirmed by direct pixel sampling of object-m.png to
         // be fully opaque at that sample point either way, ruling out a
         // swatch-alpha cause for any transparency complaint.
+        //
+        // 2026-10-26 (reported by the world authoring: from the side 126 blows to, its flat
+        // base showed): 126/129 had base and open face the wrong way round, the base on the
+        // side the fan blows toward. Their crops settle it: 126's base (the panel with the red
+        // and green lights) is on the right, its propeller on the left, so it blows -X with the
+        // base at +X; 129 is its mirror. On +Z, +Y and -Y the texture's u runs along +X
+        // (MeshBuilder::AddBox's corner table), so the crop's right is +X there with no turn;
+        // the -Z face, whose u runs along -X, is mirrored (MirrorBackZ) to keep the base on the
+        // same side seen from behind. The earlier RotateTop180 had put the base at -X on top.
         struct FanEntry
         {
             int Icon;
@@ -135,11 +144,12 @@ namespace GalaxyEggbert::Game
             BoxFace OpenFace;
             float BaseSwatchV;
             bool RotateTop180 = false;
+            bool MirrorBackZ = false;
         };
 
         constexpr FanEntry kFanEntries[] = {
-            {126, BoxFace::NegativeX, BoxFace::PositiveX, kMidSwatchV, true},  // FanLeft: blows toward -X
-            {129, BoxFace::PositiveX, BoxFace::NegativeX, kMidSwatchV, true},  // FanRight: blows toward +X
+            {126, BoxFace::PositiveX, BoxFace::NegativeX, kMidSwatchV, false, true},  // FanLeft: blows toward -X
+            {129, BoxFace::NegativeX, BoxFace::PositiveX, kMidSwatchV, false, true},  // FanRight: blows toward +X
             {132, BoxFace::NegativeY, BoxFace::PositiveY, kBottomSwatchV, false}, // FanUp: blows up
             {135, BoxFace::PositiveY, BoxFace::NegativeY, kTopSwatchV, false},    // FanDown: blows down
         };
@@ -357,6 +367,11 @@ namespace GalaxyEggbert::Game
             {
                 auto& top = outFaces[static_cast<int>(BoxFace::PositiveY)];
                 top.uv = CnaEngine::Graphics::UvRect{top.uv.u1, top.uv.v1, top.uv.u0, top.uv.v0};
+            }
+            if (fan.MirrorBackZ)
+            {
+                auto& back = outFaces[static_cast<int>(BoxFace::NegativeZ)];
+                back.uv = CnaEngine::Graphics::UvRect{back.uv.u1, back.uv.v0, back.uv.u0, back.uv.v1};
             }
             return;
         }

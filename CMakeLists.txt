@@ -428,6 +428,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
+        src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp
+        src/GalaxyEggbert/Game/SwatchUv.cpp
         src/GalaxyEggbert/Game/Hud.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
         src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
@@ -465,6 +467,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     ge_add_editor_verify(VerifyGEEditorStorage tools/VerifyGEEditorStorage.cpp)
     ge_add_editor_verify(VerifyGEEditorObjects tools/VerifyGEEditorObjects.cpp)
     ge_add_editor_verify(VerifyDefinitionRegistries tools/VerifyDefinitionRegistries.cpp)
+    ge_add_editor_verify(VerifyTileFaces tools/VerifyTileFaces.cpp)
 
     # -------------------------------------------------------------------
     # Linux runtime bundle (BUILD-010)
