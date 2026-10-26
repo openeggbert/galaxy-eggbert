@@ -308,6 +308,6 @@ adaptation) · evidence/test · priority. Known rows so far:
 | A | Protect and understand: audit, captures, this plan, inventories | done (this document; asset manifest still to write) |
 | B | Representative multi-height tile mission on existing systems | done: mission 011 `4986391` (`plans/briefs/world011.md`) |
 | C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress: D1-D3, D10 done; parity matrix open |
-| D | Hub network and the 64 missions + 199 | in progress: main hub and worlds 1-3 complete (001; 010-014; 020-025; 030-034), worlds 4-5 being authored; worlds 6-12 and 199 open |
+| D | Hub network and the 64 missions + 199 | in progress: the main hub, worlds 1-6, 8, 10, 11, 12 and 199 complete (2026-10-26; each world's brief in `plans/briefs/`); worlds 7 and 9 being authored by two background sessions |
 | E | Editor slots, demo seed, title screen, editor entry, transparency | done: `7eac7d5`, `6917fc9`, `e3a1042`, `fb48872` |
 | F | Stabilisation and completion audit | open |
