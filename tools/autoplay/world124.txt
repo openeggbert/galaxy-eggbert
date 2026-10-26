@@ -1,0 +1,246 @@
+# Mission 124 played through (plans/briefs/world124.md): the cisterns, seventeen treasures on the
+# tanks' bottoms and rims, dives timed past the fish, the treasure doors, the wind tunnel.
+wait 30
+expect mission = 124
+# The start passage (walk 20): past the hanging mine (12, 21, 50) and the mine (16, 48) in lane
+# z 52, into tank 1's hall; treasure (36, 41) on the tank's north rim, along z 40 clear of
+# teleporter 330's pillar over (22, 41).
+go 10 52
+go 21.3 52
+go 21.3 40.3
+go 35 40.3
+go 36 40.8 until treasures = 1
+until treasures = 1 max 200
+# Tank 1 (water y 17-19, its bottom walk 17): treasure (33, 17, 46) from the east rim, dived for
+# when the fish (z 45 along X, x 29 along Z) are clear of it.
+go 36.4 46
+face 270
+clear 33 17 46 3 max 900
+go 33 46 with crouch until treasures = 2 max 400
+until treasures = 2 max 200
+go 36.5 46 with lookup jump 1.2 max 400
+until ground = 1
+# Treasure (30, 17, 56) from the south rim, clear of the fish along z 55 and x 29 (the rim's x 37
+# lane keeps off teleporter 330's other pillar over (36, 58)).
+go 37.2 46
+go 37.2 59.5
+go 30 59.5
+face 0
+clear 30 17 56 4.5 max 1800
+go 30 56 with crouch until treasures = 3 max 400
+until treasures = 3 max 200
+go 30 59.5 with lookup jump 1.2 max 400
+until ground = 1
+# Treasure (25, 17, 50) from the west rim.
+go 21.5 59.5
+go 21.5 50
+face 90
+clear 25 17 50 4 max 1800
+go 25 50 with crouch until treasures = 4 max 400
+until treasures = 4 max 200
+go 21.5 50 with lookup jump 1.2 max 400
+until ground = 1
+# Through door "3" (x 38) into tank 2's hall (water y 15-19, its bottom walk 15; five fish).
+# Treasure (45, 15, 42) from the north rim, with the egg (40, 39) on the way. Round tank 1 by its
+# rims to the door.
+go 21.3 50
+go 21.3 40.3
+go 37.2 40.3
+go 37.2 50
+go 40 50
+go 40 39 until eggs = 1
+go 45 38.6
+face 180
+clear 45 15 42 3.5 max 1800
+go 45 42 with crouch until treasures = 5 max 400
+hold 90 crouch
+until treasures = 5 max 200
+go 45 39.7 tol 0.25 with lookup max 400
+until y >= 19.2 max 200
+hold 8 up jump
+hold 30 up
+until ground = 1
+# The egg (58, 39); treasures (53, 15, 47) and (56, 15, 52) from the east rim.
+go 58 39 until eggs = 2
+go 58.6 47
+face 270
+clear 53 15 47 3.5 max 1800
+go 53 47 with crouch until treasures = 6 max 500
+hold 90 crouch
+until treasures = 6 max 200
+go 57.3 47 tol 0.25 with lookup max 500
+until y >= 19.2 max 200
+hold 8 up jump
+hold 30 up
+until ground = 1
+go 58.6 52
+face 270
+clear 56 15 52 3.5 max 1800
+go 56 52 with crouch until treasures = 7 max 400
+hold 90 crouch
+until treasures = 7 max 200
+go 57.3 52 tol 0.25 with lookup max 400
+until y >= 19.2 max 200
+hold 8 up jump
+hold 30 up
+until ground = 1
+# Treasure (58, 61) on the rim's south-east corner, past teleporter 331's pillar over (58, 58) in
+# lane x 59; treasure (47, 15, 57) from the south rim.
+go 59.2 56
+go 59.2 61
+go 58 61 until treasures = 8
+until treasures = 8 max 200
+go 47 61.4
+face 0
+clear 47 15 57 3.5 max 1800
+go 47 57 with crouch until treasures = 9 max 400
+hold 90 crouch
+until treasures = 9 max 200
+go 47 60.3 tol 0.25 with lookup max 400
+until y >= 19.2 max 200
+hold 8 up jump
+hold 30 up
+until ground = 1
+# Through door "9" (x 60) into the wind tunnel: with the fan's wind behind him he jumps the pit
+# (x 64-66) where a mine bobs, as it turns down from the top. By the rims (lane x 59 past
+# teleporter 331).
+go 47 61.5
+go 59.2 61.5
+go 59.2 50
+go 61.4 50 tol 0.1
+face 90
+near 65 19 50 0.15 max 900
+go 70.5 50 jump 7.2 max 900
+until ground = 1
+expect x >= 69.5
+# Tank 3 (water y 13-19, its bottom walk 13; ten fish). Treasure (74, 13, 60) and (75, 13, 42)
+# from the west rim.
+go 71.4 60
+face 90
+clear 74 14 60 4 max 1800
+go 74 60 with crouch until treasures = 10 max 600
+hold 200 crouch
+until treasures = 10 max 200
+# Up beside the rim at z 61.6, off the lane of the fish along z 60.
+go 72.6 61.6 tol 0.2 with crouch max 300
+clear 72.5 17 61.6 2.5 max 900
+go 72.3 61.6 tol 0 with lookup until y >= 19.2 max 600
+face 270
+hold 8 up jump
+hold 30 up
+until ground = 1
+go 71.4 42
+face 90
+clear 75 14 42 4 max 1800
+go 75 42 with crouch until treasures = 11 max 600
+hold 200 crouch
+until treasures = 11 max 200
+go 72.6 42 tol 0.2 with crouch max 300
+clear 72.5 17 42 2 max 900
+go 72.3 42 tol 0 with lookup until y >= 19.2 max 600
+face 270
+hold 8 up jump
+hold 30 up
+until ground = 1
+# Treasure (78, 13, 53) from the south rim (round the crate on the rim's corner (71, 63)), the
+# last cell to it timed past the fish along the bottom at z 52.
+go 71.4 53
+go 70.4 60
+go 70.4 64.2
+go 78 64.2
+go 78 63.4
+face 0
+clear 78 16 59 3.5 max 1800
+go 78 55 with crouch max 600
+hold 60 crouch
+clear 78 14 52 3 max 600
+go 78 53 with crouch until treasures = 12 max 300
+until treasures = 12 max 200
+go 78 61.6 tol 0.2 with lookup max 600
+clear 78 17 61.6 2.5 max 900
+go 78 61.8 tol 0 with lookup until y >= 19.2 max 600
+face 180
+hold 8 up jump
+hold 30 up
+until ground = 1
+# The other four: straight down by the tank's wall off the fish's lanes, along the bottom (where
+# only the fish along z 50 and z 52 swim), back and straight up. Treasure (85, 13, 59) from the
+# south rim.
+go 85 63.4
+face 0
+clear 85.5 16 61.5 2.5 max 1800
+go 85 62.3 tol 0.2 with crouch max 300
+hold 200 crouch
+go 85 59 with crouch until treasures = 13 max 400
+until treasures = 13 max 200
+go 85 62.2 tol 0.2 with crouch max 400
+clear 85.5 16 61.5 2.5 max 900
+go 85 62.3 tol 0 with lookup until y >= 19.2 max 600
+face 180
+hold 8 up jump
+hold 30 up
+until ground = 1
+# Treasures (88, 13, 54) and (90, 13, 45) from the east rim (round the south-east corner).
+go 94.6 63.4
+go 94.6 54
+face 270
+clear 92.5 16 54 2.5 max 1800
+go 92.7 54 tol 0.2 with crouch max 300
+hold 200 crouch
+clear 88 14 52 2.5 max 600
+go 88 54 with crouch until treasures = 14 max 400
+until treasures = 14 max 200
+go 92.7 54 tol 0.2 with crouch max 400
+clear 92.5 16 54 2.5 max 900
+go 92.7 54 tol 0 with lookup until y >= 19.2 max 600
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1
+# Past teleporter 332's pillar over (94, 50) in lane x 95.
+go 95.3 52
+go 95.3 48
+go 94.6 45
+face 270
+clear 92.5 16 45 2.5 max 1800
+go 92.7 45 tol 0.2 with crouch max 300
+hold 200 crouch
+go 90 45 with crouch until treasures = 15 max 400
+until treasures = 15 max 200
+go 92.7 45 tol 0.2 with crouch max 400
+clear 92.5 16 45 2.5 max 900
+go 92.7 45 tol 0 with lookup until y >= 19.2 max 600
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1
+# Treasure (94, 37) on the rim's north-east corner; (83, 13, 41) from the north rim.
+go 94.6 38
+go 94 37 until treasures = 16
+until treasures = 16 max 200
+go 83 36.6
+face 180
+clear 83 16 38 2.5 max 1800
+go 83 37.8 tol 0.2 with crouch max 300
+hold 200 crouch
+go 83 41 with crouch until treasures = 17 max 400
+until treasures = 17 max 200
+go 83 37.8 tol 0.2 with crouch max 400
+clear 83 16 38 2.5 max 900
+go 83 37.7 tol 0 with lookup until y >= 19.2 max 600
+face 0
+hold 8 up jump
+hold 30 up
+until ground = 1
+# Teleporter 332 on the east rim (under its pillar at (94, 50)) back to the start passage, and
+# the exit, open with the seventeen treasures. Along the north rim to its corner first.
+go 94.6 36.8
+go 94.6 38
+go 94.6 49
+go 94 50 until x <= 20 max 900
+until x <= 20 max 900
+go 6 52
+go 5 53 until exit = 1
+until mission = 120 max 900
+expect phase = Play
+wait 60
