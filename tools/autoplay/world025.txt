@@ -1,0 +1,215 @@
+# Mission 025 played through (plans/briefs/world025.md).
+wait 30
+expect mission = 25
+expect lives = 3
+# West out of the keep, along the corridor into the ladder tower (walk 11).
+go 44 50
+go 37 50
+go 34.4 49.5 tol 0.15
+face -90
+# The ladder: six pairs of lifts (z 49-50) shuttling one cell along X, each two above the last.
+# Jump onto the next one up as it stops beside him (it stops 10 ticks, the jump lasts longer:
+# he lands as it sets off again). The first from the floor (-X), then each one +X.
+lift 32 13 49 max 400
+lift 33 13 49 max 400
+go 33 49.5 jump 2 tol 0.15
+until ground = 1
+expect y >= 12.95
+hold 2 down
+lift 33 15 49 max 200
+go 33.2 49.5 jump 2 tol 0.15
+until ground = 1
+expect y >= 14.95
+lift 33 17 49 max 200
+go 33.2 49.5 jump 2 tol 0.15
+until ground = 1
+expect y >= 16.95
+lift 33 19 49 max 200
+go 33.2 49.5 jump 2 tol 0.15
+until ground = 1
+expect y >= 18.95
+lift 33 21 49 max 200
+go 33.2 49.5 jump 2 tol 0.15
+until ground = 1
+expect y >= 20.95
+lift 33 23 49 max 200
+go 33.2 49.5 jump 2 tol 0.15
+until ground = 1
+expect y >= 22.95
+# Round, and off the last one (back at x 32) onto the top landing (walk 25): three eggs.
+hold 2 down
+lift 32 23 49 max 200
+go 30.6 49.5 jump 2.5 tol 0.15
+until ground = 1
+expect y >= 24.95
+go 29.4 47.8
+go 29.4 50.2 until eggs = 3
+until eggs = 3 max 200
+# The lightning bridge (walk 25, z 50) west through the wall: up to the gate (x 26).
+go 29 50
+go 27.6 50 tol 0.15
+face -90
+# The lightning (x 26, y 25-28) flashes half of every five seconds: through it just after a
+# flash ends.
+go 26.6 50 tol 0.15
+until blitz = 52 max 200
+go 25.2 50 tol 0.15
+# The switch (23 24 50) stops the ten saws of its row; over them to the far platform: treasure 1.
+go 23 50 tol 0.15
+hold 2 action
+wait 10
+go 10 50 until treasures = 1
+until treasures = 1 max 120
+# Off the platform's south end down onto the lava terrace (walk 11).
+go 10 59
+until ground = 1
+expect y <= 11.05
+# The lava terrace east along z 62: the one-cell lift (x 17-18) over the first lava.
+go 16.3 62 tol 0.15
+face 90
+lift 17 11 62 max 300
+go 17 62 tol 0.15
+lift 18 11 62 max 200
+go 19.6 62
+expect y >= 10.95
+# Its piers (x 19-21, a mine at each end), the four-cell lift (x 22-26), the last piers
+# (x 27-30): treasure 2.
+go 21.3 62 tol 0.15
+lift 22 11 62 max 400
+go 22 62 tol 0.15
+lift 26 11 62 max 300
+go 27.6 62
+expect y >= 10.95
+go 30 62 until treasures = 2
+until treasures = 2 max 120
+# The skate corridor (z 61-63): a skateboard, ridden through the one-high slot over the band
+# of mines (x 50-52) into the hall; left there.
+go 42.1 62 tol 0.15
+hold 2 action
+wait 30
+go 62 62
+hold 2 action
+wait 30
+# The hall: a stick from the depot (walk 12), put down beside the plug of crates over the
+# cellar's mouth (x 65-69, z 63-67), and out of the blast along -Z.
+go 61 60.4
+face 0
+go 61 59 jump 1.5
+until ground = 1
+expect y >= 11.95
+go 60 58.3
+wait 90
+go 61 60.6
+until ground = 1
+go 63.6 68.3
+go 64 68.3
+face 0
+go 64 65.3 tol 0.15
+hold 2 action
+go 64 61.2
+wait 200
+# Down through the mouth into the cellar (walk 1).
+go 67 65
+until ground = 1
+expect y <= 1.05
+# The cellar's two sticks blast the two doorways of six crates (z 69): the helicopters' room
+# and the treasure's.
+go 64 61.3
+wait 90
+go 65 66
+go 65 68 tol 0.15
+face 0
+hold 2 action
+go 65 64
+wait 200
+go 70 61.3
+wait 90
+go 72 66
+go 72 68 tol 0.15
+face 0
+hold 2 action
+go 72 64
+wait 200
+go 72 70
+go 73 71 until treasures = 3
+until treasures = 3 max 120
+# A helicopter from the first room, flown out through its doorway and up through the mouth;
+# left on the hall's floor.
+go 72 67
+go 65 67
+go 64 70.3 tol 0.15
+face 180
+hold 2 action
+wait 20
+go 65 66
+go 67 65
+wait 40
+hold 211 lookup
+wait 70
+go 67 61
+wait 40
+hold 120 crouch
+until ground = 1 max 200
+expect y >= 10.95
+hold 2 action
+wait 30
+# The hall's pool (x 76-78, z 56-60): dive, through the tunnel under its north wall (z 55,
+# y 7-9) into the water tower, along its west side (x 73.3, clear of every fish's run) to
+# z 48, and up fourteen cells to the surface in the lava hall (walk 23); jump out north.
+go 77 61.6
+face 0
+go 77 59.5
+hold 150 crouch
+go 77 53.5
+go 73.3 48
+hold 600 lookup
+go 73.3 43.4
+go 73.3 41 jump 2
+until ground = 1
+expect y >= 22.95
+# The lava hall: a helicopter from the pad, up a little (feet 24.3) and over to the channel's
+# mouth (x 68, z 31), then west through both gates' one cell (x 65 and 61, z 31, y 24-27)
+# low while their mines are up: off as gate 65's mine reaches the bottom.
+go 72 28.9 tol 0.15
+face 0
+hold 2 action
+wait 20
+hold 39 lookup
+wait 40
+go 70 31
+wait 60
+go 68 31 tol 0.15
+wait 60
+face -90
+near 65 24 31 0.15 max 400
+wait 10
+go 56 31
+wait 60
+# Down onto the west ledge (walk 23): treasure 3 (the fourth); the helicopter left there.
+hold 120 crouch
+until ground = 1 max 200
+expect y >= 22.95
+until treasures = 4 max 120
+hold 2 action
+wait 30
+# Out of the west door onto the bridge back (walk 23), south over the keep's north wall to its
+# end, and down into the courtyard (walk 11).
+go 52 31
+go 50.5 32.5
+go 50.5 44.6
+until ground = 1
+expect y <= 11.05
+# The twin lifts on the key tower's south face (x 49-50, z 51, feet 11 -> 19, 3 ticks at each
+# end): stepped on as they arrive, walking on against the tower's face all the way up, so he
+# is off them into the chamber's doorway as they stop; the golden key.
+go 45.5 44.5
+go 45.5 52.3
+go 49.5 52.3
+go 49.5 51.75 tol 0.15
+face 0
+lift 49 11 51 max 400
+go 49.5 47 until exit = 1 max 400
+expect treasures = 4
+until mission = 1 max 900
+expect phase = Play
+wait 120
