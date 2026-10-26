@@ -35,6 +35,7 @@ reach (the original's two rows are a jump in 3D): walk 11, 14, 17, … 32.
 80/80. Live (`--mission 50`, shots in `build-probe/world5-agent/shots/hub-*`): the start view
 with sign 1 in the tower's face; walked into sign 1 → mission 51 loads; lift 1 ridden from its
 foot up and down past the balconies (sign 3's bar seen level on the way); a jump off lift 1
-lands on sign 2's balcony at the right moment (3.8 s after the start; the earlier tries at 2.0–3.2 s
-did not reach it); with a probe save (`doorsUnlocked` 52) bar 2 is open and Blupi
+lands on sign 2's balcony at the right moment (re-checked after the engine's lift timing fix D43,
+which made the lifts run on their ticks and dwell: jumps 2.8–3.6 s after the start land, earlier
+ones hit the balcony's underside); with a probe save (`doorsUnlocked` 52) bar 2 is open and Blupi
 arrives on sign 2's balcony facing it, then walks in.

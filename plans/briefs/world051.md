@@ -48,7 +48,8 @@ The two places stand apart in the grid; raw cells, Y up.
 - `VerifyShippedWorlds worlds3d`: 80/80.
 - Live (`--mission 51`, `--spawn`, probe copies through `QA_LIVE_WORLDS`; shots in
   `build-probe/world5-agent/shots/051-*`): the start view with the ladder; a jump from level 1
-  onto level 2 as it passes (eggs placed on level 2's path were collected); the wind carrying
+  onto level 2 as it passes (eggs placed on level 2's path were collected; re-checked after the
+  lift timing fix D43); the wind carrying
   Blupi along the deck onto the landing (mines left out), and with the mine in place a landing at
   the wrong moment killed by it; the ferry to the alcove; teleporter 330 to the arrival room;
   the full swim from the tank's surface through the channel to the gallery's bank (no fish in
