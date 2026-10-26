@@ -1,0 +1,204 @@
+# Mission 045 played through (plans/briefs/world045.md).
+wait 30
+expect mission = 45
+# S, the plateau (walk 20): the lift (13, 87) up to the ledge in the west corner (walk 26),
+# jumped onto as it waits at the bottom: treasure 1 and three eggs.
+go 16 86
+go 14.4 87 tol 0.1
+lift 13 21 87 max 600
+go 13 87 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 20.95
+face 270
+until y >= 25.98 max 300
+go 10 87 tol 0.15
+expect y >= 25.95
+until treasures = 1 max 200
+go 11 84.3 tol 0.15
+until eggs = 1 max 200
+go 10 84.3 tol 0.15
+until eggs = 2 max 200
+go 9 84.3 tol 0.15
+until eggs = 3 max 200
+go 10 80.6
+until ground = 1
+expect y <= 20.05
+# The moat (z 63-69): the raft of lifts in step (x 19-21) boarded at the south bank as it
+# waits there, ridden across, off at the north bank.
+go 18 74
+go 20 70.4 tol 0.1
+lift 20 20 69 max 600
+go 20 68.6 tol 0.15
+until z <= 63.9 max 400
+go 20 61
+expect y >= 19.95
+# P, the gallery (z 56): crouching along its line of stones and pads under the three mines
+# hanging at Blupi's height, to door 1 (45, 56), open with one.
+go 22 52.4 tol 0.15
+until eggs = 4 max 200
+go 30 56
+go 33.6 56 tol 0.1
+go 40.8 56 tol 0.15 with crouch max 900
+expect y >= 19.95
+go 44 56
+go 46.5 56
+# H, the hop hall: the chain of four lifts and three rests over the pit of mines (z 56-57),
+# each lift stepped onto as it waits level with where he stands.
+go 47.6 56.5 tol 0.1
+lift 49 20 56 max 600
+go 49 56.5 tol 0.15
+until y <= 15.02 max 400
+go 50 56.5 tol 0.15
+expect y >= 14.95
+lift 51 15 56 max 900
+go 51 56.5 tol 0.15
+until y >= 21.98 max 400
+go 52 56.5 tol 0.15
+expect y >= 21.95
+lift 53 22 56 max 900
+go 53 56.5 tol 0.15
+until y <= 18.02 max 400
+go 54 56.5 tol 0.15
+expect y >= 17.95
+lift 55 18 56 max 900
+go 55 56.5 tol 0.15
+until y >= 19.98 max 400
+go 57 56.5
+expect y >= 19.95
+go 60 56 tol 0.15
+until eggs = 5 max 200
+# B: the ferry (63-69, z 55-57; 40 ticks, two seconds at the ledge) boarded as it waits,
+# left from its front edge as it arrives at the road.
+go 61.5 56
+go 62.3 56 tol 0.1
+lift 63 20 56 max 600
+go 63 56 tol 0.15
+until x >= 68.3 max 300
+go 71 56.5
+expect y >= 19.95
+# The road: the bulldozer drives its middle lane (72-84). Wait in the south lane for it at
+# the far end, pass the first pinch point (mines at x 75 either side) in its lane, wait in the
+# south lane for it to pass back west, pass the second pinch point (x 81) behind it.
+go 71 57 tol 0.15
+near 84 20 56 0.5 max 1500
+go 73.5 57
+go 74.2 56
+go 76 56
+go 77.5 57 tol 0.15
+near 72 20 56 0.5 max 1500
+go 80 57
+go 80.6 56
+go 82 56
+go 83 57
+go 86 56
+# G, the hangar: treasure 2 between the invert and a mine along its north side.
+go 90 50
+go 90 48.4 tol 0.15
+until treasures = 2 max 200
+# A helicopter (91, 61), flown north through the hangar's opening, over the balcony and down
+# into the core; off it on the cellar floor (walk 8).
+go 90.5 52
+go 91 60.4 tol 0.15
+hold 6 action
+wait 30
+hold 40 lookup
+wait 40
+go 93.5 51 tol 0.4
+go 93.5 45 tol 0.4
+go 89 40 tol 0.4
+go 86 33.5 tol 0.4
+hold 240 crouch
+until ground = 1 max 300
+expect y <= 8.05
+hold 6 action
+wait 30
+# R, the cellar on foot: six treasures round the lava pools, beside its mine (87, 31) and its
+# invert (70, 29), the one at (66, 22) between a pool and the row of crushers; two eggs.
+go 89.4 33
+go 88.4 29.6 tol 0.15
+until treasures = 3 max 200
+go 86 15
+go 86 14.4 tol 0.15
+until treasures = 4 max 200
+go 75 12.4 tol 0.15
+until treasures = 5 max 200
+go 64 13.4 tol 0.15
+until treasures = 6 max 200
+go 63 16
+go 69 17.5
+go 69.4 22
+go 66.3 22 tol 0.15
+until treasures = 7 max 200
+go 68.5 24
+go 68.5 31.4
+go 69.6 32 tol 0.15
+until treasures = 8 max 200
+go 64 36.6 tol 0.15
+until eggs = 6 max 200
+go 62 36.6 tol 0.15
+until eggs = 7 max 200
+# A floor helicopter (60, 33) up over the cage on its column (walls 44-46, open above), down
+# into it: treasure 3 beside its pillar.
+go 60.4 33.6 tol 0.15
+hold 6 action
+wait 30
+hold 760 lookup
+wait 60
+expect y >= 47.2
+go 74 23.5 tol 0.3
+hold 120 crouch
+until ground = 1 max 300
+expect y <= 44.05
+go 74 23.6 tol 0.2
+until treasures = 9 max 200
+# A, the attic behind the walk-through cheese high in the west wall (walk 52): flown in at
+# its floor level, treasure 4 on the floor, treasure 5 on the ledge (walk 55), three eggs.
+hold 166 lookup
+wait 60
+expect y >= 52.3
+go 59 15 tol 0.4
+go 53 17.6 tol 0.3
+hold 40 crouch
+until ground = 1 max 200
+go 53 18 tol 0.2
+until treasures = 10 max 200
+hold 69 lookup
+wait 60
+expect y >= 55.2
+go 49.6 12.4 tol 0.3
+hold 40 crouch
+until ground = 1 max 200
+go 49.3 12.2 tol 0.2
+until treasures = 11 max 200
+hold 10 lookup
+wait 20
+go 51.4 11.3 tol 0.2
+hold 90 crouch
+until ground = 1 max 200
+go 51.2 11.2 tol 0.2
+until eggs = 8 max 200
+go 52 11.2 tol 0.2
+until eggs = 9 max 200
+go 53 11.2 tol 0.2
+until eggs = 10 max 200
+# X: out through the cheese, down to the exit landing (walk 36), west along the corridor over
+# its row of crushers to the red arrow.
+hold 12 lookup
+wait 30
+go 53.5 15 tol 0.3
+go 64.5 15 tol 0.4
+hold 240 crouch
+until y <= 38 max 300
+go 59.5 23.5 tol 0.3
+hold 60 crouch
+until ground = 1 max 200
+expect y <= 36.05
+hold 12 lookup
+wait 30
+go 56 23 tol 0.3
+go 50 23 tol 0.3 until exit = 1
+until exit = 1 max 200
+expect treasures = 11
+until mission = 40 max 900
+expect phase = Play
+wait 120
