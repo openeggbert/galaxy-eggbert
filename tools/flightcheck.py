@@ -6,7 +6,8 @@ levelcheck.py walks, falls, jumps, rides lifts and takes teleporters; this adds 
 free cells -- two high, his feet's cell and his head's, in any of the six directions -- never
 into water (the original loses the helicopter there, Decor.cpp's ByeByeHelico on IsSurfWater/
 IsDeepWater) nor next to a mine or an enemy (levelcheck's danger cells, patrols swept whole),
-and leaves it on any floor he can stand on; it stays parked there for him to take again.
+and leaves it on any floor he can stand on; it stays parked there for him to take again. It flies
+through the flight barrier (214), which stops him on foot (Decor::DecorDetect).
 Flights stay within two cells of the world's blocks (the open sky round a world is no route).
 Treasures, keys, eggs and the exit count when reached on foot from the spawn, or with a
 helicopter (in flight, or walking on from where he landed); one whose own cell is not free (an
@@ -31,6 +32,7 @@ import levelcheck as lc  # noqa: E402
 import vwr_inspect  # noqa: E402
 
 HELICOPTER = 13
+FLIGHT_BARRIER = 214                       # stops Blupi on foot, the helicopter flies through it
 SIX = [(1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)]
 
 
@@ -40,7 +42,10 @@ def flyable(grid: lc.Grid, p) -> bool:
     lo, hi = grid.bounds
     if not all(lo[i] <= p[i] <= hi[i] for i in range(3)):
         return False                       # out in the open, far from everything
-    return (grid.free(p) and grid.free(head) and grid.safe(p) and head not in grid.danger and
+    def open_(c):
+        return grid.free(c) or (c not in grid.solid_objects and grid.info(c)["icon"] == FLIGHT_BARRIER)
+
+    return (open_(p) and open_(head) and grid.safe(p) and head not in grid.danger and
             not grid.info(p)["water"] and not grid.info(head)["water"])
 
 

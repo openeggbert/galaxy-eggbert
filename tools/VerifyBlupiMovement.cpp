@@ -1876,6 +1876,42 @@ int main(int argc, char** argv)
                 check(std::fabs(overSettled - 1.0f) < 0.05f, "let go, the overcraft sinks back to the ground");
                 check(heliHighest > 4.0f, "the helicopter climbs on");
             }
+            // The flight barrier (214, Decor::DecorDetect): a cage of it holds Blupi on foot and
+            // in the jeep, the helicopter and the overcraft fly out through it.
+            {
+                Worlds::World cageWorld;
+                for (std::uint16_t x = 40; x <= 60; ++x)
+                {
+                    for (std::uint16_t z = 40; z <= 60; ++z)
+                    {
+                        cageWorld.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                        const bool wall = (x == 47 || x == 53 || z == 47 || z == 53) && x >= 47 && x <= 53 &&
+                                          z >= 47 && z <= 53;
+                        for (std::uint16_t y = 1; wall && y <= 5; ++y)
+                        {
+                            cageWorld.setBlock(x, y, z, Worlds::Block::make(BlockTypes::FlightBarrier));
+                        }
+                    }
+                }
+                const auto escapes = [&cageWorld, dt](BlupiController::VehicleMode mode)
+                {
+                    BlupiController rider;
+                    rider.SetPosition(0.0f, 1.0f, 0.0f);
+                    if (mode != BlupiController::VehicleMode::None)
+                    {
+                        rider.TriggerMount(mode, false, false);
+                    }
+                    for (int i = 0; i < 240; ++i)
+                    {
+                        rider.Step(cageWorld, 0.0f, 1.0f, false, false, false, dt);
+                    }
+                    return std::max(std::fabs(rider.GetX()), std::fabs(rider.GetZ())) > 3.5f;
+                };
+                check(!escapes(BlupiController::VehicleMode::None), "the flight barrier (214) holds Blupi on foot");
+                check(!escapes(BlupiController::VehicleMode::Jeep), "the flight barrier holds the jeep");
+                check(escapes(BlupiController::VehicleMode::Helicopter), "the helicopter flies through the flight barrier");
+                check(escapes(BlupiController::VehicleMode::Overcraft), "the overcraft flies through the flight barrier");
+            }
             BlupiController heliRider;
             heliRider.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliRider.HasVehicleHazardImmunity(),

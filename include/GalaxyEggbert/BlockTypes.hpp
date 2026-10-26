@@ -160,6 +160,11 @@ inline bool isBarre(uint16_t bt) {
     return bt == 138 || bt == 202;
 }
 
+// The flight barrier (214): an invisible wall (drawn only by the ShowSecret cheat) that stops
+// Blupi on foot and in the ground vehicles and lets the helicopter and the overcraft through
+// (Decor::DecorDetect skips it in m_blupiHelico and m_blupiOver).
+constexpr uint16_t FlightBarrier = 214;
+
 // Blitz tile — electric floor, kills Blupi 25 % of ticks (animPhase % 4 == 0).
 // Icon 305 is a solid floor with an active-kill phase (same pattern as Crusher).
 constexpr uint16_t Blitz    = 305;

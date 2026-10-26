@@ -32,6 +32,16 @@ namespace GalaxyEggbert::Game
             ~CrateCellsScope() { g_crateCells = nullptr; }
         };
 
+        // Set for one Step() while Blupi flies the helicopter or the overcraft, which pass the
+        // flight barrier (BlockTypes::FlightBarrier, IsPointSolid).
+        bool g_passesFlightBarrier = false;
+
+        struct FlightBarrierScope
+        {
+            explicit FlightBarrierScope(bool passes) { g_passesFlightBarrier = passes; }
+            ~FlightBarrierScope() { g_passesFlightBarrier = false; }
+        };
+
         int ClampGrid(int v, int blocksPerAxis)
         {
             return std::clamp(v, 0, blocksPerAxis - 1);
@@ -370,6 +380,10 @@ namespace GalaxyEggbert::Game
             GalaxyEggbert::BlockTypes::isWind(blockType) ||
             GalaxyEggbert::BlockTypes::isWater(blockType) ||
             GalaxyEggbert::BlockTypes::isBarre(blockType))
+        {
+            return false;
+        }
+        if (g_passesFlightBarrier && blockType == GalaxyEggbert::BlockTypes::FlightBarrier)
         {
             return false;
         }
@@ -1038,6 +1052,8 @@ namespace GalaxyEggbert::Game
                                   bool holdingCrate)
     {
         const CrateCellsScope crateCells(m_crateCells);
+        const FlightBarrierScope flightBarrier(m_vehicleMode == VehicleMode::Helicopter ||
+                                               m_vehicleMode == VehicleMode::Overcraft);
         m_moveInput = moveInput;
         // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
         // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)

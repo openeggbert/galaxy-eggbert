@@ -70,6 +70,11 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
   1.25 cells of the ground, so it crosses a lava floor but cannot fly up); taken and left with
   Action (Space). Jeep, tank and skateboard run over mines. Any
   vehicle that meets water is wrecked and Blupi drops in (013's "it dislikes water!").
+- The flight barrier (214): a wall that stops Blupi on foot and in the jeep, tank and skateboard,
+  and lets the helicopter and the overcraft through (D49, `Decor::DecorDetect`); a route only a
+  flying vehicle may take. `flightcheck.py` flies through it.
+- Signs and flat plates read upright and unmirrored from both sides since D48: a sign needs no
+  particular facing.
 - Water: Blupi floats at the surface (feet ≈ 0.28 into the top water cell), dives with LeftShift,
   swims up with Ctrl/RightShift and drifts back up when idle (air gauge ≈ 25 s while under). He
   gets out by jumping at the surface onto a bank whose top is at most one block above the water's
