@@ -5,6 +5,7 @@
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <GalaxyEggbert/Game/MeshParts.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/AlphaTestEffect.hpp>
@@ -85,21 +86,21 @@ namespace GalaxyEggbert::Game
         // Shared rebuild logic for m_animRenderer/m_waterRenderer: computes
         // each block's current-frame icon via AnimIcon(), applies
         // AppendSpecialGeometry() where applicable, and uploads a fresh
-        // GpuMesh. Returns nullptr if every block resolved to a
+        // mesh (in parts when it is over a buffer's limit, MeshParts.hpp). Returns nullptr if every block resolved to a
         // hidden frame (e.g. Temp's blank frames) — caller should just clear
         // its renderer pointer in that case rather than upload an empty mesh.
-        [[nodiscard]] std::unique_ptr<CnaEngine::Graphics::GpuMesh> RebuildAnimatedRenderer(
+        [[nodiscard]] std::unique_ptr<GpuMeshParts> RebuildAnimatedRenderer(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
             const std::vector<AnimBlock>& blocks, int animPhase) const;
 
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_staticRenderer;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_transparentStaticRenderer;
+        std::unique_ptr<GpuMeshParts> m_staticRenderer;
+        std::unique_ptr<GpuMeshParts> m_transparentStaticRenderer;
         // Lit by vertex colour (AlphaTestEffect has no lights: BakeTerrainLighting()).
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_cutoutRenderer;
+        std::unique_ptr<GpuMeshParts> m_cutoutRenderer;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::AlphaTestEffect> m_cutoutEffect;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_animRenderer;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_waterRenderer;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_grassRenderer;
+        std::unique_ptr<GpuMeshParts> m_animRenderer;
+        std::unique_ptr<GpuMeshParts> m_waterRenderer;
+        std::unique_ptr<GpuMeshParts> m_grassRenderer;
         std::vector<AnimBlock> m_animBlocks;
         std::vector<AnimBlock> m_waterBlocks;
         // Positions with InnerFlatPlate rotation metadata set (plan.md

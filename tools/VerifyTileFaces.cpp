@@ -2,11 +2,13 @@
 // side of a fan is its base and which is open, and where flat-colour faces sample their tile.
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
+#include <GalaxyEggbert/Game/MeshParts.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
 
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 int main()
 {
@@ -125,6 +127,43 @@ int main()
         GalaxyEggbert::Game::AddUprightCrossedPlates(mesh, Microsoft::Xna::Framework::Vector3(3, 4, 5), 0.8f, 1.0f,
                                                      3, region);
         check(plateReadsRight(mesh.Mesh(), false), "a crossed-plate sprite's three planes read upright and unmirrored");
+    }
+
+    // A terrain over a buffer's limit is uploaded in parts (D47): every part within the limit,
+    // the triangles all there, in order, with their corners and texture coordinates.
+    {
+        auto mesh = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
+        for (int i = 0; i < 25; ++i)
+        {
+            GalaxyEggbert::Game::AddCenteredBox(mesh, Microsoft::Xna::Framework::Vector3(static_cast<float>(i), 0, 0),
+                                                Microsoft::Xna::Framework::Vector3(1, 1, 1),
+                                                CnaEngine::Graphics::UvRect{0.1f * (i % 7), 0.0f, 0.5f, 0.5f});
+        }
+        const auto& whole = mesh.Mesh();
+        const auto parts = GalaxyEggbert::Game::SplitMeshData(whole, 50);
+        bool within = parts.size() > 1;
+        std::vector<Microsoft::Xna::Framework::Vector3> corners;
+        std::vector<Microsoft::Xna::Framework::Vector2> uvs;
+        for (const auto& part : parts)
+        {
+            within = within && part.VertexCount() <= 50 && part.Validate().empty() &&
+                     part.normals.size() == part.positions.size();
+            for (const std::uint32_t index : part.indices)
+            {
+                corners.push_back(part.positions[index]);
+                uvs.push_back(part.texCoords0[index]);
+            }
+        }
+        bool same = corners.size() == whole.indices.size();
+        for (std::size_t k = 0; same && k < corners.size(); ++k)
+        {
+            const auto& p = whole.positions[whole.indices[k]];
+            const auto& uv = whole.texCoords0[whole.indices[k]];
+            same = corners[k].X == p.X && corners[k].Y == p.Y && corners[k].Z == p.Z && uvs[k].X == uv.X &&
+                   uvs[k].Y == uv.Y;
+        }
+        check(within && same, "a mesh over the limit splits into parts within it, every triangle kept in order (D47)");
+        check(GalaxyEggbert::Game::SplitMeshData(whole).size() == 1, "a mesh within the limit stays whole");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

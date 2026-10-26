@@ -614,12 +614,12 @@ namespace GalaxyEggbert::Game
         // terrain, so this was never reachable until now.
         if (!staticMesh.Mesh().Empty())
         {
-            m_staticRenderer = UploadLitTexturedMesh(device, staticMesh.Mesh());
+            m_staticRenderer = UploadLitTexturedMeshParts(device, staticMesh.Mesh());
         }
 
         if (!cutoutMesh.Mesh().Empty())
         {
-            m_cutoutRenderer = UploadBakedLitTexturedMesh(device, cutoutMesh.Take());
+            m_cutoutRenderer = UploadBakedLitTexturedMeshParts(device, cutoutMesh.Take());
             m_cutoutEffect = std::make_unique<Microsoft::Xna::Framework::Graphics::AlphaTestEffect>(device);
             m_cutoutEffect->setVertexColorEnabledProperty(true);
             m_cutoutEffect->setAlphaFunctionProperty(
@@ -630,18 +630,18 @@ namespace GalaxyEggbert::Game
         if (!transparentStaticMesh.Mesh().Empty())
         {
             m_transparentStaticRenderer =
-                UploadLitTexturedMesh(device, transparentStaticMesh.Mesh());
+                UploadLitTexturedMeshParts(device, transparentStaticMesh.Mesh());
         }
 
         if (!grassMesh.Mesh().Empty())
         {
-            m_grassRenderer = UploadLitTexturedMesh(device, grassMesh.Mesh());
+            m_grassRenderer = UploadLitTexturedMeshParts(device, grassMesh.Mesh());
         }
 
         Update(device, 0);
     }
 
-    std::unique_ptr<CnaEngine::Graphics::GpuMesh> TerrainRenderer::RebuildAnimatedRenderer(
+    std::unique_ptr<GpuMeshParts> TerrainRenderer::RebuildAnimatedRenderer(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         const std::vector<AnimBlock>& blocks, int animPhase) const
     {
@@ -768,7 +768,7 @@ namespace GalaxyEggbert::Game
 
         CnaEngine::Graphics::MeshData combined = mesh.Take();
         combined.Append(cubes.Mesh());
-        return UploadLitTexturedMesh(device, combined);
+        return UploadLitTexturedMeshParts(device, combined);
     }
 
     void TerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)
