@@ -101,7 +101,7 @@ MAX_EGG_COUNT): a script expects at most ten. Worlds 5-6 (agent C: 051-058, 061-
 to T2 (in the open room they could be walked round). The whole campaign plays in one run:
 `tools/autoplay/campaign.txt` (from `tools/autoplay_campaign.py`, which climbs the main hub's
 tiers at x 50 between the signs; the summit's tunnel along z 44 past the gold bars to 199):
-`tools/autoplay.sh build-cna-opengl3 tools/autoplay/campaign.txt 1`, 737915 ticks, a couple of
+`tools/autoplay.sh build-cna-opengl3 tools/autoplay/campaign.txt 1`, 755171 ticks, a couple of
 hours of wall time; it includes every mission's script, so it is the full replay. 065 and 066
 are then played in every part (two agents: 065's tower, crates, lake, overcraft and jeep; 066's
 middle and upper storeys, which found a pit under its stair to B1, fixed `c2e4861`), which found
