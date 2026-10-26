@@ -1,0 +1,240 @@
+# A new game played through from the main hub (plans/briefs/world001.md): world by world,
+# each world's sign, its hub's chain (worldN0.txt) to its golden key, back in the main hub
+# beside that world's sign; then the summit's tunnel past the twelve gold bars (each opened
+# by a world won) to world 199 and the win screen. The tiers are climbed and left at x 50,
+# between the niches: a jump of two up onto the tier above, a step off its edge down.
+wait 30
+expect mission = 1
+# World 1: its sign (55, 1, 73).
+go 50 74
+go 55 74 tol 0.15
+go 55 73 until mission = 10 max 900
+until mission = 10 max 600
+include world010.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 2: its sign (45, 7, 64).
+go 50 74
+go 50 74.1 tol 0.15
+face 0
+go 50 72.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 2.95
+go 50 71.1 tol 0.15
+face 0
+go 50 69.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 4.95
+go 50 68.1 tol 0.15
+face 0
+go 50 66.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 6.95
+go 45 65 tol 0.15
+go 45 64 until mission = 20 max 900
+until mission = 20 max 600
+include world020.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 3: its sign (55, 3, 70).
+go 50 65
+go 50 68.0
+until ground = 1
+expect y <= 5.05
+go 50 71.0
+until ground = 1
+expect y <= 3.05
+go 55 71 tol 0.15
+go 55 70 until mission = 30 max 900
+until mission = 30 max 600
+include world030.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 4: its sign (55, 5, 67).
+go 50 71
+go 50 71.1 tol 0.15
+face 0
+go 50 69.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 4.95
+go 55 68 tol 0.15
+go 55 67 until mission = 40 max 900
+until mission = 40 max 600
+include world040.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 5: its sign (45, 9, 61).
+go 50 68
+go 50 68.1 tol 0.15
+face 0
+go 50 66.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 6.95
+go 50 65.1 tol 0.15
+face 0
+go 50 63.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 8.95
+go 45 62 tol 0.15
+go 45 61 until mission = 50 max 900
+until mission = 50 max 600
+include world050.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 6: its sign (45, 11, 58).
+go 50 62
+go 50 62.1 tol 0.15
+face 0
+go 50 60.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 10.95
+go 45 59 tol 0.15
+go 45 58 until mission = 60 max 900
+until mission = 60 max 600
+include world060.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 7: its sign (55, 7, 64).
+go 50 59
+go 50 62.0
+until ground = 1
+expect y <= 9.05
+go 50 65.0
+until ground = 1
+expect y <= 7.05
+go 55 65 tol 0.15
+go 55 64 until mission = 70 max 900
+until mission = 70 max 600
+include world070.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 8: its sign (55, 11, 58).
+go 50 65
+go 50 65.1 tol 0.15
+face 0
+go 50 63.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 8.95
+go 50 62.1 tol 0.15
+face 0
+go 50 60.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 10.95
+go 55 59 tol 0.15
+go 55 58 until mission = 80 max 900
+until mission = 80 max 600
+include world080.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 9: its sign (45, 5, 67).
+go 50 59
+go 50 62.0
+until ground = 1
+expect y <= 9.05
+go 50 65.0
+until ground = 1
+expect y <= 7.05
+go 50 68.0
+until ground = 1
+expect y <= 5.05
+go 45 68 tol 0.15
+go 45 67 until mission = 90 max 900
+until mission = 90 max 600
+include world090.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 10: its sign (55, 9, 61).
+go 50 68
+go 50 68.1 tol 0.15
+face 0
+go 50 66.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 6.95
+go 50 65.1 tol 0.15
+face 0
+go 50 63.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 8.95
+go 55 62 tol 0.15
+go 55 61 until mission = 100 max 900
+until mission = 100 max 600
+include world100.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 11: its sign (45, 3, 70).
+go 50 62
+go 50 65.0
+until ground = 1
+expect y <= 7.05
+go 50 68.0
+until ground = 1
+expect y <= 5.05
+go 50 71.0
+until ground = 1
+expect y <= 3.05
+go 45 71 tol 0.15
+go 45 70 until mission = 110 max 900
+until mission = 110 max 600
+include world110.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# World 12: its sign (45, 1, 73).
+go 50 71
+go 50 74.0
+until ground = 1
+expect y <= 1.05
+go 45 74 tol 0.15
+go 45 73 until mission = 120 max 900
+until mission = 120 max 600
+include world120.txt
+expect mission = 1
+expect phase = Play
+wait 30
+# The summit (walk 13) and its tunnel (z 44) west past the twelve gold bars to world 199.
+go 50 74
+go 50 74.1 tol 0.15
+face 0
+go 50 72.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 2.95
+go 50 71.1 tol 0.15
+face 0
+go 50 69.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 4.95
+go 50 68.1 tol 0.15
+face 0
+go 50 66.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 6.95
+go 50 65.1 tol 0.15
+face 0
+go 50 63.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 8.95
+go 50 62.1 tol 0.15
+face 0
+go 50 60.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 10.95
+go 50 59.1 tol 0.15
+face 0
+go 50 57.4 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 12.95
+go 58.3 46
+go 58.3 44 tol 0.15
+go 43 44 until mission = 199 max 900
+until mission = 199 max 600
+include world199.txt
