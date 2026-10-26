@@ -128,14 +128,14 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   "the texture is never mirrored". Seen from the side that reads unmirrored, a plate is turned
   upside down; from the other side it is rotated 180 degrees.
 - **Reproduction:** `AddPlate(center, 1, 1, PlateAxis::Z, region)`; on its triangles the vertex
-  with the larger Y has the larger v. `tools/VerifyTileFaces.cpp` prints `INFO: cna-engine's own
-  AddPlate still does not (UB-005)` while the defect stands.
-- **Workaround here:** `AddUprightPlate` and `AddUprightCrossedPlates`
-  (`src/GalaxyEggbert/Game/TexturedMesh.hpp`) build one single-sided quad per side from
-  `AddVertex`/`AddQuad`, each upright and unmirrored for its own viewer (D48). The saw keeps
-  `AddPlate`, as its owner settled it.
-- **Fix upstream (suggested):** give the top corners v0 and the bottom ones v1, and in
-  `AddDoubleSidedQuad` (or in the plates) swap u0 and u1 on the reversed side.
+  with the larger Y had the larger v.
+- **Fixed upstream:** cna-engine `2a93b7e` (2026-10-27, at the owner's request: no workaround in
+  Galaxy): the top corners take v0, a horizontal plate shows its top edge towards -Z from above,
+  and `AddDoubleSidedQuad`'s reverse copy takes the coordinates mirrored back; its
+  `MeshBuilderTests.PlatesReadUprightAndUnmirroredFromBothSides`. Galaxy's interim workaround
+  (`AddUprightPlate`, `AddUprightCrossedPlates` in `TexturedMesh.hpp`, D48 `5fbc237`) was
+  removed again; `tools/VerifyTileFaces.cpp` checks cna-engine's plates directly. Re-verified
+  live: the hub signs of 060 and 040, the showcase's bolts, the saws of 092 and 999.
 
 ## Recorded elsewhere
 

@@ -68,13 +68,12 @@ int main()
     check(!GalaxyEggbert::Game::IsClosedDirectionalCube(200) && !GalaxyEggbert::Game::IsClosedDirectionalCube(107),
           "the grate (200) and icon 107 have open sides");
 
-    // Plates read upright and unmirrored from both sides (D48): on every triangle, seen from
-    // its front, the region's top (v0) is at the top and u grows to the viewer's right.
-    const auto plateReadsRight = [](const CnaEngine::Graphics::MeshData& mesh, bool onePlate)
+    // Plates read upright and unmirrored from both sides (D48, fixed in cna-engine `2a93b7e`): on
+    // every triangle, seen from its front, the region's top (v0) is at the top and u grows to the
+    // viewer's right.
+    const auto plateReadsRight = [](const CnaEngine::Graphics::MeshData& mesh)
     {
         using Microsoft::Xna::Framework::Vector3;
-        int towardViewer[2] = {0, 0};
-        Vector3 firstNormal;
         for (std::size_t t = 0; t + 2 < mesh.indices.size(); t += 3)
         {
             const std::uint32_t idx[3] = {mesh.indices[t], mesh.indices[t + 1], mesh.indices[t + 2]};
@@ -83,8 +82,6 @@ int main()
             const Vector3 front = Vector3::Normalize(
                 Vector3::Cross(mesh.positions[idx[2]] - a, mesh.positions[idx[1]] - a));
             const Vector3 viewerRight = Vector3::Cross(-front, Vector3::UnitY);
-            if (t == 0) firstNormal = front;
-            ++towardViewer[Vector3::Dot(front, firstNormal) > 0.0f ? 0 : 1];
             for (int i = 0; i < 3; ++i)
             {
                 for (int j = 0; j < 3; ++j)
@@ -97,36 +94,21 @@ int main()
                 }
             }
         }
-        // One plate: a quad (two triangles) facing each way.
-        return !onePlate || (towardViewer[0] == 2 && towardViewer[1] == 2);
+        return true;
     };
     const CnaEngine::Graphics::UvRect region{0.25f, 0.5f, 0.375f, 0.625f};
+    for (const auto axis : {CnaEngine::Graphics::PlateAxis::Z, CnaEngine::Graphics::PlateAxis::X})
     {
         auto mesh = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
-        GalaxyEggbert::Game::AddUprightPlate(mesh, Microsoft::Xna::Framework::Vector3(3, 4, 5), 0.75f, 0.9f,
-                                             CnaEngine::Graphics::PlateAxis::Z, region);
-        check(plateReadsRight(mesh.Mesh(), true), "a Z plate (a sign) reads upright and unmirrored from +Z and -Z");
+        mesh.AddPlate(Microsoft::Xna::Framework::Vector3(3, 4, 5), 0.75f, 0.9f, axis, region);
+        check(plateReadsRight(mesh.Mesh()), axis == CnaEngine::Graphics::PlateAxis::Z
+                                                ? "a Z plate (a sign) reads upright and unmirrored from +Z and -Z"
+                                                : "an X plate (a turned sign) reads upright and unmirrored from +X and -X");
     }
     {
         auto mesh = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
-        GalaxyEggbert::Game::AddUprightPlate(mesh, Microsoft::Xna::Framework::Vector3(3, 4, 5), 0.75f, 0.9f,
-                                             CnaEngine::Graphics::PlateAxis::X, region);
-        check(plateReadsRight(mesh.Mesh(), true), "an X plate (a turned sign) reads upright and unmirrored from +X and -X");
-    }
-    {
-        auto mesh = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
-        mesh.AddPlate(Microsoft::Xna::Framework::Vector3(3, 4, 5), 0.75f, 0.9f, CnaEngine::Graphics::PlateAxis::Z,
-                      region);
-        // Not a check: when cna-engine fixes it, upstream_bugs.md says to retire the workaround.
-        std::cout << "INFO: cna-engine's own AddPlate "
-                  << (plateReadsRight(mesh.Mesh(), true) ? "now reads right (UB-005 fixed?)" : "still does not (UB-005)")
-                  << std::endl;
-    }
-    {
-        auto mesh = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
-        GalaxyEggbert::Game::AddUprightCrossedPlates(mesh, Microsoft::Xna::Framework::Vector3(3, 4, 5), 0.8f, 1.0f,
-                                                     3, region);
-        check(plateReadsRight(mesh.Mesh(), false), "a crossed-plate sprite's three planes read upright and unmirrored");
+        mesh.AddCrossedPlates(Microsoft::Xna::Framework::Vector3(3, 4, 5), 0.8f, 1.0f, 3, region);
+        check(plateReadsRight(mesh.Mesh()), "a crossed-plate sprite's three planes read upright and unmirrored");
     }
 
     // A terrain over a buffer's limit is uploaded in parts (D47): every part within the limit,
