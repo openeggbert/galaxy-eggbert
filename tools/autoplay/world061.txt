@@ -1,0 +1,203 @@
+# Mission 061 played through (plans/briefs/world061.md).
+wait 30
+expect mission = 61
+# West through the corridor W into the shaft A (walk 15): the eggs along x 34.
+go 44 50
+go 36 50
+go 34 50 tol 0.2
+go 34 53 tol 0.2
+go 34 56 tol 0.2
+# The shuttle ladder: three pairs (x 33-34, 31-32, 29-30; walk 17, 19, 21) racing along Z
+# (z 45-55) in step. Board the first by jumping straight up from the floor under its north end
+# as it arrives there; then each next one by a jump west timed so that it is back under him when
+# he comes down: 66 ticks after his shuttle reaches its south end (z 45). From the third, west
+# onto the ledge (walk 23): treasure 1.
+go 33.5 54.8 tol 0.1
+lift 33 17 55 max 400
+lift 33 17 45 max 400
+wait 45
+hold 8 jump
+until ground = 1 max 120
+expect y >= 16.9
+face 270
+lift 33 17 55 max 400
+lift 33 17 45 max 400
+wait 66
+hold 20 up jump
+hold 25 up
+until ground = 1 max 120
+expect y >= 18.9
+lift 31 19 55 max 400
+lift 31 19 45 max 400
+wait 66
+hold 20 up jump
+hold 25 up
+until ground = 1 max 120
+expect y >= 20.9
+lift 29 21 55 max 400
+lift 29 21 45 max 400
+wait 66
+hold 20 up jump
+hold 25 up
+until ground = 1 max 120
+expect y >= 22.9
+go 26 45 until treasures = 1
+until treasures = 1 max 120
+# Through the door "1" north onto the landing G (walk 23) over the chasm P. L1 (x 30 -> 35) and
+# L2 (x 41 -> 36) along z 32 meet in the middle and wait there side by side: L1 boarded at G,
+# across onto L2 where they meet, off L2 at its far end onto the island I1: treasure 2, its egg.
+go 26 42
+go 26 39
+go 28.5 32
+go 29.35 32 tol 0.1
+face 90
+lift 35 23 32 max 600
+lift 30 23 32 max 600
+go 30 32 tol 0.1
+lift 35 23 32 max 400
+go 36 32 tol 0.1
+lift 41 23 32 max 400
+go 42.6 32
+go 43 31.3 tol 0.2
+go 44 32.6 tol 0.2
+# L3, from I1's east edge (46, 31) to I2's west edge (55, 26) across X and Z at once (3-tick
+# stops): stepped on as it arrives, walked to its front edge before it stops; I2: treasure 3 and
+# its egg, clear of the mine in its far corner (59, 25).
+go 45.35 31 tol 0.1
+face 90
+lift 55 23 26 max 600
+lift 46 23 31 max 600
+go 46 31 tol 0.1
+until x >= 54.0 max 300
+hold 10 up
+go 57 26.4
+go 58 26.3 tol 0.2
+go 56 25.3 tol 0.2
+# L4, from I2's east edge (60, 27) rising to the east ledge E (67, 27; walk 25), the same way.
+go 59.35 27 tol 0.1
+face 90
+lift 67 25 27 max 600
+lift 60 23 27 max 600
+go 60 27 tol 0.1
+until x >= 66.0 max 300
+hold 10 up
+go 69.5 27
+expect y >= 24.95
+expect treasures = 3
+# The tower lift (74, 24) up to the tower room T (walk 33), stepped on as it arrives: treasure 4
+# and its egg; back down its shaft onto the lift and off it south to E's floor.
+go 73 25.2
+go 74 24.8 tol 0.08
+face 0
+lift 74 33 24 max 600
+lift 74 25 24 max 600
+go 74 24.1 tol 0.1
+until y >= 31.3 max 300
+go 74 22.6 max 200
+expect y >= 32.95
+go 72 22.5
+go 71 21 tol 0.2
+go 75 21 tol 0.2
+go 74 23
+lift 74 33 24 max 600
+lift 74 25 24 max 600
+go 74 24 tol 0.15 until y <= 32
+until ground = 1 max 300
+go 74 25.6
+until ground = 1 max 300
+expect y <= 25.05
+# Through the door "4" in E's south side onto the ledge over the lava hall H, down into it
+# (walk 15): its three eggs (z 46), over the first lava trench (z 48) in a jump, across the second
+# (z 52-53) on the machine blocks (x 66-67), treasure 5 (74, 15, 56); back to the door "5" in its
+# west wall (x 58-59, z 50) into the start chamber.
+go 72 40
+go 72 43.6
+go 72 45.2
+until ground = 1 max 300
+expect y <= 15.05
+go 72 46 tol 0.2
+go 66 46 tol 0.2
+go 62 46 tol 0.2
+go 62 46.9 tol 0.1
+face 180
+go 62 49.6 jump 2.5 tol 0.25
+until ground = 1
+expect z >= 48.6
+go 66.5 51
+go 66.5 54.6
+go 74 56 tol 0.2
+until treasures = 5 max 120
+go 66.5 54.6
+go 66.5 51
+go 60.5 50.3
+go 57 50
+# Out of the start chamber's south door "5" (50, 58), down the stair of two-block drops to the
+# creatures' landing N (walk 9) and its two eggs.
+go 51 56
+go 50 57.6
+go 50 63
+until ground = 1 max 300
+expect y <= 9.05
+go 49 64 tol 0.2
+go 55 63 tol 0.2
+# Creature 1 walks the corridor C1 (z 64, x 35-45) and rests ten seconds at each end, deadly
+# only while it rests: when it has rested at the far end (x 35) and starts back, in and west
+# along the corridor through it as it walks, to treasure 6's chamber V1.
+go 48 64.5
+near 45 9 64 0.2 max 2000
+near 35 9 64 0.2 max 2000
+wait 590
+go 46 64
+go 33.5 64
+go 31 63 tol 0.2
+until treasures = 6 max 120
+# South into the lava room SW: west of the lava strip (x 36-44, z 69-70) and the pool, its egg
+# (40, 72), east along z 74 past the end of the moving mine's run (x 48, z 69-73), to creature 2's
+# corridor C2 (z 71, x 54-65): through it the same way when it starts back from x 65, to treasure
+# 7's chamber V2 and its egg.
+go 33 66.5
+go 33 68
+go 35.4 71
+go 40 72 tol 0.2
+go 46 74
+go 49.5 74
+go 51 72.5
+near 54 9 71 0.2 max 2400
+near 65 9 71 0.2 max 2400
+wait 590
+go 53 71
+go 66.5 71
+go 69 73 tol 0.2
+go 68 69.4 tol 0.2
+until treasures = 7 max 120
+# Back west through C2 as the creature leaves x 54 (caught passing x 55 after it has been at 54),
+# through SW and V1, back east through C1 as creature 1 leaves x 45 (the same way), up the stair to the start chamber and the arrow.
+go 68.5 72
+near 54 9 71 0.2 max 2400
+near 55 9 71 0.2 max 1200
+go 66 71
+go 52 71
+go 49.5 74
+go 46 74
+go 35.4 71
+go 33 68
+go 33 66.5
+go 31.5 65.5
+near 45 9 64 0.2 max 2400
+near 44 9 64 0.2 max 1200
+go 34 64
+go 47 64
+go 50 63.2
+face 0
+go 50 61 jump 1.5 tol 0.2
+until ground = 1
+go 50 60 jump 1.5 tol 0.2
+until ground = 1
+go 50 59 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 14.95
+go 50 56
+go 50 45 until exit = 1
+until mission = 60 max 900
+expect phase = Play
+wait 60
