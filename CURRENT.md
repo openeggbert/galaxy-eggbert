@@ -1,6 +1,6 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-10-26 (worlds 1-6 and 8 complete and checked, worlds 7 and 9 being authored, world 10 under way,
+_Last verified: 2026-10-26 (worlds 1-6, 8 and 10 complete and checked, worlds 7 and 9 being authored,
 engine fixes D17-D53 with tests and live checks; before that the 2026-10-25 audit of the restored `develop`,
 `plans/GALAXY_EGGBERT_COMPLETION.md` §4). Update this file whenever a change alters the current state, a known limitation, a supported
 build, or the actionable backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`),

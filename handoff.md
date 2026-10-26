@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-26 (world 10 under way to 105, D47-D53)._
+_Last updated: 2026-10-26 (worlds 5, 8 and 10 complete, D47-D53)._
 
 ## Resume here (exact state when last written)
 
@@ -48,9 +48,9 @@ upright and read unmirrored from both sides (D48, `5fbc237`, cna-engine's UB-005
 The helicopter and the overcraft fly through the flight barrier 214 (D49, `d9980d9`; the
 original hides 214 in play, a question for the owner). Of a row of crates Blupi pulls the one
 touching him (D50, `26dbadd`). The lightning 305 shows only while it strikes (D51, `15bc7a9`).
-Worlds 7 and 9 are being authored by two background sessions. World 10 by this session: hub
-100 and missions 101-105 (`b8fb27e`, `f0a8333`, `ce2917b`, `c01c06a`, `a8636e8`, `035f254`); next
-106, 107 (the golden key). Blupi jumps off lifts (D52, `6ed7942`); crumbling bridges hold him as
+Worlds 7 and 9 are being authored by two background sessions. World 10 by this session, complete:
+hub 100 and missions 101-107 (`b8fb27e`, `f0a8333`, `ce2917b`, `c01c06a`, `a8636e8`, `035f254`,
+`1f42f11`, `dde3c6a`). Blupi jumps off lifts (D52, `6ed7942`); crumbling bridges hold him as
 the original's table does (D53, `7bb9415`); a terrain over a buffer's limit is split (D47's rest,
 `7b96caf`); the editor's dead speed field is gone (`2a91ca6`). Then worlds 11, 12 and 199.
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
