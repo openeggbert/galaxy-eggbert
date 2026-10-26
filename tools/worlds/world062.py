@@ -152,7 +152,9 @@ def main(argv) -> int:
     w.fill(26, 3, 58, 34, 8, 61, DEEP)
     w.fill(26, 8, 58, 34, 8, 61, WATER)
     slime(w, 29, 3, 58, 31, 10, 58)                                    # the ledge, walk 11
-    slime(w, 32, 3, 58, 32, 9, 58)                                     # the step back up, walk 10
+    # The step back up, walk 9: level with the water's top cell (y 8), the only bank Blupi climbs
+    #    out onto from water; a jump up from it onto the ledge (walk 11).
+    slime(w, 32, 3, 58, 32, 8, 58)
     carve(30, 11, 58, 30, 12, 58)
     carve(35, 3, 59, 50, 5, 61)
     w.fill(35, 3, 59, 50, 5, 61, DEEP)
@@ -169,6 +171,8 @@ def main(argv) -> int:
         w.fill(51, 4, 58, 56, 6, 61, 0)
         slime(w, 26, 3, 58, 56, 3, 61)
         slime(w, 52, 4, 58, 56, 5, 61)                                 # a jump up out of the tunnel
+        slime(w, 32, 4, 58, 32, 8, 58)                                 # the step kept, and the swim
+        w.place(O.LIFT, 32, 3, 59, end=(32, 8, 59))                    # up to it as a stand-in lift
 
     skin(w, rng)
     w.spawn = (23, 21, 34)

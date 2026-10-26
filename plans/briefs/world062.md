@@ -31,12 +31,15 @@ girders (201) and a water channel; twelve eggs.
   a room with a strip of spike traps right across it; the blue key and treasure 3 beyond it.
 - L3 behind the green door: a corridor one wide along X; a creature (60 / 200) walks its east half
   and rests at both ends, the east one before treasure 4.
-- Behind the blue door (L2's south side): a ledge over a pool, a step to climb back; a channel three
-  high, flooded, dived east (16 cells) to a second pool whose bank (one above its water) holds
-  treasure 5.
+- Behind the blue door (L2's south side): a ledge over a pool (walk 11), a step to climb back
+  (walk 9, its top level with the water's top cell: the only bank Blupi climbs out onto from water;
+  a jump up from it onto the ledge); a channel three high, flooded, dived east (16 cells) to a
+  second pool whose bank (one above its water) holds treasure 5. (Fixed 2026-10-26: the step stood
+  a cell higher, walk 10, out of reach from the water: the pool was a trap on the way back.)
 
 **Checks**: `levelcheck.py` stages: K=1 six of nine targets (the upper level, L1, L2); K=2 adds L3's
-and the dive's treasures; K=3 the exit; every egg from K=2. The real world fails where creatures,
+and the dive's treasures; K=3 the exit and no traps (its stand-in for the swim back: a lift from
+the first pool's floor up to the step); every egg from K=2. The real world fails where creatures,
 moving mines, the shuttle and the water stand in. `VerifyShippedWorlds`. Live (spawns in each
 area): the machine room (floor faces dropped after green slime showed through their open tops),
 the lightning curtain, the lava gallery's island and bridges, the saw rows, the creature at the
