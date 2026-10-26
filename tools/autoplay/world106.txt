@@ -1,0 +1,100 @@
+# Mission 106 played through (plans/briefs/world106.md): the north block and the high room, then
+# each cave's teleporter to its well, falling through the well's four treasures back into the
+# atrium, sixteen in all; the exit beside the spawn.
+wait 30
+expect mission = 106
+# North through the door (z 38-39) into the hall (walk 10): a lift (x 45, z 23-24) up the block
+# (walk 14), its two treasures (48, 22) and (52, 26) between the mines (48, 26) and (52, 22),
+# keeping off the teleporter's cell (50, 24) until it is wanted.
+go 50 41
+go 50 30
+go 44 29
+go 44 23.5
+go 43.7 23.5 tol 0.1
+lift 45 10 23 max 900
+go 45 23.5 tol 0.15
+until y >= 13.95 max 600
+wait 6
+go 47 23
+go 48 22 until treasures = 1 max 300
+until treasures = 1 max 200
+go 49 25.2
+go 52 26 until treasures = 2 max 300
+until treasures = 2 max 200
+# Teleporter 333 (its pillar over (50, 24)) to the high room (walk 36, arriving at (42, 11)).
+go 50 24 until y >= 30 max 600
+until y >= 30 max 900
+# The high room: treasures (56, 10) and (58, 18), crossing the bulldozers' runs (one along z 14,
+# x 44-58; one along x 50, z 10-18) when each is far; then the passage south (x 46-48) and its
+# hole down into the hall.
+go 42.6 10.6
+clear 50 36 10.6 3.5 lane z max 900
+go 56 10.4 until treasures = 3 max 600
+until treasures = 3 max 200
+go 58 12.6
+clear 58 36 14 5 lane x max 900
+go 58 17.6 until treasures = 4 max 600
+until treasures = 4 max 200
+go 52 19.4
+clear 50 36 18 3 lane z max 900
+go 47 19.4
+go 47 22
+go 47 33.5
+until ground = 1
+expect y <= 10.1
+# Back south into the atrium, west down the stair (a step down every four cells) in lane z 52
+# (its mines hang in lane 50), teleporter 330 at its foot (8, 49): out over the west well, down
+# through its four treasures into the atrium.
+go 50 37
+go 50 42
+go 41 52
+go 15 52
+go 9 50
+go 8 49 until y >= 20 max 900
+until treasures = 8 max 900
+until ground = 1
+expect y <= 10.1
+# East through the door (x 61-62) into the bulldozers' hall, along z 49.5 (they run along z 44
+# and 56): the trench's two lifts meet midway (A x 77-78 -> 79-80, B x 82-83 -> 81-82); A boarded
+# at the start of its dwell, across onto B where they meet, B back; teleporter 331 (90, 52) to
+# the east well.
+go 58 50
+go 63 49.5
+go 76.3 49.5 tol 0.1
+lift 80 10 49 max 900
+lift 77 10 49 max 600
+go 77.5 49.5 tol 0.15
+lift 80 10 49 max 600
+go 81.5 49.5 tol 0.15
+lift 83 10 49 max 600
+go 84.6 49.5
+go 90 51
+go 90 52 until y >= 20 max 900
+until treasures = 12 max 900
+until ground = 1
+expect y <= 10.1
+# South through the door (z 61-62) into the enemies' cave: through the doorway under the wall
+# (x 49-51, z 70-71) when the enemy patrolling its top (z 70) is away from it, across the lane of
+# the one walking along z 78 when it is far, the short lift over the trench of lava (x 50-51,
+# z 84 -> 86) boarded at the start of its dwell, teleporter 332 (50, 88) to the south well.
+go 50 56
+go 50 63
+go 50 68.6 tol 0.15
+clear 50 13 70 5 lane x max 900
+go 50 74
+go 50 76.6 tol 0.15
+clear 50 10 78 6 lane x max 900
+go 50 83.3 tol 0.1
+lift 50 10 86 max 600
+lift 50 10 84 max 600
+go 50.5 84.2 tol 0.15
+lift 50 10 86 max 300
+go 50.5 87.4
+go 50 88 until y >= 20 max 900
+until treasures = 16 max 900
+until ground = 1
+# The exit beside the spawn.
+go 50 47 until exit = 1 max 900
+until mission = 100 max 900
+expect phase = Play
+wait 60

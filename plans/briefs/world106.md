@@ -36,5 +36,6 @@ only where Blupi stands, so the twelve treasures he falls through show as not re
 `VerifyShippedWorlds`. Live (`--mission 106`): from the west teleporter (8, 4, 49) left standing,
 Blupi came out over the west well and fell through it: 4/16, standing in the atrium. Direct view
 F3 at spawns in each part: the atrium and its exit, the stair's hanging mine, the bulldozer and
-lift, the firing enemy on the wall, the north block, the high room. Not played through: the other
-zones' walks.
+lift, the firing enemy on the wall, the north block, the high room. Played through from the
+spawn to hub 100 by `tools/autoplay/world106.txt` (the north block and the high room, all three
+wells by their teleporters, sixteen treasures).
