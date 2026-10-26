@@ -142,12 +142,10 @@ namespace GalaxyEggbert::Game
 
         // INFRA-006 3rd family (plan.md §7): the 5 "basic" pickups that share
         // one real shape -- self-delete on contact, defer their reward to
-        // voyage completion (plan.md `158`), and either need no gate at all
-        // (Treasure/Key1/2/3) or one plain caller-supplied bool gate
-        // (Dynamite, same "Gate is a plain bool, not independent logic"
-        // pattern as the secret-power-pickup pilot). New
-        // `TryCollectBasicPickup()` below replaces these 5 near-identical
-        // `case` bodies with one lookup + one dispatch.
+        // voyage completion (plan.md `158`); Dynamite's gate (the action
+        // button, none carried, none flying) is checked at its case before
+        // the call. `TryCollectBasicPickup()` below replaces these 5
+        // near-identical `case` bodies with one lookup + one dispatch.
         //
         // Deliberately excluded from this table (kept as their own case
         // bodies, not an oversight): Egg(6) computes its voyage endpoint X
@@ -167,17 +165,14 @@ namespace GalaxyEggbert::Game
             int voyageIcon;
             float endX;
             float endY;
-            // Only Dynamite sets this -- Treasure/Key1/2/3 are always granted
-            // on contact, matching the real source exactly.
-            bool requiresDynamiteGate;
             bool spawnsSparkleBurst;
         };
         constexpr BasicPickupHandler kBasicPickupHandlers[] = {
-            {GalaxyEggbert::Def::ObjectType::ObjectType5, InteractionSystem::VoyageKind::Treasure, 6, 430.0f, 430.0f, false, true},    // treasure, Decor.cpp:5956
-            {GalaxyEggbert::Def::ObjectType::ObjectType49, InteractionSystem::VoyageKind::Key1, 215, 520.0f, 418.0f, false, true},     // key 1, Decor.cpp:5971
-            {GalaxyEggbert::Def::ObjectType::ObjectType50, InteractionSystem::VoyageKind::Key2, 222, 530.0f, 418.0f, false, true},     // key 2, Decor.cpp:5986
-            {GalaxyEggbert::Def::ObjectType::ObjectType51, InteractionSystem::VoyageKind::Key3, 229, 540.0f, 418.0f, false, true},     // key 3, Decor.cpp:6001
-            {GalaxyEggbert::Def::ObjectType::ObjectType55, InteractionSystem::VoyageKind::Dynamite, 252, 505.0f, 414.0f, true, false}, // dynamite, Decor.cpp:6123-6125
+            {GalaxyEggbert::Def::ObjectType::ObjectType5, InteractionSystem::VoyageKind::Treasure, 6, 430.0f, 430.0f, true},    // treasure, Decor.cpp:5956
+            {GalaxyEggbert::Def::ObjectType::ObjectType49, InteractionSystem::VoyageKind::Key1, 215, 520.0f, 418.0f, true},     // key 1, Decor.cpp:5971
+            {GalaxyEggbert::Def::ObjectType::ObjectType50, InteractionSystem::VoyageKind::Key2, 222, 530.0f, 418.0f, true},     // key 2, Decor.cpp:5986
+            {GalaxyEggbert::Def::ObjectType::ObjectType51, InteractionSystem::VoyageKind::Key3, 229, 540.0f, 418.0f, true},     // key 3, Decor.cpp:6001
+            {GalaxyEggbert::Def::ObjectType::ObjectType55, InteractionSystem::VoyageKind::Dynamite, 252, 505.0f, 414.0f, false}, // dynamite, Decor.cpp:6123-6125
         };
 
         bool IsCrate(const MobileObjSpec& obj)
@@ -841,6 +836,9 @@ namespace GalaxyEggbert::Game
         events_.clear();
         crateBeingPushedThisFrame_ = false;
         ridingLift_ = false;
+        // The action press a dynamite stick's pickup spends (the original clears the button,
+        // Decor.cpp:6119), so one press takes one stick.
+        bool actionUnspent = blupiActionPressedEdge;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
 
@@ -1893,8 +1891,17 @@ namespace GalaxyEggbert::Game
                 case GalaxyEggbert::Def::ObjectType::ObjectType49: // key 1
                 case GalaxyEggbert::Def::ObjectType::ObjectType50: // key 2
                 case GalaxyEggbert::Def::ObjectType::ObjectType51: // key 3
+                    TryCollectBasicPickup(obj, pendingSpawns);
+                    break;
                 case GalaxyEggbert::Def::ObjectType::ObjectType55: // dynamite stick
-                    TryCollectBasicPickup(obj, dynamiteCount_ == 0, pendingSpawns);
+                    // Real gate (Decor.cpp:6116-6119): taken only with the action button, none
+                    // carried and no stick still flying to the panel (the count rises when it
+                    // lands; without this a second stick was taken during the flight, 065).
+                    if (actionUnspent && dynamiteCount_ == 0 && voyageKind_ != VoyageKind::Dynamite)
+                    {
+                        actionUnspent = false;
+                        TryCollectBasicPickup(obj, pendingSpawns);
+                    }
                     break;
                 case GalaxyEggbert::Def::ObjectType::ObjectType6: // extra-life egg
                     // Real MAX_EGG_COUNT=10 gate: at the cap, touching an
@@ -3011,18 +3018,13 @@ namespace GalaxyEggbert::Game
         }
     }
 
-    void InteractionSystem::TryCollectBasicPickup(MobileObjSpec& obj, bool dynamiteGateOpen,
-                                                     std::vector<MobileObjSpec>& pendingSpawns)
+    void InteractionSystem::TryCollectBasicPickup(MobileObjSpec& obj, std::vector<MobileObjSpec>& pendingSpawns)
     {
         for (const auto& handler : kBasicPickupHandlers)
         {
             if (handler.type != obj.type)
             {
                 continue;
-            }
-            if (handler.requiresDynamiteGate && !dynamiteGateOpen)
-            {
-                return;
             }
             obj.active = false;
             RequestVoyage(handler.voyageKind, handler.voyageIcon, false, obj.currentX, obj.currentY, obj.currentZ,

@@ -835,12 +835,21 @@ int main(int argc, char** argv)
     // and the full 9-blast sequence against a synthetic target crate
     // pushed directly into the loaded world's mobile-object list (kept
     // isolated from the real sample world's own crates/position).
+    // A stick is taken only with the action button (Decor.cpp:6116-6119).
+    const auto pressAction = [&](InteractionSystem& ir, float x, float y, float z)
+    {
+        ir.Update(dt, world, x, y, z, 0.0f, sound, false, false, 0, 0, false, true, true, true, true, false, false,
+                  false, true, /*blupiActionPressedEdge=*/true);
+    };
     if (const auto* dynamite = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType55))
     {
         const float ddx = dynamite->currentX, ddy = dynamite->currentY, ddz = dynamite->currentZ;
+        interaction.Update(dt, world, ddx, ddy, ddz, 0.0f, sound);
+        check(!findEvent(interaction, InteractionSystem::EventKind::VoyageRequested),
+              "touching a dynamite stick without the action button takes nothing");
         // Real reward deferred to voyage completion (plan.md `158`) -- see
         // the egg test's own comment above.
-        interaction.Update(dt, world, ddx, ddy, ddz, 0.0f, sound);
+        pressAction(interaction, ddx, ddy, ddz);
         completePendingVoyage(world, interaction);
         check(interaction.DynamiteCount() == 1, "dynamite pickup increments DynamiteCount() to 1");
 
@@ -982,7 +991,7 @@ int main(int argc, char** argv)
             firstStick.currentZ = firstStick.posStartZ = firstStick.posEndZ = kSecondStickZ;
             world.GetMobileObjectsMutable().push_back(firstStick);
         }
-        interaction.Update(dt, world, kSecondStickX, kSecondStickY, kSecondStickZ, 0.0f, sound);
+        pressAction(interaction, kSecondStickX, kSecondStickY, kSecondStickZ);
         completePendingVoyage(world, interaction);
         check(interaction.DynamiteCount() == 1, "test setup sanity: carrying one stick again before the gate test");
 
@@ -995,7 +1004,7 @@ int main(int argc, char** argv)
             secondStick.currentZ = secondStick.posStartZ = secondStick.posEndZ = kSecondStickZ;
             world.GetMobileObjectsMutable().push_back(secondStick);
         }
-        interaction.Update(dt, world, kSecondStickX, kSecondStickY, kSecondStickZ, 0.0f, sound);
+        pressAction(interaction, kSecondStickX, kSecondStickY, kSecondStickZ);
         // The reward is deferred to voyage completion (same as every
         // other pickup here) -- a gated (correctly-closed) touch never
         // requests a voyage at all, so completing "whatever's pending"
@@ -1017,6 +1026,43 @@ int main(int argc, char** argv)
             }
         }
         check(secondStickStillActive, "a second stick touched while already carrying one is NOT removed");
+
+        // One press takes one stick of two lying together, and while it flies to the panel (the
+        // count still 0 until it lands) a press takes no other: 065's tower handed out two.
+        constexpr float kPairX = 300.0f, kPairY = 1.0f, kPairZ = 300.0f;
+        for (int k = 0; k < 2; ++k)
+        {
+            MobileObjSpec stick;
+            stick.type = GalaxyEggbert::Def::ObjectType::ObjectType55;
+            stick.active = true;
+            stick.currentX = stick.posStartX = stick.posEndX = kPairX;
+            stick.currentY = stick.posStartY = stick.posEndY = kPairY;
+            stick.currentZ = stick.posStartZ = stick.posEndZ = kPairZ;
+            world.GetMobileObjectsMutable().push_back(stick);
+        }
+        const auto sticksLeft = [&]
+        {
+            int left = 0;
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                left += obj.type == GalaxyEggbert::Def::ObjectType::ObjectType55 && obj.active &&
+                        std::fabs(obj.currentX - kPairX) < 0.01f && std::fabs(obj.currentZ - kPairZ) < 0.01f;
+            }
+            return left;
+        };
+        InteractionSystem picker;
+        pressAction(picker, kPairX, kPairY, kPairZ);
+        check(sticksLeft() == 1, "one press takes one stick of two lying together");
+        const auto* flight = findEvent(picker, InteractionSystem::EventKind::VoyageRequested);
+        check(flight != nullptr, "the stick taken flies to the panel");
+        if (flight)
+        {
+            picker.BeginVoyage(world, flight->voyageKind, flight->voyageIconId, flight->voyageIsButtonChannel, 0.0f,
+                               0.0f, 500.0f, 400.0f, sound);
+        }
+        pressAction(picker, kPairX, kPairY, kPairZ);
+        check(sticksLeft() == 1 && picker.DynamiteCount() == 0,
+              "while a stick flies to the panel a press takes no other (the original's m_voyageIcon gate)");
     }
     else
     {

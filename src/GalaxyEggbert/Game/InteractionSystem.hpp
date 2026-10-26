@@ -1000,10 +1000,8 @@ namespace GalaxyEggbert::Game
         // near-identical `case` bodies in Update()'s own switch with one
         // shared dispatch. No-op if `obj.type` isn't one of the 5 handled
         // types (only ever called from those 5 case labels, see the call
-        // site's own comment). `dynamiteGateOpen` is the one caller-computed
-        // bool gate this family needs (Dynamite only, `dynamiteCount_ == 0`).
-        void TryCollectBasicPickup(MobileObjSpec& obj, bool dynamiteGateOpen,
-                                    std::vector<MobileObjSpec>& pendingSpawns);
+        // site's own comment). Dynamite's gate is checked at its call site.
+        void TryCollectBasicPickup(MobileObjSpec& obj, std::vector<MobileObjSpec>& pendingSpawns);
         // Real `Decor::VoyageDraw`'s icon==40 puff spawn (Decor.cpp:
         // 10331-10348), called once per TickVoyage() while Clear3Ascend is
         // active (see TickVoyage()'s own comment).

@@ -12,7 +12,8 @@ go 17 20.5 max 300
 until ground = 1 max 300
 expect y <= 34.1
 go 22 22
-go 25 20 until dynamite = 1 max 300
+go 25 20 tol 0.15 max 300
+hold 2 action
 until dynamite = 1 max 200
 wait 30
 go 18 21
@@ -56,7 +57,8 @@ go 23 76.5
 go 22.5 83
 go 16.5 83
 go 13 83
-go 7.4 84 until dynamite = 1 max 300
+go 7.4 84 tol 0.15 max 300
+hold 2 action
 until dynamite = 1 max 200
 wait 30
 expect keys = 0
@@ -104,7 +106,8 @@ expect y >= 13.9
 # against the plug of crates (x 36-37) with his back to it, then into the alcove out of the
 # blast (the blasts reach far along X).
 go 30 58
-go 34 54.4 until dynamite = 1 max 300
+go 34 54.4 tol 0.15 max 300
+hold 2 action
 until dynamite = 1 max 200
 wait 30
 go 34.5 57.5

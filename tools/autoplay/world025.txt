@@ -97,8 +97,9 @@ face 0
 go 61 59 jump 1.5
 until ground = 1
 expect y >= 11.95
-go 60 58.3
-wait 90
+go 60 58.2 tol 0.15
+hold 2 action
+until dynamite = 1 max 200
 go 61 60.6
 until ground = 1
 go 63.6 68.3
@@ -114,16 +115,18 @@ until ground = 1
 expect y <= 1.05
 # The cellar's two sticks blast the two doorways of six crates (z 69): the helicopters' room
 # and the treasure's.
-go 64 61.3
-wait 90
+go 64 61.2 tol 0.15
+hold 2 action
+until dynamite = 1 max 200
 go 65 66
 go 65 68 tol 0.15
 face 0
 hold 2 action
 go 65 64
 wait 200
-go 70 61.3
-wait 90
+go 70 61.2 tol 0.15
+hold 2 action
+until dynamite = 1 max 200
 go 72 66
 go 72 68 tol 0.15
 face 0

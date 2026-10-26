@@ -20,6 +20,8 @@ go 55 41.5 until treasures = 1 max 600
 until treasures = 1 max 200
 go 51 41.5
 go 51 41 tol 0.3
+hold 2 action
+until dynamite = 1 max 200
 # West along the gallery into the tunnel (z 41-43): the stick down before its wall of crates
 # (x 38) with his back to it (putting it down holds him 26 ticks, as the original's PutDynamite;
 # turning round would take as long again), then straight back east out of the blast.
@@ -32,7 +34,9 @@ wait 120
 go 38 42
 # The west cave (walk 9): treasure 1 (24, 38), the egg (29, 46), a stick (26, 45).
 go 29 46 until eggs = 1 max 600
-go 26 45
+go 26 45 tol 0.15
+hold 2 action
+until dynamite = 1 max 200
 go 24 38.2 tol 0.1 until treasures = 2 max 600
 until treasures = 2 max 200
 expect dynamite = 1
@@ -52,7 +56,9 @@ expect dynamite = 0
 # Beyond the plug the two sticks (65, 50) and (65, 52): one. The pit room: down into its basin
 # (walk 4) and round its heap of crates along z 48, out up its east side, along the corridor to
 # the treasure caves' corridor (x 81-83, walk 6).
-go 65 50 until dynamite = 1 max 600
+go 65 50 tol 0.15 max 600
+hold 2 action
+until dynamite = 1 max 200
 go 67.4 48
 go 69 48
 until ground = 1
@@ -110,7 +116,9 @@ until ground = 1
 go 68.5 48
 go 66.4 48 jump 1.4
 until ground = 1
-go 65 52 until dynamite = 1 max 600
+go 65 52 tol 0.15 max 600
+hold 2 action
+until dynamite = 1 max 200
 go 67.4 48
 go 69 48
 until ground = 1

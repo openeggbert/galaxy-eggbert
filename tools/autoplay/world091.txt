@@ -4,9 +4,10 @@
 # eggs.
 wait 30
 expect mission = 91
-# A, the grove: a stick of dynamite (12, 81) taken by walking over it, put down at the tunnel's
+# A, the grove: a stick of dynamite (12, 81) taken with the action button, put down at the tunnel's
 # plug of crates (z 70-71) with his back to it, then away south out of the blast.
-go 12.4 81
+go 12.4 81 tol 0.15
+hold 2 action
 until dynamite = 1 max 200
 wait 30
 go 17 76

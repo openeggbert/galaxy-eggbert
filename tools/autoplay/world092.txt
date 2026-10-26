@@ -105,7 +105,8 @@ clear 45 12 77 0.5 lane x max 100
 near 45 12 77 0.5 lane x max 100
 clear 45 12 77 0.5 lane x max 100
 go 45 72.5 max 300
-go 46 71.2 until dynamite = 1 max 300
+go 46 71.2 tol 0.15 max 300
+hold 2 action
 until dynamite = 1 max 200
 wait 30
 go 45 73.6 tol 0.1

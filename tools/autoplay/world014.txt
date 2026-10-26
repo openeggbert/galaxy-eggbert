@@ -4,8 +4,9 @@ expect mission = 14
 expect lives >= 3
 # A stick of dynamite from the start room (one at a time), put at the foot of the crate wall
 # (z 48) in the corridor, and back down the corridor out of the blast.
-go 43 62
-wait 90
+go 43 62 tol 0.15
+hold 2 action
+until dynamite = 1 max 200
 go 48 56
 go 48 49.4 tol 0.1 max 400
 face 180
@@ -17,8 +18,9 @@ wait 200
 go 48 46
 # A second stick from the start room, put beside the plug of crates in the floor (z 38-40).
 go 48 56
-go 43 60
-wait 90
+go 43 60 tol 0.15
+hold 2 action
+until dynamite = 1 max 200
 go 48 56
 go 48 46
 go 48 41.4 tol 0.1

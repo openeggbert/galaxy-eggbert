@@ -137,8 +137,9 @@ go 8 48 until eggs = 5
 until eggs = 5 max 120
 go 10 47
 go 12.5 45
-go 13.5 43.6 tol 0.1 until dynamite = 1
-until dynamite = 1 max 120
+go 13.5 43.6 tol 0.1
+hold 2 action
+until dynamite = 1 max 200
 expect dynamite = 1
 go 13.4 41.6
 go 9.5 41.6
