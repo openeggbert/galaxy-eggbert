@@ -115,6 +115,24 @@ int main()
               "a clip facing the viewer puts it on his right, even against a wall");
     }
 
+    // The camera rises over what blocks it behind him (D18).
+    {
+        using GalaxyEggbert::Game::ChaseCameraElevation;
+        const auto open = [](float) { return 4.0f; };
+        check(near(ChaseCameraElevation(0.29f, 4.0f, open), 0.29f, 1e-5f), "open behind him: the usual elevation");
+        const auto pillar = [](float e) { return e < 0.7f ? 0.3f : 4.0f; }; // blocked low, clear above
+        const float overPillar = ChaseCameraElevation(0.29f, 4.0f, pillar);
+        check(overPillar >= 0.7f && overPillar < 0.9f, "blocked low behind him: the lowest elevation that clears it");
+        const auto closed = [](float) { return 0.3f; };
+        check(near(ChaseCameraElevation(0.29f, 4.0f, closed), 0.29f, 1e-5f),
+              "blocked at every height (a tunnel): stays where it was");
+        const auto slightly = [](float e) { return 0.3f + 0.2f * e; }; // barely better higher up
+        check(near(ChaseCameraElevation(0.29f, 4.0f, slightly), 0.29f, 1e-5f),
+              "rising gains little room: stays where it was");
+        const auto ceiling = [](float e) { return e < 0.6f ? 0.5f : 2.0f; }; // clearer above, never enough
+        check(ChaseCameraElevation(0.29f, 4.0f, ceiling) >= 0.6f, "clearly more room higher up: it rises");
+    }
+
     std::cout << (allOk ? "ALL PASS" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

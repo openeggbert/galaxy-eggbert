@@ -1099,6 +1099,7 @@ namespace GalaxyEggbert::CNA
             blupi_.SetYaw(hubArrival->yaw);
         }
         chaseCamera_.Reset(blupi_.GetYaw()); // a new world starts with the camera behind him
+        cameraSmoothedInitialized_ = false;  // ... there at once, not easing over from the last world
 
         saveData_.SetMissionNumber(missionNumber);
         saveData_.Save();
@@ -1751,6 +1752,7 @@ namespace GalaxyEggbert::CNA
                                    startSpawnZ_ - WorldRuntime::kWorldCenterZ);
                 blupi_.SetYaw(startYawDegrees_ * 3.14159265f / 180.0f);
                 chaseCamera_.Reset(blupi_.GetYaw());
+                cameraSmoothedInitialized_ = false;
             }
         }
 
@@ -2318,6 +2320,7 @@ namespace GalaxyEggbert::CNA
                             {
                                 blupi_.SetPosition(0.0f, 1.0f, 0.0f);
                             }
+                            cameraSmoothedInitialized_ = false;
                         }
                         SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                     }
@@ -2656,6 +2659,13 @@ namespace GalaxyEggbert::CNA
                                                             blupi_.GetZ(), destX, destY, destZ))
                 {
                     blupi_.SetPosition(destX, destY, destZ);
+                    // He arrives one cell +Z of the partner pillar: facing on, away from it (a step
+                    // forward would take him straight back), the camera behind him at once rather
+                    // than easing over from the departure, maybe far away (2026-10-26, reported by
+                    // the world authoring).
+                    blupi_.SetYaw(3.14159265358979f);
+                    chaseCamera_.Reset(blupi_.GetYaw());
+                    cameraSmoothedInitialized_ = false;
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
                 }
             }
@@ -3988,10 +3998,21 @@ namespace GalaxyEggbert::CNA
                     chaseCamera_.Update(chaseInput, dt);
                 }
                 const float orbitYaw = chaseCamera_.GetYaw() + lookYawOffset_;
-                const Microsoft::Xna::Framework::Vector3 desiredOffset(
-                    -std::sin(orbitYaw) * kChaseDistance * std::cos(elevation),
-                    kChaseDistance * std::sin(elevation),
-                    std::cos(orbitYaw) * kChaseDistance * std::cos(elevation));
+                const auto chaseOffset = [&](float e)
+                {
+                    return Microsoft::Xna::Framework::Vector3(-std::sin(orbitYaw) * kChaseDistance * std::cos(e),
+                                                              kChaseDistance * std::sin(e),
+                                                              std::cos(orbitYaw) * kChaseDistance * std::cos(e));
+                };
+                // Over what blocks it behind him rather than onto his head (D18).
+                const float chaseElevation = GalaxyEggbert::Game::ChaseCameraElevation(
+                    elevation, kChaseDistance,
+                    [&](float e)
+                    {
+                        return RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
+                                                    chaseOffset(e) * (1.0f / kChaseDistance), kChaseDistance);
+                    });
+                const Microsoft::Xna::Framework::Vector3 desiredOffset = chaseOffset(chaseElevation);
 
                 // Wall collision (plan.md CAM-005, found 2026-07-17): pull
                 // the eye in along the same direction if a solid block
