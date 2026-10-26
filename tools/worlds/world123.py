@@ -75,25 +75,27 @@ def main(argv) -> int:
     door([(41, y, z) for y in (walk, walk + 1) for z in (54, 55, 56)], 2)
 
     # ---- the middle hall (walk 7) ----
-    # A pit of lava across it crossed on top of a row of bookcases two high; two crates to push
-    # into a step up to the high shelf (walk 11) with three treasures; door "4" east.
+    # A pit of lava across it crossed on a causeway of brick; the crates to push to the foot of
+    # the high shelf (walk 10, a jump above a crate's top) with three treasures; door "4" east.
+    # Crates only move sideways (they stack only pushed off a ledge onto one level with it), so
+    # the step is one crate; the others are spares.
     carve(42, walk, 40, 62, walk + 8, 70)
     carve(48, FLOOR - 2, 40, 54, FLOOR, 70)
     w.fill(48, FLOOR - 2, 40, 54, FLOOR - 1, 70, LAVA)
     for x in range(48, 55):
         for z in (54, 55, 56):
             w.fill(x, FLOOR - 1, z, x, FLOOR, z, BRICK)
-    bookcase(56, 40, 62, 46, 4)                                           # the high shelf, walk 11
+    bookcase(56, 40, 62, 46, 3)                                           # the high shelf, walk 10
     if taken >= 2:
         w.place(O.CRATE, 58, walk, 47)
-        w.place(O.CRATE, 58, walk + 1, 47)
-        w.place(O.CRATE, 59, walk, 48)
+        w.place(O.CRATE, 46, walk, 64)
+        w.place(O.CRATE, 45, walk, 66)
     else:
         w.place(O.CRATE, 44, walk, 64)
         w.place(O.CRATE, 46, walk, 64)
         w.place(O.CRATE, 45, walk, 66)
     for x, z in ((57, 41), (60, 43), (62, 45)):
-        w.place(O.TREASURE, x, walk + 4, z)
+        w.place(O.TREASURE, x, walk + 3, z)
     w.place(O.EGG, 61, walk, 68)
     door([(63, y, z) for y in (walk, walk + 1) for z in (54, 55, 56)], 4)
 

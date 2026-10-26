@@ -15,12 +15,16 @@ forks and pillars.
   five rows across the hall, each two higher than the one in front and touching it, a stair of
   bookcases from walk 9 to 17, a treasure on each row; two more on the floor; an egg. Door "2" east.
 - The middle hall: a pit of lava across it crossed on a causeway of brick; a high shelf of
-  bookcases four high (walk 11) with three treasures: push the crates into a step (one, then one
-  on it); an egg. Door "4" east.
+  bookcases three high (walk 10) with three treasures: push a crate over the causeway to its foot
+  and climb (the other two are spares: crates only move sideways and stack only pushed off a
+  ledge, so the four-high shelf on two stacked crates first built here could not be reached);
+  an egg. Door "4" east.
 - The east wing: a lift (2 × 2, 60 ticks, dwelling 30) up ten to its gallery (walk 17): bookcases
   along it, three treasures; door "9" to the last room with two treasures and an egg.
 
 **Checks**: `levelcheck.py`: stage 9 reaches the fifteen treasures, three eggs and the exit; stage 2
 stops at door "4"'s wing and door "9". `VerifyShippedWorlds`. Live (`--mission 123`, direct view
 F3): the hall and the stack of bookcases (their books on the faces), a treasure on its top row,
-the pit of lava, the lift, the gallery. Not played through: the climb, the crate step, the lift.
+the pit of lava, the lift, the gallery. Played through from the spawn to hub 120 by
+`tools/autoplay/world123.txt` (the climb, a crate pushed over the causeway to the shelf, the lift
+both ways, the fifteen treasures).
