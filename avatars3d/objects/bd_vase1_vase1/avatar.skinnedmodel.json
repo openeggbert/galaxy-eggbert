@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "bd_vase1_rd_00fd00",
-      "vertices": "bd_vase1_rd_00fd00.verts.bin",
-      "indices": "bd_vase1_rd_00fd00.idx.bin",
+      "name": "bd_vase1_rd_2aa92a",
+      "vertices": "bd_vase1_rd_2aa92a.verts.bin",
+      "indices": "bd_vase1_rd_2aa92a.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_vase1_rd_00fd00.png",
+      "texture": "bd_vase1_rd_2aa92a.png",
       "diffuseColor": [
-        0.0,
-        0.9909246121188983,
-        0.0,
+        0.023227824223555578,
+        0.3970934861744419,
+        0.023227824223555578,
         1.0
       ]
     }

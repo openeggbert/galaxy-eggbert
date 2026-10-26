@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "creature_rd_00fd00",
-      "vertices": "creature_rd_00fd00.verts.bin",
-      "indices": "creature_rd_00fd00.idx.bin",
+      "name": "creature_rd_33ce33",
+      "vertices": "creature_rd_33ce33.verts.bin",
+      "indices": "creature_rd_33ce33.idx.bin",
       "vertexStride": 52,
-      "texture": "creature_rd_00fd00.png",
+      "texture": "creature_rd_33ce33.png",
       "diffuseColor": [
-        0.0,
-        0.9909246121188983,
-        0.0,
+        0.033104766570885055,
+        0.6174758925887691,
+        0.033104766570885055,
         1.0
       ]
     }

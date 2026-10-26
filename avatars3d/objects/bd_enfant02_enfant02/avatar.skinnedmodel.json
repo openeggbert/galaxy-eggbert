@@ -15,15 +15,15 @@
       ]
     },
     {
-      "name": "bd_enfant02_rd_3ec1ec",
-      "vertices": "bd_enfant02_rd_3ec1ec.verts.bin",
-      "indices": "bd_enfant02_rd_3ec1ec.idx.bin",
+      "name": "bd_enfant02_rd_27a1c9",
+      "vertices": "bd_enfant02_rd_27a1c9.verts.bin",
+      "indices": "bd_enfant02_rd_27a1c9.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_enfant02_rd_3ec1ec.png",
+      "texture": "bd_enfant02_rd_27a1c9.png",
       "diffuseColor": [
-        0.04928941756705957,
-        0.53507099108643,
-        0.8398461092288596,
+        0.02030234019775254,
+        0.3596832630192606,
+        0.5903564080535254,
         1.0
       ]
     },

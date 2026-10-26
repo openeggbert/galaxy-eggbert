@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "exit_rd_ff0000",
-      "vertices": "exit_rd_ff0000.verts.bin",
-      "indices": "exit_rd_ff0000.idx.bin",
+      "name": "exit_rd_ff0303",
+      "vertices": "exit_rd_ff0303.verts.bin",
+      "indices": "exit_rd_ff0303.idx.bin",
       "vertexStride": 52,
-      "texture": "exit_rd_ff0000.png",
+      "texture": "exit_rd_ff0303.png",
       "diffuseColor": [
         1.0,
-        0.0,
-        0.0,
+        0.0009287925696594428,
+        0.0009287925696594428,
         1.0
       ]
     }

@@ -233,8 +233,13 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   1.05 (quartiles 0.99-1.20); its spread (0.69-1.48) follows each scene's own lights, which the
   sprites were rendered with and the sheets are not (the wasp scores 0.69 from one scene and
   1.33 from the other). Strong colours come out more saturated than in the sprites (the
-  pillars' green 9,205,9 against 45,115,45), Ray Dream's shading greying them; matching that is
-  a choice of the game's lighting, left to the owner.
+  pillars' green 9,205,9 against 45,115,45), Ray Dream's shading greying them. The owner chose
+  to bring them to the sprites: each object whose scene lit it so gets a tone (`tone=A,B` in
+  `objects.txt`: every colour and texel c becomes A * c + B / 255), fitted from its compare
+  sheets by `calibrate_tone.py` (the colour distributions of sprite and model). 37 objects (the
+  creatures, pillars, tentacles, keys, mines, helicopter, big decor ...) took one; on their 60
+  models the colour error against the sprites fell 37.6 -> 14.0 (the cabin's got worse and kept
+  none); silhouettes unchanged (the bird, the fish and the invert sign keep their icon tables).
 - Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
   Recede/Advance clips; checked live in 012).
 - Win cheer: done (D29, Win clip `3415d3f`).

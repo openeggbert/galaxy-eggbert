@@ -2,14 +2,14 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "decoy_rd_ffff00",
-      "vertices": "decoy_rd_ffff00.verts.bin",
-      "indices": "decoy_rd_ffff00.idx.bin",
+      "name": "decoy_rd_e2e200",
+      "vertices": "decoy_rd_e2e200.verts.bin",
+      "indices": "decoy_rd_e2e200.idx.bin",
       "vertexStride": 52,
-      "texture": "decoy_rd_ffff00.png",
+      "texture": "decoy_rd_e2e200.png",
       "diffuseColor": [
-        1.0,
-        1.0,
+        0.7619320875623954,
+        0.7619320875623954,
         0.0,
         1.0
       ]

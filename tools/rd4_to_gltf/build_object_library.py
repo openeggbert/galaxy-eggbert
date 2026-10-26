@@ -9,7 +9,9 @@ of the scene's orthographic cameras (keeping per scene the one that wins most ic
 per-icon heights; one size per object); with ``yaw=STEP`` also
 turned about the vertical every STEP degrees (the egg's sprites spin, its scene does not); with
 ``vflip=1`` also upside down (the hanging mine's icons are the mine's flipped vertically); with
-``recolour=R,G,B>R,G,B[;...]`` flat colours replaced (the decoy mines); with ``min_iou=X`` icons
+``recolour=R,G,B>R,G,B[;...]`` flat colours replaced (the decoy mines); with ``tone=A,B`` every
+colour and texel c becomes A * c + B / 255 (the object's sprites rendered greyer or darker by their
+scene's own lights: ``calibrate_tone.py`` fits it from a build without); with ``min_iou=X`` icons
 matching worse are left out (they stay billboards); with ``shift=N`` each icon's offset within
 +-N pixels is found (sprites placed off their cell's centre). Each
 scene that wins an icon becomes one model: one rigid joint per Ray Dream object the camera sees,
@@ -77,6 +79,7 @@ class ObjectSpec:
     recolour: dict = field(default_factory=dict)
     min_iou: float = 0.0
     shift: int = 0
+    tone: tuple[float, float] | None = None
 
 
 @dataclass
@@ -163,7 +166,8 @@ def read_specs(path: Path) -> list[ObjectSpec]:
             recolour[tuple(round(float(x), 3) for x in src.split(","))] = tuple(float(x) for x in dst.split(","))
         specs.append(ObjectSpec(fields[0], fields[1], parse_icons(fields[2]), fields[3].split(","),
                                 opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1", recolour,
-                                float(opts.get("min_iou", 0)), int(opts.get("shift", 0))))
+                                float(opts.get("min_iou", 0)), int(opts.get("shift", 0)),
+                                tuple(float(x) for x in opts["tone"].split(",")) if "tone" in opts else None))
     return specs
 
 
@@ -385,6 +389,7 @@ def main(argv=None) -> int:
     for spec in specs:
         shading.COLOUR_MAP.clear()
         shading.COLOUR_MAP.update(spec.recolour)
+        shading.TONE = spec.tone
         grid = survey.GRIDS[spec.sheet]
         sizes = {survey.icon_size(spec.sheet, i) for i in spec.icons}
         if len(sizes) != 1:

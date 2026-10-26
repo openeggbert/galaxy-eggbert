@@ -2,41 +2,41 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "creature_rd_00fd00",
-      "vertices": "creature_rd_00fd00.verts.bin",
-      "indices": "creature_rd_00fd00.idx.bin",
+      "name": "creature_rd_33ce33",
+      "vertices": "creature_rd_33ce33.verts.bin",
+      "indices": "creature_rd_33ce33.idx.bin",
       "vertexStride": 52,
-      "texture": "creature_rd_00fd00.png",
+      "texture": "creature_rd_33ce33.png",
       "diffuseColor": [
-        0.0,
-        0.9909246121188983,
-        0.0,
+        0.033104766570885055,
+        0.6174758925887691,
+        0.033104766570885055,
         1.0
       ]
     },
     {
-      "name": "creature_rd_ffffff",
-      "vertices": "creature_rd_ffffff.verts.bin",
-      "indices": "creature_rd_ffffff.idx.bin",
+      "name": "creature_rd_cecece",
+      "vertices": "creature_rd_cecece.verts.bin",
+      "indices": "creature_rd_cecece.idx.bin",
       "vertexStride": 52,
-      "texture": "creature_rd_ffffff.png",
+      "texture": "creature_rd_cecece.png",
       "diffuseColor": [
-        1.0,
-        1.0,
-        1.0,
+        0.6209158623742829,
+        0.6209158623742829,
+        0.6209158623742829,
         1.0
       ]
     },
     {
-      "name": "creature_rd_000000",
-      "vertices": "creature_rd_000000.verts.bin",
-      "indices": "creature_rd_000000.idx.bin",
+      "name": "creature_rd_333333",
+      "vertices": "creature_rd_333333.verts.bin",
+      "indices": "creature_rd_333333.idx.bin",
       "vertexStride": 52,
-      "texture": "creature_rd_000000.png",
+      "texture": "creature_rd_333333.png",
       "diffuseColor": [
-        0.0,
-        0.0,
-        0.0,
+        0.033104766570885055,
+        0.033104766570885055,
+        0.033104766570885055,
         1.0
       ]
     }

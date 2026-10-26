@@ -28,15 +28,15 @@
       ]
     },
     {
-      "name": "lollipop_rd_fc7a3b",
-      "vertices": "lollipop_rd_fc7a3b.verts.bin",
-      "indices": "lollipop_rd_fc7a3b.idx.bin",
+      "name": "lollipop_rd_cd581f",
+      "vertices": "lollipop_rd_cd581f.verts.bin",
+      "indices": "lollipop_rd_cd581f.idx.bin",
       "vertexStride": 52,
-      "texture": "lollipop_rd_fc7a3b.png",
+      "texture": "lollipop_rd_cd581f.png",
       "diffuseColor": [
-        0.9818974516898041,
-        0.19599417930148813,
-        0.0447042609466385,
+        0.6157600869234823,
+        0.09811617093614336,
+        0.014159286560001295,
         1.0
       ]
     }

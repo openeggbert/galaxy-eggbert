@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "secretexit_rd_ffca00",
-      "vertices": "secretexit_rd_ffca00.verts.bin",
-      "indices": "secretexit_rd_ffca00.idx.bin",
+      "name": "secretexit_rd_cca610",
+      "vertices": "secretexit_rd_cca610.verts.bin",
+      "indices": "secretexit_rd_cca610.idx.bin",
       "vertexStride": 52,
-      "texture": "secretexit_rd_ffca00.png",
+      "texture": "secretexit_rd_cca610.png",
       "diffuseColor": [
-        1.0,
-        0.5970697121666518,
-        0.0,
+        0.6089246956302707,
+        0.3826490945339203,
+        0.005208478963291025,
         1.0
       ]
     }

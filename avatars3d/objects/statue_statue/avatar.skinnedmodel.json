@@ -15,15 +15,15 @@
       ]
     },
     {
-      "name": "statue_rd_ffffff",
-      "vertices": "statue_rd_ffffff.verts.bin",
-      "indices": "statue_rd_ffffff.idx.bin",
+      "name": "statue_rd_f7f7f7",
+      "vertices": "statue_rd_f7f7f7.verts.bin",
+      "indices": "statue_rd_f7f7f7.idx.bin",
       "vertexStride": 52,
-      "texture": "statue_rd_ffffff.png",
+      "texture": "statue_rd_f7f7f7.png",
       "diffuseColor": [
-        1.0,
-        1.0,
-        1.0,
+        0.9374824827715106,
+        0.9374824827715106,
+        0.9374824827715106,
         1.0
       ]
     },
@@ -41,15 +41,15 @@
       ]
     },
     {
-      "name": "statue_rd_fdfdfd",
-      "vertices": "statue_rd_fdfdfd.verts.bin",
-      "indices": "statue_rd_fdfdfd.idx.bin",
+      "name": "statue_rd_f6f6f6",
+      "vertices": "statue_rd_f6f6f6.verts.bin",
+      "indices": "statue_rd_f6f6f6.idx.bin",
       "vertexStride": 52,
-      "texture": "statue_rd_fdfdfd.png",
+      "texture": "statue_rd_f6f6f6.png",
       "diffuseColor": [
-        0.9909246121188983,
-        0.9909246121188983,
-        0.9909246121188983,
+        0.9287431375377354,
+        0.9287431375377354,
+        0.9287431375377354,
         1.0
       ]
     }

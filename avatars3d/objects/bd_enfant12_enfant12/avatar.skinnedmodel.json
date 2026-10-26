@@ -28,15 +28,15 @@
       ]
     },
     {
-      "name": "bd_enfant12_rd_3ec1ec",
-      "vertices": "bd_enfant12_rd_3ec1ec.verts.bin",
-      "indices": "bd_enfant12_rd_3ec1ec.idx.bin",
+      "name": "bd_enfant12_rd_2a9fc6",
+      "vertices": "bd_enfant12_rd_2a9fc6.verts.bin",
+      "indices": "bd_enfant12_rd_2a9fc6.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_enfant12_rd_3ec1ec.png",
+      "texture": "bd_enfant12_rd_2a9fc6.png",
       "diffuseColor": [
-        0.04928941756705957,
-        0.53507099108643,
-        0.8398461092288596,
+        0.023482025412993175,
+        0.3509753340455398,
+        0.5672076769793062,
         1.0
       ]
     },
@@ -54,14 +54,14 @@
       ]
     },
     {
-      "name": "bd_enfant12_rd_00fd00",
-      "vertices": "bd_enfant12_rd_00fd00.verts.bin",
-      "indices": "bd_enfant12_rd_00fd00.idx.bin",
+      "name": "bd_enfant12_rd_00d600",
+      "vertices": "bd_enfant12_rd_00d600.verts.bin",
+      "indices": "bd_enfant12_rd_00d600.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_enfant12_rd_00fd00.png",
+      "texture": "bd_enfant12_rd_00d600.png",
       "diffuseColor": [
         0.0,
-        0.9909246121188983,
+        0.6756679518897253,
         0.0,
         1.0
       ]

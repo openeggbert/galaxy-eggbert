@@ -62,7 +62,7 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | lollipop_sucette | Blupi/sucette.rd4, camera 'Caméra 2' | 8 | 0.985 | 0.971 | faithful |
 | mine_bombe | Blupi/bombe.rd4, camera 'Caméra 2' | 18 | 0.943 | 0.880 | faithful |
 | movingmine_bombe-move | Blupi/bombe-move.rd4, camera 'Caméra 2' | 9 | 0.984 | 0.975 | faithful |
-| pillar_colonne1 | Decor/smooth/colonne1.rds, camera 'Caméra 2' | 1 | 0.897 | 0.897 | faithful |
+| pillar_colonne1 | Decor/smooth/colonne1.rds, camera 'Caméra 2' | 1 | 0.895 | 0.895 | faithful |
 | pillar_colonne2 | Decor/smooth/colonne2.rds, camera 'Caméra 2' | 1 | 0.994 | 0.994 | faithful |
 | pillar_colonne3 | Decor/smooth/colonne3.rds, camera 'Caméra 2' | 1 | 0.916 | 0.916 | faithful |
 | projectile_balle-glu | Blupi/balle-glu.rd4, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |

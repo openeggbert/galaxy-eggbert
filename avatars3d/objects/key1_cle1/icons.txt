@@ -2,7 +2,7 @@
 # icon <sheet> <icon> <seconds> <mirror 0/1 left-right/2 upside down> <yaw degrees> <iou> <icon pixels> <dx> <dy> (the sprite's offset, pixels right and down)
 icon element 209 0.0000 0 0 0.987 60 0 0
 icon element 210 0.0500 0 0 0.974 60 0 0
-icon element 211 0.2000 0 0 0.945 60 0 0
+icon element 211 0.1000 0 0 0.945 60 0 0
 icon element 212 0.1500 0 0 0.946 60 0 0
 icon element 213 0.2000 0 0 0.945 60 0 0
 icon element 214 0.2500 0 0 0.961 60 0 0

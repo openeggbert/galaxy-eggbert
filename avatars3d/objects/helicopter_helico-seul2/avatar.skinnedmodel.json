@@ -2,54 +2,54 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "helicopter_rd_00bffd",
-      "vertices": "helicopter_rd_00bffd.verts.bin",
-      "indices": "helicopter_rd_00bffd.idx.bin",
+      "name": "helicopter_rd_3dc7f4",
+      "vertices": "helicopter_rd_3dc7f4.verts.bin",
+      "indices": "helicopter_rd_3dc7f4.idx.bin",
       "vertexStride": 52,
-      "texture": "helicopter_rd_00bffd.png",
+      "texture": "helicopter_rd_3dc7f4.png",
       "diffuseColor": [
-        0.0,
-        0.5225215539683921,
-        0.9909246121188983,
+        0.04811861634393292,
+        0.5754130955839954,
+        0.9114075004063535,
         1.0
       ]
     },
     {
-      "name": "helicopter_rd_ff0918",
-      "vertices": "helicopter_rd_ff0918.verts.bin",
-      "indices": "helicopter_rd_ff0918.idx.bin",
+      "name": "helicopter_rd_f5444f",
+      "vertices": "helicopter_rd_f5444f.verts.bin",
+      "indices": "helicopter_rd_f5444f.idx.bin",
       "vertexStride": 52,
-      "texture": "helicopter_rd_ff0918.png",
+      "texture": "helicopter_rd_f5444f.png",
       "diffuseColor": [
-        1.0,
-        0.0029411764705882353,
-        0.00926431084760073,
+        0.91788603851473,
+        0.05925352111727415,
+        0.07932181648664352,
         1.0
       ]
     },
     {
-      "name": "helicopter_rd_ffff00",
-      "vertices": "helicopter_rd_ffff00.verts.bin",
-      "indices": "helicopter_rd_ffff00.idx.bin",
+      "name": "helicopter_rd_f5f53d",
+      "vertices": "helicopter_rd_f5f53d.verts.bin",
+      "indices": "helicopter_rd_f5f53d.idx.bin",
       "vertexStride": 52,
-      "texture": "helicopter_rd_ffff00.png",
+      "texture": "helicopter_rd_f5f53d.png",
       "diffuseColor": [
-        1.0,
-        1.0,
-        0.0,
+        0.91788603851473,
+        0.91788603851473,
+        0.04811861634393292,
         1.0
       ]
     },
     {
-      "name": "helicopter_rd_bfbfbf",
-      "vertices": "helicopter_rd_bfbfbf.verts.bin",
-      "indices": "helicopter_rd_bfbfbf.idx.bin",
+      "name": "helicopter_rd_c7c7c7",
+      "vertices": "helicopter_rd_c7c7c7.verts.bin",
+      "indices": "helicopter_rd_c7c7c7.idx.bin",
       "vertexStride": 52,
-      "texture": "helicopter_rd_bfbfbf.png",
+      "texture": "helicopter_rd_c7c7c7.png",
       "diffuseColor": [
-        0.5225215539683921,
-        0.5225215539683921,
-        0.5225215539683921,
+        0.5754130955839954,
+        0.5754130955839954,
+        0.5754130955839954,
         1.0
       ]
     }

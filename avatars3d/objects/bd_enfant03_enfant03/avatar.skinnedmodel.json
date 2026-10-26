@@ -15,27 +15,27 @@
       ]
     },
     {
-      "name": "bd_enfant03_rd_4f53aa",
-      "vertices": "bd_enfant03_rd_4f53aa.verts.bin",
-      "indices": "bd_enfant03_rd_4f53aa.idx.bin",
+      "name": "bd_enfant03_rd_383c8e",
+      "vertices": "bd_enfant03_rd_383c8e.verts.bin",
+      "indices": "bd_enfant03_rd_383c8e.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_enfant03_rd_4f53aa.png",
+      "texture": "bd_enfant03_rd_383c8e.png",
       "diffuseColor": [
-        0.07932181648664352,
-        0.08787617689143362,
-        0.403762527524017,
+        0.040728799297092555,
+        0.04620366067963664,
+        0.27064344320002387,
         1.0
       ]
     },
     {
-      "name": "bd_enfant03_rd_00fd00",
-      "vertices": "bd_enfant03_rd_00fd00.verts.bin",
-      "indices": "bd_enfant03_rd_00fd00.idx.bin",
+      "name": "bd_enfant03_rd_00dc00",
+      "vertices": "bd_enfant03_rd_00dc00.verts.bin",
+      "indices": "bd_enfant03_rd_00dc00.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_enfant03_rd_00fd00.png",
+      "texture": "bd_enfant03_rd_00dc00.png",
       "diffuseColor": [
         0.0,
-        0.9909246121188983,
+        0.7218005511679789,
         0.0,
         1.0
       ]

@@ -2,28 +2,28 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "bd_meca2_rd_7f7f7f",
-      "vertices": "bd_meca2_rd_7f7f7f.verts.bin",
-      "indices": "bd_meca2_rd_7f7f7f.idx.bin",
+      "name": "bd_meca2_rd_989898",
+      "vertices": "bd_meca2_rd_989898.verts.bin",
+      "indices": "bd_meca2_rd_989898.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_meca2_rd_7f7f7f.png",
+      "texture": "bd_meca2_rd_989898.png",
       "diffuseColor": [
-        0.21404114048223255,
-        0.21404114048223255,
-        0.21404114048223255,
+        0.31738083095280933,
+        0.31738083095280933,
+        0.31738083095280933,
         1.0
       ]
     },
     {
-      "name": "bd_meca2_rd_545454",
-      "vertices": "bd_meca2_rd_545454.verts.bin",
-      "indices": "bd_meca2_rd_545454.idx.bin",
+      "name": "bd_meca2_rd_727272",
+      "vertices": "bd_meca2_rd_727272.verts.bin",
+      "indices": "bd_meca2_rd_727272.idx.bin",
       "vertexStride": 52,
-      "texture": "bd_meca2_rd_545454.png",
+      "texture": "bd_meca2_rd_727272.png",
       "diffuseColor": [
-        0.09065468189359736,
-        0.09065468189359736,
-        0.09065468189359736,
+        0.16983507382386248,
+        0.16983507382386248,
+        0.16983507382386248,
         1.0
       ]
     }

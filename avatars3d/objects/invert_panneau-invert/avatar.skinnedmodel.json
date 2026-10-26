@@ -2,14 +2,14 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "invert_rd_f7ac00",
-      "vertices": "invert_rd_f7ac00.verts.bin",
-      "indices": "invert_rd_f7ac00.idx.bin",
+      "name": "invert_rd_be8000",
+      "vertices": "invert_rd_be8000.verts.bin",
+      "indices": "invert_rd_be8000.idx.bin",
       "vertexStride": 52,
-      "texture": "invert_rd_f7ac00.png",
+      "texture": "invert_rd_be8000.png",
       "diffuseColor": [
-        0.9374824827715106,
-        0.41456802404539866,
+        0.5163119007882351,
+        0.21682840460038244,
         0.0,
         1.0
       ]

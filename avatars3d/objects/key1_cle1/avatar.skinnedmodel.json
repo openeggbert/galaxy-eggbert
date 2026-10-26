@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "key1_rd_fd0000",
-      "vertices": "key1_rd_fd0000.verts.bin",
-      "indices": "key1_rd_fd0000.idx.bin",
+      "name": "key1_rd_cb1a1a",
+      "vertices": "key1_rd_cb1a1a.verts.bin",
+      "indices": "key1_rd_cb1a1a.idx.bin",
       "vertexStride": 52,
-      "texture": "key1_rd_fd0000.png",
+      "texture": "key1_rd_cb1a1a.png",
       "diffuseColor": [
-        0.9909246121188983,
-        0.0,
-        0.0,
+        0.6021337723868513,
+        0.010336018135493605,
+        0.010336018135493605,
         1.0
       ]
     }

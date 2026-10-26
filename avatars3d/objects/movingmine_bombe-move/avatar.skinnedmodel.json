@@ -2,15 +2,15 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "movingmine_rd_ff0918",
-      "vertices": "movingmine_rd_ff0918.verts.bin",
-      "indices": "movingmine_rd_ff0918.idx.bin",
+      "name": "movingmine_rd_eb202c",
+      "vertices": "movingmine_rd_eb202c.verts.bin",
+      "indices": "movingmine_rd_eb202c.idx.bin",
       "vertexStride": 52,
-      "texture": "movingmine_rd_ff0918.png",
+      "texture": "movingmine_rd_eb202c.png",
       "diffuseColor": [
-        1.0,
-        0.0029411764705882353,
-        0.00926431084760073,
+        0.8357426333732239,
+        0.014541950987839999,
+        0.025306828950105272,
         1.0
       ]
     }

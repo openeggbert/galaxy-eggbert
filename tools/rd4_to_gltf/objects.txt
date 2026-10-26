@@ -6,80 +6,80 @@
 # min_iou=X (icons matching worse stay billboards), shift=N (each icon's offset within +-N pixels).
 treasure    element 0-11    Blupi/coffre.rd4
 egg         element 21-28   Blupi/oeuf.rd4    yaw=5
-exit        element 29-36   Blupi/fleche.rd4  yaw=5
+exit        element 29-36   Blupi/fleche.rd4  yaw=5 tone=1.30,3
 projectile  element 176     Blupi/balle-glu.rd4
 ammo        element 177     Blupi/munitions-glu.rd4
 drink       element 178     Blupi/bouteille.rd4
 # Enemies: the icons their tables use (ObjectIcons.cpp, the patrol tables per direction and turn).
 # The creature: 242-246 with its eyes (creature1y.rds, eyeballs scaled by xyzS), 247-251 without.
-creature    element 242-251 Blupi/creature1.rds,Blupi/creature2.rds,Blupi/creature3.rds,Blupi/creature4.rds,Blupi/creature5.rds,Blupi/creature1y.rds
+creature    element 242-251 Blupi/creature1.rds,Blupi/creature2.rds,Blupi/creature3.rds,Blupi/creature4.rds,Blupi/creature5.rds,Blupi/creature1y.rds tone=0.61,51
 # The mine spins in its sprites (yaw); the hanging mine's icons 48-56 are 12-20 upside down.
-mine        element 12-20,48-56 Blupi/bombe.rd4 yaw=5 vflip=1
+mine        element 12-20,48-56 Blupi/bombe.rd4 yaw=5 vflip=1 tone=0.71,24
 # The wasp's sprites were rendered by "Caméra 2" (IoU 0 with "Caméra Jeu"); the builder finds it.
 wasp        element 195-207 Blupi/guepe.rd4,Blupi/guepe-tourne.rd4
 # The follow enemies' spinning star; its camera looks 6.7 degrees down.
 follow      element 256-265 Blupi/bombe-follow.rd4 yaw=5
 # Pickups and doors' keys (sources found by survey.py icons, element_icons.csv).
-key1        element 209-215 Blupi/cle1.rd4
-key2        element 216-222 Blupi/cle2.rd4
-key3        element 223-229 Blupi/cle3.rd4
-secretexit  element 122-128 Blupi/cle.rd4
+key1        element 209-215 Blupi/cle1.rd4 tone=0.70,26
+key2        element 216-222 Blupi/cle2.rd4 tone=0.70,26
+key3        element 223-229 Blupi/cle3.rd4 tone=0.78,16
+secretexit  element 122-128 Blupi/cle.rd4 tone=0.74,16
 dynamite    element 252-253 Decor/dynamite.rd4
-invert      element 187-194 Blupi/panneau-invert.rd4
-lollipop    element 136-143 Blupi/sucette.rd4
+invert      element 187-194 Blupi/panneau-invert.rd4 tone=0.82,-13
+lollipop    element 136-143 Blupi/sucette.rd4 tone=0.90,-22
 # Type 16's icons 69-77: the moving mine.
-movingmine  element 69-77   Blupi/bombe-move.rd4
+movingmine  element 69-77   Blupi/bombe-move.rd4 tone=0.83,24
 # The bird: free-form sections are right-handed (its profile's head under its eyes), and its
 # raised wings are the scene's last key (the builder adds the end frame); its turning icons need
 # headings between 15-degree steps (icon 112: 0.91 at a 15-degree step, 0.97 at 40 degrees).
-bird        element 90-121  Blupi/oiseau.rd4 yaw=5
+bird        element 90-121  Blupi/oiseau.rd4 yaw=5 tone=0.85,32
 # The fish (its head comes out somewhat larger than in the sprites: plan.md BB3D-032).
-fish        element 78-88   Blupi/poisson.rd4 yaw=5
+fish        element 78-88   Blupi/poisson.rd4 yaw=5 tone=1.03,27
 # The bulldozer (types 4 and 32): its blade's hazard stripes are a texture map in a rectangle
 # domain of a free-form. Icon 68 (in type 32's tables) is the helicopter without Blupi.
 bulldozer   element 57-67   Blupi/tracks-profil.rd4 yaw=5
-helicopter  element 68      Blupi/helico-seul2.rd4
+helicopter  element 68      Blupi/helico-seul2.rd4 tone=0.72,62
 # Types 200-203 (the decoys, blupi.png / blupi1.png icons 257-262): the mine in Blupi's colours.
-decoy       blupi   257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>1,1,0
-decoygreen  blupi1  257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>0.5,1,0
+decoy       blupi   257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>1,1,0 tone=0.93,-11
+decoygreen  blupi1  257-262 Blupi/bombe.rd4 yaw=5 recolour=1,0.038,0.095>0.5,1,0 tone=0.91,-4
 # The tentacle (type 53, explo.png icons 70-86, 64 game pixels each): one Studio 5 scene per icon.
-tentacle    explo   70-86   Decor/tentacule/tenta01.rds,Decor/tentacule/tenta02.rds,Decor/tentacule/tenta03.rds,Decor/tentacule/tenta04.rds,Decor/tentacule/tenta05.rds,Decor/tentacule/tenta06.rds,Decor/tentacule/tenta07.rds,Decor/tentacule/tenta08.rds,Decor/tentacule/tenta09.rds,Decor/tentacule/tenta10.rds,Decor/tentacule/tenta11.rds,Decor/tentacule/tenta12.rds,Decor/tentacule/tenta13.rds,Decor/tentacule/tenta14.rds,Decor/tentacule/tenta15.rds,Decor/tentacule/tenta16.rds,Decor/tentacule/tenta17.rds
+tentacle    explo   70-86   Decor/tentacule/tenta01.rds,Decor/tentacule/tenta02.rds,Decor/tentacule/tenta03.rds,Decor/tentacule/tenta04.rds,Decor/tentacule/tenta05.rds,Decor/tentacule/tenta06.rds,Decor/tentacule/tenta07.rds,Decor/tentacule/tenta08.rds,Decor/tentacule/tenta09.rds,Decor/tentacule/tenta10.rds,Decor/tentacule/tenta11.rds,Decor/tentacule/tenta12.rds,Decor/tentacule/tenta13.rds,Decor/tentacule/tenta14.rds,Decor/tentacule/tenta15.rds,Decor/tentacule/tenta16.rds,Decor/tentacule/tenta17.rds tone=0.51,56
 # Big decor (explo.png, BigDecor cells): the Blupi statue (icon 89).
-statue      explo   89      Decor/palais/statue.rds
+statue      explo   89      Decor/palais/statue.rds tone=1.09,-30
 # The green pillars (icons 66-68, 144 pixels), each sprite placed a few pixels off its cell's centre.
-pillar      explo   66-68   Decor/smooth/colonne1.rds,Decor/smooth/colonne2.rds,Decor/smooth/colonne3.rds shift=10
+pillar      explo   66-68   Decor/smooth/colonne1.rds,Decor/smooth/colonne2.rds,Decor/smooth/colonne3.rds shift=10 tone=0.50,38
 # Big decor from Explo/ (survey.py icons --sheet explo.png --folders Explo).
 bd_plante1a   explo   16      Explo/plante1a.rd4 shift=6
 bd_plante1b   explo   17      Explo/plante1b.rd4 shift=6
 bd_plante1c   explo   18      Explo/plante1c.rd4 shift=6
 bd_plante1d   explo   19      Explo/plante1d.rd4 shift=6
-bd_plante2a   explo   20      Explo/plante2a.rd4 shift=6
-bd_plante2b   explo   21      Explo/plante2b.rd4 shift=6
-bd_plante2c   explo   22      Explo/plante2c.rd4 shift=6
+bd_plante2a   explo   20      Explo/plante2a.rd4 shift=6 tone=0.81,-2
+bd_plante2b   explo   21      Explo/plante2b.rd4 shift=6 tone=0.79,-2
+bd_plante2c   explo   22      Explo/plante2c.rd4 shift=6 tone=0.79,-2
 bd_maison     explo   26      Explo/maison.rd4 shift=6
 bd_cabane     explo   27      Explo/cabane.rd4 shift=6
-bd_meca1      explo   28      Explo/meca1.rd4 shift=6
-bd_meca2      explo   29      Explo/meca2.rd4 shift=6
+bd_meca1      explo   28      Explo/meca1.rd4 shift=6 tone=1.01,36
+bd_meca2      explo   29      Explo/meca2.rd4 shift=6 tone=0.90,38
 bd_meca3      explo   30      Explo/meca3.rd4 shift=6
-bd_meca4      explo   31      Explo/meca4.rd4 shift=6
-bd_enfant01   explo   36      Explo/enfant01.rd4 shift=6
-bd_enfant02   explo   37      Explo/enfant02.rd4 shift=6
-bd_enfant03   explo   38      Explo/enfant03.rd4 shift=6
-bd_enfant04   explo   39      Explo/enfant04.rd4 shift=6
-bd_enfant05   explo   40      Explo/enfant05.rd4 shift=6
-bd_enfant06   explo   41      Explo/enfant06.rd4 shift=6
-bd_enfant07   explo   42      Explo/enfant07.rd4 shift=6
-bd_enfant08   explo   43      Explo/enfant08.rd4 shift=6
-bd_enfant10   explo   44      Explo/enfant10.rd4 shift=6
+bd_meca4      explo   31      Explo/meca4.rd4 shift=6 tone=1.09,19
+bd_enfant01   explo   36      Explo/enfant01.rd4 shift=6 tone=0.95,-19
+bd_enfant02   explo   37      Explo/enfant02.rd4 shift=6 tone=0.94,-20
+bd_enfant03   explo   38      Explo/enfant03.rd4 shift=6 tone=0.94,-18
+bd_enfant04   explo   39      Explo/enfant04.rd4 shift=6 tone=0.94,-19
+bd_enfant05   explo   40      Explo/enfant05.rd4 shift=6 tone=0.89,-19
+bd_enfant06   explo   41      Explo/enfant06.rd4 shift=6 tone=0.87,-17
+bd_enfant07   explo   42      Explo/enfant07.rd4 shift=6 tone=0.92,-25
+bd_enfant08   explo   43      Explo/enfant08.rd4 shift=6 tone=0.89,-17
+bd_enfant10   explo   44      Explo/enfant10.rd4 shift=6 tone=0.95,-22
 bd_enfant11   explo   45      Explo/enfant11.rd4 shift=6
-bd_enfant12   explo   46      Explo/enfant12.rd4 shift=6
-bd_enfant13   explo   47      Explo/enfant13.rd4 shift=6
+bd_enfant12   explo   46      Explo/enfant12.rd4 shift=6 tone=0.90,-14
+bd_enfant13   explo   47      Explo/enfant13.rd4 shift=6 tone=0.96,-6
 # Grass (icons 23-25, the commonest big decor): its blades come out wider than the sprites'
 # (IoU 0.41-0.49; plan.md BB3D-050).
 bd_plante3a   explo   23      Explo/plante3a.rd4 shift=6
-bd_plante3b   explo   24      Explo/plante3b.rd4 shift=6
+bd_plante3b   explo   24      Explo/plante3b.rd4 shift=6 tone=0.98,-11
 bd_plante3c   explo   25      Explo/plante3c.rd4 shift=6
 # The green spiky plant (69), the column (87) and the fountain bowl (88).
-bd_vase1      explo   69      Decor/smooth/vase1.rds
+bd_vase1      explo   69      Decor/smooth/vase1.rds tone=0.50,42
 bd_big0108    explo   87      Decor/palais/big0108.rds
 bd_big02      explo   88      Decor/palais/big02.rds

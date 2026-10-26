@@ -82,14 +82,42 @@ def _mix_colour(mix: rd4.Chunk):
 # the decoy mines of blupi.png / blupi1.png are bombe.rd4's red mine in yellow and green.
 COLOUR_MAP: dict[tuple, tuple] = {}
 
+# The tone of the object being converted (build_object_library.py's ``tone=A,B``): every colour
+# and texel c (0..1) becomes A * c + B / 255. Ray Dream rendered each scene's sprites with the
+# scene's own lights; the game lights every object alike, so an object whose sprites came out
+# greyer or darker gets the map that brings its colours to them (calibrate_tone.py fits it).
+TONE: tuple[float, float] | None = None
 
-def material_key(scene: sc.Scene, obj: sc.Obj) -> tuple[float, float, float]:
+
+def apply_tone(colours: np.ndarray) -> np.ndarray:
+    """``colours`` (any shape, last axis RGB, 0..1) under the current TONE."""
+    if TONE is None:
+        return colours
+    gain, lift = TONE
+    return np.clip(gain * np.asarray(colours, dtype=np.float64) + lift / 255.0, 0.0, 1.0)
+
+
+def _tone_image(img: np.ndarray) -> np.ndarray:
+    if TONE is None:
+        return img
+    return (apply_tone(img.astype(np.float64) / 255.0) * 255).round().clip(0, 255).astype(np.uint8)
+
+
+def _raw_material_key(scene: sc.Scene, obj: sc.Obj) -> tuple[float, float, float]:
     inst = primary_color(obj.chunk.chunk("sh") if obj.chunk is not None else None)
     if not isinstance(inst, tuple):
         master = scene.masters.get(obj.master)
         inst = primary_color(master.chunk("sh") if master is not None else None)
     key = inst if isinstance(inst, tuple) else (1.0, 1.0, 1.0)
     return COLOUR_MAP.get(key, key)
+
+
+def material_key(scene: sc.Scene, obj: sc.Obj) -> tuple[float, float, float]:
+    """The flat colour of ``obj``'s surface (recoloured and toned for the object converted)."""
+    key = _raw_material_key(scene, obj)
+    if TONE is None:
+        return key
+    return tuple(round(float(c), 3) for c in apply_tone(np.array(key)))
 
 
 def _srgb_to_linear(c: float) -> float:
@@ -228,7 +256,7 @@ def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
     counts = (int(placement.get("cnth") or 1), int(placement.get("cntv") or 1)) \
         if placement.get("tile") == "1" else (1, 1)
     flips = (placement.get("flph") == "1", placement.get("flpv") == "1")
-    return TextureMap((rgb * 255).round().astype(np.uint8), (u0, v0, u1, v1),
+    return TextureMap(_tone_image((rgb * 255).round().astype(np.uint8)), (u0, v0, u1, v1),
                       int(placement.get("rotc") or 0), warnings, counts, flips)
 
 
@@ -270,7 +298,7 @@ def mesh_texture(scene: sc.Scene, obj: sc.Obj, uvmesh) -> tuple[np.ndarray, np.n
                  and _color_channel(d).tag == "smap"), None)
     if rect is None:
         return None
-    base = material_key(scene, obj)
+    base = _raw_material_key(scene, obj)
     image = _texels(scene, obj, _color_channel(rect), base)
     if image is None:
         return None
@@ -287,7 +315,7 @@ def mesh_texture(scene: sc.Scene, obj: sc.Obj, uvmesh) -> tuple[np.ndarray, np.n
     corner = np.array([0.5 / width, 0.5 / height]) if (x0, y0) != (0, 0) else np.array([1 - 0.5 / width,
                                                                                             1 - 0.5 / height])
     st[uvmesh.domain != 0] = corner
-    return (canvas * 255).round().astype(np.uint8), st
+    return _tone_image((canvas * 255).round().astype(np.uint8)), st
 
 
 CUBE_ATLAS_PX = 128      # atlas pixels per unit of the cube's surface coordinates
@@ -340,7 +368,7 @@ def cube_texture(scene: sc.Scene, obj: sc.Obj, positions: np.ndarray, normals: n
     channels = [(d, _color_channel(d)) for d in domains]
     if not any(ch is not None and ch.tag == "smap" for _d, ch in channels):
         return None
-    base = material_key(scene, obj)
+    base = _raw_material_key(scene, obj)
     base = base if isinstance(base, tuple) else (1.0, 1.0, 1.0)
     w, h = 4 * CUBE_ATLAS_PX, 3 * CUBE_ATLAS_PX
     us = (np.arange(w) + 0.5) / CUBE_ATLAS_PX
@@ -389,7 +417,7 @@ def cube_texture(scene: sc.Scene, obj: sc.Obj, positions: np.ndarray, normals: n
             paint(d, ch, rect if d.tag == "srct" else oval, False)
     uv = cube_surface_coordinates(positions, normals)
     st = np.stack([uv[:, 0] / 4.0, (3.0 - uv[:, 1]) / 3.0], axis=1)
-    return (atlas * 255).round().clip(0, 255).astype(np.uint8), st
+    return _tone_image((atlas * 255).round().clip(0, 255).astype(np.uint8)), st
 
 
 FREEFORM_ATLAS_PX = 64           # atlas pixels per unit of a free-form's surface coordinates
@@ -411,7 +439,7 @@ def freeform_texture(scene: sc.Scene, obj: sc.Obj, ff):
     channels = [(d, _color_channel(d)) for d in sh.chunk("elms").chunks()]
     if not any(d.tag in ("srct", "sovl") and ch is not None and ch.tag == "smap" for d, ch in channels):
         return None
-    base = material_key(scene, obj)
+    base = _raw_material_key(scene, obj)
     base = base if isinstance(base, tuple) else (1.0, 1.0, 1.0)
     around_max = float(ff.perimeter)
     along_max = float(max(ff.uv[:, 1].max(), 1e-6))
@@ -461,7 +489,7 @@ def freeform_texture(scene: sc.Scene, obj: sc.Obj, ff):
     # the front icons 60-63; along the loop they sat on the flat face toward the cab.
     around = np.mod(around_max - ff.uv[:, 0], around_max)
     st = np.stack([around / around_max, ff.uv[:, 1] / along_max], axis=1)
-    return (atlas * 255).round().clip(0, 255).astype(np.uint8), st
+    return _tone_image((atlas * 255).round().clip(0, 255).astype(np.uint8)), st
 
 
 def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals: np.ndarray):

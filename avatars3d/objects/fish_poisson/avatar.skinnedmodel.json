@@ -2,28 +2,28 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "fish_rd_00bffd",
-      "vertices": "fish_rd_00bffd.verts.bin",
-      "indices": "fish_rd_00bffd.idx.bin",
+      "name": "fish_rd_1bdfff",
+      "vertices": "fish_rd_1bdfff.verts.bin",
+      "indices": "fish_rd_1bdfff.idx.bin",
       "vertexStride": 52,
-      "texture": "fish_rd_00bffd.png",
+      "texture": "fish_rd_1bdfff.png",
       "diffuseColor": [
-        0.0,
-        0.5225215539683921,
-        0.9909246121188983,
+        0.010979339119185963,
+        0.7445777288949111,
+        1.0,
         1.0
       ]
     },
     {
-      "name": "fish_rd_000000",
-      "vertices": "fish_rd_000000.verts.bin",
-      "indices": "fish_rd_000000.idx.bin",
+      "name": "fish_rd_1b1b1b",
+      "vertices": "fish_rd_1b1b1b.verts.bin",
+      "indices": "fish_rd_1b1b1b.idx.bin",
       "vertexStride": 52,
-      "texture": "fish_rd_000000.png",
+      "texture": "fish_rd_1b1b1b.png",
       "diffuseColor": [
-        0.0,
-        0.0,
-        0.0,
+        0.010979339119185963,
+        0.010979339119185963,
+        0.010979339119185963,
         1.0
       ]
     },
@@ -41,15 +41,15 @@
       ]
     },
     {
-      "name": "fish_rd_ff0000",
-      "vertices": "fish_rd_ff0000.verts.bin",
-      "indices": "fish_rd_ff0000.idx.bin",
+      "name": "fish_rd_ff1b1b",
+      "vertices": "fish_rd_ff1b1b.verts.bin",
+      "indices": "fish_rd_ff1b1b.idx.bin",
       "vertexStride": 52,
-      "texture": "fish_rd_ff0000.png",
+      "texture": "fish_rd_ff1b1b.png",
       "diffuseColor": [
         1.0,
-        0.0,
-        0.0,
+        0.010979339119185963,
+        0.010979339119185963,
         1.0
       ]
     }
