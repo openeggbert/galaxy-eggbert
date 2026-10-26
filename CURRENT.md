@@ -1,6 +1,6 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-10-26 (every world but 7 complete and checked, world 7 being authored,
+_Last verified: 2026-10-26 (every world complete and checked: the main hub, 12 hubs, 64 missions and 199,
 engine fixes D17-D54 with tests and live checks; before that the 2026-10-25 audit of the restored `develop`,
 `plans/GALAXY_EGGBERT_COMPLETION.md` §4). Update this file whenever a change alters the current state, a known limitation, a supported
 build, or the actionable backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`),

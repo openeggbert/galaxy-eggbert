@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-27 (all worlds but 7 complete, D47-D54, water exits)._
+_Last updated: 2026-10-27 (the campaign complete: every world authored; D48 fixed in cna-engine)._
 
 ## Resume here (exact state when last written)
 
@@ -58,7 +58,13 @@ the original's table does (D53, `7bb9415`); a terrain over a buffer's limit is s
 `f4276da`, `dce9f47` and 125's). World 199, the grand tour, by this session (its red arrow shows the win screen live). World 9 is complete (its agent: hub 090, missions 091-095, `0813bec`..`1684214`). The weak jump
 out of the water clears only a bank level with the water's top cell (the guide said one above):
 `tools/watercheck.py` finds water without a way out; 045, 057 and 084 had such pools, fixed
-(`53f7de1`, `7450970`). Left: world 7 (its agent).
+(`53f7de1`, `7450970`). World 7 is complete (its agent: hub 070, missions 071-075, `75999ce`..`81a1f97`). The campaign is
+complete: `tools/campaigncheck.py` (the main hub, 12 hubs, 64 missions and 199) and
+`tools/watercheck.py` pass. D48 is now fixed in cna-engine (`2a93b7e`, owner's request: no
+cna-engine workarounds in Galaxy), Galaxy's interim plate code removed (`ae7b0a8`). The flight
+barrier 214 is drawn only by the ShowSecret cheat and in the editor (owner, `aa50281`).
+Next: milestone F, the completion audit; D11 waits for the owner's list of models that look wrong;
+D41 (empty-mask decor as floors) is audited but open.
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 
