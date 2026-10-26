@@ -127,7 +127,7 @@ namespace GalaxyEggbert::Game
                 }
                 static const std::pair<const char*, Field> kFields[] = {
                     {"x", Field::X},         {"y", Field::Y},         {"z", Field::Z},
-                    {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mission", Field::Mission},
+                    {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mtick", Field::MissionTick}, {"mission", Field::Mission},
                     {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite},
                     {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp},
                     {"phase", Field::Phase}};
@@ -318,7 +318,7 @@ namespace GalaxyEggbert::Game
         return true;
     }
 
-    bool Autoplay::Holds(const Condition& condition, const AutoplayState& state)
+    bool Autoplay::Holds(const Condition& condition, const AutoplayState& state) const
     {
         float value = 0.0f;
         switch (condition.field)
@@ -328,6 +328,7 @@ namespace GalaxyEggbert::Game
         case Field::Z: value = state.z; break;
         case Field::Yaw: value = state.yawDegrees; break;
         case Field::Tick: value = static_cast<float>(state.tick); break;
+        case Field::MissionTick: value = static_cast<float>(state.tick - missionStartTick_); break;
         case Field::Mission: value = static_cast<float>(state.mission); break;
         case Field::Treasures: value = static_cast<float>(state.treasures); break;
         case Field::Eggs: value = static_cast<float>(state.eggs); break;
@@ -426,6 +427,10 @@ namespace GalaxyEggbert::Game
             return keys;
         }
         const bool justDied = state.dead && !(havePrevious_ && previous_.dead);
+        if (!havePrevious_ || state.mission != previous_.mission)
+        {
+            missionStartTick_ = state.tick;
+        }
         LogChanges(state);
         if (justDied)
         {

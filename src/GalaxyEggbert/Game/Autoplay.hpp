@@ -34,10 +34,11 @@
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
-// COND is FIELD OP VALUE, FIELD one of x y z yaw tick mission treasures eggs lives keys dynamite ground dead
-// exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
+// COND is FIELD OP VALUE, FIELD one of x y z yaw tick mtick mission treasures eggs lives keys dynamite
+// ground dead exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
 // it strikes on the even ticks of 0-49) temp (the vanishing saucers' place in their 20-step cycle:
-// gone at 18-19) phase, OP one of = != < <= > >=; phase takes a name
+// gone at 18-19) phase, OP one of = != < <= > >=; tick counts from the script's start, mtick from
+// the current mission's (a mission's own timing holds when it is played in a chain); phase takes a name
 // (Play, Win, Lost, Pause, Init, ...). A
 // command that runs out of ticks, or Blupi dying, ends the run as a failure.
 
@@ -100,7 +101,7 @@ namespace GalaxyEggbert::Game
 
     private:
         enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, End };
-        enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Ground, Dead, Exit, Blitz, Temp, Phase };
+        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Ground, Dead, Exit, Blitz, Temp, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {
@@ -134,7 +135,7 @@ namespace GalaxyEggbert::Game
         bool ParseInto(std::string_view text, const std::string& source, const std::filesystem::path& directory,
                        int depth, std::string& error);
 
-        [[nodiscard]] static bool Holds(const Condition& condition, const AutoplayState& state);
+        [[nodiscard]] bool Holds(const Condition& condition, const AutoplayState& state) const;
         void Write(const AutoplayState& state, const std::string& text);
         void Fail(const AutoplayState& state, const std::string& text);
         void LogChanges(const AutoplayState& state);
@@ -142,6 +143,7 @@ namespace GalaxyEggbert::Game
         std::vector<Command> commands_;
         std::size_t current_ = 0;
         int commandStartTick_ = -1;
+        int missionStartTick_ = 0; // the tick the current mission was first seen
         int jumpTicksLeft_ = 0;
         int traceTicksLeft_ = 0;
         bool jumped_ = false;

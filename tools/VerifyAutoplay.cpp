@@ -163,6 +163,23 @@ int main()
     }
 
     {
+        // mtick counts from the mission's start: in a chain a mission's own timing still holds.
+        Autoplay autoplay;
+        std::string error;
+        autoplay.Parse("until mission = 12\nuntil mtick >= 3\nlog three\nuntil tick >= 9\nlog nine\n", error);
+        AutoplayState state{.mission = 11};
+        for (int t = 0; t < 20 && !autoplay.Finished(); ++t)
+        {
+            state.tick = t;
+            state.mission = t >= 5 ? 12 : 11;
+            autoplay.Step(state);
+        }
+        const std::string log = autoplay.TakeLog();
+        check(autoplay.Passed() && Contains(log, "t=8 log three") && Contains(log, "t=9 log nine"),
+              "mtick counts from the mission's start, tick from the script's");
+    }
+
+    {
         Autoplay autoplay;
         std::string error;
         autoplay.Parse("wait 100\n", error);
