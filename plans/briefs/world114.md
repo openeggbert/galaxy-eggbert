@@ -33,5 +33,8 @@ helicopters (13), fourteen lifts; the exit high up.
 **Checks**: `flightcheck.py --mine-margin 0`: stage 4 reaches the fourteen treasures, sixteen eggs,
 the keys and the exit; `levelcheck.py` stage 1 stops at the three doors. `VerifyShippedWorlds`.
 Live (`--mission 114`, direct view F3): the hall's doors, the terraces' moving mines, the skate
-track's mines and treasures, the pool and its islands, the vault, the exit's platform. Not played
-through: the mission (fourteen minutes in the original), the swims, the flights, the follow stars.
+track's mines and treasures, the pool and its islands, the vault, the exit's platform. Played
+through from the spawn to hub 110 by `tools/autoplay/world114.txt` (the terraces' lanes crossed
+at their middles, the skateboard through the mines, the four ferries, four dives, the vault's
+stars left asleep, a helicopter to the exit). 2026-10-27: the way from the terraces' floor back
+north to the first terrace had no floor, so the red key's floor was a trap; it has one now.
