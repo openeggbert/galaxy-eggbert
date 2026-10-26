@@ -1,244 +1,213 @@
 # handoff.md — where work stands and how to continue
 
-Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not add to it). Update
-this file after every committed task: what was done, where it stopped, what to run next. Keep it
-short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
+For the AI agent that continues this work in a fresh context. Read this file first, then the
+documents it points to. Update it after every committed task (what was done, where it stopped,
+what to run next). `NEXT.md` is frozen history (do not add to it); the backlog with checkboxes is
+`plan.md`; verified current state is `CURRENT.md`; the active plan is
+`plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-10-27 (the campaign complete: every world authored; D48 fixed in cna-engine; the saw
-death's half body wound consistently)._
+_Last updated: 2026-10-27 (the whole campaign played through in one run; milestone F done;
+models toned to their sprites; D11 candidates prepared for the owner)._
 
-## Resume here (exact state when last written)
+## 1. The project and the goal in one paragraph
 
-2026-10-25 evening: the owner reverted the earlier campaign and restarted it on the restored
-`develop` (`00ba088`) with a new brief; the active plan is `plans/GALAXY_EGGBERT_COMPLETION.md`
-(read it first: direction, art fidelity, defects D1-D18, milestones). Not pushed (push only
-when asked).
+Galaxy Eggbert is a faithful, true-3D tile/voxel remake of Mobile Eggbert / Speedy Blupi, written
+in C++ on CNA (an XNA 4.0 reimplementation) and cna-engine. The owner's standing goal: finish it as
+a faithful, fully playable, polished remake, keeping the existing architecture (voxel worlds,
+`.vwr` format, the 3D editor, controls, camera, registries, saves), with gameplay taken from
+`../mobile-eggbert` (C++, the authoritative reference) and models/animations converted from the
+original Ray Dream scenes in `../speedyblupi-data`. Read, in this order:
+`CLAUDE.md` (repository rules), `../CLAUDE.md` (build rules for every repository),
+`plans/GALAXY_EGGBERT_COMPLETION.md` (direction, defects D1-D59, milestones in §13), then this file.
+`plans/SESSION_SUMMARY_2026-10.md` summarises the whole session that brought the project here
+(what was done, the evidence, the honest list of weaknesses).
 
-Done since the restore (details and hashes: the plan's §5 defects D1-D23 and §13): controls,
-menus, title scene, editor slots, hint zones, world tooling (`worldkit.py`, `tools/worlds/kit.py`,
-`levelcheck.py`, `VerifyShippedWorlds`), renderer (props, lifts, lighting, signs, door bars), Blupi
-rebuilt (whole body, Bye, StopPop/Pop), hubs as the original's (signs, doors, gold bars, golden
-key, arrivals), 3D crates (solid, push X/Z, pull), 3D dynamite, D13 (vehicles run over mines),
-no underwater camera crash, and **the main hub plus all of world 1** (`world001`, `world010`,
-missions 011-014; briefs in `plans/briefs/`, scripts in `tools/worlds/`).
+## 2. State (verified)
 
-2026-10-26: sprite tiles (doors, treasure doors, pillars, girders, bars, plate decor) render cut
-out, cobwebs blended (`73c85a6`, D31, `TileCoverage.hpp`); Blupi's Win/Turn/Vertigo/Recede clips
-installed (`3415d3f`). `qa_live.sh` takes `QA_LIVE_WORLDS=<dir>` for probe worlds. Later on
-2026-10-26: swimming as the original's (D32), the helicopter's glue drop and no self-hit (D33),
-Blupi's reactions JumpAie/Ouf* with clips, the camera over obstacles and after teleports
-(D18/D34), flat-colour faces (D35), fan faces (D36). World 3 is done (030-034, background
-session) and world 2 (020-025); worlds 4 and 5 are being authored by two background sessions.
-World agents' reports name the engine problems they met; each was fixed with a test (D32-D37).
-Later still: the wind pushes Blupi (D39), 347 is plain slime (D40); world 6 by this session:
-hub 060, missions 061-066 (`b083d7b`, `5162e0e`, `955008a`, `237c771`, `5353607`, `74b3ded`):
-world 6 is complete. World 4 is complete too (its agent, through 046). A switched-off saw
-(379) now stands still and is harmless (D42, `0cf3ce2`); lifts keep their ticks and dwell (D43,
-`3b0a861`; the pre-D43 worlds' lift meetings re-checked, 011 and 061 lengthened, `89b12c0`); follow stars ignore a hidden
-Blupi (D44, `d115903`); a jump from under a bar catches it (D45, `7c49172`); the overcraft (46,
-not a balloon: `worldkit` OVERCRAFT) hovers within 1.25 cells of the ground (D46, `4cdd48b`). Empty-mask decor is
-passable both ways, as the original's (D41, done 2026-10-27; only 024 stood on it, rebuilt). `--spawn` yaw: 0 faces
--Z, 90 +X; the chase camera orbits to his side after 3 s idle, so F3 (direct view) shows the
-facing in scripted shots.
-World 8 by this session, complete: hub 080 and missions 081-084 (`6441258`, `7705ef6`,
-`5b2eb86`, `ef92476`, `0414a90`; 084's chain of lifts to the golden key played live). World 5 is
-complete (its agent: hub 050, missions 051-058, `8e06def`..`92c64a7`). Closed machine cubes hide the
-faces between them (D47, `be9daab`: 083 crashed on load with a vertex buffer over the GPU's
-limit; a mesh over that limit still throws instead of being split). Signs and flat plates stand
-upright and read unmirrored from both sides (D48, `5fbc237`, cna-engine's UB-005 worked round).
-The helicopter and the overcraft fly through the flight barrier 214 (D49, `d9980d9`; the
-original hides 214 in play, a question for the owner). Of a row of crates Blupi pulls the one
-touching him (D50, `26dbadd`). The lightning 305 shows only while it strikes (D51, `15bc7a9`).
-Worlds 7 and 9 are being authored by two background sessions. World 10 by this session, complete:
-hub 100 and missions 101-107 (`b8fb27e`, `f0a8333`, `ce2917b`, `c01c06a`, `a8636e8`, `035f254`,
-`1f42f11`, `dde3c6a`). World 11 by this session, complete: hub 110 and missions 111-115 (`34745ee`,
-`f017378`, `e17e780`, `f30ea6a`, `0e27a76` and 115's). A lift holds Blupi while a foot is on its
-edge (D54, `fc230a3`: walking off at the cell's boundary he used to drop past the ledge). Blupi jumps off lifts (D52, `6ed7942`); crumbling bridges hold him as
-the original's table does (D53, `7bb9415`); a terrain over a buffer's limit is split (D47's rest,
-`7b96caf`); the editor's dead speed field is gone (`2a91ca6`). World 12 by this session, complete: hub 120 and missions 121-125 (`52b36e9`, `d8240bb`, `85b71cb`,
-`f4276da`, `dce9f47` and 125's). World 199, the grand tour, by this session (its red arrow shows the win screen live). World 9 is complete (its agent: hub 090, missions 091-095, `0813bec`..`1684214`). The weak jump
-out of the water clears only a bank level with the water's top cell (the guide said one above):
-`tools/watercheck.py` finds water without a way out; 045, 057 and 084 had such pools, fixed
-(`53f7de1`, `7450970`). World 7 is complete (its agent: hub 070, missions 071-075, `75999ce`..`81a1f97`). The campaign is
-complete: `tools/campaigncheck.py` (the main hub, 12 hubs, 64 missions and 199) and
-`tools/watercheck.py` pass. D48 is now fixed in cna-engine (`2a93b7e`, owner's request: no
-cna-engine workarounds in Galaxy), Galaxy's interim plate code removed (`ae7b0a8`). The flight
-barrier 214 is drawn only by the ShowSecret cheat and in the editor (owner, `aa50281`).
-Next: milestone F, the completion audit (playthroughs of the other missions); D11 waits for the owner's list of models that look wrong;
-D41 is done: decor is neither a floor nor a ceiling (only 024 needed a change).
-The saw death's half body no longer shows through its cut (`0cff927`: the converter winds Ray Dream's
-boolean masters consistently, `geometry.orient_consistently`; only its two parts re-exported, every
-other clip pixel-identical; checked live in a probe of 065).
-Mission 011 is played through in one run (`81b51f0`): `GalaxyEggbertCNA --mission N --autoplay
-<script>` plays by a script (`Autoplay.hpp` documents its commands; `VerifyAutoplay`), and
-`tools/autoplay.sh build-cna-opengl3 tools/autoplay/world011.txt 11` runs it under Xvfb in 21 s
-with a fresh save, printing the trace; exit 0 = passed. Write a mission's script a section at a
-time, rerunning; `trace N` logs every tick. A lift holds Blupi while his feet strip touches it,
-as the original's (`MoveObjectStepLine`): on a lift with a 3-tick dwell ride at its front edge.
-Later on 2026-10-27: playthroughs of worlds 1, 2 and 12 (12 also as a chain from hub 120 through
-all five missions to the main hub: `tools/autoplay/world120.txt`, a hub's script is its world's
-chain) and the first of worlds 3-5 (background agents: worlds 3-4, 5-6). `tools/autoplay_all.sh
-build-cna-opengl3` replays them all (run it after any gameplay change). Autoplay commands added on
-the way: crate, clear/near (time patrols), `with KEY` (swim, dive), `tol 0 ... until`, include, the
-fields exit and blitz; the run draws one frame in 30. Found and fixed: D55 (penetration recovery
-tested his feet and sank him through floors, `1b8c144`), and world defects in 013, 025, 121, 122,
-123 (crates cannot stack on a flat floor: one crate's climb), 124 (wind at the feet's cell).
-`levelcheck.py` swims and reports traps (candidates still open in 052, 054, 062).
-Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
-reproduced (a helicopter mount at 4.5 s works).
-Then: every mission of worlds 1-4 and 7-12 and each of those worlds as one chain from its hub
-(`worldN0.txt`: the hub's signs in order, each mission's script included, back past the bar it
-opened, the golden key to the main hub), world 199 to the win screen (each key spent on one
-door: machine, library, cheese, the finale's outer door, village, inner door). Found and fixed:
-D56 (a lift carried him sideways off a ledge), D57 (a lift going down pulled him through a ledge,
-107), D58 (a key opened one cell of a door, 107), 082's arrow-room shuttle (its ends in the
-floor's cells: levelcheck now reports a level lift with an end inside a block), 199's crushers
-(floating two above the floor, now in it). Autoplay fields: `temp` (saucers), `crush`
-(crushers), `mtick` (ticks since the mission started; a mission timed by the script's `tick`
-lost its timing in a chain, 032-034 moved to it). Eggs stop at ten (the original's
-MAX_EGG_COUNT): a script expects at most ten. Worlds 5-6 (agent C: 051-058, 061-066, the fix of
-062's first pool, `dc0b6e1`) and their chains 050/060 followed; 094's mine rows now bar a corridor
-to T2 (in the open room they could be walked round). The whole campaign plays in one run:
-`tools/autoplay/campaign.txt` (from `tools/autoplay_campaign.py`, which climbs the main hub's
-tiers at x 50 between the signs; the summit's tunnel along z 44 past the gold bars to 199):
-`tools/autoplay.sh build-cna-opengl3 tools/autoplay/campaign.txt 1`, 755171 ticks, a couple of
-hours of wall time; it includes every mission's script, so it is the full replay. 065 and 066
-are then played in every part (two agents: 065's tower, crates, lake, overcraft and jeep; 066's
-middle and upper storeys, which found a pit under its stair to B1, fixed `c2e4861`), which found
-D59: walking past sticks of dynamite took two, any stick on contact; now, as the original, one
-stick per press of Action while none is carried or flying (`c4a539f`; the seven scripts that
-take sticks press Action). levelcheck reports traps in 052 and 054 that the wasp's balloon
-leaves; 066's blupit can be walked round (B1 wider than its line of fire, left). Open: D11.
-Milestone F is done (the suite 110/110; `tools/qa_sweep.sh` loads all 79 worlds live, 79/79;
-campaigncheck, watercheck; the campaign in one run). Milestone C: every turning object (bird,
-fish, follow star, egg, exit arrow, bulldozer) is now matched to its icons every 5 degrees
-(`tools/rd4_to_gltf/objects.txt`; only the icon-to-pose tables change, the meshes stay), and the
-parity matrix is `plans/inventory/model_parity.md` (`tools/model_parity.py`): 75 of 82 models
-match every icon at 0.85 or better, the 7 below are faithful by their compare sheets. To re-export
-one object: `build_object_library.py ... --only NAME --out build-probe/rd4-objects-probe`, then
-`export_cna_avatar.py` into `avatars3d/objects/<dir>/` and copy its `icons.txt` (the full
-`export_objects.py` would remove every directory its library lacks). Objects are toned to their
-sprites (owner's choice): `tone=A,B` in `objects.txt` (37 objects), fitted by
-`tools/rd4_to_gltf/calibrate_tone.py <library> --objects tools/rd4_to_gltf/objects.txt` from a
-build's compare sheets; colour error 37.6 -> 14.0 on those models. A new object: build it
-without a tone, run the calibration, add the suggested `tone=`, build again and compare. Open:
-D11 (the owner's list), BB3D-032 (the fish's head), the flat procedural textures (a bake was
-tried and did not help). The vehicles are toned too (`calibrate_vehicle_tone.py`, applied with
-`export_cna_avatar.py --tone`; their commands in `avatars3d/blupi/README.md`).
+| Milestone | State |
+|---|---|
+| A, B, D, E | done (plan §13) |
+| F, stabilisation and completion audit | **done**: suite 110/110; `tools/qa_sweep.sh` loads all 79 worlds live, 79/79; `campaigncheck.py`, `watercheck.py`, `VerifyShippedWorlds` pass; every mission has a playthrough, every world a chain from its hub, and the whole campaign plays in one autoplay run (755171 ticks, ends on the win screen) |
+| C, model/animation parity | **open only for D11 and BB3D-032** (below); everything else done: parity matrix `plans/inventory/model_parity.md`, every turning object matched every 5 degrees, objects and vehicles toned to their sprites, Blupi's 45 clips at 0.94-0.99 silhouette IoU |
 
-Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
-variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.
-Mechanics a world needs that misbehave are fixed in the engine with a test first (D21-D54).
+Engine defects found by the playthroughs and fixed with tests: D55-D59 (penetration recovery, a
+lift's reach through ledges, a lift taking him sideways off a ledge, a key opening one door cell,
+dynamite taken two at a time / without Action). World defects fixed: 013, 025, 062, 066, 082, 094,
+103, 104, 105, 113, 114, 121-124, 199 (details in the plan's §13 row F and the briefs in
+`plans/briefs/`).
 
-Live checks: `tools/qa_live.sh build-cna-opengl3 <out> <steps> [--mission N --spawn x,y,z,yaw]`
-runs from `build-probe/qa-run/` so the owner's `build-cna-opengl3/savedata.txt` and
-`customworlds/` are never touched. The owner plays from `build-cna-opengl3/`.
+## 3. What is open, and exactly how to continue
 
-## Active work: billboards → 3D models (`plan.md` Phase 7B, `BB3D-*`)
+### D11 — the owner's list of models that look wrong (the only real blocker)
 
-Approved 2026-10-24. Objects, big decor and the other Blupis get 3D models converted from the Ray
-Dream scenes in `../speedyblupi-data/originals`; effects stay billboards. Background:
-`assets-3d-analysis.md`.
+The owner said they will send the list later. Until then nothing in D11 can be closed. To help
+them, `plans/inventory/d11_candidates.md` lists the models that differ most from their sprites
+(worst silhouette IoU, largest remaining colour error) with the numbers; the contact sheet of
+sprite vs model for those (sent to the owner) is regenerated by
+`tools/rd4_to_gltf/d11_candidates.py` (its docstring has the commands; the full library it reads
+is `build-probe/rd4-objects-current/`). Seen on that sheet, worth looking at first even before
+the owner's list arrives:
 
-- **State:** Phase 7B is complete apart from the open items. In game as 3D models
-  (`avatars3d/objects/`, built from `tools/rd4_to_gltf/objects.txt`): every pickup but the charge and the shield, every
-  enemy, the decoys (200-203), the tentacle and all big decor the original worlds use (palms,
-  trees, grass, houses, machines, toys, pillars, plant, column, fountain, statue; BigDecor 203
-  is the object channel's marine animation, now drawn as such). Effects, the charge and the
-  shield stay billboards. Per-object results and open points: `plan.md` Phase 7B.
-- **Converter conventions found today** (all in `tools/rd4_to_gltf/README.md` with evidence):
-  cones; the flat surface is the unseen ground; mesh forms; Studio 5 `xyzS`; camera frame
-  `ofst`; right-handed free-form sections (blupi.dxf confirms); continuous sweep frames;
-  textures on cubes (4 x 3 cross), cylinders/spheres/cones (meridian fraction) and free-form
-  domains; explo.png icon squares and per-icon sprite offsets; flips about the sprite's centre
-  line; objects' model space upright in the scene.
-- **Open (no blocker):** the fish's head is ~15 % large (`BB3D-032`, jaw analysis in the plan);
-  the grass blades are wider than the sprites' (`BB3D-050`, 0.65-0.69); procedural textures
-  (palm bark, metal noise, wood grain) are flat colours.
-- **Waiting for the user:** (1) the charge (type 31) and the shield stay billboards because
-  their sprites' sparks are effects; a model plus a sparks-only billboard derived from the
-  sprites is possible but is a new derived asset set (`BB3D-025`, `BB3D-039`). (2) BigDecor
-  models stand at the original's size (a 128/144-pixel icon = 2/2.25 blocks, as
-  mobile-eggbert's Pixmap draws it 1:1), where the billboards were 1 block; say if the old size
-  is wanted (`GalaxyEggbertGame.cpp`, the BigDecor loop of the object model pass).
-- **Found and fixed on the way:** the opened door's slide showed the treasure's icon
-  (`BB3D-042`); BigDecor icon 203 was drawn as a missing explo.png icon; parts of a mix shader
-  with one colour were a red placeholder (now their colour: metal grey, the jeep's orange);
-  non-ASCII part names crashed the load (UB-004).
-- **Done on request (2026-10-24):** the chase camera leaves Blupi's back after 3 s standing
-  still (`ChaseCameraYaw::kIdleDelaySeconds`, was 0.8 s).
-- **Survey** (`build-probe/rd4-survey/scenes.csv`, after `BB3D-004`): all 528 scenes read; the
-  only masters not built are `tx` (14, menus), `COFA` (2, terrain tiles), `fogg` (1, the cloud).
+- `bd_maison` (the house): the sprite's walls carry a pink texture with daisies; the model shows
+  pink with yellow and white blotches. Looks like a texture placement fault of the converter
+  (a real candidate).
+- `bd_big02` (fountain bowl) and `bd_big0108` (column): grey in the sprites, near white in the
+  model; a tone fit made the bowl worse, so it got none. Look at their shaders (highlight /
+  reflection channels) rather than toning.
+- `bd_cabane` (cabin): its logs are a procedural wood grain, flat here (decided, see below).
+- `dynamite`: the sprite's lit fuse spark is an effect, not part of the model (expected).
+- `bird`, plants 1 and 3: thin wings, legs and leaves a pixel off; faithful (recorded).
 
-Regenerate the survey (about 25 s for scenes, much longer for icons):
+When the list arrives, for each named model:
+
+1. Find its entry in `tools/rd4_to_gltf/objects.txt` (name, sprite sheet, icons, Ray Dream
+   scenes, options) and its directory in `avatars3d/objects/<name>_<scene>/`.
+2. Rebuild it alone: `python3 tools/rd4_to_gltf/build_object_library.py --originals
+   ../speedyblupi-data/originals --sheets ../mobile-eggbert/Content/icons --objects
+   tools/rd4_to_gltf/objects.txt --out build-probe/rd4-objects-probe --only <name>`; look at
+   `build-probe/rd4-objects-probe/<dir>/compare.png` (rows: sprite, model, overlap) and the IoU in
+   its `icons.txt`.
+3. Find the cause in the converter (`tools/rd4_to_gltf/`, every verified Ray Dream convention is
+   in its `README.md`), never by hand-editing the model. Probe hypotheses with temporary
+   environment switches, measure IoU, revert what does not help, record the experiment in
+   `plan.md` (see BB3D-032 for the style).
+4. Export only that object: `export_cna_avatar.main(["--glb", <probe>/model.glb, "--cna-home",
+   "../../libcna/cna", "--out", "avatars3d/objects/<dir>"])` and copy its `icons.txt` beside it.
+   Do NOT run the full `export_objects.py` against a partial library: it deletes every directory
+   the library lacks.
+5. Check live (`tools/qa_live.sh`, below; world999's exhibition rows z 27-54, x 78-96 hold every
+   object), regenerate `plans/inventory/model_parity.md` with `python3 tools/model_parity.py >
+   plans/inventory/model_parity.md`, commit.
+
+### BB3D-032 — the fish's head (~15 % large), cosmetic
+
+Every lead has been tested and recorded in `plan.md` under BB3D-032 (jaws' deformer about origin
+vs hinge, envelopes, interpolation, jaw scale, the hidden free-form, the body cylinders). No
+remaining hypothesis. Leave it unless the owner's D11 list names the fish.
+
+### Left as decided (do not reopen without the owner)
+
+- Procedural textures (palm bark, wood grain, metal noise) stay flat colours: an approximate bake
+  was measured worse against the sprite (plan §7.3).
+- Objects and vehicles are toned to their sprites (owner's choice): `tone=A,B` per object in
+  `objects.txt`, fitted by `tools/rd4_to_gltf/calibrate_tone.py <library> --objects
+  tools/rd4_to_gltf/objects.txt`; vehicles by `calibrate_vehicle_tone.py`, applied with
+  `export_cna_avatar.py --tone` (commands in `avatars3d/blupi/README.md`). A new object: build
+  without a tone, calibrate, add the suggested `tone=`, rebuild, compare. The owner asked for an
+  opinion on reverting; the recommendation given was to keep them and soften only an object that
+  looks washed out in play (before/after sheets were sent). Revert = `git revert ad46640 a25e8cb`.
+- levelcheck reports traps in 052 and 054 that the wasp's balloon actually leaves (not modelled).
+- 066's blupit can be walked round (room B1 wider than its line of fire): design weakness, left.
+- Questions still waiting for the owner from earlier: the charge (31) and shield as billboards;
+  BigDecor at the original's size (2-2.25 blocks) vs the old 1 block.
+
+## 4. Workflows
+
+### Build and test (rules: `../CLAUDE.md`, `CLAUDE.md`)
 
 ```bash
-python3 tools/rd4_to_gltf/survey.py scenes --originals ../speedyblupi-data/originals --out build-probe/rd4-survey
-python3 tools/rd4_to_gltf/survey.py icons --originals ../speedyblupi-data/originals \
-    --sheet ../mobile-eggbert/Content/icons/element.png --out build-probe/rd4-survey
+export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv      # the one shared ccache; never another
+cmake --build build-cna-opengl3 --parallel 4            # this session's limit; CLAUDE.md says -j2
+ctest --test-dir build-cna-opengl3 -j2                  # 110 tests, all pass
 ```
 
-## Build, test, run
+Only existing build directories (`build-cna-opengl3/`; `build-probe/` for probes and converter
+output). Never build in `/tmp` or the scratchpad. Reconfigure only when broken:
+`cmake -S . -B build-cna-opengl3 -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_RENDERER=OPENGL33
+-DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache`.
 
-Environment for every build (global rules in `../CLAUDE.md`): shared ccache, at most `-j2` in
-this repository, only the existing build directories (`build-cna-opengl3/` is the native one in
-use; `build-probe/` for converter output; never `/tmp` or the scratchpad).
+### Playthroughs (QA autoplay) — the regression net for any gameplay or world change
 
-```bash
-export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
-cmake --build build-cna-opengl3 --target GalaxyEggbertCNA -j2
-ctest --test-dir build-cna-opengl3 --output-on-failure -j2
-cd build-cna-opengl3 && ./GalaxyEggbertCNA          # assets are relative to the build dir
-cd build-cna-opengl3 && timeout 80 xvfb-run -a ./GalaxyEggbertCNA   # headless live run
-```
+- `GalaxyEggbertCNA --mission N --autoplay <script>` plays a script deterministically (fixed 1/60
+  ticks, draws one frame in 30) and writes `autoplay_trace.txt`; exit 0 = passed. Commands and
+  fields are documented in `src/GalaxyEggbert/Game/Autoplay.hpp` (go/jump/tol/until/with, lift,
+  crate, clear/near with lane, hold, face, expect, trace, include; fields incl. blitz, temp, crush,
+  mtick, keys, eggs, dynamite, phase).
+- `tools/autoplay.sh build-cna-opengl3 <script> <mission> [--spawn x,y,z,yaw]` runs one under its
+  own Xvfb with a fresh save in `$AUTOPLAY_RUN` (default `build-probe/autoplay-run/`; give each
+  parallel run its own directory).
+- Scripts: `tools/autoplay/worldNNN.txt` (a mission; a hub's `worldN0.txt` is its world's chain:
+  each sign, the mission's script included, back past the bar it opened, the golden key to the main
+  hub); `tools/autoplay/campaign.txt` (a new game through all twelve worlds, the gold bars and
+  199; regenerate with `python3 tools/autoplay_campaign.py`). `tools/autoplay_all.sh
+  build-cna-opengl3 [worldNNN ...]` replays mission scripts; the campaign run is the full replay
+  (about two hours of wall time: run it in the background).
+- After any change that can touch gameplay or a world: replay the affected missions, and before
+  calling a batch done, the campaign.
+- Writing or fixing a script (hard-won rules):
+  - Write a section, run, read the trace, repeat; `trace N` logs every tick.
+  - Lifts: wait on the leading cube's unique end cell (other cubes pass through intermediate
+    cells); board at the start of a dwell (wait for the far end, then the near end).
+  - Jumps need a run-up and take off at an edge; jumps two up take off close to the wall.
+  - Pickups need Blupi within ~0.6. Sticks of dynamite need `hold 2 action` (D59). Keys are
+    spent by a door (the whole count clears); eggs stop at ten per mission (MAX_EGG_COUNT).
+  - Patrols: `near X Y Z R lane x|z` for the enemy at its far end, then passing heading away.
+  - Cycles: sync on the fields (`until temp = 19` then `until temp = 0` for vanishing saucers,
+    `blitz` for lightning, `crush` for crushers); never on `tick` (it breaks in chains; use
+    `mtick`, ticks since the mission loaded).
+  - To find a delay, template it as `wait {D}` and run `python3 tools/autoplay_search.py
+    <template> "<mission> [--spawn ...]" <from> <to> <step>`; pick the middle of the passing run.
+  - Water: reach the edge, `until y >= surface`, face the bank, `hold 8 up jump`, `hold 30 up`.
+- A script that fails after an engine change: check whether the mechanic changed against
+  `../mobile-eggbert` before "fixing" the script; a real engine defect gets a test first.
 
-Reconfigure only when the build is broken or the configuration changed:
+### World changes
 
-```bash
-cmake -S . -B build-cna-opengl3 -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_RENDERER=OPENGL33 \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
-```
+Worlds are built by `tools/worlds/worldNNN.py` (writes `worlds3d/worldNNN.vwr`; staged variants
+`--stage K out.vwr` for checks). After a change: `python3 tools/levelcheck.py` on the stages the
+world's brief (`plans/briefs/worldNNN.md`) names, `ctest -R VerifyShippedWorlds`, `python3
+tools/campaigncheck.py`, `python3 tools/watercheck.py worlds3d/world*.vwr`, the mission's
+playthrough and a live look; update the brief. Never convert or extrude the 2D maps.
 
-Golden frames and behavioural trace (need a display; not in default CTest):
-`xvfb-run -a tools/verify_golden_frames.sh build-cna-opengl3`,
-`xvfb-run -a tools/verify_golden_trace.sh build-cna-opengl3`. WebGL 2: `build-cna-webgl2/`
-(Emscripten toolchain, `-DCNA_GRAPHICS_RENDERER=WEBGL2 -DBUILD_TESTING=OFF`).
+### Live checks
 
-## The real Blupi and the converter
+`tools/qa_live.sh build-cna-opengl3 <out> <steps> [--mission N --spawn x,y,z,yaw]` runs under
+Xvfb from `build-probe/qa-run/` (never touches the owner's `build-cna-opengl3/savedata.txt`);
+steps: `sleep`, `shot NAME`, `key`, `keydown/keyup`, `focus` (Space is Action). `QA_LIVE_AVATARS=`
+and `QA_LIVE_WORLDS=` point at alternative asset directories (A/B comparisons with
+`git archive <rev> avatars3d`). `tools/qa_sweep.sh build-cna-opengl3` loads every world (79/79).
 
-- Converter and every verified Ray Dream convention: `tools/rd4_to_gltf/README.md`.
-- Blupi's asset, contents and regeneration commands: `avatars3d/blupi/README.md`. The `.glb` files
-  are intermediates in `build-probe/rd4-blupi/`; the game loads CNA `SkinnedModelEXT`
-  directories.
-- Python converters need `numpy` and `Pillow`; renders for checking go to `build-probe/` or the
-  scratchpad (images only, never builds).
+### Models
 
-## Sibling repositories (last verified together)
+Converter: `tools/rd4_to_gltf/` (`README.md` holds every verified Ray Dream convention).
+Objects: `build_object_library.py` + `objects.txt` → `export_objects.py` / `export_cna_avatar.py`
+→ `avatars3d/objects/` (`avatars3d/objects/README.md`). Blupi and the vehicles:
+`build_clip_library.py` → `avatars3d/blupi/` (`avatars3d/blupi/README.md`; rebuilding Blupi is
+expensive and risky: verify byte-identical output before replacing anything). Parity:
+`tools/model_parity.py`. Converter outputs and probes go to `build-probe/` (`rd4-objects-current/`
+is a full library built 2026-10-27 with the current settings).
+
+## 5. Rules that bind every change
+
+- CNA (`../../libcna/cna`) is absolutely read-only: no edits, temporary changes, commits or
+  issues. A CNA defect goes to `upstream_bugs.md` (English, UB-NNN). It is a live working tree
+  another session edits: rebuild after its header changes before suspecting this repository.
+- cna-engine: only justified, policy-compliant fixes, upstream with a test and CHANGELOG, no
+  workarounds in Galaxy (owner's rule).
+- Never modify `../mobile-eggbert`, `../speedyblupi-data`, `blupi_recon`, `free-eggbert`.
+- Every gameplay feature traces to confirmed mobile-eggbert behaviour; fixes only for a reproduced
+  bug, focused, with a regression test.
+- Commit each discrete task; no AI attribution of any kind in commits or PRs; push only when the
+  owner asks. Never `git reset --hard`, `git clean -fd`, forced checkout, destructive rebase.
+- At most 2 concurrent subagents; give each its own autoplay run directory and file prefixes.
+- The VirtualBox VM `xp` (Ray Dream Studio) must never get network access.
+
+## 6. Sibling repositories (last verified together)
 
 | Repo | Verified commit | Date |
 |---|---|---|
 | `../../libcna/cna-engine` | `d86c62da` | 2026-10-20 |
-| `~/deps/cna-baseline` (cna-engine's CNA compatibility baseline) | `900d0db3b` | 2026-10-20 |
+| `~/deps/cna-baseline` | `900d0db3b` | 2026-10-20 |
 | `../../libcna/easy-gl` | `f4d6afaf` (v0.1.1) | 2026-10-20 |
 | `~/deps/sharp-runtime-baseline` | `f2aecfef` | 2026-10-20 |
 | `../../libcna/meta-gl` | `dd3b3005` (v0.4.1) | 2026-10-20 |
 
-`../mobile-eggbert` is test data (worlds read by two verifiers) and the behavioural reference;
-read-only, never modified. Do not modify any sibling repository unless the user scopes it in; a
-bug found in one goes to `upstream_bugs.md` (English, `UB-NNN`).
+## 7. Gotchas
 
-## Gotchas
-
-- `tests/golden/` frames are stale since before Phase 7B (the whole frame differs; CURRENT.md
-  says why); `--golden-capture` still works as a live check, its output just won't byte-match.
-
-- `../../libcna/cna` is a live working tree another session edits: a build can break or crash
-  mid-edit; rebuild after its header changes before suspecting this repository.
-- VirtualBox VM `xp` (Ray Dream Studio) is free to use but must never get network access: keep its
-  NIC unattached, never NAT or bridged.
-- Commit each discrete task; push only when the owner asks (the standing push approval is
-  suspended since 2026-10-25).
-- Effects (explosions, splashes, sparkles, bursts, goo, the bridge being built) stay billboards
-  (decision 2026-10-24).
+- `tests/golden/` frames are stale since Phase 7B (CURRENT.md says why).
+- The chase camera orbits to Blupi's side after 3 s idle; `--spawn` yaw 0 faces -Z, 90 +X.
 - Types 32 and 33: the code's names ("blupih"/"blupit") do not match their icons; check against
-  mobile-eggbert before converting (`BB3D-030`).
+  mobile-eggbert before converting.
+- Effects (explosions, splashes, sparkles, goo) stay billboards (decision 2026-10-24).
+- Part files of exported models are named after their colours (`<name>_rd_rrggbb`); toning
+  renames them, and no code refers to those names.
