@@ -25,9 +25,9 @@ content-authoring UX, but not new gameplay mechanics.
   `tools/campaigncheck.py`; water Blupi cannot leave: `tools/watercheck.py`; inventories
   `plans/inventory/worlds.md` and `plans/inventory/assets.md`. Playthroughs by the QA autoplay
   (`tools/autoplay.sh`, scripts in `tools/autoplay/`, all replayed by `tools/autoplay_all.sh`):
-  every mission of worlds 1-4 and 7-12, each of those worlds also as one chain from its hub
-  through its signs to the main hub (`world010.txt` ... `world120.txt`), and world 199 to the win
-  screen; worlds 5-6 as their scripts land.
+  all 64 missions, each world also as one chain from its hub through its signs to the main hub
+  (`world010.txt` ... `world120.txt`), world 199 to the win screen, and the whole campaign in one
+  run from a new game (`campaign.txt`, `tools/autoplay_campaign.py`).
 - Hubs work as the original's (`HubDoors.hpp`): mission bars slide up once the previous mission is
   won, gold bars in the main hub per completed world, the golden key ends a world. Crates are solid,
   pushed along X or Z and pulled (crouch + Down); the dynamite blast and mine contacts are 3D.

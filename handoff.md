@@ -96,10 +96,15 @@ floor's cells: levelcheck now reports a level lift with an end inside a block), 
 (floating two above the floor, now in it). Autoplay fields: `temp` (saucers), `crush`
 (crushers), `mtick` (ticks since the mission started; a mission timed by the script's `tick`
 lost its timing in a chain, 032-034 moved to it). Eggs stop at ten (the original's
-MAX_EGG_COUNT): a script expects at most ten. Next: worlds 5-6 (agent C) and their chains 050/060,
-then the whole campaign as one run: `tools/autoplay/campaign.txt`, written by a generator that
-climbs the main hub's tiers at x 50 between the signs (draft in the session's scratchpad; worlds
-1-4 tried first).
+MAX_EGG_COUNT): a script expects at most ten. Worlds 5-6 (agent C: 051-058, 061-066, the fix of
+062's first pool, `dc0b6e1`) and their chains 050/060 followed; 094's mine rows now bar a corridor
+to T2 (in the open room they could be walked round). The whole campaign plays in one run:
+`tools/autoplay/campaign.txt` (from `tools/autoplay_campaign.py`, which climbs the main hub's
+tiers at x 50 between the signs; the summit's tunnel along z 44 past the gold bars to 199):
+`tools/autoplay.sh build-cna-opengl3 tools/autoplay/campaign.txt 1`, 737915 ticks, a couple of
+hours of wall time; it includes every mission's script, so it is the full replay. Not played by
+any script: 065's dynamite tower, blue door, lake and north-east, 066's middle and upper storeys
+(eggs only). levelcheck reports traps in 052 and 054 that the wasp's balloon leaves. Open: D11.
 
 Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
 variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.
