@@ -1,0 +1,208 @@
+# Mission 034 played through (plans/briefs/world034.md).
+wait 30
+expect mission = 34
+# S: round the golden key (48, 78; it ends the world at a touch, so last) to teleporter delta
+# (52, 79): to the rock cave's arrival hall.
+go 52 82
+go 52 79 tol 0.15 until x <= 40
+until ground = 1 max 600
+expect y <= 14.05
+# R: south of the hall's three pillars (z 52-53), down the hole at its west end (x 20-23,
+# z 48) into the lower cave (walk 8).
+go 30 56
+go 22 56
+go 22 50
+go 22 46
+until ground = 1 max 300
+expect y <= 8.05
+# West, the chasm over lava (x 17-19) on the temporary bridge (z 39): solid but for 24 ticks
+# of every 240 (from 216); each way across in one solid spell. The blue key on the ledge.
+go 20.6 39 tol 0.15
+face 270
+until tick >= 1434
+go 15.2 39 tol 0.15
+expect y >= 7.95
+face 90
+until tick >= 1669
+go 20.6 39 tol 0.15
+expect y >= 7.95
+# The middle's egg, then east over the lava pit (x 24-29) on the sliding lifts (36 ticks,
+# 3 stop: stepped on as one arrives, left from its front edge) to the treasure (36, 36).
+go 21 33 tol 0.15
+until eggs = 1 max 200
+go 22.5 39
+go 23.3 39 tol 0.15
+lift 24 8 39 max 600
+hold 17 up
+until x >= 28.0 max 300
+go 31 39
+expect y >= 7.95
+go 36 36 tol 0.15
+until treasures = 1 max 200
+# The stair back up (x 33-35): steps of two at z 45-46 and z 47, then z 48 and the hall.
+go 34 44.4 tol 0.15
+go 34 46 jump 1.9
+until ground = 1
+expect y >= 9.95
+face 180
+go 34 47 jump 1.5
+until ground = 1
+expect y >= 11.95
+go 34 49.5 jump 2.6
+until ground = 1
+expect y >= 13.95
+# The long lift (x 40-43, z 53; 180 ticks, 10 stop) from the hall's east end up fourteen
+# into the machine hall's east part (walk 28).
+go 38 55
+go 43 55
+go 43 53.75 tol 0.1
+lift 43 14 53 max 1200
+go 43 53 tol 0.1
+face 90
+# Off sideways onto the floor at x 44 (the shaft is open either side of the lifts' row) as
+# soon as it arrives: its dwell is 30 ticks.
+until y >= 27.98 max 700
+go 44.4 53
+expect y >= 27.95
+# M: the tunnel west (x 30-37, z 44-46), the bulldozer in its middle lane: along the north
+# lane past the mine at (36, 46), across behind the bulldozer, the south lane past (31, 44).
+go 44 50
+go 38.6 44
+go 34.5 44 tol 0.1
+clear 33.5 28 45 2.0 max 1500
+go 32.5 46
+go 29.5 46
+# The west part: along the pool's west bank (x 14, the fish two away) to the blue door
+# (13, 53), the treasure room behind it round its bobbing mine (11, 53).
+go 14.2 46
+go 14 53 tol 0.1
+go 12 53
+go 12 51.6
+go 10 52.6 tol 0.1
+until treasures = 2 max 200
+# Back out, along the bank and through the tunnel the other way, then down the long lift's
+# open shaft (z 52) into the rock cave's hall.
+go 12 51.6
+go 12 53
+go 14 53
+go 14 46
+go 29.5 46
+go 32.5 46 tol 0.1
+clear 33.5 28 45 2.0 max 1500
+go 34.5 44
+go 38.6 44
+go 41.5 50
+go 41.5 52.3
+until ground = 1 max 400
+expect y <= 14.05
+# Round the long lift's hole (x 40-43, z 53) and the pillars to beta (26, 52): to the toy room.
+go 38.8 52
+go 38 56
+go 26 56
+go 26 52 tol 0.1 until x >= 50
+until ground = 1 max 600
+expect y <= 6.05
+# T: the lift three wide (x 70-72, z 47; 60 ticks) between its two mines up to the balcony
+# (walk 12), the lollipop (80, 52), its high jump onto the shelf (walk 18): treasure and egg.
+go 65 37
+go 71 44
+go 71 46.25 tol 0.1
+lift 71 6 47 max 900
+go 71 47 tol 0.1
+face 180
+until y >= 11.98 max 400
+go 71 49
+go 79.6 52 tol 0.1
+hold 6 action
+wait 90
+go 67.4 52 tol 0.1
+go 64.5 52 jump 3.0
+until ground = 1
+expect y >= 17.95
+go 62 52 tol 0.1
+until treasures = 3 max 200
+go 64 54 tol 0.1
+until eggs = 2 max 200
+# Off the shelf's north edge to the floor and back to beta (64, 32): to the rock cave.
+go 64 47
+until ground = 1 max 300
+go 64 33.5
+go 64 32 tol 0.1 until x <= 30
+until ground = 1 max 600
+expect y <= 14.05
+# Chi (34, 52): to the brick ruins.
+go 26 56
+go 34 56
+go 34 52 tol 0.1 until z <= 30
+until ground = 1 max 600
+expect y >= 35.95
+# B: the drink (28, 22), then unseen over the three roofs and their birds (walk 38, 40, 42)
+# to the tower's lift (26, 5; 48 ticks, 3 stop), jumped off at the top onto the tower.
+go 27 23.4
+go 28 22.4 tol 0.1
+hold 6 action
+wait 90
+go 26 19
+go 26 18.4 tol 0.1
+go 26 16 jump 1.9
+until ground = 1
+expect y >= 37.95
+go 26 14.4 tol 0.1
+go 26 12 jump 1.9
+until ground = 1
+expect y >= 39.95
+go 26 10.4 tol 0.1
+go 26 8 jump 1.9
+until ground = 1
+expect y >= 41.95
+go 26 5.72 tol 0.05
+lift 26 42 5 max 600
+go 26 5 tol 0.1
+until y >= 49.98 max 400
+go 26 3 jump 5
+until ground = 1
+go 26 3 tol 0.1
+until treasures = 4 max 200
+# Down off the tower's east side (x 33, walk 36), south beside the houses to chi (24, 22) and
+# back to the rock cave; then delta (30, 53) back to the courtyard.
+go 32.4 3
+go 33.4 3
+until ground = 1 max 400
+expect y <= 36.05
+go 33 17
+go 33 23.6
+go 24 23.6
+go 24 22 tol 0.1 until z >= 40
+until ground = 1 max 600
+expect y <= 14.05
+go 34 56
+go 30 56
+go 30 53 tol 0.1 until z >= 70
+until ground = 1 max 600
+expect y >= 29.95
+# S again: round the golden key to alpha (44, 79): to the machine hall's gallery (walk 34).
+go 52 82
+go 44 82
+go 44 79 tol 0.1 until z <= 40
+until ground = 1 max 600
+expect y >= 33.95
+# The gallery: its two eggs, then along z 31 (clear of the fan's wind on z 33) to the treasure
+# in the corner beside the fan's mouth; back to alpha (18, 32).
+go 16 33.6
+go 16 31 tol 0.1
+until eggs = 3 max 200
+go 22 31 tol 0.1
+until eggs = 4 max 200
+go 44 31 tol 0.1
+until treasures = 5 max 200
+go 18 31 tol 0.1
+go 18 32 tol 0.1 until z >= 70
+until ground = 1 max 600
+expect y >= 29.95
+# The golden key: all five treasures, the end of world 3, the main hub.
+go 48 78 until exit = 1
+expect treasures = 5
+until mission = 1 max 900
+expect lives = 7
+expect phase = Play
+wait 120
