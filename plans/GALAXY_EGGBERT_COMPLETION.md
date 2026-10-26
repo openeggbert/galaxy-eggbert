@@ -292,6 +292,21 @@ adaptation) · evidence/test · priority. Known rows so far:
 | Helicopter glue drop (HelicoGlu, Decor.cpp:3694-3708, 3058-3080) | A | done `85bc1ae` |
 | Swimming, surface float, the jump out of the water (Decor.cpp:4542-4692, 5336-5357) | A | done D32 |
 | Reactions: JumpAie, Ouf1a/1b/3/4 | C | done `ec84d42` (clips pending) |
+| Platform lifts: step machine, dwell and travel ticks (`Decor::MoveObjectStepLine`) | A | done D43 (`AdvancePatrolStep`; worlds give 3D steps 30-40 tick dwells) |
+| Jumping off a lift; a lift holds him while a foot is on its edge | A | done D52, D54 (`RideLift`, `InteractionSystem` ride reach) |
+| Conveyor lifts 47/48 carry him along (`Decor.cpp:8161-8168`) | A | done (`kConveyorNudgeSpeed`, E3D-MIG-154; the 2 px/tick nudge approximated) |
+| Switch stops the saws of its row; a stopped saw is harmless (`Decor::ActiveSwitch`, `IsScie`) | A | done D42 |
+| Bars and rods catch a jump from below (`GetTypeBarre`) | A | done D45 |
+| Overcraft hovers within OVERHEIGHT (`Decor.cpp:3936-3967`) | A | done D46 |
+| Hide hides him from follow stars (`MoveObjectFollow`) | A | done D44 |
+| Flight barrier 214: helicopter/overcraft pass, drawn only by ShowSecret (`DecorDetect`, `DrawDecor`) | A/C | done D49 |
+| Of a row of crates the one touching him is held (`CaisseInFront`) | A | done D50 |
+| Lightning drawn and deadly only in `BlitzActif`'s ticks | C | done D51 |
+| Crumbling bridge's 157-tick `table_bridge` | A | done D53 |
+| Empty-mask decor passable up and down (`table_decor_quart`) | A | done D41 |
+| The weak jump out of the water (-12 px/tick): banks level with the water's top cell | A/D | as the original; the authoring guide corrected, `tools/watercheck.py` |
+| Wind pushes him (`Decor.cpp:2773`, not on lifts) | A | done D39 |
+| Plates (signs, sprites) upright and unmirrored from both sides | C | done D48 (in cna-engine `2a93b7e`) |
 
 ## 12. QA gates and tools
 
