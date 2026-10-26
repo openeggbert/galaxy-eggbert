@@ -1,0 +1,94 @@
+# Mission 115 played through (plans/briefs/world115.md): a helicopter from the north gallery to
+# the eleven treasures (the gallery's four ledges, the high shelf over the crates' walls, the
+# skate run's end, the west wing past its curtains of lightning), then the golden key in the
+# hall's alcove, which ends in the main hub.
+wait 30
+expect mission = 115
+# North to the gallery (walk 20): a helicopter of the row along z 26.
+go 50 40
+go 50 30
+go 45 27.4
+go 44 26.8 tol 0.1
+hold 2 action
+wait 20
+# Treasures 1-4 on the ledges round the gallery's walls (walk 26, 30, 34, 38): over each, then
+# down onto it; south of the helicopters' ledge (x 48-54, z 6-9, walk 32) on the way.
+go 44 24 tol 0 with lookup until y >= 25.5 max 900
+go 35.5 7.5 tol 0.3 max 900
+go 35 7 tol 0 with crouch until treasures = 1 max 300
+until treasures = 1 max 200
+go 40 12 tol 0 with lookup until y >= 29.5 max 900
+go 58 12 tol 0.3 max 900
+go 64.5 7.5 tol 0.3 max 900
+go 65 7 tol 0 with crouch until treasures = 2 max 300
+until treasures = 2 max 200
+go 62 14 tol 0 with lookup until y >= 33.5 max 900
+go 64.5 26.5 tol 0.3 max 900
+go 65 27 tol 0 with crouch until treasures = 3 max 300
+until treasures = 3 max 200
+go 60 22 tol 0 with lookup until y >= 37.5 max 900
+go 35.5 26.5 tol 0.3 max 900
+go 35 27 tol 0 with crouch until treasures = 4 max 300
+until treasures = 4 max 200
+# Down to the gallery's floor and on the ground through the passage (three high) into the hall,
+# east along the corridor; over the skate run's two blocks of mines a little above them; down
+# onto treasures 5-7 at its end (93, 47), (93, 50), (93, 53).
+hold 20 lookup
+go 50 28 tol 0 with crouch until y <= 20.2 max 900
+go 50 38
+go 50 50
+go 70 50
+go 72 50 tol 0 with lookup until y >= 21.2 max 300
+go 92.5 50 tol 0.3 max 900
+go 93 50 tol 0 with crouch until treasures = 5 max 300
+until treasures = 5 max 200
+go 93 47 until treasures = 6 max 300
+until treasures = 6 max 200
+go 93 53 until treasures = 7 max 300
+until treasures = 7 max 200
+# Back west over the mines, into the hall, south through its passage into the crates' room; up
+# over the crates and the two walls onto the high shelf's treasures 8-9 (40, 93), (60, 93).
+go 92 50 tol 0 with lookup until y >= 21.2 max 300
+go 71 50 tol 0.3 max 900
+go 70 50 tol 0 with crouch until ground = 1 max 300
+go 55 50
+go 50 58
+go 50 69
+go 50 72 tol 0 with lookup until y >= 26.5 max 600
+go 40.5 92.5 tol 0.3 max 900
+go 40 93 tol 0 with crouch until treasures = 8 max 300
+until treasures = 8 max 200
+go 59.5 92.5 tol 0.3 max 900
+go 60 93 tol 0 with crouch until treasures = 9 max 300
+until treasures = 9 max 200
+# Off the shelf, down to the crates' room's floor by its passage, north into the hall and west
+# along the corridor: its curtain of lightning (x 35) on the ground just after a strike; over the
+# pool to treasures 11 (5, 58) and 10 (5, 42) west of the second curtain (x 7, z 40-46).
+hold 20 lookup
+go 50 71 tol 0.3 max 900
+go 50 71 tol 0 with crouch until y <= 20.2 max 900
+go 50 61
+go 45 50
+go 36.7 50 tol 0.1
+until blitz = 52 max 400
+go 31 50
+go 29 50 tol 0 with lookup until y >= 21.2 max 300
+go 12 57 tol 0.3 max 900
+go 5.5 58 tol 0.3 max 600
+go 5 58 tol 0 with crouch until treasures = 10 max 300
+until treasures = 10 max 200
+go 5 47.5 max 600
+go 5 42 until treasures = 11 max 600
+until treasures = 11 max 200
+# Back east through the corridor's curtain and the hall to the golden key in its alcove (47, 62).
+go 5 50
+go 28 50
+go 29 50 tol 0 with crouch until y <= 20.2 max 300
+go 33.3 50 tol 0.1
+until blitz = 52 max 400
+go 40 50
+go 47 58
+go 47 62 until exit = 1 max 600
+until mission = 1 max 900
+expect phase = Play
+wait 60

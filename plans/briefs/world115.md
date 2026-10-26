@@ -25,5 +25,8 @@ columns of lightning (305), pits of lava, a fish (17) in a pool, five eggs.
 **Checks**: `flightcheck.py --mine-margin 0`: stage 1 and the real world reach the eleven treasures,
 five eggs and the golden key (the real world reaches the high shelf by helicopter).
 `VerifyShippedWorlds`. Live (`--mission 115`, direct view F3): the hall, the gallery, the skate
-run's mines, the crates, the pool, the west run. Not played through: the flights, the crate steps,
-the skate rides (the skateboard over mines was played in 102).
+run's mines, the crates, the pool, the west run. Played through from the spawn to the main hub by
+`tools/autoplay/world115.txt`, by helicopter (the gallery's ledges, over the skate run's mines,
+onto the high shelf, the west wing past its curtains). The crates' steps reach only the first
+wall: crates never stack on a flat floor, so the high shelf is the helicopter's (the stage
+variant's two stacked crates are for levelcheck only).
