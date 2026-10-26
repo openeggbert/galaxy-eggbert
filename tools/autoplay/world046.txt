@@ -1,0 +1,249 @@
+# Mission 046 played through (plans/briefs/world046.md).
+wait 30
+expect mission = 46
+# A, the court (walk 10, roofed): its egg; the helicopter flown up onto the machine tower for
+# the red key; down to the red door (24, 80), off, through it.
+go 10.4 91.6 tol 0.15
+until eggs = 1 max 200
+go 17.6 88.6 tol 0.15
+hold 6 action
+wait 30
+hold 242 lookup
+wait 60
+expect y >= 22.2
+go 12 82.3 tol 0.3
+hold 60 crouch
+until ground = 1 max 200
+expect y >= 21.95
+go 12 82 tol 0.2
+until keys > 0 max 200
+hold 12 lookup
+wait 30
+go 21.5 80 tol 0.3
+hold 300 crouch
+until ground = 1 max 300
+expect y <= 10.05
+hold 6 action
+wait 30
+go 25.6 80
+# B, the pool room: a dive under the curtain wall (x 29, open only at the pool's bottom), up
+# on its far side and out onto the east bank.
+go 27.6 80 with crouch
+hold 60 crouch
+go 31.6 80 tol 0.3 with crouch
+go 32.3 80 tol 0.3 with lookup
+until y >= 9.28 max 300
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1 max 200
+expect y >= 9.95
+go 35 79
+# C, the stair: twenty-one steps one high, two deep (z 72-74), walk 11 at x 35 to 31 at x 76,
+# jumped one at a time; the mine rows on steps 4, 8, 12 and 16 passed in their free lanes
+# (73, 72, 74, 73), the moving mines on steps 6 and 14 timed with near, step 10 on its lifts.
+go 35.6 75.6 tol 0.1
+go 35.6 73.4 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 10.95
+face 90
+go 38 73 jump 1.6
+until ground = 1
+go 40 73 jump 1.6
+until ground = 1
+go 39.75 74 tol 0.15
+until eggs = 2 max 200
+go 39.75 73 tol 0.15
+face 90
+go 42 73 jump 1.6
+until ground = 1
+go 44 73 jump 1.6
+until ground = 1
+go 46 73 jump 1.6
+until ground = 1
+go 45.75 72 tol 0.15
+face 90
+near 48 17 72 0.25 max 400
+near 48 17 73 0.1 max 400
+go 48 72 jump 1.6
+until ground = 1
+go 50 72 jump 1.6
+until ground = 1
+go 52 72 jump 1.6
+until ground = 1
+go 54 72 jump 1.6
+until ground = 1
+go 54.2 72 tol 0.1
+lift 55 20 72 max 400
+go 55.5 72 tol 0.15
+until y >= 21.98 max 300
+go 57.6 72 tol 0.15
+expect y >= 21.95
+go 57.6 74 tol 0.15
+face 90
+go 60 74 jump 1.6
+until ground = 1
+expect y >= 22.95
+go 62 74 jump 1.6
+until ground = 1
+near 64 25 74 0.25 max 400
+near 64 25 73 0.1 max 400
+go 64 74 jump 1.6
+until ground = 1
+go 66 74 jump 1.6
+until ground = 1
+go 65.75 73 tol 0.15
+face 90
+go 68 73 jump 1.6
+until ground = 1
+go 70 73 jump 1.6
+until ground = 1
+go 72 73 jump 1.6
+until ground = 1
+go 71.75 72 tol 0.15
+until eggs = 3 max 200
+go 71.75 73 tol 0.15
+face 90
+go 74 73 jump 1.6
+until ground = 1
+go 76 73 jump 1.6
+until ground = 1
+expect y >= 30.95
+go 79 70
+# D, the chasm: the chain of six lifts and five rests (x 79-80) north from the landing (walk 31)
+# to the terrace (walk 51): each lift boarded as it waits at its bottom, ridden standing to its
+# top, then the step onto the rest and the wait there for the next.
+go 79.5 66.6 tol 0.1
+lift 79 31 65 max 900
+go 79.5 64.5 tol 0.15
+until y >= 34.99 max 400
+wait 6
+go 79.5 63 tol 0.15
+expect y >= 34.95
+lift 79 35 62 max 900
+go 79.5 61.5 tol 0.15
+until y >= 38.99 max 400
+wait 6
+go 79.5 60 tol 0.15
+expect y >= 38.95
+lift 79 39 59 max 900
+go 79.5 58.5 tol 0.15
+until y >= 41.99 max 400
+wait 6
+go 79.5 57 tol 0.15
+expect y >= 41.95
+lift 79 42 56 max 900
+go 79.5 55.5 tol 0.15
+until y >= 44.99 max 400
+wait 6
+go 79.5 54 tol 0.15
+expect y >= 44.95
+lift 79 45 53 max 900
+go 79.5 52.5 tol 0.15
+until y >= 47.99 max 400
+wait 6
+go 79.5 51 tol 0.15
+expect y >= 47.95
+lift 79 48 50 max 900
+go 79.5 49.5 tol 0.15
+until y >= 50.99 max 400
+wait 6
+go 79.5 46.5
+expect y >= 50.95
+# E, the plateau: the lollipop outside the toy cage (82, 42) licked, its high jump from the
+# plateau (walk 51) onto the machine deck (walk 57): the egg, the green key; the green door
+# (60, 32) into the summit massif.
+go 81.9 42.3 tol 0.1
+hold 6 action
+wait 90
+go 82 36.5
+go 82 35.4 tol 0.1
+go 82 32.5 jump 3.0
+until ground = 1
+expect y >= 56.95
+go 80 31.4 tol 0.15
+until eggs = 4 max 200
+go 75 33
+go 63 32.4 tol 0.15
+until keys > 0 max 200
+go 61 32
+go 58.5 32
+# F, the drinks hall (walk 57): over its lava strip (x 51), three eggs, a drink taken (Action):
+# for its twenty seconds unseen through the gallery's four moving mines, west then south up its
+# steps (walk 58-63) into the crate cave.
+go 53 33
+go 52.3 33 tol 0.1
+go 49.5 33 jump 2.4
+until ground = 1
+expect y >= 56.95
+go 49 31.3 tol 0.15
+until eggs = 5 max 200
+go 48 31.3 tol 0.15
+until eggs = 6 max 200
+go 47 31.3 tol 0.15
+until eggs = 7 max 200
+go 48 36.6 tol 0.1
+hold 6 action
+wait 90
+go 45 34
+go 34 34
+go 34 34.6 tol 0.1
+go 34 36.6 jump 1.6
+until ground = 1
+go 34 38.6 jump 1.6
+until ground = 1
+go 34 40.6 jump 1.6
+until ground = 1
+go 34 42.6 jump 1.6
+until ground = 1
+go 34 44.6 jump 1.6
+until ground = 1
+go 34 46.6 jump 1.6
+until ground = 1
+expect y >= 62.95
+go 34 49
+# The crate cave (walk 63): its egg; the crate (38, 53) pushed east to x 43 and north to
+# (43, 49) under the ledge (walk 66); up the crate onto it: the blue key.
+go 34 55.6 tol 0.15
+until eggs = 8 max 200
+go 36.6 53 tol 0.1
+face 90
+go 41.6 53 max 900
+crate 43 63 53 max 60
+go 41.6 54.4
+go 43 54.4 tol 0.1
+face 0
+go 43 50.4 max 900
+crate 43 63 49 max 60
+go 43 49 jump 1.4 tol 0.15
+until ground = 1
+expect y >= 63.95
+face 90
+go 45 49 jump 1.6 tol 0.15
+until ground = 1
+expect y >= 65.95
+until keys > 0 max 200
+# Down off the ledge, through the blue door (40, 57), onto the last lift (40-41, z 59-60)
+# from the cell before it as it waits at the bottom, up to the summit (walk 71).
+go 45 51.4
+until ground = 1
+expect y <= 63.05
+go 40 55.5
+go 40 58.2 tol 0.1
+lift 40 64 59 max 900
+go 40.3 59.6 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 63.95
+until y >= 70.99 max 400
+wait 6
+go 40.5 61.6
+expect y >= 70.95
+# G, the summit: east of the lift's shaft, round its three mines (42, 45), (48, 44), (45, 49) to the golden key
+# (45, 45), clear of the moving mine on z 41; the end of world 4, the main hub.
+go 43.5 61.6
+go 47 52
+go 45.1 45.3 tol 0.1 until exit = 1
+until exit = 1 max 200
+until mission = 1 max 900
+expect phase = Play
+wait 120
