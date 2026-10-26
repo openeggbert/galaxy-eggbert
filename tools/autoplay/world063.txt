@@ -1,0 +1,172 @@
+# Mission 063 played through (plans/briefs/world063.md): no treasures, the arrow open from the
+# start.
+wait 30
+expect mission = 63
+# B, the pit: the shuttle (x 46-47, three long) boarded at its south end by the start pocket,
+# ridden north in the lane x 47 (the floating mine waits over x 46), walked forward onto its
+# front block during the ride, off at its north end onto the landing C (walk 11).
+go 47 87.5
+go 47 86.35 tol 0.1
+face 0
+lift 47 11 77 max 600
+lift 47 11 85 max 600
+go 47 84.6 tol 0.1
+hold 38 up
+lift 47 11 77 max 400
+go 47 75.5
+expect y >= 10.95
+# C: the elevator (2 x 2, twelve up; a 3-tick stop) stepped on from its door as it arrives, Up held against
+# its shaft's north wall from halfway, off at the top onto the ledge E (walk 23).
+go 45 72
+go 45 70.6 tol 0.08
+face 0
+lift 45 23 69 max 900
+lift 45 11 69 max 900
+go 45 69.9 tol 0.1
+until y >= 18 max 400
+go 45 66 max 300
+expect y >= 22.95
+# The basin: down off the ledge onto the south rim (walk 20); the shuttle (x 47-48, three long)
+# boarded at its south end, walked forward onto its front block, ridden across the basin, off
+# at its north end onto the north rim.
+go 47.5 62
+go 47.5 60.5
+until ground = 1 max 200
+go 47.5 59.35 tol 0.1
+face 0
+lift 47 20 43 max 900
+lift 47 20 58 max 900
+go 47.5 58.4 tol 0.1
+hold 48 up
+lift 47 20 43 max 600
+go 47.5 41
+expect y >= 19.95
+# The machine yard: onto the skateboard (49, 20, 31), east along the corridor (z 30-31), riding
+# over its six mines (they blow up under the board), into the saw yard; off the board there.
+go 49 32
+go 49 31.9 tol 0.1
+hold 2 action
+wait 20
+go 58 30.5
+go 77 30.5 tol 1.0
+wait 60
+hold 2 action
+wait 20
+expect x >= 74.5
+# The saw yard: the switch in its floor at the beam's start (81, 22), pressed (Action): it stops
+# the beam's three saws; along the beam (z 22, walk 20) to the tower's core, then up its five
+# arms, a jump of two each (north 22, east 24, south 26, west 28, north 30), landing clear of
+# their saws and mines, onto the ledge L (walk 32).
+go 79 25
+go 81 22 tol 0.12
+hold 2 action
+wait 20
+go 87.5 22 tol 0.15
+face 0
+go 88.5 20.8 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 21.95
+go 89 21.5 tol 0.15
+face 90
+go 90.6 21.5 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 23.95
+go 90.3 22.2 tol 0.15
+face 180
+go 90.3 23.6 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 25.95
+go 89.3 23.4 tol 0.15
+face 270
+go 87.9 23 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 27.95
+go 87.6 22.4 tol 0.15
+face 0
+go 87.6 20.9 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 29.95
+go 87.6 19.6 tol 0.15
+face 0
+go 87.6 17.8 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 31.95
+# The ledge L: the egg in its nook (97, 15) beyond a spike trap (x 95), a jump each way; the shaft
+# north of it: three lifts (z 11) sixteen up, one stepped on as it arrives, Up held against the
+# shaft's north wall to walk out at the top into the gallery (walk 48).
+go 93.6 15.5 tol 0.1
+face 90
+go 96.6 15.5 jump 2.5 tol 0.25
+until ground = 1
+go 97 15.2 tol 0.2
+go 96.4 15.5 tol 0.1
+face 270
+go 93.4 15.5 jump 2.5 tol 0.25
+until ground = 1
+expect x <= 94.4
+go 89 12.5
+go 89 11.9 tol 0.08
+face 0
+lift 89 48 11 max 900
+lift 89 32 11 max 900
+go 89 11.15 tol 0.1
+until y >= 45 max 400
+go 89 8.6 max 300
+expect y >= 47.95
+# The gallery west (z 9-10): its trench (x 76-84) holds four pistons (x 83, 81, 79, 77) pumping a
+# cell up and down in turn with holes between them: from piston to piston in jumps over the
+# holes; the spike traps across it (x 68) in a jump.
+go 86 9.3
+go 85.4 9.3 tol 0.1
+face 270
+go 83 9.3 jump 2.3 tol 0.25
+until ground = 1
+go 81 9.3 jump 1.9 tol 0.25
+until ground = 1
+go 79 9.3 jump 1.9 tol 0.25
+until ground = 1
+go 77 9.3 jump 1.9 tol 0.25
+until ground = 1
+go 74.8 9.3 jump 2.1 tol 0.25
+until ground = 1
+expect y >= 47.95
+go 69.5 9.3
+go 66.6 9.3 jump 2.3 tol 0.25
+until ground = 1
+expect x <= 67.4
+# The exit tower: its lift (57, 9; four up, a 3-tick stop) stepped on as it arrives, then a jump
+# of two up onto each arm round the core (north 54, west 56, south 58, east 60), clear of the
+# saws and mines on their far ends, and onto the cage's floor (walk 62), where the arrow (61, 62,
+# 9) is touched in the jump.
+go 60 9.3
+go 57.7 9 tol 0.08
+face 270
+lift 57 52 9 max 600
+lift 57 48 9 max 600
+go 57.1 9 tol 0.1
+face 0
+lift 57 52 9 max 300
+go 57 7.6 jump 2.0 tol 0.2
+until ground = 1
+expect y >= 53.95
+go 56.6 8 tol 0.15
+face 270
+go 55 8.2 jump 1.9 tol 0.2
+until ground = 1
+expect y >= 55.95
+go 55 8.6 tol 0.15
+face 180
+go 55 10.3 jump 1.9 tol 0.2
+until ground = 1
+expect y >= 57.95
+go 55.6 10.4 tol 0.15
+face 90
+go 57.2 10.3 jump 1.9 tol 0.2
+until ground = 1
+expect y >= 59.95
+go 59.2 9.5 tol 0.15
+face 90
+go 60.7 9.3 jump 1.9 tol 0.2 until exit = 1
+until mission = 60 max 900
+expect phase = Play
+wait 60
