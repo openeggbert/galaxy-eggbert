@@ -86,6 +86,20 @@ tested his feet and sank him through floors, `1b8c144`), and world defects in 01
 `levelcheck.py` swims and reports traps (candidates still open in 052, 054, 062).
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
+Then: every mission of worlds 1-4 and 7-12 and each of those worlds as one chain from its hub
+(`worldN0.txt`: the hub's signs in order, each mission's script included, back past the bar it
+opened, the golden key to the main hub), world 199 to the win screen (each key spent on one
+door: machine, library, cheese, the finale's outer door, village, inner door). Found and fixed:
+D56 (a lift carried him sideways off a ledge), D57 (a lift going down pulled him through a ledge,
+107), D58 (a key opened one cell of a door, 107), 082's arrow-room shuttle (its ends in the
+floor's cells: levelcheck now reports a level lift with an end inside a block), 199's crushers
+(floating two above the floor, now in it). Autoplay fields: `temp` (saucers), `crush`
+(crushers), `mtick` (ticks since the mission started; a mission timed by the script's `tick`
+lost its timing in a chain, 032-034 moved to it). Eggs stop at ten (the original's
+MAX_EGG_COUNT): a script expects at most ten. Next: worlds 5-6 (agent C) and their chains 050/060,
+then the whole campaign as one run: `tools/autoplay/campaign.txt`, written by a generator that
+climbs the main hub's tiers at x 50 between the signs (draft in the session's scratchpad; worlds
+1-4 tried first).
 
 Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
 variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.
