@@ -35,13 +35,18 @@ hanging mines, four mines.
   red arrow.
 
 **Checks**: `levelcheck.py` stage 2 reaches all eight treasures, the egg and the arrow; stage 1
-stops at door "2"; the real world stops at the swarm. `VerifyShippedWorlds`. Live (`--mission 82`,
+and the real world stop at door "2". `VerifyShippedWorlds`. Live (`--mission 82`,
 spawns in each part, direct view F3): the start room, the corridor's shuttles, the relay over the
 sky, the gallery's lava and shuttles, the niches under their mines, the bobbing mines, the tower,
-the arrow's room. Not played through live: the ride through the swarm.
+the arrow's room. Played through by `tools/autoplay/world082.txt` (all eight treasures,
+the egg, the arrow).
 
 2026-10-27: the lifts' dwells raised from the original's 3-20 ticks to 30-40 (a step from lift to
 lift or ledge in 3D needs a second or two), and the relay's lifts made two cells along X (one cell
 was too small a target to stop on: walking across, Blupi went over it into the sky). Played live:
 riding A out of the wall and stepping onto B where they wait side by side, B carrying him to the
 rest.
+
+The arrow room's shuttle runs within its gap, z 17 to 16 (its ends had lain in the floor's cells
+at z 18 and 15: Blupi stood on the floor there and the shuttle slid away from under him; found
+by the playthrough).

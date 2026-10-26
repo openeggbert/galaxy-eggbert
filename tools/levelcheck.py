@@ -5,6 +5,7 @@ every treasure, key and egg and to the exit?
 Also finds traps: the exit must stay reachable from where each target is taken (a one-way drop
 into a pit with no way out is a softlock), and of any two treasures or keys one must be reachable
 from the other, so that some order takes them all (linear levels with one-way drops are fine).
+A lift travelling level must not have an end inside a block.
 
 Searches the voxel grid with moves Blupi certainly has (BlupiController): walk to a neighbour
 cell, step off an edge and fall, jump (up to two blocks up, or across a gap of up to two cells,
@@ -307,6 +308,16 @@ def check(path: Path, blocks) -> bool:
             got = bool(near & reach)
             report.append(f"sign {raw >> 4} at {cell}: {'reachable' if got else 'NOT REACHABLE'}")
             ok = ok and got
+    # A lift travelling level must not have an end inside a block: standing on that block Blupi is
+    # on ground, and the lift slides away from under him (082's arrow room). A rising or sinking
+    # lift may start in the floor, which it lifts him off.
+    for o in world["objects"]:
+        if o.get("type") in LIFTS:
+            a = tuple(int(c // 1) for c in o["start"])
+            b = tuple(int(c // 1) for c in o["end"])
+            if a[1] == b[1] and any(grid.info(e)["solid"] == 1 for e in (a, b)):
+                report.append(f"lift {a} -> {b}: an end inside a block")
+                ok = False
     exits = [o for o in world["objects"] if o.get("type") in EXITS]
     if not exits and world["mission"] % 10 != 0 and world["mission"] not in (0, 1):
         report.append("no exit")

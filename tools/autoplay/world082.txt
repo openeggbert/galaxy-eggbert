@@ -1,0 +1,192 @@
+# Mission 082 played through (plans/briefs/world082.md).
+wait 30
+expect mission = 82
+expect lives = 3
+# The start room (walk 10): the lift in its north-east corner (x 18-19, z 70-71) up to the
+# corridor (walk 20), boarded as it starts a dwell at the bottom.
+go 17 72.6
+lift 18 20 70 max 400
+lift 18 10 70 max 400
+go 18.5 70.5 tol 0.15
+lift 18 20 70 max 400
+go 20.6 70.5
+expect y >= 19.95
+# The corridor east: four gaps (x 24-26, 30-32, 36-38, 42-44), each bridged by a shuttle one
+# cell long (z 70-71) that carries him two along X; boarded at the start of its dwell at the
+# west end, left at the east end. Treasure 1 at the corridor's end.
+go 22.9 70.5 tol 0.15
+lift 26 20 70 max 400
+lift 24 20 70 max 400
+go 24 70.5 tol 0.15
+lift 26 20 70 max 200
+go 27.6 70.5
+go 28.9 70.5 tol 0.15
+lift 32 20 70 max 400
+lift 30 20 70 max 400
+go 30 70.5 tol 0.15
+lift 32 20 70 max 200
+go 33.6 70.5
+go 34.9 70.5 tol 0.15
+lift 38 20 70 max 400
+lift 36 20 70 max 400
+go 36 70.5 tol 0.15
+lift 38 20 70 max 200
+go 39.6 70.5
+go 40.9 70.5 tol 0.15
+lift 44 20 70 max 400
+lift 42 20 70 max 400
+go 42 70.5 tol 0.15
+lift 44 20 70 max 200
+go 45.6 70.5
+expect y >= 19.95
+go 46 71 until treasures = 1
+until treasures = 1 max 120
+# The shaft (x 48-56): lift A (x 50-51, z 69-70) rises from its floor (walk 20) as B beside it
+# (x 52-53) sinks from the top ledge; they wait side by side at walk 31. A boarded at the start
+# of a dwell at the bottom, across to B, B up to the ledge (walk 40): treasure 2. The swarm's
+# mines drift clear of the lifts' column.
+go 47.2 70.5
+go 49.1 69.5 tol 0.15
+face 90
+lift 50 31 69 max 600
+lift 50 20 69 max 600
+go 50.5 69.5 tol 0.15
+lift 50 31 69 max 400
+go 52.5 69.5 tol 0.15
+expect y >= 30.95
+lift 52 40 69 max 400
+go 53.5 67.6
+expect y >= 39.95
+go 55 66 until treasures = 2
+until treasures = 2 max 120
+# Out east through the wall (x 57) to the relay in the sky (walk 40, z 66-67), its lifts two
+# cells long and all in step: A (x 58-59) carries him four east to wait beside B (x 64-65), B
+# on east to its start (x 67-68) by the rest (x 69-70); then C (x 71-72) to D (x 77-78), D to
+# its start by the landing at door "2" (x 82-84). Each boarded at the start of a dwell, each
+# waited for on its leading cube's end cell (the other cube passes through the cells before).
+go 57 66.5 tol 0.15
+face 90
+lift 63 40 66 max 600
+lift 58 40 66 max 600
+go 58.9 66.5 tol 0.15
+lift 63 40 66 max 400
+go 64.5 66.5 tol 0.15
+lift 68 40 66 max 400
+go 69.5 66.5 tol 0.15
+expect y >= 39.95
+lift 76 40 66 max 600
+lift 71 40 66 max 600
+go 71.9 66.5 tol 0.15
+lift 76 40 66 max 400
+go 77.5 66.5 tol 0.15
+lift 81 40 66 max 400
+go 83 66.5
+expect y >= 39.95
+# Door "2" (x 82-83, z 65), open with two treasures, into the gallery; the egg by it.
+go 82.5 64
+go 87 63 until eggs = 1
+until eggs = 1 max 120
+# The gallery (walk 40) south to north (-Z): the lava pit (z 54-62) on its two shuttles (x 83-84)
+# with the rest (z 58) between them, in step: the first boarded at the start of a dwell at its
+# south end (z 62), off onto the rest at its north end (z 59); the second, back at its south end
+# (z 57) as the first returns, carries him on to the floor (z 53).
+go 83.5 63.1 tol 0.15
+face 0
+lift 83 40 59 max 400
+lift 83 40 62 max 400
+go 83.5 62 tol 0.15
+lift 83 40 59 max 200
+go 83.5 58 tol 0.15
+lift 83 40 54 max 400
+lift 83 40 57 max 400
+go 83.5 57 tol 0.15
+lift 83 40 54 max 200
+go 83.5 52.6
+expect y >= 39.95
+# Six niches in the west wall (x 79), a treasure in each under a hanging mine: walked into, never
+# jumped; three pits across the floor (z 50, 44, 36), jumped in the middle (x 84) between the
+# mines bobbing up out of them (x 82, 86).
+go 80.6 52
+go 79 52 until treasures = 3
+until treasures = 3 max 120
+go 81 51.6
+go 84 51.4 tol 0.15
+face 0
+go 84 48.4 jump 2.6
+until ground = 1
+expect y >= 39.95
+go 80.6 47
+go 79 47 until treasures = 4
+until treasures = 4 max 120
+go 81 45.6
+go 84 45.4 tol 0.15
+face 0
+go 84 42.4 jump 2.6
+until ground = 1
+expect y >= 39.95
+go 80.6 42
+go 79 42 until treasures = 5
+until treasures = 5 max 120
+go 80.6 38
+go 79 38 until treasures = 6
+until treasures = 6 max 120
+go 81 37.6
+go 84 37.4 tol 0.15
+face 0
+go 84 34.4 jump 2.6
+until ground = 1
+expect y >= 39.95
+go 80.6 34
+go 79 34 until treasures = 7
+until treasures = 7 max 120
+go 80.6 31.4
+go 79 31 until treasures = 8
+until treasures = 8 max 120
+# Over the last gap (z 29) clear of its mine (81, 30) into the tower.
+go 81 32
+go 86 30.4 tol 0.15
+face 0
+go 86 27.4 jump 2.6
+until ground = 1
+expect y >= 39.95
+# The tower: three lifts stacked in one column (x 84-85, z 23-24), in step, each rising four;
+# from each one's top a jump of two up onto the shelf of the north wall (z 21-22), from which
+# the next one is boarded at the start of its dwell at the bottom. The shelves' hanging mines
+# (x 82, 88) and still mines (87 46 22, 83 52 22) stay clear of the column.
+go 84.5 25.6
+face 0
+lift 84 44 23 max 400
+lift 84 40 23 max 400
+go 84.5 24.2 tol 0.15
+lift 84 44 23 max 300
+go 84.5 21.6 jump 1.3 tol 0.15
+until ground = 1
+expect y >= 45.95
+lift 84 50 23 max 400
+lift 84 46 23 max 400
+go 84.5 24.2 tol 0.15
+lift 84 50 23 max 300
+go 84.5 21.6 jump 1.3 tol 0.15
+until ground = 1
+expect y >= 51.95
+lift 84 56 23 max 400
+lift 84 52 23 max 400
+go 84.5 24.2 tol 0.15
+lift 84 56 23 max 300
+go 84.5 21.6 jump 1.3 tol 0.15
+until ground = 1
+expect y >= 57.95
+# The arrow's room (walk 58): over its gap (z 16-17) on the shuttle (x 83-84), boarded at the
+# start of its dwell at the gap's south side (z 17), off at the north side (z 16); past the mine
+# (86 58 14) to the red arrow.
+go 83.5 18.3 tol 0.15
+face 0
+lift 83 58 16 max 300
+lift 83 58 17 max 300
+go 83.5 17 tol 0.15
+lift 83 58 16 max 200
+go 84 13 until exit = 1 max 400
+expect treasures = 8
+until mission = 80 max 900
+expect phase = Play
+wait 60

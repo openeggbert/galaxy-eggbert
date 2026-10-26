@@ -184,8 +184,10 @@ def main(argv) -> int:
     if calm:
         w.fill(83, 57, 16, 84, 57, 17, PANEL)
     else:
+        # The shuttle runs within the gap, one cell (a shuttle whose ends lay in the floor's cells
+        # left a rider standing on the floor as it slid away).
         for x in (83, 84):
-            lift(w, (x, 57, 18), (x, 57, 15), ticks=20, stop=30)
+            lift(w, (x, 57, 17), (x, 57, 16), ticks=20, stop=30)
         mine(w, 86, 58, 14)
     w.place(O.EXIT, 84, 58, 13)
     for x, z in ((81, 13), (87, 19)):
