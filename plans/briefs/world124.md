@@ -27,4 +27,8 @@ Seventeen treasures, seven eggs.
 (falls reach the bottoms; it cannot swim, the game does); stage 9 stops at door "17", stage 2 at
 door "3"; the real world stops at the first mines. `VerifyShippedWorlds`. Live (`--mission 124`,
 direct view F3): the start passage, tank 1 and its fish, tank 2's ferry, the fan tunnel, tank 3,
-a teleporter's pillar. Not played through: the swims, the teleporters, the wind.
+a teleporter's pillar. Played through from the spawn to hub 120 by `tools/autoplay/world124.txt`
+(every dive timed past the fish, the wind tunnel's jump, teleporter 332 back to the exit).
+2026-10-27: the tunnel's wind stood a cell above walking height, where the engine (as the
+original, at his middle in his own tile) does not feel it; it now fills the tunnel's lower two
+rows.
