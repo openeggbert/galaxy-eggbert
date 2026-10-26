@@ -1,7 +1,7 @@
 # Mission 084 played through (plans/briefs/world084.md): world 8's golden key.
 wait 30
 expect mission = 84
-expect lives = 3
+expect lives >= 3
 # The catwalk (walk 60, lanes x 9-11) north: the egg by the start; the first row of mines
 # (z 87) passed in lane 11 under its hanging mine, the second (z 84) in lane 10.
 go 11 90 until eggs = 1

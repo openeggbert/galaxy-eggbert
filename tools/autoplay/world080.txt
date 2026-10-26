@@ -1,0 +1,22 @@
+# World 8 played as a chain from its hub (plans/briefs/world080.md): each mission's sign in hub
+# 080, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 084 ends in the main hub.
+wait 30
+expect mission = 80
+# Sign 1, open, at the lower deck's east end (59, 21, 53).
+go 59 53 until mission = 81 max 600
+until mission = 81 max 600
+include world081.txt
+# Past bar 2: sign 2 at the upper deck's east end (57, 23, 44).
+go 57 44 until mission = 82 max 900
+until mission = 82 max 600
+include world082.txt
+# Past bar 3: sign 3 at the lower deck's west end (41, 21, 53).
+go 41 53 until mission = 83 max 900
+until mission = 83 max 600
+include world083.txt
+# Past bar 4: sign 4 at the upper deck's west end (43, 23, 44).
+go 43 44 until mission = 84 max 900
+until mission = 84 max 600
+include world084.txt
+expect mission = 1

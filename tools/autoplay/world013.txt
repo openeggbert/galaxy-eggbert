@@ -1,7 +1,7 @@
 # Mission 013 played through (plans/briefs/world013.md).
 wait 30
 expect mission = 13
-expect lives = 3
+expect lives >= 3
 # A. The hangar: take a helicopter (Space), climb to the window (RightShift; held T s and let
 # go, it rises 3.125 T cells) and fly through it onto the pool hall's ledge (walk 6).
 go 44 60.8
@@ -66,6 +66,6 @@ go 91 14 jump 5.8
 go 95 14 until exit = 1
 expect treasures = 3
 until mission = 10 max 900
-expect lives = 3
+expect lives >= 3
 expect phase = Play
 wait 120

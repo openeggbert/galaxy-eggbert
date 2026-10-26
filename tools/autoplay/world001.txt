@@ -11,4 +11,4 @@ wait 30
 go 55 47
 go 55 45 until mission = 11
 until mission = 11 max 600
-expect lives = 3
+expect lives >= 3

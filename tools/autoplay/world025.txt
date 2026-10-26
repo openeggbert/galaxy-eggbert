@@ -1,7 +1,7 @@
 # Mission 025 played through (plans/briefs/world025.md).
 wait 30
 expect mission = 25
-expect lives = 3
+expect lives >= 3
 # West out of the keep, along the corridor into the ladder tower (walk 11).
 go 44 50
 go 37 50

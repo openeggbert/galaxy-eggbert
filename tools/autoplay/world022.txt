@@ -1,7 +1,7 @@
 # Mission 022 played through (plans/briefs/world022.md).
 wait 30
 expect mission = 22
-expect lives = 3
+expect lives >= 3
 # A. The roof terrace (walk 11): its egg, the lava trench (z 73) jumped, treasure 1.
 go 38.4 75 until eggs = 1
 until eggs = 1 max 120

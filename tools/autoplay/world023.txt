@@ -1,7 +1,7 @@
 # Mission 023 played through (plans/briefs/world023.md).
 wait 30
 expect mission = 23
-expect lives = 3
+expect lives >= 3
 # The hall (walk 11): its egg, then the lift (44 60, feet 11 -> 4) down into the cave.
 go 55 65 until eggs = 1
 until eggs = 1 max 120

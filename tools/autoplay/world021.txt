@@ -1,7 +1,7 @@
 # Mission 021 played through (plans/briefs/world021.md).
 wait 30
 expect mission = 21
-expect lives = 3
+expect lives >= 3
 # Tower 1: treasure 1 in the middle arch of its foot.
 go 34 73
 go 34 71 max 200 until treasures = 1

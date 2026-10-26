@@ -1,7 +1,7 @@
 # Mission 012 played through (plans/briefs/world012.md).
 wait 30
 expect mission = 12
-expect lives = 3
+expect lives >= 3
 # 1. Push the crate four cells -Z to the red dot under T1 (it stops at T1's face), climb it.
 go 48 63.1 max 400
 go 48 62 jump 1.4
@@ -67,6 +67,6 @@ expect y >= 15.95
 # The red arrow on T4 (no treasures here): the win cheer, then the world's hub.
 go 49 18 until exit = 1
 until mission = 10 max 900
-expect lives = 3
+expect lives >= 3
 expect phase = Play
 wait 120

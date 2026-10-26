@@ -1,7 +1,7 @@
 # Mission 014 played through (plans/briefs/world014.md).
 wait 30
 expect mission = 14
-expect lives = 3
+expect lives >= 3
 # A stick of dynamite from the start room (one at a time), put at the foot of the crate wall
 # (z 48) in the corridor, and back down the corridor out of the blast.
 go 43 62

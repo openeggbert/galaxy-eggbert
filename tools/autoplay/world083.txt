@@ -1,7 +1,7 @@
 # Mission 083 played through (plans/briefs/world083.md).
 wait 30
 expect mission = 83
-expect lives = 3
+expect lives >= 3
 # The start hall (walk 30): north to the stair at its west end (x 10-13), steps two up and two
 # deep (walk 32, 34, 36, 38) to the ledge of treasure 1 (walk 40).
 go 11.5 61

@@ -1,7 +1,7 @@
 # Mission 082 played through (plans/briefs/world082.md).
 wait 30
 expect mission = 82
-expect lives = 3
+expect lives >= 3
 # The start room (walk 10): the lift in its north-east corner (x 18-19, z 70-71) up to the
 # corridor (walk 20), boarded as it starts a dwell at the bottom.
 go 17 72.6
