@@ -36,5 +36,7 @@ stage 1 stops at the doors; the real world stops at the mines and the hanging mi
 doors, a teleporter alcove, the deck's skateboards, the yard's mines, the plate hall's pool, the
 passage's hanging mines, the cave's lava and wasp. Played live: crouching through the passage
 under the seven mines; riding a skateboard into the block of mines, which go off one by one as
-he rides on (a probe with a board set at the yard's mouth). Not played through: the teleporters
-here, the caterpillars, the swim for the blue key, the doors.
+he rides on (a probe with a board set at the yard's mouth). Played through from the spawn to hub 100
+by `tools/autoplay/world102.txt` (the three teleporters there and back, the skateboard through the
+mines, the lift and the caterpillars jumped from their west edges, the dive for the blue key, the
+crouch under the hanging mines, the wasp's lane at its far end, the doors and the exit).

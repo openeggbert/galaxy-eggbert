@@ -1,0 +1,121 @@
+# Mission 102 played through (plans/briefs/world102.md): from the atrium by teleporter to the
+# three works for the three keys, back, the three doors and their treasures, the exit.
+wait 30
+expect mission = 102
+# Teleporter 330 (its pillar over (39, 6, 74), in the atrium's west wall) to the machine deck
+# (walk 20), arriving at (8, 9).
+go 41 74
+go 39 74 until x <= 30 max 900
+until x <= 30 max 900
+# A skateboard (12, 15), east along the yard (z 11-13) through its block of mines (x 26-28),
+# off it before the lava pit (x 39-41).
+go 12 14.2 tol 0.15
+hold 2 action
+wait 20
+go 21 12 max 600
+go 37 12 max 900
+hold 2 action
+wait 20
+# The lift (2 x 2 at x 39-40, z 11-12) up out of the pit to walk 28; west over the caterpillars
+# (x 37-38, 34-35, 31-32, 28-29, 25-26, carrying west, a gap of one between them, jumped from
+# each one's west edge: the yard's mines off the skateboard's lane are still below) to the key's
+# platform (walk 28) and the green key (19, 12).
+go 38.3 11.5 tol 0.1
+lift 39 20 11 max 900
+go 39.5 11.5 tol 0.15
+until y >= 27.95 max 600
+wait 6
+go 36.75 11.5 tol 0.1
+go 34.5 11.5 jump 3 tol 0.3
+until ground = 1
+go 33.75 11.5 tol 0.1
+go 31.5 11.5 jump 3 tol 0.3
+until ground = 1
+go 30.75 11.5 tol 0.1
+go 28.5 11.5 jump 3 tol 0.3
+until ground = 1
+go 27.75 11.5 tol 0.1
+go 25.5 11.5 jump 3 tol 0.3
+until ground = 1
+go 24.75 11.5 tol 0.1
+go 22.5 11.5 jump 3 tol 0.3
+until ground = 1
+expect y >= 27.9
+go 19 12 until keys = 1 max 600
+until keys = 1 max 200
+# Off the platform's south edge down onto the deck (walk 20), teleporter 330's pillar (8, 8) back
+# to the atrium (39, 75).
+go 18.5 13.5
+go 18.5 16
+until ground = 1
+go 10 10
+go 8 8 until z >= 60 max 900
+until z >= 60 max 900
+# Teleporter 331 (east wall, (61, 74)) to the plate hall (walk 12, arriving at (60, 8)): the blue
+# key on the pool's bottom (73, 7, 17), dived for from the north bank when the fish along z 14
+# is clear of the way.
+go 59 75.5
+go 59 74
+go 61 74 until z <= 30 max 900
+until z <= 30 max 900
+go 64 9
+go 73 9.4 tol 0.15
+face 180
+clear 73 9 14 3 lane x max 1800
+go 73 17 with crouch until keys = 2 max 600
+hold 150 crouch
+until keys = 2 max 200
+clear 73 9 14 3 lane x max 900
+go 73 10.4 tol 0.2 with lookup max 600
+until y >= 11.2 max 300
+face 0
+hold 8 up jump
+hold 30 up
+until ground = 1
+go 62 8
+go 60 7 until z >= 60 max 900
+until z >= 60 max 900
+# Teleporter 332 (west wall, (39, 82)) to the rock cave (walk 10, arriving at (10, 51)). South
+# through the low passage (x 10-11) crouching under its hanging mines; the wasp's lane (z 75,
+# x 10-20) crossed at x 11 as the wasp reaches its east end; the red key (15, 84) between the
+# pools of lava.
+go 41 80
+go 41 82
+go 39 82 until x <= 30 max 900
+until x <= 30 max 900
+go 10.5 57
+go 10.5 71 with crouch max 1500
+go 11 73.4 tol 0.15
+near 20 10 75 0.3 lane x max 900
+go 11 77
+go 15 77
+go 15 84 until keys = 3 max 600
+until keys = 3 max 200
+# Back north past the wasp and through the passage, teleporter 332's pillar (10, 50) back.
+go 15 77
+go 11 76.6 tol 0.15
+near 20 10 75 0.3 lane x max 900
+go 11 73.4
+go 10.5 71
+go 10.5 57 with crouch max 1500
+go 10 52
+go 10 50 until x >= 30 max 900
+until x >= 30 max 900
+# The three doors (z 67) take their keys; a treasure behind each (x, 65); the exit (50, 89).
+go 41.5 83.3
+go 44 70
+go 44 65 until treasures = 1 max 600
+until treasures = 1 max 200
+go 44 69
+go 50 69
+go 50 65 until treasures = 2 max 600
+until treasures = 2 max 200
+go 50 69
+go 56 69
+go 56 65 until treasures = 3 max 600
+until treasures = 3 max 200
+go 56 69
+go 50 89 until exit = 1 max 900
+until mission = 100 max 900
+expect phase = Play
+wait 60
