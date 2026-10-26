@@ -1,0 +1,34 @@
+# World 10 played as a chain from its hub (plans/briefs/world100.md): each mission's sign in hub
+# 100, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 107 ends in the main hub.
+wait 30
+expect mission = 100
+# Sign 1, open, on the plaza's east edge (59, 21, 53).
+go 59 53 until mission = 101 max 600
+until mission = 101 max 600
+include world101.txt
+# Past bar 2: sign 2 in the plaza's south edge (49, 21, 59).
+go 49 59 until mission = 102 max 900
+until mission = 102 max 600
+include world102.txt
+# Past bar 3: sign 3 in the plaza's south edge (54, 21, 59).
+go 54 59 until mission = 103 max 900
+until mission = 103 max 600
+include world103.txt
+# Past bar 4: sign 4 at the north terrace's east end (61, 23, 42).
+go 61 42 until mission = 104 max 900
+until mission = 104 max 600
+include world104.txt
+# Past bar 5: sign 5 in the plaza's west edge (41, 21, 53).
+go 41 53 until mission = 105 max 900
+until mission = 105 max 600
+include world105.txt
+# Past bar 6: sign 6 at the west block's west end (31, 25, 41).
+go 31 41 until mission = 106 max 900
+until mission = 106 max 600
+include world106.txt
+# Past bar 7: sign 7 on the top (58, 27, 28).
+go 58 28 until mission = 107 max 900
+until mission = 107 max 600
+include world107.txt
+expect mission = 1
