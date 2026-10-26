@@ -1058,6 +1058,7 @@ namespace GalaxyEggbert::CNA
         state.exitReached = interaction_.ExitReached();
         state.blitz = ((worldRuntime_.GetAnimPhase() % 100) + 100) % 100;
         state.temp = (((worldRuntime_.GetAnimPhase() / 4) % 20) + 20) % 20;
+        state.crush = (((worldRuntime_.GetAnimPhase() / 3) % 10) + 10) % 10;
         state.phase = phase_;
         state.mission = worldRuntime_.GetMissionNumber();
         state.treasures = interaction_.TreasuresCollected();
