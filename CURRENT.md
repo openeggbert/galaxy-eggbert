@@ -1,7 +1,8 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-10-25 (audit of the restored `develop`, `plans/GALAXY_EGGBERT_COMPLETION.md`
-§4; mission 011 and the renderer fixes D14-D16 the same evening). Update this file whenever a change alters the current state, a known limitation, a supported
+_Last verified: 2026-10-26 (worlds 1-3 complete and checked, engine fixes D17-D37 with tests and
+live checks; before that the 2026-10-25 audit of the restored `develop`,
+`plans/GALAXY_EGGBERT_COMPLETION.md` §4). Update this file whenever a change alters the current state, a known limitation, a supported
 build, or the actionable backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`),
 where work stands in `handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
 
@@ -15,19 +16,25 @@ and remains available in git history at commit `4afd53e`.
 The in-game 3D world editor is the one approved exception to the faithful-remake rule: it may add
 content-authoring UX, but not new gameplay mechanics.
 
-## Content state (2026-10-25)
+## Content state (2026-10-26)
 
-- Real content: `world999` (showcase), `title.vwr`, the **main hub** `world001` and **all of world 1**
-  (`world010` hub, missions 011-014, briefs in `plans/briefs/`, scripts in `tools/worlds/`). The 11
-  other theme hubs are placeholder plazas (migrated to the original's sign/door icons); **missions
-  21-125 and the bonus world 199 are placeholders** (an 11×11 floor with an exit). Authoring them is
-  the main open work (`plans/GALAXY_EGGBERT_COMPLETION.md` §9, `plans/inventory/worlds.md`).
+- Real content: `world999` (showcase), `title.vwr`, the **main hub** `world001` and **worlds 1-3**
+  complete (`world010`-`014`, `world020`-`025`, `world030`-`034`: hub plus missions each, briefs in
+  `plans/briefs/`, scripts in `tools/worlds/`, every lesson checked with `levelcheck.py` stages and
+  live). Worlds 4 and 5 are being authored; the other theme hubs are placeholder plazas, and
+  **missions 41-125 and the bonus world 199 are still placeholders** (an 11×11 floor with an exit).
+  Authoring them is the main open work (`plans/GALAXY_EGGBERT_COMPLETION.md` §9,
+  `plans/inventory/worlds.md`).
 - Hubs work as the original's (`HubDoors.hpp`): mission bars slide up once the previous mission is
   won, gold bars in the main hub per completed world, the golden key ends a world. Crates are solid,
   pushed along X or Z and pulled (crouch + Down); the dynamite blast and mine contacts are 3D.
+- Swimming as the original's (float at the surface, dive with LeftShift, jump out onto a bank);
+  vehicles are wrecked by water; the helicopter drops glue; teleporter arrivals face on.
 - Terrain, its grass and the cube objects are lit (one directional light + ambient,
-  `TerrainLighting.hpp`); lifts are drawn as their tile's bar and stem; cross-billboard machine
-  parts are alpha-blended (D14-D16 in the plan).
+  `TerrainLighting.hpp`); sprite tiles are cut out (`TileCoverage.hpp`), faint ones blended; lifts
+  are drawn as their tile's bar and stem; the chase camera rises over obstacles behind Blupi.
+- Blupi's 3D model (from the Ray Dream originals) has clips for every live table_blupi action,
+  including Win, Turn, Vertigo, Recede, the reactions (JumpAie, Ouf*) and the poses between moves.
 
 ## Shipped, working state
 
