@@ -1,0 +1,399 @@
+# Mission 064 played through (plans/briefs/world064.md).
+wait 30
+expect mission = 64
+# The bottom (walk 5): treasure 1 and the egg; across the line the blupit shoots along (z 45)
+# just after a shot has gone by.
+go 55 47.6
+go 55 47 tol 0.2
+go 57 56 tol 0.2
+# The spiral (x 40-45, z 38-43): six lifts (2 x 2) round a core, each pumping two up and down,
+# odd ones rising as even ones sink: each is level with the next while they stop. Onto the first
+# (x 40-41, z 42-43) at its low stop (walk 5), then onto each next as they stop level: north,
+# north, east, east (at z 39, off the second blupit's lane z 38), south, and south onto the
+# landing (walk 17).
+go 42 46.6 tol 0.15
+near 42 5 45 0.5 max 600
+clear 42 5 45 1.0 max 200
+go 40.5 43.6 tol 0.1
+face 0
+lift 40 7 42 max 600
+lift 40 5 42 max 600
+go 40.5 42.5 tol 0.15
+lift 40 7 42 max 300
+go 40.5 40.5 tol 0.15
+lift 40 9 40 max 300
+go 40.5 39.2 tol 0.15
+lift 40 11 38 max 300
+go 42.5 39.2 tol 0.15
+lift 42 13 38 max 300
+go 44.5 39.2 tol 0.15
+lift 44 15 38 max 300
+go 44.5 40.5 tol 0.15
+lift 44 17 40 max 300
+go 44.5 42.5 tol 0.15
+expect y >= 16.95
+# Door "1" east of the landing; the long lift (2 x 2, fifteen up, a 3-tick stop) stepped on as it
+# arrives, Up held west against its shaft from halfway, off at the top into the pool storey R2
+# (walk 32).
+go 48 42.5
+go 54 38.5
+go 55.35 38.5 tol 0.1
+face 90
+lift 56 32 38 max 900
+lift 56 17 38 max 900
+go 56.5 38.5 tol 0.15
+until y >= 22 max 300
+face 270
+go 53 38.5 max 400
+expect y >= 31.95
+# R2: treasures 4 (48, 34, 36) and 3 (42, 34, 36) on their ledges (walk 34), a jump up and back
+# down each; the egg (40, 41) west of the moving mine's run (x 42-53, z 41).
+go 48 38.6 tol 0.1
+face 0
+go 48 36.8 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 33.95
+go 48 36.3 tol 0.2
+hold 36 down
+until ground = 1
+go 42 38.6 tol 0.1
+face 0
+go 42 36.8 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 33.95
+go 42 36.3 tol 0.2
+hold 36 down
+until ground = 1
+until treasures = 3 max 120
+go 40 41 tol 0.2
+# The pool room (z 48-56): the pool (x 39-45, z 49-55, seven deep, flush with the floor): from
+# its east bank down to treasure 2 (44, 25, 54) beside the fish's lanes (z 51 at y 27, z 53 at
+# y 29), along the bottom to the egg (40, 25, 50), up the west side and out onto the west bank.
+go 41.5 46
+go 41.5 48.2
+go 46.1 48.2
+go 46.1 54
+go 45 54 tol 0 with crouch until y <= 25.3 max 500
+go 44.5 54 tol 0.15 with crouch
+go 40.4 50 tol 0.2 with crouch max 400
+go 39.4 49.6 tol 0 with lookup until y >= 31.28 max 500
+face 270
+hold 8 up jump
+hold 30 up
+until ground = 1 max 120
+expect y >= 31.95
+until treasures = 4 max 120
+# Back into R2 and east through door "4" (59, 45-46) into the corridors' spiral: five corridors
+# two wide, each three above the last, a step and a hole at each corner (a jump up onto the
+# step, a jump of two up through the hole onto the next one's floor); their mines and the bird
+# keep to the outer lanes.
+# C1 east (walk 32), C2 north (35, its egg), C3 west (38), C4 south (41, its egg), C5 east (44).
+go 38.3 48.2
+go 41.5 48.2
+go 41.5 46
+go 58 45.5
+go 61 46.9
+go 70.2 46.9 tol 0.15
+face 90
+go 71.5 47.1 jump 1.4 tol 0.2
+until ground = 1
+expect y >= 32.95
+go 72 47.8 tol 0.15
+face 0
+go 72 45.8 jump 1.6 tol 0.2
+until ground = 1 max 120
+expect y >= 34.95
+go 72 39 tol 0.2
+go 72 37.8 tol 0.15
+face 0
+go 72 36.6 jump 1.4 tol 0.2
+until ground = 1
+expect y >= 35.95
+go 71.6 36.5 tol 0.15
+face 270
+go 69.6 36.8 jump 1.6 tol 0.2
+until ground = 1 max 120
+expect y >= 37.95
+go 70 37.2
+go 62.2 37.2 tol 0.15
+face 270
+go 60.9 37.2 jump 1.4 tol 0.2
+until ground = 1
+expect y >= 38.95
+go 60.5 36.4 tol 0.15
+face 180
+go 60.5 38.4 jump 1.6 tol 0.2
+until ground = 1 max 120
+expect y >= 40.95
+go 60 45 tol 0.2
+go 60.5 46.2 tol 0.15
+face 180
+go 60.5 47.4 jump 1.4 tol 0.2
+until ground = 1
+expect y >= 41.95
+go 60.4 47.1 tol 0.15
+face 90
+near 69 44 48 0.2 max 600
+go 62.4 46.9 jump 1.6 tol 0.2
+until ground = 1 max 120
+expect y >= 43.95
+# C5 east along z 46.9 past its mine (entered as it turns at its far end); the drink at its end (72, 44, 48): unseen and untouchable,
+# up the stair east (z 48), a jump a step, past the mines on its first four steps and the saws
+# that are its last seven, to the shuttle room's landing (walk 56).
+go 71.6 46.9
+go 71.6 47.7 tol 0.1
+hold 2 action
+wait 120
+face 90
+go 73 48 jump 1.4 tol 0.2
+until ground = 1
+go 74 48 jump 1.4 tol 0.2
+until ground = 1
+go 75 48 jump 1.4 tol 0.2
+until ground = 1
+go 76 48 jump 1.4 tol 0.2
+until ground = 1
+go 77 48 jump 1.4 tol 0.2
+until ground = 1
+go 78 48 jump 1.4 tol 0.2
+until ground = 1
+go 79 48 jump 1.4 tol 0.2
+until ground = 1
+go 80 48 jump 1.4 tol 0.2
+until ground = 1
+go 81 48 jump 1.4 tol 0.2
+until ground = 1
+go 82 48 jump 1.4 tol 0.2
+until ground = 1
+go 83 48 jump 1.4 tol 0.2
+until ground = 1
+go 84.3 48 jump 1.4 tol 0.2
+until ground = 1
+expect y >= 55.95
+# The shuttle room: shuttle A (z 47-48, walk 56) and B (z 45-46, two higher) cross it in opposite
+# directions. Onto A as it reaches the landing; ridden east and back; a jump north onto B as they
+# pass (34 ticks after A starts back), timed so that B is under him when he comes down; B ridden
+# east and back to its west end, a jump west onto the ledge (walk 60).
+go 84.35 47.5 tol 0.1
+face 90
+lift 92 56 47 max 600
+lift 85 56 47 max 600
+go 85.3 47.5 tol 0.15
+face 0
+lift 92 56 47 max 400
+wait 34
+hold 20 up jump
+hold 25 up
+until ground = 1 max 120
+expect y >= 57.95
+face 270
+lift 92 58 45 max 400
+lift 85 58 45 max 400
+go 83.6 45.6 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 59.95
+# The bulldozer's corridor (z 45, walk 60): in as the bulldozer rests at its west end (x 77), a
+# jump up to hang from the bars under the ceiling, west along them while it passes under, off
+# their end (x 74.5) down by the lollipop: licked, a jump of four up the column into the next
+# corridor (walk 64).
+go 83.4 45
+near 77 60 45 0.2 max 900
+go 81 45 tol 0.15
+hold 6 jump
+wait 20
+face 270
+hold 170 up
+until ground = 1 max 200
+expect x <= 74.6
+go 74.3 45 tol 0.1
+hold 2 action
+wait 120
+go 73.2 45 tol 0.1
+face 0
+go 73.2 43.6 jump 2.5 tol 0.2
+until ground = 1 max 200
+expect y >= 63.95
+# Walk 64: north under the three hanging mines (walking, never a jump), west along lane z 35,
+# over its dip (x 70, a mine in it) in a jump, clear of the moving mine in lane z 34; up the
+# step at its end (walk 65) and up into the bars' corridor (x 66), whose floor two moving mines
+# sweep (z 29-33): that jump catches the bar over its mouth (z 34); hanging, north along the bars
+# above the mines, off their end (z 28.5) by the step (walk 68); up into the hall (walk 70).
+go 73 36
+go 73 35
+go 71.4 35 tol 0.1
+face 270
+go 68.6 35 jump 2.1 tol 0.2
+until ground = 1
+expect y >= 63.95
+go 67.4 35 tol 0.1
+go 66.2 35 jump 1.4 tol 0.2
+until ground = 1
+expect y >= 64.95
+face 0
+go 66 34 jump 1.5 tol 0.15
+wait 20
+expect y >= 67.9
+face 0
+hold 150 up
+until ground = 1 max 200
+expect z <= 28.6
+wait 20
+go 66 28.3 tol 0.1
+face 0
+go 66 27.2 jump 1.5 tol 0.15
+until ground = 1 max 200
+expect y >= 67.95
+go 66 25.8 jump 1.6 tol 0.2
+until ground = 1 max 200
+expect y >= 69.95
+# The hall (walk 70, up to 80): into the helicopter (66, 70, 19); the four treasures of its
+# columns, two on the standing ones' tops, two under the hanging ones (hovered at their height,
+# the column just over his head): under (66, 77-80, 21) at 76; on (64, 70-77, 25) at 78; under
+# (61, 78-80, 25) at 77; on (59, 70-75, 23) at 76. Short hops from rest, each let go a third of
+# the way short so the helicopter coasts to the point.
+go 66 19.9 tol 0.1
+face 0
+hold 2 action
+wait 20
+hold 115 lookup
+wait 100
+go 66 21 tol 0.4
+wait 60
+go 66 21 tol 0.15
+wait 30
+until treasures = 5 max 120
+go 64 23.4 tol 0.8
+wait 60
+go 64 23.4 tol 0.15
+wait 40
+hold 52 lookup
+wait 90
+go 64 25 tol 0.5
+wait 60
+go 64 25 tol 0 with crouch until ground = 1 max 300
+until treasures = 6 max 120
+go 62.6 25 tol 0.5
+wait 60
+hold 32 crouch
+wait 60
+go 61 25 tol 0.5
+wait 60
+go 61 25 tol 0.15
+wait 30
+until treasures = 7 max 120
+go 59.6 23.6 tol 0.6
+wait 60
+go 59 23 tol 0.2
+wait 40
+go 59 23 tol 0 with crouch until ground = 1 max 300
+until treasures = 8 max 120
+# Up through the hole in the vault (x 62-63, z 22-23) into the upper garage (walk 82), over and
+# up through its hole (x 57-58, z 19-20) into the top cave (walk 88); down onto the ledge with the
+# egg (walk 90).
+go 61 22.8 tol 0.6
+wait 60
+go 62.5 22.5 tol 0.15
+wait 30
+hold 144 lookup
+wait 100
+expect y >= 82.5
+go 59.3 20.6 tol 0.8
+wait 60
+go 57.5 19.5 tol 0.4
+wait 60
+go 57.5 19.5 tol 0.15
+wait 30
+hold 115 lookup
+wait 100
+expect y >= 88.5
+hold 67 lookup
+wait 100
+expect y >= 92.2
+go 55.6 20 tol 0.5
+wait 60
+go 55.4 20 tol 0.15
+wait 30
+go 55.4 20 tol 0 with crouch until ground = 1 max 300
+expect y >= 89.95
+# The switch's corridor (z 26, x 55-61): landed at its mouth, out of the helicopter, the switch
+# in its floor (61, 26) pressed: its two saws stop; along it under the hanging mines to treasure
+# 10 (55, 88, 26) and back, into the helicopter again.
+hold 50 lookup
+wait 90
+go 59.6 23.6 tol 1.0
+wait 60
+go 62.6 25.9 tol 0.5
+wait 60
+go 62.6 25.9 tol 0.15
+wait 30
+go 62.6 25.9 tol 0 with crouch until ground = 1 max 400
+expect y <= 88.05
+hold 2 action
+wait 30
+go 61.1 26 tol 0.1
+hold 2 action
+wait 30
+go 55.3 26 tol 0.15
+until treasures = 9 max 120
+go 62.4 26 tol 0.15
+hold 2 action
+wait 30
+# The bend of water under the north wall (x 56): landed by it, out of the helicopter, down its
+# first shaft (z 16), along under the wall (y 84), up the second (z 13) and out into the niche:
+# treasure 9 (57, 88, 12); back the same way, into the helicopter.
+hold 60 lookup
+wait 90
+go 58.6 20.6 tol 1.4
+wait 60
+go 56.6 17.4 tol 0.5
+wait 60
+go 56.6 17.4 tol 0.15
+wait 30
+go 56.6 17.4 tol 0 with crouch until ground = 1 max 400
+expect y <= 88.05
+hold 2 action
+wait 30
+go 56 16.6 tol 0.1
+face 0
+go 56 15.9 tol 0.15
+go 56 16 tol 0 with crouch until y <= 84.3 max 400
+go 56 13 tol 0.15 with crouch max 400
+go 56 13 tol 0 with lookup until y >= 87.28 max 400
+face 0
+hold 8 up jump
+hold 30 up
+until ground = 1 max 120
+expect y >= 87.95
+go 57 12.2 tol 0.2
+until treasures = 10 max 120
+go 56.2 12.4 tol 0.15
+face 180
+go 56 13.1 tol 0.15
+go 56 13 tol 0 with crouch until y <= 84.3 max 400
+go 56 16 tol 0.15 with crouch max 400
+go 56 16 tol 0 with lookup until y >= 87.28 max 400
+face 180
+hold 8 up jump
+hold 30 up
+until ground = 1 max 120
+expect y >= 87.95
+go 56.6 17.4 tol 0.15
+hold 2 action
+wait 30
+# Up and over the arrow's box, down through its grate roof (no wall to a flyer) beside its egg
+# (62, 22), the arrow (63, 88, 23).
+hold 85 lookup
+wait 100
+expect y >= 92.3
+go 60.4 20.4 tol 1.2
+wait 60
+go 62.4 22.4 tol 0.5
+wait 60
+go 62.4 22.4 tol 0.15
+wait 30
+go 62.4 22.4 tol 0 with crouch until ground = 1 max 400
+expect y <= 88.05
+go 63 23 until exit = 1
+until mission = 60 max 900
+expect phase = Play
+wait 60
