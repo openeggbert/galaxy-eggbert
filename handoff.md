@@ -4,7 +4,8 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-27 (the campaign complete: every world authored; D48 fixed in cna-engine)._
+_Last updated: 2026-10-27 (the campaign complete: every world authored; D48 fixed in cna-engine; the saw
+death's half body wound consistently)._
 
 ## Resume here (exact state when last written)
 
@@ -65,13 +66,15 @@ cna-engine workarounds in Galaxy), Galaxy's interim plate code removed (`ae7b0a8
 barrier 214 is drawn only by the ShowSecret cheat and in the editor (owner, `aa50281`).
 Next: milestone F, the completion audit; D11 waits for the owner's list of models that look wrong;
 D41 is done: decor is neither a floor nor a ceiling (only 024 needed a change).
+The saw death's half body no longer shows through its cut (`0cff927`: the converter winds Ray Dream's
+boolean masters consistently, `geometry.orient_consistently`; only its two parts re-exported, every
+other clip pixel-identical; checked live in a probe of 065).
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 
-Next: milestone D, worlds 2-12 and 199 — hub then missions per world, each from the original's
-map, hints, objects and the video, authored with the kit, checked with `levelcheck.py` (a
-`--solved` variant where crates or dynamite gate the route) and live. Expect 2D-era mechanics
-like D21/D23 to surface; fix them in the engine with tests before relying on them.
+Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
+variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.
+Mechanics a world needs that misbehave are fixed in the engine with a test first (D21-D54).
 
 Live checks: `tools/qa_live.sh build-cna-opengl3 <out> <steps> [--mission N --spawn x,y,z,yaw]`
 runs from `build-probe/qa-run/` so the owner's `build-cna-opengl3/savedata.txt` and
