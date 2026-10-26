@@ -232,6 +232,27 @@ int main()
           "Lava semantic is centralized");
     Check(GetBlockDefinition(BlockTypes::Drip).hazard == BlockHazardKind::Drip,
           "Drip semantic is centralized");
+    // A switch turns its saws to 379 (Decor::ActiveSwitch): still (only a stored 378 goes
+    // through table_decor_scie) and harmless (Decor::IsScie reads 378).
+    Check(GetBlockDefinition(BlockTypes::Saw).animation.frameCount == 6 &&
+              GetBlockDefinition(382).animation.baseIcon == BlockTypes::Saw,
+          "a saw turns through 378-383");
+    Check(GetBlockDefinition(BlockTypes::SawStopped).animation.frameCount == 1 &&
+              GetBlockDefinition(BlockTypes::SawStopped).animation.frames[0] == BlockTypes::SawStopped &&
+              GetBlockDefinition(BlockTypes::SawStopped).renderMode == BlockRenderMode::GroundAnchoredPlate,
+          "a switched-off saw is drawn still, as the same plate");
+    Check(!BlockTypes::isHazard(BlockTypes::SawStopped) && BlockTypes::isHazard(BlockTypes::Saw),
+          "a switched-off saw is harmless");
+    {
+        bool still = true;
+        bool turns = false;
+        for (int tick = 0; tick < 12; ++tick)
+        {
+            still = still && ResolveBlockAnimationIcon(BlockTypes::SawStopped, tick) == BlockTypes::SawStopped;
+            turns = turns || ResolveBlockAnimationIcon(BlockTypes::Saw, tick) != BlockTypes::Saw;
+        }
+        Check(still && turns, "the terrain draws a switched-off saw still and a saw turning");
+    }
     Check(GetBlockDefinition(BlockTypes::FanLeft).fanDirection ==
               BlockFanDirection::NegativeX,
           "fan direction is centralized");

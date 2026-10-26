@@ -143,6 +143,7 @@ Found while building mission 011 (live, 2026-10-25):
 | D39 | The wind tiles push nothing; they are floors and ceilings | only the fan's mouth was modelled; the coarse vertical test counted them solid | **done** `be3ec9c` |
 | D40 | Placed 347 (plain slime) animates and kills as the spike trap | 347 resolved to the trap's animation family | **done** `ecc5605` (the trap is 373) |
 | D41 | Tiles with an empty collision mask (decor: pillars, cobwebs, 185, cheese 339, signs) are floors and ceilings to the vertical test, walls to nothing | the coarse vertical test counts any non-air cell; lava, crushers, saws, drips rely on it as the ground their hazard reads | open: a per-class rule (decor passable, hazards still the ground) needs care for worlds 1-5 built on it |
+| D42 | A saw stopped by its switch (379) kept turning, and counted as a hazard | `Decor.cpp:1058` turns only a stored 378 through `table_decor_scie`; `Decor::IsScie` (`:7254`) reads 378; the original's levels store only 378 and 384, so 379 comes only from `ActiveSwitch` | **done**: 379 its own still frame, out of the saw's hazard family (`VerifyDefinitionRegistries`) |
 
 ## 6. Native world format: evolution policy
 

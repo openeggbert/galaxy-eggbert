@@ -147,6 +147,9 @@ namespace GalaxyEggbert
         };
         constexpr int crusherFrames[10] = {317, 317, 318, 319, 320, 321, 322, 323, 323, 323};
         constexpr int sawFrames[6] = {378, 379, 380, 381, 382, 383};
+        // A switched-off saw (Decor::ActiveSwitch's 379) stands still: the original turns only
+        // a stored 378 through table_decor_scie.
+        constexpr int sawStoppedFrames[1] = {379};
         constexpr int water1Frames[6] = {92, 93, 94, 95, 94, 93};
         constexpr int water2Frames[6] = {91, 96, 97, 98, 97, 96};
         constexpr int fanLeftFrames[3] = {126, 127, 128};
@@ -163,7 +166,7 @@ namespace GalaxyEggbert
         SetAnimation(definitions_[Spike], Spike, spikeFrames, 4);
         SetAnimation(definitions_[Crusher], Crusher, crusherFrames, 3);
         SetAnimation(definitions_[Saw], Saw, sawFrames, 1);
-        SetAnimation(definitions_[SawStopped], Saw, sawFrames, 1);
+        SetAnimation(definitions_[SawStopped], SawStopped, sawStoppedFrames, 1);
         SetAnimation(definitions_[Water1], Water1, water1Frames, 3);
         SetAnimation(definitions_[Water2], Water2, water2Frames, 3);
         SetAnimation(definitions_[FanLeft], FanLeft, fanLeftFrames, 3);
@@ -184,7 +187,7 @@ namespace GalaxyEggbert
             // of the trap's animation. The trap is 373 (Decor::IsPiege, 2026-10-26).
             else if (icon == 373 || icon == 374) base = Spike;
             else if (icon >= 317 && icon <= 323) base = Crusher;
-            else if (icon >= 378 && icon <= 383) base = Saw;
+            else if (icon == 378 || (icon >= 380 && icon <= 383)) base = Saw;
             else if (icon >= 92 && icon <= 95) base = Water1;
             else if (icon == 91 || (icon >= 96 && icon <= 98)) base = Water2;
             else if (icon >= 126 && icon <= 128) base = FanLeft;
@@ -220,7 +223,7 @@ namespace GalaxyEggbert
             definitions_[static_cast<std::size_t>(icon)].hazard = BlockHazardKind::Crusher;
         }
         definitions_[Saw].hazard = BlockHazardKind::Saw;
-        for (int icon = 379; icon <= 383; ++icon)
+        for (int icon = 380; icon <= 383; ++icon)     // not 379: Decor::IsScie reads 378 only
         {
             definitions_[static_cast<std::size_t>(icon)].hazard = BlockHazardKind::Saw;
         }
