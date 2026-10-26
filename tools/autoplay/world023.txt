@@ -1,0 +1,151 @@
+# Mission 023 played through (plans/briefs/world023.md).
+wait 30
+expect mission = 23
+expect lives = 3
+# The hall (walk 11): its egg, then the lift (44 60, feet 11 -> 4) down into the cave.
+go 55 65 until eggs = 1
+until eggs = 1 max 120
+go 44 61.35 tol 0.1
+face 180
+lift 44 11 60 max 600
+go 44 60 tol 0.15
+until y <= 4.05 max 400
+go 44 61.6
+# The cave (walk 4): the green key, the egg, the red key.
+go 52 53
+go 59 53
+go 37 53 until eggs = 2
+until eggs = 2 max 120
+go 37 69
+wait 60
+# Its crate pushed +X to the ledge's foot (53 66), climbed, and the ledge (walk 7): the
+# treasure and the blue key.
+go 47 66
+go 48.6 66 tol 0.1
+face 90
+go 51.6 66 tol 0.1 max 300
+crate 53 4 66 max 10
+go 53 66 jump 1.4
+until ground = 1
+expect y >= 4.95
+go 55 66 jump 2.0
+until ground = 1
+expect y >= 6.95
+go 55 69 until treasures = 1
+until treasures = 1 max 120
+go 58 68
+wait 60
+# Off the ledge's north side, the lift back up to the hall, the lift (52 54, feet 11 -> 15)
+# up to the landing.
+go 57 63
+until ground = 1
+go 44 61.35 tol 0.1
+face 0
+lift 44 4 60 max 600
+go 44 60 tol 0.15
+face 180
+until y >= 10.95 max 400
+go 44 61.6
+go 52 55.35 tol 0.1
+face 0
+lift 52 11 54 max 400
+go 52 54 tol 0.15
+until y >= 14.95 max 300
+go 52 52.4
+expect y >= 14.95
+# The corridor west (walk 15): the red door (the cave's red key), the green door (its green
+# key) with an egg between, the blue door (its blue key) of the vault; the vault's red and
+# green keys; out north to the saw pit.
+go 47 49
+face -90
+go 42 49
+go 42 50 until eggs = 3
+until eggs = 3 max 120
+go 41.6 49
+face -90
+go 37.5 49
+go 34 49
+go 33.2 48.2 tol 0.15
+go 33.2 49.8 tol 0.15
+wait 60
+go 34 48
+face 0
+go 34 45
+expect y >= 14.95
+# The saw pit (z 38-42) crossed on the middle one of its three lifts.
+go 34 43.3 tol 0.1
+lift 34 15 42 max 400
+go 34 42 tol 0.15
+lift 34 15 38 max 300
+go 34 36.6
+# The red door (34 15 35, the vault's red key), then the spiral of ball blocks (walk 17, 19
+# with an egg, 21, 23, 25) to the green door (33 25 27, the vault's green key).
+go 34 34
+expect y >= 14.95
+face 0
+go 33.6 32.6 jump 1.6
+until ground = 1
+expect y >= 16.95
+face -90
+go 31.8 32.6 jump 1.6
+until ground = 1
+expect y >= 18.95
+go 31.4 32.8 until eggs = 4
+until eggs = 4 max 120
+go 31.5 32.3 tol 0.1
+face 0
+go 31.5 30.6 jump 1.6
+until ground = 1
+expect y >= 20.95
+face 90
+go 33.4 30.5 jump 1.6
+until ground = 1
+expect y >= 22.95
+face 0
+go 33.5 28.6 jump 1.6
+until ground = 1
+expect y >= 24.95
+go 33 28.3 tol 0.1
+face 0
+go 33 25.5
+expect y >= 24.95
+# The machine terrace (walk 25). West: the catwalk's switch (28 24 22) stops its five saws,
+# the first blue key at its end.
+go 30 22
+go 28 22 tol 0.15
+hold 2 action
+wait 10
+go 19 22
+wait 60
+go 30 22
+# East: the switch in the toy room's doorway (45 24 24) stops its five saws; the egg and
+# treasure 2.
+go 44 24
+go 45 24 tol 0.15
+hold 2 action
+wait 10
+go 46 24 until eggs = 5
+until eggs = 5 max 120
+go 52 24 until treasures = 2
+until treasures = 2 max 120
+go 44 24
+# North through the first blue door (37 25 17) to the landing; west along the bridge, its
+# switch (35 24 15) stopping its four saws, to the island and the second blue key.
+go 37 18.3
+face 0
+go 37 15.6
+go 35 15 tol 0.15
+hold 2 action
+wait 10
+go 27 15
+wait 60
+# Back, north over the bridge, through the second blue door (37 25 11) to the red arrow.
+go 36.6 15
+go 37 15 tol 0.1
+face 0
+go 37 9.4 until exit = 1
+expect treasures = 2
+until mission = 20 max 900
+expect lives = 8
+expect phase = Play
+wait 120
