@@ -1,0 +1,207 @@
+# Mission 081 played through (plans/briefs/world081.md): the climb from platform to platform over
+# the chains of vanishing saucers (Temp: all gone for 0.4 s in every 4 s, the field temp 18-19)
+# and the causeway east, to the red arrow. Each chain is taken in one run of hops from its
+# platform's edge, started a set delay after the saucers come back (temp turning from 19 to 0),
+# so that no saucer is under him while they are gone and the bird crossing the chain's middle
+# misses him. The delays were found by trying every sixth tick over the cycle (the run is
+# deterministic): each is the middle of the first run of delays that pass.
+wait 30
+expect mission = 81
+# Chain 0: platform 0 (walk 20) to 1 (walk 23), 3 saucers.
+go 13.50 76.60 tol 0.15
+face 0
+until temp = 19 max 600
+until temp = 0 max 60
+wait 12
+go 13.50 73.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 13.50 70.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 13.50 68.00 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 13.50 65.00 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 22.9
+# Chain 1: platform 1 (walk 23) to 2 (walk 26), 3 saucers.
+go 15.40 63.50 tol 0.15
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+wait 12
+go 18.50 63.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 21.50 63.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 24.00 63.50 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 27.00 63.50 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 25.9
+# Chain 2: platform 2 (walk 26) to 3 (walk 29), 3 saucers.
+go 29.50 60.60 tol 0.15
+face 0
+until temp = 19 max 600
+until temp = 0 max 60
+wait 12
+go 29.50 57.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 29.50 54.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 29.50 52.00 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 29.50 49.00 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 28.9
+# Chain 3: platform 3 (walk 29) to 4 (walk 32), 3 saucers.
+go 26.60 47.50 tol 0.15
+face 270
+until temp = 19 max 600
+until temp = 0 max 60
+wait 12
+go 23.50 47.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 20.50 47.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 18.00 47.50 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 15.00 47.50 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 31.9
+# Chain 4: platform 4 (walk 32) to 5 (walk 35), 4 saucers.
+go 13.50 44.60 tol 0.15
+face 0
+until temp = 19 max 600
+until temp = 0 max 60
+wait 12
+go 13.50 41.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 13.50 38.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 13.50 36.00 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 13.50 34.00 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 13.50 31.00 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 34.9
+# Chain 5: platform 5 (walk 35) to 6 (walk 38), 3 saucers.
+go 15.40 29.50 tol 0.15
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+wait 18
+go 18.50 29.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 21.50 29.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 24.00 29.50 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 27.00 29.50 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 37.9
+# Chain 6: platform 6 (walk 38) to 7 (walk 40), 2 saucers.
+go 33.40 25.50 tol 0.15
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+wait 12
+go 36.00 25.50 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 38.00 25.50 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 41.00 25.50 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 39.9
+# The causeway east (walk 40): over the saucers from rest to rest (x 55, 61, 67) in lane
+# z 21, each stretch walked just after they come back; the still mines keep to lane 22.
+go 47.4 21 tol 0.15
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+go 55 21 tol 0.3
+until temp = 19 max 600
+until temp = 0 max 60
+go 61 21 tol 0.3
+until temp = 19 max 600
+until temp = 0 max 60
+go 67 21 tol 0.3
+until temp = 19 max 600
+until temp = 0 max 60
+go 73 21 tol 0.3
+expect y >= 39.9
+# Chain 8: platform 8 (walk 40) to 9 (walk 44), 3 saucers.
+go 76.50 25.40 tol 0.15
+face 180
+until temp = 19 max 600
+until temp = 0 max 60
+wait 18
+go 76.50 28.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 76.50 31.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 76.50 34.00 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 76.50 37.00 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 43.9
+# Chain 9: platform 9 (walk 44) to 10 (walk 47), 2 saucers.
+go 72.60 39.50 tol 0.15
+face 270
+until temp = 19 max 600
+until temp = 0 max 60
+wait 18
+go 69.50 39.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 66.50 39.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 63.00 39.50 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 46.9
+# Chain 10: platform 10 (walk 47) to 11 (walk 50), 3 saucers.
+go 60.50 41.40 tol 0.15
+face 180
+until temp = 19 max 600
+until temp = 0 max 60
+wait 18
+go 60.50 44.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 60.50 47.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 60.50 50.00 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 60.50 53.00 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 49.9
+# Chain 11: platform 11 (walk 50) to 12 (walk 53), 2 saucers.
+go 63.40 55.50 tol 0.15
+face 90
+until temp = 19 max 600
+until temp = 0 max 60
+wait 18
+go 66.50 55.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 69.50 55.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 73.00 55.50 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 52.9
+# Chain 12: platform 12 (walk 53) to 13 (walk 56), 3 saucers.
+go 78.50 57.40 tol 0.15
+face 180
+until temp = 19 max 600
+until temp = 0 max 60
+wait 24
+go 78.50 60.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 78.50 63.50 jump 2.05 tol 0.3 max 300
+until ground = 1 max 200
+go 78.50 66.00 jump 1.55 tol 0.3 max 300
+until ground = 1 max 200
+go 78.50 69.00 jump 2.55 tol 0.3 max 300
+until ground = 1 max 200
+expect y >= 55.9
+# The red arrow on the last platform.
+go 80 71 until exit = 1 max 900
+until mission = 80 max 900
+expect phase = Play
+wait 60
