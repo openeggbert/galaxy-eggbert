@@ -62,4 +62,7 @@ drops of cheese, 11 under domes and ledges), the invert, the arrow.
   A→E lift boarded with a jump at four moments of its cycle (three rode up into E's tunnel);
   the low mine west of the hub passed crouching, and walking into it kills; the east drop into
   G; G's ledge lift jumped onto, ridden and the ledge with its treasure stepped onto; N's
-  helicopter taken and flown up the drop shaft into L.
+  helicopter taken and flown up the drop shaft into L. Re-checked with the authored lift timing
+  of 3b0a861: the A→E lift boarded at four moments (two ride up into E's tunnel, one stands on
+  it while it is down, one jumps into its shaft while it is up and waits under it); G's ledge
+  lift jumped onto while it waits at the bottom and ridden to the ledge's treasure.
