@@ -32,7 +32,8 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
   Tiles 15–31 and 49–60 have transparent parts: fine as props/plates, not as wall cubes. Since
   2026-10-26 a sprite tile (a quarter or more clear: doors, treasure doors, pillars, girders,
   bars, cobwebs) is drawn cut out, so it shows the scene behind it, not black; a tile with only
-  small gaps (stone walls) stays opaque. Check a tile's look in `Content/icons/object-m.png`
+  small gaps (stone walls) stays opaque. A tile whose collision mask is empty (185, the
+  backgrounds) is walk-through as in the original: no walls of it. Check a tile's look in `Content/icons/object-m.png`
   (icon i at x = 1 + (i % 20)·65, y = 1 + (i // 20)·65, 64 × 64).
 
 ## Tools
@@ -65,6 +66,8 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
   swims up with Ctrl/RightShift and drifts back up when idle (air gauge ≈ 25 s while under). He
   gets out by jumping at the surface onto a bank whose top is at most one block above the water's
   top cell (open air above him), or swims straight onto a bank no higher than that.
+- Teleporters (330-333): standing under one, after 6.4 s he arrives one cell +Z of the cell under
+  its partner, facing on (+Z): leave that cell and the one beyond it open.
 - Hubs: world signs and mission signs in niches (`sign_niche`); mission N > 1 behind a blue bar
   (182) one or two cells from its sign — it opens when mission N − 1 is won, and Blupi then
   arrives just outside it. Each world's last mission ends with the golden key (ObjectType21).

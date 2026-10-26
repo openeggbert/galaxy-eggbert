@@ -119,7 +119,7 @@ Found while building mission 011 (live, 2026-10-25):
 | D15 | Every platform lift is a black box | lift = one cube of icon 29, a bar over a stem with its lower 44 % transparent | **done** `7f02216` (bar + stem, `LiftVisual.hpp`) |
 | D16 | Walls, steps and edges merge into one flat colour | terrain drawn unlit: all faces equally bright | **done** `eeb9624` (one directional light + ambient, `TerrainLighting.hpp`) |
 | D17 | Partly transparent machine cubes (15-31) would show black holes in 3D | their 2D tiles let the backdrop through | **done** `2b7c60d` (cut out like the other sprite tiles, D31); walls still built of the opaque 1-14 (`tools/worlds/kit.py`) |
-| D18 | Chase camera pulled tight behind Blupi next to walls loses the view | wall collision brings the eye to Blupi's back | open; levels keep open sides (no 1-wide tunnels) |
+| D18 | Chase camera pulled tight behind Blupi next to walls loses the view | wall collision brings the eye to Blupi's back | **done** `fe7d351` (the camera rises over what blocks it, ChaseCameraElevation); levels still keep open sides |
 | D19 | Hubs: world pictures as mission signs, sign icons as doors, worlds 9-12 shown as copies of 1-4, no door slide, no gold bars, no golden-key ending | Galaxy's 2026-07-17 scheme | **done** `2f57bbc` (original's signs/doors/arrivals, `HubDoors.hpp`) |
 | D20 | Opened doors and collapsed bridges stay drawn | terrain mesh never rebuilt in play | **done** `2f57bbc` (`World::blockRevision()`) |
 | D21 | Crates 2D-era: X-only push, floor test at y 0, Blupi walks through them, no pull | — | **done** `1598ebc`, `fd67b3f`, clips `d098a0b` (solid, X/Z push with support, StopPop/Pop pull) |
@@ -135,6 +135,9 @@ Found while building mission 011 (live, 2026-10-25):
 | D31 | Sprite tiles drawn as opaque cubes/plates: black where the sprite is clear (doors 334-336, treasure doors 421+, pillars 399/76/375, girder 201, bars 51/138, balustrade 398, plate decor, cobwebs) | — | **done** (TileCoverage: alpha-test cutout pass, faint tiles blended; stone walls under a quarter clear stay opaque) |
 | D32 | Blupi cannot leave deep water onto a bank (bobs at the surface, sinks back) | full gravity while Surf, a kick while Nage | **done** `762d254` (swimming as Decor.cpp: no gravity, float band, dive, drift up, the weak jump out) |
 | D33 | The tank's own glue shot killed Blupi | contact is a sphere round him; the shot left from his position (the original starts it 35 px ahead) | **done** `85bc1ae` (his own shots never hit him) |
+| D34 | After a teleport Blupi faces the partner pillar (a step takes him back) and the camera eases over from the departure | arrival kept his yaw; the smoothed camera was never reset (also on a world load) | **done** `fe7d351` |
+| D35 | Flat-colour faces of DirectionalCube tiles show stripes; the facades 186-192 dark or red edges | an 8 x 8-texel swatch stretched over a face; facades sampled at their window | **done** `db0816f` |
+| D36 | The horizontal fans 126/129 show their base on the side they blow toward | base and open face swapped in the face table | **done** `6101598` |
 
 ## 6. Native world format: evolution policy
 
