@@ -293,6 +293,20 @@ namespace GalaxyEggbert::Game
         };
     }
 
+    bool IsClosedDirectionalCube(int icon)
+    {
+        CnaEngine::Graphics::BoxFaces faces;
+        ConfigureDirectionalCubeFaces(icon, CnaEngine::Graphics::UvRect{}, CnaEngine::Graphics::UvRect{}, faces);
+        for (const auto& face : faces)
+        {
+            if (!face.visible)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
     void ConfigureDirectionalCubeFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
                                        const CnaEngine::Graphics::UvRect& icon107Uv,
                                        CnaEngine::Graphics::BoxFaces& outFaces)

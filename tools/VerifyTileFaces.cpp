@@ -59,6 +59,12 @@ int main()
     check(face(window, BoxFace::PositiveZ).uv.u0 == tile.u0 && face(window, BoxFace::PositiveZ).uv.u1 == tile.u1,
           "its front (+Z) shows the whole tile");
 
+    // Closed cubes occlude (D47): the machine panel draws all six faces, the grate (200) has no
+    // top or bottom, icon 107 no top.
+    check(GalaxyEggbert::Game::IsClosedDirectionalCube(10), "the machine panel (10) is a closed cube");
+    check(!GalaxyEggbert::Game::IsClosedDirectionalCube(200) && !GalaxyEggbert::Game::IsClosedDirectionalCube(107),
+          "the grate (200) and icon 107 have open sides");
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

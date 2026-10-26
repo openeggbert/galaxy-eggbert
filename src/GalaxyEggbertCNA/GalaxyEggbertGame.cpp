@@ -967,6 +967,8 @@ namespace GalaxyEggbert::CNA
 
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_, tileCoverage_);
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
+        std::cout << "GalaxyEggbertCNA: world terrain built — " << terrainRenderer_->BlockCount() << " blocks, "
+                  << terrainRenderer_->VertexCount() << " vertices." << std::endl;
     }
 
     void GalaxyEggbertGame::AdvanceAfterWin()

@@ -221,7 +221,8 @@ namespace GalaxyEggbert::Game
                                    const CnaEngine::Graphics::UvRect& icon107Uv,
                                    const Microsoft::Xna::Framework::Vector3& center,
                                    bool plateRotated,
-                                   CnaEngine::Graphics::MeshBuilder& mesh)
+                                   CnaEngine::Graphics::MeshBuilder& mesh,
+                                   std::uint8_t hiddenFaces = 0)
         {
             using CnaEngine::Graphics::BoxFace;
             const int lookupIcon = static_cast<int>(definition.type);
@@ -230,6 +231,13 @@ namespace GalaxyEggbert::Game
             {
                 ConfigureDirectionalCubeFaces(
                     lookupIcon, tileUv, icon107Uv, directionalFaces);
+                for (int face = 0; face < 6; ++face)
+                {
+                    if (hiddenFaces & (1u << face))
+                    {
+                        directionalFaces[face].visible = false;
+                    }
+                }
 
                 if (IsTeleporterTipIcon(lookupIcon))
                 {
@@ -351,6 +359,22 @@ namespace GalaxyEggbert::Game
                    mode != GalaxyEggbert::BlockRenderMode::UniformCube;
         }
 
+        // IsClosedDirectionalCube for a block's definition, worked out once per icon.
+        bool IsClosedDirectionalCubeCached(const GalaxyEggbert::BlockDefinition& definition)
+        {
+            if (definition.renderMode != GalaxyEggbert::BlockRenderMode::DirectionalCube)
+            {
+                return false;
+            }
+            static std::array<std::int8_t, GalaxyEggbert::BlockDefinitionRegistry::DefinitionCount> cache{};
+            auto& known = cache[definition.type];
+            if (known == 0)
+            {
+                known = IsClosedDirectionalCube(static_cast<int>(definition.type)) ? 1 : -1;
+            }
+            return known > 0;
+        }
+
         // Face-culling occlusion test (NEXT.md §8 -- "add face-culling/
         // occlusion to TerrainRenderer"): true only for a block that is
         // guaranteed to be a plain, fully opaque 1x1x1 cube on every side --
@@ -391,12 +415,35 @@ namespace GalaxyEggbert::Game
             }
 
             const int icon = static_cast<int>(block.type());
-            if (definition.alphaBlend || IsSpecialGeometryIcon(icon))
+            if (definition.alphaBlend || (IsSpecialGeometryIcon(icon) && !IsClosedDirectionalCubeCached(definition)))
             {
                 return false;
             }
 
             return CoverageOf(tileCoverage, icon) == TileCoverage::Opaque;
+        }
+
+        // A face of a DirectionalCube hidden by its neighbour (IsOccluderBlock), as a plain cube's
+        // faces are: the machine panel (10) and its kin fill whole worlds, and drawing every face
+        // between two of them overflowed the GPU's vertex buffer (D47).
+        std::uint8_t HiddenFaceMask(const Worlds::World& world, int blocksPerAxis, int x, int y, int z,
+                                    const std::vector<TileCoverage>& tileCoverage)
+        {
+            using CnaEngine::Graphics::BoxFace;
+            struct Side { BoxFace face; int dx, dy, dz; };
+            static constexpr Side kSides[] = {
+                {BoxFace::PositiveZ, 0, 0, 1}, {BoxFace::NegativeZ, 0, 0, -1}, {BoxFace::PositiveX, 1, 0, 0},
+                {BoxFace::NegativeX, -1, 0, 0}, {BoxFace::PositiveY, 0, 1, 0}, {BoxFace::NegativeY, 0, -1, 0},
+            };
+            std::uint8_t mask = 0;
+            for (const auto& side : kSides)
+            {
+                if (IsOccluderBlock(world, blocksPerAxis, x + side.dx, y + side.dy, z + side.dz, tileCoverage))
+                {
+                    mask |= static_cast<std::uint8_t>(1u << static_cast<unsigned>(side.face));
+                }
+            }
+            return mask;
         }
     }
 
@@ -521,7 +568,11 @@ namespace GalaxyEggbert::Game
                     case TileCoverage::Opaque:
                         break;
                     }
-                    if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh))
+                    const std::uint8_t hiddenFaces =
+                        definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube
+                            ? HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage)
+                            : std::uint8_t{0};
+                    if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh, hiddenFaces))
                     {
                         continue;
                     }

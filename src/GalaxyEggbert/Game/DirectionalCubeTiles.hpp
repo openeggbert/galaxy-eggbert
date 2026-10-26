@@ -56,4 +56,9 @@ namespace GalaxyEggbert::Game
     void ConfigureDirectionalCubeFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
                                        const CnaEngine::Graphics::UvRect& icon107Uv,
                                        CnaEngine::Graphics::BoxFaces& outFaces);
+
+    // True for a DirectionalCube icon whose six faces are all drawn (its texture or a colour
+    // swatch on each, no open side such as icon 200's top and bottom): with opaque texels it hides
+    // what lies behind any of its sides, so the terrain can cull faces against it.
+    [[nodiscard]] bool IsClosedDirectionalCube(int icon);
 }
