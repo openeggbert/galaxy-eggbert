@@ -223,6 +223,15 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   model faithful; its 0.65 comes from the thin leaves and the sprite cut at the icon's bottom edge,
   not from a wrong shape. The owner will send the list of models that look wrong (D11).
 - `BB3D-032` fish head ~15 % large; `BB3D-050` grass blades wide; procedural textures flat.
+  Tried 2026-10-27 on palm 1a's trunk: its marble blend (`smix` of three browns by `smrb`)
+  baked into the free-form's atlas with an approximate seeded noise. It did not bring the model
+  nearer its sprite: mean colour error on the trunk 27.7 -> 32.1, luminance spread 15.4 -> 19.6
+  against the sprite's 21.9. The sprite's bark grain comes from the shader's bump channel (a
+  blend by spots), and the model is lighter overall (mean 156 vs 133 red): Ray Dream's lighting
+  (highlights, metal reflection), not the colour pattern, is most of the difference, also on
+  the keys, the chest and the bulldozer. Without Ray Dream's noise the patterns cannot be
+  reproduced; the prototype was not kept. Matching the sprites' tone is a lighting question
+  for the owner.
 - Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
   Recede/Advance clips; checked live in 012).
 - Win cheer: done (D29, Win clip `3415d3f`).
