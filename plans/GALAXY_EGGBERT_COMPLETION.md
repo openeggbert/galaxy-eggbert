@@ -210,7 +210,10 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   object of `world999` (D11), recorded per object: source, IoU, live view, verdict. 2026-10-26:
   the silhouette match against each object's own sprites (`avatars3d/objects/*/icons.txt`, the
   library's IoU per icon) is 0.88-1.00 for 76 of the 82 models. The weakest, to look at first:
-  the bird (min 0.60, mean 0.88: some wing frames), the plants 3a-c (0.65-0.69), the follow
+  the bird (min 0.60, mean 0.88: some wing frames; matched every 5 degrees instead of 15 since,
+  mean 0.90, min 0.67: its turning frames now pick the right heading, e.g. icon 112 0.91 -> 0.97;
+  the rest are thin wings and legs a pixel off at 60 pixels, not a wrong shape: compare sheet
+  and live in 084), the plants 3a-c (0.65-0.69), the follow
   star (min 0.77), the plants 1a-d (0.83-0.86), the fish (min 0.85, BB3D-032) and the drink
   (0.88). Silhouettes do not measure colour: the flat procedural textures remain. The live
   exhibition (rows z 27-54, x 78-96; stand at x 76.5) shows no model gross enough to name
