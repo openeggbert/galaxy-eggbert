@@ -60,5 +60,8 @@ arrow; the real world stops where switches, dynamite, the jeep, swimming and the
 wing, the pocket, the key room's band, the region, the tower inside and its top with the sticks,
 the corridor and the crates, the cage with its curtain, the creature's corridor, the stones, the
 lake's island, the overcrafts, the north-east and its teleporter, the bridges, the funnel. Played
-live: an overcraft mounted and hovered over the cavern's lava to the far floor. Not played through
-live: the dynamite on the crates, a jeep on the lift and the mine row.
+live: an overcraft mounted and hovered over the cavern's lava to the far floor. Played through,
+every part, by `tools/autoplay/world065.txt`: the tower's saw steps and switches, a stick's blasts
+on the nine crates and the blue key, the creature's corridor, the stones, the lake, an overcraft
+over the lava, a jeep on the lift over the mine row, the niche's eggs, teleporter 2, the bridges
+and the funnel (ten eggs, the most taken). It found D59 (two sticks taken from the tower).

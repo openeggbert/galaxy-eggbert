@@ -102,9 +102,13 @@ to T2 (in the open room they could be walked round). The whole campaign plays in
 `tools/autoplay/campaign.txt` (from `tools/autoplay_campaign.py`, which climbs the main hub's
 tiers at x 50 between the signs; the summit's tunnel along z 44 past the gold bars to 199):
 `tools/autoplay.sh build-cna-opengl3 tools/autoplay/campaign.txt 1`, 737915 ticks, a couple of
-hours of wall time; it includes every mission's script, so it is the full replay. Not played by
-any script: 065's dynamite tower, blue door, lake and north-east, 066's middle and upper storeys
-(eggs only). levelcheck reports traps in 052 and 054 that the wasp's balloon leaves. Open: D11.
+hours of wall time; it includes every mission's script, so it is the full replay. 065 and 066
+are then played in every part (two agents: 065's tower, crates, lake, overcraft and jeep; 066's
+middle and upper storeys, which found a pit under its stair to B1, fixed `c2e4861`), which found
+D59: walking past sticks of dynamite took two, any stick on contact; now, as the original, one
+stick per press of Action while none is carried or flying (`c4a539f`; the seven scripts that
+take sticks press Action). levelcheck reports traps in 052 and 054 that the wasp's balloon
+leaves; 066's blupit can be walked round (B1 wider than its line of fire, left). Open: D11.
 
 Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
 variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.
