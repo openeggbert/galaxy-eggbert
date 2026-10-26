@@ -1,0 +1,327 @@
+# Mission 024 played through (plans/briefs/world024.md).
+wait 30
+expect mission = 24
+expect lives = 3
+# The start room (walk 11): its crate pushed -Z beside the corner ledge (x 42-44), climbed,
+# and the ledge's egg (walk 14).
+go 45 48
+face 0
+go 45 43.45 tol 0.1 max 300
+crate 45 11 42 max 10
+go 45 42 jump 1.4
+until ground = 1
+expect y >= 11.95
+face -90
+go 43.2 42 jump 1.8
+until ground = 1
+expect y >= 13.95
+go 43 41 until eggs = 1
+until eggs = 1 max 120
+# North: up the stairwell's eight two-block steps along x 50 (clear of the saws at 51 30 and
+# 49 21 and the mine at 51 18), the egg on step 4.
+go 43 43
+until ground = 1
+go 50 40
+face 0
+go 50 37.4 jump 1.8
+until ground = 1
+expect y >= 12.95
+go 50 34.4 jump 2.0
+until ground = 1
+expect y >= 14.95
+go 50 31.4 jump 2.0
+until ground = 1
+expect y >= 16.95
+go 50 28.4 jump 2.0
+until ground = 1
+expect y >= 18.95
+go 49.3 27.3 until eggs = 2
+until eggs = 2 max 120
+go 50 27.4
+face 0
+go 50 25.4 jump 1.8
+until ground = 1
+expect y >= 20.95
+go 50 22.4 jump 2.0
+until ground = 1
+expect y >= 22.95
+go 50 19.4 jump 2.0
+until ground = 1
+expect y >= 24.95
+go 50 16.4 jump 2.0
+until ground = 1
+expect y >= 26.95
+# The top room: walk (never jump) the corridor under the hanging mines to the blue key.
+go 50 4.3 tol 0.1
+wait 60
+# The egg in the room's west part, round the mine at (45 27 5); back down the stairwell.
+go 47 4.4
+go 46.5 6
+go 46 11 until eggs = 3
+until eggs = 3 max 120
+go 46.5 6
+go 47 4.2
+go 50 4.2
+go 50 6
+go 50 41
+until ground = 1
+expect y <= 11.05
+# East: into the cage (x 61-71, z 46-54), onto west ledge 1 (walk 13), L1 (z 49, feet 13)
+# across to the foot of east ledge 1 (walk 15).
+go 58 50
+go 60.6 50
+face 90
+go 62.6 50 jump 1.6
+until ground = 1
+expect y >= 12.95
+go 63.3 49 tol 0.08
+face 90
+lift 64 13 49 max 400
+go 64 49 tol 0.15
+lift 68 13 49 max 300
+go 69.6 49 jump 1.7
+until ground = 1
+expect y >= 14.95
+# L2 (z 51, feet 15) back to the foot of west ledge 2 (walk 17): its egg (a saw at 62 48).
+go 69.3 51
+go 68.7 51 tol 0.08
+face -90
+lift 68 15 51 max 400
+go 68 51 tol 0.15
+lift 64 15 51 max 300
+go 62.4 51 jump 1.7
+until ground = 1
+expect y >= 16.95
+go 62.4 52 until eggs = 4
+until eggs = 4 max 120
+# L3 (z 49, feet 17, there in 0.75 s, 2 ticks at each end): stepped on as it arrives, off
+# by a jump onto east ledge 2 (walk 19) as it stops.
+go 63.3 49.5
+go 63.3 49 tol 0.08
+face 90
+lift 64 17 49 max 600
+hold 17 up
+lift 68 17 49 max 300
+go 69.6 49 jump 1.8
+until ground = 1
+expect y >= 18.95
+# L4 (z 51, feet 19) to the foot of west ledge 3 (walk 21).
+go 69.3 51
+go 68.7 51 tol 0.08
+face -90
+lift 68 19 51 max 600
+go 68 51 tol 0.15
+lift 64 19 51 max 400
+go 62.4 51 jump 1.7
+until ground = 1
+expect y >= 20.95
+# L5 (z 49, feet 21, 3 ticks at each end) to east ledge 3 (walk 23): the red key, an egg.
+go 63.3 49.5
+go 63.3 49 tol 0.08
+face 90
+lift 64 21 49 max 600
+hold 12 up
+lift 68 21 49 max 300
+go 69.6 49 jump 1.8
+until ground = 1
+expect y >= 22.95
+go 69.4 50
+go 69.4 52 until eggs = 5
+until eggs = 5 max 120
+# Off the ledge's east side down to the yard, out of the cage under the bars (z 54), round
+# to the room.
+go 72 52
+until ground = 1
+expect y <= 11.05
+go 72 56
+go 60 56
+go 60 50
+go 57 50
+go 55.5 47.5
+go 44 47.5
+go 42.5 50
+go 40 50
+# West: the lava hall. Over the entry ledge clear of its saw (35 53) and its hanging mines
+# (37, z 49-51), the gap at x 33 jumped onto the first pier (x 31-32).
+go 39 47.5
+go 35.5 47.5
+go 35 50
+face -90
+go 31.5 50 jump 2.4
+until ground = 1
+expect y >= 10.95
+# The piers: onto each lift (x 30, 26, 22) when it is up, over the second cell by a jump.
+go 30.75 50 tol 0.08
+lift 30 11 50 max 400
+go 30 50 tol 0.15
+go 27.6 50 jump 2.5
+until ground = 1
+expect y >= 10.95
+go 28 49 until eggs = 6
+until eggs = 6 max 120
+go 27.5 50
+go 26.75 50 tol 0.08
+face -90
+lift 26 11 50 max 400
+go 26 50 tol 0.15
+go 23.6 50 jump 2.5
+until ground = 1
+expect y >= 10.95
+go 22.75 50 tol 0.08
+lift 22 11 50 max 400
+go 22 50 tol 0.15
+go 19.6 50 jump 2.5
+until ground = 1
+expect y >= 10.95
+# The gap at x 18 to the far platform: the green key and an egg.
+go 19.1 50 tol 0.08
+go 16 50 jump 2.9
+until ground = 1
+expect y >= 10.95
+go 13 50
+go 13 48 until eggs = 7
+until eggs = 7 max 120
+# Back east: the gap at x 18, then each pair of cells jumped from pier to pier, onto the
+# lift or past it (wait for it to be up first, so a short landing finds it there).
+go 16.6 50
+face 90
+go 19.5 50 jump 2.5
+until ground = 1
+expect y >= 10.95
+go 20.3 50 tol 0.08
+lift 22 11 50 max 400
+go 23.6 50 jump 3.4
+until ground = 1
+go 23.6 50 max 300
+expect y >= 10.95
+go 24.3 50 tol 0.08
+lift 26 11 50 max 400
+go 27.6 50 jump 3.4
+until ground = 1
+go 27.6 50 max 300
+expect y >= 10.95
+go 28.3 50 tol 0.08
+lift 30 11 50 max 400
+go 31.6 50 jump 3.4
+until ground = 1
+go 31.6 50 max 300
+expect y >= 10.95
+go 32.2 50 tol 0.08
+go 35.2 50 jump 3.1
+until ground = 1
+expect y >= 10.95
+go 35.5 47.5
+go 39 47.5
+go 40 50
+go 42.5 50
+# The shrine's red, green and blue doors (z 56, 55, 54) opened with the three keys.
+go 44 57.6
+go 50 57.6
+face 0
+go 50 54.4 tol 0.1
+expect z <= 54.6
+# South: the flooded gallery (x 43-47): in from the room, dive under the curtain (z 65, open
+# below y 9) along x 46.5, clear of the fish (x 44, y 7), surface and out onto the tower's
+# landing (walk 11).
+go 50 57.6
+go 46 59
+face 180
+go 46 62
+go 46.6 63
+hold 150 crouch
+go 46.6 67
+hold 150 lookup
+go 46.6 75.8
+go 46.6 77.4 jump 2
+until ground = 1
+expect y >= 10.95
+# The treasure tower: round the core's east side (clear of the mine at 52 79) to the
+# landing's egg; the crate pushed -Z under shelf 1, climbed, and shelf 1 (walk 14).
+go 50 77.6
+go 50.5 87
+go 52 88 until eggs = 8
+until eggs = 8 max 120
+go 46 89.4
+face 0
+go 46 87.45 tol 0.1 max 300
+crate 46 11 86 max 10
+go 46 86 jump 1.4
+until ground = 1
+expect y >= 11.95
+go 46 84.6 jump 2.0
+until ground = 1
+expect y >= 13.95
+go 45 85 until treasures = 1
+until treasures = 1 max 120
+# Shelf 2 (east, walk 16): its treasure and egg; the fast lift (50 78, feet 16 -> 20) and a
+# jump off it at the top onto shelf 3 (north, walk 20).
+go 47.8 84.6
+face 90
+go 49.6 84.6 jump 1.8
+until ground = 1
+expect y >= 15.95
+go 50 84 until eggs = 9
+until eggs = 9 max 120
+go 50 80 until treasures = 2
+until treasures = 2 max 120
+go 50 78.7 tol 0.05
+face 0
+lift 50 16 78 max 400
+hold 6 up
+lift 50 20 78 max 200
+go 50 76.6 jump 3
+until ground = 1
+expect y >= 19.95
+# Shelf 3's treasure along z 76 (a saw at 47 77); the short lift (42 77, feet 20 -> 22),
+# a jump off it at the top onto shelf 4 (west, walk 22): its treasure and egg.
+go 49 76
+go 45 76 until treasures = 3
+until treasures = 3 max 120
+go 43.5 76.6
+go 42.7 77 tol 0.05
+face -90
+lift 42 20 77 max 400
+hold 6 up
+face 180
+lift 42 22 77 max 300
+go 42.5 79 jump 3
+until ground = 1
+expect y >= 21.95
+go 42.4 81 until treasures = 4
+until treasures = 4 max 120
+go 43 83 until eggs = 10
+until eggs = 10 max 120
+# Shelf 5 (the top, walk 24): its treasure (its egg would be the eleventh: at ten eggs the
+# original takes no more, MAX_EGG_COUNT).
+go 42.8 83.3 tol 0.1
+face 180
+go 42.8 84.8 jump 1.8
+until ground = 1
+expect y >= 23.95
+go 45 85 until treasures = 5
+until treasures = 5 max 120
+# Down off shelf 5's south side to the landing, round the core's east side, into the gallery:
+# dive under the curtain going -Z, surface and out into the room; the shrine's red arrow.
+go 45 87.6
+until ground = 1
+expect y <= 11.05
+go 50 87
+go 50 77.1
+go 46.6 77.1
+face 0
+go 46.6 75
+hold 150 crouch
+go 46.6 63.5
+hold 150 lookup
+go 46 62.5
+go 46 60 jump 2
+until ground = 1
+expect y >= 10.95
+go 46 58
+go 50 57.6
+go 50 52 until exit = 1
+expect treasures = 5
+until mission = 20 max 900
+expect lives = 13
+expect phase = Play
+wait 120
