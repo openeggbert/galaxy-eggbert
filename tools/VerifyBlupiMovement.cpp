@@ -2007,6 +2007,27 @@ int main(int argc, char** argv)
                       "a hair inside a ledge just above his feet, he stands on it, not shoved off it (D56)");
             }
 
+            // D57: standing on a ledge with a foot on a lift's edge, the lift going down does not
+            // pull him through the ledge; off any ground it carries him down as ever.
+            {
+                Worlds::World ledge;
+                ledge.setBlock(50, 31, 50, Worlds::Block::make(396));
+                BlupiController stander;
+                stander.SetPosition(0.0f, 32.0f, 0.0f);
+                stander.RideLift(ledge, 0.0f, 31.9f, 0.55f);
+                Worlds::World open;
+                BlupiController rider;
+                rider.SetPosition(0.0f, 32.0f, 0.0f);
+                rider.RideLift(open, 0.0f, 31.9f, 0.0f);
+                BlupiController edge;
+                edge.SetPosition(0.0f, 32.0f, 0.6f);          // his centre past the ledge, a foot on it
+                edge.RideLift(ledge, 0.0f, 31.9f, 0.6f);
+                check(std::fabs(stander.GetY() - 32.0f) < 1e-4f && std::fabs(edge.GetY() - 32.0f) < 1e-4f &&
+                          std::fabs(rider.GetY() - 31.9f) < 1e-4f,
+                      "a lift going down leaves him on the ledge he stands on (a foot on it is enough), carries "
+                      "him off ground (D57)");
+            }
+
             BlupiController heliRider;
             heliRider.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliRider.HasVehicleHazardImmunity(),

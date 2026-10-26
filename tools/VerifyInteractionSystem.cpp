@@ -1427,9 +1427,15 @@ int main(int argc, char** argv)
         completePendingVoyage(world, doorInteraction);
         check(doorInteraction.Key1Count() == 1, "picking up the key increments Key1Count() to 1");
 
+        // D58: a door of several cells (a 3D doorway's width and height) opens whole with one key.
+        world.GetWorldMutable().setBlock(48, 2, 90, Worlds::Block::make(BlockTypes::Door1));
+        world.GetWorldMutable().setBlock(48, 3, 90, Worlds::Block::make(BlockTypes::Door1));
         doorInteraction.Update(dt, world, 48.0f - 50.0f, 1.0f, 89.0f - 50.0f, 0.0f, sound, false, false, 0, 1);
         check(doorTileType() != BlockTypes::Door1,
               "the door opens (tile no longer Door1) once Blupi approaches while holding the key");
+        check(world.GetWorld().getBlock(48, 2, 90).type() != BlockTypes::Door1 &&
+                  world.GetWorld().getBlock(48, 3, 90).type() != BlockTypes::Door1,
+              "one key opens the whole door, every cell of it touching the one reached (D58)");
         check(doorInteraction.Key1Count() == 0, "the key is consumed on use (real behavior), not just on pickup");
         bool slideShowsDoor = false;
         for (const auto& obj : world.GetMobileObjects())

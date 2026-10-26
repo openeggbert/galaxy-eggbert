@@ -658,6 +658,11 @@ namespace GalaxyEggbert::Game
         // this is NOT a teleport (no animation/state reset beyond velocity)
         // since it's called every single frame while riding, not once.
         void RideLift(float x, float y, float z) noexcept;
+        // The same, but a lift going down does not take him off ground he stands on: with a foot
+        // still on its edge (D54) while he stands on the ledge beside it, the snap used to pull him
+        // down through the ledge (D57, 107's landing). The original moves him by the lift's vector
+        // through its usual collision test, which the ledge stops.
+        void RideLift(const Worlds::World& world, float x, float y, float z) noexcept;
 
         // Sets facing directly — useful for tests/tools that need to face a
         // specific direction without stepping turnInput to get there (see

@@ -2025,7 +2025,35 @@ namespace GalaxyEggbert::Game
                                      (keyType == 51 && keys3_ > 0);
                 if (hasKey)
                 {
-                    OpenDoorAt(worldRuntime, gx, probeGY, gz, sound);
+                    // The whole door: a 3D door is a block of cells of its icon (a doorway's width
+                    // and height), the original's one tile. Opening only the probed cell, which a
+                    // diagonal facing can make one off his way, spent the key and left the doorway
+                    // shut (D58, 107's red door).
+                    std::vector<std::array<int, 3>> door{{gx, probeGY, gz}};
+                    for (std::size_t k = 0; k < door.size() && door.size() < 64; ++k)
+                    {
+                        const auto [cx, cy, cz] = door[k];
+                        constexpr int kSides[6][3] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+                        for (const auto& side : kSides)
+                        {
+                            const int nx = cx + side[0], ny = cy + side[1], nz = cz + side[2];
+                            if (nx < 0 || ny < 0 || nz < 0 || nx >= axis || ny >= axis || nz >= axis ||
+                                std::find(door.begin(), door.end(), std::array<int, 3>{nx, ny, nz}) != door.end())
+                            {
+                                continue;
+                            }
+                            if (terrain.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(ny),
+                                                 static_cast<std::uint16_t>(nz))
+                                    .type() == icon)
+                            {
+                                door.push_back({nx, ny, nz});
+                            }
+                        }
+                    }
+                    for (const auto& [cx, cy, cz] : door)
+                    {
+                        OpenDoorAt(worldRuntime, cx, cy, cz, sound);
+                    }
                     if (keyType == 49) keys1_ = 0;
                     else if (keyType == 50) keys2_ = 0;
                     else if (keyType == 51) keys3_ = 0;

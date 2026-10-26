@@ -323,6 +323,24 @@ namespace GalaxyEggbert::Game
         m_onGround = true;
     }
 
+    void BlupiController::RideLift(const Worlds::World& world, float x, float y, float z) noexcept
+    {
+        // Ground under any part of his foot (the vertigo test's, 0.15 either way: D54's reach).
+        constexpr float kFoot = 0.15f;
+        constexpr float kFootPoints[5][2] = {{0.0f, 0.0f}, {kFoot, 0.0f}, {-kFoot, 0.0f}, {0.0f, kFoot}, {0.0f, -kFoot}};
+        if (y < m_y)
+        {
+            for (const auto& foot : kFootPoints)
+            {
+                if (IsPointSolid(world, m_x + foot[0], m_y - 0.05f, m_z + foot[1], false, false))
+                {
+                    return;
+                }
+            }
+        }
+        RideLift(x, y, z);
+    }
+
     bool BlupiController::IsSolidAt(const Worlds::World& world, int gx, int gy, int gz)
     {
         // Deliberately just "non-air", NOT sub-tile-aware (reverted

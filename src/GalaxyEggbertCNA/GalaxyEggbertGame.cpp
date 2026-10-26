@@ -3896,8 +3896,8 @@ namespace GalaxyEggbert::CNA
             // delta-vs-snap rationale.
             if (interaction_.IsRidingLift())
             {
-                blupi_.RideLift(blupi_.GetX() + interaction_.RideDeltaX(), interaction_.RideStandY(),
-                                 blupi_.GetZ() + interaction_.RideDeltaZ());
+                blupi_.RideLift(worldRuntime_.GetWorld(), blupi_.GetX() + interaction_.RideDeltaX(),
+                                interaction_.RideStandY(), blupi_.GetZ() + interaction_.RideDeltaZ());
             }
 
             // Secret power grants (plan.md E3D-MIG-170) -- Shield is real,
