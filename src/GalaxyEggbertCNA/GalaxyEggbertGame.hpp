@@ -200,6 +200,10 @@ namespace GalaxyEggbert::CNA
         // live GraphicsDevice.
         std::unique_ptr<GalaxyEggbert::Game::TerrainRenderer> terrainRenderer_;
         std::uint32_t terrainRevision_ = 0; // World::blockRevision() terrainRenderer_ was built from
+        // The ShowSecret cheat (3, Decor::CheatAction's m_bDrawSecret): the flight barrier (214),
+        // invisible in play, is drawn while it is on and in the editor (TerrainDrawSecret()).
+        bool cheatShowSecret_ = false;
+        bool terrainDrawSecret_ = false;   // whether terrainRenderer_ was built drawing it
         bool holdingCrate_ = false;        // crouching with a crate in front, to pull it (StopPop/Pop)
         bool winCheerActive_ = false;      // the Win cheer at the exit plays; then AdvanceAfterWin()
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> terrainEffect_;
@@ -429,6 +433,8 @@ namespace GalaxyEggbert::CNA
         // Builds the terrain mesh again when the world's blocks changed since it was built
         // (`Worlds::World::blockRevision()`): doors opened in play, hub doors at load.
         void RefreshTerrainMeshIfChanged();
+        // Whether the terrain draws the flight barrier now: the ShowSecret cheat, or the editor.
+        [[nodiscard]] bool TerrainDrawSecret() const noexcept;
 
         // After a won mission: unlocks what it opens and loads where it leads (the hub, the main
         // hub after a golden key, 199 after the main hub's exit).
@@ -526,15 +532,10 @@ namespace GalaxyEggbert::CNA
         // CheatCodes)`, correcting several wrong/imprecise draft
         // descriptions from an earlier, unverified plan.md pass (see
         // InteractionSystem.hpp's own per-cheat comments for exactly
-        // what each one corrects). Cheat3 "ShowSecret" is NOT implemented
-        // -- the real effect gates rendering of "hidden ObjectType12
-        // secret-decor icons", but this engine's own ObjectType12 is
-        // already a confirmed, unrelated real type (a pushable crate,
-        // plan.md E3D-MIG-15x) -- whether the real citation means the
-        // MoveObject enum value or an unrelated STATIC TILE icon that
-        // happens to also be "12" was not resolved this session, and
-        // guessing risks silently reusing the crate machinery for the
-        // wrong feature. A documented gap, not a silent omission.
+        // what each one corrects). Cheat3 "ShowSecret" toggles m_bDrawSecret: the flight
+        // barrier (214) is drawn (Decor.cpp:930). The original also stamps icon 214 over crates
+        // (ObjectType12) whose icon is not 32-34 (Decor.cpp:896); Galaxy's crates are 3D models
+        // without that icon field, so that half is not reproduced.
         void ApplyCheat(int cheatNumber);
         GalaxyEggbert::Def::GamePhase phase_ = GalaxyEggbert::Def::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;

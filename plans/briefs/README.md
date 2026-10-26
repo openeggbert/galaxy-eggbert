@@ -72,7 +72,8 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
   vehicle that meets water is wrecked and Blupi drops in (013's "it dislikes water!").
 - The flight barrier (214): a wall that stops Blupi on foot and in the jeep, tank and skateboard,
   and lets the helicopter and the overcraft through (D49, `Decor::DecorDetect`); a route only a
-  flying vehicle may take. `flightcheck.py` flies through it.
+  flying vehicle may take. Invisible in play, as the original (only the ShowSecret cheat and the
+  editor draw it): mark where it stands with the level's shape. `flightcheck.py` flies through it.
 - Signs and flat plates read upright and unmirrored from both sides since D48: a sign needs no
   particular facing.
 - Water: Blupi floats at the surface (feet ≈ 0.28 into the top water cell), dives with LeftShift,

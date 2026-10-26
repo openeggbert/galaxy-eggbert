@@ -407,6 +407,12 @@ namespace GalaxyEggbert::Game
                 return false;
             }
 
+            // The flight barrier is drawn only by the ShowSecret cheat (and in the editor), so it
+            // never hides its neighbours' faces.
+            if (block.type() == GalaxyEggbert::BlockTypes::FlightBarrier)
+            {
+                return false;
+            }
             const auto& definition = GalaxyEggbert::GetBlockDefinition(block.type());
             const std::uint16_t animBase = definition.animation.baseIcon;
             if (IsWater(animBase) || IsAnimated(animBase))
@@ -450,7 +456,7 @@ namespace GalaxyEggbert::Game
     TerrainRenderer::TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                          const Worlds::World& world,
                                          const TileAtlas& tileAtlas,
-                                         const std::vector<TileCoverage>& tileCoverage)
+                                         const std::vector<TileCoverage>& tileCoverage, bool drawSecret)
         : m_tileAtlas(&tileAtlas)
     {
         // Icons 108/109's DirectionalCube entry reuses icon 107's own side
@@ -479,6 +485,12 @@ namespace GalaxyEggbert::Game
                                                        static_cast<std::uint16_t>(y),
                                                        static_cast<std::uint16_t>(z));
                     if (block.isAir())
+                    {
+                        continue;
+                    }
+                    // The flight barrier (214) is invisible in play: Decor::DrawDecor skips it
+                    // unless m_bDrawSecret (the ShowSecret cheat, Decor.cpp:930).
+                    if (!drawSecret && block.type() == GalaxyEggbert::BlockTypes::FlightBarrier)
                     {
                         continue;
                     }

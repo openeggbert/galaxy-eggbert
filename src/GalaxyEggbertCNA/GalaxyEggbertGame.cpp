@@ -965,7 +965,9 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_, tileCoverage_);
+        terrainDrawSecret_ = TerrainDrawSecret();
+        terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_, tileCoverage_,
+                                                             terrainDrawSecret_);
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         std::cout << "GalaxyEggbertCNA: world terrain built — " << terrainRenderer_->BlockCount() << " blocks, "
                   << terrainRenderer_->VertexCount() << " vertices." << std::endl;
@@ -994,15 +996,23 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::RefreshTerrainMeshIfChanged()
     {
-        // Blocks changed in play (a door opened, a hub door slid away): the terrain mesh is
-        // built from the blocks, so build it again.
-        if (terrainRenderer_ && worldRuntime_.GetWorld().blockRevision() != terrainRevision_)
+        // Blocks changed in play (a door opened, a hub door slid away), or the flight barrier's
+        // visibility (ShowSecret, the editor): the terrain mesh is built from the blocks, so
+        // build it again.
+        if (terrainRenderer_ && (worldRuntime_.GetWorld().blockRevision() != terrainRevision_ ||
+                                 TerrainDrawSecret() != terrainDrawSecret_))
         {
+            terrainDrawSecret_ = TerrainDrawSecret();
             terrainRenderer_ =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), tileAtlas_,
-                                                  tileCoverage_);
+                                                  tileCoverage_, terrainDrawSecret_);
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         }
+    }
+
+    bool GalaxyEggbertGame::TerrainDrawSecret() const noexcept
+    {
+        return cheatShowSecret_ || phase_ == GalaxyEggbert::Def::GamePhase::Editor;
     }
 
     void GalaxyEggbertGame::LoadMission(int missionNumber)
@@ -1672,7 +1682,9 @@ namespace GalaxyEggbert::CNA
             case 2: // SuperBlupi -- pure invincibility toggle, NOT "all abilities" (an earlier draft was wrong)
                 blupi_.SetCheatSuperBlupi(!blupi_.GetCheatSuperBlupi());
                 break;
-            case 3: // ShowSecret -- NOT implemented, see this method's own header comment
+            case 3: // ShowSecret: draws the flight barrier (214), invisible in play (Decor.cpp:930)
+                cheatShowSecret_ = !cheatShowSecret_;
+                RefreshTerrainMeshIfChanged();
                 break;
             case 4: // "LayEgg" -- real effect sets lives to 9 (the enum name is misleading, no egg is spawned)
                 interaction_.SetLives(9);

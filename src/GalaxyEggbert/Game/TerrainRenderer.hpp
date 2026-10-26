@@ -39,7 +39,9 @@ namespace GalaxyEggbert::Game
         TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                           const Worlds::World& world,
                           const TileAtlas& tileAtlas,
-                          const std::vector<TileCoverage>& tileCoverage = {});
+                          const std::vector<TileCoverage>& tileCoverage = {},
+                          // Draw the flight barrier (214), invisible in play (ShowSecret, D49).
+                          bool drawSecret = false);
 
         // Rebuilds the animated-tile mesh for animPhase (no-op if unchanged
         // since the last call). Call once per frame with
