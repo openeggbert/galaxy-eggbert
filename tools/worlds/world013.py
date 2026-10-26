@@ -42,7 +42,6 @@ def main() -> int:
     # A. The hangar (walk 1): two helicopters; a window up high in its north wall.
     wall(w, X0, 0, 55, X1, 0, 67, rng, face_chance=0.1)
     shell(w, X0, 1, 55, X1, 10, 67, rng)
-    w.fill(43, 6, 55, 53, 8, 55, 0)                          # the window
     for x in (44, 52):
         w.place(O.HELICOPTER, x, 1, 60)
     w.hint_zone(0, X0 + 1, 1, 56, X1 - 1, 9, 66)
@@ -51,6 +50,8 @@ def main() -> int:
     # B. The pool hall: a ledge behind the window (walk 6), the pool below it (water 1-4).
     wall(w, X0, 0, 38, X1, 0, 54, rng, face_chance=0.1)
     shell(w, X0, 1, 38, X1, 10, 55, rng)
+    # The hangar's window, cut after the pool hall's shell, whose south wall is the same wall.
+    w.fill(43, 6, 55, 53, 8, 55, 0)
     wall(w, X0 + 1, 1, 50, X1 - 1, 5, 54, rng, face_chance=0.25)   # the ledge
     w.fill(X0 + 1, 1, 41, X1 - 1, 4, 49, WATER)
     w.hint_zone(2, X0 + 1, 6, 50, X1 - 1, 9, 54)
