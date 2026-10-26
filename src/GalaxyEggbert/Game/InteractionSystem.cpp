@@ -801,6 +801,9 @@ namespace GalaxyEggbert::Game
             return nullptr; // facing diagonally: no crate is in front
         }
         const float sign = alongX ? (facingX > 0.0f ? 1.0f : -1.0f) : (facingZ > 0.0f ? 1.0f : -1.0f);
+        // The nearest one: of a row of crates he holds the one touching him (D50).
+        const MobileObjSpec* nearest = nullptr;
+        float nearestAhead = 0.0f;
         for (const auto& obj : worldRuntime.GetMobileObjects())
         {
             if (!IsCrate(obj) || std::fabs(obj.currentY - blupiY) >= 0.5f)
@@ -809,12 +812,13 @@ namespace GalaxyEggbert::Game
             }
             const float ahead = (alongX ? obj.currentX - blupiX : obj.currentZ - blupiZ) * sign;
             const float aside = alongX ? obj.currentZ - blupiZ : obj.currentX - blupiX;
-            if (ahead > 0.3f && ahead < 2.2f && std::fabs(aside) < 0.6f)
+            if (ahead > 0.3f && ahead < 2.2f && std::fabs(aside) < 0.6f && (!nearest || ahead < nearestAhead))
             {
-                return &obj;
+                nearest = &obj;
+                nearestAhead = ahead;
             }
         }
-        return nullptr;
+        return nearest;
     }
 
     void InteractionSystem::OpenDoor(WorldRuntime& worldRuntime, int gx, int gy, int gz, Sound& sound)

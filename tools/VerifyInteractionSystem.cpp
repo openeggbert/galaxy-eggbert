@@ -4454,6 +4454,8 @@ int main(int argc, char** argv)
         placeCrate(55, 2, 55); // on the step, pushed +X onto the next crate
         placeCrate(56, 1, 55);
         placeCrate(52, 1, 42); // pulled
+        placeCrate(58, 1, 45); // a row of two: the one touching him is held (D50)
+        placeCrate(58, 1, 46);
         for (const float mineX : {42.0f, 44.0f}) // run over on the skateboard / walked into
         {
             GalaxyEggbert::MoveObjectRecord mine;
@@ -4500,6 +4502,14 @@ int main(int argc, char** argv)
             pullX -= 0.02f;
         }
         check(crateAt(51, 1, 42), "a held crate follows Blupi a cell as he backs away");
+        // D50: of two crates in a row the one touching him is held, whichever the list has first.
+        const auto heldZ = [&](float rawZ, float facingZ)
+        {
+            const auto* held = InteractionSystem::CrateInFront(crates, 58.0f - 50.0f, 1.0f, rawZ - 50.0f, 0.0f, facingZ);
+            return held ? held->currentZ + 50.0f : -1.0f;
+        };
+        check(std::fabs(heldZ(47.0f, -1.0f) - 46.0f) < 0.01f && std::fabs(heldZ(44.0f, 1.0f) - 45.0f) < 0.01f,
+              "of two crates in a row Blupi holds the nearer one, from either end (D50)");
 
         // D13: in the jeep, the tank or on the skateboard a mine is destroyed and Blupi lives.
         const auto mineActive = [&](float rawX)
