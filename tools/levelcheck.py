@@ -2,6 +2,10 @@
 """Conservative reachability check for a Galaxy Eggbert world: can Blupi get from the spawn to
 every treasure, key and egg and to the exit?
 
+Also finds traps: the exit must stay reachable from where each target is taken (a one-way drop
+into a pit with no way out is a softlock), and of any two treasures or keys one must be reachable
+from the other, so that some order takes them all (linear levels with one-way drops are fine).
+
 Searches the voxel grid with moves Blupi certainly has (BlupiController): walk to a neighbour
 cell, step off an edge and fall, jump (up to two blocks up, or across a gap of up to two cells,
 needing headroom, the arc's columns free at the apex's feet and head), ride a platform lift
@@ -139,10 +143,16 @@ def teleport_links(grid: Grid):
 
 
 def reachable(grid: Grid, start):
+    return graph(grid, start)[0]
+
+
+def graph(grid: Grid, start):
+    """The cells reachable from start and the moves between them (cell -> cells)."""
     links = lift_links(grid)
     for cell, targets in teleport_links(grid).items():
         links[cell] |= targets
     seen = {start}
+    edges = collections.defaultdict(set)
     queue = collections.deque([start])
     axis = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     while queue:
@@ -178,10 +188,62 @@ def reachable(grid: Grid, start):
             if grid.free(n) and grid.safe(n):
                 nexts.append(n)
         for n in nexts:
+            edges[(x, y, z)].add(n)
             if n not in seen:
                 seen.add(n)
                 queue.append(n)
-    return seen
+    return seen, edges
+
+
+def onward_sets(cells, edges):
+    """For every cell, the bit set of the strongly connected components it can reach (one bit
+    per component), and each cell's component: Kosaraju's algorithm, iteratively."""
+    order, done = [], set()
+    for root in cells:
+        if root in done:
+            continue
+        done.add(root)
+        stack = [(root, iter(edges.get(root, ())))]
+        while stack:
+            cell, it = stack[-1]
+            nxt = next((n for n in it if n not in done), None)
+            if nxt is None:
+                order.append(cell)
+                stack.pop()
+            else:
+                done.add(nxt)
+                stack.append((nxt, iter(edges.get(nxt, ()))))
+    reverse = collections.defaultdict(list)
+    for a, targets in edges.items():
+        for b in targets:
+            reverse[b].append(a)
+    component = {}
+    count = 0
+    for root in reversed(order):
+        if root in component:
+            continue
+        component[root] = count
+        stack = [root]
+        while stack:
+            cell = stack.pop()
+            for prev in reverse.get(cell, ()):
+                if prev not in component:
+                    component[prev] = count
+                    stack.append(prev)
+        count += 1
+    # Components come out sources first: fill each one's reach from the sinks back.
+    succ = collections.defaultdict(set)
+    for a, targets in edges.items():
+        for b in targets:
+            if component[a] != component[b]:
+                succ[component[a]].add(component[b])
+    reach = [0] * count
+    for c in range(count - 1, -1, -1):
+        bits = 1 << c
+        for d in succ[c]:
+            bits |= reach[d]
+        reach[c] = bits
+    return component, reach
 
 
 def check(path: Path, blocks) -> bool:
@@ -189,9 +251,10 @@ def check(path: Path, blocks) -> bool:
     grid = Grid(world, blocks)
     # Without an explicit spawn the game starts Blupi at render (0, 1, 0), raw (50, 1, 50).
     spawn = world["spawn"] or (50, 1, 50)
-    reach = reachable(grid, tuple(spawn))
+    reach, edges = graph(grid, tuple(spawn))
     ok = True
     report = []
+    targets = []
     for o in world["objects"]:
         kind = TARGETS.get(o.get("type")) or EXITS.get(o.get("type"))
         if not kind:
@@ -199,6 +262,7 @@ def check(path: Path, blocks) -> bool:
         cell = tuple(int(c // 1) for c in o["start"])
         near = {cell} | {(cell[0] + dx, cell[1] + dy, cell[2] + dz)
                          for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1)}
+        targets.append((kind, cell, near))
         got = bool(near & reach)
         report.append(f"{kind} at {cell}: {'reachable' if got else 'NOT REACHABLE'}")
         if not got and kind != "egg":
@@ -213,6 +277,35 @@ def check(path: Path, blocks) -> bool:
     if not exits and world["mission"] % 10 != 0 and world["mission"] not in (0, 1):
         report.append("no exit")
         ok = False
+    # No traps: the exit stays reachable from where each target is taken (no one-way drop into a
+    # pit with no way out), and of any two treasures or keys one is reachable from the other, so
+    # there is an order that takes them all before the exit.
+    component, onward = onward_sets(reach, edges)
+    exit_bits = 0
+    for kind, _, near in targets:
+        if kind in EXITS.values():
+            for c in near & reach:
+                exit_bits |= 1 << component[c]
+    taken = {}
+    for i, (kind, cell, near) in enumerate(targets):
+        if kind in EXITS.values() or not near & reach:
+            continue
+        starts = {component[c] for c in near & reach}
+        leading = [c for c in starts if onward[c] & exit_bits]
+        if exit_bits and not leading:
+            report.append(f"{kind} at {cell}: TRAP, the exit is unreachable from there")
+            ok = False
+        taken[i] = (leading or list(starts), sum(1 << c for c in starts))
+    goals = [i for i in taken if targets[i][0] != "egg"]
+    for a in goals:
+        for b in goals:
+            if a < b:
+                a_to_b = any(onward[c] & taken[b][1] for c in taken[a][0])
+                b_to_a = any(onward[c] & taken[a][1] for c in taken[b][0])
+                if not a_to_b and not b_to_a:
+                    report.append(f"{targets[a][0]} at {targets[a][1]} and {targets[b][0]} at {targets[b][1]}: "
+                                  f"TRAP, neither reachable from the other")
+                    ok = False
     print(f"{path.name}: {'OK' if ok else 'FAIL'} ({len(reach)} cells reachable)")
     for line in report:
         print("  " + line)
