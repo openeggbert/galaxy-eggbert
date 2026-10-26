@@ -1,0 +1,130 @@
+# Mission 054 played through (plans/briefs/world054.md): no treasures, the arrow open from the
+# start.
+wait 30
+expect mission = 54
+# A, the hall: lick the lollipop (45, 5, 59) by the shaft's door: jumps four high for 15 s.
+go 44 62
+go 45 59.35 tol 0.1
+face 180
+hold 2 action
+# B, the shaft: up the four pillars spiralling round it, a licked jump each: P1 (47-48, z 54-56,
+# walk 9) east, P2 (z 51-53, 13) north, P3 (x 44-46, z 50-51, 17) west and its egg, P4 (x 42-43, 21) west,
+# along it and the ledge under the doorway (x 44-46, z 55-56, 25) east.
+go 45.3 55.2 tol 0.15
+go 47.4 55 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 8.95
+go 47.5 52.6 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 12.95
+go 45.6 51 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 16.95
+go 44.3 50.4 tol 0.15
+go 42.6 50.5 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 20.95
+go 43.2 55.5 tol 0.15
+go 45 55.5 jump 2.0 tol 0.2
+until ground = 1
+expect y >= 24.95
+# C, the relay hall: six lifts, each a pair (z 62-63) one cell east of the last; each pair meets
+# the next at an end and both wait there 60 ticks: board A (x 44) at its foot, step east onto
+# each next lift where they wait side by side (feet 30, 35, 40, 45, 50), off F at the landing
+# (55).
+go 45 58.5
+go 43 59.5
+go 43.3 62.5 tol 0.1
+face 90
+lift 44 30 62 max 600
+lift 44 25 62 max 600
+go 44 62.5 tol 0.1
+lift 44 30 62 max 400
+go 45 62.5 tol 0.1
+lift 45 35 62 max 400
+go 46 62.5 tol 0.1
+lift 46 40 62 max 400
+go 47 62.5 tol 0.1
+lift 47 45 62 max 400
+go 48 62.5 tol 0.1
+lift 48 50 62 max 400
+go 49 62.5 tol 0.1
+lift 49 55 62 max 400
+go 50.6 62.5 tol 0.15
+expect y >= 54.95
+# The landing: round the two mines riding up and down at (53, 62) and (54, 63), to the bridge.
+go 52 64.5
+go 55.5 64.5
+go 56.6 62.5 tol 0.15
+# D, the bridge: two pads bob a cell under it in opposite phase, a mine hanging over each pad
+# cell at his height: crossed crouching (hanging mines spare a crouching Blupi); on a pad that is
+# down he waits for it to come up level.
+go 63.6 62.5 with crouch max 900
+# E, the corridor (walk 55) and the slime pocket under it: down its hole (x 66-68, z 61-63), the
+# three eggs in the pocket's corners, the wasp sweeping under the hole (z 62) for a balloon back
+# up through it, drifted off onto the corridor's floor beside it.
+go 65.6 61.2 tol 0.15
+go 66.3 61.2 tol 0.1 until y <= 53
+until ground = 1 max 300
+expect y <= 47.05
+go 63 58 until eggs = 2
+go 64 59.2
+go 71 59.2
+go 72 58 until eggs = 3
+go 71.5 64
+go 64 67
+go 63 67 until eggs = 4
+go 64 64
+go 67 62.6 tol 0.15
+until y >= 47.3 max 600
+go 67 62.3 tol 0 with jump until y >= 55.6 max 600
+go 67 59.8 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 54.95
+# F, the balloon well (x 73-77, z 60-64): the wasp at its foot (z 62), the balloon up its south
+# side (z 63.8) past the mine sweeping across it halfway up (z 62), off onto the machine room's
+# floor (walk 67) south of the well's mouth.
+go 70 60
+go 72 62.4
+go 75 62.6 tol 0.15
+until y >= 55.3 max 600
+go 75 63.8 tol 0 with jump until y >= 67.6 max 700
+go 75 65.4 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 66.95
+# G, the machine room: across the mine sweeping x 83 (z 58-66) as it turns at z 66, to the east
+# door (x 86); the lift (87) rising flush out of the gap, a jump from it over the last cell.
+go 78.8 65.4
+go 81.8 62 tol 0.15
+near 83 67 66 0.2 max 600
+go 86.35 62 tol 0.1
+lift 87 65 62 max 300
+lift 87 67 62 max 300
+go 89.6 62 jump 2.2 tol 0.25
+until ground = 1
+expect x >= 88.6
+# H, S1 (walk 67), entered at x 93 between the gap's walls: across the tank's line (z 65) once it
+# has turned at its east end and its westward shot is past, off the south edge onto S2 (63), S3 (59), S4 (55) along x 90 (clear of
+# the helicopter over S3) and down into the cave (51); the arrow (93, 51, 88) between the
+# helicopters' turning points.
+go 92.5 62
+go 93.3 63.4 tol 0.15
+near 98 67 65 0.3 max 900
+near 93 67 65 0.6 max 300
+wait 40
+clear 93 67 65 1.5 max 300
+go 93.3 67.7
+until ground = 1 max 300
+go 90.2 69.5
+go 90.2 71.7
+until ground = 1 max 300
+go 90.2 75.7
+until ground = 1 max 300
+go 90.2 79.4
+until ground = 1 max 300
+expect y <= 51.05
+go 92 84
+go 93 88 until exit = 1
+until mission = 50 max 900
+expect phase = Play
+wait 60
