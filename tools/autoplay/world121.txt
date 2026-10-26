@@ -1,0 +1,92 @@
+# Mission 121 played through (plans/briefs/world121.md): four treasures, two of them on ledges
+# reached from crates pushed to their feet, the cellar, the exit beside the spawn.
+wait 30
+expect mission = 121
+# West: the room with the ledge. Push its crate (35, 50) to the ledge's foot (32, 45): along -Z
+# from its south side, then along -X from its east side.
+go 44 50
+go 38 50
+go 35 52
+face 0
+go 35 46.4 max 900
+crate 35 10 45 max 60
+go 36.6 46.4
+go 36.6 45
+face 270
+go 33.4 45 max 900
+crate 32 10 45 max 60
+# Onto the crate (one up), onto the ledge (two up) for treasure 2.
+go 32 45 jump 1.4 tol 0.15
+until ground = 1
+go 30.4 45 jump 1.6
+until ground = 1
+expect y >= 12.9
+go 28 44
+until treasures = 1 max 120
+# Off the ledge, the egg (37, 43) and treasure 1 on the floor (34, 56).
+go 33 43
+until ground = 1
+go 37 43
+go 34 56 until treasures = 2
+until treasures = 2 max 120
+# Back through the start room east: the corridor of mines (60, 49) and (62, 51), along z 50.
+go 41 50
+go 56 50
+go 64.6 50
+# The east room's crate (68, 48) to the ledge's foot (71, 55): along +Z from its north side,
+# then along +X from its west side.
+go 66.6 46.6
+go 68 46.6
+face 180
+go 68 53.6 max 900
+crate 68 10 55 max 60
+go 66.6 53.6
+go 66.6 55
+face 90
+go 69.6 55 max 900
+crate 71 10 55 max 60
+go 71 55 jump 1.4 tol 0.15
+until ground = 1
+go 72.6 55 jump 1.6
+until ground = 1
+expect y >= 12.9
+go 74 56
+until treasures = 3 max 120
+# Down, the egg (66, 57), back to the start room.
+go 70 57.4
+until ground = 1
+go 66 57
+go 64.6 50
+go 56 50
+# North through the doorway between the hanging mines (49, 44) and (51, 44), down its shaft into
+# the cellar: treasure 4 (46, 38) and the eggs (48, 38), (54, 38) either side of its crate.
+go 50 46
+go 50 40
+until ground = 1
+go 50 39
+until ground = 1
+go 48.6 39
+go 48 38.5 until eggs = 3
+go 46 38 until treasures = 4
+go 47 39
+go 54 39
+go 54 38.5 until eggs = 4
+# The stair at z 40: x 56 two up, x 55 two up, the passage one up and north into the start room.
+go 56 38.6
+face 180
+go 56 40 jump 1.3 tol 0.2
+until ground = 1
+face 270
+go 55 40 jump 1.1 tol 0.2
+until ground = 1
+face 180
+go 55 41.2 jump 1.0 tol 0.2
+until ground = 1
+expect y >= 9.9
+go 55.5 46
+# The exit beside the spawn, open with the four treasures.
+go 52 54 until exit = 1
+until mission = 120 max 900
+expect lives >= 5
+expect phase = Play
+wait 60
