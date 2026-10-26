@@ -1,0 +1,156 @@
+# Mission 033 played through (plans/briefs/world033.md).
+wait 30
+expect mission = 33
+# Ground floor (walk 5). The hall, the doorway under its two hanging mines, the atrium: its
+# treasure (50, 47) under the wasp sweeping along z 47, touched from the south.
+go 50 58
+go 50 49
+go 50 47.4 tol 0.05
+go 50 49.5
+until treasures = 1 max 200
+# Up the atrium's east side (x 56, clear of both wasps) to the north room's doorway (50, 37);
+# between its row of floor mines (z 33) to the treasure (57, 29) and the egg (43, 29).
+go 56 49
+go 56 38.6
+go 50 38.6
+go 49.2 35
+go 49.2 31
+go 57 29 tol 0.1
+until treasures = 2 max 200
+go 43 29.4 tol 0.1
+until eggs = 1 max 200
+go 49.2 31
+go 49.2 35
+go 50 38.6
+# The east wing (doorway x 59, z 46-48): a running jump over the pedestal (65, 47) touches
+# its treasure, between the two mines hanging beside it.
+go 56 39
+go 56 47
+go 60.5 47
+go 64 50.5
+go 65 50.5 tol 0.1
+go 65 44 jump 4.6
+until ground = 1
+until treasures = 3 max 200
+# Back across the atrium south of its middle wasp (z 51) to the west doorway (x 41, z 46-48),
+# past the wasp beating along x 43 while it is away up the side.
+go 60.5 47
+go 57 51
+go 44.5 51
+go 44.5 47.5 tol 0.1
+until tick >= 4150
+go 40 47.5
+expect y <= 5.05
+# The west wing: its treasure in the south-west corner, then the stair (z 39-41), three steps
+# of two (x 31-33, 34-36, 37-39), and one up through the hole onto the first floor (walk 12).
+go 31 55 tol 0.1
+until treasures = 4 max 200
+go 32 43
+go 32 42.4 tol 0.1
+go 32 40 jump 1.9
+until ground = 1
+expect y >= 6.9
+go 35 40 jump 1.9
+until ground = 1
+expect y >= 8.9
+go 38 40 jump 1.9
+until ground = 1
+expect y >= 10.9
+go 40 40 jump 1.2
+until ground = 1
+expect y >= 11.9
+# West wing 1: its treasure (31, 55) under three mines hanging a jump high (walked under).
+go 40 43
+go 31 55 tol 0.1
+until treasures = 5 max 200
+# The gallery round the atrium (walk 12): its south side past the floor mine (46, 55) to its
+# treasure (50, 55); the egg in the room over the hall; north room 1 later.
+go 39 47
+go 43 47
+go 43 55.9
+go 49 55.9
+go 50 55 tol 0.1
+until treasures = 6 max 200
+go 50 58
+go 45 67 tol 0.1
+until eggs = 2 max 200
+go 50 58
+go 50 55.9
+# North room 1 (doorway x 49-51, z 37) by the gallery's west side, past its floor mine (44, 44).
+go 43 55.9
+go 43 39
+go 50 38.8
+go 50 36
+go 46.5 32.5
+go 43.5 32.5
+go 43 29 tol 0.1
+until treasures = 7 max 200
+go 43.5 32.5
+go 46.5 32.5
+go 50 36
+go 50 38.8
+# East wing 1 (doorway x 59, z 46-48): down the gallery's east side beside the wasp's beat
+# (x 57, z 39-55), across it while it is away.
+go 56.2 39.6
+go 56.2 47 tol 0.1
+go 60 47
+expect y <= 12.05
+# The stair up to the attic (z 39-41): steps of two at x 67-69, 64-66, 61-63, then one up at
+# x 60 onto the attic floor (walk 19).
+go 68 43
+go 68 42.4 tol 0.1
+go 68 40 jump 1.9
+until ground = 1
+expect y >= 13.9
+go 65 40 jump 1.9
+until ground = 1
+expect y >= 15.9
+go 62 40 jump 1.9
+until ground = 1
+expect y >= 17.9
+go 60 40 jump 1.2
+until ground = 1
+expect y >= 18.9
+# The east attic: along its west wall (x 60), past the end of the wasp's beat (x 61-69,
+# z 44), to the treasure (69, 55) and back.
+go 60.05 41
+go 60.05 47
+go 69 55 tol 0.1
+until treasures = 8 max 200
+go 60.6 47
+# The bridge across the atrium (walk 19, z 46-48): two fast wasps sweep across it along x 53
+# and x 47 (96 ticks to and fro): pass each along the bridge's north edge (z 46) while it is
+# out over the void, the treasure (50, 47) between them.
+go 54.2 46 tol 0.1
+until tick >= 11285
+go 52 46
+expect y <= 19.05
+go 50 47 tol 0.1
+go 48.2 46 tol 0.1
+until tick >= 11530
+go 44 46
+expect y <= 19.05
+until treasures = 9 max 200
+# The west attic: the drink (38, 47) taken with Action beside the wasp's beat (x 37), then,
+# unseen, through the wasp and the knot of mines (x 33, 35) to the last treasure (31, 47).
+go 41 47
+go 38.3 47 tol 0.1
+hold 6 action
+wait 90
+go 31 47 tol 0.1
+until treasures = 10 max 200
+# Still unseen, back across the bridge and off its south edge: down the atrium to the ground
+# floor, through the doorway into the hall, to the red arrow beside the start.
+go 41 47
+go 50 47.6
+go 50 50
+until ground = 1 max 400
+expect y <= 5.1
+go 50 56
+go 50 58.5
+go 46 59 until exit = 1
+expect treasures = 10
+until mission = 30 max 900
+expect lives = 5
+expect phase = Play
+wait 120
