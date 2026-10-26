@@ -25,4 +25,5 @@ foot. Six eggs.
 eggs and the exit (the curtain is crossed in its off ticks: the checker jumps a one-cell curtain).
 `VerifyShippedWorlds`. Live (`--mission 112`, direct view F3): the hall and the bulldozer, a
 helicopter, the gallery's mines and lifts, the high chamber's treasure, the lightning passage.
-Not played through: the flights, the lift.
+Played through from the spawn to hub 110 by `tools/autoplay/world112.txt` (a helicopter to both
+treasures, back on foot past the bulldozer, the curtain between strikes, the lift).

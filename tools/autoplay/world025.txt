@@ -52,7 +52,7 @@ face -90
 # The lightning (x 26, y 25-28) flashes half of every five seconds: through it just after a
 # flash ends.
 go 26.6 50 tol 0.15
-until blitz = 52 max 200
+until blitz = 52 max 400
 go 25.2 50 tol 0.15
 # The switch (23 24 50) stops the ten saws of its row; over them to the far platform: treasure 1.
 go 23 50 tol 0.15

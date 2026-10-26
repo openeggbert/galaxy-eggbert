@@ -1,0 +1,56 @@
+# Mission 112 played through (plans/briefs/world112.md): west past the bulldozer to the hangar, a
+# helicopter to the gallery's treasure and the high chamber's, back on foot, through the curtain
+# of lightning between strikes and up the lift to the exit.
+wait 30
+expect mission = 112
+# West through the bulldozer's passage (z 48-52, its patrol along z 50) in lane z 52.
+go 24.5 52.2
+clear 19 6 50 2.5 max 900
+go 13.6 52.2
+# A helicopter of the hangar's row (x 10), Action beside it.
+go 11 50
+go 10.8 50 tol 0.1
+hold 2 action
+wait 20
+# Up to the gallery (walk 18) and down onto treasure 1 at its west end (4, 42), clear of the
+# posts' mines (9, 42) and (11, 42).
+go 10 50 tol 0 with lookup until y >= 18.2 max 600
+go 4 44.5 tol 0.3 max 600
+go 4 42.5 tol 0 with crouch until treasures = 1 max 300
+until treasures = 1 max 200
+# Into the high chamber (walk 18, from the hangar's upper space at x 14-19) and down onto
+# treasure 2 (26, 48) between its two mines, from the south.
+go 6 46 tol 0 with lookup until y >= 19 max 300
+go 16 48 tol 0.3 max 600
+go 26 50 tol 0.3 max 600
+go 26 48 tol 0 with crouch until treasures = 2 max 300
+until treasures = 2 max 200
+# Back south of the mines' row, west to the hangar, down to its floor, out of the helicopter
+# (Action).
+go 26 50.5 tol 0.3 max 300
+go 18 50.5 tol 0.3 max 600
+go 8 50 tol 0.3 max 600
+go 8 50 tol 0 with crouch until ground = 1 max 600
+hold 2 action
+wait 20
+# East through the bulldozer's passage in lane z 52 again, across the hall to the lightning
+# passage (z 48-52): through its curtain (x 41) just after a strike, past the mine (44, 50) in
+# lane z 51.8.
+go 13.6 52.2
+clear 19 6 50 2.5 max 900
+go 24.5 52.2
+go 36.5 50
+go 39.7 50 tol 0.1
+until blitz = 52 max 400
+go 42.5 51.8
+go 48.6 51.8
+# The lift (2 x 2 at x 50-51, z 49-50) up nine to the exit's room, the exit on its ledge.
+go 49.3 50 tol 0.1
+lift 50 6 49 max 900
+go 50.5 49.5 tol 0.15
+until y >= 14.9 max 600
+go 52.5 51
+go 54 52 until exit = 1 max 600
+until mission = 110 max 900
+expect phase = Play
+wait 60
