@@ -92,6 +92,34 @@ def bubble(w: World, cx, floor, cz, rx, height, rz, rng: random.Random, below=1)
                         w.set(x, y, z, rng.choice(CHEESE))
 
 
+def cave(w: World, cx, floor, cz, rx, walls, dome, rng: random.Random, rz=None, below=1):
+    """A cave: a round (elliptic, radii rx, rz) room with a flat floor at walking level
+    `floor`, upright walls `walls` cells high and a dome `dome` cells high above them (the
+    cheese under the floor filled back to `below` cells thick). Unlike `bubble` its edges are
+    full height, so ledges and niches round its wall have headroom."""
+    rz = rz if rz is not None else rx
+    for x in range(math.floor(cx - rx), math.ceil(cx + rx) + 1):
+        for z in range(math.floor(cz - rz), math.ceil(cz + rz) + 1):
+            d = ((x - cx) / rx) ** 2 + ((z - cz) / rz) ** 2
+            if d > 1.0:
+                continue
+            top = floor + walls - 1 + (dome * math.sqrt(1.0 - d) if dome else 0)
+            for y in range(floor, int(top) + 1):
+                w.clear(x, y, z)
+            for y in range(floor - below, floor):
+                if w.get(x, y, z) == 0:
+                    w.set(x, y, z, rng.choice(CHEESE))
+
+
+def shaft(w: World, cx, cz, y0, y1, r):
+    """A round vertical shaft of radius r round (cx, cz) from y0 to y1 inclusive."""
+    for x in range(math.floor(cx - r), math.ceil(cx + r) + 1):
+        for z in range(math.floor(cz - r), math.ceil(cz + r) + 1):
+            if (x - cx) ** 2 + (z - cz) ** 2 <= r * r:
+                for y in range(min(y0, y1), max(y0, y1) + 1):
+                    w.clear(x, y, z)
+
+
 def tube(w: World, a, b, r=2.6, floor=None):
     """A round tunnel of radius r from cell a to cell b (any direction). With `floor` (a
     walking level) a and b are cells Blupi walks through: the axis runs r - 1.1 above them and
