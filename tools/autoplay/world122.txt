@@ -1,0 +1,136 @@
+# Mission 122 played through (plans/briefs/world122.md): three galleries, each a loop of tunnels
+# two wide round the central shaft, ten treasures in pockets off them. Mines and the bobbing mines
+# stand in one lane: pass them in the other.
+wait 30
+expect mission = 122
+# The bottom gallery (walk 6), south out of the shaft: treasure (50, 66) in the south pocket.
+go 49.5 56
+go 49.5 63
+go 50 66 until treasures = 1
+go 50 63
+# West along the south tunnel, north up the west one (the mine at (36, 58): lane x 37; the
+# bobbing mine at (37, 52): lane x 36), treasure (32, 50) in the west pocket.
+go 37 63
+go 37 55
+go 36 54
+go 36 50
+go 32 50 until treasures = 2
+go 36 50
+# North to the north tunnel, east along it (the mine (40, 37) and the bobbing mine (46, 37) in
+# lane z 37: use z 36; the crate (58, 36) in lane z 36: use z 37), treasure (68, 36).
+go 36 36.2
+go 55 36
+go 56.5 37
+go 60 37
+go 63 36
+go 68 36 until treasures = 3
+until treasures = 3 max 200
+# Back down the east tunnel (the mine (64, 44): lane x 63) and along the south one (the mine
+# (56, 64): lane z 63) into the shaft.
+go 63 37
+go 63 63
+go 50 63
+go 49.5 56
+# Up the shaft's stair, two up a step: (46-47, 52-53) to walk 8, then 10, 12 and 14 along the
+# west wall, onto the middle gallery's passage north.
+go 48.6 52.5
+face 270
+go 47 52.5 jump 1.3 tol 0.2
+until ground = 1
+go 46.5 52.5
+face 0
+go 46.5 50.5 jump 1.3 tol 0.2
+until ground = 1
+go 46.5 48.5 jump 1.3 tol 0.2
+until ground = 1
+go 46.5 46.5 jump 1.3 tol 0.2
+until ground = 1
+expect y >= 13.9
+go 46.5 44
+# The middle gallery (walk 14). The passage meets the north tunnel where a mine bobs at (46, 37):
+# keep to x 47. Treasure (50, 32) in the north pocket.
+go 47 39
+go 47 36
+go 50 36
+go 50 32 until treasures = 4
+until treasures = 4 max 200
+go 50 36
+# East along z 36 (its crate (58, 36): lane z 37 past it), down the east tunnel in lane x 63 (the
+# mine (64, 44)), treasures (68, 50) and (68, 64) in the east pockets.
+go 55 36
+go 56.5 37
+go 60 37
+go 63 36.5
+go 63 50
+go 68 50 until treasures = 5
+until treasures = 5 max 200
+go 63 50
+go 63.5 63.5
+go 68 64 until treasures = 6
+until treasures = 6 max 200
+# Back up the east tunnel, west along the north one (the mine (40, 37): lane z 36), down the west
+# tunnel (the bobbing mine (37, 52): lane x 36; the mine (36, 58): lane x 37) to the south-west
+# pocket and treasure (32, 66), clear of the bulldozer's south tunnel.
+go 63.5 50
+go 63 36.5
+go 56.5 37
+go 55 36
+go 36.5 36
+go 36 54
+go 37 55
+go 37 62
+go 34 65
+go 32 66 until treasures = 7
+until treasures = 7 max 200
+# Back up the west tunnel and along the north one to the passage, into the shaft, up the rest of
+# the stair along the north wall (walk 16, 18, 20, 22) and east onto the top gallery's passage.
+go 37 62
+go 37 55
+go 36 54
+go 36.5 36
+go 47.2 36
+go 47.2 45
+go 46.5 46.5
+face 90
+go 48.5 46.5 jump 1.3 tol 0.2
+until ground = 1
+go 50.5 46.5 jump 1.3 tol 0.2
+until ground = 1
+go 52.5 46.5 jump 1.3 tol 0.2
+until ground = 1
+go 54.5 46.5 jump 1.3 tol 0.2
+until ground = 1
+expect y >= 21.9
+# The top gallery (walk 22): up the east tunnel (lane x 63), treasure (68, 34) in the north-east
+# pocket, west along z 36 to treasure (32, 34) in the north-west one.
+go 63 46.5
+go 63 37
+go 66 35
+go 68 34 until treasures = 8
+until treasures = 8 max 200
+go 63 36
+go 36.5 36
+go 34 35
+go 32 34 until treasures = 9
+until treasures = 9 max 200
+# Down the west tunnel, east along the south one in lane z 63 (the mine (56, 64)), treasure
+# (50, 68) in the south pocket.
+go 36.5 36.5
+go 36 54
+go 37 55
+go 37 63
+go 50 63
+go 50 68 until treasures = 10
+until treasures = 10 max 200
+# Round to the east tunnel and back to the shaft, down the stair, the exit by the spawn.
+go 50 63
+go 63 63
+go 63 46.5
+go 54.5 46.5
+go 46.5 46.5
+go 46.5 52.5
+go 48.6 52.5
+go 52 53 until exit = 1
+until mission = 120 max 900
+expect phase = Play
+wait 60
