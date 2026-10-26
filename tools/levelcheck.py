@@ -9,7 +9,8 @@ from the other, so that some order takes them all (linear levels with one-way dr
 Searches the voxel grid with moves Blupi certainly has (BlupiController): walk to a neighbour
 cell, step off an edge and fall, jump (up to two blocks up, or across a gap of up to two cells,
 needing headroom, the arc's columns free at the apex's feet and head), ride a platform lift
-between its two ends, take a teleporter (standing under one of its pillars he arrives one cell
+between its two ends, swim (through water in every direction, out at the surface onto a bank level
+with the water's top cell), take a teleporter (standing under one of its pillars he arrives one cell
 +Z of the cell under the other pillar of the same icon, as WorldRuntime::FindTeleportDestination
 places him). Hub doors (the bars 182/183) count as open: they open as the player progresses. In
 a hub every sign must be reachable too. Block classes come from tools/data/blocks.csv
@@ -93,6 +94,9 @@ class Grid:
         x, y, z = p
         return (p not in self.danger and self.info(p)["hazard"] == 0 and
                 self.info((x, y - 1, z))["hazard"] == 0)
+
+    def water(self, p) -> bool:
+        return bool(self.info(p)["water"])
 
     def standable(self, p) -> bool:
         return self.free(p) and self.floor(p) and self.safe(p)
@@ -184,6 +188,26 @@ def graph(grid: Grid, start):
                         if grid.standable(t) and all(grid.free((tx, h, tz)) for h in range(ty, y + up + 2)):
                             nexts.append(t)
                             break
+        # Swimming: on through the water in every direction (he floats up, dives with LeftShift);
+        # at the surface out onto a bank whose top block is level with the water's top cell (the
+        # weak jump, as tools/watercheck.py), or on into open air at the surface's height.
+        if grid.water((x, y, z)):
+            for dx, dy, dz in ((1, 0, 0), (-1, 0, 0), (0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0)):
+                n = (x + dx, y + dy, z + dz)
+                if grid.water(n) and grid.safe(n):
+                    nexts.append(n)
+            if not grid.water((x, y + 1, z)) and grid.free((x, y + 1, z)):
+                for dx, dz in axis:
+                    n = (x + dx, y, z + dz)
+                    above, head = (n[0], y + 1, n[2]), (n[0], y + 2, n[2])
+                    if grid.water(n):
+                        continue
+                    if not grid.free(n) and grid.free(above) and grid.free(head) and grid.safe(above):
+                        nexts.append(above)
+                    elif grid.free(n) and grid.free(above):
+                        landing = grid.fall(n)
+                        if landing:
+                            nexts.append(landing)
         for n in links.get((x, y, z), ()):
             if grid.free(n) and grid.safe(n):
                 nexts.append(n)
