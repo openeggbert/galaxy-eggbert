@@ -551,6 +551,20 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
+        // Only the box's bottom in a floor whose top is within the step tolerance above it (riding a
+        // lift up beside a ledge he presses against, its interpolated height a hair under the
+        // ledge's top): he stands on that floor, as kStepLimit lets him step onto it walking. The
+        // original's sideways phases shoved him off the ledge's far side instead (D56, 046).
+        if (!IsPointSolid(world, x, y + kBoxTop, z, tempPassable))
+        {
+            const float floorTop = std::floor(y + kBoxBottom) + 1.0f;
+            if (floorTop - y <= kStepLimit + kBoxBottom && !IsPointSolid(world, x, floorTop + kBoxBottom, z, tempPassable) &&
+                !IsPointSolid(world, x, floorTop + kBoxTop, z, tempPassable))
+            {
+                y = floorTop;
+                return;
+            }
+        }
         constexpr float kStep = 2.0f / 64.0f; // real BlupiAdjust()'s 2px step, converted at 64px/block
         constexpr int kMaxIterations = 50; // real BlupiAdjust()'s own bound, every phase
         // Real phase order: down (the box's top edge), right, left, right-again, left-again (the

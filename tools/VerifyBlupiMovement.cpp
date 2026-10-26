@@ -1992,6 +1992,21 @@ int main(int argc, char** argv)
                       "a head caught in the block above is still pushed down clear of it (BlupiAdjust)");
             }
 
+            // D56: carried up by a lift against a ledge's face, a hair inside its column and 0.07
+            // under its top (046's chasm), he stands on the ledge; the sideways phases shoved him
+            // 1.03 off its far side, over the drop.
+            {
+                Worlds::World rest;
+                rest.setBlock(50, 34, 50, Worlds::Block::make(396));
+                BlupiController rider;
+                rider.SetPosition(0.0f, 34.93f, 0.49f);
+                rider.RideLift(0.0f, 34.93f, 0.49f);
+                rider.Step(rest, 0.0f, 0.0f, false, false, false, dt);
+                check(std::fabs(rider.GetX()) < 0.05f && std::fabs(rider.GetZ() - 0.49f) < 0.05f &&
+                          std::fabs(rider.GetY() - 35.0f) < 0.01f,
+                      "a hair inside a ledge just above his feet, he stands on it, not shoved off it (D56)");
+            }
+
             BlupiController heliRider;
             heliRider.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliRider.HasVehicleHazardImmunity(),
