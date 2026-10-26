@@ -1,0 +1,139 @@
+# Mission 051 played through (plans/briefs/world051.md).
+wait 30
+expect mission = 51
+# W1: west through the atrium's door (x 23, z 44-46), across the tank's lane (x 17) between its
+# shots.
+go 24 45
+go 19.6 45
+clear 17 20 45 6 max 900
+go 13 45
+# W2, the fan shaft: onto blue panel P1 (x 9-10, z 49-50, walk 22) off its mine's diagonal, onto
+# P2 (z 46-48, walk 24), onto the wind deck (walk 26).
+go 11.6 47
+go 11.6 49 tol 0.1
+face 270
+near 9 22 49 0.2 max 300
+go 10 49 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 21.9
+face 0
+go 10 47.6 jump 1.3 tol 0.15
+until ground = 1
+expect y >= 23.9
+# The wind deck: jump when its mine (x 8) is in lane z 44, the wind carries him west past it
+# in lane z 45 onto the landing.
+go 10 45.65 tol 0.1
+near 8 26 44 0.1 max 300
+go 8.5 45.1 jump 2
+go 5 45
+expect x <= 6.5
+# The ferry (x 5-6, z 47 -> 50) to the alcove, teleporter 330 to the cistern.
+go 5.5 46.3 tol 0.1
+face 180
+lift 5 26 47 max 300
+go 5.5 47.2 tol 0.1
+lift 5 26 50 max 300
+go 5.5 51.6
+go 5 52 tol 0.15 until x >= 60
+until x >= 60 max 600
+until ground = 1 max 300
+expect x >= 70
+# The cistern: from the arrival room into the tank, down its west wall (x 69, off every fish's
+# run) to the channel, west along its top (y 31, clear of the fish at y 29-30), up the pool's
+# east side (x 62) and out onto the gallery's north bank.
+go 69 39.6
+go 69 45 tol 0.2 with crouch until y <= 31.3 max 600
+go 62.2 44 tol 0.2 with lookup max 600
+go 62 43 tol 0 with lookup until y >= 33.28 max 300
+face 0
+hold 8 up jump
+hold 30 up
+until ground = 1
+expect y >= 33.95
+# The gallery: north of the pillar (53, 39) past the mine sweeping x 53 (z 41-49), the egg in
+# the north-west corner, both treasures along x 51 (two from the mine's run), the egg in the
+# south-west corner, back east south of the pillar (53, 51).
+go 58 41.5
+go 55 37.8
+go 51.5 37.8
+go 50 38 until eggs = 1
+go 51 43 until treasures = 1
+go 51 47 until treasures = 2
+go 50 52 until eggs = 2
+go 51.5 53.2
+go 55.5 53.2
+# Treasure door "2" (x 55-56, z 55), open at 2/2: through it, down the shaft to the corridor's
+# foot (walk 20), the drink.
+go 55.5 56.5 until y <= 30
+until ground = 1 max 600
+expect y <= 20.05
+go 55.5 56.3 tol 0.1
+# The tank at the corridor's end fires a pair of shots along it (z 58, 92 ticks apart) once a
+# round (380 ticks): take the drink after the pair's second has passed (the grab holds him about
+# two seconds), then walk the corridor unseen through the mines, the saws and the tank. Any shot,
+# then 100 ticks (past a second if it was a first), the next is a first, then its second.
+near 58 20 58 0.5 max 900
+clear 58 20 58 0.6 max 300
+wait 100
+near 58 20 58 0.5 max 900
+clear 58 20 58 0.6 max 300
+near 58 20 58 0.5 max 300
+clear 58 20 58 0.6 max 300
+wait 40
+go 56 57.9 tol 0.15
+hold 2 action
+wait 120
+go 77 58
+# The teleporter room: its egg, teleporter 331 (under its pillar (81, 21, 56)) to the ledge
+# high in the atrium.
+go 80 60
+go 83 61 until eggs = 3
+until eggs = 3 max 120
+go 81 57.5
+go 81 56 tol 0.15 until x <= 40
+until x <= 40 max 900
+until ground = 1 max 300
+expect y >= 37.95
+# Off the ledge east into the atrium (well clear of the still mine (25, 20, 40) under it).
+go 30 39.5 until y <= 30
+until ground = 1 max 300
+expect y <= 20.05
+# The lift ladder: board level 1 (lane x 30-31) from the south as it arrives at its south end,
+# then jump across and up to each next level as they pass: 2 (lane x 32-33), 3, 4, the exit
+# block. Each jump is timed by the lift it lands on, whose leading block is the one matched.
+go 30.5 48.3 tol 0.1
+face 0
+lift 30 21 41 max 900
+lift 30 21 45 max 900
+hold 25 up jump
+until ground = 1
+hold 20 up
+face 90
+lift 32 23 43.9 max 400
+hold 20 up jump
+hold 30 up
+until ground = 1
+expect y >= 22.9
+face 270
+lift 30 25 43.75 max 400
+hold 20 up jump
+hold 30 up
+until ground = 1
+expect y >= 24.9
+face 90
+lift 32 27 43.75 max 400
+hold 20 up jump
+hold 30 up
+until ground = 1
+expect y >= 26.9
+hold 20 up jump
+hold 30 up
+until ground = 1
+expect y >= 28.9
+# The exit block's egg, the red arrow (open with both treasures), the hub.
+go 36 46 until eggs = 4
+go 36 39 until exit = 1
+expect treasures = 2
+until mission = 50 max 900
+expect phase = Play
+wait 60
