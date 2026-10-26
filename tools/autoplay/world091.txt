@@ -1,0 +1,148 @@
+# Mission 091 played through (plans/briefs/world091.md): a stick of dynamite at the grove's plug of
+# crates, the cave of forks, the swim through the tank house, the corridor's sweeping mine, the
+# lift up to the upper cave past the tank's fire, the crack, the stone hills to the arrow; nine
+# eggs.
+wait 30
+expect mission = 91
+# A, the grove: a stick of dynamite (12, 81) taken by walking over it, put down at the tunnel's
+# plug of crates (z 70-71) with his back to it, then away south out of the blast.
+go 12.4 81
+until dynamite = 1 max 200
+wait 30
+go 17 76
+go 17 72.1 tol 0.05
+face 180
+hold 2 action
+go 17 79
+wait 200
+# The block gone: north over the trench (z 69, one deep) through the tunnel into B, the cave
+# of forks (walk 10): the egg in its north-west corner (11, 51), the step (walk 11) and the
+# shelf (walk 12) in its east and the egg on it (29, 61).
+go 17 70.4 tol 0.1
+go 17 67.6 jump 2.0
+until ground = 1
+go 17 62
+go 11 51 until eggs = 1 max 600
+until eggs = 1 max 200
+go 22.6 57 tol 0.1
+face 90
+go 24 57 jump 1.5 tol 0.15
+until ground = 1
+go 25.2 57 jump 1.3 tol 0.15
+until ground = 1
+expect y >= 11.9
+go 29 61 until eggs = 2 max 300
+until eggs = 2 max 200
+# The passage east (z 55), up a block twice (walk 13, 14), through the tank house's door onto its
+# west rim (walk 14).
+go 32.8 55
+go 34.5 55 jump 1.2 tol 0.15
+until ground = 1
+go 35.4 55 tol 0.1
+go 36.5 55 jump 1.1 tol 0.15
+until ground = 1
+expect y >= 13.9
+go 40 55.5
+# C, the tank house: a dive into the west tank (water y 8-13) to the egg on its bottom (42, 58),
+# along the bottom and through the channel under the dividing wall (x 45-47, z 52-56, three high)
+# into the east tank, up by its east rim and out onto it.
+go 40.4 58 tol 0.1
+face 90
+go 42 58 with crouch until eggs = 3 max 600
+hold 150 crouch
+until eggs = 3 max 200
+go 44 55 with crouch max 600
+go 49 54 with crouch max 600
+go 52.5 54 tol 0 with lookup until y >= 13.2 max 900
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1 max 300
+expect y >= 13.9
+# D, the corridor (walk 14): past the mine sweeping across it at x 61 (2 cells a second, z 51-55)
+# along its north wall behind the mine, the egg (64, 51); the four lifts (x 67-68, z 52-53,
+# 90 ticks, 40 dwelling) up the shaft into the upper cave (walk 23).
+go 56.5 53
+go 59.6 51.3 tol 0.1
+near 61 14 51 0.05 lane z max 400
+wait 25
+go 64 51 until eggs = 4 max 300
+until eggs = 4 max 200
+go 66.3 52.5 tol 0.1
+lift 67 23 52 max 600
+lift 67 14 52 max 600
+go 67.5 52.5 tol 0.15
+until y >= 22.99 max 600
+wait 5
+# E, the upper cave: north across the tank's line of fire (z 44: its shots fly east in pairs,
+# 4 cells a second, every 200 ticks) once a pair has passed, up onto the shelf (walk 25) and its
+# three eggs (69-71, 35).
+go 68.5 50
+go 68.5 45.5 tol 0.1
+near 68.5 23 44 0.5 lane x max 400
+clear 68.5 23 44 0.5 lane x max 100
+near 68.5 23 44 0.5 lane x max 100
+clear 68.5 23 44 0.5 lane x max 100
+go 69.5 38.6 tol 0.1
+face 0
+go 69.5 36 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 24.9
+go 69 35 until eggs = 5 max 300
+go 70 35 until eggs = 6 max 300
+go 71 35 until eggs = 7 max 300
+until eggs = 7 max 200
+# West along the cave's north side (z 34.6, past the mine (58, 36)) to the crack (x 50-54) and
+# up its five steps (two up each, walk 25 ... 33) onto the stone hills (walk 34).
+go 66 34.6
+go 52 34.6
+go 52 34.4 tol 0.1
+face 0
+go 52 32.5 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 24.9
+go 52 32.4 tol 0.1
+go 52 30.5 jump 2.2 tol 0.15
+until ground = 1
+go 52 30.4 tol 0.1
+go 52 28.5 jump 2.2 tol 0.15
+until ground = 1
+go 52 28.4 tol 0.1
+go 52 26.5 jump 2.2 tol 0.15
+until ground = 1
+go 52 26.4 tol 0.1
+go 52 24.5 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 32.9
+go 52 24.4 tol 0.1
+go 52 22 jump 1.8 tol 0.15
+until ground = 1
+expect y >= 33.9
+# F, the stone hills: west to the west hill, up its two tiers (walk 36, 38) for its two eggs
+# (38, 14), (37, 12), each jump made when no bird is near.
+go 51 13
+go 44.4 13 tol 0.1
+face 270
+clear 43 37 13 3 max 600
+go 42.5 13 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 35.9
+go 41.4 13 tol 0.1
+clear 40 39 13 3 max 600
+go 39.5 13 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 37.9
+go 38 14 until eggs = 8 max 300
+go 37 12 until eggs = 9 max 300
+until eggs = 9 max 200
+# Back down east and along the village's front (z 11, between the houses and the pond) to the
+# red arrow before the middle house (70, 13).
+go 44 11.5
+until ground = 1
+go 57 11
+go 66 11
+go 70 13 until exit = 1 max 600
+expect eggs = 9
+until mission = 90 max 900
+expect phase = Play
+wait 60
