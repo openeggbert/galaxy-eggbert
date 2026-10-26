@@ -33,7 +33,7 @@ Later still: the wind pushes Blupi (D39), 347 is plain slime (D40); world 6 by t
 hub 060, missions 061-066 (`b083d7b`, `5162e0e`, `955008a`, `237c771`, `5353607`, `74b3ded`):
 world 6 is complete. World 4 is complete too (its agent, through 046). A switched-off saw
 (379) now stands still and is harmless (D42, `0cf3ce2`); lifts keep their ticks and dwell (D43,
-`3b0a861`: timed lifts authored before it need a live re-check); follow stars ignore a hidden
+`3b0a861`; the pre-D43 worlds' lift meetings re-checked, 011 and 061 lengthened, `89b12c0`); follow stars ignore a hidden
 Blupi (D44, `d115903`); a jump from under a bar catches it (D45, `7c49172`); the overcraft (46,
 not a balloon: `worldkit` OVERCRAFT) hovers within 1.25 cells of the ground (D46, `4cdd48b`). Open: D41 (empty-mask decor is a floor to the
 vertical test; worlds keep girders, poles, grates out of walking cells). `--spawn` yaw: 0 faces
