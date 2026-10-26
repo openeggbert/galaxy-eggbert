@@ -27,4 +27,6 @@ exit's room with four eggs.
 exit (on foot and in flight); the real world stops at the passage (its checker counts the cells
 under hanging mines as unsafe). `VerifyShippedWorlds`. Live (`--mission 111`, direct view F3): the
 passage's lifts under their mines, the bulldozer's corridor, the hangar's pool, the shaft from
-above, the exit's room. Not played through: the flights.
+above, the exit's room. Played through from the spawn to hub 110 by `tools/autoplay/world111.txt`
+(the pits' lifts, the posts jumped, the bulldozer passed from an alcove, a helicopter to the four
+ledges and through the corridor weaving round its mines).

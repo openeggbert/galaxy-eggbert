@@ -1,0 +1,79 @@
+# Mission 111 played through (plans/briefs/world111.md): the passage of pits on its lifts, the
+# bulldozer's corridor, a helicopter up the hangar's shaft to the four ledges' treasures, the
+# corridor of mines and the exit's room.
+wait 30
+expect mission = 111
+# The passage (walk 6) in lane z 51, clear of the mines hanging over z 49-50. Pit 1 (x 17-21):
+# its lifts (x 17-18) carry him to x 20-21.
+go 14 51
+go 16.3 51 tol 0.1
+lift 17 6 51 max 600
+go 17.5 51 tol 0.15
+lift 20 6 51 max 400
+go 22.4 51
+# Pit 2 (x 23-27) the same way.
+go 22.3 51 tol 0.1
+lift 23 6 51 max 600
+go 23.5 51 tol 0.15
+lift 26 6 51 max 400
+go 28.4 51
+# The three small pits (x 29-30, 32-33, 35-36), their lifts bobbing: jumped from post to post in
+# lane z 51 (the posts' mines stand at z 50).
+go 31 51 jump 2.7 tol 0.2
+until ground = 1
+go 31.4 51 tol 0.15
+go 34 51 jump 2.7 tol 0.2
+until ground = 1
+go 34.4 51 tol 0.15
+go 37 51 jump 2.7 tol 0.2
+until ground = 1
+go 37.4 51 tol 0.15
+# The bulldozer's corridor (x 38-45, its patrol along z 50): into the alcove (40, 52) once it
+# heads back west from x 44, then east past it while it rests at x 39.
+near 44 6 50 0.3 max 900
+go 40 51 tol 0.15
+go 40 52 tol 0.15
+near 39 6 50 0.3 max 900
+go 40 51 tol 0.15
+go 46 51
+# The hangar (walk 6): a helicopter from the row along z 44 (Action beside it).
+go 52 46
+go 52 44.8 tol 0.15
+hold 2 action
+wait 20
+# Up the shaft to each ledge's treasure: over it, then down onto it. Ledge 1 (walk 12), 2 (18),
+# 3 (24), 4 (30); the invert's ledge (54-57, 42-43, walk 22) is kept clear of.
+go 52 46 tol 0 with lookup until y >= 13.5 max 600
+go 47 43 tol 0.2 max 600
+go 47 43 tol 0 with crouch until treasures = 1 max 300
+until treasures = 1 max 200
+go 50 46 tol 0 with lookup until y >= 19.5 max 600
+go 63 43 tol 0.2 max 600
+go 63 43 tol 0 with crouch until treasures = 2 max 300
+until treasures = 2 max 200
+go 60 50 tol 0 with lookup until y >= 25.5 max 600
+go 63 57 tol 0.2 max 600
+go 63 57 tol 0 with crouch until treasures = 3 max 300
+until treasures = 3 max 200
+go 58 53 tol 0 with lookup until y >= 31.5 max 600
+go 47 57 tol 0.2 max 600
+go 47 57 tol 0 with crouch until treasures = 4 max 300
+until treasures = 4 max 200
+# Up to the corridor (walk 34, three high: the helicopter climbs on a while after the key, so
+# stop at 33.2), along it weaving round its mines (67, 49), (70, 51), (73, 49), (75, 51), into
+# the exit's room.
+go 52 50 tol 0 with lookup until y >= 33.2 max 600
+go 63 50 tol 0.2 max 600
+go 66.5 51.8 tol 0.3 max 600
+go 68.5 51.8 tol 0.3 max 600
+go 70 48.3 tol 0.3 max 600
+go 71.5 48.3 tol 0.3 max 600
+go 73 51.8 tol 0.3 max 600
+go 74 51.8 tol 0.3 max 600
+go 75.5 48.3 tol 0.3 max 600
+go 78 50 max 900
+go 82 54 tol 0.3 max 600
+go 82 54 tol 0 with crouch until exit = 1 max 300
+until mission = 110 max 900
+expect phase = Play
+wait 60
