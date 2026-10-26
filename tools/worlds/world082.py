@@ -72,15 +72,15 @@ def main(argv) -> int:
     carve(18, 9, 70, 19, 22, 71)
     for x in (18, 19):
         for z in (70, 71):
-            lift(w, (x, 9, z), (x, 19, z), ticks=60, stop=3)
+            lift(w, (x, 9, z), (x, 19, z), ticks=60, stop=30)
 
     # ---- the shuttle corridor (walk 20) ----
-    # East, two wide, four gaps across it bridged by small shuttles (20 ticks, 10 dwell); a gap
+    # East, two wide, four gaps across it bridged by small shuttles (20 ticks, 30 dwell); a gap
     # drops back into the start room's block. Treasure 1 at its end.
     carve(16, 20, 70, 46, 23, 71)
     for x0 in (24, 30, 36, 42):
         carve(x0, 14, 70, x0 + 2, 19, 71)
-        shuttle([(x0, 19, 70), (x0, 19, 71)], 2, 20, 10, 19)
+        shuttle([(x0, 19, 70), (x0, 19, 71)], 2, 20, 30, 19)
     w.place(O.TREASURE, 46, 20, 71)
 
     # ---- the shaft (walk 20 -> 40) ----
@@ -91,10 +91,10 @@ def main(argv) -> int:
     carve(47, 20, 70, 47, 23, 71)
     for x in (50, 51):
         for z in (69, 70):
-            lift(w, (x, 19, z), (x, 30, z), ticks=70, stop=20)
+            lift(w, (x, 19, z), (x, 30, z), ticks=70, stop=40)
     for x in (52, 53):
         for z in (69, 70):
-            lift(w, (x, 39, z), (x, 30, z), ticks=70, stop=20)
+            lift(w, (x, 39, z), (x, 30, z), ticks=70, stop=40)
     w.fill(52, 39, 66, 56, 39, 68, PANEL)                              # the top ledge, walk 40
     w.place(O.TREASURE, 55, 40, 66)
     swarm = [((49, 22, 72), (49, 25, 72), 20), ((53, 24, 72), (53, 24, 74), 10), ((48, 27, 68), (50, 27, 68), 16),
@@ -108,16 +108,21 @@ def main(argv) -> int:
         drifter(start, end, ticks)
 
     # ---- the relay in the sky (walk 40) ----
-    # From the ledge east: two pairs of lifts, each pair meeting midway (50 ticks, 10 dwell), a
+    # From the ledge east: two pairs of lifts, each pair meeting midway (50 ticks, 40 dwell), a
     # rest of panel between the pairs; door "2" at the far end.
     carve(57, 39, 66, 58, 42, 67)                                     # out through the wall
     w.fill(57, 39, 66, 57, 39, 67, PANEL)
-    shuttle([(58, 39, 66), (58, 39, 67)], 5, 50, 10, 39)              # meets the next at 63/64
-    shuttle([(68, 39, 66), (68, 39, 67)], -4, 50, 10, 39)
+    # Each lift of the relay two cells along X (a one-cell lift is too small a target to stop on
+    # in 3D): A 58-59 -> 62-63 meets B 67-68 -> 64-65; C 71-72 -> 75-76 meets D 80-81 -> 77-78.
+    def relay(x, dx):
+        shuttle([(x + k, 39, z) for k in (0, 1) for z in (66, 67)], dx, 50, 40, 39)
+
+    relay(58, 4)
+    relay(67, -3)
     w.fill(69, 37, 65, 70, 39, 68, PANEL)
     carve(77, 39, 66, 84, 43, 67)                                     # into the gallery's block
-    shuttle([(71, 39, 66), (71, 39, 67)], 5, 50, 10, 39)              # meets the next at 76/77
-    shuttle([(81, 39, 66), (81, 39, 67)], -4, 50, 10, 39)
+    relay(71, 4)
+    relay(80, -3)
     w.fill(82, 37, 66, 84, 39, 67, PANEL)                               # the landing at the door
     for x in range(69, 71):
         w.set(x, 36, 66, rng.choice(PIPES))
@@ -139,8 +144,8 @@ def main(argv) -> int:
         w.fill(83, 39, 54, 84, 39, 62, PANEL)
     else:
         for x in (83, 84):
-            lift(w, (x, 39, 62), (x, 39, 59), ticks=30, stop=10)
-            lift(w, (x, 39, 57), (x, 39, 54), ticks=30, stop=10)
+            lift(w, (x, 39, 62), (x, 39, 59), ticks=30, stop=30)
+            lift(w, (x, 39, 57), (x, 39, 54), ticks=30, stop=30)
     for z in (52, 47, 42, 38, 34, 31):
         carve(79, 40, z, 79, 41, z)
         w.place(O.TREASURE, 79, 40, z)
@@ -158,7 +163,7 @@ def main(argv) -> int:
         mine(w, 81, 40, 30)
 
     # ---- the tower (walk 40 -> 58) and the arrow's room ----
-    # North of the gallery a shaft: three lifts stacked in one column (2 x 2, 40 ticks, 10
+    # North of the gallery a shaft: three lifts stacked in one column (2 x 2, 40 ticks, 30
     # dwell), each rising four beside a shelf of the north wall two above its top; hanging mines
     # over the shelves' ends, a mine on two of them. At the top the arrow's room: a gap two wide
     # across it bridged by a shuttle, a mine beyond.
@@ -167,7 +172,7 @@ def main(argv) -> int:
     for bottom in (39, 45, 51):
         for x in (84, 85):
             for z in (23, 24):
-                lift(w, (x, bottom, z), (x, bottom + 4, z), ticks=40, stop=10)
+                lift(w, (x, bottom, z), (x, bottom + 4, z), ticks=40, stop=30)
         shelf = bottom + 6                                               # walk bottom + 7
         w.fill(82, 40 if bottom == 39 else shelf, 21, 88, shelf, 22, PANEL)  # the upper two float
         hanger(82, shelf + 2, 22)
@@ -180,7 +185,7 @@ def main(argv) -> int:
         w.fill(83, 57, 16, 84, 57, 17, PANEL)
     else:
         for x in (83, 84):
-            lift(w, (x, 57, 18), (x, 57, 15), ticks=20, stop=10)
+            lift(w, (x, 57, 18), (x, 57, 15), ticks=20, stop=30)
         mine(w, 86, 58, 14)
     w.place(O.EXIT, 84, 58, 13)
     for x, z in ((81, 13), (87, 19)):

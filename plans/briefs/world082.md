@@ -38,4 +38,10 @@ hanging mines, four mines.
 stops at door "2"; the real world stops at the swarm. `VerifyShippedWorlds`. Live (`--mission 82`,
 spawns in each part, direct view F3): the start room, the corridor's shuttles, the relay over the
 sky, the gallery's lava and shuttles, the niches under their mines, the bobbing mines, the tower,
-the arrow's room. Not played through live: the ride through the swarm and the lift meetings.
+the arrow's room. Not played through live: the ride through the swarm.
+
+2026-10-27: the lifts' dwells raised from the original's 3-20 ticks to 30-40 (a step from lift to
+lift or ledge in 3D needs a second or two), and the relay's lifts made two cells along X (one cell
+was too small a target to stop on: walking across, Blupi went over it into the sky). Played live:
+riding A out of the wall and stepping onto B where they wait side by side, B carrying him to the
+rest.
