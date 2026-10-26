@@ -835,7 +835,9 @@ be converted one at a time.
       quaternions turning about one fixed axis (71 degrees, key dot products 0.81 / 0.86), so
       slerp and an angle tween agree: not the tween either. Not resolved. Scaling the free-form
       `Assistant 3D 3` (`ev 1 evs 1`) by 0.85-1.15 changes no icon (it is hidden inside); the
-      two cylinders are untested.
+      two cylinders are untested. 2026-10-27: matched every 5 degrees, 0.942 mean, 0.926 min;
+      the jaws' deformer applied about their hot point (the hinge) instead of the master's
+      origin drops it to 0.772, so the origin is right. Still open; cosmetic.
 - [x] `BB3D-033` Follow enemies (96, 97, `Blupi/bombe-follow.rd4`, icons 256-265): the star
       spins about the scene's vertical under a camera looking 6.7 degrees down; model space is
       now upright in the scene (its +Y the scene's vertical, +Z the camera's direction made
