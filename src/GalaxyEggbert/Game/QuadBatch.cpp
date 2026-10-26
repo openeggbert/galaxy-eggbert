@@ -69,9 +69,20 @@ namespace GalaxyEggbert::Game::QuadBatch
         effect.Projection = Microsoft::Xna::Framework::Matrix::CreateOrthographicOffCenter(
             0.0f, static_cast<float>(viewportW), static_cast<float>(viewportH), 0.0f, 0.0f, 1.0f);
         effect.setAlphaProperty(alpha);
+        // BasicEffect premultiplies its colour by Alpha, as XNA's stock effects do, while every
+        // overlay here blends NonPremultiplied over straight-alpha PNGs: the colour was scaled by
+        // alpha twice, so the menu's 0.3 panels came out a dark veil where the original's
+        // (premultiplied SpriteBatch) are a light one (2026-10-26, plan §10). Dividing the
+        // diffuse colour by alpha leaves the texture's own colour, scaled once by the blend.
+        const auto diffuse = effect.getDiffuseColorProperty();
+        if (alpha > 0.0f && alpha < 1.0f)
+        {
+            effect.setDiffuseColorProperty(diffuse * (1.0f / alpha));
+        }
 
         renderer = UploadTexturedMesh(device, mesh.Mesh());
         renderer->Draw(device, effect);
         effect.setAlphaProperty(1.0f);
+        effect.setDiffuseColorProperty(diffuse);
     }
 }
