@@ -1,0 +1,26 @@
+# World 11 played as a chain from its hub (plans/briefs/world110.md): each mission's sign in hub
+# 110, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 115 ends in the main hub.
+wait 30
+expect mission = 110
+# Sign 1, open, on the floor's east side (54, 21, 50).
+go 54 50 until mission = 111 max 600
+until mission = 111 max 600
+include world111.txt
+# Past bar 2: sign 2 on the first ring's east side (56, 23, 50).
+go 56 50 until mission = 112 max 900
+until mission = 112 max 600
+include world112.txt
+# Past bar 3: sign 3 on the second ring's east side (58, 25, 50).
+go 58 50 until mission = 113 max 900
+until mission = 113 max 600
+include world113.txt
+# Past bar 4: sign 4 on the first ring's west side (44, 23, 50).
+go 44 50 until mission = 114 max 900
+until mission = 114 max 600
+include world114.txt
+# Past bar 5: sign 5 on the second ring's west side (42, 25, 50).
+go 42 50 until mission = 115 max 900
+until mission = 115 max 600
+include world115.txt
+expect mission = 1
