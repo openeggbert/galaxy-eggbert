@@ -212,8 +212,9 @@ HelicoGlu (58, the helicopter's glue drop, `85bc1ae`), JumpAie (36) and Ouf1a/1b
 added, being dead code there: the Suspend family (31-34; `m_blupiSuspend` is never set), Ouf5
 (65, its only cause is Suspend), Electro (57) and Clear5-8 (78-81; never assigned), Set (12;
 never referenced). The vehicle turns are the host turning the 3D model for the length of
-each Turn action (`TurnAroundSeconds`). **Open:** Ouf2 (46) with the Perso decoy, StopJump/
-StopMarch landing poses (61/60), SlowdownSkate (85).
+each Turn action (`TurnAroundSeconds`). Ouf2 (46, the decoy, `99f215a`) and the
+StopMarch/StopJump poses (60/61, `6ffded6`, clips `729063e`) are in too. StopJumph (62) is never
+set. **Open:** SlowdownSkate (85).
 
 ## 9. Campaign content
 
