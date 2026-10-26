@@ -1,0 +1,164 @@
+# Mission 104 played through (plans/briefs/world104.md): crates to two ledges, the passage under
+# its hanging mines, a jeep down the corridor of mines, the bobbing lift's jumps, the sliding
+# ladder, the lower gallery and the spiral down to the exit.
+wait 30
+expect mission = 104
+# The start cave (walk 30): of the heap (10, 46), (11, 46), (10, 47), the south one pushed west
+# to x 7 and north to the ledge's foot (7, 44); onto it, onto the ledge (walk 33): treasure 1.
+go 12 48
+go 11.4 47 tol 0.1
+face 270
+go 8.4 47 max 600
+crate 7 30 47 max 60
+go 8.4 48.4
+go 7 48.4
+face 0
+go 7 45.4 max 600
+crate 7 30 44 max 60
+go 7 44 jump 1.4 tol 0.15
+until ground = 1
+go 5.6 44 jump 1.6
+until ground = 1
+expect y >= 32.9
+go 5 43 until treasures = 1 max 300
+until treasures = 1 max 200
+# Down off the ledge, south into the passage (walk 30, a step down to 29 at z 61), crouching under
+# the mines hanging in it at z 59 and 62: treasure 2 at its end (7, 63).
+go 6 46
+until ground = 1
+go 7 56
+go 7 63 with crouch max 1200
+until treasures = 2 max 200
+# Back crouching under the mine at z 62, up standing at z 61 (a jump up the step), crouching on
+# under the one at z 59 into the cave.
+go 7 60.8 tol 0.1 with crouch max 600
+go 7 60.2 jump 1.0 tol 0.2
+until ground = 1
+expect y >= 29.9
+go 7 56 with crouch max 600
+# A jeep from the garage (18, 49), down the corridor of mines (z 49-51, four blocks two deep: the
+# jeep sets them off), the step down and the block in the passage beyond, into the hall (walk
+# 28); out of it (Action).
+go 16 49
+go 17.2 49 tol 0.1
+hold 2 action
+wait 20
+go 22 50 max 600
+go 46 50 max 900
+go 52 49.5 max 600
+go 56 49.5 max 600
+hold 2 action
+wait 30
+expect y <= 28.1
+# The hall: of its heap (56, 46), (57, 46), (56, 47), the south one pushed east to x 60 and north
+# to the ledge's foot (60, 44); onto it and up onto the ledge (walk 31): treasure 3 (62, 42).
+go 54.6 48.5
+go 54.6 47 tol 0.1
+face 90
+go 58.6 47 max 600
+crate 60 28 47 max 60
+go 58.6 48.4
+go 60 48.4
+face 0
+go 60 45.4 max 600
+crate 60 28 44 max 60
+go 60 44 jump 1.4 tol 0.15
+until ground = 1
+go 60 42.6 jump 1.6
+until ground = 1
+expect y >= 30.9
+go 62 42.5 until treasures = 3 max 300
+until treasures = 3 max 200
+# Down, the egg (68, 46); the pit of lava (x 60-66, z 52-57): onto its bobbing lift (x 61-62)
+# when it is up, level with the floor, over the gap of one, then onto the pillar (x 64-65) and
+# its treasure 4 (65, 55); back the same way.
+go 64 45
+until ground = 1
+go 68 46 until eggs = 1 max 600
+go 59 48
+go 59.4 54.5 tol 0.1
+lift 61 28 54 max 900
+go 61.5 54.5 jump 2.2 tol 0.2
+until ground = 1
+lift 61 28 54 max 300
+go 64.5 54.5 jump 3 tol 0.3
+until ground = 1
+go 65 55 until treasures = 4 max 300
+until treasures = 4 max 200
+go 64.4 54.5 tol 0.15
+lift 61 28 54 max 300
+go 61.5 54.5 jump 3 tol 0.2
+until ground = 1
+lift 61 28 54 max 300
+go 59 54.5 jump 2.5 tol 0.3
+until ground = 1
+expect x <= 59.5
+# The sliding ladder (x 72-80, z 49-50): five lifts two apart one above the other, the even ones
+# sliding from x 74-75 to 75-76, the odd ones from 78-79 to 77-78, all in step: at the end of a
+# slide two neighbours stand side by side, a jump up two from one to the next. Feet 30, 32, 34,
+# 36, 38 (arrived on one at the end of a slide, he waits for its next: its cube at its start,
+# then at its end); then north onto the landing (walk 38) and treasure 5 (75, 47).
+go 59 50
+go 71 50
+go 73.4 49.5 tol 0.1
+lift 74 30 49 max 900
+go 74.5 49.5 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 29.9
+lift 76 30 49 max 300
+go 77.6 49.5 jump 2 tol 0.25
+until ground = 1
+expect y >= 31.9
+face 270
+lift 79 32 49 max 300
+lift 77 32 49 max 300
+go 75.4 49.5 jump 2 tol 0.25
+until ground = 1
+expect y >= 33.9
+face 90
+lift 74 34 49 max 300
+lift 76 34 49 max 300
+go 77.6 49.5 jump 2 tol 0.25
+until ground = 1
+expect y >= 35.9
+face 270
+lift 79 36 49 max 300
+lift 77 36 49 max 300
+go 75.4 49.5 jump 2 tol 0.25
+until ground = 1
+expect y >= 37.9
+go 75 47.2 tol 0.1 until treasures = 5 max 300
+until treasures = 5 max 200
+# Off the landing west down to the shaft's floor, back into the hall and down its hole (x 54-56,
+# z 58) into the lower gallery (walk 18).
+go 73 47.5
+until ground = 1
+go 70 48
+go 55 50
+go 55 57.4
+go 55 58.6
+until ground = 1
+expect y <= 18.1
+# The seventh jeep (58, 60) east through the gallery's two blocks of mines to treasure 6 (88, 61);
+# out of it.
+go 57.2 60 tol 0.1
+hold 2 action
+wait 20
+go 88 61 until treasures = 6 max 900
+until treasures = 6 max 200
+hold 2 action
+wait 20
+# The spiral (round the pillar x 87-91, z 43-51): through the door north (x 85-86), down its ramp
+# on the inner lane (the mines lie on the outer), once round and on to the exit (86, 3, 46).
+go 85.6 58.5
+go 85.6 54
+go 85.6 53
+go 86 52
+go 86 42
+go 92 42
+go 92 52
+go 86 52
+go 86 46 until exit = 1 max 900
+until mission = 100 max 900
+expect phase = Play
+wait 60
