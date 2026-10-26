@@ -1,0 +1,201 @@
+# Mission 075 played through (plans/briefs/world075.md): the hill in clear lanes, the canal's
+# shuttles, a skateboard over the mine corridor, the eggs' ledge, the pond's raft, the alley's
+# shuttles, the shaft, a skateboard down the basin's course, the funnel's seven treasures past its
+# sliding mines, the relay, the rods and a skateboard up the key corridor to the golden key.
+wait 30
+expect mission = 75
+# A, the hill: step 1 (walk 36) in lane x 13 (mines on its landing row at x 10, 11, 14, 15),
+# along its back row to lane x 10.3, step 2 (walk 38; mines at x 12, 13, 16) and the top
+# (walk 40) from lane x 10.3 (the hanging mines over step 2's back row at x 12-15).
+go 13 38.6 tol 0.1
+face 0
+go 13 36 jump 2.2
+until ground = 1
+expect y >= 35.9
+go 13 35.6
+go 10.4 35.6 tol 0.1
+face 0
+go 10.4 33 jump 2.2
+until ground = 1
+expect y >= 37.9
+go 10.4 32.6 tol 0.1
+face 0
+go 10.4 30 jump 2.2
+until ground = 1
+expect y >= 39.9
+# B, the canal (z 14-25) on its two shuttles (60 ticks, 40 dwelling) meeting in the middle: S1
+# from the deck to z 20, across onto S2 at z 19, S2 to the north bank.
+go 13 26.4 tol 0.1
+lift 13 40 20 max 600
+lift 13 40 25 max 600
+go 13 25 tol 0.15
+lift 13 40 20 max 400
+go 13 19 tol 0.15
+lift 13 40 14 max 400
+go 13 12
+expect y >= 39.9
+# C, the yard: a skateboard (19, 7), east along the mine corridor (z 10) over its mines (x 31-32,
+# two deep: run over), off it before the eggs' alcove; up onto the ledge (walk 42) for its eggs.
+go 19 7.7 tol 0.1
+hold 2 action
+wait 30
+go 22 10 max 300
+go 31.5 10 max 600
+go 32.4 10 tol 0.3 max 300
+wait 40
+hold 2 action
+wait 30
+expect x <= 34.6
+go 36 9.5
+go 36 9.4 tol 0.1
+face 0
+go 36 8 jump 1.6 tol 0.15
+until ground = 1
+expect y >= 41.9
+until eggs = 1 max 200
+go 35 8 until eggs = 2 max 300
+go 37 8 until eggs = 3 max 300
+until eggs = 3 max 200
+# D, the lava pond: the raft of three lifts in step (80 ticks, 40 dwelling) from x 46 to x 54.
+go 37 9.6
+go 44.8 10 tol 0.1
+lift 54 40 10 max 600
+lift 46 40 10 max 600
+go 46 10 tol 0.15
+lift 54 40 10 max 600
+go 56 10
+# E, the lava alley: a shuttle over each pit (40 ticks, 40 dwelling) in lanes z 9, 11, 9, off it
+# beside the mine on the middle lane of the next cell (x 62, 67, 72).
+go 57.6 9 tol 0.1
+lift 61 40 9 max 400
+lift 59 40 9 max 400
+go 59 9 tol 0.15
+lift 61 40 9 max 400
+go 62 8.9 tol 0.1
+go 63 9.2 tol 0.1
+go 63.2 11 tol 0.1
+lift 66 40 11 max 400
+lift 64 40 11 max 400
+go 64 11 tol 0.15
+lift 66 40 11 max 400
+go 67 11.1 tol 0.1
+go 68 10.8 tol 0.1
+go 68.2 9 tol 0.1
+lift 71 40 9 max 400
+lift 69 40 9 max 400
+go 69 9 tol 0.15
+lift 71 40 9 max 400
+go 72 8.9 tol 0.1
+go 73.5 9.3
+# F, the shaft (x 77-79): thirty down into the basin (walk 10).
+go 78 10 max 600
+until ground = 1 max 600
+expect y <= 10.1
+# G, the basin: a skateboard from the garage (75, 14); south along the course (x 80) over its two
+# mine fields (z 20-21, 28-29), hopping the humps after each (z 24-25, 33-34); off it before the
+# funnel room.
+go 75 13.4 tol 0.1
+hold 2 action
+wait 30
+go 80 17 max 300
+go 80 26 jump 3.4 max 600
+go 80 35.5 jump 3.9 max 600
+go 80 42 tol 0.3 max 600
+wait 40
+hold 2 action
+wait 30
+expect z <= 45.5
+# H, the funnel (rings walk 9, 8, 7, the bottom 6). Down through ring 1's north row (z 48)
+# behind its sliding mine (3 cells a second, x 77-83) for treasure 1, on through rings 2 and 3
+# (treasure 2 at (80, 50)) to the bottom and treasure 3 (80, 53).
+go 80 46.6 tol 0.1
+face 180
+near 80 9 48 0.1 lane x max 400
+wait 15
+go 80 49 max 200
+until treasures = 1 max 200
+go 80 53 until treasures = 3 max 300
+until treasures = 3 max 200
+expect y <= 6.1
+# Ring 2's west and east treasures (76, 53), (84, 53): up a ring at a time (one up each).
+go 78.6 53 tol 0.1
+face 270
+go 77 53 jump 1.5 tol 0.15
+until ground = 1
+go 76 53 jump 1.3 tol 0.15
+until ground = 1
+until treasures = 4 max 200
+go 79 53
+go 81.4 53 tol 0.1
+face 90
+go 83 53 jump 1.5 tol 0.15
+until ground = 1
+go 84 53 jump 1.3 tol 0.15
+until ground = 1
+until treasures = 5 max 200
+# South: ring 3 (treasure 6 at (80, 56)), ring 2, then, behind ring 1's south mine, ring 1's
+# row (treasure 7 at (80, 58)) and out onto the room's floor (walk 10).
+go 81 53
+go 80 54.6 tol 0.1
+face 180
+go 80 56 jump 1.5 tol 0.15
+until ground = 1
+until treasures = 6 max 200
+go 80 57 jump 1.3 tol 0.15
+until ground = 1
+expect y >= 7.9
+near 80 9 58 0.1 lane x max 400
+wait 15
+go 80 58 jump 1.3 tol 0.15 max 200
+until ground = 1
+go 80 59.6 jump 1.4 tol 0.15 max 200
+until ground = 1
+until treasures = 7 max 200
+expect y >= 9.9
+# The egg on the ledge (walk 12) in the room's south-east corner (87, 61).
+go 85.3 61 tol 0.1
+face 90
+go 86.8 61 jump 1.8 tol 0.15
+until ground = 1
+until eggs = 4 max 200
+expect y >= 11.9
+# West along the way (z 60-62, walk 10) to I, the relay (30 ticks, 40 dwelling): A1 (x 46) up to
+# meet B1 (x 47) coming down, B1 back up to A2, A2 up to B2, B2 back up to A3, A3 up to the west
+# level (walk 25).
+go 84 61
+go 72 61
+go 48.4 60.5
+go 47.2 60 tol 0.1
+lift 46 13 60 max 400
+lift 46 10 60 max 400
+go 46 60 tol 0.15
+lift 46 13 60 max 400
+go 47 60 tol 0.15
+lift 47 16 60 max 400
+go 46 60 tol 0.15
+lift 46 19 60 max 400
+go 47 60 tol 0.15
+lift 47 22 60 max 400
+go 46 60 tol 0.15
+lift 46 25 60 max 400
+wait 5
+go 44 60.5
+expect y >= 24.9
+# J, the west tube (walk 25): off the gap's edge onto its rods (x 33-39), hanging across to the
+# far side; the skate shed's skateboard (29, 64); north up the key corridor (x 25) over its four
+# mine fields to the golden key (25, 18), open with the seven treasures.
+go 40 61
+go 32 61 max 600
+expect y >= 24.9
+go 30 61
+go 29 63.4 tol 0.1
+hold 2 action
+wait 30
+go 25 58 max 300
+go 25 18 until exit = 1 max 900
+until exit = 1 max 300
+expect treasures = 7
+expect eggs = 4
+until mission = 1 max 900
+expect phase = Play
+wait 60
