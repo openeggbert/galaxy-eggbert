@@ -16,16 +16,15 @@ and remains available in git history at commit `4afd53e`.
 The in-game 3D world editor is the one approved exception to the faithful-remake rule: it may add
 content-authoring UX, but not new gameplay mechanics.
 
-## Content state (2026-10-26)
+## Content state (2026-10-27)
 
-- Real content: `world999` (showcase), `title.vwr`, the **main hub** `world001` and **worlds 1-4
-  and 6** complete (`world010`-`014`, `world020`-`025`, `world030`-`034`, `world040`-`046`,
-  `world060`-`066`: hub plus missions each, briefs in `plans/briefs/`, scripts in `tools/worlds/`,
-  every lesson checked with `levelcheck.py`/`flightcheck.py` stages and live). World 5
-  (`world050`-`058`) is being authored; the hubs of worlds 7-12 are placeholder plazas, and
-  **missions 71-125 and the bonus world 199 are still placeholders** (an 11×11 floor with an exit).
-  Authoring them is the main open work (`plans/GALAXY_EGGBERT_COMPLETION.md` §9,
-  `plans/inventory/worlds.md`).
+- Real content: `world999` (showcase), `title.vwr`, the **main hub** `world001`, **all twelve
+  worlds** (hub plus missions each: `world010`-`014` ... `world120`-`125`, 64 missions) and the
+  **bonus world 199**: briefs in `plans/briefs/`, scripts in `tools/worlds/`, every lesson checked
+  with `levelcheck.py`/`flightcheck.py` stages and live at its key moments. The campaign's structure:
+  `tools/campaigncheck.py`; water Blupi cannot leave: `tools/watercheck.py`; inventories
+  `plans/inventory/worlds.md` and `plans/inventory/assets.md`. No mission has been played through
+  start to finish in one run.
 - Hubs work as the original's (`HubDoors.hpp`): mission bars slide up once the previous mission is
   won, gold bars in the main hub per completed world, the golden key ends a world. Crates are solid,
   pushed along X or Z and pulled (crouch + Down); the dynamite blast and mine contacts are 3D.
