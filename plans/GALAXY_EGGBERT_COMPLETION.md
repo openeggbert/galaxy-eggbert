@@ -326,4 +326,4 @@ adaptation) · evidence/test · priority. Known rows so far:
 | C | Model/animation integration and parity (D1-D3, D10, Push/Bye live, parity matrix) | in progress: D1-D3, D10 done; parity matrix open |
 | D | Hub network and the 64 missions + 199 | done 2026-10-27: the main hub, the 12 hubs, the 64 missions and 199 (each world's brief in `plans/briefs/`; `tools/campaigncheck.py`, `tools/watercheck.py`, `VerifyShippedWorlds`) |
 | E | Editor slots, demo seed, title screen, editor entry, transparency | done: `7eac7d5`, `6917fc9`, `e3a1042`, `fb48872` |
-| F | Stabilisation and completion audit | open |
+| F | Stabilisation and completion audit | in progress (2026-10-27): the suite 109/109; every one of the 79 worlds loaded live, walked a moment and closed with no error in its log (`qa_live.sh`, `build-probe/sweep/`); `campaigncheck.py`, `watercheck.py`, `VerifyShippedWorlds` pass; D41-D54 closed; inventories regenerated. Open: no mission played through in one run; D11 (the owner's list of models that look wrong) |
