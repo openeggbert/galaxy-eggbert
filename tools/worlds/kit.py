@@ -93,11 +93,13 @@ WORLD_SIGNS = {**{n: 157 + n for n in range(1, 9)}, 9: 309, 10: 411, 11: 412, 12
 SHOWCASE_SIGN = 414      # Galaxy's own portal to world999
 
 
-def sign_niche(w: World, x, y, z, facing, icon, rng: random.Random, door=False, block=MACHINE_FLOOR):
+def sign_niche(w: World, x, y, z, facing, icon, rng: random.Random, door=False, block=MACHINE_FLOOR,
+               faces=MACHINE_FACES):
     """A hub sign in a niche one cell high, opening toward `facing` (dx, dz). With `door` the
     niche is two deep and its doorway holds a blue bar (HubDoor), which the hub opens once the
     previous mission is won (HubDoors.hpp); Blupi then arrives just outside it. Walls, roof
-    and floor are filled in where missing, so it can be cut into a wall or stand alone."""
+    and floor are filled in where missing (`block`, with some of `faces` mixed in; `faces=()`
+    for none), so it can be cut into a wall or stand alone."""
     dx, dz = facing
     cells = [(x, z)] + ([(x + dx, z + dz)] if door else [])
     for cx, cz in cells:
@@ -105,7 +107,7 @@ def sign_niche(w: World, x, y, z, facing, icon, rng: random.Random, door=False, 
         for sx, sz, sy in ((cx - dz, cz + dx, y), (cx + dz, cz - dx, y), (cx, cz, y + 1), (cx, cz, y - 1),
                            (cx - dz, cz + dx, y + 1), (cx + dz, cz - dx, y + 1)):
             if w.get(sx, sy, sz) == 0:
-                w.set(sx, sy, sz, rng.choice(MACHINE_FACES) if rng.random() < 0.3 else block)
+                w.set(sx, sy, sz, rng.choice(faces) if faces and rng.random() < 0.3 else block)
     if w.get(x - dx, y, z - dz) == 0:
         w.set(x - dx, y, z - dz, block)
     w.set(x, y, z, icon)
