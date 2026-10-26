@@ -27,7 +27,10 @@ installed (`3415d3f`). `qa_live.sh` takes `QA_LIVE_WORLDS=<dir>` for probe world
 2026-10-26: swimming as the original's (D32), the helicopter's glue drop and no self-hit (D33),
 Blupi's reactions JumpAie/Ouf* with clips, the camera over obstacles and after teleports
 (D18/D34), flat-colour faces (D35), fan faces (D36). World 3 is done (030-034, background
-session); world 2 is being finished and world 4 authored by two background sessions.
+session) and world 2 (020-025); worlds 4 and 5 are being authored by two background sessions.
+World agents' reports name the engine problems they met; each was fixed with a test (D32-D37).
+Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
+reproduced (a helicopter mount at 4.5 s works).
 
 Next: milestone D, worlds 2-12 and 199 — hub then missions per world, each from the original's
 map, hints, objects and the video, authored with the kit, checked with `levelcheck.py` (a
