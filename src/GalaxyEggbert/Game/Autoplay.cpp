@@ -224,9 +224,9 @@ namespace GalaxyEggbert::Game
                     return fail("needs X Z [jump D] [tol T] [max N] [until COND]");
                 }
             }
-            else if (verb == "lift")
+            else if (verb == "lift" || verb == "crate")
             {
-                command.kind = Kind::Lift;
+                command.kind = verb == "lift" ? Kind::Lift : Kind::Crate;
                 if (!(words >> command.x >> command.y >> command.z) || !readOptions(false))
                 {
                     return fail("needs X Y Z [max N]");
@@ -354,6 +354,16 @@ namespace GalaxyEggbert::Game
                           state.lives);
             Write(state, line);
         }
+        if (!state.crates.empty() && (!havePrevious_ || state.crates != previous_.crates))
+        {
+            std::string crates = "crates";
+            for (const auto& crate : state.crates)
+            {
+                std::snprintf(line, sizeof(line), " (%.2f %.2f %.2f)", crate[0], crate[1], crate[2]);
+                crates += line;
+            }
+            Write(state, crates);
+        }
         if (!havePrevious_ || state.tick % kPositionEveryTicks == 0 || traceTicksLeft_ > 0)
         {
             std::snprintf(line, sizeof(line), "at %.2f %.2f %.2f yaw %.0f%s", state.x, state.y, state.z,
@@ -447,12 +457,16 @@ namespace GalaxyEggbert::Game
                 done = Holds(command.condition, state);
                 break;
             case Kind::Lift:
-                done = std::any_of(state.lifts.begin(), state.lifts.end(), [&](const std::array<float, 3>& lift) {
+            case Kind::Crate:
+            {
+                const auto& where = command.kind == Kind::Lift ? state.lifts : state.crates;
+                done = std::any_of(where.begin(), where.end(), [&](const std::array<float, 3>& at) {
                     constexpr float kAt = 0.05f;
-                    return std::fabs(lift[0] - command.x) <= kAt && std::fabs(lift[1] - command.y) <= kAt &&
-                           std::fabs(lift[2] - command.z) <= kAt;
+                    return std::fabs(at[0] - command.x) <= kAt && std::fabs(at[1] - command.y) <= kAt &&
+                           std::fabs(at[2] - command.z) <= kAt;
                 });
                 break;
+            }
             case Kind::Expect:
                 if (Holds(command.condition, state))
                 {

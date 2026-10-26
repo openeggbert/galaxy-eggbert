@@ -210,6 +210,24 @@ int main()
     }
 
     {
+        Autoplay autoplay;
+        std::string error;
+        autoplay.Parse("crate 32 10 45 max 100\n", error);
+        AutoplayState state;
+        std::string log;
+        for (int t = 0; t < 50 && !autoplay.Finished(); ++t)
+        {
+            state.tick = t;
+            state.crates = {{t < 20 ? 33.0f : 32.0f, 10.0f, 45.0f}};
+            autoplay.Step(state);
+            log += autoplay.TakeLog();
+        }
+        check(autoplay.Passed() && Contains(log, "t=20 crates (32.00 10.00 45.00)") &&
+                  Contains(log, "t=0 crates (33.00 10.00 45.00)") && Contains(log, "t=20 PASS script complete"),
+              "crate waits for a crate in a cell; the trace records each crate move");
+    }
+
+    {
         // include: a scratch tree in the working directory (the build directory under ctest).
         namespace fs = std::filesystem;
         const fs::path root = "autoplay_include_check";

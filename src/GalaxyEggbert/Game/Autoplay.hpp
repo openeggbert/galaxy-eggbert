@@ -19,6 +19,7 @@
 //   until COND [max N]         no keys until COND holds (at most N ticks, default 1800)
 //   lift X Y Z [max N]         no keys until a lift would carry him standing at (X, Y, Z): its
 //                              platform is there (within 0.05), Y being his feet's height on it
+//   crate X Y Z [max N]        no keys until a crate stands in cell (X, Y, Z) (within 0.05)
 //   expect COND                record a pass or a failure
 //   log TEXT                   write TEXT to the trace
 //   trace N                    write the position every tick for the next N ticks (else every 60)
@@ -55,6 +56,8 @@ namespace GalaxyEggbert::Game
         int lives = 0;
         // Every active lift, as where a rider stands on it: raw x, feet y, raw z.
         std::vector<std::array<float, 3>> lifts;
+        // Every crate: raw x, y (its cell), raw z. The trace records them whenever one moves.
+        std::vector<std::array<float, 3>> crates;
     };
 
     struct AutoplayKeys
@@ -80,7 +83,7 @@ namespace GalaxyEggbert::Game
         std::string TakeLog();
 
     private:
-        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Expect, Log, Trace, End };
+        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Expect, Log, Trace, End };
         enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Ground, Dead, Exit, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition

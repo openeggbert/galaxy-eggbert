@@ -1069,6 +1069,11 @@ namespace GalaxyEggbert::CNA
                                        LiftRiderCenterY(object.currentY),
                                        object.currentZ + WorldRuntime::kWorldCenterZ});
             }
+            if (object.active && object.type == GalaxyEggbert::Def::ObjectType::ObjectType12)
+            {
+                state.crates.push_back({object.currentX + WorldRuntime::kWorldCenterX, object.currentY,
+                                        object.currentZ + WorldRuntime::kWorldCenterZ});
+            }
         }
         const GalaxyEggbert::Game::AutoplayKeys keys = autoplay_->Step(state);
         std::unordered_set<Keys> down;
