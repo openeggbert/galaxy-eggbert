@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-26 (night: engine fixes from the world authoring, reactions, world 3 done)._
+_Last updated: 2026-10-26 (night: world 6 to mission 063, D42)._
 
 ## Resume here (exact state when last written)
 
@@ -29,6 +29,12 @@ Blupi's reactions JumpAie/Ouf* with clips, the camera over obstacles and after t
 (D18/D34), flat-colour faces (D35), fan faces (D36). World 3 is done (030-034, background
 session) and world 2 (020-025); worlds 4 and 5 are being authored by two background sessions.
 World agents' reports name the engine problems they met; each was fixed with a test (D32-D37).
+Later still: the wind pushes Blupi (D39), 347 is plain slime (D40); world 6 by this session:
+hub 060, missions 061-063 (`b083d7b`, `5162e0e`, `955008a`); a switched-off saw (379) now
+stands still and is harmless (D42, `0cf3ce2`). Open: D41 (empty-mask decor is a floor to the
+vertical test; worlds keep girders, poles, grates out of walking cells). `--spawn` yaw: 0 faces
+-Z, 90 +X; the chase camera orbits to his side after 3 s idle, so F3 (direct view) shows the
+facing in scripted shots.
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 
