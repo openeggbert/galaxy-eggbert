@@ -80,7 +80,7 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
   gets out by jumping at the surface onto a bank whose top block is level with the water's top
   cell (open air above him; the original's weak jump, -12 px/tick, clears no more): build every
   pool's water up to its banks' tops. A bank one block higher traps him (measured by world 7's
-  agent; `build-probe/watertrap.py` finds water without an exit).
+  agent; `tools/watercheck.py` finds water without a way out).
 - Saws (378) and switches (384) lie in the floor; a switch stops the saws in its own row (same Z
   and Y, ±20 along X); a stopped saw (379) is a still, harmless floor (D42).
 - Bars and rods (138, 202): walking onto one over a drop, or a jump from under one, catches it
