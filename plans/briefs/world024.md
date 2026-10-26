@@ -44,3 +44,7 @@ any order. The exit needs all five treasures (InteractionSystem: m_nbTresor ≥ 
   hanging mines to the blue key (alive); the cage, its bars and lifts; the lava hall's
   balustrades, lifts and hanging mines; the gallery: dived under the curtain past the fish,
   surfaced (idle, Blupi drifts up) and out onto the tower's landing; the shelves and lifts.
+
+2026-10-27 (D41: empty-mask decor is no floor): the lava hall's balustrades (398) were its piers;
+the piers are now white stone with the balustrades along their edges (walked through); every
+staged check reaches what it did, Blupi stood on a pier live.

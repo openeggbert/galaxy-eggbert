@@ -141,12 +141,15 @@ def main(argv) -> int:
     white(11, 6, 45, 40, 14, 45)
     white(11, 6, 55, 40, 14, 55)
     white(11, 6, 45, 11, 14, 55)
-    # Balustrades two wide, between them a gap of two with a lift rising into its first cell:
-    #    step on it when it is up, jump the second cell (the original's 20-tick lifts).
+    # Piers two wide, between them a gap of two with a lift rising into its first cell:
+    #    step on it when it is up, jump the second cell (the original's 20-tick lifts). The
+    #    balustrades run along the piers' edges: decor Blupi walks through (D41), not a floor.
     for x0 in (31, 27, 23, 19):
         for x in (x0, x0 + 1):
             for zz in range(48, 53):
-                w.set(x, 10, zz, BALUSTRADE)
+                w.set(x, 10, zz, STONE)
+            for zz in (48, 52):
+                w.set(x, 11, zz, BALUSTRADE)
     for x in (30, 26, 22):
         lift(w, (x, 8, 50), (x, 10, 50), ticks=20, stop=10)
     mine(w, 24, 11, 52)
