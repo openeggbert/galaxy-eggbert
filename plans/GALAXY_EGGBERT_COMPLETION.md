@@ -214,7 +214,7 @@ added, being dead code there: the Suspend family (31-34; `m_blupiSuspend` is nev
 never referenced). The vehicle turns are the host turning the 3D model for the length of
 each Turn action (`TurnAroundSeconds`). Ouf2 (46, the decoy, `99f215a`) and the
 StopMarch/StopJump poses (60/61, `6ffded6`, clips `729063e`) are in too. StopJumph (62) is never
-set. **Open:** SlowdownSkate (85).
+set. SlowdownSkate (85, `81fe27d`, clip `c1df021`). Every live table_blupi action now has a state and a clip, except the turns (TurnAir 59, the swimming and vehicle turns), which are the 3D model turning.
 
 ## 9. Campaign content
 
