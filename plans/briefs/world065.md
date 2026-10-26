@@ -3,7 +3,7 @@
 Built by `tools/worlds/world065.py` → `worlds3d/world065.vwr` (mission 65, region 4 as the
 original). Staged variant for `levelcheck.py` and `flightcheck.py`: `--stage 1 out.vwr` (the
 keys' doors and door "1" open, the saws floors, the crates and the lightning gone, no enemies in
-the narrow ways, a causeway over the lake, a stair for the balloons, no mines on the jeeps' run).
+the narrow ways, a causeway over the lake, a floor over the cavern's lava, no mines on the jeeps' run).
 
 **Reference** (`worlds/world065.txt`, video 5:54:15-6:03:58): a maze of slime round Blupi's start
 with a single treasure, and the red arrow alone in a funnel far below, reached by a fall through
@@ -13,7 +13,7 @@ machine tiles behind a curtain of lightning (305 under 304), past a switch and i
 key (51) walled in by a block of nine crates that only dynamite (four sticks at the top of a
 tower of blue blocks, saws and switches) blows away. The blue door (336) leads past the big
 creature, over saws on a switch's row, down into a lake with an egg in an air pocket, to a
-cavern of four balloons; teleporters (330) join the west to the north-east, where a garage of
+cavern of four overcrafts (46) hovering over its lava floor; teleporters (330) join the west to the north-east, where a garage of
 four jeeps on lifts drives over a row of seven mines to three eggs; a lava bridge of crumbling
 tiles (364) under a moving mine guards the drop. Twelve eggs, fourteen mines, six moving mines,
 six switches.
@@ -44,8 +44,10 @@ six switches.
 - The blue door's way (walk 36): the big creature's corridor (it rests at both ends, by the door
   too); stepping stones over a lava trench, the switch on the second, three saws among the rest;
   steps down to the lake.
-- The lake (surface 30, a low vault): an island with an egg and a saw; the shore of the cavern (walk
-  30) with four balloons under a shaft to the north-east.
+- The lake (surface 30, a low vault): an island with an egg and a saw; the cavern's west shore (walk
+  30) with four overcrafts; lava over the cavern's floor from wall to wall, crossed hovering (the
+  overcraft climbs only within 1.25 cells of the ground, D46); beyond it a stair up to the
+  north-east.
 - The north-east (walk 46): teleporter 2 by two crates and a mine; bars over a gap; the garage of
   four jeeps on grates and a lift (2 × 2, 40 ticks) down to the mine row (walk 42, one wide, seven
   mines: only a jeep passes), the niche of three eggs at its end; lava.
@@ -57,6 +59,6 @@ arrow; the real world stops where switches, dynamite, the jeep, swimming and the
 `VerifyShippedWorlds`. Live (`--mission 65`, spawns in each part, direct view F3): the hall, the
 wing, the pocket, the key room's band, the region, the tower inside and its top with the sticks,
 the corridor and the crates, the cage with its curtain, the creature's corridor, the stones, the
-lake's island, the balloons, the north-east and its teleporter, the bridges, the funnel. Not
-played through live: the dynamite on the crates, a balloon ride, a jeep on the lift and the mine
-row.
+lake's island, the overcrafts, the north-east and its teleporter, the bridges, the funnel. Played
+live: an overcraft mounted and hovered over the cavern's lava to the far floor. Not played through
+live: the dynamite on the crates, a jeep on the lift and the mine row.

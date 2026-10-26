@@ -7,18 +7,18 @@ that treasure. The treasure lies behind the red door; the red key behind the gre
 row of saws whose switch is reached from above; the green key in a cage behind a curtain of
 lightning, past a gate of saws; the blue key behind a block of nine crates that only the
 dynamite, fetched from the top of a tower of saws, blows away. The blue door leads past the big
-creature, over stepping stones and a lake to a cavern of balloons; a pair of teleporters, a
+creature, over stepping stones and a lake to a cavern of overcrafts; a pair of teleporters, a
 garage of jeeps over a row of mines and a lava bridge under a moving mine complete it. Here the
 maze is built in 3D round the start hall: the west wing and the treasure pocket, the key room,
 the west region over them with the tower, the north corridor to the crates and the cage, the
-blue door's way east to the lake, the balloons and the north-east, and the drop.
+blue door's way east to the lake, the overcrafts and the north-east, and the drop.
 
     python3 tools/worlds/world065.py                 # writes worlds3d/world065.vwr
     python3 tools/worlds/world065.py --stage 1 out   # for levelcheck and flightcheck: the keys'
                                                      # and the treasure's doors open, the saws
                                                      # floors, the crates and the curtain gone, no
                                                      # enemies in the narrow ways, the lake, the
-                                                     # balloons and the jeeps' run as floors
+                                                     # cavern's lava and the jeeps' run as floors
 """
 
 import random
@@ -238,28 +238,28 @@ def main(argv) -> int:
     for k, z in enumerate((44, 43, 42)):
         slime(w, 79, 30, z, 80, 34 - 2 * k, z)                        # down to walk 31
 
-    # ---- the lake and the cavern of balloons (walk 30) ----
+    # ---- the lake and the cavern of the overcrafts (walk 30) ----
     # A lake under a low vault, its surface at 30: from the stair's foot Blupi swims north, past
-    # an air pocket with an egg and a saw on its floor, to the cavern's shore. In the cavern four
-    # balloons, and a shaft in its vault up to the north-east.
+    # an island with an egg and a saw on it, to the cavern's west shore. In the cavern four
+    # overcrafts; lava over its floor from wall to wall, which only an overcraft, hovering, gets
+    # over; beyond it a stair up to the north-east.
     carve(76, 22, 30, 88, 32, 41)
     w.fill(76, 22, 30, 88, 29, 41, DEEP)
     w.fill(76, 30, 30, 88, 30, 41, WATER)
-    slime(w, 80, 22, 34, 82, 30, 36)                                  # the pocket's floor, walk 31
+    slime(w, 80, 22, 34, 82, 30, 36)                                  # the island, walk 31
     carve(80, 31, 34, 82, 32, 36)
     w.place(O.EGG, 80, 31, 34)
     saw(82, 30, 36, False)
+    slime(w, 83, 22, 30, 88, 30, 30)                                  # the shore only west of the lava
     if solved:
-        w.fill(77, 30, 30, 79, 30, 41, 10)                            # a causeway for the checks
-        w.fill(77, 30, 30, 85, 30, 31, 10)
-    carve(84, 30, 18, 94, 36, 29)
-    for x in (86, 88, 90, 92):
-        w.place(O.BALLOON, x, 30, 26)
-    carve(90, 37, 20, 91, 45, 21)
-    if solved:                                                        # the balloons as a stair
-        carve(93, 30, 20, 94, 48, 27)
-        for k in range(8):
-            slime(w, 93, 30, 27 - k, 94, 31 + 2 * k, 27 - k)
+        w.fill(77, 30, 31, 79, 30, 41, 10)                            # a causeway for the checks
+    carve(76, 30, 18, 98, 36, 29)
+    for x in (77, 78, 79, 80):
+        w.place(O.OVERCRAFT, x, 30, 22)
+    w.fill(83, 29, 18, 90, 29, 29, 10 if solved else LAVA)
+    carve(93, 30, 20, 94, 48, 27)
+    for k in range(8):                                                # up to walk 46
+        slime(w, 93, 30, 27 - k, 94, 31 + 2 * k, 27 - k)
 
     # ---- the north-east (walk 46) ----
     # Teleporter 2 hanging over the floor by two crates and a mine; bars over a gap; the garage
