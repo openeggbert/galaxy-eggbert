@@ -1,0 +1,140 @@
+# Mission 092 played through (plans/briefs/world092.md): the dell's eggs, the lollipop's jump and
+# the steps to the canyon, its crumbling bridges, the birds' crater and its mounds, the stair
+# down, the hall's switches and saw catwalks, a stick from the dynamite box past the tank's
+# fire, the cage's crates blasted, the treasure and the arrow.
+wait 30
+expect mission = 92
+# A, the dell (walk 20): its two eggs (10, 90), (31, 90) round the pond's south side; the
+# lollipop (30, 70) licked, its high jump onto the step (walk 24), then plain jumps up the three
+# steps (walk 26, 28, 30) to the canyon (walk 32).
+go 10 90 until eggs = 1 max 600
+until eggs = 1 max 200
+go 31 90 until eggs = 2 max 900
+until eggs = 2 max 200
+go 30.5 74
+go 30 70.4 tol 0.1
+face 0
+hold 6 action
+wait 90
+go 30 67 jump 3.0 tol 0.15
+until ground = 1
+expect y >= 23.9
+go 30 66.4 tol 0.1
+go 30 64 jump 2.2 tol 0.15
+until ground = 1
+go 30 63.4 tol 0.1
+go 30 61 jump 2.2 tol 0.15
+until ground = 1
+go 30 60.4 tol 0.1
+go 30 58 jump 2.2 tol 0.15
+until ground = 1
+go 30 57.4 tol 0.1
+go 30 55 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 31.9
+# B, the lava canyon: along z 50.5 over the first crumbling bridge (x 34-40) without stopping to
+# the island (x 41-42) and its eggs (41, 49), (42, 52); over the second (x 43-49) under its two
+# hanging mines to the east landing.
+go 30 50.5
+go 33 50.5
+go 41.5 50.5 max 300
+go 41 49.2 until eggs = 3 max 300
+go 42 51.8 until eggs = 4 max 300
+until eggs = 4 max 200
+go 42.3 50.5 tol 0.15
+go 51 50.5 max 300
+expect y >= 31.9
+# C, the birds' crater (walk 32; the birds fly a cell or more above him): the egg in its
+# north-west corner (61, 30); east along z 30 to the low mound (x 82-86, z 32-36, walk 33) and
+# its egg (84, 34); the high mound (x 74-79, z 44-48, walk 34) and its egg (76, 46), each jumped
+# onto when no bird is near.
+go 59.5 48
+go 61 30 until eggs = 5 max 600
+until eggs = 5 max 200
+go 80 30
+go 81.4 34 tol 0.1
+face 90
+clear 82 34 34 3 max 600
+go 83 34 jump 1.8 tol 0.15
+until ground = 1
+expect y >= 32.9
+go 84 34 until eggs = 6 max 300
+until eggs = 6 max 200
+go 81 37.5
+go 76 42.6 tol 0.1
+face 180
+clear 76 35 44 3 max 600
+go 76 45.2 jump 2.4 tol 0.15
+until ground = 1
+expect y >= 33.9
+go 76 46 until eggs = 7 max 300
+until eggs = 7 max 200
+# D, the stair out of the crater's south-east corner, eleven steps of two down west to the
+# machine hall (walk 12).
+go 80 49.5
+go 87 59
+go 87.5 63
+go 66.5 63 max 900
+expect y <= 12.1
+# E, the machine hall's east side: its egg (62, 82) past the mine (63, 74) along x 65.5; the
+# switch at catwalk 1's start (60, 71) stops its three saws: west over them to the landing; the
+# landing's switch (55, 78) stops catwalk 2's: west over them.
+go 65.5 67
+go 65.5 80
+go 62 82 until eggs = 8 max 300
+until eggs = 8 max 200
+go 61.3 80
+go 61.3 72
+go 60 71 tol 0.15
+hold 2 action
+wait 10
+go 55.5 71
+go 55.5 78
+go 55 78 tol 0.15
+hold 2 action
+wait 10
+go 50 78.5
+expect y >= 11.9
+# F, the dynamite box (x 44-46, z 70-73, open south): across the tank's line of fire (z 77) once
+# a pair of its shots has passed, under the helicopter's run (it drops its shots at its ends,
+# x 41 and 49), a stick from the box (46, 71), and back across.
+go 45 78.6 tol 0.1
+face 0
+near 45 12 77 0.5 lane x max 400
+clear 45 12 77 0.5 lane x max 100
+near 45 12 77 0.5 lane x max 100
+clear 45 12 77 0.5 lane x max 100
+go 45 72.5 max 300
+go 46 71.2 until dynamite = 1 max 300
+until dynamite = 1 max 200
+wait 30
+go 45 73.6 tol 0.1
+face 180
+near 45 12 77 0.5 lane x max 400
+clear 45 12 77 0.5 lane x max 100
+near 45 12 77 0.5 lane x max 100
+clear 45 12 77 0.5 lane x max 100
+go 46 80 max 300
+# G, the cage: the stick put down against the block of crates in its door (the front one at
+# (46, 85)), then away north out of the blast; in over the trench (z 87) to the treasure (46, 91)
+# and the egg (49, 92); the red arrow in the alcove west (36, 90).
+go 46 84.1 tol 0.05
+face 0
+hold 2 action
+go 46 80.6
+wait 200
+go 46 86.4 tol 0.1
+face 180
+go 46 88.6 jump 2.2 tol 0.15
+until ground = 1
+go 46 91 until treasures = 1 max 300
+until treasures = 1 max 200
+go 49 92 until eggs = 9 max 300
+until eggs = 9 max 200
+go 41 90
+go 36 90 until exit = 1 max 600
+expect treasures = 1
+expect eggs = 9
+until mission = 90 max 900
+expect phase = Play
+wait 60
