@@ -1912,6 +1912,24 @@ int main(int argc, char** argv)
                 check(escapes(BlupiController::VehicleMode::Helicopter), "the helicopter flies through the flight barrier");
                 check(escapes(BlupiController::VehicleMode::Overcraft), "the overcraft flies through the flight barrier");
             }
+            // D52: Blupi jumps off a lift. Standing on one (RideLift), a jump starts him rising and
+            // the lift's next snap no longer pulls him back onto it.
+            {
+                Worlds::World openWorld;
+                BlupiController rider;
+                rider.SetPosition(0.0f, 5.0f, 0.0f);
+                rider.RideLift(0.0f, 5.0f, 0.0f);
+                rider.SetRidingLift(true);
+                rider.Step(openWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+                const bool jumped = rider.GetVelocityY() > 0.0f;
+                rider.RideLift(0.0f, 5.0f, 0.0f);
+                for (int i = 0; i < 6; ++i)
+                {
+                    rider.SetRidingLift(false);
+                    rider.Step(openWorld, 0.0f, 0.0f, false, false, false, dt);
+                }
+                check(jumped && rider.GetY() > 5.5f, "Blupi jumps off a lift (its snap does not cancel the jump)");
+            }
             BlupiController heliRider;
             heliRider.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliRider.HasVehicleHazardImmunity(),

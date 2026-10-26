@@ -309,6 +309,13 @@ namespace GalaxyEggbert::Game
 
     void BlupiController::RideLift(float x, float y, float z) noexcept
     {
+        // Rising, he has just jumped (or a flying vehicle climbs) off the lift: in the original
+        // a lift is ground he jumps from, so it no longer holds him (D52). Riding, his upward
+        // speed is always zero: this snap resets it every frame.
+        if (m_velocityY > 0.0f)
+        {
+            return;
+        }
         m_x = x;
         m_y = y;
         m_z = z;
