@@ -129,24 +129,32 @@ def main(argv) -> int:
 
     # South-west: Blupi drops off the far platform onto the lava terrace (walk 11, x 8-40,
     #    z 56-68): lava in its floor, balustrades, mines, a lift of one cell (10 ticks) and one
-    #    of four (30 ticks), the second treasure on the last balustrade.
+    #    of four (30 ticks), the second treasure on the last balustrade. The lifts travel in
+    #    the floor's row, so their paths are open, not lava (standing over lava is death). The
+    #    piers are stone with the balustrades along their edges: decor Blupi walks through
+    #    (D41), not a floor.
     white(8, 10, 56, 40, 10, 68, chance=0.05)
     parapet(w, [(x, 68) for x in range(8, 17)] + [(x, 68) for x in range(31, 41)] +
             [(8, z) for z in range(56, 69)], 11, rng)
+
+    def pier(x):
+        for zz in range(56, 69):
+            w.set(x, 10, zz, STONE)
+        for zz in (56, 68):
+            w.set(x, 11, zz, BALUSTRADE)
+
     w.fill(17, 10, 56, 18, 10, 68, LAVA)                             # lava to the terrace's edge
-    w.clear(17, 10, 62)
+    w.fill(17, 10, 62, 18, 10, 62, 0)
     lift(w, (17, 10, 62), (18, 10, 62), ticks=10, stop=10)
     for x in (19, 20, 21):
-        for zz in range(56, 69):
-            w.set(x, 10, zz, BALUSTRADE)
+        pier(x)
     mine(w, 20, 11, 58)
     mine(w, 20, 11, 66)
     w.fill(22, 10, 56, 26, 10, 68, LAVA)
-    w.clear(22, 10, 62)
+    w.fill(22, 10, 62, 26, 10, 62, 0)
     lift(w, (22, 10, 62), (26, 10, 62), ticks=30, stop=10)
     for x in range(27, 31):
-        for zz in range(56, 69):
-            w.set(x, 10, zz, BALUSTRADE)
+        pier(x)
     mine(w, 28, 11, 59)
     mine(w, 29, 11, 65)
     w.place(O.TREASURE, 30, 11, 62)

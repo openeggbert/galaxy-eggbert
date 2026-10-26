@@ -53,3 +53,9 @@ pairs, two wide).
   the tunnel and the swim up the tower past the fish, with air to spare, and the jump out; a
   helicopter flown over the lava into a gate, killed by the moving mine when mistimed; the
   golden key touched (probe copy without treasures): world 2 ends, Blupi arrives in the main hub.
+
+2026-10-27 (milestone F, the playthrough): the lava terrace's balustrades (398) stood in for its
+piers, but since D41 they are decor Blupi falls through, and its two lifts travelled through
+lava cells (standing over lava is death, as the original's). The piers are now white stone with
+the balustrades along their edges, and the lifts' paths (17-18 and 22-26, z 62) are open; the
+terrace crossed live on both lifts to treasure 2; every staged check reaches what it did.
