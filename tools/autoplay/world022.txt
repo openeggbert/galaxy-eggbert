@@ -1,0 +1,183 @@
+# Mission 022 played through (plans/briefs/world022.md).
+wait 30
+expect mission = 22
+expect lives = 3
+# A. The roof terrace (walk 11): its egg, the lava trench (z 73) jumped, treasure 1.
+go 38.4 75 until eggs = 1
+until eggs = 1 max 120
+go 39 74.6
+face 0
+go 39 71.8 jump 2.2
+until ground = 1
+go 39 70 until treasures = 1
+until treasures = 1 max 120
+# The water channel (z 67-68) jumped, treasure 2.
+go 49 69.8
+face 0
+go 49 66.0 jump 2.0
+until ground = 1
+expect y >= 10.95
+go 49 65 until treasures = 2
+until treasures = 2 max 120
+# The crate pushed two cells -Z to the plinth's foot, climbed, and the plinth (walk 14).
+go 44 65
+face 0
+go 44 62.45 tol 0.1 max 300
+crate 44 11 61 max 10
+go 44 61 jump 1.4
+until ground = 1
+expect y >= 11.95
+go 44 59 jump 2.0 until treasures = 3 max 200
+until treasures = 3 max 120
+# B. Off the terrace's north end down into the brick court (walk 1): its egg.
+go 44 57
+go 44 54
+until ground = 1
+expect y <= 1.05
+go 58 53 until eggs = 2
+until eggs = 2 max 120
+# The crate at (40, 51) pushed -Z to the foot of the south gallery (walk 4), climbed.
+go 41 54
+go 40 52.7 tol 0.1
+face 0
+go 40 48.45 tol 0.1 max 400
+crate 40 1 47 max 10
+go 40 47 jump 1.4
+until ground = 1
+expect y >= 1.95
+go 40 45 jump 2.0
+until ground = 1
+expect y >= 3.95
+# The lift three wide (x 44-46) over the lava trench (z 34-38) to the north gallery.
+go 45 40
+go 45 39.3 tol 0.1
+lift 45 4 38 max 600
+go 45 38 tol 0.15
+lift 45 4 34 max 300
+go 45 32.5
+until ground = 1
+expect y >= 3.95
+# The north gallery: its egg, then the pool (x 30-38, z 24-31, two deep): dive to treasure 4
+# at its bottom and jump out.
+go 40 25 until eggs = 3
+until eggs = 3 max 120
+go 40 27
+go 37.5 27
+hold 60 crouch
+go 34 27 until treasures = 4
+until treasures = 4 max 120
+hold 50 lookup
+go 38 27
+go 40 27 jump 2
+until ground = 1
+expect y >= 3.95
+# East between the gallery's two saws (x 49, z 25 and 29) to the brick lift (52, feet 4 -> 7)
+# up to the ledge: its egg, and the bar marked 4 (62 7 27) into the lift tower's yard.
+go 51.3 27 tol 0.1
+lift 52 4 27 max 400
+go 52 27 tol 0.15
+until y >= 6.95 max 300
+go 54 27
+go 58 24 until eggs = 4
+until eggs = 4 max 120
+go 61 27
+face 90
+go 64 27
+expect y >= 6.95
+# C. The lift tower: the yard's egg, then L1 (66 23, feet 7 -> 10) to treasure 5's ledge.
+go 76 30 until eggs = 5
+until eggs = 5 max 120
+go 66 26
+go 66 24.35 tol 0.1
+lift 66 7 23 max 400
+go 66 23 tol 0.15
+face -90
+until y >= 9.95 max 300
+go 64 23 until treasures = 5
+until treasures = 5 max 120
+# Over L1's shaft onto pier P1, L2 (70 23, feet 10 -> 14) up to pier P2.
+go 64 23 tol 0.1
+face 90
+go 68 23 jump 2.6
+until ground = 1
+expect y >= 9.95
+go 69.3 23 tol 0.1
+lift 70 10 23 max 400
+go 70 23 tol 0.15
+until y >= 13.95 max 300
+go 71.6 23
+# Treasure 6 on the ledge across z 25, and back.
+go 72 24.2 tol 0.1
+face 180
+go 72 26.6 jump 2.35
+until ground = 1
+expect y >= 13.95
+go 72 27 until treasures = 6
+until treasures = 6 max 120
+face 0
+go 72 23.5 jump 2.4
+until ground = 1
+expect y >= 13.95
+# L3 (72 21, feet 14 -> 18) to pier P3, L4 (70 19, feet 18 -> 26) to the top landing.
+go 72 22.3 tol 0.1
+lift 72 14 21 max 400
+go 72 21 tol 0.15
+until y >= 17.95 max 300
+go 72 19.5
+go 71.3 19 tol 0.1
+lift 70 18 19 max 600
+go 70 19 tol 0.15
+until y >= 25.95 max 400
+go 68.5 19
+go 63 19 until treasures = 7
+until treasures = 7 max 120
+# The landing's crate pushed +X out of the way of the bar marked 7 (66 26 17).
+go 64.4 18 tol 0.1
+face 90
+go 66 18 tol 0.1 max 200
+crate 68 26 18 max 10
+face 0
+go 66 15
+# D. The upper hall: over the passage's saws (x 56, z 9-11), over the north aisle's saws
+# (x 44) to treasure 8 and its egg.
+go 59 10
+face -90
+go 54 10 jump 3.0
+until ground = 1
+expect y >= 25.95
+go 47 7
+face -90
+go 42 7 jump 3.0
+until ground = 1
+expect y >= 25.95
+go 40 7 until treasures = 8
+until treasures = 8 max 120
+go 40 5 until eggs = 6
+until eggs = 6 max 120
+# The bars marked 8 are open: the green key in its shrine.
+go 36 7
+face -90
+go 32 7
+wait 60
+# Back east over the saws, round the bookcases' east end into the south aisle: the egg on
+# the shelves, then the green door (34 26 13) and the red arrow.
+go 35 7
+go 47 7 jump 4.0
+until ground = 1
+expect y >= 25.95
+go 53 10
+go 52 13
+go 49.4 14 tol 0.1
+face -90
+go 48 14 jump 1.4 until eggs = 7
+until eggs = 7 max 120
+go 48 15.4
+until ground = 1
+go 36 13
+face -90
+go 32 13 until exit = 1
+expect treasures = 8
+until mission = 20 max 900
+expect lives = 10
+expect phase = Play
+wait 120
