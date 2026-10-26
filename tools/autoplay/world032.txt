@@ -1,0 +1,117 @@
+# Mission 032 played through (plans/briefs/world032.md).
+wait 30
+expect mission = 32
+# A: up the lane to the street, east to wait west of the bulldozer's beat (x 24-30, z 82).
+go 10 82.5
+go 22 82
+# Its cycle is 660 ticks (60 at x 24, 270 east, 60 at x 30, 270 back): follow it east through
+# the gate (x 26-28) and step aside onto z 83 while it waits at x 30.
+until tick >= 830
+go 28.6 82 tol 0.1
+go 29.4 83
+go 36 83
+# Lollipop 1 (40, 82): lick it (Action), then the high jump onto L1, five up.
+go 39.6 82 tol 0.1
+hold 6 action
+wait 90
+go 40 81.2 tol 0.1
+go 40 78.5 jump 2.4
+until ground = 1
+expect y >= 9.9
+# B: L1 heading +X; the wasp sweeps it at x 58 (z 74-80, a 96-tick cycle from z 74): cross
+# it along the mountain's foot (z 74.4) while it is out over the ledge.
+go 41 77
+go 56.5 74.4 tol 0.1
+until tick >= 1931
+go 60 74.4
+go 75.5 75
+# L2 up the east face, heading -Z: two steps up (z 65.5, z 57.5).
+go 75.5 66.4 tol 0.1
+go 75.5 64 jump 1.9
+until ground = 1
+go 75.5 58.4 tol 0.1
+go 75.5 56 jump 1.9
+until ground = 1
+expect y >= 13.9
+# C: over the one-cell gap (x 79) to the island, lick lollipop 2, back.
+go 77.4 46 tol 0.1
+go 80.5 46 jump 2.4
+until ground = 1
+go 83.6 46 tol 0.1
+hold 6 action
+wait 90
+go 80.4 46 tol 0.1
+go 77.5 46 jump 2.4
+until ground = 1
+# The high jump up the six-block cliff onto L3 (walk 20) at z 35.
+go 75.5 36.6 tol 0.1
+go 75.5 34 jump 2.8
+until ground = 1
+expect y >= 19.9
+# D: L3 heading -X; over the fish pool (x 60-61) in one jump, the egg nook (x 51-53) in the
+# mountain's face, the step (x 44-47, walk 22) and up onto the summit (walk 24).
+go 74 25
+go 63.6 25 tol 0.1
+go 58.5 25 jump 3.15
+until ground = 1
+expect y >= 19.9
+go 52 27
+go 52 28.8 tol 0.1
+go 51.1 28.9 tol 0.1
+until eggs = 1 max 200
+go 52.9 28.9 tol 0.1
+until eggs = 3 max 200
+go 52 26
+go 48.6 26 tol 0.1
+go 46.5 26 jump 1.9
+until ground = 1
+go 44.6 26.8 tol 0.1
+go 44.6 29 jump 1.9
+until ground = 1
+expect y >= 23.9
+# E: the summit village. Round to the key house's doorway (59, 52) along its front (z 53),
+# clear of the bird beating along z 54; in its room the red key and the egg.
+go 52 30
+go 63 44
+go 63 53
+go 59 53 tol 0.1
+go 59 50.5
+go 59 48 tol 0.1
+go 57 48 tol 0.1
+until eggs = 4 max 200
+go 59 50.5
+go 59 53 tol 0.1
+go 55.5 53
+# The gatehouse's red door (48, 34): it opens with the key, and the shaft behind it drops into
+# the machine gallery (walk 8).
+go 48 35.6
+go 48 32
+until ground = 1 max 400
+expect y <= 8.1
+# F: the gallery heading +Z. The lightning curtains (z 38, z 50) are on for the first 150
+# ticks of every 300; the three mines of the gate (z 44) ride up and down every 240 ticks
+# (their clock, measured, runs 123 ticks ahead of the mission's here): pass each in its gap.
+go 48 36.6 tol 0.1
+until tick >= 7712
+go 48 42 tol 0.1
+until tick >= 7877
+go 48 48.6 tol 0.1
+until tick >= 8292
+go 48 52
+# The blue key in its alcove (x 51-53), then the blue door (48, 60) into the exit room.
+go 50 55
+go 53 55 tol 0.1
+wait 30
+go 48 57.5
+go 48 61
+go 46.4 62.4 tol 0.1
+# G: the exit room. Its two mines slide across it (z 64 and z 67, 180 ticks to and fro, in
+# opposite directions): down its west side (x 46.4) where each turns once a cycle, between
+# them, to the red arrow.
+until tick >= 8957
+go 46.4 68.6 tol 0.1
+go 50 69 until exit = 1
+until mission = 30 max 900
+expect lives = 7
+expect phase = Play
+wait 120
