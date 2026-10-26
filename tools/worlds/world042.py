@@ -121,12 +121,14 @@ def causeway(w: World, rng: random.Random):
 def tower(w: World, rng: random.Random):
     """E: the tower and its hall (floor walk 18, 38 high): treasure 3 and two eggs on the
     floor, an egg in a niche behind walk-through cheese; along the north wall five lifts in
-    relay (42 ticks, 3 stop), each two cells deep, each rising seven above the last, the first
-    from a step at its foot. In 3D the lifts stand a column apart, a rest between each two
-    whose top is the meeting height: Blupi rides one up, steps across onto the rest and boards
-    the next at its bottom, or jumps onto it as it leaves (he waits on the rest instead of
-    crossing from lift to lift in the moment they meet). A mistimed step drops him back to the
-    hall floor. From the last lift's top the way out north, a step down onto the avenue."""
+    relay (the original's 42 ticks), each two cells deep, each rising seven above the last,
+    alternately up and down so that one's top meets the next one's bottom, the first from a
+    step at its foot. In 3D the lifts stand a column apart, a rest between each two whose top
+    is the meeting height, and they wait two seconds at each end (the original's 3 ticks leave
+    no time to cross a cell): Blupi rides one up (the rest's column holds him back until the
+    top), crosses the rest onto the next waiting at its bottom, and so on -- walking on, he is
+    carried all the way up. A mistimed step drops him back to the hall floor. At the top a
+    landing, and the way out north onto the avenue."""
     cheese(w, 81, 10, 66, 97, 56, 92, rng)
     carve(w, 84, WC, 70, 94, 55, 88)
     carve(w, 81, WC, 84, 83, WC + 3, 86)                  # the entrance from the causeway
@@ -141,11 +143,12 @@ def tower(w: World, rng: random.Random):
         low, high = WC + 7 * k, WC + 7 + 7 * k            # the first stands on the floor
         a, b = (low, high) if k % 2 == 0 else (high, low)
         for z in (70, 71):
-            lift(w, (x, a, z), (x, b, z), ticks=42, stop=3)
+            lift(w, (x, a, z), (x, b, z), ticks=42, stop=40)
         if k < 4:                                         # the rest east of it
             cheese(w, x + 1, WC, 70, x + 1, high, 71, rng)
     cheese(w, 84, WC, 72, 86, WC, 73, rng)                # a step at the first lift's foot
-    carve(w, 92, WT + 1, 66, 94, WT + 3, 69)              # the way out north, down onto the avenue
+    cheese(w, 94, WC, 70, 94, WT - 1, 73, rng)            # the landing at the top (walk 54)
+    carve(w, 92, WT, 66, 94, WT + 3, 69)                  # the way out north, onto the avenue
 
 
 def avenue(w: World, rng: random.Random):

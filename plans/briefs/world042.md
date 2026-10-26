@@ -28,7 +28,7 @@ Islands of cheese (246–249) floating in the red sky, joined by the route. Raw 
 | B, the lift stair | x 29–46, z 84–85 | Six stones, each four lifts two by two, bobbing one cell (10 ticks, 10 stop, counter-step), each a jump from the last and one higher, from the landing (walk 12) to the house island (walk 18). A lift does not stop Blupi sideways, so each stone is a cell from the last: every one is jumped onto. The basin under it (walk 6) catches a fall: treasure 2 there, steps back up to the landing |
 | C, the house island | x 46–58, z 76–94, walk 18 | The house (BigDecor 26), five trees, an egg; along its east edge a ridge four high with door 2 (422) at (58, 18, 85) |
 | D, the causeway | x 59–80, z 84–86, walk 18, over the sky | Five rows of three mines across it, four apart, jumped one at a time (a mine kills within 0.7 of Blupi and a jump carries him 2.4 cells: rows closer than four leave no room to land) |
-| E, the tower hall | x 84–94, z 70–88, floor walk 18, up to y 55 | Treasure 3 and two eggs on the floor; an egg in a niche behind walk-through cheese (339, at walking level only, never a floor). The relay along the north wall: five lifts two deep (42 ticks, 3 stop), each rising seven above the last (walk 19 → 26 → … → 54), alternately up and down, a column apart; between each two a rest whose top is their meeting height. Blupi rides one up (the rest's column blocks him until the top), steps onto the rest and boards or jumps onto the next at its bottom; a mistimed step drops him back to the hall floor. Stepping straight from lift to lift as the 2D original does would want them to meet at the cell boundary in the 0.15 s they stand level |
+| E, the tower hall | x 84–94, z 70–88, floor walk 18, up to y 55 | Treasure 3 and two eggs on the floor; an egg in a niche behind walk-through cheese (339, at walking level only, never a floor). The relay along the north wall: five lifts two deep (42 ticks as the original's, but a 2 s wait at each end for its 3 ticks), each rising seven above the last (walk 19 → 26 → … → 54), alternately up and down, a column apart; between each two a rest whose top is their meeting height. Blupi rides one up (the rest's column holds him back until the top), crosses the rest onto the next waiting at its bottom: walking on, he is carried all the way up (with the original's 0.15 s wait he missed the third lift). A mistimed step drops him back to the hall floor. A landing at the top, the passage north out of it |
 | G, the avenue | x 90–94, z 39–65, walk 53 | Out of the top of the relay through a passage north, a step down: bays three long with trees (20–22), between them five necks three wide where three mines lie across the way (15 mines for the original's 12–14), an egg in a bay |
 | H, the pyramid island | x 60–96, z 6–38, walk 53 | The pyramid round (78, 21), six steps one high: twelve treasures on steps 1, 3 and 5, three on each face's middle. On the top step a cap with door 15 (435) in its south wall at (78, 59, 23), a jump up from step 5; behind it a shaft down the pyramid's core into the exit hall (walk 43) with the red arrow at (78, 43, 16) |
 
@@ -52,9 +52,10 @@ stones are four lifts each, the relay lifts two deep).
   then up the steps to treasure 1 (a jump under the beam meets the hanging mine and kills, as
   meant); the stones seen bobbing from the landing, jumped onto from the landing and from stone
   to stone; the house island with the house, trees and door 2; the causeway crossed jumping its
-  five rows; through the secret cheese into the niche for its egg; lift 1 of the relay ridden
-  from its step, the rest stepped onto at its top, the next lift boarded by a jump from the rest
-  at four moments of a 0.6 s window, the last lift ridden into the passage and out onto the
-  avenue; the avenue's first row jumped; door 435 in a probe with fifteen treasures in a row
+  five rows; through the secret cheese into the niche for its egg. With the authored lift timing
+  (3b0a861): the relay ridden from lift 1 to the top landing holding forward the whole way
+  (alone in a probe in the open, then in the world), and out north onto the avenue with its
+  trees and mines; the stones hopped (from a stone's far edge, two of four wait times land on
+  the next stone, the others fall into the basin, as the original's timed stair); the avenue's first row jumped; door 435 in a probe with fifteen treasures in a row
   opens at 15/15 and lets Blupi through; in the solved variant the jump into door 15's doorway,
   the fall down the shaft into the exit hall and its arrow.
