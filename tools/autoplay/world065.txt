@@ -1,4 +1,10 @@
-# Mission 065 played through (plans/briefs/world065.md).
+# Mission 065 played through (plans/briefs/world065.md): the closet's switch, the region's egg,
+# the tower's saw steps to its eggs and a stick, the stick's blasts on the nine crates and the
+# blue key, the saw gate and the cage, the blue door's way (the big creature, the stepping stones,
+# the lake's island, an overcraft over the cavern's lava, the stair), the north-east (a jeep down
+# the lift over the mine row to the niche's eggs, the bars, teleporter 2 back west), the key room,
+# the west wing and the treasure, the lava bridges and the funnel's arrow; ten eggs, the most
+# the game allows (the funnel's two stay).
 wait 30
 expect mission = 65
 # The start hall (walk 30): its lift (x 41-42, z 58-59; six up, a 3-tick stop) stepped on as it
@@ -41,10 +47,113 @@ expect y >= 33.95
 go 27.8 52 jump 1.5 tol 0.2
 until ground = 1
 expect y >= 35.95
-# The north corridor (walk 36): up the passage (x 44-45) and east along z 29, past the mines
-# (48, 28), (51, 27) and the two shafts' mines (x 54, 58, z 28); the pit's lift (z 27, x 61 -> 63)
-# boarded as it arrives at its west end and left at its east end.
+# The region's egg (21, 55) in its south-west corner, west of the moving mine's run (x 28-36,
+# z 54).
 go 27.8 50.6 tol 0.15
+go 21.5 52
+go 21 55 until eggs = 1
+until eggs = 1 max 120
+# The tower (blue blocks, x 6-16): the switch (18, 37, 48) on its block by the doorway jumped onto
+# (two up) and pressed: the first step's saws (13-14, z 48) stop. Through the doorway (x 16-17,
+# z 44-46) into the tower.
+go 19.6 50
+go 19.6 48 tol 0.1
+face 270
+go 18 48 jump 1.4 tol 0.15
+until ground = 1
+expect y >= 37.95
+hold 2 action
+wait 20
+go 19.4 46
+until ground = 1
+go 17 45
+go 15.3 46
+go 15.3 48 tol 0.1
+face 270
+# The stair round the core, each step two up and jumped from 0.7-0.8 short of its face: the
+# first (its saws stopped) and the second along z 48, then the switch (12, 41, 47) raised on the
+# second, pressed: the third step's saws (9-10, z 47) stop.
+go 13.5 48 jump 2 tol 0.2
+until ground = 1
+expect y >= 37.95
+go 13.3 48 tol 0.1
+go 12 48 jump 2 tol 0.2
+until ground = 1
+expect y >= 39.95
+go 12 48.3 tol 0.1
+face 0
+go 12 47 jump 2 tol 0.15
+until ground = 1
+expect y >= 41.95
+hold 2 action
+wait 20
+# West over the second step onto the third, then the fourth to the eighth (walk 44-52) round the
+# tower's west and north walls, and up one onto the top floor (walk 53) by the hole over the
+# last two steps.
+face 270
+go 9.5 47 jump 2.6 tol 0.2
+until ground = 1
+expect y >= 41.95
+go 9.4 47 tol 0.1
+go 7.5 47 jump 2 tol 0.2
+until ground = 1
+expect y >= 43.95
+go 7.5 46.3 tol 0.1
+face 0
+go 7.5 44.5 jump 2 tol 0.2
+until ground = 1
+expect y >= 45.95
+go 7.5 44.2 tol 0.1
+go 7.5 42.6 jump 2 tol 0.15
+until ground = 1
+expect y >= 47.95
+go 7.8 42 tol 0.1
+face 90
+go 9.5 41.7 jump 2 tol 0.2
+until ground = 1
+expect y >= 49.95
+go 9.8 41.7 tol 0.1
+go 11.5 41.7 jump 2 tol 0.2
+until ground = 1
+expect y >= 51.95
+go 11.8 41.7 tol 0.1
+go 13.5 41.7 jump 2 tol 0.2
+until ground = 1
+expect y >= 52.95
+# The top: the four eggs between the poles (x 8-11, z 48), then one stick (14, 44) from the
+# north-west, clear of the other three (walking past two takes both here, while the first one
+# still flies to the panel; the original takes none then). Down the hole onto the eighth and
+# seventh steps, off the seventh to the floor, out by the doorway.
+go 12.5 43.5
+go 12.5 46.5
+go 11 47.3 tol 0.15
+go 11 48 until eggs = 2
+until eggs = 2 max 120
+go 10 48 until eggs = 3
+until eggs = 3 max 120
+go 9 48 until eggs = 4
+until eggs = 4 max 120
+go 8 48 until eggs = 5
+until eggs = 5 max 120
+go 10 47
+go 12.5 45
+go 13.5 43.6 tol 0.1 until dynamite = 1
+until dynamite = 1 max 120
+expect dynamite = 1
+go 13.4 41.6
+go 9.5 41.6
+until ground = 1
+expect y <= 50.05
+go 9.5 43.6
+until ground = 1
+expect y <= 36.05
+go 13 43.6
+go 15 45
+go 19 45
+# The north corridor (walk 36) with the stick: up the passage (x 44-45) and east along z 29, past
+# the mines (48, 28), (51, 27) and the two shafts' mines (x 54, 58, z 28); the pit's lift (z 27,
+# x 61 -> 63) boarded as it arrives at its west end and left at its east end.
+go 27 47.5
 go 34 49.5
 go 43 44
 go 44.5 37
@@ -57,14 +166,25 @@ lift 61 36 27 max 600
 go 61 27 tol 0.15
 lift 63 36 27 max 300
 go 64.5 27.5 tol 0.15
-go 65 28 tol 0.1
-face 0
-# The saw gate: north past the front's mine rising and falling at (65, 26) while it is high, up
-# the passage (x 65), the switch (64, 22) at its mouth pressed: the gate's saws stop; west over
-# them, up the step (z 21) onto the landing (z 20) before the cage's curtain.
-go 65 27.3 tol 0.1
-near 65 36 26 0.2 max 300
-wait 30
+# The crates' front: the stick put down at the foot of the nine crates' middle row (z 27), short
+# of touching them (they would be pushed), and back south out of its blasts' lane (they reach 1.5
+# along Z); the first blast, 2.5 s after, takes the nine crates and the front's north mine
+# (65, 26) rising and falling. Through the empty passage to the blue key (71, 27).
+go 65.6 27 tol 0.1
+face 90
+hold 2 action
+expect dynamite = 0
+wait 80
+go 65.6 28.7 tol 0.1
+wait 160
+clear 65 37 26 1.2 max 5
+go 70 27
+go 71 27 until keys = 1
+until keys = 1 max 120
+# The saw gate: north up the passage (x 65), its mine gone, the switch (64, 22) at its mouth
+# pressed: the gate's saws stop; west over them, up the step (z 21) onto the landing (z 20)
+# before the cage's curtain.
+go 66 27
 go 65 25.2
 go 65 22.2 tol 0.15
 go 64 22 tol 0.1
@@ -84,19 +204,19 @@ go 55.5 20.15 tol 0.08
 # back out through the curtain in another quiet half.
 until blitz = 50 max 400
 go 55.5 18 tol 0.2
-go 49 17 until keys >= 1
-go 50 14 until eggs = 1
-until eggs = 1 max 120
+go 49 17 until keys >= 2
+go 50 14 until eggs = 6
+until eggs = 6 max 120
+expect keys = 2
 go 55.5 17.85 tol 0.08
 until blitz = 50 max 400
 go 55.5 20.2 tol 0.1
-# Back: down the step into the corridor, east over the stopped saws, south down the passage past
-# the front's mine while it is high, the pit's lift back west, the north corridor back.
+# Back: down the step into the corridor, east over the stopped saws, south down the passage
+# (the front's south mine (65, 30) two rows off), the pit's lift back west, the north corridor
+# back.
 go 55.5 22.5
 go 64.8 22.2 tol 0.15
 go 65 24.7 tol 0.1
-near 65 36 26 0.2 max 300
-wait 30
 go 65 27.6 tol 0.15
 go 64.3 27 tol 0.1
 face 270
@@ -108,6 +228,181 @@ go 59.5 28.5
 go 59.5 29.1 tol 0.15
 go 44.5 29.1
 go 44.5 37
+# The blue door (x 51, z 44-45) opened with the blue key; the big creature's corridor (z 44,
+# x 52-62): it kills only while it rests at an end (x 53, x 61), so he waits by the door for it
+# to rest at the far end and set off back, walks through it as it comes (harmless while it
+# walks), and is over the trench long before it rests at the far end again.
+go 48 44
+go 50.3 44 tol 0.1
+face 90
+expect keys = 1
+near 61 36 44 0.3 lane x max 1800
+clear 61 36 44 0.3 lane x max 1200
+go 63 44 tol 0.1 max 600
+# The stepping stones over the lava trench (odd x 63-75, z 44): the switch on the second (65)
+# pressed, the saws on the third to the fifth (67-71) stopped; stone to stone, each jump two
+# cells over a cell of lava.
+face 90
+go 65 44 jump 2 tol 0.15
+until ground = 1
+expect y >= 35.95
+hold 2 action
+wait 20
+go 67 44 jump 2 tol 0.15
+until ground = 1
+expect y >= 35.95
+go 69 44 jump 2 tol 0.15
+until ground = 1
+expect y >= 35.95
+go 71 44 jump 2 tol 0.15
+until ground = 1
+expect y >= 35.95
+go 73 44 jump 2 tol 0.15
+until ground = 1
+expect y >= 35.95
+go 75 44 jump 2 tol 0.15
+until ground = 1
+expect y >= 35.95
+# Along the passage (z 44), over the shaft (x 78) onto the steps down (x 79-80: walk 35, 33, 31)
+# to the lake.
+go 77 44 tol 0.1
+face 90
+go 79.5 44 jump 2.3 tol 0.2
+until ground = 1
+expect y >= 34.95
+go 79.5 43
+until ground = 1
+expect y <= 33.05
+go 79.5 42
+until ground = 1
+expect y <= 31.05
+# The lake (surface 30): swum north to the island's west side, jumped out of the water onto it,
+# its egg (80, 31, 34); back in, north to the cavern's west shore (walk 30).
+go 79.5 40 max 300
+go 79 35 max 400
+go 79.3 34.2 tol 0.15 max 300
+wait 30
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1 max 200
+expect y >= 30.95
+go 80 34 until eggs = 7
+until eggs = 7 max 120
+go 80.3 32.5
+until ground = 0 max 100
+go 80 28 max 400
+until ground = 1 max 200
+expect y <= 30.05
+# An overcraft (80, 30, 22) mounted; east over the cavern's lava (x 83-90) with Up held all the
+# way: it climbs only while the ground lies within 1.25 under it (D46), so it hovers 1-1.6 over
+# the lava, never higher, and comes down on the far floor; off it there.
+go 80 22.9 tol 0.08
+face 0
+hold 2 action
+wait 30
+hold 20 lookup
+expect y >= 30.05
+go 87 22 tol 0.5 with lookup max 600
+expect y <= 31.75
+go 92 22 tol 0.5 with lookup max 600
+wait 30
+expect x >= 91
+hold 2 action
+wait 30
+# The stair up to the north-east (x 93-94, z 27 -> 20): eight steps two up, a cell deep, each
+# jumped from where he lands on the one before.
+go 93.5 28.3 tol 0.1
+face 0
+go 93.5 27 jump 2 tol 0.2
+until ground = 1
+expect y >= 31.95
+go 93.5 26 jump 2 tol 0.2
+until ground = 1
+expect y >= 33.95
+go 93.5 25 jump 2 tol 0.2
+until ground = 1
+expect y >= 35.95
+go 93.5 24 jump 2 tol 0.2
+until ground = 1
+expect y >= 37.95
+go 93.5 23 jump 2 tol 0.2
+until ground = 1
+expect y >= 39.95
+go 93.5 22 jump 2 tol 0.2
+until ground = 1
+expect y >= 41.95
+go 93.5 21 jump 2 tol 0.2
+until ground = 1
+expect y >= 43.95
+go 93.5 20 jump 2 tol 0.2
+until ground = 1
+expect y >= 45.95
+# The north-east (walk 46): the garage's west jeep (84, 10) mounted, driven onto the lift
+# (x 84-85, z 12-13) at its top, turned west on the way down, and west along the mine row
+# (z 12, walk 42) as the lift arrives: the jeep runs over its seven mines (x 73-79).
+go 88 14
+go 85.5 11
+go 84 10.9 tol 0.1
+hold 2 action
+wait 30
+lift 84 46 12 max 600
+go 84 12 tol 0.15
+face 270
+until y <= 42.05 max 300
+go 72.8 12 tol 0.3 max 900
+wait 60
+clear 76 42 12 4 lane x max 5
+# Off the jeep at the row's end; the niche (x 68-69): its egg on the step (69, 40, 13), its two
+# eggs on its floor (68, 38), back up the step and into the row (two up each).
+hold 2 action
+wait 30
+go 69 12.2
+until ground = 1 max 100
+expect y <= 40.05
+go 69 13 until eggs = 8
+until eggs = 8 max 120
+go 68 13 until eggs = 9
+until eggs = 9 max 120
+go 68 12 until eggs = 10
+until eggs = 10 max 120
+go 67.8 12 tol 0.1
+face 90
+go 69 12 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 39.95
+go 68.8 12 tol 0.1
+face 90
+go 70.3 12 jump 1.6 tol 0.2
+until ground = 1
+expect y >= 41.95
+# East along the row on foot (its mines gone) to the lift, boarded at its west edge at the
+# bottom, turned west on the way up and walked off west as it reaches the top (it rests there
+# only 10 ticks).
+go 82.6 12 tol 0.15
+face 90
+lift 84 42 12 max 600
+go 83.9 12 tol 0.1
+face 270
+until y >= 44.5 max 300
+go 82 12.5
+expect y >= 45.95
+# The bars (x 76-78, z 20) over the gap: hanging from them, west across it; under teleporter 2
+# (70, 47, 10), clear of the mine (75, 14) and the crates, to teleporter 1 in the west region
+# (20, 37, 40), and east across the region to its lift.
+go 82 16
+go 80 20 tol 0.15
+face 270
+go 74.5 20 tol 0.2 max 600
+expect y >= 45.95
+go 71 16
+go 70 11 tol 0.2
+go 70 10 tol 0.15 until x <= 30
+until x <= 30 max 600
+until ground = 1 max 300
+expect y >= 35.95
+go 27 47.5
+go 34 49.5
 # The region's lift down to the start hall: walked onto at its top, ridden down.
 go 41.5 56
 go 41.5 57.4 tol 0.08
@@ -171,10 +466,12 @@ go 71 63 tol 0.2
 go 72.5 62.5 until y <= 28
 until ground = 1 max 300
 expect y <= 5.05
-# The funnel: its two eggs, onto the pedestal (69, 62) to the red arrow, then the hub.
-go 74 58 until eggs = 2
-go 74 66 until eggs = 3
-until eggs = 3 max 120
+# The funnel: over its two eggs, which stay (at ten an egg is not taken, the original's
+# MAX_EGG_COUNT), onto the pedestal (69, 62) to the red arrow, then the hub.
+go 74 58 tol 0.15
+go 74 66 tol 0.15
+wait 60
+expect eggs = 10
 go 70.6 62.3
 go 70.6 62 tol 0.1
 face 270
