@@ -1,0 +1,170 @@
+# Mission 093 played through (plans/briefs/world093.md): the mine passage's rows jumped, the dive
+# through the cistern's outlet, a crate pushed against the plinth, the pipelines' mines jumped,
+# the two treasures, the door "2", the lift, the swim through the second pipe, the drink, the
+# guarded lane unseen and the arrow in its box; ten eggs.
+wait 30
+expect mission = 93
+# S, the start cave: its egg (9, 89). M, the mine passage north (x 12-14, three high): round the
+# mine (13, 76) in lane x 12, each row of three mines (z 71, z 65) jumped from 0.85 before it
+# (the low roof makes the jump short); the niche's three eggs (17, z 67-69) between the rows.
+go 9 89 until eggs = 1 max 300
+until eggs = 1 max 200
+go 12 80
+go 12 74
+go 13 73
+go 13 71.85 tol 0.03
+face 0
+go 13 69 jump 9 max 200
+until ground = 1
+go 17 69 until eggs = 2 max 300
+go 17 68 until eggs = 3 max 300
+go 17 67 until eggs = 4 max 300
+until eggs = 4 max 200
+go 13 67
+go 13 65.85 tol 0.03
+face 0
+go 13 63 jump 9 max 200
+until ground = 1
+go 13 60
+# R, the cistern room: up onto the cistern's rim (walk 22), a dive to the egg on its bottom
+# (16, 15, 48), east along the outlet under the floor (z 47-49, three high) and up the rising
+# pipe into the hall's basin (x 32-34), out onto the hall's floor (walk 20).
+go 10.6 48 tol 0.1
+face 90
+go 12 48 jump 1.6 tol 0.15
+until ground = 1
+expect y >= 21.9
+go 16 48 with crouch until eggs = 5 max 600
+hold 120 crouch
+until eggs = 5 max 200
+go 31 48 with crouch max 900
+go 34.4 48 tol 0 with lookup until y >= 19.2 max 600
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1 max 300
+expect y >= 19.9
+# The hall's shelf (x 33-37, z 21-25, walk 22) in its north-west corner and its three eggs
+# (34-36, 22).
+go 35 27
+go 35 26.4 tol 0.1
+face 0
+go 35 24.5 jump 2.0 tol 0.15
+until ground = 1
+expect y >= 21.9
+go 35 22 until eggs = 6 max 300
+go 34 22 until eggs = 7 max 300
+go 36 22 until eggs = 8 max 300
+until eggs = 8 max 200
+go 37.4 26
+until ground = 1
+go 39.3 28
+go 39.3 42.6
+# P, the hall of pipes: the crate (43, 40) pushed north against the plinth (x 40-44, z 30-34,
+# walk 23); onto it, onto the plinth, onto its pier (walk 25) and east along pipeline P1 (z 32),
+# its mine (51, 32) jumped, into the treasure box and its two treasures (60, 31), (62, 33).
+go 43 42.6
+go 43 42.4 tol 0.1
+face 0
+go 43 36.4 max 900
+crate 43 20 35 max 120
+go 43 35 jump 1.5 tol 0.15
+until ground = 1
+expect y >= 20.9
+go 43 33 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 22.9
+go 43 33.4 tol 0.1
+face 0
+go 43 31.6 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 24.9
+go 43 32 tol 0.1
+face 90
+go 49.8 32 tol 0.05
+go 53.4 32 jump 9 tol 0.15 max 200
+until ground = 1
+go 58 32
+go 60 31 until treasures = 1 max 300
+go 62 33 until treasures = 2 max 300
+until treasures = 2 max 200
+# East out of the box along pipeline P2 (z 32; the helicopter over it drops its shots at z 33),
+# its mine (73, 32) jumped, through the door "2" (x 79), open with both treasures.
+go 63 32
+go 65 32
+go 71.8 32 tol 0.05
+go 75.4 32 jump 9 tol 0.15 max 200
+until ground = 1
+go 82 32
+expect y >= 24.9
+# L: the four lifts (x 87-88, z 34-35; 80 ticks, 40 dwelling) down from the corridor (walk 25)
+# to the landing (walk 17); south down the corridor behind the mine sweeping across it (z 48,
+# 4 cells a second) as it heads back west from x 89,
+# past the mine (86, 56) in lane x 88.
+go 87.5 32.6 tol 0.1
+lift 87 17 34 max 600
+lift 87 25 34 max 600
+go 87.5 34.5 tol 0.15
+lift 87 17 34 max 600
+wait 5
+go 87.5 37
+go 88 46.6 tol 0.1
+near 89 17 48 0.05 lane x max 400
+wait 18
+go 88 54
+go 87.5 60.4 tol 0.1
+# W2, the second swim: into the well (x 86-88, z 61-63, its surface level with the floor), down
+# it, south and west along the pipe at its bottom (y 8-10), up into the court's east basin
+# (x 80-82, z 70-72) and out south onto the alcove's floor (walk 12); its egg (83, 76).
+face 180
+go 87 63 with crouch max 300
+go 87 66 with crouch max 600
+go 87 71 with crouch max 600
+go 82 71 with crouch max 600
+go 81 72.6 tol 0 with lookup until y >= 11.2 max 600
+face 180
+hold 8 up jump
+hold 30 up
+until ground = 1 max 300
+expect y >= 11.9
+go 83 76 until eggs = 9 max 300
+until eggs = 9 max 200
+# G, the guarded court: out of the alcove across the lane's line of fire (z 78; its shots fly
+# east past the bank in bursts every 200 ticks) when no shot is within 5; the drink's pocket (x 74-78, z 86-90) through its mouth (x 75-76, z 85),
+# under the mine riding up and down in x 75 while it is at the top; the drink (76, 88) taken
+# with Action: unseen and unhurt for a while.
+go 78 76
+go 77 76.6 tol 0.1
+face 180
+clear 77 12 78 5 lane x max 600
+go 76 81
+go 75 83.6 tol 0.1
+face 180
+near 75 15 85 0.05 max 400
+go 75 87.2 max 300
+go 75.4 88 tol 0.1
+hold 2 action
+wait 110
+# Unseen: out through the mouth, west along the lane (z 78) through the bank of clods past its
+# two tanks and the helicopters over it; round the exit box's east side (x 48, clear of the
+# helicopter's drops at x 49) to the egg by its south-west corner (41, 89).
+go 75 84
+go 63 78 max 600
+go 50.5 78 max 600
+go 48 79.5
+go 48 89.3
+go 41 89 until eggs = 10 max 600
+until eggs = 10 max 200
+# Round the box's west side to its doorway (44, 80) in the north wall, while the helicopter over
+# it (x 41-47, z 79) waits at its east end (its drops fall at its ends); the red arrow inside.
+go 40.3 87
+go 40.3 80.6 tol 0.1
+near 47 16 79 0.05 max 600
+go 41.5 79.3
+go 44 79.3 tol 0.15
+go 44 85 until exit = 1 max 600
+expect treasures = 2
+expect eggs = 10
+until mission = 90 max 900
+expect phase = Play
+wait 60
