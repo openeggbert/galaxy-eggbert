@@ -266,6 +266,30 @@
       "clip": "clips/Recede.clip.bin"
     },
     {
+      "name": "JumpAie",
+      "clip": "clips/JumpAie.clip.bin"
+    },
+    {
+      "name": "Ouf1a",
+      "clip": "clips/Ouf1a.clip.bin"
+    },
+    {
+      "name": "Ouf1b",
+      "clip": "clips/Ouf1b.clip.bin"
+    },
+    {
+      "name": "Ouf3",
+      "clip": "clips/Ouf3.clip.bin"
+    },
+    {
+      "name": "Ouf4",
+      "clip": "clips/Ouf4.clip.bin"
+    },
+    {
+      "name": "Ouf2",
+      "clip": "clips/Ouf2.clip.bin"
+    },
+    {
       "name": "Bye",
       "clip": "clips/Bye.clip.bin"
     },
@@ -276,6 +300,10 @@
     {
       "name": "FireTank",
       "clip": "clips/FireTank.clip.bin"
+    },
+    {
+      "name": "HelicoGlu",
+      "clip": "clips/HelicoGlu.clip.bin"
     },
     {
       "name": "TakeDynamite",

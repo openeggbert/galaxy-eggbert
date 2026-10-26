@@ -52,6 +52,19 @@
         0.5225215539683921,
         1.0
       ]
+    },
+    {
+      "name": "helico_rd_00cf00",
+      "vertices": "helico_rd_00cf00.verts.bin",
+      "indices": "helico_rd_00cf00.idx.bin",
+      "vertexStride": 52,
+      "texture": "helico_rd_00cf00.png",
+      "diffuseColor": [
+        0.0,
+        0.6243669853667839,
+        0.0,
+        1.0
+      ]
     }
   ],
   "animations": [
@@ -62,6 +75,10 @@
     {
       "name": "MarchHelico",
       "clip": "clips/MarchHelico.clip.bin"
+    },
+    {
+      "name": "HelicoGlu",
+      "clip": "clips/HelicoGlu.clip.bin"
     }
   ]
 }
