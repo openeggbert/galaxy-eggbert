@@ -117,6 +117,15 @@ int main()
     }
 
     {
+        Autoplay autoplay;
+        std::string error;
+        autoplay.Parse("go 0 -3 with crouch with lookup\n", error);
+        AutoplayState state;
+        const AutoplayKeys keys = autoplay.Step(state);
+        check(keys.up && keys.crouch && keys.lookUp && !keys.jump, "go ... with KEY holds the keys while it walks");
+    }
+
+    {
         const Run run = Play("go 5 0 jump 1.5\n", 2000);
         check(run.jumpTicks == 6, "go ... jump D jumps once (6 ticks)");
         check(run.firstJumpDistanceTo5 <= 1.5f && run.firstJumpDistanceTo5 > 1.4f,
@@ -255,6 +264,27 @@ int main()
         const bool badLoaded = bad.Load((root / "bad.txt").string(), error);
         check(!badLoaded && Contains(error, "broken.txt:2"), "an error in an included file names it (" + error + ")");
         fs::remove_all(root);
+    }
+
+    {
+        Autoplay autoplay;
+        std::string error;
+        autoplay.Parse("clear 30 17 46 2\nwait 1\n", error);
+        AutoplayState state;
+        int cleared = -1;
+        for (int t = 0; t < 60 && cleared < 0; ++t)
+        {
+            state.tick = t;
+            // A fish swimming along +X past (30, 17, 46) at 0.1 a tick: more than 2 beyond it from
+            // tick 30.
+            state.enemies = {{29.05f + 0.1f * t, 17.0f, 46.0f}};
+            autoplay.Step(state);
+            if (Contains(autoplay.TakeLog(), "line 2: wait 1"))
+            {
+                cleared = t;
+            }
+        }
+        check(cleared == 30, "clear waits until no enemy is within R (tick " + std::to_string(cleared) + ")");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

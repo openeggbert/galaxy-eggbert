@@ -13,13 +13,16 @@
 //   wait N                     no keys for N ticks (1/60 s each)
 //   hold N KEY...              hold the keys for N ticks: up down left right jump action crouch lookup
 //   face DEG                   turn on the spot until facing DEG
-//   go X Z [jump D] [tol T] [max N] [until COND]
+//   go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...
 //                              turn towards (X, Z) and walk until within T (0.25) of it, or until
-//                              COND holds; with `jump D`, jump once on the way when D or less from it
+//                              COND holds; with `jump D`, jump once on the way when D or less from
+//                              it; `with KEY` holds KEY too (crouch dives, lookup swims up)
 //   until COND [max N]         no keys until COND holds (at most N ticks, default 1800)
 //   lift X Y Z [max N]         no keys until a lift would carry him standing at (X, Y, Z): its
 //                              platform is there (within 0.05), Y being his feet's height on it
 //   crate X Y Z [max N]        no keys until a crate stands in cell (X, Y, Z) (within 0.05)
+//   clear X Y Z R [max N]      no keys until no enemy (fish, mine, bird, ...) is within R of
+//                              (X, Y, Z): time a dive past a patrol
 //   expect COND                record a pass or a failure
 //   log TEXT                   write TEXT to the trace
 //   trace N                    write the position every tick for the next N ticks (else every 60)
@@ -58,6 +61,8 @@ namespace GalaxyEggbert::Game
         std::vector<std::array<float, 3>> lifts;
         // Every crate: raw x, y (its cell), raw z. The trace records them whenever one moves.
         std::vector<std::array<float, 3>> crates;
+        // Every active enemy and projectile: raw x, y, raw z of its cell centre.
+        std::vector<std::array<float, 3>> enemies;
     };
 
     struct AutoplayKeys
@@ -83,7 +88,7 @@ namespace GalaxyEggbert::Game
         std::string TakeLog();
 
     private:
-        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Expect, Log, Trace, End };
+        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Expect, Log, Trace, End };
         enum class Field { X, Y, Z, Yaw, Tick, Mission, Treasures, Eggs, Lives, Ground, Dead, Exit, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
@@ -102,6 +107,7 @@ namespace GalaxyEggbert::Game
             AutoplayKeys keys;
             float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
             float jumpAt = -1.0f;
+            float radius = 0.0f;
             float tolerance = 0.25f;
             Condition condition;
             bool hasCondition = false;

@@ -169,6 +169,15 @@ namespace GalaxyEggbert::Game
                 std::string option;
                 while (words >> option)
                 {
+                    if (allowGo && option == "with")
+                    {
+                        std::string key;
+                        if (!(words >> key) || !SetKey(command.keys, key))
+                        {
+                            return false;
+                        }
+                        continue;
+                    }
                     if (allowGo && option == "until")
                     {
                         command.hasCondition = true;
@@ -221,7 +230,7 @@ namespace GalaxyEggbert::Game
                 command.kind = Kind::Go;
                 if (!(words >> command.x >> command.z) || !readOptions(true))
                 {
-                    return fail("needs X Z [jump D] [tol T] [max N] [until COND]");
+                    return fail("needs X Z [jump D] [tol T] [max N] [until COND] [with KEY]...");
                 }
             }
             else if (verb == "lift" || verb == "crate")
@@ -230,6 +239,14 @@ namespace GalaxyEggbert::Game
                 if (!(words >> command.x >> command.y >> command.z) || !readOptions(false))
                 {
                     return fail("needs X Y Z [max N]");
+                }
+            }
+            else if (verb == "clear")
+            {
+                command.kind = Kind::Clear;
+                if (!(words >> command.x >> command.y >> command.z >> command.radius) || !readOptions(false))
+                {
+                    return fail("needs X Y Z R [max N]");
                 }
             }
             else if (verb == "until" || verb == "expect")
@@ -440,6 +457,7 @@ namespace GalaxyEggbert::Game
                        (command.hasCondition && Holds(command.condition, state));
                 if (!done)
                 {
+                    keys = command.keys;
                     constexpr float kDegrees = 57.2957795f;
                     const float error = WrapDegrees(std::atan2(dx, -dz) * kDegrees - state.yawDegrees);
                     keys.up = distance > command.tolerance && std::fabs(error) <= kWalkConeDegrees;
@@ -455,6 +473,12 @@ namespace GalaxyEggbert::Game
             }
             case Kind::Until:
                 done = Holds(command.condition, state);
+                break;
+            case Kind::Clear:
+                done = std::none_of(state.enemies.begin(), state.enemies.end(), [&](const std::array<float, 3>& at) {
+                    const float dx = at[0] - command.x, dy = at[1] - command.y, dz = at[2] - command.z;
+                    return dx * dx + dy * dy + dz * dz < command.radius * command.radius;
+                });
                 break;
             case Kind::Lift:
             case Kind::Crate:

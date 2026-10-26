@@ -1069,6 +1069,12 @@ namespace GalaxyEggbert::CNA
                                        LiftRiderCenterY(object.currentY),
                                        object.currentZ + WorldRuntime::kWorldCenterZ});
             }
+            const auto kind = GetObjectDefinition(object.type).semanticKind;
+            if (object.active && (kind == ObjectSemanticKind::Enemy || kind == ObjectSemanticKind::Projectile))
+            {
+                state.enemies.push_back({object.currentX + WorldRuntime::kWorldCenterX, object.currentY,
+                                         object.currentZ + WorldRuntime::kWorldCenterZ});
+            }
             if (object.active && object.type == GalaxyEggbert::Def::ObjectType::ObjectType12)
             {
                 state.crates.push_back({object.currentX + WorldRuntime::kWorldCenterX, object.currentY,
