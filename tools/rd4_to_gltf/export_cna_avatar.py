@@ -76,11 +76,28 @@ def make_clockwise(idx_path: Path, ccw: np.ndarray) -> str:
     raise SystemExit(f"{idx_path}: triangles differ from the .glb's; cannot tell their winding")
 
 
+def tone_parts(directory: Path, gain: float, lift: float) -> None:
+    """Every part texture of an exported avatar directory toned: texel c (0..1) -> gain * c + lift / 255
+    (a vehicle's tone against Blupi's sprites, calibrate_vehicle_tone.py)."""
+    manifest = json.loads((directory / "avatar.skinnedmodel.json").read_text())
+    for part in manifest["parts"]:
+        path = directory / part["texture"]
+        image = Image.open(path)
+        rgb = np.asarray(image.convert("RGB")).astype(np.float64)
+        toned = np.clip(gain * rgb + lift, 0, 255).round().astype(np.uint8)
+        out = Image.fromarray(toned, "RGB")
+        if image.mode == "RGBA":
+            out.putalpha(image.getchannel("A"))
+        out.save(path)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--glb", required=True, type=Path)
     ap.add_argument("--cna-home", required=True, type=Path, help="CNA source checkout (for its converter)")
     ap.add_argument("--out", required=True, type=Path, help="avatar directory to write")
+    ap.add_argument("--tone", help="A,B: every part texel c becomes A * c + B / 255 (a vehicle's tone, "
+                                   "calibrate_vehicle_tone.py)")
     args = ap.parse_args(argv)
 
     converter = args.cna_home / "tools" / "avatar_asset_pipeline" / "convert_avatar.py"
@@ -96,6 +113,10 @@ def main(argv=None) -> int:
         image.save(args.out / part["texture"])
         winding = make_clockwise(args.out / part["indices"], indices[part["name"]])
         print(f"{part['name']}: texture {image.size[0]}x{image.size[1]}, triangles {winding}")
+    if args.tone:
+        gain, lift = (float(v) for v in args.tone.split(","))
+        tone_parts(args.out, gain, lift)
+        print(f"parts toned {gain:g}, {lift:g}")
     clips = args.glb.parent / "clips.txt"
     if clips.exists():
         shutil.copyfile(clips, args.out / "clips.txt")

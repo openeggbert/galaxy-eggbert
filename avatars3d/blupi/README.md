@@ -68,8 +68,12 @@ python3 tools/rd4_to_gltf/build_clip_library.py --scenes $B --base marche-profil
     --sheet ../mobile-eggbert/Content/icons/blupi.png --out build-probe/rd4-blupi/library/blupi.glb
 python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/library/blupi.glb \
     --cna-home ../../libcna/cna --out avatars3d/blupi
-for v in helico jeep tank over skate; do
+# The vehicles toned to Blupi's sprites (each scene's own lights greyed them; fitted by
+# calibrate_vehicle_tone.py: helicopter 25.6 -> 11.4, overcraft 27.6 -> 11.4, tank 28.9 -> 19.1,
+# jeep 7.7 -> 4.3 colour error; the skateboard gains too little and keeps none).
+for vt in helico:0.71,50 jeep:0.93,-4 tank:0.94,31 over:0.59,41 skate:; do
+    v=${vt%%:*}; t=${vt#*:}
     python3 tools/rd4_to_gltf/export_cna_avatar.py --glb build-probe/rd4-blupi/library/vehicles/$v.glb \
-        --cna-home ../../libcna/cna --out avatars3d/blupi/vehicles/$v
+        --cna-home ../../libcna/cna --out avatars3d/blupi/vehicles/$v ${t:+--tone $t}
 done
 ```

@@ -123,7 +123,8 @@ sprites (owner's choice): `tone=A,B` in `objects.txt` (37 objects), fitted by
 build's compare sheets; colour error 37.6 -> 14.0 on those models. A new object: build it
 without a tone, run the calibration, add the suggested `tone=`, build again and compare. Open:
 D11 (the owner's list), BB3D-032 (the fish's head), the flat procedural textures (a bake was
-tried and did not help), the vehicles' tone (Blupi's clip library, not toned).
+tried and did not help). The vehicles are toned too (`calibrate_vehicle_tone.py`, applied with
+`export_cna_avatar.py --tone`; their commands in `avatars3d/blupi/README.md`).
 
 Milestone D (every world) is done; a change to a world is checked with `levelcheck.py` (a `--solved`
 variant where crates or dynamite gate the route), `campaigncheck.py`, `watercheck.py` and live.

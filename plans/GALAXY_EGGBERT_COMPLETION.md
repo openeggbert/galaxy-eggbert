@@ -240,6 +240,10 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   creatures, pillars, tentacles, keys, mines, helicopter, big decor ...) took one; on their 60
   models the colour error against the sprites fell 37.6 -> 14.0 (the cabin's got worse and kept
   none); silhouettes unchanged (the bird, the fish and the invert sign keep their icon tables).
+  The vehicles Blupi rides likewise (`calibrate_vehicle_tone.py` on the pixels where only the
+  vehicle shows; `export_cna_avatar.py --tone`): helicopter, overcraft, tank and jeep, colour
+  error 25.6 -> 11.4, 27.6 -> 11.4, 28.9 -> 19.1, 7.7 -> 4.3 (the helicopter's 0.71/50 agrees
+  with its parked object's 0.72/62); the skateboard keeps none.
 - Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
   Recede/Advance clips; checked live in 012).
 - Win cheer: done (D29, Win clip `3415d3f`).
