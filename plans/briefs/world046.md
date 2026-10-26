@@ -53,10 +53,11 @@ each), 3 lollipops, 2 drinks, 1 helicopter, 1 crate, the three keys and doors, t
   stair where the lollipop's high jump goes) — also the deck and the green key; `--check green`
   — also the drinks hall, the gallery and the crate cave, not the blue key; `--check solved`
   (crate under the ledge, blue door open, a step at the last lift) — the blue key and the golden
-  key: OK. From the blue key and the green key the way to the summit exists.
+  key: OK. From the green key, the blue key and the plateau the way on to the golden key exists
+  (scratch check).
 - `VerifyShippedWorlds`; objects on floors, nothing sunk into the cheese (scratch check); the
-  court, the pool room and the summit interior are closed apart from their doors and the last
-  lift's shaft.
+  court is closed but for the red door, the pool room opens only on the foot path, the summit
+  interior only through the green door and the last lift's shaft (scratch checks).
 - Live (`--mission 46`, `--spawn`, probes through `QA_LIVE_WORLDS`, authored lift timing of
   3b0a861): the start view (tower, helicopter); the helicopter flown up to the red key on the
   tower; with a probe red key the red door opened, the pool dived under its curtain and the bank
