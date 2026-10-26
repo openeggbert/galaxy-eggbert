@@ -1,0 +1,93 @@
+# Mission 066 played through (plans/briefs/world066.md).
+wait 30
+expect mission = 66
+# The start corridor (walk 20, one wide, three high: a jump carries him under two blocks): over
+# the mine west of the start (x 18) for the egg, back between the mines, over the mine east of
+# it (x 20).
+face 270
+go 18.85 60 tol 0.03
+go 16.5 60 jump 3 tol 0.2
+until ground = 1
+until eggs = 1 max 120
+face 90
+go 19 60 jump 2 tol 0.05
+until ground = 1
+go 19.2 60 tol 0.03
+go 22.6 60 jump 4 tol 0.08
+until ground = 1
+# The lightning curtain (x 24) in a quiet half (blitz 50-99).
+until blitz = 50 max 400
+go 25.5 60 tol 0.08
+# The three big creatures, deadly only resting at the ends of their walks: each passed through
+# while it walks back west from its east end (x 32, 36, 43), the trap (30) jumped on the way.
+near 32 20 60 0.05 max 2000
+clear 32 20 60 0.05 max 700
+go 33.5 60 jump 4.3 tol 0.08
+expect x >= 33.3
+near 36 20 60 0.05 max 2000
+clear 36 20 60 0.05 max 700
+go 37.5 60 tol 0.08
+near 43 20 60 0.05 max 2000
+clear 43 20 60 0.05 max 900
+go 50 60
+# The lower wind tunnel (walk 20, two high, blowing east), entered beside its fan: walking with
+# the wind he runs at twice his pace, each of its three mines (x 57, 61, 65) jumped a block before
+# it; its egg at the end.
+go 51 60 tol 0.1
+go 51 61.4 tol 0.1
+go 59.2 61.8 jump 3.2 tol 0.3
+go 63.2 61.8 jump 3.2 tol 0.3
+go 67.2 61.8 jump 3.2 tol 0.3
+go 68.3 62 until eggs = 2
+until eggs = 2 max 120
+# East out of the wind: the two saws in the floor (x 71, 73) jumped, one jump each, landing
+# between them; up the stair (x 77-78, z 63-64) to the corridor of lava cells (z 65, walk 26), east
+# up the second stair (x 80-81, z 65 -> 63) onto the east cave's west ledge (walk 32).
+go 72.2 62 jump 1.85 tol 0.08
+until ground = 1
+go 75 62 jump 3 tol 0.2
+until ground = 1
+go 77.5 62.2 tol 0.1
+face 180
+go 77.5 63 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 21.95
+go 77.5 64 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 23.95
+go 77.5 65 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 25.95
+go 78.8 65 tol 0.1
+face 90
+go 80.3 65 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 27.95
+face 0
+go 80.5 64 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 29.95
+go 80.5 63 jump 1.5 tol 0.2
+until ground = 1
+expect y >= 31.95
+go 82.5 61 tol 0.1
+face 90
+# The rods over the lava pit (z 61, x 84-92, hung from at his walking height): out to x 85, past
+# the mine rising and falling through their lane (x 86) just after it turns at the bottom; on to
+# x 87.5, past the bird's diagonal (it crosses the lane at x 89) in the long gap after it leaves
+# its south-west end; off their end onto the far ledge.
+go 85 61 tol 0.1
+near 86 28 61 0.1 max 600
+go 87.5 61 tol 0.05
+near 87 32 64 0.1 max 600
+clear 87 32 64 0.1 max 300
+wait 60
+go 92.9 61 tol 0.1
+until ground = 1 max 60
+# The far ledge (walk 32): round the trap (94, 61) to the golden key (98, 61), then the main hub.
+go 93.3 62.4 tol 0.15
+go 97.3 62.4
+go 98 61 until exit = 1
+until mission = 1 max 900
+expect phase = Play
+wait 60
