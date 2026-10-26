@@ -145,6 +145,63 @@ def smooth_normals(mesh: Mesh, crease_degrees: float = 60.0, return_index: bool 
     return np.array(out_p), np.array(out_n), new_t
 
 
+def orient_consistently(mesh: Mesh, decimals: int = 5) -> Mesh:
+    """Every triangle wound like its neighbours: across each edge two triangles share (positions
+    welded at ``decimals``) they must run it in opposite directions. Ray Dream Studio 5's boolean
+    results (the ``im`` masters, the saw death's half body "Corps et Cube") store some of their
+    triangles the other way round, which a single global flip cannot mend; each connected
+    piece is then turned outwards by its own signed volume. Edges shared by more than two
+    triangles are not followed."""
+    p, t = mesh.positions, mesh.triangles.copy()
+    if len(t) == 0:
+        return mesh
+    _, weld_index = np.unique(np.round(p, decimals), axis=0, return_inverse=True)
+    w = weld_index.ravel()[t]
+    edges: dict = {}
+    for f, (a, b, c) in enumerate(w):
+        for u, v in ((a, b), (b, c), (c, a)):
+            edges.setdefault((min(u, v), max(u, v)), []).append(f)
+    flip = np.zeros(len(t), dtype=bool)
+    seen = np.zeros(len(t), dtype=bool)
+
+    def runs(f, u, v):
+        a, b, c = w[f]
+        forward = (a, b) == (u, v) or (b, c) == (u, v) or (c, a) == (u, v)
+        return forward != flip[f]
+
+    for start in range(len(t)):
+        if seen[start]:
+            continue
+        seen[start] = True
+        component = [start]
+        stack = [start]
+        while stack:
+            f = stack.pop()
+            a, b, c = w[f]
+            for u, v in ((a, b), (b, c), (c, a)):
+                shared = edges[(min(u, v), max(u, v))]
+                if len(shared) != 2:
+                    continue
+                g = shared[0] if shared[1] == f else shared[1]
+                if seen[g]:
+                    continue
+                # f runs u->v (as currently oriented); g must run v->u.
+                f_forward = runs(f, u, v)
+                g_forward = runs(g, u, v)
+                if f_forward == g_forward:
+                    flip[g] = True
+                seen[g] = True
+                component.append(g)
+                stack.append(g)
+        ids = np.array(component)
+        tri = np.where(flip[ids, None], t[ids][:, ::-1], t[ids])
+        vol = np.einsum("ij,ij->i", p[tri[:, 0]], np.cross(p[tri[:, 1]], p[tri[:, 2]])).sum()
+        if vol < 0:
+            flip[ids] = ~flip[ids]
+    t[flip] = t[flip][:, ::-1]
+    return Mesh(p, t)
+
+
 def orient_outwards(mesh: Mesh) -> Mesh:
     """Counter-clockwise winding seen from outside (positive signed volume)."""
     p, t = mesh.positions, mesh.triangles
@@ -217,9 +274,10 @@ def canonical_mesh(master: rd4.Chunk):
         tris = tris[(tris[:, 0] != tris[:, 1]) & (tris[:, 1] != tris[:, 2]) & (tris[:, 0] != tris[:, 2])]
         extent = next((tuple(c.floats("max")) for c in master.chunk("uvls").chunks("uvif") if c.leaf("id") == "0"),
                       (1.0, 1.0))
+        mesh = orient_consistently(Mesh(uniq[:, 0:3], tris))
         if not has_uv:
-            return orient_outwards(Mesh(uniq[:, 0:3], tris)), None
-        return orient_outwards(Mesh(uniq[:, 0:3], tris)), MeshUV(uniq[:, 3:5], uniq[:, 5].astype(int), extent)
+            return mesh, None
+        return mesh, MeshUV(uniq[:, 3:5], uniq[:, 5].astype(int), extent)
     prim = master.chunk("prim")
     kind = prim.chunks()[0].tag if prim is not None and prim.chunks() else master.tag
     if kind == "sp":

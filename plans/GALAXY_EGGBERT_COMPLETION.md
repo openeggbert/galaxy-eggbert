@@ -216,8 +216,11 @@ Candidates (investigate when a world or the editor needs them; none implemented 
 - Push/Pull: done (D21: push pose while walking into a crate, pull by crouching + Down,
   Recede/Advance clips; checked live in 012).
 - Win cheer: done (D29, Win clip `3415d3f`).
-- Saw death's half body (`Corps et Cube`, a CSG prop in Clear4 only) still has 119 + 76
-  inconsistently wound triangles after the cap fix: a second converter case (CSG), to find.
+- Saw death's half body (`Corps et Cube`, a CSG prop in Clear4 only): done 2026-10-27. Ray Dream's
+  boolean (`im`) masters store their triangles wound either way; the converter now winds each like
+  its neighbours (`geometry.orient_consistently`: 53 misoriented edges to 0), so the cut face no
+  longer shows through when culled. Only its parts were re-exported; every other clip renders
+  pixel-identical (`render_cna.py`, all 62 clips).
 
 ## 8. Blupi animation coverage
 
