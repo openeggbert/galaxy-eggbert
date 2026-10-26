@@ -92,12 +92,13 @@ def main(argv) -> int:
     door([(54, z) for z in (55, 56, 57)], S4[1], 6, 4)
 
     # S1, the start (east side, walk 35): a lift (one cell, ten ticks a cell, the original's
-    #    pace) rises through a hole in the ceiling into the pocket above with two treasures; a
+    #    pace) rises through a hole in the ceiling into the pocket above with two treasures; it
+    #    waits 30 ticks at each end (the original's 10 is half a second, a 2D step off it); a
     #    star sleeps under the ceiling beyond it.
     walk = S1[1]
     w.clear(56, walk - 1, 50)
     w.clear(56, walk + 3, 50)
-    lift(w, (56, walk - 1, 50), (56, walk + 3, 50), ticks=40, stop=10)
+    lift(w, (56, walk - 1, 50), (56, walk + 3, 50), ticks=40, stop=30)
     w.set(56, walk - 2, 50, 82)
     carve(rect(55, 47, 57, 53), walk + 4, walk + 5)
     w.place(O.TREASURE, 55, walk + 4, 48)
@@ -113,7 +114,7 @@ def main(argv) -> int:
         star(w, x, walk + 2, 44)
     w.clear(49, walk - 1, 44)
     w.clear(49, walk + 3, 44)
-    lift(w, (49, walk - 1, 44), (49, walk + 3, 44), ticks=40, stop=10)
+    lift(w, (49, walk - 1, 44), (49, walk + 3, 44), ticks=40, stop=30)
     w.set(49, walk - 2, 44, 82)
     carve(rect(46, 43, 53, 45), walk + 4, walk + 5)
     w.place(O.TREASURE, 46, walk + 4, 43)

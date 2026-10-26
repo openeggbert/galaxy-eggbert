@@ -25,7 +25,7 @@ four into the next side. Raw cells, Y up.
 
 | Part | Where | Lesson |
 |---|---|---|
-| S1, east, the start | x 55–57, z 46–57, walk 35; spawn (56, 35, 56) facing −Z | A lift (one cell, 40 ticks for four) rises through the ceiling into the pocket with two treasures; a star sleeps under the ceiling past it; the door "2" at the north end |
+| S1, east, the start | x 55–57, z 46–57, walk 35; spawn (56, 35, 56) facing −Z | A lift (one cell, 40 ticks for four, waiting 30 at each end: the original's 10 is half a second, too short to step off in 3D) rises through the ceiling into the pocket with two treasures; a star sleeps under the ceiling past it; the door "2" at the north end |
 | S2, north | x 46–57, z 43–45, walk 31 | Four stars in a row under the ceiling between the drop and the lift: wake them and back away; the pocket above with two treasures; the door "4" at the west end |
 | S3, west | x 43–45, z 43–54, walk 27 | A pit four deep (a hole of two cells, a step inside to climb out), a treasure and two stars at its top corners; the door "5" |
 | S4, south | x 43–54, z 55–57, walk 23 | A pit with a treasure and four stars along its top; the door "6" |
@@ -45,6 +45,8 @@ Object counts as the original's: 12 treasures, 34 follow stars, 8 helicopters, 2
   helicopter. (A first build leaked into the well through pipe tiles in its one-thick walls, which
   have no collision sideways: replaced by grilles.)
 - `VerifyShippedWorlds worlds3d`: 80/80.
+- Re-checked after the engine's lift timing fix (D43): S1's lift ridden into the pocket and stepped
+  off at the top (markers taken at three delays) once its dwell was lengthened to 30 ticks.
 - Live (`--mission 52`, `--spawn`, probes through `QA_LIVE_WORLDS`; `build-probe/world5-agent/shots/052-*`):
   the start view down S1 to the door "2"; S1's lift into the pocket and a treasure taken; S2's
   stars waking, homing and killing Blupi on contact; a probe with S1's treasures before the door:
