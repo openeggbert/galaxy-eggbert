@@ -1,0 +1,27 @@
+# World 9 played as a chain from its hub (plans/briefs/world090.md): each mission's sign in hub
+# 90, the mission's own playthrough, back in the hub past the bar it opened, the next sign; the
+# golden key of 095 ends in the main hub.
+wait 30
+expect mission = 90
+# Sign 1, open, in the north ledge's north wall (47, 26, 39), ahead of the spawn.
+go 47 39 until mission = 91 max 600
+until mission = 91 max 600
+include world091.txt
+# Back in the hub outside bar 2, now open: sign 2 in the east ledge's east wall (62, 23, 53).
+expect x = 60
+go 62 53 until mission = 92 max 600
+until mission = 92 max 600
+include world092.txt
+# Past bar 3: sign 3 in the south ledge's south wall (47, 20, 62).
+go 47 62 until mission = 93 max 600
+until mission = 93 max 600
+include world093.txt
+# Past bar 4: sign 4 in the west ledge's west wall (38, 17, 50).
+go 38 50 until mission = 94 max 600
+until mission = 94 max 600
+include world094.txt
+# Past bar 5: sign 5 in the pit's north wall under the start (50, 12, 43).
+go 50 43 until mission = 95 max 600
+until mission = 95 max 600
+include world095.txt
+expect mission = 1
