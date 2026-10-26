@@ -1633,11 +1633,39 @@ namespace GalaxyEggbert::Game
         // Afloat: at the surface, neither diving nor jumping out (kSurfFloatHeight's comment).
         const bool afloat = m_surf && !crouchHeld && !m_waterExitJump;
         const float floatLine = static_cast<float>(waterCell) + kSurfFloatHeight;
-        if (m_vehicleMode == VehicleMode::Helicopter || m_vehicleMode == VehicleMode::Overcraft)
+        if (m_vehicleMode == VehicleMode::Overcraft)
         {
-            const bool isHelicopter = (m_vehicleMode == VehicleMode::Helicopter);
-            const float ascendSpeed = isHelicopter ? kHelicopterAscendSpeed : kOvercraftAscendSpeed;
-            const float descendSpeed = isHelicopter ? kHelicopterDescendSpeed : kOvercraftDescendSpeed;
+            // The overcraft hovers, it does not fly (Decor.cpp:3936-3967): Up or Jump climbs it
+            // (1 px/tick each tick, to 5) only while the ground, or a lift, lies within
+            // OVERHEIGHT (80 px) under his feet; otherwise it sinks back (1 px/tick every 2
+            // ticks, to 12), faster with Down (5 px/tick each tick). Water is no ground: over it
+            // the overcraft comes down into it.
+            bool groundInReach = m_ridingLift || m_onGround;
+            for (float depth = 2.0f / 64.0f; !groundInReach && depth < kOverHeight; depth += 0.25f)
+            {
+                groundInReach = IsPointSolid(world, m_x, m_y - depth, m_z, tempPassable, false);
+            }
+            if (!groundInReach)
+            {
+                groundInReach = IsPointSolid(world, m_x, m_y - (kOverHeight - 1.0f / 64.0f), m_z, tempPassable, false);
+            }
+            if ((lookUpHeld || jumpPressed) && groundInReach)
+            {
+                m_velocityY = std::min(m_velocityY + kOvercraftClimbAccel * dt, kOvercraftAscendSpeed);
+            }
+            else if (crouchHeld)
+            {
+                m_velocityY = std::max(m_velocityY - kOvercraftDiveAccel * dt, -kOvercraftDescendSpeed);
+            }
+            else
+            {
+                m_velocityY = std::max(m_velocityY - kVehicleVerticalAccel * dt, -kOvercraftDescendSpeed);
+            }
+        }
+        else if (m_vehicleMode == VehicleMode::Helicopter)
+        {
+            const float ascendSpeed = kHelicopterAscendSpeed;
+            const float descendSpeed = kHelicopterDescendSpeed;
             float targetVelocityY = 0.0f;
             if (lookUpHeld)
             {

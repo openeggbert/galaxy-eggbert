@@ -438,6 +438,12 @@ namespace GalaxyEggbert::Game
         static constexpr float kOvercraftAscendSpeed = kOvercraftMaxSpeed * (5.0f / 12.0f);
         static constexpr float kOvercraftDescendSpeed = kOvercraftMaxSpeed * (12.0f / 12.0f);
         static constexpr float kVehicleVerticalAccel = kVehicleAccel * 0.5f; // real accel 0.5/tick (both flying modes)
+        // The overcraft's hover (Decor.cpp:3936-3967): it climbs only with ground within
+        // OVERHEIGHT (Decor.hpp's 80 px) under it, at 1 px/tick each tick; Down sinks it at
+        // 5 px/tick each tick; otherwise it sinks at kVehicleVerticalAccel (1 px/tick every 2).
+        static constexpr float kOverHeight = 80.0f / 64.0f;
+        static constexpr float kOvercraftClimbAccel = kVehicleVerticalAccel * 2.0f;
+        static constexpr float kOvercraftDiveAccel = kVehicleVerticalAccel * 10.0f;
 
         // Jump vs Air preserves the real GalaxyEggbert::Def::BlupiAction IDs 4/5 distinction.
         // The 2D reference distinguishes them with a discrete, frame-counted

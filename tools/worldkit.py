@@ -63,7 +63,8 @@ class ObjectType:
     CREATURE = 33
     INVERT = 40
     WASP = 44
-    BALLOON = 46
+    OVERCRAFT = 46        # the hover vehicle (03-objects.md's DOC-300 correction)
+    BALLOON = 46          # the old, wrong name of OVERCRAFT, kept for existing scripts
     LIFT_RIGHT = 47
     LIFT_LEFT = 48
     KEY1 = 49

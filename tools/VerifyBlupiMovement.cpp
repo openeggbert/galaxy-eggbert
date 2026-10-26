@@ -1834,6 +1834,48 @@ int main(int argc, char** argv)
             overRider.TriggerMount(BlupiController::VehicleMode::Overcraft, false, false);
             check(overRider.HasVehicleHazardImmunity(),
                   "HasVehicleHazardImmunity() is true while riding an Overcraft");
+
+            // The overcraft hovers (Decor.cpp:3936-3967): held Up climbs it only while the ground
+            // lies within OVERHEIGHT (1.25 cells) under it, so it rides at about that height and
+            // sinks back when let go; the helicopter climbs on.
+            {
+                Worlds::World hoverWorld;
+                for (std::uint16_t x = 40; x <= 60; ++x)
+                {
+                    for (std::uint16_t z = 40; z <= 60; ++z)
+                    {
+                        hoverWorld.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                    }
+                }
+                const auto climb = [&hoverWorld, dt](BlupiController::VehicleMode mode, float& highest)
+                {
+                    BlupiController rider;
+                    rider.SetPosition(0.0f, 1.0f, 0.0f);
+                    rider.TriggerMount(mode, false, false);
+                    for (int i = 0; i < 30; ++i)
+                    {
+                        rider.Step(hoverWorld, 0.0f, 0.0f, false, false, false, dt);
+                    }
+                    highest = rider.GetY();
+                    for (int i = 0; i < 240; ++i)
+                    {
+                        rider.Step(hoverWorld, 0.0f, 0.0f, false, false, /*lookUpHeld=*/true, dt);
+                        highest = std::max(highest, rider.GetY());
+                    }
+                    for (int i = 0; i < 240; ++i)
+                    {
+                        rider.Step(hoverWorld, 0.0f, 0.0f, false, false, false, dt);
+                    }
+                    return rider.GetY();
+                };
+                float overHighest = 0.0f, heliHighest = 0.0f;
+                const float overSettled = climb(BlupiController::VehicleMode::Overcraft, overHighest);
+                climb(BlupiController::VehicleMode::Helicopter, heliHighest);
+                check(overHighest > 1.5f && overHighest < 1.0f + 1.25f + 0.4f,
+                      "the overcraft climbs only to about OVERHEIGHT over the ground");
+                check(std::fabs(overSettled - 1.0f) < 0.05f, "let go, the overcraft sinks back to the ground");
+                check(heliHighest > 4.0f, "the helicopter climbs on");
+            }
             BlupiController heliRider;
             heliRider.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
             check(!heliRider.HasVehicleHazardImmunity(),
