@@ -24,5 +24,8 @@ with four treasures, three crates (12) to push, mines (2), four eggs; far off a 
 **Checks**: `levelcheck.py`: the solved variant reaches the four treasures, five eggs and the exit;
 the real world stops at the two ledges (the crates not pushed). `VerifyShippedWorlds`. Live
 (`--mission 121`, direct view F3): the start room's doorway and its hanging mines, the west room's
-crate, the east corridor's mines and crate, the cellar, the rock cave. Not played through: the
-crate pushes (crates pushed onto ledges' feet were played in 101).
+crate, the east corridor's mines and crate, the cellar, the rock cave. Played through from the
+spawn to hub 120 by `tools/autoplay/world121.txt` (both crate pushes, the cellar and its stair; the
+rock cave skipped). 2026-10-27: the cellar's stair had been buried in the house's brick (the fills
+added nothing to solid brick), so the cellar was a trap; it is now cut out (`levelcheck.py`'s trap
+check).

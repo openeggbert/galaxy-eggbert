@@ -86,10 +86,11 @@ def main(argv) -> int:
     w.place(O.EGG, 54, 5, 38)
     w.place(O.EGG, 48, 5, 38)
     w.place(O.CRATE, 50, 5, 38)
-    for k, x in enumerate((56, 55)):
-        w.fill(x, 5, 40, x, 6 + 2 * k, 40, BRICK)
-    carve(55, 7, 41, 56, WALK + 1, 45)
-    w.fill(55, 9, 41, 56, 9, 45, BRICK)
+    # The stair is cut out of the brick at z 40: x 56 up to walk 7, x 55 to walk 9, then the
+    # passage north of it (walk 10) into the start room.
+    carve(56, 7, 40, 56, WALK + 1, 40)
+    carve(55, 9, 40, 55, WALK + 1, 40)
+    carve(55, WALK, 41, 56, WALK + 1, 45)
 
     # ---- the rock cave (walk 10), down a long tunnel west ----
     # The invert (it turns the controls round for a while) and three mines.
