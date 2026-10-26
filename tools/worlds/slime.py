@@ -2,9 +2,9 @@
 
 Mobile Eggbert's world 6 builds everything of one autotiled set, icons 341-363. Measured over
 the original's worlds 060-066 (which tile sits where air is above, below, left or right of it):
-341-346 inside the mass, 362 on tops, 363 and 348 on undersides, 351 for a slab one block thick,
-349/350 on left and right sides, 352-361 for thin pieces and corners. 347, also on tops, is the
-world's hazard: an animated slime surface that kills like spikes (blocks.csv hazard 2). A cube
+341-346 inside the mass, 362 and 347 on tops, 363 and 348 on undersides, 351 for a slab one block
+thick, 349/350 on left and right sides, 352-361 for thin pieces and corners. (347 is also a frame
+of the spike trap's animation; the trap itself is 373, Decor::IsPiege.) A cube
 shows its tile on every side, so only the vertical roles carry into 3D: `skin()` gives each
 slime cube its tile from what lies above and below it, once a world is built. The undersides and
 the slab (363, 348, 351) have small clear bits along their edges, under the renderer's cutout
@@ -16,12 +16,12 @@ import random
 from kit import World
 
 SLIME_INSIDE = (341, 342, 343, 344, 345, 346)
-SLIME_TOP = 362
-SLIME_SPIKES = 347          # the deadly slime surface (hazard: spikes); never skinned onto slime
+SLIME_TOPS = (362, 362, 347)  # the original's tops, 362 about twice as often
+SLIME_TRAP = 373            # the spike trap (Decor::IsPiege): kills in its spiked frames
 SLIME_UNDER = (363, 348)
 SLIME_SLAB = 351
 SLIME = 341                 # what slime is built of until skin() gives each cube its tile
-SLIME_ALL = frozenset(range(341, 364)) - {SLIME_SPIKES}
+SLIME_ALL = frozenset(range(341, 364))
 POLES = (235, 236)          # the striped poles the original's lifts run along
 
 
@@ -37,7 +37,7 @@ def skin(w: World, rng: random.Random):
         open_above = y + 1 >= 100 or w.get(x, y + 1, z) == 0
         open_below = y == 0 or w.get(x, y - 1, z) == 0
         if open_above:
-            tile = SLIME_TOP
+            tile = rng.choice(SLIME_TOPS)
         else:
             tile = rng.choice(SLIME_INSIDE)
         w.set(x, y, z, tile)
