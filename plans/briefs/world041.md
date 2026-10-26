@@ -29,17 +29,21 @@ cellar opens to the outside. Raw cells, Y up.
 |---|---|---|
 | A, the cellar | x 21–43, z 66–86, walk 10, eight high under a dome | Open to the south on the dark rocks (a parapet one high). Spawn (36, 10, 80) facing −Z; the house at (40, 10, 70), the hut at (40, 10, 77), plants. The shelf along the north wall (x 22–30, z 66–69, standing level 14: four above the floor) with three helicopters. Crate A on the floor at (28, 10, 78); crate B on a bench one high along the west wall (x 22, z 71–77) under a low overhang (y 14–16): B is pushed north off the bench's end onto A at (22, 10, 70), under the shelf's west end. One crate is no stair (three up), nor is B on the bench (the overhang leaves no room for a full jump) |
 | B, the chimney and the loft | chimney radius 2.3 above the shelf, y 14–28; loft x 20–36, z 57–71, walk 28 | Fly up the chimney; treasure 1 on a ledge three above the loft's floor in its west side, (23, 31, 62); door 1, two cells of 421, at (37, 28, 64) in the east wall |
-| C, the tunnel | (40, 28, 64) → (44, 28, 64) → (50, 28, 58), five wide and five high | Walked; a drop of cheese from the vault with a mine hanging at head height at (42, 29, 62), to pass by the south side; the mouth opens six above the great cave's floor |
+| C, the tunnel | (40, 28, 64) → (44, 28, 64) → (50, 28, 58), five wide and five high | Walked; a drop of cheese from the vault with a mine hanging at Blupi's height at (42, 28, 62): he passes beside it or crouches under it; the mouth opens six above the great cave's floor |
 | D, the great cave | cylinder radius 12 round (60, 58), floor walk 22, walls to y 41, dome above | Nine helicopters on the floor; five ledges: south-west (top 26) treasure and egg, a mine hanging under it; south-east (30) treasure with a mine beside it; east (33) treasure and egg; north-west (35) treasure with a mine beside it; the middle ledge on a column (31) treasure and egg; mines hanging under the ledges and from the dome. Door 6 (426) at (60, 38, 45) over a landing (x 58–62, z 46–48, walk 38) in the north wall |
 | E, the corridor | x 59–61, z 18–44, landings walk 38, water y 36–37 (z 22–39), air to y 44 | South landing with six helicopters; mines hanging from the ceiling along it; three gates (z 35, 30, 25) of three moving mines across the corridor rising and falling between y 38 and 43 (50 ticks, no stop; the middle gate in counter-step), so each gate is a moving barrier as the original's one-cell corridor made each mine; the water two deep under it (a fall wrecks the helicopter; a dive passes under the gates, as in the original's deep row) |
-| F, the far landing and the exit | z 18–21; shaft radius 2.3 round (60, 19.5), y 45–51; chamber walk 52 | Treasure 7, three helicopters, an alcove with two eggs either side of a mine hanging at head height (crouch); the shaft up to the chamber with the red arrow at (60, 52, 16) |
+| F, the far landing and the exit | z 18–21; shaft radius 2.3 round (60, 19.5), y 45–51; chamber walk 52 | Treasure 7, three helicopters, an alcove one high with two eggs either side of a mine hanging at Blupi's height; the shaft up to the chamber with the red arrow at (60, 52, 16) |
 
 The 2D corridor's three moving mines become three gates of three (nine) across the 3D
 corridor's width; everything else keeps the original's counts (7 treasures, 5 eggs, 21
 helicopters, 2 crates, 2 lying mines; 15 hanging mines for its 16).
 
 Walking tunnels are five wide and five high and the cellar eight high: in a three-high tunnel
-a jump took the chase camera into the ceiling (the screen showed only the background).
+a jump took the chase camera into the ceiling (the screen showed only the background). A hanging
+mine kills within 0.7 of Blupi's feet, so one hanging a cell above his walking cell is harmless
+to a walker (as the original's, a tile row above his); the tunnel's and the alcove's hang in his
+walking cell (checked live: walking into one explodes it, crouching he passes under). The
+cave's and the corridor's hang under ceilings, where a flight too high meets them.
 
 ## Checks
 
@@ -60,4 +64,5 @@ a jump took the chase camera into the ceiling (the screen showed only the backgr
   (treasure and egg); door 6 seen from its landing with the corridor beyond; hovering low over
   the corridor's water without a wreck, the gates rising and falling, the flight to the far
   landing and up the shaft into the exit chamber; with no treasures left, walking into the red
-  arrow wins and returns to the hub.
+  arrow wins and returns to the hub; the alcove's egg taken beside its mine (the checks' mine
+  margin of a cell counts that egg out, the game's 0.7 does not).

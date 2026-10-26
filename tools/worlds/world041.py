@@ -92,12 +92,13 @@ def loft(w: World, rng: random.Random, stage):
 
 
 def tunnel(w: World, rng: random.Random):
-    """C: from door 1 a tunnel winds east, a mine hanging at head height along its north side,
-    to a mouth high in the great cave's west wall."""
+    """C: from door 1 a tunnel winds east, a mine hanging at Blupi's height along its north
+    side (he passes beside it, or crouches under it), to a mouth high in the great cave's west
+    wall."""
     tube(w, (40, WB, 64), (44, WB, 64), floor=WB)
     tube(w, (44, WB, 64), (50, WB, 58), floor=WB)
-    cheese(w, 42, WB + 2, 62, 42, WB + 4, 62, rng)        # a drop of cheese from the vault
-    hang(w, 42, WB + 1, 62)                                # with a mine at head height
+    cheese(w, 42, WB + 1, 62, 42, WB + 4, 62, rng)        # a drop of cheese from the vault
+    hang(w, 42, WB, 62)                                    # with a mine at Blupi's height
 
 
 def great_cave(w: World, rng: random.Random, stage):
@@ -158,12 +159,12 @@ def corridor(w: World, rng: random.Random, stage):
                 low, high = (x, WE, z), (x, WE + 5, z)
                 patrol(w, O.MOVING_MINE, low if k % 2 == 0 else high, high if k % 2 == 0 else low, ticks=50)
     # The far landing: the last treasure, three helicopters, and in a low alcove two eggs
-    # either side of a mine hanging at Blupi's height (he crouches under it).
+    # either side of a mine hanging at Blupi's height.
     w.place(O.TREASURE, 59, WE, 19)
-    carve(w, 62, WE, 18, 62, WE + 1, 20)
+    carve(w, 62, WE, 18, 62, WE, 20)
     w.place(O.EGG, 62, WE, 18)
     w.place(O.EGG, 62, WE, 20)
-    hang(w, 62, WE + 1, 19)
+    hang(w, 62, WE, 19)
     helicopters(w, [(59, WE, 21), (60, WE, 21), (61, WE, 21)])
     # The shaft up from it and the exit chamber at the top.
     shaft = [(x, z) for x in range(57, 64) for z in range(16, 24) if (x - 60) ** 2 + (z - 19.5) ** 2 <= 2.3 ** 2]
