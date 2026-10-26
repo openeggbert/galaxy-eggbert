@@ -425,34 +425,42 @@ namespace GalaxyEggbert::CNA
             effect.getDirectionalLight2Property().setEnabledProperty(false);
         }
 
+        // Whether a point (render space) is in a block that stops the camera. Water and blocks
+        // nothing collides with (machine parts, signs) leave the view open: the camera follows
+        // Blupi under water. (Treating water as a wall pulled the eye onto the look-at point and
+        // Camera::LookAt threw, 2026-10-25.)
+        bool BlocksCamera(const GalaxyEggbert::Worlds::World& world, const Microsoft::Xna::Framework::Vector3& point)
+        {
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            const int gx = static_cast<int>(std::lround(point.X)) + WorldRuntime::kWorldCenterX;
+            const int gy = static_cast<int>(std::lround(point.Y));
+            const int gz = static_cast<int>(std::lround(point.Z)) + WorldRuntime::kWorldCenterZ;
+            if (gx < 0 || gz < 0 || gy < 0 || gx >= blocksPerAxis || gz >= blocksPerAxis || gy >= blocksPerAxis)
+            {
+                return false; // out of bounds -- open air
+            }
+            const auto type = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                             static_cast<std::uint16_t>(gz))
+                                  .type();
+            const auto& block = GalaxyEggbert::GetBlockDefinition(type);
+            return type != 0 && !block.water && block.collisionMask != 0;
+        }
+
         float RaymarchWallDistance(const GalaxyEggbert::Worlds::World& world,
                                    const Microsoft::Xna::Framework::Vector3& origin,
                                    const Microsoft::Xna::Framework::Vector3& direction, float maxDistance)
         {
             constexpr float kStep = 0.1f;
-            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            // Kept this far before a hit: the near plane (0.1, its corners about 0.12 away) must
+            // not reach through the face, or the camera shows what lies behind it.
+            constexpr float kFaceMargin = 0.15f;
             float traveled = 0.0f;
             while (traveled < maxDistance)
             {
                 traveled = std::min(traveled + kStep, maxDistance);
-                const auto point = origin + direction * traveled;
-                const int gx = static_cast<int>(std::lround(point.X)) + WorldRuntime::kWorldCenterX;
-                const int gy = static_cast<int>(std::lround(point.Y));
-                const int gz = static_cast<int>(std::lround(point.Z)) + WorldRuntime::kWorldCenterZ;
-                if (gx < 0 || gz < 0 || gy < 0 || gx >= blocksPerAxis || gz >= blocksPerAxis || gy >= blocksPerAxis)
+                if (BlocksCamera(world, origin + direction * traveled))
                 {
-                    continue; // out of bounds -- treat as open air
-                }
-                // Water and blocks nothing collides with (machine parts, signs) leave the view
-                // open: the camera follows Blupi under water. (Treating water as a wall pulled
-                // the eye onto the look-at point and Camera::LookAt threw, 2026-10-25.)
-                const auto type = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                                 static_cast<std::uint16_t>(gz))
-                                      .type();
-                const auto& block = GalaxyEggbert::GetBlockDefinition(type);
-                if (type != 0 && !block.water && block.collisionMask != 0)
-                {
-                    return std::max(0.0f, traveled - kStep);
+                    return std::max(0.0f, traveled - kStep - kFaceMargin);
                 }
             }
             return maxDistance;
@@ -3988,6 +3996,14 @@ namespace GalaxyEggbert::CNA
                 const float elevation = std::clamp(kBaseElevation + lookPitchOffset_, -1.2f, 1.45f);
                 rawTarget = Microsoft::Xna::Framework::Vector3(
                     blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
+                // Jumping under a low ceiling (a three-high tunnel) lifts the look point into the
+                // block above him, and a camera marched out from inside a block stays in it,
+                // showing only the sky behind (reported by the world authoring, 2026-10-26):
+                // look from just under that block instead.
+                if (BlocksCamera(worldRuntime_.GetWorld(), rawTarget))
+                {
+                    rawTarget.Y = std::max(blupi_.GetY() + 0.2f, std::round(rawTarget.Y) - 0.5f - 0.15f);
+                }
 
                 // Orbit (ChaseCameraYaw, the real-Blupi plan's phase E, user
                 // decisions 2026-10-24): behind him while he moves, lagging on
@@ -4044,8 +4060,9 @@ namespace GalaxyEggbert::CNA
                     safeDistance = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
                 }
                 // Never onto the target itself (Camera::LookAt rejects that): at least a short
-                // way back even when a wall stands right behind him.
-                constexpr float kMinChaseDistance = 0.3f;
+                // way back even when a wall stands right behind him (no further, or the eye
+                // would be in that wall).
+                constexpr float kMinChaseDistance = 0.05f;
                 safeDistance = std::max(safeDistance, std::min(kMinChaseDistance, desiredDistance));
                 rawEye = rawTarget + desiredOffset * (desiredDistance > 0.001f ? safeDistance / desiredDistance : 1.0f);
             }

@@ -452,7 +452,8 @@ namespace GalaxyEggbert::Game
             if (!xBlocked)
             {
                 const float candidateX = startX + stepDx * static_cast<float>(i);
-                if (IsPointSolid(world, candidateX, clearY, clearZ, tempPassable, checkSubcellHorizontal))
+                if (IsPointSolid(world, candidateX, clearY, clearZ, tempPassable, checkSubcellHorizontal) ||
+                    IsPointSolid(world, candidateX, clearY + kHeadHeight, clearZ, tempPassable, checkSubcellHorizontal))
                 {
                     xBlocked = true;
                 }
@@ -464,7 +465,9 @@ namespace GalaxyEggbert::Game
             if (!yBlocked)
             {
                 const float candidateY = startY + stepDy * static_cast<float>(i);
-                if (IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcellVertical))
+                if (IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcellVertical) ||
+                    (stepDy > 0.0f &&
+                     IsPointSolid(world, clearX, candidateY + kHeadHeight, clearZ, tempPassable, checkSubcellVertical)))
                 {
                     yBlocked = true;
                 }
@@ -476,7 +479,8 @@ namespace GalaxyEggbert::Game
             if (!zBlocked)
             {
                 const float candidateZ = startZ + stepDz * static_cast<float>(i);
-                if (IsPointSolid(world, clearX, clearY, candidateZ, tempPassable, checkSubcellHorizontal))
+                if (IsPointSolid(world, clearX, clearY, candidateZ, tempPassable, checkSubcellHorizontal) ||
+                    IsPointSolid(world, clearX, clearY + kHeadHeight, candidateZ, tempPassable, checkSubcellHorizontal))
                 {
                     zBlocked = true;
                 }

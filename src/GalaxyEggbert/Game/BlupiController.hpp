@@ -74,6 +74,12 @@ namespace GalaxyEggbert::Game
 
         static constexpr float kGravity   = 25.0f;
         static constexpr float kFallLimit = -10.0f;
+        // Blupi's height for collision: his head, the top of the original's BlupiRect (pos.Y + 11
+        // of his 60-pixel sprite, feet at + 60), 49/64 of a block above his feet (2026-10-26).
+        // He fits under a one-block ceiling standing; rising, his head stops on a ceiling, where
+        // only his feet were checked before (in a three-high tunnel a jump took his body and the
+        // camera up into the ceiling, reported by the world authoring).
+        static constexpr float kHeadHeight = 49.0f / 64.0f;
         // Not a step-up: real Decor::TestPath() has none, so a one-tile step
         // stops Blupi until he jumps onto it (user report 2026-10-25: he
         // walked up steps by himself; this was 1.0, a whole block, until then).

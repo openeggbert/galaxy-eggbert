@@ -1427,6 +1427,35 @@ int main(int argc, char** argv)
                   "holding Jump from the bottom he swims up and jumps out at the surface, onto the bank");
         }
 
+        // His height (BlupiController::kHeadHeight, 2026-10-26): a ceiling stops his head, not
+        // his feet; he still walks through a one-block gap. A floor at y 0 (x 66-70, z 97) with a
+        // ceiling at y 4 (a three-high tunnel) and, at x 70, one at y 2 (a one-high gap).
+        {
+            for (std::uint16_t x = 66; x <= 70; ++x)
+            {
+                synthetic.setBlock(x, 0, 97, Worlds::Block::make(BlockTypes::Ground));
+                synthetic.setBlock(x, 4, 97, Worlds::Block::make(BlockTypes::Ground));
+            }
+            synthetic.setBlock(70, 2, 97, Worlds::Block::make(BlockTypes::Ground));
+            BlupiController jumper;
+            jumper.SetPosition(67.0f - 50.0f, 1.0f, 97.0f - 50.0f);
+            for (int i = 0; i < 10; ++i) jumper.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            float highest = jumper.GetY();
+            for (int i = 0; i < 90; ++i)
+            {
+                jumper.Step(synthetic, 0.0f, 0.0f, i < 2, false, false, dt);
+                highest = std::max(highest, jumper.GetY());
+            }
+            check(highest <= 4.0f - BlupiController::kHeadHeight + 0.01f && highest > 3.0f,
+                  "jumping in a three-high tunnel his head stops on the ceiling, his feet below it");
+            BlupiController walker;
+            walker.SetPosition(68.0f - 50.0f, 1.0f, 97.0f - 50.0f);
+            walker.SetYaw(1.57079632679f);
+            for (int i = 0; i < 10; ++i) walker.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            for (int i = 0; i < 48; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+            check(walker.GetX() > 70.0f - 50.0f - 0.3f, "he walks on under a ceiling one block above the floor");
+        }
+
         // His reactions (2026-10-26, BlupiController::kJumpAieSpeed's comment): JumpAie after a
         // fast jump meets a ceiling, the Oufs after a swim, a long push, a close call.
         {

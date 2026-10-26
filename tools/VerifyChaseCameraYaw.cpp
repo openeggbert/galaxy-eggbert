@@ -131,6 +131,9 @@ int main()
               "rising gains little room: stays where it was");
         const auto ceiling = [](float e) { return e < 0.6f ? 0.5f : 2.0f; }; // clearer above, never enough
         check(ChaseCameraElevation(0.29f, 4.0f, ceiling) >= 0.6f, "clearly more room higher up: it rises");
+        const auto tunnel = [](float e) { return e <= 0.05f ? 4.0f : 0.4f; }; // a low ceiling, open along it
+        const float inTunnel = ChaseCameraElevation(0.29f, 4.0f, tunnel);
+        check(inTunnel <= 0.05f && inTunnel >= -0.35f, "a low ceiling over him: it drops toward the level");
     }
 
     std::cout << (allOk ? "ALL PASS" : "SOME CHECKS FAILED") << std::endl;

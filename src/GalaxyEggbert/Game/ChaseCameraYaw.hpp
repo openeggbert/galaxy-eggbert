@@ -60,15 +60,18 @@ namespace GalaxyEggbert::Game
 
     // How high the chase camera stands (D18, 2026-10-26). When something behind Blupi (a wall, a
     // pillar over the cell he stands in) pulls the camera in onto his head, it rises over it
-    // instead, looking down at him: the lowest elevation from `elevation` up to kMaxElevation
-    // that leaves it kEnough of `distance`, else the one with the most room if that is clearly
-    // more (kGain) than at `elevation`, else `elevation`. `room(e)` is how far the camera can
-    // stand back at elevation e (radians above his look point).
+    // instead, looking down at him; in a low tunnel, whose ceiling the usual elevation meets, it
+    // drops toward the level instead. The elevation nearest to `elevation` (up before down,
+    // within kMinElevation..kMaxElevation) that leaves it kEnough of `distance`, else the one
+    // with the most room if that is clearly more (kGain) than at `elevation`, else `elevation`.
+    // `room(e)` is how far the camera can stand back at elevation e (radians above his look
+    // point).
     template <typename Room>
     [[nodiscard]] float ChaseCameraElevation(float elevation, float distance, Room&& room)
     {
         constexpr float kStep = 0.15f;
         constexpr float kMaxElevation = 1.3f;
+        constexpr float kMinElevation = -0.35f;
         constexpr float kEnough = 0.85f;
         constexpr float kGain = 0.5f;
         const float base = room(elevation);
@@ -78,17 +81,32 @@ namespace GalaxyEggbert::Game
         }
         float best = elevation;
         float bestRoom = base;
-        for (float e = elevation + kStep; e <= kMaxElevation + 1e-4f; e += kStep)
+        for (int k = 1;; ++k)
         {
-            const float r = room(e);
-            if (r >= distance * kEnough)
+            const float up = elevation + static_cast<float>(k) * kStep;
+            const float down = elevation - static_cast<float>(k) * kStep;
+            const bool canUp = up <= kMaxElevation + 1e-4f;
+            const bool canDown = down >= kMinElevation - 1e-4f;
+            if (!canUp && !canDown)
             {
-                return e;
+                break;
             }
-            if (r > bestRoom)
+            for (const float e : {up, down})
             {
-                best = e;
-                bestRoom = r;
+                if ((e == up && !canUp) || (e == down && !canDown))
+                {
+                    continue;
+                }
+                const float r = room(e);
+                if (r >= distance * kEnough)
+                {
+                    return e;
+                }
+                if (r > bestRoom)
+                {
+                    best = e;
+                    bestRoom = r;
+                }
             }
         }
         return bestRoom > base + kGain ? best : elevation;
