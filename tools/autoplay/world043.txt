@@ -1,0 +1,183 @@
+# Mission 043 played through (plans/briefs/world043.md).
+wait 30
+expect mission = 43
+# S: the start cave (walk 40), the red arrow (28, 34) beside the spawn left for the end.
+# Treasure 2 on the north ledge and treasure 1 on the west ledge, each a jump up (walk 42).
+go 30 27.6 tol 0.1
+go 30 25.3 jump 2.0
+until ground = 1
+expect y >= 41.95
+until treasures = 1 max 200
+go 30 27.6
+until ground = 1
+go 26.6 30 tol 0.1
+go 24.3 30 jump 2.0
+until ground = 1
+expect y >= 41.95
+go 24 30 tol 0.15
+until treasures = 2 max 200
+# W: east down the passages. Through the slot in the first cross wall (x 42, z 31) in one
+# jump over the mine lying in it.
+go 27 31
+go 40.9 31 tol 0.05
+go 45 31 jump 4.1
+until ground = 1
+expect x >= 43
+# Down to the south passage (walk 37); the pocket east of it: treasure 3 on its block, a jump
+# up (walk 39).
+go 47 31.5
+until ground = 1
+go 47 37
+go 51.6 37 tol 0.1
+go 54 37 jump 2.6
+until ground = 1
+expect y >= 38.95
+go 54 37 tol 0.15
+until treasures = 3 max 200
+go 50 37
+until ground = 1
+go 47 37
+# South through the second slot (z 44) over its mine.
+go 47 42.9 tol 0.05
+go 47 47 jump 4.1
+until ground = 1
+expect z >= 45
+go 47.5 51.2
+until ground = 1
+expect y <= 33.05
+# East (walk 33): the pocket north of the passage (treasure 4), then the third slot (x 56,
+# z 51) jumped over its mine; down at its end (walk 29), north, and down the shaft into the
+# grotto (walk 14).
+go 54 50.6
+go 54 45.4 tol 0.15
+until treasures = 4 max 200
+go 54 50.6
+go 54 51
+go 54.9 51 tol 0.05
+go 59 51 jump 4.1
+until ground = 1
+expect x >= 57
+go 62 51
+go 63.5 51
+until ground = 1
+expect y <= 29.05
+go 63 41
+go 63 39.5
+until ground = 1 max 400
+expect y <= 14.05
+# G: the grotto's treasure 5 and egg, a helicopter (70, 30), up the shaft (71, 39) through the
+# ring's hole between its two hanging mines into chamber 1 and onto its shelf (walk 37):
+# treasure 6.
+go 66 29.4 tol 0.15
+until treasures = 5 max 200
+go 67 30 tol 0.15
+until eggs = 1 max 200
+go 69.4 30 tol 0.15
+hold 6 action
+wait 30
+go 71 38.5 tol 0.3
+wait 40
+go 71 39 tol 0.15
+wait 40
+hold 451 lookup
+wait 60
+expect y >= 37.2
+go 76 46 tol 0.3
+hold 60 crouch
+until ground = 1 max 200
+go 76 46 tol 0.2
+until treasures = 6 max 200
+# F: the tube down south-west (from (72, 36, 47) to (61, 27, 61)) into chamber 2 (walk 24),
+# flown along its floor: treasure 7 on chamber 2's floor.
+hold 12 lookup
+wait 30
+go 72.5 46.5 tol 0.3
+go 61 61 tol 0.4 with crouch
+go 58 63 tol 0.3 with crouch
+until ground = 1 max 200
+go 58 63 tol 0.2
+until treasures = 7 max 200
+# Treasure 8 in the niche high in the south wall (from (60, 28, 66) to (62, 28, 69)).
+hold 85 lookup
+wait 60
+expect y >= 28.1
+go 60.3 65.8 tol 0.3
+go 62 69 tol 0.3
+until treasures = 8 max 200
+go 60.3 65.8 tol 0.3
+# The chimney: its foot (a tube west at y 26), up to the side niche (y 36, north to z 68) for
+# treasure 9, on up to the dome (walk 46).
+hold 50 crouch
+wait 40
+go 54 63.2 tol 0.3
+go 50 62 tol 0.3
+wait 30
+hold 200 lookup
+wait 60
+expect y >= 36
+go 50 67.8 tol 0.3
+until treasures = 9 max 200
+go 50 62.2 tol 0.3
+wait 30
+hold 196 lookup
+wait 60
+expect y >= 46.2
+# The dome: treasure 10 on the ledge six high (walk 52), treasure 11 on the ledge four high
+# (walk 50), the egg on its floor.
+go 47 61 tol 0.3
+hold 125 lookup
+wait 60
+go 44.4 64.4 tol 0.3
+hold 60 crouch
+until ground = 1 max 200
+go 44 64 tol 0.2
+until treasures = 10 max 200
+hold 12 lookup
+wait 30
+go 39.3 56.4 tol 0.3
+hold 60 crouch
+until ground = 1 max 200
+go 39 56 tol 0.2
+until treasures = 11 max 200
+hold 12 lookup
+wait 30
+go 42 56.4 tol 0.3
+hold 90 crouch
+until ground = 1 max 200
+expect y <= 46.05
+go 42 56 tol 0.2
+until eggs = 2 max 200
+# R: the way back, a tube from the dome's north side at y 51: up into it, along it to the block
+# under the pocket in its roof, up into the pocket and down onto the block (treasure 12), on
+# to its end, down the shaft and the tube into the start cave's roof.
+hold 102 lookup
+wait 60
+expect y >= 51
+go 41 55.2 tol 0.3
+go 38.5 51.0 tol 0.3
+go 37.6 49.3 tol 0.25
+hold 47 lookup
+wait 40
+go 37 48 tol 0.3
+hold 40 crouch
+until ground = 1 max 200
+go 37 48 tol 0.2
+until treasures = 12 max 200
+hold 15 lookup
+wait 20
+go 36.4 47 tol 0.3
+hold 20 crouch
+wait 30
+go 32.4 41.6 tol 0.3
+go 32 39.5 tol 0.3
+hold 70 crouch
+wait 40
+go 31 35 tol 0.3 with crouch
+hold 120 crouch
+until ground = 1 max 300
+expect y <= 40.05
+go 28 34 until exit = 1
+expect treasures = 12
+until mission = 40 max 900
+expect phase = Play
+wait 120
