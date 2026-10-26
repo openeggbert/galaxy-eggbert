@@ -46,7 +46,7 @@ namespace GalaxyEggbert
 
     struct BlockAnimationDefinition final
     {
-        static constexpr std::size_t MaxFrames = 20;
+        static constexpr std::size_t MaxFrames = 100; // the lightning's whole cycle (Decor::BlitzActif)
 
         std::uint16_t baseIcon = 0;
         std::array<std::int16_t, MaxFrames> frames{};

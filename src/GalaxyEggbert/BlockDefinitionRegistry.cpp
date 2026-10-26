@@ -161,6 +161,14 @@ namespace GalaxyEggbert
             325, 325, 326, 326, 327, 329, 328, 328, -1, -1,
         };
         constexpr int marineFrames[11] = {203, 204, 205, 206, 207, 208, 207, 206, 205, 204, 203};
+        // The lightning (Decor::BlitzActif, Decor.cpp:620-634, 1079): drawn, and deadly, only on
+        // the even ticks of the first half of its 100-tick cycle, a frame of 305-307 each time
+        // (the original picks one at random; here they take turns). -1: not drawn (D51).
+        int blitzFrames[100];
+        for (int tick = 0; tick < 100; ++tick)
+        {
+            blitzFrames[tick] = (tick % 2 == 0 && tick < 50) ? 305 + (tick / 2) % 3 : -1;
+        }
 
         SetAnimation(definitions_[Lava], Lava, lavaFrames, 2);
         SetAnimation(definitions_[Spike], Spike, spikeFrames, 4);
@@ -175,6 +183,7 @@ namespace GalaxyEggbert
         SetAnimation(definitions_[FanDown], FanDown, fanDownFrames, 3);
         SetAnimation(definitions_[Temp], Temp, tempFrames, 4);
         SetAnimation(definitions_[Marine], Marine, marineFrames, 3);
+        SetAnimation(definitions_[Blitz], Blitz, blitzFrames, 1);
 
         // Any non-base frame stored in an imported world resolves through
         // the same base definition as its animation family.

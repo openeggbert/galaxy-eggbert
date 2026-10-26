@@ -253,6 +253,21 @@ int main()
         }
         Check(still && turns, "the terrain draws a switched-off saw still and a saw turning");
     }
+    {
+        // D51: the lightning is drawn exactly when it kills (WorldRuntime::IsBlitzActiveAtPhase's
+        // cycle, Decor::BlitzActif): even ticks of the first half of every 100.
+        bool drawnWhenDeadly = true;
+        int drawn = 0;
+        for (int tick = 0; tick < 300; ++tick)
+        {
+            const int cycle = tick % 100;
+            const bool deadly = cycle % 2 == 0 && cycle < 50;
+            const int icon = ResolveBlockAnimationIcon(BlockTypes::Blitz, tick);
+            drawnWhenDeadly = drawnWhenDeadly && (deadly ? icon >= 305 && icon <= 307 : icon == -1);
+            drawn += icon >= 0 ? 1 : 0;
+        }
+        Check(drawnWhenDeadly && drawn == 75, "the lightning (305) is drawn only while it is deadly");
+    }
     Check(GetBlockDefinition(BlockTypes::FanLeft).fanDirection ==
               BlockFanDirection::NegativeX,
           "fan direction is centralized");
