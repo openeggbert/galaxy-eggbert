@@ -138,6 +138,7 @@ Found while building mission 011 (live, 2026-10-25):
 | D34 | After a teleport Blupi faces the partner pillar (a step takes him back) and the camera eases over from the departure | arrival kept his yaw; the smoothed camera was never reset (also on a world load) | **done** `fe7d351` |
 | D35 | Flat-colour faces of DirectionalCube tiles show stripes; the facades 186-192 dark or red edges | an 8 x 8-texel swatch stretched over a face; facades sampled at their window | **done** `db0816f` |
 | D36 | The horizontal fans 126/129 show their base on the side they blow toward | base and open face swapped in the face table | **done** `6101598` |
+| D37 | Vehicles pass over and through water (013's "it dislikes water!") | water detection skipped while riding | **done** `557a694` (wrecked as Decor.cpp:5415-5435) |
 
 ## 6. Native world format: evolution policy
 

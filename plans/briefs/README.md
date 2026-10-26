@@ -61,7 +61,8 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
 - Lifts (ObjectType1): `kit.lift` with the original's tick timings; lifts with the same timing
   move in step (put several side by side for a wide platform).
 - Vehicles: helicopter (13, RightShift up / LeftShift down), jeep, tank, skateboard (24),
-  overcraft; taken and left with Action (Space). Jeep, tank and skateboard run over mines.
+  overcraft; taken and left with Action (Space). Jeep, tank and skateboard run over mines. Any
+  vehicle that meets water is wrecked and Blupi drops in (013's "it dislikes water!").
 - Water: Blupi floats at the surface (feet ≈ 0.28 into the top water cell), dives with LeftShift,
   swims up with Ctrl/RightShift and drifts back up when idle (air gauge ≈ 25 s while under). He
   gets out by jumping at the surface onto a bank whose top is at most one block above the water's
