@@ -40,6 +40,8 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
 
 - `tools/worldkit.py`: `World` (set, fill, box, stairs, place(ObjectType…), bigdecor, hint_zone,
   rotate_plate, spawn, save), `ObjectType`, `letter_cells`.
+- `tools/flightcheck.py`: levelcheck plus the helicopter; `--mine-margin 0` lets still mines be
+  jumped as in the game.
 - `tools/worlds/kit.py`: `slab`, `wall` (machine faces mixed in — pass `faces=`/`block=` for other
   themes), `rail`, `props`, `lift(start, end, ticks, stop)`, `mine`, `boundary`, `rect`, `line`,
   `sign_niche` (hub signs; gated ones two deep with the bar in the doorway). Add helpers there
@@ -58,15 +60,27 @@ hub `world001.py`, world 1's hub `world010.py` and missions `world011.py`–`wor
 - Dynamite (55): one stick at a time, put down at his feet, blast after 2.5 s reaching ±1.5 cells
   in Y/Z and wider in X; it destroys crates (with their linked stacks), saws, small enemies — and
   Blupi if he stays within it.
-- Lifts (ObjectType1): `kit.lift` with the original's tick timings; lifts with the same timing
-  move in step (put several side by side for a wide platform).
+- Lifts (ObjectType1): `kit.lift` with the original's tick timings, kept exactly since D43 (dwell
+  `stop`, travel `ticks`, dwell, travel back); lifts with the same timing move in step (put several
+  side by side for a wide platform). A lift does not block Blupi sideways and passes through him
+  coming down; the original's 3- and 20-tick dwells are often too short to step across a cell in
+  3D: give a lift-to-lift step a rest column, or 40-tick dwells.
 - Vehicles: helicopter (13, RightShift up / LeftShift down), jeep, tank, skateboard (24),
-  overcraft; taken and left with Action (Space). Jeep, tank and skateboard run over mines. Any
+  overcraft (46: `ObjectType.OVERCRAFT`, not a balloon; since D46 it hovers, climbing only within
+  1.25 cells of the ground, so it crosses a lava floor but cannot fly up); taken and left with
+  Action (Space). Jeep, tank and skateboard run over mines. Any
   vehicle that meets water is wrecked and Blupi drops in (013's "it dislikes water!").
 - Water: Blupi floats at the surface (feet ≈ 0.28 into the top water cell), dives with LeftShift,
   swims up with Ctrl/RightShift and drifts back up when idle (air gauge ≈ 25 s while under). He
   gets out by jumping at the surface onto a bank whose top is at most one block above the water's
   top cell (open air above him), or swims straight onto a bank no higher than that.
+- Saws (378) and switches (384) lie in the floor; a switch stops the saws in its own row (same Z
+  and Y, ±20 along X); a stopped saw (379) is a still, harmless floor (D42).
+- Bars and rods (138, 202): walking onto one over a drop, or a jump from under one, catches it
+  (D45); he hangs in the bar's cell, out of reach of enemies a cell below.
+- Hanging mines (3) kill within 0.7 of his feet: one a cell above his walking cell is harmless to a
+  walker and deadly to a jump; a low mine must hang in his walking cell.
+- The drink's Hide hides him from the follow stars too (D44).
 - Teleporters (330-333): standing under one, after 6.4 s he arrives one cell +Z of the cell under
   its partner, facing on (+Z): leave that cell and the one beyond it open.
 - Hubs: world signs and mission signs in niches (`sign_niche`); mission N > 1 behind a blue bar
