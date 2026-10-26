@@ -27,7 +27,7 @@ Fifteen eggs, no treasure; twenty-three mines, five hanging mines, four moving m
   D51), a hanging mine, an egg; a pit six long across it, lava at its foot and two mines sweeping
   it, crossed hanging from rods (202, along X; 138's flat plate cannot be seen end on); a hole down
   its shaft into the hall.
-- The hall (x 36-44, walk 36, north): a shuttle three wide over a pool a cell under the floor (fall
+- The hall (x 36-44, walk 36, north): a shuttle three wide over a pool level with the floor (fall
   in and climb out); a pipe floor with eggs on pedestals; a curtain of lightning across the whole
   hall; a field of lava crossed on two pairs of lifts meeting midway with a rest between (2.5 s
   dwells: two cells to step); the last lift carries Blupi out east through the wall to the ledge
@@ -42,8 +42,8 @@ Fifteen eggs, no treasure; twenty-three mines, five hanging mines, four moving m
   a different lane free (weave through), eggs between.
 - The chain (walk 18 → 26, out south-east): the platform with two mines and a hanging mine; a lift
   moving out and up at once, a lift along X, a lift up, a lift along Z, all four in step, each
-  meeting the next at a dwell; the golden key on its stand. Under the chain a pool a cell deep
-  catches a fall (three eggs in it, a stair from it back up to the platform).
+  meeting the next at a dwell; the golden key on its stand. Under the chain a pool two deep
+  catches a fall (its water level with its rim; three eggs in it, a stair from it back up to the platform).
 
 **Checks**: stage 1: `levelcheck.py` reaches all fifteen eggs and the golden key; the real world
 stops at the first row of mines (levelcheck keeps a cell off mines). `VerifyShippedWorlds`. Live
@@ -55,3 +55,7 @@ first lift — out and up, across onto the second, onto the third, up, onto the 
 stand — and the golden key, after which the main hub loads. Not played through: the whole mission
 in one run, a walk through a curtain in its off phase, the wind hall's rods, the lift pairs of
 the hall.
+
+Since 2026-10-27 every pool's water is level with its banks' top blocks (the weak jump out of the
+water clears no more, as the original's -12 px/tick: the three pools were a block below their
+banks and trapped a Blupi who fell in).

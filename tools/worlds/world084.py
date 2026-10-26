@@ -138,7 +138,7 @@ def main(argv) -> int:
     carve(38, 41, 55, 40, 47, 57)                                       # the hole down
 
     # ---- the hall (walk 36, south to north, lanes x 36-44) ----
-    # A shuttle over a pool (the water a cell under the floor: fall in and climb out); a pipe
+    # A shuttle over a pool (its water level with the floor: fall in and climb out); a pipe
     # floor with eggs on pedestals; a second curtain of lightning across the whole hall; a field
     # of lava crossed on two pairs of lifts meeting midway with a rest between, the last lift
     # carrying Blupi out east through the wall, under the ledge two higher.
@@ -146,7 +146,7 @@ def main(argv) -> int:
     w.place(O.EGG, 42, 36, 58)
     still(37, 36, 55)
     carve(36, 32, 45, 44, 35, 52)
-    w.fill(36, 32, 45, 44, 34, 52, WATER)
+    w.fill(36, 32, 45, 44, 35, 52, WATER)                              # level with the floor
     lifts(39, 41, 35, 51, 52, (0, 0, -6), 70, 20)
     for z in range(30, 45):
         for x in (36, 44):
@@ -177,7 +177,7 @@ def main(argv) -> int:
     carve(55, 29, 3, 57, 29, 7)                                         # the drop
     w.set(54, 27, 6, FAN_EAST)
     carve(61, 21, 3, 71, 23, 9)
-    w.fill(61, 21, 3, 71, 22, 9, WATER)
+    w.fill(61, 21, 3, 71, 23, 9, WATER)                                # level with the floor
     lifts(61, 62, 23, 5, 7, (9, 0, 0), 90, 20)
     w.fill(61, 25, 4, 80, 25, 8, WIND_EAST)
     carve(73, 20, 3, 79, 23, 9)
@@ -230,7 +230,7 @@ def main(argv) -> int:
     # The platform: two mines and a hanging mine. A lift moving out and up at once, a lift along
     # X, a lift up, a lift along Z: the four in step, each meeting the next at a dwell (two seconds
     # at each end), the last one bringing Blupi to the key on its stand. Under the chain a pool
-    # catches a fall (a cell deep: he lands, swims, climbs out onto its rim): three eggs in it, a
+    # catches a fall (its water level with its rim: he lands, swims up, climbs out): three eggs in it, a
     # stair from it back up to the platform.
     still(55, 18, 42)
     still(59, 18, 46)
@@ -243,9 +243,9 @@ def main(argv) -> int:
     for x, z in ((63, 65), (66, 67)):
         w.set(x, 22, z, rng.choice(BOLTS))
     w.place(O.SECRET_EXIT, 64, 26, 66)
-    w.fill(50, 2, 53, 72, 8, 76, PANEL)                                 # the pool, a cell deep
-    carve(51, 7, 54, 71, 8, 75)
-    w.fill(51, 7, 54, 71, 7, 75, WATER)
+    w.fill(47, 2, 50, 75, 8, 79, PANEL)                                 # the pool, two deep, its water
+    carve(51, 7, 54, 71, 8, 75)                                         # level with its rim (four wide)
+    w.fill(51, 7, 54, 71, 8, 75, WATER)
     for x, z in ((55, 62), (60, 68), (68, 58)):
         w.place(O.EGG, x, 7, z)
     for k, z in enumerate((52, 50, 48, 46)):                            # its stair: 11, 13, 15, 17
