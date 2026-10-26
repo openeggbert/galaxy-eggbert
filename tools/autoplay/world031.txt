@@ -1,0 +1,98 @@
+# Mission 031 played through (plans/briefs/world031.md).
+wait 30
+expect mission = 31
+# A: the rooftop ridge heading -Z, on its west side (x 20), clear of the roof mines (x 22).
+go 20.5 86
+go 20.5 83 jump 1.9
+until ground = 1
+go 20.5 81.4
+go 20.5 79 jump 1.9
+until ground = 1
+# Over the alley (z 76) and up onto the fourth house.
+go 20.5 77.4
+go 20.5 74.5 jump 2.4
+until ground = 1
+go 20.5 71.6
+go 20.5 69.5 jump 1.9
+until ground = 1
+go 20.5 67
+go 21 64
+# B: the tall house's lift (x 22) from the last roof to its own roof.
+go 22 63.6
+go 22 62.8 tol 0.1
+lift 22 14 62 max 600
+go 22 62 tol 0.15
+until y >= 20.95 max 400
+# The egg on the roof, then the cave mouth (z 52).
+go 25 55 tol 0.1 until eggs = 1
+go 21 53
+# C: the cave hall, west of its mine (22, 47); up onto shelf 1 between its edge mines.
+go 20 48
+go 19.5 44.5
+go 19.5 42 jump 1.9
+until ground = 1
+expect y >= 22.9
+go 19 40.6
+go 19 38.5 jump 1.9
+until ground = 1
+expect y >= 24.9
+go 14.5 38.5
+go 14 36 tol 0.1 until treasures = 1
+until treasures = 1 max 200
+# Back down to shelf 1 and east along the passage between its two mines to the treasure door
+# (x 38, z 41), open now; through it and down the shaft into the vault.
+go 14.5 38.5
+go 18 40.8
+go 30 41
+go 37 41
+go 40 41
+until ground = 1 max 300
+expect y <= 13.1
+# D: the vault, its egg and two treasures and the other egg, then out east.
+go 42 30 tol 0.1
+go 44 31 tol 0.1
+until treasures = 2 max 200
+go 48 31 tol 0.1
+until treasures = 3 max 200
+go 50 30 tol 0.1
+until eggs = 3 max 200
+go 51 34
+# E: the arcade heading +X. Up onto the first house (its egg), then the three mine gaps on
+# their sliding lifts: 60 ticks / 20 stop, 30 / 10, and 18 / 3 (stepped off from its front).
+go 54.6 36
+go 56.5 36 jump 1.9
+until ground = 1
+expect y >= 14.9
+go 58 36 tol 0.1
+until eggs = 4 max 200
+go 60.2 36 tol 0.1
+lift 61 15 36 max 600
+go 61 36 tol 0.15
+lift 64 15 36 max 400
+go 66 36
+go 69.2 36 tol 0.1
+lift 70 15 36 max 600
+go 70 36 tol 0.15
+lift 73 15 36 max 400
+go 75 36
+go 78.3 36 tol 0.1
+lift 79 15 36 max 600
+hold 17 up
+until x >= 81.0 max 300
+go 84 36
+# F: across the yard between its two mines to the exit lift (x 91), up five to the tower roof.
+go 89 36
+go 90.2 36 tol 0.1
+lift 91 15 36 max 600
+go 91 36 tol 0.15
+until y >= 19.95 max 400
+# Round the roof's bird (x 94, z 33-39) by its south edge (z 40), then to the red arrow.
+go 92.6 36
+go 92.6 40.2
+go 95.8 40.2
+go 96 36 until exit = 1
+expect treasures = 3
+until mission = 30 max 900
+expect lives = 7
+expect phase = Play
+wait 120
