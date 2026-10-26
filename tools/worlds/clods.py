@@ -92,6 +92,34 @@ def carve(w: World, x0, y0, z0, x1, y1, z1):
     w.fill(x0, y0, z0, x1, y1, z1, 0)
 
 
+def rough(w: World, x0, z0, x1, z1, walk, top, rng: random.Random, bulge=0.35, sag=0.25):
+    """Make a carved room (x0..x1, z0..z1, walk .. top - 1) lumpy as the original's caves: clods
+    bulging from its walls above head height (walk + 2 and up, so the floor stays clear) and
+    sagging from its ceiling in patches, never lower than walk + 4 (a jump's headroom)."""
+    for x in range(x0, x1 + 1):
+        for z in range(z0, z1 + 1):
+            edge = x in (x0, x1) or z in (z0, z1)
+            if edge and rng.random() < bulge:
+                low = walk + rng.choice((2, 3, 3, 4))
+                for y in range(low, top):
+                    w.set(x, y, z, clod(rng))
+    for _ in range(max(1, (x1 - x0 + 1) * (z1 - z0 + 1) // 18)):
+        if top - 1 < walk + 4 or rng.random() > sag * 3:
+            continue
+        cx, cz = rng.randint(x0, x1), rng.randint(z0, z1)
+        rx, rz = rng.randint(1, 3), rng.randint(1, 3)
+        depth = rng.randint(1, max(1, top - 1 - (walk + 4) + 1))
+        for x in range(max(x0, cx - rx), min(x1, cx + rx) + 1):
+            for z in range(max(z0, cz - rz), min(z1, cz + rz) + 1):
+                for y in range(top - depth, top):
+                    w.set(x, y, z, clod(rng))
+
+
+def column(w: World, x, z, y0, y1, rng: random.Random, width=1):
+    """A column of clods from floor to ceiling (x .. x + width - 1)."""
+    clay(w, x, y0, z, x + width - 1, y1, z + width - 1, rng)
+
+
 def is_clod(w: World, x, y, z) -> bool:
     return w.get(x, y, z) in CLODS
 
