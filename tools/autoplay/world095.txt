@@ -1,0 +1,187 @@
+# Mission 095 played through (plans/briefs/world095.md): the gallery's crate pit blasted, teleporter
+# alpha, the grove's keys and doors (the green key over the crumbling bridges, the red key, the
+# dynamite store, the blue key's crates blasted from the trench), the lifts, the corridor's plug
+# blasted, the pool along its bottom, the lava ferry, the mines' passage, the treasure and the
+# golden key; four eggs.
+wait 30
+expect mission = 95
+# S: north into the shaft (x 16-18, z 19-21), twelve down onto the crate pit in the gallery
+# (walk 34). G: the stick at the gallery's east end (25, 20), put down on the crates, then away
+# south along Z out of the blast; down into the emptied pit.
+go 17 20.5 max 300
+until ground = 1 max 300
+expect y <= 34.1
+go 22 22
+go 25 20 until dynamite = 1 max 300
+until dynamite = 1 max 200
+wait 30
+go 18 21
+go 17 21.4 tol 0.05
+face 180
+hold 2 action
+go 17 25 tol 0.1
+wait 200
+go 17 20 max 300
+until ground = 1 max 300
+expect y <= 31.1
+# The tunnel east from the pit's floor (walk 31) to teleporter alpha (30, 32, 20): under it to
+# the grove (walk 10), arriving at (20, 81) facing +Z.
+go 27 20
+go 30 20 until y <= 12 max 900
+until y <= 12 max 900
+wait 30
+# R, the grove (walk 10): its egg (29, 89). E, east over the crumbling bridges (x 36-43,
+# z 82-84) without stopping to the green key (48, 83) and the egg (50, 84), and back.
+go 29 89 until eggs = 1 max 600
+until eggs = 1 max 200
+go 30 83
+go 44.5 83 max 600
+go 48 83 until keys = 1 max 300
+go 50 84 until eggs = 2 max 300
+until eggs = 2 max 200
+# The bridges come back about 7.6 s after they gave way.
+wait 150
+go 44.5 83
+go 30 83 max 600
+expect keys = 1
+# N: through the green door (23, 75), which takes the green key, to the red key (23, 70). W:
+# round alpha's partner (under (20, 80): it would send him back) and through the red door
+# (15, 83) into the dynamite store for a stick (7, 84), clear of its mine (11, 81).
+go 23 77
+go 23 73.5
+expect keys = 0
+go 23 70 until keys = 1 max 600
+until keys = 1 max 200
+go 23 76.5
+go 22.5 83
+go 16.5 83
+go 13 83
+go 7.4 84 until dynamite = 1 max 300
+until dynamite = 1 max 200
+wait 30
+expect keys = 0
+# B: the stick put down in the trench (z 90, one deep) before the doorway of crates (x 22-24,
+# z 91-92), a jump out and away north; the blue key (23, 95) and the egg (21, 95) behind it.
+go 13 83
+go 16.5 83
+go 23 88.5
+go 23 90 tol 0.1
+until ground = 1
+face 0
+hold 2 action
+wait 80
+go 23 88.6 jump 3 tol 0.15 max 200
+go 23 85.5 max 300
+wait 200
+go 23 89.4 tol 0.1
+face 180
+go 23 91.2 jump 2.0 tol 0.15
+until ground = 1
+go 23 95 until keys = 1 max 300
+go 21 95 until eggs = 3 max 300
+until eggs = 3 max 200
+# Back north down into the trench and out (the doorway is too low to jump the trench); U: through the green door's room to the blue door (23, 68), open
+# with the blue key; the four lifts (x 22-23, z 61-62; 40 ticks, 40 dwelling) up from the landing
+# (walk 10) to the ledge (walk 14).
+go 23 90 tol 0.1
+until ground = 1
+face 0
+go 23 88.4 jump 2.0 tol 0.15 max 200
+until ground = 1
+expect y >= 9.9
+go 23 76
+go 23 69
+expect keys = 0
+go 22.5 63.6 tol 0.1
+lift 22 14 61 max 400
+lift 22 10 61 max 400
+go 22.5 61.5 tol 0.15
+until y >= 13.99 max 400
+wait 5
+go 23 58.5
+expect y >= 13.9
+# C, the corridor east (walk 14): a stick from the alcove under the cobwebs (34, 54), put down
+# against the plug of crates (x 36-37) with his back to it, then into the alcove out of the
+# blast (the blasts reach far along X).
+go 30 58
+go 34 54.4 until dynamite = 1 max 300
+until dynamite = 1 max 200
+wait 30
+go 34.5 57.5
+go 35.4 58 tol 0.05
+face 315
+hold 2 action
+go 33.8 54.8 tol 0.1 max 300
+wait 200
+go 34.5 58
+go 39 58
+# P, the pool (water y 7-13 between the banks): straight down at x 48.5, along its bottom
+# (walk 7, a cell or more below each fish's depth) under the wall (x 53-54) and up by the east
+# bank (x 60), out onto it.
+go 46.6 58 tol 0.1
+face 90
+go 48.5 58 with crouch max 300
+go 48.5 58 tol 0 with crouch until y <= 7.05 max 400
+go 59.2 58 with crouch max 900
+go 59.6 58 tol 0 with lookup until y >= 13.2 max 600
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1 max 300
+expect y >= 13.9
+# F, the lava ferry: the four lifts (x 63-64, z 57-58; 36 ticks, 40 dwelling) six cells east over
+# the lava to the landing (x 71-73).
+go 62.3 57.5 tol 0.1
+lift 69 14 57 max 400
+lift 63 14 57 max 400
+go 63.5 57.5 tol 0.15
+lift 69 14 57 max 400
+go 72.5 58
+# M, the mines' passage (walk 14, z 57-59; each mine 2 cells a second, 121 ticks a cycle), one at
+# a time from the pocket before it, along z 58.9: the sweeper at x 75 as it heads back north from
+# z 59; the gate at x 79 while its mine bobs above him; the sweeper at x 83 as it heads north.
+go 73.6 58.9 tol 0.1
+face 90
+near 75 14 59 0.05 lane z max 300
+wait 24
+go 77.6 58.9 tol 0.1 max 200
+go 77.6 58 tol 0.1
+face 90
+near 79 14 58 0.05 max 300
+wait 20
+go 81.6 58 tol 0.1 max 200
+go 81.6 58.9 tol 0.1
+face 90
+near 83 14 59 0.05 lane z max 300
+wait 24
+go 86.5 58.9 max 200
+# K, the last cave (walk 14): the treasure in the east wall's niche (96, 61), taken short of the
+# invert behind it (97, 61); the egg (93, 47) round the post at (93, 52); up the step (walk 16) and the rock (walk 18) and
+# onto the ball (walk 19) for the golden key (90, 44), open with the treasure.
+go 93 60
+go 94.5 61
+go 95.85 61 until treasures = 1 max 300
+until treasures = 1 max 200
+expect x <= 96.2
+go 94 60
+go 91.8 53
+go 93 47 until eggs = 4 max 600
+until eggs = 4 max 200
+go 89.5 48.6 tol 0.1
+face 0
+go 89.5 46.6 jump 2.2 tol 0.15
+until ground = 1
+expect y >= 15.9
+go 89.5 46.4 tol 0.1
+go 89.4 45 jump 2.0 tol 0.15
+until ground = 1
+expect y >= 17.9
+go 89.3 44.6 tol 0.1
+face 90
+go 90 44 jump 1.5 tol 0.1 until exit = 1 max 300
+until exit = 1 max 300
+expect treasures = 1
+expect eggs = 4
+until mission = 1 max 900
+expect phase = Play
+wait 60
