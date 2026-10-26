@@ -115,17 +115,27 @@ class Grid:
 
 def lift_links(grid: Grid):
     links = collections.defaultdict(set)
+    # Where a rider stands at either end of every lift: another lift's end is a stop too (relays).
+    ends = set()
+    for o in grid.objects:
+        if o.get("type") in LIFTS:
+            for end in (o["start"], o["end"]):
+                c = tuple(int(v // 1) for v in end)
+                ends.add((c[0], c[1] + 1, c[2]))
     for o in grid.objects:
         if o.get("type") in LIFTS:
             a = tuple(int(c // 1) for c in o["start"])
             b = tuple(int(c // 1) for c in o["end"])
             # Blupi stands on the lift's cube: the cell above it at either end.
             top_a, top_b = (a[0], a[1] + 1, a[2]), (b[0], b[1] + 1, b[2])
-            # Everything within reach of the lift's path counts as a stop.
+            # He steps on and off at either end from a neighbouring cell with a floor under it, or
+            # from another lift's end (a hole beside the lift's end is a gap to jump, not a stop).
             stops = {top_a, top_b}
             for s in list(stops):
                 for dx, dz in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                    stops.add((s[0] + dx, s[1], s[2] + dz))
+                    n = (s[0] + dx, s[1], s[2] + dz)
+                    if grid.standable(n) or n in ends:
+                        stops.add(n)
             for s in stops:
                 links[s] |= stops - {s}
     return links
