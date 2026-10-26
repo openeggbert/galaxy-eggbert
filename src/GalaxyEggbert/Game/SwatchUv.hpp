@@ -17,5 +17,9 @@ namespace GalaxyEggbert::Game
     constexpr float kBottomSwatchV = 0.92f;
     constexpr float kMidSwatchV = 0.5f;
 
-    CnaEngine::Graphics::UvRect SwatchUv(const CnaEngine::Graphics::UvRect& tile, float vCenterFrac);
+    // Centred on the tile's (uCenterFrac, vCenterFrac) and three texels across (2026-10-26:
+    // it was 12 % of the tile, about 8 x 8 texels, whose detail stretched over a whole face
+    // showed as stripes, reported on the window panels 186-192), so it reads as one colour.
+    CnaEngine::Graphics::UvRect SwatchUv(const CnaEngine::Graphics::UvRect& tile, float vCenterFrac,
+                                         float uCenterFrac = 0.5f);
 }

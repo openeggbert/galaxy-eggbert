@@ -178,6 +178,11 @@ namespace GalaxyEggbert::Game
             BoxFace Primary; // single-face patterns: the textured face.
                               // Axis patterns: one face of the textured pair
                               // (its opposite is inferred).
+            // Where the flat-colour faces sample the tile (u, v); v < 0: by face (top, bottom,
+            // middle). The facade tiles (a window or a door on a wall) take their wall's colour
+            // from a bottom corner, where their middle is the window and their top the cornice.
+            float SwatchU = 0.5f;
+            float SwatchV = -1.0f;
         };
 
         constexpr BoxFace Opposite(BoxFace f)
@@ -212,13 +217,13 @@ namespace GalaxyEggbert::Game
             {13, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
             {14, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
             {48, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {186, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {187, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {188, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {189, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {190, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {191, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {192, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            {186, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
+            {187, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
+            {188, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
+            {189, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
+            {190, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
+            {191, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
+            {192, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
             {390, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
             {391, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
             {392, Pattern::SingleFaceRestColor, BoxFace::NegativeX}, // light trim on the crop's left edge
@@ -375,7 +380,8 @@ namespace GalaxyEggbert::Game
             {
                 auto& face = outFaces[static_cast<int>(f)];
                 face.visible = true;
-                face.uv = SwatchUv(tileUv, vFrac);
+                face.uv = entry.SwatchV >= 0.0f ? SwatchUv(tileUv, entry.SwatchV, entry.SwatchU)
+                                                : SwatchUv(tileUv, vFrac);
             };
             const auto setTex = [&](BoxFace f)
             {
