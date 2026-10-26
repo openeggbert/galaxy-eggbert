@@ -252,7 +252,7 @@ Use it as an index; verify each claim against extracted frames before relying on
 - **Title screen** (done `6917fc9`, `worlds3d/title.vwr`): a Galaxy Eggbert scene (CNA-rendered or composed from Galaxy's own
   assets), not Mobile Eggbert's `init.png`; legible original UI.
 - **Editor entry** (done `e3a1042`): a labelled "3D World Editor" button instead of the X icon.
-- **Transparency** (open): verify the menu panels' alpha against the original (pad.png boxes).
+- **Transparency** (done `063b272`): the panels' alpha was applied twice (BasicEffect premultiplies, the overlays blend straight alpha); now as the original's light veil (video 0:10).
 - Done 2026-10-25: proportional text (D9), full-screen backgrounds (D7).
 
 ## 11. Mechanic parity (to fill per mechanic)
