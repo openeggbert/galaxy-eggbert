@@ -4,7 +4,7 @@ Replaces `NEXT.md` (obsolete since 2026-10-24, kept frozen as history; do not ad
 this file after every committed task: what was done, where it stopped, what to run next. Keep it
 short; the backlog with checkboxes is `plan.md`, verified current state is `CURRENT.md`.
 
-_Last updated: 2026-10-26 (night: world 6 complete, D42-D46)._
+_Last updated: 2026-10-26 (world 8 under way, D47-D49)._
 
 ## Resume here (exact state when last written)
 
@@ -39,6 +39,14 @@ not a balloon: `worldkit` OVERCRAFT) hovers within 1.25 cells of the ground (D46
 vertical test; worlds keep girders, poles, grates out of walking cells). `--spawn` yaw: 0 faces
 -Z, 90 +X; the chase camera orbits to his side after 3 s idle, so F3 (direct view) shows the
 facing in scripted shots.
+World 8 by this session: hub 080 and missions 081-083 (`6441258`, `7705ef6`, `5b2eb86`,
+`ef92476`); next is 084 (the last, ending with the golden key). Closed machine cubes hide the
+faces between them (D47, `be9daab`: 083 crashed on load with a vertex buffer over the GPU's
+limit; a mesh over that limit still throws instead of being split). Signs and flat plates stand
+upright and read unmirrored from both sides (D48, `5fbc237`, cna-engine's UB-005 worked round).
+The helicopter and the overcraft fly through the flight barrier 214 (D49, `d9980d9`; the
+original hides 214 in play, a question for the owner). Worlds 5 and 7 are being authored by two
+background sessions.
 Unconfirmed (world 2's agent): Action seemed ignored for ~6 s after a mission loads; not
 reproduced (a helicopter mount at 4.5 s works).
 
