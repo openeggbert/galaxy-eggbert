@@ -1,10 +1,10 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-10-26 (every world complete and checked: the main hub, 12 hubs, 64 missions and 199,
-engine fixes D17-D54 with tests and live checks; before that the 2026-10-25 audit of the restored `develop`,
-`plans/GALAXY_EGGBERT_COMPLETION.md` §4). Update this file whenever a change alters the current state, a known limitation, a supported
-build, or the actionable backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`),
-where work stands in `handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
+_Last verified: 2026-10-31 (current Web/Emscripten Release build linked and ran in Chrome/WebGL 2;
+the completed campaign and gameplay baseline remains the 2026-10-27 verification). Update this file
+whenever a change alters the current state, a known limitation, a supported build, or the actionable
+backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`), where work stands in
+`handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
 
 ## What this project is
 
@@ -76,7 +76,7 @@ verified native and WebGL 2 configurations:
 |---|---|
 | `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the then-quarantined `easy-gl-resource-smoke-tests` excluded; normal startup and the three-frame golden capture run successfully under Xvfb (2026-10-17, before cna-engine; on 2026-10-20 an `OPENGL33` build on cna-engine ran the menus and the editor under Xvfb) |
 | `OPENGLES3` on cna-engine (2026-10-20) | 93/93 CTest cases pass; golden frames, behavioral trace and startup screenshots byte-identical to the easy-3d build under Xvfb and on the GPU (`NEXT.md` §3, "Moved from easy-3d to cna-engine") |
-| `build-cna-webgl2` (`WEBGL2`) | Emscripten release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data`; a 12-second final-artifact headless-Chrome run creates a real WebGL 2 context, loads `world001`, and renders without an application error (2026-10-17, before cna-engine; since then only compiled with `em++`, not linked or run) |
+| `build-cna-webgl2` (`WEBGL2`) | Current Emscripten Release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data`; a final-artifact headless-Chrome run creates a real WebGL 2 context, loads `world001`, all 82 object models and 93/93 sound channels, uploads and samples the terrain, and renders the gamer-select menu over the 3D scene without an application error (2026-10-31, CNA + cna-engine) |
 
 The deterministic golden-frame and behavioral-trace harnesses are manual `xvfb-run` checks, not
 default CTest cases. Full commands and sibling-repository pins live in `handoff.md`.

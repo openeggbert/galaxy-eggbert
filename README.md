@@ -205,8 +205,9 @@ emrun build-cna-webgl2/GalaxyEggbertCNA.html
 - Linux: confirmed working, EasyGL family by default (`CNA_GRAPHICS_RENDERER=OPENGLES3`).
 - Windows: the previous cross-build packaging path exists, but the current `SDL_GPU` renderer
   still needs a fresh build and live 3D verification (see `WINDOWS.md`).
-- Web (Emscripten): WebGL2 release build and a 12-second final-artifact browser runtime verified on
-  2026-10-17; the target is not covered by CI or a publishing pipeline.
+- Web (Emscripten): the current WebGL2 Release build and final-artifact browser runtime were
+  verified on 2026-10-31 against CNA + cna-engine; the target is not covered by CI or a publishing
+  pipeline.
 - Android: intended, see `ANDROID.md`. `GalaxyEggbertCNA` is the sole game target and is enabled
   by default, so Gradle needs no target-selection argument.
 

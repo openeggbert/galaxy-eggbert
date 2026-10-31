@@ -1,5 +1,7 @@
 #pragma once
 
+#include <initializer_list>
+
 namespace GalaxyEggbert::Game
 {
     // Where the third-person camera orbits Blupi (the real-Blupi plan's phase E, user decisions

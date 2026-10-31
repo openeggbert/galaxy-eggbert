@@ -6,8 +6,8 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-10-27 (the whole campaign played through in one run; milestone F done;
-models toned to their sprites; D11 candidates prepared for the owner)._
+_Last updated: 2026-10-31 (current Web/Emscripten Release build linked and passed a real
+Chrome/WebGL 2 smoke run; the whole-campaign and D11 state below is unchanged)._
 
 ## 1. The project and the goal in one paragraph
 
@@ -35,6 +35,12 @@ lift's reach through ledges, a lift taking him sideways off a ledge, a key openi
 dynamite taken two at a time / without Action). World defects fixed: 013, 025, 062, 066, 082, 094,
 103, 104, 105, 113, 114, 121-124, 199 (details in the plan's §13 row F and the briefs in
 `plans/briefs/`).
+
+The Web/Emscripten Release build was freshly rebuilt and linked on 2026-10-31 against the current
+CNA and cna-engine checkouts. Headless Chrome created a real WebGL 2 context, loaded `world001`,
+82 object models and 93/93 sound channels, uploaded the terrain, and visibly rendered the
+gamer-select menu over its 3D scene. The build exposed and fixed one portability defect:
+`ChaseCameraYaw.hpp` now includes the standard header required by its initializer list.
 
 ## 3. What is open, and exactly how to continue
 
@@ -107,12 +113,31 @@ remaining hypothesis. Leave it unless the owner's D11 list names the fish.
 
 ```bash
 export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv      # the one shared ccache; never another
-cmake --build build-cna-opengl3 --parallel 4            # this session's limit; CLAUDE.md says -j2
+cmake --build build-cna-opengl3 --parallel 2
 ctest --test-dir build-cna-opengl3 -j2                  # 110 tests, all pass
 ```
 
-Only existing build directories (`build-cna-opengl3/`; `build-probe/` for probes and converter
-output). Never build in `/tmp` or the scratchpad. Reconfigure only when broken:
+### Web build
+
+Use the existing build tree and the workstation's actual CNA/cna-engine locations:
+
+```bash
+source /home/robertvokac/emsdk/emsdk_env.sh
+emcmake cmake -S . -B build-cna-webgl2 \
+  -DGALAXY_EGGBERT_BUILD_CNA=ON \
+  -DCNA_HOME=/rv/data/development/github.com/libcna/cna \
+  -DCNA_ENGINE_HOME=/rv/data/development/github.com/libcna/cna-engine \
+  -DCNA_GRAPHICS_RENDERER=WEBGL2 \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_TESTING=OFF
+cmake --build build-cna-webgl2 --target GalaxyEggbertCNA -j2
+```
+
+The four deployable files are `build-cna-webgl2/GalaxyEggbertCNA.{html,js,wasm,data}`. Serve them
+over HTTP; opening the HTML directly as a `file:` URL is not a valid runtime check.
+
+Only existing build directories (`build-cna-opengl3/`, `build-cna-webgl2/`; `build-probe/` for
+probes and converter output). Never build in `/tmp` or the scratchpad. Reconfigure only when broken:
 `cmake -S . -B build-cna-opengl3 -DGALAXY_EGGBERT_BUILD_CNA=ON -DCNA_GRAPHICS_RENDERER=OPENGL33
 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache`.
 
