@@ -23,3 +23,5 @@ GP-0035,NOT_APPLICABLE,,JumpSuspend: m_blupiSuspend is never set,,
 GP-0064,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDetect()) (Decor.cpp:5630-5634),,
 GP-0065,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDetect()),,
 GP-0084,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDetect()),,
+GP-0090,FIXED_AND_VERIFIED,AdvancePatrolStep (D43); world builders,BD-0006: every shipped lift within the original's speeds (lift_envelope.py),VerifyInteractionSystem; playthroughs 024 061 062 073 113,human play pass
+GP-0480,CONFIRMED_MATCH,AdvancePatrolStep,linear posStart->posEnd over stepAdvance 20 Hz ticks with dwells (D43),VerifyInteractionSystem,

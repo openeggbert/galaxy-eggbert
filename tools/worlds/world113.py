@@ -74,7 +74,10 @@ def main(argv) -> int:
     for k, x0 in enumerate((15, 21, 27, 33)):
         carve(x0, WALK - 4, 49, x0 + 3, WALK - 1, 51)
         w.fill(x0, WALK - 4, 49, x0 + 3, WALK - 3, 51, LAVA)
-        lifts(x0, x0, WALK - 1, 49, 51, (3, 0, 0), 10 + 2 * (k % 2), 20)
+        # The original's gallery lifts carry 2 cells in 10 or 12 ticks (4.0 / 3.33 cells/s,
+        # worlds/world113.txt 512;1216 -> 640;1216 and 960;1344 -> 1088;1344); these carry 3, so
+        # 15 or 18 ticks (they took 10/12: 6.0 / 5.0 cells/s, BD-0006).
+        lifts(x0, x0, WALK - 1, 49, 51, (3, 0, 0), 15 + 3 * (k % 2), 20)
         if k >= 2:
             hazard(x0 + 1, WALK + 1, 50, hanging=True)
     w.place(O.EGG, 25, WALK, 49)
@@ -102,7 +105,9 @@ def main(argv) -> int:
                 stop_end=47)
     carve(71, LOW, 47, 76, WALK + 3, 53)
     # The lift stands against the pool room's floor (x 70), so Blupi walks straight onto it.
-    lifts(71, 72, WALK - 1, 49, 50, (0, LOW - WALK, 0), 40, 30)
+    # Ten cells down at the original's shaft lift's 3.33 cells/s (3200;2624 -> 3200;3072, 42 ticks):
+    # 60 ticks (they took 40: 5 cells/s, BD-0006).
+    lifts(71, 72, WALK - 1, 49, 50, (0, LOW - WALK, 0), 60, 30)
     carve(71, LOW - 1, 49, 72, LOW - 1, 50)
     w.place(O.EGG, 75, LOW, 52)
     carve(77, LOW, 49, 90, LOW + 2, 51)

@@ -90,7 +90,8 @@ def main(argv) -> int:
     step_lift((53, 10, 77), (53, 7, 77), ticks=40, stop=40, raised=False)  # L2: P1 <-> P2 (orig. stop 10)
     step_lift((50, 9, 75), (50, 14, 75), ticks=40, stop=40)             # L3: P1 -> P3 (orig. stop 10)
     step_lift((47, 14, 71), (47, 9, 71), ticks=60, stop=40, raised=False)  # L4: P3 <-> P4 (orig. stop 10)
-    step_lift((50, 13, 69), (50, WN - 1, 69), ticks=18, stop=40)        # L5: P3 -> N (orig. stop 3)
+    # L5: P3 -> N (orig. 3 cells in 18 ticks, stop 3): four cells at its 3.33 cells/s (was 18: BD-0006)
+    step_lift((50, 13, 69), (50, WN - 1, 69), ticks=24, stop=40)
     w.place(O.TREASURE, 55, 8, 77)                                   # T1
     w.place(O.TREASURE, 44, WN, 67)                                  # T2
     w.place(O.EGG, 45, 10, 71)

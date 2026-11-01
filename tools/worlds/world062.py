@@ -104,7 +104,9 @@ def main(argv) -> int:
     carve(46, 11, 43, 46, 20, 43)                                      # the lift back up
     carve(46, 21, 41, 46, 23, 43)
     w.set(46, 10, 43, 0)
-    lift(w, (46, 10, 43), (46, 20, 43), ticks=40, stop=20)
+    # The original's long lifts run 3.33 cells/s (5312;2304 -> 5312;3008, 66 ticks): 60 ticks for these
+    # ten cells (it took 40: 5 cells/s, BD-0006).
+    lift(w, (46, 10, 43), (46, 20, 43), ticks=60, stop=20)
 
     # ---- the lower level (walk 11) ----
     # L1, the creatures' hub. A creature rests in the doorway west and walks off it.

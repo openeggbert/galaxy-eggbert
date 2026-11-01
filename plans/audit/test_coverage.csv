@@ -8,8 +8,8 @@ crate push live at normal speed,gameplay,live trace + screenshots,plans/evidence
 crate push walking past its side,gameplay,unit,VerifyInteractionSystem,pass,
 jump while pushing / beside a moving crate,gameplay,unit+autoplay,VerifyBlupiMovement; world012.txt,pass,
 lifts dwell/travel/ride (D43 D52 D54 D57),gameplay,unit,VerifyInteractionSystem; VerifyBlupiMovement,pass,
-moving-platform jump windows,gameplay,engine search (autoplay_search),build-probe/fb-061-window*.txt,open,BD-0006: 061 ladder ~5 frames at 8.33 cells/s
-lift speeds within the original envelope,world data,static,tools/audit/lift_envelope.py,fail,31 lifts faster than the original (BD-0006)
+moving-platform jump windows,gameplay,engine search (autoplay_search),build-probe/fb-061-*.out,pass (061),BD-0006: 061 ladder ~5 frames at 8.33 cells/s -> 4-56 frames at 3.33 + 30-tick dwell; a human play pass still to do
+lift speeds within the original envelope,world data,static,tools/audit/lift_envelope.py,pass,0 lifts over the original's 4.01 cells/s (was 31; BD-0006)
 editor variant cycling,editor,unit+UI,—,open,ED-0001
 editor slots 3x10 save/edit/play-test/reopen,editor,unit,VerifyGEEditorStorage,pass (earlier),end-to-end UI script open
 world format round trip (BMD1 types 1-4),format,unit,VerifyShippedWorlds; MoveObjectRecordTests; BigDecorRecordTests; HintZoneRecordTests,pass,a BMD1 record with type > 4 is not yet round-tripped

@@ -119,9 +119,11 @@ def main(argv) -> int:
         white(69, y, 48, 70, y, 52, chance=0.1)                     # east ledges, walk 15/19/23
     lift(w, (64, 12, 49), (68, 12, 49), ticks=30, stop=10)
     lift(w, (68, 14, 51), (64, 14, 51), ticks=30, stop=10)
-    w.place(O.LIFT, 64, 16, 49, end=(68, 16, 49), advance=15, recede=66, stop_start=2, stop_end=2)
+    # Quick out, slow back as the original's quick lifts (world113: 2 cells out in 10 ticks, back in
+    # 44): out at their 4.0 cells/s, 20 ticks for these 4 (it took 15: 5.33 cells/s, BD-0006).
+    w.place(O.LIFT, 64, 16, 49, end=(68, 16, 49), advance=20, recede=66, stop_start=2, stop_end=2)
     lift(w, (68, 18, 51), (64, 18, 51), ticks=60, stop=20)
-    lift(w, (64, 20, 49), (68, 20, 49), ticks=18, stop=3)
+    lift(w, (64, 20, 49), (68, 20, 49), ticks=24, stop=3)  # the original's 3.33 cells/s (was 18: BD-0006)
     w.set(62, 16, 48, SAW)
     mine(w, 66, 11, 44)
     w.place(O.KEY1, 69, 23, 50)

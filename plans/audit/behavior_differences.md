@@ -63,7 +63,7 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   whose bytes start `AMAP`/`BLOKSHAP`/`blokgeom` (Amapi 3D chunks with big-endian floats: a
   reader looks feasible). Evidence: `tools/audit/asset_sources.py` (this session).
 
-## BD-0006 — lifts faster than any lift of the original; 061's shuttle ladder has a ~0.1 s jump window (gameplay / world data) — REPRODUCED_DEFECT (061 fixed; 024, 062, 073, 113 open)
+## BD-0006 — lifts faster than any lift of the original; 061's shuttle ladder has a ~0.1 s jump window (gameplay / world data) — FIXED_AND_VERIFIED (all 31 lifts; a human play pass still to do)
 
 - Owner report (2026-11-01): a mission expects jumps between moving platforms whose speed makes the
   jump impossible or unreasonably precise.
@@ -95,3 +95,10 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   (jump 30 frames into a dwell) and passes (16 933 ticks). Still to do: a human play pass; the
   other worlds over the envelope (113: twelve lifts at 5-6 cells/s; 024; 062; 073), each measured
   and re-timed the same way.
+- Fix, the other worlds (2026-11-01): each at its original counterpart's speed — 113's gallery
+  lifts 15/18 ticks for 3 cells (4.0/3.33 cells/s, were 6.0/5.0) and its shaft lift 60 ticks (3.33,
+  was 5.0); 024's quick lift out in 20 ticks (4.0, back still 66; was 5.33) and its upper lift 24
+  (3.33, was 4.44); 062's long lift 60 (3.33, was 5.0); 073's L5 24 (3.33, was 4.44). No dwell
+  changed (none of them is a jump between lifts in step). `lift_envelope.py`: 0 lifts over the
+  original's fastest. Playthroughs: 113 and the world-110 chain pass unchanged; 024, 062, 073 and
+  the chains 020, 060, 070: see the commit.
