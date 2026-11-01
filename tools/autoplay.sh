@@ -37,7 +37,10 @@ rm -f "$run/GalaxyEggbertCNA"
 ln "$build/GalaxyEggbertCNA" "$run/GalaxyEggbertCNA"
 
 cd "$run"
-SDL_VIDEODRIVER=x11 xvfb-run -a -s "-screen 0 1280x720x24" \
+# Silent unless QA_SOUND=1: the runs would otherwise play through the desktop's speakers.
+audio_driver=dummy
+[[ "${QA_SOUND:-}" == 1 ]] && audio_driver="${SDL_AUDIODRIVER:-}"
+SDL_AUDIODRIVER="$audio_driver" SDL_VIDEODRIVER=x11 xvfb-run -a -s "-screen 0 1280x720x24" \
     ./GalaxyEggbertCNA --mission "$mission" --autoplay "$script" "$@" > game.log 2>&1
 code=$?
 cat autoplay_trace.txt 2>/dev/null

@@ -11,6 +11,7 @@
 # QA_LIVE_AVATARS=<dir> uses that directory as avatars3d/ (to look at re-exported models before
 # they replace the committed ones). QA_LIVE_RUN=<dir> runs from that directory instead of
 # build-probe/qa-run/ (its own savedata.txt), so two sessions can run checks at once.
+# QA_SOUND=1 lets the game play sound (default: silent, SDL_AUDIODRIVER=dummy).
 # QA_LIVE_WORLDS=<dir> uses that directory as worlds3d/ (probe worlds beside symlinks to the
 # shipped ones).
 #
@@ -56,7 +57,10 @@ rm -f "$run/GalaxyEggbertCNA"
 ln "$build/GalaxyEggbertCNA" "$run/GalaxyEggbertCNA"
 
 cd "$run"
-SDL_VIDEODRIVER=x11 ./GalaxyEggbertCNA "$@" > "$out/game.log" 2>&1 &
+# Silent unless QA_SOUND=1: the run would otherwise play through the desktop's speakers.
+audio_driver=dummy
+[[ "${QA_SOUND:-}" == 1 ]] && audio_driver="${SDL_AUDIODRIVER:-}"
+SDL_AUDIODRIVER="$audio_driver" SDL_VIDEODRIVER=x11 ./GalaxyEggbertCNA "$@" > "$out/game.log" 2>&1 &
 pid=$!
 wid=""
 for _ in $(seq 50); do
