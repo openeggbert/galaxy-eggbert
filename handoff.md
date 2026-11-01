@@ -6,8 +6,37 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-10-31 (current Web/Emscripten Release build linked and passed a real
-Chrome/WebGL 2 smoke run; the whole-campaign and D11 state below is unchanged)._
+_Last updated: 2026-11-01 (the fidelity audit started: milestone G; crate push/pull rebuilt to the
+original's speed and contact, D60; next the over-fast lifts, BD-0006)._
+
+## 0. Start here (fidelity audit, since 2026-11-01)
+
+The owner's campaign brief of 2026-11-01 is milestone G: `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`
+(plan, waves, next steps) and its ledgers in `plans/audit/` (regenerate the CSVs with
+`tools/audit/*.py`; hand-written parts in the `*.notes.csv` sidecars and the `.md` ledgers). Read the
+ledgers before repeating any discovery. Where it stands:
+
+- Done: baseline (70d2b99, 110/110); ledgers (`f4d67c8`); silent runs (`b33fac3`); **D60 crate
+  push/pull** (`1c59eae`; BD-0001/0002, M3D-0001):
+  `CratePush.hpp`, `InteractionSystem::UpdateCratePush()`, crates as boxes in Blupi's collision,
+  `BlupiController::FollowCrate()/SetCrateDriven()/CanStandAt()/IsBlockSolidAt()`; tests and the 18
+  crate playthroughs pass; evidence `plans/evidence/crate-push-012.png`.
+- Game runs are silent now (owner's request): `tools/autoplay.sh`/`qa_live.sh` default to
+  `SDL_AUDIODRIVER=dummy`; `QA_SOUND=1` for an explicit sound check.
+- In progress: **BD-0006** — lifts faster than any lift of the original (`python3
+  tools/audit/lift_envelope.py`). **061 done** (`7e0d1cf`: original speeds, the ladder's shuttles
+  dwell 30 ticks; jump window ~5 frames -> ~0.9 s; playthrough re-timed). Left: 113 (twelve at 5-6
+  cells/s), 024, 062, 073 (20 lifts). Method, per world: find each lift's original counterpart in
+  `../mobile-eggbert/worlds/worldNNN.txt`, set the builder's ticks to its speed, probe with a copy
+  of the builder (`python3 <copy> --stage -1 out.vwr`; `--stage -1` reproduces the shipped world
+  byte for byte for 061) in a worlds dir of symlinks (`AUTOPLAY_WORLDS=<dir>`), measure the jump
+  windows with `tools/autoplay_search.py`, lengthen a dwell only where a jump between lifts in
+  step needs it, re-time the playthrough. Never kill a background job by `pkill -f` with a pattern
+  that also matches its parent shell (it killed a batch on 2026-11-01).
+- Then: ED-0001 (the original's variant cycling is traced in `plans/audit/editor_parity.md`; the 3D
+  mapping is MR-0003 in `manual_review.md`), fan/lava/pillars (VIS rows), the `.a3d` reader.
+- The whole-campaign playthrough (`campaign.txt`, ~2 h) has not been re-run since D60: regenerate
+  it (`python3 tools/autoplay_campaign.py`) and run it after the lift changes.
 
 ## 1. The project and the goal in one paragraph
 
@@ -221,6 +250,8 @@ is a full library built 2026-10-27 with the current settings).
 
 | Repo | Verified commit | Date |
 |---|---|---|
+| `../../libcna/cna` (live tree; what `build-cna-opengl3` compiles) | `dda46ec4d` | 2026-11-01 (110/110) |
+| `../../libcna/cna-engine` | `2a93b7e` | 2026-11-01 (110/110) |
 | `../../libcna/cna-engine` | `d86c62da` | 2026-10-20 |
 | `~/deps/cna-baseline` | `900d0db3b` | 2026-10-20 |
 | `../../libcna/easy-gl` | `f4d6afaf` (v0.1.1) | 2026-10-20 |

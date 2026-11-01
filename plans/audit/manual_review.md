@@ -24,3 +24,18 @@
 - D11: the list of models that look wrong.
 - The charge (31) and the shield as billboards.
 - BigDecor at the original's size (2-2.25 blocks) or one block.
+
+## MR-0003 — how the original's "click again to cycle the variant" maps onto 3D placement (decision wanted; a default is proposed)
+
+- The original (ED-0001, traced in `editor_parity.md`): pressing the button on a cell that already
+  holds the family's current variant replaces it with the next variant; dragging paints without
+  cycling.
+- Galaxy places a block in the empty cell *in front of* the clicked face, so the 2D "same cell"
+  has two 3D readings that conflict: clicking the block just placed (which is what a second click
+  without moving the mouse does) either cycles it (the original's feel) or stacks another block on
+  it (today's behaviour, how towers and walls are built).
+- Proposed default: a click whose target block is the one placed by the previous click, of a
+  family with variants, and still holding that variant, cycles it (an undoable step); any other
+  click places. Stacking the same family then means placing on a neighbouring face first, or
+  Ctrl+click (the original's Ctrl places without cycling). Alternative: cycle only with a modifier
+  (e.g. Alt+click) and keep plain clicks stacking.
