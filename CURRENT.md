@@ -63,7 +63,7 @@ content-authoring UX, but not new gameplay mechanics.
   stages SDL3 and MinGW thread runtime DLLs while statically linking GCC/C++, but the current
   `SDL_GPU` path still needs a fresh build and live 3D verification. The Web/Emscripten build uses
   `WEBGL2`; it is manually verified rather than part of CI or a release pipeline.
-- Linux provides a reproducible `GalaxyEggbertCNA-linux-x86_64.tar.gz` runtime bundle through
+- Linux provides a reproducible `GalaxyEggbert-linux-x86_64.tar.gz` runtime bundle through
   CMake's `package` target. It contains source-tracked assets and bundled SDL libraries; actual
   desktop launch remains a host-environment check, not a CI/release gate.
 - GitHub Actions CI builds and tests the CNA target from a clean sibling-checkout layout. It excludes

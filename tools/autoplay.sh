@@ -33,15 +33,15 @@ fi
 rm -f "$run/savedata.txt" "$run/autoplay_trace.txt"
 # A hard link, not a symlink: CNA resolves its content roots against the executable's real
 # directory (see qa_live.sh).
-rm -f "$run/GalaxyEggbertCNA"
-ln "$build/GalaxyEggbertCNA" "$run/GalaxyEggbertCNA"
+rm -f "$run/GalaxyEggbertCNA" "$run/GalaxyEggbert"
+ln "$build/GalaxyEggbert" "$run/GalaxyEggbert"
 
 cd "$run"
 # Silent unless QA_SOUND=1: the runs would otherwise play through the desktop's speakers.
 audio_driver=dummy
 [[ "${QA_SOUND:-}" == 1 ]] && audio_driver="${SDL_AUDIODRIVER:-}"
 SDL_AUDIODRIVER="$audio_driver" SDL_VIDEODRIVER=x11 xvfb-run -a -s "-screen 0 1280x720x24" \
-    ./GalaxyEggbertCNA --mission "$mission" --autoplay "$script" "$@" > game.log 2>&1
+    ./GalaxyEggbert --mission "$mission" --autoplay "$script" "$@" > game.log 2>&1
 code=$?
 cat autoplay_trace.txt 2>/dev/null
 grep -E "autoplay|ERROR|exception|Abort" game.log

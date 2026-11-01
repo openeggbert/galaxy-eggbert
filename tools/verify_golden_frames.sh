@@ -29,7 +29,7 @@ fi
 build_dir="$1"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 golden_dir="${repo_root}/tests/golden"
-binary="${build_dir}/GalaxyEggbertCNA"
+binary="${build_dir}/GalaxyEggbert"
 
 if [[ ! -x "${binary}" ]]; then
     echo "FAIL: ${binary} not found or not executable -- build it first:" >&2
@@ -43,7 +43,7 @@ for f in "${frames[@]}"; do
     rm -f "${build_dir}/${f}"
 done
 
-(cd "${build_dir}" && timeout 20 "./GalaxyEggbertCNA" --golden-capture) > /dev/null 2>&1 || true
+(cd "${build_dir}" && timeout 20 "./GalaxyEggbert" --golden-capture) > /dev/null 2>&1 || true
 
 all_ok=1
 for f in "${frames[@]}"; do

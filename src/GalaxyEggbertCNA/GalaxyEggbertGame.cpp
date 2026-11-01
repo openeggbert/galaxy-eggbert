@@ -507,7 +507,7 @@ namespace GalaxyEggbert::CNA
 
     GalaxyEggbertGame::GalaxyEggbertGame()
     {
-        Game::getWindowProperty().setTitleProperty("Galaxy Eggbert (CNA)");
+        Game::getWindowProperty().setTitleProperty("Galaxy Eggbert");
         // Standard XNA pattern: the manager must be constructed and the
         // required profile selected before Run() initializes the device.
         // Galaxy's screenshot/golden-capture diagnostics use

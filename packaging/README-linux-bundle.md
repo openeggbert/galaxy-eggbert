@@ -7,7 +7,7 @@ Run the game from this extracted directory:
 ```
 
 The launcher sets the working directory required by the game's bundled data.
-Do not move `GalaxyEggbertCNA` away from `Content/`, `worlds3d/`, `textures3d/`,
+Do not move `GalaxyEggbert` away from `Content/`, `worlds3d/`, `textures3d/`,
 or `avatars3d/`.
 
 This x86-64 Linux bundle includes the SDL3, SDL3_image, and SDL3_mixer shared

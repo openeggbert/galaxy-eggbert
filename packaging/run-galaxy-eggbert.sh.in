@@ -5,4 +5,4 @@ set -eu
 
 bundle_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$bundle_dir"
-exec "$bundle_dir/GalaxyEggbertCNA" "$@"
+exec "$bundle_dir/GalaxyEggbert" "$@"

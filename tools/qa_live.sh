@@ -53,14 +53,14 @@ fi
 # A hard link, not a symlink: CNA resolves its content roots (avatars3d/) against the executable's
 # real directory, which a symlink would make the build directory again. Relinked every run,
 # since the linker replaces the binary with a new file.
-rm -f "$run/GalaxyEggbertCNA"
-ln "$build/GalaxyEggbertCNA" "$run/GalaxyEggbertCNA"
+rm -f "$run/GalaxyEggbertCNA" "$run/GalaxyEggbert"
+ln "$build/GalaxyEggbert" "$run/GalaxyEggbert"
 
 cd "$run"
 # Silent unless QA_SOUND=1: the run would otherwise play through the desktop's speakers.
 audio_driver=dummy
 [[ "${QA_SOUND:-}" == 1 ]] && audio_driver="${SDL_AUDIODRIVER:-}"
-SDL_AUDIODRIVER="$audio_driver" SDL_VIDEODRIVER=x11 ./GalaxyEggbertCNA "$@" > "$out/game.log" 2>&1 &
+SDL_AUDIODRIVER="$audio_driver" SDL_VIDEODRIVER=x11 ./GalaxyEggbert "$@" > "$out/game.log" 2>&1 &
 pid=$!
 wid=""
 for _ in $(seq 50); do

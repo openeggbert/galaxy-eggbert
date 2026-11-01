@@ -58,7 +58,7 @@ sibling checkouts of `../cna` and `../cna-engine` (or
 cmake -S . -B build-cna-opengl3 -DGALAXY_EGGBERT_BUILD_CNA=ON \
   -DCNA_GRAPHICS_RENDERER=OPENGL33
 cmake --build build-cna-opengl3 --target GalaxyEggbertCNA -j2
-cd build-cna-opengl3 && ./GalaxyEggbertCNA   # run from its build dir (relative asset paths)
+cd build-cna-opengl3 && ./GalaxyEggbert   # run from its build dir (relative asset paths)
 ```
 
 #### Linux runtime bundle (`.tar.gz`)
@@ -71,8 +71,8 @@ required asset-relative working directory.
 cmake -S . -B build-package -DCMAKE_BUILD_TYPE=Release \
   -DGALAXY_EGGBERT_BUILD_CNA=ON
 cmake --build build-package --target package -j2
-tar -xzf build-package/GalaxyEggbertCNA-linux-x86_64.tar.gz
-./GalaxyEggbertCNA-linux-x86_64/run-galaxy-eggbert
+tar -xzf build-package/GalaxyEggbert-linux-x86_64.tar.gz
+./GalaxyEggbert-linux-x86_64/run-galaxy-eggbert
 ```
 
 The archive is deliberately a runtime bundle, not an AppImage: its host still supplies standard
@@ -167,17 +167,17 @@ cmake --build build-cna-webgl2 --target GalaxyEggbertCNA -j2
 ##### Run
 
 ```bash
-emrun build-cna-webgl2/GalaxyEggbertCNA.html
+emrun build-cna-webgl2/GalaxyEggbert.html
 ```
 
 ##### Generated files
 
 | File | Description |
 |------|-------------|
-| `GalaxyEggbertCNA.html` | Main entry point — open in browser |
-| `GalaxyEggbertCNA.js`   | Emscripten JS glue |
-| `GalaxyEggbertCNA.wasm` | WebAssembly binary |
-| `GalaxyEggbertCNA.data` | Preloaded asset bundle |
+| `GalaxyEggbert.html` | Main entry point — open in browser |
+| `GalaxyEggbert.js`   | Emscripten JS glue |
+| `GalaxyEggbert.wasm` | WebAssembly binary |
+| `GalaxyEggbert.data` | Preloaded asset bundle |
 
 ##### Virtual filesystem layout
 

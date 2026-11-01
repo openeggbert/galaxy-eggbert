@@ -194,7 +194,7 @@ emcmake cmake -S . -B build-cna-webgl2 \
 cmake --build build-cna-webgl2 --target GalaxyEggbertCNA -j2
 ```
 
-The four deployable files are `build-cna-webgl2/GalaxyEggbertCNA.{html,js,wasm,data}`. Serve them
+The four deployable files are `build-cna-webgl2/GalaxyEggbert.{html,js,wasm,data}`. Serve them
 over HTTP; opening the HTML directly as a `file:` URL is not a valid runtime check.
 
 Only existing build directories (`build-cna-opengl3/`, `build-cna-webgl2/`; `build-probe/` for
@@ -204,7 +204,7 @@ probes and converter output). Never build in `/tmp` or the scratchpad. Reconfigu
 
 ### Playthroughs (QA autoplay) — the regression net for any gameplay or world change
 
-- `GalaxyEggbertCNA --mission N --autoplay <script>` plays a script deterministically (fixed 1/60
+- `GalaxyEggbert --mission N --autoplay <script>` plays a script deterministically (fixed 1/60
   ticks, draws one frame in 30) and writes `autoplay_trace.txt`; exit 0 = passed. Commands and
   fields are documented in `src/GalaxyEggbert/Game/Autoplay.hpp` (go/jump/tol/until/with, lift,
   crate, clear/near with lane, hold, face, expect, trace, include; fields incl. blitz, temp, crush,

@@ -168,6 +168,9 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         ${GE_SHARED_SOURCES}
     )
 
+    # The game's file is GalaxyEggbert (GalaxyEggbert.exe, GalaxyEggbert.html on the web; owner,
+    # OR-0008, 2026-11-01); the CMake target keeps its name, so `--target GalaxyEggbertCNA` builds it.
+    set_target_properties(GalaxyEggbertCNA PROPERTIES OUTPUT_NAME GalaxyEggbert)
     target_include_directories(GalaxyEggbertCNA PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -218,7 +221,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
                     COMMAND ${CMAKE_COMMAND} -E copy_if_different
                         "${_ge_windows_sdl_dll_path}"
                         $<TARGET_FILE_DIR:GalaxyEggbertCNA>
-                    COMMENT "Copying ${_ge_windows_sdl_dll} next to GalaxyEggbertCNA"
+                    COMMENT "Copying ${_ge_windows_sdl_dll} next to GalaxyEggbert"
                     VERBATIM)
                 endif()
             endforeach()
@@ -529,8 +532,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             endif()
 
             set(CPACK_GENERATOR "TGZ")
-            set(CPACK_PACKAGE_NAME "GalaxyEggbertCNA")
-            set(CPACK_PACKAGE_FILE_NAME "GalaxyEggbertCNA-linux-${CMAKE_SYSTEM_PROCESSOR}")
+            set(CPACK_PACKAGE_NAME "GalaxyEggbert")
+            set(CPACK_PACKAGE_FILE_NAME "GalaxyEggbert-linux-${CMAKE_SYSTEM_PROCESSOR}")
             set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
             set(CPACK_COMPONENTS_ALL Runtime)
             # CPack otherwise invokes the root install with no component,

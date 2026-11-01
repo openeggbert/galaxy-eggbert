@@ -34,7 +34,7 @@ fi
 build_dir="$1"
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 golden_dir="${repo_root}/tests/golden"
-binary="${build_dir}/GalaxyEggbertCNA"
+binary="${build_dir}/GalaxyEggbert"
 
 if [[ ! -x "${binary}" ]]; then
     echo "FAIL: ${binary} not found or not executable -- build it first:" >&2
@@ -45,7 +45,7 @@ fi
 trace="golden_trace.txt"
 rm -f "${build_dir}/${trace}"
 
-(cd "${build_dir}" && timeout 20 "./GalaxyEggbertCNA" --golden-capture-trace) > /dev/null 2>&1 || true
+(cd "${build_dir}" && timeout 20 "./GalaxyEggbert" --golden-capture-trace) > /dev/null 2>&1 || true
 
 fresh="${build_dir}/${trace}"
 reference="${golden_dir}/${trace}"

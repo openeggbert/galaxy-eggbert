@@ -88,7 +88,7 @@ Run the game from its build directory because runtime asset paths are relative:
 
 ```bash
 cd build-cna
-./GalaxyEggbertCNA
+./GalaxyEggbert          # the target GalaxyEggbertCNA builds the file GalaxyEggbert
 ```
 
 For risky rendering/editor changes, add or update a pure-logic verifier when possible and perform
