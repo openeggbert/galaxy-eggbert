@@ -87,8 +87,14 @@ def main(argv) -> int:
         if stage is not None and stage >= 0:
             w.fill(x, y, 45, x + 1, y, 55, MACHINE_FLOOR)             # the ladder as floors
         else:
+            # The original's shuttles: 4 cells in 24 ticks (3.33 cells/s; worlds/world061.txt,
+            # posStart 3136;1472 -> 2880;1472). Ten cells here take 60 ticks at that speed (they took
+            # 24: 8.33 cells/s, a ~0.1 s jump window, BD-0006). Blupi does not keep a lift's motion
+            # in a jump (Decor::MoveObjectStep), so stepping up onto the next shuttle, which moves in
+            # step, is done while they dwell at an end: 30 ticks there (a 0.9 s window, measured with
+            # tools/autoplay_search.py), not the original's 3, as the chasm's pair below (D43).
             for dx in (0, 1):
-                lift(w, (x + dx, y, 45), (x + dx, y, 55), ticks=24, stop=3)
+                lift(w, (x + dx, y, 45), (x + dx, y, 55), ticks=60, stop=30)
     w.place(O.TREASURE, 26, 23, 45)
     for z in (50, 53, 56):
         w.place(O.EGG, 34, 15, z)
@@ -117,10 +123,14 @@ def main(argv) -> int:
     else:
         # The two meet side by side: the original's 3-tick dwell is too short to step across in
         # 3D, so they wait 30 ticks there (D43).
-        lift(w, (30, 22, 32), (35, 22, 32), ticks=18, stop=30)
-        lift(w, (41, 22, 32), (36, 22, 32), ticks=18, stop=30)
-        lift(w, (46, 22, 31), (55, 22, 26), ticks=36, stop=3)
-        lift(w, (60, 22, 27), (67, 24, 27), ticks=24, stop=3)
+        # Every lift at its original counterpart's speed (BD-0006; the original's lifts in 061 run
+        # 3.2-4.0 cells/s, these ran 5.6-6.1): the pair 4.0 (4480;1344 -> 4672;1472, 18 ticks),
+        # the one across X and Z at once 3.43 (4800;1472 -> 5056;1536, 24 ticks), the one rising as
+        # it goes 3.43 (5504;1472 -> 5568;1728, 24 ticks).
+        lift(w, (30, 22, 32), (35, 22, 32), ticks=25, stop=30)
+        lift(w, (41, 22, 32), (36, 22, 32), ticks=25, stop=30)
+        lift(w, (46, 22, 31), (55, 22, 26), ticks=60, stop=3)
+        lift(w, (60, 22, 27), (67, 24, 27), ticks=43, stop=3)
     w.place(O.TREASURE, 43, 23, 31)
     w.place(O.TREASURE, 58, 23, 26)
     mine(w, 59, 23, 25)                                               # off the way across I2
@@ -128,7 +138,9 @@ def main(argv) -> int:
         w.place(O.EGG, x, 23, z)
     # T: the tower over E, up its lift (walk 25 -> 33), treasure 4.
     w.fill(74, 24, 24, 74, 32, 24, 0)
-    lift(w, (74, 24, 24), (74, 32, 24), ticks=36, stop=3)
+    # The original's tower lift: 6 cells in 36 ticks (6016;1472 -> 6016;1088, 3.33 cells/s); eight
+    # here take 48 (they took 36: 4.44 cells/s, BD-0006).
+    lift(w, (74, 24, 24), (74, 32, 24), ticks=48, stop=3)
     w.place(O.TREASURE, 71, 33, 21)
     w.place(O.EGG, 75, 33, 21)
 

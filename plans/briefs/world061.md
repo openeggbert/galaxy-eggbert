@@ -17,15 +17,20 @@ are plain slime (only 373 is the spike trap): a fall costs the climb back, not a
 - S, the start chamber (x 43–57, z 43–57, walk 15): spawn (50, 15, 54) facing −Z, the red arrow at
   (50, 15, 45) in view; an egg cache in its north-east corner behind a seven-treasure door.
 - West, through a corridor: the shaft A (x 25–36, z 42–58), three shuttle pairs along Z (z 45–55,
-  24 ticks, 3 dwell, all in step) at walk 17, 19 and 21, each one column further west, then the
-  ledge at walk 23 with treasure 1. Each step up is a two-block jump onto the neighbouring column.
+  60 ticks, 30 dwell, all in step) at walk 17, 19 and 21, each one column further west, then the
+  ledge at walk 23 with treasure 1. Each step up is a two-block jump onto the neighbouring column,
+  made while the shuttles dwell at an end. (Until 2026-11-01: 24 ticks and 3 dwell, 8.33 cells/s,
+  a ~0.1 s window per cycle; now the original's 3.33 cells/s and a 0.9 s window, BD-0006.)
 - Out of the ledge's north end behind door "1" (421): the chasm P (x 24–76, z 21–40). From the
-  landing G (walk 23) two shuttles meet in the middle (18 ticks, opposite phases; they wait 30 ticks
+  landing G (walk 23) two shuttles meet in the middle (25 ticks since 2026-11-01, the original's
+  4 cells/s; opposite phases; they wait 30 ticks
   there, not the original's 3, to step across in 3D: D43, stepped across live) to island I1
   (treasure 2); a lift moving across X and Z at once to island I2 (treasure 3, a mine in its far
   corner); a lift rising as it goes to the east ledge E (walk 25). The chasm's floor is twelve
   blocks down; a stair of two-block steps beside G leads back up.
-- On E the tower lift (36 ticks) up to the tower room (walk 33): treasure 4.
+- On E the tower lift (48 ticks since 2026-11-01, the original's 3.33 cells/s) up to the tower
+  room (walk 33): treasure 4. Every lift of the world runs at its original counterpart's speed
+  (`tools/audit/lift_envelope.py`).
 - E's south doorway behind door "4" (424): a ledge over the lava hall H (walk 15), two lava trenches
   across it (one a jump wide, one two wide crossed on machine blocks), treasure 5, two mines.
   H opens into S behind door "5" (425).

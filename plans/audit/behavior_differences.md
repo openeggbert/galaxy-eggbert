@@ -62,3 +62,36 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   proprietary tools". The tree holds 56 `.max` (14 stamped "3D Studio MAX: 3.1") and 105 `.a3d`,
   whose bytes start `AMAP`/`BLOKSHAP`/`blokgeom` (Amapi 3D chunks with big-endian floats: a
   reader looks feasible). Evidence: `tools/audit/asset_sources.py` (this session).
+
+## BD-0006 — lifts faster than any lift of the original; 061's shuttle ladder has a ~0.1 s jump window (gameplay / world data) — REPRODUCED_DEFECT (061 fixed; 024, 062, 073, 113 open)
+
+- Owner report (2026-11-01): a mission expects jumps between moving platforms whose speed makes the
+  jump impossible or unreasonably precise.
+- Envelope (`tools/audit/lift_envelope.py`, this session): the original's 424 moving lifts (52
+  worlds) run at most **4.01 cells/s** (`world061`, `world113`), dwell at least 0.10 s. Galaxy's
+  shipped worlds hold **31 lifts faster than that**: world061 (six shuttles at **8.33 cells/s**,
+  dwell 0.15 s; others 4.4-6.1), world113 (twelve at 5-6), world024 (5.33, 4.44), world062 (5.0),
+  world073 (4.44). Cause: the world builders lengthened the original's paths (061's shuttles: 4
+  cells in the original, `posStart=3136;1472 posEnd=2880;1472`, 24 ticks) and kept its tick counts
+  (10 cells in 24 ticks), so the speed rose with the length.
+- Reproduced with the engine (`tools/autoplay_search.py` on the ladder's first jump, from its
+  shuttle's arrival at z 45, delays 30-82 every 2 frames): only 64, 66 and 68 pass — a window of
+  about 5-7 frames (~0.1 s) once per 2.7 s cycle. Not a human-playable jump.
+- Momentum checked: the original's Blupi does not keep a lift's motion when he jumps off it
+  (`Decor::MoveObjectStep`, Decor.cpp:7946-7948 clears `m_blupiVector`/`m_blupiTransport` every
+  frame, :8159-8171 sets them only while he stands on the lift); Galaxy's does not either. A jump
+  from one moving lift onto another therefore always asks for timing, as in the original; only
+  the speeds make it inhuman.
+- Engine timing checked: lifts step as `Decor::MoveObjectStepLine` (linear posStart -> posEnd over
+  stepAdvance 20 Hz ticks; `AdvancePatrolStep`, `kTicksPerSecond` 20, D43). The engine is not the
+  cause; the world data is.
+- Fix, world061 (2026-11-01): every lift at its original counterpart's speed (`tools/worlds/
+  world061.py`: shuttles 60 ticks, the chasm pair 25, the X-and-Z lift 60, the riser 43, the tower
+  48). At the original's speed alone the ladder's window was still ~0.1-0.3 s (delays 174-180 of a
+  378-frame cycle): the shuttles move in step and Blupi rightly loses a lift's motion in a jump, so
+  the target must be dwelling when he lands. With a 30-tick dwell at each end (the precedent: this
+  world's chasm pair, D43) boarding passes at every delay 2-40 and each ladder jump at 4-56 frames
+  into the dwell (~0.9 s): a timed jump a person can make. The mission's playthrough re-timed
+  (jump 30 frames into a dwell) and passes (16 933 ticks). Still to do: a human play pass; the
+  other worlds over the envelope (113: twelve lifts at 5-6 cells/s; 024; 062; 073), each measured
+  and re-timed the same way.

@@ -7,36 +7,32 @@ go 36 50
 go 34 50 tol 0.2
 go 34 53 tol 0.2
 go 34 56 tol 0.2
-# The shuttle ladder: three pairs (x 33-34, 31-32, 29-30; walk 17, 19, 21) racing along Z
-# (z 45-55) in step. Board the first by jumping straight up from the floor under its north end
-# as it arrives there; then each next one by a jump west timed so that it is back under him when
-# he comes down: 66 ticks after his shuttle reaches its south end (z 45). From the third, west
-# onto the ledge (walk 23): treasure 1.
+# The shuttle ladder: three pairs (x 33-34, 31-32, 29-30; walk 17, 19, 21) shuttling along Z
+# (z 45-55, 60 ticks, 30 dwelling, in step; BD-0006). Board the first by jumping straight up from the
+# floor under its north end while it dwells there; then each next one by a jump west while they
+# dwell at an end (the window: 4-56 ticks into the dwell, tools/autoplay_search.py); from the
+# third, west onto the ledge (walk 23): treasure 1.
 go 33.5 54.8 tol 0.1
-lift 33 17 55 max 400
-lift 33 17 45 max 400
-wait 45
+lift 33 17 55 max 600
+wait 20
 hold 8 jump
 until ground = 1 max 120
 expect y >= 16.9
 face 270
-lift 33 17 55 max 400
-lift 33 17 45 max 400
-wait 66
+lift 33 17 45 max 600
+wait 30
 hold 20 up jump
 hold 25 up
 until ground = 1 max 120
 expect y >= 18.9
-lift 31 19 55 max 400
-lift 31 19 45 max 400
-wait 66
+lift 31 19 55 max 600
+wait 30
 hold 20 up jump
 hold 25 up
 until ground = 1 max 120
 expect y >= 20.9
-lift 29 21 55 max 400
-lift 29 21 45 max 400
-wait 66
+lift 29 21 45 max 600
+wait 30
 hold 20 up jump
 hold 25 up
 until ground = 1 max 120
