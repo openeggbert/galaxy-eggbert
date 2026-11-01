@@ -1,0 +1,25 @@
+id,status,galaxy_impl,verification,tests,next_action
+GP-0015,REPRODUCED_DEFECT,InteractionSystem::UpdateCratePush; CratePush.hpp,BD-0001: crate jumped a whole cell; fix in progress,VerifyInteractionSystem,re-tune crate playthroughs; live look
+GP-0029,UNREVIEWED,GalaxyEggbertGame holdingCrate_; BlupiController StopPop,held at the contact distance (2026-11-01),VerifyBlupiMovement,live look
+GP-0030,REPRODUCED_DEFECT,InteractionSystem::UpdateCratePush,BD-0002: 4 px a tick and a jump at a 1.9 gap; fix in progress,VerifyInteractionSystem,re-tune crate playthroughs
+GP-0122,REPRODUCED_DEFECT,InteractionSystem::UpdateCratePush,BD-0001,VerifyInteractionSystem,
+GP-0488,UNREVIEWED,CrateGroupCanMove,atomic group test kept; support counts non-solid blocks (BD-0003),VerifyInteractionSystem,test BD-0003
+GP-0489,UNREVIEWED,CrateGroupCanMove,BD-0003,,
+GP-0490,CONFIRMED_MATCH,CrateGroup,links touching crates at or above the seed's row; a pull only the stack on it,VerifyInteractionSystem (linked trio),
+GP-0492,CONFIRMED_MATCH,InteractionSystem::CrateInFront,the nearest crate ahead (D50),VerifyInteractionSystem,
+GP-0493,FIXED_AND_VERIFIED,CratePush::PixelsPerTick,transcribed (2026-11-01),VerifyInteractionSystem,
+GP-0013,NOT_APPLICABLE,,Set (12) never referenced (completion plan §8),,
+GP-0058,NOT_APPLICABLE,,Electro (57) never assigned (completion plan §8),,
+GP-0063,NOT_APPLICABLE,,StopJumph (62) never set (completion plan §8),,
+GP-0079,NOT_APPLICABLE,,Clear5 never assigned (completion plan §8),,
+GP-0080,NOT_APPLICABLE,,Clear6 never assigned (completion plan §8),,
+GP-0081,NOT_APPLICABLE,,Clear7 never assigned (completion plan §8),,
+GP-0082,NOT_APPLICABLE,,Clear8 never assigned (completion plan §8),,
+GP-0066,NOT_APPLICABLE,,Ouf5 (65): its only cause is Suspend (completion plan §8),,
+GP-0032,NOT_APPLICABLE,,StopSuspend: m_blupiSuspend is never set (completion plan §8),,
+GP-0033,NOT_APPLICABLE,,MarchSuspend: m_blupiSuspend is never set,,
+GP-0034,NOT_APPLICABLE,,TurnSuspend: m_blupiSuspend is never set,,
+GP-0035,NOT_APPLICABLE,,JumpSuspend: m_blupiSuspend is never set,,
+GP-0064,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDetect()) (Decor.cpp:5630-5634),,
+GP-0065,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDetect()),,
+GP-0084,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDetect()),,

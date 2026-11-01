@@ -1,0 +1,13 @@
+case,area,method,test,status,notes
+crate push speed/ramp/stack/power vs original,gameplay,unit+differential,VerifyInteractionSystem (Crate push timing against the original),pass,per-20Hz-tick positions equal to CaisseGetMove's
+crate pull speed and contact distance,gameplay,unit,VerifyInteractionSystem (Crates in 3D),pass,
+crate wall/gap/stacking/nearest of a row,gameplay,unit,VerifyInteractionSystem (Crates in 3D),pass,
+crate between two cells is a box for Blupi,gameplay,unit,VerifyBlupiMovement (Crates),pass,
+crate push in the campaign,gameplay,autoplay,tools/autoplay/world0{12,14,22,23,24,41,46,58,66,93,94,95}.txt world1{01,04,21,22,23,24}.txt,partial,9 scripts assume the old jump: being re-tuned
+crate push live at normal speed,gameplay,human/live,—,open,
+lifts dwell/travel/ride (D43 D52 D54 D57),gameplay,unit,VerifyInteractionSystem; VerifyBlupiMovement,pass,
+moving-platform jump windows,gameplay,reachability,—,open,§5 of the audit plan
+editor variant cycling,editor,unit+UI,—,open,ED-0001
+editor slots 3x10 save/edit/play-test/reopen,editor,unit,VerifyGEEditorStorage,pass (earlier),end-to-end UI script open
+world format round trip (BMD1 types 1-4),format,unit,VerifyShippedWorlds; MoveObjectRecordTests; BigDecorRecordTests; HintZoneRecordTests,pass,a BMD1 record with type > 4 is not yet round-tripped
+golden frames,render,golden,tools/verify_golden_frames.sh,stale,known stale since Phase 7B

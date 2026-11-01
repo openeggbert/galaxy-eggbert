@@ -1,0 +1,9 @@
+id,status,verdict,notes,next_action
+VIS-0069,UNREVIEWED,,owner must-fix: lava drawn as cubes; original sources Decor/lave/lave1-5.rds and lave-1..5.a3d,live look; define a 3D lava surface
+VIS-0127,UNREVIEWED,,owner must-fix: fan as icons on a cube's faces,live look; a 3D fan (rotor and housing)
+VIS-0130,UNREVIEWED,,owner must-fix: fan,see VIS-0127
+VIS-0133,UNREVIEWED,,owner must-fix: fan,see VIS-0127
+VIS-0136,UNREVIEWED,,owner must-fix: fan,see VIS-0127
+VIS-0077,UNREVIEWED,,owner must-fix: pillar drawn as a sprite on an inner box; sources Decor/smooth/colonne1-3,live look
+VIS-0376,UNREVIEWED,,owner must-fix: pillar 375 drawn as a cube (D31 cut out),live look
+VIS-0400,UNREVIEWED,,owner must-fix: pillar 399 drawn as a cube (D31 cut out),live look

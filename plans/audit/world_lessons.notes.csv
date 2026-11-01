@@ -1,0 +1,4 @@
+id,lesson,reinterpretation_3d,bypasses,human_play,status,next_action
+LV-0040,,,the blupit's line of fire can be walked round along a safer Z edge (room B1 wider than its lane; earlier session),,REPRODUCED_DEFECT,re-check live; restore the lesson by 3D encounter design (no 2D corridor)
+LV-0056,,,mine-row bypass fixed earlier (completion plan §13 F); re-verify after physics changes,,UNREVIEWED,replay and live look
+LV-0078,,,levelcheck reports advisory FAILs (under-modelled abilities),,UNREVIEWED,replay and live look
