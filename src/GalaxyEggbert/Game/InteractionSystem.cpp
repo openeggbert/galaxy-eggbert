@@ -790,7 +790,11 @@ namespace GalaxyEggbert::Game
         // from its center here, not its edge) -- same "half-tile + real
         // px offset, /64" combination already used for
         // kFollowerWakeRadius below.
-        constexpr float kCloudAuraRadius = (40.0f + 32.0f) / 64.0f;
+        // The Cloud's arc (Decor::BlupiElectro, Decor.cpp:9614-9634): the enemy's box (28 px wide)
+        // meets Blupi's inflated by 16 + 40 px: centres within 100 px across, 87 px up or down. In
+        // 3D the reach across holds on X and on Z.
+        constexpr float kCloudAuraAcross = 100.0f / 64.0f;
+        constexpr float kCloudAuraUpDown = 87.0f / 64.0f;
 
         // Follower wake box (ObjectType96, plan.md E3D-MIG-137, real
         // Decor.cpp:9646-9678 MoveObjectFollow): the real check is an
@@ -1058,6 +1062,18 @@ namespace GalaxyEggbert::Game
     {
         events_.clear();
         ridingLift_ = false;
+        // The contact grace ends 30 px from where it began (Decor.cpp:6341-6345), there already out
+        // of the original's 28 px contact box; Galaxy's contact sphere reaches farther
+        // (kHazardContactRadius), so the grace lasts until he is out of it.
+        if (contactGrace_)
+        {
+            constexpr float kGraceReach = std::max(30.0f / 64.0f, kHazardContactRadius);
+            if (std::fabs(blupiX - graceX_) > kGraceReach || std::fabs(blupiY - graceY_) > kGraceReach ||
+                std::fabs(blupiZ - graceZ_) > kGraceReach)
+            {
+                contactGrace_ = false;
+            }
+        }
         // The action press a dynamite stick's pickup spends (the original clears the button,
         // Decor.cpp:6119), so one press takes one stick.
         bool actionUnspent = blupiActionPressedEdge;
@@ -1177,7 +1193,8 @@ namespace GalaxyEggbert::Game
                 const float adx = obj.currentX - blupiX;
                 const float ady = obj.currentY - blupiY;
                 const float adz = obj.currentZ - blupiZ;
-                if (adx * adx + ady * ady + adz * adz < kCloudAuraRadius * kCloudAuraRadius)
+                if (std::fabs(adx) < kCloudAuraAcross && std::fabs(adz) < kCloudAuraAcross &&
+                    std::fabs(ady) < kCloudAuraUpDown)
                 {
                     obj.active = false;
                     sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel59);
@@ -1867,21 +1884,23 @@ namespace GalaxyEggbert::Game
                 {
                     ReplaceEvent(EventKind::EnemyNearMiss, Event{EventKind::EnemyNearMiss});
                 }
-                if (!blupiInvincible && hd2 < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && !contactGrace_ && hd2 < kHazardContactRadius * kHazardContactRadius)
                 {
                     if (blupiBallooned &&
                         GetObjectDefinition(obj.type).balloonPoppableHazard)
                     {
                         events_.push_back(Event{EventKind::BalloonPopped});
+                        StartContactGrace(blupiX, blupiY, blupiZ); // Decor.cpp:5780
                     }
                     else
                     {
                         obj.active = false;
+                        // The hazard's explosion, whether he dies or rides over it (Decor.cpp:5822).
+                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
                         if (blupiArmoredVehicle)
                         {
                             // Run over in the jeep, the tank or on the skateboard: only the
-                            // hazard goes (the real site's channel 10, shake and flash below).
-                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                            // hazard goes (the real site's shake and flash below).
                         }
                         else
                         {

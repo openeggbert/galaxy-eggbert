@@ -25,3 +25,11 @@ GP-0065,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDete
 GP-0084,UNREVIEWED,BlupiController mockery,set through ToBlupiAction(MockeryDetect()),,
 GP-0090,FIXED_AND_VERIFIED,AdvancePatrolStep (D43); world builders,BD-0006: every shipped lift within the original's speeds (lift_envelope.py),VerifyInteractionSystem; playthroughs 024 061 062 073 113,human play pass
 GP-0480,CONFIRMED_MATCH,AdvancePatrolStep,linear posStart->posEnd over stepAdvance 20 Hz ticks with dwells (D43),VerifyInteractionSystem,
+GP-0148,UNREVIEWED,InteractionSystem (type 54); WorldRuntime ForceOriginalTiming,reviewed 2026-11-01: rest forced to 152 ticks (BD-0013); matches: deadly only resting; immune ballooned/Shield/Hide; kills in a vehicle; Glu death; channel 51; glue splat effect not drawn,VerifyInteractionSystem,playthroughs after BD-0013
+GP-0147,UNREVIEWED,InteractionSystem (type 44); BlupiController::TriggerBalloon,reviewed 2026-11-01: the sting now ends Power and Cloud (BD-0011); matches: Shield/Hide immunity; never destroyed; 10 s; channels 40/41; sting effect not drawn,VerifyBlupiMovement,
+GP-0141,UNREVIEWED,InteractionSystem kill set,reviewed 2026-11-01: grace after a balloon pop/vehicle/teleport (BD-0010); matches: pop set; icons; dynamite; CleanAll; taunt list; open: contact reach (0.7 sphere vs 28 px box); kills during busy actions,VerifyInteractionSystem,
+GP-0097,UNREVIEWED,InteractionSystem kill set; Cloud aura,reviewed 2026-11-01: BD-0010 BD-0012; matches: decoy trap; dynamite; icons; open: electrocution animation (ObjectType38) not drawn,VerifyInteractionSystem,
+GP-0142,UNREVIEWED,InteractionSystem kill set,reviewed 2026-11-01: BD-0010; matches: ObjectType10 + BigShake; kills ballooned; destroyed by jeep/tank/skateboard; no water rule in the original either,VerifyInteractionSystem,
+GP-0144,UNREVIEWED,InteractionSystem kill set,reviewed 2026-11-01: as the fish,VerifyInteractionSystem,
+GP-0495,FIXED_AND_VERIFIED,InteractionSystem Cloud aura,the original's box (100 px across on X and Z; 87 up/down) since BD-0012,VerifyInteractionSystem,
+GP-0497,UNREVIEWED,InteractionSystem kHazardContactRadius,a 0.7-cell sphere where the original has 28 px boxes with per-type vertical bands: a documented approximation; open,,decide with all playthroughs

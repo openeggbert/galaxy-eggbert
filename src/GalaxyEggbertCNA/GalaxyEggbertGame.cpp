@@ -3766,6 +3766,13 @@ namespace GalaxyEggbert::CNA
             // Crate-push gate (found 2026-07-16, Decor.cpp:6130-6132): real source also excludes
             // every vehicle mode + Ecrase (Balloon is covered separately by the existing
             // blupi_.IsBallooned() argument just below).
+            // Off a vehicle, or arrived by a teleporter: the hazards' contact grace (the original's
+            // m_blupiPosHelico, InteractionSystem::StartContactGrace).
+            if ((graceWasInVehicle_ && !blupi_.IsInVehicle()) || (wasTeleporting && !blupi_.IsTeleporting()))
+            {
+                interaction_.StartContactGrace(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+            }
+            graceWasInVehicle_ = blupi_.IsInVehicle();
             const bool canPushCrate = !blupi_.IsInVehicle() && !blupi_.IsEcrased();
             // Pushing and pulling crates (CratePush.hpp): the crate moves at the original's speed,
             // a cell at a time, and holds Blupi against it at the original's distance.

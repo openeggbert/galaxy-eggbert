@@ -56,8 +56,8 @@ ledgers before repeating any discovery. Where it stands:
   `BlockModels.hpp`, regenerate `model_parity.md`/`assets.md`, look live (before/after).
 - Done (Wave E): 066's blupit walks across room B1 so its line of fire must be crossed (`63e37fe`,
   LV-0040; crossing window measured with `autoplay_search.py`); 094's mine rows checked.
-- Next: pillars 375/376 (`Decor/colonne2.rds` is a `cube` master shaped by a Ray Dream deformer the
-  converter does not apply: it comes out a plain shaft), 377/399 (no source yet); the wind tiles
+- Next: pillars 375/376 (no source found: `Decor/colonne1.rds` is a plain textured cube, not the
+  turned column); the wind tiles
   (`Decor/vent-norm/` holds only rendered frames: a 2D effect candidate); a low-angle owner look at
   lava/fan/pillars; Wave E for the other mechanic-heavy worlds (199 next); Wave C type by type (an
   enemy review of types 4/16/17/20/44/54 was started 2026-11-01).

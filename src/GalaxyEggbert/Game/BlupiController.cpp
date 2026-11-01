@@ -727,6 +727,10 @@ namespace GalaxyEggbert::Game
         // holding priority via IsInVehicle().
         m_vehicleMode = VehicleMode::None;
         m_vehicleSpeed = 0.0f;
+        // The sting also ends any secret power (Decor.cpp:5845-5847: Shield, Power, Cloud, Hide).
+        m_secretPower = GalaxyEggbert::Def::SecretPower::None;
+        m_secretPowerLevel = 0;
+        m_secretPowerTimer = 0.0f;
         return true;
     }
 

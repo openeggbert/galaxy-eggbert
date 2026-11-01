@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -271,6 +272,106 @@ int main(int argc, char** argv)
         check(runFollower(403), "a follow star passes a cobweb (empty-mask decor) on its way to Blupi");
         check(runFollower(GalaxyEggbert::BlockTypes::Water1), "a follow star passes water");
         check(!runFollower(1), "a solid block stops it (it explodes)");
+    }
+
+    // 1.57. The contact grace (the original's m_blupiPosHelico, Decor.cpp:5767/5786/5780/6341): a
+    // balloon popped by a spider is not followed by his death while he is within 30 px; a grace
+    // started by the caller (a vehicle left, a teleport's arrival) spares him and the hazard; it ends
+    // once he is more than 30 px from where it began.
+    {
+        const auto runWorld = [&](GalaxyEggbert::Def::ObjectType type, float hazardX)
+        {
+            auto rt = std::make_unique<WorldRuntime>();
+            rt->LoadFromVwrFile(worldPath);
+            auto& objs = rt->GetMobileObjectsMutable();
+            objs.clear();
+            MobileObjSpec hazard;
+            hazard.type = type;
+            hazard.posStartX = hazard.posEndX = hazard.currentX = hazardX;
+            hazard.posStartY = hazard.posEndY = hazard.currentY = 20.0f;
+            hazard.posStartZ = hazard.posEndZ = hazard.currentZ = 0.0f;
+            hazard.speed = 0.0f;
+            objs.push_back(hazard);
+            return rt;
+        };
+        const auto step = [&](InteractionSystem& sys, WorldRuntime& rt, float x, bool ballooned)
+        {
+            sys.Update(dt, rt, x, 20.0f, 0.0f, 0.0f, sound, false, ballooned);
+            return hasEvent(sys, InteractionSystem::EventKind::Died);
+        };
+        {
+            auto rt = runWorld(GalaxyEggbert::Def::ObjectType::ObjectType16, 0.0f);
+            InteractionSystem sys;
+            sys.Update(dt, *rt, 0.0f, 20.0f, 0.0f, 0.0f, sound, false, /*blupiBallooned=*/true);
+            const bool popped = hasEvent(sys, InteractionSystem::EventKind::BalloonPopped);
+            bool died = false;
+            for (int i = 0; i < 20; ++i)
+                died = step(sys, *rt, 0.0f, false) || died;
+            check(popped && !died && sys.ContactGraceActive(),
+                  "a spider pops his balloon and does not kill him while he stays within 30 px (Decor.cpp:5780)");
+            step(sys, *rt, 0.6f, false); // 38 px away but still within the hazards' contact reach
+            check(sys.ContactGraceActive(), "the grace lasts while he is within the hazards' contact reach");
+            step(sys, *rt, 0.8f, false); // out of it: the grace ends
+            check(!sys.ContactGraceActive(), "the grace ends once he is out of contact reach of where it began");
+            check(step(sys, *rt, 0.0f, false), "back on the spider, it kills him");
+        }
+        {
+            auto rt = runWorld(GalaxyEggbert::Def::ObjectType::ObjectType2, 0.0f);
+            InteractionSystem sys;
+            sys.StartContactGrace(0.0f, 20.0f, 0.0f);
+            bool died = false;
+            for (int i = 0; i < 20; ++i)
+                died = step(sys, *rt, 0.0f, false) || died;
+            check(!died && rt->GetMobileObjects()[0].active,
+                  "off a vehicle or out of a teleporter onto a mine: neither he nor the mine goes while he stays");
+        }
+    }
+
+    // The big creature (54) rests 152 ticks at each end whatever the world file says (Decor::Read,
+    // Decor.cpp:11366-11370); the Cloud's arc reaches 100 px across, 87 up or down
+    // (BlupiElectro, Decor.cpp:9614-9634).
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        GW::World w;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            w.setBlock(x, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        GalaxyEggbert::MoveObjectRecord creature;
+        creature.type = GalaxyEggbert::Def::ObjectType::ObjectType54;
+        creature.posStartX = 45; creature.posEndX = 50;
+        creature.posStartY = creature.posEndY = 1;
+        creature.posStartZ = creature.posEndZ = 50;
+        creature.timeStopStartTicks = 200; creature.timeStopEndTicks = 200;
+        GalaxyEggbert::PlaceMoveObject(w, creature);
+        const std::filesystem::path path = "VerifyInteractionSystem-creature.vwr";
+        w.saveToFile(path);
+        WorldRuntime rt;
+        rt.LoadFromVwrFile(path.string());
+        std::filesystem::remove(path);
+        bool forced = false;
+        for (const auto& obj : rt.GetMobileObjects())
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
+                forced = obj.timeStopStartTicks == 152.0f && obj.timeStopEndTicks == 152.0f;
+        check(forced, "a big creature stored with 200-tick rests rests 152 ticks, as the original's loader forces");
+
+        const auto cloudReaches = [&](float dx)
+        {
+            WorldRuntime cloudWorld;
+            cloudWorld.LoadFromVwrFile(worldPath);
+            auto& objs = cloudWorld.GetMobileObjectsMutable();
+            objs.clear();
+            MobileObjSpec dozer;
+            dozer.type = GalaxyEggbert::Def::ObjectType::ObjectType4;
+            dozer.posStartX = dozer.posEndX = dozer.currentX = dx;
+            dozer.posStartY = dozer.posEndY = dozer.currentY = 20.0f;
+            dozer.posStartZ = dozer.posEndZ = dozer.currentZ = 0.0f;
+            objs.push_back(dozer);
+            InteractionSystem sys;
+            sys.Update(dt, cloudWorld, 0.0f, 20.0f, 0.0f, 0.0f, sound, false, false, 0, 0, false, true, true, true,
+                       true, false, false, /*blupiCloudActive=*/true);
+            return !cloudWorld.GetMobileObjects()[0].active;
+        };
+        check(cloudReaches(1.4f) && !cloudReaches(1.7f),
+              "the Cloud's arc reaches a bulldozer 1.4 cells away (it stopped at 1.125), not one at 1.7");
     }
 
     // 1.6. Lift timing (D43): a lift follows the original's step machine (Decor::

@@ -792,6 +792,7 @@ namespace GalaxyEggbert::CNA
             std::uint16_t icon;
         };
         std::vector<BigDecorCell> bigDecorCells_;
+        bool graceWasInVehicle_ = false; // for the contact grace after leaving a vehicle
         // Tells the terrain which cells are drawn as models (the fan, BlockModels.hpp).
         void ApplyBlockModels();
         [[nodiscard]] std::vector<std::uint16_t> StillModelIcons() const;

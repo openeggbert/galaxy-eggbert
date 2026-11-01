@@ -157,5 +157,52 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Also 377 (the barrel stack, `Decor/pile1.rd4`, 0.93) and 399 (the white column,
   `Decor/palais/big0108.rds`, 0.99), sources found by the earlier tile survey
   (`build-probe/rd4-survey/object-m_icons.csv`); live in world999.
-- Open: 375/376 (turned and twisted wooden columns): their scenes (`colonne1/2.rds`) are cube masters
-  shaped by a Ray Dream deformer the converter does not apply; they convert to plain shafts.
+- Open: 375/376 (turned and twisted wooden columns): no source found. `Decor/colonne1.rds` (the
+  survey's best match, 0.90) holds one plain `Cube` primitive with a procedural wood shader and no
+  deformer (its tree read 2026-11-01): a narrow rectangle scoring against a narrow column, not the
+  turned column's scene. (An earlier note here guessed a deformer; the scene shows none.)
+
+## BD-0010 — enemy contact right after a vehicle, a teleport or a balloon pop (gameplay) — FIXED_AND_VERIFIED
+
+- Found by a read-only review of the enemy types (2026-11-01), verified here against both sources.
+- Reference: `m_blupiPosHelico` is set where Blupi leaves a vehicle (Decor.cpp:3910, 4031, 4303,
+  4446, 4507), where a balloon is popped (5780) and where a teleport puts him (6360); while it is
+  set the hazards 2/3/4/16/17/20/96/97 neither kill him nor are destroyed, and none pops a balloon
+  (5767, 5786); it clears once he is more than 30 px away (6341-6345). Galaxy had nothing alike:
+  stepping off a vehicle or out of a teleporter onto a hazard killed him, and a spider that popped
+  his balloon killed him the next frame.
+- Fix: `InteractionSystem::StartContactGrace` (a balloon pop starts it inside; the host on leaving a
+  vehicle and on a teleport's arrival); it lasts until he is out of the hazards' contact reach
+  (Galaxy's contact sphere, 0.7 of a cell, is wider than the original's 28 px box, so 30 px would
+  end it while he still touches). `VerifyInteractionSystem`.
+- Also: the hazard's explosion (channel 10) now plays when it kills him too (Decor.cpp:5822).
+
+## BD-0011 — the wasp's sting kept Power and the Cloud (gameplay) — FIXED_AND_VERIFIED
+
+- Reference Decor.cpp:5845-5847 clears Shield, Power, Cloud and Hide on the sting; Galaxy's
+  `TriggerBalloon` cleared only the vehicle. `VerifyBlupiMovement`.
+
+## BD-0012 — the Cloud's arc reached too short (gameplay) — FIXED_AND_VERIFIED
+
+- Reference `BlupiElectro` (Decor.cpp:9614-9634): centres within 100 px across and 87 px up or down;
+  Galaxy used a sphere of 72 px. Now the original's box, its reach across on both X and Z.
+
+## BD-0013 — big creatures rested what the world file said, not the original's 152 ticks (gameplay) — FIXED_AND_VERIFIED
+
+- Reference `Decor::Read` (11366-11370) forces 152 ticks at each end for every type 54 (its rest
+  animation's length), whatever the file stores. Galaxy kept the stored values (200 in 061, 062,
+  065, 066; 30 in 199; 40 in 999). Now forced at load (`WorldRuntime`). `VerifyInteractionSystem`.
+
+## Reviewed, not changed (yet)
+
+- Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px
+  across (0.44 of a cell) with type-specific vertical bands (`MoveObjectDetect`, 9689-9767). A
+  documented approximation (InteractionSystem.cpp); narrowing it changes every encounter in the
+  campaign: a decision for a session of its own, with all playthroughs.
+- Kills during busy actions: the original kills only with `m_blupiFocus` (or in Air/JumpAie),
+  otherwise the hazard explodes and he survives (5789); Galaxy always kills. Rare; open.
+- The patrol step machine spends one tick more per phase in the original (8077-8141); minor; open.
+- Cosmetic: the destroyed enemy's spinning debris, the bulldozer's 90-tick electrocution
+  (ObjectType38), the wasp's sting effect (90), the creature's glue splat (53), the balloon pop
+  effect (91) are not drawn. Open (visual).
+- Validation for BD-0010..0013: 110/110 and all 78 playthroughs pass (2026-11-01).

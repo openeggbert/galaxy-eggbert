@@ -433,6 +433,20 @@ namespace GalaxyEggbert::Game
         // explicitly excluded it, see plan.md §7).
         [[nodiscard]] bool CrateBeingPushedThisFrame() const noexcept { return crateBeingPushedThisFrame_; }
 
+        // The original's m_blupiPosHelico (Decor.cpp:3910/4031/4303/4446/4507 leaving a vehicle,
+        // 5780 a balloon pop, 6360 a teleport's arrival): until Blupi is more than 30 px from where
+        // that happened (6341-6345) the hazards 2/3/4/16/17/20/96/97 neither kill him nor are
+        // destroyed, and none pops his balloon (5767, 5786). The caller starts it for a vehicle
+        // left and a teleport; a balloon pop starts it here.
+        void StartContactGrace(float x, float y, float z) noexcept
+        {
+            contactGrace_ = true;
+            graceX_ = x;
+            graceY_ = y;
+            graceZ_ = z;
+        }
+        [[nodiscard]] bool ContactGraceActive() const noexcept { return contactGrace_; }
+
         // Re-spawns a pickup at its original position as a static, active
         // object (real `ObjectStart(pos, type, 0)`, speed=0) -- called by
         // the game class once the real 2-stage freeze resolves for
@@ -1072,6 +1086,8 @@ namespace GalaxyEggbert::Game
             std::vector<std::array<float, 3>> from;
         };
         CrateMove crateMove_;
+        bool contactGrace_ = false;
+        float graceX_ = 0.0f, graceY_ = 0.0f, graceZ_ = 0.0f;
         int crateAction_ = 0;            // 0 none, 1 Push, 2 Pop: the action the speed ramps in
         float crateActionSeconds_ = 0.0f; // time in that action (the original's m_blupiPhase)
         CratePushOutput cratePush_;

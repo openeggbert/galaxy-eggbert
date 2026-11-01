@@ -2934,6 +2934,17 @@ int main(int argc, char** argv)
               "CanStandAt: clear with ground under him; not inside the floor; not off the edge");
     }
 
+    // The wasp's sting ends any secret power (Decor.cpp:5845-5847).
+    {
+        BlupiController stung;
+        stung.SetPosition(0.0f, 1.0f, 0.0f);
+        check(stung.TriggerPower() && stung.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Power,
+              "Power taken");
+        stung.TriggerBalloon();
+        check(stung.IsBallooned() && stung.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
+              "stung by the wasp, Blupi loses Power (the sting ends Shield, Power, Cloud and Hide)");
+    }
+
     // Turning round (table_blupi 3) and the exit's Win cheer (13, 40 ticks).
     {
         Worlds::World flat;

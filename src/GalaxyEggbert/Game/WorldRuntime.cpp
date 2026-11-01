@@ -20,6 +20,21 @@ namespace GalaxyEggbert::Game
 {
     namespace
     {
+        // What the original's loader imposes whatever a world file says (Decor::Read,
+        // Decor.cpp:11366-11370): a big creature (54) rests 152 ticks at each end, the length of
+        // its rest animation (ObjectIcons.cpp), during which it is deadly.
+        void ForceOriginalTiming(MobileObjSpec& spec)
+        {
+            if (spec.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
+            {
+                spec.timeStopStartTicks = 152.0f;
+                spec.timeStopEndTicks = 152.0f;
+            }
+        }
+    }
+
+    namespace
+    {
         constexpr int kMobileTileSize = 64;
         constexpr int kDecorGridSize = 100;
 
@@ -159,6 +174,7 @@ namespace GalaxyEggbert::Game
                 spec.stepRecedeTicks = static_cast<float>(std::max(stepRec, 1));
                 spec.timeStopStartTicks = static_cast<float>(std::max(stopStart, 0));
                 spec.timeStopEndTicks = static_cast<float>(std::max(stopEnd, 0));
+                ForceOriginalTiming(spec);
 
                 if (objectDefinition.patrolMotion &&
                     spec.posStartX == spec.posEndX && spec.posStartZ == spec.posEndZ)
@@ -366,6 +382,7 @@ namespace GalaxyEggbert::Game
             spec.stepRecedeTicks = record.stepRecedeTicks;
             spec.timeStopStartTicks = record.timeStopStartTicks;
             spec.timeStopEndTicks = record.timeStopEndTicks;
+            ForceOriginalTiming(spec);
             spec.currentX = spec.posStartX;
             spec.currentY = spec.posStartY;
             spec.currentZ = spec.posStartZ;
