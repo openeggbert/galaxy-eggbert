@@ -6,8 +6,8 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-01 (fidelity audit, milestone G: crate push/pull as the original's, D60;
-every lift within the original's speeds, BD-0006; crate support, BD-0003)._
+_Last updated: 2026-11-01 (fidelity audit, milestone G: crates D60, lifts BD-0006, BD-0003/0004,
+editor variants ED-0001/0006, .a3d reader, lava/fan/pillars from the original sources)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -45,9 +45,18 @@ ledgers before repeating any discovery. Where it stands:
   logons was refused by the permission classifier).
 - Fan/lava/pillar live views: first captures in `build-probe/fa-live/vis*/` are too imprecise;
   take them in world999 from the exhibition rows' documented positions, first person (F3), close.
-- Next: the 3D lava surface (VIS-0069: design in `render_representation.notes.csv`, data in
-  `plans/audit/a3d_format.md`), the fan (VIS-0127) and pillars from the original sources, a
-  precise live gallery; then Wave C type by type, Wave E world lessons (066's blupit first).
+- Done (visual, Wave B): lava as a pool with the original wave from `Decor/lave/lave-1..5.a3d`
+  (`90acade`, `LavaSurface.hpp`, data `tools/a3d/lava_surface.py`); fans as the original model
+  `Decor/ventillo-h.rd4` turned per direction (`6daa06b`); pillars 76/77 as `support1/2.rd4`
+  (`801c232`). Mechanism for more: `BlockModels.hpp` — animated families by base
+  (`SetModelDrawnBases`) and still icons (`kStillModelIcons`, the terrain constructor's list), drawn
+  by the host's model pass. A new block model: build it with `build_object_library.py` (probe in
+  `build-probe/`), export with `export_cna_avatar.py`, copy `icons.txt`, add to
+  `avatars3d/objects/index.txt` and `tools/rd4_to_gltf/objects.txt`, list its icon in
+  `BlockModels.hpp`, regenerate `model_parity.md`/`assets.md`, look live (before/after).
+- Next: pillars 375/376 (`Decor/colonne2.rds` converts to a plain cylinder: find the profile it
+  uses), 377/399 (no source yet); the wind tiles (`Decor/vent-norm/`); a low-angle owner look at
+  lava/fan/pillars; Wave E world lessons (066's blupit lane first); Wave C type by type.
 
 ## 1. The project and the goal in one paragraph
 

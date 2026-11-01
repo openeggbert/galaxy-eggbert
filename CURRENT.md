@@ -116,9 +116,10 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 - **The fidelity audit (milestone G, since 2026-11-01)**: `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`
   and its ledgers in `plans/audit/`. Fixed so far: crate push/pull (D60), lifts over the
   original's speeds (BD-0006: 31 lifts; 061's shuttle ladder), crate support (BD-0003). Open: the
-  editor's variant cycling (ED-0001, MR-0003), fan / lava / pillar representation (the fan is a
-  cube with its icon on every face, VIS-0127), the 105 `.a3d` sources, the 56 `.max` sources
-  (BLOCKED, MR-0001), a human play pass of the changed mechanics, the whole-campaign run.
+  editor's variant cycling (ED-0001/0006), follow stars and shots vs decor (BD-0004), lava as a pool
+  from the original Amapi sources, fans and pillars 76/77 as their original 3D scenes (all 2026-11-01;
+  110/110, all 78 playthroughs, the whole campaign 761140 ticks). Open: pillars 375-377/399, the wind
+  tiles, the 56 `.max` sources (BLOCKED, MR-0001), a human play pass, Waves C and E.
 - The completion campaign (`plans/GALAXY_EGGBERT_COMPLETION.md`): owner-reported defects D1-D12
   (§5), then milestones B-F (representative mission, model/animation parity, hubs and missions,
   editor slots and title screen, stabilisation).

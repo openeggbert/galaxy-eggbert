@@ -42,7 +42,7 @@ REPRODUCED_DEFECT | FIXED_AND_VERIFIED | BLOCKED | NOT_APPLICABLE`. A generated 
 | Wave | Scope | State |
 |---|---|---|
 | A | baseline; ledgers; crate push (§4); moving platforms (§5) | done except a human play pass: crate push/pull D60 (`1c59eae`), every lift within the original's speeds (BD-0006, `7e0d1cf`, `46a663b`), crate support (BD-0003) |
-| B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | ED-0001 done (`e8a86ae`), ED-0006 (BigDecor) in the tree; the fan seen live as a textured cube (VIS-0127); the gallery needs precise positions |
+| B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | ED-0001/0006 done; lava (`90acade`), fan (`6daa06b`), pillars 76/77 (`801c232`) from the original sources with live before/after; open: pillars 375-377/399, wind tiles, the owner's look |
 | C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | ledger generated; every one of the 29 object types the original's 78 worlds use and every live action is referenced by Galaxy's code (no type missing outright); the per-type behaviour review is the work left; fixed so far: BD-0003 (crate support), BD-0004 (follow stars and shot ranges vs decor, in the tree) |
 | D | original assets: `.a3d` reader, `.max` request, per-source stages | inventory done; `.a3d` reader done, all 105 read (`5fe7bc9`); `.max` BLOCKED (MR-0001: the MAX 3.1 ISO offered looks unlicensed; not installed) |
 | E | every world's lesson, bypasses, platform fairness | ledger generated |
