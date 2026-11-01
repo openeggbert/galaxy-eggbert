@@ -165,6 +165,65 @@ int main()
               "removing the nearest block preserves the slab below it");
     }
 
+    // ED-0001 (the original's variant cycling, MR-0003): a click on the block the previous click
+    // placed cycles it through its family's variants; another click places the current variant;
+    // Ctrl places without cycling; each step undoes on its own.
+    {
+        using GalaxyEggbert::Editor::FindVariantFamily;
+        using GalaxyEggbert::Editor::VariantCycler;
+        check(FindVariantFamily(126) >= 0 && FindVariantFamily(126) == FindVariantFamily(135) &&
+                  FindVariantFamily(35) < 0,
+              "the fans 126-135 are one family; the rock pile has none");
+        VariantCycler cycler;
+        check(cycler.IconToPlace(126, false) == 126, "a family places the palette entry's icon until cycled");
+        check(!cycler.Cycle(5, 5, 5, 126, 126), "no cycle before anything was placed there");
+        cycler.NotePlaced(5, 5, 5);
+        check(!cycler.Cycle(6, 5, 5, 126, 126), "no cycle on another cell");
+        check(cycler.Cycle(5, 5, 5, 126, 126).value_or(0) == 129, "a click on the placed cell cycles it");
+        check(cycler.Cycle(5, 5, 5, 129, 126).value_or(0) == 132 && cycler.Cycle(5, 5, 5, 132, 126).value_or(0) == 135 &&
+                  cycler.Cycle(5, 5, 5, 135, 126).value_or(0) == 126,
+              "the variants go round and wrap to the first");
+        check(!cycler.Cycle(5, 5, 5, 129, 126), "a cell no longer holding the current variant is not cycled");
+        cycler.Cycle(5, 5, 5, 126, 126);
+        check(cycler.IconToPlace(126, false) == 129, "the next new cell gets the variant last cycled to");
+
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        CnaEngine::Graphics::Camera camera;
+        editor.Palette().SelectBlock(126);
+        const MouseState press(
+            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        const auto click = [&](KeyboardState keys)
+        {
+            editor.Update(keys, press, 0.0f, 800, 480, camera, world);
+            editor.Update(keys, restMouse, 0.0f, 800, 480, camera, world);
+        };
+        click(KeyboardState{});
+        check(world.getBlock(placeX, placeY, placeZ).type() == 126, "the first click places the fan");
+        click(KeyboardState{});
+        check(world.getBlock(placeX, placeY, placeZ).type() == 129,
+              "a second click without moving (on the placed fan) cycles it: 126 -> 129");
+        check(world.getBlock(placeX, placeY, placeZ + 1).isAir() && world.getBlock(placeX, placeY + 1, placeZ).isAir(),
+              "cycling places nothing new beside it");
+        click(KeyboardState{Keys::RightControl});
+        bool stacked = false;
+        for (int dy = -1; dy <= 1; ++dy)
+            for (int dz = -1; dz <= 1; ++dz)
+                if ((dy != 0 || dz != 0) &&
+                    world.getBlock(placeX, static_cast<std::uint16_t>(placeY + dy), static_cast<std::uint16_t>(placeZ + dz))
+                            .type() == 129)
+                    stacked = true;
+        check(world.getBlock(placeX, placeY, placeZ).type() == 129 && stacked,
+              "Ctrl+click places another (the current variant) instead of cycling");
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(placeX, placeY, placeZ).type() == 126, "undo takes a cycle step back on its own");
+    }
+
     {
         World world = slab;
         WorldEditor editor;

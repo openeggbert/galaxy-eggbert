@@ -6,11 +6,12 @@ Galaxy-only 3D UX is allowed where the original has no equivalent; it must not c
 
 | ID | Behaviour | Original evidence | Galaxy | Status | Next |
 |---|---|---|---|---|---|
-| ED-0001 | Repeated clicks cycle a placed item's variants | traced 2026-11-01, below | `EditorPalette::Update()` selects a type and closes the category; no cycle found yet | UNREVIEWED (original traced; Galaxy to check live) | implement per the trace |
+| ED-0001 | Repeated clicks cycle a placed item's variants | traced 2026-11-01, below | `EditorVariants.hpp` (`VariantCycler`) in `WorldEditor::HandlePlacement`: a click on the block the previous click placed cycles it; Ctrl places without cycling (owner's choice, MR-0003) | FIXED_AND_VERIFIED for block families (`VerifyGEWorldEditor`); BigDecor families (trees, palms, houses ...) not yet | BigDecor cycling (ED-0006); a live UI run |
 | ED-0002 | Ten editable slots per gamer, three gamers; slot 1 seeded from the showcase | owner requirement (completion plan §10) | done `7eac7d5` | UNREVIEWED (re-verify: create/edit/save/play-test/reopen per slot) | end-to-end script |
 | ED-0003 | Palette groups and order (ten groups) | Eggbert 2 editor | `PaletteCategories.cpp` | UNREVIEWED | compare group by group |
 | ED-0004 | Play-test -> stop -> edit -> save -> reload | — | done (completion plan §10) | UNREVIEWED | repeatable UI script |
 | ED-0005 | Undo/redo across every edit including metadata | — | `WorldEditor` command history | UNREVIEWED | test object metadata edits |
+| ED-0006 | Variant cycling of the BigDecor families (menu 1: trees, palms, plants, houses, machine and kid backgrounds, slime, palace) | `PlaceDecor1` entries 0-8 (random families) | BigDecor placement places the entry's icon | UNREVIEWED | the same rule on a BigDecor anchor |
 
 ## ED-0001 — the original's variant cycling (traced 2026-11-01)
 

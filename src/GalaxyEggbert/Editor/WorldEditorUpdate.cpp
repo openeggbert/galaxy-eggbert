@@ -275,6 +275,7 @@ namespace GalaxyEggbert::Editor
             keyboard.IsKeyDown(Keys::Delete),
             keyboard.IsKeyDown(Keys::Left),
             keyboard.IsKeyDown(Keys::Right),
+            keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl),
         };
     }
 
@@ -351,12 +352,30 @@ namespace GalaxyEggbert::Editor
         }
         else
         {
-            const Worlds::Block before = world.getBlock(x, y, z);
-            const Worlds::Block after = Worlds::Block::make(palette_.SelectedBlockType());
-            world.setBlock(x, y, z, after);
+            const std::uint16_t selected = palette_.SelectedBlockType();
+            // A click on the block the previous click placed cycles its variant (ED-0001, the
+            // original's PlaceDecor with bMix; MR-0003); Ctrl places without cycling.
+            std::optional<std::uint16_t> cycled;
+            if (!input.ctrlHeld)
+            {
+                cycled = variants_.Cycle(hitCellX_, hitCellY_, hitCellZ_,
+                                         world.getBlock(hitCellX_, hitCellY_, hitCellZ_).type(), selected);
+            }
+            const std::uint16_t cx = cycled ? hitCellX_ : x;
+            const std::uint16_t cy = cycled ? hitCellY_ : y;
+            const std::uint16_t cz = cycled ? hitCellZ_ : z;
+            const Worlds::Block before = world.getBlock(cx, cy, cz);
+            const Worlds::Block after =
+                Worlds::Block::make(cycled ? *cycled : variants_.IconToPlace(selected, input.ctrlHeld));
+            world.setBlock(cx, cy, cz, after);
+            variants_.NotePlaced(cx, cy, cz);
             command.kind = EditCommand::Kind::BlockEdit;
-            command.blockChanges.push_back({x, y, z, before, after});
+            command.blockChanges.push_back({cx, cy, cz, before, after});
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+            return true;
         }
+        variants_.Forget();
         commandStack_.Push(std::move(command));
         MarkMutated();
         return true;

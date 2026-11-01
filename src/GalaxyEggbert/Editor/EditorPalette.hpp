@@ -100,6 +100,13 @@ namespace GalaxyEggbert::Editor
             return static_cast<std::uint16_t>(selectedBigDecorIcon_);
         }
 
+        // Selects a block icon as a click on its palette entry does (scripted checks).
+        void SelectBlock(std::uint16_t blockType) noexcept
+        {
+            selectedBlockType_ = blockType;
+            placementKind_ = PlacementKind::Block;
+        }
+
         void SetSelectedSkyRegion(std::uint32_t skyRegion) noexcept
         {
             selectedSkyRegion_ = static_cast<int>(skyRegion);

@@ -4,6 +4,7 @@
 #include "EditorBrowserScreen.hpp"
 #include "EditorHighlightRenderer.hpp"
 #include "EditorPalette.hpp"
+#include "EditorVariants.hpp"
 
 #include <CnaEngine/Graphics/Camera.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -26,6 +27,8 @@ namespace GalaxyEggbert::Editor
     class WorldEditor
     {
     public:
+        // The palette (scripted checks select from it as a click would).
+        [[nodiscard]] EditorPalette& Palette() noexcept { return palette_; }
         // Enters the browser and rescans the selected gamer's custom worlds.
         void EnterBrowser(int gamerSlot);
 
@@ -131,6 +134,7 @@ namespace GalaxyEggbert::Editor
             bool deleteObjectHeld = false;
             bool skyPreviousHeld = false;
             bool skyNextHeld = false;
+            bool ctrlHeld = false; // place without cycling (ED-0001)
         };
 
         [[nodiscard]] Microsoft::Xna::Framework::Vector3 UpdateCamera(
@@ -232,6 +236,7 @@ namespace GalaxyEggbert::Editor
 
         EditCommandStack commandStack_;
         EditorPalette palette_;
+        VariantCycler variants_; // the original's variant families (ED-0001)
 
         // Box-fill tool (plan.md EDITOR-105).
         bool boxFirstCornerPlaced_ = false;
