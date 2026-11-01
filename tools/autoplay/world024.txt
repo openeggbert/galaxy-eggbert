@@ -7,7 +7,7 @@ expect lives >= 3
 go 45 48
 face 0
 go 45 43.45 tol 0.1 max 300
-crate 45 11 42 max 10
+crate 45 11 42 max 60
 go 45 42 jump 1.4
 until ground = 1
 expect y >= 11.95
@@ -244,7 +244,7 @@ until eggs = 8 max 120
 go 46 89.4
 face 0
 go 46 87.45 tol 0.1 max 300
-crate 46 11 86 max 10
+crate 46 11 86 max 60
 go 46 86 jump 1.4
 until ground = 1
 expect y >= 11.95

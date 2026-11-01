@@ -151,6 +151,7 @@ namespace GalaxyEggbert::Game
         bool finished_ = false;
         int failures_ = 0;
         bool havePrevious_ = false;
+        std::vector<std::array<float, 3>> crateRest_; // where each crate last came to rest
         AutoplayState previous_;
         std::string log_;
     };

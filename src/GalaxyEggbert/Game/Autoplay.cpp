@@ -394,18 +394,31 @@ namespace GalaxyEggbert::Game
         if (!state.crates.empty() && (!havePrevious_ || state.crates.size() != previous_.crates.size()))
         {
             Write(state, "crates " + std::to_string(state.crates.size()));
+            crateRest_ = state.crates;
         }
         else if (havePrevious_ && state.crates != previous_.crates)
         {
-            for (std::size_t i = 0; i < state.crates.size(); ++i)
+            // A crate moves smoothly from cell to cell (CratePush.hpp): one line each time it comes
+            // to rest on another cell; under `trace` one every tick it moves.
+            for (std::size_t i = 0; i < state.crates.size() && i < crateRest_.size(); ++i)
             {
-                const auto& was = previous_.crates[i];
+                const auto& was = crateRest_[i];
                 const auto& now = state.crates[i];
-                if (was != now)
+                const bool onCell = std::fabs(now[0] - std::round(now[0])) < 1e-3f &&
+                                    std::fabs(now[2] - std::round(now[2])) < 1e-3f;
+                if (traceTicksLeft_ > 0 && i < previous_.crates.size() && previous_.crates[i] != now)
+                {
+                    const auto& prev = previous_.crates[i];
+                    std::snprintf(line, sizeof(line), "crate moving (%.4f %.2f %.4f) -> (%.4f %.2f %.4f)", prev[0],
+                                  prev[1], prev[2], now[0], now[1], now[2]);
+                    Write(state, line);
+                }
+                if (onCell && was != now)
                 {
                     std::snprintf(line, sizeof(line), "crate (%.2f %.2f %.2f) -> (%.2f %.2f %.2f)", was[0], was[1],
                                   was[2], now[0], now[1], now[2]);
                     Write(state, line);
+                    crateRest_[i] = now;
                 }
             }
         }

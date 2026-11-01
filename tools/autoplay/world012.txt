@@ -16,10 +16,11 @@ go 52 50 tol 0.1
 go 52.95 50 tol 0.08
 face 90
 hold 10 crouch
-# Backing 2.3 cells: the crate follows at each 1.9 gap, 54 -> 53 -> 52, and no third time.
-hold 110 crouch down
-wait 10
-expect x <= 50.7
+# Pulled two cells, 54 -> 53 -> 52, at the original's pull speed (CaisseGetMove(3): the first cell
+# from rest 98 ticks, the next 64); let go during the second, the crate finishes its cell.
+hold 130 crouch down
+crate 52 4 50 max 60
+expect x <= 51.2
 go 52 50 jump 1.4
 until ground = 1
 expect y >= 4.95

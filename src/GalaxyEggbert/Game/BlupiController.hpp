@@ -1201,10 +1201,22 @@ namespace GalaxyEggbert::Game
                   bool tempPassable = false, bool inSurfWater = false, bool inDeepWater = false,
                   bool pushingCrate = false, bool holdingCrate = false);
 
-        // The cells the crates (ObjectType12) occupy, raw grid: solid for Blupi like blocks for
-        // the next Step()s -- he can't walk through a crate and stands on one, as the original's
+        // The crates (ObjectType12), each its centre in raw grid coordinates (its cell's x, y, z
+        // at rest, between two cells while pushed): solid cubes for Blupi like blocks for the
+        // next Step()s -- he can't walk through a crate and stands on one, as the original's
         // DecorDetect() counts crates. The caller sets them every frame before Step().
-        void SetCrateCells(std::vector<std::array<int, 3>> cells) { m_crateCells = std::move(cells); }
+        void SetCrateCells(std::vector<std::array<float, 3>> cells) { m_crateCells = std::move(cells); }
+
+        // A crate he pushes or holds carries him (InteractionSystem::UpdateCratePush()): his own
+        // walk does not move him, FollowCrate() does.
+        void SetCrateDriven(bool driven) noexcept { m_crateDriven = driven; }
+        // Moves him on the ground toward (x, z) (relative coordinates), at most maxStep, through
+        // his collision: where the crate he moves holds him.
+        void FollowCrate(const Worlds::World& world, float x, float z, float maxStep, bool tempPassable = false);
+        // Whether he could stand at (x, y, z) (relative coordinates): feet and head clear, ground
+        // under his feet (blocks only; the caller checks the crates).
+        [[nodiscard]] static bool CanStandAt(const Worlds::World& world, float x, float y, float z,
+                                             bool tempPassable = false);
 
         // Whether the caller is turning him round on foot this frame (Down's turn-around): shows
         // AnimState::Turn while he stands.
@@ -1223,9 +1235,8 @@ namespace GalaxyEggbert::Game
         static constexpr float kWindSideSpeed = 9.0f * 20.0f / 64.0f;
         static constexpr float kWindVerticalSpeed = 10.0f;
 
-        // Holding a crate (Step()'s holdingCrate: crouching, a crate right in front): Blupi
-        // cannot turn or step forward, and backs away at the original's Pop speed, 4 px a tick.
-        static constexpr float kPullSpeed = 4.0f * 20.0f / 64.0f;
+        // Holding a crate (Step()'s holdingCrate: crouching, a crate right in front) Blupi cannot
+        // turn or step; pulling it, he backs away with it at the crate's speed (CratePush.hpp).
 
         // The Win cheer's length: the original moves on at m_blupiPhase == 40 (Decor.cpp:6411).
         static constexpr float kWinDuration = 40.0f / 20.0f;
@@ -1277,7 +1288,8 @@ namespace GalaxyEggbert::Game
         // resolver (IsPointSolid/ResolveMove) does its own finer-than-
         // whole-block sub-tile lookup on top of this, not through it.
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
-        std::vector<std::array<int, 3>> m_crateCells;
+        std::vector<std::array<float, 3>> m_crateCells;
+        bool m_crateDriven = false;
         bool m_turning = false;
         float m_vertigoTimer = 0.0f;   // teetering at a ledge (AnimState::Vertigo)
         float m_recedeTimer = 0.0f;    // stepping back from it (AnimState::Recede)
@@ -1335,6 +1347,8 @@ namespace GalaxyEggbert::Game
         // default) -- this is a deliberate, documented scope boundary, not
         // an inconsistency: "one shared resolver algorithm, axis-appropriate
         // solidity granularity," not "one solidity model for everything."
+        // IsSolidAt() without the crates: the block alone.
+        [[nodiscard]] static bool IsBlockSolidAt(const Worlds::World& world, int gx, int gy, int gz);
         [[nodiscard]] static bool IsPointSolid(const Worlds::World& world, float x, float y, float z,
                                                 bool tempPassable, bool checkSubcell = true);
 

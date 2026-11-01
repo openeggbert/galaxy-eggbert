@@ -111,7 +111,8 @@ hold 2 action
 until dynamite = 1 max 200
 wait 30
 go 34.5 57.5
-go 35.4 58 tol 0.05
+# Short of the plug's face: walking into it (within 57 px of a crate's centre) would push it.
+go 35.0 58 tol 0.05
 face 315
 hold 2 action
 go 33.8 54.8 tol 0.1 max 300

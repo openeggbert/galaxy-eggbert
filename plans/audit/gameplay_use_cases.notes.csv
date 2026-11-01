@@ -1,8 +1,8 @@
 id,status,galaxy_impl,verification,tests,next_action
-GP-0015,REPRODUCED_DEFECT,InteractionSystem::UpdateCratePush; CratePush.hpp,BD-0001: crate jumped a whole cell; fix in progress,VerifyInteractionSystem,re-tune crate playthroughs; live look
+GP-0015,FIXED_AND_VERIFIED,InteractionSystem::UpdateCratePush; CratePush.hpp,BD-0001/D60: positions per 20 Hz tick equal to CaisseGetMove; live trace,VerifyInteractionSystem; 18 crate playthroughs,
 GP-0029,UNREVIEWED,GalaxyEggbertGame holdingCrate_; BlupiController StopPop,held at the contact distance (2026-11-01),VerifyBlupiMovement,live look
-GP-0030,REPRODUCED_DEFECT,InteractionSystem::UpdateCratePush,BD-0002: 4 px a tick and a jump at a 1.9 gap; fix in progress,VerifyInteractionSystem,re-tune crate playthroughs
-GP-0122,REPRODUCED_DEFECT,InteractionSystem::UpdateCratePush,BD-0001,VerifyInteractionSystem,
+GP-0030,FIXED_AND_VERIFIED,InteractionSystem::UpdateCratePush,BD-0002/D60: 3 px a tick with the ramp; 1.63 s a cell from rest,VerifyInteractionSystem; world012.txt,
+GP-0122,FIXED_AND_VERIFIED,InteractionSystem::UpdateCratePush,BD-0001/D60,VerifyInteractionSystem,
 GP-0488,UNREVIEWED,CrateGroupCanMove,atomic group test kept; support counts non-solid blocks (BD-0003),VerifyInteractionSystem,test BD-0003
 GP-0489,UNREVIEWED,CrateGroupCanMove,BD-0003,,
 GP-0490,CONFIRMED_MATCH,CrateGroup,links touching crates at or above the seed's row; a pull only the stack on it,VerifyInteractionSystem (linked trio),

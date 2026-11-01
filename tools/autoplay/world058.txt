@@ -128,8 +128,8 @@ go 89 56 with crouch
 # either side of it, then the one under the row's middle crate, pushed east off it.
 go 89 49
 go 89 40.2 max 1200
-crate 89 8 35 max 30
-crate 89 8 39 max 30
+crate 89 8 35 max 60
+crate 89 8 39 max 60
 go 88 39.6
 go 88 37 tol 0.15
 go 86 37 tol 0.15

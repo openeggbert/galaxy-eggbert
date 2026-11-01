@@ -4,7 +4,7 @@ One finding each: what differs, the reference evidence, how it was reproduced, t
 validation. Kinds: `gameplay`, `visual`, `editor`, `doc` (a wrong statement in our own documents).
 Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 
-## BD-0001 — crates jumped a whole cell ahead of Blupi (gameplay) — REPRODUCED_DEFECT, fix in progress
+## BD-0001 — crates jumped a whole cell ahead of Blupi (gameplay) — FIXED_AND_VERIFIED (D60)
 
 - Owner report (2026-11-01): a crate can be pushed but visually jumps away.
 - Galaxy before: `InteractionSystem::Update` (crate branch) moved a crate's group a whole cell
@@ -20,11 +20,23 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   own per-frame step once pushed") and the playthrough traces (`crate (48 1 66) -> (48 1 65)` in
   one tick).
 - Fix: see `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §4 and M3D-0001.
-- Validation so far: `VerifyInteractionSystem` (per-20 Hz-tick positions equal to the original's for
+- Validation: `VerifyInteractionSystem` (per-20 Hz-tick positions equal to the original's for
   2.5 s; no tick moves more than 5 px; three crates 4 px; Power 10 px; wall; gap; stacking; release
-  mid-cell); `VerifyBlupiMovement`; 110/110. Pending: the crate missions' playthroughs, a live look.
+  mid-cell; walking past a crate's side does not push it); `VerifyBlupiMovement` (a crate between
+  two cells is a cube where it is; a jump beside it rises; FollowCrate; CanStandAt); 110/110. Live
+  game trace (mission 012's first crate, every frame): the crate on the original's positions, Blupi
+  0.890-0.896 behind it until he jumps, no frame over 5 px a 20 Hz tick
+  (`plans/evidence/crate-push-012.png`, `.csv`); a live look from the side: his nose on the crate's
+  face. The 18 crate playthroughs pass (see `test_coverage.csv`).
+- Found on the way and fixed before the commit (the fix's own first cut): a jump while pushing had
+  no forward speed (the crate held him); the point collision counted a moving crate in its nearest
+  cell (a ceiling over his jump); Push/Pop stayed on while the crate finished its cell alone (no
+  air speed); a crate grazed at its corner (0.6 off its line) was pushed.
+- Scripts changed for the new timing (assumptions of the old jump, each checked against the
+  failing trace): every `crate X Y Z max N` wait raised to 60 ticks (the crate finishes its cell
+  at push speed); 012's pull (two cells take 162 ticks); 022's last push (let go past x 67).
 
-## BD-0002 — pulling a crate: 4 px a tick, no ramp, crate jumping at a 1.9 gap (gameplay) — REPRODUCED_DEFECT, fixed with BD-0001
+## BD-0002 — pulling a crate: 4 px a tick, no ramp, crate jumping at a 1.9 gap (gameplay) — FIXED_AND_VERIFIED (D60)
 
 - Galaxy before: `BlupiController::kPullSpeed = 4 px/tick`, Blupi backed away freely and the crate
   jumped a cell once he was 1.9 away.

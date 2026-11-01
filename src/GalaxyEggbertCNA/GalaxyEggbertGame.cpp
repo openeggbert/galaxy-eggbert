@@ -2542,7 +2542,8 @@ namespace GalaxyEggbert::CNA
                 constexpr float kPi = 3.14159265358979f;
                 const bool downHeld = moveInput < 0.0f;
                 const bool canTurn = !blupi_.IsTeleporting() && !blupi_.IsBye() && !blupi_.IsDeathLocked() &&
-                                     !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying() && !pullingStance;
+                                     !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying() && !pullingStance &&
+                                     !(interaction_.LastCratePush().committed && interaction_.LastCratePush().holdBlupi);
                 if (downHeld && !turnAroundDownWasHeld_ && turnAroundRemaining_ <= 0.0f && canTurn)
                 {
                     turnAroundDuration_ = TurnAroundSeconds(blupi_.GetAnimState());
@@ -2561,6 +2562,17 @@ namespace GalaxyEggbert::CNA
                 {
                     moveInput = -moveInput;
                 }
+            }
+            // What the player asks of a crate (UpdateCratePush() below), before a crate between two
+            // cells takes over: it finishes its move first (CratePush.hpp, M3D-0001), Blupi pushing
+            // or pulling it whatever is held, not turning meanwhile. A jump still takes him off it
+            // at once, as the original's Jump interrupts Push; the crate then finishes alone.
+            const float crateMoveInput = moveInput;
+            const auto& lastCratePush = interaction_.LastCratePush();
+            if (lastCratePush.committed && lastCratePush.holdBlupi)
+            {
+                moveInput = lastCratePush.pulling ? -1.0f : 1.0f;
+                turnInput = 0.0f;
             }
             const bool actionPressed = keys.IsKeyDown(Keys::Space) || padPlayInput.actionPressed;
             const bool lookUpHeld = keys.IsKeyDown(Keys::RightShift);
@@ -2627,14 +2639,13 @@ namespace GalaxyEggbert::CNA
             // crouches facing it (Decor.cpp's StopPop/Pop): taken when it is right in front of
             // him, kept while he backs away with it, let go when he stops crouching.
             {
-                std::vector<std::array<int, 3>> crateCells;
+                std::vector<std::array<float, 3>> crateCells;
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
                 {
                     if (obj.active && GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle)
                     {
-                        crateCells.push_back({static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX,
-                                              static_cast<int>(std::lround(obj.currentY)),
-                                              static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ});
+                        crateCells.push_back({obj.currentX + WorldRuntime::kWorldCenterX, obj.currentY,
+                                              obj.currentZ + WorldRuntime::kWorldCenterZ});
                     }
                 }
                 blupi_.SetCrateCells(std::move(crateCells));
@@ -2646,7 +2657,18 @@ namespace GalaxyEggbert::CNA
                                             : nullptr;
                 const float crateGap = crate ? std::hypot(crate->currentX - blupi_.GetX(), crate->currentZ - blupi_.GetZ())
                                              : 0.0f;
-                holdingCrate_ = crate != nullptr && (holdingCrate_ || crateGap < 1.1f);
+                holdingCrate_ = (crate != nullptr && (holdingCrate_ || crateGap < 1.1f)) ||
+                                (lastCratePush.committed && lastCratePush.pulling && lastCratePush.holdBlupi &&
+                                 !jumpPressed);
+                // The crate he pushes or holds moves him (FollowCrate() after UpdateCratePush());
+                // holding one he stands still (StopPop) until it follows him.
+                // A jump takes him off the crate at his own speed (the original's Jump follows Push
+                // at the march speed): onto the crate he has pushed, say.
+                blupi_.SetCrateDriven((lastCratePush.pushing && !jumpPressed) || holdingCrate_);
+                if (holdingCrate_ && !lastCratePush.pulling)
+                {
+                    moveInput = 0.0f;
+                }
             }
             blupi_.SetTurning(turnAroundRemaining_ > 0.0f && !blupi_.IsInVehicle());
             blupi_.SetRidingLift(interaction_.IsRidingLift());
@@ -3710,11 +3732,46 @@ namespace GalaxyEggbert::CNA
             // every vehicle mode + Ecrase (Balloon is covered separately by the existing
             // blupi_.IsBallooned() argument just below).
             const bool canPushCrate = !blupi_.IsInVehicle() && !blupi_.IsEcrased();
-            // Crates move by where Blupi walks, not by how far he got: a crate is solid, so walking
-            // into one does not move him (the original pushes while he marches into it).
-            const bool walking = blupi_.IsOnGround() && !holdingCrate_ && moveInput > 0.0f;
-            const float crateIntentDX = walking ? std::sin(blupi_.GetYaw()) * moveInput * simDt : 0.0f;
-            const float crateIntentDZ = walking ? -std::cos(blupi_.GetYaw()) * moveInput * simDt : 0.0f;
+            // Pushing and pulling crates (CratePush.hpp): the crate moves at the original's speed,
+            // a cell at a time, and holds Blupi against it at the original's distance.
+            {
+                InteractionSystem::CratePushInput crateInput;
+                crateInput.blupiX = interactionBlupiX;
+                crateInput.blupiY = interactionBlupiY;
+                crateInput.blupiZ = interactionBlupiZ;
+                crateInput.facingX = std::sin(blupi_.GetYaw());
+                crateInput.facingZ = -std::cos(blupi_.GetYaw());
+                crateInput.onGround = blupi_.IsOnGround();
+                crateInput.canPush = canPushCrate && !blupi_.IsBallooned() && !blupi_.IsNage() && !blupi_.IsSurf() &&
+                                     !blupi_.IsDeathLocked() && !blupi_.IsGhost();
+                crateInput.walkingForward = crateMoveInput > 0.0f;
+                crateInput.holding = holdingCrate_;
+                crateInput.pullingBack = holdingCrate_ && crateMoveInput < 0.0f;
+                crateInput.power = blupi_.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Power;
+                const auto& crateWorld = worldRuntime_.GetWorld();
+                crateInput.blupiClearAt = [&crateWorld, tempPassable](float x, float y, float z)
+                { return BlupiController::CanStandAt(crateWorld, x, y, z, tempPassable); };
+                const auto crateOut = interaction_.UpdateCratePush(simDt, worldRuntime_, crateInput);
+                if (crateOut.holdBlupi && !blupi_.IsDeathLocked())
+                {
+                    // Faster than any crate (Power's 10 px a tick = 3.1 cells/s): he keeps up exactly.
+                    constexpr float kFollowCellsPerSecond = 4.0f;
+                    blupi_.FollowCrate(crateWorld, crateOut.blupiX, crateOut.blupiZ, kFollowCellsPerSecond * simDt,
+                                       tempPassable);
+                    // He squares up to the crate's face unless the player turns him.
+                    if (turnInput == 0.0f)
+                    {
+                        constexpr float kPi = 3.14159265358979f;
+                        const float targetYaw = std::atan2(crateOut.faceX, -crateOut.faceZ);
+                        float delta = std::remainder(targetYaw - blupi_.GetYaw(), 2.0f * kPi);
+                        const float maxTurn = BlupiController::kTurnSpeed * simDt;
+                        delta = std::clamp(delta, -maxTurn, maxTurn);
+                        blupi_.SetYaw(blupi_.GetYaw() + delta);
+                    }
+                }
+            }
+            const float crateIntentDX = 0.0f;
+            const float crateIntentDZ = 0.0f;
             interaction_.Update(simDt, worldRuntime_, interactionBlupiX, interactionBlupiY, interactionBlupiZ,
                                  crateIntentDX, sound_, crouchHeld,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),

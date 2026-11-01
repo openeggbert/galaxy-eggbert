@@ -23,7 +23,7 @@ until treasures = 2 max 120
 go 44 65
 face 0
 go 44 62.45 tol 0.1 max 300
-crate 44 11 61 max 10
+crate 44 11 61 max 60
 go 44 61 jump 1.4
 until ground = 1
 expect y >= 11.95
@@ -41,7 +41,7 @@ go 41 54
 go 40 52.7 tol 0.1
 face 0
 go 40 48.45 tol 0.1 max 400
-crate 40 1 47 max 10
+crate 40 1 47 max 60
 go 40 47 jump 1.4
 until ground = 1
 expect y >= 1.95
@@ -134,8 +134,9 @@ until treasures = 7 max 120
 # The landing's crate pushed +X out of the way of the bar marked 7 (66 26 17).
 go 64.4 18 tol 0.1
 face 90
-go 66 18 tol 0.1 max 200
-crate 68 26 18 max 10
+# Let go with the crate past 67.0 (Blupi 57 px behind it): it finishes its cell at 68.
+go 66.6 18 tol 0.1 max 200
+crate 68 26 18 max 60
 face 0
 go 66 15
 # D. The upper hall: over the passage's saws (x 56, z 9-11), over the north aisle's saws

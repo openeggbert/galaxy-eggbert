@@ -15,20 +15,35 @@ namespace GalaxyEggbert::Game
         constexpr int kWorldCenterX = WorldRuntime::kWorldCenterX;
         constexpr int kWorldCenterZ = WorldRuntime::kWorldCenterZ;
 
-        // The crate cells of the Step() running now (SetCrateCells()), for the static solidity
-        // checks below; null outside Step().
-        thread_local const std::vector<std::array<int, 3>>* g_crateCells = nullptr;
+        // The crates of the Step() running now (SetCrateCells()), for the static solidity checks
+        // below; null outside Step(). Each is its centre, raw grid: a unit cube from x - 0.5 to
+        // x + 0.5, y to y + 1, z - 0.5 to z + 0.5 (between two cells while it is pushed).
+        thread_local const std::vector<std::array<float, 3>>* g_crateCells = nullptr;
 
+        // A crate in cell (gx, gy, gz) (the cell its centre is nearest).
         bool IsCrateCell(int gx, int gy, int gz)
         {
             return g_crateCells != nullptr &&
-                   std::any_of(g_crateCells->begin(), g_crateCells->end(), [&](const std::array<int, 3>& c)
-                   { return c[0] == gx && c[1] == gy && c[2] == gz; });
+                   std::any_of(g_crateCells->begin(), g_crateCells->end(), [&](const std::array<float, 3>& c)
+                   {
+                       return std::lround(c[0]) == gx && std::lround(c[1]) == gy && std::lround(c[2]) == gz;
+                   });
+        }
+
+        // A crate's cube holds the point (raw grid X/Z, Y).
+        bool IsCrateAt(float gxf, float y, float gzf)
+        {
+            return g_crateCells != nullptr &&
+                   std::any_of(g_crateCells->begin(), g_crateCells->end(), [&](const std::array<float, 3>& c)
+                   {
+                       return std::fabs(gxf - c[0]) < 0.5f && std::fabs(gzf - c[2]) < 0.5f && y >= c[1] &&
+                              y < c[1] + 1.0f;
+                   });
         }
 
         struct CrateCellsScope
         {
-            explicit CrateCellsScope(const std::vector<std::array<int, 3>>& cells) { g_crateCells = &cells; }
+            explicit CrateCellsScope(const std::vector<std::array<float, 3>>& cells) { g_crateCells = &cells; }
             ~CrateCellsScope() { g_crateCells = nullptr; }
         };
 
@@ -341,6 +356,34 @@ namespace GalaxyEggbert::Game
         RideLift(x, y, z);
     }
 
+    void BlupiController::FollowCrate(const Worlds::World& world, float x, float z, float maxStep,
+                                      bool tempPassable)
+    {
+        float dx = x - m_x;
+        float dz = z - m_z;
+        const float distance = std::sqrt(dx * dx + dz * dz);
+        if (distance < 1e-6f)
+        {
+            return;
+        }
+        if (distance > maxStep)
+        {
+            dx *= maxStep / distance;
+            dz *= maxStep / distance;
+        }
+        const CrateCellsScope crateCells(m_crateCells);
+        const MoveResult moved = ResolveMove(world, m_x, m_y, m_z, dx, 0.0f, dz, tempPassable);
+        m_x = moved.x;
+        m_z = moved.z;
+    }
+
+    bool BlupiController::CanStandAt(const Worlds::World& world, float x, float y, float z, bool tempPassable)
+    {
+        return !IsPointSolid(world, x, y + 0.05f, z, tempPassable) &&
+               !IsPointSolid(world, x, y + kHeadHeight, z, tempPassable) &&
+               IsPointSolid(world, x, y - 0.05f, z, tempPassable, false);
+    }
+
     bool BlupiController::IsSolidAt(const Worlds::World& world, int gx, int gy, int gz)
     {
         // Deliberately just "non-air", NOT sub-tile-aware (reverted
@@ -354,6 +397,11 @@ namespace GalaxyEggbert::Game
         {
             return true;
         }
+        return IsBlockSolidAt(world, gx, gy, gz);
+    }
+
+    bool BlupiController::IsBlockSolidAt(const Worlds::World& world, int gx, int gy, int gz)
+    {
         // Decor is neither a floor nor a ceiling (D41): the original's empty quarter-cell mask.
         const auto block = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
                                           static_cast<std::uint16_t>(gz));
@@ -379,11 +427,13 @@ namespace GalaxyEggbert::Game
         // introduces or should try to "fix") -- floor(y), not floor(y+0.5).
         const int gy = ClampGrid(static_cast<int>(std::floor(y)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::floor(gzf + 0.5f)), blocksPerAxis);
-        if (IsCrateCell(gx, gy, gz))
+        if (IsCrateAt(gxf, y, gzf))
         {
             return true; // a whole cube, no sub-cell mask
         }
-        if (!IsSolidAt(world, gx, gy, gz))
+        // The blocks only: a crate is the cube where it is (above), not the cell it is nearest,
+        // which differ while it is pushed.
+        if (!IsBlockSolidAt(world, gx, gy, gz))
         {
             return false;
         }
@@ -1502,7 +1552,10 @@ namespace GalaxyEggbert::Game
         }
         else
         {
-            horizontalSpeed = holdingCrate ? std::min(moveInput, 0.0f) * kPullSpeed : moveInput * effectiveMoveSpeed;
+            // Against a crate he pushes or holds he does not walk: the crate's move carries him
+            // (FollowCrate(), InteractionSystem::UpdateCratePush()), as the original puts the
+            // crate against him and takes him back when it cannot go.
+            horizontalSpeed = (holdingCrate || m_crateDriven) ? 0.0f : moveInput * effectiveMoveSpeed;
             // Invert/Mirror (plan.md PICKUP-011, real `Decor::SetSpeedX`:
             // "if (m_blupiInvert) speed = -speed") -- negates normal ground
             // movement only; vehicles use their own separate real speed
@@ -1514,7 +1567,10 @@ namespace GalaxyEggbert::Game
             }
         }
 
-        const bool moving = std::fabs(horizontalSpeed) > 0.001f;
+        // Against a crate the crate's move carries him, so his input says whether he moves (Push,
+        // Pop) rather than his own speed.
+        const bool moving = std::fabs(horizontalSpeed) > 0.001f || (holdingCrate && moveInput < -0.001f) ||
+                            (m_crateDriven && !holdingCrate && moveInput > 0.001f);
 
         // Real Mockery/Mockeryi/Mockeryp (see TriggerMockery()'s own
         // comment) -- NOT a freeze, so it's ticked/cancelled inline here

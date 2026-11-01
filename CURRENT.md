@@ -1,7 +1,7 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-10-31 (current Web/Emscripten Release build linked and ran in Chrome/WebGL 2;
-the completed campaign and gameplay baseline remains the 2026-10-27 verification). Update this file
+_Last verified: 2026-11-01 (native build, 110/110 CTest, the 18 crate playthroughs after D60; the
+Web/Emscripten build 2026-10-31; the whole-campaign run remains the 2026-10-27 verification). Update this file
 whenever a change alters the current state, a known limitation, a supported build, or the actionable
 backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`), where work stands in
 `handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
@@ -30,7 +30,9 @@ content-authoring UX, but not new gameplay mechanics.
   run from a new game (`campaign.txt`, `tools/autoplay_campaign.py`).
 - Hubs work as the original's (`HubDoors.hpp`): mission bars slide up once the previous mission is
   won, gold bars in the main hub per completed world, the golden key ends a world. Crates are solid,
-  pushed along X or Z and pulled (crouch + Down); the dynamite blast and mine contacts are 3D.
+  pushed along X or Z and pulled (crouch + Down) at the original's speed with Blupi's hands on them
+  (`CratePush.hpp`, D60, 2026-11-01: a move once started finishes its cell); the dynamite blast and
+  mine contacts are 3D.
 - Swimming as the original's (float at the surface, dive with LeftShift, jump out onto a bank);
   vehicles are wrecked by water; the helicopter drops glue; teleporter arrivals face on.
 - Terrain, its grass and the cube objects are lit (one directional light + ambient,
@@ -111,6 +113,11 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 
 ### Active and explicitly approved
 
+- **The fidelity audit (milestone G, since 2026-11-01)**: `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`
+  and its ledgers in `plans/audit/`. Open there now: lifts faster than any of the original's
+  (BD-0006: 31 lifts in 024, 061, 062, 073, 113; 061's shuttle ladder has a ~0.1 s jump window),
+  the editor's variant cycling (ED-0001, MR-0003), fan / lava / pillar representation, the 105
+  `.a3d` sources, the 56 `.max` sources (BLOCKED, MR-0001).
 - The completion campaign (`plans/GALAXY_EGGBERT_COMPLETION.md`): owner-reported defects D1-D12
   (§5), then milestones B-F (representative mission, model/animation parity, hubs and missions,
   editor slots and title screen, stabilisation).

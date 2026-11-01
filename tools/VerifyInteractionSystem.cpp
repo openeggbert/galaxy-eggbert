@@ -1,4 +1,5 @@
 #include <GalaxyEggbert/Game/BlupiController.hpp>
+#include <GalaxyEggbert/Game/CratePush.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/InteractionSystem.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
@@ -16,8 +17,10 @@
 
 #include <cmath>
 #include <filesystem>
+#include <functional>
 #include <iostream>
 #include <string>
+#include <vector>
 
 // Scripted, non-interactive verification of InteractionSystem (2026-07-10)
 // against worlds3d/world999.vwr, this engine's quarantined mechanics-showcase
@@ -28,6 +31,61 @@
 // constructed but never LoadContent()-ed, so every Play() call is a no-op
 // against an unloaded channel (no audio device needed for this scripted
 // check).
+namespace
+{
+    // A pared-down host for InteractionSystem::UpdateCratePush() (GalaxyEggbertGame's): Blupi
+    // walks forward at his speed (2.5 cells/s) unless a crate he pushes holds him; a crate that
+    // holds him pulls him toward its contact point at most 4 cells/s (FollowCrate()); no blocks
+    // in his way in these tests.
+    struct CrateSim
+    {
+        float x = 0.0f, y = 1.0f, z = 0.0f; // relative
+        float fx = 1.0f, fz = 0.0f;         // facing
+        GalaxyEggbert::Game::InteractionSystem::CratePushOutput last;
+    };
+
+    GalaxyEggbert::Game::InteractionSystem::CratePushOutput CrateTick(
+        GalaxyEggbert::Game::InteractionSystem& sys, GalaxyEggbert::Game::WorldRuntime& world, CrateSim& b, float dt,
+        bool forward, bool holding = false, bool back = false, bool canPush = true, bool power = false,
+        std::function<bool(float, float, float)> clearAt = {})
+    {
+        if (forward && !holding && !b.last.pushing)
+        {
+            b.x += b.fx * 2.5f * dt;
+            b.z += b.fz * 2.5f * dt;
+        }
+        GalaxyEggbert::Game::InteractionSystem::CratePushInput in;
+        in.blupiX = b.x;
+        in.blupiY = b.y;
+        in.blupiZ = b.z;
+        in.facingX = b.fx;
+        in.facingZ = b.fz;
+        in.canPush = canPush;
+        in.walkingForward = forward;
+        in.holding = holding;
+        in.pullingBack = holding && back;
+        in.power = power;
+        in.blupiClearAt = std::move(clearAt);
+        const auto out = sys.UpdateCratePush(dt, world, in);
+        if (out.holdBlupi)
+        {
+            float dx = out.blupiX - b.x;
+            float dz = out.blupiZ - b.z;
+            const float d = std::sqrt(dx * dx + dz * dz);
+            const float m = 4.0f * dt;
+            if (d > m)
+            {
+                dx *= m / d;
+                dz *= m / d;
+            }
+            b.x += dx;
+            b.z += dz;
+        }
+        b.last = out;
+        return out;
+    }
+}
+
 int main(int argc, char** argv)
 {
     using namespace GalaxyEggbert;
@@ -724,47 +782,50 @@ int main(int argc, char** argv)
         check(false, "found a generic hazard (ObjectType2) in the sample world");
     }
 
-    // 3. Crate push (ObjectType12) -- position Blupi immediately west of a
-    // crate and simulate walking east into it (a positive per-frame X
-    // delta); the crate's currentX should increase.
+    // 3. Crate push (ObjectType12) -- Blupi just west of a crate walks east into it; the crate
+    // moves east smoothly, never more than the push speed a tick (2026-11-01: it used to jump a
+    // whole cell when he came within 1.1 of it, BD-0001).
     if (const auto* crate = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType12))
     {
         const float startX = crate->currentX;
-        const float blupiZ = crate->currentZ;
-        float blupiX = startX - 0.8f;
+        CrateSim b;
+        b.x = startX - 0.95f;
+        b.y = crate->currentY;
+        b.z = crate->currentZ;
         bool sawCratePushSignal = false;
-        for (int i = 0; i < 30; ++i)
+        float maxStep = 0.0f;
+        float prevX = startX;
+        for (int i = 0; i < 120; ++i)
         {
-            const float moveDX = 0.05f; // walking east this frame
-            interaction.Update(dt, world, blupiX, crate->currentY, blupiZ, moveDX, sound);
+            CrateTick(interaction, world, b, dt, true);
             sawCratePushSignal = sawCratePushSignal || interaction.CrateBeingPushedThisFrame();
-            blupiX += moveDX;
+            const auto* now = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType12);
+            maxStep = std::max(maxStep, std::fabs(now->currentX - prevX));
+            prevX = now->currentX;
         }
         const auto* after = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType12);
         std::cout << "Crate X after push attempt: " << (after ? after->currentX : -999.0f)
-                  << " (started at " << startX << ")" << std::endl;
+                  << " (started at " << startX << "), largest step a tick " << maxStep << std::endl;
         check(after != nullptr && after->currentX > startX, "crate was pushed east (currentX increased)");
-        check(sawCratePushSignal,
-              "CrateBeingPushedThisFrame() was true on at least one frame a push actually moved "
-              "the crate (real crate-push loop sound, ch38, found 2026-07-16) -- checked across "
-              "the whole approach since the crate outpaces Blupi's own per-frame step once pushed");
+        check(maxStep <= 5.0f * 20.0f / 64.0f * dt + 1e-4f,
+              "the crate never moves more than the original's 5 px a 20 Hz tick in one tick (no jump)");
+        check(sawCratePushSignal, "CrateBeingPushedThisFrame() is true while Blupi pushes (ch38's loop)");
+        for (int i = 0; i < 120 && interaction.LastCratePush().committed; ++i)
+            CrateTick(interaction, world, b, dt, false);
 
         // Real crate-push gate (Decor.cpp:6130-6132, found 2026-07-16) also excludes every
-        // vehicle mode + Ecrase -- blupiCanPushCrate=false (e.g. while riding a vehicle) must
-        // stop the push entirely, even while walking straight into the crate.
+        // vehicle mode + Ecrase -- canPush=false (e.g. while riding a vehicle) must stop the push
+        // entirely, even while walking straight into the crate.
         const float gatedStartX = after->currentX;
-        float gatedBlupiX = gatedStartX - 0.8f;
+        CrateSim g;
+        g.x = gatedStartX - 0.88f;
+        g.y = after->currentY;
+        g.z = after->currentZ;
         for (int i = 0; i < 30; ++i)
-        {
-            const float moveDX = 0.05f;
-            interaction.Update(dt, world, gatedBlupiX, after->currentY, blupiZ, moveDX, sound, false, false, 0, 0,
-                                false, true, true, true, true, false, false, false, true, false,
-                                /*blupiCanPushCrate=*/false);
-            gatedBlupiX += moveDX;
-        }
+            CrateTick(interaction, world, g, dt, true, false, false, /*canPush=*/false);
         const auto* stillGated = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType12);
         check(stillGated != nullptr && std::fabs(stillGated->currentX - gatedStartX) < 0.01f,
-              "crate does NOT move when blupiCanPushCrate=false (real vehicle-mode gate)");
+              "crate does NOT move when canPush=false (real vehicle-mode gate)");
         check(!interaction.CrateBeingPushedThisFrame(),
               "CrateBeingPushedThisFrame() is false when the vehicle-mode gate blocks the push");
     }
@@ -801,13 +862,14 @@ int main(int argc, char** argv)
         const float seedStartX = seed->currentX;
         const float neighborStartX = neighbor->currentX;
         const float stackedStartX = stacked->currentX;
-        const float pushZ = seed->currentZ;
-        float blupiX = seedStartX - 0.8f;
+        CrateSim b;
+        b.x = seedStartX - 0.88f;
+        b.y = seed->currentY;
+        b.z = seed->currentZ;
         for (int i = 0; i < 30; ++i)
-        {
-            interaction.Update(dt, world, blupiX, seed->currentY, pushZ, 0.05f, sound);
-            blupiX += 0.05f;
-        }
+            CrateTick(interaction, world, b, dt, true);
+        for (int i = 0; i < 200 && interaction.LastCratePush().committed; ++i)
+            CrateTick(interaction, world, b, dt, false);
         const auto* seedAfter = findByPos(11.0f, 1.0f, 23.0f);
         const auto* neighborAfter = findByPos(12.0f, 1.0f, 23.0f);
         const auto* stackedAfter = findByPos(11.0f, 2.0f, 23.0f);
@@ -4560,28 +4622,58 @@ int main(int argc, char** argv)
                     return true;
             return false;
         };
-        const auto push = [&](float rawX, float y, float rawZ, float dx, float dz)
+        // Walk into a crate from (rawX, y, rawZ) facing (fx, fz) for `seconds`, then let go and let
+        // a crate between two cells finish its move.
+        const auto push = [&](float rawX, float y, float rawZ, float fx, float fz, float seconds = 0.5f)
         {
-            crateInteraction.Update(dt, crates, rawX - 50.0f, y, rawZ - 50.0f, dx, sound, false, false, 0, 0, false, true,
-                                    true, true, true, false, false, false, true, false, true, dz, false);
+            CrateSim b;
+            b.x = rawX - 50.0f;
+            b.y = y;
+            b.z = rawZ - 50.0f;
+            b.fx = fx;
+            b.fz = fz;
+            for (int i = 0; i < static_cast<int>(seconds / dt); ++i)
+                CrateTick(crateInteraction, crates, b, dt, true);
+            for (int i = 0; i < 300 && crateInteraction.LastCratePush().committed; ++i)
+                CrateTick(crateInteraction, crates, b, dt, false);
+            CrateTick(crateInteraction, crates, b, dt, false);
+            return b;
         };
-        push(50, 1, 49.25f, 0.0f, 0.05f);
-        check(crateAt(50, 1, 51), "a crate is pushed along Z by Blupi walking +Z into it");
-        push(50, 1, 50.25f, 0.0f, 0.05f);
+        push(50, 1, 49.12f, 0.0f, 1.0f);
+        check(crateAt(50, 1, 51), "a crate is pushed along Z by Blupi walking +Z into it (a whole cell, then it rests)");
+        push(50, 1, 50.12f, 0.0f, 1.0f);
         check(crateAt(50, 1, 51), "a crate does not go into a wall");
-        push(44.25f, 1, 45, 0.05f, 0.0f);
+        push(44.12f, 1, 45, 1.0f, 0.0f);
         check(crateAt(45, 1, 45), "a crate is not pushed over a gap (it needs support)");
-        push(54.25f, 2, 55, 0.05f, 0.0f);
+        push(54.12f, 2, 55, 1.0f, 0.0f);
         check(crateAt(56, 2, 55), "a crate is pushed off a step onto a crate level with it (stacking)");
-        // Pull: Blupi at raw x 51.25 faces +X, the crate at 52, and backs away along -X.
-        float pullX = 51.25f;
-        for (int i = 0; i < 80 && crateAt(52, 1, 42); ++i)
+        // Pull: Blupi at raw x 51.12 faces +X, the crate at 52, holds it and backs away along -X.
         {
-            crateInteraction.Update(dt, crates, pullX - 50.0f, 1.0f, -8.0f, 0.0f, sound, false, false, 1, 0, false,
-                                    true, true, true, true, false, false, false, true, false, true, 0.0f, true);
-            pullX -= 0.02f;
+            CrateSim b;
+            b.x = 51.12f - 50.0f;
+            b.z = -8.0f;
+            float maxStep = 0.0f;
+            float prev = 2.0f;
+            int ticks = 0;
+            for (; ticks < 300 && !crateAt(51, 1, 42); ++ticks)
+            {
+                CrateTick(crateInteraction, crates, b, dt, false, true, true);
+                for (const auto& obj : crates.GetMobileObjects())
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType12 && std::fabs(obj.currentZ + 8.0f) < 0.01f &&
+                        obj.currentX > 0.5f && obj.currentX < 2.5f)
+                    {
+                        maxStep = std::max(maxStep, std::fabs(obj.currentX - prev));
+                        prev = obj.currentX;
+                    }
+            }
+            check(crateAt(51, 1, 42), "a held crate follows Blupi a cell as he backs away");
+            check(maxStep <= 3.0f * 20.0f / 64.0f * dt + 1e-4f,
+                  "pulled, it moves at most the original's 3 px a 20 Hz tick (CaisseGetMove(3)), no jump");
+            check(std::fabs((51.0f - 50.0f) - b.x - CratePush::kContactGap) < 0.01f,
+                  "pulling, Blupi stays at the original's contact distance from the crate (57 px)");
+            // From rest: 26 px over the 20-tick ramp, then 3 px a tick: 32.7 ticks of 20 Hz (1.63 s).
+            check(std::abs(ticks - 98) <= 2, "a cell's pull from rest takes the original's 1.63 s");
         }
-        check(crateAt(51, 1, 42), "a held crate follows Blupi a cell as he backs away");
         // D50: of two crates in a row the one touching him is held, whichever the list has first.
         const auto heldZ = [&](float rawZ, float facingZ)
         {
@@ -4645,6 +4737,146 @@ int main(int argc, char** argv)
                 died = died || hasEvent(blastInteraction, InteractionSystem::EventKind::Died);
             }
             check(died, "a cell away along Z, the blast kills him");
+        }
+    }
+
+    // Crate push timing against the original (BD-0001, 2026-11-01): Decor::CaisseGetMove(5) a 20 Hz
+    // tick with its 20-tick ramp, the stack's slowdown, Power, the crate held against Blupi at
+    // 57 px, a push let go of between two cells finishing its cell, a blocked push holding him.
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        GW::World flat;
+        for (std::uint16_t x = 30; x <= 70; ++x)
+            for (std::uint16_t z = 30; z <= 70; ++z)
+                flat.setBlock(x, 0, z, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        flat.setBlock(44, 1, 60, GW::Block::make(GalaxyEggbert::BlockTypes::Ground)); // a wall
+        const auto place = [&](float x, float y, float z)
+        {
+            GalaxyEggbert::MoveObjectRecord crate;
+            crate.type = GalaxyEggbert::Def::ObjectType::ObjectType12;
+            crate.posStartX = crate.posEndX = x;
+            crate.posStartY = crate.posEndY = y;
+            crate.posStartZ = crate.posEndZ = z;
+            GalaxyEggbert::PlaceMoveObject(flat, crate);
+        };
+        place(35, 1, 35); // alone
+        place(35, 1, 45); // three in a row
+        place(36, 1, 45);
+        place(37, 1, 45);
+        place(35, 1, 55); // alone, under Power
+        place(43, 1, 60); // against the wall
+        place(35, 1, 65); // let go of half way
+        const std::filesystem::path flatPath = "VerifyInteractionSystem-cratetiming.vwr";
+        flat.saveToFile(flatPath);
+        WorldRuntime timing;
+        check(timing.LoadFromVwrFile(flatPath.string()), "crate timing world loads");
+        std::filesystem::remove(flatPath);
+        const auto crateX = [&](float rawX, float rawZ) -> const MobileObjSpec*
+        {
+            const MobileObjSpec* best = nullptr;
+            for (const auto& obj : timing.GetMobileObjects())
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType12 && std::fabs(obj.currentZ + 50.0f - rawZ) < 0.01f &&
+                    (!best || std::fabs(obj.currentX + 50.0f - rawX) < std::fabs(best->currentX + 50.0f - rawX)))
+                    best = &obj;
+            return best;
+        };
+        // The original's distance (pixels) after k 20 Hz ticks of Push.
+        const auto originalPixels = [](int maxPixels, int linked, bool power, int ticks)
+        {
+            int px = 0;
+            for (int p = 0; p < ticks; ++p)
+                px += CratePush::PixelsPerTick(maxPixels, linked, power, p);
+            return px;
+        };
+        check(originalPixels(5, 1, false, 20) == 44 && CratePush::PixelsPerTick(5, 3, false, 40) == 4 &&
+                  CratePush::PixelsPerTick(5, 1, true, 40) == 10 && CratePush::PixelsPerTick(5, 9, false, 40) == 1,
+              "CaisseGetMove: 44 px over the ramp, 4 px for three crates, 10 under Power, never below 1");
+
+        const auto drive = [&](InteractionSystem& sys, float rawCrateX, float rawZ, bool power, int frames,
+                               std::vector<float>* along, CrateSim& b)
+        {
+            b.x = rawCrateX - 50.0f - CratePush::kContactGap;
+            b.z = rawZ - 50.0f;
+            for (int i = 0; i < frames; ++i)
+            {
+                CrateTick(sys, timing, b, dt, true, false, false, true, power);
+                if (along)
+                    along->push_back(crateX(rawCrateX, rawZ)->currentX + 50.0f - rawCrateX);
+            }
+        };
+        {
+            InteractionSystem sys;
+            CrateSim b;
+            std::vector<float> along;
+            drive(sys, 35.0f, 35.0f, false, 150, &along, b);
+            bool matches = true;
+            for (int k = 1; k <= 50; ++k) // every 20 Hz tick = 3 frames
+            {
+                const float expected = static_cast<float>(originalPixels(5, 1, false, k)) / 64.0f;
+                matches = matches && std::fabs(along[static_cast<std::size_t>(3 * k - 1)] - expected) < 2e-3f;
+            }
+            check(matches, "pushed from rest, a crate is where the original's is after every 20 Hz tick (2.5 s)");
+            int firstCell = 0;
+            while (firstCell < static_cast<int>(along.size()) && along[static_cast<std::size_t>(firstCell)] < 1.0f - 1e-4f)
+                ++firstCell;
+            check(firstCell + 1 == 72, "its first cell takes 1.2 s (44 px of ramp, then 5 px a tick)");
+            check(std::fabs(crateX(35.0f, 35.0f)->currentX - b.x - CratePush::kContactGap) < 1e-3f,
+                  "pushing, Blupi stays 57 px (centre to centre) behind the crate");
+            check(sys.LastCratePush().pushing && sys.LastCratePush().holdBlupi, "pushing is Push, and the crate holds him");
+        }
+        {
+            InteractionSystem sys;
+            CrateSim b;
+            std::vector<float> along;
+            drive(sys, 35.0f, 45.0f, false, 150, &along, b);
+            check(std::fabs(along[89] - static_cast<float>(originalPixels(5, 3, false, 30)) / 64.0f) < 2e-3f,
+                  "three crates in a row go at the original's 4 px a tick");
+        }
+        {
+            InteractionSystem sys;
+            CrateSim b;
+            std::vector<float> along;
+            drive(sys, 35.0f, 55.0f, true, 90, &along, b);
+            check(std::fabs(along[89] - static_cast<float>(originalPixels(5, 1, true, 30)) / 64.0f) < 2e-3f,
+                  "under Power a crate goes twice as fast (CaisseGetMove's max * 2)");
+        }
+        {
+            // Walking past a crate along its side (his centre 0.55 off its line) does not push it.
+            InteractionSystem sys;
+            CrateSim b;
+            b.x = 35.0f - 50.0f - 0.55f;
+            b.z = 35.0f - 50.0f - 2.0f;
+            b.fx = 0.0f;
+            b.fz = 1.0f;
+            for (int i = 0; i < 90; ++i)
+                CrateTick(sys, timing, b, dt, true);
+            check(std::fabs(crateX(36.0f, 35.0f)->currentZ + 50.0f - 35.0f) < 1e-4f && !sys.LastCratePush().pushing,
+                  "walking past a crate beside it (0.55 off its line) does not push it");
+        }
+        {
+            InteractionSystem sys;
+            CrateSim b;
+            drive(sys, 43.0f, 60.0f, false, 60, nullptr, b);
+            check(std::fabs(crateX(43.0f, 60.0f)->currentX + 50.0f - 43.0f) < 1e-4f && sys.LastCratePush().pushing &&
+                      std::fabs((43.0f - 50.0f) - b.x - CratePush::kContactGap) < 1e-3f,
+                  "against a wall the crate stays; Blupi stays in Push, held at the contact distance");
+        }
+        {
+            InteractionSystem sys;
+            CrateSim b;
+            drive(sys, 35.0f, 65.0f, false, 50, nullptr, b);
+            const float half = crateX(35.0f, 65.0f)->currentX + 50.0f;
+            check(half > 35.2f && half < 35.9f && sys.LastCratePush().committed,
+                  "after 50 frames the crate is between two cells (committed)");
+            int frames = 0;
+            for (; frames < 200 && sys.LastCratePush().committed; ++frames)
+                CrateTick(sys, timing, b, dt, false);
+            const float rest = crateX(35.0f, 65.0f)->currentX + 50.0f;
+            check(std::fabs(rest - 36.0f) < 1e-4f, "let go of between two cells, it finishes its cell and rests on it");
+            for (int i = 0; i < 60; ++i)
+                CrateTick(sys, timing, b, dt, false);
+            check(std::fabs(crateX(35.0f, 65.0f)->currentX + 50.0f - 36.0f) < 1e-4f && !sys.LastCratePush().pushing,
+                  "and then it stays put; Blupi is out of Push");
         }
     }
 

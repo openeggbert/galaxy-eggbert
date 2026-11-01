@@ -21,6 +21,9 @@ the key opening a door's whole block of cells D58, ...) and §11.
   floor).
 - Pull: also needs room and ground for Blupi a cell behind him (a pull never takes him off a
   ledge; in the original he would walk off it and fall, ending the pull).
+- A push needs him walking into the crate's face: his centre within half a cell of its line
+  across the push (where his collision point would meet its cube); walking past its side does not
+  push it.
 - Push direction: the axis he faces most (not within ~10 degrees of a diagonal, as
   `CrateInFront`); while he pushes or holds he squares up to the crate's face unless the player
   turns him.

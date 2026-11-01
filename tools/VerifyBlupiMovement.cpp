@@ -2859,14 +2859,14 @@ int main(int argc, char** argv)
     }
 
     // Crates (2026-10-25): solid for Blupi like blocks (SetCrateCells(), the original's DecorDetect
-    // counting crates), and held to be pulled (StopPop/Pop: no turning, no step forward, backing
-    // away at kPullSpeed).
+    // counting crates), and held to be pulled (StopPop/Pop: no turning, no step of his own; the
+    // crate's move carries him, 2026-11-01).
     {
         Worlds::World crateWorld;
         for (std::uint16_t x = 40; x <= 60; ++x)
             for (std::uint16_t z = 40; z <= 60; ++z)
                 crateWorld.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
-        const std::vector<std::array<int, 3>> crates{{52, 1, 50}, {54, 1, 50}};
+        const std::vector<std::array<float, 3>> crates{{52, 1, 50}, {54, 1, 50}};
 
         BlupiController walker;
         walker.SetPosition(0.0f, 1.0f, 0.0f); // raw (50, 1, 50)
@@ -2892,12 +2892,46 @@ int main(int argc, char** argv)
         check(std::fabs(holder.GetX() - 1.25f) < 0.01f && std::fabs(holder.GetYaw() - 1.5707963f) < 1e-4f,
               "holding a crate, Blupi neither turns nor steps forward");
         check(holder.GetAnimState() == BlupiController::AnimState::StopPop, "holding still is StopPop");
-        const float before = holder.GetX();
         for (int i = 0; i < 60; ++i)
             holder.Step(crateWorld, 0.0f, -1.0f, false, true, false, dt, false, false, false, false, true);
-        check(std::fabs((before - holder.GetX()) - BlupiController::kPullSpeed * 60.0f * dt) < 0.05f,
-              "holding a crate, Blupi backs away at the original's pull speed");
+        check(std::fabs(holder.GetX() - 1.25f) < 0.01f,
+              "holding a crate, Blupi does not back away by himself (the crate's pull carries him)");
         check(holder.GetAnimState() == BlupiController::AnimState::Pop, "backing away with it is Pop");
+
+        // A crate between two cells (pushed) is a cube where it is, not the cell it is nearest:
+        // at raw x 52.45 its face is at 51.95, and Blupi walking +X stops there.
+        BlupiController between;
+        between.SetPosition(0.0f, 1.0f, 0.0f);
+        between.SetYaw(1.5707963f);
+        between.SetCrateCells({{52.45f, 1.0f, 50.0f}});
+        for (int i = 0; i < 90; ++i)
+            between.Step(crateWorld, 0.0f, 1.0f, false, false, false, dt);
+        check(between.GetX() + 50.0f > 51.9f && between.GetX() + 50.0f < 51.96f,
+              "a crate between two cells stops him at its face, not at its nearest cell's");
+
+        // A jump beside a crate between two cells rises: the cell the crate is nearest is not a
+        // ceiling over him (012's shelf, 2026-11-01).
+        BlupiController jumper;
+        jumper.SetPosition(-0.542f, 1.0f, 0.0f); // raw 49.458
+        jumper.SetYaw(-1.5707963f);               // facing -X, the crate at raw 48.6 ahead
+        jumper.SetCrateCells({{48.6f, 1.0f, 50.0f}});
+        jumper.Step(crateWorld, 0.0f, 0.0f, false, false, false, dt);
+        jumper.Step(crateWorld, 0.0f, 1.0f, true, false, false, dt);
+        check(!jumper.IsOnGround() && jumper.GetY() > 1.05f,
+              "a jump beside a crate between two cells rises (its nearest cell is no ceiling)");
+
+        // FollowCrate: moved toward where the crate holds him, at most the step, through collision.
+        BlupiController follower;
+        follower.SetPosition(0.0f, 1.0f, 0.0f);
+        follower.SetCrateCells(crates);
+        follower.FollowCrate(crateWorld, 0.3f, 0.0f, 0.1f);
+        check(std::fabs(follower.GetX() - 0.1f) < 1e-4f, "FollowCrate moves at most the step it is given");
+        follower.FollowCrate(crateWorld, 3.0f, 0.0f, 5.0f);
+        check(follower.GetX() + 50.0f < 51.51f, "FollowCrate does not take him into a crate");
+        check(BlupiController::CanStandAt(crateWorld, 0.0f, 1.0f, 0.0f) &&
+                  !BlupiController::CanStandAt(crateWorld, 0.0f, 0.0f, 0.0f) &&
+                  !BlupiController::CanStandAt(crateWorld, 20.0f, 1.0f, 0.0f),
+              "CanStandAt: clear with ground under him; not inside the floor; not off the edge");
     }
 
     // Turning round (table_blupi 3) and the exit's Win cheer (13, 40 ticks).

@@ -3,6 +3,8 @@
 #include "Sound.hpp"
 #include "WorldRuntime.hpp"
 
+#include <array>
+#include <functional>
 #include <random>
 #include <vector>
 
@@ -261,10 +263,43 @@ namespace GalaxyEggbert::Game
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.
-        // facingX/Z: his facing direction (sin yaw, -cos yaw).
+        // facingX/Z: his facing direction (sin yaw, -cos yaw). maxAhead: the farthest centre-to-
+        // centre distance along the axis that counts.
         [[nodiscard]] static const MobileObjSpec* CrateInFront(const WorldRuntime& worldRuntime, float blupiX,
                                                                float blupiY, float blupiZ, float facingX,
-                                                               float facingZ) noexcept;
+                                                               float facingZ, float maxAhead = 2.2f) noexcept;
+
+        // Pushing and pulling crates (CratePush.hpp has the original's rules and the 3D
+        // adaptation). Called once a tick after Blupi's own step, before Update().
+        struct CratePushInput
+        {
+            float blupiX = 0.0f, blupiY = 0.0f, blupiZ = 0.0f;
+            float facingX = 0.0f, facingZ = -1.0f; // sin(yaw), -cos(yaw)
+            bool onGround = true;
+            // Decor.cpp:6130-6132: not in a vehicle, the balloon, squashed or swimming.
+            bool canPush = true;
+            bool walkingForward = false; // Up held: a march into a crate becomes Push
+            bool holding = false;        // crouching, facing a crate: StopPop
+            bool pullingBack = false;    // holding and Down held: Pop
+            bool power = false;          // m_blupiPower: twice the speed
+            // Whether Blupi's collision point (feet and head) is clear at (x, y, z): a pull backs
+            // him a cell away, which needs room behind him. Empty: always clear.
+            std::function<bool(float x, float y, float z)> blupiClearAt;
+        };
+        struct CratePushOutput
+        {
+            bool pushing = false;   // Push: walking into a crate (moving it or not)
+            bool pulling = false;   // Pop: a held crate following him
+            bool committed = false; // a crate is between two cells: its move finishes first
+            // Where Blupi stands against the crate he moves (centre-to-centre kContactGap
+            // along the axis, on its line across it).
+            bool holdBlupi = false;
+            float blupiX = 0.0f, blupiZ = 0.0f;
+            // His facing along the axis (unit X or Z, toward the crate).
+            float faceX = 0.0f, faceZ = 0.0f;
+        };
+        CratePushOutput UpdateCratePush(float dt, WorldRuntime& worldRuntime, const CratePushInput& input);
+        [[nodiscard]] const CratePushOutput& LastCratePush() const noexcept { return cratePush_; }
 
         // INFRA-007 (plan.md §7): all 14 of this class's former *ThisFrame() signals (Died
         // through DeathLockRequested below) are carried by one typed per-frame event queue
@@ -390,7 +425,7 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] const std::vector<Event>& EventsThisFrame() const noexcept { return events_; }
 
         // Real crate-push loop sound (found 2026-07-16, plan.md SOUND-048's real meaning --
-        // ch38, not "electric arc") -- true the one frame a crate actually moved due to a push.
+        // ch38, not "electric arc") -- true while Blupi is in Push (UpdateCratePush).
         // The caller compares this against its own previous-frame value to start/stop the real
         // looped ch38 sound (this class has no sound-instance-lifetime access of its own).
         // NOT part of EventsThisFrame() above -- unlike every Kind there, this is a plain
@@ -1023,7 +1058,23 @@ namespace GalaxyEggbert::Game
         float glueDropTimer_ = 0.0f; // > 0: a helicopter glue ball about to leave
         static constexpr int kPersoCap = 5; // real m_blupiPerso cap
         int persoCount_ = 0;
-        bool crateBeingPushedThisFrame_ = false; // reset at the top of every Update() call; NOT part of events_ (see its own comment)
+        bool crateBeingPushedThisFrame_ = false; // set by UpdateCratePush(); NOT part of events_ (see its own comment)
+        // The crate move in progress (UpdateCratePush): its group's rest cells, raw relative
+        // coordinates, before the move; the axis (0: X, 2: Z), direction and progress (cells).
+        struct CrateMove
+        {
+            bool active = false;
+            bool pulled = false;
+            int axis = 0;
+            float dir = 0.0f;
+            float side = 0.0f; // where the crate is from Blupi along the axis (+1 / -1)
+            float progress = 0.0f;
+            std::vector<std::array<float, 3>> from;
+        };
+        CrateMove crateMove_;
+        int crateAction_ = 0;            // 0 none, 1 Push, 2 Pop: the action the speed ramps in
+        float crateActionSeconds_ = 0.0f; // time in that action (the original's m_blupiPhase)
+        CratePushOutput cratePush_;
         std::vector<Event> events_; // cleared and refilled every Update() call (INFRA-007)
     };
 }
