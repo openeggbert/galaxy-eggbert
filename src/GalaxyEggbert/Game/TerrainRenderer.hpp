@@ -83,6 +83,8 @@ namespace GalaxyEggbert::Game
             float y;
             float z;
             std::uint16_t base;
+            // Lava (VIS-0069): bit 0..3 lava at +X, -X, +Z, -Z; bit 4 something under it.
+            std::uint8_t lavaSides = 0;
         };
 
         // Shared rebuild logic for m_animRenderer/m_waterRenderer: computes

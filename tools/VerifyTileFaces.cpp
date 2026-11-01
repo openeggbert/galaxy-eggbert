@@ -2,10 +2,12 @@
 // side of a fan is its base and which is open, and where flat-colour faces sample their tile.
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
+#include <GalaxyEggbert/Game/LavaSurface.hpp>
 #include <GalaxyEggbert/Game/MeshParts.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <vector>
@@ -146,6 +148,64 @@ int main()
         }
         check(within && same, "a mesh over the limit splits into parts within it, every triangle kept in order (D47)");
         check(GalaxyEggbert::Game::SplitMeshData(whole).size() == 1, "a mesh within the limit stays whole");
+    }
+
+    // Lava in 3D (VIS-0069): a pool with the original frames' wave on top, wound as the builder's own
+    // faces, its rim flat so cells join, walls only where no lava is beside it.
+    {
+        using Microsoft::Xna::Framework::Vector3;
+        const auto frontFacesAgreeWithNormals = [](const CnaEngine::Graphics::MeshData& m)
+        {
+            for (std::size_t t = 0; t + 2 < m.indices.size(); t += 3)
+            {
+                const Vector3 a = m.positions[m.indices[t]];
+                const Vector3 b = m.positions[m.indices[t + 1]];
+                const Vector3 c = m.positions[m.indices[t + 2]];
+                const Vector3 n = m.normals[m.indices[t]] + m.normals[m.indices[t + 1]] + m.normals[m.indices[t + 2]];
+                if (Vector3::Dot(Vector3::Cross(b - a, c - a), n) >= 0.0f)
+                {
+                    return false;
+                }
+            }
+            return true;
+        };
+        CnaEngine::Graphics::MeshBuilder box = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
+        box.AddBox(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f));
+        check(frontFacesAgreeWithNormals(box.Mesh()), "the builder's box: cross(b - a, c - a) points against the normal");
+        const CnaEngine::Graphics::UvRect tile{0.0f, 0.0f, 1.0f, 1.0f};
+        for (int frame = 0; frame < GalaxyEggbert::Game::kLavaFrames; ++frame)
+        {
+            CnaEngine::Graphics::MeshBuilder lava = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
+            GalaxyEggbert::Game::AppendLavaCell(lava, Vector3(0.0f, 0.5f, 0.0f), frame, tile, {});
+            const auto& m = lava.Mesh();
+            bool inRange = true;
+            for (const auto& p : m.positions)
+                inRange = inRange && p.Y >= -1e-5f && p.Y <= 0.55f;
+            check(frontFacesAgreeWithNormals(m) && inRange,
+                  "a lava cell is wound as the builder's faces and stays under 0.55 of the cell");
+        }
+        bool rimFlat = true;
+        for (int frame = 0; frame < GalaxyEggbert::Game::kLavaFrames; ++frame)
+            for (float t = 0.0f; t <= 1.0f; t += 0.1f)
+                rimFlat = rimFlat &&
+                          std::fabs(GalaxyEggbert::Game::LavaSurfaceHeight(frame, 0.0f, t) - GalaxyEggbert::Game::kLavaRimHeight) < 1e-5f &&
+                          std::fabs(GalaxyEggbert::Game::LavaSurfaceHeight(frame, 1.0f, t) - GalaxyEggbert::Game::kLavaRimHeight) < 1e-5f &&
+                          std::fabs(GalaxyEggbert::Game::LavaSurfaceHeight(frame, t, 0.0f) - GalaxyEggbert::Game::kLavaRimHeight) < 1e-5f &&
+                          std::fabs(GalaxyEggbert::Game::LavaSurfaceHeight(frame, t, 1.0f) - GalaxyEggbert::Game::kLavaRimHeight) < 1e-5f;
+        check(rimFlat, "every frame's rim is at the trough level, so lava cells side by side join without a step");
+        float crest = 0.0f;
+        for (int frame = 0; frame < GalaxyEggbert::Game::kLavaFrames; ++frame)
+            for (float u = 0.0f; u <= 1.0f; u += 0.05f)
+                for (float w = 0.0f; w <= 1.0f; w += 0.05f)
+                    crest = std::max(crest, GalaxyEggbert::Game::LavaSurfaceHeight(frame, u, w));
+        check(crest > 0.40f && crest < 0.55f, "the wave's crests rise to about half a cell, as the tiles' spikes");
+        CnaEngine::Graphics::MeshBuilder open = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
+        GalaxyEggbert::Game::AppendLavaCell(open, Vector3(0.0f, 0.5f, 0.0f), 0, tile, {});
+        CnaEngine::Graphics::MeshBuilder surrounded = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
+        GalaxyEggbert::Game::AppendLavaCell(surrounded, Vector3(0.0f, 0.5f, 0.0f), 0, tile, {true, true, true, true, true});
+        const std::size_t top = static_cast<std::size_t>(GalaxyEggbert::Game::kLavaGridX * GalaxyEggbert::Game::kLavaGridZ);
+        check(surrounded.Mesh().VertexCount() == top && open.Mesh().VertexCount() == top + 5 * 4,
+              "walls and floor only where no lava (or, below, nothing solid) is beside the cell");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

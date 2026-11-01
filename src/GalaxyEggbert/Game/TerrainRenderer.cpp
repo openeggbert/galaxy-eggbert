@@ -1,4 +1,6 @@
 #include "TerrainRenderer.hpp"
+
+#include "LavaSurface.hpp"
 #include "DirectionalCubeTiles.hpp"
 #include "InnerFlatPlateTiles.hpp"
 #include "InnerPillarBoxTiles.hpp"
@@ -512,7 +514,33 @@ namespace GalaxyEggbert::Game
                     }
                     if (IsAnimated(animBase))
                     {
-                        m_animBlocks.push_back({worldX, worldY, worldZ, animBase});
+                        std::uint8_t lavaSides = 0;
+                        if (animBase == GalaxyEggbert::BlockTypes::Lava)
+                        {
+                            const auto sideIs = [&](int dx, int dy, int dz, bool lavaOnly)
+                            {
+                                const int nx = x + dx, ny = y + dy, nz = z + dz;
+                                if (nx < 0 || ny < 0 || nz < 0 || nx >= blocksPerAxis || ny >= blocksPerAxis ||
+                                    nz >= blocksPerAxis)
+                                {
+                                    return false;
+                                }
+                                const auto other = world.getBlock(static_cast<std::uint16_t>(nx),
+                                                                  static_cast<std::uint16_t>(ny),
+                                                                  static_cast<std::uint16_t>(nz));
+                                if (lavaOnly)
+                                {
+                                    return !other.isAir() && GalaxyEggbert::GetBlockDefinition(other.type())
+                                                                     .animation.baseIcon == GalaxyEggbert::BlockTypes::Lava;
+                                }
+                                return !other.isAir();
+                            };
+                            lavaSides = static_cast<std::uint8_t>(
+                                (sideIs(1, 0, 0, true) ? 1 : 0) | (sideIs(-1, 0, 0, true) ? 2 : 0) |
+                                (sideIs(0, 0, 1, true) ? 4 : 0) | (sideIs(0, 0, -1, true) ? 8 : 0) |
+                                (sideIs(0, -1, 0, false) ? 16 : 0));
+                        }
+                        m_animBlocks.push_back({worldX, worldY, worldZ, animBase, lavaSides});
                         continue;
                     }
 
@@ -763,6 +791,19 @@ namespace GalaxyEggbert::Game
             if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
                                       mesh))
             {
+                continue;
+            }
+
+            // Lava (VIS-0069): a pool with the original frames' wave, not a cube of fire.
+            if (block.base == GalaxyEggbert::BlockTypes::Lava)
+            {
+                LavaNeighbours beside;
+                beside.posX = (block.lavaSides & 1) != 0;
+                beside.negX = (block.lavaSides & 2) != 0;
+                beside.posZ = (block.lavaSides & 4) != 0;
+                beside.negZ = (block.lavaSides & 8) != 0;
+                beside.below = (block.lavaSides & 16) != 0;
+                AppendLavaCell(mesh, center, icon - GalaxyEggbert::BlockTypes::Lava, tileUv, beside);
                 continue;
             }
 
