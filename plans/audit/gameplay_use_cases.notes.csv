@@ -3,8 +3,8 @@ GP-0015,FIXED_AND_VERIFIED,InteractionSystem::UpdateCratePush; CratePush.hpp,BD-
 GP-0029,UNREVIEWED,GalaxyEggbertGame holdingCrate_; BlupiController StopPop,held at the contact distance (2026-11-01),VerifyBlupiMovement,live look
 GP-0030,FIXED_AND_VERIFIED,InteractionSystem::UpdateCratePush,BD-0002/D60: 3 px a tick with the ramp; 1.63 s a cell from rest,VerifyInteractionSystem; world012.txt,
 GP-0122,FIXED_AND_VERIFIED,InteractionSystem::UpdateCratePush,BD-0001/D60,VerifyInteractionSystem,
-GP-0488,UNREVIEWED,CrateGroupCanMove,atomic group test kept; support counts non-solid blocks (BD-0003),VerifyInteractionSystem,test BD-0003
-GP-0489,UNREVIEWED,CrateGroupCanMove,BD-0003,,
+GP-0488,CONFIRMED_MATCH,CrateGroupCanMove,atomic group test; support needs a solid mask since BD-0003,VerifyInteractionSystem,
+GP-0489,CONFIRMED_MATCH,CrateGroupCanMove,destination free of solid blocks and crates; support a solid mask (BD-0003; Galaxy tests the destination cell; no 19 px overhang: M3D-0001),VerifyInteractionSystem,
 GP-0490,CONFIRMED_MATCH,CrateGroup,links touching crates at or above the seed's row; a pull only the stack on it,VerifyInteractionSystem (linked trio),
 GP-0492,CONFIRMED_MATCH,InteractionSystem::CrateInFront,the nearest crate ahead (D50),VerifyInteractionSystem,
 GP-0493,FIXED_AND_VERIFIED,CratePush::PixelsPerTick,transcribed (2026-11-01),VerifyInteractionSystem,

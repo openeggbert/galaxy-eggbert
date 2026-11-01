@@ -45,12 +45,15 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyInteractionSystem` (no tick over 3 px; a cell from rest in 98 frames = the
   original's 32.7 ticks; contact distance kept).
 
-## BD-0003 — a crate can stand on a non-solid block (gameplay) — UNREVIEWED (suspected)
+## BD-0003 — a crate could be pushed out over water or empty-mask decor (gameplay) — FIXED_AND_VERIFIED
 
-- `CrateGroupCanMove` (was `MoveCrateGroup`) counts any non-air block under the seed row as
+- `CrateGroupCanMove` (was `MoveCrateGroup`) counted any non-air block under the seed row as
   support (water, decor with an empty mask). `TestPushOneCaisse` (`Decor.cpp:9354-9385`) needs
-  `DecorDetect` to hit a solid quarter-cell under both lower corners. Next: a test with water and
-  decor under the destination; fix if it reproduces.
+  `DecorDetect` to hit a solid quarter-cell under both lower corners.
+- Reproduced 2026-11-01: `VerifyInteractionSystem` pushes a crate toward water two cells away; it
+  went out over the water. Fixed: support is a block with a non-zero collision mask (or a crate);
+  the crate now stops at the bank. 110/110; the 18 crate playthroughs pass with the same tick
+  counts (none relied on it).
 
 ## BD-0004 — `IsPointSolid` excludes decor, `InteractionSystem::IsSolidAtCell` and projectile traversal do not (gameplay) — UNREVIEWED (suspected, from the campaign brief)
 

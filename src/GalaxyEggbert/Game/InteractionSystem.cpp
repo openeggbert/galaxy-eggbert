@@ -271,7 +271,12 @@ namespace GalaxyEggbert::Game
                 {
                     return false;
                 }
-                if (std::fabs(member->currentY - seedY) < 0.5f && at(gy - 1).isAir() &&
+                // Support: something solid under it (TestPushOneCaisse's DecorDetect tests the
+                // quarter-cell mask, so water and empty-mask decor hold nothing up, BD-0003), or a
+                // crate.
+                const auto below = at(gy - 1);
+                const bool solidBelow = !below.isAir() && GetBlockDefinition(below.type()).collisionMask != 0;
+                if (std::fabs(member->currentY - seedY) < 0.5f && !solidBelow &&
                     !CrateAtCell(objects, gx, gy - 1, gz, except))
                 {
                     return false;

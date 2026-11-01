@@ -6,8 +6,8 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-01 (the fidelity audit started: milestone G; crate push/pull rebuilt to the
-original's speed and contact, D60; next the over-fast lifts, BD-0006)._
+_Last updated: 2026-11-01 (fidelity audit, milestone G: crate push/pull as the original's, D60;
+every lift within the original's speeds, BD-0006; crate support, BD-0003)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -23,16 +23,15 @@ ledgers before repeating any discovery. Where it stands:
   crate playthroughs pass; evidence `plans/evidence/crate-push-012.png`.
 - Game runs are silent now (owner's request): `tools/autoplay.sh`/`qa_live.sh` default to
   `SDL_AUDIODRIVER=dummy`; `QA_SOUND=1` for an explicit sound check.
-- In progress: **BD-0006** — lifts faster than any lift of the original (`python3
-  tools/audit/lift_envelope.py`). **061 done** (`7e0d1cf`: original speeds, the ladder's shuttles
-  dwell 30 ticks; jump window ~5 frames -> ~0.9 s; playthrough re-timed). Left: 113 (twelve at 5-6
-  cells/s), 024, 062, 073 (20 lifts). Method, per world: find each lift's original counterpart in
-  `../mobile-eggbert/worlds/worldNNN.txt`, set the builder's ticks to its speed, probe with a copy
-  of the builder (`python3 <copy> --stage -1 out.vwr`; `--stage -1` reproduces the shipped world
-  byte for byte for 061) in a worlds dir of symlinks (`AUTOPLAY_WORLDS=<dir>`), measure the jump
-  windows with `tools/autoplay_search.py`, lengthen a dwell only where a jump between lifts in
-  step needs it, re-time the playthrough. Never kill a background job by `pkill -f` with a pattern
-  that also matches its parent shell (it killed a batch on 2026-11-01).
+- Done: **BD-0006** — every shipped lift within the original's speeds (`7e0d1cf` world061: the
+  shuttle ladder's jump window ~5 frames -> ~0.9 s with the original's speed and a 30-tick dwell;
+  `46a663b` 113, 024, 062, 073). `python3 tools/audit/lift_envelope.py` must report 0. Method for
+  a lift problem: the original counterpart's speed in `../mobile-eggbert/worlds/worldNNN.txt`;
+  probe with a copy of the builder (`--stage -1 out.vwr` reproduces 061 byte for byte) in a
+  worlds dir of symlinks (`AUTOPLAY_WORLDS=<dir>`); measure windows with
+  `tools/autoplay_search.py`. Never `pkill -f` a pattern that also matches a parent shell.
+- Done: **BD-0003** (a crate could be pushed out over water: support needs a solid mask; the 18
+  crate playthroughs unchanged).
 - Then: ED-0001 (the original's variant cycling is traced in `plans/audit/editor_parity.md`; the 3D
   mapping is MR-0003 in `manual_review.md`), fan/lava/pillars (VIS rows), the `.a3d` reader.
 - The whole-campaign playthrough (`campaign.txt`, ~2 h) has not been re-run since D60: regenerate

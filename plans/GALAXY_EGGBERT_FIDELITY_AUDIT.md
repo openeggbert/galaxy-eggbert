@@ -41,7 +41,7 @@ REPRODUCED_DEFECT | FIXED_AND_VERIFIED | BLOCKED | NOT_APPLICABLE`. A generated 
 
 | Wave | Scope | State |
 |---|---|---|
-| A | baseline; ledgers; crate push (§4); moving platforms (§5) | baseline done; ledgers started; crate push implemented, tests pass, crate missions' scripts being re-tuned; platforms not started |
+| A | baseline; ledgers; crate push (§4); moving platforms (§5) | done except a human play pass: crate push/pull D60 (`1c59eae`), every lift within the original's speeds (BD-0006, `7e0d1cf`, `46a663b`), crate support (BD-0003) |
 | B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | not started |
 | C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | ledger generated; 12 actions flagged as possibly never entered |
 | D | original assets: `.a3d` reader, `.max` request, per-source stages | inventory done; `.max` BLOCKED (owner request in `manual_review.md`) |
@@ -65,22 +65,25 @@ tick equals the original's for 2.5 s; first cell 1.2 s; three crates 4 px; Power
 stacking; pull 3 px and 1.63 s a cell; release mid-cell; contact distance), `VerifyBlupiMovement`
 (a crate between two cells is a box where it is; FollowCrate; CanStandAt).
 
-Open: the crate missions' playthrough scripts assumed the old jump (`crate X Y Z max 10` right
-after a push, Blupi 1.1-2.1 behind a crate): re-tune each after checking the failure is the
-script's, not the level's; live normal-speed look and before/after frames.
+Done (`1c59eae`): the 18 crate playthroughs re-timed where they assumed the old jump (each checked
+against its failing trace), a live per-frame trace against the original
+(`plans/evidence/crate-push-012.png`) and a live look.
 
-## 5. Moving platforms — Wave A (not started)
+## 5. Moving platforms — Wave A (BD-0006, done)
 
-Find the mission(s) with the reported impossible jumps from the briefs, scripts and world data;
-measure the reachable envelope (platform speed, dwell, jump reach, air control) against
-`Decor.cpp` (`MoveObjectStepLine`, `AscenseurDetect/Vertigo/Shift/Synchro`); fix at the
-narrowest layer; keep D52-D57 green.
+`tools/audit/lift_envelope.py` compares every shipped lift with the original's 424: 31 ran faster
+than any of them (061's shuttle ladder 8.33 cells/s against the original's 3.33). The engine was
+right (linear steps over 20 Hz ticks; no lift momentum in a jump, as `Decor::MoveObjectStep`);
+the world data was not. Each lift now runs at its original counterpart's speed; 061's ladder,
+whose shuttles move in step, also dwells 30 ticks at each end. Measured with the engine
+(`autoplay_search.py`): the ladder's jump window went from ~5 frames per cycle to ~0.9 s. The
+playthroughs of the five worlds and their chains pass; the D52-D57 tests pass (110/110).
 
 ## 6. Next steps (in order)
 
-1. Re-tune the crate missions' scripts (012, 022, 023, 024, 046, 058, 095, 104, 124 failed the
-   old scripts), live look, commit the crate fix.
-2. Moving platforms (§5).
-3. Editor variant cycling (ED-0001).
-4. Fan, lava, pillars live (VIS-0069, VIS-0127..0136, VIS-0077/0376/0400) and the `.a3d` reader
-   (lava `Decor/lave/lave-1..5.a3d`, columns `Decor/smooth/colonne*.a3d`).
+1. Editor variant cycling (ED-0001; the 3D mapping is MR-0003, a default proposed).
+2. Fan, lava, pillars: a multi-angle live gallery (first captures `build-probe/fa-live/vis/`),
+   the `.a3d` reader (lava `Decor/lave/lave-1..5.a3d`, columns `Decor/smooth/colonne*.a3d`), then
+   3D replacements from the original sources.
+3. The whole-campaign playthrough after D60/BD-0006/BD-0003 (regenerate `campaign.txt`).
+4. Wave C: the GP ledger row by row (BD-0004 first: decor solidity for followers/projectiles).

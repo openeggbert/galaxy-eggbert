@@ -4766,6 +4766,9 @@ int main(int argc, char** argv)
         place(35, 1, 55); // alone, under Power
         place(43, 1, 60); // against the wall
         place(35, 1, 65); // let go of half way
+        place(35, 1, 40); // pushed +X toward water at x 37
+        flat.setBlock(37, 0, 40, GW::Block::make(GalaxyEggbert::BlockTypes::Water1));
+        flat.setBlock(38, 0, 40, GW::Block::make(GalaxyEggbert::BlockTypes::Water1));
         const std::filesystem::path flatPath = "VerifyInteractionSystem-cratetiming.vwr";
         flat.saveToFile(flatPath);
         WorldRuntime timing;
@@ -4839,6 +4842,18 @@ int main(int argc, char** argv)
             drive(sys, 35.0f, 55.0f, true, 90, &along, b);
             check(std::fabs(along[89] - static_cast<float>(originalPixels(5, 1, true, 30)) / 64.0f) < 2e-3f,
                   "under Power a crate goes twice as fast (CaisseGetMove's max * 2)");
+        }
+        {
+            // BD-0003: a crate needs solid ground under it (TestPushOneCaisse's DecorDetect on the
+            // two lower corners: a quarter-cell mask): not water, not decor with an empty mask.
+            InteractionSystem sys;
+            CrateSim b;
+            drive(sys, 35.0f, 40.0f, false, 150, nullptr, b);
+            for (int i = 0; i < 120 && sys.LastCratePush().committed; ++i)
+                CrateTick(sys, timing, b, dt, false);
+            const float rest = crateX(35.0f, 40.0f)->currentX + 50.0f;
+            check(std::fabs(rest - 36.0f) < 1e-4f,
+                  "a crate is not pushed out over water (no solid ground under it): it stops at the bank");
         }
         {
             // Walking past a crate along its side (his centre 0.55 off its line) does not push it.

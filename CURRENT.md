@@ -114,10 +114,11 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 ### Active and explicitly approved
 
 - **The fidelity audit (milestone G, since 2026-11-01)**: `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`
-  and its ledgers in `plans/audit/`. Open there now: lifts faster than any of the original's
-  (BD-0006: 31 lifts in 024, 061, 062, 073, 113; 061's shuttle ladder has a ~0.1 s jump window),
-  the editor's variant cycling (ED-0001, MR-0003), fan / lava / pillar representation, the 105
-  `.a3d` sources, the 56 `.max` sources (BLOCKED, MR-0001).
+  and its ledgers in `plans/audit/`. Fixed so far: crate push/pull (D60), lifts over the
+  original's speeds (BD-0006: 31 lifts; 061's shuttle ladder), crate support (BD-0003). Open: the
+  editor's variant cycling (ED-0001, MR-0003), fan / lava / pillar representation (the fan is a
+  cube with its icon on every face, VIS-0127), the 105 `.a3d` sources, the 56 `.max` sources
+  (BLOCKED, MR-0001), a human play pass of the changed mechanics, the whole-campaign run.
 - The completion campaign (`plans/GALAXY_EGGBERT_COMPLETION.md`): owner-reported defects D1-D12
   (§5), then milestones B-F (representative mission, model/animation parity, hubs and missions,
   editor slots and title screen, stabilisation).
