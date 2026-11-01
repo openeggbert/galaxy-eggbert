@@ -1,4 +1,4 @@
 id,lesson,reinterpretation_3d,bypasses,human_play,status,next_action
-LV-0040,,,the blupit's line of fire can be walked round along a safer Z edge (room B1 wider than its lane; earlier session),,REPRODUCED_DEFECT,re-check live; restore the lesson by 3D encounter design (no 2D corridor)
-LV-0056,,,mine-row bypass fixed earlier (completion plan §13 F); re-verify after physics changes,,UNREVIEWED,replay and live look
+LV-0040,pass a shooting blupit (original: it walks and shoots along the passage),the blupit walks across room B1 along Z and shoots wall to wall: every crossing of the room passes its line of fire; the room stays open (no corridor),fixed 2026-11-01: its lane was z 52 and nobody had to cross it,crossing measured with the engine over one 438-frame cycle: started at the wrong moment it dies (three windows, ~25 % of the cycle), long safe windows otherwise (up to 3.7 s); before the change it could never die,FIXED_AND_VERIFIED,a human play pass
+LV-0056,jump rows of mines,two rows of three mines across a corridor three wide between banks (x 52-54; z 28 and 33),none: checked 2026-11-01 (each row fills the corridor wall to wall; the playthrough passes after D60/BD-0004),,CONFIRMED_MATCH,a human play pass
 LV-0078,,,levelcheck reports advisory FAILs (under-modelled abilities),,UNREVIEWED,replay and live look

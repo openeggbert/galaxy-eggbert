@@ -78,7 +78,11 @@ def main(argv) -> int:
     slime(w, 48, 20, 58, 49, 21, 58)                                  # walk 22
     slime(w, 48, 20, 57, 49, 23, 57)                                  # walk 24
     carve(40, 26, 50, 49, 29, 56)
-    patrol(O.CREATURE, (42, 26, 52), (46, 26, 52), 50, 23)
+    # The blupit walks across the room (along Z at x 44) and shoots along it, wall to wall: every
+    # way from the stair (east) to the bulldozer's corridor (west) crosses its line of fire, timed
+    # as the original's passage past it, while the room stays open around it (until 2026-11-01 it
+    # shot along z 52, a row nobody had to cross: LV-0040).
+    patrol(O.CREATURE, (44, 26, 51), (44, 26, 55), 50, 23)
     carve(30, 26, 53, 39, 28, 53)
     patrol(O.BULLDOZER, (38, 26, 53), (33, 26, 53), 90, 20)
     carve(26, 22, 53, 29, 28, 53)                                     # the gap, floor 21

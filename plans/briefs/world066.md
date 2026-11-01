@@ -20,8 +20,10 @@ cave.
 - The start corridor (x 16–51, z 60, walk 20, one wide, three high): an egg, a mine, spawn (19, 20,
   60) facing −Z, a mine; the lightning curtain at x 24; the big creatures (100/200 x 27–32, 40/200
   x 35–36, 80/200 x 39–43; the corridor is high enough to jump the one that barely moves); a trap.
-- The middle storey (walk 26), up a stair from the corridor's east end: B1 with the blupit shooting
-  along it; west the bulldozer's corridor (one wide, jump it); the gap crossed on a lift (18 ticks);
+- The middle storey (walk 26), up a stair from the corridor's east end: B1 with the blupit walking
+  across it (along Z at x 44, z 51-55) and shooting along its walk, wall to wall: every way from the
+  stair to the west corridor crosses its line of fire (2026-11-01, LV-0040: it used to shoot along
+  z 52, a row nobody had to cross, so the room could be walked round it); west the bulldozer's corridor (one wide, jump it); the gap crossed on a lift (18 ticks);
   the trench of five mines with the crate at its end, the bars over it (a jump catches them, D45).
   (Fixed 2026-10-26: the stair's shaft was dug into the room's floor at z 56, leaving a pit six
   deep at its top (x 48–49) with no way out, between the stair, the room and the upper tunnel's
