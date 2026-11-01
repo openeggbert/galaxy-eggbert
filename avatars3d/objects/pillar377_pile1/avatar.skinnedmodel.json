@@ -1,0 +1,63 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "pillar377_rd_ffca00",
+      "vertices": "pillar377_rd_ffca00.verts.bin",
+      "indices": "pillar377_rd_ffca00.idx.bin",
+      "vertexStride": 52,
+      "texture": "pillar377_rd_ffca00.png",
+      "diffuseColor": [
+        1.0,
+        0.5970697121666518,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "pillar377_rd_7f3f00",
+      "vertices": "pillar377_rd_7f3f00.verts.bin",
+      "indices": "pillar377_rd_7f3f00.idx.bin",
+      "vertexStride": 52,
+      "texture": "pillar377_rd_7f3f00.png",
+      "diffuseColor": [
+        0.21404114048223255,
+        0.05087608817155679,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "pillar377_rd_c36100",
+      "vertices": "pillar377_rd_c36100.verts.bin",
+      "indices": "pillar377_rd_c36100.idx.bin",
+      "vertexStride": 52,
+      "texture": "pillar377_rd_c36100.png",
+      "diffuseColor": [
+        0.5477945081433117,
+        0.12126402020640804,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "pillar377_rd_ff0000",
+      "vertices": "pillar377_rd_ff0000.verts.bin",
+      "indices": "pillar377_rd_ff0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "pillar377_rd_ff0000.png",
+      "diffuseColor": [
+        1.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

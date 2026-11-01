@@ -314,7 +314,7 @@ AS-0312,Decor/orga01.rds,.rds,Ray Dream Studio scene,791495,d7f05916b5ce,,Decor,
 AS-0313,Decor/orga02.rds,.rds,Ray Dream Studio scene,791458,9c3d889b6760,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0314,Decor/orga03.rds,.rds,Ray Dream Studio scene,791449,3828b1e4ef6f,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0315,Decor/orga04.rds,.rds,Ray Dream Studio scene,793904,8f6fc4cb7c5d,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
-AS-0316,Decor/pile1.rd4,.rd4,Ray Dream Studio scene,68555,533c4effa7a8,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
+AS-0316,Decor/pile1.rd4,.rd4,Ray Dream Studio scene,68555,533c4effa7a8,,Decor,ok frames=12 animated=0,object:pillar377,yes,yes,,UNREVIEWED,,fidelity review of the runtime model(s)
 AS-0317,Decor/porte-b.rd4,.rd4,Ray Dream Studio scene,15207,fa5f539a04f5,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0318,Decor/porte-r.rd4,.rd4,Ray Dream Studio scene,15186,8e256af07d18,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0319,Decor/porte-v.rd4,.rd4,Ray Dream Studio scene,15187,54b93075b805,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
@@ -469,7 +469,7 @@ AS-0467,Decor/lave/lave4.rds,.rds,Ray Dream Studio scene,173167,8c7b2d149d69,,De
 AS-0468,Decor/lave/lave5.rds,.rds,Ray Dream Studio scene,173158,6d5526bba2b5,,Decor/lave,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0469,Decor/palais/a.rds,.rds,Ray Dream Studio scene,9512,b72b733e7b25,,Decor/palais,ok frames=0 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0470,Decor/palais/base.a3d,.a3d,Amapi 3D (AMAP/BLOKSHAP chunks),12049,50fb3dc51afc,,Decor/palais,"a3d: 3 shapes (1 with faces, 152 faces)",,yes,no,,UNREVIEWED,,"classify; a .rds of the same object is the richer source when one exists (materials, cameras)"
-AS-0471,Decor/palais/big0108.rds,.rds,Ray Dream Studio scene,86884,7e90096ca5e1,,Decor/palais,ok frames=12 animated=0,object:bd_big0108,yes,yes,,UNREVIEWED,,fidelity review of the runtime model(s)
+AS-0471,Decor/palais/big0108.rds,.rds,Ray Dream Studio scene,86884,7e90096ca5e1,,Decor/palais,ok frames=12 animated=0,object:bd_big0108 object:pillar399,yes,yes,,UNREVIEWED,,fidelity review of the runtime model(s)
 AS-0472,Decor/palais/big02.rds,.rds,Ray Dream Studio scene,175158,2c1383444b70,,Decor/palais,ok frames=12 animated=0,object:bd_big02,yes,yes,,UNREVIEWED,,fidelity review of the runtime model(s)
 AS-0473,Decor/palais/fenetre.a3d,.a3d,Amapi 3D (AMAP/BLOKSHAP chunks),61325,76339f37bb22,,Decor/palais,"a3d: 7 shapes (5 with faces, 334 faces)",,yes,no,,UNREVIEWED,,"classify; a .rds of the same object is the richer source when one exists (materials, cameras)"
 AS-0474,Decor/palais/fenetre.rds,.rds,Ray Dream Studio scene,167485,6cae42b18056,,Decor/palais,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"

@@ -148,12 +148,14 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: 110/110; live in worlds 999 and 051 (before/after). Left: the owner's look; the
   wind column tiles (110-125, `Decor/vent-norm/`) are the next candidates.
 
-## BD-0009 — pillars 76 and 77 drawn as sprites on boxes (visual) — FIXED_AND_VERIFIED (VIS-0077/0078); 375/376/377/399 open
+## BD-0009 — pillars drawn as sprites on boxes (visual) — FIXED_AND_VERIFIED for 76, 77, 377, 399; 375/376 open
 
 - 76 (a stone column) and 77 (the golden branched support) were sprite tiles on an inner box. Their
   original scenes: `Decor/support1.rd4` (IoU 0.92) and `Decor/support2.rd4` (0.995). Converted and
   drawn as still block models (`BlockModels.hpp` `kStillModelIcons`; the terrain leaves those cells
   out and lists them, the host draws the model at the cell); their decor role is unchanged.
-- Open: 375/376 (turned and twisted wooden columns): `Decor/colonne2.rds` matches the outline (0.90)
-  but converts to a plain cylinder (its profile is lost: a converter gap); 377 (barrels) and 399
-  (a white column): no source found yet among the support and column scenes.
+- Also 377 (the barrel stack, `Decor/pile1.rd4`, 0.93) and 399 (the white column,
+  `Decor/palais/big0108.rds`, 0.99), sources found by the earlier tile survey
+  (`build-probe/rd4-survey/object-m_icons.csv`); live in world999.
+- Open: 375/376 (turned and twisted wooden columns): their scenes (`colonne1/2.rds`) are cube masters
+  shaped by a Ray Dream deformer the converter does not apply; they convert to plain shafts.

@@ -22,9 +22,10 @@ namespace GalaxyEggbert::Game
     inline constexpr std::uint16_t kFanModelIcon = GalaxyEggbert::BlockTypes::FanUp;
 
     // Still terrain icons drawn as their original scene's model when avatars3d/objects has one for
-    // their object-m icon (VIS-0077/0078): the stone column 76 (Decor/support1.rd4) and the golden
-    // support 77 (Decor/support2.rd4). Their decor role (no collision) is unchanged.
-    inline constexpr std::array<std::uint16_t, 2> kStillModelIcons{76, 77};
+    // their object-m icon (VIS-0077/0078/0378/0400): the stone column 76 (Decor/support1.rd4), the
+    // golden support 77 (Decor/support2.rd4), the barrel stack 377 (Decor/pile1.rd4) and the white
+    // column 399 (Decor/palais/big0108.rds). Their roles and collision are unchanged.
+    inline constexpr std::array<std::uint16_t, 4> kStillModelIcons{76, 77, 377, 399};
 
     // The fan model's roll about Z (radians) for a fan cell of animation base `base`.
     [[nodiscard]] constexpr float FanModelRoll(std::uint16_t base) noexcept

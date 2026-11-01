@@ -64,6 +64,8 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | lollipop_sucette | Blupi/sucette.rd4, camera 'Caméra 2' | 8 | 0.985 | 0.971 | faithful |
 | mine_bombe | Blupi/bombe.rd4, camera 'Caméra 2' | 18 | 0.943 | 0.880 | faithful |
 | movingmine_bombe-move | Blupi/bombe-move.rd4, camera 'Caméra 2' | 9 | 0.984 | 0.975 | faithful |
+| pillar377_pile1 | Decor/pile1.rd4, camera 'Caméra 2' | 1 | 0.934 | 0.934 | faithful |
+| pillar399_big0108 | Decor/palais/big0108.rds, camera 'Caméra 2' | 1 | 0.989 | 0.989 | faithful |
 | pillar_colonne1 | Decor/smooth/colonne1.rds, camera 'Caméra 2' | 1 | 0.895 | 0.895 | faithful |
 | pillar_colonne2 | Decor/smooth/colonne2.rds, camera 'Caméra 2' | 1 | 0.994 | 0.994 | faithful |
 | pillar_colonne3 | Decor/smooth/colonne3.rds, camera 'Caméra 2' | 1 | 0.916 | 0.916 | faithful |
@@ -92,4 +94,4 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | wasp_guepe | Blupi/guepe.rd4, camera 'Caméra 2' | 8 | 0.955 | 0.950 | faithful |
 | wasp_guepe-tourne | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 5 | 0.962 | 0.956 | faithful |
 
-85 models: 78 match every icon at 0.85 or better; 7 below, each with its verdict.
+87 models: 80 match every icon at 0.85 or better; 7 below, each with its verdict.

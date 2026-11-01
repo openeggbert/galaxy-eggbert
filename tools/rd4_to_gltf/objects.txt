@@ -92,3 +92,9 @@ fan         object-m 132-134 Decor/ventillo-h.rd4
 # golden branched support 77 (Decor/support2.rd4, IoU 0.995).
 column      object-m 76      Decor/support1.rd4
 support     object-m 77      Decor/support2.rd4
+# More terrain pillars (VIS-0376/0400 era, block models): the barrel stack 377 (Decor/pile1.rd4, IoU
+# 0.93) and the white column 399 (Decor/palais/big0108.rds, 0.99, the scene of the big decor column).
+# Not yet: 375 (Decor/colonne1.rds converts without its turned profile: a Ray Dream deformer) and 376
+# (its best match, Decor/enfant22.rd4, is a striped stick of another colour).
+pillar377   object-m 377     Decor/pile1.rd4
+pillar399   object-m 399     Decor/palais/big0108.rds

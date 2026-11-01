@@ -74,6 +74,8 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/lollipop_sucette` | Blupi/sucette.rd4, camera 'Caméra 2' | 3 | 1 | element 136-143 | 0.97 / 0.99 |
 | `avatars3d/objects/mine_bombe` | Blupi/bombe.rd4, camera 'Caméra 2' | 1 | 1 | element 12-20,48-56 | 0.88 / 0.94 |
 | `avatars3d/objects/movingmine_bombe-move` | Blupi/bombe-move.rd4, camera 'Caméra 2' | 1 | 1 | element 69-77 | 0.97 / 0.98 |
+| `avatars3d/objects/pillar377_pile1` | Decor/pile1.rd4, camera 'Caméra 2' | 4 | 1 | object-m 377 | 0.93 / 0.93 |
+| `avatars3d/objects/pillar399_big0108` | Decor/palais/big0108.rds, camera 'Caméra 2' | 1 | 1 | object-m 399 | 0.99 / 0.99 |
 | `avatars3d/objects/pillar_colonne1` | Decor/smooth/colonne1.rds, camera 'Caméra 2' | 1 | 1 | explo 66 | 0.90 / 0.90 |
 | `avatars3d/objects/pillar_colonne2` | Decor/smooth/colonne2.rds, camera 'Caméra 2' | 1 | 1 | explo 67 | 0.99 / 0.99 |
 | `avatars3d/objects/pillar_colonne3` | Decor/smooth/colonne3.rds, camera 'Caméra 2' | 1 | 1 | explo 68 | 0.92 / 0.92 |
@@ -102,4 +104,4 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/wasp_guepe` | Blupi/guepe.rd4, camera 'Caméra 2' | 4 | 1 | element 195-202 | 0.95 / 0.96 |
 | `avatars3d/objects/wasp_guepe-tourne` | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 4 | 1 | element 203-207 | 0.96 / 0.96 |
 
-91 models.
+93 models.
