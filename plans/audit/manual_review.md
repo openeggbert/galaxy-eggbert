@@ -49,3 +49,17 @@
   (e.g. Alt+click) and keep plain clicks stacking.
 - Owner, 2026-11-01: "ano klik na kostku polozenou predchozim kliknutim prepne jeji variantu" (yes,
   a click on the block placed by the previous click switches its variant). Implemented (ED-0001).
+
+## MR-0004 — a human play pass of the 2026-11-01 changes (what to try, where)
+
+Machine checks pass for each (tests, playthroughs, measured windows); only a person can judge feel.
+- Crates (D60): mission 012 from its start (`--mission 12`): push, stop half way (it finishes its
+  cell), pull with crouch + Down, jump onto a crate right after pushing it.
+- Lifts (BD-0006): mission 061, the shuttle ladder in shaft A (jump west while the shuttles dwell
+  at an end); mission 113's gallery lifts; 024, 062, 073.
+- 066's blupit (LV-0040): room B1 on the middle storey, cross its line of fire.
+- Editor (ED-0001/0006, MR-0003): place a fan, click it again (it turns), Ctrl+click to place
+  another; a tree likewise.
+- Looks (VIS-0069/0127/0077/0078): lava in 062 and 083, fans in 051 and 999, pillars in 023 and 094;
+  from low angles too. Before/after images: `plans/evidence/lava-before-after.png`,
+  `fan-before-after.png`.
