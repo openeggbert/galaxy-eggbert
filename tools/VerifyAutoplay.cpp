@@ -254,19 +254,29 @@ int main()
     {
         Autoplay autoplay;
         std::string error;
-        autoplay.Parse("crate 32 10 45 max 100\n", error);
+        // Crates move continuously and rest anywhere (BD-0014): from 33 to 32 over ticks 10-20.
+        autoplay.Parse("crate 32.5 10 45 tol 0.06 max 100\ncrate 32 10 45 max 100\nwait 5\n", error);
         AutoplayState state;
         std::string log;
+        int halfWay = -1;
         for (int t = 0; t < 50 && !autoplay.Finished(); ++t)
         {
             state.tick = t;
-            state.crates = {{t < 20 ? 33.0f : 32.0f, 10.0f, 45.0f}};
+            const float x = t < 10 ? 33.0f : t < 20 ? 33.0f - static_cast<float>(t - 10) * 0.1f : 32.0f;
+            state.crates = {{x, 10.0f, 45.0f}};
             autoplay.Step(state);
-            log += autoplay.TakeLog();
+            const std::string taken = autoplay.TakeLog();
+            if (halfWay < 0 && Contains(taken, "crate 32 10 45 max 100"))
+            {
+                halfWay = t;
+            }
+            log += taken;
         }
-        check(autoplay.Passed() && Contains(log, "t=20 crate (33.00 10.00 45.00) -> (32.00 10.00 45.00)") &&
-                  Contains(log, "t=0 crates 1") && Contains(log, "t=20 PASS script complete"),
-              "crate waits for a crate in a cell; the trace records each crate move");
+        check(autoplay.Passed() && halfWay == 15 && Contains(log, "t=21 crate (33.00 10.00 45.00) -> (32.00 10.00 45.00)") &&
+                  !Contains(log, "-> (32.50") && Contains(log, "t=0 crates 1") &&
+                  Contains(log, "PASS script complete"),
+              "crate waits for a crate at a point (tol along X and Z); the trace records where each crate comes "
+              "to rest, not its moving positions");
     }
 
     {

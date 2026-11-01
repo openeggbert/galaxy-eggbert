@@ -55,18 +55,18 @@ go 47 56
 go 47 65.3
 go 46 65.3
 face 0
-go 46 56.4 max 900
-crate 46 7 55 max 60
+go 46.00 55.89 tol 0.05 max 900
+crate 46 7 55 tol 0.06 max 60
 go 44.6 56.4
 go 44.6 55
 face 90
-go 56.6 55 max 1200
-crate 58 7 55 max 60
+go 57.11 55.00 tol 0.05 max 1200
+crate 58 7 55 tol 0.06 max 60
 go 56.6 56.4
 go 58 56.4
 face 0
-go 58 48.4 max 900
-crate 58 7 47 max 60
+go 58.00 47.89 tol 0.05 max 900
+crate 58 7 47 tol 0.06 max 60
 go 58 47 jump 1.4 tol 0.15
 until ground = 1
 go 58 45.4 jump 1.6

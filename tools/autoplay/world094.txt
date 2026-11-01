@@ -96,8 +96,8 @@ go 72 50.5
 expect keys = 0
 go 74.4 51 tol 0.1
 face 90
-go 79.6 51 max 600
-crate 81 20 51 max 120
+go 80.11 51.00 tol 0.05 max 600
+crate 81 20 51 tol 0.06 max 120
 go 79.6 49
 go 81 49
 face 90
@@ -107,8 +107,8 @@ expect y >= 20.9
 go 84.6 50
 go 84.6 51 tol 0.1
 face 270
-go 82.6 51 max 600
-crate 81 21 51 max 120
+go 81.89 51.00 tol 0.05 max 600
+crate 81 21 51 tol 0.06 max 120
 go 82.4 52.2 tol 0.1
 face 270
 go 81 52 jump 1.5 tol 0.15

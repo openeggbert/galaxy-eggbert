@@ -127,9 +127,9 @@ go 89 56 with crouch
 # wall (z 35): the row stands along x 89 from z 35 to 39. The vault's treasures along z 37
 # either side of it, then the one under the row's middle crate, pushed east off it.
 go 89 49
-go 89 40.2 max 1200
-crate 89 8 35 max 60
-crate 89 8 39 max 60
+go 89.00 39.89 tol 0.05 max 1200
+crate 89 8 35 tol 0.06 max 60
+crate 89 8 39 tol 0.06 max 60
 go 88 39.6
 go 88 37 tol 0.15
 go 86 37 tol 0.15

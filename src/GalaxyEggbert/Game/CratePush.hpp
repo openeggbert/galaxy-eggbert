@@ -17,11 +17,9 @@ namespace GalaxyEggbert::Game::CratePush
     //   linked to the one he holds (at least 1), doubles under Power, and ramps up over the
     //   first 20 ticks of the action (max * phase / 20, at least 1).
     //
-    // Galaxy's 3D adaptation (plans/audit/mechanics_3d_decisions.md M3D-0001): a crate moves
-    // one cell at a time along X or Z, at exactly that speed, with Blupi held at the contact
-    // distance, and a push or pull once started finishes its cell, so a crate always comes to
-    // rest on the grid (a crate half way between two cells could fit no corridor along the
-    // other axis). Holding the button carries it on across cells without a stop.
+    // In 3D the crate moves along X or Z (the axis Blupi faces), its group linked within the push's
+    // lane, and it rests wherever it stops, as the original's (the owner's reports OR-0021..0023
+    // overturned the whole-cell moves of M3D-0001, 2026-11-01).
 
     // The original's 64-pixel block is one Galaxy cell.
     inline constexpr float kPixelsPerCell = 64.0f;
@@ -35,6 +33,12 @@ namespace GalaxyEggbert::Game::CratePush
     // Walking into a crate becomes a push once his centre is this close to the crate's (his
     // collision point stops at half a cell from it, so he always gets there).
     inline constexpr float kEngageGap = kContactGap + 1.0f / kPixelsPerCell;
+
+    // A 3D adaptation (M3D-0002): a crate that cannot go only because it lies off the lane of its
+    // move by up to this much across (a pixel past a cell after a push along the other axis, say)
+    // first slides into the lane, at the same speed. The original is 1D and needs no such rule;
+    // aligning a crate to the pixel in 3D is not humanly possible.
+    inline constexpr float kLaneSlide = 16.0f / kPixelsPerCell;
 
     inline constexpr int kPushMaxPixels = 5; // CaisseGetMove(5), Decor.cpp:3388/3446
     inline constexpr int kPullMaxPixels = 3; // CaisseGetMove(3), Decor.cpp:3410/3468

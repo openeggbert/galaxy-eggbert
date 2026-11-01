@@ -208,13 +208,13 @@ go 34 55.6 tol 0.15
 until eggs = 8 max 200
 go 36.6 53 tol 0.1
 face 90
-go 41.6 53 max 900
-crate 43 63 53 max 60
+go 42.11 53.00 tol 0.05 max 900
+crate 43 63 53 tol 0.06 max 60
 go 41.6 54.4
 go 43 54.4 tol 0.1
 face 0
-go 43 50.4 max 900
-crate 43 63 49 max 60
+go 43.00 49.89 tol 0.05 max 900
+crate 43 63 49 tol 0.06 max 60
 go 43 49 jump 1.4 tol 0.15
 until ground = 1
 expect y >= 63.95

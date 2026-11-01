@@ -66,8 +66,8 @@ go 39.3 42.6
 go 43 42.6
 go 43 42.4 tol 0.1
 face 0
-go 43 36.4 max 900
-crate 43 20 35 max 120
+go 43.00 35.89 tol 0.05 max 900
+crate 43 20 35 tol 0.06 max 120
 go 43 35 jump 1.5 tol 0.15
 until ground = 1
 expect y >= 20.9

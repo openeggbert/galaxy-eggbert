@@ -193,6 +193,31 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   animation's length), whatever the file stores. Galaxy kept the stored values (200 in 061, 062,
   065, 066; 30 in 199; 40 in 999). Now forced at load (`WorldRuntime`). `VerifyInteractionSystem`.
 
+## BD-0014 — crates moved whole cells; a pull ran on after the keys and needed a free cell (gameplay) — FIXED_AND_VERIFIED
+
+- Owner reports OR-0021 (a pull sometimes does not start), OR-0022 (released, a pulled crate keeps
+  moving for about a second), OR-0023 (Mobile Eggbert lets a crate be pulled onto another so that
+  it overhangs; Galaxy did not). All three came from M3D-0001's first reading (D60): a move once
+  started finished its cell; support was checked for the destination cell; a pull needed room for
+  Blupi a whole cell behind him.
+- Reference: `Decor.cpp:6130-6157/6200-6248` (Push/Pop each tick: the crate put at Blupi's hands;
+  a Push that cannot go takes Blupi back, a Pop that cannot go becomes Stop), `:9321-9346`
+  (`TestPushCaisse`: the linked group all or nothing), `:9354-9385` (`TestPushOneCaisse`: the box
+  against the decor, then for the seed row a 20 px patch under each lower corner must hit solid
+  ground or a crate), `:9456-9479` (`CaisseInFront`), `:9487-9507` (`CaisseGetMove`).
+- Fix: crates are boxes at any X/Z (`InteractionSystem::UpdateCratePush`, `CrateGroupCanMove`,
+  `CrateSupported` with four corner patches in 3D, `CrateBoxHoldsBlupi`); each frame the group
+  moves by the original's speed if it all fits, else nothing; release stops it the same frame; a
+  blocked pull restarts the ramp (Stop). Autoplay: `crate X Y Z [tol T]`, crate rest lines
+  wherever a crate stops. M3D-0001 rewritten.
+- Validation: `VerifyInteractionSystem` (pushed along Z and resting between cells; stays when let
+  go of; stops at a wall at most one step short; over a gap, off a step onto a crate and over water
+  by at most the 20 px support; pulled onto another crate until only its corner holds (OR-0023);
+  a pull stops the frame he stops backing away and stays (OR-0022); pulled again from there and
+  with a wall less than a cell behind him (OR-0021); timing per 20 Hz tick unchanged); 110/110.
+  The 24 playthroughs with crates: see `test_coverage.csv` (push targets recomputed: Blupi stops
+  57 px behind the crate's goal, `crate ... tol 0.06`).
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

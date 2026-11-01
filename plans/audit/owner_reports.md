@@ -29,10 +29,9 @@ must be deep and complete, not limited to this list. Status values as in
 | OR-0018 | On a moving platform a wrong animation plays, as if Blupi were falling. | onGround while riding a lift (RideLift) vs the anim state | UNREVIEWED |
 | OR-0019 | Flying the helicopter into a block's ceiling should wreck it; nothing happens. | the original's helicopter crash rule | UNREVIEWED |
 | OR-0020 | In the helicopter in the air (not at the floor), pressing Space leaves the helicopter hanging in the air and Blupi falls; Mobile Eggbert probably does not behave so. | the original's dismount rule for the helicopter (only on the ground?) | UNREVIEWED |
-| OR-0021 | Pulling a crate back sometimes does not work. | D60's pull: hold detection, Blupi's room behind, `CratePush` | UNREVIEWED |
-| OR-0022 | Pulling a crate, if all keys are released Blupi keeps pulling it by himself for another second. | D60's committed move (M3D-0001): the owner rejects it; the original stops at once | REPRODUCED_DEFECT (by design of M3D-0001) |
-| OR-0023 | In Mobile Eggbert a crate can be pulled onto another crate so that part of it overhangs; in Galaxy it cannot. "You skimped on comparing the crate logic." | M3D-0001's whole-cell moves and destination-cell support; the original's crates rest at any pixel and need only a 20 px corner support | REPRODUCED_DEFECT (by design of M3D-0001) |
+| OR-0021 | Pulling a crate back sometimes does not work. | The pull needed a whole free cell behind Blupi (and none of it inside another crate's cell); now only his collision point where it puts him (BD-0014). | FIXED_AND_VERIFIED |
+| OR-0022 | Pulling a crate, if all keys are released Blupi keeps pulling it by himself for another second. | M3D-0001's committed move removed: it stops the frame he lets go (BD-0014). | FIXED_AND_VERIFIED |
+| OR-0023 | In Mobile Eggbert a crate can be pulled onto another crate so that part of it overhangs; in Galaxy it cannot. "You skimped on comparing the crate logic." | Crates rest at any position and need only the original's 20 px corner supports (four in 3D), so they overhang ledges and crates as in the original (BD-0014). | FIXED_AND_VERIFIED |
 
-Consequences already clear: OR-0022/0023 overturn M3D-0001 (the owner wants the original's
-continuous crates: stopping anywhere, overhanging up to the original's corner rule). The crate
-module has to move to continuous positions with box collision against cells and crates.
+OR-0021..0023 overturned M3D-0001's first reading: crates are continuous now (BD-0014, M3D-0001
+rewritten).

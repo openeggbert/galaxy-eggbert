@@ -20,7 +20,8 @@
 //   until COND [max N]         no keys until COND holds (at most N ticks, default 1800)
 //   lift X Y Z [max N]         no keys until a lift would carry him standing at (X, Y, Z): its
 //                              platform is there (within 0.05), Y being his feet's height on it
-//   crate X Y Z [max N]        no keys until a crate stands in cell (X, Y, Z) (within 0.05)
+//   crate X Y Z [tol T] [max N] no keys until a crate stands at (X, Y, Z) (within T along X and Z,
+//                              default 0.05; crates rest anywhere, not on whole cells)
 //   clear X Y Z R [lane x|z] [max N]
 //                              no keys until no enemy (fish, mine, bird, ...) is within R of
 //                              (X, Y, Z): time a dive past a patrol; with `lane x` only the enemies

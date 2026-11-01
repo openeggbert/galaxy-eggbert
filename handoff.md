@@ -16,6 +16,14 @@ The owner's campaign brief of 2026-11-01 is milestone G: `plans/GALAXY_EGGBERT_F
 `tools/audit/*.py`; hand-written parts in the `*.notes.csv` sidecars and the `.md` ledgers). Read the
 ledgers before repeating any discovery. Where it stands:
 
+- **Owner reports OR-0001..0023** (`plans/audit/owner_reports.md`, the owner's spot checks of
+  2026-11-01; the owner expects the audit to go deeper than the list). Done: OR-0001/0015 lives
+  row and life-loss icon; **OR-0021/0022/0023 continuous crates** (BD-0014, M3D-0001 rewritten,
+  M3D-0002 lane slide): crates are boxes at any X/Z, move by `CaisseGetMove` while all of the
+  group fits, stop the frame he lets go, overhang by the original's 20 px corner supports; a pull
+  needs room only for his collision point. Autoplay: `crate X Y Z [tol T]`; a push in a script
+  now stops Blupi exactly 57 px (0.89) behind the crate's goal (`go ... tol 0.05`). All 24
+  crate playthroughs pass.
 - Done: baseline (70d2b99, 110/110); ledgers (`f4d67c8`); silent runs (`b33fac3`); **D60 crate
   push/pull** (`1c59eae`; BD-0001/0002, M3D-0001):
   `CratePush.hpp`, `InteractionSystem::UpdateCratePush()`, crates as boxes in Blupi's collision,

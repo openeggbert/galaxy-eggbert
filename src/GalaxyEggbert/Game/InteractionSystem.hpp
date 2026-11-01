@@ -282,15 +282,15 @@ namespace GalaxyEggbert::Game
             bool holding = false;        // crouching, facing a crate: StopPop
             bool pullingBack = false;    // holding and Down held: Pop
             bool power = false;          // m_blupiPower: twice the speed
-            // Whether Blupi's collision point (feet and head) is clear at (x, y, z): a pull backs
-            // him a cell away, which needs room behind him. Empty: always clear.
+            // Whether Blupi's collision point (feet and head) is clear of blocks at (x, y, z): a
+            // pull backs him away with the crate, which needs room behind him (other crates are
+            // tested here). Empty: no blocks in the way.
             std::function<bool(float x, float y, float z)> blupiClearAt;
         };
         struct CratePushOutput
         {
             bool pushing = false;   // Push: walking into a crate (moving it or not)
             bool pulling = false;   // Pop: a held crate following him
-            bool committed = false; // a crate is between two cells: its move finishes first
             // Where Blupi stands against the crate he moves (centre-to-centre kContactGap
             // along the axis, on its line across it).
             bool holdBlupi = false;
@@ -1075,19 +1075,6 @@ namespace GalaxyEggbert::Game
         static constexpr int kPersoCap = 5; // real m_blupiPerso cap
         int persoCount_ = 0;
         bool crateBeingPushedThisFrame_ = false; // set by UpdateCratePush(); NOT part of events_ (see its own comment)
-        // The crate move in progress (UpdateCratePush): its group's rest cells, raw relative
-        // coordinates, before the move; the axis (0: X, 2: Z), direction and progress (cells).
-        struct CrateMove
-        {
-            bool active = false;
-            bool pulled = false;
-            int axis = 0;
-            float dir = 0.0f;
-            float side = 0.0f; // where the crate is from Blupi along the axis (+1 / -1)
-            float progress = 0.0f;
-            std::vector<std::array<float, 3>> from;
-        };
-        CrateMove crateMove_;
         bool contactGrace_ = false;
         float graceX_ = 0.0f, graceY_ = 0.0f, graceZ_ = 0.0f;
         int crateAction_ = 0;            // 0 none, 1 Push, 2 Pop: the action the speed ramps in

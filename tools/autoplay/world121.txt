@@ -8,13 +8,13 @@ go 44 50
 go 38 50
 go 35 52
 face 0
-go 35 46.4 max 900
-crate 35 10 45 max 60
+go 35.00 45.89 tol 0.05 max 900
+crate 35 10 45 tol 0.06 max 60
 go 36.6 46.4
 go 36.6 45
 face 270
-go 33.4 45 max 900
-crate 32 10 45 max 60
+go 32.89 45.00 tol 0.05 max 900
+crate 32 10 45 tol 0.06 max 60
 # Onto the crate (one up), onto the ledge (two up) for treasure 2.
 go 32 45 jump 1.4 tol 0.15
 until ground = 1
@@ -38,13 +38,13 @@ go 64.6 50
 go 66.6 46.6
 go 68 46.6
 face 180
-go 68 53.6 max 900
-crate 68 10 55 max 60
+go 68.00 54.11 tol 0.05 max 900
+crate 68 10 55 tol 0.06 max 60
 go 66.6 53.6
 go 66.6 55
 face 90
-go 69.6 55 max 900
-crate 71 10 55 max 60
+go 70.11 55.00 tol 0.05 max 900
+crate 71 10 55 tol 0.06 max 60
 go 71 55 jump 1.4 tol 0.15
 until ground = 1
 go 72.6 55 jump 1.6

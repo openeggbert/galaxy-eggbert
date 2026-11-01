@@ -9,8 +9,8 @@ expect mission = 101
 go 48 52
 go 48 51.4 tol 0.1
 face 0
-go 48 47.4 max 900
-crate 48 6 46 max 60
+go 48.00 46.89 tol 0.05 max 900
+crate 48 6 46 tol 0.06 max 60
 go 48 46 jump 1.4 tol 0.15
 until ground = 1
 go 48 44.4 jump 1.6
@@ -90,13 +90,13 @@ until treasures = 4 max 200
 go 83.3 54
 go 82 53.6
 face 180
-go 82 56.6 max 600
-crate 82 6 58 max 60
+go 82.00 57.11 tol 0.05 max 600
+crate 82 6 58 tol 0.06 max 60
 go 83.4 56.6
 go 83.4 58
 face 270
-go 82.4 58 max 600
-crate 81 6 58 max 60
+go 81.89 58.00 tol 0.05 max 600
+crate 81 6 58 tol 0.06 max 60
 go 81 58 jump 1.4 tol 0.15
 until ground = 1
 go 79.6 58 jump 1.6

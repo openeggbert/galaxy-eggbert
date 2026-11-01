@@ -1217,6 +1217,9 @@ namespace GalaxyEggbert::Game
         // under his feet (blocks only; the caller checks the crates).
         [[nodiscard]] static bool CanStandAt(const Worlds::World& world, float x, float y, float z,
                                              bool tempPassable = false);
+        // Whether his collision point (feet and head) is clear at (x, y, z), ground or not.
+        [[nodiscard]] static bool IsClearAt(const Worlds::World& world, float x, float y, float z,
+                                            bool tempPassable = false);
 
         // Whether the caller is turning him round on foot this frame (Down's turn-around): shows
         // AnimState::Turn while he stands.

@@ -377,6 +377,12 @@ namespace GalaxyEggbert::Game
         m_z = moved.z;
     }
 
+    bool BlupiController::IsClearAt(const Worlds::World& world, float x, float y, float z, bool tempPassable)
+    {
+        return !IsPointSolid(world, x, y + 0.05f, z, tempPassable) &&
+               !IsPointSolid(world, x, y + kHeadHeight, z, tempPassable);
+    }
+
     bool BlupiController::CanStandAt(const Worlds::World& world, float x, float y, float z, bool tempPassable)
     {
         return !IsPointSolid(world, x, y + 0.05f, z, tempPassable) &&

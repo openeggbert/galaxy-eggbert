@@ -182,7 +182,11 @@ namespace GalaxyEggbert::Game
             return obj.active && GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle;
         }
 
-        // A crate occupies raw cell (gx, gy, gz)?
+        // Crates are boxes where they are (a unit cube centred on currentX/Z, from currentY up, at any
+        // position along X and Z, as the original's crates rest at any pixel: OR-0022/0023).
+        constexpr float kCrateEps = 1e-3f;
+
+        // A crate's box covers part of raw cell (gx, gy, gz)?
         bool CrateAtCell(const std::vector<MobileObjSpec>& objects, int gx, int gy, int gz,
                          const std::vector<MobileObjSpec*>& except)
         {
@@ -192,9 +196,11 @@ namespace GalaxyEggbert::Game
                 {
                     continue;
                 }
-                if (static_cast<int>(std::lround(other.currentX)) + WorldRuntime::kWorldCenterX == gx &&
-                    static_cast<int>(std::lround(other.currentY)) == gy &&
-                    static_cast<int>(std::lround(other.currentZ)) + WorldRuntime::kWorldCenterZ == gz)
+                const float rawX = other.currentX + static_cast<float>(WorldRuntime::kWorldCenterX);
+                const float rawZ = other.currentZ + static_cast<float>(WorldRuntime::kWorldCenterZ);
+                if (static_cast<int>(std::lround(other.currentY)) == gy &&
+                    std::fabs(rawX - static_cast<float>(gx)) < 1.0f - kCrateEps &&
+                    std::fabs(rawZ - static_cast<float>(gz)) < 1.0f - kCrateEps)
                 {
                     return true;
                 }
@@ -202,14 +208,36 @@ namespace GalaxyEggbert::Game
             return false;
         }
 
-        // `seed` and every crate linked to it (touching, at or above its row; for a pull only
-        // those stacked right on it, SearchLinkCaisse(bPop)), the seed first, for a move along
-        // `axis` (0: X, 2: Z).
+        // Whether a crate's box (not one of `except`) holds Blupi's collision point at relative (x, z)
+        // between his feet and his head standing at y: where he cannot stand (BlupiController's
+        // IsCrateAt, the same test).
+        bool CrateBoxHoldsBlupi(const std::vector<MobileObjSpec>& objects, float x, float y, float z,
+                                const std::vector<MobileObjSpec*>& except)
+        {
+            constexpr float kFeet = 0.05f;
+            constexpr float kHead = 49.0f / 64.0f; // BlupiController::kHeadHeight
+            for (const auto& other : objects)
+            {
+                if (IsCrate(other) && std::find(except.begin(), except.end(), &other) == except.end() &&
+                    std::fabs(other.currentX - x) < 0.5f && std::fabs(other.currentZ - z) < 0.5f &&
+                    other.currentY < y + kHead && other.currentY + 1.0f > y + kFeet)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // `seed` and every crate linked to it (Decor::SearchLinkCaisse): crates whose boxes touch (1 px)
+        // an already linked one, at or above the seed's row; for a pull only those within 32 px of
+        // the seed along the axis (the stack on it). In 3D they must also share the push's lane
+        // (overlap across it): a crate beside the lane is not dragged along.
         std::vector<MobileObjSpec*> CrateGroup(std::vector<MobileObjSpec>& objects, MobileObjSpec& seed, int axis,
                                                bool pulled)
         {
             const auto along = [axis](const MobileObjSpec& o) { return axis == 0 ? o.currentX : o.currentZ; };
             const auto across = [axis](const MobileObjSpec& o) { return axis == 0 ? o.currentZ : o.currentX; };
+            constexpr float kTouch = 1.0f + 1.0f / 64.0f;
             std::vector<MobileObjSpec*> linked{&seed};
             for (bool added = true; added;)
             {
@@ -217,15 +245,17 @@ namespace GalaxyEggbert::Game
                 for (auto& other : objects)
                 {
                     if (!IsCrate(other) || std::find(linked.begin(), linked.end(), &other) != linked.end() ||
-                        other.currentY < seed.currentY - 0.5f || std::fabs(across(other) - across(seed)) > 0.5f ||
+                        other.currentY < seed.currentY - 0.5f ||
+                        std::fabs(across(other) - across(seed)) >= 1.0f - kCrateEps ||
                         (pulled && std::fabs(along(other) - along(seed)) > 0.5f))
                     {
                         continue;
                     }
                     for (auto* member : linked)
                     {
-                        if (std::fabs(along(other) - along(*member)) < 1.5f &&
-                            std::fabs(other.currentY - member->currentY) < 1.5f)
+                        if (std::fabs(along(other) - along(*member)) <= kTouch &&
+                            std::fabs(across(other) - across(*member)) <= kTouch &&
+                            std::fabs(other.currentY - member->currentY) <= kTouch)
                         {
                             linked.push_back(&other);
                             added = true;
@@ -237,47 +267,110 @@ namespace GalaxyEggbert::Game
             return linked;
         }
 
-        // Whether every crate of `group` can move one cell along `axis` by `dir`: every
-        // destination free of solid blocks and other crates, and the seed row's destinations
-        // standing on a block or a crate (Decor::TestPushCaisse()/TestPushOneCaisse()).
+        // Solid for a crate (DecorDetect): a block with a collision mask, or outside the world.
+        bool CrateBlockSolid(const Worlds::World& world, int gx, int gy, int gz)
+        {
+            const int n = static_cast<int>(world.blocksPerAxis());
+            if (gx < 0 || gy < 0 || gz < 0 || gx >= n || gy >= n || gz >= n)
+            {
+                return true;
+            }
+            const auto block =
+                world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy), static_cast<std::uint16_t>(gz));
+            return !block.isAir() && GetBlockDefinition(block.type()).collisionMask != 0;
+        }
+
+        // The raw cells a span [lo, hi] (raw, centre-anchored cells) overlaps.
+        void CellSpan(float lo, float hi, int& first, int& last)
+        {
+            first = static_cast<int>(std::floor(lo + 0.5f + kCrateEps));
+            last = static_cast<int>(std::floor(hi + 0.5f - kCrateEps));
+        }
+
+        // Whether a crate box centred at raw (rx, rz), row y, overlaps a solid block.
+        bool CrateBoxHitsBlock(const Worlds::World& world, float rx, int y, float rz)
+        {
+            int x0, x1, z0, z1;
+            CellSpan(rx - 0.5f, rx + 0.5f, x0, x1);
+            CellSpan(rz - 0.5f, rz + 0.5f, z0, z1);
+            for (int gx = x0; gx <= x1; ++gx)
+                for (int gz = z0; gz <= z1; ++gz)
+                    if (CrateBlockSolid(world, gx, y, gz))
+                        return true;
+            return false;
+        }
+
+        // Support under a crate box at raw (rx, rz), row y (Decor::TestPushOneCaisse): each of its
+        // bottom's corner patches, 20 px square, stands on a solid block or on a crate below. A crate
+        // may so overhang an edge by up to 20 px, as the original's.
+        bool CrateSupported(const Worlds::World& world, const std::vector<MobileObjSpec>& objects, float rx, int y,
+                            float rz, const std::vector<MobileObjSpec*>& group)
+        {
+            constexpr float kPatch = 20.0f / 64.0f;
+            for (const float sx : {-1.0f, 1.0f})
+            {
+                for (const float sz : {-1.0f, 1.0f})
+                {
+                    const float px0 = sx < 0.0f ? rx - 0.5f : rx + 0.5f - kPatch;
+                    const float pz0 = sz < 0.0f ? rz - 0.5f : rz + 0.5f - kPatch;
+                    bool held = false;
+                    int x0, x1, z0, z1;
+                    CellSpan(px0, px0 + kPatch, x0, x1);
+                    CellSpan(pz0, pz0 + kPatch, z0, z1);
+                    for (int gx = x0; gx <= x1 && !held; ++gx)
+                        for (int gz = z0; gz <= z1 && !held; ++gz)
+                            held = CrateBlockSolid(world, gx, y - 1, gz);
+                    for (const auto& other : objects)
+                    {
+                        if (held)
+                            break;
+                        if (!IsCrate(other) || std::find(group.begin(), group.end(), &other) != group.end() ||
+                            static_cast<int>(std::lround(other.currentY)) != y - 1)
+                            continue;
+                        const float ox = other.currentX + static_cast<float>(WorldRuntime::kWorldCenterX);
+                        const float oz = other.currentZ + static_cast<float>(WorldRuntime::kWorldCenterZ);
+                        held = px0 + kPatch > ox - 0.5f + kCrateEps && px0 < ox + 0.5f - kCrateEps &&
+                               pz0 + kPatch > oz - 0.5f + kCrateEps && pz0 < oz + 0.5f - kCrateEps;
+                    }
+                    if (!held)
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        // Whether every crate of `group` can move by `delta` along `axis` (0: X, 2: Z): its box free
+        // of blocks and of the other crates, and the seed row's crates supported where they arrive
+        // (Decor::TestPushCaisse: all or nothing).
         bool CrateGroupCanMove(const WorldRuntime& worldRuntime, const std::vector<MobileObjSpec>& objects,
-                               const std::vector<MobileObjSpec*>& group, int axis, float dir)
+                               const std::vector<MobileObjSpec*>& group, int axis, float delta)
         {
             const auto& world = worldRuntime.GetWorld();
-            const int axisCells = static_cast<int>(world.blocksPerAxis());
             const float seedY = group.front()->currentY;
             for (const auto* member : group)
             {
-                const int gx = static_cast<int>(std::lround(member->currentX + (axis == 0 ? dir : 0.0f))) +
-                               WorldRuntime::kWorldCenterX;
-                const int gy = static_cast<int>(std::lround(member->currentY));
-                const int gz = static_cast<int>(std::lround(member->currentZ + (axis == 2 ? dir : 0.0f))) +
-                               WorldRuntime::kWorldCenterZ;
-                if (gx < 0 || gz < 0 || gy < 1 || gx >= axisCells || gz >= axisCells || gy >= axisCells)
+                const float rx = member->currentX + static_cast<float>(WorldRuntime::kWorldCenterX) + (axis == 0 ? delta : 0.0f);
+                const float rz = member->currentZ + static_cast<float>(WorldRuntime::kWorldCenterZ) + (axis == 2 ? delta : 0.0f);
+                const int y = static_cast<int>(std::lround(member->currentY));
+                if (y < 1 || CrateBoxHitsBlock(world, rx, y, rz))
                 {
                     return false;
                 }
-                const auto at = [&](int y) {
-                    return world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(y),
-                                          static_cast<std::uint16_t>(gz));
-                };
-                const auto& here = GetBlockDefinition(at(gy).type());
-                if (!at(gy).isAir() && here.collisionMask != 0)
+                for (const auto& other : objects)
                 {
-                    return false;
+                    if (!IsCrate(other) || std::find(group.begin(), group.end(), &other) != group.end() ||
+                        static_cast<int>(std::lround(other.currentY)) != y)
+                    {
+                        continue;
+                    }
+                    const float ox = other.currentX + static_cast<float>(WorldRuntime::kWorldCenterX);
+                    const float oz = other.currentZ + static_cast<float>(WorldRuntime::kWorldCenterZ);
+                    if (std::fabs(ox - rx) < 1.0f - kCrateEps && std::fabs(oz - rz) < 1.0f - kCrateEps)
+                    {
+                        return false;
+                    }
                 }
-                std::vector<MobileObjSpec*> except(group.begin(), group.end());
-                if (CrateAtCell(objects, gx, gy, gz, except))
-                {
-                    return false;
-                }
-                // Support: something solid under it (TestPushOneCaisse's DecorDetect tests the
-                // quarter-cell mask, so water and empty-mask decor hold nothing up, BD-0003), or a
-                // crate.
-                const auto below = at(gy - 1);
-                const bool solidBelow = !below.isAir() && GetBlockDefinition(below.type()).collisionMask != 0;
-                if (std::fabs(member->currentY - seedY) < 0.5f && !solidBelow &&
-                    !CrateAtCell(objects, gx, gy - 1, gz, except))
+                if (std::fabs(member->currentY - seedY) < 0.5f && !CrateSupported(world, objects, rx, y, rz, group))
                 {
                     return false;
                 }
@@ -851,176 +944,95 @@ namespace GalaxyEggbert::Game
     InteractionSystem::CratePushOutput InteractionSystem::UpdateCratePush(float dt, WorldRuntime& worldRuntime,
                                                                           const CratePushInput& in)
     {
+        // As the original (Decor.cpp:6130-6248, 3386-3470, 9321-9507): every tick of Push or Pop Blupi
+        // moves CaisseGetMove pixels and the crate group is put against him if all of it fits there
+        // (blocks, other crates, the corner support); if not, nothing moves. Crates rest wherever
+        // they stop; letting go stops them at once (OR-0021/0022/0023 overturned the whole-cell moves
+        // of M3D-0001).
         using namespace CratePush;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const auto alongOf = [](int axis, const MobileObjSpec& o) { return axis == 0 ? o.currentX : o.currentZ; };
         const auto acrossOf = [](int axis, const MobileObjSpec& o) { return axis == 0 ? o.currentZ : o.currentX; };
-        // The axis Blupi faces along (CrateInFront's: not diagonally) and its sign.
         const bool faceAlongX = std::fabs(in.facingX) > std::fabs(in.facingZ);
-        const int faceAxis = faceAlongX ? 0 : 2;
-        const float faceSign = faceAlongX ? (in.facingX > 0.0f ? 1.0f : -1.0f) : (in.facingZ > 0.0f ? 1.0f : -1.0f);
+        const int axis = faceAlongX ? 0 : 2;
+        const float side = faceAlongX ? (in.facingX > 0.0f ? 1.0f : -1.0f) : (in.facingZ > 0.0f ? 1.0f : -1.0f);
         const bool wantPush = in.canPush && in.onGround && in.walkingForward && !in.holding;
         const bool wantPull = in.canPush && in.onGround && in.holding && in.pullingBack;
 
-        // The crates of the move in progress, found where they should be by now; a crate gone
-        // meanwhile (a blast) is dropped, the others finish the move.
-        std::vector<MobileObjSpec*> members;
-        const auto locateMembers = [&]()
+        MobileObjSpec* seed = nullptr;
+        if (wantPush || in.holding)
         {
-            members.clear();
-            std::vector<std::array<float, 3>> kept;
-            for (const auto& from : crateMove_.from)
-            {
-                const float shift = crateMove_.dir * crateMove_.progress;
-                const float ex = from[0] + (crateMove_.axis == 0 ? shift : 0.0f);
-                const float ez = from[2] + (crateMove_.axis == 2 ? shift : 0.0f);
-                for (auto& obj : objects)
-                {
-                    if (IsCrate(obj) && std::find(members.begin(), members.end(), &obj) == members.end() &&
-                        std::fabs(obj.currentX - ex) < 1e-3f && std::fabs(obj.currentY - from[1]) < 1e-3f &&
-                        std::fabs(obj.currentZ - ez) < 1e-3f)
-                    {
-                        members.push_back(&obj);
-                        kept.push_back(from);
-                        break;
-                    }
-                }
-            }
-            crateMove_.from = std::move(kept);
-            crateMove_.active = !members.empty();
-        };
-        const auto placeMembers = [&]()
-        {
-            for (std::size_t i = 0; i < members.size(); ++i)
-            {
-                const auto& from = crateMove_.from[i];
-                const float shift = crateMove_.dir * crateMove_.progress;
-                members[i]->currentX = from[0] + (crateMove_.axis == 0 ? shift : 0.0f);
-                members[i]->currentZ = from[2] + (crateMove_.axis == 2 ? shift : 0.0f);
-            }
-        };
-        // Starts a one-cell move of `seed`'s group if every crate of it can go (and, pulling,
-        // Blupi has room to back away a cell).
-        const auto tryStart = [&](MobileObjSpec& seed, bool pulled) -> bool
-        {
-            const float side = faceSign;
-            const float dir = pulled ? -side : side;
-            std::vector<MobileObjSpec*> group = CrateGroup(objects, seed, faceAxis, pulled);
-            if (!CrateGroupCanMove(worldRuntime, objects, group, faceAxis, dir))
-            {
-                return false;
-            }
-            if (pulled)
-            {
-                // He backs a cell away: room for him there (blocks, ground, another crate).
-                const float blupiAlong = alongOf(faceAxis, seed) + dir - side * kContactGap;
-                const float x = faceAxis == 0 ? blupiAlong : in.blupiX;
-                const float z = faceAxis == 2 ? blupiAlong : in.blupiZ;
-                if ((in.blupiClearAt && !in.blupiClearAt(x, in.blupiY, z)) ||
-                    CrateAtCell(objects, static_cast<int>(std::lround(x)) + WorldRuntime::kWorldCenterX,
-                                static_cast<int>(std::floor(in.blupiY + 0.05f)),
-                                static_cast<int>(std::lround(z)) + WorldRuntime::kWorldCenterZ, group))
-                {
-                    return false;
-                }
-            }
-            crateMove_ = CrateMove{};
-            crateMove_.active = true;
-            crateMove_.pulled = pulled;
-            crateMove_.axis = faceAxis;
-            crateMove_.dir = dir;
-            crateMove_.side = side;
-            for (auto* member : group)
-            {
-                crateMove_.from.push_back({member->currentX, member->currentY, member->currentZ});
-            }
-            members = std::move(group);
-            return true;
-        };
-
-        if (crateMove_.active)
-        {
-            locateMembers();
-        }
-        // The crate he is against: the seed of the move in progress, or the nearest one in front.
-        MobileObjSpec* seed = crateMove_.active ? members.front() : nullptr;
-        int action = 0;
-        if (crateMove_.active)
-        {
-            action = crateMove_.pulled ? 2 : 1;
-        }
-        else if (wantPush || in.holding)
-        {
-            const float reach = in.holding ? 1.1f : kEngageGap;
-            seed = const_cast<MobileObjSpec*>(
-                CrateInFront(worldRuntime, in.blupiX, in.blupiY, in.blupiZ, in.facingX, in.facingZ, reach));
-            // A push needs him walking into the crate's face (his collision point would meet its
-            // cube), not grazing its corner as he walks past it.
-            const bool intoFace = seed && std::fabs(acrossOf(faceAxis, *seed) -
-                                                    (faceAxis == 0 ? in.blupiZ : in.blupiX)) < 0.5f;
-            if (seed && wantPush && intoFace)
-            {
-                action = 1;
-                tryStart(*seed, false);
-            }
-            else if (wantPush)
+            seed = const_cast<MobileObjSpec*>(CrateInFront(worldRuntime, in.blupiX, in.blupiY, in.blupiZ, in.facingX,
+                                                           in.facingZ, in.holding ? 1.1f : kEngageGap));
+            // A push needs him walking into the crate's face, not grazing its corner.
+            if (seed && wantPush && std::fabs(acrossOf(axis, *seed) - (axis == 0 ? in.blupiZ : in.blupiX)) >= 0.5f)
             {
                 seed = nullptr;
             }
-            else if (seed && wantPull && tryStart(*seed, true))
-            {
-                action = 2;
-            }
         }
+        const int action = seed == nullptr ? 0 : (wantPush ? 1 : (wantPull ? 2 : 0));
         if (action != crateAction_)
         {
             crateActionSeconds_ = 0.0f;
             crateAction_ = action;
         }
 
-        // Advance the move at CaisseGetMove's speed; holding on carries it into the next cell.
-        if (crateMove_.active)
+        bool moved = false;
+        if (action != 0)
         {
-            const int maxPixels = crateMove_.pulled ? kPullMaxPixels : kPushMaxPixels;
-            float travel = CellsPerSecond(maxPixels, static_cast<int>(members.size()), in.power, crateActionSeconds_) * dt;
-            for (int cells = 0; cells < 2 && crateMove_.active && travel > 0.0f; ++cells)
+            const bool pulled = action == 2;
+            std::vector<MobileObjSpec*> group = CrateGroup(objects, *seed, axis, pulled);
+            const float speed = CellsPerSecond(pulled ? kPullMaxPixels : kPushMaxPixels, static_cast<int>(group.size()),
+                                               in.power, crateActionSeconds_);
+            const float delta = (pulled ? -side : side) * speed * dt;
+            bool blupiFree = true;
+            if (pulled)
             {
-                const float step = std::min(travel, 1.0f - crateMove_.progress);
-                crateMove_.progress += step;
-                travel -= step;
-                if (crateMove_.progress >= 1.0f - 1e-5f)
+                // He backs away with it: room for him where it puts him (blocks, other crates).
+                const float blupiAlong = alongOf(axis, *seed) + delta - side * kContactGap;
+                const float toX = axis == 0 ? blupiAlong : in.blupiX;
+                const float toZ = axis == 2 ? blupiAlong : in.blupiZ;
+                blupiFree = (!in.blupiClearAt || in.blupiClearAt(toX, in.blupiY, toZ)) &&
+                            !CrateBoxHoldsBlupi(objects, toX, in.blupiY, toZ, group);
+            }
+            if (blupiFree && CrateGroupCanMove(worldRuntime, objects, group, axis, delta))
+            {
+                for (auto* member : group)
                 {
-                    crateMove_.progress = 1.0f;
-                    placeMembers();
-                    for (auto* member : members)
-                    {
-                        // Exactly onto the cell (posStart keeps the crate's place in the world file).
-                        member->currentX = std::round(member->currentX);
-                        member->currentZ = std::round(member->currentZ);
-                    }
-                    const bool pulled = crateMove_.pulled;
-                    crateMove_ = CrateMove{};
-                    MobileObjSpec& next = *seed;
-                    if (!(pulled ? wantPull : wantPush) || !tryStart(next, pulled))
-                    {
-                        break;
-                    }
-                    seed = members.front();
+                    (axis == 0 ? member->currentX : member->currentZ) += delta;
                 }
-                else
+                moved = true;
+            }
+            else if (blupiFree)
+            {
+                // Blocked: off its lane by a sliver, it slides into the lane first (M3D-0002).
+                const float across = acrossOf(axis, *seed);
+                const float off = across - std::round(across);
+                const float slide = -std::copysign(std::min(std::fabs(off), std::fabs(delta)), off);
+                const int acrossAxis = axis == 0 ? 2 : 0;
+                if (std::fabs(off) > 1e-5f && std::fabs(off) <= kLaneSlide &&
+                    CrateGroupCanMove(worldRuntime, objects, group, acrossAxis, slide))
                 {
-                    placeMembers();
+                    for (auto* member : group)
+                    {
+                        (acrossAxis == 0 ? member->currentX : member->currentZ) += slide;
+                    }
+                    moved = true;
                 }
             }
         }
         crateActionSeconds_ += dt;
+        if (action == 2 && !moved)
+        {
+            // A pull that cannot go is the original's Stop (Decor.cpp:6239-6243): the next pull
+            // starts over from rest, its CaisseGetMove ramp again from phase 0.
+            crateAction_ = 0;
+            crateActionSeconds_ = 0.0f;
+        }
 
         CratePushOutput out;
-        out.committed = crateMove_.active;
         if (seed && (action != 0 || in.holding))
         {
-            const float side = crateMove_.active ? crateMove_.side : faceSign;
-            const int axis = crateMove_.active ? crateMove_.axis : faceAxis;
             const float targetAlong = alongOf(axis, *seed) - side * kContactGap;
             const float targetAcross = acrossOf(axis, *seed);
             const float blupiAlong = axis == 0 ? in.blupiX : in.blupiZ;
@@ -1036,9 +1048,10 @@ namespace GalaxyEggbert::Game
                 out.faceZ = axis == 2 ? side : 0.0f;
             }
         }
-        // Push and Pop are his: a crate finishing its cell alone (he jumped off) is neither.
+        // Push stays on against a crate that cannot go (the original's Push while he marches into
+        // it); Pop only while the crate follows him (a blocked pull is the original's Stop).
         out.pushing = action == 1 && out.holdBlupi;
-        out.pulling = action == 2 && out.holdBlupi;
+        out.pulling = action == 2 && moved && out.holdBlupi;
         crateBeingPushedThisFrame_ = out.pushing;
         cratePush_ = out;
         return out;

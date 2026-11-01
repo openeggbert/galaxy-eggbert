@@ -6,18 +6,18 @@ expect mission = 41
 go 31 79
 go 29.6 78
 face 270
-go 24.4 78 max 900
-crate 23 10 78 max 60
+go 23.89 78.00 tol 0.05 max 900
+crate 23 10 78 tol 0.06 max 60
 go 24.6 79.6
 go 23 79.6
 face 0
-go 23 71.4 max 900
-crate 23 10 70 max 60
+go 23.00 70.89 tol 0.05 max 900
+crate 23 10 70 tol 0.06 max 60
 go 24.6 71.4
 go 24.6 70
 face 270
-go 23.4 70 max 900
-crate 22 10 70 max 60
+go 22.89 70.00 tol 0.05 max 900
+crate 22 10 70 tol 0.06 max 60
 # Crate B along the bench (x 22, walk 11) north off its end onto A: up onto the bench behind
 # it from the south, then walk it north.
 go 24.5 72
@@ -27,8 +27,8 @@ face 0
 go 22 76.95 jump 2.6 tol 0.1
 until ground = 1
 expect y >= 10.95
-go 22 71.4 max 900
-crate 22 11 70 max 120
+go 22.00 70.89 tol 0.05 max 900
+crate 22 11 70 tol 0.06 max 120
 # Up the stack (walk 12) onto the shelf (walk 14); the first helicopter (24, 67).
 go 22 70 jump 1.4 tol 0.15
 until ground = 1

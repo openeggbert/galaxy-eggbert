@@ -206,7 +206,7 @@ namespace GalaxyEggbert::Game
                     }
                     if (option == "max") command.ticks = static_cast<int>(value);
                     else if (allowGo && option == "jump") command.jumpAt = value;
-                    else if (allowGo && option == "tol") command.tolerance = value;
+                    else if ((allowGo || command.kind == Kind::Crate) && option == "tol") command.tolerance = value;
                     else return false;
                 }
                 return true;
@@ -248,9 +248,10 @@ namespace GalaxyEggbert::Game
             else if (verb == "lift" || verb == "crate")
             {
                 command.kind = verb == "lift" ? Kind::Lift : Kind::Crate;
+                command.tolerance = 0.05f;
                 if (!(words >> command.x >> command.y >> command.z) || !readOptions(false))
                 {
-                    return fail("needs X Y Z [max N]");
+                    return fail(command.kind == Kind::Crate ? "needs X Y Z [tol T] [max N]" : "needs X Y Z [max N]");
                 }
             }
             else if (verb == "clear" || verb == "near")
@@ -396,24 +397,23 @@ namespace GalaxyEggbert::Game
             Write(state, "crates " + std::to_string(state.crates.size()));
             crateRest_ = state.crates;
         }
-        else if (havePrevious_ && state.crates != previous_.crates)
+        else if (havePrevious_)
         {
-            // A crate moves smoothly from cell to cell (CratePush.hpp): one line each time it comes
-            // to rest on another cell; under `trace` one every tick it moves.
-            for (std::size_t i = 0; i < state.crates.size() && i < crateRest_.size(); ++i)
+            // A crate moves smoothly and rests wherever it stops (CratePush.hpp): one line each
+            // time it comes to rest; under `trace` one every tick it moves.
+            for (std::size_t i = 0; i < state.crates.size() && i < crateRest_.size() && i < previous_.crates.size(); ++i)
             {
                 const auto& was = crateRest_[i];
                 const auto& now = state.crates[i];
-                const bool onCell = std::fabs(now[0] - std::round(now[0])) < 1e-3f &&
-                                    std::fabs(now[2] - std::round(now[2])) < 1e-3f;
-                if (traceTicksLeft_ > 0 && i < previous_.crates.size() && previous_.crates[i] != now)
+                const bool moving = previous_.crates[i] != now;
+                if (traceTicksLeft_ > 0 && moving)
                 {
                     const auto& prev = previous_.crates[i];
                     std::snprintf(line, sizeof(line), "crate moving (%.4f %.2f %.4f) -> (%.4f %.2f %.4f)", prev[0],
                                   prev[1], prev[2], now[0], now[1], now[2]);
                     Write(state, line);
                 }
-                if (onCell && was != now)
+                if (!moving && was != now)
                 {
                     std::snprintf(line, sizeof(line), "crate (%.2f %.2f %.2f) -> (%.2f %.2f %.2f)", was[0], was[1],
                                   was[2], now[0], now[1], now[2]);
@@ -551,9 +551,9 @@ namespace GalaxyEggbert::Game
             {
                 const auto& where = command.kind == Kind::Lift ? state.lifts : state.crates;
                 done = std::any_of(where.begin(), where.end(), [&](const std::array<float, 3>& at) {
-                    constexpr float kAt = 0.05f;
-                    return std::fabs(at[0] - command.x) <= kAt && std::fabs(at[1] - command.y) <= kAt &&
-                           std::fabs(at[2] - command.z) <= kAt;
+                    constexpr float kAtY = 0.05f;
+                    return std::fabs(at[0] - command.x) <= command.tolerance && std::fabs(at[1] - command.y) <= kAtY &&
+                           std::fabs(at[2] - command.z) <= command.tolerance;
                 });
                 break;
             }
