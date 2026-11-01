@@ -852,6 +852,8 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool VoyageActive() const noexcept { return voyageKind_ != VoyageKind::None; }
         [[nodiscard]] int VoyageIconId() const noexcept { return voyageIconId_; }
         [[nodiscard]] bool VoyageIsButtonChannel() const noexcept { return voyageIsButton_; }
+        // The life-loss voyage flies the lives row's small Blupi (the blupi.png sheet).
+        [[nodiscard]] bool VoyageIsBlupiChannel() const noexcept { return voyageKind_ == VoyageKind::LifeLoss; }
         [[nodiscard]] float VoyageDrawX() const noexcept;
         [[nodiscard]] float VoyageDrawY() const noexcept;
         // False only for Clear3Ascend during its real 30-tick pre-move

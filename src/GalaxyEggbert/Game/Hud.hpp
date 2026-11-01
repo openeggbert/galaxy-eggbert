@@ -148,6 +148,7 @@ namespace GalaxyEggbert::Game
                   const char* overlayMessage,
                   int animIcon, bool animIconUsesElementSheet,
                   bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
+                  bool voyageIsBlupiChannel,
                   float voyageX, float voyageY,
                   GalaxyEggbert::Def::GameSpeed gameSpeed);
 

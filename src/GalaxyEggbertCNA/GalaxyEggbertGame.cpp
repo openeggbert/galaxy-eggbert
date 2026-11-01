@@ -1643,7 +1643,9 @@ namespace GalaxyEggbert::CNA
         // calling anything that decrements, since LoseLife() itself is what
         // performs the decrement (inside BeginVoyage()'s own LifeLoss case
         // below, matching real VoyageInit's inline `m_nbVies--`).
-        if (interaction_.Lives() <= 1)
+        // The lives row shows the lives in reserve: with none left this death ends the game; with
+        // one or more, one of them flies to him and he plays on (Decor.cpp:6379-6396).
+        if (interaction_.Lives() <= 0)
         {
             interaction_.LoseLife();
             return;
@@ -5432,7 +5434,7 @@ namespace GalaxyEggbert::CNA
                           cameraMode_ == CameraMode::FirstPerson ? blupi_.GetDisplayAnimIcon() : -1,
                           blupi_.AnimIconUsesElementSheet(),
                           interaction_.VoyageActive(), interaction_.VoyageIconId(),
-                          interaction_.VoyageIsButtonChannel(),
+                          interaction_.VoyageIsButtonChannel(), interaction_.VoyageIsBlupiChannel(),
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
                           gameSpeed_);
             }

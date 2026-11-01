@@ -244,6 +244,7 @@ namespace GalaxyEggbert::Game
                      const char* overlayMessage,
                      int animIcon, bool animIconUsesElementSheet,
                      bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
+                     bool voyageIsBlupiChannel,
                      float voyageX, float voyageY,
                      GalaxyEggbert::Def::GameSpeed gameSpeed)
     {
@@ -496,6 +497,13 @@ namespace GalaxyEggbert::Game
             {
                 IconUv(voyageIconId, buttonSheetW, buttonSheetH, q.u0, q.v0, q.u1, q.v1, kButtonTilePx, kButtonCols);
                 buttonQuads.push_back(q);
+            }
+            else if (voyageIsBlupiChannel)
+            {
+                // A life lost: the small Blupi of the lives row flies to him (blupi.png icon 48,
+                // the original's VoyageInit(..., 48, PixmapChannel::Blupi), Decor.cpp:6391).
+                IconUv(voyageIconId, blupiSheetW, blupiSheetH, q.u0, q.v0, q.u1, q.v1);
+                blupiQuads.push_back(q);
             }
             else
             {

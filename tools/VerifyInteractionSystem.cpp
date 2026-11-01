@@ -633,8 +633,13 @@ int main(int argc, char** argv)
         {
             interaction.LoseLife();
         }
+        // OR-0001 (Decor.cpp:6379-6396): the lives row shows the lives in reserve; with it empty he
+        // still plays, and only the next death ends the game.
+        check(interaction.Lives() == 0 && interaction.GameOverCount() == 0,
+              "with the lives row empty Blupi still plays (the original's m_nbVies 0 is not game over)");
+        interaction.LoseLife();
         check(interaction.Lives() == 3, "Lives() resets to 3 on game-over, not a permanent depletion");
-        check(interaction.GameOverCount() == 1, "GameOverCount() increments exactly once on game-over");
+        check(interaction.GameOverCount() == 1, "a death with no life in reserve is the game over, exactly once");
     }
 
     if (const auto* chest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))

@@ -2420,14 +2420,16 @@ namespace GalaxyEggbert::Game
 
     void InteractionSystem::LoseLife()
     {
-        --lives_;
-        if (lives_ <= 0)
+        // A death: with lives in reserve one of them is spent (the life-loss voyage's m_nbVies--,
+        // Decor.cpp:10176) and he plays on, even with none left after it; a death with none left is
+        // the game over (6393-6396), and DoorsLost() (11716) gives the new game its 3 again.
+        if (lives_ > 0)
         {
-            // Real DoorsLost() (Decor.cpp:11716) resets m_nbVies back to 3
-            // on game-over rather than a permanent depletion.
-            lives_ = 3;
-            ++gameOverCount_;
+            --lives_;
+            return;
         }
+        lives_ = 3;
+        ++gameOverCount_;
     }
 
     bool InteractionSystem::PlaceDynamite(WorldRuntime& worldRuntime, float x, float y, float z, bool grounded,
