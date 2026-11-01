@@ -132,3 +132,18 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   lava is beside, the rim flat so cells join. Collision and the hazard are unchanged.
 - Validation: `VerifyTileFaces` (winding as the engine's faces, heights, flat rim, walls); 110/110;
   live in worlds 062 and 083 (before/after). Left: the owner's look, a low-angle close view.
+
+## BD-0008 — the fan drawn as a cube with its icon on every face (visual) — FIXED_AND_VERIFIED (VIS-0127)
+
+- Owner report (2026-11-01): a fan sprite glued on the sides of a cube. Galaxy drew fan cells (126-137)
+  as DirectionalCubes: the fan picture cut out on the faces, flat strips from most angles
+  (`plans/evidence/fan-before-after.png`, left).
+- Source: all four directions' tiles were rendered from one Ray Dream scene, `Decor/ventillo-h.rd4`
+  (a fan on a stem standing on a wall plate with two lights), animated in three frames; converted
+  with the object pipeline it matches the up tiles 132-134 at IoU 0.993 (`model_parity.md`).
+- Fix: the model `avatars3d/objects/fan_ventillo-h`; fan cells are left out of the terrain mesh and
+  drawn as that model turned about the view axis to blow the cell's way (`BlockModels.hpp`: left
+  -X, right +X, up, down; `VerifyTileFaces` checks the directions), its rotor on the tile
+  animation's frame. Without the model (no avatars3d) the cubes stay. Gameplay unchanged.
+- Validation: 110/110; live in worlds 999 and 051 (before/after). Left: the owner's look; the
+  wind column tiles (110-125, `Decor/vent-norm/`) are the next candidates.

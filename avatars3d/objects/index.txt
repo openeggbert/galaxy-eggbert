@@ -45,6 +45,7 @@ drink_bouteille
 dynamite_dynamite
 egg_oeuf
 exit_fleche
+fan_ventillo-h
 fish_poisson
 follow_bombe-follow
 helicopter_helico-seul2

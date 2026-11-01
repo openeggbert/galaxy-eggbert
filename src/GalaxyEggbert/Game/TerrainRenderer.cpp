@@ -694,6 +694,10 @@ namespace GalaxyEggbert::Game
         const auto icon107Uv = m_tileAtlas->GetTileUv(107);
         for (const auto& block : blocks)
         {
+            if (std::find(m_modelBases.begin(), m_modelBases.end(), block.base) != m_modelBases.end())
+            {
+                continue; // drawn as a model by the caller (SetModelDrawnBases)
+            }
             const auto& definition = GalaxyEggbert::GetBlockDefinition(block.base);
             const int icon = AnimIcon(block.base, animPhase);
             if (icon < 0)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "TileAtlas.hpp"
 #include "TileCoverage.hpp"
 
@@ -76,6 +78,33 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] float CentroidY() const noexcept { return m_centroidY; }
         [[nodiscard]] float CentroidZ() const noexcept { return m_centroidZ; }
 
+        // Cells of these animation bases are left to the caller, who draws them as models
+        // (BlockModels.hpp: the fan, VIS-0127) instead of textured cubes; the next Update()
+        // rebuilds the animated mesh without them.
+        void SetModelDrawnBases(std::vector<std::uint16_t> bases)
+        {
+            m_modelBases = std::move(bases);
+            m_lastAnimPhase = -1;
+        }
+        struct ModelCell
+        {
+            float x, y, z; // the cell's centre (world space)
+            std::uint16_t base;
+        };
+        // The cells of the bases set above.
+        [[nodiscard]] std::vector<ModelCell> ModelCells() const
+        {
+            std::vector<ModelCell> cells;
+            for (const auto& block : m_animBlocks)
+            {
+                if (std::find(m_modelBases.begin(), m_modelBases.end(), block.base) != m_modelBases.end())
+                {
+                    cells.push_back({block.x, block.y, block.z, block.base});
+                }
+            }
+            return cells;
+        }
+
     private:
         struct AnimBlock
         {
@@ -120,5 +149,6 @@ namespace GalaxyEggbert::Game
         float m_centroidY = 0.0f;
         float m_centroidZ = 0.0f;
         int m_lastAnimPhase = -1;
+        std::vector<std::uint16_t> m_modelBases;
     };
 }

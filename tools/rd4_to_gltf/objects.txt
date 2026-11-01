@@ -83,3 +83,7 @@ bd_plante3c   explo   25      Explo/plante3c.rd4 shift=6
 bd_vase1      explo   69      Decor/smooth/vase1.rds tone=0.50,42
 bd_big0108    explo   87      Decor/palais/big0108.rds
 bd_big02      explo   88      Decor/palais/big02.rds
+# The fan (the terrain's fan cells 126-137, VIS-0127): the original scene the four directions' tiles
+# were rendered from; it matches the up fan's frames 132-134 (IoU 0.993); the other directions are
+# it turned about the view axis, as the game draws them (block models, GalaxyEggbertGame).
+fan         object-m 132-134 Decor/ventillo-h.rd4

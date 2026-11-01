@@ -424,7 +424,7 @@ AS-0422,Decor/tuyau6.rds,.rds,Ray Dream Studio scene,29155,a27225c6feb3,,Decor,o
 AS-0423,Decor/tuyau7.rds,.rds,Ray Dream Studio scene,44009,05a0ca519848,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0424,Decor/tuyau8.rds,.rds,Ray Dream Studio scene,11883,5bc96b1b4156,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0425,Decor/tuyau9.rds,.rds,Ray Dream Studio scene,23401,ca0684181f4f,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
-AS-0426,Decor/ventillo-h.rd4,.rd4,Ray Dream Studio scene,26024,35766a5001ed,,Decor,ok frames=3 animated=1,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
+AS-0426,Decor/ventillo-h.rd4,.rd4,Ray Dream Studio scene,26024,35766a5001ed,,Decor,ok frames=3 animated=1,object:fan,yes,yes,,UNREVIEWED,,fidelity review of the runtime model(s)
 AS-0427,Decor/world1.rd4,.rd4,Ray Dream Studio scene,16723,c46e6eedf55b,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0428,Decor/world2a.rd4,.rd4,Ray Dream Studio scene,16833,db8b4a721815,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0429,Decor/world2b.rd4,.rd4,Ray Dream Studio scene,16760,349c46f601f4,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"

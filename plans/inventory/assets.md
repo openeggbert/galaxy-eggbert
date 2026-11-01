@@ -48,8 +48,8 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/bd_plante3b_plante3b` | Explo/plante3b.rd4, camera 'Caméra Jeu' | 22 | 1 | explo 24 | 0.65 / 0.65 |
 | `avatars3d/objects/bd_plante3c_plante3c` | Explo/plante3c.rd4, camera 'Caméra Jeu' | 33 | 1 | explo 25 | 0.69 / 0.69 |
 | `avatars3d/objects/bd_vase1_vase1` | Decor/smooth/vase1.rds, camera 'Caméra 2' | 1 | 1 | explo 69 | 0.99 / 0.99 |
-| `avatars3d/objects/bird_oiseau` | Blupi/oiseau.rd4, camera 'Caméra 2' | 3 | 1 | element 90-121 | 0.60 / 0.88 |
-| `avatars3d/objects/bulldozer_tracks-profil` | Blupi/tracks-profil.rd4, camera 'Caméra Jeu' | 7 | 1 | element 57-67 | 0.89 / 0.95 |
+| `avatars3d/objects/bird_oiseau` | Blupi/oiseau.rd4, camera 'Caméra 2' | 3 | 1 | element 90-121 | 0.67 / 0.90 |
+| `avatars3d/objects/bulldozer_tracks-profil` | Blupi/tracks-profil.rd4, camera 'Caméra Jeu' | 7 | 1 | element 57-67 | 0.92 / 0.97 |
 | `avatars3d/objects/creature_creature1` | Blupi/creature1.rds, camera 'Caméra 2' | 1 | 1 | element 247 | 1.00 / 1.00 |
 | `avatars3d/objects/creature_creature1y` | Blupi/creature1y.rds, camera 'Caméra 2' | 3 | 1 | element 242-246 | 0.99 / 0.99 |
 | `avatars3d/objects/creature_creature2` | Blupi/creature2.rds, camera 'Caméra 2' | 1 | 1 | element 248 | 0.99 / 0.99 |
@@ -60,16 +60,17 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/decoygreen_bombe` | Blupi/bombe.rd4, camera 'Caméra 2' | 1 | 1 | blupi1 257-262 | 0.91 / 0.96 |
 | `avatars3d/objects/drink_bouteille` | Blupi/bouteille.rd4, camera 'Caméra Jeu' | 2 | 1 | element 178 | 0.88 / 0.88 |
 | `avatars3d/objects/dynamite_dynamite` | Decor/dynamite.rd4, camera 'Caméra 2' | 2 | 1 | element 252-253 | 0.97 / 0.98 |
-| `avatars3d/objects/egg_oeuf` | Blupi/oeuf.rd4, camera 'Caméra 2' | 1 | 1 | element 21-28 | 0.96 / 0.97 |
-| `avatars3d/objects/exit_fleche` | Blupi/fleche.rd4, camera 'Caméra 2' | 1 | 1 | element 29-36 | 0.90 / 0.93 |
-| `avatars3d/objects/fish_poisson` | Blupi/poisson.rd4, camera 'Caméra 2' | 4 | 1 | element 78-88 | 0.85 / 0.92 |
-| `avatars3d/objects/follow_bombe-follow` | Blupi/bombe-follow.rd4, camera 'Caméra 2' | 2 | 1 | element 256-265 | 0.77 / 0.87 |
+| `avatars3d/objects/egg_oeuf` | Blupi/oeuf.rd4, camera 'Caméra 2' | 1 | 1 | element 21-28 | 0.96 / 0.98 |
+| `avatars3d/objects/exit_fleche` | Blupi/fleche.rd4, camera 'Caméra 2' | 1 | 1 | element 29-36 | 0.90 / 0.95 |
+| `avatars3d/objects/fan_ventillo-h` | Decor/ventillo-h.rd4, camera 'Caméra 2' | 3 | 1 | object-m 132-134 | 0.99 / 0.99 |
+| `avatars3d/objects/fish_poisson` | Blupi/poisson.rd4, camera 'Caméra 2' | 4 | 1 | element 78-88 | 0.93 / 0.94 |
+| `avatars3d/objects/follow_bombe-follow` | Blupi/bombe-follow.rd4, camera 'Caméra 2' | 2 | 1 | element 256-265 | 0.87 / 0.93 |
 | `avatars3d/objects/helicopter_helico-seul2` | Blupi/helico-seul2.rd4, camera 'Caméra Jeu' | 4 | 1 | element 68 | 0.97 / 0.97 |
 | `avatars3d/objects/invert_panneau-invert` | Blupi/panneau-invert.rd4, camera 'Caméra 2' | 2 | 1 | element 187-194 | 1.00 / 1.00 |
 | `avatars3d/objects/key1_cle1` | Blupi/cle1.rd4, camera 'Caméra 2' | 1 | 1 | element 209-215 | 0.94 / 0.96 |
 | `avatars3d/objects/key2_cle2` | Blupi/cle2.rd4, camera 'Caméra 2' | 1 | 1 | element 216-222 | 0.94 / 0.96 |
 | `avatars3d/objects/key3_cle3` | Blupi/cle3.rd4, camera 'Caméra 2' | 1 | 1 | element 223-229 | 0.94 / 0.96 |
-| `avatars3d/objects/lollipop_sucette` | Blupi/sucette.rd4, camera 'Caméra 2' | 3 | 1 | element 136-143 | 0.97 / 0.98 |
+| `avatars3d/objects/lollipop_sucette` | Blupi/sucette.rd4, camera 'Caméra 2' | 3 | 1 | element 136-143 | 0.97 / 0.99 |
 | `avatars3d/objects/mine_bombe` | Blupi/bombe.rd4, camera 'Caméra 2' | 1 | 1 | element 12-20,48-56 | 0.88 / 0.94 |
 | `avatars3d/objects/movingmine_bombe-move` | Blupi/bombe-move.rd4, camera 'Caméra 2' | 1 | 1 | element 69-77 | 0.97 / 0.98 |
 | `avatars3d/objects/pillar_colonne1` | Decor/smooth/colonne1.rds, camera 'Caméra 2' | 1 | 1 | explo 66 | 0.90 / 0.90 |
@@ -99,4 +100,4 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/wasp_guepe` | Blupi/guepe.rd4, camera 'Caméra 2' | 4 | 1 | element 195-202 | 0.95 / 0.96 |
 | `avatars3d/objects/wasp_guepe-tourne` | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 4 | 1 | element 203-207 | 0.96 / 0.96 |
 
-88 models.
+89 models.

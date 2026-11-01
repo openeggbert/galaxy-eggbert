@@ -1,6 +1,7 @@
 // The faces DirectionalCube tiles show (src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp): which
 // side of a fan is its base and which is open, and where flat-colour faces sample their tile.
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/LavaSurface.hpp>
 #include <GalaxyEggbert/Game/MeshParts.hpp>
@@ -206,6 +207,19 @@ int main()
         const std::size_t top = static_cast<std::size_t>(GalaxyEggbert::Game::kLavaGridX * GalaxyEggbert::Game::kLavaGridZ);
         check(surrounded.Mesh().VertexCount() == top && open.Mesh().VertexCount() == top + 5 * 4,
               "walls and floor only where no lava (or, below, nothing solid) is beside the cell");
+    }
+
+    // The fan model (VIS-0127) blows up; turned by FanModelRoll it blows each fan cell's way:
+    // 126 -X, 129 +X, 132 +Y, 135 -Y (the cells' gameplay and face tables).
+    {
+        using Microsoft::Xna::Framework::Matrix;
+        using Microsoft::Xna::Framework::Vector3;
+        const auto blows = [](std::uint16_t base)
+        { return Vector3::Transform(Vector3(0.0f, 1.0f, 0.0f), Matrix::CreateRotationZ(GalaxyEggbert::Game::FanModelRoll(base))); };
+        const auto near = [](const Vector3& a, const Vector3& b) { return Vector3::Distance(a, b) < 1e-4f; };
+        check(near(blows(126), Vector3(-1.0f, 0.0f, 0.0f)) && near(blows(129), Vector3(1.0f, 0.0f, 0.0f)) &&
+                  near(blows(132), Vector3(0.0f, 1.0f, 0.0f)) && near(blows(135), Vector3(0.0f, -1.0f, 0.0f)),
+              "the fan model turned for each fan cell blows the cell's way (-X, +X, up, down)");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

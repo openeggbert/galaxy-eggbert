@@ -1,5 +1,7 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <GalaxyEggbert/Game/BlockModels.hpp>
+
 #include <fstream>
 #include <sstream>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
@@ -851,6 +853,7 @@ namespace GalaxyEggbert::CNA
                     }
                     std::cout << "GalaxyEggbertCNA: " << objectModels_.size() << " object model(s) draw "
                               << objectModelTable_.Size() << " sprite icon(s) in 3D." << std::endl;
+                    ApplyBlockModels();
                 }
                 blupiModelLoaded_ = true;
                 std::cout << "GalaxyEggbertCNA: third-person model loaded — "
@@ -969,6 +972,7 @@ namespace GalaxyEggbert::CNA
         terrainDrawSecret_ = TerrainDrawSecret();
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_, tileCoverage_,
                                                              terrainDrawSecret_);
+        ApplyBlockModels();
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         std::cout << "GalaxyEggbertCNA: world terrain built — " << terrainRenderer_->BlockCount() << " blocks, "
                   << terrainRenderer_->VertexCount() << " vertices." << std::endl;
@@ -1007,7 +1011,21 @@ namespace GalaxyEggbert::CNA
             terrainRenderer_ =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), tileAtlas_,
                                                   tileCoverage_, terrainDrawSecret_);
+            ApplyBlockModels();
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
+        }
+    }
+
+    void GalaxyEggbertGame::ApplyBlockModels()
+    {
+        // The fan cells as the original's fan model (BlockModels.hpp, VIS-0127) when it is loaded;
+        // without it (no avatars3d/objects) they stay textured cubes.
+        if (terrainRenderer_ &&
+            objectModelTable_.Find(ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon) != nullptr)
+        {
+            terrainRenderer_->SetModelDrawnBases(
+                std::vector<std::uint16_t>(GalaxyEggbert::Game::kFanModelBases.begin(),
+                                           GalaxyEggbert::Game::kFanModelBases.end()));
         }
     }
 
@@ -4805,7 +4823,8 @@ namespace GalaxyEggbert::CNA
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiEffect_->setViewProperty(camera_.View());
                 blupiEffect_->setProjectionProperty(camera_.Projection());
-                const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f)
+                const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
+                                           float rollRadians = 0.0f)
                 {
                     auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
                     model.ComputeBoneTransformsEXT(
@@ -4822,6 +4841,7 @@ namespace GalaxyEggbert::CNA
                             (pose.mirror == 1 ? -kFlipShift : 0.0f) + static_cast<float>(pose.offsetX) / 64.0f,
                             (pose.mirror == 2 ? kFlipShift : 0.0f) - static_cast<float>(pose.offsetY) / 64.0f,
                             0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationZ(rollRadians) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(turnRadians) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(x, y, z));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
@@ -4860,6 +4880,22 @@ namespace GalaxyEggbert::CNA
                         }
                         drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
                                   turn);
+                    }
+                }
+                // The fan cells (VIS-0127): the original fan model turned to blow the cell's way, its
+                // rotor on the tile animation's frame.
+                if (terrainRenderer_)
+                {
+                    for (const auto& cell : terrainRenderer_->ModelCells())
+                    {
+                        const int frame = GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase()) -
+                                          static_cast<int>(cell.base);
+                        const ObjectModelPose* pose = objectModelTable_.Find(
+                            ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon + std::max(0, frame));
+                        if (pose != nullptr)
+                        {
+                            drawModel(*pose, cell.x, cell.y, cell.z, 0.0f, GalaxyEggbert::Game::FanModelRoll(cell.base));
+                        }
                     }
                 }
                 for (const auto& cell : bigDecorCells_)

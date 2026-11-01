@@ -52,6 +52,7 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | dynamite_dynamite | Decor/dynamite.rd4, camera 'Caméra 2' | 2 | 0.976 | 0.970 | faithful |
 | egg_oeuf | Blupi/oeuf.rd4, camera 'Caméra 2' | 8 | 0.984 | 0.963 | faithful |
 | exit_fleche | Blupi/fleche.rd4, camera 'Caméra 2' | 8 | 0.947 | 0.902 | faithful |
+| fan_ventillo-h | Decor/ventillo-h.rd4, camera 'Caméra 2' | 3 | 0.993 | 0.993 | faithful |
 | fish_poisson | Blupi/poisson.rd4, camera 'Caméra 2' | 11 | 0.942 | 0.926 | its head is rounder and larger than the sprites' (BB3D-032, open) |
 | follow_bombe-follow | Blupi/bombe-follow.rd4, camera 'Caméra 2' | 10 | 0.932 | 0.874 | faithful |
 | helicopter_helico-seul2 | Blupi/helico-seul2.rd4, camera 'Caméra Jeu' | 1 | 0.970 | 0.970 | faithful |
@@ -89,4 +90,4 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | wasp_guepe | Blupi/guepe.rd4, camera 'Caméra 2' | 8 | 0.955 | 0.950 | faithful |
 | wasp_guepe-tourne | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 5 | 0.962 | 0.956 | faithful |
 
-82 models: 75 match every icon at 0.85 or better; 7 below, each with its verdict.
+83 models: 76 match every icon at 0.85 or better; 7 below, each with its verdict.

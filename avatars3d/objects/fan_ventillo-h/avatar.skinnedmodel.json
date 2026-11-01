@@ -1,0 +1,50 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "fan_rd_00fd00",
+      "vertices": "fan_rd_00fd00.verts.bin",
+      "indices": "fan_rd_00fd00.idx.bin",
+      "vertexStride": 52,
+      "texture": "fan_rd_00fd00.png",
+      "diffuseColor": [
+        0.0,
+        0.9909246121188983,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "fan_rd_fd0000",
+      "vertices": "fan_rd_fd0000.verts.bin",
+      "indices": "fan_rd_fd0000.idx.bin",
+      "vertexStride": 52,
+      "texture": "fan_rd_fd0000.png",
+      "diffuseColor": [
+        0.9909246121188983,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "fan_rd_00bffd",
+      "vertices": "fan_rd_00bffd.verts.bin",
+      "indices": "fan_rd_00bffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "fan_rd_00bffd.png",
+      "diffuseColor": [
+        0.0,
+        0.5225215539683921,
+        0.9909246121188983,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
