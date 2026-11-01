@@ -458,7 +458,8 @@ namespace GalaxyEggbert::Game
     TerrainRenderer::TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                          const Worlds::World& world,
                                          const TileAtlas& tileAtlas,
-                                         const std::vector<TileCoverage>& tileCoverage, bool drawSecret)
+                                         const std::vector<TileCoverage>& tileCoverage, bool drawSecret,
+                                         std::vector<std::uint16_t> modelDrawnIcons)
         : m_tileAtlas(&tileAtlas)
     {
         // Icons 108/109's DirectionalCube entry reuses icon 107's own side
@@ -501,6 +502,11 @@ namespace GalaxyEggbert::Game
                     const float worldY = static_cast<float>(y);
                     const float worldZ = static_cast<float>(z - kWorldCenterZ);
                     ++m_blockCount;
+                    if (std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), block.type()) != modelDrawnIcons.end())
+                    {
+                        m_staticModelCells.push_back({worldX, worldY, worldZ, block.type()}); // drawn as a model
+                        continue;
+                    }
                     sumX += worldX;
                     sumY += worldY;
                     sumZ += worldZ;

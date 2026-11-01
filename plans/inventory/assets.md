@@ -50,6 +50,7 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/bd_vase1_vase1` | Decor/smooth/vase1.rds, camera 'Caméra 2' | 1 | 1 | explo 69 | 0.99 / 0.99 |
 | `avatars3d/objects/bird_oiseau` | Blupi/oiseau.rd4, camera 'Caméra 2' | 3 | 1 | element 90-121 | 0.67 / 0.90 |
 | `avatars3d/objects/bulldozer_tracks-profil` | Blupi/tracks-profil.rd4, camera 'Caméra Jeu' | 7 | 1 | element 57-67 | 0.92 / 0.97 |
+| `avatars3d/objects/column_support1` | Decor/support1.rd4, camera 'Caméra Jeu' | 1 | 1 | object-m 76 | 0.92 / 0.92 |
 | `avatars3d/objects/creature_creature1` | Blupi/creature1.rds, camera 'Caméra 2' | 1 | 1 | element 247 | 1.00 / 1.00 |
 | `avatars3d/objects/creature_creature1y` | Blupi/creature1y.rds, camera 'Caméra 2' | 3 | 1 | element 242-246 | 0.99 / 0.99 |
 | `avatars3d/objects/creature_creature2` | Blupi/creature2.rds, camera 'Caméra 2' | 1 | 1 | element 248 | 0.99 / 0.99 |
@@ -79,6 +80,7 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/projectile_balle-glu` | Blupi/balle-glu.rd4, camera 'Caméra 2' | 1 | 1 | element 176 | 0.99 / 0.99 |
 | `avatars3d/objects/secretexit_cle` | Blupi/cle.rd4, camera 'Caméra 2' | 1 | 1 | element 122-128 | 0.94 / 0.96 |
 | `avatars3d/objects/statue_statue` | Decor/palais/statue.rds, camera 'Caméra Jeu' | 4 | 1 | explo 89 | 0.99 / 0.99 |
+| `avatars3d/objects/support_support2` | Decor/support2.rd4, camera 'Caméra Jeu' | 2 | 1 | object-m 77 | 0.99 / 0.99 |
 | `avatars3d/objects/tentacle_tenta01` | Decor/tentacule/tenta01.rds, camera 'Caméra 2' | 1 | 1 | explo 70 | 0.98 / 0.98 |
 | `avatars3d/objects/tentacle_tenta02` | Decor/tentacule/tenta02.rds, camera 'Caméra 2' | 1 | 1 | explo 71 | 0.99 / 0.99 |
 | `avatars3d/objects/tentacle_tenta03` | Decor/tentacule/tenta03.rds, camera 'Caméra 2' | 1 | 1 | explo 72 | 0.99 / 0.99 |
@@ -100,4 +102,4 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/wasp_guepe` | Blupi/guepe.rd4, camera 'Caméra 2' | 4 | 1 | element 195-202 | 0.95 / 0.96 |
 | `avatars3d/objects/wasp_guepe-tourne` | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 4 | 1 | element 203-207 | 0.96 / 0.96 |
 
-89 models.
+91 models.

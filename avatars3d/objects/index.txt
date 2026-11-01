@@ -33,6 +33,7 @@ bd_plante3c_plante3c
 bd_vase1_vase1
 bird_oiseau
 bulldozer_tracks-profil
+column_support1
 creature_creature1
 creature_creature1y
 creature_creature2
@@ -62,6 +63,7 @@ pillar_colonne3
 projectile_balle-glu
 secretexit_cle
 statue_statue
+support_support2
 tentacle_tenta01
 tentacle_tenta02
 tentacle_tenta03

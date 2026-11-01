@@ -87,3 +87,8 @@ bd_big02      explo   88      Decor/palais/big02.rds
 # were rendered from; it matches the up fan's frames 132-134 (IoU 0.993); the other directions are
 # it turned about the view axis, as the game draws them (block models, GalaxyEggbertGame).
 fan         object-m 132-134 Decor/ventillo-h.rd4
+# Terrain pillars drawn as their original scenes (VIS-0077/0078, block models): the stone column 76
+# (Decor/support1.rd4, IoU 0.92; its speckled granite is a procedural texture, flat here) and the
+# golden branched support 77 (Decor/support2.rd4, IoU 0.995).
+column      object-m 76      Decor/support1.rd4
+support     object-m 77      Decor/support2.rd4

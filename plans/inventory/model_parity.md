@@ -40,6 +40,7 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | bd_vase1_vase1 | Decor/smooth/vase1.rds, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |
 | bird_oiseau | Blupi/oiseau.rd4, camera 'Caméra 2' | 32 | 0.899 | 0.674 | faithful: its weakest icons are turning frames whose thin wings and legs land a pixel off at 60 pixels (compare sheet; live in 084) |
 | bulldozer_tracks-profil | Blupi/tracks-profil.rd4, camera 'Caméra Jeu' | 11 | 0.969 | 0.922 | faithful |
+| column_support1 | Decor/support1.rd4, camera 'Caméra Jeu' | 1 | 0.921 | 0.921 | faithful |
 | creature_creature1 | Blupi/creature1.rds, camera 'Caméra 2' | 1 | 0.998 | 0.998 | faithful |
 | creature_creature1y | Blupi/creature1y.rds, camera 'Caméra 2' | 5 | 0.995 | 0.990 | faithful |
 | creature_creature2 | Blupi/creature2.rds, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |
@@ -69,6 +70,7 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | projectile_balle-glu | Blupi/balle-glu.rd4, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |
 | secretexit_cle | Blupi/cle.rd4, camera 'Caméra 2' | 7 | 0.963 | 0.945 | faithful |
 | statue_statue | Decor/palais/statue.rds, camera 'Caméra Jeu' | 1 | 0.991 | 0.991 | faithful |
+| support_support2 | Decor/support2.rd4, camera 'Caméra Jeu' | 1 | 0.995 | 0.995 | faithful |
 | tentacle_tenta01 | Decor/tentacule/tenta01.rds, camera 'Caméra 2' | 1 | 0.985 | 0.985 | faithful |
 | tentacle_tenta02 | Decor/tentacule/tenta02.rds, camera 'Caméra 2' | 1 | 0.986 | 0.986 | faithful |
 | tentacle_tenta03 | Decor/tentacule/tenta03.rds, camera 'Caméra 2' | 1 | 0.987 | 0.987 | faithful |
@@ -90,4 +92,4 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | wasp_guepe | Blupi/guepe.rd4, camera 'Caméra 2' | 8 | 0.955 | 0.950 | faithful |
 | wasp_guepe-tourne | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 5 | 0.962 | 0.956 | faithful |
 
-83 models: 76 match every icon at 0.85 or better; 7 below, each with its verdict.
+85 models: 78 match every icon at 0.85 or better; 7 below, each with its verdict.

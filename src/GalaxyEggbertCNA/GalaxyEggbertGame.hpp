@@ -794,6 +794,7 @@ namespace GalaxyEggbert::CNA
         std::vector<BigDecorCell> bigDecorCells_;
         // Tells the terrain which cells are drawn as models (the fan, BlockModels.hpp).
         void ApplyBlockModels();
+        [[nodiscard]] std::vector<std::uint16_t> StillModelIcons() const;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> bigDecorEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> bigDecorMeshRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> bigDecorMarineMeshRenderer_;

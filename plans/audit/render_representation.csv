@@ -75,8 +75,8 @@ VIS-0073,block:72,block,72,,,UniformCube,cube,,2,1,UNREVIEWED,,,
 VIS-0074,block:73,block,73,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): průchozí blok; textura na všech 4 bočních stranách, nahoře i dole modrá fallback barva",UniformCube,cube,,12,2,UNREVIEWED,,,
 VIS-0075,block:74,block,74,(unnamed),unnamed variant,DirectionalCube,cube,,9,1,UNREVIEWED,,,
 VIS-0076,block:75,block,75,(unnamed),unnamed variant,DirectionalCube,cube,,10,1,UNREVIEWED,,,
-VIS-0077,block:76,block,76,(unnamed),unnamed variant — **Billboard** (§10.2): stone pedestal/column,InnerPillarBox,pillar-box,,22,4,UNREVIEWED,,owner must-fix: pillar drawn as a sprite on an inner box; sources Decor/smooth/colonne1-3,live look
-VIS-0078,block:77,block,77,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow ""Y"" signpost/antenna",InnerFlatPlate,plate,,11,9,UNREVIEWED,,,
+VIS-0077,block:76,block,76,(unnamed),unnamed variant — **Billboard** (§10.2): stone pedestal/column,InnerPillarBox,pillar-box,,22,4,FIXED_AND_VERIFIED,a 3D column from its original scene (was a sprite on an inner box),2026-11-01: Decor/support1.rd4 -> avatars3d/objects/column_support1 (IoU 0.92); drawn as a still block model (BlockModels.hpp kStillModelIcons); its speckled granite is a procedural texture drawn flat (decision of 2026-10-24); live world023 (build-probe/fa-live/pillar),the owner's look
+VIS-0078,block:77,block,77,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow ""Y"" signpost/antenna",InnerFlatPlate,plate,,11,9,FIXED_AND_VERIFIED,the golden support as its original model,Decor/support2.rd4 -> avatars3d/objects/support_support2 (IoU 0.995); live world094,
 VIS-0079,block:78,block,78,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,14,UNREVIEWED,,,
 VIS-0080,block:79,block,79,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,13,UNREVIEWED,,,
 VIS-0081,block:80,block,80,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,13,UNREVIEWED,,,
@@ -374,7 +374,7 @@ VIS-0372,block:371,block,371,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
 VIS-0373,block:372,block,372,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
 VIS-0374,block:373,block,373,Spike (base),"hazard — **ThinMechanical** (§10.3): lower confidence: may just be the glossy wall-texture family, not an obviously pointed spike; flagged for a closer look",UniformCube,cube,catalogue says ThinMechanical,5,5,UNREVIEWED,,,look at it live
 VIS-0375,block:374,block,374,,,UniformCube,cube,,1,1,UNREVIEWED,,,
-VIS-0376,block:375,block,375,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,3,1,UNREVIEWED,,owner must-fix: pillar 375 drawn as a cube (D31 cut out),live look
+VIS-0376,block:375,block,375,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,3,1,UNREVIEWED,,owner must-fix (pillar 375: a turned wooden column). Decor/colonne2.rds matches its outline at 0.90 but converts to a plain cylinder: its bulges (and 376's twist) are lost in conversion,find what colonne2.rds uses for its profile (a lathe or a deformer) and support it in tools/rd4_to_gltf; or Decor/smooth/colonne*.rds / .a3d
 VIS-0377,block:376,block,376,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,5,1,UNREVIEWED,,,look at it live
 VIS-0378,block:377,block,377,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,1,1,UNREVIEWED,,,look at it live
 VIS-0379,block:378,block,378,Saw (base),"hazard — **InnerFlatPlate** (revised 2026-07-11 per direct live user Q&A, supersedes the ""ThinMechanical, geometry not decided"" placeholder below): circular saw",GroundAnchoredPlate,ground-plate,,15,14,UNREVIEWED,,,
@@ -398,7 +398,7 @@ VIS-0396,block:395,block,395,(unnamed),unnamed variant — **architectural-kit**
 VIS-0397,block:396,block,396,(unnamed),unnamed variant,DirectionalCube,cube,,7,8,UNREVIEWED,,,
 VIS-0398,block:397,block,397,(unnamed),unnamed variant — **architectural-kit** (§10.5): lintel/corner-post fragment — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,8,UNREVIEWED,,,
 VIS-0399,block:398,block,398,(unnamed),unnamed variant — **Billboard** (§10.2): fence rail on two posts,InnerFlatPlate,plate,,7,3,UNREVIEWED,,,
-VIS-0400,block:399,block,399,(unnamed),unnamed variant — **Billboard** (§10.2): fluted classical column,UniformCube,cube,catalogue says Billboard,5,1,UNREVIEWED,,owner must-fix: pillar 399 drawn as a cube (D31 cut out),live look
+VIS-0400,block:399,block,399,(unnamed),unnamed variant — **Billboard** (§10.2): fluted classical column,UniformCube,cube,catalogue says Billboard,5,1,UNREVIEWED,,owner must-fix (pillar 399: a white column). No source among Decor/support1-4.rd4 and colonne1/2.rds (best 0.75 mirrored),search Decor/palais and Decor/smooth for its scene
 VIS-0401,block:400,block,400,(unnamed),unnamed variant — **architectural-kit** (§10.5): the archway opening itself — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,5,2,UNREVIEWED,,,
 VIS-0402,block:401,block,401,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,16,4,UNREVIEWED,,,
 VIS-0403,block:402,block,402,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,15,4,UNREVIEWED,,,
@@ -526,3 +526,5 @@ VIS-0524,billboard:effects,object-billboard,,"explosions, splashes, sparkles, go
 VIS-0525,billboard:charge,object-billboard,,charge (ObjectType 31),,billboard,2d-effect,kept by decision 2026-10-24,,,UNREVIEWED,,,look at it live
 VIS-0526,billboard:shield,object-billboard,,shield sparks (25),,billboard,2d-effect,kept by decision 2026-10-24,,,UNREVIEWED,,,look at it live
 VIS-0527,model:fan_ventillo-h,object-model,object-m:132 object-m:133 object-m:134,fan_ventillo-h,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0528,model:column_support1,object-model,object-m:76,column_support1,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0529,model:support_support2,object-model,object-m:77,support_support2,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,

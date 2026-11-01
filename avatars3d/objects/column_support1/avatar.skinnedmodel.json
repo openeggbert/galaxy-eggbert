@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "column_rd_cecdc7",
+      "vertices": "column_rd_cecdc7.verts.bin",
+      "indices": "column_rd_cecdc7.idx.bin",
+      "vertexStride": 52,
+      "texture": "column_rd_cecdc7.png",
+      "diffuseColor": [
+        0.6209158623742829,
+        0.6140470656879686,
+        0.5754130955839954,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

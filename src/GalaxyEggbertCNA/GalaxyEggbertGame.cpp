@@ -854,6 +854,9 @@ namespace GalaxyEggbert::CNA
                     std::cout << "GalaxyEggbertCNA: " << objectModels_.size() << " object model(s) draw "
                               << objectModelTable_.Size() << " sprite icon(s) in 3D." << std::endl;
                     ApplyBlockModels();
+                    // A terrain built before the models came leaves the still model icons in its
+                    // mesh: build it again (the next frame).
+                    --terrainRevision_;
                 }
                 blupiModelLoaded_ = true;
                 std::cout << "GalaxyEggbertCNA: third-person model loaded — "
@@ -971,7 +974,7 @@ namespace GalaxyEggbert::CNA
 
         terrainDrawSecret_ = TerrainDrawSecret();
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_, tileCoverage_,
-                                                             terrainDrawSecret_);
+                                                             terrainDrawSecret_, StillModelIcons());
         ApplyBlockModels();
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         std::cout << "GalaxyEggbertCNA: world terrain built — " << terrainRenderer_->BlockCount() << " blocks, "
@@ -1010,10 +1013,24 @@ namespace GalaxyEggbert::CNA
             terrainDrawSecret_ = TerrainDrawSecret();
             terrainRenderer_ =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), tileAtlas_,
-                                                  tileCoverage_, terrainDrawSecret_);
+                                                  tileCoverage_, terrainDrawSecret_, StillModelIcons());
             ApplyBlockModels();
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         }
+    }
+
+    std::vector<std::uint16_t> GalaxyEggbertGame::StillModelIcons() const
+    {
+        // The still terrain icons with a loaded model (BlockModels.hpp), drawn as it.
+        std::vector<std::uint16_t> icons;
+        for (const auto icon : GalaxyEggbert::Game::kStillModelIcons)
+        {
+            if (objectModelTable_.Find(ObjectTextureSource::ObjectM, icon) != nullptr)
+            {
+                icons.push_back(icon);
+            }
+        }
+        return icons;
     }
 
     void GalaxyEggbertGame::ApplyBlockModels()
@@ -4888,6 +4905,16 @@ namespace GalaxyEggbert::CNA
                 {
                     for (const auto& cell : terrainRenderer_->ModelCells())
                     {
+                        if (std::find(GalaxyEggbert::Game::kFanModelBases.begin(), GalaxyEggbert::Game::kFanModelBases.end(),
+                                      cell.base) == GalaxyEggbert::Game::kFanModelBases.end())
+                        {
+                            // A still icon drawn as its model (a pillar).
+                            if (const ObjectModelPose* still = objectModelTable_.Find(ObjectTextureSource::ObjectM, cell.base))
+                            {
+                                drawModel(*still, cell.x, cell.y, cell.z);
+                            }
+                            continue;
+                        }
                         const int frame = GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase()) -
                                           static_cast<int>(cell.base);
                         const ObjectModelPose* pose = objectModelTable_.Find(

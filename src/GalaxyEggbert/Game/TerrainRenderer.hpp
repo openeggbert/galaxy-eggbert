@@ -43,7 +43,10 @@ namespace GalaxyEggbert::Game
                           const TileAtlas& tileAtlas,
                           const std::vector<TileCoverage>& tileCoverage = {},
                           // Draw the flight barrier (214), invisible in play (ShowSecret, D49).
-                          bool drawSecret = false);
+                          bool drawSecret = false,
+                          // Still (not animated) icons the caller draws as models (BlockModels.hpp:
+                          // the pillars): left out of the mesh, listed by ModelCells().
+                          std::vector<std::uint16_t> modelDrawnIcons = {});
 
         // Rebuilds the animated-tile mesh for animPhase (no-op if unchanged
         // since the last call). Call once per frame with
@@ -91,10 +94,10 @@ namespace GalaxyEggbert::Game
             float x, y, z; // the cell's centre (world space)
             std::uint16_t base;
         };
-        // The cells of the bases set above.
+        // The cells of the bases set above, and of the still icons given to the constructor.
         [[nodiscard]] std::vector<ModelCell> ModelCells() const
         {
-            std::vector<ModelCell> cells;
+            std::vector<ModelCell> cells = m_staticModelCells;
             for (const auto& block : m_animBlocks)
             {
                 if (std::find(m_modelBases.begin(), m_modelBases.end(), block.base) != m_modelBases.end())
@@ -150,5 +153,6 @@ namespace GalaxyEggbert::Game
         float m_centroidZ = 0.0f;
         int m_lastAnimPhase = -1;
         std::vector<std::uint16_t> m_modelBases;
+        std::vector<ModelCell> m_staticModelCells;
     };
 }

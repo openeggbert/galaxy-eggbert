@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "support_rd_f7ac00",
+      "vertices": "support_rd_f7ac00.verts.bin",
+      "indices": "support_rd_f7ac00.idx.bin",
+      "vertexStride": 52,
+      "texture": "support_rd_f7ac00.png",
+      "diffuseColor": [
+        0.9374824827715106,
+        0.41456802404539866,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "support_rd_tex_p07_Cube",
+      "vertices": "support_rd_tex_p07_Cube.verts.bin",
+      "indices": "support_rd_tex_p07_Cube.idx.bin",
+      "vertexStride": 52,
+      "texture": "support_rd_tex_p07_Cube.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

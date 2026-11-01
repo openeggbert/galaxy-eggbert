@@ -4,6 +4,7 @@ VIS-0127,FIXED_AND_VERIFIED,the original fan model (was a cube with its icon on 
 VIS-0130,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,
 VIS-0133,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,
 VIS-0136,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,
-VIS-0077,UNREVIEWED,,owner must-fix: pillar drawn as a sprite on an inner box; sources Decor/smooth/colonne1-3,live look
-VIS-0376,UNREVIEWED,,owner must-fix: pillar 375 drawn as a cube (D31 cut out),live look
-VIS-0400,UNREVIEWED,,owner must-fix: pillar 399 drawn as a cube (D31 cut out),live look
+VIS-0077,FIXED_AND_VERIFIED,a 3D column from its original scene (was a sprite on an inner box),2026-11-01: Decor/support1.rd4 -> avatars3d/objects/column_support1 (IoU 0.92); drawn as a still block model (BlockModels.hpp kStillModelIcons); its speckled granite is a procedural texture drawn flat (decision of 2026-10-24); live world023 (build-probe/fa-live/pillar),the owner's look
+VIS-0376,UNREVIEWED,,owner must-fix (pillar 375: a turned wooden column). Decor/colonne2.rds matches its outline at 0.90 but converts to a plain cylinder: its bulges (and 376's twist) are lost in conversion,find what colonne2.rds uses for its profile (a lathe or a deformer) and support it in tools/rd4_to_gltf; or Decor/smooth/colonne*.rds / .a3d
+VIS-0400,UNREVIEWED,,owner must-fix (pillar 399: a white column). No source among Decor/support1-4.rd4 and colonne1/2.rds (best 0.75 mirrored),search Decor/palais and Decor/smooth for its scene
+VIS-0078,FIXED_AND_VERIFIED,the golden support as its original model,Decor/support2.rd4 -> avatars3d/objects/support_support2 (IoU 0.995); live world094,

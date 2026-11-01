@@ -357,8 +357,8 @@ AS-0355,Decor/roc4t.rd4,.rd4,Ray Dream Studio scene,149148,911abc8d27c4,,Decor,o
 AS-0356,Decor/roc4u.rd4,.rd4,Ray Dream Studio scene,157605,080b2776c3ef,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0357,Decor/scie.rd4,.rd4,Ray Dream Studio scene,160925,ac075a47e9d8,,Decor,ok frames=6 animated=1,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0358,Decor/structure1.rd4,.rd4,Ray Dream Studio scene,55938,90aafcba8708,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
-AS-0359,Decor/support1.rd4,.rd4,Ray Dream Studio scene,32145,855a44cfab8a,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
-AS-0360,Decor/support2.rd4,.rd4,Ray Dream Studio scene,129578,de4da1acba18,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
+AS-0359,Decor/support1.rd4,.rd4,Ray Dream Studio scene,32145,855a44cfab8a,,Decor,ok frames=12 animated=0,object:column,yes,yes,,UNREVIEWED,,fidelity review of the runtime model(s)
+AS-0360,Decor/support2.rd4,.rd4,Ray Dream Studio scene,129578,de4da1acba18,,Decor,ok frames=12 animated=0,object:support,yes,yes,,UNREVIEWED,,fidelity review of the runtime model(s)
 AS-0361,Decor/support3.rd4,.rd4,Ray Dream Studio scene,131422,e4b60fff7454,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0362,Decor/support4.rd4,.rd4,Ray Dream Studio scene,205126,d9841d5a2adb,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
 AS-0363,Decor/techno01.rd4,.rd4,Ray Dream Studio scene,21216,41a4282770d0,,Decor,ok frames=12 animated=0,,yes,no,,UNREVIEWED,,"classify: game object, tile source, backdrop, demo or revision"
