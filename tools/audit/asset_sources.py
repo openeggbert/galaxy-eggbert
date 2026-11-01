@@ -7,7 +7,7 @@ size, SHA-1, the first file with identical bytes (duplicates), what Galaxy has d
 the audit's per-stage state. Stages are filled only from evidence this script can see:
 
   opened     the Ray Dream survey read it (build-probe/rd4-survey/scenes.csv, tools/rd4_to_gltf/
-             survey.py), or another parser exists for its format
+             survey.py), tools/a3d/a3d.py read it (.a3d), or another parser exists for its format
   runtime    an object model (tools/rd4_to_gltf/objects.txt) or Blupi's clip library
              (build-probe/rd4-blupi/match/icons.csv, when present) is built from it
   verified   left to the hand-written notes (plans/audit/asset_sources.notes.csv)
@@ -23,6 +23,9 @@ import csv
 import hashlib
 import os
 import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "a3d"))
+import a3d  # noqa: E402
 
 EXTS = {".rd4", ".rds", ".rd3", ".max", ".a3d", ".3ds", ".dxf", ".wrl", ".glb", ".obj"}
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -144,6 +147,15 @@ def main():
             opened = "yes" if surveyed["status"] == "ok" else "partial"
         elif ext == ".dxf":
             survey_text, opened = "", "parser:tools/rd4_to_gltf/dxf.py"
+        elif ext == ".a3d":
+            try:
+                shapes = a3d.read(full)
+                faced = [s for s in shapes if s.faces]
+                survey_text = "a3d: %d shapes (%d with faces, %d faces)" % (
+                    len(shapes), len(faced), sum(len(s.faces) for s in faced))
+                opened = "yes"
+            except Exception as exc:
+                survey_text, opened = "a3d: " + str(exc), "partial"
         else:
             survey_text, opened = "", "no"
         if dup != rel:
@@ -157,7 +169,7 @@ def main():
             next_action = "needs 3ds Max (owner request in plans/audit/manual_review.md)"
         elif ext == ".a3d":
             status = "UNREVIEWED"
-            next_action = "write an Amapi .a3d reader (format looks open: AMAP/BLOKSHAP/blokgeom chunks)"
+            next_action = "classify; a .rds of the same object is the richer source when one exists (materials, cameras)"
         else:
             status = "UNREVIEWED"
             next_action = "classify: game object, tile source, backdrop, demo or revision"
