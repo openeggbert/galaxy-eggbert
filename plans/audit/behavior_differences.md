@@ -55,9 +55,19 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   the crate now stops at the bank. 110/110; the 18 crate playthroughs pass with the same tick
   counts (none relied on it).
 
-## BD-0004 — `IsPointSolid` excludes decor, `InteractionSystem::IsSolidAtCell` and projectile traversal do not (gameplay) — UNREVIEWED (suspected, from the campaign brief)
+## BD-0004 — follow stars and shot ranges stopped at any non-air cell (gameplay) — FIXED_AND_VERIFIED
 
-- Next: a follower and a projectile crossing a passable decor tile (D41's set) in a micro-world.
+- `InteractionSystem::IsSolidAt` claimed to match `BlupiController::IsSolidAt` but counted every
+  non-air cell: a follow star (97) homing on Blupi exploded on a cobweb, a sign or water.
+  The original moves it with `TestPath` -> `DecorDetect`: blocked only by a solid quarter-cell of a
+  collision mask, or a crate. Reproduced by a test (a follow star crossing a cobweb, 403; water).
+- The shots' range (`SearchAirDistance`, the original's `SearchDistRight`, Decor.cpp:7628) stopped
+  at any non-air cell; the original stops only at `IsBlocIcon` cells (Decor.cpp:7522): all sixteen
+  quarter-cells solid, or the vanishing saucer 324 while there. Now the same (71 block icons have
+  a part mask: shots pass them as in the original). The saucer's two passable ticks in twenty
+  are not modelled for shots (it counts as there).
+- Fix: both as the original; `VerifyInteractionSystem` (cobweb and water passed, a block stops
+  it); 110/110; all 78 playthroughs (every mission, every world chain, 199) pass with it.
 
 ## BD-0005 — the asset inventory undercounted the original 3D sources (doc) — FIXED_AND_VERIFIED
 

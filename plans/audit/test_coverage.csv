@@ -15,3 +15,5 @@ editor variant cycling,editor,unit+integration,VerifyGEWorldEditor (ED-0001),pas
 editor slots 3x10 save/edit/play-test/reopen,editor,unit,VerifyGEEditorStorage,pass (earlier),end-to-end UI script open
 world format round trip (BMD1 types 1-4),format,unit,VerifyShippedWorlds; MoveObjectRecordTests; BigDecorRecordTests; HintZoneRecordTests,pass,a BMD1 record with type > 4 is not yet round-tripped
 golden frames,render,golden,tools/verify_golden_frames.sh,stale,known stale since Phase 7B
+follow star vs decor/water/blocks,gameplay,unit,VerifyInteractionSystem (BD-0004),pass,
+all playthroughs after D60/BD-0006/BD-0003/BD-0004,gameplay,autoplay,tools/autoplay_all.sh (78 scripts) + campaign.txt,pass,2026-11-01: 78/78; campaign 761140 ticks

@@ -520,7 +520,13 @@ namespace GalaxyEggbert::Game
         // this early-cancel path). One grid cell here == one real 64px
         // mobile-eggbert tile, matching this file's existing world<->grid
         // conversion convention (see WorldRuntime's kMobileTileSize use).
-        int SearchAirDistance(const Worlds::World& world, int gx, int gy, int gz, int dx, int dy, int dz)
+        //
+        // A cell stops it only as `Decor::IsBlocIcon` does (Decor.cpp:7522, used by SearchDistRight
+        // :7628): every quarter-cell of its collision mask solid, or the vanishing saucer (324)
+        // while it is there (`tempSolid`); empty-mask decor and part-blocks let a shot through
+        // (BD-0004).
+        int SearchAirDistance(const Worlds::World& world, int gx, int gy, int gz, int dx, int dy, int dz,
+                              bool tempSolid = true)
         {
             const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
             int x = gx;
@@ -536,8 +542,10 @@ namespace GalaxyEggbert::Game
                 {
                     break;
                 }
-                if (!world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
-                                     static_cast<std::uint16_t>(z)).isAir())
+                const auto block = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                                  static_cast<std::uint16_t>(z));
+                if (!block.isAir() && (GetBlockDefinition(block.type()).collisionMask == 0xFFFF ||
+                                       (block.type() == GalaxyEggbert::BlockTypes::Temp && tempSolid)))
                 {
                     break;
                 }
@@ -558,14 +566,19 @@ namespace GalaxyEggbert::Game
             gz = std::clamp(static_cast<int>(std::lround(wz)) + WorldRuntime::kWorldCenterZ, 0, blocksPerAxis - 1);
         }
 
-        // Matches BlupiController::IsSolidAt's own logic exactly
-        // (duplicated here rather than exposed from BlupiController,
-        // which keeps it private -- same reason ToGridCell above is its
-        // own copy rather than a shared call).
-        bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz)
+        // What stops a moving object's step (`Decor::TestPath` -> `DecorDetect`): a block with any
+        // solid quarter-cell in its collision mask, or a crate (DecorDetect counts crates). Decor
+        // with an empty mask (cobwebs, signs, pillars as decor) and water do not (BD-0004; it used
+        // to be any non-air cell).
+        bool IsSolidAt(const WorldRuntime& worldRuntime, int gx, int gy, int gz)
         {
-            return !world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                    static_cast<std::uint16_t>(gz)).isAir();
+            const auto block = worldRuntime.GetWorld().getBlock(
+                static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy), static_cast<std::uint16_t>(gz));
+            if (!block.isAir() && GetBlockDefinition(block.type()).collisionMask != 0)
+            {
+                return true;
+            }
+            return CrateAtCell(worldRuntime.GetMobileObjects(), gx, gy, gz, {});
         }
 
         // Spawns a fired-projectile MobileObjSpec (ObjectType23) travelling
@@ -1621,7 +1634,7 @@ namespace GalaxyEggbert::Game
 
                 int fgx, fgy, fgz;
                 ToGridCell(world, endX, endY, endZ, fgx, fgy, fgz);
-                if (IsSolidAt(world, fgx, fgy, fgz))
+                if (IsSolidAt(worldRuntime, fgx, fgy, fgz))
                 {
                     obj.active = false;
                     sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);

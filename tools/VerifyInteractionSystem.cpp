@@ -239,6 +239,40 @@ int main(int argc, char** argv)
               "seen again, the dormant one wakes and the awake one homes");
     }
 
+    // 1.56. BD-0004: a follow star homing on Blupi is stopped (and explodes) only by what
+    // `Decor::TestPath` stops: a block with a solid quarter-cell, or a crate; it passes empty-mask
+    // decor (a cobweb, 403) and water.
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        const auto runFollower = [&](std::uint16_t blockInPath)
+        {
+            GW::World w;
+            for (std::uint16_t x = 40; x <= 60; ++x)
+                w.setBlock(x, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+            w.setBlock(52, 1, 50, GW::Block::make(blockInPath));
+            const std::filesystem::path path = "VerifyInteractionSystem-follower.vwr";
+            w.saveToFile(path);
+            WorldRuntime rt;
+            rt.LoadFromVwrFile(path.string());
+            std::filesystem::remove(path);
+            MobileObjSpec follower;
+            follower.type = GalaxyEggbert::Def::ObjectType::ObjectType97;
+            follower.posStartX = follower.posEndX = follower.currentX = 52.6f - 50.0f;
+            follower.posStartY = follower.posEndY = follower.currentY = 1.0f;
+            follower.posStartZ = follower.posEndZ = follower.currentZ = 0.0f;
+            rt.GetMobileObjectsMutable().push_back(follower);
+            InteractionSystem sys;
+            for (int i = 0; i < 90; ++i)
+                sys.Update(dt, rt, 47.0f - 50.0f, 1.0f, 0.0f, 0.0f, sound);
+            const auto& objs = rt.GetMobileObjects();
+            return !objs.empty() && objs[0].type == GalaxyEggbert::Def::ObjectType::ObjectType97 && objs[0].active &&
+                   objs[0].currentX < 52.5f - 50.0f;
+        };
+        check(runFollower(403), "a follow star passes a cobweb (empty-mask decor) on its way to Blupi");
+        check(runFollower(GalaxyEggbert::BlockTypes::Water1), "a follow star passes water");
+        check(!runFollower(1), "a solid block stops it (it explodes)");
+    }
+
     // 1.6. Lift timing (D43): a lift follows the original's step machine (Decor::
     // MoveObjectStepLine) -- dwell timeStopStart, advance over stepAdvance ticks, dwell
     // timeStopEnd, recede over stepRecede -- so two lifts with the same ticks and different
