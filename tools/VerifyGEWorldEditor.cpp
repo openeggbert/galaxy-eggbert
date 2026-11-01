@@ -3,6 +3,7 @@
 #include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
+#include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
@@ -222,6 +223,32 @@ int main()
         editor.Update(KeyboardState{Keys::U}, restMouse, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
         check(world.getBlock(placeX, placeY, placeZ).type() == 126, "undo takes a cycle step back on its own");
+    }
+
+    // ED-0006: the BigDecor families cycle the same way: a click again where the previous click put
+    // a tree (the same cell: BigDecor are no voxels) makes it the next tree.
+    {
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        CnaEngine::Graphics::Camera camera;
+        editor.Palette().SelectBigDecor(20);
+        const MouseState press(
+            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        const auto treeAt = [&]() -> int
+        {
+            for (const auto& record : GalaxyEggbert::CollectBigDecor(world))
+                if (record.x == placeX && record.y == placeY && record.z == placeZ)
+                    return record.icon;
+            return -1;
+        };
+        editor.Update(KeyboardState{}, press, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        const int first = treeAt();
+        editor.Update(KeyboardState{}, press, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        check(first == 20 && treeAt() == 21, "a second click on the tree just placed makes it the next tree (20 -> 21)");
     }
 
     {

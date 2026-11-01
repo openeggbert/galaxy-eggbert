@@ -107,6 +107,13 @@ namespace GalaxyEggbert::Editor
             placementKind_ = PlacementKind::Block;
         }
 
+        // Selects a BigDecor icon as a click on its palette entry does (scripted checks).
+        void SelectBigDecor(std::uint16_t icon) noexcept
+        {
+            selectedBigDecorIcon_ = icon;
+            placementKind_ = PlacementKind::BigDecor;
+        }
+
         void SetSelectedSkyRegion(std::uint32_t skyRegion) noexcept
         {
             selectedSkyRegion_ = static_cast<int>(skyRegion);

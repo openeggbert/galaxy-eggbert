@@ -20,8 +20,8 @@ namespace GalaxyEggbert::Editor
     // aimed at, as before.
     //
     // The tables are the decompiled Speedy Blupi 2's (games/sb2/src/decblock.cpp,
-    // design_tables.h; names in the comments), the decor cells only: the BigDecor families of the
-    // first menu (trees, palms, houses, ...) are not cycled yet. Ported under the owner's standing
+    // design_tables.h; names in the comments): the decor cells' families, and the BigDecor
+    // families of the first menu (trees, palms, houses, ...). Ported under the owner's standing
     // approval for small fidelity tables (2026-10-25).
     struct VariantFamily
     {
@@ -67,10 +67,27 @@ namespace GalaxyEggbert::Editor
         return families;
     }
 
-    // The family whose table holds `icon`, or -1 (a single icon: nothing to cycle).
-    [[nodiscard]] inline int FindVariantFamily(std::uint16_t icon)
+    // The BigDecor families of the first menu (PlaceDecor1 entries 0-8, all random), the same
+    // decompiled tables (ED-0006).
+    [[nodiscard]] inline const std::vector<VariantFamily>& BigDecorVariantFamilies()
     {
-        const auto& families = VariantFamilies();
+        static const std::vector<VariantFamily> families = {
+            {"table_366b0 (tree)", true, {20, 21, 22}},
+            {"table_366c0 (palm tree)", true, {16, 17, 18, 19}},
+            {"table_366d8 (decorative plant)", true, {23, 24, 25}},
+            {"table_366e8 (house)", true, {26, 27}},
+            {"table_366f8 (mechanical background)", true, {28, 29, 30, 31}},
+            {"table_36710 (kid's stuff background)", true, {45, 46, 47, 36, 37, 38, 39, 40, 41, 42, 43, 44}},
+            {"sb2_design_37740 (green slime)", true, {66, 67, 68, 69}},
+            {"sb2_design_37518 (palace element)", true, {87, 88, 89}},
+        };
+        return families;
+    }
+
+    // The family of `families` whose table holds `icon`, or -1 (a single icon: nothing to cycle).
+    [[nodiscard]] inline int FindVariantFamily(std::uint16_t icon,
+                                               const std::vector<VariantFamily>& families = VariantFamilies())
+    {
         for (std::size_t f = 0; f < families.size(); ++f)
         {
             for (const auto variant : families[f].icons)
@@ -89,18 +106,22 @@ namespace GalaxyEggbert::Editor
     class VariantCycler
     {
     public:
+        explicit VariantCycler(const std::vector<VariantFamily>& families = VariantFamilies()) : families_(&families)
+        {
+        }
+
         // The icon a click places for the palette's `selected` icon: its family's current variant
         // (the entry's own icon until it has been cycled); with Ctrl a random one of a random
         // family.
         [[nodiscard]] std::uint16_t IconToPlace(std::uint16_t selected, bool ctrl)
         {
-            const int family = FindVariantFamily(selected);
+            const int family = FindVariantFamily(selected, *families_);
             if (family < 0)
             {
                 return selected;
             }
-            const auto& icons = VariantFamilies()[static_cast<std::size_t>(family)].icons;
-            if (ctrl && VariantFamilies()[static_cast<std::size_t>(family)].random)
+            const auto& icons = (*families_)[static_cast<std::size_t>(family)].icons;
+            if (ctrl && (*families_)[static_cast<std::size_t>(family)].random)
             {
                 return icons[std::uniform_int_distribution<std::size_t>(0, icons.size() - 1)(rng_)];
             }
@@ -117,12 +138,12 @@ namespace GalaxyEggbert::Editor
             {
                 return std::nullopt;
             }
-            const int family = FindVariantFamily(selected);
+            const int family = FindVariantFamily(selected, *families_);
             if (family < 0)
             {
                 return std::nullopt;
             }
-            const auto& icons = VariantFamilies()[static_cast<std::size_t>(family)].icons;
+            const auto& icons = (*families_)[static_cast<std::size_t>(family)].icons;
             const std::size_t current = CurrentIndex(family, selected);
             if (icons.size() < 2 || icons[current] != iconThere)
             {
@@ -141,15 +162,15 @@ namespace GalaxyEggbert::Editor
     private:
         std::size_t CurrentIndex(int family, std::uint16_t selected)
         {
-            if (index_.size() != VariantFamilies().size())
+            if (index_.size() != families_->size())
             {
-                index_.assign(VariantFamilies().size(), -1);
+                index_.assign(families_->size(), -1);
             }
             int& index = index_[static_cast<std::size_t>(family)];
             if (index < 0)
             {
                 // Until cycled, the palette entry's own icon.
-                const auto& icons = VariantFamilies()[static_cast<std::size_t>(family)].icons;
+                const auto& icons = (*families_)[static_cast<std::size_t>(family)].icons;
                 for (std::size_t i = 0; i < icons.size(); ++i)
                 {
                     if (icons[i] == selected)
@@ -161,6 +182,7 @@ namespace GalaxyEggbert::Editor
             return static_cast<std::size_t>(index);
         }
 
+        const std::vector<VariantFamily>* families_;
         std::vector<int> index_;
         std::optional<std::array<std::uint16_t, 3>> lastPlaced_;
         std::mt19937 rng_{20261101u};

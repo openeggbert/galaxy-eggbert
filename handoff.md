@@ -32,10 +32,22 @@ ledgers before repeating any discovery. Where it stands:
   `tools/autoplay_search.py`. Never `pkill -f` a pattern that also matches a parent shell.
 - Done: **BD-0003** (a crate could be pushed out over water: support needs a solid mask; the 18
   crate playthroughs unchanged).
-- Then: ED-0001 (the original's variant cycling is traced in `plans/audit/editor_parity.md`; the 3D
-  mapping is MR-0003 in `manual_review.md`), fan/lava/pillars (VIS rows), the `.a3d` reader.
-- The whole-campaign playthrough (`campaign.txt`, ~2 h) has not been re-run since D60: regenerate
-  it (`python3 tools/autoplay_campaign.py`) and run it after the lift changes.
+- Done: ED-0001 editor variant cycling (`e8a86ae`) and ED-0006 for the BigDecor families; BD-0004
+  follow stars and shot ranges vs decor (`92a1a6f`). After all of today's gameplay fixes: 110/110,
+  all 78 playthroughs, the whole campaign 761140 ticks (2026-11-01).
+- `.a3d`: decoded and read (`tools/a3d/a3d.py`, all 105, `plans/audit/a3d_format.md`). The lava
+  frames are a height-field slab, the columns profiled shafts: the next step is a 3D lava surface
+  and pillar models from them or their `.rds` twins.
+- `.max` (MR-0001): the owner offered a 3D Studio MAX 3.1 ISO; setup was stopped unaccepted (the
+  key file holds the generic key-generator serial, the ISO a `CRACKS` folder); still BLOCKED until
+  a genuine licence is confirmed. The XP VM was shut down, its ISO detached, its network still
+  `null`. Do not change the VM's security settings (a registry change for blank-password guest
+  logons was refused by the permission classifier).
+- Fan/lava/pillar live views: first captures in `build-probe/fa-live/vis*/` are too imprecise;
+  take them in world999 from the exhibition rows' documented positions, first person (F3), close.
+- Next: the 3D lava surface (VIS-0069: design in `render_representation.notes.csv`, data in
+  `plans/audit/a3d_format.md`), the fan (VIS-0127) and pillars from the original sources, a
+  precise live gallery; then Wave C type by type, Wave E world lessons (066's blupit first).
 
 ## 1. The project and the goal in one paragraph
 

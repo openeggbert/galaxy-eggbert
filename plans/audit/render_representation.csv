@@ -67,7 +67,7 @@ VIS-0065,block:64,block,64,(unnamed),unnamed variant,TripleCrossBillboard,crosse
 VIS-0066,block:65,block,65,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): několik cihel,UniformCube,cube,catalogue says Billboard,6,1,UNREVIEWED,,,look at it live
 VIS-0067,block:66,block,66,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): vertical rung-segmented column, reads as a ladder, passable",DirectionalCube,cube,catalogue says ThinMechanical,15,1,UNREVIEWED,,,look at it live
 VIS-0068,block:67,block,67,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): cihly,UniformCube,cube,catalogue says Billboard,14,1,UNREVIEWED,,,look at it live
-VIS-0069,block:68,block,68,Lava (base),hazard,UniformCube,cube,shaped thing by its name,43,33,UNREVIEWED,,owner must-fix: lava drawn as cubes; original sources Decor/lave/lave1-5.rds and lave-1..5.a3d,live look; define a 3D lava surface
+VIS-0069,block:68,block,68,Lava (base),hazard,UniformCube,cube,shaped thing by its name,43,33,UNREVIEWED,,owner must-fix: lava drawn as cubes. The original tiles 68-72 are a pool: an orange body to ~60% of the cell under a spiky wave that changes frame to frame (rendered from Decor/lave/lave-1..5: an 11x6 height-field slab; tools/a3d),a 3D lava surface: each lava cell filled to ~0.6 with a top from the lave-1..5 height fields (tiled continuously across cells; frames cycled as tiles 68-72); body colour from the tiles; live multi-angle check
 VIS-0070,block:69,block,69,(unnamed),unnamed variant,UniformCube,cube,,9,1,UNREVIEWED,,,
 VIS-0071,block:70,block,70,,,UniformCube,cube,,0,1,UNREVIEWED,,,
 VIS-0072,block:71,block,71,,,UniformCube,cube,,0,1,UNREVIEWED,,,
@@ -125,7 +125,7 @@ VIS-0123,block:122,block,122,(unnamed),"unnamed variant — **ThinMechanical** (
 VIS-0124,block:123,block,123,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
 VIS-0125,block:124,block,124,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
 VIS-0126,block:125,block,125,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0127,block:126,block,126,FanLeft (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,8,4,UNREVIEWED,,owner must-fix: fan as icons on a cube's faces,live look; a 3D fan (rotor and housing)
+VIS-0127,block:126,block,126,FanLeft (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,8,4,REPRODUCED_DEFECT,a cube with the fan icon on its faces,owner must-fix; live 2026-11-01 (world999 exhibition, build-probe/fa-live/vis/fans/view.png): grey cubes with the grille icon on every face
 VIS-0128,block:127,block,127,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
 VIS-0129,block:128,block,128,,,DirectionalCube,cube,,3,1,UNREVIEWED,,,
 VIS-0130,block:129,block,129,FanRight (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,7,4,UNREVIEWED,,owner must-fix: fan,see VIS-0127

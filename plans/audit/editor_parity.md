@@ -11,7 +11,7 @@ Galaxy-only 3D UX is allowed where the original has no equivalent; it must not c
 | ED-0003 | Palette groups and order (ten groups) | Eggbert 2 editor | `PaletteCategories.cpp` | UNREVIEWED | compare group by group |
 | ED-0004 | Play-test -> stop -> edit -> save -> reload | — | done (completion plan §10) | UNREVIEWED | repeatable UI script |
 | ED-0005 | Undo/redo across every edit including metadata | — | `WorldEditor` command history | UNREVIEWED | test object metadata edits |
-| ED-0006 | Variant cycling of the BigDecor families (menu 1: trees, palms, plants, houses, machine and kid backgrounds, slime, palace) | `PlaceDecor1` entries 0-8 (random families) | BigDecor placement places the entry's icon | UNREVIEWED | the same rule on a BigDecor anchor |
+| ED-0006 | Variant cycling of the BigDecor families (menu 1: trees, palms, plants, houses, machine and kid backgrounds, slime, palace) | `PlaceDecor1` entries 0-8 (random families) | `BigDecorVariantFamilies()`; a click again on the cell where the previous click put a BigDecor cycles it (the ray meets the same cell); Ctrl places a random one | FIXED_AND_VERIFIED (`VerifyGEWorldEditor`) | a live UI run |
 
 ## ED-0001 — the original's variant cycling (traced 2026-11-01)
 

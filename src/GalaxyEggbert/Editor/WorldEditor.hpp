@@ -237,6 +237,7 @@ namespace GalaxyEggbert::Editor
         EditCommandStack commandStack_;
         EditorPalette palette_;
         VariantCycler variants_; // the original's variant families (ED-0001)
+        VariantCycler bigDecorVariants_{BigDecorVariantFamilies()}; // ED-0006
 
         // Box-fill tool (plan.md EDITOR-105).
         bool boxFirstCornerPlaced_ = false;

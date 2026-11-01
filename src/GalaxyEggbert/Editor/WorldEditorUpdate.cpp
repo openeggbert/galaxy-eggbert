@@ -321,15 +321,28 @@ namespace GalaxyEggbert::Editor
         }
         else if (palette_.IsBigDecorMode())
         {
+            // A click again where the previous click put a BigDecor cycles it (ED-0006; the ray
+            // meets the same cell, BigDecor not being voxels); Ctrl places without cycling.
+            const std::uint16_t selected = palette_.SelectedBigDecorIcon();
+            const std::optional<BigDecorRecord> existing = FindBigDecorAt(world, x, y, z);
+            std::optional<std::uint16_t> cycled;
+            if (!input.ctrlHeld && existing)
+            {
+                cycled = bigDecorVariants_.Cycle(x, y, z, existing->icon, selected);
+            }
             const BigDecorRecord record{
-                palette_.SelectedBigDecorIcon(), x, y, z};
+                cycled ? *cycled : bigDecorVariants_.IconToPlace(selected, input.ctrlHeld), x, y, z};
             command.kind = EditCommand::Kind::BigDecorEdit;
             command.bigDecorAnchorX = x;
             command.bigDecorAnchorY = y;
             command.bigDecorAnchorZ = z;
-            command.bigDecorBefore = FindBigDecorAt(world, x, y, z);
+            command.bigDecorBefore = existing;
             command.bigDecorAfter = record;
             PlaceBigDecor(world, record);
+            bigDecorVariants_.NotePlaced(x, y, z);
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+            return true;
         }
         else if (palette_.IsObjectMode())
         {

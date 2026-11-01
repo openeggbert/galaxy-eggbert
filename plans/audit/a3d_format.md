@@ -37,3 +37,8 @@ shape from the `.2D` preview's view and comparing silhouettes, then the lava fra
 - Next: per object, compare with the tile sprites (object-m.png 68-72 for lava; 76/375/399 for
   pillars) and with the `.rds` of the same name where one exists (it carries the materials and
   the camera the sprites were rendered with).
+- The five lava frames' top surfaces (`Form1`, y > 0): 66 points each on an 11 x 6 grid (frame 4
+  has one point moved in z: resample every frame onto a common grid), heights 23.6-98.4 in
+  (0.6-2.5 m) above the slab's base; `lave-base.a3d` is the same build without waves. Calibrate the
+  cell height against the tiles' silhouettes (object-m.png 68-72: body to ~60 % of the cell,
+  spikes up to ~90 %).
