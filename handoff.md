@@ -54,9 +54,13 @@ ledgers before repeating any discovery. Where it stands:
   `build-probe/`), export with `export_cna_avatar.py`, copy `icons.txt`, add to
   `avatars3d/objects/index.txt` and `tools/rd4_to_gltf/objects.txt`, list its icon in
   `BlockModels.hpp`, regenerate `model_parity.md`/`assets.md`, look live (before/after).
-- Next: pillars 375/376 (`Decor/colonne2.rds` converts to a plain cylinder: find the profile it
-  uses), 377/399 (no source yet); the wind tiles (`Decor/vent-norm/`); a low-angle owner look at
-  lava/fan/pillars; Wave E world lessons (066's blupit lane first); Wave C type by type.
+- Done (Wave E): 066's blupit walks across room B1 so its line of fire must be crossed (`63e37fe`,
+  LV-0040; crossing window measured with `autoplay_search.py`); 094's mine rows checked.
+- Next: pillars 375/376 (`Decor/colonne2.rds` is a `cube` master shaped by a Ray Dream deformer the
+  converter does not apply: it comes out a plain shaft), 377/399 (no source yet); the wind tiles
+  (`Decor/vent-norm/` holds only rendered frames: a 2D effect candidate); a low-angle owner look at
+  lava/fan/pillars; Wave E for the other mechanic-heavy worlds (199 next); Wave C type by type (an
+  enemy review of types 4/16/17/20/44/54 was started 2026-11-01).
 
 ## 1. The project and the goal in one paragraph
 
