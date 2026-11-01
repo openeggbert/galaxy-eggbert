@@ -49,6 +49,7 @@ exit_fleche
 fan_ventillo-h
 fish_poisson
 follow_bombe-follow
+girder201_structure1
 helicopter_helico-seul2
 invert_panneau-invert
 key1_cle1

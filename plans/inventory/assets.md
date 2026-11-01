@@ -66,6 +66,7 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/fan_ventillo-h` | Decor/ventillo-h.rd4, camera 'Caméra 2' | 3 | 1 | object-m 132-134 | 0.99 / 0.99 |
 | `avatars3d/objects/fish_poisson` | Blupi/poisson.rd4, camera 'Caméra 2' | 4 | 1 | element 78-88 | 0.93 / 0.94 |
 | `avatars3d/objects/follow_bombe-follow` | Blupi/bombe-follow.rd4, camera 'Caméra 2' | 2 | 1 | element 256-265 | 0.87 / 0.93 |
+| `avatars3d/objects/girder201_structure1` | Decor/structure1.rd4, camera 'Caméra 2' | 1 | 1 | object-m 201 | 0.79 / 0.79 |
 | `avatars3d/objects/helicopter_helico-seul2` | Blupi/helico-seul2.rd4, camera 'Caméra Jeu' | 4 | 1 | element 68 | 0.97 / 0.97 |
 | `avatars3d/objects/invert_panneau-invert` | Blupi/panneau-invert.rd4, camera 'Caméra 2' | 2 | 1 | element 187-194 | 1.00 / 1.00 |
 | `avatars3d/objects/key1_cle1` | Blupi/cle1.rd4, camera 'Caméra 2' | 1 | 1 | element 209-215 | 0.94 / 0.96 |
@@ -104,4 +105,4 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/wasp_guepe` | Blupi/guepe.rd4, camera 'Caméra 2' | 4 | 1 | element 195-202 | 0.95 / 0.96 |
 | `avatars3d/objects/wasp_guepe-tourne` | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 4 | 1 | element 203-207 | 0.96 / 0.96 |
 
-93 models.
+94 models.

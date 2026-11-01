@@ -25,7 +25,25 @@ namespace GalaxyEggbert::Game
     // their object-m icon (VIS-0077/0078/0378/0400): the stone column 76 (Decor/support1.rd4), the
     // golden support 77 (Decor/support2.rd4), the barrel stack 377 (Decor/pile1.rd4) and the white
     // column 399 (Decor/palais/big0108.rds). Their roles and collision are unchanged.
-    inline constexpr std::array<std::uint16_t, 4> kStillModelIcons{76, 77, 377, 399};
+    inline constexpr std::array<std::uint16_t, 5> kStillModelIcons{76, 77, 377, 399, 201};
+
+    // Still icons whose model is a flat frame drawn on each side of the cell (a lattice box), left
+    // out on a side shared with the same icon: the steel girder 201 (Decor/structure1.rd4, its
+    // truss frame). The sides mask bits: 1 +X, 2 -X, 4 +Z, 8 -Z (that neighbour is the same icon).
+    inline constexpr std::array<std::uint16_t, 1> kLatticeModelIcons{201};
+
+    struct LatticeSide
+    {
+        float dx, dz;    // the frame's offset from the cell's centre
+        float yaw;       // its turn about Y (the model's frame faces +Z)
+        std::uint8_t bit; // the neighbour bit that hides it
+    };
+    inline constexpr std::array<LatticeSide, 4> kLatticeSides{{
+        {0.0f, 0.5f, 0.0f, 4},
+        {0.0f, -0.5f, 3.14159265f, 8},
+        {0.5f, 0.0f, 1.57079632f, 1},
+        {-0.5f, 0.0f, -1.57079632f, 2},
+    }};
 
     // The fan model's roll about Z (radians) for a fan cell of animation base `base`.
     [[nodiscard]] constexpr float FanModelRoll(std::uint16_t base) noexcept

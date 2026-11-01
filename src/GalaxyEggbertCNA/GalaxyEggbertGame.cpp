@@ -4908,10 +4908,25 @@ namespace GalaxyEggbert::CNA
                         if (std::find(GalaxyEggbert::Game::kFanModelBases.begin(), GalaxyEggbert::Game::kFanModelBases.end(),
                                       cell.base) == GalaxyEggbert::Game::kFanModelBases.end())
                         {
-                            // A still icon drawn as its model (a pillar).
+                            // A still icon drawn as its model (a pillar), or a lattice of its frame.
                             if (const ObjectModelPose* still = objectModelTable_.Find(ObjectTextureSource::ObjectM, cell.base))
                             {
-                                drawModel(*still, cell.x, cell.y, cell.z);
+                                if (std::find(GalaxyEggbert::Game::kLatticeModelIcons.begin(),
+                                              GalaxyEggbert::Game::kLatticeModelIcons.end(),
+                                              cell.base) != GalaxyEggbert::Game::kLatticeModelIcons.end())
+                                {
+                                    for (const auto& side : GalaxyEggbert::Game::kLatticeSides)
+                                    {
+                                        if ((cell.sameSides & side.bit) == 0)
+                                        {
+                                            drawModel(*still, cell.x + side.dx, cell.y, cell.z + side.dz, side.yaw);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    drawModel(*still, cell.x, cell.y, cell.z);
+                                }
                             }
                             continue;
                         }

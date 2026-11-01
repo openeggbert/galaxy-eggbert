@@ -504,7 +504,17 @@ namespace GalaxyEggbert::Game
                     ++m_blockCount;
                     if (std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), block.type()) != modelDrawnIcons.end())
                     {
-                        m_staticModelCells.push_back({worldX, worldY, worldZ, block.type()}); // drawn as a model
+                        const auto same = [&](int dx, int dz)
+                        {
+                            const int nx = x + dx, nz = z + dz;
+                            return nx >= 0 && nz >= 0 && nx < blocksPerAxis && nz < blocksPerAxis &&
+                                   world.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(y),
+                                                  static_cast<std::uint16_t>(nz))
+                                           .type() == block.type();
+                        };
+                        const auto sides = static_cast<std::uint8_t>((same(1, 0) ? 1 : 0) | (same(-1, 0) ? 2 : 0) |
+                                                                     (same(0, 1) ? 4 : 0) | (same(0, -1) ? 8 : 0));
+                        m_staticModelCells.push_back({worldX, worldY, worldZ, block.type(), sides}); // drawn as a model
                         continue;
                     }
                     sumX += worldX;

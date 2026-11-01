@@ -98,3 +98,6 @@ support     object-m 77      Decor/support2.rd4
 # (its best match, Decor/enfant22.rd4, is a striped stick of another colour).
 pillar377   object-m 377     Decor/pile1.rd4
 pillar399   object-m 399     Decor/palais/big0108.rds
+# The steel girder 201 (passable decor; Decor/structure1.rd4, IoU 0.79: the truss frame), drawn as a
+# lattice box: the frame on every side of the cell not shared with another girder (BlockModels.hpp).
+girder201   object-m 201     Decor/structure1.rd4

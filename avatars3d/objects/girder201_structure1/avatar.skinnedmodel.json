@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "girder201_rd_545454",
+      "vertices": "girder201_rd_545454.verts.bin",
+      "indices": "girder201_rd_545454.idx.bin",
+      "vertexStride": 52,
+      "texture": "girder201_rd_545454.png",
+      "diffuseColor": [
+        0.09065468189359736,
+        0.09065468189359736,
+        0.09065468189359736,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

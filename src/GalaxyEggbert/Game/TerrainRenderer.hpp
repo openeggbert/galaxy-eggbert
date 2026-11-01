@@ -93,6 +93,8 @@ namespace GalaxyEggbert::Game
         {
             float x, y, z; // the cell's centre (world space)
             std::uint16_t base;
+            // Still cells: which side neighbours are the same icon (1 +X, 2 -X, 4 +Z, 8 -Z).
+            std::uint8_t sameSides = 0;
         };
         // The cells of the bases set above, and of the still icons given to the constructor.
         [[nodiscard]] std::vector<ModelCell> ModelCells() const
@@ -102,7 +104,7 @@ namespace GalaxyEggbert::Game
             {
                 if (std::find(m_modelBases.begin(), m_modelBases.end(), block.base) != m_modelBases.end())
                 {
-                    cells.push_back({block.x, block.y, block.z, block.base});
+                    cells.push_back({block.x, block.y, block.z, block.base, 0});
                 }
             }
             return cells;
