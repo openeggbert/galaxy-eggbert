@@ -24,6 +24,7 @@ from kit import MACHINE_FACES, MACHINE_FLOOR, O, World, lift, mine, wall  # noqa
 
 WALK, HIGH = 6, 18
 BLITZ, EMITTER = 305, 304
+SAW = 378                   # a running saw in the floor: the space over it is deadly
 
 
 def main(argv) -> int:
@@ -82,13 +83,17 @@ def main(argv) -> int:
 
     # ---- the lightning passage and the lift to the exit ----
     # East from the hall a passage, a curtain of lightning across it under its emitters, a mine
-    # beyond; the lift (2 x 2, 54 ticks) up nine to the exit's room; three eggs by its foot.
+    # beyond, two saws in its floor; the lift (2 x 2, 54 ticks) up nine to the exit's room; three eggs by its foot.
     carve(37, WALK, 48, 48, WALK + 2, 52)
     for z in range(48, 53):
         w.set(41, WALK + 3, z, EMITTER)
         if not calm:
             w.fill(41, WALK, z, 41, WALK + 2, z, BLITZ)
     hazard(44, WALK, 50)
+    # Two saws across the passage's floor beyond the mine (x 45, 47), a cell of floor between:
+    #    jumped one after the other (the original's two saws by its lightning, LV-0068).
+    for x in (45, 47):
+        w.fill(x, WALK - 1, 48, x, WALK - 1, 52, SAW)
     carve(49, WALK, 46, 54, WALK + 10, 54)
     for x in (50, 51):
         for z in (49, 50):

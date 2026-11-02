@@ -35,7 +35,7 @@ hold 2 action
 wait 20
 # East through the bulldozer's passage in lane z 52 again, across the hall to the lightning
 # passage (z 48-52): through its curtain (x 41) just after a strike, past the mine (44, 50) in
-# lane z 51.8.
+# lane z 51.8, over its two saws (x 45, 47) in two jumps.
 go 13.6 52.2
 clear 19 6 50 2.5 max 900
 go 24.5 52.2
@@ -43,6 +43,11 @@ go 36.5 50
 go 39.7 50 tol 0.1
 until blitz = 52 max 400
 go 42.5 51.8
+go 44.3 51.8 tol 0.1
+go 46 51.8 jump 1.8 tol 0.1
+until ground = 1
+go 48 51.8 jump 1.8 tol 0.1
+until ground = 1
 go 48.6 51.8
 # The lift (2 x 2 at x 50-51, z 49-50) up nine to the exit's room, the exit on its ledge.
 go 49.3 50 tol 0.1
