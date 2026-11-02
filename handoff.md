@@ -206,12 +206,17 @@ ledgers before repeating any discovery. Where it stands:
   084's three gates of crushers (`0cf9a4f`, LV-0051), 024's rods over the lava hall's last gap
   (`7fc63b9`, LV-0011), 034's lava pit across the gallery crossed on rods (`1e99936`, LV-0017),
   each with its playthrough; **OR-0056** the teleporters' letter plate and lights on all four sides
-  (`3be74e6`). Web build refreshed (`CURRENT.md`). Rods are `ROD = 202` at the walk over a drop
+  (`3be74e6`); then 106's rods before the west teleporter (`74184d8`, LV-0064), 061's clay
+  bridge to treasure 5 in a lava pool (`9894f64`, LV-0035: the bridge grows back after 156 ticks
+  of 20, so a script waits ~520 frames on the far side), 066's crumbling bridge cell over lava in
+  the upper corridor (`f79dacb`). 052's rods under its corner drop were tried and reverted: the
+  helicopter parked at the well's foot then could not be boarded again (LV-0027, open). Web build
+  refreshed (`CURRENT.md`). Rods are `ROD = 202` at the walk over a drop
   (`go ... max 600` crosses them in a script); levelcheck stages put a floor under them.
 - Next: the glue death (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
-  `plans/audit/lesson_inventory.md` (bars of 046/052/061/106/125, bridges of 061/066, lava, water,
-  teleporters of 105, 199's many).
+  `plans/audit/lesson_inventory.md` (bars of 046/052/061/125, lava, water, teleporters of 105,
+  199's many); a full 78-world regression run after these world changes.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
