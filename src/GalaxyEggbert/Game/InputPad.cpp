@@ -116,12 +116,13 @@ namespace GalaxyEggbert::Game
             return jumpRight ? right : MirrorX(right, m);
         }
 
-        // The back-up button (Galaxy's, 2026-11-02): over the stick's ring.
+        // The back-up button (Galaxy's, 2026-11-02): just over the stick's ring (owner: it was
+        // too high), inside the stick's touch area, which it takes precedence over.
         Rect PlayBackUpRect(const ScreenMetrics& m, bool jumpRight) noexcept
         {
             const auto c = DPadCenter(m, jumpRight);
             const float half = 28.0f * m.s;
-            const float cy = c.Y - 205.0f * m.s;
+            const float cy = c.Y - (kDPadDrawRadius + 14.0f) * m.s - half;
             return Rect{c.X - half, cy - half, c.X + half, cy + half};
         }
 

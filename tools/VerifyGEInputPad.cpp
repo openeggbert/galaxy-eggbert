@@ -276,8 +276,8 @@ int main()
     }
     {
         // Several fingers (owner 2026-11-02, touch devices): one steers the stick up while another
-        // holds Jump; Action fires when its finger lifts; the back-up button over the stick is held
-        // by the finger that pressed it, and a finger dragged over it from the stick does not.
+        // holds Jump; Action fires when its finger lifts; the back-up button just over the stick's ring is
+        // held by the finger that pressed it, and a finger dragged over it from the stick does not.
         InputPad pad;
         using TP = InputPad::TouchPoint;
         InputPad::PlayInput in;
@@ -287,12 +287,12 @@ int main()
                                     kViewportW, kViewportH, in);
         check(in.moveInput == 1.0f && in.turnInput == 0.0f && in.jumpHeld,
               "touch: the stick and Jump held together by two fingers");
-        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 180.0f, false, false}}, kViewportW, kViewportH, in);
+        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 270.0f, false, false}}, kViewportW, kViewportH, in);
         check(!in.backUpHeld && in.moveInput == 1.0f, "touch: the stick's finger over the back-up button stays the stick");
-        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 180.0f, false, true}}, kViewportW, kViewportH, in);
-        (void)pad.UpdatePlayTouches({TP{3, 100.0f, 175.0f, true, false}}, kViewportW, kViewportH, in);
+        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 270.0f, false, true}}, kViewportW, kViewportH, in);
+        (void)pad.UpdatePlayTouches({TP{3, 100.0f, 268.0f, true, false}}, kViewportW, kViewportH, in);
         check(in.backUpHeld && in.moveInput == 0.0f, "touch: a finger pressed on the back-up button holds it");
-        (void)pad.UpdatePlayTouches({TP{3, 100.0f, 175.0f, false, true}}, kViewportW, kViewportH, in);
+        (void)pad.UpdatePlayTouches({TP{3, 100.0f, 268.0f, false, true}}, kViewportW, kViewportH, in);
         check(!in.backUpHeld, "touch: lifted, the back-up button lets go");
     }
     {
