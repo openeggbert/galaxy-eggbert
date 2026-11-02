@@ -288,8 +288,14 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   in 3D he turns in place; there is no turn about in the air (INTENTIONAL_3D_ADAPTATION).
 - Validation: `VerifyBlupiMovement` (each event at its tick: the taps 4 ticks apart from 125,
   the hanging fidget at 118, the grip once per entry).
-- Open: hanging Blupi plays the Air clip -- the model has no StopSuspend/MarchSuspend clips yet
-  (the Ray Dream sources for them to be looked for, `tools/rd4_to_gltf`).
+- Hanging Blupi played the Air clip: Galaxy had no hanging states. Now `AnimState::StopSuspend`
+  and `MarchSuspend` with the original's tables (table_blupi 31 and 32, Tables.cpp), their clips
+  built from Ray Dream's own `suspendu*.rd4` scenes (every icon matched confidently; added to
+  `avatars3d/blupi/` alone: a whole rebuild today also changes Hide and StopTank, converter drift
+  since their export, left as shipped); the hanging fidget sound follows StopSuspend's phase.
+  `plans/evidence/hanging.png`.
+- Open: the jump off a bar. The original holds Jump for 10 ticks first (JumpSuspend's wind-up,
+  Decor.cpp:4769-4789; let go earlier and he stays); Galaxy lets go at once.
 
 ## Reviewed, not changed (yet)
 

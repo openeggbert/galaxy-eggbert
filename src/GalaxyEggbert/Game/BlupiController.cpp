@@ -240,6 +240,33 @@ namespace GalaxyEggbert::Game
         constexpr int kMarchSurfFrames[] = {
             93, 93, 94, 94, 95, 95, 96, 96, 97, 97, 98, 98};
         constexpr int kHideFrames[] = {276, 277, 278, 279, 280, 281, 282, 283, 284};
+        // table_blupi StopSuspend (31) and MarchSuspend (32), Tables.cpp (standing approval for
+        // animation tables): hanging still -- swinging, with two hand-over-hand pauses -- and
+        // moving along the bar.
+        constexpr int kStopSuspendFrames[] = {
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            144, 144, 143, 143, 151, 151, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
+            163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
+            163, 163, 164, 164, 163, 163, 162, 162, 151, 151, 143, 143, 144, 144, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            156, 156, 156, 156, 157, 157, 157, 157, 158, 158, 158, 158, 157, 157, 157, 157,
+            144, 144, 143, 143, 151, 151, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
+            163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
+            163, 163, 164, 164, 163, 163, 162, 162, 151, 151, 143, 143, 151, 151, 162, 162,
+            163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
+            163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
+            163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
+            151, 151, 143, 143, 144, 144, 157, 157};
+        constexpr int kMarchSuspendFrames[] = {
+            144, 144, 145, 145, 146, 146, 145, 145, 144, 144, 143, 143};
         constexpr int kPushFrames[] = {49, 50, 51, 52, 53, 54};
         // table_blupi StopPop (28) and Pop (29), Tables.cpp: holding a crate, pulling it.
         constexpr int kStopPopFrames[] = {122, 122, 122, 125, 125, 125};
@@ -1464,7 +1491,6 @@ namespace GalaxyEggbert::Game
                 m_velocityY = 0.0f;
                 m_onGround = false;
                 m_suspendDropHoldTimer = 0.0f;
-                m_suspendIdleTicks = 0.0f;
                 m_barGrabbed = true;
             }
         }
@@ -1487,20 +1513,6 @@ namespace GalaxyEggbert::Game
             {
                 m_x += std::sin(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
                 m_z += -std::cos(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
-                m_suspendIdleTicks = 0.0f;
-            }
-            else
-            {
-                // StopSuspend's fidget sound at its ticks 118, 230 and 278 of 328
-                // (Decor.cpp:2379-2382).
-                const float before = m_suspendIdleTicks;
-                m_suspendIdleTicks += dt * 20.0f;
-                for (int tick = static_cast<int>(std::floor(before)) + 1;
-                     tick <= static_cast<int>(std::floor(m_suspendIdleTicks)); ++tick)
-                {
-                    const int k = tick % 328;
-                    m_barIdleFidget = m_barIdleFidget || k == 118 || k == 230 || k == 278;
-                }
             }
 
             const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
@@ -2238,8 +2250,7 @@ namespace GalaxyEggbert::Game
             m_vertigoStarted = false;
         }
         for (auto [flag, kind] : {std::pair{&m_barGrabbed, EventKind::BarGrabbed},
-                                  std::pair{&m_barJumpedOff, EventKind::BarJumpedOff},
-                                  std::pair{&m_barIdleFidget, EventKind::BarIdleFidget}})
+                                  std::pair{&m_barJumpedOff, EventKind::BarJumpedOff}})
         {
             if (*flag)
             {
@@ -2309,6 +2320,7 @@ namespace GalaxyEggbert::Game
                                   : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
                                   : m_nage        ? (moving ? AnimState::MarchNage : AnimState::StopNage)
                                   : m_surf        ? (moving ? AnimState::MarchSurf : AnimState::StopSurf)
+                                  : m_suspended   ? (moving ? AnimState::MarchSuspend : AnimState::StopSuspend)
                                   : IsInVehicle() ? vehicleAnimState()
                                   : pushingCrate  ? AnimState::Push
                                   : holdingCrate  ? (moving ? AnimState::Pop : AnimState::StopPop)
@@ -2376,6 +2388,16 @@ namespace GalaxyEggbert::Game
                     {
                         m_eventsThisFrame.push_back(Event{EventKind::IdleFidget});
                     }
+                }
+            }
+            // Hanging still, StopSuspend's at ticks 118, 230 and 278 of its 328 (channel 36,
+            // Decor.cpp:2379-2382).
+            if (m_animState == AnimState::StopSuspend)
+            {
+                const int k = m_animPhase % 328;
+                if (k == 118 || k == 230 || k == 278)
+                {
+                    m_eventsThisFrame.push_back(Event{EventKind::BarIdleFidget});
                 }
             }
         }
@@ -2495,6 +2517,10 @@ namespace GalaxyEggbert::Game
                 return kStopSurfFrames[m_animPhase % (sizeof(kStopSurfFrames) / sizeof(kStopSurfFrames[0]))];
             case AnimState::MarchSurf:
                 return kMarchSurfFrames[m_animPhase % (sizeof(kMarchSurfFrames) / sizeof(kMarchSurfFrames[0]))];
+            case AnimState::StopSuspend:
+                return kStopSuspendFrames[m_animPhase % (sizeof(kStopSuspendFrames) / sizeof(kStopSuspendFrames[0]))];
+            case AnimState::MarchSuspend:
+                return kMarchSuspendFrames[m_animPhase % (sizeof(kMarchSuspendFrames) / sizeof(kMarchSuspendFrames[0]))];
             case AnimState::Hide:
                 return kHideFrames[m_animPhase % (sizeof(kHideFrames) / sizeof(kHideFrames[0]))];
             case AnimState::Push:

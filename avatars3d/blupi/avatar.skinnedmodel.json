@@ -238,6 +238,14 @@
       "clip": "clips/MarchSurf.clip.bin"
     },
     {
+      "name": "StopSuspend",
+      "clip": "clips/StopSuspend.clip.bin"
+    },
+    {
+      "name": "MarchSuspend",
+      "clip": "clips/MarchSuspend.clip.bin"
+    },
+    {
       "name": "Hide",
       "clip": "clips/Hide.clip.bin"
     },

@@ -532,6 +532,9 @@ namespace GalaxyEggbert::Game
             // table under `DeathLocked` above, not a separate AnimState.
             StopNage, MarchNage,
             StopSurf, MarchSurf,
+            // Hanging from a bar (the original's StopSuspend 31 and MarchSuspend 32, chosen by
+            // m_blupiSuspend in BlupiSearchIcon): still, and moving along it.
+            StopSuspend, MarchSuspend,
             // Hide (plan.md BLUPI-051, found 2026-07-18): real single
             // static pose (`table_blupi` ID 35, 9-frame idle-fidget cycle,
             // same shape as Stop's own long idle table) while
@@ -1547,12 +1550,9 @@ namespace GalaxyEggbert::Game
         bool m_suspended = false;
         float m_suspendGraceTimer = 0.0f; // real m_blupiNoBarre, prevents an immediate re-grab
         float m_suspendDropHoldTimer = 0.0f; // real "holding Down >5 ticks drops him" accumulator
-        // Ticks hanging still (the original's StopSuspend phase: from the grab or the last move),
-        // for its fidget sound; and the grab / jump-off of this step, for their sounds.
-        float m_suspendIdleTicks = 0.0f;
+        // The grab / jump-off of this step, for their sounds.
         bool m_barGrabbed = false;
         bool m_barJumpedOff = false;
-        bool m_barIdleFidget = false;
 
         bool m_ghost = false;
 

@@ -73,7 +73,10 @@ ledgers before repeating any discovery. Where it stands:
   sound on arriving removed (`plans/evidence/teleport-arrival.png`).
 - Done: BD-0018, six Blupi sounds the original plays and Galaxy never did (turn 5, bar grab 34,
   bar jump-off 35, hanging fidget 36, idle taps 37, crate grip 39), as `BlupiController`
-  events. A hanging Blupi still shows the Air clip (no suspend clips in the model yet).
+  events. Hanging Blupi has his clips now (StopSuspend/MarchSuspend from `suspendu*.rd4`, only
+  those two exported into `avatars3d/blupi/`; a full re-export would also change Hide and
+  StopTank -- converter drift to look at first). Open: the 10-tick wind-up before he lets go of
+  a bar (Galaxy lets go at once; bars in 064 065 066 071 074 075 083 084).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

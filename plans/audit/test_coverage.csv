@@ -39,3 +39,4 @@ deaths drawn with the original element sprites (OR-0015),render,live,plans/evide
 teleport arrival under the partner; re-entry after leaving (BD-0017),gameplay,unit+autoplay,VerifyInteractionSystem (destination); 034 051 065 066 094 095 102 106 124,pass,
 teleport arrival sparkles; no arrival sound (BD-0017),render+audio,unit+live,VerifyInteractionSystem (two ObjectType27 to the nearest wall); plans/evidence/teleport-arrival.png (original vs Galaxy),pass,
 Blupi sounds 5/34/35/36/37/39 at the original moments (BD-0018),audio,unit,VerifyBlupiMovement (event ticks),pass,heard only in code: game runs are silent
+hanging clips StopSuspend/MarchSuspend from suspendu*.rd4 (BD-0018),render,live,plans/evidence/hanging.png (probe world 995),pass,
