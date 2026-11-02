@@ -3117,6 +3117,24 @@ namespace GalaxyEggbert::CNA
                     case BlupiController::EventKind::HeadBumped:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel40);
                         break;
+                    case BlupiController::EventKind::TurnStarted:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel5);
+                        break;
+                    case BlupiController::EventKind::IdleFidget:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel37);
+                        break;
+                    case BlupiController::EventKind::BarGrabbed:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel34);
+                        break;
+                    case BlupiController::EventKind::BarJumpedOff:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel35);
+                        break;
+                    case BlupiController::EventKind::BarIdleFidget:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel36);
+                        break;
+                    case BlupiController::EventKind::CrateGripped:
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel39);
+                        break;
                     case BlupiController::EventKind::ReactionStarted:
                         // Decor.cpp:6258/6275 (ch46, Ouf1b's at its 4th tick), 6291 (ch48), 6301 (ch49).
                         switch (blupi_.GetAnimState())

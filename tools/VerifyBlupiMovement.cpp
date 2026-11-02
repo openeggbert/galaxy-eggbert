@@ -404,6 +404,46 @@ int main(int argc, char** argv)
         check(onDrip.GetGroundBlockType(synthetic) == BlockTypes::Drip,
               "GetGroundBlockType() identifies the water-drip hazard correctly (real icon 404)");
 
+        // Gripping a crate (StopPop) and starting to pull it (Pop) each give channel 39's event
+        // (Decor.cpp:3291-3323).
+        {
+            Worlds::World gripWorld;
+            for (int z = 28; z <= 32; ++z)
+            {
+                gripWorld.setBlock(30, 0, static_cast<std::uint16_t>(z), Worlds::Block::make(BlockTypes::Ground));
+            }
+            BlupiController gripper;
+            gripper.SetPosition(30.0f - 50.0f, 1.0f, 30.0f - 50.0f);
+            gripper.Step(gripWorld, 0.0f, 0.0f, false, false, false, dt);
+            gripper.Step(gripWorld, 0.0f, 0.0f, false, false, false, dt, false, false, false, false, /*holdingCrate=*/true);
+            const bool gripped = hasEvent(gripper, BlupiController::EventKind::CrateGripped);
+            gripper.Step(gripWorld, 0.0f, 0.0f, false, false, false, dt, false, false, false, false, true);
+            const bool notAgain = !hasEvent(gripper, BlupiController::EventKind::CrateGripped);
+            gripper.Step(gripWorld, 0.0f, -1.0f, false, false, false, dt, false, false, false, false, true);
+            const bool pulling = hasEvent(gripper, BlupiController::EventKind::CrateGripped);
+            check(gripped && notAgain && pulling,
+                  "gripping a crate and starting to pull it each give the grip sound's event, once");
+        }
+
+        // Stop's idle cycle taps (channel 37) at its ticks 125, 129, ... of 330 (Decor.cpp:2371-2378).
+        {
+            Worlds::World idleWorld;
+            idleWorld.setBlock(30, 0, 30, Worlds::Block::make(BlockTypes::Ground));
+            BlupiController idler;
+            idler.SetPosition(30.0f - 50.0f, 1.0f, 30.0f - 50.0f);
+            std::vector<int> taps;
+            for (int frame = 1; frame <= 60 * 8; ++frame)
+            {
+                idler.Step(idleWorld, 0.0f, 0.0f, false, false, false, dt);
+                if (hasEvent(idler, BlupiController::EventKind::IdleFidget))
+                {
+                    taps.push_back(frame);
+                }
+            }
+            check(taps.size() >= 2 && std::abs(taps[0] - taps[1] + 12) <= 1 && taps[0] > 300,
+                  "standing idle, the tap sound's events come 4 ticks apart from tick 125 of the cycle");
+        }
+
         // Suspended/hanging bar-and-rope mode (plan.md TILE-045, real
         // Decor::GetTypeBarre()/m_blupiSuspend, icons 138/202 confirmed
         // 2026-07-14 via a direct Decor.cpp read). Own synthetic world,
@@ -476,6 +516,28 @@ int main(int argc, char** argv)
             check(!jumper.IsSuspended(), "pressing Jump while suspended releases the hang");
             check(jumper.GetVelocityY() > 0.0f,
                   "the jump-release gives Blupi a real upward launch (real fixed -11.0 equivalent)");
+            check(hasEvent(jumper, BlupiController::EventKind::BarJumpedOff),
+                  "jumping off a bar gives its sound's event (channel 35, Decor.cpp:4789)");
+
+            // The grab's sound (channel 34, Decor.cpp:5452), and hanging still StopSuspend's fidget
+            // (channel 36) at its tick 118 of 328 (Decor.cpp:2379-2382).
+            BlupiController hanger;
+            hanger.SetPosition(barreWorldX, 1.0f, 73.0f - 50.0f);
+            hanger.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(hanger.IsSuspended() && hanger.EventsThisFrame().size() >= 1 &&
+                      hasEvent(hanger, BlupiController::EventKind::BarGrabbed),
+                  "catching a bar gives its sound's event (channel 34)");
+            int fidgetFrame = -1;
+            for (int frame = 1; frame <= 400 && fidgetFrame < 0; ++frame)
+            {
+                hanger.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+                if (hasEvent(hanger, BlupiController::EventKind::BarIdleFidget))
+                {
+                    fidgetFrame = frame;
+                }
+            }
+            check(fidgetFrame >= 353 && fidgetFrame <= 355,
+                  "hanging still, the fidget sound's event comes at tick 118 (frame 354 at 60 Hz)");
 
             // Grace timer (real m_blupiNoBarre, 5 ticks @ 20Hz = 0.25s):
             // force Blupi back to the exact bar cell right after release

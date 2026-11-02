@@ -71,6 +71,9 @@ ledgers before repeating any discovery. Where it stands:
   106's well pillars moved over the wells; 066/102 scripts adjusted. Then compared with the
   original running: the arrival's two sparkle clusters added (`SpawnTeleportArrival`), the second
   sound on arriving removed (`plans/evidence/teleport-arrival.png`).
+- Done: BD-0018, six Blupi sounds the original plays and Galaxy never did (turn 5, bar grab 34,
+  bar jump-off 35, hanging fidget 36, idle taps 37, crate grip 39), as `BlupiController`
+  events. A hanging Blupi still shows the Air clip (no suspend clips in the model yet).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

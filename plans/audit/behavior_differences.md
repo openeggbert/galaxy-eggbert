@@ -276,6 +276,21 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   sliding +X and -X to the nearest wall, 20 ticks a cell, Decor.cpp:6355-6356) and no longer
   plays channel 71 a second time on arriving (the original plays it only on entering, 5603).
 
+## BD-0018 — six of the original's Blupi sounds were never played (audio) — FIXED_AND_VERIFIED
+
+- Found by matching every `PlaySound(SoundChannelN, ...)` in Decor.cpp (63 channels) against
+  Galaxy's play sites: 5, 34, 35, 36, 37 and 39 had none.
+- Now played, as events of `BlupiController` (the host maps them to channels): 34 on catching a
+  hanging bar (Decor.cpp:5452), 35 on jumping off it (4789), 36 hanging still at ticks 118, 230
+  and 278 of StopSuspend's 328 (2379-2382), 37 standing still at Stop's taps, ticks 125-139 and
+  215-269 of its 330 (2371-2378), 39 on each grip of a crate (StopPop) and start of a pull (Pop)
+  (3291-3323). Channel 5, the turn about (3364-3371, 3422-3429), plays as the Turn clip starts:
+  in 3D he turns in place; there is no turn about in the air (INTENTIONAL_3D_ADAPTATION).
+- Validation: `VerifyBlupiMovement` (each event at its tick: the taps 4 ticks apart from 125,
+  the hanging fidget at 118, the grip once per entry).
+- Open: hanging Blupi plays the Air clip -- the model has no StopSuspend/MarchSuspend clips yet
+  (the Ray Dream sources for them to be looked for, `tools/rd4_to_gltf`).
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

@@ -1143,6 +1143,12 @@ namespace GalaxyEggbert::Game
             VertigoStarted, // the original's channel 6 as he starts to teeter
             HeadBumped,     // channel 40: a fast jump met a ceiling (JumpAie follows on landing)
             ReactionStarted, // a reaction began: GetAnimState() says which (its sound)
+            TurnStarted,     // channel 5: he turns about (Decor.cpp:3364-3371, 3422-3429)
+            IdleFidget,      // channel 37: Stop's idle cycle at its taps (Decor.cpp:2371-2378)
+            BarGrabbed,      // channel 34: he catches a hanging bar (Decor.cpp:5452)
+            BarJumpedOff,    // channel 35: he jumps off it (Decor.cpp:4789)
+            BarIdleFidget,   // channel 36: hanging still, at StopSuspend's ticks (Decor.cpp:2379-2382)
+            CrateGripped,    // channel 39: he grips a crate (StopPop) or starts pulling it (Pop), Decor.cpp:3291-3323
         };
         struct Event
         {
@@ -1541,6 +1547,12 @@ namespace GalaxyEggbert::Game
         bool m_suspended = false;
         float m_suspendGraceTimer = 0.0f; // real m_blupiNoBarre, prevents an immediate re-grab
         float m_suspendDropHoldTimer = 0.0f; // real "holding Down >5 ticks drops him" accumulator
+        // Ticks hanging still (the original's StopSuspend phase: from the grab or the last move),
+        // for its fidget sound; and the grab / jump-off of this step, for their sounds.
+        float m_suspendIdleTicks = 0.0f;
+        bool m_barGrabbed = false;
+        bool m_barJumpedOff = false;
+        bool m_barIdleFidget = false;
 
         bool m_ghost = false;
 

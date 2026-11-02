@@ -1464,6 +1464,8 @@ namespace GalaxyEggbert::Game
                 m_velocityY = 0.0f;
                 m_onGround = false;
                 m_suspendDropHoldTimer = 0.0f;
+                m_suspendIdleTicks = 0.0f;
+                m_barGrabbed = true;
             }
         }
 
@@ -1485,6 +1487,20 @@ namespace GalaxyEggbert::Game
             {
                 m_x += std::sin(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
                 m_z += -std::cos(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
+                m_suspendIdleTicks = 0.0f;
+            }
+            else
+            {
+                // StopSuspend's fidget sound at its ticks 118, 230 and 278 of 328
+                // (Decor.cpp:2379-2382).
+                const float before = m_suspendIdleTicks;
+                m_suspendIdleTicks += dt * 20.0f;
+                for (int tick = static_cast<int>(std::floor(before)) + 1;
+                     tick <= static_cast<int>(std::floor(m_suspendIdleTicks)); ++tick)
+                {
+                    const int k = tick % 328;
+                    m_barIdleFidget = m_barIdleFidget || k == 118 || k == 230 || k == 278;
+                }
             }
 
             const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
@@ -1502,6 +1518,7 @@ namespace GalaxyEggbert::Game
                 m_onGround = false;
                 m_velocityY = kSuspendReleaseSpeed;
                 m_suspendGraceTimer = kSuspendNoRegrabSeconds;
+                m_barJumpedOff = true;
             }
             // Real: holding Down for >5 ticks, or walking off the bar
             // entirely (no bar tile at the new position), drops Blupi into
@@ -2220,6 +2237,16 @@ namespace GalaxyEggbert::Game
             m_eventsThisFrame.push_back(Event{EventKind::VertigoStarted});
             m_vertigoStarted = false;
         }
+        for (auto [flag, kind] : {std::pair{&m_barGrabbed, EventKind::BarGrabbed},
+                                  std::pair{&m_barJumpedOff, EventKind::BarJumpedOff},
+                                  std::pair{&m_barIdleFidget, EventKind::BarIdleFidget}})
+        {
+            if (*flag)
+            {
+                m_eventsThisFrame.push_back(Event{kind});
+                *flag = false;
+            }
+        }
         if (m_headBumped)
         {
             m_eventsThisFrame.push_back(Event{EventKind::HeadBumped});
@@ -2313,6 +2340,17 @@ namespace GalaxyEggbert::Game
             {
                 m_eventsThisFrame.push_back(Event{EventKind::DownReleaseSoundFired});
             }
+            // The original's turn about plays channel 5 (Decor.cpp:3364-3371); in 3D he turns in
+            // place, the Turn clip.
+            if (newState == AnimState::Turn)
+            {
+                m_eventsThisFrame.push_back(Event{EventKind::TurnStarted});
+            }
+            // Each time he takes hold of a crate or starts pulling it (Decor.cpp:3291-3323).
+            if (newState == AnimState::StopPop || newState == AnimState::Pop)
+            {
+                m_eventsThisFrame.push_back(Event{EventKind::CrateGripped});
+            }
             m_animState = newState;
             m_animPhase = 0;
             m_animTimer = 0.0f;
@@ -2326,6 +2364,20 @@ namespace GalaxyEggbert::Game
         {
             m_animTimer -= frameDuration;
             ++m_animPhase;
+            // Stop's idle cycle taps (channel 37) at these ticks of its 330 (Decor.cpp:2371-2378).
+            if (m_animState == AnimState::Stop)
+            {
+                static constexpr int kTaps[] = {125, 129, 135, 139, 215, 219, 225, 229, 235, 239, 245, 249,
+                                                255, 259, 265, 269};
+                const int k = m_animPhase % 330;
+                for (const int tap : kTaps)
+                {
+                    if (k == tap)
+                    {
+                        m_eventsThisFrame.push_back(Event{EventKind::IdleFidget});
+                    }
+                }
+            }
         }
 
         const float previousStateTimer = m_animStateTimer;
