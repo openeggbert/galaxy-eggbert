@@ -15,7 +15,8 @@ gallery, dived under a curtain past the fish, to the treasure tower of shelves a
     python3 tools/worlds/world024.py                   # writes worlds3d/world024.vwr
     python3 tools/worlds/world024.py --stage K out.vwr # lessons 1..K solved (levelcheck):
         1 crates pushed (start room, tower foot), 2 the shrine's doors open,
-        3 the flooded gallery swum (its surface made a floor, the curtain gone)
+        3 the flooded gallery swum (its surface made a floor, the curtain gone),
+        4 the lava hall's rods hung from (a floor under them)
 """
 
 import random
@@ -29,6 +30,7 @@ from palace import (BALUSTRADE, BLUE_DOOR, DEEP_WATER, FOUNTAIN, GREEN_DOOR, LAV
                     SAW, STONE, WATER, WINDOWS, gate, parapet, stone, windows_row)
 
 BARS = 51
+ROD = 202                   # a bar along X Blupi hangs from (ThinBar), seen from every side
 SPAWN = (50, 11, 59)
 
 
@@ -156,7 +158,14 @@ def main(argv) -> int:
         lift(w, (x, 8, 50), (x, 10, 50), ticks=20, stop=10)
     mine(w, 24, 11, 52)
     w.place(O.MOVING_MINE, 25, 11, 52, end=(25, 13, 52), advance=20, recede=20, stop_start=0, stop_end=0)
-    white(12, 10, 47, 17, 10, 53, chance=0.1)                       # the far platform
+    white(12, 10, 47, 14, 10, 53, chance=0.1)                       # the far platform
+    # Between the last pier and the far platform (x 15-18) rods at the walk over the lava: Blupi
+    #    hangs from them across (the original's row of bars under its ceiling over saws,
+    #    LV-0011); in stage 4 a floor under them (levelcheck cannot hang).
+    if stage >= 4:
+        w.fill(15, 10, 50, 18, 10, 50, STONE)
+    else:
+        w.fill(15, 11, 50, 18, 11, 50, ROD)
     w.place(O.KEY2, 13, 11, 50)
     w.place(O.EGG, 13, 11, 48)
     w.place(O.EGG, 28, 11, 49)

@@ -175,20 +175,19 @@ go 22 50 tol 0.15
 go 19.6 50 jump 2.5
 until ground = 1
 expect y >= 10.95
-# The gap at x 18 to the far platform: the green key and an egg.
+# The rods over the lava (x 15-18) to the far platform, hanging: the green key and an egg.
 go 19.1 50 tol 0.08
-go 16 50 jump 2.9
-until ground = 1
+face -90
+go 13.6 50 max 600
 expect y >= 10.95
 go 13 50
 go 13 48 until eggs = 7
 until eggs = 7 max 120
-# Back east: the gap at x 18, then each pair of cells jumped from pier to pier, onto the
+# Back east: along the rods, then each pair of cells jumped from pier to pier, onto the
 # lift or past it (wait for it to be up first, so a short landing finds it there).
-go 16.6 50
+go 14 50 tol 0.15
 face 90
-go 19.5 50 jump 2.5
-until ground = 1
+go 19.5 50 max 600
 expect y >= 10.95
 go 20.3 50 tol 0.08
 lift 22 11 50 max 400

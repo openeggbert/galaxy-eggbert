@@ -8,7 +8,6 @@ Clusters are the original map's cells (x, y; 64 px tiles), `xN` the cells in the
 | 010 | spikes: (15,5)x6 (56,4)x11 | - | - |
 | 013 | - | helicopter 13 -> 4 | - |
 | 014 | water: (37,55)x5 | - | - |
-| 024 | bar: (7,52)x8 (25,32)x1 | - | - |
 | 034 | bar: (20,39)x6 | - | - |
 | 046 | bar: (47,19)x1 | crate 8 -> 1 | - |
 | 052 | bar: (71,34)x11 (70,22)x8 | - | - |
