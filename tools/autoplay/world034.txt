@@ -186,15 +186,22 @@ go 44 82
 go 44 79 tol 0.1 until z <= 40
 until ground = 1 max 600
 expect y >= 33.95
-# The gallery: its two eggs, then along z 31 (clear of the fan's wind on z 33) to the treasure
-# in the corner beside the fan's mouth; back to alpha (18, 32).
+# The gallery: its two eggs, then along z 31 (clear of the fan's wind on z 33), over the pit of
+# lava on its rods, to the treasure in the corner beside the fan's mouth; back to alpha (18, 32).
 go 16 33.6
 go 16 31 tol 0.1
 until eggs = 3 max 200
 go 22 31 tol 0.1
 until eggs = 4 max 200
+# The pit of lava (x 30-33) crossed hanging from its rods (lane 31), there and back.
+go 29 31 tol 0.1
+go 35 31 max 600
+expect y >= 33.95
 go 44 31 tol 0.1
 until treasures = 5 max 200
+go 35 31 tol 0.1
+go 28.5 31 max 600
+expect y >= 33.95
 go 18 31 tol 0.1
 go 18 32 tol 0.1 until z >= 70
 until ground = 1 max 600

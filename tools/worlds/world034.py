@@ -34,6 +34,7 @@ MACHINE = (78, 79, 80, 81, 82, 83, 84)
 ALPHA, BETA, DELTA, CHI = 330, 331, 332, 333       # teleporter pairs (their panels' letters)
 FAN_LEFT, WIND_LEFT = 126, 110                     # the fan blows -X; its wind tiles before it
 LAVA, WATER, TEMP, BLUE_DOOR = 68, 92, 324, 336
+ROD = 202                   # a bar along X Blupi hangs from (ThinBar), seen from every side
 WS, WR, WL, WM, WG, WT, WB = 30, 14, 8, 28, 34, 6, 36   # walking levels of the places
 SPAWN = (48, WS, 84)
 
@@ -110,7 +111,8 @@ def rock_cave(w: World, rng: random.Random, timed: bool):
 
 
 def machine_hall(w: World, rng: random.Random, timed: bool, solved: bool):
-    """M: the gallery (walk 34) where alpha arrives, its fan, a treasure and two eggs; the hall
+    """M: the gallery (walk 34) where alpha arrives, its fan, a treasure, two eggs and a pit of lava
+    crossed hanging from rods; the hall
     below (walk 28): the long lift's top, a tunnel where the bulldozer drives among mines,
     lava with invert pickups on the way to an egg, the pool with the fish before the blue
     door and its treasure."""
@@ -128,6 +130,15 @@ def machine_hall(w: World, rng: random.Random, timed: bool, solved: bool):
     for x in range(37, 45):
         w.set(x, WG, 33, WIND_LEFT)
     w.place(O.TREASURE, 44, WG, 31)
+    # A pit of lava across the gallery (x 30-33), its rods at the walk in lane 31: crossed hanging
+    # there and back (the original's row of bars in its machine walls, LV-0017); in the check
+    # stages a floor under them (levelcheck cannot hang).
+    carve(w, 30, WG - 4, 30, 33, WG - 1, 35)
+    w.fill(30, WG - 5, 30, 33, WG - 5, 35, LAVA)
+    if timed:
+        w.fill(30, WG - 1, 31, 33, WG - 1, 31, MACHINE[0])
+    else:
+        w.fill(30, WG, 31, 33, WG, 31, ROD)
     bird(w, (42, WM + 1, 38), (42, WM + 6, 38), ticks=32)   # rising and falling under the window
     # The tunnel between the hall's two parts: the bulldozer drives its middle lane, mines in
     # the side lanes, a mine hanging a jump above.
