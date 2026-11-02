@@ -60,11 +60,13 @@ key3_cle3
 lollipop_sucette
 mine_bombe
 movingmine_bombe-move
+pillar183_porte2
 pillar377_pile1
 pillar399_big0108
 pillar_colonne1
 pillar_colonne2
 pillar_colonne3
+post182_porte1
 projectile_balle-glu
 secretexit_cle
 statue_statue

@@ -181,8 +181,8 @@ VIS-0179,block:178,block,178,(unnamed),"unnamed variant — **Billboard** (§10.
 VIS-0180,block:179,block,179,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,4,5,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), then decide with the owner how the digit goes on (a decal from the sprite would be a 2D addition)"
 VIS-0181,block:180,block,180,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,2,3,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), then decide with the owner how the digit goes on (a decal from the sprite would be a 2D addition)"
 VIS-0182,block:181,block,181,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,1,2,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), then decide with the owner how the digit goes on (a decal from the sprite would be a 2D addition)"
-VIS-0183,block:182,block,182,(unnamed),unnamed variant — **Billboard** (§10.2): plain post/pillar; per `06-doors.md`'s `SearchDoor` this is the real door-trigger tile,InnerPillarBox,pillar-box,,12,13,UNREVIEWED,,,
-VIS-0184,block:183,block,183,"GoldPillar` (renamed from `Wall`, 2026-07-06 — the old name/description was wrong)",decorative/gate-adjacent,InnerPillarBox,pillar-box,,1,2,UNREVIEWED,,,
+VIS-0183,block:182,block,182,(unnamed),unnamed variant — **Billboard** (§10.2): plain post/pillar; per `06-doors.md`'s `SearchDoor` this is the real door-trigger tile,InnerPillarBox,pillar-box,,12,13,FIXED_AND_VERIFIED,the blue post as its original model (was a textured pillar box),"Decor/porte1.rd4 -> avatars3d/objects/post182_porte1 (IoU 0.956, tone 0.79,17); collision unchanged (its quarter mask); live world 010",
+VIS-0184,block:183,block,183,"GoldPillar` (renamed from `Wall`, 2026-07-06 — the old name/description was wrong)",decorative/gate-adjacent,InnerPillarBox,pillar-box,,1,2,FIXED_AND_VERIFIED,the golden baluster as its original model (was a textured pillar box),"Decor/porte2.rd4 -> avatars3d/objects/pillar183_porte2 (IoU 0.981, tone 0.76,13); collision unchanged",
 VIS-0185,block:184,block,184,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
 VIS-0186,block:185,block,185,(unnamed),unnamed variant,UniformCube,cube,,8,1,UNREVIEWED,,,
 VIS-0187,block:186,block,186,(unnamed),unnamed variant,DirectionalCube,cube,,11,9,UNREVIEWED,,,
@@ -284,8 +284,8 @@ VIS-0282,block:281,block,281,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,1
 VIS-0283,block:282,block,282,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
 VIS-0284,block:283,block,283,(unnamed),unnamed variant,DirectionalCube,cube,,9,10,UNREVIEWED,,,
 VIS-0285,block:284,block,284,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0286,block:285,block,285,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,6,UNREVIEWED,,,
-VIS-0287,block:286,block,286,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,,
+VIS-0286,block:285,block,285,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,6,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte01.rd4 matches at IoU 0.880; not converted: 285 and 302 fill close to 6,000 cells of the worlds, one model draw each","instanced drawing of block models first, then the cave rocks 285-303 as models"
+VIS-0287,block:286,block,286,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte02.rd4 matches at IoU 0.814; not converted: 285 and 302 fill close to 6,000 cells of the worlds, one model draw each","instanced drawing of block models first, then the cave rocks 285-303 as models"
 VIS-0288,block:287,block,287,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,1,UNREVIEWED,,,
 VIS-0289,block:288,block,288,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,1,UNREVIEWED,,,
 VIS-0290,block:289,block,289,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
@@ -299,10 +299,10 @@ VIS-0297,block:296,block,296,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,
 VIS-0298,block:297,block,297,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
 VIS-0299,block:298,block,298,(unnamed),unnamed variant,InnerFlatPlate,plate,,10,1,UNREVIEWED,,,
 VIS-0300,block:299,block,299,(unnamed),unnamed variant,InnerFlatPlate,plate,,9,1,UNREVIEWED,,,
-VIS-0301,block:300,block,300,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,3,UNREVIEWED,,,
+VIS-0301,block:300,block,300,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,3,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte16.rd4 matches at IoU 0.910; not converted: 285 and 302 fill close to 6,000 cells of the worlds, one model draw each","instanced drawing of block models first, then the cave rocks 285-303 as models"
 VIS-0302,block:301,block,301,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0303,block:302,block,302,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,6,UNREVIEWED,,,
-VIS-0304,block:303,block,303,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,,
+VIS-0303,block:302,block,302,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,6,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte18.rd4 matches at IoU 0.860; not converted: 285 and 302 fill close to 6,000 cells of the worlds, one model draw each","instanced drawing of block models first, then the cave rocks 285-303 as models"
+VIS-0304,block:303,block,303,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte19.rd4 matches at IoU 0.812; not converted: 285 and 302 fill close to 6,000 cells of the worlds, one model draw each","instanced drawing of block models first, then the cave rocks 285-303 as models"
 VIS-0305,block:304,block,304,(unnamed),unnamed variant — **Billboard** (§10.2): gold ball on a red spring/screw bumper,UniformCube,cube,catalogue says Billboard,15,13,UNREVIEWED,,,look at it live
 VIS-0306,block:305,block,305,Blitz,"hazard — **ThinMechanical** (§10.3): thin jagged lightning-bolt/arc line, not bulk",UniformCube,cube,catalogue says ThinMechanical,15,13,UNREVIEWED,,,look at it live
 VIS-0307,block:306,block,306,,,UniformCube,cube,,0,1,UNREVIEWED,,,
@@ -538,3 +538,5 @@ VIS-0536,model:teleporter2_teleporteur2,object-model,object-m:331,teleporter2_te
 VIS-0537,model:teleporter3_teleporteur3,object-model,object-m:333,teleporter3_teleporteur3,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
 VIS-0538,model:teleporter4_teleporteur4,object-model,object-m:332,teleporter4_teleporteur4,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
 VIS-0539,model:support3_support3,object-model,object-m:199,support3_support3,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0540,model:pillar183_porte2,object-model,object-m:183,pillar183_porte2,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0541,model:post182_porte1,object-model,object-m:182,post182_porte1,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,

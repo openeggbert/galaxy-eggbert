@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "pillar183_rd_cea70d",
+      "vertices": "pillar183_rd_cea70d.verts.bin",
+      "indices": "pillar183_rd_cea70d.idx.bin",
+      "vertexStride": 52,
+      "texture": "pillar183_rd_cea70d.png",
+      "diffuseColor": [
+        0.6226400290750774,
+        0.3878654884740334,
+        0.004026504358339251,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

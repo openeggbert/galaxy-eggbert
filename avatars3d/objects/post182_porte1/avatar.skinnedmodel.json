@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "post182_rd_11a8d9",
+      "vertices": "post182_rd_11a8d9.verts.bin",
+      "indices": "post182_rd_11a8d9.idx.bin",
+      "vertexStride": 52,
+      "texture": "post182_rd_11a8d9.png",
+      "diffuseColor": [
+        0.005642319704963382,
+        0.391804847733111,
+        0.6994350899141973,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

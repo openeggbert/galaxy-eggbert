@@ -117,3 +117,8 @@ teleporter3 object-m 333     Decor/teleporteur3.rd4 tone=0.72,17
 # The yellow trestle 199 (passable decor; Decor/support3.rd4, IoU 0.989), a block model turned to
 # face the room as the teleporters (BlockModels.hpp kFrontModelIcons).
 support3    object-m 199     Decor/support3.rd4 tone=1.01,6
+# The posts 182 (blue, Decor/porte1.rd4, IoU 0.956) and 183 (the golden baluster, Decor/porte2.rd4,
+# 0.981), block models in place of the textured pillar boxes. Not the cave rocks 285-303
+# (Decor/grotte*.rd4, 0.81-0.91): close to 6,000 cells in the worlds, one draw each.
+post182     object-m 182     Decor/porte1.rd4 tone=0.79,17
+pillar183   object-m 183     Decor/porte2.rd4 tone=0.76,13

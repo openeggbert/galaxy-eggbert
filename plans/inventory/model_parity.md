@@ -67,11 +67,13 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | lollipop_sucette | Blupi/sucette.rd4, camera 'Caméra 2' | 8 | 0.985 | 0.971 | faithful |
 | mine_bombe | Blupi/bombe.rd4, camera 'Caméra 2' | 18 | 0.943 | 0.880 | faithful |
 | movingmine_bombe-move | Blupi/bombe-move.rd4, camera 'Caméra 2' | 9 | 0.984 | 0.975 | faithful |
+| pillar183_porte2 | Decor/porte2.rd4, camera 'Caméra 2' | 1 | 0.981 | 0.981 | faithful |
 | pillar377_pile1 | Decor/pile1.rd4, camera 'Caméra 2' | 1 | 0.934 | 0.934 | faithful |
 | pillar399_big0108 | Decor/palais/big0108.rds, camera 'Caméra 2' | 1 | 0.989 | 0.989 | faithful |
 | pillar_colonne1 | Decor/smooth/colonne1.rds, camera 'Caméra 2' | 1 | 0.895 | 0.895 | faithful |
 | pillar_colonne2 | Decor/smooth/colonne2.rds, camera 'Caméra 2' | 1 | 0.994 | 0.994 | faithful |
 | pillar_colonne3 | Decor/smooth/colonne3.rds, camera 'Caméra 2' | 1 | 0.916 | 0.916 | faithful |
+| post182_porte1 | Decor/porte1.rd4, camera 'Caméra 2' | 1 | 0.956 | 0.956 | faithful |
 | projectile_balle-glu | Blupi/balle-glu.rd4, camera 'Caméra 2' | 1 | 0.995 | 0.995 | faithful |
 | secretexit_cle | Blupi/cle.rd4, camera 'Caméra 2' | 7 | 0.963 | 0.945 | faithful |
 | statue_statue | Decor/palais/statue.rds, camera 'Caméra Jeu' | 1 | 0.991 | 0.991 | faithful |
@@ -102,4 +104,4 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | wasp_guepe | Blupi/guepe.rd4, camera 'Caméra 2' | 8 | 0.955 | 0.950 | faithful |
 | wasp_guepe-tourne | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 5 | 0.962 | 0.956 | faithful |
 
-95 models: 86 match every icon at 0.85 or better; 9 below, each with its verdict.
+97 models: 88 match every icon at 0.85 or better; 9 below, each with its verdict.

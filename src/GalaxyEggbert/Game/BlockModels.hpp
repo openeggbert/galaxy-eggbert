@@ -27,10 +27,10 @@ namespace GalaxyEggbert::Game
     // column 399 (Decor/palais/big0108.rds). Their roles and collision are unchanged.
     // The hanging bar's two icons too (Decor/barre.rd4, owner 2026-11-02: in 3D, not a plate).
     // The teleporters 330-333 (Decor/teleporteur1-4.rd4, one scene a letter; owner 2026-11-02: in
-    // one cell as the tile shows it, the device its top third, the tip under it), and the yellow
-    // trestle 199 (Decor/support3.rd4).
-    inline constexpr std::array<std::uint16_t, 12> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
-                                                                     330, 331, 332, 333, 199};
+    // one cell as the tile shows it, the device its top third, the tip under it), the yellow
+    // trestle 199 (Decor/support3.rd4), and the posts 182 and 183 (Decor/porte1.rd4, porte2.rd4).
+    inline constexpr std::array<std::uint16_t, 14> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+                                                                     330, 331, 332, 333, 199, 182, 183};
 
     // Still icons whose model has a front (the original is a front view: the teleporters' lights
     // and letter, the trestle's frame), turned toward the cell's open side
