@@ -1759,7 +1759,19 @@ namespace GalaxyEggbert::CNA
         return cameraMode_ == CameraMode::ThirdPersonModel && blupiModelIsReal_ &&
                blupi_.GetAnimState() == BlupiController::AnimState::DeathLocked &&
                blupi_.AnimIconUsesElementSheet() && !blupi_.IsAnimIconInvisible() && !blupi_.IsDeathHidden() &&
-               !BlupiCharredShape().charred;
+               !BlupiCharredShape().charred && BlupiGlueModel() == nullptr;
+    }
+
+    const GalaxyEggbert::Game::ObjectModelPose* GalaxyEggbertGame::BlupiGlueModel() const
+    {
+        if (cameraMode_ != CameraMode::ThirdPersonModel || !blupiModelIsReal_ ||
+            blupi_.GetAnimState() != BlupiController::AnimState::DeathLocked ||
+            blupi_.GetDeathCause() != BlupiController::DeathCause::Glu || !blupi_.AnimIconUsesElementSheet() ||
+            blupi_.IsAnimIconInvisible() || blupi_.IsDeathHidden())
+        {
+            return nullptr;
+        }
+        return objectModelTable_.Find(ObjectTextureSource::Element, blupi_.GetRawAnimIcon());
     }
 
     GalaxyEggbert::Game::CharredShape GalaxyEggbertGame::BlupiCharredShape() const
@@ -5025,8 +5037,9 @@ namespace GalaxyEggbert::CNA
                 {
                     clipName = MissingClipFallback(blupi_);
                 }
-                // Charred, he stands still in his Stop pose (CharredBlupi.hpp).
-                const bool charred = BlupiCharredShape().charred;
+                // Charred, he stands still in his Stop pose (CharredBlupi.hpp); glued, that pose
+                // flattened is the puddle under the glue model.
+                const bool charred = BlupiCharredShape().charred || BlupiGlueModel() != nullptr;
                 if (charred)
                 {
                     clipName = "Stop";
@@ -5433,7 +5446,15 @@ namespace GalaxyEggbert::CNA
                 const float suspendDrop = blupi_.IsSuspended() ? kSuspendModelDrop : 0.0f;
                 // Charred (Clear1, Clear3: CharredBlupi.hpp), shrunk toward his feet as the frame
                 // crumbles and spread out as the heap of ash.
-                const auto charred = BlupiCharredShape();
+                auto charred = BlupiCharredShape();
+                // Glued (BlupiGlueModel()): his model flattened and spread under the glue model, the
+                // dark green puddle of the sprites (168-171: about a sixteenth of his height, half as
+                // wide again).
+                const bool gluePuddle = BlupiGlueModel() != nullptr;
+                if (gluePuddle)
+                {
+                    charred = GalaxyEggbert::Game::CharredShape{true, 0.06f, 1.5f, false};
+                }
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
                     Microsoft::Xna::Framework::Matrix::CreateScale(charred.spread, charred.height, charred.spread) *
@@ -5512,9 +5533,10 @@ namespace GalaxyEggbert::CNA
                 blupiEffect_->setAlphaProperty(blupiAlpha);
                 if (charred.charred)
                 {
-                    // Burnt black: soot, no sheen.
+                    // Burnt black: soot, no sheen; glued, the puddle's dark green.
                     blupiEffect_->setDiffuseColorProperty(
-                        Microsoft::Xna::Framework::Vector3(kCharredShade, kCharredShade, kCharredShade));
+                        gluePuddle ? Microsoft::Xna::Framework::Vector3(0.20f, 0.32f, 0.03f)
+                                   : Microsoft::Xna::Framework::Vector3(kCharredShade, kCharredShade, kCharredShade));
                     blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
                 }
                 drawParts(*blupiModel_, face);
@@ -5725,6 +5747,16 @@ namespace GalaxyEggbert::CNA
                         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
                         soulDrawnIn3D = true;
                     }
+                }
+                // The glue death (element 168-171; Q-006): Blupi/glu.rd4's struggling pose, its yellow
+                // made the sprites' green at conversion (texrecolour), turned the way he faces, its
+                // icon's centre 30 px over his feet; his own model lies flattened under it as the
+                // puddle (BlupiGlueModel()).
+                if (const ObjectModelPose* glued = BlupiGlueModel())
+                {
+                    constexpr float kPi = 3.14159265358979f;
+                    drawModel(*glued, blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f, blupi_.GetZ(),
+                              kPi - blupi_.GetYaw());
                 }
                 // The fan cells (VIS-0127): the original fan model turned to blow the cell's way, its
                 // rotor on the tile animation's frame.

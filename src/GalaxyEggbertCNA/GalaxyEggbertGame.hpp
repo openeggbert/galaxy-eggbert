@@ -441,6 +441,10 @@ namespace GalaxyEggbert::CNA
         // His charred frames (element.png 40-47, Clear1 and Clear3) drawn as his model
         // (CharredBlupi.hpp); not charred otherwise, or without the real model.
         [[nodiscard]] GalaxyEggbert::Game::CharredShape BlupiCharredShape() const;
+        // The glue death's model for this frame (element 168-171 as Blupi/glu.rd4, recoloured green
+        // at conversion as the sprites were), or null: then the sprite stands in. While it is
+        // drawn, his own model lies flattened under it as the puddle of glue.
+        [[nodiscard]] const GalaxyEggbert::Game::ObjectModelPose* BlupiGlueModel() const;
         // A conveyor lift's (47/48) tread model for its current frame (Decor/chenille.rds,
         // table_chenille/chenillei's 311-316), or null: then it is drawn as a textured cube.
         [[nodiscard]] const GalaxyEggbert::Game::ObjectModelPose* ConveyorLiftModel(

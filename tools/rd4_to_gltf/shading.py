@@ -97,7 +97,29 @@ def apply_tone(colours: np.ndarray) -> np.ndarray:
     return np.clip(gain * np.asarray(colours, dtype=np.float64) + lift / 255.0, 0.0, 1.0)
 
 
+# Texture shades recoloured (build_object_library.py's ``texrecolour=``): a texel c that is k times
+# a source colour s (k = c.s / s.s, |c - k s| < 0.15, k > 0.1) becomes k times the target. The glued
+# Blupi's sprites (element 168-171) are his yellow render recoloured green afterwards; his face
+# texture's skin follows, its white eyes and black lashes (off the yellow's line) do not.
+TEXTURE_RECOLOUR: dict[tuple, tuple] = {}
+
+
+def _recolour_texels(rgb: np.ndarray) -> np.ndarray:
+    out = rgb.copy()
+    for src, dst in TEXTURE_RECOLOUR.items():
+        s = np.array(src, dtype=np.float64)
+        k = (rgb @ s) / float(s @ s)
+        dist = np.linalg.norm(rgb - k[..., None] * s, axis=-1)
+        hit = (dist < 0.15) & (k > 0.1)
+        out[hit] = np.clip(k[hit, None] * np.array(dst, dtype=np.float64), 0.0, 1.0)
+    return out
+
+
 def _tone_image(img: np.ndarray) -> np.ndarray:
+    if TEXTURE_RECOLOUR:
+        rgb = img[..., :3].astype(np.float64) / 255.0
+        img = img.copy()
+        img[..., :3] = (_recolour_texels(rgb) * 255).round().clip(0, 255).astype(np.uint8)
     if TONE is None:
         return img
     return (apply_tone(img.astype(np.float64) / 255.0) * 255).round().clip(0, 255).astype(np.uint8)

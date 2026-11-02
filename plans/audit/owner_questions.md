@@ -52,6 +52,14 @@ yet. Options: (a) teach the converter the scene's glue (recommended, some work),
 pose tinted green, (c) keep the sprite. Meanwhile: the sprite (as for the burn death, which has no
 scene at all).
 
+Found since (2026-11-02 night): the scene holds no glue at all, only Blupi's parts, every one
+yellow: the sprites' green, strands and puddle were added to the render afterwards (as the signs'
+digits were). Done meanwhile, closest to (a): the converter recolours the scene's yellow to the
+sprites' green, its flat parts and its face texture's skin (`texrecolour`, the eyes and lashes
+kept), and the game draws that model with his own model flattened under it as the dark green
+puddle; the strands are not drawn. Still yours to decide: keep this, add strands, or another
+option.
+
 ## Answered
 
 ### Q-000 — Wind and fans along Z (2026-11-02)

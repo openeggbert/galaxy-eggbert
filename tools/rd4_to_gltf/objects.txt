@@ -13,6 +13,12 @@ exit        element 29-36   Blupi/fleche.rd4  yaw=5 tone=1.30,3
 # VoyageStep cycling the icons every 2 ticks; owner 2026-11-02): Blupi/blupi-ange.rd4 turning 30
 # degrees a frame as its wings beat (IoU 0.965-0.982); drawn half transparent in the sheet (alpha).
 angel       element 230-241 Blupi/blupi-ange.rd4 alpha=0.25 yaw=15 tone=1.03,-27
+# The glue death (element 168-171; Q-006): Blupi/glu.rd4's struggling pose (IoU 0.80-0.85). The
+# scene renders yellow; the sprites were recoloured green afterwards (their strands and puddle
+# painted), so the yellow becomes the sprites' green here too, its flat parts and its face
+# texture's skin (texrecolour: the white eyes and black lashes kept). The game lays his own model
+# flattened under it as the puddle.
+glu168      element 168-171 Blupi/glu.rd4 min_iou=0.5 recolour=1,1,0>0.42,0.67,0.04 texrecolour=1,1,0>0.42,0.67,0.04
 projectile  element 176     Blupi/balle-glu.rd4
 ammo        element 177     Blupi/munitions-glu.rd4
 drink       element 178     Blupi/bouteille.rd4

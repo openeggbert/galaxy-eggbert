@@ -1,0 +1,50 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "glu168_rd_tex_p02_Corps",
+      "vertices": "glu168_rd_tex_p02_Corps.verts.bin",
+      "indices": "glu168_rd_tex_p02_Corps.idx.bin",
+      "vertexStride": 52,
+      "texture": "glu168_rd_tex_p02_Corps.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "glu168_rd_6baa0a",
+      "vertices": "glu168_rd_6baa0a.verts.bin",
+      "indices": "glu168_rd_6baa0a.idx.bin",
+      "vertexStride": 52,
+      "texture": "glu168_rd_6baa0a.png",
+      "diffuseColor": [
+        0.147318999244498,
+        0.40644830114675407,
+        0.0030959752321981426,
+        1.0
+      ]
+    },
+    {
+      "name": "glu168_rd_000000",
+      "vertices": "glu168_rd_000000.verts.bin",
+      "indices": "glu168_rd_000000.idx.bin",
+      "vertexStride": 52,
+      "texture": "glu168_rd_000000.png",
+      "diffuseColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
