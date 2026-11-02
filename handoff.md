@@ -46,11 +46,16 @@ ledgers before repeating any discovery. Where it stands:
   automatic zoom 1.3x while walking -- `plans/evidence/auto-zoom.png`, the accelerometer
   steers by tilt with the original's dead zone; settings saved as `jumpRight`, `autoZoom`,
   `accelActive`; the sensitivity slider is not drawn yet; tilt untested on hardware).
+- Done: OR-0014 world music -- the original tracks (`SOUND/MUSIC000-009.BLP` in
+  `Speedy_Eggbert_1.7z`) rendered by `tools/music/render_music.py --ogg` to `Content/music/`;
+  a world's `musicTrack()` (header sky word, second byte), the originals' `music=` for every
+  world (`worldkit.ORIGINAL_MUSIC`), the editor's M key; not on the web yet. OR-0015's death
+  clips: Clear1/Clear3/Glu show the original element.png sprite (live look to do).
+- OR-0017 (Blupi partly in walls): a body half-width (18 px) in the horizontal collision was
+  tried and reverted -- 55 of the first 70 playthroughs failed (wall-hugging targets, ledges,
+  crates). Doing it needs every route re-planned; meanwhile it stays open.
 - Open owner reports: OR-0004 (teleporters: no detail -- ask), OR-0009 (a Galaxy loading
-  screen), OR-0011 (Android), OR-0012 (editor menu look), OR-0014 (world music: the ten
-  originals are MIDI `SOUND/MUSIC000-009.BLP` in `Speedy_Eggbert_1.7z`; `tools/music/render_music.py`
-  renders them through libfluidsynth; ~64 MB a track as WAV, so OGG via ffmpeg -- CNA's
-  stb_vorbis plays it), OR-0015's death clips, OR-0017 (his collision is a point: a body
+  screen), OR-0011 (Android), OR-0012 (editor menu look), OR-0015's death clips, OR-0017 (his collision is a point: a body
   half-width of 18 px, the original's BlupiRect, for horizontal moves only, then all
   playthroughs).
 - Script lessons from the vehicle rules: wait ~40 frames for a skateboard to slow before Action

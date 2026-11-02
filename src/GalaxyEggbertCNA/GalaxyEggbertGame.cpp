@@ -1646,6 +1646,47 @@ namespace GalaxyEggbert::CNA
                blupi_.AnimIconUsesElementSheet() && !blupi_.IsAnimIconInvisible() && !blupi_.IsDeathHidden();
     }
 
+    void GalaxyEggbertGame::UpdateMusic()
+    {
+        using Microsoft::Xna::Framework::Media::MediaPlayer;
+        using Microsoft::Xna::Framework::Media::Song;
+        using GalaxyEggbert::Def::GamePhase;
+        const bool inWorld = phase_ == GamePhase::Play || phase_ == GamePhase::Pause ||
+                             phase_ == GamePhase::PlaySetup ||
+                             (phase_ == GamePhase::Editor && !worldEditor_.IsBrowsing());
+        const std::uint32_t wanted =
+            inWorld && sound_.IsEnabled() && !autoplay_ ? worldRuntime_.GetWorld().musicTrack() : 0u;
+        if (wanted == musicPlaying_)
+        {
+            return;
+        }
+        if (music_)
+        {
+            MediaPlayer::Stop();
+            music_.reset();
+        }
+        musicPlaying_ = wanted;
+        if (wanted == 0)
+        {
+            return;
+        }
+        char path[48];
+        std::snprintf(path, sizeof(path), "Content/music/music%03u.ogg", wanted - 1u);
+        try
+        {
+            music_.reset(Song::FromUri("music", std::string(path)));
+            MediaPlayer::setIsRepeatingProperty(true);
+            MediaPlayer::setVolumeProperty(0.5f);
+            MediaPlayer::Play(music_.get());
+            std::cout << "GalaxyEggbert: music " << path << " playing." << std::endl;
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << "GalaxyEggbert: music " << path << " not played: " << e.what() << std::endl;
+            music_.reset();
+        }
+    }
+
     void GalaxyEggbertGame::WreckVehicle()
     {
         if (!blupi_.IsInVehicle())
@@ -2059,6 +2100,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
+        UpdateMusic();
 
         if (goldenCaptureMode_ && goldenCaptureAwaitingDraw_)
         {

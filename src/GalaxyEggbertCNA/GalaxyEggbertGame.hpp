@@ -30,6 +30,7 @@
 #include <Microsoft/Xna/Framework/Input/KeyboardState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 #include <Microsoft/Devices/Sensors/Accelerometer.hpp>
+#include <Microsoft/Xna/Framework/Media/Song.hpp>
 
 #include <cstdint>
 #include <cstdio>
@@ -456,6 +457,12 @@ namespace GalaxyEggbert::CNA
         bool accelLastState_ = false;
         bool accelWaitZero_ = true;
         float AccelTurnInput();
+        // The world's background music (OR-0014: World::musicTrack(), the original tracks as
+        // Content/music/musicNNN.ogg): playing while in play (pause and setup included) and in
+        // the editor, if sound is on; never in autoplay.
+        std::unique_ptr<Microsoft::Xna::Framework::Media::Song> music_;
+        std::uint32_t musicPlaying_ = 0;
+        void UpdateMusic();
         void TickPendingSkate(float dt);
 
         // Hub/mission-progression system (plan.md `MENU-035`/`036`,

@@ -277,7 +277,8 @@ void World::saveToFile(const std::filesystem::path& path) const {
     Binary::writeU32LE(out, static_cast<std::uint32_t>(chunks_.size()));
     Binary::writeU32LE(out, static_cast<std::uint32_t>(tableOffset));
     Binary::writeU32LE(out, static_cast<std::uint32_t>(dataOffset));
-    Binary::writeU32LE(out, skyRegion_);
+    // The sky region (0-31) in the low byte, the music track (0-10, OR-0014) in the next one.
+    Binary::writeU32LE(out, (skyRegion_ & 0xFFu) | ((musicTrack_ & 0xFFu) << 8));
     Binary::writeU32LE(out, missionNumber_);
     Binary::writeU32LE(out, hasSpawnPoint_ ? static_cast<std::uint32_t>(spawnX_) + 1u : 0u);
     Binary::writeU32LE(out, hasSpawnPoint_ ? static_cast<std::uint32_t>(spawnY_) + 1u : 0u);
@@ -341,7 +342,8 @@ World World::loadFromFile(const std::filesystem::path& path) {
     }
 
     World world(chunksPerAxis);
-    world.skyRegion_ = skyRegion;
+    world.skyRegion_ = skyRegion & 0xFFu;
+    world.setMusicTrack((skyRegion >> 8) & 0xFFu);
     world.missionNumber_ = missionNumber;
     const bool noSpawn =
         encodedSpawnX == 0 && encodedSpawnY == 0 && encodedSpawnZ == 0;

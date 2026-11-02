@@ -95,7 +95,7 @@ def read_world(path: Path) -> dict:
     version, chunk_size, per_axis, flags = data[4], data[5], data[6], data[7]
     chunk_count, table_offset, data_offset, sky, mission, sx, sy, sz = struct.unpack_from("<8I", data, 8)
     world = {"path": path, "version": version, "chunk_size": chunk_size, "per_axis": per_axis,
-             "flags": flags, "sky": sky, "mission": mission,
+             "flags": flags, "sky": sky & 0xFF, "music": (sky >> 8) & 0xFF, "mission": mission,
              "spawn": (sx - 1, sy - 1, sz - 1) if sx and sy and sz else None,
              "blocks": {}, "objects": [], "bigdecor": [], "hints": [], "plates": 0, "other_meta": collections.Counter(),
              "sha1": hashlib.sha1(data).hexdigest()[:10], "bytes": len(data)}
@@ -137,7 +137,7 @@ def summary_line(w: dict) -> str:
         box = f"x{min(xs)}-{max(xs)} y{min(ys)}-{max(ys)} z{min(zs)}-{max(zs)}"
     else:
         box = "-"
-    return (f"{w['path'].name}: mission {w['mission']} sky {w['sky']} spawn {w['spawn']} "
+    return (f"{w['path'].name}: mission {w['mission']} sky {w['sky']} music {w['music']} spawn {w['spawn']} "
             f"blocks {len(blocks)} ({len(types)} types, {len(ys)} heights, {box}) "
             f"objects {len(w['objects'])} ({len(obj_types)} types) bigdecor {len(w['bigdecor'])} "
             f"sha1 {w['sha1']}")

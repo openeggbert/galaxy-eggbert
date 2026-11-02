@@ -59,6 +59,7 @@ namespace GalaxyEggbert::Editor
             MoveObjectEdit,
             SkyRegionEdit,
             SpawnPointEdit,
+            MusicEdit, // the world's background music (OR-0014)
             BigDecorEdit,
         };
 
@@ -73,6 +74,8 @@ namespace GalaxyEggbert::Editor
 
         std::uint32_t skyRegionBefore = 0;
         std::uint32_t skyRegionAfter = 0;
+        std::uint32_t musicBefore = 0;
+        std::uint32_t musicAfter = 0;
         SpawnPointState spawnBefore;
         SpawnPointState spawnAfter;
 

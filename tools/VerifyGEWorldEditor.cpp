@@ -448,6 +448,15 @@ int main()
                 camera, world);
         };
 
+        // OR-0014: M steps the world's music (none, 1-10, none), undoable.
+        pressKey(Keys::M);
+        pressKey(Keys::M);
+        check(world.musicTrack() == 2, "M steps the world's background music (none -> 1 -> 2)");
+        pressKey(Keys::U);
+        check(world.musicTrack() == 1, "undo restores the previous music");
+        for (int i = 0; i < 10; ++i)
+            pressKey(Keys::M);
+        check(world.musicTrack() == 0, "after the tenth track M comes back to no music");
         pressKey(Keys::Left);
         check(world.skyRegion() == 31,
               "Left wraps the background selection from 0 to 31");

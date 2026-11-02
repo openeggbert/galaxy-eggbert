@@ -54,6 +54,20 @@ CREATURE_TIMING = {
 }
 
 
+# Each mission's background music in the original (../mobile-eggbert/worlds/worldNNN.txt's
+# header `music=`, Speedy Eggbert's level data: 0 none, N the track SOUND/MUSIC<N-1>.BLP;
+# OR-0014). A world built for a mission takes its original's unless the builder says otherwise.
+ORIGINAL_MUSIC = {
+    1: 0, 10: 10, 11: 10, 12: 1, 13: 1, 14: 1, 20: 0, 21: 1, 22: 1, 23: 2, 24: 6, 25: 8,
+    30: 0, 31: 1, 32: 10, 33: 4, 34: 2, 40: 0, 41: 3, 42: 1, 43: 2, 44: 8, 45: 6, 46: 9,
+    50: 0, 51: 7, 52: 2, 53: 3, 54: 4, 55: 6, 56: 5, 57: 1, 58: 9, 60: 0, 61: 1, 62: 2, 63: 3,
+    64: 4, 65: 10, 66: 9, 70: 0, 71: 1, 72: 5, 73: 2, 74: 3, 75: 4, 80: 0, 81: 1, 82: 2, 83: 3,
+    84: 4, 90: 0, 91: 6, 92: 7, 93: 8, 94: 9, 95: 10, 100: 0, 101: 1, 102: 10, 103: 2, 104: 3,
+    105: 4, 106: 9, 107: 8, 110: 0, 111: 5, 112: 6, 113: 7, 114: 8, 115: 5, 120: 0, 121: 10,
+    122: 10, 123: 8, 124: 8, 125: 7, 199: 1,
+}
+
+
 class ObjectType:
     """`include/GalaxyEggbert/Def/ObjectType.hpp` ids used when authoring worlds."""
     LIFT = 1
@@ -103,9 +117,13 @@ def _bits_for(count: int) -> int:
 
 
 class World:
-    def __init__(self, mission: int = 0, sky: int = 0):
+    def __init__(self, mission: int = 0, sky: int = 0, music: int | None = None):
         self.mission = mission
         self.sky = sky
+        # The background music (OR-0014): 0 none, 1-10 the original tracks music000-009;
+        # stored in the sky-region word's second byte (World Format.md). By default the
+        # original mission's (ORIGINAL_MUSIC).
+        self.music = ORIGINAL_MUSIC.get(mission, 0) if music is None else music
         self.spawn: tuple[int, int, int] | None = None
         self.blocks: dict[tuple[int, int, int], int] = {}   # cell -> raw block (type << 4 | meta)
         self.records: dict[tuple[int, int, int], list[tuple[int, bytes]]] = {}
@@ -271,7 +289,8 @@ class World:
                         offset += len(blob)
         sx, sy, sz = (c + 1 for c in self.spawn) if self.spawn else (0, 0, 0)
         header = b"VWR1" + struct.pack("<BBBBIIIIIIII", 2, CHUNK, PER_AXIS, 0, count, HEADER_SIZE,
-                                       data_offset, self.sky, self.mission, sx, sy, sz)
+                                       data_offset, (self.sky & 0xFF) | ((self.music & 0xFF) << 8),
+                                       self.mission, sx, sy, sz)
         return header + b"".join(table) + b"".join(blobs)
 
     def save(self, path: str | Path):

@@ -191,6 +191,25 @@ TEST(WorldSerializationTests, SaveAndLoadPreservesSkyRegion) {
     removeFileNoThrow(filePath);
 }
 
+TEST(WorldSerializationTests, SaveAndLoadPreservesMusicTrackBesideSkyRegion) {
+    // OR-0014: the world's music rides in the sky-region word's second byte.
+    const auto filePath = makeTempPath(".vwr");
+
+    World world;
+    EXPECT_EQ(world.musicTrack(), 0u);
+    world.setSkyRegion(21);
+    world.setMusicTrack(10);
+    world.saveToFile(filePath);
+    const World loaded = World::loadFromFile(filePath);
+
+    EXPECT_EQ(loaded.skyRegion(), 21u);
+    EXPECT_EQ(loaded.musicTrack(), 10u);
+    world.setMusicTrack(11); // out of range: none
+    EXPECT_EQ(world.musicTrack(), 0u);
+
+    removeFileNoThrow(filePath);
+}
+
 TEST(WorldSerializationTests, SaveAndLoadPreservesMissionNumber) {
     const auto filePath = makeTempPath(".vwr");
 

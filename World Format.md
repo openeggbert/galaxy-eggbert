@@ -373,7 +373,7 @@ Current v2 layout:
 |      8 |    4 | chunkCount       | `chunksPerAxis³`                                            |
 |     12 |    4 | chunkTableOffset | usually `40` (the v2 header size)                           |
 |     16 |    4 | chunkDataOffset  | start of the chunk data section                             |
-|     20 |    4 | skyRegion        | world-level sky/background region id, 0-31 (see below)      |
+|     20 |    4 | skyRegion        | low byte: sky/background region id 0-31 (see below); second byte: music track 0-10 (2026-11-02) |
 |     24 |    4 | missionNumber    | world mission id; `0` means no mission                      |
 |     28 |    4 | spawnXPlusOne    | raw-grid spawn X + 1; all three spawn fields `0` means unset |
 |     32 |    4 | spawnYPlusOne    | raw-grid spawn Y + 1                                         |
@@ -410,6 +410,15 @@ ids (0-31) have a real background file — a hand-authored world referencing
 one of the 4 missing ids, or any value a real level never uses, degrades
 gracefully to a flat fallback clear color at render time rather than
 failing to load.
+
+### World background music
+
+The second byte of the `skyRegion` word (bits 8-15) is the world's background music
+(`World::musicTrack()`/`setMusicTrack()`, 2026-11-02, the owner's OR-0014): `0` none, `1`-`10`
+the original Speedy Eggbert tracks `SOUND/MUSIC000-009.BLP` (MIDI), rendered to
+`Content/music/music000-009.ogg` by `tools/music/render_music.py`. Worlds written before carry
+`0` there, so they read as "no music"; the upper two bytes stay `0`. Chosen per world in the 3D
+editor.
 
 ### Optional Blupi spawn point
 

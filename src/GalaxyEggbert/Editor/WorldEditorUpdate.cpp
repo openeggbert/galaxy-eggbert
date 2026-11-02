@@ -277,6 +277,7 @@ namespace GalaxyEggbert::Editor
             keyboard.IsKeyDown(Keys::Left),
             keyboard.IsKeyDown(Keys::Right),
             keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl),
+            keyboard.IsKeyDown(Keys::M),
         };
     }
 
@@ -601,6 +602,26 @@ namespace GalaxyEggbert::Editor
         return false;
     }
 
+    bool WorldEditor::HandleMusic(const FrameInput& input, Worlds::World& world)
+    {
+        // M steps through the world's background music: none, then the original tracks 1-10
+        // (OR-0014); the game plays the chosen one while editing, so it is heard at once.
+        if (!input.musicNextHeld || musicKeyHeldLastFrame_)
+        {
+            return false;
+        }
+        const std::uint32_t before = world.musicTrack();
+        const std::uint32_t after = (before + 1) % (Worlds::World::kMusicTrackCount + 1);
+        world.setMusicTrack(after);
+        EditCommand command;
+        command.kind = EditCommand::Kind::MusicEdit;
+        command.musicBefore = before;
+        command.musicAfter = after;
+        commandStack_.Push(std::move(command));
+        MarkMutated();
+        return true;
+    }
+
     bool WorldEditor::HandleSkyRegion(const FrameInput& input, Worlds::World& world)
     {
         constexpr std::uint32_t kRegionCount = 32;
@@ -783,6 +804,7 @@ namespace GalaxyEggbert::Editor
         deleteObjectKeyHeldLastFrame_ = input.deleteObjectHeld;
         skyRegionPrevKeyHeldLastFrame_ = input.skyPreviousHeld;
         skyRegionNextKeyHeldLastFrame_ = input.skyNextHeld;
+        musicKeyHeldLastFrame_ = input.musicNextHeld;
         placementOffsetKeyHeldLastFrame_ = placementOffsetKeyHeld;
     }
 }

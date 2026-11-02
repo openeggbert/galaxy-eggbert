@@ -135,6 +135,7 @@ namespace GalaxyEggbert::Editor
             bool skyPreviousHeld = false;
             bool skyNextHeld = false;
             bool ctrlHeld = false; // place without cycling (ED-0001)
+            bool musicNextHeld = false; // M: the world's next background music (OR-0014)
         };
 
         [[nodiscard]] Microsoft::Xna::Framework::Vector3 UpdateCamera(
@@ -156,6 +157,8 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool HandleSessionAndHistory(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleBoxFill(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSkyRegion(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleMusic(const FrameInput& input, Worlds::World& world);
+        bool musicKeyHeldLastFrame_ = false;
         [[nodiscard]] bool HandleObjectEditing(
             const FrameInput& input, CnaEngine::Graphics::Camera& camera,
             int viewportWidth, int viewportHeight, Worlds::World& world);

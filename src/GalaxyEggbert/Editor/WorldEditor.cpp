@@ -114,7 +114,8 @@ namespace GalaxyEggbert::Editor
             !HandleRemoval(input, world) &&
             !HandleSessionAndHistory(input, world) &&
             !HandleBoxFill(input, world) &&
-            !HandleSkyRegion(input, world))
+            !HandleSkyRegion(input, world) &&
+            !HandleMusic(input, world))
         {
             (void)HandleObjectEditing(input, camera, viewportWidth, viewportHeight, world);
         }

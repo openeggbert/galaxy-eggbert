@@ -63,6 +63,15 @@ public:
     void setSkyRegion(std::uint32_t skyRegion) noexcept { skyRegion_ = skyRegion; }
 
     /**
+     * @brief The world's background music (2026-11-02, OR-0014): 0 none, 1-10 the original
+     * Speedy Eggbert tracks music000-009 (`Content/music/musicNNN.ogg`). Stored in the second
+     * byte of the header's sky-region word (World Format.md), so worlds written before read 0.
+     */
+    [[nodiscard]] std::uint32_t musicTrack() const noexcept { return musicTrack_; }
+    void setMusicTrack(std::uint32_t track) noexcept { musicTrack_ = track <= kMusicTrackCount ? track : 0; }
+    static constexpr std::uint32_t kMusicTrackCount = 10;
+
+    /**
      * @brief Returns the world-level mission/level number (2026-07-13,
      * format v2's first reserved field put to use), a direct pass-through
      * of mobile-eggbert's real `m_mission` -- gates level-specific logic
@@ -249,6 +258,7 @@ private:
     std::uint8_t chunksPerAxis_;
     std::vector<Chunk> chunks_;
     std::uint32_t skyRegion_ = 0;
+    std::uint32_t musicTrack_ = 0;
     std::uint32_t missionNumber_ = 0;
     bool hasSpawnPoint_ = false;
     std::uint16_t spawnX_ = 0;

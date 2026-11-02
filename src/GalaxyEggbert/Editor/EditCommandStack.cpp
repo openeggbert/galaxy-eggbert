@@ -84,6 +84,10 @@ namespace GalaxyEggbert::Editor
         {
             world.setSkyRegion(command.skyRegionBefore);
         }
+        else if (command.kind == EditCommand::Kind::MusicEdit)
+        {
+            world.setMusicTrack(command.musicBefore);
+        }
         else if (command.kind == EditCommand::Kind::SpawnPointEdit)
         {
             ApplySpawnPointState(world, command.spawnBefore);
@@ -120,6 +124,10 @@ namespace GalaxyEggbert::Editor
         else if (command.kind == EditCommand::Kind::SkyRegionEdit)
         {
             world.setSkyRegion(command.skyRegionAfter);
+        }
+        else if (command.kind == EditCommand::Kind::MusicEdit)
+        {
+            world.setMusicTrack(command.musicAfter);
         }
         else if (command.kind == EditCommand::Kind::SpawnPointEdit)
         {
