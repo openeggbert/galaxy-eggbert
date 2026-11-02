@@ -247,6 +247,19 @@ int main()
               "a bar runs along its row; a lone bar along X; neighbours on both axes make a field");
     }
 
+    // A model with a front (the teleporters, BlockModels.hpp) faces +Z unturned; FrontModelYaw turns
+    // it toward its cell's open side: 0 +X, 1 -X, 2 +Z, 3 -Z.
+    {
+        using Microsoft::Xna::Framework::Matrix;
+        using Microsoft::Xna::Framework::Vector3;
+        const auto front = [](int side)
+        { return Vector3::Transform(Vector3(0.0f, 0.0f, 1.0f), Matrix::CreateRotationY(GalaxyEggbert::Game::FrontModelYaw(side))); };
+        const auto near = [](const Vector3& a, const Vector3& b) { return Vector3::Distance(a, b) < 1e-4f; };
+        check(near(front(0), Vector3(1.0f, 0.0f, 0.0f)) && near(front(1), Vector3(-1.0f, 0.0f, 0.0f)) &&
+                  near(front(2), Vector3(0.0f, 0.0f, 1.0f)) && near(front(3), Vector3(0.0f, 0.0f, -1.0f)),
+              "a teleporter's front turns to its open side (+X, -X, +Z, -Z)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

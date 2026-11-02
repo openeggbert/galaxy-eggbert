@@ -90,6 +90,9 @@ namespace GalaxyEggbert::Game
         // mattered when the plate was still horizontal).
         constexpr float kSawPlateEpsilon = 0.02f;
 
+        // Since 2026-11-02 the teleporters are their original model in one cell
+        // (BlockModels.hpp, OR-0025): this cube and tip are only the fallback
+        // without avatars3d/objects.
         // Teleporter pillars (330-333, plan.md E3D-MIG-147): the "hrot"
         // (spike/tip) hanging below the block, per direct user Q&A live in
         // session 2026-07-11 ("pod teleporterem by měl být prostor... zbytek
@@ -533,7 +536,53 @@ namespace GalaxyEggbert::Game
                                 shown = bar;
                             }
                         }
-                        m_staticModelCells.push_back({worldX, worldY, worldZ, shown, sides}); // drawn as a model
+                        // The side facing the most room to stand in: along each side, up to kOpenRun
+                        // cells while the cell's own height stays passable, those with a floor at
+                        // most kFloorDepth below; ties to the earlier of +X, -X, +Z, -Z.
+                        constexpr int kOpenRun = 8;
+                        constexpr int kFloorDepth = 4;
+                        const auto passable = [&](int cx, int cy, int cz)
+                        {
+                            if (cx < 0 || cy < 0 || cz < 0 || cx >= blocksPerAxis || cy >= blocksPerAxis ||
+                                cz >= blocksPerAxis)
+                            {
+                                return false;
+                            }
+                            const auto type = world.getBlock(static_cast<std::uint16_t>(cx), static_cast<std::uint16_t>(cy),
+                                                             static_cast<std::uint16_t>(cz))
+                                                  .type();
+                            return type == 0 || GalaxyEggbert::GetBlockDefinition(type).collisionMask == 0;
+                        };
+                        constexpr int kSideDx[4] = {1, -1, 0, 0};
+                        constexpr int kSideDz[4] = {0, 0, 1, -1};
+                        std::uint8_t openSide = 2;
+                        int bestRun = -1;
+                        for (int side = 0; side < 4; ++side)
+                        {
+                            int run = 0;
+                            for (int k = 1; k <= kOpenRun; ++k)
+                            {
+                                const int cx = x + kSideDx[side] * k, cz = z + kSideDz[side] * k;
+                                if (!passable(cx, y, cz))
+                                {
+                                    break;
+                                }
+                                for (int d = 1; d <= kFloorDepth; ++d)
+                                {
+                                    if (!passable(cx, y - d, cz))
+                                    {
+                                        run += d > 1 ? 1 : 0; // a floor below, room over it
+                                        break;
+                                    }
+                                }
+                            }
+                            if (run > bestRun)
+                            {
+                                bestRun = run;
+                                openSide = static_cast<std::uint8_t>(side);
+                            }
+                        }
+                        m_staticModelCells.push_back({worldX, worldY, worldZ, shown, sides, openSide}); // drawn as a model
                         continue;
                     }
                     sumX += worldX;

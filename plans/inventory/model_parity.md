@@ -76,6 +76,10 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | secretexit_cle | Blupi/cle.rd4, camera 'Caméra 2' | 7 | 0.963 | 0.945 | faithful |
 | statue_statue | Decor/palais/statue.rds, camera 'Caméra Jeu' | 1 | 0.991 | 0.991 | faithful |
 | support_support2 | Decor/support2.rd4, camera 'Caméra Jeu' | 1 | 0.995 | 0.995 | faithful |
+| teleporter1_teleporteur1 | Decor/teleporteur1.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
+| teleporter2_teleporteur2 | Decor/teleporteur2.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
+| teleporter3_teleporteur3 | Decor/teleporteur3.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
+| teleporter4_teleporteur4 | Decor/teleporteur4.rd4, camera 'Caméra 2' | 1 | 0.997 | 0.997 | faithful |
 | tentacle_tenta01 | Decor/tentacule/tenta01.rds, camera 'Caméra 2' | 1 | 0.985 | 0.985 | faithful |
 | tentacle_tenta02 | Decor/tentacule/tenta02.rds, camera 'Caméra 2' | 1 | 0.986 | 0.986 | faithful |
 | tentacle_tenta03 | Decor/tentacule/tenta03.rds, camera 'Caméra 2' | 1 | 0.987 | 0.987 | faithful |
@@ -97,4 +101,4 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | wasp_guepe | Blupi/guepe.rd4, camera 'Caméra 2' | 8 | 0.955 | 0.950 | faithful |
 | wasp_guepe-tourne | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 5 | 0.962 | 0.956 | faithful |
 
-90 models: 81 match every icon at 0.85 or better; 9 below, each with its verdict.
+94 models: 85 match every icon at 0.85 or better; 9 below, each with its verdict.

@@ -86,6 +86,10 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/secretexit_cle` | Blupi/cle.rd4, camera 'Caméra 2' | 1 | 1 | element 122-128 | 0.94 / 0.96 |
 | `avatars3d/objects/statue_statue` | Decor/palais/statue.rds, camera 'Caméra Jeu' | 4 | 1 | explo 89 | 0.99 / 0.99 |
 | `avatars3d/objects/support_support2` | Decor/support2.rd4, camera 'Caméra Jeu' | 2 | 1 | object-m 77 | 0.99 / 0.99 |
+| `avatars3d/objects/teleporter1_teleporteur1` | Decor/teleporteur1.rd4, camera 'Caméra 2' | 4 | 1 | object-m 330 | 1.00 / 1.00 |
+| `avatars3d/objects/teleporter2_teleporteur2` | Decor/teleporteur2.rd4, camera 'Caméra 2' | 4 | 1 | object-m 331 | 1.00 / 1.00 |
+| `avatars3d/objects/teleporter3_teleporteur3` | Decor/teleporteur3.rd4, camera 'Caméra 2' | 4 | 1 | object-m 333 | 1.00 / 1.00 |
+| `avatars3d/objects/teleporter4_teleporteur4` | Decor/teleporteur4.rd4, camera 'Caméra 2' | 4 | 1 | object-m 332 | 1.00 / 1.00 |
 | `avatars3d/objects/tentacle_tenta01` | Decor/tentacule/tenta01.rds, camera 'Caméra 2' | 1 | 1 | explo 70 | 0.98 / 0.98 |
 | `avatars3d/objects/tentacle_tenta02` | Decor/tentacule/tenta02.rds, camera 'Caméra 2' | 1 | 1 | explo 71 | 0.99 / 0.99 |
 | `avatars3d/objects/tentacle_tenta03` | Decor/tentacule/tenta03.rds, camera 'Caméra 2' | 1 | 1 | explo 72 | 0.99 / 0.99 |
@@ -107,4 +111,4 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/wasp_guepe` | Blupi/guepe.rd4, camera 'Caméra 2' | 4 | 1 | element 195-202 | 0.95 / 0.96 |
 | `avatars3d/objects/wasp_guepe-tourne` | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 4 | 1 | element 203-207 | 0.96 / 0.96 |
 
-96 models.
+100 models.

@@ -69,6 +69,10 @@ projectile_balle-glu
 secretexit_cle
 statue_statue
 support_support2
+teleporter1_teleporteur1
+teleporter2_teleporteur2
+teleporter3_teleporteur3
+teleporter4_teleporteur4
 tentacle_tenta01
 tentacle_tenta02
 tentacle_tenta03

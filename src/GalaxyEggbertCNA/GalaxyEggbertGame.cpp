@@ -5399,6 +5399,13 @@ namespace GalaxyEggbert::CNA
                                                   cell.z + (alongZ ? 0.0f : offset), alongZ ? 1.57079632f : 0.0f);
                                     }
                                 }
+                                else if (std::find(GalaxyEggbert::Game::kFrontModelIcons.begin(),
+                                                   GalaxyEggbert::Game::kFrontModelIcons.end(),
+                                                   cell.base) != GalaxyEggbert::Game::kFrontModelIcons.end())
+                                {
+                                    drawModel(*still, cell.x, cell.y, cell.z,
+                                              GalaxyEggbert::Game::FrontModelYaw(cell.openSide));
+                                }
                                 else
                                 {
                                     drawModel(*still, cell.x, cell.y, cell.z);

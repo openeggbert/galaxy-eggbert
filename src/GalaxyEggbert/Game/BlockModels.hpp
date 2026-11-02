@@ -26,7 +26,22 @@ namespace GalaxyEggbert::Game
     // golden support 77 (Decor/support2.rd4), the barrel stack 377 (Decor/pile1.rd4) and the white
     // column 399 (Decor/palais/big0108.rds). Their roles and collision are unchanged.
     // The hanging bar's two icons too (Decor/barre.rd4, owner 2026-11-02: in 3D, not a plate).
-    inline constexpr std::array<std::uint16_t, 7> kStillModelIcons{76, 77, 377, 399, 201, 138, 202};
+    // The teleporters 330-333 (Decor/teleporteur1-4.rd4, one scene a letter; owner 2026-11-02: in
+    // one cell as the tile shows it, the device its top third, the tip under it).
+    inline constexpr std::array<std::uint16_t, 11> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+                                                                     330, 331, 332, 333};
+
+    // Still icons whose model has a front (the teleporters' lights and letter: the original is a
+    // front view), turned toward the cell's open side (TerrainRenderer::ModelCell::openSide).
+    inline constexpr std::array<std::uint16_t, 4> kFrontModelIcons{330, 331, 332, 333};
+
+    // The turn about Y (radians) putting a model's front, +Z at no turn, toward side 0 +X, 1 -X,
+    // 2 +Z, 3 -Z: CreateRotationY(a) turns +Z to (sin a, 0, cos a).
+    [[nodiscard]] constexpr float FrontModelYaw(int side) noexcept
+    {
+        constexpr float kHalfPi = 1.57079632679f;
+        return side == 0 ? kHalfPi : side == 1 ? -kHalfPi : side == 3 ? 2.0f * kHalfPi : 0.0f;
+    }
 
     // The hanging bar's icons, both rendered from Decor/barre.rd4: 138 with the two mounts that hold
     // it to a ceiling, 202 the pipe alone (its model leaves the mounts out, objects.txt drop=).

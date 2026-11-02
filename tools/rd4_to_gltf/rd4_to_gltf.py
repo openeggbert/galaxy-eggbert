@@ -393,8 +393,9 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
             key = ("texture", re.sub(r"[^\w.-]", "_", label))
     elif tex is not None:
         warnings.extend(tex.warnings)
-        st = freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src]
-        pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0)
+        st, caps = freeform_mesh.planar_caps(ff, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src],
+                                             nrm, src, tex.flips)
+        pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0, caps)
         key = ("texture", re.sub(r"[^\w.-]", "_", label))
     wpos = pos @ m[:3, :3].T + m[:3, 3]
     nm = np.linalg.inv(m[:3, :3]).T

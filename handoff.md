@@ -104,11 +104,13 @@ ledgers before repeating any discovery. Where it stands:
   075) stay free. His model hangs 6 px lower (BLUPISUSPEND) with his right palm on his pipe per
   icon (`HangingModelShift`, measured on the clip library). Evidence
   `plans/evidence/bar-two-pipes.png`; probe world 995 (bar row along Z under a two-cell beam).
-  Next: the teleporter (OR-0025) -- one cell, the device its top third, the tip under it: the
-  scenes `Decor/teleporteur1-4.rd4` (letters alpha, beta, chi, delta: tele01-04 textures; icons
-  330 alpha, 331 beta, 332 delta, 333 chi to confirm on the sheet), but the converter draws the
-  letter panel white (texture placement flph/flpv/cnth/cntv unverified, `shading.py`), and one
-  scene won all four icons on the silhouette alone: one entry per letter.
+  **The teleporters** (OR-0025): each letter its scene's model in its one cell (330 alpha
+  `teleporteur1`, 331 beta `2`, 332 delta `4`, 333 chi `3`; IoU 0.997), the device its top third,
+  the tip under it; the front (lights, letter) turned to the cell's side with the most room to
+  stand in (`ModelCell::openSide`, `kFrontModelIcons`); the old cube and hanging pyramid are
+  only the fallback. The converter's flat end caps of prisms now take the whole image
+  (`freeform_mesh.planar_caps`, kept out of `split_seam`): the letter panels were a magnified
+  corner. Evidence `plans/evidence/teleporter-model.png`; probe world 998 (four teleporters).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

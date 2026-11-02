@@ -499,15 +499,71 @@ def texture_coordinates(m: FreeformMesh, quarter_turns: int) -> np.ndarray:
     return np.stack([s, meridian_fraction(m)], axis=1)
 
 
+# The image on a prism's flat end cap (tested variants: swap the cap's axes, flip s, flip t).
+PLANAR_CAP_VARIANT = (False, False, False)
+
+
+def planar_caps(m: FreeformMesh, st: np.ndarray, normals: np.ndarray, src: np.ndarray,
+                flips: tuple) -> tuple[np.ndarray, np.ndarray]:
+    """(``st``, cap mask): ``st`` (texture coordinates of the output vertices of ``m`` split by
+    ``geometry.smooth_normals``, ``src`` their source vertices) with the flat end caps of a prism
+    (a straight sweep: two rings) given the whole image, laid flat over the cap's section: s along
+    the section's x, t along its y, over their extent, then the map's flips (``flph``, ``flpv``).
+    The teleporters' letter panels (Decor/teleporteur1-4.rd4) are such prisms seen end on; under
+    the meridian rule their caps showed a magnified corner of the letter. Other free-forms keep
+    the meridian rule (``texture_coordinates``). The mask marks the cap vertices, whose ``s`` is no
+    angle: ``split_seam`` must leave them (``fixed``)."""
+    rings = np.unique(m.ring_of)
+    none = np.zeros(len(st), dtype=bool)
+    if len(rings) != 2:
+        return st, none
+    c0 = m.positions[m.ring_of == rings[0]].mean(axis=0)
+    c1 = m.positions[m.ring_of == rings[1]].mean(axis=0)
+    tan = c1 - c0
+    if np.linalg.norm(tan) < 1e-9:
+        return st, none
+    tan = tan / np.linalg.norm(tan)
+    ax = np.array([1.0, 0.0, 0.0]) - tan * tan[0]
+    if np.linalg.norm(ax) < 1e-6:
+        return st, none
+    ax /= np.linalg.norm(ax)
+    bx = np.cross(ax, tan)
+    out = st.copy()
+    on_cap = np.abs(normals @ tan) > 0.98
+    done = none.copy()
+    x = -(m.positions @ ax)     # the section's own x (sweep: a = -x)
+    y = m.positions @ bx
+    for r in rings:
+        ring = m.ring_of == r
+        sel = on_cap & ring[src]
+        if not sel.any():
+            continue
+        x0, x1 = x[ring].min(), x[ring].max()
+        y0, y1 = y[ring].min(), y[ring].max()
+        if x1 - x0 < 1e-9 or y1 - y0 < 1e-9:
+            continue
+        s = (x[src[sel]] - x0) / (x1 - x0)
+        t = (y[src[sel]] - y0) / (y1 - y0)
+        swap, fs, ft = PLANAR_CAP_VARIANT
+        if swap:
+            s, t = t, s
+        s = 1.0 - s if (flips[0] != fs) else s
+        t = 1.0 - t if (flips[1] != ft) else t
+        out[sel] = np.stack([s, t], axis=1)
+        done |= sel
+    return out, done
+
+
 def split_seam(positions: np.ndarray, normals: np.ndarray, triangles: np.ndarray, uv: np.ndarray,
-               period: float = 1.0):
-    """Duplicate vertices so no triangle's s spans the wrap-around seam (s in [0, period))."""
+               period: float = 1.0, fixed: np.ndarray | None = None):
+    """Duplicate vertices so no triangle's s spans the wrap-around seam (s in [0, period)).
+    Triangles with a ``fixed`` vertex (a flat cap's, ``planar_caps``) are left as they are."""
     pos, nrm, tex = list(positions), list(normals), list(uv)
     out = triangles.copy()
     extra: dict[int, int] = {}
     for f, tri in enumerate(triangles):
         us = uv[tri, 0]
-        if us.max() - us.min() <= period / 2:
+        if us.max() - us.min() <= period / 2 or (fixed is not None and fixed[tri].any()):
             continue
         for k, vi in enumerate(tri):
             if uv[vi, 0] < period / 2:

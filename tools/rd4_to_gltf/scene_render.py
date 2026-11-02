@@ -77,7 +77,9 @@ class SceneRenderer:
                 baked = shading.freeform_texture(self.scene, obj, ff)
                 self.textures[key] = None if baked is None else (baked[0], baked[1][src])
             elif tex is not None and ff is not None:
-                self.textures[key] = (tex.image, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src])
+                st, caps = freeform_mesh.planar_caps(
+                    ff, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src], nrm, src, tex.flips)
+                self.textures[key] = (tex.image, st, caps)
             elif tex is not None:
                 prim = self.scene.masters[obj.master].chunk("prim")
                 self.textures[key] = shading.primitive_texture(
@@ -126,7 +128,7 @@ class SceneRenderer:
             t = tris[:, ::-1] if np.linalg.det(lin) < 0 else tris
             tex = self._texture(o, canon)
             if tex is not None:
-                p2, n2, t2, uv = freeform_mesh.split_seam(wpos, wn, t, tex[1], 1.0)
+                p2, n2, t2, uv = freeform_mesh.split_seam(wpos, wn, t, tex[1], 1.0, tex[2] if len(tex) > 2 else None)
                 out.append((p2, n2, t2, np.ones(3), uv, tex[0].astype(float) / 255.0))
             else:
                 out.append((wpos, wn, t, np.array(shading.material_key(self.scene, o))))

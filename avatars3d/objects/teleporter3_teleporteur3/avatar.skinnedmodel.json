@@ -1,0 +1,63 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "teleporter3_rd_c81111",
+      "vertices": "teleporter3_rd_c81111.verts.bin",
+      "indices": "teleporter3_rd_c81111.idx.bin",
+      "vertexStride": 52,
+      "texture": "teleporter3_rd_c81111.png",
+      "diffuseColor": [
+        0.5820269793795811,
+        0.005642319704963382,
+        0.005642319704963382,
+        1.0
+      ]
+    },
+    {
+      "name": "teleporter3_rd_c7c711",
+      "vertices": "teleporter3_rd_c7c711.verts.bin",
+      "indices": "teleporter3_rd_c7c711.idx.bin",
+      "vertexStride": 52,
+      "texture": "teleporter3_rd_c7c711.png",
+      "diffuseColor": [
+        0.5770624335144318,
+        0.5770624335144318,
+        0.005642319704963382,
+        1.0
+      ]
+    },
+    {
+      "name": "teleporter3_rd_119ac7",
+      "vertices": "teleporter3_rd_119ac7.verts.bin",
+      "indices": "teleporter3_rd_119ac7.idx.bin",
+      "vertexStride": 52,
+      "texture": "teleporter3_rd_119ac7.png",
+      "diffuseColor": [
+        0.005642319704963382,
+        0.32677834696921176,
+        0.5770624335144318,
+        1.0
+      ]
+    },
+    {
+      "name": "teleporter3_rd_tex_p08_mur_sud",
+      "vertices": "teleporter3_rd_tex_p08_mur_sud.verts.bin",
+      "indices": "teleporter3_rd_tex_p08_mur_sud.idx.bin",
+      "vertexStride": 52,
+      "texture": "teleporter3_rd_tex_p08_mur_sud.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
