@@ -525,6 +525,25 @@ int main(int argc, char** argv)
             check(sawFreefall, "walking off the bar's near end (no bar tile, gap below) drops Blupi "
                                 "into free-fall instead of releasing gracefully");
 
+            // OR-0017 (render only): near a wall face his model is drawn kBodyHalfWidth from it.
+            {
+                Worlds::World wallWorld;
+                wallWorld.setBlock(30, 0, 30, Worlds::Block::make(BlockTypes::Ground));
+                wallWorld.setBlock(31, 0, 30, Worlds::Block::make(BlockTypes::Ground));
+                wallWorld.setBlock(31, 1, 30, Worlds::Block::make(BlockTypes::Ground)); // a wall at +X
+                BlupiController nearWall;
+                nearWall.SetPosition(30.0f - 50.0f + 0.4f, 1.0f, 30.0f - 50.0f); // 0.1 from its face
+                const auto offset = nearWall.WallClearanceOffset(wallWorld);
+                check(std::fabs(offset.first + (BlupiController::kBodyHalfWidth - 0.1f)) < 0.02f &&
+                          std::fabs(offset.second) < 1e-6f,
+                      "0.1 from a wall face his model is drawn back to his half-width from it (OR-0017)");
+                BlupiController inTheOpen;
+                inTheOpen.SetPosition(30.0f - 50.0f - 0.2f, 1.0f, 30.0f - 50.0f);
+                const auto none = inTheOpen.WallClearanceOffset(wallWorld);
+                check(std::fabs(none.first) < 1e-6f && std::fabs(none.second) < 1e-6f,
+                      "away from walls his model is drawn where he is");
+            }
+
             // In 3D the bar's row is the original's bar (BarRows.hpp): grabbed off its centre line and
             // turned off its way, he hangs on the line facing along the row, the end nearest his
             // yaw, and moves along it only, his hands on its two pipes.

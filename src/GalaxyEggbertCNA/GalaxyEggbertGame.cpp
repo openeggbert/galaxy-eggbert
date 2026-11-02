@@ -5120,6 +5120,10 @@ namespace GalaxyEggbert::CNA
                 const float facingYaw = hanging ? blupi_.GetHangFacingYaw() : blupi_.GetYaw();
                 const float modelYaw = blupiModelIsReal_ ? kPi - facingYaw : facingYaw;
                 const float hangShift = hanging ? GalaxyEggbert::Game::HangingModelShift(blupi_.GetAnimIcon()) : 0.0f;
+                // On foot, kept out of walls as the original's 36 px box keeps his sprite (OR-0017).
+                const auto clearance = blupi_.IsInVehicle() || blupi_.IsSuspended()
+                                           ? std::pair<float, float>{0.0f, 0.0f}
+                                           : blupi_.WallClearanceOffset(worldRuntime_.GetWorld());
                 // No render-only Balloon offset here: Blupi's own physics
                 // now genuinely lift him while ballooned (BlupiController's
                 // kBalloonRiseSpeed, a direct port of the real
@@ -5141,7 +5145,8 @@ namespace GalaxyEggbert::CNA
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(hangShift, 0.0f, modelDepthOffset) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                        blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop, blupi_.GetZ());
+                        blupi_.GetX() + clearance.first, blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop,
+                        blupi_.GetZ() + clearance.second);
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiModel_->ComputeBoneTransformsEXT(
                     blupiActiveClipName_,

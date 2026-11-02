@@ -6,6 +6,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <utility>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -830,6 +831,14 @@ namespace GalaxyEggbert::Game
         // Suspended/hanging bar-and-rope mode (plan.md TILE-045, see
         // kSuspendMoveSpeed's own comment).
         [[nodiscard]] bool IsSuspended() const noexcept { return m_suspended; }
+        // Where his model is drawn off his position so it does not show sunk into a wall (OR-0017):
+        // the original's box is 36 px across (Decor::BlupiRect, pos.X + 12 to + 48) while Galaxy
+        // collides at his centre, so near a wall face his model keeps kBodyHalfWidth from it. Render
+        // only: his position, collision and contacts are unchanged (the collision box itself broke
+        // most playthroughs, plans/audit/or0017-body-width.patch). Returns (dx, dz).
+        static constexpr float kBodyHalfWidth = 18.0f / 64.0f;
+        [[nodiscard]] std::pair<float, float> WallClearanceOffset(const Worlds::World& world) const;
+
         // The way his model faces while hanging (BarRows.hpp): along the bar's row, the end nearest
         // GetYaw(); in a bar field GetYaw() itself.
         [[nodiscard]] float GetHangFacingYaw() const noexcept { return m_hangFacingYaw; }

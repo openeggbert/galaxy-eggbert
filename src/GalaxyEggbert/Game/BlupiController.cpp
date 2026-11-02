@@ -776,6 +776,33 @@ namespace GalaxyEggbert::Game
         return belowSolid ? BarreCellType::LandingAvailable : BarreCellType::Hanging;
     }
 
+    std::pair<float, float> BlupiController::WallClearanceOffset(const Worlds::World& world) const
+    {
+        // Each side's free run up to the half-width, in pixel steps, at his body (above the step
+        // limit) and his head: a wall face closer than that pushes the model back by the rest.
+        constexpr int kSteps = 18;
+        const float step = kBodyHalfWidth / static_cast<float>(kSteps);
+        const float heights[2] = {m_y + 0.15f, m_y + kHeadHeight};
+        const auto freeRun = [&](float ux, float uz)
+        {
+            for (int k = 1; k <= kSteps; ++k)
+            {
+                const float d = step * static_cast<float>(k);
+                for (const float h : heights)
+                {
+                    if (IsPointSolid(world, m_x + ux * d, h, m_z + uz * d, false))
+                    {
+                        return d - step;
+                    }
+                }
+            }
+            return kBodyHalfWidth;
+        };
+        const float dx = (kBodyHalfWidth - freeRun(-1.0f, 0.0f)) - (kBodyHalfWidth - freeRun(1.0f, 0.0f));
+        const float dz = (kBodyHalfWidth - freeRun(0.0f, -1.0f)) - (kBodyHalfWidth - freeRun(0.0f, 1.0f));
+        return {dx, dz};
+    }
+
     void BlupiController::KeepOnBarRow(const Worlds::World& world, int gx, int gy, int gz)
     {
         const auto bar = [&](int x, int z)
