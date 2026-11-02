@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "door335_rd_15ca15",
+      "vertices": "door335_rd_15ca15.verts.bin",
+      "indices": "door335_rd_15ca15.idx.bin",
+      "vertexStride": 52,
+      "texture": "door335_rd_15ca15.png",
+      "diffuseColor": [
+        0.007985828279401842,
+        0.5920305834000243,
+        0.007985828279401842,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "temp324_rd_00bffd",
+      "vertices": "temp324_rd_00bffd.verts.bin",
+      "indices": "temp324_rd_00bffd.idx.bin",
+      "vertexStride": 52,
+      "texture": "temp324_rd_00bffd.png",
+      "diffuseColor": [
+        0.0,
+        0.5225215539683921,
+        0.9909246121188983,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

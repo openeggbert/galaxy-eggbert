@@ -44,6 +44,9 @@ creature_creature4
 creature_creature5
 decoy_bombe
 decoygreen_bombe
+door334_porte-r
+door335_porte-v
+door336_porte-b
 drink_bouteille
 dynamite_dynamite
 egg_oeuf
@@ -76,6 +79,7 @@ teleporter1_teleporteur1
 teleporter2_teleporteur2
 teleporter3_teleporteur3
 teleporter4_teleporteur4
+temp324_temporaire
 tentacle_tenta01
 tentacle_tenta02
 tentacle_tenta03

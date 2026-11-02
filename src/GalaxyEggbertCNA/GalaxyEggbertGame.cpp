@@ -1111,12 +1111,27 @@ namespace GalaxyEggbert::CNA
     {
         // The fan cells as the original's fan model (BlockModels.hpp, VIS-0127) when it is loaded;
         // without it (no avatars3d/objects) they stay textured cubes.
-        if (terrainRenderer_ &&
-            objectModelTable_.Find(ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon) != nullptr)
+        if (!terrainRenderer_)
         {
-            terrainRenderer_->SetModelDrawnBases(
-                std::vector<std::uint16_t>(GalaxyEggbert::Game::kFanModelBases.begin(),
-                                           GalaxyEggbert::Game::kFanModelBases.end()));
+            return;
+        }
+        std::vector<std::uint16_t> bases;
+        if (objectModelTable_.Find(ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon) != nullptr)
+        {
+            bases.insert(bases.end(), GalaxyEggbert::Game::kFanModelBases.begin(),
+                         GalaxyEggbert::Game::kFanModelBases.end());
+        }
+        // Animated tiles with their scene's model (BlockModels.hpp kAnimatedModelBases).
+        for (const auto base : GalaxyEggbert::Game::kAnimatedModelBases)
+        {
+            if (objectModelTable_.Find(ObjectTextureSource::ObjectM, base) != nullptr)
+            {
+                bases.push_back(base);
+            }
+        }
+        if (!bases.empty())
+        {
+            terrainRenderer_->SetModelDrawnBases(std::move(bases));
         }
     }
 
@@ -5541,6 +5556,23 @@ namespace GalaxyEggbert::CNA
                 {
                     for (const auto& cell : terrainRenderer_->ModelCells())
                     {
+                        if (std::find(GalaxyEggbert::Game::kAnimatedModelBases.begin(),
+                                      GalaxyEggbert::Game::kAnimatedModelBases.end(),
+                                      cell.base) != GalaxyEggbert::Game::kAnimatedModelBases.end())
+                        {
+                            // An animated tile as its scene's model, on the tile's frame (gone: none).
+                            const int icon =
+                                GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase());
+                            if (icon >= 0)
+                            {
+                                if (const ObjectModelPose* pose = objectModelTable_.Find(
+                                        ObjectTextureSource::ObjectM, static_cast<std::uint16_t>(icon)))
+                                {
+                                    drawModel(*pose, cell.x, cell.y, cell.z);
+                                }
+                            }
+                            continue;
+                        }
                         if (std::find(GalaxyEggbert::Game::kFanModelBases.begin(), GalaxyEggbert::Game::kFanModelBases.end(),
                                       cell.base) == GalaxyEggbert::Game::kFanModelBases.end())
                         {

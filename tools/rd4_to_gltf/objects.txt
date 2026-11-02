@@ -122,3 +122,14 @@ support3    object-m 199     Decor/support3.rd4 tone=1.01,6
 # (Decor/grotte*.rd4, 0.81-0.91): close to 6,000 cells in the worlds, one draw each.
 post182     object-m 182     Decor/porte1.rd4 tone=0.79,17
 pillar183   object-m 183     Decor/porte2.rd4 tone=0.76,13
+# The coloured doors 334 red, 335 green, 336 blue (owner 2026-11-02: the red, green and blue posts
+# in 3D), block models: Decor/porte-r.rd4, porte-v.rd4, porte-b.rd4 (rouge, vert, bleu; IoU 0.983).
+door334     object-m 334     Decor/porte-r.rd4 tone=0.71,22
+door335     object-m 335     Decor/porte-v.rd4 tone=0.71,22
+door336     object-m 336     Decor/porte-b.rd4 tone=0.79,14
+# The vanishing saucer (Temp, 324-329; owner 2026-11-02: in 3D, not a billboard): Decor/temporaire.rd4,
+# its frames 0, 2, 3 the icons 324-326 (IoU 0.99, 0.99, 0.91).
+temp324     object-m 324-329 Decor/temporaire.rd4 min_iou=0.6 tone=0.72,16
+# The crusher (317-323; owner 2026-11-02: the blue spring and the red block striking down, in 3D):
+# Decor/aplatisseur.rd4, a piston hanging from the ceiling of its cell (IoU 0.95-0.975, survey).
+crusher317  object-m 317-323 Decor/aplatisseur.rd4 min_iou=0.6

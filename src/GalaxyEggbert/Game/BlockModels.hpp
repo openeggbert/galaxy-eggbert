@@ -21,6 +21,12 @@ namespace GalaxyEggbert::Game
     // The icon whose model pose draws frame 0 (the up fan's; frame k is this + k).
     inline constexpr std::uint16_t kFanModelIcon = GalaxyEggbert::BlockTypes::FanUp;
 
+    // Animated terrain drawn as its original scene's model frame by frame: the cell's animation
+    // icon (ResolveBlockAnimationIcon) picks the pose its model draws for that icon; a frame with
+    // no icon (-1: gone) draws nothing. The vanishing saucer 324-329 (Decor/temporaire.rd4, its
+    // six icons at IoU 0.985-0.992; owner 2026-11-02: a billboard, wrong from above).
+    inline constexpr std::array<std::uint16_t, 1> kAnimatedModelBases{GalaxyEggbert::BlockTypes::Temp};
+
     // Still terrain icons drawn as their original scene's model when avatars3d/objects has one for
     // their object-m icon (VIS-0077/0078/0378/0400): the stone column 76 (Decor/support1.rd4), the
     // golden support 77 (Decor/support2.rd4), the barrel stack 377 (Decor/pile1.rd4) and the white
@@ -29,8 +35,11 @@ namespace GalaxyEggbert::Game
     // The teleporters 330-333 (Decor/teleporteur1-4.rd4, one scene a letter; owner 2026-11-02: in
     // one cell as the tile shows it, the device its top third, the tip under it), the yellow
     // trestle 199 (Decor/support3.rd4), and the posts 182 and 183 (Decor/porte1.rd4, porte2.rd4).
-    inline constexpr std::array<std::uint16_t, 14> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
-                                                                     330, 331, 332, 333, 199, 182, 183};
+    // The coloured doors 334-336 (Decor/porte-r/v/b.rd4, IoU 0.983; owner 2026-11-02: the red, green
+    // and blue posts in 3D), until a key opens them.
+    inline constexpr std::array<std::uint16_t, 17> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+                                                                     330, 331, 332, 333, 199, 182, 183,
+                                                                     334, 335, 336};
 
     // Still icons whose model has a front (the original is a front view: the teleporters' lights
     // and letter, the trestle's frame), turned toward the cell's open side

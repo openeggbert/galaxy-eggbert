@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "door336_rd_0ea4d6",
+      "vertices": "door336_rd_0ea4d6.verts.bin",
+      "indices": "door336_rd_0ea4d6.idx.bin",
+      "vertexStride": 52,
+      "texture": "door336_rd_0ea4d6.png",
+      "diffuseColor": [
+        0.00440084974745434,
+        0.37618646516667625,
+        0.6774791908969094,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
