@@ -538,6 +538,12 @@ namespace GalaxyEggbert::Game
             // through fans; at its mouth he dies (WorldRuntime::TryConsumeFan, Decor::IsVentillo).
             return true;
         }
+        if (blockType == GalaxyEggbert::BlockTypes::Drip)
+        {
+            // The slime drip hangs under a ceiling in an open cell and kills in Blupi's own cell
+            // (Decor::IsGoutte, BD-0033): nothing stands on it.
+            return false;
+        }
         if (GalaxyEggbert::BlockTypes::isCrusher(blockType))
         {
             // It hangs in Blupi's own cell of a one-high passage and squashes him there (Decor::

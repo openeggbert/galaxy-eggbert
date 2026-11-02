@@ -51,6 +51,10 @@ door334_porte-r
 door335_porte-v
 door336_porte-b
 drink_bouteille
+drip404_goutte01
+drip404_goutte02
+drip404_goutte03
+drip404_goutte04
 dynamite_dynamite
 egg_oeuf
 emitter304_eclair

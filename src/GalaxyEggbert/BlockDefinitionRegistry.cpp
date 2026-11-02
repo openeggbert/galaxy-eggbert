@@ -186,6 +186,14 @@ namespace GalaxyEggbert
         SetAnimation(definitions_[Temp], Temp, tempFrames, 4);
         SetAnimation(definitions_[Marine], Marine, marineFrames, 3);
         SetAnimation(definitions_[Blitz], Blitz, blitzFrames, 1);
+        // The slime drip (Decor.cpp:1039-1042, Tables::table_decor_goutte; BD-0033): the drop
+        // forms, falls and is gone, a step every 2 ticks (the original offsets each cell's phase
+        // by i * 13 + j * 7; here the drips beat together, as the lava does).
+        constexpr int dripFrames[48] = {
+            410, 409, 410, -1, -1, -1, -1, -1, -1, 410, 409, 408, 409, 410, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1, -1, 410, 409, 408, 407, 406, 405, 404, 405,
+            406, 407, 408, 409, 410, -1, -1, -1, -1, 410, 409, 410, -1, -1, -1, -1};
+        SetAnimation(definitions_[Drip], Drip, dripFrames, 2);
 
         // Any non-base frame stored in an imported world resolves through
         // the same base definition as its animation family.

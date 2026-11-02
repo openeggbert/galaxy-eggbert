@@ -40,6 +40,7 @@ import vwr_inspect  # noqa: E402
 
 SIZE = 100
 CRUSHER_HAZARD = 3  # BlockHazardKind::Crusher (tools/data/blocks.csv)
+DRIP_HAZARD = 6     # BlockHazardKind::Drip: hangs in an open cell (BD-0033), nothing stands on it
 LIFTS = {1, 47, 48}
 DANGEROUS = {2, 3, 4, 16, 17, 20, 32, 33, 44, 54, 96, 97}   # mines and enemies
 TARGETS = {5: "treasure", 6: "egg", 49: "key", 50: "key", 51: "key"}
@@ -94,7 +95,8 @@ class Grid:
         below = (x, y - 1, z)
         b = self.info(below)
         # A crusher hangs in a walk cell (BD-0032): nothing stands on it.
-        return y > 0 and ((b["solid"] == 1 and b["hazard"] != CRUSHER_HAZARD) or below in self.solid_objects)
+        return y > 0 and ((b["solid"] == 1 and b["hazard"] not in (CRUSHER_HAZARD, DRIP_HAZARD)) or
+                          below in self.solid_objects)
 
     def safe(self, p) -> bool:
         x, y, z = p

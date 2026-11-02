@@ -558,7 +558,7 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   secret powers (Decor.cpp:5556-5573); Galaxy's `TriggerCrush` only squashed. Now as the original
   (045's corridor can be crossed in the helicopter on the ground).
 
-## BD-0033 — the slime drip read as a floor and drawn still (gameplay, render) — REPRODUCED_DEFECT
+## BD-0033 — the slime drip read as a floor and drawn still (gameplay, render) — FIXED_AND_VERIFIED
 
 - Original (`Decor::IsGoutte`, Decor.cpp:7220-7240, 5513; the draw at 1041): the drip 404 is a
   tile of a ceiling row; Blupi dies when his own cell is the drip's (his centre 15-49 px into it),
@@ -566,6 +566,13 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   ticks, each cell's phase offset by `i * 13 + j * 7`).
 - Galaxy: the drip is a ground hazard (`GetGroundBlockType() == Drip`, standing on it) and has no
   animation (`BlockDefinitionRegistry` sets none): a still drop.
-- To do (next): the drip as the crusher was (BD-0032): detection in his own cell, the tile
-  passable where it hangs, `goutte01-04.rds` as its model frame by frame, the worlds with drips
-  (062, 066) replayed.
+- In the original's maps every drip hangs right under a solid tile with open cells below it
+  (062, 066, 199): he dies going up into it (a jump), or walking into one hung lower.
+- Fix: the drip's cell is passable (`IsPointSolid`), it kills in his own cell (`GetBlockTypeAt`),
+  his safe position avoids it (as `IsGoutte(.., true)`), it animates through `table_decor_goutte`
+  (the registry; the cells beat together, as the lava's), drawn as `Decor/goutte/goutte01-04.rds`
+  frame by frame (`kAnimatedModelBases`; 404-408 matched, the two smallest drops 409-410 have no
+  scene and are not drawn); levelcheck: a drip is no floor.
+- Validation: `VerifyBlupiMovement` (its cell passable, he is in it); the drip worlds'
+  playthroughs (062, 063, 066) pass; seen live, the drop forming under its ceiling as its model
+  (`plans/evidence/drip-3d.png`).

@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "drip404_rd_44d444",
+      "vertices": "drip404_rd_44d444.verts.bin",
+      "indices": "drip404_rd_44d444.idx.bin",
+      "vertexStride": 52,
+      "texture": "drip404_rd_44d444.png",
+      "diffuseColor": [
+        0.05794929929129671,
+        0.6630683878962322,
+        0.05794929929129671,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

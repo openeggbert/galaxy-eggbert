@@ -404,14 +404,18 @@ int main(int argc, char** argv)
         // recognition-only test shape as Lava/Spike above (the actual
         // kill trigger lives in GalaxyEggbertGame::Update(), same as
         // every other hazard here, not separately unit-testable yet).
+        // BD-0033: the drip hangs in an open cell under a ceiling and kills in Blupi's own cell
+        // (IsGoutte(m_blupiPos), no +60): its cell is passable, and he is in it, not on it.
         constexpr std::uint16_t kDripX = 31, kDripZ = 31;
-        synthetic.setBlock(kDripX, 0, kDripZ, Worlds::Block::make(BlockTypes::Drip));
-        BlupiController onDrip;
-        onDrip.SetPosition(static_cast<float>(kDripX) - 50.0f, 1.0f, static_cast<float>(kDripZ) - 50.0f);
-        onDrip.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-        check(onDrip.IsOnGround(), "Blupi stands on a water-drip block rather than falling through it");
-        check(onDrip.GetGroundBlockType(synthetic) == BlockTypes::Drip,
-              "GetGroundBlockType() identifies the water-drip hazard correctly (real icon 404)");
+        synthetic.setBlock(kDripX, 0, kDripZ, Worlds::Block::make(BlockTypes::Ground));
+        synthetic.setBlock(kDripX, 1, kDripZ, Worlds::Block::make(BlockTypes::Drip));
+        BlupiController inDrip;
+        inDrip.SetPosition(static_cast<float>(kDripX) - 50.0f, 1.0f, static_cast<float>(kDripZ) - 50.0f);
+        inDrip.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        check(inDrip.IsOnGround() && std::fabs(inDrip.GetY() - 1.0f) < 0.05f,
+              "a drip's cell is passable: he stands in it on the floor below, not on it (BD-0033)");
+        check(inDrip.GetBlockTypeAt(synthetic) == BlockTypes::Drip,
+              "GetBlockTypeAt() finds the drip in his own cell (real icon 404, Decor::IsGoutte)");
 
         // Gripping a crate (StopPop) and starting to pull it (Pop) each give channel 39's event
         // (Decor.cpp:3291-3323).

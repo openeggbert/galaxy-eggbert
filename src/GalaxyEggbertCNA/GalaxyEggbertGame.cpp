@@ -3622,8 +3622,10 @@ namespace GalaxyEggbert::CNA
             // GalaxyEggbert::Def::BlupiAction::Glu death, same gate shape, same real channel 51
             // sound (Decor.cpp:5513-5519), same real Over/Jeep/Tank vehicle
             // immunity (fixed 2026-07-16, same as Spike above).
+            // His own cell, as IsGoutte(m_blupiPos) (no +60 as IsPiege has; BD-0033): the drip
+            // hangs under a ceiling, he dies going into it.
             if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
-                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
+                blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
@@ -4078,7 +4080,7 @@ namespace GalaxyEggbert::CNA
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Spike ||
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Saw ||
                     safetyGroundBlock == GalaxyEggbert::BlockTypes::Temp ||
-                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Drip ||
+                    blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip || // IsGoutte(.., true)
                     (safetyGroundBlock == GalaxyEggbert::BlockTypes::Blitz &&
                      WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()));
                 const bool underTeleporter =

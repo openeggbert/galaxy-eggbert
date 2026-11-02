@@ -27,8 +27,11 @@ namespace GalaxyEggbert::Game
     // six icons at IoU 0.985-0.992; owner 2026-11-02: a billboard, wrong from above) and the
     // crusher 317-323 hanging in its cell (Decor/aplatisseur.rd4, seven icons at IoU 0.948-0.99:
     // the blue spring and the red block striking down).
-    inline constexpr std::array<std::uint16_t, 2> kAnimatedModelBases{GalaxyEggbert::BlockTypes::Temp,
-                                                                      GalaxyEggbert::BlockTypes::Crusher};
+    // The slime drip 404-410 (Decor/goutte/goutte01-04.rds, 404-408; the two smallest drops 409-410
+    // have no scene and are not drawn; BD-0033).
+    inline constexpr std::array<std::uint16_t, 3> kAnimatedModelBases{GalaxyEggbert::BlockTypes::Temp,
+                                                                      GalaxyEggbert::BlockTypes::Crusher,
+                                                                      GalaxyEggbert::BlockTypes::Drip};
 
     // Animated terrain whose cell is the floor (Galaxy's convention: the space over it is deadly)
     // and whose model stands on it, one cell up: the saw 378-383 and the stopped saw 379
