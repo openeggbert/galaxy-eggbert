@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kit import MACHINE_FACES, MONITOR, O, World, wall  # noqa: E402
 
 TOP = 10            # the upper floors' top: Blupi walks at 11
+WATER = 92
 WALK = TOP + 1
 SPAWN = (48, WALK, 62)
 
@@ -76,6 +77,11 @@ def main(argv) -> int:
     wall(w, room_low[0], 1, room_low[1], room_low[2], 4, room_low[3], rng, face_chance=0.3)
     w.fill(42, 1, 34, 54, 4, 46, 0)
     w.fill(47, 1, 38, 49, 4, 40, 0)                                   # the shaft comes down here
+    # Between the shaft's foot and the key a channel of water across the room (z 41-43), level with
+    #    its floor: swum across and climbed out of (the original's pool under its key, LV-0006).
+    w.fill(42, 0, 41, 54, 0, 43, WATER)
+    if solved:                                    # levelcheck cannot swim: the surface stands in
+        w.fill(42, 0, 41, 54, 0, 43, MACHINE_FACES[0])
     w.place(O.SECRET_EXIT, 51, 1, 44)
     for x in range(42, 55, 4):
         w.set(x, 3, 33, rng.choice(MACHINE_FACES))

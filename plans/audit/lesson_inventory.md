@@ -6,7 +6,6 @@ Clusters are the original map's cells (x, y; 64 px tiles), `xN` the cells in the
 | World | Missing (original's cells) | Thinned (original -> Galaxy) | Added |
 |---|---|---|---|
 | 013 | - | helicopter 13 -> 4 | - |
-| 014 | water: (37,55)x5 | - | - |
 | 046 | bar: (47,19)x1 | crate 8 -> 1 | - |
 | 052 | bar: (71,34)x11 (70,22)x8 | - | - |
 | 061 | bar: (63,38)x6 | - | - |
