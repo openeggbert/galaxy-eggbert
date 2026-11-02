@@ -159,6 +159,8 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<GpuMeshParts> m_cutoutRenderer;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::AlphaTestEffect> m_cutoutEffect;
         std::unique_ptr<GpuMeshParts> m_animRenderer;
+        // The saws' floor cells, opaque (built once; see the constructor).
+        std::unique_ptr<GpuMeshParts> m_sawFloorRenderer;
         std::unique_ptr<GpuMeshParts> m_waterRenderer;
         std::unique_ptr<GpuMeshParts> m_grassRenderer;
         std::vector<AnimBlock> m_animBlocks;

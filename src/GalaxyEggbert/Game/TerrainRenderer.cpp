@@ -828,6 +828,30 @@ namespace GalaxyEggbert::Game
             m_grassRenderer = UploadLitTexturedMeshParts(device, grassMesh.Mesh());
         }
 
+        // The saws' floor cells: plain opaque floor blocks, drawn with the static mesh so they
+        // write depth. In the animated (semi-transparent, depth-read) pass the saw's model showed
+        // through its own floor: a whole blade over a one-wide catwalk of saws (owner 2026-11-02:
+        // only its upper half should show, as the original's sprite).
+        {
+            auto sawFloors = MakeLitTexturedMeshBuilder();
+            for (const auto& block : m_animBlocks)
+            {
+                if (GalaxyEggbert::GetBlockDefinition(block.base).renderMode ==
+                    GalaxyEggbert::BlockRenderMode::GroundAnchoredPlate)
+                {
+                    AddCenteredBox(sawFloors,
+                                   Microsoft::Xna::Framework::Vector3(block.x, block.y - kSawPlateEpsilon, block.z),
+                                   Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
+                                   m_tileAtlas->GetTileUv(block.floorIcon != 0 ? block.floorIcon
+                                                                               : GalaxyEggbert::BlockTypes::RockPile));
+                }
+            }
+            if (!sawFloors.Mesh().Empty())
+            {
+                m_sawFloorRenderer = UploadLitTexturedMeshParts(device, sawFloors.Mesh());
+            }
+        }
+
         Update(device, 0);
     }
 
@@ -941,11 +965,8 @@ namespace GalaxyEggbert::Game
                 // unambiguous geometry rather than relying on depth-test
                 // tie-breaking at all.
                 // The floor as the floor around it (owner 2026-11-02: a rock cube showed in the saw's
-                // place whatever the floor; RockPile only when nothing plain lies beside or under).
-                AddCenteredBox(cubes, Microsoft::Xna::Framework::Vector3(block.x, block.y - kSawPlateEpsilon, block.z),
-                               Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
-                               m_tileAtlas->GetTileUv(block.floorIcon != 0 ? block.floorIcon
-                                                                           : GalaxyEggbert::BlockTypes::RockPile));
+                // place whatever the floor; RockPile only when nothing plain lies beside or under):
+                // m_sawFloorRenderer, built once and drawn opaque with the static mesh.
                 continue;
             }
 
@@ -1004,6 +1025,10 @@ namespace GalaxyEggbert::Game
         if (m_staticRenderer)
         {
             m_staticRenderer->Draw(device, effect);
+        }
+        if (m_sawFloorRenderer)
+        {
+            m_sawFloorRenderer->Draw(device, effect);
         }
         if (m_cutoutRenderer)
         {
@@ -1074,6 +1099,7 @@ namespace GalaxyEggbert::Game
                (m_transparentStaticRenderer ? m_transparentStaticRenderer->VertexCount() : 0) +
                (m_cutoutRenderer ? m_cutoutRenderer->VertexCount() : 0) +
                (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
+               (m_sawFloorRenderer ? m_sawFloorRenderer->VertexCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->VertexCount() : 0) +
                (m_grassRenderer ? m_grassRenderer->VertexCount() : 0);
     }
