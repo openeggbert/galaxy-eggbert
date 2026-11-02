@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "worldsign158_rd_c5ab46",
+      "vertices": "worldsign158_rd_c5ab46.verts.bin",
+      "indices": "worldsign158_rd_c5ab46.idx.bin",
+      "vertexStride": 52,
+      "texture": "worldsign158_rd_c5ab46.png",
+      "diffuseColor": [
+        0.5623173952428667,
+        0.41049645147981934,
+        0.0614649528184819,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

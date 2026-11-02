@@ -1,0 +1,9 @@
+# sign174_world1: the painted faces of icons 174-181 (tools/rd4_to_gltf/sign_decals.py)
+decal 174 decals/174.png 22 12 42 35 0.2971
+decal 175 decals/175.png 22 12 42 35 0.2971
+decal 176 decals/176.png 22 12 42 35 0.2971
+decal 177 decals/177.png 22 12 42 35 0.2971
+decal 178 decals/178.png 22 12 42 35 0.2971
+decal 179 decals/179.png 22 12 42 35 0.2971
+decal 180 decals/180.png 22 12 42 35 0.2971
+decal 181 decals/181.png 22 12 42 35 0.2971

@@ -1,0 +1,15 @@
+# worlddone166_world2b: the painted faces of icons 166-173,310,416-420 (tools/rd4_to_gltf/sign_decals.py)
+decal 166 decals/166.png 19 22 47 50 0.2971
+decal 167 decals/167.png 19 22 47 50 0.2971
+decal 168 decals/168.png 19 22 47 50 0.2971
+decal 169 decals/169.png 19 22 47 50 0.2971
+decal 170 decals/170.png 19 22 47 50 0.2971
+decal 171 decals/171.png 19 22 47 50 0.2971
+decal 172 decals/172.png 19 22 47 50 0.2971
+decal 173 decals/173.png 19 22 47 50 0.2971
+decal 310 decals/310.png 19 22 47 50 0.2971
+decal 416 decals/416.png 19 22 47 50 0.2971
+decal 417 decals/417.png 19 22 47 50 0.2971
+decal 418 decals/418.png 19 22 47 50 0.2971
+decal 419 decals/419.png 19 22 47 50 0.2971
+decal 420 decals/420.png 19 22 47 50 0.2971

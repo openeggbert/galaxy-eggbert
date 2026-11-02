@@ -62,6 +62,27 @@ namespace GalaxyEggbert::Game
         return kSpringFrames[static_cast<std::size_t>(k)];
     }
 
+    // The signs as their Ray Dream models (owner's decision MR-0006): the missions' 174-181
+    // (Decor/world1.rd4), the worlds' 158-165, 309, 411-415 (world2a.rd4) and the completed worlds'
+    // 166-173, 310, 416-420 (world2b.rd4), IoU 0.995; what was painted on them (the digit, the
+    // world's picture) is a decal (avatars3d/objects/<sign>/decals.txt, tools/rd4_to_gltf/
+    // sign_decals.py). Turned toward the cell's open side like the front models below.
+    inline constexpr std::array<std::uint16_t, 36> kSignModelIcons{
+        174, 175, 176, 177, 178, 179, 180, 181,
+        158, 159, 160, 161, 162, 163, 164, 165, 309, 411, 412, 413, 414, 415,
+        166, 167, 168, 169, 170, 171, 172, 173, 310, 416, 417, 418, 419, 420};
+    [[nodiscard]] constexpr bool IsSignModelIcon(std::uint16_t icon) noexcept
+    {
+        for (const auto sign : kSignModelIcons)
+        {
+            if (sign == icon)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     // Still icons whose model has a front (the original is a front view: the teleporters' lights
     // and letter, the trestle's frame), turned toward the cell's open side
     // (TerrainRenderer::ModelCell::openSide).

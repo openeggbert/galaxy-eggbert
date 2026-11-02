@@ -75,6 +75,7 @@ post182_porte1
 projectile_balle-glu
 saw378_scie
 secretexit_cle
+sign174_world1
 spring211_ressort
 statue_statue
 support3_support3
@@ -104,3 +105,5 @@ tentacle_tenta17
 treasure_coffre
 wasp_guepe
 wasp_guepe-tourne
+worlddone166_world2b
+worldsign158_world2a

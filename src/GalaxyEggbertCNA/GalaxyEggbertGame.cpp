@@ -924,6 +924,33 @@ namespace GalaxyEggbert::CNA
                         objectModels_.push_back(
                             content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                                 "objects/" + name + "/avatar"));
+                        // A sign's painted face (sign_decals.py): decal <icon> <png> <x0> <y0> <x1> <y1> <z>.
+                        std::ifstream decals("avatars3d/objects/" + name + "/decals.txt");
+                        for (std::string line; std::getline(decals, line);)
+                        {
+                            std::istringstream fields(line);
+                            std::string word, png;
+                            int icon = 0;
+                            float x0 = 0, y0 = 0, x1 = 0, y1 = 0, z = 0;
+                            if (!(fields >> word >> icon >> png >> x0 >> y0 >> x1 >> y1 >> z) || word != "decal")
+                            {
+                                continue;
+                            }
+                            const std::string path = "avatars3d/objects/" + name + "/" + png;
+                            if (!std::filesystem::exists(path))
+                            {
+                                continue;
+                            }
+                            SignDecal decal;
+                            decal.texture = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(path, device);
+                            // Model space: 64 sprite pixels a block, the icon's centre the origin, +Y up.
+                            decal.left = (x0 - 32.0f) / 64.0f;
+                            decal.right = (x1 - 32.0f) / 64.0f;
+                            decal.top = (32.0f - y0) / 64.0f;
+                            decal.bottom = (32.0f - y1) / 64.0f;
+                            decal.depth = z;
+                            signDecals_[icon] = std::move(decal);
+                        }
                     }
                     std::cout << "GalaxyEggbertCNA: " << objectModels_.size() << " object model(s) draw "
                               << objectModelTable_.Size() << " sprite icon(s) in 3D." << std::endl;
@@ -1099,7 +1126,11 @@ namespace GalaxyEggbert::CNA
     {
         // The still terrain icons with a loaded model (BlockModels.hpp), drawn as it.
         std::vector<std::uint16_t> icons;
-        for (const auto icon : GalaxyEggbert::Game::kStillModelIcons)
+        std::vector<std::uint16_t> candidates(GalaxyEggbert::Game::kStillModelIcons.begin(),
+                                              GalaxyEggbert::Game::kStillModelIcons.end());
+        candidates.insert(candidates.end(), GalaxyEggbert::Game::kSignModelIcons.begin(),
+                          GalaxyEggbert::Game::kSignModelIcons.end());
+        for (const auto icon : candidates)
         {
             if (objectModelTable_.Find(ObjectTextureSource::ObjectM, icon) != nullptr)
             {
@@ -5526,6 +5557,9 @@ namespace GalaxyEggbert::CNA
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiEffect_->setViewProperty(camera_.View());
                 blupiEffect_->setProjectionProperty(camera_.Projection());
+                // The signs drawn this frame whose painted face is a decal (drawn after the models).
+                auto& decalCells = signDecalCells_;
+                decalCells.clear();
                 const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
                                            float rollRadians = 0.0f)
                 {
@@ -5697,10 +5731,16 @@ namespace GalaxyEggbert::CNA
                                 }
                                 else if (std::find(GalaxyEggbert::Game::kFrontModelIcons.begin(),
                                                    GalaxyEggbert::Game::kFrontModelIcons.end(),
-                                                   cell.base) != GalaxyEggbert::Game::kFrontModelIcons.end())
+                                                   cell.base) != GalaxyEggbert::Game::kFrontModelIcons.end() ||
+                                         GalaxyEggbert::Game::IsSignModelIcon(cell.base))
                                 {
                                     drawModel(*still, cell.x, cell.y, cell.z,
                                               GalaxyEggbert::Game::FrontModelYaw(cell.openSide));
+                                    if (signDecals_.count(cell.base) != 0)
+                                    {
+                                        decalCells.push_back({cell.base, cell.x, cell.y, cell.z,
+                                                              GalaxyEggbert::Game::FrontModelYaw(cell.openSide)});
+                                    }
                                 }
                                 else
                                 {
@@ -5730,6 +5770,58 @@ namespace GalaxyEggbert::CNA
                 }
                 device.setRasterizerStateProperty(
                     Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+            }
+
+            // The signs' painted faces (MR-0006): each decal on the sign's front and, mirrored so it
+            // reads the right way round, on its back, a hair off the faces.
+            if (!signDecals_.empty() && terrainRenderer_)
+            {
+                if (!decalEffect_)
+                {
+                    decalEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+                    decalEffect_->VertexColorEnabled = false;
+                    decalEffect_->setTextureEnabledProperty(true);
+                }
+                decalEffect_->View = camera_.View();
+                decalEffect_->Projection = camera_.Projection();
+                decalEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullNone);
+                for (const auto& cell : signDecalCells_)
+                {
+                    const auto found = signDecals_.find(cell.icon);
+                    if (found == signDecals_.end())
+                    {
+                        continue;
+                    }
+                    const SignDecal& decal = found->second;
+                    const float c = std::cos(cell.yaw), s = std::sin(cell.yaw);
+                    // Model (x, y, z) to the world: CreateRotationY(yaw), then the cell.
+                    const auto toWorld = [&](float x, float y, float z) {
+                        return Microsoft::Xna::Framework::Vector3(cell.x + x * c + z * s, cell.y + y,
+                                                                  cell.z - x * s + z * c);
+                    };
+                    const float midX = (decal.left + decal.right) * 0.5f;
+                    const float midY = (decal.top + decal.bottom) * 0.5f;
+                    const Microsoft::Xna::Framework::Vector2 size(decal.right - decal.left, decal.top - decal.bottom);
+                    constexpr float kLift = 0.004f;
+                    const Microsoft::Xna::Framework::Vector3 right(c, 0.0f, -s);
+                    const Microsoft::Xna::Framework::Vector3 up(0.0f, 1.0f, 0.0f);
+                    auto mesh = MakeTexturedMeshBuilder();
+                    mesh.AddBillboard(toWorld(midX, midY, decal.depth + kLift), size, right, up,
+                                      CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+                    mesh.AddBillboard(toWorld(-midX, midY, -decal.depth - kLift), size,
+                                      Microsoft::Xna::Framework::Vector3(-c, 0.0f, s), up,
+                                      CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+                    if (auto renderer = UploadTexturedMesh(device, mesh.Mesh()))
+                    {
+                        decalEffect_->setTextureProperty(decal.texture.get());
+                        renderer->Draw(device, *decalEffect_);
+                    }
+                }
+                device.setRasterizerStateProperty(
+                    Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+                device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
             }
 
             // The terrain's semi-transparent pass after Blupi and every model, so water covers

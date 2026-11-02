@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "sign174_rd_46a5c5",
+      "vertices": "sign174_rd_46a5c5.verts.bin",
+      "indices": "sign174_rd_46a5c5.idx.bin",
+      "vertexStride": 52,
+      "texture": "sign174_rd_46a5c5.png",
+      "diffuseColor": [
+        0.0614649528184819,
+        0.38005633644979925,
+        0.5590709226862485,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

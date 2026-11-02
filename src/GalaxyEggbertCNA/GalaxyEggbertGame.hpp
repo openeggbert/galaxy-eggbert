@@ -929,6 +929,21 @@ namespace GalaxyEggbert::CNA
         // which sprite icon. An icon objectModelTable_ lists is drawn as its
         // model instead of its billboard; any other icon stays a billboard.
         std::vector<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>> objectModels_;
+        // A sign's painted face (its digit or world picture) as a decal on its model (MR-0006;
+        // avatars3d/objects/<sign>/decals.txt): the texture and its rectangle in model space.
+        struct SignDecal
+        {
+            std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> texture;
+            float left = 0, right = 0, top = 0, bottom = 0, depth = 0;
+        };
+        std::unordered_map<int, SignDecal> signDecals_;
+        struct SignDecalCell
+        {
+            std::uint16_t icon;
+            float x, y, z, yaw;
+        };
+        std::vector<SignDecalCell> signDecalCells_; // this frame's signs with a decal
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> decalEffect_;
         GalaxyEggbert::Game::ObjectModelTable objectModelTable_;
         // The sheet and icon a MoveObject's billboard shows this frame, picked
         // as the billboard passes pick them; false when it shows none (hidden,

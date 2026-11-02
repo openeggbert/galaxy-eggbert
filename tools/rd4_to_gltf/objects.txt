@@ -145,3 +145,9 @@ spring211   object-m 209-213 Decor/ressort.rd4 min_iou=0.6 tone=0.73,10
 # The saw (378-383, the stopped 379; owner 2026-11-02: a rock cube showed in its place), drawn standing
 # on its floor cell: Decor/scie.rd4, its six icons at IoU 0.986-0.990 (mirrored).
 saw378      object-m 378-383 Decor/scie.rd4 min_iou=0.6 tone=1.6,60
+# The signs (owner's decision MR-0006: their Ray Dream models with what was painted on them as a decal,
+# tools/rd4_to_gltf/sign_decals.py): the missions' 174-181 Decor/world1.rd4, the worlds' world2a.rd4,
+# the completed worlds' world2b.rd4 (IoU 0.995; tone calibrated without the painting).
+sign174      object-m 174-181 Decor/world1.rd4 tone=0.50,70
+worldsign158 object-m 158-165,309,411-415 Decor/world2a.rd4 tone=0.50,70
+worlddone166 object-m 166-173,310,416-420 Decor/world2b.rd4 tone=0.50,48

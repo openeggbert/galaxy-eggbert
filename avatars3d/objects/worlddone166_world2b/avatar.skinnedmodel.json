@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "worlddone166_rd_af952f",
+      "vertices": "worlddone166_rd_af952f.verts.bin",
+      "indices": "worlddone166_rd_af952f.idx.bin",
+      "vertexStride": 52,
+      "texture": "worlddone166_rd_af952f.png",
+      "diffuseColor": [
+        0.43108930642436105,
+        0.302449846008959,
+        0.029488260435851198,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
