@@ -11,9 +11,9 @@ Searches the voxel grid with moves Blupi certainly has (BlupiController): walk t
 cell, step off an edge and fall, jump (up to two blocks up, or across a gap of up to two cells,
 needing headroom, the arc's columns free at the apex's feet and head), ride a platform lift
 between its two ends, swim (through water in every direction, out at the surface onto a bank level
-with the water's top cell), take a teleporter (standing under one of its pillars he arrives one cell
-+Z of the cell under the other pillar of the same icon, as WorldRuntime::FindTeleportDestination
-places him). Hub doors (the bars 182/183) count as open: they open as the player progresses. In
+with the water's top cell), take a teleporter (standing under one of its pillars he arrives in the cell
+under the other pillar of the same icon, as WorldRuntime::FindTeleportDestination places him
+since BD-0017). Hub doors (the bars 182/183) count as open: they open as the player progresses. In
 a hub every sign must be reachable too. Block classes come from tools/data/blocks.csv
 (BlockDefinitionRegistry; DumpBlockDefinitions keeps it current): a cell is free when it holds
 air, water, a fan or a teleporter, or a block whose collision mask is empty; it is a floor when
@@ -143,7 +143,7 @@ def lift_links(grid: Grid):
 
 
 def teleport_links(grid: Grid):
-    """Under a teleporter pillar -> one cell +Z of the cell under its partner (same icon)."""
+    """Under a teleporter pillar -> the cell under its partner (same icon, BD-0017)."""
     pillars = collections.defaultdict(list)
     for p, icon in grid.cells.items():
         if grid.blocks.get(icon, grid.blocks[0])["teleporter"]:
@@ -153,7 +153,7 @@ def teleport_links(grid: Grid):
         for a in cells:
             for b in cells:
                 if a != b:
-                    links[(a[0], a[1] - 1, a[2])].add((b[0], b[1] - 1, b[2] + 1))
+                    links[(a[0], a[1] - 1, a[2])].add((b[0], b[1] - 1, b[2]))
     return links
 
 
