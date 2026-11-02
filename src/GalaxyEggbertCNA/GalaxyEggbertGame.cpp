@@ -5150,7 +5150,8 @@ namespace GalaxyEggbert::CNA
             terrainEffect_->View = camera_.View();
             terrainEffect_->Projection = camera_.Projection();
             terrainEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
-            terrainRenderer_->Draw(device, *terrainEffect_);
+            // The opaque terrain now; its semi-transparent pass (water) after the models below.
+            terrainRenderer_->DrawOpaque(device, *terrainEffect_);
 
             if (objectCubeEffect_)
             {
@@ -5697,6 +5698,12 @@ namespace GalaxyEggbert::CNA
                 device.setRasterizerStateProperty(
                     Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
             }
+
+            // The terrain's semi-transparent pass after Blupi and every model, so water covers
+            // what lies in it (OR-0052: a chest under water looked dry from above).
+            device.setRasterizerStateProperty(
+                Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+            terrainRenderer_->DrawTransparent(device, *terrainEffect_);
 
             static bool terrainPixelPrinted = false;
             if (!terrainPixelPrinted)

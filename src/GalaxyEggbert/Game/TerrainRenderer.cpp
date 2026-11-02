@@ -1022,6 +1022,13 @@ namespace GalaxyEggbert::Game
     void TerrainRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                  Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
     {
+        DrawOpaque(device, effect);
+        DrawTransparent(device, effect);
+    }
+
+    void TerrainRenderer::DrawOpaque(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                       Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
+    {
         if (m_staticRenderer)
         {
             m_staticRenderer->Draw(device, effect);
@@ -1040,6 +1047,11 @@ namespace GalaxyEggbert::Game
             m_cutoutEffect->setTextureProperty(effect.getTextureProperty());
             m_cutoutRenderer->Draw(device, *m_cutoutEffect);
         }
+    }
+
+    void TerrainRenderer::DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                            Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
+    {
         if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see

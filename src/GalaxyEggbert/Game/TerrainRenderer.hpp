@@ -56,6 +56,15 @@ namespace GalaxyEggbert::Game
         // The cutout pass takes @p effect's World/View/Projection and texture.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
+        // Draw() in two halves, for a caller that draws models in between: the opaque terrain
+        // (writing depth), then the semi-transparent pass (water, animated tiles, the
+        // transparent icons; depth-read), which must come after everything opaque, or water
+        // does not cover what lies in it (owner 2026-11-02, OR-0052: a chest under water
+        // looked dry).
+        void DrawOpaque(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                        Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
+        void DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                             Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
 
         // Draws the grass-top overlay (icon 107 blocks' real grass texture,
         // NEXT.md §8 task 3) with a SEPARATE effect/texture bind from the
