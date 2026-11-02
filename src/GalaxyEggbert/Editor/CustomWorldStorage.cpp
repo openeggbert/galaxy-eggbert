@@ -4,6 +4,7 @@
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <string>
 
@@ -123,6 +124,82 @@ namespace GalaxyEggbert::Editor
         if (std::FILE* file = std::fopen(marker.string().c_str(), "w"))
         {
             std::fputs(copied ? "slot 1 seeded from the showcase world\n" : "slot 1 was taken; not seeded\n", file);
+            std::fclose(file);
+        }
+        return copied;
+    }
+
+    namespace
+    {
+        // FNV-1a over a file's bytes (0 when it cannot be read).
+        std::uint64_t FileHash(const std::filesystem::path& path)
+        {
+            std::FILE* file = std::fopen(path.string().c_str(), "rb");
+            if (file == nullptr)
+            {
+                return 0;
+            }
+            std::uint64_t hash = 1469598103934665603ULL;
+            int c = 0;
+            while ((c = std::fgetc(file)) != EOF)
+            {
+                hash = (hash ^ static_cast<std::uint64_t>(c)) * 1099511628211ULL;
+            }
+            std::fclose(file);
+            return hash;
+        }
+    }
+
+    bool SeedGallerySlot(int gamerSlot, const std::filesystem::path& gallery)
+    {
+        std::error_code ec;
+        if (!std::filesystem::exists(gallery, ec))
+        {
+            return false;
+        }
+        const std::filesystem::path dir = CustomWorldsDir(gamerSlot);
+        std::filesystem::create_directories(dir, ec);
+        const std::filesystem::path marker = dir / ".gallery-seeded";
+        const std::uint64_t shipped = FileHash(gallery);
+        int slot = 0;
+        unsigned long long copiedHash = 0;
+        if (std::FILE* file = std::fopen(marker.string().c_str(), "r"))
+        {
+            if (std::fscanf(file, "slot %d hash %llu", &slot, &copiedHash) != 2)
+            {
+                slot = 0;
+            }
+            std::fclose(file);
+            if (slot < 1 || slot > kCustomWorldSlotCount)
+            {
+                return false; // no free slot when first offered, or edited away
+            }
+            const std::filesystem::path copy = SlotWorldPath(gamerSlot, slot);
+            if (!std::filesystem::exists(copy, ec) || FileHash(copy) != copiedHash || copiedHash == shipped)
+            {
+                return false; // deleted, edited, or already current
+            }
+        }
+        else
+        {
+            for (int candidate = 1; candidate <= kCustomWorldSlotCount && slot == 0; ++candidate)
+            {
+                if (!std::filesystem::exists(SlotWorldPath(gamerSlot, candidate), ec))
+                {
+                    slot = candidate;
+                }
+            }
+        }
+        bool copied = false;
+        if (slot != 0)
+        {
+            copied = std::filesystem::copy_file(gallery, SlotWorldPath(gamerSlot, slot),
+                                                std::filesystem::copy_options::overwrite_existing, ec);
+        }
+        if (std::FILE* file = std::fopen(marker.string().c_str(), "w"))
+        {
+            std::fprintf(file, "slot %d hash %llu\n", copied ? slot : 0,
+                         static_cast<unsigned long long>(copied ? shipped : 0));
             std::fclose(file);
         }
         return copied;

@@ -54,6 +54,12 @@ namespace GalaxyEggbert::Editor
     // copied the showcase.
     bool SeedShowcaseSlot(int gamerSlot, const std::filesystem::path& showcase);
 
+    // The gallery (worlds3d/world998.vwr: every block, object and BigDecor in one place; owner
+    // 2026-11-02, OR-0044) in the gamer's first free slot, once; afterwards the copy follows the
+    // shipped gallery for as long as it is left unedited (the marker `.gallery-seeded` keeps the
+    // slot and the hash of what was copied). Returns true when it wrote the slot.
+    bool SeedGallerySlot(int gamerSlot, const std::filesystem::path& gallery);
+
     // The first scene a new Galaxy 3D editor world opens with. It is a
     // compact playable tutorial rather than an all-air volume: a 3x3 Rock
     // Pile board, treasure chest, exit arrow and a clear Blupi start at the

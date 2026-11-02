@@ -133,6 +133,40 @@ int main()
     }
 
     {
+        // The gallery (OR-0044): the first free slot, then kept current while unedited.
+        constexpr int kGallerySlot = 81;
+        std::filesystem::remove_all(CustomWorldsDir(kGallerySlot), error);
+        std::filesystem::create_directories(CustomWorldsDir(kGallerySlot), error);
+        World own;
+        own.setBlock(9, 9, 9, Block::make(5));
+        own.saveToFile(SlotWorldPath(kGallerySlot, 1));
+        const std::filesystem::path gallery = "verify_ge_editor_storage_gallery.vwr";
+        World first;
+        first.setBlock(1, 1, 1, Block::make(35));
+        first.saveToFile(gallery);
+        check(SeedGallerySlot(kGallerySlot, gallery) &&
+                  World::loadFromFile(SlotWorldPath(kGallerySlot, 2)).getBlock(1, 1, 1).type() == 35 &&
+                  World::loadFromFile(SlotWorldPath(kGallerySlot, 1)).getBlock(9, 9, 9).type() == 5,
+              "the gallery goes into the first free slot (2), the gamer's slot 1 kept");
+        check(!SeedGallerySlot(kGallerySlot, gallery), "an unchanged gallery is not copied again");
+        World second;
+        second.setBlock(2, 2, 2, Block::make(261));
+        second.saveToFile(gallery);
+        check(SeedGallerySlot(kGallerySlot, gallery) &&
+                  World::loadFromFile(SlotWorldPath(kGallerySlot, 2)).getBlock(2, 2, 2).type() == 261,
+              "a newer gallery replaces the unedited copy");
+        World edited;
+        edited.setBlock(3, 3, 3, Block::make(10));
+        edited.saveToFile(SlotWorldPath(kGallerySlot, 2));
+        first.saveToFile(gallery);
+        check(!SeedGallerySlot(kGallerySlot, gallery) &&
+                  World::loadFromFile(SlotWorldPath(kGallerySlot, 2)).getBlock(3, 3, 3).type() == 10,
+              "an edited gallery copy is never overwritten");
+        std::filesystem::remove(gallery, error);
+        std::filesystem::remove_all(CustomWorldsDir(kGallerySlot), error);
+    }
+
+    {
         const World starter = CreateEditorStarterWorld();
         bool rockBoardIsComplete = true;
         for (std::uint16_t x = 49; x <= 51; ++x)

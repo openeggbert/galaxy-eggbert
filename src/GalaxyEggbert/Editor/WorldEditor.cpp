@@ -35,6 +35,8 @@ namespace GalaxyEggbert::Editor
         // The showcase world fills an empty slot 1 once per gamer (owner,
         // 2026-10-25; CustomWorldStorage::SeedShowcaseSlot()).
         (void)SeedShowcaseSlot(gamerSlot, "worlds3d/world999.vwr");
+        // The gallery of everything drawn (OR-0044) in the next free slot, kept current.
+        (void)SeedGallerySlot(gamerSlot, "worlds3d/world998.vwr");
         browserScreen_.Refresh(gamerSlot);
     }
 
