@@ -26,6 +26,7 @@ Corrections to earlier documents found on the way are recorded in `plans/audit/b
 | `gameplay_use_cases.csv` | every `BlupiAction` (88), `ObjectType` (204 entries), `SoundChannel` (93) and `Decor::` function (153) of the reference, with its source line, references, campaign use and the Galaxy files citing it | `tools/audit/gameplay_use_cases.py` | `gameplay_use_cases.notes.csv` |
 | `behavior_differences.md` | numbered divergences (BD-NNNN): cause, reproduction, fix, validation | — | all |
 | `mechanics_3d_decisions.md` | intentional 3D adaptations (M3D-NNNN) | — | all |
+| `lesson_inventory.md` | per world, the original's object roles and mechanic tiles Galaxy leaves out, thins or adds | `tools/audit/lesson_inventory.py` | — |
 | `world_lessons.csv` | the 79 worlds: original world, brief, playthrough, video span, size; lesson, 3D reading, bypasses, human play | `tools/audit/world_lessons.py` | `world_lessons.notes.csv` |
 | `asset_sources.csv` | every original 3D source: format, hash, duplicates, survey state, runtime use, per-stage status | `tools/audit/asset_sources.py` | `asset_sources.notes.csv` |
 | `render_representation.csv` | how every block icon (441) and object model (82) is drawn; flags volumetric things drawn as cubes or crossed planes | `tools/audit/render_representation.py` | `render_representation.notes.csv` |
@@ -45,7 +46,7 @@ REPRODUCED_DEFECT | FIXED_AND_VERIFIED | BLOCKED | NOT_APPLICABLE`. A generated 
 | B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | ED-0001/0006 done; lava (`90acade`), fan (`6daa06b`), pillars 76/77/377/399, the girder 201, the bar 138/202 as two pipes (M3D-0003), the teleporters 330-333, the trestle 199, the posts 182/183, from the original scenes with live checks (2026-11-02); the converter's flat caps and texture repeats fixed (houses); open: pillars 375/376, wind tiles, world signs 174-181 (no digits in the scene), the switch 384/385, the cave rocks 285-303 (need instancing), ED-0007 auto-tiling (MR-0005), the owner's look |
 | C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | every one of the 29 object types the original's worlds use reviewed against `Decor.cpp`: fixed BD-0003/0004, BD-0010..0028 (contact boxes, keys, vehicles, invert, exits' goal phase, dynamite on lifts, the decoy's boxes, sounds, the head shake, Advance, ...), the rest recorded as matching; open: the fish and bird beyond their speeds, the shooters' and big creature's drawn height, `m_blupiFocus` (unmodelled gate) |
 | D | original assets: `.a3d` reader, `.max` request, per-source stages | inventory done; `.a3d` reader done, all 105 read (`5fe7bc9`); `.max` BLOCKED (MR-0001: the MAX 3.1 ISO offered looks unlicensed; not installed) |
-| E | every world's lesson, bypasses, platform fairness | ledger generated |
+| E | every world's lesson, bypasses, platform fairness | ledger generated; `lesson_inventory.md` (2026-11-02, `tools/audit/lesson_inventory.py`): 19 worlds leave out or thin a mechanic of their original -- first 102 (switch and saw, fan shaft, blitz columns, crumbling bridge), 114 (blitz, fans, lava), 115/107/199 (fans, temp), 105 (teleport pair, lava floor), 061/066 (bridges), 084 (crushers) |
 | F | release audit at pinned revisions | — |
 
 ## 4. Crate push and pull (BD-0001, M3D-0001) — Wave A
