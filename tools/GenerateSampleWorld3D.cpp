@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
+#include <string>
 #include <vector>
 
 namespace
@@ -1001,12 +1002,21 @@ void GenerateGlobalHub(const std::filesystem::path& outPath)
                  "12 WorldSelect portals + 1 DemoPortal, no other content)." << std::endl;
 }
 
-int main()
+int main(int argc, char** argv)
 {
     // This session's quarantined mechanics-showcase/test world -- an
     // engine-specific 79th world beyond mobile-eggbert's real 78 (see
     // `GenerateDemoWorld()`'s own comment).
     GenerateDemoWorld(999, "worlds3d/world999.vwr");
+
+    // The placeholders below would overwrite every hand-authored world (tools/worlds/*.py since
+    // 2026-07): only on request (2026-11-02).
+    if (argc < 2 || std::string(argv[1]) != "--placeholders")
+    {
+        std::cout << "GenerateSampleWorld3D: only world999 written (--placeholders also writes the "
+                     "2026-07 placeholder hubs and sublevels over worlds3d/)." << std::endl;
+        return 0;
+    }
 
     // The real global hub, now genuinely clean (see `GenerateGlobalHub()`'s
     // own comment) -- reachable content starts here.
