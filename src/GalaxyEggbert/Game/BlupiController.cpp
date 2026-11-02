@@ -2280,7 +2280,6 @@ namespace GalaxyEggbert::Game
                                   : m_teleporting ? AnimState::Teleporting
                                   : m_balloon     ? AnimState::Balloon
                                   : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
-                                  : m_secretPower == GalaxyEggbert::Def::SecretPower::Hide ? AnimState::Hide
                                   : m_nage        ? (moving ? AnimState::MarchNage : AnimState::StopNage)
                                   : m_surf        ? (moving ? AnimState::MarchSurf : AnimState::StopSurf)
                                   : IsInVehicle() ? vehicleAnimState()

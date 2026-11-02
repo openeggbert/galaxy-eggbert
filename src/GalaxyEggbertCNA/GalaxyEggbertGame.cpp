@@ -4910,6 +4910,21 @@ namespace GalaxyEggbert::CNA
                             part.Part->getPrimitiveCountProperty());
                     }
                 };
+                // The drink's Hide (Decor.cpp:828-838, OR-0016): his own clips, drawn at 30 %
+                // opacity, flashing to full every other pair of ticks once the gauge is down to 25.
+                // Not depth-written, so what lies behind him still shows through.
+                float blupiAlpha = 1.0f;
+                if (blupi_.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Hide)
+                {
+                    const bool flash = blupi_.GetSecretPowerLevel() <= 25 && worldRuntime_.GetAnimPhase() % 4 >= 2;
+                    blupiAlpha = flash ? 1.0f : 0.3f;
+                }
+                if (blupiAlpha < 1.0f)
+                {
+                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
+                }
+                blupiEffect_->setAlphaProperty(blupiAlpha);
                 drawParts(*blupiModel_, face);
 
                 // The vehicle he rides in this clip (helicopter, jeep, tank,
@@ -4929,6 +4944,12 @@ namespace GalaxyEggbert::CNA
                         boneTransforms);
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     drawParts(*vehicle, nullptr);
+                }
+                blupiEffect_->setAlphaProperty(1.0f);
+                if (blupiAlpha < 1.0f)
+                {
+                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
                 }
             }
 
