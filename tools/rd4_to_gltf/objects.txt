@@ -106,5 +106,5 @@ girder201   object-m 201     Decor/structure1.rd4
 # their row (BarRows.hpp): 138 with its ceiling mounts (Decor/barre.rd4, IoU 0.89); 202, shown where
 # no block is over the bar (Decor::AdaptMidBorder), the scene's pipe alone without the two spheres
 # and four cylinders of the mounts (its top-level parts 3-4 and 6-9; IoU 0.83).
-barre       object-m 138     Decor/barre.rd4
-barreplain  object-m 202     Decor/barre.rd4 drop=3,4,6,7,8,9
+barre       object-m 138     Decor/barre.rd4 tone=0.75,14
+barreplain  object-m 202     Decor/barre.rd4 drop=3,4,6,7,8,9 tone=0.74,14
