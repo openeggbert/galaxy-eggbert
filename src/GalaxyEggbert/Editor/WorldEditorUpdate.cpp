@@ -604,14 +604,27 @@ namespace GalaxyEggbert::Editor
 
     bool WorldEditor::HandleMusic(const FrameInput& input, Worlds::World& world)
     {
-        // M steps through the world's background music: none, then the original tracks 1-10
-        // (OR-0014); the game plays the chosen one while editing, so it is heard at once.
-        if (!input.musicNextHeld || musicKeyHeldLastFrame_)
+        // The palette's Music group picks the world's background music (none, or the original
+        // tracks 1-10; OR-0054), and M steps through them (OR-0014); the game plays the chosen
+        // one while editing, so it is heard at once.
+        const std::uint32_t before = world.musicTrack();
+        std::uint32_t after = before;
+        if (input.palette.action == EditorPalette::Action::SelectMusicTrack && input.palette.musicTrack >= 0)
+        {
+            after = static_cast<std::uint32_t>(input.palette.musicTrack);
+        }
+        else if (input.musicNextHeld && !musicKeyHeldLastFrame_)
+        {
+            after = (before + 1) % (Worlds::World::kMusicTrackCount + 1);
+        }
+        else
         {
             return false;
         }
-        const std::uint32_t before = world.musicTrack();
-        const std::uint32_t after = (before + 1) % (Worlds::World::kMusicTrackCount + 1);
+        if (after == before)
+        {
+            return true;
+        }
         world.setMusicTrack(after);
         EditCommand command;
         command.kind = EditCommand::Kind::MusicEdit;

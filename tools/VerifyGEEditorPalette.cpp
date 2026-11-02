@@ -275,6 +275,23 @@ int main()
                   region31.skyRegion == 31,
               "the background popup stays open for immediate visual comparison");
     }
+    {
+        // OR-0054: the world's music follows the backgrounds in the Background group (none,
+        // tracks 1-10), each a note with its number.
+        const auto background = GalaxyBackgroundCategory();
+        check(background.musicTrackIds.size() == 43 && background.musicTrackIds[31] == -1 &&
+                  background.musicTrackIds[32] == 0 && background.musicTrackIds[42] == 10 &&
+                  background.buttonIconIds.size() == 43,
+              "the Background group offers the music after its 32 backgrounds: none and tracks 1-10");
+        const EditorPaletteLayout layout;
+        EditorPalette palette;
+        (void)click(palette, 72.0f, 30.0f); // open Background
+        const auto cell = layout.PaletteCellRect(36, 43, EditorPaletteLayout::GalaxyBackgroundCategoryIndex,
+                                                 kViewportWidth, kViewportHeight);
+        const auto track4 = click(palette, (cell.x0 + cell.x1) * 0.5f, (cell.y0 + cell.y1) * 0.5f);
+        check(track4.action == EditorPalette::Action::SelectMusicTrack && track4.musicTrack == 4,
+              "a music cell reports its track (4)");
+    }
 
     {
         EditorPalette palette;

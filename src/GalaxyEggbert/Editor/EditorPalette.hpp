@@ -40,6 +40,7 @@ namespace GalaxyEggbert::Editor
             PlaceSelection,
             DeleteAtTarget,
             SelectSkyRegion,
+            SelectMusicTrack,
         };
 
         struct UpdateResult
@@ -47,6 +48,7 @@ namespace GalaxyEggbert::Editor
             Action action = Action::None;
             bool clickConsumed = false;
             int skyRegion = -1;
+            int musicTrack = -1;
         };
 
         EditorPalette();
@@ -119,6 +121,11 @@ namespace GalaxyEggbert::Editor
             selectedSkyRegion_ = static_cast<int>(skyRegion);
         }
 
+        void SetSelectedMusicTrack(std::uint32_t musicTrack) noexcept
+        {
+            selectedMusicTrack_ = static_cast<int>(musicTrack);
+        }
+
         void Draw(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
             int viewportWidth, int viewportHeight, bool stopConfirmArmed = false,
@@ -131,6 +138,7 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] const std::vector<int>& ContentObjectTypeIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentButtonIconIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentSkyRegionIds() const noexcept;
+        [[nodiscard]] const std::vector<int>& ContentMusicTrackIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentObjectVisualIconIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentSpawnPointIds() const noexcept;
         [[nodiscard]] const std::vector<int>& ContentBigDecorIconIds() const noexcept;
@@ -143,6 +151,7 @@ namespace GalaxyEggbert::Editor
         int selectedBigDecorIcon_ = 0;
         PlacementKind placementKind_ = PlacementKind::Block;
         int selectedSkyRegion_ = 0;
+        int selectedMusicTrack_ = 0;
         float notYetImplementedSeconds_ = 0.0f;
 
         EditorPaletteLayout layout_;

@@ -170,21 +170,25 @@ namespace GalaxyEggbert::Editor
                     state.contentObjectTypeIds[static_cast<std::size_t>(i)] : 0;
                 const int blockType = i < static_cast<int>(state.contentBlockIds.size()) ?
                     state.contentBlockIds[static_cast<std::size_t>(i)] : 0;
+                const int musicTrack = i < static_cast<int>(state.contentMusicTrackIds.size()) ?
+                    state.contentMusicTrackIds[static_cast<std::size_t>(i)] : -1;
                 const int skyRegion = i < static_cast<int>(state.contentSkyRegionIds.size()) ?
-                    state.contentSkyRegionIds[static_cast<std::size_t>(i)] : -1;
+                    state.contentSkyRegionIds[static_cast<std::size_t>(i)] :
+                    (musicTrack >= 0 ? -2 : -1); // -2: a music cell, never a block
                 const int spawnPoint = i < static_cast<int>(state.contentSpawnPointIds.size()) ?
                     state.contentSpawnPointIds[static_cast<std::size_t>(i)] : 0;
                 const int bigDecorIcon = i < static_cast<int>(state.contentBigDecorIconIds.size()) ?
                     state.contentBigDecorIconIds[static_cast<std::size_t>(i)] : 0;
                 const bool selected =
+                    (musicTrack >= 0 && musicTrack == state.selectedMusicTrack) ||
                     (skyRegion >= 0 && skyRegion == state.selectedSkyRegion) ||
-                    (skyRegion < 0 && spawnPoint > 0 && state.spawnPointMode) ||
-                    (skyRegion < 0 && bigDecorIcon > 0 && state.bigDecorMode &&
+                    (skyRegion == -1 && spawnPoint > 0 && state.spawnPointMode) ||
+                    (skyRegion == -1 && bigDecorIcon > 0 && state.bigDecorMode &&
                      bigDecorIcon == state.selectedBigDecorIcon) ||
-                    (skyRegion < 0 && spawnPoint == 0 && bigDecorIcon == 0 &&
+                    (skyRegion == -1 && spawnPoint == 0 && bigDecorIcon == 0 &&
                      objectType > 0 && state.objectMode &&
                      objectType == state.selectedObjectType) ||
-                    (skyRegion < 0 && spawnPoint == 0 && bigDecorIcon == 0 &&
+                    (skyRegion == -1 && spawnPoint == 0 && bigDecorIcon == 0 &&
                      objectType == 0 && blockType > 0 && !state.objectMode &&
                      !state.spawnPointMode && !state.bigDecorMode &&
                      blockType == state.selectedBlockType);
@@ -351,6 +355,50 @@ namespace GalaxyEggbert::Editor
                     device, *impl_->textEffect, impl_->textRenderer, numberLabels,
                     viewportWidth, viewportHeight, 1.0f);
             }
+        }
+
+        // The music cells: the note with its track's number ("-": none).
+        if (!state.contentMusicTrackIds.empty() && impl_->textTexture && impl_->textEffect)
+        {
+            const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
+            const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
+            std::vector<GalaxyEggbert::Game::QuadBatch::Quad> numberBackgrounds;
+            std::vector<GalaxyEggbert::Game::QuadBatch::Quad> numberLabels;
+            for (int i = 0; i < static_cast<int>(state.contentMusicTrackIds.size()); ++i)
+            {
+                const int track = state.contentMusicTrackIds[static_cast<std::size_t>(i)];
+                if (track < 0)
+                {
+                    continue; // a background thumbnail
+                }
+                char label[4];
+                if (track == 0)
+                {
+                    std::snprintf(label, sizeof(label), "-");
+                }
+                else
+                {
+                    std::snprintf(label, sizeof(label), "%d", track);
+                }
+                const GalaxyEggbert::Game::QuadBatch::Rect cell = layout.PaletteCellRect(
+                    i, itemCount, state.openCategory, viewportWidth, viewportHeight);
+                const float labelWidth = LabelWidth(label);
+                numberBackgrounds.push_back({
+                    cell.x0 + 2.0f, cell.y0 + 2.0f,
+                    cell.x0 + labelWidth + 8.0f,
+                    cell.y0 + kGlyphCellPx * kTextScale + 6.0f,
+                    0, 0, 1, 1,
+                });
+                AppendLabel(numberLabels, label, cell.x0 + 5.0f, cell.y0 + 5.0f, sheetWidth, sheetHeight);
+            }
+            impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
+            GalaxyEggbert::Game::QuadBatch::FlushQuads(
+                device, *impl_->flatEffect, impl_->flatRenderer, numberBackgrounds,
+                viewportWidth, viewportHeight, 0.78f);
+            impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
+            GalaxyEggbert::Game::QuadBatch::FlushQuads(
+                device, *impl_->textEffect, impl_->textRenderer, numberLabels,
+                viewportWidth, viewportHeight, 1.0f);
         }
 
         if (state.hasPlacementPreview)

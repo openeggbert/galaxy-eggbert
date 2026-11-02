@@ -102,6 +102,7 @@ namespace GalaxyEggbert::Editor
     {
         const Microsoft::Xna::Framework::Vector3 forward = UpdateCamera(keyboard, mouse, dt, camera);
         palette_.SetSelectedSkyRegion(world.skyRegion());
+        palette_.SetSelectedMusicTrack(world.musicTrack());
         const EditorPalette::UpdateResult paletteResult =
             palette_.Update(mouse, viewportWidth, viewportHeight, dt);
         const bool placementOffsetKeyHeld =

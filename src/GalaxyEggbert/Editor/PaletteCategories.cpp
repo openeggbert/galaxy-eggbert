@@ -109,6 +109,16 @@ namespace GalaxyEggbert::Editor
         {
             category.skyRegionIds.push_back(region);
         }
+        // The world's music after the backgrounds (OR-0054): none, then the original tracks 1-10.
+        constexpr int kMusicButtonIcon = 44; // button.png's note
+        category.musicTrackIds.assign(32, -1);
+        for (int track = 0; track <= 10; ++track)
+        {
+            category.buttonIconIds.push_back(kMusicButtonIcon);
+            category.iconIds.push_back(0);
+            category.objectTypeIds.push_back(0);
+            category.musicTrackIds.push_back(track);
+        }
         return category;
     }
 

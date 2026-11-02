@@ -55,6 +55,12 @@ namespace GalaxyEggbert::Editor
         return category ? category->skyRegionIds : EmptyIds();
     }
 
+    const std::vector<int>& EditorPalette::ContentMusicTrackIds() const noexcept
+    {
+        const PaletteCategory* category = OpenCategory();
+        return category ? category->musicTrackIds : EmptyIds();
+    }
+
     const std::vector<int>& EditorPalette::ContentObjectVisualIconIds() const noexcept
     {
         const PaletteCategory* category = OpenCategory();
@@ -132,10 +138,20 @@ namespace GalaxyEggbert::Editor
                 const auto& blockIds = ContentBlockIds();
                 const auto& objectIds = ContentObjectTypeIds();
                 const auto& skyRegionIds = ContentSkyRegionIds();
+                const auto& musicTrackIds = ContentMusicTrackIds();
                 const auto& objectVisualIconIds = ContentObjectVisualIconIds();
                 const auto& spawnPointIds = ContentSpawnPointIds();
                 const auto& bigDecorIconIds = ContentBigDecorIconIds();
                 const int index = pointer.index;
+                if (index >= static_cast<int>(skyRegionIds.size()) &&
+                    index < static_cast<int>(musicTrackIds.size()) &&
+                    musicTrackIds[static_cast<std::size_t>(index)] >= 0)
+                {
+                    result.action = Action::SelectMusicTrack;
+                    result.musicTrack = musicTrackIds[static_cast<std::size_t>(index)];
+                    selectedMusicTrack_ = result.musicTrack;
+                    break;
+                }
                 if (index >= 0 && index < static_cast<int>(skyRegionIds.size()))
                 {
                     result.action = Action::SelectSkyRegion;
@@ -211,12 +227,14 @@ namespace GalaxyEggbert::Editor
             ContentObjectTypeIds(),
             ContentButtonIconIds(),
             ContentSkyRegionIds(),
+            ContentMusicTrackIds(),
             ContentSpawnPointIds(),
             ContentBigDecorIconIds(),
             openCategory_,
             selectedBlockType_,
             selectedObjectType_,
             selectedSkyRegion_,
+            selectedMusicTrack_,
             selectedBigDecorIcon_,
             IsObjectMode(),
             IsSpawnPointMode(),

@@ -20,12 +20,14 @@ namespace GalaxyEggbert::Editor
             const std::vector<int>& contentObjectTypeIds;
             const std::vector<int>& contentButtonIconIds;
             const std::vector<int>& contentSkyRegionIds;
+            const std::vector<int>& contentMusicTrackIds;
             const std::vector<int>& contentSpawnPointIds;
             const std::vector<int>& contentBigDecorIconIds;
             int openCategory = -1;
             int selectedBlockType = 0;
             int selectedObjectType = 0;
             int selectedSkyRegion = 0;
+            int selectedMusicTrack = 0;
             int selectedBigDecorIcon = 0;
             bool objectMode = false;
             bool spawnPointMode = false;

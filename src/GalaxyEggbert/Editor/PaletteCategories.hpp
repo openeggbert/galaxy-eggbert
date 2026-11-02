@@ -43,6 +43,10 @@ namespace GalaxyEggbert::Editor
         std::vector<int> spawnPointIds;
         // Populated by EDITOR-126 for source BigDecor placements.
         std::vector<int> bigDecorIconIds;
+        // Last, as categories are brace-initialised by position. Non-empty only for Galaxy Eggbert's Background group: after its 32 sky regions (-1 here),
+        // the World::musicTrack value each further cell sets (0 none, 1-10 the original tracks;
+        // OR-0014, OR-0054: the M key alone was not to be found).
+        std::vector<int> musicTrackIds;
     };
 
     // Hand-curated categories built ONLY from BlockTypes.hpp's own already-
@@ -55,7 +59,8 @@ namespace GalaxyEggbert::Editor
 
     // Galaxy-only group appended after the ten Eggbert 2 source groups.
     // Its representative remains a button.png glyph, while its contents
-    // are the 32 valid sky-region choices rendered as live thumbnails.
+    // are the 32 valid sky-region choices rendered as live thumbnails,
+    // then the world's music: a note per choice, none and tracks 1-10.
     [[nodiscard]] PaletteCategory GalaxyBackgroundCategory();
 
     // Every valid block type id (1..440; 0 is Air, never placeable), in
