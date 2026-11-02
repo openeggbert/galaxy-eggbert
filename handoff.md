@@ -181,10 +181,13 @@ ledgers before repeating any discovery. Where it stands:
   in the editor palette's Background group (OR-0054). `GenerateSampleWorld3D` writes only world999
   (it overwrote every world). All 112 tests pass; playthroughs: all 78 after the saw/fan, then
   045/053/199 after the crusher (render-only changes since).
-- Next: the web build (`build-cna-webgl2`, §4), the all-variants demo world (OR-0044: a gallery
-  above world999's ground, `tools/GenerateSampleWorld3D.cpp`), the sweep of every model source
-  (OR-0050), then the queued 3D conversions (signs, clay bridge, spring, lightning, grass, glue
-  and burn deaths) and Wave E.
+- Done after that: the gallery `worlds3d/world998.vwr` (`tools/worlds/gallery.py`, its map
+  `plans/audit/gallery_map.md`; the editor seeds it into the first free slot and refreshes it while
+  unedited, `SeedGallerySlot`); the web build of 2026-11-02 with it (checked in headless Chrome
+  under Xvfb over DevTools: `--use-angle=swiftshader --enable-unsafe-swiftshader
+  --remote-debugging-port=9333 --remote-allow-origins=...`, serve the build dir over HTTP first).
+- Next: the sweep of every model source (OR-0050), the queued 3D conversions (signs, clay bridge,
+  spring, lightning, grass, glue and burn deaths), the editor's wind tiles beside fans, Wave E.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
