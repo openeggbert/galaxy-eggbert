@@ -196,14 +196,14 @@ ledgers before repeating any discovery. Where it stands:
   surface dropped (`drop=2`); the charred deaths (Clear1, Clear3's first half) as his own model
   burnt black and shrinking to the heap (`39d800a`, `CharredBlupi.hpp`), the glue sprite now on
   his feet (it hung half a cell up); the column 375 back to its sprite (`b887345`:
-  `Decor/colonne1.rds` is a plain box). Probe world for these: `build-probe/wave-e/probe_burn.py`
+  `Decor/colonne1.rds` is a cube with a painted column, no turned shaft exists). Probe world for these: `build-probe/wave-e/probe_burn.py`
   (mission 995: lightning spawn 50,1,42,90; spikes 50,1,44,90; drip/conveyor/switch 50,1,48,90;
   bridge 44,1,56,90). Note for qa_live: a mine kills by a coin flip (Clear1 or the angel); the
   lightning is always Clear1; only spike 373 kills (347/374 are its animation). Measure a
   model's size at its frame-0 pose (`tools/rd4_to_gltf/posed_bounds.py`), not from the accessor
   bounds: the bridge's bind pose sat 0.109 off.
-- Next: the conveyor lifts 47/48 (textured cubes) as the chenille model; the column 375 from
-  `Decor/smooth/colonne1.a3d`; the glue death (Q-006), the lightning bolt and grass (Q-001/Q-002)
+- Done after: the conveyor lifts 47/48 as the chenille model (`bda333e`, world 102).
+- Next: the glue death (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: 084's five crushers (gates in
   walls in the original), the bars of 024/034/052/125; a fresh web build.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):

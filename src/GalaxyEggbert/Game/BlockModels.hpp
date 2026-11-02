@@ -56,8 +56,8 @@ namespace GalaxyEggbert::Game
     // The lightning's emitter 304 (Decor/eclair.rd4, IoU 0.94), its front toward the open side.
     // The saws' switch 384/385 (Decor/interrupteur.rd4, IoU 1.0, front toward the open side) and the
     // conveyor 311-316 (Decor/chenille.rds, 0.95-0.96) (OR-0050's sweep). Not the column 375:
-    // Decor/colonne1.rds matches its silhouette (0.90) but is a plain box; the turned shaft is
-    // Decor/smooth/colonne1.a3d, not converted yet.
+    // Decor/colonne1.rds is a cube carrying a painted column (an embedded image and mask), so the
+    // original was already a picture on a box, which its sprite on the cell's faces reproduces.
     inline constexpr std::array<std::uint16_t, 30> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
                                                                      334, 335, 336, 211, 364, 365, 366, 304,

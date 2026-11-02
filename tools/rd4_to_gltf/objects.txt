@@ -164,7 +164,7 @@ drip404     object-m 404-410 Decor/goutte/goutte01.rds,Decor/goutte/goutte02.rds
 # tone 29.5 -> 19.9). The bolt between two emitters (305-307) has no scene.
 emitter304  object-m 304 Decor/eclair.rd4 tone=0.75,13
 # OR-0050's sweep (plans/audit/model_sources.md): the saws' switch and the conveyor (stretched along
-# Z to the cell's depth, BlockModels.hpp ModelDepthScale). The column 375's Decor/colonne1.rds
-# matches its silhouette but is a plain box (the turned shaft is Decor/smooth/colonne1.a3d).
+# Z to the cell's depth, BlockModels.hpp ModelDepthScale). Not the column 375: Decor/colonne1.rds
+# is a cube carrying a painted column (an embedded image and mask), its sprite already.
 switch384   object-m 384-385 Decor/interrupteur.rd4 tone=0.70,15
 conveyor311 object-m 311-316 Decor/chenille.rds tone=0.66,11
