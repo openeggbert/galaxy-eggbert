@@ -4435,6 +4435,20 @@ int main(int argc, char** argv)
         check(Sound::FootstepChannelFor(BlockTypes::RockPile) == GalaxyEggbert::Def::SoundChannel::SoundChannel3,
               "an icon outside all 7 remap ranges falls back to the generic channel 3");
     }
+    // 18b. Sound::CeilingChannelFor(): the same ranges' second sounds for channel 4 (a ceiling met
+    // rising, Decor.cpp:2961), channel 4 outside them.
+    {
+        using GalaxyEggbert::Def::SoundChannel;
+        check(Sound::CeilingChannelFor(41) == SoundChannel::SoundChannel79 &&
+                  Sound::CeilingChannelFor(10) == SoundChannel::SoundChannel81 &&
+                  Sound::CeilingChannelFor(290) == SoundChannel::SoundChannel83 &&
+                  Sound::CeilingChannelFor(350) == SoundChannel::SoundChannel85 &&
+                  Sound::CeilingChannelFor(220) == SoundChannel::SoundChannel87 &&
+                  Sound::CeilingChannelFor(247) == SoundChannel::SoundChannel89 &&
+                  Sound::CeilingChannelFor(108) == SoundChannel::SoundChannel91 &&
+                  Sound::CeilingChannelFor(35) == SoundChannel::SoundChannel4,
+              "CeilingChannelFor: each material's channel-4 sound (79-91), channel 4 otherwise");
+    }
 
     // 19. FindTrainingHint() (plan.md HUD-024) -- the real
     // Decor::DrawInfo/Tables::table_training1..4 lookup, one representative

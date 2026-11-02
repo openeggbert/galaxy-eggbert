@@ -70,9 +70,8 @@ namespace GalaxyEggbert::Game
         // Fixed here to channel 3, matching PlayStep() (plan.md
         // E3D-MIG-084's terrain-remap task surfaced this while researching
         // the real channels 78-91 the same shared sound remaps to).
-        // Head-bump (channel 4 and its own 79/81/83/85/87/89/91 terrain
-        // remaps) stays unwired -- there is no ceiling-hit detection in
-        // BlupiController yet, a separate not-yet-implemented mechanic.
+        // Channel 4 and its 79/81/83/85/87/89/91 remaps: a ceiling met rising
+        // (CeilingChannelFor; BlupiController's CeilingTapped).
         //
         // groundIcon is the tile icon underfoot (BlupiController::
         // GetGroundBlockType()) -- remapped via FootstepChannelFor() to one
@@ -89,6 +88,9 @@ namespace GalaxyEggbert::Game
         // (341-363), 86 (215-234), 88 (246-249), 90 (107-109). Falls back
         // to the generic channel 3 for every icon outside all 7 ranges.
         [[nodiscard]] static GalaxyEggbert::Def::SoundChannel FootstepChannelFor(std::uint16_t icon) noexcept;
+        // The same remap of channel 4, the tap of a ceiling met rising (Decor.cpp:2961): each
+        // material's second sound (79, 81, ... 91), channel 4 outside every range.
+        [[nodiscard]] static GalaxyEggbert::Def::SoundChannel CeilingChannelFor(std::uint16_t icon) noexcept;
 
     private:
         struct Channel

@@ -576,3 +576,17 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyBlupiMovement` (its cell passable, he is in it); the drip worlds'
   playthroughs (062, 063, 066) pass; seen live, the drop forming under its ceiling as its model
   (`plans/evidence/drip-3d.png`).
+
+## BD-0034 — a ceiling met rising slowly made no sound; channel 4 and its seven remaps were never played (audio) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:2950-2961): when his rise is stopped by a ceiling, a fast one (faster than
+  14 of 16, not dying, not on the skateboard) plays channel 40 and arms JumpAie; any other plays
+  channel 4 through `SoundEnviron` by the ceiling's icon: 79, 81, 83, 85, 87, 89 or 91 by its
+  material, channel 4 otherwise.
+- Galaxy played channel 40 for the fast bump only; channels 4, 79, 81, 83, 85, 87, 89 and 91
+  were never played (found by the use case ledger: their only Galaxy references were the enum).
+- Fix: `BlupiController` reports `CeilingTapped` with the ceiling's icon (on foot or on the
+  skateboard, not swimming); the host plays `Sound::CeilingChannelFor(icon)` (the footstep
+  remap's second sound of each material).
+- Validation: `VerifyBlupiMovement` (an ordinary jump under a ceiling taps it, the ceiling's icon
+  reported), `VerifyInteractionSystem` (the seven remaps and the fallback); ctest 112/112.

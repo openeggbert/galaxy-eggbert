@@ -3383,6 +3383,9 @@ namespace GalaxyEggbert::CNA
                     case BlupiController::EventKind::HeadBumped:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel40);
                         break;
+                    case BlupiController::EventKind::CeilingTapped:
+                        sound_.Play(GalaxyEggbert::Game::Sound::CeilingChannelFor(blupi_.GetCeilingIcon()));
+                        break;
                     case BlupiController::EventKind::TurnStarted:
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel5);
                         break;

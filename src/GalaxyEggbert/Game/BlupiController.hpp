@@ -1045,6 +1045,8 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool IsDeathHidden() const noexcept { return m_deathLossVoyageActive; }
         // The cause the death-lock animation is showing (GetAnimIcon's DeathLocked variants).
         [[nodiscard]] DeathCause GetDeathCause() const noexcept { return m_deathCause; }
+        // The icon of the ceiling the last CeilingTapped met (its sound's material).
+        [[nodiscard]] std::uint16_t GetCeilingIcon() const noexcept { return m_ceilingIcon; }
         // True exactly once, the frame the lock (part 1) elapses and the life-loss-Voyage window
         // (part 2) begins. outShouldRespawn echoes the value passed into TriggerDeathLock().
         [[nodiscard]] bool ConsumeDeathLockResolved(bool& outShouldRespawn) noexcept;
@@ -1171,6 +1173,7 @@ namespace GalaxyEggbert::Game
             DownReleaseSoundFired,
             VertigoStarted, // the original's channel 6 as he starts to teeter
             HeadBumped,     // channel 40: a fast jump met a ceiling (JumpAie follows on landing)
+            CeilingTapped,  // channel 4 by GetCeilingIcon() (SoundEnviron): a slower rise met a ceiling
             ReactionStarted, // a reaction began: GetAnimState() says which (its sound)
             TurnStarted,     // channel 5: he turns about (Decor.cpp:3364-3371, 3422-3429)
             IdleFidget,      // channel 37: Stop's idle cycle at its taps (Decor.cpp:2371-2378)
@@ -1366,6 +1369,8 @@ namespace GalaxyEggbert::Game
         float m_oufTime = 0.0f;
         bool m_jumpAieArmed = false;  // bumped his head, JumpAie on landing
         bool m_headBumped = false;    // HeadBumped is due this frame
+        bool m_ceilingTapped = false; // CeilingTapped is due this frame
+        std::uint16_t m_ceilingIcon = 0; // the ceiling's icon at the last CeilingTapped
         bool m_reactionStarted = false; // ReactionStarted is due this frame
         bool m_wasPushingCrate = false;
         float m_marchSeconds = 0.0f; // walking on foot without a break (StopMarch)

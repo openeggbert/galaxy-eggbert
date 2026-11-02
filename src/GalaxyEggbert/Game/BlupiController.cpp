@@ -2195,11 +2195,25 @@ namespace GalaxyEggbert::Game
         }
 
         // A fast jump met a ceiling (kJumpAieSpeed's comment): ouch, and JumpAie on landing.
+        // Any other rise stopped by a ceiling taps it (Decor.cpp:2950-2961: channel 4 through
+        // SoundEnviron by the ceiling's icon), the skateboard's too.
         if (moveResult.blockedY && m_velocityY > kJumpAieSpeed && m_vehicleMode == VehicleMode::None && !m_nage &&
             !m_surf)
         {
             m_jumpAieArmed = true;
             m_headBumped = true;
+        }
+        else if (moveResult.blockedY && m_velocityY > 0.0f &&
+                 (m_vehicleMode == VehicleMode::None || m_vehicleMode == VehicleMode::Skateboard) && !m_nage && !m_surf)
+        {
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            const int cgx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
+            const int cgy = ClampGrid(static_cast<int>(std::lround(newY)) + 1, blocksPerAxis);
+            const int cgz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+            m_ceilingIcon = world.getBlock(static_cast<std::uint16_t>(cgx), static_cast<std::uint16_t>(cgy),
+                                           static_cast<std::uint16_t>(cgz))
+                                .type();
+            m_ceilingTapped = true;
         }
         if (afloat && m_y >= floatLine && newY < floatLine)
         {
@@ -2461,6 +2475,11 @@ namespace GalaxyEggbert::Game
         {
             m_eventsThisFrame.push_back(Event{EventKind::HeadBumped});
             m_headBumped = false;
+        }
+        if (m_ceilingTapped)
+        {
+            m_eventsThisFrame.push_back(Event{EventKind::CeilingTapped});
+            m_ceilingTapped = false;
         }
         const bool reactionStarted = m_reactionStarted;
         m_reactionStarted = false;

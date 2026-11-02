@@ -153,6 +153,17 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    GalaxyEggbert::Def::SoundChannel Sound::CeilingChannelFor(std::uint16_t icon) noexcept
+    {
+        // SoundEnviron pairs each material's channel 3 sound with the next as its channel 4.
+        const auto step = FootstepChannelFor(icon);
+        if (step == GalaxyEggbert::Def::SoundChannel::SoundChannel3)
+        {
+            return GalaxyEggbert::Def::SoundChannel::SoundChannel4;
+        }
+        return static_cast<GalaxyEggbert::Def::SoundChannel>(static_cast<int>(step) + 1);
+    }
+
     GalaxyEggbert::Def::SoundChannel Sound::FootstepChannelFor(std::uint16_t icon) noexcept
     {
         using GalaxyEggbert::Def::SoundChannel;

@@ -1867,13 +1867,17 @@ int main(int argc, char** argv)
             BlupiController plain;
             plain.SetPosition(62.0f - 50.0f, 1.0f, 95.0f - 50.0f);
             for (int i = 0; i < 10; ++i) plain.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-            bool plainBumped = false;
+            bool plainBumped = false, plainTapped = false;
             for (int i = 0; i < 120; ++i)
             {
                 plain.Step(synthetic, 0.0f, 0.0f, i < 2, false, false, dt);
                 plainBumped = plainBumped || hasEvent(plain, BlupiController::EventKind::HeadBumped);
+                plainTapped = plainTapped || hasEvent(plain, BlupiController::EventKind::CeilingTapped);
             }
             check(!plainBumped, "an ordinary jump has slowed down before it reaches that ceiling: no bump");
+            // Slower, it taps the ceiling: channel 4 by the ceiling's icon (Decor.cpp:2950-2961).
+            check(plainTapped && plain.GetCeilingIcon() == BlockTypes::Ground,
+                  "an ordinary jump that meets that ceiling taps it (ch4 by its icon)");
 
             // Ouf1a: out of the channel's water (x 70-72, z 88) onto its bank after a swim.
             const float floatY = 2.0f + BlupiController::kSurfFloatHeight;
