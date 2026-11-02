@@ -2449,6 +2449,15 @@ namespace GalaxyEggbert::CNA
                                          viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
                                          worldRuntime_.GetWorldMutable());
                     cameraTarget_ = worldEditor_.CameraTarget();
+                    // Everything animates while editing, as in blupi_recon's editor (OR-0013): the
+                    // tiles' and the objects' animation clocks run. WorldRuntime::Update() moves
+                    // nothing (patrols are InteractionSystem's, in play only), so what is placed
+                    // stays where it was put.
+                    worldRuntime_.Update(dt);
+                    if (terrainRenderer_)
+                    {
+                        terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
+                    }
                     if (worldEditor_.ConsumeNeedsPresentationRebuild())
                     {
                         RebuildWorldPresentation();

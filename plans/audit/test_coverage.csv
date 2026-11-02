@@ -30,3 +30,4 @@ typed cheats (OR-0007),input,unit,VerifyGEInputPad; VerifyBlupiMovement (cheat e
 skateboard put down at DeposeSkate tick 12 / taken at TakeSkate tick 8 (OR-0003),gameplay,live,qa_live (to do),open,host timing; no unit test
 Bye farewell clip plays (OR-0002),gameplay,live,qa_live with AUTOPLAY_REALTIME=1; plans/evidence/bye-farewell.png,pass,
 drink Hide drawn translucent (OR-0016),render,live,plans/evidence/hide-drink.png,pass,
+editor animates tiles and objects (OR-0013),editor,code,host editor branch runs WorldRuntime::Update,open,live look to do
