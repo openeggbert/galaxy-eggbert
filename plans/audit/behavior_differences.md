@@ -444,6 +444,19 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   Decor.cpp:6025-6039, 3212-3223) and the drink (30, its Hide at tick 36, back in place).
 - Validation: the playthroughs with dynamite or the decoy (014, 025, 065, 091, 092, 095, 101).
 
+## BD-0028 — a decoy met a small enemy from a 0.7-cell sphere; the original's boxes are smaller (gameplay) — FIXED_AND_VERIFIED
+
+- Wave C, the bulldozer and the shooters (4, 32, 33) against the decoy and the lethal
+  decorations (200-203). The original destroys both when MovePersoDetect's boxes meet
+  (Decor.cpp:7957-7975, 9835-9865): the enemy's Blupi's box (28 px across, 11 to 58 px under its
+  cell's top), the decoy's an object's (28 px, its bottom 24). Galaxy used the 0.7-cell sphere
+  BD-0021 left only here, which met a decoy up to 45 px off.
+- Now `MoveObjectTouches` with the enemy in Blupi's place; the sphere is gone.
+- Also reviewed and matching: the Cloud's aura destroying them (BlupiElectro, BD-0012), the
+  bulldozer's draw offset (2 px, BLUPIOFFY) and its patrol (BD-0016).
+- Validation: `VerifyInteractionSystem` (32 px beside: not met; 26 px: met). No playthrough has
+  a decoy and a small enemy in one world.
+
 ## Reviewed, not changed (yet)
 
 - Matching (2026-11-02): the shooters 32 (blupih: one shot straight down at tick 21 of each

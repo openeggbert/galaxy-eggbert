@@ -1586,6 +1586,29 @@ int main(int argc, char** argv)
                         });
         check(!anyActiveDecoyOrEnemy, "both the decoy and the enemy are destroyed by the trap (real mutual ObjectDelete)");
 
+        // By MovePersoDetect's boxes (BD-0028): 28 px across, so a decoy half a cell off (32 px)
+        // is not met, where the old 0.7-cell sphere took it.
+        {
+            WorldRuntime nearWorld;
+            InteractionSystem nearInteraction;
+            MobileObjSpec nearDecoy = decoy;
+            nearDecoy.posStartX = nearDecoy.posEndX = nearDecoy.currentX = 500.5f;
+            nearWorld.GetMobileObjectsMutable().push_back(nearDecoy);
+            nearWorld.GetMobileObjectsMutable().push_back(bulldozer);
+            nearInteraction.Update(dt, nearWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
+            check(!hasEvent(nearInteraction, InteractionSystem::EventKind::SmallShakeTriggered),
+                  "a decoy 32 px beside a small enemy is not met (MovePersoDetect's 28 px boxes)");
+            MobileObjSpec closeDecoy = decoy;
+            closeDecoy.posStartX = closeDecoy.posEndX = closeDecoy.currentX = 500.4f;
+            WorldRuntime closeWorld;
+            InteractionSystem closeInteraction;
+            closeWorld.GetMobileObjectsMutable().push_back(closeDecoy);
+            closeWorld.GetMobileObjectsMutable().push_back(bulldozer);
+            closeInteraction.Update(dt, closeWorld, 9999.0f, 9999.0f, 9999.0f, 0.0f, sound);
+            check(hasEvent(closeInteraction, InteractionSystem::EventKind::SmallShakeTriggered),
+                  "a decoy 26 px beside a small enemy is met");
+        }
+
         // A small enemy far from any decoy is entirely unaffected.
         WorldRuntime noTrapWorld;
         InteractionSystem noTrapInteraction;

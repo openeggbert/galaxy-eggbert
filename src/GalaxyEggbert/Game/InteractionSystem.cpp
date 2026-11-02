@@ -901,10 +901,6 @@ namespace GalaxyEggbert::Game
             const float dyScreen = -dy * 64.0f; // screen y grows downward
             return objTop + dyScreen < blupiBottom && objBottom + dyScreen > blupiTop;
         }
-        // The old 0.7-cell sphere: still the pickups' reach (BD-0021 open) and a moving object
-        // meeting an enemy Blupi (not Blupi's own contact).
-        constexpr float kPickupRadius = 0.7f;
-        constexpr float kHazardContactRadius = kPickupRadius;
 
         // Real `BlupiElectro` aura (plan.md `068`, Decor.cpp:9610-9638,
         // mobile-eggbert-reference/10-blupi-mechanics.md §9): while
@@ -1275,10 +1271,14 @@ namespace GalaxyEggbert::Game
                     {
                         continue;
                     }
+                    // MovePersoDetect's boxes (Decor.cpp:9835-9865): the enemy's is Blupi's (28 px
+                    // across, 11 to 58 below its cell's top), the decoy's an object's (28 px, its
+                    // bottom 24) -- MoveObjectTouches with the enemy in Blupi's place (BD-0028; it
+                    // was a 0.7-cell sphere).
                     const float pdx = other.currentX - obj.currentX;
                     const float pdy = other.currentY - obj.currentY;
                     const float pdz = other.currentZ - obj.currentZ;
-                    if (pdx * pdx + pdy * pdy + pdz * pdz < kHazardContactRadius * kHazardContactRadius)
+                    if (MoveObjectTouches(other.type, pdx, pdy, pdz))
                     {
                         AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
