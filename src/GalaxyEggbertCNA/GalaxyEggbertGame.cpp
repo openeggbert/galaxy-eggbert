@@ -4056,17 +4056,10 @@ namespace GalaxyEggbert::CNA
             // `Decor::MoveObjectPlouf`, `ObjectType14`) via the two dry->
             // Surf/dry->Nage branches (`Decor.cpp:5298/5318`) -- previously
             // entirely unwired (no code/sound at all on entry). Also added:
-            // the jump-triggered exit's extra "Tiplouf" splash (channel 64,
-            // `ObjectType35`, `Decor.cpp:5355-5356`) -- real source
-            // distinguishes a deliberate jump-out (Jump held near the
-            // surface, `MoveObjectTiplouf`+ch22 together) from a passive
-            // drift-out (`Decor.cpp:5359-5408`, ch22 alone, 3 sub-cases by
-            // vertical velocity sign, cosmetically identical) -- this
-            // engine's single-point collision has no equivalent drift-out
-            // distinction, so `jumpPressed` at the exact exit frame is used
-            // as a documented approximation for "this was a deliberate jump
-            // exit" (matches the common case: players hold Jump through the
-            // whole swim-up-and-surface action).
+            // the jump out of the water (BD-0041): at the jump itself, as the original
+            // (Decor.cpp:5336-5357), channel 22 and the "Tiplouf" splash (channel 64,
+            // `ObjectType35`, at most one at a time); leaving the water any other way, channel 22
+            // alone (Decor.cpp:5359-5408). Rising out on the jump is not a second exit.
             const bool wasDry = !wasSurf && !wasNage;
             const bool nowDry = !blupi_.IsSurf() && !blupi_.IsNage();
             if (wasDry && !nowDry && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14))
@@ -4075,15 +4068,19 @@ namespace GalaxyEggbert::CNA
                 interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14, blupi_.GetX(),
                                                blupi_.GetY(), blupi_.GetZ());
             }
-            if (!wasDry && nowDry)
+            if (blupi_.JumpedOutOfWater())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel22);
-                if (jumpPressed && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35))
+                if (!interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35))
                 {
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel64);
                     interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35, blupi_.GetX(),
                                                    blupi_.GetY(), blupi_.GetZ());
                 }
+            }
+            else if (!wasDry && nowDry && !blupi_.IsWaterExitJump())
+            {
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel22);
             }
             if (wasNage && blupi_.IsSurf())
             {

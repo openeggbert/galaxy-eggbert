@@ -1561,6 +1561,23 @@ int main(int argc, char** argv)
               "afloat in a shallow 1-layer pool is Surf (dry above), not Nage");
         check(inShallow.GetWaterGaugeLevel() == BlupiController::kWaterGaugeMax,
               "the breath gauge stays full while merely Surf, not Nage");
+        {
+            // BD-0040: coming onto the surface ends the Cloud (Decor.cpp:5287-5307).
+            BlupiController charged;
+            charged.SetPosition(static_cast<float>(kShallowX) - 50.0f, 20.0f, static_cast<float>(kShallowZ) - 50.0f);
+            charged.TriggerCloud();
+            bool cloudInAir = true;
+            for (int i = 0; i < 200; ++i)
+            {
+                if (!charged.IsSurf() && !charged.IsNage())
+                {
+                    cloudInAir = cloudInAir && charged.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Cloud;
+                }
+                stepWithWaterDetection(charged, synthetic, dt);
+            }
+            check(cloudInAir && charged.IsSurf() && charged.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
+                  "falling into the water with the Cloud, it lasts through the fall and ends on the surface");
+        }
 
         BlupiController inDeep;
         inDeep.SetPosition(static_cast<float>(kDeepX) - 50.0f, 20.0f, static_cast<float>(kDeepZ) - 50.0f);
@@ -1667,7 +1684,22 @@ int main(int argc, char** argv)
             BlupiController climber;
             climber.SetPosition(71.0f - 50.0f, floatY, static_cast<float>(kChannelZ) - 50.0f);
             climber.SetYaw(kFacingPlusX);
-            for (int i = 0; i < 90; ++i) stepInWater(climber, synthetic, dt, 1.0f, true, false);
+            int exitJumps = 0;
+            bool leftOnTheJump = true;
+            for (int i = 0; i < 90; ++i)
+            {
+                const bool wasInWater = climber.IsSurf() || climber.IsNage();
+                stepInWater(climber, synthetic, dt, 1.0f, true, false);
+                exitJumps += climber.JumpedOutOfWater() ? 1 : 0;
+                if (wasInWater && !climber.IsSurf() && !climber.IsNage())
+                {
+                    leftOnTheJump = leftOnTheJump && climber.IsWaterExitJump();
+                }
+            }
+            // BD-0041: the splash and channel 22 at the jump (Decor.cpp:5336-5357), once; rising
+            // out of the water on it is no second exit.
+            check(exitJumps == 1 && leftOnTheJump,
+                  "the jump out of the water is reported once, at the jump, and he leaves the water on it");
             for (int i = 0; i < 30; ++i) stepInWater(climber, synthetic, dt, 0.0f, false, false);
             check(climber.IsOnGround() && std::fabs(climber.GetY() - 3.0f) < 0.01f &&
                       climber.GetX() > 73.0f - 50.0f - 0.5f && !climber.IsSurf() && !climber.IsNage(),

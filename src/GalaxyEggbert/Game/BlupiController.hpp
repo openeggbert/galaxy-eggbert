@@ -1091,6 +1091,12 @@ namespace GalaxyEggbert::Game
         // used for the balloon/crusher/teleport recovery sounds.
         [[nodiscard]] bool IsSurf() const noexcept { return m_surf; }
         [[nodiscard]] bool IsNage() const noexcept { return m_nage; }
+        // The jump out of the water (kSurfFloatHeight's comment): true for the one Step() that
+        // starts it, where the original splashes (MoveObjectTiplouf, channel 64) and plays
+        // channel 22 (Decor.cpp:5336-5357; BD-0041). While it rises, leaving the water is no
+        // second exit: the original has already ended Surf/Nage at the jump.
+        [[nodiscard]] bool JumpedOutOfWater() const noexcept { return m_jumpedOutOfWater; }
+        [[nodiscard]] bool IsWaterExitJump() const noexcept { return m_waterExitJump; }
 
         // Real submersion breath gauge, 0-100 (plan.md E3D-MIG-148,
         // `m_blupiLevel`) -- only ticks down while Nage, resets to full
@@ -1639,6 +1645,7 @@ namespace GalaxyEggbert::Game
         // The weak jump out of the water is under way (kSurfFloatHeight's comment): gravity, not
         // the surface hold, until its top.
         bool m_waterExitJump = false;
+        bool m_jumpedOutOfWater = false; // one Step() only: JumpedOutOfWater()
 
         bool m_pickupFrozen = false;
         float m_pickupFreezeTimer = 0.0f;

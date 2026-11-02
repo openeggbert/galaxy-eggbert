@@ -1372,6 +1372,7 @@ namespace GalaxyEggbert::Game
         const FlightBarrierScope flightBarrier(m_vehicleMode == VehicleMode::Helicopter ||
                                                m_vehicleMode == VehicleMode::Overcraft);
         m_moveInput = moveInput;
+        m_jumpedOutOfWater = false;
         // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
         // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)
         // { BlupiGhostStep(); return; }`, before even teleporting. Real
@@ -1427,6 +1428,13 @@ namespace GalaxyEggbert::Game
         // tempPassable. The gauge only ticks while genuinely Nage, and
         // resets to full the instant Nage ends (matches the real "gauge
         // hidden" behavior on resurfacing/leaving the water).
+        // Coming onto the surface from dry ground or the air ends the Cloud (Decor.cpp:5287-5307,
+        // `!m_blupiNage && !m_blupiSurf && IsSurfWater`; BD-0040). Diving in deeper at once, past
+        // the surface band, keeps it there too.
+        if (inSurfWater && !m_surf && !m_nage && m_secretPower == GalaxyEggbert::Def::SecretPower::Cloud)
+        {
+            m_secretPower = GalaxyEggbert::Def::SecretPower::None;
+        }
         m_surf = inSurfWater;
         m_nage = inDeepWater;
         m_justDrowned = false;
@@ -1884,6 +1892,7 @@ namespace GalaxyEggbert::Game
         {
             m_velocityY = jumpPowered ? kJumpSpeedReducedPowered : kJumpSpeedReduced;
             m_waterExitJump = true;
+            m_jumpedOutOfWater = true;
             m_onGround = false;
         }
         else if (m_onGround && jumpPressed && !m_ecrase && !m_balloon && !m_nage && !m_surf &&
