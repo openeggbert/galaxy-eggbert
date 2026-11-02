@@ -17,11 +17,9 @@ Clusters are the original map's cells (x, y; 64 px tiles), `xN` the cells in the
 | 084 | crusher: (57,37)x1 (68,71)x1 (70,57)x1 (80,63)x1 (90,65)x1 | - | - |
 | 105 | lava: (22,44)x21; teleport: (19,33)x1 (21,1)x1 | - | - |
 | 106 | bar: (13,52)x4 | - | - |
-| 107 | fan: (8,76)x3; temp: (5,40)x6 | - | - |
 | 111 | lava: (24,80)x4 | - | - |
 | 112 | saw: (38,31)x2; water: (22,26)x11 (19,17)x2 | - | - |
 | 113 | fan: (50,35)x1 | - | - |
-| 115 | fan: (22,16)x6 (17,25)x4 (42,11)x1 (44,22)x1 | - | - |
 | 122 | lift 3; lava: (67,78)x6 (74,68)x5 | - | - |
 | 124 | lava: (33,38)x2 (33,65)x5 | mine 18 -> 2; moving mine 4 -> 1 | - |
 | 125 | lava: (32,6)x3; bar: (46,23)x12 | - | - |

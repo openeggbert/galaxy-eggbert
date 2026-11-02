@@ -82,6 +82,31 @@ playthroughs of the five worlds and their chains pass; the D52-D57 tests pass (1
 
 ## 6. Next steps (in order)
 
+Owner's queue of 2026-11-02 (asked during the session; in this order after the current work):
+- **Every 2D billboard/sprite that has an original 3D source becomes that 3D model** (owner,
+  2026-11-02: "všechno co je v galaxy eggbert stále jako billboard ve 2D a jsou pro to rd4 nebo jiné
+  3D modely, předělat do 3D a použít ten rd4 model"): go through `render_representation.csv`
+  (rows drawn as plate / crossed planes / 2d-effect / element sprite) against `asset_sources.csv`
+  and `model_parity.md` (scenes matched by outline), convert each with `tools/rd4_to_gltf`
+  (objects.txt, tone, live look), and the 2D death sprites too: first the glue death (Glu, owner
+  report: the element.png billboard in place of a 3D Blupi; `Blupi/glu.rd4`).
+- The red, green and blue posts (the coloured doors/bars) and the numbered posts (world signs
+  174-181) from billboards to 3D models (owner, 2026-11-02): from the RD4 scenes where they exist
+  (signs: `Decor/world1.rd4` with the digit decal, MR-0006; the coloured doors 334-336 most likely
+  `Decor/porte-r.rd4`, `porte-v.rd4`, `porte-b.rd4` -- rouge, vert, bleu), otherwise found in the
+  other sources or modelled in the original's style.
+- The crumbling clay bridge (364; owner, 2026-11-02): right until Blupi crosses it, then while it
+  is gone an elongated lump of clay shows above its place (the crumble/return frames 365-372 drawn
+  wrong), afterwards right again; and its top is plain brown, it should show the clay texture.
+  Candidate source: `Decor/grotte-fragile1.rd4` (and `terre.tif`); 364-366 are drawn as directional
+  cubes, the crumble frames 367-372 as upright plates in the cell (the lump).
+- The vanishing saucer (Temp 324-329, owner 2026-11-02: "the special piece of cube that stretches,
+  shrinks, vanishes and comes back is drawn as a billboard, from above totally wrong"): its own
+  animated scene `Decor/temporaire.rd4` (8 frames) as a 3D model, the frames following the cycle.
+- The fan's spin speed against Mobile Eggbert's (owner: "větrák by se měl asi točit rychleji"):
+  done 2026-11-02, divisor 2 as Decor.cpp:1104-1122 (it was 3).
+- The Setup's volume sliders and the sounds' pitch (BD-0031): in progress 2026-11-02.
+
 1. The owner's answers: MR-0005 (auto-tiling in 3D), the world signs' digits (VIS-0175..0182),
    OR-0006, the human play pass (MR-0004).
 2. OR-0017 (Blupi's body in walls): `plans/audit/or0017-body-width.patch` with the playthroughs

@@ -152,6 +152,20 @@ ledgers before repeating any discovery. Where it stands:
   hanging mines (x 35-39, one wide; the lift pits moved to x 15, 20, 25, 30). Learned: hanging,
   Blupi touches anything in the bar's row within 0.44 (the hanging mine's box is the top 24 px of
   its cell); a jump off a bar under a ceiling regrabs it, Down held 5 ticks drops him.
+- 2026-11-02 evening, the owner's live reports (OR-0028..0035, `plans/audit/owner_reports.md`;
+  the queue with sources in `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md` §6 and the task list):
+  BD-0031 (every effect at the table's pitch, the crate's effort once, not looped), the Setup's
+  volume sliders (effects, music; Erase progress a row lower), the fans at divisor 2, the
+  helicopter climbing with Jump, Right Ctrl backing up, a gamepad (`GamepadInput.hpp`), multi-touch
+  with a back-up button (`InputPad::UpdatePlayTouches`), the active cheats top-left, the coloured
+  doors 334-336 and the vanishing saucer 324-329 as their Ray Dream models
+  (`kAnimatedModelBases` draws an animated tile's model per frame). BD-0030 (jump headroom as
+  IsPassIcon) changed jumps under wind and bars: 107's saucer ledges moved to 46 and 54 with
+  straight hops, 124's wind tunnel fills its height. Still queued from the owner: the crusher (it
+  hangs in Blupi's cell in the original; Galaxy put it in the floor) and the flattened Blupi
+  (`blupi-plat.rd4`), the clay bridge (`grotte-fragile1.rd4`), the spring (`ressort.rd4`), the
+  lightning and the charred Blupi (no scene: to model), grass, the glue death (`glu.rd4`; its
+  icons are element.png's, the clip library matches blupi.png's only), the world signs.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
