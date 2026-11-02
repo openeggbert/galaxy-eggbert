@@ -2320,6 +2320,16 @@ int main(int argc, char** argv)
             }
             check(heliIdle.IsVehicleMotorHigh(),
                   "IsVehicleMotorHigh() is true once the Helicopter is ascending (nonzero vertical velocity)");
+            // Jump (Left Ctrl) climbs it as Up does (Decor.cpp:3725/3760; owner 2026-11-02).
+            BlupiController heliJump;
+            heliJump.SetPosition(0.0f, 20.0f, 0.0f);
+            heliJump.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false);
+            const float heliJumpFrom = heliJump.GetY();
+            for (int i = 0; i < 60; ++i)
+            {
+                heliJump.Step(synthetic, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+            }
+            check(heliJump.GetY() > heliJumpFrom + 1.0f, "Jump held climbs the helicopter (as Up does)");
 
             // Real per-mode accel/decel ramp: Jeep's horizontal speed
             // should climb from 0 toward its own max, not snap instantly.

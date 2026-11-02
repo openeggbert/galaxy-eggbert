@@ -116,6 +116,15 @@ namespace GalaxyEggbert::Game
             return jumpRight ? right : MirrorX(right, m);
         }
 
+        // The back-up button (Galaxy's, 2026-11-02): over the stick's ring.
+        Rect PlayBackUpRect(const ScreenMetrics& m, bool jumpRight) noexcept
+        {
+            const auto c = DPadCenter(m, jumpRight);
+            const float half = 28.0f * m.s;
+            const float cy = c.Y - 205.0f * m.s;
+            return Rect{c.X - half, cy - half, c.X + half, cy + half};
+        }
+
         Rect PlayPauseRect(const ScreenMetrics& m) noexcept
         {
             return Rect{m.w - m.f1 * 0.7f, m.f1 * 0.2f, m.w - m.f1 * 0.2f, m.f1 * 0.7f};
@@ -242,6 +251,7 @@ namespace GalaxyEggbert::Game
         constexpr int kPlayControlJump = 1;
         constexpr int kPlayControlAction = 2;
         constexpr int kPlayControlPause = 3;
+        constexpr int kPlayControlBackUp = 4;
 
         constexpr int kPauseControlMenu = 0;
         constexpr int kPauseControlBack = 1;
@@ -655,6 +665,49 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    InputPad::CheatListRect InputPad::ActiveCheatsRect(const std::vector<std::string>& names, int viewportH) noexcept
+    {
+        constexpr float kScale = 0.55f, kLine = 18.0f, kPad = 3.0f, kAt = 5.0f;
+        const float s = static_cast<float>(viewportH) / kRefH;
+        float maxWidth = 0.0f;
+        for (const auto& name : names)
+        {
+            maxWidth = std::max(maxWidth, TextMetrics::Width(name) * kScale);
+        }
+        return CheatListRect{(kAt - kPad) * s, (kAt - kPad) * s, (kAt + maxWidth + kPad) * s,
+                             (kAt + kLine * static_cast<float>(names.size()) + kPad) * s};
+    }
+
+    void InputPad::DrawActiveCheats(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                     int viewportH, const std::vector<std::string>& names)
+    {
+        if (!loaded_ || names.empty())
+        {
+            return;
+        }
+        constexpr float kScale = 0.55f, kLine = 18.0f, kAt = 5.0f;
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const CheatListRect r = ActiveCheatsRect(names, viewportH);
+        std::vector<Quad> panel;
+        {
+            Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
+            PadIconUv(kInitPanelIcon, static_cast<float>(padTexture_.getWidthProperty()),
+                      static_cast<float>(padTexture_.getHeightProperty()), q.u0, q.v0, q.u1, q.v1);
+            panel.push_back(q);
+        }
+        std::vector<Quad> labels;
+        float y = kAt;
+        for (const auto& name : names)
+        {
+            AppendGamerLabel(labels, name, kAt * s, y * s, kScale, s);
+            y += kLine;
+        }
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *padEffect_, padRenderer_, panel, viewportW, viewportH, 0.6f);
+        FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     void InputPad::AppendGamerLabel(std::vector<Quad>& quads, const std::string& text, float leftX, float topY,
                                       float labelScale, float viewportScale) const
     {
@@ -812,10 +865,12 @@ namespace GalaxyEggbert::Game
         const bool overJump = InRect(mouseX, mouseY, PlayJumpRect(m, jumpRight_));
         const bool overAction = InRect(mouseX, mouseY, PlayActionRect(m, jumpRight_));
         const bool overPause = InRect(mouseX, mouseY, PlayPauseRect(m));
+        const bool overBackUp = InRect(mouseX, mouseY, PlayBackUpRect(m, jumpRight_));
 
         if (mouseDown && !mouseWasDown_)
         {
-            if (overDPad) activeControl_ = kPlayControlDPad;
+            if (overBackUp) activeControl_ = kPlayControlBackUp;
+            else if (overDPad) activeControl_ = kPlayControlDPad;
             else if (overJump) activeControl_ = kPlayControlJump;
             else if (overAction) activeControl_ = kPlayControlAction;
             else if (overPause) activeControl_ = kPlayControlPause;
@@ -826,6 +881,7 @@ namespace GalaxyEggbert::Game
         // currently inside its rect while the mouse is down, independent
         // of where the press started (see InputPad.hpp's class comment).
         outInput.jumpHeld = mouseDown && overJump;
+        outInput.backUpHeld = mouseDown && activeControl_ == kPlayControlBackUp;
 
         // Real discrete D-pad: only active while the drag that STARTED on
         // the pad continues, using the CURRENT drag point each frame (not
@@ -862,6 +918,95 @@ namespace GalaxyEggbert::Game
 
         mouseWasDown_ = mouseDown;
         return activeControl_ != -1;
+    }
+
+    bool InputPad::UpdatePlayTouches(const std::vector<TouchPoint>& touches, int viewportW, int viewportH,
+                                       PlayInput& outInput) noexcept
+    {
+        outInput = PlayInput{};
+        const ScreenMetrics m = Metrics(viewportW, viewportH);
+        const auto padCenter = DPadCenter(m, jumpRight_);
+        const float padHalf = kDPadRadius * m.s;
+        const Rect padRect{padCenter.X - padHalf, padCenter.Y - padHalf, padCenter.X + padHalf, padCenter.Y + padHalf};
+        const Rect jumpRect = PlayJumpRect(m, jumpRight_);
+        const Rect actionRect = PlayActionRect(m, jumpRight_);
+        const Rect pauseRect = PlayPauseRect(m);
+        const Rect backRect = PlayBackUpRect(m, jumpRight_);
+        bool onControl = false;
+        bool dpadSeen = false;
+        for (const auto& t : touches)
+        {
+            if (t.pressed)
+            {
+                if (InRect(t.x, t.y, backRect) && backUpTouchId_ < 0) backUpTouchId_ = t.id;
+                else if (InRect(t.x, t.y, padRect) && dpadTouchId_ < 0) dpadTouchId_ = t.id;
+                else if (InRect(t.x, t.y, actionRect)) actionTouchId_ = t.id;
+                else if (InRect(t.x, t.y, pauseRect)) pauseTouchId_ = t.id;
+            }
+            const bool down = !t.released;
+            if (down && InRect(t.x, t.y, jumpRect))
+            {
+                outInput.jumpHeld = true;
+                onControl = true;
+            }
+            if (t.id == dpadTouchId_)
+            {
+                dpadSeen = true;
+                onControl = true;
+                if (down)
+                {
+                    const float dx = t.x - padCenter.X;
+                    const float dy = t.y - padCenter.Y;
+                    const float threshold = kDPadThreshold * m.s;
+                    outInput.turnInput = dx > threshold ? 1.0f : (dx < -threshold ? -1.0f : 0.0f);
+                    outInput.moveInput = dy < -threshold ? 1.0f : (dy > threshold ? -1.0f : 0.0f);
+                    dpadDragOffsetX_ = std::clamp(dx, -padHalf, padHalf) / m.s;
+                    dpadDragOffsetY_ = std::clamp(dy, -padHalf, padHalf) / m.s;
+                }
+                else
+                {
+                    dpadTouchId_ = -1;
+                }
+            }
+            if (t.id == backUpTouchId_)
+            {
+                onControl = true;
+                if (down) outInput.backUpHeld = true;
+                else backUpTouchId_ = -1;
+            }
+            if (t.id == actionTouchId_)
+            {
+                onControl = true;
+                if (t.released)
+                {
+                    outInput.actionPressed = true;
+                    actionTouchId_ = -1;
+                }
+            }
+            if (t.id == pauseTouchId_)
+            {
+                onControl = true;
+                if (t.released)
+                {
+                    outInput.pausePressed = true;
+                    pauseTouchId_ = -1;
+                }
+            }
+        }
+        if (!dpadSeen)
+        {
+            // Its finger is gone (no release reported): let go of the stick.
+            dpadTouchId_ = -1;
+            dpadDragOffsetX_ = 0.0f;
+            dpadDragOffsetY_ = 0.0f;
+        }
+        const auto present = [&touches](int id) {
+            return std::any_of(touches.begin(), touches.end(), [id](const TouchPoint& t) { return t.id == id; });
+        };
+        if (backUpTouchId_ >= 0 && !present(backUpTouchId_)) backUpTouchId_ = -1;
+        if (actionTouchId_ >= 0 && !present(actionTouchId_)) actionTouchId_ = -1;
+        if (pauseTouchId_ >= 0 && !present(pauseTouchId_)) pauseTouchId_ = -1;
+        return onControl;
     }
 
     void InputPad::DrawPlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -912,6 +1057,9 @@ namespace GalaxyEggbert::Game
                    kIconPlayAction);
         appendRect(activeControl_ == kPlayControlPause ? pressedQuads : normalQuads, PlayPauseRect(m),
                    kIconPlayPause);
+        // The back-up button (Galaxy's, 2026-11-02), the Setup's return arrow over the stick.
+        appendRect(activeControl_ == kPlayControlBackUp || backUpTouchId_ >= 0 ? pressedQuads : normalQuads,
+                   PlayBackUpRect(m, jumpRight_), kIconSetupReturn);
 
         // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
         // straight alpha, while AlphaBlend expects the premultiplied colours

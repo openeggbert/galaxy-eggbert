@@ -2000,7 +2000,9 @@ namespace GalaxyEggbert::Game
             const float ascendSpeed = kHelicopterAscendSpeed;
             const float descendSpeed = kHelicopterDescendSpeed;
             float targetVelocityY = 0.0f;
-            if (lookUpHeld)
+            // Up or Jump climbs (Decor.cpp:3725/3760: `m_blupiSpeedY <= -1.0 || m_keyPress & Jump`;
+            // owner 2026-11-02: Left Ctrl should climb).
+            if (lookUpHeld || jumpPressed)
             {
                 targetVelocityY = ascendSpeed;
             }

@@ -592,6 +592,12 @@ namespace GalaxyEggbert::CNA
         // The original's typed cheats (InputPad::TypedCheat; `Decor::CheatAction` for each word,
         // OR-0007); the menu's nine go through ApplyCheat().
         void ApplyTypedCheat(GalaxyEggbert::Game::InputPad::TypedCheat cheat);
+        // The persistent typed cheats now on, as Mobile Eggbert lists them top-left in Play.
+        std::vector<std::string> activeCheats_;
+        // Enter (or a gamepad's A) held in the main menu last frame: Play fires on its press.
+        bool initEnterWasDown_ = true;
+        // Frames left in which the mouse is ignored after the last finger on the screen.
+        int touchQuietFrames_ = 0;
         GalaxyEggbert::Def::GamePhase phase_ = GalaxyEggbert::Def::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;

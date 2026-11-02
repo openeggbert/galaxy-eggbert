@@ -1,7 +1,9 @@
+#include <GalaxyEggbert/Game/GamepadInput.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -271,6 +273,64 @@ int main()
         (void)reset.UpdateSetup(mouse(470, 285, true), kViewportW, kViewportH, true);
         const auto erased = reset.UpdateSetup(mouse(470, 285, false), kViewportW, kViewportH, true);
         check(erased.resetPressed, "Setup: Erase progress is a row lower (the Jump row), right of it");
+    }
+    {
+        // Several fingers (owner 2026-11-02, touch devices): one steers the stick up while another
+        // holds Jump; Action fires when its finger lifts; the back-up button over the stick is held
+        // by the finger that pressed it, and a finger dragged over it from the stick does not.
+        InputPad pad;
+        using TP = InputPad::TouchPoint;
+        InputPad::PlayInput in;
+        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 380.0f, true, false}, TP{2, 570.0f, 410.0f, true, false}},
+                                    kViewportW, kViewportH, in);
+        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 330.0f, false, false}, TP{2, 570.0f, 410.0f, false, false}},
+                                    kViewportW, kViewportH, in);
+        check(in.moveInput == 1.0f && in.turnInput == 0.0f && in.jumpHeld,
+              "touch: the stick and Jump held together by two fingers");
+        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 180.0f, false, false}}, kViewportW, kViewportH, in);
+        check(!in.backUpHeld && in.moveInput == 1.0f, "touch: the stick's finger over the back-up button stays the stick");
+        (void)pad.UpdatePlayTouches({TP{1, 100.0f, 180.0f, false, true}}, kViewportW, kViewportH, in);
+        (void)pad.UpdatePlayTouches({TP{3, 100.0f, 175.0f, true, false}}, kViewportW, kViewportH, in);
+        check(in.backUpHeld && in.moveInput == 0.0f, "touch: a finger pressed on the back-up button holds it");
+        (void)pad.UpdatePlayTouches({TP{3, 100.0f, 175.0f, false, true}}, kViewportW, kViewportH, in);
+        check(!in.backUpHeld, "touch: lifted, the back-up button lets go");
+    }
+    {
+        // A gamepad as keys (GamepadInput.hpp, owner 2026-11-02): none when unplugged; the stick past
+        // half way or the D-pad walks and turns; A jumps and confirms, B/X act, RB backs up, LB
+        // crouches, Y looks up, Start pauses.
+        using namespace GalaxyEggbert::Game;
+        GamepadFrame f;
+        f.a = true;
+        check(GamepadKeys(f) == 0u, "a gamepad not connected presses nothing");
+        f.connected = true;
+        f.leftY = 0.8f;
+        f.leftX = -0.3f;
+        f.rightShoulder = true;
+        const unsigned keys = GamepadKeys(f);
+        check((keys & kPadUp) && !(keys & kPadLeft) && (keys & kPadJump) && (keys & kPadConfirm) &&
+                  (keys & kPadBackUp) && !(keys & kPadAction),
+              "the stick past half way walks, A jumps and confirms, RB backs up");
+        GamepadFrame g;
+        g.connected = true;
+        g.dpadDown = true;
+        g.x = true;
+        g.start = true;
+        g.leftShoulder = true;
+        g.y = true;
+        const unsigned more = GamepadKeys(g);
+        check((more & kPadDown) && (more & kPadAction) && (more & kPadPause) && (more & kPadCrouch) &&
+                  (more & kPadLookUp),
+              "the D-pad down turns round, X acts, Start pauses, LB crouches, Y looks up");
+    }
+    {
+        // The active cheats' panel (Mobile Eggbert's InputPad.cpp:1290-1316): from (2, 2) at 480 high,
+        // 18 px a name plus the padding; wider for a longer name; none when empty.
+        const auto one = InputPad::ActiveCheatsRect({"ghost"}, kViewportH);
+        const auto two = InputPad::ActiveCheatsRect({"ghost", "opendoors"}, kViewportH);
+        check(std::fabs(one.x0 - 2.0f) < 0.01f && std::fabs(one.y0 - 2.0f) < 0.01f &&
+                  std::fabs(one.y1 - 26.0f) < 0.01f && std::fabs(two.y1 - 44.0f) < 0.01f && two.x1 > one.x1,
+              "the active cheats' panel: top-left, 18 px a name, as wide as the longest");
     }
     {
         // Jump on the left (the setting off): the stick and the buttons trade sides.

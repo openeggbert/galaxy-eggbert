@@ -89,6 +89,13 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   turning is 135°/s, and Blupi no longer walks up one-block steps — he jumps, as in
   `Decor::TestPath`. Menus fill the bars beside their 640×480 images and text uses the
   original proportional glyph widths.
+- Controls added 2026-11-02 (owner's requests): Right Ctrl backs Blupi up (on foot or in a
+  vehicle; Down still turns him round); Left Ctrl (Jump) climbs the helicopter as Up does
+  (Decor.cpp); a gamepad (`GamepadInput.hpp`): left stick/D-pad walk and turn, A jump (and Enter:
+  Play in the main menu), B/X action, RB back up, LB crouch, Y look up, Start pause; touch
+  screens: the on-screen pad takes several fingers at once (`InputPad::UpdatePlayTouches`: stick
+  and Jump together) and has a back-up button over the stick. Not tried on real hardware yet
+  (no gamepad or touch screen here).
 - Third person shows the real Blupi converted from the original Ray Dream scenes
   (`avatars3d/blupi/`, `tools/rd4_to_gltf/`) with a clip, expression, props and vehicle per
   animation state, and parked vehicles as 3D models (re-exported 2026-10-24: the overcraft now

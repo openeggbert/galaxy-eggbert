@@ -1,5 +1,6 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <GalaxyEggbert/Game/GamepadInput.hpp>
 #include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 
@@ -18,13 +19,16 @@
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
 #include <Microsoft/Xna/Framework/Color.hpp>
+#include <Microsoft/Xna/Framework/Input/GamePad.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
+#include <Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
 #include <Microsoft/Xna/Framework/Graphics/ModelMeshPart.hpp>
 #include <Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp>
 
 #include <algorithm>
+#include <unordered_set>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
@@ -46,11 +50,68 @@ namespace GalaxyEggbert::CNA
         constexpr int kGoldenCaptureCount =
             static_cast<int>(sizeof(kGoldenCaptureTicks) / sizeof(kGoldenCaptureTicks[0]));
 
+        // The first gamepad as the keys it stands for (GamepadInput.hpp: the owner's request of
+        // 2026-11-02; Mobile Eggbert has no gamepad).
+        GalaxyEggbert::Game::GamepadFrame ReadGamepadFrame()
+        {
+            using namespace Microsoft::Xna::Framework::Input;
+            GalaxyEggbert::Game::GamepadFrame f;
+            const GamePadState pad = GamePad::GetState(Microsoft::Xna::Framework::PlayerIndex::One);
+            f.connected = pad.getIsConnectedProperty();
+            if (!f.connected)
+            {
+                return f;
+            }
+            const auto down = [](ButtonState s) { return s == ButtonState::Pressed; };
+            const auto& stick = pad.getThumbSticksProperty().getLeftProperty();
+            f.leftX = stick.X;
+            f.leftY = stick.Y;
+            const auto& dpad = pad.getDPadProperty();
+            f.dpadUp = down(dpad.getUpProperty());
+            f.dpadDown = down(dpad.getDownProperty());
+            f.dpadLeft = down(dpad.getLeftProperty());
+            f.dpadRight = down(dpad.getRightProperty());
+            const auto& b = pad.getButtonsProperty();
+            f.a = down(b.getAProperty());
+            f.b = down(b.getBProperty());
+            f.x = down(b.getXProperty());
+            f.y = down(b.getYProperty());
+            f.leftShoulder = down(b.getLeftShoulderProperty());
+            f.rightShoulder = down(b.getRightShoulderProperty());
+            f.start = down(b.getStartProperty());
+            f.back = down(b.getBackProperty());
+            return f;
+        }
+
         Microsoft::Xna::Framework::Input::KeyboardState ReadKeyboardState(bool suppressLiveInput)
         {
-            return suppressLiveInput
-                ? Microsoft::Xna::Framework::Input::KeyboardState{}
-                : Microsoft::Xna::Framework::Input::Keyboard::GetState();
+            using namespace Microsoft::Xna::Framework::Input;
+            if (suppressLiveInput)
+            {
+                return KeyboardState{};
+            }
+            const KeyboardState keyboard = Keyboard::GetState();
+            const unsigned pad = GalaxyEggbert::Game::GamepadKeys(ReadGamepadFrame());
+            if (pad == 0u)
+            {
+                return keyboard;
+            }
+            const auto pressed = keyboard.GetPressedKeys();
+            std::unordered_set<Keys> keys(pressed.begin(), pressed.end());
+            using namespace GalaxyEggbert::Game;
+            const std::pair<unsigned, Keys> map[] = {
+                {kPadUp, Keys::Up}, {kPadDown, Keys::Down}, {kPadLeft, Keys::Left}, {kPadRight, Keys::Right},
+                {kPadJump, Keys::LeftControl}, {kPadAction, Keys::Space}, {kPadBackUp, Keys::RightControl},
+                {kPadCrouch, Keys::LeftShift}, {kPadLookUp, Keys::RightShift}, {kPadPause, Keys::Escape},
+                {kPadConfirm, Keys::Enter}};
+            for (const auto& [bit, key] : map)
+            {
+                if (pad & bit)
+                {
+                    keys.insert(key);
+                }
+            }
+            return KeyboardState(keys);
         }
 
         Microsoft::Xna::Framework::Input::MouseState ReadMouseState(bool suppressLiveInput)
@@ -2249,9 +2310,48 @@ namespace GalaxyEggbert::CNA
             bool mouseBackPressed = false;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                // Several fingers at once (owner 2026-11-02: touch devices). While fingers are on
+                // the screen, and a few frames after, the mouse is left out: the platform also
+                // turns a touch into mouse events, which would press Action twice.
+                std::vector<GalaxyEggbert::Game::InputPad::TouchPoint> touches;
+                if (!SuppressLiveInput())
+                {
+                    using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+                    for (const auto& t : Microsoft::Xna::Framework::Input::Touch::TouchPanel::GetState())
+                    {
+                        const auto state = t.getStateProperty();
+                        if (state == TouchLocationState::Invalid)
+                        {
+                            continue;
+                        }
+                        GalaxyEggbert::Game::InputPad::TouchPoint p;
+                        p.id = t.getIdProperty();
+                        p.x = t.getPositionProperty().X;
+                        p.y = t.getPositionProperty().Y;
+                        p.pressed = state == TouchLocationState::Pressed;
+                        p.released = state == TouchLocationState::Released;
+                        touches.push_back(p);
+                    }
+                }
+                touchQuietFrames_ = touches.empty() ? std::max(0, touchQuietFrames_ - 1) : 15;
+                const auto mouse = touchQuietFrames_ > 0 ? Microsoft::Xna::Framework::Input::MouseState{}
+                                                         : ReadMouseState(SuppressLiveInput());
                 inputPadClaimedMouse = inputPad_.UpdatePlay(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
+                {
+                    GalaxyEggbert::Game::InputPad::PlayInput touchInput;
+                    if (inputPad_.UpdatePlayTouches(touches, viewport.getWidthProperty(),
+                                                    viewport.getHeightProperty(), touchInput))
+                    {
+                        inputPadClaimedMouse = true;
+                    }
+                    padPlayInput.turnInput = std::clamp(padPlayInput.turnInput + touchInput.turnInput, -1.0f, 1.0f);
+                    padPlayInput.moveInput = std::clamp(padPlayInput.moveInput + touchInput.moveInput, -1.0f, 1.0f);
+                    padPlayInput.jumpHeld = padPlayInput.jumpHeld || touchInput.jumpHeld;
+                    padPlayInput.actionPressed = padPlayInput.actionPressed || touchInput.actionPressed;
+                    padPlayInput.pausePressed = padPlayInput.pausePressed || touchInput.pausePressed;
+                    padPlayInput.backUpHeld = padPlayInput.backUpHeld || touchInput.backUpHeld;
+                }
                 mousePausePressed = padPlayInput.pausePressed;
 
                 // Hidden cheat menu (2026-07-13, plan.md CHEAT-001..009):
@@ -2291,6 +2391,30 @@ namespace GalaxyEggbert::CNA
                 if (typedCheat.ghostTyped)
                 {
                     blupi_.ToggleGhost(worldRuntime_.GetWorld());
+                }
+                // The persistent ones listed top-left (Mobile Eggbert's InputPad.cpp:842-855: each
+                // typing toggles its name; ghost follows the real ghost state).
+                {
+                    using TC = GalaxyEggbert::Game::InputPad::TypedCheat;
+                    const auto toggle = [this](const char* name) {
+                        const auto it = std::find(activeCheats_.begin(), activeCheats_.end(), name);
+                        if (it != activeCheats_.end()) activeCheats_.erase(it);
+                        else activeCheats_.emplace_back(name);
+                    };
+                    switch (typedCheat.cheat)
+                    {
+                        case TC::OpenDoors: toggle("opendoors"); break;
+                        case TC::MegaBlupi: toggle("megablupi"); break;
+                        case TC::ShowSecret: toggle("showsecret"); break;
+                        default: break;
+                    }
+                    if (typedCheat.quickTyped) toggle("quick");
+                    if (typedCheat.ghostTyped)
+                    {
+                        activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "ghost"),
+                                            activeCheats_.end());
+                        if (blupi_.IsGhost()) activeCheats_.emplace_back("ghost");
+                    }
                 }
                 if (typedCheat.quickTyped)
                 {
@@ -2492,8 +2616,19 @@ namespace GalaxyEggbert::CNA
                 // MENU-006..020) -- see InputPad::UpdateInit()/
                 // DrawInit()'s own class comment for full detail.
                 const auto mouse = ReadMouseState(SuppressLiveInput());
-                const auto initInput = inputPad_.UpdateInit(
+                auto initInput = inputPad_.UpdateInit(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                // Enter (a gamepad's A, GamepadInput.hpp) plays as the Play button does: the menu
+                // without a pointer (owner 2026-11-02: gamepads).
+                {
+                    const bool enterDown = ReadKeyboardState(SuppressLiveInput()).IsKeyDown(
+                        Microsoft::Xna::Framework::Input::Keys::Enter);
+                    if (enterDown && !initEnterWasDown_)
+                    {
+                        initInput.playPressed = true;
+                    }
+                    initEnterWasDown_ = enterDown;
+                }
                 if (initInput.gamerSelected >= 0)
                 {
                     // Real Game1::SetGamer(): a single tap immediately
@@ -2860,7 +2995,7 @@ namespace GalaxyEggbert::CNA
             // LeftControl -> PlayJump, Space -> PlayAction) — Space is read
             // here but not wired to anything yet, since there is no
             // interactive-object system in GalaxyEggbertCNA yet. LShift
-            // crouches and RShift looks up.
+            // crouches and RShift looks up; RCtrl backs up (2026-11-02).
             using Microsoft::Xna::Framework::Input::Keys;
             const auto keys = CurrentKeyboardState();
             float turnInput = 0.0f;
@@ -2923,6 +3058,14 @@ namespace GalaxyEggbert::CNA
                 else if (downHeld && !pullingStance)
                 {
                     moveInput = -moveInput;
+                }
+                // Right Ctrl backs him up (owner 2026-11-02: "pravý ctrl bude couvání"), on foot or
+                // in a vehicle, facing as he is: a Galaxy addition beside Down's turn-around (the
+                // original has no backing up); a gamepad's RB and the on-screen back-up button too.
+                if ((keys.IsKeyDown(Keys::RightControl) || padPlayInput.backUpHeld) && turnAroundRemaining_ <= 0.0f &&
+                    !pullingStance)
+                {
+                    moveInput = -1.0f;
                 }
             }
             // What the player asks of a crate (UpdateCratePush() below).
@@ -6025,6 +6168,8 @@ namespace GalaxyEggbert::CNA
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
                 inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                           activeCheats_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {

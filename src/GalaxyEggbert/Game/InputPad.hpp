@@ -92,7 +92,24 @@ namespace GalaxyEggbert::Game
             bool jumpHeld = false;    // PlayJump, level-triggered
             bool actionPressed = false; // PlayAction, edge-triggered (single-fire)
             bool pausePressed = false;  // PlayPause, edge-triggered (single-fire)
+            bool backUpHeld = false;    // the back-up button (Galaxy's, 2026-11-02), held
         };
+        // One finger on a touch screen (CNA's TouchLocation, in screen pixels).
+        struct TouchPoint
+        {
+            int id = 0;
+            float x = 0.0f, y = 0.0f;
+            bool pressed = false;  // it touched down this frame
+            bool released = false; // it lifted this frame (its last position)
+        };
+        // The Play controls from several fingers at once (owner 2026-11-02: touch devices; the mouse
+        // path above drives one control at a time, so a stick and Jump could not be held together):
+        // a finger that touches down on the stick steers it while it stays down, wherever it moves;
+        // Jump is held by any finger on it; Action and Pause fire when the finger that pressed
+        // them lifts; the back-up button (above the stick, Galaxy's: the original has no backing
+        // up) is held by the finger that pressed it. Returns whether any finger is on a control.
+        [[nodiscard]] bool UpdatePlayTouches(const std::vector<TouchPoint>& touches, int viewportW, int viewportH,
+                                             PlayInput& outInput) noexcept;
 
         // Hit-tests the Play-phase on-screen controls against the current
         // mouse state. Returns whether the mouse press (if any) landed on
@@ -102,6 +119,18 @@ namespace GalaxyEggbert::Game
         // model (a touch point drives exactly one control at a time).
         [[nodiscard]] bool UpdatePlay(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                       int viewportW, int viewportH, PlayInput& outInput) noexcept;
+        // The active persistent cheats in the top-left corner during Play, as Mobile Eggbert's port
+        // lists them (InputPad.cpp:1290-1316: pad icon 15 under them at 0.6 opacity, padding 3; each
+        // name DrawTextLeft at scale 0.55, a line every 18 px from (5, 5)); nothing when empty.
+        void DrawActiveCheats(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                              int viewportH, const std::vector<std::string>& names);
+        // The panel's rectangle for those names (screen pixels), for the test.
+        struct CheatListRect
+        {
+            float x0, y0, x1, y1;
+        };
+        [[nodiscard]] static CheatListRect ActiveCheatsRect(const std::vector<std::string>& names, int viewportH) noexcept;
+
         void DrawPlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                       int viewportW, int viewportH);
 
@@ -702,6 +731,8 @@ namespace GalaxyEggbert::Game
         // needs them.
         int activeControl_ = -1;
         bool mouseWasDown_ = false;
+        // UpdatePlayTouches(): the finger holding each control (-1: none).
+        int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1;
 
         // Live D-pad drag offset (reference-space pixels from the pad's
         // center), used only to position the thumb icon in DrawPlay --
