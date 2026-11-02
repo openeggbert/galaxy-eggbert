@@ -518,8 +518,8 @@ namespace GalaxyEggbert::Game
                         };
                         const auto sides = static_cast<std::uint8_t>((same(1, 0) ? 1 : 0) | (same(-1, 0) ? 2 : 0) |
                                                                      (same(0, 1) ? 4 : 0) | (same(0, -1) ? 8 : 0));
-                        // A bar shows its ceiling mounts only under a block (ShownBarIcon), when that
-                        // icon's model is loaded too.
+                        // A bar shows its ceiling mounts only under a tile they hold to (ShownBarIcon),
+                        // when that icon's model is loaded too.
                         std::uint16_t shown = block.type();
                         if (IsBarIcon(shown))
                         {
@@ -529,8 +529,7 @@ namespace GalaxyEggbert::Game
                                                      static_cast<std::uint16_t>(z))
                                           .type()
                                     : std::uint16_t{0};
-                            const std::uint16_t bar = ShownBarIcon(
-                                above, above != 0 && GalaxyEggbert::GetBlockDefinition(above).collisionMask != 0);
+                            const std::uint16_t bar = ShownBarIcon(above);
                             if (std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), bar) != modelDrawnIcons.end())
                             {
                                 shown = bar;

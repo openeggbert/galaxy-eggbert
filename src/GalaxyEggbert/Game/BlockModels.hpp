@@ -54,22 +54,28 @@ namespace GalaxyEggbert::Game
         return icon == kBarMountedIcon || icon == kBarPlainIcon;
     }
 
-    // Icons whose underside is no edge for the mounts to hold: Decor::IsRightBorder (Decor.cpp:10367)
-    // answers false for them seen from below (dy == 1).
-    inline constexpr std::array<std::uint16_t, 18> kNoUndersideEdgeIcons{
-        15, 16, 17, 18, 19, 21, 25, 26, 28, 74, 75, 87, 88, 89, 90, 154, 155, 317};
+    // The icons under which a bar has no mounts: those for which Decor::IsRightBorder (Decor.cpp:10367)
+    // answers false seen from the bar below (dx 0, dy 1), found by running that function over every
+    // icon (2026-11-02); empty, Galaxy's air, too. Passable decor not listed (the girder 201) holds
+    // them all the same.
+    inline constexpr std::array<std::uint16_t, 86> kNoMountsUnderIcons{
+        15,  16,  17,  18,  19,  21,  25,  26,  28,  32,  33,  34,  45,  46,  47,  74,  75,  87,
+        88,  89,  90,  107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
+        122, 123, 124, 125, 126, 129, 135, 138, 139, 140, 141, 142, 143, 154, 155, 157, 202, 250,
+        251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 264, 265, 266, 267, 268, 269, 270, 271,
+        272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 317, 378, 404};
 
-    // The bar a cell shows, by the icon above it and whether that one is solid (a quarter-cell
-    // collision mask). The original's editor keeps a bar so (Decor::AdaptMidBorder, the "above" bit of
-    // Tables::table_adapt_decor's bar row: 138 with it, 202 without): all 303 bars of its levels
-    // follow this. Galaxy's worlds place either icon anywhere, so the cell's own icon is not used.
-    [[nodiscard]] constexpr std::uint16_t ShownBarIcon(std::uint16_t above, bool aboveSolid) noexcept
+    // The bar a cell shows, by the icon above it (0: air). The original's editor keeps a bar so
+    // (Decor::AdaptMidBorder, the "above" bit of Tables::table_adapt_decor's bar row: 138 with it, 202
+    // without); 301 of the 303 bars of its levels follow it (two 138 under cheese 250/252, left from
+    // an edit). Galaxy's worlds place either icon anywhere, so the cell's own icon is not used.
+    [[nodiscard]] constexpr std::uint16_t ShownBarIcon(std::uint16_t above) noexcept
     {
-        if (!aboveSolid || IsBarIcon(above))
+        if (above == 0)
         {
             return kBarPlainIcon;
         }
-        for (const auto icon : kNoUndersideEdgeIcons)
+        for (const auto icon : kNoMountsUnderIcons)
         {
             if (icon == above)
             {

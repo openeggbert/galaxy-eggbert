@@ -98,8 +98,9 @@ ledgers before repeating any discovery. Where it stands:
   (OR-0024/0026/0027, M3D-0003, `BarRows.hpp`): a bar cell is two parallel pipes of the original
   model (`barre_barre`; 202 = its pipe alone, `barreplain_barre`, built with the new
   `objects.txt` option `drop=` that leaves scene parts out) along its row, one under each of
-  Blupi's hands; the cell shows its mounts only under a block (`ShownBarIcon`, the original
-  editor's rule, true for all 303 bars of its levels), whichever bar icon the world holds. On a
+  Blupi's hands; the cell shows its mounts only under a tile they hold to (`ShownBarIcon`, the
+  original editor's rule: `Decor::IsRightBorder` compiled from a copy and run over every icon in
+  `build-probe/irb/`; 301 of the 303 bars of its levels), whichever bar icon the world holds. On a
   row Blupi hangs on its centre line facing along it and moves along it only; fields (071, 074,
   075) stay free. His model hangs 6 px lower (BLUPISUSPEND) with his right palm on his pipe per
   icon (`HangingModelShift`, measured on the clip library). Evidence

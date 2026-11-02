@@ -223,15 +223,15 @@ int main()
               "the fan model turned for each fan cell blows the cell's way (-X, +X, up, down)");
     }
 
-    // The hanging bar shows its ceiling mounts (138) only under a block they can hold, as every bar
-    // of the original's levels: under nothing, another bar, or a block without an underside edge
-    // (Decor::IsRightBorder), the plain pipe 202. Both bars are one row of models.
+    // The hanging bar shows its ceiling mounts (138) only under a tile they hold to, as the original's
+    // editor (Decor::IsRightBorder): under air, another bar, or a tile it rules out, the plain pipe
+    // 202; under passable decor such as the girder 201 the mounts all the same. Both bars are one row.
     {
         using GalaxyEggbert::Game::ShownBarIcon;
-        check(ShownBarIcon(0, false) == 202 && ShownBarIcon(10, true) == 138 && ShownBarIcon(138, false) == 202 &&
-                  ShownBarIcon(202, false) == 202 && ShownBarIcon(25, true) == 202 && ShownBarIcon(15, true) == 202 &&
-                  ShownBarIcon(230, true) == 138,
-              "a bar shows its mounts only under a block with an underside edge");
+        check(ShownBarIcon(0) == 202 && ShownBarIcon(10) == 138 && ShownBarIcon(138) == 202 &&
+                  ShownBarIcon(202) == 202 && ShownBarIcon(25) == 202 && ShownBarIcon(15) == 202 &&
+                  ShownBarIcon(230) == 138 && ShownBarIcon(201) == 138 && ShownBarIcon(264) == 202,
+              "a bar shows its mounts only under a tile they hold to (Decor::IsRightBorder)");
         check(GalaxyEggbert::Game::ModelRowFamily(202) == GalaxyEggbert::Game::ModelRowFamily(138) &&
                   GalaxyEggbert::Game::ModelRowFamily(201) == 201,
               "the mounted and the plain bar continue one row");
