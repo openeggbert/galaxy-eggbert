@@ -24,13 +24,15 @@ go 56 50 tol 0.1
 until ground = 1 max 120
 expect y <= 35.05
 go 56 47
-go 56 44.5
-until ground = 1 max 300
-expect y <= 31.05
+go 56 45 tol 0.1
+until y <= 31.05 max 300
+# The drop lands on the rods over the corner's pit of lava (x 53-57, z 45): hung from westward
+# onto S2's floor.
+go 52.3 45 max 600
+expect y >= 30.95
 # S2 (walk 31): west along z 45, under and beside the four stars asleep under the ceiling
 # (51-54, 33, 44; two cells and more away), onto the lift (49, 44) from the east, up into the
 # pocket: its treasures along z 45 and z 43, off the lift's hole.
-go 54 45
 go 50.3 44.6 tol 0.1
 face 270
 lift 49 35 44 max 600
@@ -212,7 +214,8 @@ go 52.75 52.6 tol 0.15 until treasures = 12
 until treasures = 12 max 120
 go 52.2 51.3 tol 0.15
 go 51 50
-go 50 49.4 tol 0.15
+# Close to where it was left (z 49.0; from 49.5 its box was a hundredth of a cell from reach).
+go 50 49.15 tol 0.1
 hold 2 action
 wait 30
 # Into the helicopter again, to the well's north-west corner and straight up it, clear of the

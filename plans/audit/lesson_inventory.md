@@ -7,7 +7,7 @@ Clusters are the original map's cells (x, y; 64 px tiles), `xN` the cells in the
 |---|---|---|---|
 | 013 | - | helicopter 13 -> 4 | - |
 | 046 | bar: (47,19)x1 | crate 8 -> 1 | - |
-| 052 | bar: (71,34)x11 (70,22)x8 | - | - |
+| 052 | - | - | lava |
 | 061 | bar: (63,38)x6 | - | - |
 | 105 | lava: (22,44)x21; teleport: (19,33)x1 (21,1)x1 | - | - |
 | 112 | water: (22,26)x11 (19,17)x2 | - | - |

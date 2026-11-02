@@ -29,6 +29,8 @@ from kit import O, World, lift, rect  # noqa: E402
 from station import GRILLE, PLATE_EDGES, WATER, metal, treasure_door  # noqa: E402
 
 SKY = 13
+LAVA = 68
+ROD = 202                        # a bar along X Blupi hangs from (ThinBar), seen from every side
 RING = (40, 40, 60, 60)          # the station block round the well (x0, z0, x1, z1), y 10-42
 WELL = (47, 47, 53, 53)          # the well's inside, open from its floor (walk 11) to the sky
 # The spiral's stretches: (cells, walk). Corners belong to the stretch that starts there.
@@ -85,6 +87,15 @@ def main(argv) -> int:
     carve(rect(43, 43, 45, 45), S3[1], S2[1] + 2)    # north-west: S2 -> S3
     carve(rect(43, 55, 45, 57), S4[1], S3[1] + 2)    # south-west: S3 -> S4
     carve(rect(55, 55, 57, 57), S5[1], S4[1] + 2)    # south-east: S4 -> S5
+    # The north-east corner: the drop from S1 lands on a row of rods over a pit of lava (x 53-57,
+    #    z 45), hung from westward onto S2's floor (the original's bars under its shafts,
+    #    LV-0027); for levelcheck (any stage) a floor under them, as it cannot hang.
+    carve(rect(53, 43, 57, 45), 27, 30)
+    w.fill(53, 26, 43, 57, 26, 45, LAVA)
+    if stage:
+        w.fill(53, 30, 45, 57, 30, 45, 82)
+    else:
+        w.fill(53, 31, 45, 57, 31, 45, ROD)
     # The doors, each at the far end of its stretch.
     door([(x, 46) for x in (55, 56, 57)], S1[1], 2, 1)
     door([(46, z) for z in (43, 44, 45)], S2[1], 4, 2)
