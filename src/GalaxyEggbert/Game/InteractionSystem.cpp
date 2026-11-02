@@ -862,12 +862,48 @@ namespace GalaxyEggbert::Game
             }
         }
 
-        // Established 3D pickup-radius approximation, covered by interaction tests.
+        // Contact as Decor::MoveObjectDetect has it (Decor.cpp, "src"/"src3" boxes; it replaced a
+        // 0.7-cell sphere, BD-0021): Blupi 28 px across (pos+16..+44) and from 11 to 58 px below
+        // the top of his cell; an object 28 px across and, by type, the bottom 24 px of its cell
+        // (most), the top 24 (the hanging mine, 3), the middle 28 (fish 17, bird 20, wasp 44, big
+        // creature 54), or a bullet (23) 16 px across from 10 to 28. Across is X and Z alike in
+        // 3D. dx/dy/dz: object minus Blupi, in cells, y up; both stand on their cells' floors.
+        // `widen`/`above`/`below` grow Blupi's box (the still mine's near-miss box: 20 px each
+        // side, 40 above, 30 below).
+        bool MoveObjectTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz, float widen = 0.0f,
+                               float above = 0.0f, float below = 0.0f)
+        {
+            using T = GalaxyEggbert::Def::ObjectType;
+            float objAcross = 28.0f, objTop = 36.0f, objBottom = 60.0f;
+            if (type == T::ObjectType3)
+            {
+                objTop = 0.0f;
+                objBottom = 24.0f;
+            }
+            else if (type == T::ObjectType17 || type == T::ObjectType20 || type == T::ObjectType44 ||
+                     type == T::ObjectType54)
+            {
+                objTop = 16.0f;
+                objBottom = 44.0f;
+            }
+            else if (type == T::ObjectType23)
+            {
+                objAcross = 16.0f;
+                objTop = 10.0f;
+                objBottom = 28.0f;
+            }
+            const float reach = (28.0f + 2.0f * widen + objAcross) * 0.5f / 64.0f;
+            if (std::fabs(dx) >= reach || std::fabs(dz) >= reach)
+            {
+                return false;
+            }
+            const float blupiTop = 11.0f - above, blupiBottom = 58.0f + below;
+            const float dyScreen = -dy * 64.0f; // screen y grows downward
+            return objTop + dyScreen < blupiBottom && objBottom + dyScreen > blupiTop;
+        }
+        // The old 0.7-cell sphere: still the pickups' reach (BD-0021 open) and a moving object
+        // meeting an enemy Blupi (not Blupi's own contact).
         constexpr float kPickupRadius = 0.7f;
-        // The real contact hitbox is a tile-based rectangle overlap
-        // (MoveObjectDetect), not a radius -- kPickupRadius is reused here
-        // as the closest existing documented approximation, same
-        // simplification already applied to every pickup type above.
         constexpr float kHazardContactRadius = kPickupRadius;
 
         // Real `BlupiElectro` aura (plan.md `068`, Decor.cpp:9610-9638,
@@ -1075,12 +1111,11 @@ namespace GalaxyEggbert::Game
     {
         events_.clear();
         ridingLift_ = false;
-        // The contact grace ends 30 px from where it began (Decor.cpp:6341-6345), there already out
-        // of the original's 28 px contact box; Galaxy's contact sphere reaches farther
-        // (kHazardContactRadius), so the grace lasts until he is out of it.
+        // The contact grace ends 30 px from where it began (Decor.cpp:6341-6345), out of the
+        // contact box (MoveObjectTouches) by then.
         if (contactGrace_)
         {
-            constexpr float kGraceReach = std::max(30.0f / 64.0f, kHazardContactRadius);
+            constexpr float kGraceReach = 30.0f / 64.0f;
             if (std::fabs(blupiX - graceX_) > kGraceReach || std::fabs(blupiY - graceY_) > kGraceReach ||
                 std::fabs(blupiZ - graceZ_) > kGraceReach)
             {
@@ -1754,7 +1789,7 @@ namespace GalaxyEggbert::Game
                 const float bdx = obj.currentX - blupiX;
                 const float bdy = obj.currentY - blupiY;
                 const float bdz = obj.currentZ - blupiZ;
-                if (!blupiInvincible && bdx * bdx + bdy * bdy + bdz * bdz < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && MoveObjectTouches(obj.type, bdx, bdy, bdz))
                 {
                     AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     obj.active = false;
@@ -1786,7 +1821,7 @@ namespace GalaxyEggbert::Game
                 const float wdx = obj.currentX - blupiX;
                 const float wdy = obj.currentY - blupiY;
                 const float wdz = obj.currentZ - blupiZ;
-                if (!blupiInvincible && wdx * wdx + wdy * wdy + wdz * wdz < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && MoveObjectTouches(obj.type, wdx, wdy, wdz))
                 {
                     events_.push_back(Event{EventKind::BalloonTouched});
                 }
@@ -1839,7 +1874,7 @@ namespace GalaxyEggbert::Game
                     const float gdx = obj.currentX - blupiX;
                     const float gdy = obj.currentY - blupiY;
                     const float gdz = obj.currentZ - blupiZ;
-                    if (gdx * gdx + gdy * gdy + gdz * gdz < kHazardContactRadius * kHazardContactRadius)
+                    if (MoveObjectTouches(obj.type, gdx, gdy, gdz))
                     {
                         events_.push_back(Event{EventKind::Died});
                         // Real LoseLife()/respawn deferred to the death-lock resolution point
@@ -1888,17 +1923,16 @@ namespace GalaxyEggbert::Game
                 const float hdx = obj.currentX - blupiX;
                 const float hdy = obj.currentY - blupiY;
                 const float hdz = obj.currentZ - blupiZ;
-                const float hd2 = hdx * hdx + hdy * hdy + hdz * hdz;
-                // A patrolling enemy passing close without touching (Decor.cpp:9763-9767,
-                // MoveObjectDetect's rect 20 px wider for ObjectType2): his "phew" (Ouf4, armed by
+                const bool touches = MoveObjectTouches(obj.type, hdx, hdy, hdz);
+                // A still mine close without touching (Decor.cpp:9763-9767, MoveObjectDetect's
+                // near box: 20 px wider each side, 40 above, 30 below): his "phew" (Ouf4, armed by
                 // the caller).
-                constexpr float kNearMissRadius = kHazardContactRadius + 20.0f / 64.0f;
-                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 &&
-                    hd2 >= kHazardContactRadius * kHazardContactRadius && hd2 < kNearMissRadius * kNearMissRadius)
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 && !touches &&
+                    MoveObjectTouches(obj.type, hdx, hdy, hdz, 20.0f, 40.0f, 30.0f))
                 {
                     ReplaceEvent(EventKind::EnemyNearMiss, Event{EventKind::EnemyNearMiss});
                 }
-                if (!blupiInvincible && !contactGrace_ && hd2 < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && !contactGrace_ && touches)
                 {
                     if (blupiBallooned &&
                         GetObjectDefinition(obj.type).balloonPoppableHazard)
@@ -1976,8 +2010,7 @@ namespace GalaxyEggbert::Game
                 const float sdx = obj.currentX - blupiX;
                 const float sdy = obj.currentY - blupiY;
                 const float sdz = obj.currentZ - blupiZ;
-                if (!blupiInvincible &&
-                    sdx * sdx + sdy * sdy + sdz * sdz < kHazardContactRadius * kHazardContactRadius)
+                if (!blupiInvincible && MoveObjectTouches(obj.type, sdx, sdy, sdz))
                 {
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});
@@ -2015,6 +2048,8 @@ namespace GalaxyEggbert::Game
             const float dx = obj.currentX - blupiX;
             const float dy = obj.currentY - blupiY;
             const float dz = obj.currentZ - blupiZ;
+            // Pickups keep the 0.7-cell sphere for now: the playthroughs were planned with it (31
+            // of the first 46 missed an item with the original's boxes); BD-0021 open.
             const bool touching = (dx * dx + dy * dy + dz * dz) < kPickupRadius * kPickupRadius;
 
             // Secret exit (ObjectType21, plan.md PICKUP-009/083, found 2026-07-16) shares the

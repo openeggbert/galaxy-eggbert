@@ -75,7 +75,7 @@ go 71.5 64
 go 64 67
 go 63 67 until eggs = 4
 go 64 64
-go 67 62.6 tol 0.15
+go 67 62.3 tol 0.15
 until y >= 47.3 max 600
 go 67 62.3 tol 0 with jump until y >= 55.6 max 600
 go 67 59.8 tol 0.2 with crouch max 300
@@ -86,7 +86,7 @@ expect y >= 54.95
 # floor (walk 67) south of the well's mouth.
 go 70 60
 go 72 62.4
-go 75 62.6 tol 0.15
+go 75 62.3 tol 0.15
 until y >= 55.3 max 600
 go 75 63.8 tol 0 with jump until y >= 67.6 max 700
 go 75 65.4 tol 0.2 with crouch max 300

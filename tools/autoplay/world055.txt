@@ -4,7 +4,7 @@ expect mission = 55
 # A, the start shaft (walk 10): the wasp sweeping its floor (z 71) gives a balloon; up four,
 # held at the niche's height with crouch, drifted into the west niche (x 17-19, y 14-16) and
 # let down there for treasure 1 (18, 14, 71).
-go 23 71.6 tol 0.1
+go 23 71.3 tol 0.1
 until y >= 10.2 max 600
 go 23 71.6 tol 0 until y >= 14.4 max 400
 go 18.4 71 tol 0.2 with crouch max 300
@@ -14,7 +14,7 @@ until treasures = 1 max 120
 # Out, down to the floor, the next balloon into the east niche (x 27-29) for treasure 2.
 go 21 71.6
 until ground = 1 max 300
-go 23 71.6 tol 0.1
+go 23 71.3 tol 0.1
 until y >= 10.2 max 600
 go 23 71.6 tol 0 until y >= 14.4 max 400
 go 27.6 71 tol 0.2 with crouch max 300
@@ -27,7 +27,7 @@ until treasures = 2 max 120
 # down the drop (z 55-58) to walk 4.
 go 25 71.6
 until ground = 1 max 300
-go 23 71.6 tol 0.1
+go 23 71.3 tol 0.1
 until y >= 10.2 max 600
 go 23 69 tol 0 with jump until y >= 18.4 max 600
 go 23 66.2 tol 0.2 with crouch max 300
@@ -42,7 +42,7 @@ expect y <= 4.05
 # to (23, 38.6), between the corner ledges' mines and north of the block in the middle, up to
 # its mouth north (walk 14), into the passage.
 go 23 46
-go 23 42.6 tol 0.1
+go 23 42.3 tol 0.1
 until y >= 4.2 max 600
 go 23 38.6 tol 0 with jump until y >= 14.4 max 600
 go 23 36.2 tol 0.2 with crouch max 300
@@ -52,7 +52,7 @@ expect y >= 13.95
 # sweeping across at z 27 and z 29 (a plate juts out of the wall at x 23), up to its mouth east
 # (walk 24) into the inverts' corridor.
 go 23 30.5
-go 23 28.6 tol 0.1
+go 23 28.3 tol 0.1
 until y >= 14.2 max 600
 go 25 25.4 tol 0 with jump until y >= 24.4 max 600
 go 27.8 28 tol 0.2 with crouch max 300

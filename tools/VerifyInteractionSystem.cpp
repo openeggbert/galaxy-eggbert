@@ -309,10 +309,10 @@ int main(int argc, char** argv)
                 died = step(sys, *rt, 0.0f, false) || died;
             check(popped && !died && sys.ContactGraceActive(),
                   "a spider pops his balloon and does not kill him while he stays within 30 px (Decor.cpp:5780)");
-            step(sys, *rt, 0.6f, false); // 38 px away but still within the hazards' contact reach
-            check(sys.ContactGraceActive(), "the grace lasts while he is within the hazards' contact reach");
-            step(sys, *rt, 0.8f, false); // out of it: the grace ends
-            check(!sys.ContactGraceActive(), "the grace ends once he is out of contact reach of where it began");
+            step(sys, *rt, 0.4f, false); // 26 px away: within the original's 30
+            check(sys.ContactGraceActive(), "the grace lasts while he is within 30 px of where it began");
+            step(sys, *rt, 0.5f, false); // 32 px: the grace ends (Decor.cpp:6341-6345)
+            check(!sys.ContactGraceActive(), "the grace ends once he is 30 px from where it began");
             check(step(sys, *rt, 0.0f, false), "back on the spider, it kills him");
         }
         {
@@ -324,6 +324,21 @@ int main(int argc, char** argv)
                 died = step(sys, *rt, 0.0f, false) || died;
             check(!died && rt->GetMobileObjects()[0].active,
                   "off a vehicle or out of a teleporter onto a mine: neither he nor the mine goes while he stays");
+        }
+        // Contact as MoveObjectDetect's boxes (BD-0021): 28 px across each, so a still mine kills
+        // with its middle within 28 px (0.44 cell) of his, not from 0.7 as the old sphere did.
+        {
+            auto far = runWorld(GalaxyEggbert::Def::ObjectType::ObjectType2, 0.5f);
+            InteractionSystem farSys;
+            check(!step(farSys, *far, 0.0f, false), "a still mine half a cell away does not touch him (28 px boxes)");
+            auto near = runWorld(GalaxyEggbert::Def::ObjectType::ObjectType2, 0.4f);
+            InteractionSystem nearSys;
+            check(step(nearSys, *near, 0.0f, false), "a still mine 0.4 cell away touches him");
+            auto below = runWorld(GalaxyEggbert::Def::ObjectType::ObjectType2, 0.0f);
+            InteractionSystem belowSys;
+            belowSys.Update(dt, *below, 0.0f, 21.0f, 0.0f, 0.0f, sound, false, false);
+            check(!hasEvent(belowSys, InteractionSystem::EventKind::Died),
+                  "a still mine a cell below his feet does not touch him");
         }
     }
 

@@ -330,6 +330,30 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   on and off a ledge; the helicopter receding without a teeter); all playthroughs, the 33 with
   vehicles again after the vehicle rules.
 
+## BD-0021 — hazards reached Blupi from a 0.7-cell sphere; the original's boxes are smaller (gameplay) — FIXED_AND_VERIFIED (pickups open)
+
+- Open since the BD-0010 review ("contact reach: 0.7 sphere vs 28 px box"). Decor::MoveObjectDetect
+  intersects two boxes: Blupi 28 px across (pos+16..+44), from 11 to 58 px below his cell's top;
+  an object 28 px across and, by type, the bottom 24 px of its cell (most, pickups included),
+  the top 24 (the hanging mine, 3; not while he crouches), the middle 28 (fish 17, bird 20, wasp
+  44, big creature 54), or a bullet (23) 16 px across from 10 to 28. So a still mine kills with
+  its middle within 28 px (0.44 of a cell) of his; Galaxy's sphere reached 0.7 (45 px), about
+  60 % farther, up and down alike. The still mine's near-miss box (Ouf4) is Blupi's grown 20 px
+  each side, 40 above and 30 below; the contact grace ends at 30 px (6341-6345).
+- Now `MoveObjectTouches` in InteractionSystem, across in X and Z alike, for the generic hazards,
+  their near miss, bullets, the wasp's balloon, the big creature and lethal decor; the grace ends
+  at 30 px. A moving object meeting an enemy Blupi keeps the sphere (not Blupi's contact).
+- The teleporters' re-entry guard was the grace (BD-0017). The original's 30 px suffices there
+  only because its trigger is a 7 px band (IsTeleporte, `pos.X % 64 <= 6`); Galaxy's is the
+  whole cell under the pillar, so with 30 px he went straight back (034's chi). Now a teleporter
+  also waits until he has left the cell he arrived in (`teleportArrivalGuard_`).
+- Open: pickups keep the sphere. With the boxes 31 of the first 46 playthroughs missed an item
+  (their `go` targets stop within 0.25 of a point chosen with the 0.7 reach); moving every target
+  onto its item is a job of its own. Two wasp waits moved into its box (054, 055: 0.6 -> 0.3 from
+  its lane).
+- Validation: `VerifyInteractionSystem` (a mine at 0.5 cell misses, at 0.4 touches, a cell below
+  misses; the grace's 30 px); all playthroughs.
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

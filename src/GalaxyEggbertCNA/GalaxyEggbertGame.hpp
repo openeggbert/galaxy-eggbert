@@ -447,6 +447,12 @@ namespace GalaxyEggbert::CNA
             GalaxyEggbert::Game::MobileObjSpec deposit;
         };
         PendingSkate pendingSkate_;
+        // The cell a teleporter put him in: no teleporter takes him while he stays in it. The
+        // original's 30 px (m_blupiPosHelico) suffices there because its trigger is a 7 px band
+        // (Decor::IsTeleporte, pos.X % 64 <= 6); Galaxy's is the whole cell under the pillar.
+        bool teleportArrivalGuard_ = false;
+        int teleportArrivalCellX_ = 0;
+        int teleportArrivalCellZ_ = 0;
         // Automatic zoom on action (the Setup's SetupZoom, Decor::MoveHotSpot; OR-0010): the
         // chase camera's distance is divided by it (1.0 .. 1.3).
         float chaseZoom_ = 1.0f;

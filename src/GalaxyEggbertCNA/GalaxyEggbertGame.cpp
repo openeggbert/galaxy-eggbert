@@ -1166,6 +1166,7 @@ namespace GalaxyEggbert::CNA
         titleSceneActive_ = false;
         winCheerActive_ = false;
         pendingSkate_ = {};
+        teleportArrivalGuard_ = false;
         accelWaitZero_ = true; // StartMission(): the first tilt waits for a level device
         char path[64];
         std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
@@ -3203,6 +3204,9 @@ namespace GalaxyEggbert::CNA
                     // camera goes behind him at once rather than easing over from the departure,
                     // maybe far away (2026-10-26, reported by the world authoring).
                     interaction_.StartContactGrace(destX, destY, destZ);
+                    teleportArrivalGuard_ = true;
+                    teleportArrivalCellX_ = static_cast<int>(std::lround(destX));
+                    teleportArrivalCellZ_ = static_cast<int>(std::lround(destZ));
                     interaction_.SpawnTeleportArrival(worldRuntime_, destX, destY, destZ);
                     chaseCamera_.Reset(blupi_.GetYaw());
                     cameraSmoothedInitialized_ = false;
@@ -3681,9 +3685,17 @@ namespace GalaxyEggbert::CNA
             // every other Trigger*() here, so channel 71 only plays on an
             // actual new trigger.
             // Not while m_blupiPosHelico is set (Decor.cpp:5594): just off a vehicle, out of a
-            // popped balloon, or where a teleporter put him, until he has left that spot (BD-0017).
+            // popped balloon, or where a teleporter put him, until he is 30 px from that spot
+            // (BD-0017); and not before he has left the cell a teleporter put him in, since here
+            // the whole cell under a pillar triggers, not the original's 7 px band (BD-0021).
             const auto aboveIcon = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
+            if (teleportArrivalGuard_ && (static_cast<int>(std::lround(blupi_.GetX())) != teleportArrivalCellX_ ||
+                                          static_cast<int>(std::lround(blupi_.GetZ())) != teleportArrivalCellZ_))
+            {
+                teleportArrivalGuard_ = false; // he has left the cell he arrived in
+            }
             if (GalaxyEggbert::BlockTypes::isTeleporter(aboveIcon) && !interaction_.ContactGraceActive() &&
+                !teleportArrivalGuard_ &&
                 blupi_.TriggerTeleport(aboveIcon))
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
