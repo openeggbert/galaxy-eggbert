@@ -54,14 +54,14 @@ namespace GalaxyEggbert::Game
     // The clay bridge 364 and its shaking 365-366 (Decor/grotte-fragile1.rd4; its crumbling pieces
     // 367-372 are the ObjectType52's, drawn in the same cell).
     // The lightning's emitter 304 (Decor/eclair.rd4, IoU 0.94), its front toward the open side.
-    // The saws' switch 384/385 (Decor/interrupteur.rd4, IoU 1.0, front toward the open side), the
-    // conveyor 311-316 (Decor/chenille.rds, 0.95-0.96) and the column 375 (Decor/colonne1.rds, 0.90)
-    // (OR-0050's sweep).
-    inline constexpr std::array<std::uint16_t, 31> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+    // The saws' switch 384/385 (Decor/interrupteur.rd4, IoU 1.0, front toward the open side) and the
+    // conveyor 311-316 (Decor/chenille.rds, 0.95-0.96) (OR-0050's sweep). Not the column 375:
+    // Decor/colonne1.rds matches its silhouette (0.90) but is a plain box; the turned shaft is
+    // Decor/smooth/colonne1.a3d, not converted yet.
+    inline constexpr std::array<std::uint16_t, 30> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
                                                                      334, 335, 336, 211, 364, 365, 366, 304,
-                                                                     384, 385, 311, 312, 313, 314, 315, 316,
-                                                                     375};
+                                                                     384, 385, 311, 312, 313, 314, 315, 316};
 
     // The spring 211 is drawn as Decor/ressort.rd4 always bouncing as the original draws it:
     // Tables::table_ressort[(m_time / 2 + column * 7) % 8] (Decor.cpp:926-929; the column's 7

@@ -163,8 +163,8 @@ drip404     object-m 404-410 Decor/goutte/goutte01.rds,Decor/goutte/goutte02.rds
 # The lightning's emitter (304; owner 2026-11-02: the lightning in 3D): Decor/eclair.rd4 (IoU 0.94,
 # tone 29.5 -> 19.9). The bolt between two emitters (305-307) has no scene.
 emitter304  object-m 304 Decor/eclair.rd4 tone=0.75,13
-# OR-0050's sweep (plans/audit/model_sources.md): the saws' switch, the conveyor (stretched along Z
-# to the cell's depth, BlockModels.hpp ModelDepthScale) and a column.
+# OR-0050's sweep (plans/audit/model_sources.md): the saws' switch and the conveyor (stretched along
+# Z to the cell's depth, BlockModels.hpp ModelDepthScale). The column 375's Decor/colonne1.rds
+# matches its silhouette but is a plain box (the turned shaft is Decor/smooth/colonne1.a3d).
 switch384   object-m 384-385 Decor/interrupteur.rd4 tone=0.70,15
 conveyor311 object-m 311-316 Decor/chenille.rds tone=0.66,11
-column375   object-m 375 Decor/colonne1.rds tone=0.86,-13

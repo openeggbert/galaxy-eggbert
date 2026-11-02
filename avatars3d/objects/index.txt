@@ -37,7 +37,6 @@ bd_vase1_vase1
 bird_oiseau
 bridge364_grotte-fragile1
 bulldozer_tracks-profil
-column375_colonne1
 column_support1
 conveyor311_chenille
 creature_creature1

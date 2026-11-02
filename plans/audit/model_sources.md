@@ -4,17 +4,18 @@
 
 | State | Scenes |
 |---|---|
-| in game | 162 |
+| in game | 161 |
 | in game otherwise | 8 |
 | converted, not exported | 0 |
 | terrain tile (Q-004) | 129 |
-| matched, not converted | 1 |
+| matched, not converted | 2 |
 | no game sprite | 228 |
 
 ## Matched, not converted
 
 | Scene | Sprites rendered from it |
 |---|---|
+| `Decor/colonne1.rds` | object-m:375 |
 | `Decor/electro.rd4` | object-m:238 object-m:239 object-m:240 object-m:242 |
 
 ## Terrain tile (q-004)
@@ -253,7 +254,6 @@
 | `Decor/aplatisseur.rd4` | object-m:317 object-m:318 object-m:319 object-m:320 |
 | `Decor/barre.rd4` | object-m:138 |
 | `Decor/chenille.rds` | object-m:311 object-m:312 object-m:313 object-m:314 object-m:315 object-m:316 |
-| `Decor/colonne1.rds` | object-m:375 |
 | `Decor/dynamite.rd4` | element:252 element:253 element:254 element:255 |
 | `Decor/eclair.rd4` | object-m:304 |
 | `Decor/goutte/goutte01.rds` | object-m:404 |
