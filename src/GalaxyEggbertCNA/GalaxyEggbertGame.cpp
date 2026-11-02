@@ -27,6 +27,8 @@
 #include <Microsoft/Xna/Framework/Graphics/ModelMeshPart.hpp>
 #include <Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp>
 
+#include <Microsoft/Xna/Framework/Graphics/SamplerState.hpp>
+
 #include <algorithm>
 #include <unordered_set>
 #include <cmath>
@@ -5097,10 +5099,33 @@ namespace GalaxyEggbert::CNA
                 camPos.Y + forward.Y * kBackgroundDistance,
                 camPos.Z + forward.Z * kBackgroundDistance);
 
+            // A distant panorama (owner 2026-11-02, OR-0053: it stood still on the screen as the
+            // camera turned). The original tiles its 640 x 480 picture and scrolls it at 2/3 of
+            // the world's scroll (Decor.cpp:650-700); here the picture is wrapped round the
+            // horizon N times, N the whole number of screen widths in a turn (so it keeps about
+            // the width it had), turning the camera scrolls it, and the camera's height moves it
+            // up and down at 2/3, as the original's vertical scroll.
+            constexpr float kTwoPi = 6.28318530718f;
+            const float verticalFov = camera_.FieldOfView();
+            const float horizontalFov = 2.0f * std::atan(std::tan(verticalFov * 0.5f) * camera_.AspectRatio());
+            const float repeats = std::max(1.0f, std::round(kTwoPi / horizontalFov));
+            const float imageAngleWide = kTwoPi / repeats;      // one picture's width, radians
+            const float imageAngleHigh = imageAngleWide * 0.75f; // 640 x 480
+            const float quadAngleWide = 2.0f * std::atan(halfWidth / kBackgroundDistance);
+            const float quadAngleHigh = 2.0f * std::atan(halfHeight / kBackgroundDistance);
+            const float yaw = std::atan2(forward.X, -forward.Z);
+            const float pitch = std::asin(std::clamp(forward.Y, -1.0f, 1.0f));
+            const float uWidth = quadAngleWide / imageAngleWide;
+            const float vHeight = quadAngleHigh / imageAngleHigh;
+            const float uCenter = yaw / imageAngleWide;
+            constexpr float kParallax = 2.0f / 3.0f;
+            const float vCenter = 0.5f - (camPos.Y * 64.0f * kParallax) / 480.0f - pitch / imageAngleHigh;
             auto mesh = MakeTexturedMeshBuilder();
             mesh.AddBillboard(quadCenter,
                               Microsoft::Xna::Framework::Vector2(halfWidth * 2.0f, halfHeight * 2.0f),
-                              cameraRight, cameraUp, CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+                              cameraRight, cameraUp,
+                              CnaEngine::Graphics::UvRect{uCenter - uWidth * 0.5f, vCenter - vHeight * 0.5f,
+                                                          uCenter + uWidth * 0.5f, vCenter + vHeight * 0.5f});
 
             if (!mesh.Mesh().Empty())
             {
@@ -5108,6 +5133,8 @@ namespace GalaxyEggbert::CNA
                 backgroundEffect_->View = camera_.View();
                 backgroundEffect_->Projection = camera_.Projection();
                 backgroundEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                // The panorama wraps (its UVs run past 0..1).
+                device.getSamplerStatesProperty()[0] = Microsoft::Xna::Framework::Graphics::SamplerState::LinearWrap;
                 // No CullNone override needed here -- fixed at the source
                 // (2026-07-09, NEXT.md §8 task 0): billboards used to be
                 // back-facing under the default CullCounterClockwise state;
