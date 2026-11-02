@@ -20,10 +20,10 @@ face 0
 go 10 47.6 jump 1.3 tol 0.15
 until ground = 1
 expect y >= 23.9
-# The wind deck: jump when its mine (x 8) is in lane z 44, the wind carries him west past it
-# in lane z 45 onto the landing.
+# The wind deck: jump when its mine (x 8, z 43-46) is beyond lane z 44, the wind carries him
+# west past it in lane z 45 onto the landing.
 go 10 45.65 tol 0.1
-near 8 26 44 0.1 max 300
+near 8 26 43 0.1 max 300
 go 8.5 45.1 jump 2
 go 5 45
 expect x <= 6.5

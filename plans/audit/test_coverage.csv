@@ -22,6 +22,7 @@ crate overhang onto a crate / ledge / water by the 20 px support (OR-0023),gamep
 crate pull with little room behind / pulled again (OR-0021),gameplay,unit,VerifyInteractionSystem (timing),pass,BD-0014
 crate lane slide (a sliver across blocks a push),gameplay,unit+autoplay,VerifyInteractionSystem; world041.txt,pass,M3D-0002
 autoplay crate waits with tol and rest logging,tooling,unit,VerifyAutoplay,pass,
+creature speed and rest per type (OR-0005),world data,static audit,tools/audit/patrol_envelope.py,pass,BD-0016: 0 creatures off their type's original timing (world999 exhibition excluded)
 leaving a vehicle only on the ground / off lifts / both feet / skate slow (OR-0020),gameplay,unit+autoplay,VerifyBlupiMovement; world025/065/102/114.txt,pass,
 helicopter ceiling crash (OR-0019),gameplay,unit+autoplay,VerifyBlupiMovement; world043/115/125.txt,pass,
 lift rider's clip (OR-0018),gameplay,unit,VerifyBlupiMovement,pass,clip only; riding unchanged

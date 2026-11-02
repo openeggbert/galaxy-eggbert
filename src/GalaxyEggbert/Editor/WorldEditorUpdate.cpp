@@ -3,6 +3,7 @@
 #include "BoxRegion.hpp"
 #include "VoxelRaycast.hpp"
 #include <GalaxyEggbert/Game/Hud.hpp>
+#include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
@@ -699,6 +700,18 @@ namespace GalaxyEggbert::Editor
             after.posEndX = static_cast<float>(hitCellX_);
             after.posEndY = static_cast<float>(hitCellY_);
             after.posEndZ = static_cast<float>(hitCellZ_);
+            // A creature's patrol takes its type's own speed and rests, as the original editor
+            // gave them (BD-0016); the fields stay editable afterwards.
+            const auto& definition = Game::GetObjectDefinition(after.type);
+            if (definition.patrolTicksPerCell > 0)
+            {
+                const float cells = std::max({std::fabs(after.posEndX - after.posStartX),
+                                              std::fabs(after.posEndY - after.posStartY),
+                                              std::fabs(after.posEndZ - after.posStartZ)});
+                after.stepAdvanceTicks = after.stepRecedeTicks =
+                    cells * static_cast<float>(definition.patrolTicksPerCell);
+                after.timeStopStartTicks = after.timeStopEndTicks = static_cast<float>(definition.patrolRestTicks);
+            }
             EditCommand command;
             command.kind = EditCommand::Kind::MoveObjectEdit;
             command.objectAnchorX = selectedAnchorX_;

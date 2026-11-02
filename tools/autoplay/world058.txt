@@ -194,11 +194,15 @@ hold 2 action
 wait 30
 face 80
 near 60 30 86 0.15 max 600
+# Its mine is at the original's 2 cells/s now (BD-0016): 80-96 pass (autoplay_search).
+wait 88
 go 61.7 84.05 tol 0.15
 go 62.15 85 tol 0.15
 go 62 86 tol 0.15
 face 260
 near 62 30 84 0.15 max 600
+# And back past it: 64-88 pass (autoplay_search, BD-0016).
+wait 76
 go 60.3 85.95 tol 0.15
 go 59.85 85 tol 0.15
 go 60.2 84.3 tol 0.15

@@ -117,8 +117,10 @@ def stair(w: World, rng: random.Random, stage):
             if z != free:
                 mine(w, 36 + 2 * k, WC + 1 + k, z)
     if not at_least(stage, "timed"):
+        # Across the step's three lanes and a cell beyond (the original's 30-tick mines cross
+        # three cells; at its speed a two-cell beat came back before Blupi was across, BD-0016).
         for k, ticks in ((6, 30), (14, 30)):
-            patrol(w, O.MOVING_MINE, (36 + 2 * k, WC + 1 + k, 72), (36 + 2 * k, WC + 1 + k, 74), ticks)
+            patrol(w, O.MOVING_MINE, (36 + 2 * k, WC + 1 + k, 72), (36 + 2 * k, WC + 1 + k, 75), ticks)
     w.place(O.EGG, 40, WC + 3, 74)
     w.place(O.EGG, 72, WC + 19, 72)
     for x in (40, 56, 72):                                  # the girders

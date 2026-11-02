@@ -4,9 +4,10 @@ expect mission = 32
 # A: up the lane to the street, east to wait west of the bulldozer's beat (x 24-30, z 82).
 go 10 82.5
 go 22 82
-# Its cycle is 660 ticks (60 at x 24, 270 east, 60 at x 30, 270 back): follow it east through
-# the gate (x 26-28) and step aside onto z 83 while it waits at x 30.
-until mtick >= 830
+# Its cycle is the original's (BD-0016): 1200 frames (60 at x 24, 540 east, 60 at x 30, 540
+# back): follow it east through the gate (x 26-28) and step aside onto z 83 while it waits at
+# x 30 (frames 1600-1700 pass, autoplay_search).
+until mtick >= 1650
 go 28.6 82 tol 0.1
 go 29.4 83
 go 36 83
@@ -18,11 +19,11 @@ go 40 81.2 tol 0.1
 go 40 78.5 jump 2.4
 until ground = 1
 expect y >= 9.9
-# B: L1 heading +X; the wasp sweeps it at x 58 (z 74-80, a 96-tick cycle from z 74): cross
-# it along the mountain's foot (z 74.4) while it is out over the ledge.
+# B: L1 heading +X; the wasp sweeps it at x 58 (z 74-80; the original's 240-frame cycle,
+# BD-0016): cross it along the mountain's foot (z 74.4); every phase passes now.
 go 41 77
 go 56.5 74.4 tol 0.1
-until mtick >= 1931
+until mtick >= 2760
 go 60 74.4
 go 75.5 75
 # L2 up the east face, heading -Z: two steps up (z 65.5, z 57.5).

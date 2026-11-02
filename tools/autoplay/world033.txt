@@ -118,16 +118,17 @@ go 60.05 47
 go 69 55 tol 0.1
 until treasures = 8 max 200
 go 60.6 47
-# The bridge across the atrium (walk 19, z 46-48): two fast wasps sweep across it along x 53
-# and x 47 (96 ticks to and fro): pass each along the bridge's north edge (z 46) while it is
-# out over the void, the treasure (50, 47) between them.
+# The bridge across the atrium (walk 19, z 46-48): two wasps sweep across it along x 53 and
+# x 47 (the original's 80 ticks to and fro, BD-0016): pass each along the bridge's north edge
+# (z 46) while it is out over the void, the treasure (50, 47) between them (frames 11295-11407
+# and 11660-11756 pass, autoplay_search).
 go 54.2 46 tol 0.1
-until mtick >= 11285
+until mtick >= 11351
 go 52 46
 expect y <= 19.05
 go 50 47 tol 0.1
 go 48.2 46 tol 0.1
-until mtick >= 11530
+until mtick >= 11708
 go 44 46
 expect y <= 19.05
 until treasures = 9 max 200

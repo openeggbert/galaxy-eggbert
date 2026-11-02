@@ -23,7 +23,27 @@ ledgers before repeating any discovery. Where it stands:
   group fits, stop the frame he lets go, overhang by the original's 20 px corner supports; a pull
   needs room only for his collision point. Autoplay: `crate X Y Z [tol T]`; a push in a script
   now stops Blupi exactly 57 px (0.89) behind the crate's goal (`go ... tol 0.05`). All 24
-  crate playthroughs pass.
+  crate playthroughs pass. OR-0008: the executable is `GalaxyEggbert` (target still
+  `GalaxyEggbertCNA`), the window "Galaxy Eggbert".
+- Done 2026-11-02: OR-0002 (Bye froze: the world-select check returned early every frame of
+  the farewell), OR-0003 (the skateboard is put down at DeposeSkate's tick 12, taken at
+  TakeSkate's 8; live look still to do), OR-0007 (the port's 21 typed cheat words,
+  `InputPad::TypedCheat`, `ApplyTypedCheat`), OR-0018 (a lift rider's clip: Stop, not Air; the
+  riding itself unchanged -- a first cut that removed his per-frame fall broke 066's lift
+  boarding), OR-0019 (the helicopter's ceiling crash, `HelicopterHitsCeiling`, sub-cell masks),
+  OR-0020 (vehicles left only on the ground and off lifts, the helicopter/overcraft on both foot
+  probes, the skateboard below 8 px a tick: `CanLeaveVehicle`), BD-0015 (a spring wrecks the
+  vehicle). **OR-0005 / BD-0016: every creature at its type's original speed and rest**
+  (`tools/worldkit.py` `CREATURE_TIMING`, the registry's `patrolTicksPerCell`, the 3D editor;
+  `python3 tools/audit/patrol_envelope.py` must report 0). 46 worlds rebuilt; 046/051's mines
+  given the original's three-cell beat; 043's chimney opened into the dome (LV-0021).
+  Playthroughs re-timed with `tools/autoplay_search.py --jobs 3` (middle of each passing
+  window); autoplay logs `vehicle ...` changes and has `expect/until vehicle`;
+  `AUTOPLAY_REALTIME=1` paces a run at 60 Hz for `qa_live.sh` screenshots. All 78 pass.
+- Script lessons from the vehicle rules: wait ~40 frames for a skateboard to slow before Action
+  (and never let it glide onto a lift); settle the overcraft (`hold 40 crouch`, `until ground`)
+  before Action; fly the helicopter well clear of ceilings (descend before entering a lower
+  passage; it drifts a cell after a stop).
 - Done: baseline (70d2b99, 110/110); ledgers (`f4d67c8`); silent runs (`b33fac3`); **D60 crate
   push/pull** (`1c59eae`; BD-0001/0002, M3D-0001):
   `CratePush.hpp`, `InteractionSystem::UpdateCratePush()`, crates as boxes in Blupi's collision,

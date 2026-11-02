@@ -36,6 +36,24 @@ BIG_DECOR_TYPE = 3
 HINT_ZONE_TYPE = 4
 
 
+# The original's creatures (../mobile-eggbert/worlds, all 1,000-odd records; BD-0016, the owner's
+# OR-0005): every patrol of a type takes the same 20 Hz ticks per cell along its longer axis, there
+# and back, and rests the same ticks at each end -- its editor's per-type values. Galaxy's
+# builders had set them freely (moving mines up to 14 cells/s against the original's 2). type: (ticks a
+# cell, rest ticks). Type 54's file rest (200) is overridden to 152 at load (Decor::Read, BD-0013).
+# `tools/audit/patrol_envelope.py` checks the shipped worlds against the original.
+CREATURE_TIMING = {
+    4: (30, 20),    # bulldozer: 0.67 cells/s
+    16: (10, 0),    # moving mine: 2 cells/s, no rest
+    17: (15, 47),   # fish: 1.33 cells/s
+    20: (8, 8),     # bird: 2.5 cells/s
+    32: (8, 25),    # robot (blupih, drops shots): 2.5 cells/s
+    33: (10, 23),   # creature (blupit, fires sideways): 2 cells/s
+    44: (6, 4),     # wasp: 3.33 cells/s
+    54: (20, 200),  # the big creature: 1 cell/s
+}
+
+
 class ObjectType:
     """`include/GalaxyEggbert/Def/ObjectType.hpp` ids used when authoring worlds."""
     LIFT = 1
@@ -151,8 +169,17 @@ class World:
               speed: float = 1.5, advance: float = 60.0, recede: float = 60.0, stop_start: float = 40.0,
               stop_end: float = 40.0, icon: int = 0):
         """A MoveObject (MoveObjectRecord.cpp's 47-byte payload). `end` makes it patrol; the
-        timing fields are 20 Hz ticks like the reference's. Anchored at floor(start)."""
+        timing fields are 20 Hz ticks like the reference's. Anchored at floor(start).
+
+        A patrolling creature (CREATURE_TIMING) always gets its type's own timing, whatever is
+        passed: the original's creatures of a type all move at one speed and rest alike."""
         ex, ey, ez = end if end is not None else (x, y, z)
+        timing = CREATURE_TIMING.get(otype)
+        if timing is not None and end is not None:
+            ticks_per_cell, rest = timing
+            cells = max(abs(ex - x), abs(ey - y), abs(ez - z))
+            advance = recede = cells * ticks_per_cell
+            stop_start = stop_end = rest
         payload = struct.pack("<B11fH", otype, x, y, z, ex, ey, ez, speed, advance, recede, stop_start,
                               stop_end, icon)
         self._record(int(x // 1), int(y // 1), int(z // 1), MOVE_OBJECT_TYPE, payload)

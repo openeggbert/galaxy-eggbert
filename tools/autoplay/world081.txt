@@ -27,7 +27,9 @@ go 15.40 63.50 tol 0.15
 face 90
 until temp = 19 max 600
 until temp = 0 max 60
-wait 12
+# Two vanishing cycles later than the first return: the bird (the original's 2.5 cells/s,
+# BD-0016) is then away from the chain's middle (252-732 pass, autoplay_search).
+wait 492
 go 18.50 63.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 21.50 63.50 jump 2.05 tol 0.3 max 300
@@ -42,7 +44,8 @@ go 29.50 60.60 tol 0.15
 face 0
 until temp = 19 max 600
 until temp = 0 max 60
-wait 12
+# Re-timed for the original creature speeds (BD-0016): [252, 492, 732, 1212, 1452, 1692] pass (autoplay_search).
+wait 492
 go 29.50 57.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 29.50 54.50 jump 2.05 tol 0.3 max 300
@@ -57,7 +60,8 @@ go 26.60 47.50 tol 0.15
 face 270
 until temp = 19 max 600
 until temp = 0 max 60
-wait 12
+# Re-timed for the original creature speeds (BD-0016): [252, 492, 732, 1212, 1452, 1692] pass (autoplay_search).
+wait 492
 go 23.50 47.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 20.50 47.50 jump 2.05 tol 0.3 max 300
@@ -190,7 +194,8 @@ go 78.50 57.40 tol 0.15
 face 180
 until temp = 19 max 600
 until temp = 0 max 60
-wait 24
+# Re-timed for the original creature speeds (BD-0016): [264, 504, 744, 984, 1224, 1464, 1704] pass (autoplay_search).
+wait 984
 go 78.50 60.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 78.50 63.50 jump 2.05 tol 0.3 max 300

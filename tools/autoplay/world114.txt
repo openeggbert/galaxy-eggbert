@@ -149,6 +149,9 @@ go 66 12 with crouch until treasures = 7 max 600
 hold 250 crouch
 until treasures = 7 max 200
 clear 66 15 8 5 lane x max 900
+# Under water to just off the bank first: surfacing farther out (the fish's original timing
+# changes where he is after the dive, BD-0016) the jump falls short of the one-cell ledge.
+go 66 7.2 tol 0.15 max 600
 go 66 6.6 tol 0 with lookup until y >= 19.2 max 600
 face 0
 hold 8 up jump

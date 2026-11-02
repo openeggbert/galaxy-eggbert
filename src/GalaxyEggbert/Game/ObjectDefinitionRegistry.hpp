@@ -90,6 +90,11 @@ namespace GalaxyEggbert::Game
         bool smallEnemy = false;
         bool lethalDecorContactHazard = false;
         bool levelExit = false;
+        // The original's per-type patrol timing (its editor's values, uniform over every record of
+        // ../mobile-eggbert/worlds; BD-0016): 20 Hz ticks a cell along the path's longer axis,
+        // there and back, and the rest at each end. 0 ticks a cell: no fixed timing (lifts vary).
+        std::uint16_t patrolTicksPerCell = 0;
+        std::uint16_t patrolRestTicks = 0;
     };
 
     struct ResolvedObjectVisual final

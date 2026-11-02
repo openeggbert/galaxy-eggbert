@@ -132,11 +132,12 @@ def main(argv) -> int:
         for z in (44, 45):
             w.set(12, y, z, FAN_LEFT)
             w.fill(7, y, z, 11, y, z, WIND_LEFT)
-    # Moving mines in the wind (30 ticks, no stop: the original's): one sweeping across the
-    #    deck's two lanes at x 8, which the wind carries Blupi past (jump when it is in the
-    #    other lane); one sweeping P1.
+    # Moving mines in the wind (no stop: the original's): one sweeping across the deck's two
+    #    lanes at x 8 and a cell beyond each (the original's 30-tick mines cross three cells; at
+    #    its speed a one-cell beat left no gap, BD-0016), which the wind carries Blupi past (jump
+    #    when it is beyond the far lane); one sweeping P1.
     if stage < 2:
-        patrol(w, O.MOVING_MINE, (8, 26, 44), (8, 26, 45), ticks=30, stop=0)
+        patrol(w, O.MOVING_MINE, (8, 26, 43), (8, 26, 46), ticks=30, stop=0)
         patrol(w, O.MOVING_MINE, (9, 22, 49), (10, 22, 50), ticks=30, stop=0)
     # The ferry: two lifts in step shuttling from the landing's south edge to the alcove in the
     #    shaft's south wall (30 ticks for three cells, stop 10).

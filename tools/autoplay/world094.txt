@@ -192,30 +192,26 @@ go 58 24
 go 72 14
 go 87 10 until eggs = 5 max 900
 until eggs = 5 max 200
-# T3 at the end of the bulldozer's trench (x 84, z 18-38; it drives z 22-36, 2.3 cells a second,
-# about 60 waiting at each end): followed south as it drives away, into the alcove (85, 32) as it
-# comes back, south to the treasure (84, 38) beyond its end once it has passed north; back
-# behind it as it drives north again into the alcove (85, 26), out once it has passed south.
+# T3 at the end of the bulldozer's trench (x 84, z 18-38; it drives z 22-36 at the original's
+# 0.67 cells a second, 1 s at each end, BD-0016): in behind it once it is past the alcove
+# (85, 32), into the alcove; out once it has come back north past it, south to the treasure
+# (84, 38) beyond its end; north behind it into the alcove (85, 26) once it is past that one;
+# out once it has come back south past it.
 go 84 16.8 tol 0.1
 face 180
-near 84 10 22 0.05 lane z max 1200
+near 84 10 22 0.05 lane z max 3000
 clear 84 10 22 0.05 lane z max 200
-near 84 10 26 0.05 lane z max 300
+near 84 10 34 0.3 lane z max 2400
 go 84 31.2 tol 0.1 max 600
 go 85 32 tol 0.1 max 200
-near 84 10 32 0.3 lane z max 300
-clear 84 10 32 1.3 lane z max 300
+near 84 10 30 0.3 lane z max 1800
 go 84 32.5 tol 0.1
 go 84 38 until treasures = 4 max 600
 until treasures = 4 max 200
-near 84 10 36 0.05 lane z max 1200
-clear 84 10 36 0.05 lane z max 200
+near 84 10 24 0.3 lane z max 2400
 go 84 26 tol 0.1 max 600
 go 85 26 tol 0.1 max 200
-near 84 10 22 0.05 lane z max 600
-clear 84 10 22 0.05 lane z max 200
-near 84 10 26 0.3 lane z max 300
-clear 84 10 26 1.3 lane z max 300
+near 84 10 28 0.3 lane z max 1800
 go 84 25.5 tol 0.1
 go 84 16.5 max 600
 # The red arrow in the alcove of the caverns' north side (60, 6), open with the four treasures.

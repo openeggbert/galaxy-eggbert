@@ -110,7 +110,8 @@ wait 5
 go 87.5 37
 go 88 46.6 tol 0.1
 near 89 17 48 0.05 lane x max 400
-wait 18
+# Its mine at the original's 2 cells/s (BD-0016): 30-150 pass (autoplay_search).
+wait 90
 go 88 54
 go 87.5 60.4 tol 0.1
 # W2, the second swim: into the well (x 86-88, z 61-63, its surface level with the floor), down

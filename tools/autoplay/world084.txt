@@ -29,11 +29,14 @@ lift 10 60 69 max 400
 go 10 68.5 tol 0.15
 lift 10 60 65 max 300
 go 10 63.6 tol 0.15
-# The one-wide bridge (x 10, z 60-62): its two mines (z 62, 60) bob two up and down in turn;
-# each passed while it waits up, the cell between them (z 61) safe.
-near 10 62 62 0.1 max 400
+# The one-wide bridge (x 10, z 60-62): its two mines (z 62, 60) bob two up and down without a
+# rest (the original's 2 cells/s, BD-0016); each passed as it rises past mid-height, while it is
+# up, the cell between them (z 61) safe.
+near 10 60 62 0.1 max 400
+near 10 61 62 0.1 max 100
 go 10 61 tol 0.1
-near 10 62 60 0.1 max 400
+near 10 60 60 0.1 max 400
+near 10 61 60 0.1 max 100
 go 10 58.4 tol 0.15
 # The lift down (x 9-10, z 56-57, twelve cells) to the corridor (walk 48), boarded at the start
 # of its dwell at the top.

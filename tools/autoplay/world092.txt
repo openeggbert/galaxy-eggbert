@@ -100,10 +100,9 @@ expect y >= 11.9
 # x 41 and 49), a stick from the box (46, 71), and back across.
 go 45 78.6 tol 0.1
 face 0
-near 45 12 77 0.5 lane x max 400
-clear 45 12 77 0.5 lane x max 100
-near 45 12 77 0.5 lane x max 100
-clear 45 12 77 0.5 lane x max 100
+# The tank at the original's 2 cells/s (BD-0016): crossed at a set time, the middle of the
+# widest gap (frames 7600-7780 pass; 7560-7580 and 7800-7820 meet a shot pair: autoplay_search).
+until mtick >= 7690
 go 45 72.5 max 300
 go 46 71.2 tol 0.15 max 300
 hold 2 action
@@ -111,10 +110,8 @@ until dynamite = 1 max 200
 wait 30
 go 45 73.6 tol 0.1
 face 180
-near 45 12 77 0.5 lane x max 400
-clear 45 12 77 0.5 lane x max 100
-near 45 12 77 0.5 lane x max 100
-clear 45 12 77 0.5 lane x max 100
+# Back across at a set time too (frames 8306-8506 pass: autoplay_search).
+until mtick >= 8406
 go 46 80 max 300
 # G, the cage: the stick put down against the block of crates in its door (the front one at
 # (46, 85)), then away north out of the blast; in over the trench (z 87) to the treasure (46, 91)

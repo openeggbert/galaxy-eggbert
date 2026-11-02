@@ -71,6 +71,22 @@ namespace GalaxyEggbert::Game
             definition.patrolMotion = true;
         });
 
+        // BD-0016 (the owner's OR-0005: creatures too fast): type -> ticks a cell, rest ticks.
+        // The same table drives tools/worldkit.py's CREATURE_TIMING; type 54's 200-tick rest is
+        // 152 at load (Decor::Read, WorldRuntime).
+        struct PatrolTiming
+        {
+            std::uint16_t type, ticksPerCell, restTicks;
+        };
+        static constexpr PatrolTiming kPatrolTimings[] = {
+            {4, 30, 20}, {16, 10, 0}, {17, 15, 47}, {20, 8, 8}, {32, 8, 25}, {33, 10, 23}, {44, 6, 4}, {54, 20, 200},
+        };
+        for (const auto& timing : kPatrolTimings)
+        {
+            definitions_[timing.type].patrolTicksPerCell = timing.ticksPerCell;
+            definitions_[timing.type].patrolRestTicks = timing.restTicks;
+        }
+
         // Declarative runtime capabilities. These are intentionally not a
         // general behavior-dispatch table: they only replace exact membership
         // checks whose members receive identical treatment at their call site.

@@ -86,11 +86,14 @@ until ground = 1
 expect y >= 22.95
 go 62 74 jump 1.6
 until ground = 1
-near 64 25 74 0.25 max 400
+# Step 64's mine sweeps z 72-75 (BD-0016): cross in lane 72, while it is out toward z 75.
+go 61.75 72 tol 0.15
+face 90
+near 64 25 72 0.25 max 400
 near 64 25 73 0.1 max 400
-go 64 74 jump 1.6
+go 64 72 jump 1.6
 until ground = 1
-go 66 74 jump 1.6
+go 66 72 jump 1.6
 until ground = 1
 go 65.75 73 tol 0.15
 face 90

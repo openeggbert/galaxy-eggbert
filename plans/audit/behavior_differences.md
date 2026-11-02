@@ -226,6 +226,28 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   deposited the vehicle's pickup intact. Now `WreckVehicle()`, shared with water and the
   helicopter's ceiling (OR-0019).
 
+## BD-0016 — creatures moved at the builders' own speeds, many far faster than the original (gameplay) — FIXED_AND_VERIFIED
+
+- Owner report OR-0005 (wasps, fish, birds too fast). Reference: every MoveObject record of a
+  creature type in `../mobile-eggbert/worlds` (about 1,000) takes the same 20 Hz ticks a cell
+  along its path's longer axis, there and back, and rests the same ticks: bulldozer (4) 30/20,
+  moving mine (16) 10/0, fish (17) 15/47, bird (20) 8/8, robot (32) 8/25, creature (33) 10/23,
+  wasp (44) 6/4, big creature (54) 20/200 (152 at load, BD-0013) -- the original editor's
+  per-type values. `Decor::MoveObjectStepLine` runs them unchanged.
+- Galaxy's world builders set ticks freely: 359 creatures differed, mostly faster (moving mines
+  up to 14 cells/s, birds 2-7x); some slower (a one-cell mine given a three-cell mine's 30 ticks).
+- Fix: `tools/worldkit.py` `CREATURE_TIMING` gives every patrolling creature its type's timing
+  whatever a builder passes; the same table in `ObjectDefinitionRegistry`
+  (`patrolTicksPerCell`, `patrolRestTicks`) times a patrol set in the 3D editor; all worlds
+  rebuilt (46 changed, only creature timing: checked field by field). Where the original speed
+  closed a gap a Galaxy design relied on, the creature got the original's path length for its
+  ticks instead (051's deck mine and 046's two stair mines: three cells in 30 ticks, as the
+  original's 30-tick mines). `tools/audit/patrol_envelope.py` (exact per-type check): 0 off
+  (world999, the C++-generated exhibition used by the verifiers, keeps its own).
+- Validation: the playthroughs re-timed where they synced on creatures (032, 033, 046, 051, 057,
+  058, 081, 084, 092, 093, 094, 114: waits searched with `tools/autoplay_search.py`, now with
+  `--jobs`, the middle of each passing window kept); all 78 pass.
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px
