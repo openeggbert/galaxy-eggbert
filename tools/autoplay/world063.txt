@@ -167,6 +167,8 @@ expect y >= 59.95
 go 59.2 9.5 tol 0.15
 face 90
 go 60.7 9.3 jump 1.9 tol 0.2 until exit = 1
+# Onto the exit (the original's 28 px boxes, BD-0021).
+go 61 9 tol 0.1 until exit = 1 max 200
 until mission = 60 max 900
 expect phase = Play
 wait 60

@@ -127,7 +127,7 @@ expect y <= 14.05
 # (52, 18, 36), under one of the drops, taken just after its shot; the arrow (54, 18, 36).
 go 59 37
 go 60.6 40
-go 61.5 40 tol 0.08
+go 61.8 40 tol 0.08
 hold 2 action
 go 61.6 39.4 tol 0.15
 go 61.6 40.6 tol 0.15
@@ -141,7 +141,7 @@ expect y >= 17.95
 go 53.4 35.3 tol 0.15
 near 52 19 36 0.5 max 600
 go 52.6 36 tol 0.1
-go 53.15 36 tol 0.1
+go 52 36 tol 0.1
 until treasures = 3 max 120
 go 54 36 until exit = 1
 until mission = 50 max 900

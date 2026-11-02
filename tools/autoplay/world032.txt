@@ -12,7 +12,7 @@ go 28.6 82 tol 0.1
 go 29.4 83
 go 36 83
 # Lollipop 1 (40, 82): lick it (Action), then the high jump onto L1, five up.
-go 39.6 82 tol 0.1
+go 39.85 82 tol 0.1
 hold 6 action
 wait 90
 go 40 81.2 tol 0.1
@@ -38,7 +38,7 @@ expect y >= 13.9
 go 77.4 46 tol 0.1
 go 80.5 46 jump 2.4
 until ground = 1
-go 83.6 46 tol 0.1
+go 83.85 46 tol 0.1
 hold 6 action
 wait 90
 go 80.4 46 tol 0.1
@@ -93,11 +93,13 @@ expect y <= 8.1
 # ticks of every 300; the three mines of the gate (z 44) ride up and down every 240 ticks
 # (their clock, measured, runs 123 ticks ahead of the mission's here): pass each in its gap.
 go 48 36.6 tol 0.1
-until mtick >= 7712
+# One shared cycle later than first planned (curtains 300, mines 240): the original's boxes
+# made the way here longer (BD-0021).
+until mtick >= 8912
 go 48 42 tol 0.1
-until mtick >= 7877
+until mtick >= 9077
 go 48 48.6 tol 0.1
-until mtick >= 8292
+until mtick >= 9492
 go 48 52
 # The blue key in its alcove (x 51-53), then the blue door (48, 60) into the exit room.
 go 50 55
@@ -109,7 +111,7 @@ go 46.4 62.4 tol 0.1
 # G: the exit room. Its two mines slide across it (z 64 and z 67, 180 ticks to and fro, in
 # opposite directions): down its west side (x 46.4) where each turns once a cycle, between
 # them, to the red arrow.
-until mtick >= 8957
+until mtick >= 10157
 go 46.4 68.6 tol 0.1
 go 50 69 until exit = 1
 until mission = 30 max 900

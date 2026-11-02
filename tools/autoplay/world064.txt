@@ -53,7 +53,7 @@ face 0
 go 48 36.8 jump 1.6 tol 0.2
 until ground = 1
 expect y >= 33.95
-go 48 36.3 tol 0.2
+go 48 36 tol 0.2
 hold 36 down
 until ground = 1
 go 42 38.6 tol 0.1
@@ -61,10 +61,11 @@ face 0
 go 42 36.8 jump 1.6 tol 0.2
 until ground = 1
 expect y >= 33.95
-go 42 36.3 tol 0.2
+go 42 36 tol 0.2
+# On it until it is taken: a pickup waits while the last one still flies to the panel.
+until treasures = 3 max 120
 hold 36 down
 until ground = 1
-until treasures = 3 max 120
 go 40 41 tol 0.2
 # The pool room (z 48-56): the pool (x 39-45, z 49-55, seven deep, flush with the floor): from
 # its east bank down to treasure 2 (44, 25, 54) beside the fish's lanes (z 51 at y 27, z 53 at
@@ -141,7 +142,7 @@ expect y >= 43.95
 # up the stair east (z 48), a jump a step, past the mines on its first four steps and the saws
 # that are its last seven, to the shuttle room's landing (walk 56).
 go 71.6 46.9
-go 71.6 47.7 tol 0.1
+go 71.88 47.91 tol 0.1
 hold 2 action
 wait 120
 face 90

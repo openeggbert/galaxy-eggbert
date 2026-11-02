@@ -93,11 +93,11 @@ go 57 75.2 tol 0.1
 face 180
 until crush = 3 max 120
 go 57 80.5 tol 0.15
-go 54.3 81 until keys = 1
+go 54 81 until keys = 1
 until keys = 1 max 120
 go 57 82 until eggs = 9
 until eggs = 9 max 120
-go 59.7 81 until keys = 2
+go 60 81 until keys = 2
 until keys = 2 max 120
 go 57 76.8 tol 0.1
 face 0
@@ -144,6 +144,8 @@ wait 30
 near 28 20 58 0.2 lane x max 900
 wait 90
 go 30.4 56.4
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 29 62 tol 0.15
 go 29.4 61.8 until eggs = 10
 until eggs = 10 max 120
 go 19.4 62.2 tol 0.15

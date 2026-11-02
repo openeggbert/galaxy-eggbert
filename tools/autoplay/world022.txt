@@ -3,7 +3,7 @@ wait 30
 expect mission = 22
 expect lives >= 3
 # A. The roof terrace (walk 11): its egg, the lava trench (z 73) jumped, treasure 1.
-go 38.4 75 until eggs = 1
+go 38 75 until eggs = 1
 until eggs = 1 max 120
 go 39 74.6
 face 0

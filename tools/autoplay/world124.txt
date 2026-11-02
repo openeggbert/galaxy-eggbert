@@ -56,7 +56,7 @@ go 45 42 with crouch until treasures = 5 max 400
 hold 90 crouch
 until treasures = 5 max 200
 go 45 39.7 tol 0.25 with lookup max 400
-until y >= 19.2 max 200
+until y >= 19.2 max 400
 hold 8 up jump
 hold 30 up
 until ground = 1
@@ -69,7 +69,7 @@ go 53 47 with crouch until treasures = 6 max 500
 hold 90 crouch
 until treasures = 6 max 200
 go 57.3 47 tol 0.25 with lookup max 500
-until y >= 19.2 max 200
+until y >= 19.2 max 400
 hold 8 up jump
 hold 30 up
 until ground = 1
@@ -77,10 +77,11 @@ go 58.6 52
 face 270
 clear 56 15 52 3.5 max 1800
 go 56 52 with crouch until treasures = 7 max 400
-hold 90 crouch
+# Down to the bottom: the treasure lies on it (the original's boxes, BD-0021).
+hold 200 crouch
 until treasures = 7 max 200
 go 57.3 52 tol 0.25 with lookup max 400
-until y >= 19.2 max 200
+until y >= 19.2 max 400
 hold 8 up jump
 hold 30 up
 until ground = 1
@@ -97,7 +98,7 @@ go 47 57 with crouch until treasures = 9 max 400
 hold 90 crouch
 until treasures = 9 max 200
 go 47 60.3 tol 0.25 with lookup max 400
-until y >= 19.2 max 200
+until y >= 19.2 max 400
 hold 8 up jump
 hold 30 up
 until ground = 1

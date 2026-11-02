@@ -34,7 +34,7 @@ go 20 61
 expect y >= 19.95
 # P, the gallery (z 56): crouching along its line of stones and pads under the three mines
 # hanging at Blupi's height, to door 1 (45, 56), open with one.
-go 22 52.4 tol 0.15
+go 22 52 tol 0.15
 until eggs = 4 max 200
 go 30 56
 go 33.6 56 tol 0.1
@@ -93,7 +93,7 @@ go 83 57
 go 86 56
 # G, the hangar: treasure 2 between the invert and a mine along its north side.
 go 90 50
-go 90 48.4 tol 0.15
+go 90 48 tol 0.15
 until treasures = 2 max 200
 # A helicopter (91, 61), flown north through the hangar's opening, over the balcony and down
 # into the core; off it on the cellar floor (walk 8).
@@ -118,6 +118,8 @@ go 89.4 33
 go 88.4 29.6 tol 0.15
 until treasures = 3 max 200
 go 86 15
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 86 14 tol 0.15
 go 86 14.4 tol 0.15
 until treasures = 4 max 200
 go 75 12.4 tol 0.15
@@ -127,12 +129,18 @@ until treasures = 6 max 200
 go 63 16
 go 69 17.5
 go 69.4 22
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 66 22 tol 0.15
 go 66.3 22 tol 0.15
 until treasures = 7 max 200
 go 68.5 24
 go 68.5 31.4
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 70 32 tol 0.15
 go 69.6 32 tol 0.15
 until treasures = 8 max 200
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 64 37 tol 0.15
 go 64 36.6 tol 0.15
 until eggs = 6 max 200
 go 62 36.6 tol 0.15

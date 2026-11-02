@@ -12,7 +12,7 @@ until eggs = 1 max 200
 go 31 90 until eggs = 2 max 900
 until eggs = 2 max 200
 go 30.5 74
-go 30 70.4 tol 0.1
+go 30 70.15 tol 0.1
 face 0
 hold 6 action
 wait 90

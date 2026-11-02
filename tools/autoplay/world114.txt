@@ -55,6 +55,8 @@ go 50 93 tol 0.3
 # Up the lift (2 x 2 at x 64-65, z 92-93) to its landing (walk 20) and north along the way over
 # the terraces' east ends to the first terrace, in lane x 66 (the mines sweep to x 65), west
 # along its row 66 and north to the hall.
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 60 92 tol 0.15
 go 63.3 92.5 tol 0.1
 lift 64 8 92 max 1200
 go 64.5 92.5 tol 0.15
@@ -193,16 +195,18 @@ go 50 41
 go 50 50
 go 57.5 50
 go 71 50
-go 82.6 50 tol 0.1 until treasures = 10 max 600
+go 83 50 tol 0.1 until treasures = 10 max 600
 until treasures = 10 max 200
 go 75.4 63
 go 75.6 66 tol 0.1 until treasures = 11 max 600
 until treasures = 11 max 200
 go 75.4 63
 go 89.3 63
-go 89.5 66 tol 0.1 until treasures = 12 max 600
+go 90 66 tol 0.1 until treasures = 12 max 600
 until treasures = 12 max 200
 go 89.3 52
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 90 34 tol 0.15
 go 89.5 34 tol 0.1 until treasures = 13 max 900
 until treasures = 13 max 200
 go 89.3 37

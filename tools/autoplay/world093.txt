@@ -35,7 +35,8 @@ go 12 48 jump 1.6 tol 0.15
 until ground = 1
 expect y >= 21.9
 go 16 48 with crouch until eggs = 5 max 600
-hold 120 crouch
+# Down to the bottom: the egg lies on it (the original's boxes, BD-0021).
+hold 200 crouch
 until eggs = 5 max 200
 go 31 48 with crouch max 900
 go 34.4 48 tol 0 with lookup until y >= 19.2 max 600
@@ -143,7 +144,7 @@ go 75 83.6 tol 0.1
 face 180
 near 75 15 85 0.05 max 400
 go 75 87.2 max 300
-go 75.4 88 tol 0.1
+go 75.85 88 tol 0.1
 hold 2 action
 wait 110
 # Unseen: out through the mouth, west along the lane (z 78) through the bank of clods past its

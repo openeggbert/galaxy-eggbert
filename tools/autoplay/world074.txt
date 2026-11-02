@@ -35,7 +35,7 @@ expect y >= 6.9
 go 50.5 33
 go 50.5 32.4 tol 0.1
 face 0
-go 50.5 30 jump 1.6 tol 0.15
+go 50 30 jump 1.6 tol 0.15
 until ground = 1
 until treasures = 1 max 200
 go 51 30 tol 0.1

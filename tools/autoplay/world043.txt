@@ -4,7 +4,7 @@ expect mission = 43
 # S: the start cave (walk 40), the red arrow (28, 34) beside the spawn left for the end.
 # Treasure 2 on the north ledge and treasure 1 on the west ledge, each a jump up (walk 42).
 go 30 27.6 tol 0.1
-go 30 25.3 jump 2.0
+go 30 25 jump 2.0
 until ground = 1
 expect y >= 41.95
 until treasures = 1 max 200
@@ -49,7 +49,7 @@ expect y <= 33.05
 # z 51) jumped over its mine; down at its end (walk 29), north, and down the shaft into the
 # grotto (walk 14).
 go 54 50.6
-go 54 45.4 tol 0.15
+go 54 45 tol 0.15
 until treasures = 4 max 200
 go 54 50.6
 go 54 51
@@ -68,6 +68,8 @@ expect y <= 14.05
 # G: the grotto's treasure 5 and egg, a helicopter (70, 30), up the shaft (71, 39) through the
 # ring's hole between its two hanging mines into chamber 1 and onto its shelf (walk 37):
 # treasure 6.
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 66 29 tol 0.15
 go 66 29.4 tol 0.15
 until treasures = 5 max 200
 go 67 30 tol 0.15
@@ -105,7 +107,12 @@ hold 85 lookup
 wait 60
 expect y >= 28.1
 go 60.3 65.8 tol 0.3
-go 62 69 tol 0.3
+# Onto the item, dipping toward its floor: the original's boxes reach 22 px below his feet
+# (BD-0021).
+go 62 69 tol 0.15
+# 10-14 pass (autoplay_search).
+hold 12 crouch
+go 62 69 tol 0.1
 until treasures = 8 max 200
 go 60.3 65.8 tol 0.3
 # The chimney: its foot (a tube west at y 26), up to the side niche (y 36, north to z 68) for
@@ -118,7 +125,10 @@ wait 30
 hold 200 lookup
 wait 60
 expect y >= 36
-go 50 67.8 tol 0.3
+# Dipping toward the niche's floor as at treasure 8 (16-22 pass).
+go 50 68 tol 0.15
+hold 19 crouch
+go 50 68 tol 0.1
 until treasures = 9 max 200
 go 50 62.2 tol 0.3
 wait 30

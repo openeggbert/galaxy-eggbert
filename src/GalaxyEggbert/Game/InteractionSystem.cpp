@@ -2048,9 +2048,8 @@ namespace GalaxyEggbert::Game
             const float dx = obj.currentX - blupiX;
             const float dy = obj.currentY - blupiY;
             const float dz = obj.currentZ - blupiZ;
-            // Pickups keep the 0.7-cell sphere for now: the playthroughs were planned with it (31
-            // of the first 46 missed an item with the original's boxes); BD-0021 open.
-            const bool touching = (dx * dx + dy * dy + dz * dz) < kPickupRadius * kPickupRadius;
+            // Touched as the original's boxes say, as the hazards (BD-0021).
+            const bool touching = MoveObjectTouches(obj.type, dx, dy, dz);
 
             // Secret exit (ObjectType21, plan.md PICKUP-009/083, found 2026-07-16) shares the
             // EXACT same real exit-gate logic as the regular exit (ObjectType7) below

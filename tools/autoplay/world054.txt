@@ -4,7 +4,7 @@ wait 30
 expect mission = 54
 # A, the hall: lick the lollipop (45, 5, 59) by the shaft's door: jumps four high for 15 s.
 go 44 62
-go 45 59.35 tol 0.1
+go 45 59.15 tol 0.1
 face 180
 hold 2 action
 # B, the shaft: up the four pillars spiralling round it, a licked jump each: P1 (47-48, z 54-56,

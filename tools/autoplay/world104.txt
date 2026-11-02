@@ -67,7 +67,7 @@ until ground = 1
 go 60 42.6 jump 1.6
 until ground = 1
 expect y >= 30.9
-go 62 42.5 until treasures = 3 max 300
+go 62 42 until treasures = 3 max 300
 until treasures = 3 max 200
 # Down, the egg (68, 46); the pit of lava (x 60-66, z 52-57): onto its bobbing lift (x 61-62)
 # when it is up, level with the floor, over the gap of one, then onto the pillar (x 64-65) and

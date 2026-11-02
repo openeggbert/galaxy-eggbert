@@ -100,7 +100,7 @@ go 40 24.4 tol 0.15
 lift 40 36 20 max 300
 go 40 18.6 tol 0.15
 lift 40 36 14 max 300
-go 40 12.4 tol 0.15
+go 40 12 tol 0.15
 until eggs = 7 max 60
 lift 40 36 6 max 600
 lift 40 36 11 max 600
@@ -173,13 +173,15 @@ expect y >= 17.95
 go 87 44
 go 84 45 tol 0.1
 go 79.5 45 tol 0.1
-go 79.5 43 tol 0.1
+go 79 43 tol 0.1
 until eggs = 10 max 60
 go 76.5 43 tol 0.1
 go 76.5 44 tol 0.1
 go 73.5 44 tol 0.1
 go 73.5 45 tol 0.1
 go 70.5 45 tol 0.1
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 70 44 tol 0.15
 go 70.5 43 tol 0.1
 go 67.5 43 tol 0.1
 go 67.5 44 tol 0.1
@@ -201,7 +203,8 @@ go 64.5 55.5 tol 0.15
 lift 64 26 55 max 400
 go 64.5 57.5 tol 0.15
 lift 64 26 64 max 400
-go 64.5 66 until exit = 1 max 300
+# Onto the exit (the original's 28 px boxes, BD-0021).
+go 64.1 66 until exit = 1 max 300
 expect eggs = 10
 until mission = 1 max 900
 expect phase = Play

@@ -35,7 +35,7 @@ expect y >= 16.95
 go 50 28.4 jump 2.0
 until ground = 1
 expect y >= 18.95
-go 49.3 27.3 until eggs = 2
+go 49 27 until eggs = 2
 until eggs = 2 max 120
 go 50 27.4
 face 0
@@ -125,6 +125,8 @@ lift 68 21 49 max 300
 go 69.6 49 jump 1.8
 until ground = 1
 expect y >= 22.95
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 69 50 tol 0.15
 go 69.4 50
 go 69.4 52 until eggs = 5
 until eggs = 5 max 120

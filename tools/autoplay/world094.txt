@@ -54,7 +54,7 @@ go 68.8 59.5
 go 68.8 64
 go 68.6 68 tol 0.1
 face 270
-go 65.5 68 jump 3.2 tol 0.15 max 200
+go 65 68 jump 3.2 tol 0.15 max 200
 until ground = 1
 until keys = 1 max 200
 go 66.4 68 tol 0.1

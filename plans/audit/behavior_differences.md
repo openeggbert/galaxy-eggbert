@@ -330,7 +330,7 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   on and off a ledge; the helicopter receding without a teeter); all playthroughs, the 33 with
   vehicles again after the vehicle rules.
 
-## BD-0021 — hazards reached Blupi from a 0.7-cell sphere; the original's boxes are smaller (gameplay) — FIXED_AND_VERIFIED (pickups open)
+## BD-0021 — hazards and pickups reached Blupi from a 0.7-cell sphere; the original's boxes are smaller (gameplay) — FIXED_AND_VERIFIED
 
 - Open since the BD-0010 review ("contact reach: 0.7 sphere vs 28 px box"). Decor::MoveObjectDetect
   intersects two boxes: Blupi 28 px across (pos+16..+44), from 11 to 58 px below his cell's top;
@@ -347,12 +347,29 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   only because its trigger is a 7 px band (IsTeleporte, `pos.X % 64 <= 6`); Galaxy's is the
   whole cell under the pillar, so with 30 px he went straight back (034's chi). Now a teleporter
   also waits until he has left the cell he arrived in (`teleportArrivalGuard_`).
-- Open: pickups keep the sphere. With the boxes 31 of the first 46 playthroughs missed an item
-  (their `go` targets stop within 0.25 of a point chosen with the 0.7 reach); moving every target
-  onto its item is a job of its own. Two wasp waits moved into its box (054, 055: 0.6 -> 0.3 from
-  its lane).
+- Pickups too, in a second step: with the boxes 31 of the first 46 playthroughs missed an item,
+  their `go` targets chosen for the 0.7 reach. A temporary probe build logged every item the
+  sphere would have taken and the box did not, with the playthrough's tick; each was mapped to
+  the script line running then and fixed: a detour onto the item before that line (so the line
+  still ends where it did), a lick or drink point moved to 0.15 from its item, an exit's
+  `until exit` target moved onto it, swims and balloon dips held long enough to reach an item on
+  a floor (the box reaches 22 px below his feet), and three timings re-searched where the longer
+  ways changed them (032's gallery a shared cycle later, 052's stars, 053's star columns passed
+  beyond their wake reach). Two wasp waits moved into its box (054, 055).
 - Validation: `VerifyInteractionSystem` (a mine at 0.5 cell misses, at 0.4 touches, a cell below
   misses; the grace's 30 px); all playthroughs.
+
+## BD-0022 — a pickup taken with the camera right against it never paid its reward (gameplay) — FIXED_AND_VERIFIED
+
+- Found with BD-0021 (043's niche treasure): a pickup's reward comes when its icon's flight to
+  the panel ends (`VoyageInit`/`VoyageStep`); Galaxy starts that flight from the item projected
+  onto the screen. With the camera pressed against the item the point lay almost in the camera's
+  plane: a tiny W, coordinates thousands of pixels out, a flight that never ended -- the treasure
+  gone and never counted. The original's items are always on its screen.
+- `Hud::ProjectWorldToHudSpace` now clamps onto the 640 x 480 reference screen: an off-screen
+  item's flight starts from the screen's edge.
+- Validation: `VerifyInteractionSystem` (a point almost level with the camera lands on the edge);
+  043 passes; all playthroughs.
 
 ## Reviewed, not changed (yet)
 

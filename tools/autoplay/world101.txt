@@ -16,7 +16,7 @@ until ground = 1
 go 48 44.4 jump 1.6
 until ground = 1
 expect y >= 8.9
-go 55 41.5 until treasures = 1 max 600
+go 55 41 until treasures = 1 max 600
 until treasures = 1 max 200
 go 51 41.5
 go 51 41 tol 0.3
@@ -136,7 +136,7 @@ go 82.6 45
 wait 120
 go 82.6 39
 go 87 41 until eggs = 2 max 600
-go 90 37.4 tol 0.1 until treasures = 6 max 600
+go 90 37 tol 0.1 until treasures = 6 max 600
 until treasures = 6 max 200
 # The stair at the corridor's north end (walk 8, 10, 12) and the exit (82, 31).
 go 84 39

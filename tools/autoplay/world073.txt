@@ -84,7 +84,7 @@ lift 48 15 44 max 400
 go 49.5 42.6
 # D: the lollipop (50, 42) licked; its high jumps onto the landing (walk 20, treasure 3) and the
 # shelf (walk 25).
-go 50 42.5 tol 0.1
+go 50 42.15 tol 0.1
 hold 6 action
 wait 90
 face 0

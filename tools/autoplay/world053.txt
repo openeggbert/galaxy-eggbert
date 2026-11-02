@@ -214,7 +214,7 @@ go 56.3 30.6 tol 0.15
 go 57 28
 go 57 13 until eggs = 8
 go 57 8.5
-go 56.4 7.5 tol 0.15
+go 56 8 tol 0.15
 until treasures = 13 max 120
 # G, the door "13" (x 53-55, z 4) onto the corridor of stars (z 1-3, walk 30). The drink (twenty
 # seconds unseen) does not last there and back (about 74 cells), so it is left: each curtain of
@@ -298,18 +298,21 @@ wait 620
 # Seven treasures along z 62; two columns of four stars stacked at x 67 and 73 over the row. The
 # two lowest of a column wake as he takes the treasure beside it: he takes it and goes round the
 # column's south side to the next, west to east, the woken stars trailing behind him.
-go 70 61.4 tol 0.15
-go 64.5 60
-go 64 61.4 tol 0.15
-go 65.35 62 tol 0.1
+# Each treasure taken from beside it within the original's 28 px boxes (BD-0021): 0.38 off.
+go 70 61.62 tol 0.05
+# West along z 59.5, beyond the x 67 column's wake reach (2 cells), so it wakes only at 66.
+go 70 59.5
+go 64.5 59.5
+go 64 61.62 tol 0.05
+go 65.62 62 tol 0.05
 go 66 64.6 tol 0.2
 go 68 64.6 tol 0.2
-go 68.65 62 tol 0.1
+go 68.38 62 tol 0.05
 go 70.5 62.4 tol 0.2
-go 71.35 62 tol 0.1
+go 71.62 62 tol 0.05
 go 72 64.6 tol 0.2
 go 74 64.6 tol 0.2
-go 74.65 62 tol 0.1
+go 74.38 62 tol 0.05
 go 76 62 tol 0.15
 # Out over the crushers again to the foot's last row (69.6, 56.3): homing on him the four woken
 # stars run into the hall's north wall beside the doorway (x 71-73) and burst. Back in, the

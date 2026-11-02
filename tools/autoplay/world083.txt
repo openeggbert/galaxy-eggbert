@@ -99,7 +99,7 @@ expect y >= 30.95
 # sweeping mine's run (x 72-78, z 58), east along the north wall to treasure 2 (76 31 57).
 go 70.8 64
 go 70.8 56.3
-go 76 56.4 until treasures = 2
+go 76 57 until treasures = 2
 until treasures = 2 max 120
 # East out of the block (x 80-81, z 60-64), east of the sweeper's run and north of the mine
 # (79 31 64), into the east shafts (walk 31); along their south side (z 64.3), clear of the

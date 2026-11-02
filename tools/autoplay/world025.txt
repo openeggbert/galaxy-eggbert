@@ -213,7 +213,8 @@ go 49.5 52.3
 go 49.5 51.75 tol 0.15
 face 0
 lift 49 11 51 max 400
-go 49.5 47 until exit = 1 max 400
+# Onto the exit (the original's 28 px boxes, BD-0021).
+go 49.9 47 until exit = 1 max 400
 expect treasures = 4
 until mission = 1 max 900
 expect phase = Play

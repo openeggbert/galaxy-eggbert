@@ -33,7 +33,7 @@ go 56 10.4 until treasures = 3 max 600
 until treasures = 3 max 200
 go 58 12.6
 clear 58 36 14 5 lane x max 900
-go 58 17.6 until treasures = 4 max 600
+go 58 18 until treasures = 4 max 600
 until treasures = 4 max 200
 go 52 19.4
 clear 50 36 18 3 lane z max 900

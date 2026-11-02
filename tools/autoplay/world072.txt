@@ -5,7 +5,7 @@ wait 30
 expect mission = 72
 # Back off the pier onto the floor beside the lollipop (44, 5, 54); lick it (Action).
 face 180
-go 44 53.6 tol 0.1
+go 44 53.85 tol 0.1
 until ground = 1
 hold 6 action
 wait 90
@@ -19,7 +19,7 @@ until ground = 1
 expect y >= 13.9
 until treasures = 1 max 120
 go 44 48.6 tol 0.1
-go 44 45.4 jump 3.0 tol 0.15
+go 44 45 jump 3.0 tol 0.15
 until ground = 1
 expect y >= 18.9
 until treasures = 2 max 120
@@ -30,12 +30,14 @@ face 270
 go 38.5 45 jump 4.0 tol 0.15
 until ground = 1
 expect y >= 20.9
+# Onto it (the original's 28 px boxes, BD-0021).
+go 38.1 45 tol 0.1
 until treasures = 3 max 120
 go 38.5 48 max 300
 until ground = 1
 expect y <= 5.1
 go 40.5 53.6
-go 43.6 53.6 tol 0.1
+go 43.89 53.89 tol 0.1
 # Lick 2: the pier, B1, B2 again and east across two cells onto the east column (walk 21) and
 # its treasure; down off its south side.
 hold 6 action
@@ -56,12 +58,14 @@ face 90
 go 50 46.5 jump 4.0 tol 0.15
 until ground = 1
 expect y >= 20.9
+# Onto it (the original's 28 px boxes, BD-0021).
+go 50 46.1 tol 0.1
 until treasures = 4 max 120
 go 50 49 max 300
 until ground = 1
 expect y <= 5.1
 go 47.5 53.6
-go 44.4 53.6 tol 0.1
+go 44.11 53.89 tol 0.1
 # Lick 3: the pier, B1, B2, B3 (walk 24) and east onto the tower's top (walk 29): its two
 # treasures either side of the arrow (round it along z 42), then the arrow.
 hold 6 action

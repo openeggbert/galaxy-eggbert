@@ -85,9 +85,10 @@ ledgers before repeating any discovery. Where it stands:
   only the new clip, `avatar.skinnedmodel.json` and `clips.txt`).
 - Done: BD-0021, hazard contact by the original's boxes (`MoveObjectTouches`: 28 px across, by
   type's vertical band) instead of a 0.7-cell sphere; the contact grace 30 px; a teleporter waits
-  until he leaves the cell he arrived in. Open: pickups still use the sphere -- with the boxes 31
-  playthroughs missed items (targets chosen for the 0.7 reach): move each target onto its item
-  (`tools/autoplay_search.py` will not help; read each failing `until eggs/treasures/keys`).
+  until he leaves the cell he arrived in; pickups by the boxes too, the playthroughs re-aimed
+  (detours onto items, lick points, exits, dives; found with a temporary probe that logged every
+  item the old sphere would have taken -- the method is in BD-0021). BD-0022: a pickup's reward
+  was lost when its HUD flight started off screen (projection now clamped).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

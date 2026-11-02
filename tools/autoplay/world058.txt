@@ -4,6 +4,8 @@ expect mission = 58
 # A, the start room (walk 20): its egg, up the two steps in the north-east corner (walk 22, 24)
 # and into the high doorway (walk 25) of the lava hall.
 go 12 81
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 11 79 tol 0.15
 go 11.3 79.4 tol 0.15
 go 14.6 80.5 tol 0.1
 face 90
@@ -33,7 +35,7 @@ go 33.6 84 tol 0.15
 go 36.8 84 jump 2.7 tol 0.25
 until ground = 1
 expect y >= 25.95
-go 37 84.6 tol 0.2
+go 37 85 tol 0.2
 until keys = 1 max 120
 # Back over the stones and out of the doorway down into the start room.
 go 36.4 84 tol 0.15
@@ -81,6 +83,8 @@ face 90
 go 48.8 82 jump 2.7 tol 0.25
 until ground = 1
 expect y <= 18.05
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 51 83 tol 0.15
 go 51 82.4 tol 0.2
 go 52 79.6 tol 0.15
 face 180
@@ -102,13 +106,15 @@ expect y <= 8.05
 # tunnel to treasure 1 (26, 8, 61) and back; the drink at the mouth (42, 8, 60) on the way out,
 # for the walk east to the corridor of tanks (x 79), north of the lava pool (z 56-62).
 go 48 69
-go 47.3 67.5 tol 0.1
+go 47.08 67.13 tol 0.1
 hold 2 action
 go 43 63
 go 41.5 61
+# Onto the item (the original's 28 px boxes, BD-0021).
+go 26 61 tol 0.15
 go 26.5 61 tol 0.2 until treasures = 1
 go 41.5 61
-go 42.3 60.5 tol 0.1
+go 42.08 60.13 tol 0.1
 hold 2 action
 until treasures = 1 max 120
 go 43 63.5
@@ -117,7 +123,7 @@ go 78.4 61
 # D, the corridor of tanks (z 59-63): the drink at its mouth (80, 8, 59), unseen past the three
 # tanks swinging across it and its two mines, north through the doorway (89, 58), under the mine
 # hanging in it, into the crate room E.
-go 79.9 59.35 tol 0.06
+go 79.96 59.14 tol 0.06
 hold 2 action
 go 88.5 59.4
 go 89 59.3 tol 0.15
@@ -150,7 +156,7 @@ go 89 49
 # three platforms (2 x 2, shuttling a cell along Z; z 51 always on them), east, west, east, and
 # west onto the top ledge (walk 24); out south onto the deck G.
 go 92 51
-go 94.4 51 tol 0.08
+go 94.75 51 tol 0.08
 hold 2 action
 wait 120
 face 90

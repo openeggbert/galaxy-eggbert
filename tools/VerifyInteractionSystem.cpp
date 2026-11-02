@@ -3769,6 +3769,13 @@ int main(int argc, char** argv)
         ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 10.0f), camera.View(),
                                             camera.Projection(), 640, 480, px, py);
         check(!ok, "ProjectWorldToHudSpace() returns false for a point behind the camera");
+
+        // Almost in the camera's plane, far to its right: on the screen's edge, not thousands of
+        // pixels out (a pickup's flight from there never ended and its reward was lost, BD-0022).
+        ok = Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(50.0f, 0.0f, 4.95f), camera.View(),
+                                            camera.Projection(), 640, 480, px, py);
+        check(ok && px >= 0.0f && px <= 640.0f && py >= 0.0f && py <= 480.0f,
+              "a point almost level with the camera projects onto the screen's edge (clamped)");
     }
 
     // 17.13. Clear2Ascend/Clear3Ascend/Clear4 death VFX (plan.md `158`

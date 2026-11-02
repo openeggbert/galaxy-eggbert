@@ -228,8 +228,11 @@ namespace GalaxyEggbert::Game
         // kRefH, the refToScreenX/Y lambdas in Draw() below).
         const float scale = static_cast<float>(viewportH) / kRefH;
         const float offsetX = (static_cast<float>(viewportW) - kRefW * scale) * 0.5f;
-        outX = (viewportX - offsetX) / scale;
-        outY = viewportY / scale;
+        // Onto the screen: a point off it, or nearly in the camera's plane (tiny W, huge
+        // coordinates), starts its flight from the screen's edge. Unclamped, a pickup taken with
+        // the camera pressed against it flew for ever and its reward never came (BD-0021).
+        outX = std::clamp((viewportX - offsetX) / scale, 0.0f, kRefW);
+        outY = std::clamp(viewportY / scale, 0.0f, kRefH);
         return true;
     }
 

@@ -78,7 +78,7 @@ go 14.2 46
 go 14 53 tol 0.1
 go 12 53
 go 12 51.6
-go 10 52.6 tol 0.1
+go 10 53 tol 0.1
 until treasures = 2 max 200
 # Back out, along the bank and through the tunnel the other way, then down the long lift's
 # open shaft (z 52) into the rock cave's hall.
@@ -112,7 +112,7 @@ go 71 47 tol 0.1
 face 180
 until y >= 11.98 max 400
 go 71 49
-go 79.6 52 tol 0.1
+go 79.85 52 tol 0.1
 hold 6 action
 wait 90
 go 67.4 52 tol 0.1
@@ -139,7 +139,7 @@ expect y >= 35.95
 # B: the drink (28, 22), then unseen over the three roofs and their birds (walk 38, 40, 42)
 # to the tower's lift (26, 5; 48 ticks, 3 stop), jumped off at the top onto the tower.
 go 27 23.4
-go 28 22.4 tol 0.1
+go 28 22.15 tol 0.1
 hold 6 action
 wait 90
 go 26 19

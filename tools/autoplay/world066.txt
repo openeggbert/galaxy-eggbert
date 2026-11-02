@@ -167,7 +167,7 @@ go 33 45.55 jump 1.8 tol 0.1
 until ground = 1
 go 35 45.55 jump 1.8 tol 0.1
 until ground = 1
-go 45.6 46 tol 0.1
+go 46 46 tol 0.1
 until eggs = 3 max 200
 # Back west: the traps (x 34, 32); the moving mine jumped as it comes east toward him (106 ticks
 # after it turned at its east end, x 30), the still mine and the trap (x 16); under teleporter 1
