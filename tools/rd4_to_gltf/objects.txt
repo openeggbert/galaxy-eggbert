@@ -139,6 +139,9 @@ temp324     object-m 324-329 Decor/temporaire.rd4 min_iou=0.6 tone=0.72,16
 # Decor/aplatisseur.rd4, a piston hanging from the ceiling of its cell (IoU 0.95-0.975, survey;
 # tone calibrated, error 32.1 -> 20.1).
 crusher317  object-m 317-323 Decor/aplatisseur.rd4 min_iou=0.6 tone=0.66,3
+# The spring (211, always bouncing through table_ressort's 209-213 in the original, Decor.cpp:926-929;
+# owner 2026-11-02: a cube with a sprite texture): Decor/ressort.rd4 (IoU 0.979-0.98; tone 34.3 -> 23.5).
+spring211   object-m 209-213 Decor/ressort.rd4 min_iou=0.6 tone=0.73,10
 # The saw (378-383, the stopped 379; owner 2026-11-02: a rock cube showed in its place), drawn standing
 # on its floor cell: Decor/scie.rd4, its six icons at IoU 0.986-0.990 (mirrored).
 saw378      object-m 378-383 Decor/scie.rd4 min_iou=0.6 tone=1.6,60

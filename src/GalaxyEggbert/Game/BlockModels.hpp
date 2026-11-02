@@ -46,10 +46,21 @@ namespace GalaxyEggbert::Game
     // one cell as the tile shows it, the device its top third, the tip under it), the yellow
     // trestle 199 (Decor/support3.rd4), and the posts 182 and 183 (Decor/porte1.rd4, porte2.rd4).
     // The coloured doors 334-336 (Decor/porte-r/v/b.rd4, IoU 0.983; owner 2026-11-02: the red, green
-    // and blue posts in 3D), until a key opens them.
-    inline constexpr std::array<std::uint16_t, 17> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+    // and blue posts in 3D), until a key opens them. The spring 211 (Decor/ressort.rd4, IoU 0.98;
+    // owner 2026-11-02: a cube with a sprite), its frame per tick (SpringFrameIcon below).
+    inline constexpr std::array<std::uint16_t, 18> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
-                                                                     334, 335, 336};
+                                                                     334, 335, 336, 211};
+
+    // The spring 211 is drawn as Decor/ressort.rd4 always bouncing as the original draws it:
+    // Tables::table_ressort[(m_time / 2 + column * 7) % 8] (Decor.cpp:926-929; the column's 7
+    // offsets each spring's phase; in 3D the cell's X + Z).
+    inline constexpr std::array<std::uint16_t, 8> kSpringFrames{209, 210, 211, 212, 213, 212, 211, 210};
+    [[nodiscard]] inline std::uint16_t SpringFrameIcon(int animPhase, int gridX, int gridZ) noexcept
+    {
+        const int k = ((animPhase / 2 + (gridX + gridZ) * 7) % 8 + 8) % 8;
+        return kSpringFrames[static_cast<std::size_t>(k)];
+    }
 
     // Still icons whose model has a front (the original is a front view: the teleporters' lights
     // and letter, the trestle's frame), turned toward the cell's open side

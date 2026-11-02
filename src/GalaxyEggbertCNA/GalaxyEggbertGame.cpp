@@ -5656,7 +5656,15 @@ namespace GalaxyEggbert::CNA
                                       cell.base) == GalaxyEggbert::Game::kFanModelBases.end())
                         {
                             // A still icon drawn as its model (a pillar), or a lattice of its frame.
-                            if (const ObjectModelPose* still = objectModelTable_.Find(ObjectTextureSource::ObjectM, cell.base))
+                            // The spring bounces through its frames (BlockModels.hpp SpringFrameIcon).
+                            const std::uint16_t shown =
+                                cell.base == GalaxyEggbert::BlockTypes::Spring
+                                    ? GalaxyEggbert::Game::SpringFrameIcon(
+                                          worldRuntime_.GetAnimPhase(),
+                                          static_cast<int>(std::lround(cell.x)) + WorldRuntime::kWorldCenterX,
+                                          static_cast<int>(std::lround(cell.z)) + WorldRuntime::kWorldCenterZ)
+                                    : cell.base;
+                            if (const ObjectModelPose* still = objectModelTable_.Find(ObjectTextureSource::ObjectM, shown))
                             {
                                 if (std::find(GalaxyEggbert::Game::kLatticeModelIcons.begin(),
                                               GalaxyEggbert::Game::kLatticeModelIcons.end(),

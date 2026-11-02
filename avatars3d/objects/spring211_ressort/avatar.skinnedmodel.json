@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "spring211_rd_0995c3",
+      "vertices": "spring211_rd_0995c3.verts.bin",
+      "indices": "spring211_rd_0995c3.idx.bin",
+      "vertexStride": 52,
+      "texture": "spring211_rd_0995c3.png",
+      "diffuseColor": [
+        0.003018575851393189,
+        0.3035835004356886,
+        0.5477945081433117,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
