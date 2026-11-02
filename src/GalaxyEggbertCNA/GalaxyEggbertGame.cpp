@@ -3984,55 +3984,37 @@ namespace GalaxyEggbert::CNA
                 interaction_.SpawnTeleportArc(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
             }
 
-            // Fan hazard (plan.md E3D-MIG-149, see WorldRuntime::
-            // TryConsumeFan()'s own comment for the real IsVentillo() source
-            // this ports, and for why only the head-tile consumption is
-            // implemented, not the real trail-walk). Real "kills only if
-            // m_blupiFocus && unshielded/unhidden/not-SuperBlupi" -- Shield/
-            // Hide immunity IS modeled now (plan.md E3D-MIG-170); focus/
-            // superBlupi don't exist in this engine yet. The fan is still
-            // consumed (cleared) regardless of immunity, matching the real
-            // "a shielded Blupi walking through a fan still pops it but
-            // survives" behavior -- only the death itself is gated. Real
-            // channel 10 (the fan's own contact sound, distinct from lava/
-            // spike/blitz's channel 8/51) plays via triggerDeath() itself,
-            // same pattern as every hazard above. BigShake IS modeled
-            // (plan.md CAM-009, 2026-07-14) -- verified directly against
-            // Decor.cpp: the real trigger site is the SAME `if
-            // (m_blupiFocus && !shield && !hide && !superBlupi)` block
-            // that calls BlupiDead(), i.e. the shake fires exactly when
-            // the fan actually kills Blupi, not on every fan contact --
-            // matches this engine's own `!IsInvincible()` gate on
-            // triggerDeath() below exactly. The real cosmetic ObjectType11
-            // shockwave flash spawned at the SAME site is now also
-            // modeled (plan.md VISUAL-008-adjacent, 2026-07-14, see
-            // `InteractionSystem::SpawnFanHitFlash()`'s own comment).
-            if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) && !blupi_.IsInvincible())
+            // Fan hazard (Decor.cpp:5459-5474, IsVentillo; WorldRuntime::TryConsumeFan): touching a
+            // fan at its mouth destroys it with its wind. Every touch explodes (ObjectType11), shakes
+            // the screen hard and plays channel 10; only the death is gated on Shield, Hide and
+            // SuperBlupi, so a shielded Blupi survives the explosion he caused (BD-0042: until
+            // 2026-11-03 the explosion, the shake and the sound came only with the death). The death
+            // is BlupiDead(Clear1, Clear2), the 50/50 coinflip, without m_blupiRestart.
+            if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()))
             {
-                // Captured BEFORE triggerDeath() respawns Blupi -- the
-                // flash/ascend must originate from the death position, not
-                // the respawn position (fixes a pre-existing bug: this
-                // call previously read blupi_.GetX/Y/Z() AFTER triggerDeath()
-                // had already moved it).
+                // Captured BEFORE triggerDeath() respawns Blupi: the flash and the ascent start
+                // where he died.
                 const float deathX = blupi_.GetX();
                 const float deathY = blupi_.GetY();
                 const float deathZ = blupi_.GetZ();
                 cameraShake_.Trigger(CameraShakeType::Big);
                 interaction_.SpawnFanHitFlash(worldRuntime_, deathX, deathY, deathZ);
-                // Real 50/50 Clear1/Clear2 coinflip (plan.md `158`
-                // death-VFX follow-up, Decor.cpp:5458-5463) -- unlike
-                // fall-off-world/Lava, Fan's death is NOT deterministically
-                // Clear2. Real m_blupiRestart=false at this site (no
-                // `m_blupiRestart=true` anywhere near Decor.cpp:5458-5472).
-                const bool isClear2 = interaction_.RollClear2Coinflip();
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel10,
-                             isClear2 ? GalaxyEggbert::Game::BlupiController::DeathCause::Clear2
-                                      : GalaxyEggbert::Game::BlupiController::DeathCause::Clear1,
-                             false);
-                if (isClear2)
+                if (blupi_.IsInvincible())
                 {
-                    triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
-                                        deathX, deathY, deathZ);
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                }
+                else
+                {
+                    const bool isClear2 = interaction_.RollClear2Coinflip();
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel10,
+                                 isClear2 ? GalaxyEggbert::Game::BlupiController::DeathCause::Clear2
+                                          : GalaxyEggbert::Game::BlupiController::DeathCause::Clear1,
+                                 false);
+                    if (isClear2)
+                    {
+                        triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f,
+                                            230, deathX, deathY, deathZ);
+                    }
                 }
             }
 
