@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-02 (fidelity audit, milestone G: the owner's reports OR-0001..0027)._
+_Last updated: 2026-11-02 late (fidelity audit, milestone G: the owner's reports up to OR-0050)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -166,6 +166,22 @@ ledgers before repeating any discovery. Where it stands:
   (`blupi-plat.rd4`), the clay bridge (`grotte-fragile1.rd4`), the spring (`ressort.rd4`), the
   lightning and the charred Blupi (no scene: to model), grass, the glue death (`glu.rd4`; its
   icons are element.png's, the clip library matches blupi.png's only), the world signs.
+- Done 2026-11-02 late (OR-0038..0050, all 78 playthroughs passed with the saw and fan
+  changes): the saw as `Decor/scie.rd4` standing on the floor around it (`kModelOverFloorBases`,
+  the cell drawn as the commonest plain floor within 3 cells); a fan a whole block in collision
+  (M3D-0004; levelcheck agrees); Down and Air hold their last frame (`GetAnimHoldFrame`, the
+  crouch no longer pumps); opendoors as `Decor::AdaptDoors` with `m_bCheatDoors`
+  (`HubDoors::AdaptHubDoors`, live in hub 10); the back-up button just over the stick's ring;
+  `build_clip_library.py` `ease_doubled` (a pose shown two ticks moves over both; 35 clips
+  replaced only where a `--no-ease` rebuild matched the shipped clip byte for byte; vehicles
+  excepted). `GenerateSampleWorld3D` now writes only world999 (it overwrote every world before).
+  Uncommitted, in progress: the crusher (worlds 045/053 moved into one-high passages, 199's
+  invented crusher row removed, `objects.txt` tone for `aplatisseur.rd4`; code next: non-solid,
+  own-cell detection, model via `kAnimatedModelBases`, playthroughs 045/053/199), the death angel
+  (`objects.txt` `angel`: element 230-241 from `blupi-ange.rd4` at IoU 0.965-0.982 with the new
+  `alpha=` option; to draw in 3D at 50 % opacity instead of the HUD voyage sprite). Queued: the
+  all-variants demo world (OR-0044, a gallery above world999's ground), a sweep of every model
+  source (OR-0050), a new web build.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
