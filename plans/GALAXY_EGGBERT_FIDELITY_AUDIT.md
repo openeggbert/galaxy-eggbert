@@ -42,8 +42,8 @@ REPRODUCED_DEFECT | FIXED_AND_VERIFIED | BLOCKED | NOT_APPLICABLE`. A generated 
 | Wave | Scope | State |
 |---|---|---|
 | A | baseline; ledgers; crate push (§4); moving platforms (§5) | done except a human play pass: crate push/pull D60 (`1c59eae`), every lift within the original's speeds (BD-0006, `7e0d1cf`, `46a663b`), crate support (BD-0003) |
-| B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | ED-0001/0006 done; lava (`90acade`), fan (`6daa06b`), pillars 76/77 (`801c232`) from the original sources with live before/after; open: pillars 375-377/399, wind tiles, the owner's look |
-| C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | ledger generated; every one of the 29 object types the original's 78 worlds use and every live action is referenced by Galaxy's code (no type missing outright); the per-type behaviour review is the work left; fixed so far: BD-0003 (crate support), BD-0004 (follow stars and shot ranges vs decor, in the tree) |
+| B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | ED-0001/0006 done; lava (`90acade`), fan (`6daa06b`), pillars 76/77/377/399, the girder 201, the bar 138/202 as two pipes (M3D-0003), the teleporters 330-333, the trestle 199, the posts 182/183, from the original scenes with live checks (2026-11-02); the converter's flat caps and texture repeats fixed (houses); open: pillars 375/376, wind tiles, world signs 174-181 (no digits in the scene), the switch 384/385, the cave rocks 285-303 (need instancing), ED-0007 auto-tiling (MR-0005), the owner's look |
+| C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | every one of the 29 object types the original's worlds use reviewed against `Decor.cpp`: fixed BD-0003/0004, BD-0010..0028 (contact boxes, keys, vehicles, invert, exits' goal phase, dynamite on lifts, the decoy's boxes, sounds, the head shake, Advance, ...), the rest recorded as matching; open: the fish and bird beyond their speeds, the shooters' and big creature's drawn height, `m_blupiFocus` (unmodelled gate) |
 | D | original assets: `.a3d` reader, `.max` request, per-source stages | inventory done; `.a3d` reader done, all 105 read (`5fe7bc9`); `.max` BLOCKED (MR-0001: the MAX 3.1 ISO offered looks unlicensed; not installed) |
 | E | every world's lesson, bypasses, platform fairness | ledger generated |
 | F | release audit at pinned revisions | — |
@@ -81,9 +81,9 @@ playthroughs of the five worlds and their chains pass; the D52-D57 tests pass (1
 
 ## 6. Next steps (in order)
 
-1. Editor variant cycling (ED-0001; the 3D mapping is MR-0003, a default proposed).
-2. Fan, lava, pillars: a multi-angle live gallery (first captures `build-probe/fa-live/vis/`),
-   the `.a3d` reader (lava `Decor/lave/lave-1..5.a3d`, columns `Decor/smooth/colonne*.a3d`), then
-   3D replacements from the original sources.
-3. The whole-campaign playthrough after D60/BD-0006/BD-0003 (regenerate `campaign.txt`).
-4. Wave C: the GP ledger row by row (BD-0004 first: decor solidity for followers/projectiles).
+1. The owner's answers: MR-0005 (auto-tiling in 3D), the world signs' digits (VIS-0175..0182),
+   OR-0006, the human play pass (MR-0004).
+2. OR-0017 (Blupi's body in walls): `plans/audit/or0017-body-width.patch` with the playthroughs
+   re-planned world by world.
+3. Instanced drawing of block models, then the cave rocks 285-303 as models.
+4. Wave E: every world's lesson and bypasses (ledger generated), then Wave F.
