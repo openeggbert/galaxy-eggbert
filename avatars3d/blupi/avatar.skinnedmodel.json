@@ -246,6 +246,10 @@
       "clip": "clips/MarchSuspend.clip.bin"
     },
     {
+      "name": "JumpSuspend",
+      "clip": "clips/JumpSuspend.clip.bin"
+    },
+    {
       "name": "Hide",
       "clip": "clips/Hide.clip.bin"
     },

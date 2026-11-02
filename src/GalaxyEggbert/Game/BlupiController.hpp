@@ -361,15 +361,16 @@ namespace GalaxyEggbert::Game
         // reasonable value, not a transcribed constant. kSuspendReleaseSpeed
         // is proportionally anchored to kJumpSpeed the same way as the jump-
         // headroom constants (real fixed -11.0 vs the real jump baseline
-        // -16.0 already anchored to kJumpSpeed). The real 10-tick
-        // jump-release wind-up animation is NOT modeled (no visible Blupi
-        // model exists to show it) -- pressing Jump releases instantly, a
-        // documented simplification, not a transcription gap. Real 5-tick
+        // -16.0 already anchored to kJumpSpeed). He lets go only after
+        // holding Jump (or Up) for kSuspendJumpWindUpTicks, JumpSuspend's
+        // wind-up (Decor.cpp:4769-4789); let go of the key earlier and he
+        // hangs on. Real 5-tick
         // no-regrab grace timer (both the free-fall-drop and jump-release
         // paths) is a direct ScaleTime(5)-at-20Hz transcription, same
         // technique as kWaterGaugeTickSeconds/kTeleportDuration.
         static constexpr float kSuspendMoveSpeed = kMoveSpeed;
         static constexpr float kSuspendReleaseSpeed = kJumpSpeed * (11.0f / 16.0f);
+        static constexpr float kSuspendJumpWindUpTicks = 10.0f; // ScaleTime(10), Decor.cpp:4780
         static constexpr float kSuspendNoRegrabSeconds = 5.0f / 20.0f;
         static constexpr float kSuspendDropHoldSeconds = 5.0f / 20.0f;
 
@@ -535,6 +536,8 @@ namespace GalaxyEggbert::Game
             // Hanging from a bar (the original's StopSuspend 31 and MarchSuspend 32, chosen by
             // m_blupiSuspend in BlupiSearchIcon): still, and moving along it.
             StopSuspend, MarchSuspend,
+            // Winding up to jump off the bar (JumpSuspend 34: the original's Jump while hanging).
+            JumpSuspend,
             // Hide (plan.md BLUPI-051, found 2026-07-18): real single
             // static pose (`table_blupi` ID 35, 9-frame idle-fidget cycle,
             // same shape as Stop's own long idle table) while
@@ -1553,6 +1556,7 @@ namespace GalaxyEggbert::Game
         // The grab / jump-off of this step, for their sounds.
         bool m_barGrabbed = false;
         bool m_barJumpedOff = false;
+        float m_barJumpTicks = -1.0f; // ticks Jump has been held on the bar; -1 not winding up
 
         bool m_ghost = false;
 

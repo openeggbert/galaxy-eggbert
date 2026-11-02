@@ -294,8 +294,10 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   `avatars3d/blupi/` alone: a whole rebuild today also changes Hide and StopTank, converter drift
   since their export, left as shipped); the hanging fidget sound follows StopSuspend's phase.
   `plans/evidence/hanging.png`.
-- Open: the jump off a bar. The original holds Jump for 10 ticks first (JumpSuspend's wind-up,
-  Decor.cpp:4769-4789; let go earlier and he stays); Galaxy lets go at once.
+- The jump off a bar: the original makes him hold Jump (or Up) 10 ticks first, JumpSuspend's
+  wind-up (Decor.cpp:4769-4789; let go earlier and he hangs on); Galaxy let go at once. Now the
+  same, with the JumpSuspend clip (`suspendu-jump.rd4`, table_blupi 34). The playthroughs leave
+  bars at their ends, so the eight bar worlds replay unchanged.
 
 ## Reviewed, not changed (yet)
 

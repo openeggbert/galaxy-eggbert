@@ -103,6 +103,7 @@ namespace GalaxyEggbert::CNA
                 case BlupiController::AnimState::StopNage:
                 case BlupiController::AnimState::StopSurf:
                 case BlupiController::AnimState::StopSuspend:
+                case BlupiController::AnimState::JumpSuspend:
                 case BlupiController::AnimState::Hide:
                 case BlupiController::AnimState::Mockery:
                 case BlupiController::AnimState::Mockeryi:
@@ -232,6 +233,7 @@ namespace GalaxyEggbert::CNA
                 case S::MarchSurf: return "MarchSurf";
                 case S::StopSuspend: return "StopSuspend";
                 case S::MarchSuspend: return "MarchSuspend";
+                case S::JumpSuspend: return "JumpSuspend";
                 case S::Hide: return "Hide";
                 case S::Push: return "Push";
                 case S::StopPop: return "StopPop";

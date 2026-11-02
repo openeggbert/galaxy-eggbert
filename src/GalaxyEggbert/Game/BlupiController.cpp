@@ -265,6 +265,7 @@ namespace GalaxyEggbert::Game
             163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
             163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
             151, 151, 143, 143, 144, 144, 157, 157};
+        constexpr int kJumpSuspendFrames[] = {157, 157, 165, 165, 165, 165, 166, 166, 166, 166}; // table_blupi 34
         constexpr int kMarchSuspendFrames[] = {
             144, 144, 145, 145, 146, 146, 145, 145, 144, 144, 143, 143};
         constexpr int kPushFrames[] = {49, 50, 51, 52, 53, 54};
@@ -1491,6 +1492,7 @@ namespace GalaxyEggbert::Game
                 m_velocityY = 0.0f;
                 m_onGround = false;
                 m_suspendDropHoldTimer = 0.0f;
+                m_barJumpTicks = -1.0f;
                 m_barGrabbed = true;
             }
         }
@@ -1521,16 +1523,25 @@ namespace GalaxyEggbert::Game
             const int gy = ClampGrid(static_cast<int>(std::lround(m_y)), blocksPerAxis);
             const BarreCellType cellHere = GetBarreCellType(world, gx, gy, gz);
 
-            // Real jump-to-release (Decor.cpp:4769-4789): instant here, not
-            // the real 10-tick wind-up (no visible model to show it, see
-            // kSuspendReleaseSpeed's own comment).
-            if (jumpPressed)
+            // Jumping off (Decor.cpp:4769-4789): Jump or Up held starts JumpSuspend's wind-up; after
+            // its 10 ticks he lets go upward; released earlier, he hangs on.
+            const bool jumpHeld = jumpPressed || lookUpHeld;
+            if (jumpHeld)
+            {
+                m_barJumpTicks = std::max(m_barJumpTicks, 0.0f) + dt * 20.0f;
+            }
+            else
+            {
+                m_barJumpTicks = -1.0f;
+            }
+            if (jumpHeld && m_barJumpTicks >= kSuspendJumpWindUpTicks)
             {
                 m_suspended = false;
                 m_onGround = false;
                 m_velocityY = kSuspendReleaseSpeed;
                 m_suspendGraceTimer = kSuspendNoRegrabSeconds;
                 m_barJumpedOff = true;
+                m_barJumpTicks = -1.0f;
             }
             // Real: holding Down for >5 ticks, or walking off the bar
             // entirely (no bar tile at the new position), drops Blupi into
@@ -2320,7 +2331,9 @@ namespace GalaxyEggbert::Game
                                   : m_ecrase      ? (moving ? AnimState::MarchEcrase : AnimState::StopEcrase)
                                   : m_nage        ? (moving ? AnimState::MarchNage : AnimState::StopNage)
                                   : m_surf        ? (moving ? AnimState::MarchSurf : AnimState::StopSurf)
-                                  : m_suspended   ? (moving ? AnimState::MarchSuspend : AnimState::StopSuspend)
+                                  : m_suspended   ? (m_barJumpTicks >= 0.0f ? AnimState::JumpSuspend
+                                                     : moving                ? AnimState::MarchSuspend
+                                                                             : AnimState::StopSuspend)
                                   : IsInVehicle() ? vehicleAnimState()
                                   : pushingCrate  ? AnimState::Push
                                   : holdingCrate  ? (moving ? AnimState::Pop : AnimState::StopPop)
@@ -2521,6 +2534,8 @@ namespace GalaxyEggbert::Game
                 return kStopSuspendFrames[m_animPhase % (sizeof(kStopSuspendFrames) / sizeof(kStopSuspendFrames[0]))];
             case AnimState::MarchSuspend:
                 return kMarchSuspendFrames[m_animPhase % (sizeof(kMarchSuspendFrames) / sizeof(kMarchSuspendFrames[0]))];
+            case AnimState::JumpSuspend:
+                return kJumpSuspendFrames[m_animPhase % (sizeof(kJumpSuspendFrames) / sizeof(kJumpSuspendFrames[0]))];
             case AnimState::Hide:
                 return kHideFrames[m_animPhase % (sizeof(kHideFrames) / sizeof(kHideFrames[0]))];
             case AnimState::Push:

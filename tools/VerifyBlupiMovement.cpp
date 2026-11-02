@@ -512,7 +512,28 @@ int main(int argc, char** argv)
             jumper.SetPosition(barreWorldX, 1.0f, 72.0f - 50.0f);
             jumper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
             check(jumper.IsSuspended(), "sanity: grabbed the bar before testing jump-release");
-            jumper.Step(barreWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+            // JumpSuspend's wind-up (Decor.cpp:4769-4789): Jump held 10 ticks (30 frames at 60 Hz)
+            // before he lets go; released earlier, he hangs on.
+            for (int frame = 0; frame < 20; ++frame)
+            {
+                jumper.Step(barreWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+            }
+            check(jumper.IsSuspended() && jumper.GetAnimState() == BlupiController::AnimState::JumpSuspend,
+                  "holding Jump on a bar winds up (JumpSuspend) before letting go");
+            jumper.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(jumper.IsSuspended() && jumper.GetAnimState() != BlupiController::AnimState::JumpSuspend,
+                  "letting go of Jump during the wind-up keeps him on the bar");
+            int releaseFrame = -1;
+            for (int frame = 1; frame <= 40 && releaseFrame < 0; ++frame)
+            {
+                jumper.Step(barreWorld, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt);
+                if (!jumper.IsSuspended())
+                {
+                    releaseFrame = frame;
+                }
+            }
+            check(releaseFrame >= 29 && releaseFrame <= 31,
+                  "held through the wind-up, Jump lets go of the bar after 10 ticks");
             check(!jumper.IsSuspended(), "pressing Jump while suspended releases the hang");
             check(jumper.GetVelocityY() > 0.0f,
                   "the jump-release gives Blupi a real upward launch (real fixed -11.0 equivalent)");
