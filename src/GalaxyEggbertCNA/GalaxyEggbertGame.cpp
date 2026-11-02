@@ -4256,9 +4256,9 @@ namespace GalaxyEggbert::CNA
                 // matching the same architecture as TryActivateSwitch/
                 // PlaceDynamite above. Real "requires the action button
                 // held/pressed at contact" gate is modeled via the same
-                // proximity radius every other pickup here uses; the real
-                // helicopter-only auto-mount-over-a-gap exception
-                // (`Decor::IsFloatingObject`) is NOT modeled.
+                // proximity radius every other pickup here uses; the
+                // helicopter floating over a gap is boarded without it
+                // (`Decor::IsFloatingObject`, BD-0024, further below).
                 if (blupi_.IsInVehicle())
                 {
                     // Only on the ground, off any lift, the helicopter and the overcraft on both feet,

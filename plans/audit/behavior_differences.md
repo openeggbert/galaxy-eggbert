@@ -643,3 +643,48 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   Found comparing every Galaxy frame table with table_blupi by action (all others equal).
 - Fix: the two entries; the DeathLocked.Clear4 clip rebuilt from it.
 - Validation: the table comparison; ctest.
+
+## BD-0040 — the Cloud lasted into the water; coming onto the surface ends it (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5287-5307): on the tick Blupi comes onto the surface from dry ground or the
+  air (`!m_blupiNage && !m_blupiSurf && IsSurfWater`), besides the splash, the Cloud ends
+  (`m_blupiCloud = false`, its gauge hidden). Diving in deeper at once, past the surface band,
+  does not end it (that branch has no such line).
+- Galaxy kept the Cloud in the water. Found reviewing IsSurfWater's use case (GP-0461).
+- Fix: `BlupiController::Step` ends the Cloud on that transition.
+- Validation: `VerifyBlupiMovement` (he falls into a pool with the Cloud: it lasts through the fall
+  and ends on the surface); live, probe world 995 with the typed `powercharge`: the Cloud's gauge
+  goes as he lands in the pool (`plans/evidence/cloud-ends-in-water.png`); the 37 worlds with
+  water replayed, all passed; ctest.
+
+## BD-0041 — the jump out of the water splashed when he left the water, and only with Jump held (audio, effects) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5336-5357): the jump out of the water plays channel 22 and splashes
+  (`MoveObjectTiplouf`: ObjectType35, channel 64) at the jump itself, ending Surf and Nage there;
+  leaving the water any other way plays channel 22 alone (5359-5408).
+- Galaxy played both when he left the water cells, the splash only if Jump was still held then.
+- Fix: `BlupiController::JumpedOutOfWater()` reports the jump's tick; the host splashes and plays
+  22 then, and leaving the water on that jump plays nothing more.
+- Validation: `VerifyBlupiMovement` (the jump is reported once and he leaves the water on it);
+  the water worlds' replay; ctest.
+
+## BD-0042 — touching a fan with the shield: no explosion, no shake, no sound (gameplay, effects) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5459-5474): `IsVentillo` destroys the fan with its wind, then only the death
+  is gated (`m_blupiFocus && !m_blupiShield && !m_blupiHide && !m_bSuperBlupi`); the explosion
+  (ObjectType11), the big shake, the stopped motors and channel 10 come with every touch.
+- Galaxy destroyed the fan silently while Blupi was shielded, hidden or SuperBlupi (its comment
+  claimed the shake sat inside the death's gate).
+- Fix: the host explodes, shakes and plays channel 10 on every touch; the death keeps its gate.
+- Validation: live, probe world 995 with the typed shield (`roundshield`): walking into a fan he
+  survives, the fan goes, the explosion shows and the view shakes
+  (`plans/evidence/fan-shield-explosion.png`); without the shield he dies as before; ctest.
+
+## BD-0043 — a door's key flew back from its own HUD place; the original starts every one at x 520 (HUD) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5614-5625): opening a coloured door with its key starts the key's voyage
+  from (520, 418) to the door for all three keys, though the second and third arrive at 530 and
+  540 when picked up (5960-6001).
+- Galaxy started it from 520, 530 or 540 by the key.
+- Fix: 520 for every door. Cosmetic.
+- Validation: build, ctest.
