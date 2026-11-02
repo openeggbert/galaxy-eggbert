@@ -226,6 +226,12 @@ ledgers before repeating any discovery. Where it stands:
   bottomless hall (LV-0063, reviewed earlier). Left in `lesson_inventory.md`: 013/124 thinned
   counts, the bars of 046/052/061/125, 113's fan (which way its wind runs against the route is
   not clear from the map), 125's lava, 199 (UNREVIEWED, many).
+- Then: the render ledger counts blocks drawn as models (`2eeee31`: 97 were misfiled as plates
+  or cubes); **the treasure doors 421-439** as the golden post 183's model with their number plate
+  a decal (`5cd6968`, `sign_decals.py --plate`, listed with the signs in `kSignModelIcons`). The
+  flagged cubes left in use (render ledger: toy balls/badges 215-236, pipes 250-260, gates 86-90,
+  187-192) match `Decor/enfant*`, `tuyau*`, `meca*` scenes: they wait on Q-004 (terrain tiles as
+  models).
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
   `plans/audit/lesson_inventory.md` (bars of 046/052/061/125, lava, water, teleporters of 105,
