@@ -23,8 +23,20 @@ go 55 36
 go 56.5 37
 go 60 37
 go 63 36
+# The pocket's basin of lava (x 65-67): onto its lift at the near end, off at the far end.
+go 64.3 36 tol 0.1
+face 90
+lift 65 6 36 max 400
+go 65 36 tol 0.15
+lift 67 6 36 max 300
 go 68 36 until treasures = 3
 until treasures = 3 max 200
+face 270
+lift 65 6 36 max 400
+lift 67 6 36 max 400
+go 67 36 tol 0.15
+lift 65 6 36 max 300
+go 64 36 tol 0.15
 # Back down the east tunnel (the mine (64, 44): lane x 63) and along the south one (the mine
 # (56, 64): lane z 63) into the shaft.
 go 63 37

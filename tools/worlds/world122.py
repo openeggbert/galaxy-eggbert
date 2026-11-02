@@ -6,7 +6,8 @@ shaft up, little rooms off it, ten treasures in pockets of the tunnels, sixteen 
 them, six moving mines (16) bobbing in shafts, five crates (12) plugging the ways (push them on),
 a bulldozer (4), the drink (30) that hides him from them, two inverts (40), twelve eggs. Here the
 warren is cut in a block of brick in 3D: a central shaft climbed in steps with three galleries
-off it, each a loop of tunnels with pockets of treasure, mines and crates.
+off it, each a loop of tunnels with pockets of treasure, mines and crates; one pocket's way over a
+basin of lava on a lift.
 
     python3 tools/worlds/world122.py                 # writes worlds3d/world122.vwr
     python3 tools/worlds/world122.py --solved out    # no mines, moving mines or bulldozer, the
@@ -19,10 +20,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from kit import O, World, mine  # noqa: E402
+from kit import O, World, lift, mine  # noqa: E402
 from station import BRICK, brick  # noqa: E402
 
 FLOORS = (6, 14, 22)                 # the three galleries' walking levels
+LAVA = 68
 SHAFT = (48, 52, 48, 52)             # x0, x1, z0, z1
 
 
@@ -79,6 +81,16 @@ def main(argv) -> int:
             az = lo if tz < lo else hi if tz > hi else tz
             carve(min(px, ax), f, min(pz, az), max(px, ax), f + 1, max(pz, az))
             w.place(O.TREASURE, px, f, pz)
+        if g == 0:
+            # The pocket to treasure (68, 36) over a basin of lava (x 65-67) crossed on a lift
+            # shuttling along it (the original's lifts over basins of lava in its tunnels,
+            # LV-0074); for levelcheck (solved) a floor.
+            carve(65, f - 2, 36, 67, f - 1, 36)
+            w.fill(65, f - 2, 36, 67, f - 2, 36, LAVA)
+            if solved:
+                w.fill(65, f - 1, 36, 67, f - 1, 36, BRICK)
+            else:
+                lift(w, (65, f - 1, 36), (67, f - 1, 36), ticks=40, stop=30)
         for x, z in ((40, lo + 1), (hi, 44), (56, hi), (lo, 58)):
             hazard(x, f, z)
         for x, z in ((46, lo + 1), (lo + 1, 52)):
