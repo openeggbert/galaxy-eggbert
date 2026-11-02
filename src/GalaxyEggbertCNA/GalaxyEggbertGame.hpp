@@ -6,6 +6,7 @@
 #include <GalaxyEggbert/Game/TerrainRenderer.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/CameraShake.hpp>
+#include <GalaxyEggbert/Game/CharredBlupi.hpp>
 #include <GalaxyEggbert/Game/ChaseCameraYaw.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
 #include <GalaxyEggbert/Game/ObjectModelTable.hpp>
@@ -437,6 +438,9 @@ namespace GalaxyEggbert::CNA
         void WreckVehicle();
         // Whether Blupi's death is shown by his element.png sprite instead of the model (OR-0015).
         [[nodiscard]] bool BlupiDrawnAsDeathSprite() const;
+        // His charred frames (element.png 40-47, Clear1 and Clear3) drawn as his model
+        // (CharredBlupi.hpp); not charred otherwise, or without the real model.
+        [[nodiscard]] GalaxyEggbert::Game::CharredShape BlupiCharredShape() const;
         // The skateboard on its way between the ground and his hands (OR-0003): put down at
         // TakeSkate's tick 8 is when the original deletes the board from the ground
         // (Decor.cpp:4510-4518), DeposeSkate's tick 12 when it starts it there.

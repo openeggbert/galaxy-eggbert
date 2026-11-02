@@ -1754,11 +1754,23 @@ namespace GalaxyEggbert::CNA
         // and Glu (glue) are drawn from element.png in the original (Decor.cpp:2403-2410), not
         // from Blupi's sheet; the 3D clips built from those icon numbers took Blupi-sheet icons
         // instead -- 46/47 are his raised-arms wave, so he seemed to cheer as he died (OR-0015).
-        // No Ray Dream scene of the charred Blupi exists, so the original's own sprite stands
-        // in for the model while it shows.
+        // The charred frames are his model now (BlupiCharredShape()); the original's sprite stands
+        // in for the rest (Glu's).
         return cameraMode_ == CameraMode::ThirdPersonModel && blupiModelIsReal_ &&
                blupi_.GetAnimState() == BlupiController::AnimState::DeathLocked &&
-               blupi_.AnimIconUsesElementSheet() && !blupi_.IsAnimIconInvisible() && !blupi_.IsDeathHidden();
+               blupi_.AnimIconUsesElementSheet() && !blupi_.IsAnimIconInvisible() && !blupi_.IsDeathHidden() &&
+               !BlupiCharredShape().charred;
+    }
+
+    GalaxyEggbert::Game::CharredShape GalaxyEggbertGame::BlupiCharredShape() const
+    {
+        if (cameraMode_ != CameraMode::ThirdPersonModel || !blupiModelIsReal_ ||
+            blupi_.GetAnimState() != BlupiController::AnimState::DeathLocked ||
+            !blupi_.AnimIconUsesElementSheet() || blupi_.IsDeathHidden())
+        {
+            return {};
+        }
+        return GalaxyEggbert::Game::CharredModelShape(blupi_.GetRawAnimIcon());
     }
 
     void GalaxyEggbertGame::UpdateMusic()
@@ -4998,12 +5010,18 @@ namespace GalaxyEggbert::CNA
                 {
                     clipName = MissingClipFallback(blupi_);
                 }
+                // Charred, he stands still in his Stop pose (CharredBlupi.hpp).
+                const bool charred = BlupiCharredShape().charred;
+                if (charred)
+                {
+                    clipName = "Stop";
+                }
                 if (clipName != blupiActiveClipName_)
                 {
                     blupiActiveClipName_ = clipName;
                     blupiClipTimeSeconds_ = 0.0;
                 }
-                blupiClipTimeSeconds_ += static_cast<double>(dt);
+                blupiClipTimeSeconds_ = charred ? 0.0 : blupiClipTimeSeconds_ + static_cast<double>(dt);
                 // Air and Down stop at their last icon (BlupiController::GetAnimHoldFrame()): the
                 // clip's key k sits at k / rate seconds.
                 if (const int hold = blupi_.GetAnimHoldFrame(); blupiModelIsReal_ && hold >= 0 && blupiFaceRate_ > 0.0)
@@ -5354,6 +5372,7 @@ namespace GalaxyEggbert::CNA
                 !BlupiDrawnAsDeathSprite())
             {
                 constexpr float kPlaceholderModelScale = 0.009095f;
+                constexpr float kCharredShade = 0.07f; // the sprites' soot black
                 constexpr float kPlaceholderModelYOffset = -0.5f;
                 constexpr float kPlaceholderModelDepthOffset = 0.6f;
                 // The real model (kRealModelScale) has its feet at local y = 0
@@ -5393,8 +5412,12 @@ namespace GalaxyEggbert::CNA
                 // (owner 2026-11-02: they were above it). Render only, as the original's sprite.
                 constexpr float kSuspendModelDrop = 6.0f / 64.0f;
                 const float suspendDrop = blupi_.IsSuspended() ? kSuspendModelDrop : 0.0f;
+                // Charred (Clear1, Clear3: CharredBlupi.hpp), shrunk toward his feet as the frame
+                // crumbles and spread out as the heap of ash.
+                const auto charred = BlupiCharredShape();
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
+                    Microsoft::Xna::Framework::Matrix::CreateScale(charred.spread, charred.height, charred.spread) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(hangShift, 0.0f, modelDepthOffset) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
@@ -5468,7 +5491,19 @@ namespace GalaxyEggbert::CNA
                     device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
                 }
                 blupiEffect_->setAlphaProperty(blupiAlpha);
+                if (charred.charred)
+                {
+                    // Burnt black: soot, no sheen.
+                    blupiEffect_->setDiffuseColorProperty(
+                        Microsoft::Xna::Framework::Vector3(kCharredShade, kCharredShade, kCharredShade));
+                    blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
+                }
                 drawParts(*blupiModel_, face);
+                if (charred.charred)
+                {
+                    blupiEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3::One);
+                    blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::One);
+                }
 
                 // The vehicle he rides in this clip (helicopter, jeep, tank,
                 // overcraft, skateboard): its own model, built from the same
@@ -5962,7 +5997,8 @@ namespace GalaxyEggbert::CNA
         // (MeshBuilder::AddBillboard faces the camera's right/up) -- convenient,
         // since it also means the icon lookup naturally re-runs every frame
         // with the latest phase.
-        if (objectEffect_ && (!worldRuntime_.GetMobileObjects().empty() || BlupiDrawnAsDeathSprite()))
+        if (objectEffect_ &&
+            (!worldRuntime_.GetMobileObjects().empty() || BlupiDrawnAsDeathSprite() || BlupiCharredShape().smokes))
         {
             // Camera-facing basis: the inverse view matrix's Right/Up rows
             // give the camera's world-space right/up vectors (standard
@@ -6021,14 +6057,31 @@ namespace GalaxyEggbert::CNA
                     CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
             // His own death sprite (BlupiDrawnAsDeathSprite()): the 60 px icon, its centre 30 px
-            // over his feet, as the original draws it.
+            // over his feet, as the original draws it. His feet are half a cell under GetY(), where
+            // the model's are (kPlaceholderModelYOffset); centred 30 px over GetY() it hung half a
+            // cell over the floor.
             if (BlupiDrawnAsDeathSprite())
             {
                 const auto uv = GetElementIconUv(blupi_.GetDisplayAnimIcon());
                 mesh.AddBillboard(
-                    Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + 30.0f / 64.0f, blupi_.GetZ()),
+                    Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f,
+                                                       blupi_.GetZ()),
                     Microsoft::Xna::Framework::Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp,
                     CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+            }
+            // The smoke over his heap of ash (46/47, CharredBlupi.hpp): the icon's rows above the
+            // heap, its bottom where the sprite's would be over the model's feet (GetY() - 0.5,
+            // as the model's kPlaceholderModelYOffset).
+            if (const auto charred = BlupiCharredShape(); charred.smokes)
+            {
+                const auto uv = GetElementIconUv(blupi_.GetRawAnimIcon());
+                constexpr float kRows = static_cast<float>(GalaxyEggbert::Game::kCharredSmokeRows);
+                const float feetY = blupi_.GetY() - 0.5f;
+                const float bottom = feetY + GalaxyEggbert::Game::kCharredSmokeBottomPixels / 64.0f;
+                mesh.AddBillboard(
+                    Microsoft::Xna::Framework::Vector3(blupi_.GetX(), bottom + kRows / 128.0f, blupi_.GetZ()),
+                    Microsoft::Xna::Framework::Vector2(60.0f / 64.0f, kRows / 64.0f), cameraRight, cameraUp,
+                    CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V0 + (uv.V1 - uv.V0) * kRows / 60.0f});
             }
 
             if (!mesh.Mesh().Empty())

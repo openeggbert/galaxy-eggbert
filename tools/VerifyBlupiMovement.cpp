@@ -1,5 +1,6 @@
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
+#include <GalaxyEggbert/Game/CharredBlupi.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -1148,6 +1149,43 @@ int main(int argc, char** argv)
                   "Clear3's DeathLocked anim icon starts at the real first frame (icon 40)");
             check(clear3Locked.AnimIconUsesElementSheet(),
                   "Clear3's DeathLocked anim icon is on element.png too");
+
+            // The charred frames as his model (CharredBlupi.hpp, owner 2026-11-02): through the
+            // whole Clear1 death every frame is charred; he stands full height first, then only
+            // shrinks, and ends as the smoking heap, wider than he was.
+            {
+                using GalaxyEggbert::Game::CharredModelShape;
+                BlupiController burning;
+                burning.SetPosition(0.0f, 1.0f, 0.0f);
+                burning.TriggerDeathLock(BlupiController::DeathCause::Clear1, true);
+                float lastHeight = 1.0f;
+                bool allCharred = true, onlyShrinks = true, smoked = false;
+                // 70 ticks at 20 Hz (kDeathLockTicks), stepped at 60 Hz.
+                for (int step = 0; step < 240 && burning.IsDeathLocked() && !burning.IsDeathHidden(); ++step)
+                {
+                    burning.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                    if (burning.IsDeathHidden())
+                    {
+                        break; // the life-loss voyage: he is no longer drawn
+                    }
+                    const auto shape = CharredModelShape(burning.GetRawAnimIcon());
+                    allCharred = allCharred && shape.charred;
+                    if (shape.charred && !shape.smokes)
+                    {
+                        onlyShrinks = onlyShrinks && shape.height <= lastHeight;
+                        lastHeight = shape.height;
+                    }
+                    smoked = smoked || (shape.smokes && shape.height < 0.3f && shape.spread > 1.0f);
+                }
+                check(allCharred, "every frame of the Clear1 death is a charred frame drawn as his model");
+                check(onlyShrinks, "the charred model only shrinks as he crumbles (42-45)");
+                check(smoked, "the Clear1 death ends as the smoking heap of ash, low and wide (46/47)");
+                check(CharredModelShape(40).height == 1.0f && CharredModelShape(41).height == 1.0f &&
+                          !CharredModelShape(45).smokes && CharredModelShape(47).smokes,
+                      "40 and 41 stand full height; only the heap of 46/47 smokes");
+                check(!CharredModelShape(168).charred && !CharredModelShape(39).charred,
+                      "the glue's frames and other element icons are not charred");
+            }
 
             BlupiController gluLocked;
             gluLocked.SetPosition(0.0f, 1.0f, 0.0f);
