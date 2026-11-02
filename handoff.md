@@ -68,8 +68,14 @@ ledgers before repeating any discovery. Where it stands:
 - Done: OR-0004 as far as it can go without detail -- teleporters looked at live (world034) and
   one difference fixed, BD-0017: Blupi lands under the partner pillar (was one cell +Z, turned
   about) and a teleporter takes him only once the contact grace (`m_blupiPosHelico`) is over;
-  106's well pillars moved over the wells; 066/102 scripts adjusted. Open in BD-0017: what the
-  original shows after the arrival (its Teleporte frames loop; needs the original running).
+  106's well pillars moved over the wells; 066/102 scripts adjusted. Then compared with the
+  original running: the arrival's two sparkle clusters added (`SpawnTeleportArrival`), the second
+  sound on arriving removed (`plans/evidence/teleport-arrival.png`).
+- **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
+  mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
+  `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always
+  starts mission 1, so copy the map to watch over the copy's `worlds/world001.txt`. Use it
+  whenever the source leaves a behaviour open.
 - Open owner reports: OR-0004 (anything else about teleporters: the owner's word), OR-0011
   (Android: SDK, NDK 29 and emulator images are in ~/Android/Sdk; gradle wants NDK 30.0.14904198,
   CMake 4.1.2 is there; an APK build compiles everything for two ABIs), OR-0017 (his

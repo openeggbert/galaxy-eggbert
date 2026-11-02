@@ -505,6 +505,9 @@ namespace GalaxyEggbert::Game
         // class at its own existing `TriggerTeleport()` success site, same
         // reasoning as `SpawnFanHitFlash()` above.
         void SpawnTeleportArc(WorldRuntime& worldRuntime, float x, float y, float z);
+        // A teleport's arrival (Decor.cpp:6355-6356): two ObjectType27 sparkle clusters sliding
+        // +X and -X from where he lands, toward the nearest wall each way (BD-0017).
+        void SpawnTeleportArrival(WorldRuntime& worldRuntime, float x, float y, float z);
 
         // Water splash (plan.md PICKUP-078/080, ObjectType14/35) -- real
         // `Decor::MoveObjectPlouf()`/`MoveObjectTiplouf()` (`Decor.cpp:

@@ -3157,10 +3157,9 @@ namespace GalaxyEggbert::CNA
             // frozen for the whole transit, so this is the only way it ends,
             // unlike balloon's PopBalloon() interrupt path). Looks up the
             // paired destination via the same icon TriggerTeleport() was
-            // called with; relocates Blupi there and plays the real arrival
-            // sound (channel 71, reused -- the real source's two
-            // ObjectType27 arrival-particle bursts are cosmetic, not
-            // modeled, same as every other hazard's real particle effects).
+            // called with; relocates Blupi there with the original's two
+            // sparkle clusters (ObjectType27) and no sound: channel 71 plays
+            // only on entering (Decor.cpp:5603, 6350-6361; BD-0017).
             // If no paired cell exists anywhere in the grid, real behavior
             // is "regains control in place" -- a silent no-op, which is
             // already true here since blupi_'s position was never touched.
@@ -3177,9 +3176,9 @@ namespace GalaxyEggbert::CNA
                     // camera goes behind him at once rather than easing over from the departure,
                     // maybe far away (2026-10-26, reported by the world authoring).
                     interaction_.StartContactGrace(destX, destY, destZ);
+                    interaction_.SpawnTeleportArrival(worldRuntime_, destX, destY, destZ);
                     chaseCamera_.Reset(blupi_.GetYaw());
                     cameraSmoothedInitialized_ = false;
-                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
                 }
             }
 

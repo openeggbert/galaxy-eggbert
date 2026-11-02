@@ -2765,6 +2765,36 @@ int main(int argc, char** argv)
         check(!foundLonely, "FindTeleportDestination() returns false for a lone teleporter with no partner anywhere");
     }
 
+    // 16b. The arrival's two sparkle clusters (Decor.cpp:6355-6356, BD-0017): ObjectType27 sliding
+    // +X and -X from where he lands, as far as the first solid cell (SearchDistRight from his own
+    // cell), 20 ticks a cell. Up at the synthetic pillars' unused height, walls 3 cells east and
+    // 2 west of the landing cell.
+    {
+        auto& mutableWorld = world.GetWorldMutable();
+        constexpr int kGX = 30, kGY = 22, kGZ = 30;
+        mutableWorld.setBlock(kGX + 3, kGY, kGZ, Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile));
+        mutableWorld.setBlock(kGX - 2, kGY, kGZ, Worlds::Block::make(GalaxyEggbert::BlockTypes::RockPile));
+        InteractionSystem arrivalInteraction;
+        const float x = static_cast<float>(kGX - WorldRuntime::kWorldCenterX);
+        const float z = static_cast<float>(kGZ - WorldRuntime::kWorldCenterZ);
+        int sparkles = 0;
+        bool east = false, west = false;
+        arrivalInteraction.SpawnTeleportArrival(world, x, static_cast<float>(kGY), z);
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType27 || obj.posStartX != x ||
+                obj.posStartZ != z)
+            {
+                continue;
+            }
+            ++sparkles;
+            east = east || (std::fabs(obj.posEndX - (x + 3.0f)) < 0.01f && std::fabs(obj.stepAdvanceTicks - 60.0f) < 0.01f);
+            west = west || (std::fabs(obj.posEndX - (x - 2.0f)) < 0.01f && std::fabs(obj.stepAdvanceTicks - 40.0f) < 0.01f);
+        }
+        check(sparkles == 2 && east && west,
+              "a teleport's arrival starts two sparkle clusters sliding to the nearest wall each way, 20 ticks a cell");
+    }
+
     // 17. WorldRuntime::TryConsumeFan() -- Decor::IsVentillo() in 3D: contact at the fan's mouth
     // (the cell in front of it, the way it blows), the fan and its wind column cleared. Synthetic
     // fans at an unused height, clear of the sample world's own.

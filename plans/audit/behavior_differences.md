@@ -269,10 +269,12 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyInteractionSystem` (destination under the exit pillar); the playthroughs
   through teleporters (034, 051, 065, 066, 094, 095, 102, 106, 124) pass; 066's arrival check
   now expects the partner's cell, 102's wait on top of the lift re-searched (1-5 pass, 3 kept).
-- Open: what the original shows after the arrival. The Teleporte record (Tables.cpp, 128
-  frames, no threshold) loops, and no code ends the action at once: whether Blupi spins in
-  again at the partner is for a run of the original to show. Its two arrival sparkles
-  (`ObjectStart(..., ObjectType27, +-20)`) are not drawn (cosmetic effects, backlog).
+- The arrival seen in the original running (the Linux build of the port, world 34's map in a
+  probe copy, `plans/evidence/teleport-arrival.png`): he appears under the partner amid two
+  sparkle clusters, settles into his idle stance and stays visible -- the looping Teleporte
+  record does not play on. Galaxy now adds those clusters (`SpawnTeleportArrival`: ObjectType27
+  sliding +X and -X to the nearest wall, 20 ticks a cell, Decor.cpp:6355-6356) and no longer
+  plays channel 71 a second time on arriving (the original plays it only on entering, 5603).
 
 ## Reviewed, not changed (yet)
 

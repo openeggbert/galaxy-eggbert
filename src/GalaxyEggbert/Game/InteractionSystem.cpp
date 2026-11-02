@@ -2819,6 +2819,50 @@ namespace GalaxyEggbert::Game
         objects.push_back(spec);
     }
 
+    void InteractionSystem::SpawnTeleportArrival(WorldRuntime& worldRuntime, float x, float y, float z)
+    {
+        // Decor.cpp:6355-6356: `ObjectStart(m_blupiPos, ObjectType27, 20)` and `(..., -20)` -- two
+        // sparkle clusters sliding right and left from where he lands. ObjectStart sends each as far
+        // as SearchDistRight reaches (Decor.cpp:7628: from his own cell to the first solid one) at
+        // ScaleTime(|20 * dist / 64|) ticks for the distance, 20 ticks a cell; ObjectType27 lives
+        // 24 ticks, so a cluster drifts about a cell. Screen right is world +X, as for the Invert
+        // burst (SpawnInvertBurst).
+        int gx = 0, gy = 0, gz = 0;
+        ToGridCell(worldRuntime.GetWorld(), x, y, z, gx, gy, gz);
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (const int dir : {1, -1})
+        {
+            const float cells = 1.0f + static_cast<float>(SearchAirDistance(worldRuntime.GetWorld(), gx, gy, gz, dir, 0, 0));
+            MobileObjSpec spec;
+            spec.type = GalaxyEggbert::Def::ObjectType::ObjectType27;
+            spec.active = true;
+            spec.phase = 0.0f;
+            spec.currentX = spec.posStartX = x;
+            spec.currentY = spec.posStartY = y;
+            spec.currentZ = spec.posStartZ = z;
+            spec.posEndX = x + static_cast<float>(dir) * cells;
+            spec.posEndY = y;
+            spec.posEndZ = z;
+            spec.patrolStep = 2; // ObjectStart's step=2: straight out, no dwell at the start
+            spec.patrolTime = 0.0f;
+            spec.stepAdvanceTicks = 20.0f * cells;
+            bool placed = false;
+            for (auto& slot : objects)
+            {
+                if (!slot.active)
+                {
+                    slot = spec;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed)
+            {
+                objects.push_back(spec);
+            }
+        }
+    }
+
     bool InteractionSystem::HasActiveObjectOfType(const WorldRuntime& worldRuntime, GalaxyEggbert::Def::ObjectType type) const
     {
         for (const auto& obj : worldRuntime.GetMobileObjects())
