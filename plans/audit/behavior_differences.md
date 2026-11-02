@@ -430,7 +430,27 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyInteractionSystem` (refused, the reward lands, the win 51 ticks after the
   refusal without stepping off); all playthroughs.
 
+## BD-0027 — dynamite and the decoy could be put down on a lift (gameplay) — FIXED_AND_VERIFIED
+
+- Wave C, the dynamite (ObjectType 55/56) and the decoy (Perso, 200). The original puts either
+  down only with `m_blupiTransport == -1` (Decor.cpp:4792-4794): not while a lift carries him.
+  Galaxy asked for no vehicle, balloon or squash, and ground under him, which a lift is; the
+  stick was left lit in the air where the lift had been.
+- Now the host's `blupiCanUseHands` also asks `!IsRidingLift()`.
+- Also reviewed against the source and matching: taking a stick (the action press, none
+  carried, none flying to the panel, Decor.cpp:6116), its fuse (ObjectType 56, the blasts at
+  ticks 50 and 53); the lollipop (26: the action press, no shield, vehicle, balloon or squash;
+  Cloud and Hide end; Power with sound 44 at the lick's tick 32, the lollipop back in place,
+  Decor.cpp:6025-6039, 3212-3223) and the drink (30, its Hide at tick 36, back in place).
+- Validation: the playthroughs with dynamite or the decoy (014, 025, 065, 091, 092, 095, 101).
+
 ## Reviewed, not changed (yet)
+
+- Matching (2026-11-02): the shooters 32 (blupih: one shot straight down at tick 21 of each
+  turn) and 33 (blupit: two along its walk at ticks 3 and 21), Decor.cpp:8838-8970; the shot
+  (23) travels 5 ticks a cell to the first solid cell (ObjectStart), and sound 52 plays even
+  against a wall (ObjectStart returns the freed slot, not -1). Galaxy's FireBlupihShot /
+  FireBlupitShot do the same; in 3D the blupit fires along whichever axis it walks.
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px
   across (0.44 of a cell) with type-specific vertical bands (`MoveObjectDetect`, 9689-9767). A

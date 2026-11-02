@@ -122,6 +122,12 @@ ledgers before repeating any discovery. Where it stands:
   (`grotte01-19.rd4`, 0.81-0.91; ~6,000 cells). The switch 384/385 (`interrupteur.rd4`, outline
   1.000): its scene does not swap the lamps (385's sprite has them recoloured: `recolour=`), and
   most switches sit in walls, where the pillar box's four faces still suit.
+- Done 2026-11-02 (Wave C): BD-0026 (an exit checked every 51 ticks while he stands on it, the
+  original's `m_goalPhase`: the last treasure landing while he is on it wins), BD-0027 (no
+  dynamite or decoy put down on a lift, `m_blupiTransport`); matching after review: the
+  lollipop, the drink, taking dynamite, the shooters 32/33 (`behavior_differences.md`). Left of
+  the 29 types the original's worlds use: the bulldozer (4), the fish (17) and the bird (20)
+  beyond their speeds, the balloon (46), the secret exit's `m_bFoundCle` (no consumer).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

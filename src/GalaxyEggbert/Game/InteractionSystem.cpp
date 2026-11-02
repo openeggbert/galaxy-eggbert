@@ -2502,8 +2502,8 @@ namespace GalaxyEggbert::Game
         // solid ground under both feet -- approximated here as `grounded`
         // (this engine's single-point collision has no separate left/right
         // foot check). Real "not in any vehicle mode" clause fixed
-        // 2026-07-16 -- see blupiCanUseHands's own header comment
-        // ("lift-transported" still isn't modeled, no such concept exists).
+        // 2026-07-16, and not on a lift (m_blupiTransport, BD-0027) -- both in
+        // the caller's blupiCanUseHands.
         if (dynamiteCount_ <= 0 || !grounded || !blupiCanUseHands)
         {
             return false;

@@ -3929,7 +3929,9 @@ namespace GalaxyEggbert::CNA
                 // exempt here) plus Balloon/Ecrase. Deliberately does NOT gate Perso PICKUP
                 // (TryPerso()'s own internal pickup branch, real Decor.cpp:6088-6101 has no
                 // vehicle clause at all) -- see PlaceDynamite()/TryPerso()'s own header comments.
-                const bool blupiCanUseHands = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased();
+                // Nor on a lift: the same block asks m_blupiTransport == -1 (Decor.cpp:4794, BD-0027).
+                const bool blupiCanUseHands = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased() &&
+                                              !interaction_.IsRidingLift();
 
                 // Dynamite placement (plan.md E3D-MIG-155) -- same action
                 // button, independent gate (carrying one + grounded) from
