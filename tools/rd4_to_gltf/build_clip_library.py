@@ -6,7 +6,8 @@ of sprite icons at ``kAnimFps`` (``BlupiController.cpp``: ``GetRawAnimIcon`` and
 tables, read in place). ``match_icons.py`` found which Ray Dream scene frame each icon was rendered
 from. Each clip here is that icon sequence turned into 3D poses: icon k becomes a key at k /
 frame_rate seconds holding the pose of its scene frame, LINEAR in between, with one more key
-closing the loop. Icons without a usable match hold the previous pose.
+closing the loop; a pose shown exactly two ticks keeps its first key only, so it moves over both
+(``ease_doubled``). Icons without a usable match hold the previous pose.
 
 Every scene is moved, frame by frame, so that its game camera sits where the base scene's does:
 a sprite shows Blupi relative to that camera, so poses from different scenes keep their sprite
@@ -185,6 +186,27 @@ def add_props(base: conv_mod.Converter, c: conv_mod.Converter):
         base.add_joint(o, c.names[k], base.names.index(c.names[c.parent[k]]), c.scene, c.scene.begin)
 
 
+def ease_doubled(poses: list, held: list) -> list:
+    """The keys without the second of every pose held exactly two ticks.
+
+    Many of the original's animations were drawn at 10 frames a second, each icon shown two ticks
+    (the lollipop: 234, 234, 235, 235, 236, 236, ...). Keyed every tick, the pose stood still for
+    one tick and jumped in the next: stop-and-go (owner 2026-11-02: the lollipop looked fast and
+    jerky). Without the second key it moves over both ticks; the timing is the original's. A pose
+    held three ticks or more stays held: those are pauses (the idle's).
+    """
+    out, k = [], 0
+    while k < len(poses):
+        run = 1
+        while k + run < len(poses) and held[k + run] == held[k]:
+            run += 1
+        out.append(poses[k])
+        if run != 2:
+            out.extend(poses[k + 1:k + run])
+        k += run
+    return out
+
+
 def viewer_clips(glb: Path, frame_rate: float, threshold_deg: float = 60.0) -> list[str]:
     """Clips with a frame where Blupi turns more than ``threshold_deg`` toward or away from his
     right (glTF -X, where the original profile camera stood): his nose against his body, seen
@@ -255,6 +277,8 @@ def main(argv=None) -> int:
     ap.add_argument("--scale", type=float, default=0.05)
     ap.add_argument("--out", required=True, type=Path, help="output .glb; faces go beside it")
     ap.add_argument("--skip-check", action="store_true", help="do not render every clip frame against its icon")
+    ap.add_argument("--no-ease", action="store_true",
+                    help="key every tick, also poses held two ticks (the clips as built before ease_doubled)")
     ap.add_argument("--whole-icons", type=Path,
                     help="icons.csv of match_icons.py run without the scenes lacking Blupi's parts "
                          "(--exclude); see WHOLE_MARGIN")
@@ -361,6 +385,7 @@ def main(argv=None) -> int:
         last = None
         fallbacks = 0
         usable = {i: m for i, m in matches.items() if m[2] >= (VEHICLE_USABLE if vehicle else USABLE)}
+        held = []  # the icon whose pose each key shows
         for k, icon in enumerate(icons):
             source = icon if icon in usable else None
             if source is None:
@@ -377,11 +402,14 @@ def main(argv=None) -> int:
             # In a vehicle clip every prop is part of the vehicle model instead.
             hide = props_of[m[0]] if vehicle else hidden_props(source, m)
             poses.append((k / args.frame_rate, c, m[1], hide, m[3]))
+            held.append(source)
             face_seq.append(face_of(m[0]))
             sources.append((icon, m))
         if len(poses) != len(icons) or not poses:
             report.append((name, len(icons), 0, fallbacks, "no usable icon: not built"))
             continue
+        if not args.no_ease and not vehicle:  # a vehicle's parts keep its every-tick keys
+            poses = ease_doubled(poses, held)
         poses.append((len(icons) / args.frame_rate, *poses[0][1:]))
         pose_clips.append(conv_mod.PoseClip(name, poses))
         if vehicle:

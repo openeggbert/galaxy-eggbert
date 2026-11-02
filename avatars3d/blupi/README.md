@@ -29,7 +29,8 @@ edit by hand; regenerate with the commands below.
 - Clips: one per `BlupiController::AnimState`, named after it (`Stop`, `March`, `Jump`, ...), plus
   `DeathLocked.<cause>` and `PickupBusy.<kind>`; each is the state's sprite icon table played at
   `kAnimFps` (20 frames per second, as in the original), interpolated linearly between the matched
-  scene frames; a frame matched turned (front and back views, Hide's somersault) turns the whole
+  scene frames (a pose the original shows exactly two ticks keys once and moves over both, except
+  in the vehicles' clips: `ease_doubled`, OR-0042); a frame matched turned (front and back views, Hide's somersault) turns the whole
   pose. A state whose icons the saw death's half-body scenes match better still takes the
   best whole-body frame within 0.05 of it (`--whole-icons`), so Stop and the others built from
   them keep both halves of Blupi. Clear2 is invisible throughout, as in the original.
