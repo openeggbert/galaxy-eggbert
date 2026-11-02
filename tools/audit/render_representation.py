@@ -10,6 +10,8 @@ the 78 Mobile Eggbert worlds and of Galaxy's shipped worlds use it, and a repres
   thin-bar / plate / ground-plate   ThinBar / InnerFlatPlate / GroundAnchoredPlate
   crossed-planes TripleCrossBillboard
   lift-parts     drawn by LiftVisual.hpp (icon 29)
+  native-model   drawn as its original scene's model (BlockModels.hpp's lists and families, where
+                 avatars3d/objects has the model)
 
 and a review flag where the tile catalogue says the thing is not bulk material (its §10 notes:
 Billboard / ThinMechanical / special-surface / architectural-kit) or its name says it has a
@@ -87,6 +89,34 @@ def galaxy_usage():
     return usage
 
 
+BLOCK_MODELS = REPO / "src" / "GalaxyEggbert" / "Game" / "BlockModels.hpp"
+# Animated terrain whose frames BlockModels.hpp draws as models by its base (kAnimatedModelBases,
+# kModelOverFloorBases, kFanModelBases, SpringFrameIcon): the frames of each family.
+MODEL_FAMILIES = [range(126, 138), range(209, 214), range(317, 324), range(324, 330), range(378, 384),
+                  range(404, 409)]
+
+
+def model_drawn_blocks():
+    """Block icons the host draws as their original scene's model: those BlockModels.hpp lists as
+    still or sign models (kStillModelIcons, kSignModelIcons) and the frames of its animated
+    families, where avatars3d/objects has a model covering the object-m icon."""
+    text = BLOCK_MODELS.read_text(encoding="utf-8")
+    listed = set()
+    for name in ("kStillModelIcons", "kSignModelIcons"):
+        m = re.search(name + r"\{([^}]*)\}", text)
+        if m:
+            listed |= {int(v) for v in re.findall(r"\d+", m.group(1))}
+    for family in MODEL_FAMILIES:
+        listed |= set(family)
+    covered = set()
+    for icons_txt in (REPO / "avatars3d" / "objects").glob("*/icons.txt"):
+        for line in icons_txt.read_text(encoding="utf-8").splitlines():
+            parts = line.split()
+            if len(parts) >= 3 and parts[0] == "icon" and parts[1] == "object-m":
+                covered.add(int(parts[2]))
+    return listed & covered
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--ref", default=str(REPO.parent / "mobile-eggbert"))
@@ -96,6 +126,7 @@ def main():
     me = reference_usage(Path(args.ref))
     gal = galaxy_usage()
     rows = []
+    modelled = model_drawn_blocks()
     with open(REPO / "tools" / "data" / "blocks.csv", newline="", encoding="utf-8") as f:
         for b in csv.DictReader(f):
             icon = int(b["icon"])
@@ -114,8 +145,11 @@ def main():
                     flag = "crossed planes"
             if mode == 0 and icon != 0:
                 rep = "not drawn"
+            if icon in modelled:
+                rep, flag = "native-model", ""
             rows.append(dict(key="block:%d" % icon, kind="block", icon=icon, name=name,
-                             category=re.sub(r"\s+", " ", category)[:160], galaxy_render=MODE_NAMES.get(mode, str(mode)),
+                             category=re.sub(r"\s+", " ", category)[:160],
+                             galaxy_render="model (BlockModels.hpp)" if icon in modelled else MODE_NAMES.get(mode, str(mode)),
                              representation=rep, flag=flag, me_worlds=me.get(icon, 0), galaxy_worlds=gal.get(icon, 0)))
     for model in sorted((REPO / "avatars3d" / "objects").iterdir()):
         if model.is_dir():

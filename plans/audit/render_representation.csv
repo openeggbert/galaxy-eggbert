@@ -1,445 +1,445 @@
 id,key,kind,icon,name,category,galaxy_render,representation,flag,me_worlds,galaxy_worlds,status,verdict,notes,next_action
 VIS-0001,block:0,block,0,,,Air,air,,2,0,UNREVIEWED,,,
-VIS-0002,block:1,block,1,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): ovládací panel/displej s tlačítky (nebo světly); textura na 1 boční straně (čelo), zbylé boční strany m",UniformCube,cube,,10,7,UNREVIEWED,,,
-VIS-0003,block:2,block,2,(unnamed),unnamed variant,DirectionalCube,cube,,8,20,UNREVIEWED,,,
-VIS-0004,block:3,block,3,(unnamed),unnamed variant,DirectionalCube,cube,,20,5,UNREVIEWED,,,
-VIS-0005,block:4,block,4,(unnamed),unnamed variant,DirectionalCube,cube,,11,23,UNREVIEWED,,,
-VIS-0006,block:5,block,5,(unnamed),unnamed variant,DirectionalCube,cube,,14,21,UNREVIEWED,,,
-VIS-0007,block:6,block,6,(unnamed),unnamed variant,DirectionalCube,cube,,8,21,UNREVIEWED,,,
-VIS-0008,block:7,block,7,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): kus nějakého stroje; textura na 1 boční straně, zbylé boční strany modrou fallback barvou",UniformCube,cube,,8,1,UNREVIEWED,,,
-VIS-0009,block:8,block,8,(unnamed),unnamed variant,DirectionalCube,cube,,9,21,UNREVIEWED,,,
-VIS-0010,block:9,block,9,(unnamed),unnamed variant,DirectionalCube,cube,,12,19,UNREVIEWED,,,
-VIS-0011,block:10,block,10,Ground,ground,DirectionalCube,cube,,30,29,UNREVIEWED,,,
-VIS-0012,block:11,block,11,(unnamed),unnamed variant,DirectionalCube,cube,,14,22,UNREVIEWED,,,
-VIS-0013,block:12,block,12,(unnamed),unnamed variant,DirectionalCube,cube,,8,20,UNREVIEWED,,,
-VIS-0014,block:13,block,13,(unnamed),unnamed variant,DirectionalCube,cube,,10,20,UNREVIEWED,,,
-VIS-0015,block:14,block,14,(unnamed),unnamed variant,DirectionalCube,cube,,7,21,UNREVIEWED,,,
-VIS-0016,block:15,block,15,(unnamed),unnamed variant,DirectionalCube,cube,,16,3,UNREVIEWED,,,
-VIS-0017,block:16,block,16,(unnamed),unnamed variant,DirectionalCube,cube,,21,3,UNREVIEWED,,,
-VIS-0018,block:17,block,17,(unnamed),unnamed variant,DirectionalCube,cube,,16,3,UNREVIEWED,,,
-VIS-0019,block:18,block,18,StoneA,ground/decoration,DirectionalCube,cube,,21,2,UNREVIEWED,,,
-VIS-0020,block:19,block,19,(unnamed),unnamed variant,DirectionalCube,cube,,4,1,UNREVIEWED,,,
-VIS-0021,block:20,block,20,(unnamed),unnamed variant,DirectionalCube,cube,,10,1,UNREVIEWED,,,
-VIS-0022,block:21,block,21,(unnamed),unnamed variant,DirectionalCube,cube,,10,1,UNREVIEWED,,,
-VIS-0023,block:22,block,22,(unnamed),unnamed variant,DirectionalCube,cube,,17,3,UNREVIEWED,,,
-VIS-0024,block:23,block,23,(unnamed),unnamed variant,DirectionalCube,cube,,34,1,UNREVIEWED,,,
-VIS-0025,block:24,block,24,(unnamed),unnamed variant,DirectionalCube,cube,,35,1,UNREVIEWED,,,
-VIS-0026,block:25,block,25,StoneB,ground/decoration,DirectionalCube,cube,,42,1,UNREVIEWED,,,
-VIS-0027,block:26,block,26,(unnamed),unnamed variant,DirectionalCube,cube,,12,1,UNREVIEWED,,,
-VIS-0028,block:27,block,27,(unnamed),unnamed variant,DirectionalCube,cube,,15,1,UNREVIEWED,,,
-VIS-0029,block:28,block,28,(unnamed),unnamed variant,DirectionalCube,cube,,10,1,UNREVIEWED,,,
-VIS-0030,block:29,block,29,(unnamed),unnamed variant,DirectionalCube,lift-parts,,13,1,UNREVIEWED,,,
-VIS-0031,block:30,block,30,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow sign with painted numeral ""1""",DirectionalCube,cube,catalogue says Billboard,10,1,UNREVIEWED,,,look at it live
-VIS-0032,block:31,block,31,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow sign with painted numeral ""2""",DirectionalCube,cube,catalogue says Billboard,4,1,UNREVIEWED,,,look at it live
-VIS-0033,block:32,block,32,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0034,block:33,block,33,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0035,block:34,block,34,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0036,block:35,block,35,(unnamed),unnamed variant,UniformCube,cube,,14,17,UNREVIEWED,,,
-VIS-0037,block:36,block,36,(unnamed),unnamed variant,UniformCube,cube,,18,16,UNREVIEWED,,,
-VIS-0038,block:37,block,37,(unnamed),unnamed variant,UniformCube,cube,,18,16,UNREVIEWED,,,
-VIS-0039,block:38,block,38,(unnamed),unnamed variant,UniformCube,cube,,10,14,UNREVIEWED,,,
-VIS-0040,block:39,block,39,(unnamed),unnamed variant,UniformCube,cube,,12,14,UNREVIEWED,,,
-VIS-0041,block:40,block,40,(unnamed),unnamed variant,UniformCube,cube,,9,1,UNREVIEWED,,,
-VIS-0042,block:41,block,41,(unnamed),unnamed variant,UniformCube,cube,,5,1,UNREVIEWED,,,
-VIS-0043,block:42,block,42,(unnamed),unnamed variant,UniformCube,cube,,3,1,UNREVIEWED,,,
-VIS-0044,block:43,block,43,(unnamed),unnamed variant,UniformCube,cube,,1,1,UNREVIEWED,,,
-VIS-0045,block:44,block,44,(unnamed),unnamed variant,DirectionalCube,cube,,1,1,UNREVIEWED,,,
-VIS-0046,block:45,block,45,(unnamed),unnamed variant,DirectionalCube,cube,,6,1,UNREVIEWED,,,
-VIS-0047,block:46,block,46,(unnamed),unnamed variant,DirectionalCube,cube,,2,1,UNREVIEWED,,,
-VIS-0048,block:47,block,47,(unnamed),unnamed variant,DirectionalCube,cube,,3,1,UNREVIEWED,,,
-VIS-0049,block:48,block,48,(unnamed),unnamed variant — **Billboard** (§10.2): yellow warning-triangle sign (name candidate: `WarningSign`),DirectionalCube,cube,catalogue says Billboard,11,5,UNREVIEWED,,,look at it live
-VIS-0050,block:49,block,49,(unnamed),unnamed variant,DirectionalCube,cube,,10,2,UNREVIEWED,,,
-VIS-0051,block:50,block,50,(unnamed),unnamed variant,DirectionalCube,cube,,14,2,UNREVIEWED,,,
-VIS-0052,block:51,block,51,(unnamed),unnamed variant,DirectionalCube,cube,,14,3,UNREVIEWED,,,
-VIS-0053,block:52,block,52,(unnamed),unnamed variant,DirectionalCube,cube,,16,1,UNREVIEWED,,,
-VIS-0054,block:53,block,53,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,23,10,UNREVIEWED,,,look at it live
-VIS-0055,block:54,block,54,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,25,8,UNREVIEWED,,,look at it live
-VIS-0056,block:55,block,55,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,26,9,UNREVIEWED,,,look at it live
-VIS-0057,block:56,block,56,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,29,9,UNREVIEWED,,,look at it live
-VIS-0058,block:57,block,57,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,18,4,UNREVIEWED,,,look at it live
-VIS-0059,block:58,block,58,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,17,3,UNREVIEWED,,,look at it live
-VIS-0060,block:59,block,59,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,24,4,UNREVIEWED,,,look at it live
-VIS-0061,block:60,block,60,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,24,8,UNREVIEWED,,,look at it live
-VIS-0062,block:61,block,61,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): cihla,UniformCube,cube,catalogue says Billboard,6,1,UNREVIEWED,,,look at it live
-VIS-0063,block:62,block,62,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): cihla,UniformCube,cube,catalogue says Billboard,6,1,UNREVIEWED,,,look at it live
-VIS-0064,block:63,block,63,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,10,3,UNREVIEWED,,,look at it live
-VIS-0065,block:64,block,64,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,12,3,UNREVIEWED,,,look at it live
-VIS-0066,block:65,block,65,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): několik cihel,UniformCube,cube,catalogue says Billboard,6,1,UNREVIEWED,,,look at it live
-VIS-0067,block:66,block,66,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): vertical rung-segmented column, reads as a ladder, passable",DirectionalCube,cube,catalogue says ThinMechanical,15,1,UNREVIEWED,,,look at it live
-VIS-0068,block:67,block,67,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): cihly,UniformCube,cube,catalogue says Billboard,14,1,UNREVIEWED,,,look at it live
-VIS-0069,block:68,block,68,Lava (base),hazard,UniformCube,cube,shaped thing by its name,43,34,FIXED_AND_VERIFIED,a pool with the original wave (was a cube with the tile cut out on every face),2026-11-01: LavaSurface.hpp; heights from Decor/lave/lave-1..5.a3d (tools/a3d/lava_surface.py; tiles 68-72 = the frames seen mirrored; height fit error 0.026 cell); VerifyTileFaces; live before/after plans/evidence/lava-before-after.png (worlds 062 and 083),the owner's look; a close low-angle view of the spikes
-VIS-0070,block:69,block,69,(unnamed),unnamed variant,UniformCube,cube,,9,1,UNREVIEWED,,,
-VIS-0071,block:70,block,70,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0072,block:71,block,71,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0073,block:72,block,72,,,UniformCube,cube,,2,1,UNREVIEWED,,,
-VIS-0074,block:73,block,73,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): průchozí blok; textura na všech 4 bočních stranách, nahoře i dole modrá fallback barva",UniformCube,cube,,12,2,UNREVIEWED,,,
-VIS-0075,block:74,block,74,(unnamed),unnamed variant,DirectionalCube,cube,,9,1,UNREVIEWED,,,
-VIS-0076,block:75,block,75,(unnamed),unnamed variant,DirectionalCube,cube,,10,1,UNREVIEWED,,,
-VIS-0077,block:76,block,76,(unnamed),unnamed variant — **Billboard** (§10.2): stone pedestal/column,InnerPillarBox,pillar-box,,22,4,FIXED_AND_VERIFIED,a 3D column from its original scene (was a sprite on an inner box),2026-11-01: Decor/support1.rd4 -> avatars3d/objects/column_support1 (IoU 0.92); drawn as a still block model (BlockModels.hpp kStillModelIcons); its speckled granite is a procedural texture drawn flat (decision of 2026-10-24); live world023 (build-probe/fa-live/pillar),the owner's look
-VIS-0078,block:77,block,77,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow ""Y"" signpost/antenna",InnerFlatPlate,plate,,11,9,FIXED_AND_VERIFIED,the golden support as its original model,Decor/support2.rd4 -> avatars3d/objects/support_support2 (IoU 0.995); live world094,
-VIS-0079,block:78,block,78,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,14,UNREVIEWED,,,
-VIS-0080,block:79,block,79,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,13,UNREVIEWED,,,
-VIS-0081,block:80,block,80,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,13,UNREVIEWED,,,
-VIS-0082,block:81,block,81,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,14,UNREVIEWED,,,
-VIS-0083,block:82,block,82,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,14,UNREVIEWED,,,
-VIS-0084,block:83,block,83,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,13,13,UNREVIEWED,,,
-VIS-0085,block:84,block,84,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,14,UNREVIEWED,,,
-VIS-0086,block:85,block,85,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): nějaký blok; textura na 4 stranách (2 shora, 2 boční), zbylé 2 strany šedou fallback barvou",UniformCube,cube,,2,2,UNREVIEWED,,,
-VIS-0087,block:86,block,86,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,5,2,UNREVIEWED,,,look at it live
-VIS-0088,block:87,block,87,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,18,4,UNREVIEWED,,,look at it live
-VIS-0089,block:88,block,88,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,14,3,UNREVIEWED,,,look at it live
-VIS-0090,block:89,block,89,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,14,4,UNREVIEWED,,,look at it live
-VIS-0091,block:90,block,90,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,9,4,UNREVIEWED,,,look at it live
-VIS-0092,block:91,block,91,(unnamed),"`Water2` sub-frame (per `table_decor_eau2`, not `Water1`) — **special-surface** (§10.4): liquid surface sub-frame, not bulk material",UniformCube,cube,catalogue says special-surface,25,26,UNREVIEWED,,,look at it live
-VIS-0093,block:92,block,92,Water1 (base),"decorative/swimmable — **special-surface** (§10.4): flat liquid surface with wavy top-edge silhouette, not bulk material",UniformCube,cube,catalogue says special-surface,38,37,UNREVIEWED,,,look at it live
-VIS-0094,block:93,block,93,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0095,block:94,block,94,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0096,block:95,block,95,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0097,block:96,block,96,Water2 (base),"decorative/swimmable — **special-surface** (§10.4): flat liquid surface with wavy top-edge silhouette, not bulk material",UniformCube,cube,catalogue says special-surface,0,1,UNREVIEWED,,,look at it live
-VIS-0098,block:97,block,97,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0099,block:98,block,98,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0100,block:99,block,99,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0101,block:100,block,100,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0102,block:101,block,101,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0103,block:102,block,102,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0104,block:103,block,103,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0105,block:104,block,104,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0106,block:105,block,105,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0107,block:106,block,106,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0108,block:107,block,107,(unnamed),unnamed variant,DirectionalCube,cube,,6,11,UNREVIEWED,,,
-VIS-0109,block:108,block,108,(unnamed),unnamed variant,DirectionalCube,cube,,3,2,UNREVIEWED,,,
-VIS-0110,block:109,block,109,(unnamed),unnamed variant,DirectionalCube,cube,,2,2,UNREVIEWED,,,
-VIS-0111,block:110,block,110,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,8,6,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0112,block:111,block,111,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0113,block:112,block,112,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0114,block:113,block,113,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0115,block:114,block,114,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,7,4,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0116,block:115,block,115,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0117,block:116,block,116,,,InnerFlatPlate,plate,,1,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0118,block:117,block,117,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0119,block:118,block,118,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,4,4,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0120,block:119,block,119,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0121,block:120,block,120,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0122,block:121,block,121,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0123,block:122,block,122,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,1,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0124,block:123,block,123,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0125,block:124,block,124,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0126,block:125,block,125,,,InnerFlatPlate,plate,,0,1,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
-VIS-0127,block:126,block,126,FanLeft (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,8,6,FIXED_AND_VERIFIED,the original fan model (was a cube with its icon on every face),2026-11-01: Decor/ventillo-h.rd4 -> avatars3d/objects/fan_ventillo-h (IoU 0.993 on 132-134); fan cells drawn as it turned to their direction (BlockModels.hpp) with the tile animation's rotor frame; VerifyTileFaces; live before/after plans/evidence/fan-before-after.png (worlds 999 and 051),the owner's look; the wind column tiles 110-125 next
-VIS-0128,block:127,block,127,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0129,block:128,block,128,,,DirectionalCube,cube,,3,1,UNREVIEWED,,,
-VIS-0130,block:129,block,129,FanRight (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,7,4,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,look at it live
-VIS-0131,block:130,block,130,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0132,block:131,block,131,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0133,block:132,block,132,FanUp (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,8,4,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,look at it live
-VIS-0134,block:133,block,133,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0135,block:134,block,134,,,DirectionalCube,cube,,1,1,UNREVIEWED,,,
-VIS-0136,block:135,block,135,FanDown (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,1,2,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,look at it live
-VIS-0137,block:136,block,136,,,DirectionalCube,cube,,4,1,UNREVIEWED,,,
-VIS-0138,block:137,block,137,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0139,block:138,block,138,(unnamed),unnamed variant — **ThinMechanical** (§10.3): single blue pipe segment with flanged joints,InnerFlatPlate,plate,,19,10,FIXED_AND_VERIFIED,the bar with its ceiling mounts as two parallel pipes of its original model (was a flat plate),"Decor/barre.rd4 -> avatars3d/objects/barre_barre (IoU 0.888); two pipes 0.35 apart along the row, one under each of Blupi's hands (BarRows.hpp, M3D-0003); shown only under a tile the mounts hold to (ShownBarIcon: the original editor's rule, Decor::IsRightBorder run over every icon; 301 of the 303 bars of its levels); live probe 995, plans/evidence/bar-two-pipes.png",
-VIS-0140,block:139,block,139,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,9,5,UNREVIEWED,,,
-VIS-0141,block:140,block,140,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,10,5,UNREVIEWED,,,
-VIS-0142,block:141,block,141,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,9,5,UNREVIEWED,,,
-VIS-0143,block:142,block,142,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,9,5,UNREVIEWED,,,
-VIS-0144,block:143,block,143,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,8,5,UNREVIEWED,,,
-VIS-0145,block:144,block,144,(unnamed),unnamed variant,UniformCube,cube,,14,16,UNREVIEWED,,,
-VIS-0146,block:145,block,145,(unnamed),unnamed variant,UniformCube,cube,,14,16,UNREVIEWED,,,
-VIS-0147,block:146,block,146,(unnamed),unnamed variant,UniformCube,cube,,9,14,UNREVIEWED,,,
-VIS-0148,block:147,block,147,(unnamed),unnamed variant,UniformCube,cube,,8,14,UNREVIEWED,,,
-VIS-0149,block:148,block,148,(unnamed),unnamed variant,UniformCube,cube,,6,14,UNREVIEWED,,,
-VIS-0150,block:149,block,149,(unnamed),unnamed variant,UniformCube,cube,,13,14,UNREVIEWED,,,
-VIS-0151,block:150,block,150,(unnamed),unnamed variant,UniformCube,cube,,13,14,UNREVIEWED,,,
-VIS-0152,block:151,block,151,(unnamed),unnamed variant,UniformCube,cube,,14,16,UNREVIEWED,,,
-VIS-0153,block:152,block,152,(unnamed),unnamed variant,UniformCube,cube,,13,16,UNREVIEWED,,,
-VIS-0154,block:153,block,153,(unnamed),unnamed variant,UniformCube,cube,,1,14,UNREVIEWED,,,
-VIS-0155,block:154,block,154,(unnamed),unnamed variant,DirectionalCube,cube,,10,1,UNREVIEWED,,,
-VIS-0156,block:155,block,155,(unnamed),unnamed variant,DirectionalCube,cube,,11,1,UNREVIEWED,,,
-VIS-0157,block:156,block,156,(unnamed),unnamed variant,UniformCube,cube,,14,17,UNREVIEWED,,,
-VIS-0158,block:157,block,157,,,UniformCube,cube,,0,2,UNREVIEWED,,,
-VIS-0159,block:158,block,158,Sp0,"**CORRECTED 2026-07-12** (was: ""likely `SecretPower` value 0"", an unconfirmed name-based guess) — `Decor::IsWorld()` (`Decor.cpp` ~7079-7095) proves 158-165 are",InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0160,block:159,block,159,Sp1,Hub-screen world-select marker for world 2 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0161,block:160,block,160,Sp2,Hub-screen world-select marker for world 3 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0162,block:161,block,161,Sp3,Hub-screen world-select marker for world 4 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0163,block:162,block,162,Sp4,Hub-screen world-select marker for world 5 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0164,block:163,block,163,Sp5,Hub-screen world-select marker for world 6 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0165,block:164,block,164,Sp6,Hub-screen world-select marker for world 7 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0166,block:165,block,165,Sp7,Hub-screen world-select marker for world 8 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,InnerFlatPlate,plate,,1,1,UNREVIEWED,,,
-VIS-0167,block:166,block,166,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0168,block:167,block,167,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0169,block:168,block,168,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0170,block:169,block,169,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0171,block:170,block,170,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0172,block:171,block,171,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0173,block:172,block,172,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0174,block:173,block,173,,,InnerFlatPlate,plate,,0,0,UNREVIEWED,,,
-VIS-0175,block:174,block,174,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,12,12,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0176,block:175,block,175,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,12,12,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0177,block:176,block,176,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,12,12,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0178,block:177,block,177,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,12,12,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0179,block:178,block,178,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,9,10,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0180,block:179,block,179,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,4,5,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0181,block:180,block,180,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,2,3,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0182,block:181,block,181,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",InnerFlatPlate,plate,,1,2,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
-VIS-0183,block:182,block,182,(unnamed),unnamed variant — **Billboard** (§10.2): plain post/pillar; per `06-doors.md`'s `SearchDoor` this is the real door-trigger tile,InnerPillarBox,pillar-box,,12,13,FIXED_AND_VERIFIED,the blue post as its original model (was a textured pillar box),"Decor/porte1.rd4 -> avatars3d/objects/post182_porte1 (IoU 0.956, tone 0.79,17); collision unchanged (its quarter mask); live world 010",
-VIS-0184,block:183,block,183,"GoldPillar` (renamed from `Wall`, 2026-07-06 — the old name/description was wrong)",decorative/gate-adjacent,InnerPillarBox,pillar-box,,1,2,FIXED_AND_VERIFIED,the golden baluster as its original model (was a textured pillar box),"Decor/porte2.rd4 -> avatars3d/objects/pillar183_porte2 (IoU 0.981, tone 0.76,13); collision unchanged",
-VIS-0185,block:184,block,184,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0186,block:185,block,185,(unnamed),unnamed variant,UniformCube,cube,,8,1,UNREVIEWED,,,
-VIS-0187,block:186,block,186,(unnamed),unnamed variant,DirectionalCube,cube,,11,9,UNREVIEWED,,,
-VIS-0188,block:187,block,187,(unnamed),unnamed variant — **ThinMechanical** (§10.3): green ventilation-grille bars,DirectionalCube,cube,catalogue says ThinMechanical,9,9,UNREVIEWED,,,look at it live
-VIS-0189,block:188,block,188,(unnamed),unnamed variant — **ThinMechanical** (§10.3): green ventilation-grille bars,DirectionalCube,cube,catalogue says ThinMechanical,9,9,UNREVIEWED,,,look at it live
-VIS-0190,block:189,block,189,(unnamed),unnamed variant — **ThinMechanical** (§10.3): green ventilation-grille bars,DirectionalCube,cube,catalogue says ThinMechanical,10,9,UNREVIEWED,,,look at it live
-VIS-0191,block:190,block,190,(unnamed),unnamed variant,DirectionalCube,cube,,9,9,UNREVIEWED,,,
-VIS-0192,block:191,block,191,(unnamed),unnamed variant — **Billboard** (§10.2): thin red post,DirectionalCube,cube,catalogue says Billboard,6,1,UNREVIEWED,,,look at it live
-VIS-0193,block:192,block,192,(unnamed),unnamed variant — **ThinMechanical** (§10.3): painted door-with-hinges graphic,DirectionalCube,cube,catalogue says ThinMechanical,17,8,UNREVIEWED,,,look at it live
-VIS-0194,block:193,block,193,(unnamed),unnamed variant,DirectionalCube,cube,,7,7,UNREVIEWED,,,
-VIS-0195,block:194,block,194,(unnamed),unnamed variant,DirectionalCube,cube,,9,5,UNREVIEWED,,,
-VIS-0196,block:195,block,195,(unnamed),unnamed variant,DirectionalCube,cube,,8,7,UNREVIEWED,,,
-VIS-0197,block:196,block,196,(unnamed),unnamed variant,DirectionalCube,cube,,14,8,UNREVIEWED,,,
-VIS-0198,block:197,block,197,(unnamed),unnamed variant,DirectionalCube,cube,,9,8,UNREVIEWED,,,
-VIS-0199,block:198,block,198,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): průchozí blok; textura na 2 protilehlých bočních stranách, zbylé strany béžovou fallback barvou",UniformCube,cube,,10,2,UNREVIEWED,,,
-VIS-0200,block:199,block,199,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): yellow crossed-bar A-frame/brace, passable",InnerFlatPlate,plate,,9,6,FIXED_AND_VERIFIED,the yellow trestle as its original model (was a flat plate),"Decor/support3.rd4 -> avatars3d/objects/support3_support3 (IoU 0.989, tone 1.01,6); passable decor as before; its frame faces the cell's open side (kFrontModelIcons); live probe 998, plans/evidence/trestle-model.png",
-VIS-0201,block:200,block,200,Platform,decoration — **DirectionalCube** (user 2026-07-07): průchozí blok / mříž (potvrzuje dřívější podezření na chybné jméno `Platform`); textura na 4 bočních stranác,DirectionalCube,cube,,28,5,UNREVIEWED,,,
-VIS-0202,block:201,block,201,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): metal cross-braced grate, passable — most common flagged icon in this pass (36/78 files)",UniformCube,cube,catalogue says ThinMechanical,36,13,FIXED_AND_VERIFIED,a lattice of the original truss frame (was a cube with the X cut out on every face),Decor/structure1.rd4 -> avatars3d/objects/girder201_structure1 (IoU 0.79); passable decor; drawn on every side of the cell not shared with another girder (BlockModels.hpp kLatticeModelIcons); live world050 before/after plans/evidence/girder-before-after.png (a modest gain: the cut-out cubes already read as a lattice),look at it live
-VIS-0203,block:202,block,202,(unnamed),"unnamed variant — **thin-bar (nová geometrie)** (user 2026-07-07): tyč, po které Blupi chodí a přeleze nebezpečnou překážku pod ní; NE billboard — tenký hranolo",ThinBar,thin-bar,,11,5,FIXED_AND_VERIFIED,"the plain bar as barre.rd4's pipe alone, two along the row (was a thin box)","Decor/barre.rd4 without its mounts (objects.txt drop=3,4,6-9) -> avatars3d/objects/barreplain_barre (IoU 0.833); every bar cell under nothing, another bar or a block without an underside edge shows it, whichever bar icon the cell holds (ShownBarIcon)",
-VIS-0204,block:203,block,203,Marine (base),"decorative/animated water — **special-surface** (§10.4): green seaweed/kelp frond — thin plant, not bulk; foliage-style billboard/cross-plane treatment recommen",UniformCube,cube,catalogue says special-surface,18,2,UNREVIEWED,,,look at it live
-VIS-0205,block:204,block,204,,,UniformCube,cube,,0,2,UNREVIEWED,,,
-VIS-0206,block:205,block,205,,,UniformCube,cube,,0,2,UNREVIEWED,,,
-VIS-0207,block:206,block,206,,,UniformCube,cube,,0,2,UNREVIEWED,,,
-VIS-0208,block:207,block,207,,,UniformCube,cube,,0,2,UNREVIEWED,,,
-VIS-0209,block:208,block,208,,,UniformCube,cube,,0,2,UNREVIEWED,,,
-VIS-0210,block:209,block,209,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0211,block:210,block,210,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0212,block:211,block,211,Spring,"interactive — **ThinMechanical** (§10.3): coiled spring, direct `Saw`-precedent parallel",UniformCube,cube,catalogue says ThinMechanical,0,1,UNREVIEWED,,,look at it live
-VIS-0213,block:212,block,212,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0214,block:213,block,213,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0215,block:214,block,214,(unnamed),unnamed variant — **Billboard** (§10.2): dashed red/yellow boundary-marker outline,UniformCube,cube,catalogue says Billboard,7,3,UNREVIEWED,,,look at it live
-VIS-0216,block:215,block,215,(unnamed),unnamed variant — **Billboard** (§10.2): plain sphere/orb,UniformCube,cube,catalogue says Billboard,13,11,UNREVIEWED,,,look at it live
-VIS-0217,block:216,block,216,(unnamed),unnamed variant — **Billboard** (§10.2): plain sphere/orb,UniformCube,cube,catalogue says Billboard,10,9,UNREVIEWED,,,look at it live
-VIS-0218,block:217,block,217,(unnamed),unnamed variant — **Billboard** (§10.2): plain sphere/orb,UniformCube,cube,catalogue says Billboard,14,12,UNREVIEWED,,,look at it live
-VIS-0219,block:218,block,218,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,10,10,UNREVIEWED,,,look at it live
-VIS-0220,block:219,block,219,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,6,8,UNREVIEWED,,,look at it live
-VIS-0221,block:220,block,220,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,5,6,UNREVIEWED,,,look at it live
-VIS-0222,block:221,block,221,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,4,6,UNREVIEWED,,,look at it live
-VIS-0223,block:222,block,222,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,4,6,UNREVIEWED,,,look at it live
-VIS-0224,block:223,block,223,,,UniformCube,cube,,0,6,UNREVIEWED,,,
-VIS-0225,block:224,block,224,,,DirectionalCube,cube,,0,4,UNREVIEWED,,,
-VIS-0226,block:225,block,225,,,DirectionalCube,cube,,0,5,UNREVIEWED,,,
-VIS-0227,block:226,block,226,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0228,block:227,block,227,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0229,block:228,block,228,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0230,block:229,block,229,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0231,block:230,block,230,(unnamed),unnamed variant — **Billboard** (§10.2): star badge,UniformCube,cube,catalogue says Billboard,6,5,UNREVIEWED,,,look at it live
-VIS-0232,block:231,block,231,(unnamed),unnamed variant — **Billboard** (§10.2): star badge,UniformCube,cube,catalogue says Billboard,7,8,UNREVIEWED,,,look at it live
-VIS-0233,block:232,block,232,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0234,block:233,block,233,(unnamed),unnamed variant — **Billboard** (§10.2): mushroom/tree silhouette,UniformCube,cube,catalogue says Billboard,4,5,UNREVIEWED,,,look at it live
-VIS-0235,block:234,block,234,(unnamed),unnamed variant — **Billboard** (§10.2): mushroom/tree silhouette,UniformCube,cube,catalogue says Billboard,4,5,UNREVIEWED,,,look at it live
-VIS-0236,block:235,block,235,(unnamed),"unnamed variant — **Billboard** (§10.2): candy-striped pole (same art family as 218-222), passable",UniformCube,cube,catalogue says Billboard,15,9,UNREVIEWED,,,look at it live
-VIS-0237,block:236,block,236,(unnamed),"unnamed variant — **Billboard** (§10.2): candy-striped pole (same art family as 218-222), passable",UniformCube,cube,catalogue says Billboard,14,10,UNREVIEWED,,,look at it live
-VIS-0238,block:237,block,237,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0239,block:238,block,238,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0240,block:239,block,239,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0241,block:240,block,240,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0242,block:241,block,241,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0243,block:242,block,242,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0244,block:243,block,243,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0245,block:244,block,244,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0246,block:245,block,245,(unnamed),unnamed variant — **Billboard** (§10.2): arched window/doorway pair,DirectionalCube,cube,catalogue says Billboard,3,1,UNREVIEWED,,,look at it live
-VIS-0247,block:246,block,246,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,10,UNREVIEWED,,,
-VIS-0248,block:247,block,247,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,9,UNREVIEWED,,,
-VIS-0249,block:248,block,248,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,9,UNREVIEWED,,,
-VIS-0250,block:249,block,249,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,9,UNREVIEWED,,,
-VIS-0251,block:250,block,250,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,6,UNREVIEWED,,,look at it live
-VIS-0252,block:251,block,251,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,7,UNREVIEWED,,,look at it live
-VIS-0253,block:252,block,252,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,7,UNREVIEWED,,,look at it live
-VIS-0254,block:253,block,253,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,8,7,UNREVIEWED,,,look at it live
-VIS-0255,block:254,block,254,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,3,4,UNREVIEWED,,,look at it live
-VIS-0256,block:255,block,255,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,3,4,UNREVIEWED,,,look at it live
-VIS-0257,block:256,block,256,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,1,UNREVIEWED,,,look at it live
-VIS-0258,block:257,block,257,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,1,UNREVIEWED,,,look at it live
-VIS-0259,block:258,block,258,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,1,UNREVIEWED,,,look at it live
-VIS-0260,block:259,block,259,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,1,UNREVIEWED,,,look at it live
-VIS-0261,block:260,block,260,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,1,UNREVIEWED,,,look at it live
-VIS-0262,block:261,block,261,(unnamed),unnamed variant,UniformCube,cube,,13,12,UNREVIEWED,,,
-VIS-0263,block:262,block,262,(unnamed),unnamed variant,UniformCube,cube,,12,10,UNREVIEWED,,,
-VIS-0264,block:263,block,263,(unnamed),unnamed variant,UniformCube,cube,,12,10,UNREVIEWED,,,
-VIS-0265,block:264,block,264,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,9,1,UNREVIEWED,,,
-VIS-0266,block:265,block,265,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0267,block:266,block,266,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,7,1,UNREVIEWED,,,
-VIS-0268,block:267,block,267,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0269,block:268,block,268,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,7,1,UNREVIEWED,,,
-VIS-0270,block:269,block,269,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,6,1,UNREVIEWED,,,
-VIS-0271,block:270,block,270,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0272,block:271,block,271,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0273,block:272,block,272,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0274,block:273,block,273,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0275,block:274,block,274,(unnamed),unnamed variant,InnerFlatPlate,plate,,7,1,UNREVIEWED,,,
-VIS-0276,block:275,block,275,(unnamed),unnamed variant,InnerFlatPlate,plate,,7,1,UNREVIEWED,,,
-VIS-0277,block:276,block,276,(unnamed),unnamed variant,InnerFlatPlate,plate,,6,1,UNREVIEWED,,,
-VIS-0278,block:277,block,277,(unnamed),unnamed variant,InnerFlatPlate,plate,,4,1,UNREVIEWED,,,
-VIS-0279,block:278,block,278,(unnamed),unnamed variant,InnerFlatPlate,plate,,4,1,UNREVIEWED,,,
-VIS-0280,block:279,block,279,(unnamed),unnamed variant,InnerFlatPlate,plate,,7,1,UNREVIEWED,,,
-VIS-0281,block:280,block,280,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0282,block:281,block,281,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0283,block:282,block,282,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,1,UNREVIEWED,,,
-VIS-0284,block:283,block,283,(unnamed),unnamed variant,DirectionalCube,cube,,9,10,UNREVIEWED,,,
-VIS-0285,block:284,block,284,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0286,block:285,block,285,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,6,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte01.rd4 matches at IoU 0.880; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
-VIS-0287,block:286,block,286,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte02.rd4 matches at IoU 0.814; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
-VIS-0288,block:287,block,287,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,1,UNREVIEWED,,,
-VIS-0289,block:288,block,288,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,1,UNREVIEWED,,,
-VIS-0290,block:289,block,289,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0291,block:290,block,290,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0292,block:291,block,291,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0293,block:292,block,292,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0294,block:293,block,293,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,1,UNREVIEWED,,,
-VIS-0295,block:294,block,294,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0296,block:295,block,295,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0297,block:296,block,296,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0298,block:297,block,297,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,1,UNREVIEWED,,,
-VIS-0299,block:298,block,298,(unnamed),unnamed variant,InnerFlatPlate,plate,,10,1,UNREVIEWED,,,
-VIS-0300,block:299,block,299,(unnamed),unnamed variant,InnerFlatPlate,plate,,9,1,UNREVIEWED,,,
-VIS-0301,block:300,block,300,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,3,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte16.rd4 matches at IoU 0.910; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
-VIS-0302,block:301,block,301,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0303,block:302,block,302,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,6,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte18.rd4 matches at IoU 0.860; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
-VIS-0304,block:303,block,303,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte19.rd4 matches at IoU 0.812; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
-VIS-0305,block:304,block,304,(unnamed),unnamed variant — **Billboard** (§10.2): gold ball on a red spring/screw bumper,UniformCube,cube,catalogue says Billboard,15,15,UNREVIEWED,,,look at it live
-VIS-0306,block:305,block,305,Blitz,"hazard — **ThinMechanical** (§10.3): thin jagged lightning-bolt/arc line, not bulk",UniformCube,cube,catalogue says ThinMechanical,15,15,INTENTIONAL_3D_ADAPTATION,"a 2D effect on the cell (crossed bolts), drawn only while deadly","looked at live 2026-11-02 (world 102's yard, plans/evidence/world102-lessons.png): the bolts flicker on the cell's faces exactly in the even ticks of the cycle's first half, as Decor::BlitzActif draws 305-307; a curtain of three cells reads as a wall of lightning",look at it live
-VIS-0307,block:306,block,306,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0308,block:307,block,307,,,UniformCube,cube,,2,1,UNREVIEWED,,,
-VIS-0309,block:308,block,308,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0310,block:309,block,309,Marker,unclassified — **Billboard** (§10.2): small gold trophy/cup on a pedestal,InnerFlatPlate,plate,,1,2,UNREVIEWED,,,
-VIS-0311,block:310,block,310,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0312,block:311,block,311,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0313,block:312,block,312,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0314,block:313,block,313,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0315,block:314,block,314,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0316,block:315,block,315,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0317,block:316,block,316,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0318,block:317,block,317,Crusher (base),"hazard — **Billboard** (§10.2): teal segmented piston shaft on a small base, thin mechanical rod not a solid block",UniformCube,cube,catalogue says Billboard,3,4,UNREVIEWED,,,look at it live
-VIS-0319,block:318,block,318,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0320,block:319,block,319,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0321,block:320,block,320,,,UniformCube,cube,,9,1,UNREVIEWED,,,
-VIS-0322,block:321,block,321,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0323,block:322,block,322,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0324,block:323,block,323,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0325,block:324,block,324,Temp (base),"hazard/passable-timing — **ThinMechanical** (§10.3): stepped triangular/pyramid wedge, non-cuboid silhouette",UniformCube,cube,catalogue says ThinMechanical,12,5,UNREVIEWED,,,look at it live
-VIS-0326,block:325,block,325,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0327,block:326,block,326,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0328,block:327,block,327,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0329,block:328,block,328,,,UniformCube,cube,,1,1,UNREVIEWED,,,
-VIS-0330,block:329,block,329,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0331,block:330,block,330,Teleport1,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11 twice more, supersedes the ""Billboard"" call below AND an intermediate ""pyramid-ti",DirectionalCube,cube,,11,9,FIXED_AND_VERIFIED,"the alpha teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur1.rd4 -> avatars3d/objects/teleporter1_teleporteur1 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
-VIS-0332,block:331,block,331,Teleport2,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11, same as 330)",DirectionalCube,cube,,6,7,FIXED_AND_VERIFIED,"the beta teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur2.rd4 -> avatars3d/objects/teleporter2_teleporteur2 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
-VIS-0333,block:332,block,332,Teleport3,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11, same as 330)",DirectionalCube,cube,,4,5,FIXED_AND_VERIFIED,"the delta teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur4.rd4 -> avatars3d/objects/teleporter4_teleporteur4 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
-VIS-0334,block:333,block,333,Teleport4,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11, same as 330)",DirectionalCube,cube,,3,4,FIXED_AND_VERIFIED,"the chi teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur3.rd4 -> avatars3d/objects/teleporter3_teleporteur3 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
-VIS-0335,block:334,block,334,Door1,"interactive — **Billboard** (§10.2): red pillar/bollard shape, not a door panel; supersedes the earlier UniformCube call",UniformCube,cube,catalogue says Billboard,12,13,UNREVIEWED,,,look at it live
-VIS-0336,block:335,block,335,Door2,"interactive — **Billboard** (§10.2): same red pillar/bollard family as 334, not a door panel",UniformCube,cube,catalogue says Billboard,10,11,UNREVIEWED,,,look at it live
-VIS-0337,block:336,block,336,Door3,"interactive — **Billboard** (§10.2): same red pillar/bollard family as 334, not a door panel",UniformCube,cube,catalogue says Billboard,11,12,UNREVIEWED,,,look at it live
-VIS-0338,block:337,block,337,(unnamed),unnamed variant,UniformCube,cube,,8,1,UNREVIEWED,,,
-VIS-0339,block:338,block,338,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0340,block:339,block,339,(unnamed),unnamed variant,UniformCube,cube,,4,3,UNREVIEWED,,,
-VIS-0341,block:340,block,340,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0342,block:341,block,341,(unnamed),unnamed variant,UniformCube,cube,,11,13,UNREVIEWED,,,
-VIS-0343,block:342,block,342,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0344,block:343,block,343,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0345,block:344,block,344,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0346,block:345,block,345,(unnamed),unnamed variant,UniformCube,cube,,12,13,UNREVIEWED,,,
-VIS-0347,block:346,block,346,(unnamed),unnamed variant,UniformCube,cube,,11,13,UNREVIEWED,,,
-VIS-0348,block:347,block,347,(unnamed),unnamed variant,UniformCube,cube,,13,13,UNREVIEWED,,,
-VIS-0349,block:348,block,348,(unnamed),unnamed variant,UniformCube,cube,,12,5,UNREVIEWED,,,
-VIS-0350,block:349,block,349,(unnamed),unnamed variant,UniformCube,cube,,13,5,UNREVIEWED,,,
-VIS-0351,block:350,block,350,(unnamed),unnamed variant,UniformCube,cube,,12,5,UNREVIEWED,,,
-VIS-0352,block:351,block,351,(unnamed),unnamed variant,UniformCube,cube,,12,1,UNREVIEWED,,,
-VIS-0353,block:352,block,352,(unnamed),unnamed variant,UniformCube,cube,,10,1,UNREVIEWED,,,
-VIS-0354,block:353,block,353,(unnamed),unnamed variant,UniformCube,cube,,12,1,UNREVIEWED,,,
-VIS-0355,block:354,block,354,(unnamed),unnamed variant,UniformCube,cube,,12,1,UNREVIEWED,,,
-VIS-0356,block:355,block,355,(unnamed),unnamed variant,UniformCube,cube,,13,1,UNREVIEWED,,,
-VIS-0357,block:356,block,356,(unnamed),unnamed variant,UniformCube,cube,,13,1,UNREVIEWED,,,
-VIS-0358,block:357,block,357,(unnamed),unnamed variant,UniformCube,cube,,10,1,UNREVIEWED,,,
-VIS-0359,block:358,block,358,(unnamed),unnamed variant,UniformCube,cube,,12,1,UNREVIEWED,,,
-VIS-0360,block:359,block,359,(unnamed),unnamed variant,UniformCube,cube,,13,1,UNREVIEWED,,,
-VIS-0361,block:360,block,360,(unnamed),unnamed variant,UniformCube,cube,,7,1,UNREVIEWED,,,
-VIS-0362,block:361,block,361,(unnamed),unnamed variant,UniformCube,cube,,5,1,UNREVIEWED,,,
-VIS-0363,block:362,block,362,(unnamed),unnamed variant,UniformCube,cube,,13,9,UNREVIEWED,,,
-VIS-0364,block:363,block,363,(unnamed),unnamed variant,UniformCube,cube,,12,1,UNREVIEWED,,,
-VIS-0365,block:364,block,364,Bridge,interactive — **ThinMechanical** (§10.3): thin walkway/log structure — only the top 16px band is solid per `table_decor_quart`,DirectionalCube,cube,catalogue says ThinMechanical,9,7,UNREVIEWED,,,look at it live
-VIS-0366,block:365,block,365,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0367,block:366,block,366,,,DirectionalCube,cube,,0,1,UNREVIEWED,,,
-VIS-0368,block:367,block,367,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0369,block:368,block,368,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0370,block:369,block,369,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0371,block:370,block,370,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0372,block:371,block,371,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0373,block:372,block,372,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0374,block:373,block,373,Spike (base),"hazard — **ThinMechanical** (§10.3): lower confidence: may just be the glossy wall-texture family, not an obviously pointed spike; flagged for a closer look",UniformCube,cube,catalogue says ThinMechanical,5,5,UNREVIEWED,,,look at it live
-VIS-0375,block:374,block,374,,,UniformCube,cube,,1,1,UNREVIEWED,,,
-VIS-0376,block:375,block,375,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,3,1,UNREVIEWED,,owner must-fix (pillar 375: a turned wooden column). No source yet: Decor/colonne1.rds (survey 0.897) is one plain Cube with a procedural wood shader (no deformer: a rectangle matching a narrow column),search the archive for a lathe/sweep column (Decor/smooth/*.rds; .a3d colonne*)
-VIS-0377,block:376,block,376,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,5,1,UNREVIEWED,,pillar 376 (a twisted wooden column): no source yet (enfant22.rd4 is a striped stick of other colours),as 375
-VIS-0378,block:377,block,377,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,1,1,FIXED_AND_VERIFIED,the barrel stack as its original scene,Decor/pile1.rd4 -> avatars3d/objects/pillar377_pile1 (IoU 0.934); still block model; live world999,look at it live
-VIS-0379,block:378,block,378,Saw (base),"hazard — **InnerFlatPlate** (revised 2026-07-11 per direct live user Q&A, supersedes the ""ThinMechanical, geometry not decided"" placeholder below): circular saw",GroundAnchoredPlate,ground-plate,,15,15,UNREVIEWED,,,
-VIS-0380,block:379,block,379,SawStopped,"interactive/hazard-adjacent — **InnerFlatPlate** (revised 2026-07-11, same as 378): same circular-blade shape as 378, stopped state",GroundAnchoredPlate,ground-plate,,0,1,UNREVIEWED,,,
-VIS-0381,block:380,block,380,,,GroundAnchoredPlate,ground-plate,,0,1,UNREVIEWED,,,
-VIS-0382,block:381,block,381,,,GroundAnchoredPlate,ground-plate,,0,1,UNREVIEWED,,,
-VIS-0383,block:382,block,382,,,GroundAnchoredPlate,ground-plate,,0,1,UNREVIEWED,,,
-VIS-0384,block:383,block,383,,,GroundAnchoredPlate,ground-plate,,0,1,UNREVIEWED,,,
-VIS-0385,block:384,block,384,Switch,interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights,InnerPillarBox,pillar-box,,15,9,UNREVIEWED,,,
-VIS-0386,block:385,block,385,SwitchOff,interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights,InnerPillarBox,pillar-box,,0,1,UNREVIEWED,,,
-VIS-0387,block:386,block,386,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,6,8,UNREVIEWED,,,
-VIS-0388,block:387,block,387,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,6,8,UNREVIEWED,,,
-VIS-0389,block:388,block,388,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,12,8,UNREVIEWED,,,
-VIS-0390,block:389,block,389,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): asi fontána; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,5,1,UNREVIEWED,,,
-VIS-0391,block:390,block,390,(unnamed),unnamed variant,DirectionalCube,cube,,5,8,UNREVIEWED,,,
-VIS-0392,block:391,block,391,(unnamed),unnamed variant — **architectural-kit** (§10.5): twin arch/window niches — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,7,UNREVIEWED,,,
-VIS-0393,block:392,block,392,(unnamed),unnamed variant — **architectural-kit** (§10.5): left door-jamb edge piece — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,10,8,UNREVIEWED,,,
-VIS-0394,block:393,block,393,(unnamed),unnamed variant — **architectural-kit** (§10.5): right door-jamb edge piece — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,8,UNREVIEWED,,,
-VIS-0395,block:394,block,394,(unnamed),unnamed variant — **architectural-kit** (§10.5): lintel/corner-post fragment — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,1,UNREVIEWED,,,
-VIS-0396,block:395,block,395,(unnamed),unnamed variant — **architectural-kit** (§10.5): lintel/corner-post fragment — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,1,UNREVIEWED,,,
-VIS-0397,block:396,block,396,(unnamed),unnamed variant,DirectionalCube,cube,,7,8,UNREVIEWED,,,
-VIS-0398,block:397,block,397,(unnamed),unnamed variant — **architectural-kit** (§10.5): lintel/corner-post fragment — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,8,UNREVIEWED,,,
-VIS-0399,block:398,block,398,(unnamed),unnamed variant — **Billboard** (§10.2): fence rail on two posts,InnerFlatPlate,plate,,7,3,UNREVIEWED,,,
-VIS-0400,block:399,block,399,(unnamed),unnamed variant — **Billboard** (§10.2): fluted classical column,UniformCube,cube,catalogue says Billboard,5,1,FIXED_AND_VERIFIED,the white column as its original scene (was a cut-out cube),Decor/palais/big0108.rds -> avatars3d/objects/pillar399_big0108 (IoU 0.989; source found by build-probe/rd4-survey/object-m_icons.csv); still block model; live world999,the owner's look
-VIS-0401,block:400,block,400,(unnamed),unnamed variant — **architectural-kit** (§10.5): the archway opening itself — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,5,2,UNREVIEWED,,,
-VIS-0402,block:401,block,401,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,16,4,UNREVIEWED,,,
-VIS-0403,block:402,block,402,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,15,4,UNREVIEWED,,,
-VIS-0404,block:403,block,403,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,15,3,UNREVIEWED,,,
-VIS-0405,block:404,block,404,(unnamed),unnamed variant — **Billboard** (§10.2): green vase/bulb on a neck,UniformCube,cube,catalogue says Billboard,3,3,UNREVIEWED,,,look at it live
-VIS-0406,block:405,block,405,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0407,block:406,block,406,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0408,block:407,block,407,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0409,block:408,block,408,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0410,block:409,block,409,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0411,block:410,block,410,(unnamed),"unnamed variant — **Billboard** (§10.2): small green knob/dome, mostly cropped",InnerFlatPlate,plate,,5,3,UNREVIEWED,,,
-VIS-0412,block:411,block,411,Tile411,unclassified — **Billboard** (§10.2): gold picture-frame-on-pedestal display stand,InnerFlatPlate,plate,,1,2,UNREVIEWED,,,
-VIS-0413,block:412,block,412,Tile412,unclassified — **Billboard** (§10.2): gold picture-frame-on-pedestal display stand,InnerFlatPlate,plate,,1,2,UNREVIEWED,,,
-VIS-0414,block:413,block,413,Tile413,unclassified — **Billboard** (§10.2): gold picture-frame-on-pedestal display stand,InnerFlatPlate,plate,,1,2,UNREVIEWED,,,
-VIS-0415,block:414,block,414,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
-VIS-0416,block:415,block,415,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0417,block:416,block,416,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0418,block:417,block,417,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0419,block:418,block,418,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0420,block:419,block,419,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0421,block:420,block,420,,,InnerFlatPlate,plate,,0,1,UNREVIEWED,,,
-VIS-0422,block:421,block,421,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,10,9,UNREVIEWED,,,look at it live
-VIS-0423,block:422,block,422,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,15,11,UNREVIEWED,,,look at it live
-VIS-0424,block:423,block,423,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,4,3,UNREVIEWED,,,look at it live
-VIS-0425,block:424,block,424,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,9,7,UNREVIEWED,,,look at it live
-VIS-0426,block:425,block,425,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,4,5,UNREVIEWED,,,look at it live
-VIS-0427,block:426,block,426,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,7,5,UNREVIEWED,,,look at it live
-VIS-0428,block:427,block,427,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,7,6,UNREVIEWED,,,look at it live
-VIS-0429,block:428,block,428,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,2,UNREVIEWED,,,look at it live
-VIS-0430,block:429,block,429,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,3,UNREVIEWED,,,look at it live
-VIS-0431,block:430,block,430,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,2,UNREVIEWED,,,look at it live
-VIS-0432,block:431,block,431,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,1,UNREVIEWED,,,look at it live
-VIS-0433,block:432,block,432,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,1,UNREVIEWED,,,look at it live
-VIS-0434,block:433,block,433,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,2,UNREVIEWED,,,look at it live
-VIS-0435,block:434,block,434,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,2,UNREVIEWED,,,look at it live
-VIS-0436,block:435,block,435,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,2,UNREVIEWED,,,look at it live
-VIS-0437,block:436,block,436,,,UniformCube,cube,,1,1,UNREVIEWED,,,
-VIS-0438,block:437,block,437,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,2,UNREVIEWED,,,look at it live
-VIS-0439,block:438,block,438,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0440,block:439,block,439,,,UniformCube,cube,,0,1,UNREVIEWED,,,
-VIS-0441,block:440,block,440,,,UniformCube,cube,,0,0,UNREVIEWED,,,
+VIS-0002,block:1,block,1,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): ovládací panel/displej s tlačítky (nebo světly); textura na 1 boční straně (čelo), zbylé boční strany m",UniformCube,cube,,10,8,UNREVIEWED,,,
+VIS-0003,block:2,block,2,(unnamed),unnamed variant,DirectionalCube,cube,,8,21,UNREVIEWED,,,
+VIS-0004,block:3,block,3,(unnamed),unnamed variant,DirectionalCube,cube,,20,6,UNREVIEWED,,,
+VIS-0005,block:4,block,4,(unnamed),unnamed variant,DirectionalCube,cube,,11,24,UNREVIEWED,,,
+VIS-0006,block:5,block,5,(unnamed),unnamed variant,DirectionalCube,cube,,14,22,UNREVIEWED,,,
+VIS-0007,block:6,block,6,(unnamed),unnamed variant,DirectionalCube,cube,,8,22,UNREVIEWED,,,
+VIS-0008,block:7,block,7,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): kus nějakého stroje; textura na 1 boční straně, zbylé boční strany modrou fallback barvou",UniformCube,cube,,8,2,UNREVIEWED,,,
+VIS-0009,block:8,block,8,(unnamed),unnamed variant,DirectionalCube,cube,,9,22,UNREVIEWED,,,
+VIS-0010,block:9,block,9,(unnamed),unnamed variant,DirectionalCube,cube,,12,20,UNREVIEWED,,,
+VIS-0011,block:10,block,10,Ground,ground,DirectionalCube,cube,,30,30,UNREVIEWED,,,
+VIS-0012,block:11,block,11,(unnamed),unnamed variant,DirectionalCube,cube,,14,23,UNREVIEWED,,,
+VIS-0013,block:12,block,12,(unnamed),unnamed variant,DirectionalCube,cube,,8,21,UNREVIEWED,,,
+VIS-0014,block:13,block,13,(unnamed),unnamed variant,DirectionalCube,cube,,10,21,UNREVIEWED,,,
+VIS-0015,block:14,block,14,(unnamed),unnamed variant,DirectionalCube,cube,,7,22,UNREVIEWED,,,
+VIS-0016,block:15,block,15,(unnamed),unnamed variant,DirectionalCube,cube,,16,4,UNREVIEWED,,,
+VIS-0017,block:16,block,16,(unnamed),unnamed variant,DirectionalCube,cube,,21,4,UNREVIEWED,,,
+VIS-0018,block:17,block,17,(unnamed),unnamed variant,DirectionalCube,cube,,16,4,UNREVIEWED,,,
+VIS-0019,block:18,block,18,StoneA,ground/decoration,DirectionalCube,cube,,21,3,UNREVIEWED,,,
+VIS-0020,block:19,block,19,(unnamed),unnamed variant,DirectionalCube,cube,,4,2,UNREVIEWED,,,
+VIS-0021,block:20,block,20,(unnamed),unnamed variant,DirectionalCube,cube,,10,2,UNREVIEWED,,,
+VIS-0022,block:21,block,21,(unnamed),unnamed variant,DirectionalCube,cube,,10,2,UNREVIEWED,,,
+VIS-0023,block:22,block,22,(unnamed),unnamed variant,DirectionalCube,cube,,17,4,UNREVIEWED,,,
+VIS-0024,block:23,block,23,(unnamed),unnamed variant,DirectionalCube,cube,,34,2,UNREVIEWED,,,
+VIS-0025,block:24,block,24,(unnamed),unnamed variant,DirectionalCube,cube,,35,2,UNREVIEWED,,,
+VIS-0026,block:25,block,25,StoneB,ground/decoration,DirectionalCube,cube,,42,2,UNREVIEWED,,,
+VIS-0027,block:26,block,26,(unnamed),unnamed variant,DirectionalCube,cube,,12,2,UNREVIEWED,,,
+VIS-0028,block:27,block,27,(unnamed),unnamed variant,DirectionalCube,cube,,15,2,UNREVIEWED,,,
+VIS-0029,block:28,block,28,(unnamed),unnamed variant,DirectionalCube,cube,,10,2,UNREVIEWED,,,
+VIS-0030,block:29,block,29,(unnamed),unnamed variant,DirectionalCube,lift-parts,,13,2,UNREVIEWED,,,
+VIS-0031,block:30,block,30,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow sign with painted numeral ""1""",DirectionalCube,cube,catalogue says Billboard,10,2,UNREVIEWED,,,look at it live
+VIS-0032,block:31,block,31,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow sign with painted numeral ""2""",DirectionalCube,cube,catalogue says Billboard,4,2,UNREVIEWED,,,look at it live
+VIS-0033,block:32,block,32,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0034,block:33,block,33,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0035,block:34,block,34,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0036,block:35,block,35,(unnamed),unnamed variant,UniformCube,cube,,14,18,UNREVIEWED,,,
+VIS-0037,block:36,block,36,(unnamed),unnamed variant,UniformCube,cube,,18,17,UNREVIEWED,,,
+VIS-0038,block:37,block,37,(unnamed),unnamed variant,UniformCube,cube,,18,17,UNREVIEWED,,,
+VIS-0039,block:38,block,38,(unnamed),unnamed variant,UniformCube,cube,,10,15,UNREVIEWED,,,
+VIS-0040,block:39,block,39,(unnamed),unnamed variant,UniformCube,cube,,12,15,UNREVIEWED,,,
+VIS-0041,block:40,block,40,(unnamed),unnamed variant,UniformCube,cube,,9,2,UNREVIEWED,,,
+VIS-0042,block:41,block,41,(unnamed),unnamed variant,UniformCube,cube,,5,2,UNREVIEWED,,,
+VIS-0043,block:42,block,42,(unnamed),unnamed variant,UniformCube,cube,,3,2,UNREVIEWED,,,
+VIS-0044,block:43,block,43,(unnamed),unnamed variant,UniformCube,cube,,1,2,UNREVIEWED,,,
+VIS-0045,block:44,block,44,(unnamed),unnamed variant,DirectionalCube,cube,,1,2,UNREVIEWED,,,
+VIS-0046,block:45,block,45,(unnamed),unnamed variant,DirectionalCube,cube,,6,2,UNREVIEWED,,,
+VIS-0047,block:46,block,46,(unnamed),unnamed variant,DirectionalCube,cube,,2,2,UNREVIEWED,,,
+VIS-0048,block:47,block,47,(unnamed),unnamed variant,DirectionalCube,cube,,3,2,UNREVIEWED,,,
+VIS-0049,block:48,block,48,(unnamed),unnamed variant — **Billboard** (§10.2): yellow warning-triangle sign (name candidate: `WarningSign`),DirectionalCube,cube,catalogue says Billboard,11,6,UNREVIEWED,,,look at it live
+VIS-0050,block:49,block,49,(unnamed),unnamed variant,DirectionalCube,cube,,10,3,UNREVIEWED,,,
+VIS-0051,block:50,block,50,(unnamed),unnamed variant,DirectionalCube,cube,,14,3,UNREVIEWED,,,
+VIS-0052,block:51,block,51,(unnamed),unnamed variant,DirectionalCube,cube,,14,4,UNREVIEWED,,,
+VIS-0053,block:52,block,52,(unnamed),unnamed variant,DirectionalCube,cube,,16,2,UNREVIEWED,,,
+VIS-0054,block:53,block,53,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,23,11,UNREVIEWED,,,look at it live
+VIS-0055,block:54,block,54,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,25,9,UNREVIEWED,,,look at it live
+VIS-0056,block:55,block,55,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,26,10,UNREVIEWED,,,look at it live
+VIS-0057,block:56,block,56,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,29,10,UNREVIEWED,,,look at it live
+VIS-0058,block:57,block,57,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,18,5,UNREVIEWED,,,look at it live
+VIS-0059,block:58,block,58,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,17,4,UNREVIEWED,,,look at it live
+VIS-0060,block:59,block,59,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,24,5,UNREVIEWED,,,look at it live
+VIS-0061,block:60,block,60,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,24,9,UNREVIEWED,,,look at it live
+VIS-0062,block:61,block,61,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): cihla,UniformCube,cube,catalogue says Billboard,6,2,UNREVIEWED,,,look at it live
+VIS-0063,block:62,block,62,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): cihla,UniformCube,cube,catalogue says Billboard,6,2,UNREVIEWED,,,look at it live
+VIS-0064,block:63,block,63,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,10,4,UNREVIEWED,,,look at it live
+VIS-0065,block:64,block,64,(unnamed),unnamed variant,TripleCrossBillboard,crossed-planes,crossed planes,12,4,UNREVIEWED,,,look at it live
+VIS-0066,block:65,block,65,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): několik cihel,UniformCube,cube,catalogue says Billboard,6,2,UNREVIEWED,,,look at it live
+VIS-0067,block:66,block,66,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): vertical rung-segmented column, reads as a ladder, passable",DirectionalCube,cube,catalogue says ThinMechanical,15,2,UNREVIEWED,,,look at it live
+VIS-0068,block:67,block,67,(unnamed),unnamed variant — **Billboard** (user 2026-07-07): cihly,UniformCube,cube,catalogue says Billboard,14,2,UNREVIEWED,,,look at it live
+VIS-0069,block:68,block,68,Lava (base),hazard,UniformCube,cube,shaped thing by its name,43,38,FIXED_AND_VERIFIED,a pool with the original wave (was a cube with the tile cut out on every face),2026-11-01: LavaSurface.hpp; heights from Decor/lave/lave-1..5.a3d (tools/a3d/lava_surface.py; tiles 68-72 = the frames seen mirrored; height fit error 0.026 cell); VerifyTileFaces; live before/after plans/evidence/lava-before-after.png (worlds 062 and 083),the owner's look; a close low-angle view of the spikes
+VIS-0070,block:69,block,69,(unnamed),unnamed variant,UniformCube,cube,,9,2,UNREVIEWED,,,
+VIS-0071,block:70,block,70,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0072,block:71,block,71,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0073,block:72,block,72,,,UniformCube,cube,,2,2,UNREVIEWED,,,
+VIS-0074,block:73,block,73,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): průchozí blok; textura na všech 4 bočních stranách, nahoře i dole modrá fallback barva",UniformCube,cube,,12,3,UNREVIEWED,,,
+VIS-0075,block:74,block,74,(unnamed),unnamed variant,DirectionalCube,cube,,9,2,UNREVIEWED,,,
+VIS-0076,block:75,block,75,(unnamed),unnamed variant,DirectionalCube,cube,,10,2,UNREVIEWED,,,
+VIS-0077,block:76,block,76,(unnamed),unnamed variant — **Billboard** (§10.2): stone pedestal/column,model (BlockModels.hpp),native-model,,22,5,FIXED_AND_VERIFIED,a 3D column from its original scene (was a sprite on an inner box),2026-11-01: Decor/support1.rd4 -> avatars3d/objects/column_support1 (IoU 0.92); drawn as a still block model (BlockModels.hpp kStillModelIcons); its speckled granite is a procedural texture drawn flat (decision of 2026-10-24); live world023 (build-probe/fa-live/pillar),the owner's look
+VIS-0078,block:77,block,77,(unnamed),"unnamed variant — **Billboard** (§10.2): yellow ""Y"" signpost/antenna",model (BlockModels.hpp),native-model,,11,10,FIXED_AND_VERIFIED,the golden support as its original model,Decor/support2.rd4 -> avatars3d/objects/support_support2 (IoU 0.995); live world094,
+VIS-0079,block:78,block,78,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,15,UNREVIEWED,,,
+VIS-0080,block:79,block,79,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,14,UNREVIEWED,,,
+VIS-0081,block:80,block,80,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,14,UNREVIEWED,,,
+VIS-0082,block:81,block,81,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,15,UNREVIEWED,,,
+VIS-0083,block:82,block,82,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,15,UNREVIEWED,,,
+VIS-0084,block:83,block,83,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,13,14,UNREVIEWED,,,
+VIS-0085,block:84,block,84,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): nějaký blok, textura na všech 6 stranách — přestává být `needs identification`",UniformCube,cube,,14,15,UNREVIEWED,,,
+VIS-0086,block:85,block,85,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): nějaký blok; textura na 4 stranách (2 shora, 2 boční), zbylé 2 strany šedou fallback barvou",UniformCube,cube,,2,3,UNREVIEWED,,,
+VIS-0087,block:86,block,86,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,5,3,UNREVIEWED,,,look at it live
+VIS-0088,block:87,block,87,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,18,5,UNREVIEWED,,,look at it live
+VIS-0089,block:88,block,88,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,14,4,UNREVIEWED,,,look at it live
+VIS-0090,block:89,block,89,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,14,5,UNREVIEWED,,,look at it live
+VIS-0091,block:90,block,90,(unnamed),unnamed variant — **ThinMechanical** (§10.3): gate/portcullis-with-counterweight mechanism (metal bar racks + hinged/chained balls),DirectionalCube,cube,catalogue says ThinMechanical,9,5,UNREVIEWED,,,look at it live
+VIS-0092,block:91,block,91,(unnamed),"`Water2` sub-frame (per `table_decor_eau2`, not `Water1`) — **special-surface** (§10.4): liquid surface sub-frame, not bulk material",UniformCube,cube,catalogue says special-surface,25,27,UNREVIEWED,,,look at it live
+VIS-0093,block:92,block,92,Water1 (base),"decorative/swimmable — **special-surface** (§10.4): flat liquid surface with wavy top-edge silhouette, not bulk material",UniformCube,cube,catalogue says special-surface,38,39,UNREVIEWED,,,look at it live
+VIS-0094,block:93,block,93,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0095,block:94,block,94,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0096,block:95,block,95,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0097,block:96,block,96,Water2 (base),"decorative/swimmable — **special-surface** (§10.4): flat liquid surface with wavy top-edge silhouette, not bulk material",UniformCube,cube,catalogue says special-surface,0,2,UNREVIEWED,,,look at it live
+VIS-0098,block:97,block,97,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0099,block:98,block,98,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0100,block:99,block,99,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0101,block:100,block,100,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0102,block:101,block,101,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0103,block:102,block,102,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0104,block:103,block,103,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0105,block:104,block,104,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0106,block:105,block,105,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0107,block:106,block,106,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0108,block:107,block,107,(unnamed),unnamed variant,DirectionalCube,cube,,6,12,UNREVIEWED,,,
+VIS-0109,block:108,block,108,(unnamed),unnamed variant,DirectionalCube,cube,,3,3,UNREVIEWED,,,
+VIS-0110,block:109,block,109,(unnamed),unnamed variant,DirectionalCube,cube,,2,3,UNREVIEWED,,,
+VIS-0111,block:110,block,110,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,8,7,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0112,block:111,block,111,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0113,block:112,block,112,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0114,block:113,block,113,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0115,block:114,block,114,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,7,5,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0116,block:115,block,115,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0117,block:116,block,116,,,InnerFlatPlate,plate,,1,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0118,block:117,block,117,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0119,block:118,block,118,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,4,5,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0120,block:119,block,119,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0121,block:120,block,120,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0122,block:121,block,121,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0123,block:122,block,122,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): thin dashed wire/spark/cable line segment, exact identity unclear",InnerFlatPlate,plate,,1,3,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0124,block:123,block,123,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0125,block:124,block,124,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0126,block:125,block,125,,,InnerFlatPlate,plate,,0,2,INTENTIONAL_3D_ADAPTATION,a 2D effect (wind) drawn as a plate,the wind (110-125: four directions x four frames) has no 3D source: Decor/vent-norm/ holds only its 16 rendered frames (i110-i125.tif); the streaks are an effect and a plate is a legitimate representation (effects may stay 2D: decision 2026-10-24),a live look at its readability (the direction it blows)
+VIS-0127,block:126,block,126,FanLeft (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,8,7,FIXED_AND_VERIFIED,the original fan model (was a cube with its icon on every face),2026-11-01: Decor/ventillo-h.rd4 -> avatars3d/objects/fan_ventillo-h (IoU 0.993 on 132-134); fan cells drawn as it turned to their direction (BlockModels.hpp) with the tile animation's rotor frame; VerifyTileFaces; live before/after plans/evidence/fan-before-after.png (worlds 999 and 051),the owner's look; the wind column tiles 110-125 next
+VIS-0128,block:127,block,127,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0129,block:128,block,128,,,DirectionalCube,cube,,3,2,UNREVIEWED,,,
+VIS-0130,block:129,block,129,FanRight (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,7,5,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,look at it live
+VIS-0131,block:130,block,130,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0132,block:131,block,131,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0133,block:132,block,132,FanUp (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",model (BlockModels.hpp),native-model,,8,5,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,
+VIS-0134,block:133,block,133,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0135,block:134,block,134,,,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0136,block:135,block,135,FanDown (base),"hazard — **ThinMechanical** (§10.3): ventilator with thin propeller blades on a hub, wall panel",DirectionalCube,cube,catalogue says ThinMechanical,1,3,FIXED_AND_VERIFIED,the fan model turned for this direction,see VIS-0127,look at it live
+VIS-0137,block:136,block,136,,,DirectionalCube,cube,,4,2,UNREVIEWED,,,
+VIS-0138,block:137,block,137,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0139,block:138,block,138,(unnamed),unnamed variant — **ThinMechanical** (§10.3): single blue pipe segment with flanged joints,model (BlockModels.hpp),native-model,,19,11,FIXED_AND_VERIFIED,the bar with its ceiling mounts as two parallel pipes of its original model (was a flat plate),"Decor/barre.rd4 -> avatars3d/objects/barre_barre (IoU 0.888); two pipes 0.35 apart along the row, one under each of Blupi's hands (BarRows.hpp, M3D-0003); shown only under a tile the mounts hold to (ShownBarIcon: the original editor's rule, Decor::IsRightBorder run over every icon; 301 of the 303 bars of its levels); live probe 995, plans/evidence/bar-two-pipes.png",
+VIS-0140,block:139,block,139,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,9,6,UNREVIEWED,,,
+VIS-0141,block:140,block,140,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,10,6,UNREVIEWED,,,
+VIS-0142,block:141,block,141,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,9,6,UNREVIEWED,,,
+VIS-0143,block:142,block,142,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,9,6,UNREVIEWED,,,
+VIS-0144,block:143,block,143,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): knihovna; textura na 1 straně (čelo), zbylých 5 stran má oranžový dřevěný odstín (fallback barva)",UniformCube,cube,,8,6,UNREVIEWED,,,
+VIS-0145,block:144,block,144,(unnamed),unnamed variant,UniformCube,cube,,14,17,UNREVIEWED,,,
+VIS-0146,block:145,block,145,(unnamed),unnamed variant,UniformCube,cube,,14,17,UNREVIEWED,,,
+VIS-0147,block:146,block,146,(unnamed),unnamed variant,UniformCube,cube,,9,15,UNREVIEWED,,,
+VIS-0148,block:147,block,147,(unnamed),unnamed variant,UniformCube,cube,,8,15,UNREVIEWED,,,
+VIS-0149,block:148,block,148,(unnamed),unnamed variant,UniformCube,cube,,6,15,UNREVIEWED,,,
+VIS-0150,block:149,block,149,(unnamed),unnamed variant,UniformCube,cube,,13,15,UNREVIEWED,,,
+VIS-0151,block:150,block,150,(unnamed),unnamed variant,UniformCube,cube,,13,15,UNREVIEWED,,,
+VIS-0152,block:151,block,151,(unnamed),unnamed variant,UniformCube,cube,,14,17,UNREVIEWED,,,
+VIS-0153,block:152,block,152,(unnamed),unnamed variant,UniformCube,cube,,13,17,UNREVIEWED,,,
+VIS-0154,block:153,block,153,(unnamed),unnamed variant,UniformCube,cube,,1,15,UNREVIEWED,,,
+VIS-0155,block:154,block,154,(unnamed),unnamed variant,DirectionalCube,cube,,10,2,UNREVIEWED,,,
+VIS-0156,block:155,block,155,(unnamed),unnamed variant,DirectionalCube,cube,,11,2,UNREVIEWED,,,
+VIS-0157,block:156,block,156,(unnamed),unnamed variant,UniformCube,cube,,14,18,UNREVIEWED,,,
+VIS-0158,block:157,block,157,,,UniformCube,cube,,0,3,UNREVIEWED,,,
+VIS-0159,block:158,block,158,Sp0,"**CORRECTED 2026-07-12** (was: ""likely `SecretPower` value 0"", an unconfirmed name-based guess) — `Decor::IsWorld()` (`Decor.cpp` ~7079-7095) proves 158-165 are",model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0160,block:159,block,159,Sp1,Hub-screen world-select marker for world 2 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0161,block:160,block,160,Sp2,Hub-screen world-select marker for world 3 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0162,block:161,block,161,Sp3,Hub-screen world-select marker for world 4 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0163,block:162,block,162,Sp4,Hub-screen world-select marker for world 5 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0164,block:163,block,163,Sp5,Hub-screen world-select marker for world 6 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0165,block:164,block,164,Sp6,Hub-screen world-select marker for world 7 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0166,block:165,block,165,Sp7,Hub-screen world-select marker for world 8 (see icon 158's corrected entry) — **Billboard** (§10.2): gold pedestal,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0167,block:166,block,166,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0168,block:167,block,167,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0169,block:168,block,168,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0170,block:169,block,169,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0171,block:170,block,170,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0172,block:171,block,171,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0173,block:172,block,172,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0174,block:173,block,173,,,model (BlockModels.hpp),native-model,,0,1,UNREVIEWED,,,
+VIS-0175,block:174,block,174,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,12,13,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0176,block:175,block,175,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,12,13,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0177,block:176,block,176,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,12,13,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0178,block:177,block,177,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,12,13,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0179,block:178,block,178,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,9,11,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0180,block:179,block,179,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,4,6,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0181,block:180,block,180,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,2,4,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0182,block:181,block,181,(unnamed),"unnamed variant — **Billboard** (§10.2): red disc + digit on a post, numbered-marker family 174-181; exact purpose not yet identified",model (BlockModels.hpp),native-model,,1,3,UNREVIEWED,,"source probe 2026-11-02: Decor/world1.rd4 (also world2a/2b.rd4) matches the numbered sign's outline at IoU 0.995, but its scene has no digit (no image map: the digits 1-8 were painted on the renders) and its rounded face converts as a flat disc (colour 0.58-0.62)","find why the sign's Cube masters convert as a disc (bevel?), owner 2026-11-02 (MR-0006): the model with the digit as a decal cut from the sign sprite"
+VIS-0183,block:182,block,182,(unnamed),unnamed variant — **Billboard** (§10.2): plain post/pillar; per `06-doors.md`'s `SearchDoor` this is the real door-trigger tile,model (BlockModels.hpp),native-model,,12,14,FIXED_AND_VERIFIED,the blue post as its original model (was a textured pillar box),"Decor/porte1.rd4 -> avatars3d/objects/post182_porte1 (IoU 0.956, tone 0.79,17); collision unchanged (its quarter mask); live world 010",
+VIS-0184,block:183,block,183,"GoldPillar` (renamed from `Wall`, 2026-07-06 — the old name/description was wrong)",decorative/gate-adjacent,model (BlockModels.hpp),native-model,,1,3,FIXED_AND_VERIFIED,the golden baluster as its original model (was a textured pillar box),"Decor/porte2.rd4 -> avatars3d/objects/pillar183_porte2 (IoU 0.981, tone 0.76,13); collision unchanged",
+VIS-0185,block:184,block,184,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
+VIS-0186,block:185,block,185,(unnamed),unnamed variant,UniformCube,cube,,8,2,UNREVIEWED,,,
+VIS-0187,block:186,block,186,(unnamed),unnamed variant,DirectionalCube,cube,,11,10,UNREVIEWED,,,
+VIS-0188,block:187,block,187,(unnamed),unnamed variant — **ThinMechanical** (§10.3): green ventilation-grille bars,DirectionalCube,cube,catalogue says ThinMechanical,9,10,UNREVIEWED,,,look at it live
+VIS-0189,block:188,block,188,(unnamed),unnamed variant — **ThinMechanical** (§10.3): green ventilation-grille bars,DirectionalCube,cube,catalogue says ThinMechanical,9,10,UNREVIEWED,,,look at it live
+VIS-0190,block:189,block,189,(unnamed),unnamed variant — **ThinMechanical** (§10.3): green ventilation-grille bars,DirectionalCube,cube,catalogue says ThinMechanical,10,10,UNREVIEWED,,,look at it live
+VIS-0191,block:190,block,190,(unnamed),unnamed variant,DirectionalCube,cube,,9,10,UNREVIEWED,,,
+VIS-0192,block:191,block,191,(unnamed),unnamed variant — **Billboard** (§10.2): thin red post,DirectionalCube,cube,catalogue says Billboard,6,2,UNREVIEWED,,,look at it live
+VIS-0193,block:192,block,192,(unnamed),unnamed variant — **ThinMechanical** (§10.3): painted door-with-hinges graphic,DirectionalCube,cube,catalogue says ThinMechanical,17,9,UNREVIEWED,,,look at it live
+VIS-0194,block:193,block,193,(unnamed),unnamed variant,DirectionalCube,cube,,7,8,UNREVIEWED,,,
+VIS-0195,block:194,block,194,(unnamed),unnamed variant,DirectionalCube,cube,,9,6,UNREVIEWED,,,
+VIS-0196,block:195,block,195,(unnamed),unnamed variant,DirectionalCube,cube,,8,8,UNREVIEWED,,,
+VIS-0197,block:196,block,196,(unnamed),unnamed variant,DirectionalCube,cube,,14,9,UNREVIEWED,,,
+VIS-0198,block:197,block,197,(unnamed),unnamed variant,DirectionalCube,cube,,9,9,UNREVIEWED,,,
+VIS-0199,block:198,block,198,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): průchozí blok; textura na 2 protilehlých bočních stranách, zbylé strany béžovou fallback barvou",UniformCube,cube,,10,3,UNREVIEWED,,,
+VIS-0200,block:199,block,199,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): yellow crossed-bar A-frame/brace, passable",model (BlockModels.hpp),native-model,,9,7,FIXED_AND_VERIFIED,the yellow trestle as its original model (was a flat plate),"Decor/support3.rd4 -> avatars3d/objects/support3_support3 (IoU 0.989, tone 1.01,6); passable decor as before; its frame faces the cell's open side (kFrontModelIcons); live probe 998, plans/evidence/trestle-model.png",
+VIS-0201,block:200,block,200,Platform,decoration — **DirectionalCube** (user 2026-07-07): průchozí blok / mříž (potvrzuje dřívější podezření na chybné jméno `Platform`); textura na 4 bočních stranác,DirectionalCube,cube,,28,6,UNREVIEWED,,,
+VIS-0202,block:201,block,201,(unnamed),"unnamed variant — **ThinMechanical** (§10.3): metal cross-braced grate, passable — most common flagged icon in this pass (36/78 files)",model (BlockModels.hpp),native-model,,36,14,FIXED_AND_VERIFIED,a lattice of the original truss frame (was a cube with the X cut out on every face),Decor/structure1.rd4 -> avatars3d/objects/girder201_structure1 (IoU 0.79); passable decor; drawn on every side of the cell not shared with another girder (BlockModels.hpp kLatticeModelIcons); live world050 before/after plans/evidence/girder-before-after.png (a modest gain: the cut-out cubes already read as a lattice),
+VIS-0203,block:202,block,202,(unnamed),"unnamed variant — **thin-bar (nová geometrie)** (user 2026-07-07): tyč, po které Blupi chodí a přeleze nebezpečnou překážku pod ní; NE billboard — tenký hranolo",model (BlockModels.hpp),native-model,,11,9,FIXED_AND_VERIFIED,"the plain bar as barre.rd4's pipe alone, two along the row (was a thin box)","Decor/barre.rd4 without its mounts (objects.txt drop=3,4,6-9) -> avatars3d/objects/barreplain_barre (IoU 0.833); every bar cell under nothing, another bar or a block without an underside edge shows it, whichever bar icon the cell holds (ShownBarIcon)",
+VIS-0204,block:203,block,203,Marine (base),"decorative/animated water — **special-surface** (§10.4): green seaweed/kelp frond — thin plant, not bulk; foliage-style billboard/cross-plane treatment recommen",UniformCube,cube,catalogue says special-surface,18,3,UNREVIEWED,,,look at it live
+VIS-0205,block:204,block,204,,,UniformCube,cube,,0,3,UNREVIEWED,,,
+VIS-0206,block:205,block,205,,,UniformCube,cube,,0,3,UNREVIEWED,,,
+VIS-0207,block:206,block,206,,,UniformCube,cube,,0,3,UNREVIEWED,,,
+VIS-0208,block:207,block,207,,,UniformCube,cube,,0,3,UNREVIEWED,,,
+VIS-0209,block:208,block,208,,,UniformCube,cube,,0,3,UNREVIEWED,,,
+VIS-0210,block:209,block,209,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0211,block:210,block,210,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0212,block:211,block,211,Spring,"interactive — **ThinMechanical** (§10.3): coiled spring, direct `Saw`-precedent parallel",model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0213,block:212,block,212,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0214,block:213,block,213,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0215,block:214,block,214,(unnamed),unnamed variant — **Billboard** (§10.2): dashed red/yellow boundary-marker outline,UniformCube,cube,catalogue says Billboard,7,4,UNREVIEWED,,,look at it live
+VIS-0216,block:215,block,215,(unnamed),unnamed variant — **Billboard** (§10.2): plain sphere/orb,UniformCube,cube,catalogue says Billboard,13,12,UNREVIEWED,,,look at it live
+VIS-0217,block:216,block,216,(unnamed),unnamed variant — **Billboard** (§10.2): plain sphere/orb,UniformCube,cube,catalogue says Billboard,10,10,UNREVIEWED,,,look at it live
+VIS-0218,block:217,block,217,(unnamed),unnamed variant — **Billboard** (§10.2): plain sphere/orb,UniformCube,cube,catalogue says Billboard,14,13,UNREVIEWED,,,look at it live
+VIS-0219,block:218,block,218,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,10,11,UNREVIEWED,,,look at it live
+VIS-0220,block:219,block,219,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,6,9,UNREVIEWED,,,look at it live
+VIS-0221,block:220,block,220,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,5,7,UNREVIEWED,,,look at it live
+VIS-0222,block:221,block,221,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,4,7,UNREVIEWED,,,look at it live
+VIS-0223,block:222,block,222,(unnamed),unnamed variant — **Billboard** (§10.2): colored balls/marbles on candy-striped poles,UniformCube,cube,catalogue says Billboard,4,7,UNREVIEWED,,,look at it live
+VIS-0224,block:223,block,223,,,UniformCube,cube,,0,7,UNREVIEWED,,,
+VIS-0225,block:224,block,224,,,DirectionalCube,cube,,0,5,UNREVIEWED,,,
+VIS-0226,block:225,block,225,,,DirectionalCube,cube,,0,6,UNREVIEWED,,,
+VIS-0227,block:226,block,226,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0228,block:227,block,227,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0229,block:228,block,228,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0230,block:229,block,229,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0231,block:230,block,230,(unnamed),unnamed variant — **Billboard** (§10.2): star badge,UniformCube,cube,catalogue says Billboard,6,6,UNREVIEWED,,,look at it live
+VIS-0232,block:231,block,231,(unnamed),unnamed variant — **Billboard** (§10.2): star badge,UniformCube,cube,catalogue says Billboard,7,9,UNREVIEWED,,,look at it live
+VIS-0233,block:232,block,232,,,DirectionalCube,cube,,0,2,UNREVIEWED,,,
+VIS-0234,block:233,block,233,(unnamed),unnamed variant — **Billboard** (§10.2): mushroom/tree silhouette,UniformCube,cube,catalogue says Billboard,4,6,UNREVIEWED,,,look at it live
+VIS-0235,block:234,block,234,(unnamed),unnamed variant — **Billboard** (§10.2): mushroom/tree silhouette,UniformCube,cube,catalogue says Billboard,4,6,UNREVIEWED,,,look at it live
+VIS-0236,block:235,block,235,(unnamed),"unnamed variant — **Billboard** (§10.2): candy-striped pole (same art family as 218-222), passable",UniformCube,cube,catalogue says Billboard,15,10,UNREVIEWED,,,look at it live
+VIS-0237,block:236,block,236,(unnamed),"unnamed variant — **Billboard** (§10.2): candy-striped pole (same art family as 218-222), passable",UniformCube,cube,catalogue says Billboard,14,11,UNREVIEWED,,,look at it live
+VIS-0238,block:237,block,237,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0239,block:238,block,238,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0240,block:239,block,239,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0241,block:240,block,240,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0242,block:241,block,241,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0243,block:242,block,242,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0244,block:243,block,243,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0245,block:244,block,244,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0246,block:245,block,245,(unnamed),unnamed variant — **Billboard** (§10.2): arched window/doorway pair,DirectionalCube,cube,catalogue says Billboard,3,2,UNREVIEWED,,,look at it live
+VIS-0247,block:246,block,246,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,11,UNREVIEWED,,,
+VIS-0248,block:247,block,247,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,10,UNREVIEWED,,,
+VIS-0249,block:248,block,248,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,10,UNREVIEWED,,,
+VIS-0250,block:249,block,249,(unnamed),"unnamed variant — **UniformCube** (user 2026-07-07, resolved): sýr; textura na všech stranách",UniformCube,cube,,8,10,UNREVIEWED,,,
+VIS-0251,block:250,block,250,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,7,UNREVIEWED,,,look at it live
+VIS-0252,block:251,block,251,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,8,UNREVIEWED,,,look at it live
+VIS-0253,block:252,block,252,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,8,UNREVIEWED,,,look at it live
+VIS-0254,block:253,block,253,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,8,8,UNREVIEWED,,,look at it live
+VIS-0255,block:254,block,254,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,3,5,UNREVIEWED,,,look at it live
+VIS-0256,block:255,block,255,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,3,5,UNREVIEWED,,,look at it live
+VIS-0257,block:256,block,256,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,2,UNREVIEWED,,,look at it live
+VIS-0258,block:257,block,257,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,2,UNREVIEWED,,,look at it live
+VIS-0259,block:258,block,258,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,2,UNREVIEWED,,,look at it live
+VIS-0260,block:259,block,259,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,2,2,UNREVIEWED,,,look at it live
+VIS-0261,block:260,block,260,(unnamed),unnamed variant — **ThinMechanical** (§10.3): blue pipe/valve/gauge-fitting family (straight run/elbow/T-junction/valve; exact sub-type per icon not resolved),DirectionalCube,cube,catalogue says ThinMechanical,9,2,UNREVIEWED,,,look at it live
+VIS-0262,block:261,block,261,(unnamed),unnamed variant,UniformCube,cube,,13,13,UNREVIEWED,,,
+VIS-0263,block:262,block,262,(unnamed),unnamed variant,UniformCube,cube,,12,11,UNREVIEWED,,,
+VIS-0264,block:263,block,263,(unnamed),unnamed variant,UniformCube,cube,,12,11,UNREVIEWED,,,
+VIS-0265,block:264,block,264,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,9,2,UNREVIEWED,,,
+VIS-0266,block:265,block,265,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0267,block:266,block,266,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,7,2,UNREVIEWED,,,
+VIS-0268,block:267,block,267,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0269,block:268,block,268,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,7,2,UNREVIEWED,,,
+VIS-0270,block:269,block,269,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,6,2,UNREVIEWED,,,
+VIS-0271,block:270,block,270,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0272,block:271,block,271,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0273,block:272,block,272,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0274,block:273,block,273,(unnamed),unnamed variant — **ThinMechanical** (§10.3): sparse yellow drip/goo/liquid overlay; marked `animated:no` but shape suggests an undetected animation cycle,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0275,block:274,block,274,(unnamed),unnamed variant,InnerFlatPlate,plate,,7,2,UNREVIEWED,,,
+VIS-0276,block:275,block,275,(unnamed),unnamed variant,InnerFlatPlate,plate,,7,2,UNREVIEWED,,,
+VIS-0277,block:276,block,276,(unnamed),unnamed variant,InnerFlatPlate,plate,,6,2,UNREVIEWED,,,
+VIS-0278,block:277,block,277,(unnamed),unnamed variant,InnerFlatPlate,plate,,4,2,UNREVIEWED,,,
+VIS-0279,block:278,block,278,(unnamed),unnamed variant,InnerFlatPlate,plate,,4,2,UNREVIEWED,,,
+VIS-0280,block:279,block,279,(unnamed),unnamed variant,InnerFlatPlate,plate,,7,2,UNREVIEWED,,,
+VIS-0281,block:280,block,280,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0282,block:281,block,281,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0283,block:282,block,282,(unnamed),unnamed variant,InnerFlatPlate,plate,,8,2,UNREVIEWED,,,
+VIS-0284,block:283,block,283,(unnamed),unnamed variant,DirectionalCube,cube,,9,11,UNREVIEWED,,,
+VIS-0285,block:284,block,284,(unnamed),unnamed variant,UniformCube,cube,,12,14,UNREVIEWED,,,
+VIS-0286,block:285,block,285,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,7,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte01.rd4 matches at IoU 0.880; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
+VIS-0287,block:286,block,286,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,3,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte02.rd4 matches at IoU 0.814; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
+VIS-0288,block:287,block,287,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,,
+VIS-0289,block:288,block,288,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,,
+VIS-0290,block:289,block,289,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0291,block:290,block,290,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0292,block:291,block,291,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0293,block:292,block,292,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0294,block:293,block,293,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,2,UNREVIEWED,,,
+VIS-0295,block:294,block,294,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0296,block:295,block,295,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0297,block:296,block,296,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0298,block:297,block,297,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,2,UNREVIEWED,,,
+VIS-0299,block:298,block,298,(unnamed),unnamed variant,InnerFlatPlate,plate,,10,2,UNREVIEWED,,,
+VIS-0300,block:299,block,299,(unnamed),unnamed variant,InnerFlatPlate,plate,,9,2,UNREVIEWED,,,
+VIS-0301,block:300,block,300,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,4,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte16.rd4 matches at IoU 0.910; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
+VIS-0302,block:301,block,301,(unnamed),unnamed variant,UniformCube,cube,,12,14,UNREVIEWED,,,
+VIS-0303,block:302,block,302,(unnamed),unnamed variant,InnerFlatPlate,plate,,11,7,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte18.rd4 matches at IoU 0.860; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
+VIS-0304,block:303,block,303,(unnamed),unnamed variant,InnerFlatPlate,plate,,12,3,UNREVIEWED,,"source probe 2026-11-02: Decor/grotte19.rd4 matches at IoU 0.812; not converted: 285 and 302 fill close to 6,000 cells of the worlds and a model has ~5,500 vertices: 33M vertices baked or ~12,000 draws a frame",needs hardware instancing (CNA's SkinnedEffect has none; CNA is read-only: an upstream request) or a decimated model; the textured plates stay meanwhile
+VIS-0305,block:304,block,304,(unnamed),unnamed variant — **Billboard** (§10.2): gold ball on a red spring/screw bumper,model (BlockModels.hpp),native-model,,15,16,UNREVIEWED,,,
+VIS-0306,block:305,block,305,Blitz,"hazard — **ThinMechanical** (§10.3): thin jagged lightning-bolt/arc line, not bulk",UniformCube,cube,catalogue says ThinMechanical,15,16,INTENTIONAL_3D_ADAPTATION,"a 2D effect on the cell (crossed bolts), drawn only while deadly","looked at live 2026-11-02 (world 102's yard, plans/evidence/world102-lessons.png): the bolts flicker on the cell's faces exactly in the even ticks of the cycle's first half, as Decor::BlitzActif draws 305-307; a curtain of three cells reads as a wall of lightning",look at it live
+VIS-0307,block:306,block,306,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0308,block:307,block,307,,,UniformCube,cube,,2,2,UNREVIEWED,,,
+VIS-0309,block:308,block,308,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0310,block:309,block,309,Marker,unclassified — **Billboard** (§10.2): small gold trophy/cup on a pedestal,model (BlockModels.hpp),native-model,,1,3,UNREVIEWED,,,
+VIS-0311,block:310,block,310,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0312,block:311,block,311,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0313,block:312,block,312,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0314,block:313,block,313,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0315,block:314,block,314,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0316,block:315,block,315,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0317,block:316,block,316,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0318,block:317,block,317,Crusher (base),"hazard — **Billboard** (§10.2): teal segmented piston shaft on a small base, thin mechanical rod not a solid block",model (BlockModels.hpp),native-model,,3,5,UNREVIEWED,,,
+VIS-0319,block:318,block,318,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0320,block:319,block,319,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0321,block:320,block,320,,,model (BlockModels.hpp),native-model,,9,2,UNREVIEWED,,,
+VIS-0322,block:321,block,321,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0323,block:322,block,322,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0324,block:323,block,323,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0325,block:324,block,324,Temp (base),"hazard/passable-timing — **ThinMechanical** (§10.3): stepped triangular/pyramid wedge, non-cuboid silhouette",model (BlockModels.hpp),native-model,,12,6,UNREVIEWED,,,
+VIS-0326,block:325,block,325,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0327,block:326,block,326,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0328,block:327,block,327,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0329,block:328,block,328,,,model (BlockModels.hpp),native-model,,1,2,UNREVIEWED,,,
+VIS-0330,block:329,block,329,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0331,block:330,block,330,Teleport1,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11 twice more, supersedes the ""Billboard"" call below AND an intermediate ""pyramid-ti",model (BlockModels.hpp),native-model,,11,10,FIXED_AND_VERIFIED,"the alpha teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur1.rd4 -> avatars3d/objects/teleporter1_teleporteur1 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
+VIS-0332,block:331,block,331,Teleport2,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11, same as 330)",model (BlockModels.hpp),native-model,,6,8,FIXED_AND_VERIFIED,"the beta teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur2.rd4 -> avatars3d/objects/teleporter2_teleporteur2 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
+VIS-0333,block:332,block,332,Teleport3,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11, same as 330)",model (BlockModels.hpp),native-model,,4,6,FIXED_AND_VERIFIED,"the delta teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur4.rd4 -> avatars3d/objects/teleporter4_teleporteur4 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
+VIS-0334,block:333,block,333,Teleport4,"interactive — **DirectionalCube + box tip, alpha-blended** (revised 2026-07-11, same as 330)",model (BlockModels.hpp),native-model,,3,5,FIXED_AND_VERIFIED,"the chi teleporter as its original model in one cell: the device its top third, the tip under it (was a cube with the panel on four sides and a pyramid hanging into the cell below)","Decor/teleporteur3.rd4 -> avatars3d/objects/teleporter3_teleporteur3 (IoU 0.997; the letter panel by freeform_mesh.planar_caps); its front (lights, letter) toward the cell's open side (TerrainRenderer openSide, BlockModels kFrontModelIcons); live probe 998 and world 034, plans/evidence/teleporter-model.png",
+VIS-0335,block:334,block,334,Door1,"interactive — **Billboard** (§10.2): red pillar/bollard shape, not a door panel; supersedes the earlier UniformCube call",model (BlockModels.hpp),native-model,,12,14,UNREVIEWED,,,
+VIS-0336,block:335,block,335,Door2,"interactive — **Billboard** (§10.2): same red pillar/bollard family as 334, not a door panel",model (BlockModels.hpp),native-model,,10,12,UNREVIEWED,,,
+VIS-0337,block:336,block,336,Door3,"interactive — **Billboard** (§10.2): same red pillar/bollard family as 334, not a door panel",model (BlockModels.hpp),native-model,,11,13,UNREVIEWED,,,
+VIS-0338,block:337,block,337,(unnamed),unnamed variant,UniformCube,cube,,8,2,UNREVIEWED,,,
+VIS-0339,block:338,block,338,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0340,block:339,block,339,(unnamed),unnamed variant,UniformCube,cube,,4,4,UNREVIEWED,,,
+VIS-0341,block:340,block,340,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0342,block:341,block,341,(unnamed),unnamed variant,UniformCube,cube,,11,14,UNREVIEWED,,,
+VIS-0343,block:342,block,342,(unnamed),unnamed variant,UniformCube,cube,,12,14,UNREVIEWED,,,
+VIS-0344,block:343,block,343,(unnamed),unnamed variant,UniformCube,cube,,12,14,UNREVIEWED,,,
+VIS-0345,block:344,block,344,(unnamed),unnamed variant,UniformCube,cube,,12,14,UNREVIEWED,,,
+VIS-0346,block:345,block,345,(unnamed),unnamed variant,UniformCube,cube,,12,14,UNREVIEWED,,,
+VIS-0347,block:346,block,346,(unnamed),unnamed variant,UniformCube,cube,,11,14,UNREVIEWED,,,
+VIS-0348,block:347,block,347,(unnamed),unnamed variant,UniformCube,cube,,13,14,UNREVIEWED,,,
+VIS-0349,block:348,block,348,(unnamed),unnamed variant,UniformCube,cube,,12,6,UNREVIEWED,,,
+VIS-0350,block:349,block,349,(unnamed),unnamed variant,UniformCube,cube,,13,6,UNREVIEWED,,,
+VIS-0351,block:350,block,350,(unnamed),unnamed variant,UniformCube,cube,,12,6,UNREVIEWED,,,
+VIS-0352,block:351,block,351,(unnamed),unnamed variant,UniformCube,cube,,12,2,UNREVIEWED,,,
+VIS-0353,block:352,block,352,(unnamed),unnamed variant,UniformCube,cube,,10,2,UNREVIEWED,,,
+VIS-0354,block:353,block,353,(unnamed),unnamed variant,UniformCube,cube,,12,2,UNREVIEWED,,,
+VIS-0355,block:354,block,354,(unnamed),unnamed variant,UniformCube,cube,,12,2,UNREVIEWED,,,
+VIS-0356,block:355,block,355,(unnamed),unnamed variant,UniformCube,cube,,13,2,UNREVIEWED,,,
+VIS-0357,block:356,block,356,(unnamed),unnamed variant,UniformCube,cube,,13,2,UNREVIEWED,,,
+VIS-0358,block:357,block,357,(unnamed),unnamed variant,UniformCube,cube,,10,2,UNREVIEWED,,,
+VIS-0359,block:358,block,358,(unnamed),unnamed variant,UniformCube,cube,,12,2,UNREVIEWED,,,
+VIS-0360,block:359,block,359,(unnamed),unnamed variant,UniformCube,cube,,13,2,UNREVIEWED,,,
+VIS-0361,block:360,block,360,(unnamed),unnamed variant,UniformCube,cube,,7,2,UNREVIEWED,,,
+VIS-0362,block:361,block,361,(unnamed),unnamed variant,UniformCube,cube,,5,2,UNREVIEWED,,,
+VIS-0363,block:362,block,362,(unnamed),unnamed variant,UniformCube,cube,,13,10,UNREVIEWED,,,
+VIS-0364,block:363,block,363,(unnamed),unnamed variant,UniformCube,cube,,12,2,UNREVIEWED,,,
+VIS-0365,block:364,block,364,Bridge,interactive — **ThinMechanical** (§10.3): thin walkway/log structure — only the top 16px band is solid per `table_decor_quart`,model (BlockModels.hpp),native-model,,9,10,UNREVIEWED,,,
+VIS-0366,block:365,block,365,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0367,block:366,block,366,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0368,block:367,block,367,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
+VIS-0369,block:368,block,368,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
+VIS-0370,block:369,block,369,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
+VIS-0371,block:370,block,370,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
+VIS-0372,block:371,block,371,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
+VIS-0373,block:372,block,372,,,InnerFlatPlate,plate,,0,2,UNREVIEWED,,,
+VIS-0374,block:373,block,373,Spike (base),"hazard — **ThinMechanical** (§10.3): lower confidence: may just be the glossy wall-texture family, not an obviously pointed spike; flagged for a closer look",UniformCube,cube,catalogue says ThinMechanical,5,6,UNREVIEWED,,,look at it live
+VIS-0375,block:374,block,374,,,UniformCube,cube,,1,2,UNREVIEWED,,,
+VIS-0376,block:375,block,375,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,3,2,UNREVIEWED,,owner must-fix (pillar 375: a turned wooden column). No source yet: Decor/colonne1.rds (survey 0.897) is one plain Cube with a procedural wood shader (no deformer: a rectangle matching a narrow column),search the archive for a lathe/sweep column (Decor/smooth/*.rds; .a3d colonne*)
+VIS-0377,block:376,block,376,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,UniformCube,cube,catalogue says Billboard,5,2,UNREVIEWED,,pillar 376 (a twisted wooden column): no source yet (enfant22.rd4 is a striped stick of other colours),as 375
+VIS-0378,block:377,block,377,(unnamed),unnamed variant — **Billboard** (§10.2): twisted rope/banded decorative post,model (BlockModels.hpp),native-model,,1,2,FIXED_AND_VERIFIED,the barrel stack as its original scene,Decor/pile1.rd4 -> avatars3d/objects/pillar377_pile1 (IoU 0.934); still block model; live world999,
+VIS-0379,block:378,block,378,Saw (base),"hazard — **InnerFlatPlate** (revised 2026-07-11 per direct live user Q&A, supersedes the ""ThinMechanical, geometry not decided"" placeholder below): circular saw",model (BlockModels.hpp),native-model,,15,17,UNREVIEWED,,,
+VIS-0380,block:379,block,379,SawStopped,"interactive/hazard-adjacent — **InnerFlatPlate** (revised 2026-07-11, same as 378): same circular-blade shape as 378, stopped state",model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0381,block:380,block,380,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0382,block:381,block,381,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0383,block:382,block,382,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0384,block:383,block,383,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0385,block:384,block,384,Switch,interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights,model (BlockModels.hpp),native-model,,15,10,UNREVIEWED,,,
+VIS-0386,block:385,block,385,SwitchOff,interactive — **ThinMechanical** (§10.3): flat wall-mounted control box with ON/OFF lights,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0387,block:386,block,386,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,6,9,UNREVIEWED,,,
+VIS-0388,block:387,block,387,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,6,9,UNREVIEWED,,,
+VIS-0389,block:388,block,388,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): blok/kus paláce; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,12,9,UNREVIEWED,,,
+VIS-0390,block:389,block,389,(unnamed),"unnamed variant — **DirectionalCube** (user 2026-07-07): asi fontána; textura na 1 straně, zbylých 5 stran šedou fallback barvou",UniformCube,cube,,5,2,UNREVIEWED,,,
+VIS-0391,block:390,block,390,(unnamed),unnamed variant,DirectionalCube,cube,,5,9,UNREVIEWED,,,
+VIS-0392,block:391,block,391,(unnamed),unnamed variant — **architectural-kit** (§10.5): twin arch/window niches — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,8,UNREVIEWED,,,
+VIS-0393,block:392,block,392,(unnamed),unnamed variant — **architectural-kit** (§10.5): left door-jamb edge piece — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,10,9,UNREVIEWED,,,
+VIS-0394,block:393,block,393,(unnamed),unnamed variant — **architectural-kit** (§10.5): right door-jamb edge piece — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,9,UNREVIEWED,,,
+VIS-0395,block:394,block,394,(unnamed),unnamed variant — **architectural-kit** (§10.5): lintel/corner-post fragment — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,2,UNREVIEWED,,,
+VIS-0396,block:395,block,395,(unnamed),unnamed variant — **architectural-kit** (§10.5): lintel/corner-post fragment — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,2,UNREVIEWED,,,
+VIS-0397,block:396,block,396,(unnamed),unnamed variant,DirectionalCube,cube,,7,9,UNREVIEWED,,,
+VIS-0398,block:397,block,397,(unnamed),unnamed variant — **architectural-kit** (§10.5): lintel/corner-post fragment — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,7,9,UNREVIEWED,,,
+VIS-0399,block:398,block,398,(unnamed),unnamed variant — **Billboard** (§10.2): fence rail on two posts,InnerFlatPlate,plate,,7,4,UNREVIEWED,,,
+VIS-0400,block:399,block,399,(unnamed),unnamed variant — **Billboard** (§10.2): fluted classical column,model (BlockModels.hpp),native-model,,5,2,FIXED_AND_VERIFIED,the white column as its original scene (was a cut-out cube),Decor/palais/big0108.rds -> avatars3d/objects/pillar399_big0108 (IoU 0.989; source found by build-probe/rd4-survey/object-m_icons.csv); still block model; live world999,the owner's look
+VIS-0401,block:400,block,400,(unnamed),unnamed variant — **architectural-kit** (§10.5): the archway opening itself — likely a fragment of a modular door/archway sprite kit,DirectionalCube,cube,,5,3,UNREVIEWED,,,
+VIS-0402,block:401,block,401,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,16,5,UNREVIEWED,,,
+VIS-0403,block:402,block,402,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,15,5,UNREVIEWED,,,
+VIS-0404,block:403,block,403,(unnamed),"unnamed variant — **DirectionalCube** + facing metadata (user 2026-07-07): pavučina; textura na 1 straně, zbylé strany průhledné, natočení (4 směry) uložené v p",UniformCube,cube,,15,4,UNREVIEWED,,,
+VIS-0405,block:404,block,404,(unnamed),unnamed variant — **Billboard** (§10.2): green vase/bulb on a neck,model (BlockModels.hpp),native-model,,3,4,UNREVIEWED,,,
+VIS-0406,block:405,block,405,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0407,block:406,block,406,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0408,block:407,block,407,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0409,block:408,block,408,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0410,block:409,block,409,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0411,block:410,block,410,(unnamed),"unnamed variant — **Billboard** (§10.2): small green knob/dome, mostly cropped",InnerFlatPlate,plate,,5,4,UNREVIEWED,,,
+VIS-0412,block:411,block,411,Tile411,unclassified — **Billboard** (§10.2): gold picture-frame-on-pedestal display stand,model (BlockModels.hpp),native-model,,1,3,UNREVIEWED,,,
+VIS-0413,block:412,block,412,Tile412,unclassified — **Billboard** (§10.2): gold picture-frame-on-pedestal display stand,model (BlockModels.hpp),native-model,,1,3,UNREVIEWED,,,
+VIS-0414,block:413,block,413,Tile413,unclassified — **Billboard** (§10.2): gold picture-frame-on-pedestal display stand,model (BlockModels.hpp),native-model,,1,3,UNREVIEWED,,,
+VIS-0415,block:414,block,414,,,model (BlockModels.hpp),native-model,,0,3,UNREVIEWED,,,
+VIS-0416,block:415,block,415,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0417,block:416,block,416,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0418,block:417,block,417,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0419,block:418,block,418,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0420,block:419,block,419,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0421,block:420,block,420,,,model (BlockModels.hpp),native-model,,0,2,UNREVIEWED,,,
+VIS-0422,block:421,block,421,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,10,10,UNREVIEWED,,,look at it live
+VIS-0423,block:422,block,422,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,15,12,UNREVIEWED,,,look at it live
+VIS-0424,block:423,block,423,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,4,4,UNREVIEWED,,,look at it live
+VIS-0425,block:424,block,424,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,9,8,UNREVIEWED,,,look at it live
+VIS-0426,block:425,block,425,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,4,6,UNREVIEWED,,,look at it live
+VIS-0427,block:426,block,426,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,7,6,UNREVIEWED,,,look at it live
+VIS-0428,block:427,block,427,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,7,7,UNREVIEWED,,,look at it live
+VIS-0429,block:428,block,428,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,3,UNREVIEWED,,,look at it live
+VIS-0430,block:429,block,429,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,4,UNREVIEWED,,,look at it live
+VIS-0431,block:430,block,430,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,3,UNREVIEWED,,,look at it live
+VIS-0432,block:431,block,431,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,2,UNREVIEWED,,,look at it live
+VIS-0433,block:432,block,432,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,2,2,UNREVIEWED,,,look at it live
+VIS-0434,block:433,block,433,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,3,UNREVIEWED,,,look at it live
+VIS-0435,block:434,block,434,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,3,UNREVIEWED,,,look at it live
+VIS-0436,block:435,block,435,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,3,UNREVIEWED,,,look at it live
+VIS-0437,block:436,block,436,,,UniformCube,cube,,1,2,UNREVIEWED,,,
+VIS-0438,block:437,block,437,(unnamed),"unnamed variant — **Billboard** (§10.2): gold ball + digit on a post, numbered-marker family 421-437; exact purpose not yet identified",UniformCube,cube,catalogue says Billboard,1,3,UNREVIEWED,,,look at it live
+VIS-0439,block:438,block,438,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0440,block:439,block,439,,,UniformCube,cube,,0,2,UNREVIEWED,,,
+VIS-0441,block:440,block,440,,,UniformCube,cube,,0,1,UNREVIEWED,,,
 VIS-0442,model:ammo_munitions-glu,object-model,element:177,ammo_munitions-glu,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
 VIS-0443,model:bd_big0108_big0108,object-model,explo:87,bd_big0108_big0108,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
 VIS-0444,model:bd_big02_big02,object-model,explo:88,bd_big02_big02,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
@@ -544,3 +544,19 @@ VIS-0542,model:door334_porte-r,object-model,object-m:334,door334_porte-r,,Skinne
 VIS-0543,model:door335_porte-v,object-model,object-m:335,door335_porte-v,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
 VIS-0544,model:door336_porte-b,object-model,object-m:336,door336_porte-b,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
 VIS-0545,model:temp324_temporaire,object-model,object-m:324 object-m:325 object-m:326 object-m:327 object-m:328 object-m:329,temp324_temporaire,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0546,model:angel_blupi-ange,object-model,element:230 element:231 element:232 element:233 element:234 element:235 +6,angel_blupi-ange,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0547,model:bridge364_grotte-fragile1,object-model,object-m:364 object-m:365 object-m:366 object-m:367 object-m:368 object-m:369 +3,bridge364_grotte-fragile1,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0548,model:conveyor311_chenille,object-model,object-m:311 object-m:312 object-m:313 object-m:314 object-m:315 object-m:316,conveyor311_chenille,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0549,model:crusher317_aplatisseur,object-model,object-m:317 object-m:318 object-m:319 object-m:320 object-m:321 object-m:322 +1,crusher317_aplatisseur,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0550,model:drip404_goutte01,object-model,object-m:404,drip404_goutte01,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0551,model:drip404_goutte02,object-model,object-m:405,drip404_goutte02,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0552,model:drip404_goutte03,object-model,object-m:406,drip404_goutte03,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0553,model:drip404_goutte04,object-model,object-m:407 object-m:408,drip404_goutte04,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0554,model:emitter304_eclair,object-model,object-m:304,emitter304_eclair,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0555,model:glu168_glu,object-model,element:168 element:169 element:170 element:171,glu168_glu,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0556,model:saw378_scie,object-model,object-m:378 object-m:379 object-m:380 object-m:381 object-m:382 object-m:383,saw378_scie,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0557,model:sign174_world1,object-model,object-m:174 object-m:175 object-m:176 object-m:177 object-m:178 object-m:179 +2,sign174_world1,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0558,model:spring211_ressort,object-model,object-m:209 object-m:210 object-m:211 object-m:212 object-m:213,spring211_ressort,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0559,model:switch384_interrupteur,object-model,object-m:384 object-m:385,switch384_interrupteur,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0560,model:worlddone166_world2b,object-model,object-m:166 object-m:167 object-m:168 object-m:169 object-m:170 object-m:171 +8,worlddone166_world2b,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
+VIS-0561,model:worldsign158_world2a,object-model,object-m:158 object-m:159 object-m:160 object-m:161 object-m:162 object-m:163 +8,worldsign158_world2a,,SkinnedModelEXT,native-model,,,,UNREVIEWED,,,
