@@ -384,49 +384,49 @@ GP-0382,sound:89,sound,SoundChannel89,89,def/SoundChannel.hpp:126,1,,,1493,inclu
 GP-0383,sound:90,sound,SoundChannel90,90,def/SoundChannel.hpp:127,1,,,1505,include/GalaxyEggbert/Def/SoundChannel.hpp src/GalaxyEggbert/Game/Sound.cpp tools/VerifyInteractionSystem.cpp,CONFIRMED_MATCH,Sound::FootstepChannelFor (the landing),SoundEnviron (Decor.cpp:1434-1503) on channel 3 at a landing; the march no longer plays them (BD-0037),ctest (sound by code review),
 GP-0384,sound:91,sound,SoundChannel91,91,def/SoundChannel.hpp:128,1,,,1503,include/GalaxyEggbert/Def/SoundChannel.hpp tools/VerifyInteractionSystem.cpp,FIXED_AND_VERIFIED,BlupiController CeilingTapped; Sound::CeilingChannelFor,"BD-0034: a ceiling met rising slowly, by the ceiling icon (Decor.cpp:2950-2961, SoundEnviron)",VerifyBlupiMovement; VerifyInteractionSystem,
 GP-0385,sound:92,sound,SoundChannel92,92,def/SoundChannel.hpp:129,1,,,9674,include/GalaxyEggbert/Def/SoundChannel.hpp src/GalaxyEggbert/Game/InteractionSystem.cpp,CONFIRMED_MATCH,InteractionSystem a follow star wakes,Decor.cpp:9674,ctest; all playthroughs (silent: sound by code review),
-GP-0386,function:getDrawBoundsProperty,function,Decor::getDrawBoundsProperty,,Decor.cpp:101,5,,,,,UNREVIEWED,,,,
-GP-0387,function:setDrawBoundsProperty,function,Decor::setDrawBoundsProperty,,Decor.cpp:102,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
+GP-0386,function:getDrawBoundsProperty,function,Decor::getDrawBoundsProperty,,Decor.cpp:101,5,,,,,NOT_APPLICABLE,,a 2D draw-bounds accessor,,
+GP-0387,function:setDrawBoundsProperty,function,Decor::setDrawBoundsProperty,,Decor.cpp:102,0,,,,,NOT_APPLICABLE,,a 2D draw-bounds accessor,,check callers outside Decor.cpp
 GP-0388,function:MoveObjectCopy,function,Decor::MoveObjectCopy,,Decor.cpp:105,7,,,,,UNREVIEWED,,,,
-GP-0389,function:Create,function,Decor::Create,,Decor.cpp:223,2,,,,src/GalaxyEggbert/Worlds/test_worlds.cpp,UNREVIEWED,,,,
-GP-0390,function:LoadImages,function,Decor::LoadImages,,Decor.cpp:245,0,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,check callers outside Decor.cpp
+GP-0389,function:Create,function,Decor::Create,,Decor.cpp:223,2,,,,src/GalaxyEggbert/Worlds/test_worlds.cpp,NOT_APPLICABLE,,the decor object's construction (Galaxy: World/WorldRuntime),,
+GP-0390,function:LoadImages,function,Decor::LoadImages,,Decor.cpp:245,0,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,NOT_APPLICABLE,,2D sheet loading (Galaxy: content loading),,check callers outside Decor.cpp
 GP-0391,function:InitDecor,function,Decor::InitDecor,,Decor.cpp:263,4,,,,,UNREVIEWED,,,,
 GP-0392,function:PlayPrepare,function,Decor::PlayPrepare,,Decor.cpp:381,1,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,UNREVIEWED,,,,
 GP-0393,function:BuildPrepare,function,Decor::BuildPrepare,,Decor.cpp:475,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
 GP-0394,function:IsTerminated,function,Decor::IsTerminated,,Decor.cpp:493,1,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,UNREVIEWED,,,,
 GP-0395,function:MoveStep,function,Decor::MoveStep,,Decor.cpp:507,5,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,UNREVIEWED,,,,
-GP-0396,function:ResetHotSpot,function,Decor::ResetHotSpot,,Decor.cpp:522,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0397,function:MoveHotSpot,function,Decor::MoveHotSpot,,Decor.cpp:538,2,,,,src/GalaxyEggbert/Game/InputPad.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,UNREVIEWED,,,,
+GP-0396,function:ResetHotSpot,function,Decor::ResetHotSpot,,Decor.cpp:522,0,,,,,INTENTIONAL_3D_ADAPTATION,GalaxyEggbertGame chase camera,the 2D scroll's hot spot; the 3D chase camera follows him instead,,check callers outside Decor.cpp
+GP-0397,function:MoveHotSpot,function,Decor::MoveHotSpot,,Decor.cpp:538,2,,,,src/GalaxyEggbert/Game/InputPad.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,INTENTIONAL_3D_ADAPTATION,GalaxyEggbertGame chase camera,the 2D scroll's hot spot; the 3D chase camera follows him instead,,
 GP-0398,function:BlitzActif,function,Decor::BlitzActif,,Decor.cpp:620,2,,,,include/GalaxyEggbert/BlockDefinitionRegistry.hpp include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/BlockDefinitionRegistry.cpp src/GalaxyEggbert/Game/InteractionSystem.hpp +5,UNREVIEWED,,,,
 GP-0399,function:Build,function,Decor::Build,,Decor.cpp:649,1,,,,src/GalaxyEggbert/Game/TerrainRenderer.cpp tools/rd4_to_gltf/build_clip_library.py,UNREVIEWED,,,,
-GP-0400,function:DrawInfo,function,Decor::DrawInfo,,Decor.cpp:1185,1,,,,src/GalaxyEggbert/Game/Hud.cpp src/GalaxyEggbert/Game/Hud.hpp src/GalaxyEggbert/Game/InputPad.cpp src/GalaxyEggbert/Game/InputPad.hpp +2,UNREVIEWED,,,,
-GP-0401,function:IsDisplayInfo,function,Decor::IsDisplayInfo,,Decor.cpp:1313,2,,,,src/GalaxyEggbert/Game/TrainingHints.cpp src/GalaxyEggbert/Game/TrainingHints.hpp,UNREVIEWED,,,,
+GP-0400,function:DrawInfo,function,Decor::DrawInfo,,Decor.cpp:1185,1,,,,src/GalaxyEggbert/Game/Hud.cpp src/GalaxyEggbert/Game/Hud.hpp src/GalaxyEggbert/Game/InputPad.cpp src/GalaxyEggbert/Game/InputPad.hpp +2,NOT_APPLICABLE,,a debug overlay of the 2D port,,
+GP-0401,function:IsDisplayInfo,function,Decor::IsDisplayInfo,,Decor.cpp:1313,2,,,,src/GalaxyEggbert/Game/TrainingHints.cpp src/GalaxyEggbert/Game/TrainingHints.hpp,NOT_APPLICABLE,,a debug overlay switch,,
 GP-0402,function:DecorNextAction,function,Decor::DecorNextAction,,Decor.cpp:1353,1,,,,src/GalaxyEggbert/Game/CameraShake.cpp src/GalaxyEggbert/Game/CameraShake.hpp,UNREVIEWED,,,,
 GP-0403,function:SetSpeedX,function,Decor::SetSpeedX,,Decor.cpp:1400,0,,,,src/GalaxyEggbert/Game/BlupiController.cpp tools/VerifyBlupiMovement.cpp,UNREVIEWED,,,,check callers outside Decor.cpp
 GP-0404,function:SetSpeedY,function,Decor::SetSpeedY,,Decor.cpp:1409,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
 GP-0405,function:KeyChange,function,Decor::KeyChange,,Decor.cpp:1414,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0406,function:GetBlupiInfo,function,Decor::GetBlupiInfo,,Decor.cpp:1419,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0407,function:SoundEnviron,function,Decor::SoundEnviron,,Decor.cpp:1434,2,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/Sound.cpp src/GalaxyEggbert/Game/Sound.hpp +1,UNREVIEWED,,,,
-GP-0408,function:PlaySound,function,Decor::PlaySound,,Decor.cpp:1518,127,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,
-GP-0409,function:StopSound,function,Decor::StopSound,,Decor.cpp:1574,86,,,,,UNREVIEWED,,,,
-GP-0410,function:StartSound,function,Decor::StartSound,,Decor.cpp:1580,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0411,function:AdaptMotorVehicleSound,function,Decor::AdaptMotorVehicleSound,,Decor.cpp:1599,2,,,,src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,UNREVIEWED,,,,
-GP-0412,function:PosSound,function,Decor::PosSound,,Decor.cpp:1641,1,,,,,UNREVIEWED,,,,
-GP-0413,function:GetRegion,function,Decor::GetRegion,,Decor.cpp:1651,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0414,function:SetRegion,function,Decor::SetRegion,,Decor.cpp:1656,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0415,function:GetMusic,function,Decor::GetMusic,,Decor.cpp:1661,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0416,function:SetMusic,function,Decor::SetMusic,,Decor.cpp:1666,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0417,function:GetDim,function,Decor::GetDim,,Decor.cpp:1671,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0418,function:SetDim,function,Decor::SetDim,,Decor.cpp:1676,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0419,function:GetMission,function,Decor::GetMission,,Decor.cpp:1681,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0420,function:SetMission,function,Decor::SetMission,,Decor.cpp:1686,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0421,function:GetNbVies,function,Decor::GetNbVies,,Decor.cpp:1691,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0422,function:SetNbVies,function,Decor::SetNbVies,,Decor.cpp:1696,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
+GP-0406,function:GetBlupiInfo,function,Decor::GetBlupiInfo,,Decor.cpp:1419,0,,,,,NOT_APPLICABLE,,a debug accessor,,check callers outside Decor.cpp
+GP-0407,function:SoundEnviron,function,Decor::SoundEnviron,,Decor.cpp:1434,2,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/Sound.cpp src/GalaxyEggbert/Game/Sound.hpp +1,FIXED_AND_VERIFIED,"Sound::FootstepChannelFor, CeilingChannelFor",the material remaps of channels 3 and 4 (BD-0034),,
+GP-0408,function:PlaySound,function,Decor::PlaySound,,Decor.cpp:1518,127,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,CONFIRMED_MATCH,Sound::Play,every channel's call sites compared with Decor.cpp (2026-11-03),,
+GP-0409,function:StopSound,function,Decor::StopSound,,Decor.cpp:1574,86,,,,,CONFIRMED_MATCH,Sound::Stop,"the stops of the motors, the crate push, the mockery (BD-0035)",,
+GP-0410,function:StartSound,function,Decor::StartSound,,Decor.cpp:1580,0,,,,,CONFIRMED_MATCH,Sound::Play loop,the looping motor sounds (AdaptMotorVehicleSound),,check callers outside Decor.cpp
+GP-0411,function:AdaptMotorVehicleSound,function,Decor::AdaptMotorVehicleSound,,Decor.cpp:1599,2,,,,src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,CONFIRMED_MATCH,GalaxyEggbertGame::UpdateMotorLoop,ported line for line (2026-11-03 sound pass),,
+GP-0412,function:PosSound,function,Decor::PosSound,,Decor.cpp:1641,1,,,,,INTENTIONAL_3D_ADAPTATION,Sound (no panning),2D stereo panning by screen position; Galaxy plays effects unpanned,,
+GP-0413,function:GetRegion,function,Decor::GetRegion,,Decor.cpp:1651,0,,,,,NOT_APPLICABLE,,an accessor (the region: World header sky word),,check callers outside Decor.cpp
+GP-0414,function:SetRegion,function,Decor::SetRegion,,Decor.cpp:1656,0,,,,,NOT_APPLICABLE,,an accessor,,check callers outside Decor.cpp
+GP-0415,function:GetMusic,function,Decor::GetMusic,,Decor.cpp:1661,0,,,,,NOT_APPLICABLE,,"an accessor (the music: World::musicTrack, OR-0014)",,check callers outside Decor.cpp
+GP-0416,function:SetMusic,function,Decor::SetMusic,,Decor.cpp:1666,0,,,,,NOT_APPLICABLE,,an accessor,,check callers outside Decor.cpp
+GP-0417,function:GetDim,function,Decor::GetDim,,Decor.cpp:1671,0,,,,,NOT_APPLICABLE,,an accessor (the 2D map size),,check callers outside Decor.cpp
+GP-0418,function:SetDim,function,Decor::SetDim,,Decor.cpp:1676,0,,,,,NOT_APPLICABLE,,an accessor,,check callers outside Decor.cpp
+GP-0419,function:GetMission,function,Decor::GetMission,,Decor.cpp:1681,0,,,,,NOT_APPLICABLE,,an accessor,,check callers outside Decor.cpp
+GP-0420,function:SetMission,function,Decor::SetMission,,Decor.cpp:1686,0,,,,,NOT_APPLICABLE,,an accessor,,check callers outside Decor.cpp
+GP-0421,function:GetNbVies,function,Decor::GetNbVies,,Decor.cpp:1691,0,,,,,NOT_APPLICABLE,,an accessor (lives: InteractionSystem),,check callers outside Decor.cpp
+GP-0422,function:SetNbVies,function,Decor::SetNbVies,,Decor.cpp:1696,0,,,,,NOT_APPLICABLE,,an accessor,,check callers outside Decor.cpp
 GP-0423,function:InitializeDoors,function,Decor::InitializeDoors,,Decor.cpp:1701,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
 GP-0424,function:MemorizeDoors,function,Decor::MemorizeDoors,,Decor.cpp:1719,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
 GP-0425,function:GetCheatTinyText,function,Decor::GetCheatTinyText,,Decor.cpp:1737,0,,,,src/GalaxyEggbert/Game/InputPad.cpp src/GalaxyEggbert/Game/InputPad.hpp,UNREVIEWED,,,,check callers outside Decor.cpp
 GP-0426,function:CheatAction,function,Decor::CheatAction,,Decor.cpp:1774,0,,,,include/GalaxyEggbert/HubDoors.hpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/InputPad.hpp src/GalaxyEggbert/Game/InteractionSystem.hpp +3,UNREVIEWED,,,,check callers outside Decor.cpp
 GP-0427,function:SetBuildOfficialMissions,function,Decor::SetBuildOfficialMissions,,Decor.cpp:2098,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0428,function:BlupiSearchIcon,function,Decor::BlupiSearchIcon,,Decor.cpp:2123,3,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/Hud.cpp tools/VerifyBlupiMovement.cpp,UNREVIEWED,,,,
+GP-0428,function:BlupiSearchIcon,function,Decor::BlupiSearchIcon,,Decor.cpp:2123,3,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/Hud.cpp tools/VerifyBlupiMovement.cpp,CONFIRMED_MATCH,BlupiController::GetRawAnimIcon,"every action's icon table equal to table_blupi (2026-11-03; Clear4 fixed, BD-0039)",,
 GP-0429,function:BlupiIsGround,function,Decor::BlupiIsGround,,Decor.cpp:2459,3,,,,,UNREVIEWED,,,,
 GP-0430,function:BlupiRect,function,Decor::BlupiRect,,Decor.cpp:2471,17,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,
 GP-0431,function:BlupiAdjust,function,Decor::BlupiAdjust,,Decor.cpp:2544,5,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp tools/VerifyBlupiMovement.cpp,UNREVIEWED,,,,
@@ -434,23 +434,23 @@ GP-0432,function:BlupiBloque,function,Decor::BlupiBloque,,Decor.cpp:2623,12,,,,s
 GP-0433,function:BlupiGhostStep,function,Decor::BlupiGhostStep,,Decor.cpp:2640,1,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp,UNREVIEWED,,,,
 GP-0434,function:BlupiStep,function,Decor::BlupiStep,,Decor.cpp:2734,3,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp tools/VerifyBlupiMovement.cpp,UNREVIEWED,,,,
 GP-0435,function:BlupiDead,function,Decor::BlupiDead,,Decor.cpp:6547,10,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/InteractionSystem.cpp +4,UNREVIEWED,,,,
-GP-0436,function:GetPosDecor,function,Decor::GetPosDecor,,Decor.cpp:6622,3,,,,,UNREVIEWED,,,,
+GP-0436,function:GetPosDecor,function,Decor::GetPosDecor,,Decor.cpp:6622,3,,,,,NOT_APPLICABLE,,the 2D scroll position accessor,,
 GP-0437,function:BlupiAddFifo,function,Decor::BlupiAddFifo,,Decor.cpp:6654,1,,,,src/GalaxyEggbert/Game/BlupiController.hpp,UNREVIEWED,,,,
 GP-0438,function:DecorDetect,function,Decor::DecorDetect,,Decor.cpp:6678,48,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/DecorQuartTable.hpp +5,UNREVIEWED,,,,
 GP-0439,function:TestPath,function,Decor::TestPath,,Decor.cpp:6782,10,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyBlupiMovement.cpp +1,UNREVIEWED,,,,
 GP-0440,function:MoveObjectPollution,function,Decor::MoveObjectPollution,,Decor.cpp:6877,4,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp,UNREVIEWED,,,,
-GP-0441,function:MoveObjectPlouf,function,Decor::MoveObjectPlouf,,Decor.cpp:6991,2,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,
-GP-0442,function:MoveObjectTiplouf,function,Decor::MoveObjectTiplouf,,Decor.cpp:7005,2,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,
-GP-0443,function:MoveObjectBlup,function,Decor::MoveObjectBlup,,Decor.cpp:7034,1,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp,UNREVIEWED,,,,
+GP-0441,function:MoveObjectPlouf,function,Decor::MoveObjectPlouf,,Decor.cpp:6991,2,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,CONFIRMED_MATCH,host water entry splash,channel 23 and the splash object (2026-11-03 sound pass),,
+GP-0442,function:MoveObjectTiplouf,function,Decor::MoveObjectTiplouf,,Decor.cpp:7005,2,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,CONFIRMED_MATCH,host water exit jump splash,channel 64 (2026-11-03 sound pass),,
+GP-0443,function:MoveObjectBlup,function,Decor::MoveObjectBlup,,Decor.cpp:7034,1,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp,CONFIRMED_MATCH,host bubbles while swimming,channel 24 (2026-11-03 sound pass),,
 GP-0444,function:IsWorld,function,Decor::IsWorld,,Decor.cpp:7079,2,,,,include/GalaxyEggbert/BlockDefinitionRegistry.hpp include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/BlockDefinitionRegistry.cpp src/GalaxyEggbert/Game/BlupiController.hpp +5,UNREVIEWED,,,,
 GP-0445,function:ActiveSwitch,function,Decor::ActiveSwitch,,Decor.cpp:7131,1,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/BlockDefinitionRegistry.cpp src/GalaxyEggbert/Game/WorldRuntime.hpp tools/VerifyDefinitionRegistries.cpp +2,UNREVIEWED,,,,
 GP-0446,function:GetTypeBarre,function,Decor::GetTypeBarre,,Decor.cpp:7158,2,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.hpp tools/GenerateSampleWorld3D.cpp tools/VerifyBlupiMovement.cpp,UNREVIEWED,,,,
 GP-0447,function:IsLave,function,Decor::IsLave,,Decor.cpp:7195,2,,,,,UNREVIEWED,,,,
-GP-0448,function:IsPiege,function,Decor::IsPiege,,Decor.cpp:7205,2,,,,src/GalaxyEggbert/BlockDefinitionRegistry.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/worlds/slime.py tools/worlds/station.py,UNREVIEWED,,,,
-GP-0449,function:IsGoutte,function,Decor::IsGoutte,,Decor.cpp:7220,2,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/VerifyBlupiMovement.cpp,UNREVIEWED,,,,
+GP-0448,function:IsPiege,function,Decor::IsPiege,,Decor.cpp:7205,2,,,,src/GalaxyEggbert/BlockDefinitionRegistry.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/worlds/slime.py tools/worlds/station.py,CONFIRMED_MATCH,host GetGroundBlockType == Spike (373),"the cell under his feet, icon 373 only (Decor.cpp:7217)",,
+GP-0449,function:IsGoutte,function,Decor::IsGoutte,,Decor.cpp:7220,2,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/VerifyBlupiMovement.cpp,FIXED_AND_VERIFIED,BlupiController GetBlockTypeAt == Drip,"his own cell, the drip passable (BD-0033)",,
 GP-0450,function:IsScie,function,Decor::IsScie,,Decor.cpp:7243,2,,,,src/GalaxyEggbert/BlockDefinitionRegistry.cpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/VerifyDefinitionRegistries.cpp,UNREVIEWED,,,,
 GP-0451,function:IsSwitch,function,Decor::IsSwitch,,Decor.cpp:7257,1,,,,,UNREVIEWED,,,,
-GP-0452,function:IsEcraseur,function,Decor::IsEcraseur,,Decor.cpp:7277,1,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/WorldRuntime.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp +4,UNREVIEWED,,,,
+GP-0452,function:IsEcraseur,function,Decor::IsEcraseur,,Decor.cpp:7277,1,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/WorldRuntime.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp +4,FIXED_AND_VERIFIED,host GetBlockTypeAt == Crusher,his own cell of a one-high passage (BD-0032),,
 GP-0453,function:IsBlitz,function,Decor::IsBlitz,,Decor.cpp:7291,2,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,
 GP-0454,function:IsRessort,function,Decor::IsRessort,,Decor.cpp:7312,2,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,
 GP-0455,function:IsTemp,function,Decor::IsTemp,,Decor.cpp:7323,1,,,,include/GalaxyEggbert/BlockTypes.hpp,UNREVIEWED,,,,
@@ -473,7 +473,7 @@ GP-0471,function:IsMoveTraj,function,Decor::IsMoveTraj,,Decor.cpp:7606,1,,,,,UNR
 GP-0472,function:SearchDistRight,function,Decor::SearchDistRight,,Decor.cpp:7628,5,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyInteractionSystem.cpp,UNREVIEWED,,,,
 GP-0473,function:IsVentillo,function,Decor::IsVentillo,,Decor.cpp:7667,1,,,,include/GalaxyEggbert/BlockTypes.hpp src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/WorldRuntime.cpp src/GalaxyEggbert/Game/WorldRuntime.hpp +3,UNREVIEWED,,,,
 GP-0474,function:NetStopCloud,function,Decor::NetStopCloud,,Decor.cpp:7759,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0475,function:StartSploutchGlu,function,Decor::StartSploutchGlu,,Decor.cpp:7763,1,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyInteractionSystem.cpp,UNREVIEWED,,,,
+GP-0475,function:StartSploutchGlu,function,Decor::StartSploutchGlu,,Decor.cpp:7763,1,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyInteractionSystem.cpp,FIXED_AND_VERIFIED,InteractionSystem::AppendSplatEffect,the splash objects 98-100 and channel 51 (BD-0036),,
 GP-0476,function:ObjectStart,function,Decor::ObjectStart,,Decor.cpp:7805,88,,,,src/GalaxyEggbert/Game/BlupiController.cpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbert/Game/InteractionSystem.hpp +3,UNREVIEWED,,,,
 GP-0477,function:ObjectDelete,function,Decor::ObjectDelete,,Decor.cpp:7881,26,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbert/Game/InteractionSystem.hpp tools/VerifyInteractionSystem.cpp,UNREVIEWED,,,,
 GP-0478,function:ModifDecor,function,Decor::ModifDecor,,Decor.cpp:7925,6,,,,tools/VerifyInteractionSystem.cpp,UNREVIEWED,,,,
@@ -485,11 +485,11 @@ GP-0483,function:AscenseurDetect,function,Decor::AscenseurDetect,,Decor.cpp:9184
 GP-0484,function:AscenseurVertigo,function,Decor::AscenseurVertigo,,Decor.cpp:9238,4,,,,src/GalaxyEggbert/Game/BlupiController.cpp,UNREVIEWED,,,,
 GP-0485,function:AscenseurShift,function,Decor::AscenseurShift,,Decor.cpp:9271,3,,,,,UNREVIEWED,,,,
 GP-0486,function:AscenseurSynchro,function,Decor::AscenseurSynchro,,Decor.cpp:9291,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0487,function:UpdateCaisse,function,Decor::UpdateCaisse,,Decor.cpp:9302,3,,,,,UNREVIEWED,,,,
+GP-0487,function:UpdateCaisse,function,Decor::UpdateCaisse,,Decor.cpp:9302,3,,,,,FIXED_AND_VERIFIED,InteractionSystem::UpdateCratePush,"BD-0001, BD-0002, BD-0014",,
 GP-0488,function:TestPushCaisse,function,Decor::TestPushCaisse,,Decor.cpp:9321,3,,,,src/GalaxyEggbert/Game/CratePush.hpp src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbert/Game/InteractionSystem.hpp,CONFIRMED_MATCH,CrateGroupCanMove,atomic group test; support needs a solid mask since BD-0003,VerifyInteractionSystem,
 GP-0489,function:TestPushOneCaisse,function,Decor::TestPushOneCaisse,,Decor.cpp:9354,1,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyInteractionSystem.cpp tools/worlds/world012.py,CONFIRMED_MATCH,CrateGroupCanMove,destination free of solid blocks and crates; support a solid mask (BD-0003; Galaxy tests the destination cell; no 19 px overhang: M3D-0001),VerifyInteractionSystem,
 GP-0490,function:SearchLinkCaisse,function,Decor::SearchLinkCaisse,,Decor.cpp:9397,2,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/GenerateSampleWorld3D.cpp tools/VerifyInteractionSystem.cpp,CONFIRMED_MATCH,CrateGroup,links touching crates at or above the seed's row; a pull only the stack on it,VerifyInteractionSystem (linked trio),
-GP-0491,function:AddLinkCaisse,function,Decor::AddLinkCaisse,,Decor.cpp:9442,2,,,,,UNREVIEWED,,,,
+GP-0491,function:AddLinkCaisse,function,Decor::AddLinkCaisse,,Decor.cpp:9442,2,,,,,FIXED_AND_VERIFIED,CrateGroup,BD-0014 (the group moves while all of it fits),,
 GP-0492,function:CaisseInFront,function,Decor::CaisseInFront,,Decor.cpp:9456,6,,,,src/GalaxyEggbert/Game/InteractionSystem.hpp,CONFIRMED_MATCH,InteractionSystem::CrateInFront,the nearest crate ahead (D50),VerifyInteractionSystem,
 GP-0493,function:CaisseGetMove,function,Decor::CaisseGetMove,,Decor.cpp:9487,8,,,,src/GalaxyEggbert/Game/CratePush.hpp src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyInteractionSystem.cpp,FIXED_AND_VERIFIED,CratePush::PixelsPerTick,transcribed (2026-11-01),VerifyInteractionSystem,
 GP-0494,function:MockeryDetect,function,Decor::MockeryDetect,,Decor.cpp:9518,1,,,,src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/audit/gameplay_use_cases.py,UNREVIEWED,,,,
@@ -498,7 +498,7 @@ GP-0496,function:MoveObjectFollow,function,Decor::MoveObjectFollow,,Decor.cpp:96
 GP-0497,function:MoveObjectDetect,function,Decor::MoveObjectDetect,,Decor.cpp:9689,6,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbert/Game/InteractionSystem.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/VerifyInteractionSystem.cpp +1,FIXED_AND_VERIFIED,InteractionSystem MoveObjectTouches,"BD-0021: the boxes per type, X and Z alike, for hazards and pickups",VerifyInteractionSystem; all playthroughs,
 GP-0498,function:MoveAscenseurDetect,function,Decor::MoveAscenseurDetect,,Decor.cpp:9773,1,,,,,UNREVIEWED,,,,
 GP-0499,function:MoveChargeDetect,function,Decor::MoveChargeDetect,,Decor.cpp:9803,1,,,,,UNREVIEWED,,,,
-GP-0500,function:MovePersoDetect,function,Decor::MovePersoDetect,,Decor.cpp:9835,1,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyInteractionSystem.cpp,UNREVIEWED,,,,
+GP-0500,function:MovePersoDetect,function,Decor::MovePersoDetect,,Decor.cpp:9835,1,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/VerifyInteractionSystem.cpp,FIXED_AND_VERIFIED,InteractionSystem::MoveObjectTouches,the decoy against the bulldozer and the shooters (BD-0028),,
 GP-0501,function:MoveObjectDelete,function,Decor::MoveObjectDelete,,Decor.cpp:9867,1,,,,,UNREVIEWED,,,,
 GP-0502,function:MoveObjectFree,function,Decor::MoveObjectFree,,Decor.cpp:9889,8,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbert/Game/InteractionSystem.hpp,UNREVIEWED,,,,
 GP-0503,function:SortGetType,function,Decor::SortGetType,,Decor.cpp:9908,3,,,,,UNREVIEWED,,,,
@@ -519,19 +519,19 @@ GP-0517,function:IsFromage,function,Decor::IsFromage,,Decor.cpp:10677,4,,,,,UNRE
 GP-0518,function:IsGrotte,function,Decor::IsGrotte,,Decor.cpp:10695,4,,,,,UNREVIEWED,,,,
 GP-0519,function:AdaptMidBorder,function,Decor::AdaptMidBorder,,Decor.cpp:10721,6,,,,src/GalaxyEggbert/Game/BlockModels.hpp,UNREVIEWED,,,,
 GP-0520,function:AdaptBorder,function,Decor::AdaptBorder,,Decor.cpp:10924,0,,,,tools/worlds/world025.py,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0521,function:CurrentDelete,function,Decor::CurrentDelete,,Decor.cpp:10974,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0522,function:CurrentWrite,function,Decor::CurrentWrite,,Decor.cpp:10986,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0523,function:CurrentRead,function,Decor::CurrentRead,,Decor.cpp:11143,1,,,,,UNREVIEWED,,,,
-GP-0524,function:Read,function,Decor::Read,,Decor.cpp:11304,1,,,,src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp src/GalaxyEggbert/Game/SaveData.hpp src/GalaxyEggbert/Game/WorldRuntime.cpp tools/VerifyInteractionSystem.cpp +2,UNREVIEWED,,,,
-GP-0525,function:Delete,function,Decor::Delete,,Decor.cpp:11379,0,,,,src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp src/GalaxyEggbert/Editor/EditorBrowserScreen.hpp src/GalaxyEggbert/Editor/EditorHighlightRenderer.hpp src/GalaxyEggbert/Editor/WorldEditor.hpp +2,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0526,function:FileExist,function,Decor::FileExist,,Decor.cpp:11387,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
+GP-0521,function:CurrentDelete,function,Decor::CurrentDelete,,Decor.cpp:10974,0,,,,,INTENTIONAL_3D_ADAPTATION,GameSave / CustomWorldStorage,the original's save files; Galaxy saves its own format,,check callers outside Decor.cpp
+GP-0522,function:CurrentWrite,function,Decor::CurrentWrite,,Decor.cpp:10986,0,,,,,INTENTIONAL_3D_ADAPTATION,GameSave,the original's save files; Galaxy saves its own format,,check callers outside Decor.cpp
+GP-0523,function:CurrentRead,function,Decor::CurrentRead,,Decor.cpp:11143,1,,,,,INTENTIONAL_3D_ADAPTATION,GameSave,the original's save files; Galaxy saves its own format,,
+GP-0524,function:Read,function,Decor::Read,,Decor.cpp:11304,1,,,,src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp src/GalaxyEggbert/Game/SaveData.hpp src/GalaxyEggbert/Game/WorldRuntime.cpp tools/VerifyInteractionSystem.cpp +2,INTENTIONAL_3D_ADAPTATION,World::load (.vwr),the 2D map reader; Galaxy reads .vwr worlds,,
+GP-0525,function:Delete,function,Decor::Delete,,Decor.cpp:11379,0,,,,src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp src/GalaxyEggbert/Editor/EditorBrowserScreen.hpp src/GalaxyEggbert/Editor/EditorHighlightRenderer.hpp src/GalaxyEggbert/Editor/WorldEditor.hpp +2,INTENTIONAL_3D_ADAPTATION,CustomWorldStorage,the original's user world files; Galaxy's editor slots,,check callers outside Decor.cpp
+GP-0526,function:FileExist,function,Decor::FileExist,,Decor.cpp:11387,0,,,,,NOT_APPLICABLE,,a file helper,,check callers outside Decor.cpp
 GP-0527,function:SearchWorld,function,Decor::SearchWorld,,Decor.cpp:11398,2,,,,include/GalaxyEggbert/HubDoors.hpp,UNREVIEWED,,,,
 GP-0528,function:SearchDoor,function,Decor::SearchDoor,,Decor.cpp:11439,1,,,,include/GalaxyEggbert/BlockTypes.hpp include/GalaxyEggbert/HubDoors.hpp,UNREVIEWED,,,,
 GP-0529,function:SearchGold,function,Decor::SearchGold,,Decor.cpp:11486,1,,,,include/GalaxyEggbert/BlockTypes.hpp include/GalaxyEggbert/HubDoors.hpp,UNREVIEWED,,,,
 GP-0530,function:MainSwitchInitialize,function,Decor::MainSwitchInitialize,,Decor.cpp:11508,0,,,,src/GalaxyEggbert/Game/SaveData.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0531,function:AdaptDoors,function,Decor::AdaptDoors,,Decor.cpp:11533,3,,,,include/GalaxyEggbert/BlockTypes.hpp include/GalaxyEggbert/HubDoors.hpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/InteractionSystem.hpp +5,UNREVIEWED,,,,
+GP-0531,function:AdaptDoors,function,Decor::AdaptDoors,,Decor.cpp:11533,3,,,,include/GalaxyEggbert/BlockTypes.hpp include/GalaxyEggbert/HubDoors.hpp src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbert/Game/InteractionSystem.hpp +5,FIXED_AND_VERIFIED,HubDoors::AdaptHubDoors,"the hub doors and the opendoors cheat (m_bCheatDoors, 2026-11-02)",,
 GP-0532,function:IsGhost,function,Decor::IsGhost,,Decor.cpp:11625,0,,,,src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/VerifyBlupiMovement.cpp,UNREVIEWED,,,,check callers outside Decor.cpp
-GP-0533,function:SetCheatZoom,function,Decor::SetCheatZoom,,Decor.cpp:11630,0,,,,,UNREVIEWED,,,,check callers outside Decor.cpp
+GP-0533,function:SetCheatZoom,function,Decor::SetCheatZoom,,Decor.cpp:11630,0,,,,,INTENTIONAL_3D_ADAPTATION,GalaxyEggbertGame camera,the 2D zoom cheat; the 3D camera has its own distance,,check callers outside Decor.cpp
 GP-0534,function:OpenDoorsTresor,function,Decor::OpenDoorsTresor,,Decor.cpp:11642,2,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp tools/worlds/palace.py tools/worlds/station.py tools/worlds/village.py +5,UNREVIEWED,,,,
 GP-0535,function:OpenDoor,function,Decor::OpenDoor,,Decor.cpp:11667,3,,,,src/GalaxyEggbert/Game/InteractionSystem.cpp src/GalaxyEggbert/Game/InteractionSystem.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp tools/VerifyInteractionSystem.cpp,UNREVIEWED,,,,
 GP-0536,function:OpenDoorsWin,function,Decor::OpenDoorsWin,,Decor.cpp:11695,1,,,,src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp,UNREVIEWED,,,,
