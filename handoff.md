@@ -218,6 +218,14 @@ ledgers before repeating any discovery. Where it stands:
   3D** (`433b01d`): `glu.rd4` holds only a yellow Blupi, the sprites' green was added afterwards,
   so the converter's new `texrecolour` turns its yellow (texture skin too) green, and the game
   lays his flattened model under it as the puddle (strands not drawn; Q-006 updated).
+- Wave E after that, each world replayed: 111's second pit over lava (`1fdcace`), 124's lava
+  strip across the start passage (`4ddeab0`; not at x 8-9: teleporter 332's partner stands
+  there), 122's pocket over lava on a lift (`8478ed7`; wait for the lift's next arrival before
+  boarding back), 014's water channel in the key room (`62bca18`; climb out with `with lookup jump
+  1.2`; levelcheck's surface stand-in), 112's two floor saws (`c03bd14`). 105's lava is its
+  bottomless hall (LV-0063, reviewed earlier). Left in `lesson_inventory.md`: 013/124 thinned
+  counts, the bars of 046/052/061/125, 113's fan (which way its wind runs against the route is
+  not clear from the map), 125's lava, 199 (UNREVIEWED, many).
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
   `plans/audit/lesson_inventory.md` (bars of 046/052/061/125, lava, water, teleporters of 105,
