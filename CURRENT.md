@@ -1,7 +1,8 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-01 (native build, 110/110 CTest, the 18 crate playthroughs after D60; the
-Web/Emscripten build 2026-10-31; the whole-campaign run remains the 2026-10-27 verification). Update this file
+_Last verified: 2026-11-02 (native build, 112/112 CTest, all 78 playthroughs after the saw and fan
+changes, 045/053/199 after the crusher; the Web/Emscripten build 2026-11-02; the whole-campaign run
+remains the 2026-10-27 verification). Update this file
 whenever a change alters the current state, a known limitation, a supported build, or the actionable
 backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`), where work stands in
 `handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
@@ -78,7 +79,7 @@ verified native and WebGL 2 configurations:
 |---|---|
 | `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the then-quarantined `easy-gl-resource-smoke-tests` excluded; normal startup and the three-frame golden capture run successfully under Xvfb (2026-10-17, before cna-engine; on 2026-10-20 an `OPENGL33` build on cna-engine ran the menus and the editor under Xvfb) |
 | `OPENGLES3` on cna-engine (2026-10-20) | 93/93 CTest cases pass; golden frames, behavioral trace and startup screenshots byte-identical to the easy-3d build under Xvfb and on the GPU (`NEXT.md` §3, "Moved from easy-3d to cna-engine") |
-| `build-cna-webgl2` (`WEBGL2`) | Current Emscripten Release build succeeds and emits `.html`, `.js`, `.wasm`, and `.data`; a final-artifact headless-Chrome run creates a real WebGL 2 context, loads `world001`, all 82 object models and 93/93 sound channels, uploads and samples the terrain, and renders the gamer-select menu over the 3D scene without an application error (2026-10-31, CNA + cna-engine) |
+| `build-cna-webgl2` (`WEBGL2`) | Emscripten Release build of 2026-11-02 (`GalaxyEggbert.{html,js,wasm,data}`, the data pack with the gallery world998); headless Chrome under Xvfb (SwiftShader WebGL 2, driven over DevTools) loads `world001`, the object models and 93/93 sound channels and draws the gamer-select menu over the title scene with no exception in the console (CNA + cna-engine of that day) |
 
 The deterministic golden-frame and behavioral-trace harnesses are manual `xvfb-run` checks, not
 default CTest cases. Full commands and sibling-repository pins live in `handoff.md`.
