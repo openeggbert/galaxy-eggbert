@@ -531,8 +531,13 @@ namespace GalaxyEggbert::Game
         {
             return true; // the whole cell, not the 2D bar's middle columns (BlockTypes::isDoorBar)
         }
+        if (GalaxyEggbert::BlockTypes::isFan(blockType))
+        {
+            // A whole block (M3D-0004, owner 2026-11-02): it was never solid here, so he walked
+            // through fans; at its mouth he dies (WorldRuntime::TryConsumeFan, Decor::IsVentillo).
+            return true;
+        }
         if (GalaxyEggbert::BlockTypes::isTeleporter(blockType) ||
-            GalaxyEggbert::BlockTypes::isFan(blockType) ||
             GalaxyEggbert::BlockTypes::isWind(blockType) ||
             GalaxyEggbert::BlockTypes::isWater(blockType) ||
             GalaxyEggbert::BlockTypes::isBarre(blockType))

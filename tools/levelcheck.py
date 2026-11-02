@@ -16,7 +16,7 @@ under the other pillar of the same icon, as WorldRuntime::FindTeleportDestinatio
 since BD-0017). Hub doors (the bars 182/183) count as open: they open as the player progresses. In
 a hub every sign must be reachable too. Block classes come from tools/data/blocks.csv
 (BlockDefinitionRegistry; DumpBlockDefinitions keeps it current): a cell is free when it holds
-air, water, a fan or a teleporter, or a block whose collision mask is empty; it is a floor when
+air, water or a teleporter (a fan is a whole block, M3D-0004), or a block whose collision mask is empty; it is a floor when
 the block below is solid. Cells holding or standing on a hazard (lava, spikes, crusher, saw,
 blitz, drip) and cells next to mines and enemies are avoided. A world can be more reachable than
 this says (dynamite, vehicles, crates, springs are not modelled yet); when it says reachable,
@@ -83,8 +83,9 @@ class Grid:
         if not (0 <= x < SIZE and 0 <= y < SIZE and 0 <= z < SIZE) or p in self.solid_objects:
             return False
         b = self.info(p)
-        return (b["icon"] == 0 or b["water"] or b["teleporter"] or b["fan"] or b["collision_mask"] == 0 or
-                b["hub_door"] != 0)
+        # A fan is a whole block (M3D-0004, BlupiController::IsPointSolid), not free.
+        return (b["icon"] == 0 or b["water"] or b["teleporter"] or
+                (b["collision_mask"] == 0 and not b["fan"]) or b["hub_door"] != 0)
 
     def floor(self, p) -> bool:
         x, y, z = p

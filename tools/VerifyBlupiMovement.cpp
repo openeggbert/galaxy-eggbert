@@ -1665,6 +1665,21 @@ int main(int argc, char** argv)
             check(faller.IsOnGround() && std::fabs(faller.GetY() - 1.0f) < 0.05f,
                   "a wind tile is no floor: he falls through it to the floor below");
 
+            // M3D-0004: a fan is a whole block -- walking at it from the side (along Z) he stops at
+            // its face; he does not pass through the three open quarter-columns of its 2D mask.
+            {
+                for (std::uint16_t z = 60; z <= 64; ++z)
+                {
+                    synthetic.setBlock(77, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                }
+                synthetic.setBlock(77, 1, 63, Worlds::Block::make(126));
+                BlupiController walker;
+                walker.SetPosition(77.0f - 50.0f, 1.0f, 60.0f - 50.0f);
+                walker.SetYaw(3.14159265f); // facing +Z
+                for (int i = 0; i < 120; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+                check(walker.GetZ() + 50.0f < 62.6f, "a fan stops him at its side: it is a whole block (M3D-0004)");
+            }
+
             // BD-0030 (Decor::IsNormalJump -> IsPassIcon): only a tile with a quarter of its mask set
             // shortens his jump; wind (110) or a bar (138) one or two over his head leaves it whole.
             // A floor at y 0 (x 70-74, z 70); wind at (71, 2), a bar at (73, 3), a block at (74, 2).

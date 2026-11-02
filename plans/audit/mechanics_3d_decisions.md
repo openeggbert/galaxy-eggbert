@@ -73,3 +73,18 @@ the key opening a door's whole block of cells D58, ...) and §11.
   row and moves along it only), `VerifyTileFaces` (rows and fields); live probe world 995,
   plans/evidence/bar-two-pipes.png (the original's sprites and tiles above); the playthroughs of
   every world with bars (064, 065, 066, 071, 074, 075, 083, 084) pass.
+
+## M3D-0004 — a fan is a whole block; its mouth kills (2026-11-02)
+
+- Original (Decor::IsVentillo, the fans' quarter masks): a fan's cell has one solid quarter-column at
+  its back; its other three quarters are open toward its mouth, and Blupi's centre reaching the
+  mouth band (16 px) kills him and wrecks the fan with its wind.
+- Galaxy had made fans never solid in collision (`IsPointSolid`'s exceptions, with teleporters,
+  wind, water and bars), so in 3D he walked through a fan from any side (owner 2026-11-02: "in
+  Mobile Eggbert the fan cannot be passed; walking onto it Blupi dies and it explodes").
+- Reading: the fan's cell is a whole block (`IsPointSolid`; `levelcheck.py` alike): from its back
+  and its sides it is a wall; at its mouth, the cell in front of it, he dies and it goes with its
+  wind (`WorldRuntime::TryConsumeFan`, as before). The registry keeps the original's mask
+  (`VerifyDefinitionRegistries`).
+- Evidence: `VerifyBlupiMovement` (walking at a fan along Z he stops at its face); levelcheck's
+  reachability of every world with fans unchanged; the playthroughs (run 2026-11-02).
