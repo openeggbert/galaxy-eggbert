@@ -601,3 +601,13 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Fix: `GalaxyEggbertGame::UpdateMockerySound` plays it at the variant's tick and stops it when
   the anim state leaves the variant.
 - Validation: build, ctest 112/112; sound timing, not covered by a verifier.
+
+## BD-0036 — a glue shot's death played the soul's ascent (channel 74), not the glue splash (51) (audio) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5914-5946, 7763-7792): a shooter's glue (ObjectType23) touching Blupi
+  starts the Glu death through `StartSploutchGlu`: the splash objects, the motors stopped, and
+  channel 51.
+- Galaxy played channel 74 there (the Clear2 soul's ascent), while its other glue death (the
+  glue on the floor, Decor.cpp:5867-5910) played 51. Found reviewing channel 74's call sites.
+- Fix: channel 51 at both.
+- Validation: build, ctest 112/112.

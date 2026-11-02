@@ -1804,7 +1804,9 @@ namespace GalaxyEggbert::Game
                         deathLockEvent.deathLockShouldRespawn = true;
                         ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                     }
-                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel74);
+                    // StartSploutchGlu's sound (Decor.cpp:7763-7792): channel 51, as the other glue
+                    // death; 74 is the soul's ascent (BD-0036).
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel51);
                 }
                 continue;
             }
