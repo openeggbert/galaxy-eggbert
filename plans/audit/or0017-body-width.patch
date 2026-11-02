@@ -1,0 +1,183 @@
+diff --git a/src/GalaxyEggbert/Game/Autoplay.cpp b/src/GalaxyEggbert/Game/Autoplay.cpp
+index 91e9f8a..604af2f 100644
+--- a/src/GalaxyEggbert/Game/Autoplay.cpp
++++ b/src/GalaxyEggbert/Game/Autoplay.cpp
+@@ -469,6 +469,9 @@ namespace GalaxyEggbert::Game
+                 commandStartTick_ = state.tick;
+                 jumped_ = false;
+                 jumpTicksLeft_ = 0;
++                goLastX_ = state.x;
++                goLastZ_ = state.z;
++                goStillTicks_ = 0;
+                 if (command.kind != Kind::Log && command.kind != Kind::Expect && command.kind != Kind::Trace)
+                 {
+                     Write(state, command.Where() + ": " + command.text);
+@@ -504,8 +507,19 @@ namespace GalaxyEggbert::Game
+                     jumped_ = true;
+                     jumpTicksLeft_ = kJumpTicks;
+                 }
++                // Pressed against a wall short of a point within his body's half-width of it (his
++                // body has width against walls, OR-0017; the scripts' points were chosen without
++                // it): he has arrived when he has not moved for 8 ticks that close.
++                constexpr float kBodyHalfWidth = 18.0f / 64.0f;
++                const bool still = std::fabs(state.x - goLastX_) < 0.001f && std::fabs(state.z - goLastZ_) < 0.001f;
++                goStillTicks_ = still ? goStillTicks_ + 1 : 0;
++                goLastX_ = state.x;
++                goLastZ_ = state.z;
++                // Not for `tol 0` (held at a point until something happens).
++                const bool againstWall = command.tolerance > 0.0f && goStillTicks_ >= 8 &&
++                                         distance <= command.tolerance + kBodyHalfWidth + 0.02f;
+                 // The jump is played out even when he arrives before it ends.
+-                done = (distance <= command.tolerance && jumpTicksLeft_ == 0) ||
++                done = ((distance <= command.tolerance || againstWall) && jumpTicksLeft_ == 0) ||
+                        (command.hasCondition && Holds(command.condition, state));
+                 if (!done)
+                 {
+diff --git a/src/GalaxyEggbert/Game/Autoplay.hpp b/src/GalaxyEggbert/Game/Autoplay.hpp
+index c54b4d0..60aac00 100644
+--- a/src/GalaxyEggbert/Game/Autoplay.hpp
++++ b/src/GalaxyEggbert/Game/Autoplay.hpp
+@@ -152,6 +152,10 @@ namespace GalaxyEggbert::Game
+         int jumpTicksLeft_ = 0;
+         int traceTicksLeft_ = 0;
+         bool jumped_ = false;
++        // A go's last position and how many ticks he has not moved from it (pressed against a wall).
++        float goLastX_ = 0.0f;
++        float goLastZ_ = 0.0f;
++        int goStillTicks_ = 0;
+         bool finished_ = false;
+         int failures_ = 0;
+         bool havePrevious_ = false;
+diff --git a/src/GalaxyEggbert/Game/BlupiController.cpp b/src/GalaxyEggbert/Game/BlupiController.cpp
+index 32b4c58..14250ab 100644
+--- a/src/GalaxyEggbert/Game/BlupiController.cpp
++++ b/src/GalaxyEggbert/Game/BlupiController.cpp
+@@ -573,9 +573,39 @@ namespace GalaxyEggbert::Game
+                                                                   float startY, float startZ, float dx, float dy,
+                                                                   float dz, bool tempPassable,
+                                                                   bool checkSubcellHorizontal,
+-                                                                  bool checkSubcellVertical)
++                                                                  bool checkSubcellVertical, float halfWidth)
+     {
+         MoveResult result;
++        // A wall stops the box's leading face (OR-0017): its middle and both corners, at his feet
++        // and his head. The corners stand a hair inside the box, so a wall along his side does not
++        // catch him. Crates keep stopping his middle, as before: their push already places him
++        // (CratePush.hpp, the original's distances).
++        const float side = std::max(0.0f, halfWidth - 0.01f);
++        const auto pointSolid = [&](float qx, float qy, float qz)
++        {
++            return IsPointSolid(world, qx, qy, qz, tempPassable, checkSubcellHorizontal) ||
++                   IsPointSolid(world, qx, qy + kHeadHeight, qz, tempPassable, checkSubcellHorizontal);
++        };
++        const auto faceSolid = [&](float cx, float cy, float cz, float fx, float fz, bool alongX)
++        {
++            if (pointSolid(cx, cy, cz))
++            {
++                return true;
++            }
++            if (halfWidth <= 0.0f)
++            {
++                return false;
++            }
++            const auto* crates = g_crateCells;
++            g_crateCells = nullptr;
++            bool solid = false;
++            for (const float o : {0.0f, -side, side})
++            {
++                solid = solid || pointSolid(alongX ? fx : fx + o, cy, alongX ? fz + o : fz);
++            }
++            g_crateCells = crates;
++            return solid;
++        };
+         result.x = startX;
+         result.y = startY;
+         result.z = startZ;
+@@ -623,8 +653,8 @@ namespace GalaxyEggbert::Game
+             if (!xBlocked)
+             {
+                 const float candidateX = startX + stepDx * static_cast<float>(i);
+-                if (IsPointSolid(world, candidateX, clearY, clearZ, tempPassable, checkSubcellHorizontal) ||
+-                    IsPointSolid(world, candidateX, clearY + kHeadHeight, clearZ, tempPassable, checkSubcellHorizontal))
++                const float faceX = candidateX + (stepDx > 0.0f ? halfWidth : stepDx < 0.0f ? -halfWidth : 0.0f);
++                if (faceSolid(candidateX, clearY, clearZ, faceX, clearZ, true))
+                 {
+                     xBlocked = true;
+                 }
+@@ -650,8 +680,8 @@ namespace GalaxyEggbert::Game
+             if (!zBlocked)
+             {
+                 const float candidateZ = startZ + stepDz * static_cast<float>(i);
+-                if (IsPointSolid(world, clearX, clearY, candidateZ, tempPassable, checkSubcellHorizontal) ||
+-                    IsPointSolid(world, clearX, clearY + kHeadHeight, candidateZ, tempPassable, checkSubcellHorizontal))
++                const float faceZ = candidateZ + (stepDz > 0.0f ? halfWidth : stepDz < 0.0f ? -halfWidth : 0.0f);
++                if (faceSolid(clearX, clearY, candidateZ, clearX, faceZ, false))
+                 {
+                     zBlocked = true;
+                 }
+@@ -2033,8 +2063,10 @@ namespace GalaxyEggbert::Game
+         const float dy = m_velocityY * dt + windDy;
+         const bool wasOnGroundBeforeMove = m_onGround; // landing this frame: StopJump
+         const float velocityYBeforeMove = m_velocityY;  // ... from a real fall, not a settle
++        const float bodyHalfWidth = m_vehicleMode == VehicleMode::None ? kBodyHalfWidth : 0.0f;
+         const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, dy, dz, tempPassable,
+-                                                   /*checkSubcellHorizontal=*/true, /*checkSubcellVertical=*/false);
++                                                   /*checkSubcellHorizontal=*/true, /*checkSubcellVertical=*/false,
++                                                   bodyHalfWidth);
+ 
+         // Step-up (FindColumnGroundY's own comment) is a separate,
+         // explicitly CNA-only fallback tried only when grounded and the
+@@ -2049,9 +2081,17 @@ namespace GalaxyEggbert::Game
+         float newZ = moveResult.z;
+         float newY = moveResult.y;
+         bool steppedUp = false;
++        // With his body's width the step is met by its leading face: only a real step there (ground
++        // higher than his feet, within the limit) lifts him; a wall stays a wall (OR-0017).
++        const auto stepAhead = [&](float faceX, float faceZ)
++        {
++            const float g = FindColumnGroundY(world, faceX, faceZ, m_y + kStepLimit, tempPassable);
++            return bodyHalfWidth <= 0.0f || g > m_y + 0.001f ? g : -1.0f;
++        };
+         if (moveResult.blockedX && dx != 0.0f && m_onGround)
+         {
+-            const float steppedGroundY = FindColumnGroundY(world, m_x + dx, moveResult.z, m_y + kStepLimit, tempPassable);
++            const float steppedGroundY =
++                stepAhead(m_x + dx + (dx > 0.0f ? bodyHalfWidth : -bodyHalfWidth), moveResult.z);
+             if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
+             {
+                 newX = m_x + dx;
+@@ -2064,7 +2104,8 @@ namespace GalaxyEggbert::Game
+         }
+         if (moveResult.blockedZ && dz != 0.0f && m_onGround)
+         {
+-            const float steppedGroundY = FindColumnGroundY(world, moveResult.x, m_z + dz, m_y + kStepLimit, tempPassable);
++            const float steppedGroundY =
++                stepAhead(moveResult.x, m_z + dz + (dz > 0.0f ? bodyHalfWidth : -bodyHalfWidth));
+             if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
+             {
+                 newZ = m_z + dz;
+diff --git a/src/GalaxyEggbert/Game/BlupiController.hpp b/src/GalaxyEggbert/Game/BlupiController.hpp
+index 769b26d..e76e798 100644
+--- a/src/GalaxyEggbert/Game/BlupiController.hpp
++++ b/src/GalaxyEggbert/Game/BlupiController.hpp
+@@ -80,6 +80,10 @@ namespace GalaxyEggbert::Game
+         // only his feet were checked before (in a three-high tunnel a jump took his body and the
+         // camera up into the ceiling, reported by the world authoring).
+         static constexpr float kHeadHeight = 49.0f / 64.0f;
++        // His body across, against walls (OR-0017): the original's box runs from pos.X + 12 to
++        // + 48 of 60 px (Decor::BlupiRect), 18 px each side of his middle. In 3D on X and Z alike;
++        // on foot and swimming (a vehicle keeps its point).
++        static constexpr float kBodyHalfWidth = 18.0f / 64.0f;
+         // Not a step-up: real Decor::TestPath() has none, so a one-tile step
+         // stops Blupi until he jumps onto it (user report 2026-10-25: he
+         // walked up steps by himself; this was 1.0, a whole block, until then).
+@@ -1449,7 +1453,8 @@ namespace GalaxyEggbert::Game
+         [[nodiscard]] static MoveResult ResolveMove(const Worlds::World& world, float startX, float startY,
+                                                      float startZ, float dx, float dy, float dz, bool tempPassable,
+                                                      bool checkSubcellHorizontal = true,
+-                                                     bool checkSubcellVertical = false);
++                                                     bool checkSubcellVertical = false,
++                                                     float halfWidth = 0.0f);
+ 
+         // Real Decor::BlupiAdjust() equivalent (INFRA-005, plan.md §7):
+         // penetration recovery, called once at the top of Step() before any

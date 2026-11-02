@@ -62,9 +62,10 @@ ledgers before repeating any discovery. Where it stands:
   tools/qa_live.sh ... --mission 996`): `plans/evidence/death-mine.png`, `death-lava.png`. Fixed
   on the way: the lava death's rising icon was drawn during its 30-tick hold (a second charred
   Blupi); the HUD now gets `VoyageActive() && VoyageIconVisible()`.
-- OR-0017 (Blupi partly in walls): a body half-width (18 px) in the horizontal collision was
-  tried and reverted -- 55 of the first 70 playthroughs failed (wall-hugging targets, ledges,
-  crates). Doing it needs every route re-planned; meanwhile it stays open.
+- OR-0017 (Blupi partly in walls): the body's width (18 px each side) tried twice and reverted.
+  The second try is kept as `plans/audit/or0017-body-width.patch` (collision + step-up + the
+  harness's wall arrival): still 31 of 42 playthroughs failed, mostly from drifted timing (lift
+  and mission-clock waits) and walkways along walls; apply it and re-plan world by world.
 - Done: OR-0004 as far as it can go without detail -- teleporters looked at live (world034) and
   one difference fixed, BD-0017: Blupi lands under the partner pillar (was one cell +Z, turned
   about) and a teleporter takes him only once the contact grace (`m_blupiPosHelico`) is over;
