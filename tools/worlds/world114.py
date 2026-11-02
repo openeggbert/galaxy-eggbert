@@ -10,10 +10,13 @@ helicopters (13) and fourteen lifts; the exit high up. Here the maze is a hall w
 in 3D: south the terraces of moving mines and the red key; west, behind the red door, the skate
 track and the green key; north, behind the green door, the pool and the blue key; east, behind
 the blue door, the vault of the follow stars, the helicopters and the exit on its high platform.
+The original's tile lessons are on the ways between: a bar over a pit of lava (south), a passage
+over updraught fans under moving mines (west), columns of lightning (north and east).
 
     python3 tools/worlds/world114.py                 # writes worlds3d/world114.vwr
     python3 tools/worlds/world114.py --stage K out   # for levelcheck/flightcheck: K >= 1 no mines,
-                                                     # moving or hanging mines, stars, fish or enemy;
+                                                     # moving or hanging mines, stars, fish or enemy,
+                                                     # lava under the bar, fans or lightning;
                                                      # K >= 2 the red door open, 3 the
                                                      # green, 4 the blue
 """
@@ -30,6 +33,9 @@ from station import water  # noqa: E402
 RED_DOOR, GREEN_DOOR, BLUE_DOOR = 334, 335, 336
 FOLLOWER = 96
 WALK, HIGH = 20, 34
+LAVA, BAR = 68, 138
+FAN_UP, WIND_UP = 132, 118             # blowing +Y; its wind tiles over it
+BLITZ_EMITTER, BLITZ = 304, 305
 
 
 def main(argv) -> int:
@@ -67,6 +73,11 @@ def main(argv) -> int:
     door([(x, y, 41) for y in (WALK, WALK + 1) for x in (49, 50, 51)], GREEN_DOOR, 3)
     door([(59, y, z) for y in (WALK, WALK + 1) for z in (49, 50, 51)], BLUE_DOOR, 4)
     carve(48, WALK, 59, 52, WALK + 2, 65)
+    # The way south crosses a pit of lava on a bar (the original opens on bars over lava, its
+    # x 9-16): the pit fills the way (z 60-64), the bar runs over it along Z two over the floor.
+    if not calm:
+        w.fill(48, WALK - 1, 60, 52, WALK - 1, 64, LAVA)
+    w.fill(50, WALK + 2, 59, 50, WALK + 2, 65, BAR)
     w.place(O.EGG, 44, WALK, 44)
     w.place(O.EGG, 56, WALK, 56)
 
@@ -107,6 +118,20 @@ def main(argv) -> int:
     # skateboard rides through, setting them off); treasures 3-5 along it; the green key at its end;
     # two inverts in alcoves off it.
     carve(30, WALK, 49, 40, WALK + 2, 51)
+    # Between the door and the track a passage one wide and six high over three fans in its floor
+    # blowing up (the original's room of four, its x 26-32): walking onto a fan's mouth kills, so
+    # he jumps each, and its updraught throws the jump up to a moving mine sweeping the passage
+    # under its ceiling (the original's sweep at its y 4): five over the walk, out of a plain
+    # jump's reach (~2.9) but not of one through an updraught (~4.9, BD-0029's wind).
+    panel(31, WALK, 49, 39, WALK + 5, 51)
+    carve(31, WALK, 50, 39, WALK + 5, 50)
+    for x in (32, 35, 38):
+        if calm:
+            continue
+        w.set(x, WALK - 1, 50, FAN_UP)
+        w.fill(x, WALK, 50, x, WALK + 5, 50, WIND_UP)
+    if not calm:
+        w.place(O.MOVING_MINE, 31, WALK + 5, 50, end=(39, WALK + 5, 50))
     carve(4, WALK, 46, 29, WALK + 3, 54)
     for k, z in enumerate((47, 48, 49, 50, 51, 52, 53, 47)):
         w.place(O.SKATEBOARD, 28 - (k // 7), WALK, z)
@@ -128,6 +153,10 @@ def main(argv) -> int:
     # ticks, dwelling 40) from the bank or the island before; mines hanging over the islands' edges;
     # the blue key on the last island.
     carve(49, WALK, 30, 51, WALK + 2, 40)
+    # A column of lightning across the way (the original has four, its x 31, 33, 42, 55).
+    w.fill(49, WALK + 3, 35, 51, WALK + 3, 35, BLITZ_EMITTER)
+    if not calm:
+        w.fill(49, WALK, 35, 51, WALK + 2, 35, BLITZ)
     carve(30, WALK, 6, 70, WALK + 5, 29)
     carve(31, 12, 7, 69, WALK - 1, 28)
     water(w, 31, 12, 7, 69, WALK - 1, 28)
@@ -157,6 +186,9 @@ def main(argv) -> int:
     # Blupi patrolling a ledge firing down; five helicopters; the exit on a high platform (walk 34),
     # reached by helicopter, eggs on its rim and on the ledges.
     carve(60, WALK, 49, 70, WALK + 2, 51)
+    w.fill(65, WALK + 3, 49, 65, WALK + 3, 51, BLITZ_EMITTER)
+    if not calm:
+        w.fill(65, WALK, 49, 65, WALK + 2, 51, BLITZ)
     carve(71, WALK, 30, 95, HIGH + 4, 70)
     for x, z in ((76, 34), (90, 34), (76, 66), (90, 66), (83, 50)):
         w.place(O.TREASURE, x, WALK, z)

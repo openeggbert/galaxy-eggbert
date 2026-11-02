@@ -143,6 +143,11 @@ ledgers before repeating any discovery. Where it stands:
   `lesson_inventory.py` now counts the bars too: 22 worlds still leave out a mechanic of their
   original (bars in 024, 034, 046, 052, 061, 106, 113, 114, 125, 199); next by weight: 114, 113,
   115, 107, 105, 199, then the bars and the small ones (lava pits, single fans, crushers in 084).
+- Done 2026-11-02 (Wave E, LV-0070): world 114 gets a bar over a lava pit on the way south
+  (z 60-64, crossed hanging both ways), a one-wide passage over three updraught fans under a
+  sweeping mine on the way west (an updraught jump peaks at y 24.8, the mine sweeps at 25), and
+  lightning columns on the north and east ways. Playthroughs 114 and 110 pass;
+  `plans/evidence/world114-lessons.png`. Open there: the original's sideways wind rooms.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not

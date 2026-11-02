@@ -7,7 +7,14 @@ expect mission = 114
 # has mines sweeping along X in its rows z0 + 1, + 3, + 5; the rows between are safe. Each lane is
 # crossed at x 50 once every mine in it is more than 12 away, and its last lane by dropping off
 # the terrace's edge.
-go 50 58
+# The lava pit (z 60-64) on the bar over it (x 50, y 22): a jump from its north floor catches the
+# bar; hanging, south along it and off its end.
+go 50 59.2 tol 0.05
+hold 6 jump
+wait 40
+expect y >= 21.9
+go 50 65.8 tol 0.1
+until ground = 1
 go 50 66
 clear 50 20 67 12 lane x max 900
 go 50 68 tol 0.2
@@ -65,14 +72,32 @@ go 65 90
 go 66 72
 go 66 66.2
 go 50 66
-go 50 58
+go 50 65.2 tol 0.05
+hold 6 jump
+wait 40
+expect y >= 21.9
+go 50 58.4 tol 0.1
+until ground = 1
 expect keys = 1
 # West through the red door (x 41, it takes the key) to the skate track (walk 20, x 4-29, z 46-54): a skateboard
 # from its head (28, 50), through the block of mines (x 20-22, z 47, 50, 53: the skateboard sets
 # them off), treasures 3-5 (16, 47), (12, 53), (8, 50) and the green key (5, 50); the inverts in
 # their alcoves (18, 45) and (10, 55) kept clear of.
+# The fan passage (x 31-39, one wide at z 50): each fan (x 38, 35, 32) jumped while the mine
+# sweeping under the ceiling (x 31-39, y 25) is far: over 38 as it turns at the west end; on the
+# floor between, the mine passes over him; over 35 and 32 as it turns at the east end.
 go 43 50
-go 31 50
+go 39.3 50 tol 0.08
+near 31 25 50 0.4 lane x max 900
+go 36.6 50 jump 2.6 tol 0.1
+until ground = 1
+go 36.3 50 tol 0.08
+near 39 25 50 0.4 lane x max 900
+go 33.6 50 jump 2.6 tol 0.1
+until ground = 1
+go 33.3 50 tol 0.08
+go 30.6 50 jump 2.6 tol 0.1
+until ground = 1
 go 28.15 50 tol 0.1
 hold 2 action
 wait 20
@@ -87,14 +112,30 @@ go 5 50 until keys = 1 max 600
 until keys = 1 max 200
 # Back east along the track on the skateboard, off it (Action) in the corridor, north through the
 # green door (z 41) to the pool's bank (walk 20, z 29).
-go 28 50.5 max 900
-go 32 50 max 300
-# The board glides on; it is left only below 8 px a tick (Decor.cpp:4499, OR-0020).
-wait 40
+go 22 50.5 max 900
+# The board glides on; it is left only below 8 px a tick (Decor.cpp:4499, OR-0020), on the track
+# before the fan passage.
+wait 60
 hold 2 action
 wait 20
+# The fan passage eastward: over 32 as the mine turns at the east end, over 35 and 38 as it turns
+# at the west end.
+go 30.7 50 tol 0.08
+near 39 25 50 0.4 lane x max 900
+go 33.4 50 jump 2.6 tol 0.1
+until ground = 1
+go 33.7 50 tol 0.08
+near 31 25 50 0.4 lane x max 900
+go 36.4 50 jump 2.6 tol 0.1
+until ground = 1
+go 36.7 50 tol 0.08
+go 39.4 50 jump 2.6 tol 0.1
+until ground = 1
 go 43 50
 go 50 43
+# The column of lightning across the way (z 35) passed in its cycle's quiet half.
+go 50 37 tol 0.1
+until blitz = 50 max 400
 go 50 31
 go 50 29.4 tol 0.2
 expect keys = 0
@@ -191,9 +232,13 @@ until ground = 1
 # from 0.4 west of it, the ways kept 2.4 or more from every star.
 go 30 29
 go 50 29.3
+go 50 33 tol 0.1
+until blitz = 50 max 400
 go 50 41
 go 50 50
 go 57.5 50
+go 63 50 tol 0.1
+until blitz = 50 max 400
 go 71 50
 go 83 50 tol 0.1 until treasures = 10 max 600
 until treasures = 10 max 200
