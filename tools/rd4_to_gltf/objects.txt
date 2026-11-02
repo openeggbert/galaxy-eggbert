@@ -151,3 +151,7 @@ saw378      object-m 378-383 Decor/scie.rd4 min_iou=0.6 tone=1.6,60
 sign174      object-m 174-181 Decor/world1.rd4 tone=0.50,70
 worldsign158 object-m 158-165,309,411-415 Decor/world2a.rd4 tone=0.50,70
 worlddone166 object-m 166-173,310,416-420 Decor/world2b.rd4 tone=0.50,48
+# The clay bridge (364, shaking 365-366, crumbling 367-372: Tables::table_bridge; owner 2026-11-02: a
+# plain brown slab, a lump of clay over it as it crumbled): Decor/grotte-fragile1.rd4, its frames
+# 1-8 the nine icons (IoU 0.848-0.865; tone 17.2 -> 6.9).
+bridge364   object-m 364-372 Decor/grotte-fragile1.rd4 tone=0.84,-3

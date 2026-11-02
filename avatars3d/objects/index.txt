@@ -35,6 +35,7 @@ bd_plante3b_plante3b
 bd_plante3c_plante3c
 bd_vase1_vase1
 bird_oiseau
+bridge364_grotte-fragile1
 bulldozer_tracks-profil
 column_support1
 creature_creature1

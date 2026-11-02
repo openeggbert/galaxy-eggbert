@@ -1611,7 +1611,7 @@ namespace GalaxyEggbert::Game
 
                 const int gx = static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX;
                 const int gz = static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ;
-                const int gy = static_cast<int>(std::lround(obj.currentY)) - 1;
+                const int gy = static_cast<int>(std::lround(obj.currentY));
                 const int axis = static_cast<int>(world.blocksPerAxis());
                 if (gx >= 0 && gx < axis && gy >= 0 && gy < axis && gz >= 0 && gz < axis)
                 {
@@ -2382,7 +2382,8 @@ namespace GalaxyEggbert::Game
                     MobileObjSpec bridge{};
                     bridge.type = GalaxyEggbert::Def::ObjectType::ObjectType52;
                     bridge.posStartX = bridge.posEndX = bridge.currentX = static_cast<float>(std::lround(blupiX));
-                    bridge.posStartY = bridge.posEndY = bridge.currentY = static_cast<float>(bridgeGY) + 1.0f;
+                    // In the bridge's own cell (its falling pieces are drawn there, OR-0031).
+                    bridge.posStartY = bridge.posEndY = bridge.currentY = static_cast<float>(bridgeGY);
                     bridge.posStartZ = bridge.posEndZ = bridge.currentZ = static_cast<float>(std::lround(blupiZ));
                     bridge.phase = 0.0f;
                     bridge.active = true;

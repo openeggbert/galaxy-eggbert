@@ -48,9 +48,11 @@ namespace GalaxyEggbert::Game
     // The coloured doors 334-336 (Decor/porte-r/v/b.rd4, IoU 0.983; owner 2026-11-02: the red, green
     // and blue posts in 3D), until a key opens them. The spring 211 (Decor/ressort.rd4, IoU 0.98;
     // owner 2026-11-02: a cube with a sprite), its frame per tick (SpringFrameIcon below).
-    inline constexpr std::array<std::uint16_t, 18> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+    // The clay bridge 364 and its shaking 365-366 (Decor/grotte-fragile1.rd4; its crumbling pieces
+    // 367-372 are the ObjectType52's, drawn in the same cell).
+    inline constexpr std::array<std::uint16_t, 21> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
-                                                                     334, 335, 336, 211};
+                                                                     334, 335, 336, 211, 364, 365, 366};
 
     // The spring 211 is drawn as Decor/ressort.rd4 always bouncing as the original draws it:
     // Tables::table_ressort[(m_time / 2 + column * 7) % 8] (Decor.cpp:926-929; the column's 7

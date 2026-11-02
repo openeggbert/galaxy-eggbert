@@ -290,7 +290,14 @@ namespace GalaxyEggbert::Game
             // already-documented category above.
             case GalaxyEggbert::Def::ObjectType::ObjectType31: return 238 + (p / 2) % 6;
             case GalaxyEggbert::Def::ObjectType::ObjectType35: return kTiplouf[(p / 2) % 3];
-            case GalaxyEggbert::Def::ObjectType::ObjectType52: return 365; // 157 frames would exceed the sheet (365+156=521 > 439) -- first-frame only
+            // The clay bridge's crumble (Tables::table_bridge, Decor.cpp:8540-8562): its cell shows
+            // 364-366 itself; the object draws the falling pieces 367-372 (ticks 16-27, and back
+            // 140-155) in that cell, where the grid holds air, and nothing otherwise (OR-0031: it
+            // was icon 365 always, a cell over the bridge: a lump of clay over it).
+            case GalaxyEggbert::Def::ObjectType::ObjectType52:
+                if (p >= 16 && p < 28) return 367 + (p - 16) / 2;
+                if (p >= 140 && p < 152) return 372 - (p - 140) / 2;
+                return -1;
             case GalaxyEggbert::Def::ObjectType::ObjectType1:  return 29;
             // Fixed 2026-07-20 -- wrong divisor (6 instead of the real
             // Config::ScaleDiv(2)==2, Decor.cpp:8202-8210); both are plain

@@ -108,7 +108,12 @@ int main()
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType28, 167, "ObjectType28 static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType29, 177, "ObjectType29 static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType56, 253, "ObjectType56 static icon (100 real frames would overflow the sheet)");
-    checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType52, 365, "ObjectType52 static icon (157 real frames would overflow the sheet)");
+    check(GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 0) == -1 &&
+              GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 16) == 367 &&
+              GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 27) == 372 &&
+              GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 60) == -1 &&
+              GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 140) == 372,
+          "ObjectType52 draws table_bridge's falling pieces 367-372 only (the cell shows 364-366)");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType1, 29, "ObjectType1 (platform lift) static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType12, 32, "ObjectType12 (crate) static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType13, 68, "ObjectType13 static icon");
