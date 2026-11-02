@@ -31,7 +31,8 @@ skateboard put down at DeposeSkate tick 12 / taken at TakeSkate tick 8 (OR-0003)
 Bye farewell clip plays (OR-0002),gameplay,live,qa_live with AUTOPLAY_REALTIME=1; plans/evidence/bye-farewell.png,pass,
 setup toggles saved and mirrored pad (OR-0010),ui,unit+live,VerifyGEInputPad; VerifyGESaveData; plans/evidence/auto-zoom.png,pass,accelerometer untested (no sensor here)
 drink Hide drawn translucent (OR-0016),render,live,plans/evidence/hide-drink.png,pass,
-editor animates tiles and objects (OR-0013),editor,code,host editor branch runs WorldRuntime::Update,open,live look to do
+editor animates tiles and objects (OR-0013),editor,live,plans/evidence/editor-animates.png (frame difference with the camera still),pass,
 world music stored and played (OR-0014),format+editor,unit+live log,WorldTests (music beside sky); VerifyGEWorldEditor (M steps it; undo); game.log 'music ... playing',pass,not heard (silent runs)
 Galaxy loading screen over the title scene (OR-0009),menu,live,plans/evidence/loading.png,pass,
 editor world list on the title scene (OR-0012),editor,unit+live,VerifyGEEditorStorage (slot/trash/back rects); plans/evidence/editor-browser.png,pass,
+deaths drawn with the original element sprites (OR-0015),render,live,plans/evidence/death-mine.png; plans/evidence/death-lava.png,pass,lava ascent icon hidden during its 30-tick hold

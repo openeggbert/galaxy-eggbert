@@ -56,11 +56,17 @@ ledgers before repeating any discovery. Where it stands:
   the tile letters, trash/tick to delete, Setup's return arrow; `EditorBrowserScreen`). The host
   loads `title.vwr` for Wait and for the list (`titleSceneUnavailable_` stops retrying when it
   fails). Evidence `plans/evidence/loading.png`, `editor-browser.png`.
+- Seen live 2026-11-02: OR-0013 (editor animation, `plans/evidence/editor-animates.png`) and
+  OR-0015's deaths in probe worlds (`build-probe/probe-worlds/world996.vwr` mines,
+  `world997.vwr` lava, made by a throwaway script; run with `QA_LIVE_WORLDS=build-probe/probe-worlds
+  tools/qa_live.sh ... --mission 996`): `plans/evidence/death-mine.png`, `death-lava.png`. Fixed
+  on the way: the lava death's rising icon was drawn during its 30-tick hold (a second charred
+  Blupi); the HUD now gets `VoyageActive() && VoyageIconVisible()`.
 - OR-0017 (Blupi partly in walls): a body half-width (18 px) in the horizontal collision was
   tried and reverted -- 55 of the first 70 playthroughs failed (wall-hugging targets, ledges,
   crates). Doing it needs every route re-planned; meanwhile it stays open.
-- Open owner reports: OR-0004 (teleporters: no detail -- ask), OR-0011 (Android), OR-0015's
-  death clips, OR-0017 (his collision is a point: a body
+- Open owner reports: OR-0004 (teleporters: no detail -- ask), OR-0011 (Android), OR-0017 (his
+  collision is a point: a body
   half-width of 18 px, the original's BlupiRect, for horizontal moves only, then all
   playthroughs).
 - Script lessons from the vehicle rules: wait ~40 frames for a skateboard to slow before Action

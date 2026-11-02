@@ -5790,7 +5790,11 @@ namespace GalaxyEggbert::CNA
                           PhaseOverlayMessage(),
                           cameraMode_ == CameraMode::FirstPerson ? blupi_.GetDisplayAnimIcon() : -1,
                           blupi_.AnimIconUsesElementSheet(),
-                          interaction_.VoyageActive(), interaction_.VoyageIconId(),
+                          // Not while the lava death's ascent holds (VoyageDraw draws icon 40 only
+                          // once it moves, Decor.cpp:10328-10331; OR-0015): Blupi's own charred
+                          // sprite is still on the spot then.
+                          interaction_.VoyageActive() && interaction_.VoyageIconVisible(),
+                          interaction_.VoyageIconId(),
                           interaction_.VoyageIsButtonChannel(), interaction_.VoyageIsBlupiChannel(),
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
                           gameSpeed_);
