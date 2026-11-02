@@ -150,7 +150,7 @@ class TextureMap:
     domain: tuple            # primary domain bbox (u0, v0, u1, v1)
     quarter_turns: int       # rotc
     warnings: list
-    counts: tuple = (1, 1)   # cnth, cntv: repeats across and along (tile 1)
+    counts: tuple = (1, 1)   # cnth, cntv: repeats across and along (tile 1), baked into image
     flips: tuple = (False, True)  # flph, flpv
 
 
@@ -256,8 +256,12 @@ def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
     counts = (int(placement.get("cnth") or 1), int(placement.get("cntv") or 1)) \
         if placement.get("tile") == "1" else (1, 1)
     flips = (placement.get("flph") == "1", placement.get("flpv") == "1")
-    return TextureMap(_tone_image((rgb * 255).round().astype(np.uint8)), (u0, v0, u1, v1),
-                      int(placement.get("rotc") or 0), warnings, counts, flips)
+    # The repeats (tile 1) baked into the image, so every mapping keeps its coordinates in [0, 1]:
+    # the house's flower paper (Explo/maison.rd4, cnth 3 cntv 3) matches its sprite at 0.831 so,
+    # 0.808 once; the cabin 0.903 against 0.901; the lollipop's cylinder as before.
+    image = _tone_image((rgb * 255).round().astype(np.uint8))
+    image = np.tile(image, (counts[1], counts[0], 1))
+    return TextureMap(image, (u0, v0, u1, v1), int(placement.get("rotc") or 0), warnings, counts, flips)
 
 
 def _white_texels(scene: sc.Scene, smap: rd4.Chunk) -> np.ndarray | None:
@@ -502,8 +506,8 @@ def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals
     a tight many-turn spiral), the lollipop Blupi holds is unchanged (234-236: 0.850 / 0.851).
     Spheres and cones take the same rule: a sphere's latitude from its -Z pole, a cone's base
     from its centre then its side to the apex. The map's repeats are baked into the image (so
-    ``t`` stays in [0, 1]); flips apply; the other placements (rotc) are not read. Returns None
-    for cubes (``cube_texture``) and other primitives."""
+    ``t`` stays in [0, 1]; ``texture_map`` does it); flips apply; the other placements (rotc) are
+    not read. Returns None for cubes (``cube_texture``) and other primitives."""
     import primitives
     x, y, z = positions.T
     s = np.mod(np.arctan2(y, x) / (2 * np.pi), 1.0)
@@ -530,8 +534,7 @@ def primitive_texture(tex: TextureMap, kind: str, positions: np.ndarray, normals
     flph, flpv = tex.flips
     s = 1.0 - s if flph else s
     t = 1.0 - t if flpv else t
-    cnth, cntv = tex.counts
-    return np.tile(tex.image, (cntv, cnth, 1)), np.stack([s, np.clip(t, 0.0, 1.0)], axis=1)
+    return tex.image, np.stack([s, np.clip(t, 0.0, 1.0)], axis=1)
 
 
 def ascii_name(name: str) -> str:
