@@ -85,5 +85,6 @@ playthroughs of the five worlds and their chains pass; the D52-D57 tests pass (1
    OR-0006, the human play pass (MR-0004).
 2. OR-0017 (Blupi's body in walls): `plans/audit/or0017-body-width.patch` with the playthroughs
    re-planned world by world.
-3. Instanced drawing of block models, then the cave rocks 285-303 as models.
+3. The cave rocks 285-303 as models need hardware instancing (~5,500 vertices a rock, ~6,000
+   cells; CNA's SkinnedEffect has none, CNA read-only: upstream request) or a decimated model.
 4. Wave E: every world's lesson and bypasses (ledger generated), then Wave F.
