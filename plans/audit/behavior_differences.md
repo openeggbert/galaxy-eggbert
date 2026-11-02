@@ -248,6 +248,32 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   058, 081, 084, 092, 093, 094, 114: waits searched with `tools/autoplay_search.py`, now with
   `--jobs`, the middle of each passing window kept); all 78 pass.
 
+## BD-0017 — a teleporter put Blupi one cell beside its partner, turned about (gameplay) — FIXED_AND_VERIFIED
+
+- Owner report OR-0004 (teleporters, no detail given). Reference: `Decor::SearchTeleporte`
+  (Decor.cpp:7406-7429) lands him in the partner tile's own column, one row down: under it, as
+  he stood under the one he entered. He does not go straight back because the arrival sets
+  `m_blupiPosHelico` (6360) and a teleporter takes him only while that is clear (5594); it
+  clears once he is 30 px from it (6341-6345). His direction is kept.
+- Galaxy put him one cell +Z of the partner and turned him to face +Z: it had no re-entry
+  guard, so landing under the partner sent him back at once (WorldRuntime's comment guessed
+  that the original's levels avoided it by design).
+- Fix: `FindTeleportDestination` lands under the partner; the arrival starts the contact grace
+  (Galaxy's `m_blupiPosHelico`, `InteractionSystem::StartContactGrace`, already used for the
+  hazards, BD-0010), and the trigger waits while it is active, as the original's does, so
+  also just off a vehicle or out of a popped balloon. The yaw is kept.
+- Worlds: 106's three well-top pillars had been put one cell short of the wells for the old
+  landing; they now stand over the wells' mouths (`tools/worlds/world106.py`), so he drops through
+  the treasures as the brief and the original have it. The other teleporter worlds needed no
+  change (the cell under each pillar is floor); builders' comments corrected.
+- Validation: `VerifyInteractionSystem` (destination under the exit pillar); the playthroughs
+  through teleporters (034, 051, 065, 066, 094, 095, 102, 106, 124) pass; 066's arrival check
+  now expects the partner's cell, 102's wait on top of the lift re-searched (1-5 pass, 3 kept).
+- Open: what the original shows after the arrival. The Teleporte record (Tables.cpp, 128
+  frames, no threshold) loops, and no code ends the action at once: whether Blupi spins in
+  again at the partner is for a run of the original to show. Its two arrival sparkles
+  (`ObjectStart(..., ObjectType27, +-20)`) are not drawn (cosmetic effects, backlog).
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

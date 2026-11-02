@@ -2738,13 +2738,13 @@ int main(int argc, char** argv)
         check(found, "FindTeleportDestination() finds the paired pillar elsewhere in the grid");
         const float expectedDestX = static_cast<float>(kExitGX) - WorldRuntime::kWorldCenterX;
         const float expectedDestY = static_cast<float>(kExitGY - 1);
-        const float expectedDestZ = static_cast<float>(kExitGZ) - WorldRuntime::kWorldCenterZ + 1.0f;
+        const float expectedDestZ = static_cast<float>(kExitGZ) - WorldRuntime::kWorldCenterZ;
         std::cout << "Teleport destination: (" << destX << "," << destY << "," << destZ << ") expected ("
                   << expectedDestX << "," << expectedDestY << "," << expectedDestZ << ")" << std::endl;
         check(std::fabs(destX - expectedDestX) < 0.01f && std::fabs(destY - expectedDestY) < 0.01f &&
                   std::fabs(destZ - expectedDestZ) < 0.01f,
-              "the destination is one cell BELOW the exit pillar in Y and one cell +Z away from directly "
-              "beneath it, not the entry pillar and not an instant-re-trigger position");
+              "the destination is directly beneath the exit pillar, one cell below it in Y, as the "
+              "original's SearchTeleporte puts him (BD-0017), not the entry pillar");
 
         // No match anywhere -- a lone pillar with no partner. Uses an
         // arbitrary non-real icon value (999, well outside the real

@@ -110,7 +110,7 @@ def main(argv) -> int:
     # ==== The grove and its wings (walk 10), south-west ======================================
     mass(4, 0, 38, 98, 24, 98)
     # The grove (x 16-30, z 76-90, walk 10, roof y 20): grass, trees; alpha's partner by its
-    #    north side: Blupi arrives at (20, 10, 81) facing +Z.
+    #    north side: Blupi arrives under it, at (20, 10, 80) (BD-0017).
     cut(16, GROVE, 76, 30, 19, 90)
     rough(w, 16, 76, 30, 90, GROVE + 3, 20, rng, sag=0.2)
     w.fill(16, GROVE - 1, 76, 30, GROVE - 1, 90, GRASS)

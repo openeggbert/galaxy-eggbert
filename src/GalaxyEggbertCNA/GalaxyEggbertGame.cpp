@@ -3171,11 +3171,12 @@ namespace GalaxyEggbert::CNA
                                                             blupi_.GetZ(), destX, destY, destZ))
                 {
                     blupi_.SetPosition(destX, destY, destZ);
-                    // He arrives one cell +Z of the partner pillar: facing on, away from it (a step
-                    // forward would take him straight back), the camera behind him at once rather
-                    // than easing over from the departure, maybe far away (2026-10-26, reported by
-                    // the world authoring).
-                    blupi_.SetYaw(3.14159265358979f);
+                    // Under the partner pillar, facing as he did (the original keeps m_blupiDir;
+                    // BD-0017). The arrival spot is m_blupiPosHelico (Decor.cpp:6360): no teleporter
+                    // takes him again, nor does a hazard touch him, until he has left it. The
+                    // camera goes behind him at once rather than easing over from the departure,
+                    // maybe far away (2026-10-26, reported by the world authoring).
+                    interaction_.StartContactGrace(destX, destY, destZ);
                     chaseCamera_.Reset(blupi_.GetYaw());
                     cameraSmoothedInitialized_ = false;
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
@@ -3653,8 +3654,10 @@ namespace GalaxyEggbert::CNA
             // focus alone still isn't modeled). Idempotent, same shape as
             // every other Trigger*() here, so channel 71 only plays on an
             // actual new trigger.
+            // Not while m_blupiPosHelico is set (Decor.cpp:5594): just off a vehicle, out of a
+            // popped balloon, or where a teleporter put him, until he has left that spot (BD-0017).
             const auto aboveIcon = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
-            if (GalaxyEggbert::BlockTypes::isTeleporter(aboveIcon) &&
+            if (GalaxyEggbert::BlockTypes::isTeleporter(aboveIcon) && !interaction_.ContactGraceActive() &&
                 blupi_.TriggerTeleport(aboveIcon))
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);

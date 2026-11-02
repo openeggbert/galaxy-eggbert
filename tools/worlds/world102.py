@@ -43,7 +43,7 @@ def main(argv) -> int:
 
     def teleporter(icon, x, walk, z):
         """A teleporter's pillar over (x, walk, z): standing under it Blupi leaves; arriving from
-        its partner he comes out at (x, walk, z + 1)."""
+        its partner he comes out under it, as the original lands him (BD-0017)."""
         w.set(x, walk + 1, z, icon)
 
     # ---- the atrium (walk 6), cut in cobble ----

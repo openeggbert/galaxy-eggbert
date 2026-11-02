@@ -88,7 +88,7 @@ def main(argv) -> int:
     if stage >= 1:                           # levelcheck cannot jump between lifts: a stand-in
         w.place(O.LIFT, 29, 19, 50, end=(33, 28, 40))
     # The ledge of teleporter 331's partner high in the north-west corner (walk 38): Blupi
-    #    arrives one cell +Z of the pillar and walks off it into the atrium.
+    #    arrives under the pillar (BD-0017) and walks off the ledge into the atrium.
     plates(24, 37, 37, 28, 37, 41)
     w.set(26, 39, 38, TP_RETURN)
     # A mine that never moves, in the corner by the west door (the original's still one).
@@ -150,7 +150,7 @@ def main(argv) -> int:
 
     # ---- The cistern -------------------------------------------------------------------------
     # The arrival room (inside x 69-77, z 34-40, walk 40) over the water tank's north bank:
-    #    Blupi arrives one cell +Z of teleporter 330's pillar and walks south into the water.
+    #    Blupi arrives under teleporter 330's pillar (BD-0017) and walks south into the water.
     shell(w, 68, 39, 33, 78, 44, 40, bricks)
     w.set(72, 41, 35, TP_STATION)
     for x, y, z in ((69, 43, 34), (77, 43, 34)):

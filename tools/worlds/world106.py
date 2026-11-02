@@ -41,7 +41,8 @@ def main(argv) -> int:
     calm = stage is not None and stage >= 1
 
     def teleporter(icon, x, walk, z):
-        """Its pillar over (x, walk, z); arriving from its partner Blupi comes out at z + 1."""
+        """Its pillar over (x, walk, z): Blupi standing under it leaves, and arriving from its partner
+        he comes out under it, as the original lands him (BD-0017)."""
         w.set(x, walk + 1, z, icon)
 
     def hazard(kind, x, y, z, **patrol):
@@ -70,7 +71,7 @@ def main(argv) -> int:
     for icon, wx, wz in wells:
         carve(w, wx - 2, TOP, wz - 3, wx + 3, TOP + 3, wz + 2)
         carve(w, wx, WALK + 6, wz, wx + 1, TOP - 1, wz + 1)              # the well, its mouth at TOP-1
-        teleporter(icon, wx, TOP, wz - 1)
+        teleporter(icon, wx, TOP, wz)                                  # over the well's mouth
         for y in (TOP - 4, TOP - 8, TOP - 12, TOP - 16):
             w.place(O.TREASURE, wx, y, wz)
     for x, z, into in ((40, 44, (-1, 0)), (60, 56, (1, 0))):

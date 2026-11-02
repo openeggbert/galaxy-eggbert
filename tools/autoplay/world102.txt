@@ -3,7 +3,7 @@
 wait 30
 expect mission = 102
 # Teleporter 330 (its pillar over (39, 6, 74), in the atrium's west wall) to the machine deck
-# (walk 20), arriving at (8, 9).
+# (walk 20), arriving under its partner (8, 8).
 go 41 74
 go 39 74 until x <= 30 max 900
 until x <= 30 max 900
@@ -27,7 +27,9 @@ go 38.3 11.5 tol 0.1
 lift 39 20 11 max 900
 go 39.5 11.5 tol 0.15
 until y >= 27.95 max 600
-wait 6
+# Off onto the first caterpillar: 1-5 pass (autoplay_search, 2026-11-02, after BD-0017's
+# arrival under the pillar).
+wait 3
 go 36.75 11.5 tol 0.1
 go 34.5 11.5 jump 3 tol 0.3
 until ground = 1
@@ -54,7 +56,7 @@ until ground = 1
 go 10 10
 go 8 8 until z >= 60 max 900
 until z >= 60 max 900
-# Teleporter 331 (east wall, (61, 74)) to the plate hall (walk 12, arriving at (60, 8)): the blue
+# Teleporter 331 (east wall, (61, 74)) to the plate hall (walk 12, arriving at (60, 7)): the blue
 # key on the pool's bottom (73, 7, 17), dived for from the north bank when the fish along z 14
 # is clear of the way.
 go 59 75.5
@@ -78,7 +80,7 @@ until ground = 1
 go 62 8
 go 60 7 until z >= 60 max 900
 until z >= 60 max 900
-# Teleporter 332 (west wall, (39, 82)) to the rock cave (walk 10, arriving at (10, 51)). South
+# Teleporter 332 (west wall, (39, 82)) to the rock cave (walk 10, arriving at (10, 50)). South
 # through the low passage (x 10-11) crouching under its hanging mines; the wasp's lane (z 75,
 # x 10-20) crossed at x 11 as the wasp reaches its east end; the red key (15, 84) between the
 # pools of lava.

@@ -171,8 +171,8 @@ go 45.6 46 tol 0.1
 until eggs = 3 max 200
 # Back west: the traps (x 34, 32); the moving mine jumped as it comes east toward him (106 ticks
 # after it turned at its east end, x 30), the still mine and the trap (x 16); under teleporter 1
-# (x 12), which takes him to teleporter 2 on the east cave's west ledge (walk 32), one cell south
-# of it (81, 58).
+# (x 12), which takes him to teleporter 2 on the east cave's west ledge (walk 32), under it
+# (81, 57).
 face 270
 go 34.7 45.55 tol 0.05
 go 33 45.55 jump 1.8 tol 0.1
@@ -189,7 +189,9 @@ go 16.7 45.55 tol 0.05
 go 15 45.55 jump 1.8 tol 0.1
 until ground = 1
 go 12 46 tol 0.05 until x >= 80 max 900
-expect z >= 57.9
+# Under the partner's pillar, as the original lands him (BD-0017).
+expect z >= 56.9
+expect z <= 57.1
 expect y >= 31.95
 go 82.5 61 tol 0.1
 face 90

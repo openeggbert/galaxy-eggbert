@@ -65,7 +65,14 @@ ledgers before repeating any discovery. Where it stands:
 - OR-0017 (Blupi partly in walls): a body half-width (18 px) in the horizontal collision was
   tried and reverted -- 55 of the first 70 playthroughs failed (wall-hugging targets, ledges,
   crates). Doing it needs every route re-planned; meanwhile it stays open.
-- Open owner reports: OR-0004 (teleporters: no detail -- ask), OR-0011 (Android), OR-0017 (his
+- Done: OR-0004 as far as it can go without detail -- teleporters looked at live (world034) and
+  one difference fixed, BD-0017: Blupi lands under the partner pillar (was one cell +Z, turned
+  about) and a teleporter takes him only once the contact grace (`m_blupiPosHelico`) is over;
+  106's well pillars moved over the wells; 066/102 scripts adjusted. Open in BD-0017: what the
+  original shows after the arrival (its Teleporte frames loop; needs the original running).
+- Open owner reports: OR-0004 (anything else about teleporters: the owner's word), OR-0011
+  (Android: SDK, NDK 29 and emulator images are in ~/Android/Sdk; gradle wants NDK 30.0.14904198,
+  CMake 4.1.2 is there; an APK build compiles everything for two ABIs), OR-0017 (his
   collision is a point: a body
   half-width of 18 px, the original's BlupiRect, for horizontal moves only, then all
   playthroughs).

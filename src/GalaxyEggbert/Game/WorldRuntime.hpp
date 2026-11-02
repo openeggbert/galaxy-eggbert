@@ -184,14 +184,9 @@ namespace GalaxyEggbert::Game
         // `destX`/`Y`/`Z` with the position Blupi should land at -- one
         // grid cell BELOW the matched pillar in Y (the same real
         // relationship as the entry side: he stands in the open space
-        // beneath a teleporter pillar, not inside/on top of it) and offset
-        // one cell in +Z from directly beneath it (NOT the matched
-        // pillar's exact X/Z) -- landing exactly beneath it would
-        // immediately satisfy the same trigger condition again, producing
-        // an infinite teleport-back-and-forth ping-pong (confirmed live
-        // during this task). Level data must place a walkable cell at that
-        // offset, same authoring responsibility the real "keep teleporter
-        // icons in matched pairs" warning already implies -- and returns
+        // beneath a teleporter pillar, not inside/on top of it), at the
+        // pillar's own X/Z as in the original (BD-0017; the caller's
+        // contact grace keeps him from going straight back) -- and returns
         // true. Returns false if no other cell shares the icon anywhere in
         // the grid (real: Blupi simply regains control in place, a silent
         // no-op -- the caller doesn't need to do anything different, since
