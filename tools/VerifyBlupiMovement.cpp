@@ -957,6 +957,16 @@ int main(int argc, char** argv)
         check(onTemp.IsOnGround(), "Blupi stands on a Temp tile during its solid (non-passable) window");
         check(onTemp.GetGroundBlockType(synthetic) == BlockTypes::Temp,
               "GetGroundBlockType() identifies a Temp tile correctly (E3D-MIG-146 detection)");
+        {
+            // He jumps off a saucer while it is there, as off any floor (Decor.cpp's jump gate has
+            // no saucer exception).
+            BlupiController jumper;
+            jumper.SetPosition(static_cast<float>(kTempX) - 50.0f, 2.0f, static_cast<float>(kTempZ) - 50.0f);
+            for (int i = 0; i < 5; ++i) jumper.Step(synthetic, 0.0f, 0.0f, false, false, false, dt, false);
+            jumper.Step(synthetic, 0.0f, 0.0f, /*jumpPressed=*/true, false, false, dt, false);
+            std::cout << "Saucer jump: onGround before? velocityY=" << jumper.GetVelocityY() << " y=" << jumper.GetY() << std::endl;
+            check(jumper.GetVelocityY() > 5.0f, "Blupi jumps off a vanishing saucer while it is there");
+        }
 
         // During the real passable window (2 of 20 phase buckets), the SAME
         // Temp tile stops being solid ground -- Blupi should fall through
@@ -1654,6 +1664,29 @@ int main(int argc, char** argv)
             for (int i = 0; i < 90; ++i) faller.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(faller.IsOnGround() && std::fabs(faller.GetY() - 1.0f) < 0.05f,
                   "a wind tile is no floor: he falls through it to the floor below");
+
+            // BD-0030 (Decor::IsNormalJump -> IsPassIcon): only a tile with a quarter of its mask set
+            // shortens his jump; wind (110) or a bar (138) one or two over his head leaves it whole.
+            // A floor at y 0 (x 70-74, z 70); wind at (71, 2), a bar at (73, 3), a block at (74, 2).
+            for (std::uint16_t x = 70; x <= 74; ++x)
+            {
+                synthetic.setBlock(x, 0, 70, Worlds::Block::make(BlockTypes::Ground));
+            }
+            synthetic.setBlock(71, 2, 70, Worlds::Block::make(110));
+            synthetic.setBlock(73, 3, 70, Worlds::Block::make(138));
+            synthetic.setBlock(74, 2, 70, Worlds::Block::make(BlockTypes::Ground));
+            const auto jumpSpeedAt = [&](float x) {
+                BlupiController jumper;
+                jumper.SetPosition(x - 50.0f, 1.0f, 70.0f - 50.0f);
+                for (int i = 0; i < 5; ++i) jumper.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                jumper.Step(synthetic, 0.0f, 0.0f, true, false, false, dt);
+                return jumper.GetVelocityY() + BlupiController::kGravity * dt;
+            };
+            check(std::fabs(jumpSpeedAt(71.0f) - BlupiController::kJumpSpeed) < 0.01f &&
+                      std::fabs(jumpSpeedAt(73.0f) - BlupiController::kJumpSpeed) < 0.01f,
+                  "wind or a bar over his head leaves his jump whole (Decor::IsPassIcon)");
+            check(std::fabs(jumpSpeedAt(74.0f) - BlupiController::kJumpSpeedReduced) < 0.01f,
+                  "a block over his head still shortens it");
         }
 
         // His height (BlupiController::kHeadHeight, 2026-10-26): a ceiling stops his head, not

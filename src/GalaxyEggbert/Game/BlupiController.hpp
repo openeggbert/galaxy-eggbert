@@ -1515,7 +1515,11 @@ namespace GalaxyEggbert::Game
         // already grid-snapped), same "single stance, not multi-candidate"
         // simplification already used for TryActivateSwitch/the bridge
         // trigger scan, not a transcription gap.
-        [[nodiscard]] bool HasJumpHeadroom(const Worlds::World& world) const;
+        // A cell blocks the headroom as Decor::IsPassIcon has it: any quarter of its collision mask
+        // set (a crate's cell too); wind, bars, lava, lightning and every other empty-mask tile
+        // leave it clear, and a vanishing saucer (324) while it is gone (BD-0030; it counted
+        // every tile that was not plain decor).
+        [[nodiscard]] bool HasJumpHeadroom(const Worlds::World& world, bool tempPassable = false) const;
 
         // Real Decor::GetTypeBarre() classification (see kSuspendMoveSpeed's
         // own comment) -- checks the icon at grid (gx,gy,gz) for a real bar

@@ -14,6 +14,15 @@ columns of lightning (305), pits of lava, a fish (17) in a pool, five eggs.
 - The hall (walk 20): spawn (50, 20, 52); the golden key in an alcove off its south side.
 - North, the helicopters' gallery (open up to walk 42): eight helicopters on its floor, five on a
   high ledge; treasures 1–4 on ledges round its walls at walk 26, 30, 34 and 38; two pits of lava.
+- West out of the gallery's wall (added 2026-11-02, Wave E): the draught tunnel, three wide and five
+  high (x 13-33, z 16-18, walk 28), reached only by helicopter; across it four curtains of wind by
+  turns, updraughts from fans in its floor (x 30, 22) and downdraughts from fans in its ceiling
+  (x 26, 18), as the original's cave of drafts (its x 14-20, y 23-27, flown through by helicopter,
+  ~12 fans in the world); treasure 1 in the chamber at its end (8, 28, 17; its old ledge holds an
+  egg). Each curtain moves a helicopter crossing at full speed about 1.25 cells: entered too high,
+  an updraught pins it under the ceiling and the next ceiling fan's mouth kills; too low in a
+  downdraught it is grounded and rolls onto the next floor fan's mouth. The original's sideways
+  wind corridors with treasures and mines in the wind are not reproduced (open).
 - East, the skate run: five skateboards at its head, two blocks of mines two deep across it (the
   skateboard rides through), treasures 5–7 at its end.
 - South, the crates' wall: a row of six crates, a wall three high and over it a second wall three

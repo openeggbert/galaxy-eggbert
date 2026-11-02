@@ -29,6 +29,8 @@ from kit import O, World, lift, mine  # noqa: E402
 from village import STONE  # noqa: E402
 
 RED_DOOR = 334
+TEMP = 324                              # the vanishing saucer: gone 8 ticks in every 80
+FAN_WEST, WIND_WEST = 126, 110          # blowing -X; its wind tiles before it
 FOOT, LEDGE, SHAFT, HIGH, TOPWALK = 4, 10, 14, 32, 58
 
 
@@ -73,6 +75,11 @@ def main(argv) -> int:
     rock(w, 38, LEDGE, 30, 62, SHAFT - 1, 41)                              # its floor, walk 14
     carve(w, 38, LEDGE, 42, 52, LEDGE + 8, 44)                            # head room for the jump
     w.place(O.LOLLIPOP, 39, LEDGE, 43)
+    # A band of wind across the jump, three fans stacked in the head room's east end blowing west
+    # over the ledge's north row (the original's three fans across the shaft just over its
+    # lollipop, its y 75-77): the high jump rises through it and is pushed west.
+    w.fill(52, LEDGE + 1, 42, 52, LEDGE + 3, 42, FAN_WEST)
+    w.fill(39, LEDGE + 1, 42, 51, LEDGE + 3, 42, WIND_WEST)
     w.place(O.WASP, 41, LEDGE, 44, end=(51, LEDGE, 44), advance=40, recede=40, stop_start=8, stop_end=8)
     if helped:
         rock(w, 44, LEDGE, 42, 46, LEDGE + 1, 42)                          # levelcheck's stair
@@ -107,7 +114,13 @@ def main(argv) -> int:
     for k in range(12):
         x0, z0, x1, z1 = ring[k % 6]
         top = HIGH + 1 + 2 * k                                            # walk 34 + 2k
-        rock(w, x0, top - 1, z0, x1, top, z1)
+        if k in (6, 10) and not helped:
+            # Two ledges of vanishing saucers (the original's pairs of 324 up its shaft, its
+            # y 36-44): gone 0.4 s in every 4, all at once; two whose next ledge is straight on
+            # (a hop and a few steps fit one cycle; one needing a turn to line up does not).
+            w.fill(x0, top, z0, x1, top, z1, TEMP)
+        else:
+            rock(w, x0, top - 1, z0, x1, top, z1)
     for walk, (x, z) in ((36, (61, 40)), (42, (56, 31)), (48, (61, 39)), (54, (57, 31))):
         w.place(O.EGG, x, walk, z)
     hazard(56, 38, 39)

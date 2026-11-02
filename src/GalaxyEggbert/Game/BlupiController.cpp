@@ -735,7 +735,7 @@ namespace GalaxyEggbert::Game
         // failure signal, matching the real `void` return exactly.
     }
 
-    bool BlupiController::HasJumpHeadroom(const Worlds::World& world) const
+    bool BlupiController::HasJumpHeadroom(const Worlds::World& world, bool tempPassable) const
     {
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
@@ -749,7 +749,17 @@ namespace GalaxyEggbert::Game
             {
                 continue; // off the top of the world -- open sky, not blocked
             }
-            if (IsSolidAt(world, gx, gy, gz))
+            if (IsCrateCell(gx, gy, gz))
+            {
+                return false;
+            }
+            const auto block = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                              static_cast<std::uint16_t>(gz));
+            if (block.isAir() || (tempPassable && block.type() == GalaxyEggbert::BlockTypes::Temp))
+            {
+                continue;
+            }
+            if (GalaxyEggbert::GetBlockDefinition(block.type()).collisionMask != 0)
             {
                 return false;
             }
@@ -1855,7 +1865,7 @@ namespace GalaxyEggbert::Game
             {
                 m_velocityY = powered ? kSkateboardJumpSpeedPowered : kSkateboardJumpSpeed;
             }
-            else if (HasJumpHeadroom(world))
+            else if (HasJumpHeadroom(world, tempPassable))
             {
                 m_velocityY = powered ? kJumpSpeedPowered : kJumpSpeed;
             }

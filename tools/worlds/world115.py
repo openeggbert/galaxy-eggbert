@@ -27,6 +27,8 @@ from station import water  # noqa: E402
 LAVA = 68
 BLITZ, EMITTER = 305, 304
 WALK = 20
+FAN_UP, WIND_UP = 132, 118             # in a floor, blowing +Y
+FAN_DOWN, WIND_DOWN = 135, 122         # in a ceiling, blowing -Y
 
 
 def main(argv) -> int:
@@ -76,7 +78,24 @@ def main(argv) -> int:
     for walk, x0, z0, x1, z1, tx, tz in ((26, 34, 6, 37, 9, 35, 7), (30, 63, 6, 66, 9, 65, 7),
                                         (34, 63, 25, 66, 29, 65, 27), (38, 34, 25, 37, 29, 35, 27)):
         panel(x0, walk - 2, z0, x1, walk - 1, z1)
-        w.place(O.TREASURE, tx, walk, tz)
+        if (tx, tz) != (35, 7):
+            w.place(O.TREASURE, tx, walk, tz)
+    w.place(O.EGG, 35, 26, 7)
+    # Treasure 1 at the end of the draught tunnel, west out of the gallery's wall five high
+    # (walk 28) and three wide: across it four curtains of wind, updraughts (fans in the floor) and
+    # downdraughts (fans in the ceiling) by turns, as the original's cave of drafts (its x 14-20,
+    # y 23-27) flown through in a helicopter: an updraught throws him up a cell or more, into the
+    # ceiling's crash band if he enters it high (OR-0019); a downdraught throws him down.
+    carve(13, 28, 16, 33, 32, 18)
+    carve(6, 28, 14, 12, 32, 20)
+    for x, up in ((30, True), (26, False), (22, True), (18, False)):
+        if up:
+            w.fill(x, 27, 16, x, 27, 18, FAN_UP)
+            w.fill(x, 28, 16, x, 32, 18, WIND_UP)
+        else:
+            w.fill(x, 33, 16, x, 33, 18, FAN_DOWN)
+            w.fill(x, 28, 16, x, 32, 18, WIND_DOWN)
+    w.place(O.TREASURE, 8, 28, 17)
     panel(48, 30, 6, 54, 31, 9)
     for x in range(49, 54):
         w.place(O.HELICOPTER, x, 32, 7)

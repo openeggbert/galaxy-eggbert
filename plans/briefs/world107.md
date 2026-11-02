@@ -19,6 +19,10 @@ the top; then down again, the red door, the treasure, the golden key. Six eggs.
 - The ledge: the lollipop at its west end (stand on it, Action: fifteen seconds of very high
   jumps), a wasp crossing it at Blupi's height; north of it the tower's floor stands four higher,
   a jump only the lollipop's power makes (head room above the ledge for it).
+- Added 2026-11-02 (Wave E, `lesson_inventory.md`): a band of wind across the high jump, three fans
+  stacked in the head room's east end (52, walk 11-13, z 42) blowing west over the ledge's north
+  row, the original's three fans across its shaft just over the lollipop (its y 75-77); the high
+  jump rises through it and drifts west (it showed BD-0030: wind overhead had cut the jump short).
 - The tower's floor (walk 14): four mines bobbing between walk 14 and 16; a wall across the tower
   with a low passage through it two high, six mines hanging in its walking cells in all three lanes
   (crouch under them); beyond it the great lift: six cells round a column of cobble, carrying him
@@ -26,6 +30,10 @@ the top; then down again, the red door, the treasure, the golden key. Six eggs.
 - The stair of ledges (walk 32 → 56): a landing, then twelve ledges two up each, three wide,
   winding round the column twice with a gap of one between each and the next; mines on two of
   them (step round), mines hanging over the gaps, four eggs.
+- Two of the stair's ledges (walk 46 and 54) are vanishing saucers (324), as
+  the original's pairs of saucers up its shaft (its y 36-44): gone 8 ticks in every 80, all at
+  once; each taken from the solid ledge before it just after they come back and left straight on
+  within the cycle (added 2026-11-02; the ledges where the next hop needs lining up stay solid).
 - The top room (walk 58): the red key, two eggs, a chute straight down to the chamber.
 
 **Checks**: `levelcheck.py`: stage 2 reaches the treasure, the six eggs, the red key and the golden

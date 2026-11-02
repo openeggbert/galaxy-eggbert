@@ -480,6 +480,24 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   water channel's bank by a hair (a jump's last moment falls a little faster): its take-off moved
   0.15 closer to the channel (`jump 3.25`), both pass.
 
+## BD-0030 — a jump under wind, a bar or lightning was shortened as under a ceiling (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp IsNormalJump -> IsPassIcon): the two cells over his head shorten the jump
+  only when one of them has a quarter of its collision mask set (and a vanishing saucer 324 not
+  while it is gone); wind (110-125), bars (138, 202), lava, lightning, drips, saws, switches, water
+  and every other empty-mask tile leave it whole.
+- Galaxy: `HasJumpHeadroom` used `IsSolidAt` (anything but plain decor), so a jump under any of
+  those tiles was the reduced one (12/16): found in world 107, where a band of wind over the
+  lollipop's ledge (Wave E) turned the Power jump (26/16) into the reduced powered one (16/16),
+  four cells short of the tower's floor.
+- Fix: `HasJumpHeadroom(world, tempPassable)`: a crate cell or a non-zero collision mask blocks,
+  the saucer while gone does not.
+- Validation: `VerifyBlupiMovement` (wind or a bar overhead: the whole jump; a block: reduced);
+  ctest 111/111; 74 of 78 playthroughs passed at once; 107 (its new saucer ledges: moved to the
+  ledges whose next hop is straight on, the hop off a saucer taken a little earlier) and 124 (its
+  wind tunnel's jump now rose above the wind: the wind fills the tunnel's height) re-planned, and
+  their chains 100/120: all 78 pass (2026-11-02).
+
 ## Reviewed, not changed (yet)
 
 - Matching (2026-11-02): the shooters 32 (blupih: one shot straight down at tick 21 of each

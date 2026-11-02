@@ -101,9 +101,10 @@ def main(argv) -> int:
     carve(61, WALK, 49, 69, WALK + 2, 51)
     w.set(61, WALK + 1, 50, FAN_EAST)
     carve(62, WALK, 49, 69, WALK + 2, 51)
-    # The wind fills the tunnel's lower two rows: the engine (as the original, his middle in his
-    # own tile) feels it in the cell at his feet.
-    w.fill(62, WALK, 49, 69, WALK + 1, 51, WIND_EAST)
+    # The wind fills the tunnel, all three rows: the engine (as the original, his middle in his
+    # own tile) feels it at his middle, and a whole jump (BD-0030: wind overhead no longer cuts it
+    # short) rises into the top row.
+    w.fill(62, WALK, 49, 69, WALK + 2, 51, WIND_EAST)
     carve(64, WALK - 4, 49, 66, WALK - 1, 51)
     if not calm:
         w.place(O.MOVING_MINE, 65, WALK - 4, 50, end=(65, WALK - 1, 50), advance=20, recede=20, stop_start=0,

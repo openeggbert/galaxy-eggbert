@@ -80,12 +80,14 @@ expect y >= 43.9
 go 62 32.3 tol 0.15
 go 62 30.6 tol 0.15
 face 180
+# The ledges at walk 46 and 54 are vanishing saucers (gone 8 ticks in every 80, all at once): onto
+# each from the solid ledge before it just after they come back, and straight on to the solid
+# ledge beyond within the cycle (no stop to line up).
+until temp = 0 max 300
 go 62 34.6 jump 2.15 tol 0.3
 until ground = 1
 expect y >= 45.9
-go 61 34.4 tol 0.15
-face 180
-go 61 38.7 jump 2.25 tol 0.3
+go 61 38.7 jump 2.45 tol 0.3
 until ground = 1
 expect y >= 47.9
 go 61.6 39.5 tol 0.15
@@ -101,12 +103,11 @@ until ground = 1
 expect y >= 51.9
 go 55.5 35.8 tol 0.15
 face 0
+until temp = 0 max 300
 go 55.5 31.6 jump 1.95 tol 0.3
 until ground = 1
 expect y >= 53.9
-go 56.0 32.3 tol 0.15
-face 90
-go 60.4 32.3 jump 1.95 tol 0.3
+go 60.4 32.3 jump 2.15 tol 0.3
 until ground = 1
 expect y >= 55.9
 go 61 30.6 tol 0.15
