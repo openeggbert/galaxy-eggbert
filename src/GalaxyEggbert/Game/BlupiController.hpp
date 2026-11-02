@@ -1338,6 +1338,7 @@ namespace GalaxyEggbert::Game
         float m_vertigoTimer = 0.0f;   // teetering at a ledge (AnimState::Vertigo)
         float m_recedeTimer = 0.0f;    // stepping back from it (AnimState::Recede)
         float m_advanceTimer = 0.0f;   // stepping forward from a ledge behind him (AnimState::Advance)
+        float m_rollTimer = 0.0f;      // a jeep, tank or skateboard rolling on from a ledge (Advance)
         bool m_vertigoStarted = false; // VertigoStarted is due this frame
         AnimState m_reaction = AnimState::Stop; // the reaction playing (kJumpAieSpeed's comment)
         float m_reactionTimer = 0.0f;

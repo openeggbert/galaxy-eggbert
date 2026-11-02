@@ -320,10 +320,15 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   channel 6. Galaxy had only the front case (Vertigo, then Recede).
 - Now the same on foot (`m_advanceTimer`, `AnimState::Advance` with table_blupi 10 -- the
   Recede icons, so its clip equals Recede's). 20 px is 0.31 of a cell.
-- Open: the vehicles. The original's helicopter and overcraft at a ledge in front recede at once
-  without teetering (4908-4912); the jeep, tank and skateboard stopped with a side over the void
-  roll forward 5 px a tick for 10 ticks (4944-5030, 3667-3680). Galaxy's vehicles do neither.
-- Validation: `VerifyBlupiMovement` (state, sound, 0.31 cell forward then Stop); all playthroughs.
+- The vehicles, which Galaxy's ledge rules left out: the landed helicopter and overcraft take the
+  same probes but recede at once without teetering (4908-4912) and advance without the sound; a
+  parked jeep, tank or skateboard with one wheel over the void (2-18 px in from a side, 12-19
+  for the skateboard) rolls on 5 px a tick for 10 ticks the way it faces (4944-5030,
+  3667-3680) -- off the ledge if it faces it. Now the same (`m_rollTimer`; not on a lift, where
+  the original measures the lift's own edges).
+- Validation: `VerifyBlupiMovement` (state, sound, 0.31 cell forward then Stop; the jeep rolling
+  on and off a ledge; the helicopter receding without a teeter); all playthroughs, the 33 with
+  vehicles again after the vehicle rules.
 
 ## Reviewed, not changed (yet)
 

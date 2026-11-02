@@ -41,4 +41,4 @@ teleport arrival sparkles; no arrival sound (BD-0017),render+audio,unit+live,Ver
 Blupi sounds 5/34/35/36/37/39 at the original moments (BD-0018),audio,unit,VerifyBlupiMovement (event ticks),pass,heard only in code: game runs are silent
 hanging clips StopSuspend/MarchSuspend from suspendu*.rd4 (BD-0018),render,live,plans/evidence/hanging.png (probe world 995),pass,
 head shake on an unused action press (BD-0019),gameplay+render,unit+live,VerifyBlupiMovement (Non 18 ticks); plans/evidence/head-shake.png,pass,
-stepping forward off a ledge behind him (BD-0020),gameplay,unit+autoplay,VerifyBlupiMovement (Advance); all playthroughs,pass,vehicle variants open
+stepping forward off a ledge behind him (BD-0020),gameplay,unit+autoplay,VerifyBlupiMovement (Advance; vehicles at a ledge); all playthroughs,pass,

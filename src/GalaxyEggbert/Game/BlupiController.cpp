@@ -2109,12 +2109,52 @@ namespace GalaxyEggbert::Game
         // foot over the void and the back one on the ground, Blupi teeters for 16 ticks, then
         // steps back 4 px a tick for 3 ticks. With the void behind him instead he steps forward
         // 4 px a tick for 5 ticks, Advance, with the teeter's sound (Decor.cpp:4935-4943, 3657-3664,
-        // 5064). Walking, jumping or a vehicle cuts it short.
+        // 5064). Walking, jumping or a vehicle cuts it short. The helicopter and the overcraft,
+        // landed, take the same probes but recede at once without teetering and advance without
+        // the sound (4908-4912, 4938-4940); a jeep, tank or skateboard stopped with one wheel over
+        // the void rolls on 5 px a tick for 10 ticks the way it faces -- off the ledge if that is
+        // where it faces (4944-5030, 3667-3680; BD-0020).
         {
             constexpr float kFoot = 0.15f;                   // the original's feet, +/-5 of 60 px, a little wider
             constexpr float kRecedeSpeed = 4.0f * 20.0f / 64.0f;
-            const bool standing = m_onGround && !moving && !IsInVehicle() && !m_balloon && !m_ecrase && !m_nage &&
-                                  !m_surf && !holdingCrate && !pushingCrate;
+            constexpr float kRollSpeed = 5.0f * 20.0f / 64.0f;
+            const bool hover = m_vehicleMode == VehicleMode::Helicopter || m_vehicleMode == VehicleMode::Overcraft;
+            const bool roller = m_vehicleMode == VehicleMode::Jeep || m_vehicleMode == VehicleMode::Tank ||
+                                m_vehicleMode == VehicleMode::Skateboard;
+            const bool standing = m_onGround && !moving && (!IsInVehicle() || hover) && !m_balloon && !m_ecrase &&
+                                  !m_nage && !m_surf && !holdingCrate && !pushingCrate;
+            // Not on a lift: the original measures a lift's own edges there (AscenseurVertigo).
+            const bool parked = m_onGround && !moving && roller && !m_balloon && !m_ecrase && !m_ridingLift;
+            const float rx = std::sin(m_yaw);
+            const float rz = -std::cos(m_yaw);
+            if (!parked && !(roller && m_rollTimer > 0.0f && !moving))
+            {
+                m_rollTimer = 0.0f;
+            }
+            if (m_rollTimer > 0.0f)
+            {
+                // Rolling on: only a wall stops it; past the edge it falls.
+                m_rollTimer -= dt;
+                const float ax = m_x + rx * kRollSpeed * dt;
+                const float az = m_z + rz * kRollSpeed * dt;
+                if (!IsPointSolid(world, ax, m_y + 0.05f, az, tempPassable, true))
+                {
+                    m_x = ax;
+                    m_z = az;
+                }
+            }
+            else if (parked)
+            {
+                // The wheels: 2-18 px in from each side for the jeep and the tank, 12-19 for the
+                // skateboard (Decor.cpp:4956-4965, 5016-5025), here their middles.
+                const float wheel = (m_vehicleMode == VehicleMode::Skateboard ? 30.0f - 15.5f : 30.0f - 10.0f) / 64.0f;
+                const bool frontVoid = !IsPointSolid(world, m_x + rx * wheel, m_y - 0.05f, m_z + rz * wheel, tempPassable, false);
+                const bool backVoid = !IsPointSolid(world, m_x - rx * wheel, m_y - 0.05f, m_z - rz * wheel, tempPassable, false);
+                if (frontVoid != backVoid)
+                {
+                    m_rollTimer = 10.0f / 20.0f;
+                }
+            }
             const float fx = std::sin(m_yaw);
             const float fz = -std::cos(m_yaw);
             if (!standing)
@@ -2158,14 +2198,21 @@ namespace GalaxyEggbert::Game
             else if (!IsPointSolid(world, m_x + fx * kFoot, m_y - 0.05f, m_z + fz * kFoot, tempPassable, false) &&
                      IsPointSolid(world, m_x - fx * kFoot, m_y - 0.05f, m_z - fz * kFoot, tempPassable, false))
             {
-                m_vertigoTimer = 16.0f / 20.0f;
-                m_vertigoStarted = true;
+                if (hover)
+                {
+                    m_recedeTimer = 3.0f / 20.0f; // no teeter, no sound
+                }
+                else
+                {
+                    m_vertigoTimer = 16.0f / 20.0f;
+                    m_vertigoStarted = true;
+                }
             }
             else if (IsPointSolid(world, m_x + fx * kFoot, m_y - 0.05f, m_z + fz * kFoot, tempPassable, false) &&
                      !IsPointSolid(world, m_x - fx * kFoot, m_y - 0.05f, m_z - fz * kFoot, tempPassable, false))
             {
                 m_advanceTimer = 5.0f / 20.0f;
-                m_vertigoStarted = true; // channel 6, as the teeter's
+                m_vertigoStarted = !hover; // channel 6, as the teeter's, on foot
             }
         }
 

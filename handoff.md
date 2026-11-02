@@ -79,8 +79,8 @@ ledgers before repeating any discovery. Where it stands:
   lets go of a bar (bars in 064 065 066 071 074 075 083 084).
 - Done: BD-0019, the head shake (Non) when the action button has nothing to do: the host's
   `actionUsed` collects every use of the press; BD-0020, Advance: the void behind him, he steps
-  forward 0.31 of a cell (on foot; the vehicles' ledge rules are open). All 78 playthroughs pass
-  with both (2026-11-02). New clips are exported one at a time
+  forward 0.31 of a cell; with the vehicles' ledge rules (helicopter/overcraft recede at once,
+  a parked jeep/tank/skateboard with a wheel over the void rolls on 10 ticks, `m_rollTimer`). New clips are exported one at a time
   (`build_clip_library.py --skip-check` into `build-probe/rd4-blupi/library-susp/`, then copy
   only the new clip, `avatar.skinnedmodel.json` and `clips.txt`).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the

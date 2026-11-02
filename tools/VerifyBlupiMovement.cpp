@@ -3139,6 +3139,47 @@ int main(int argc, char** argv)
               "he steps 20 px (0.31 cell) forward, then stands");
     }
 
+    // The vehicles at a ledge (BD-0020): a parked jeep with one wheel over the void rolls on 5 px a
+    // tick for 10 ticks the way it faces -- off the ledge if it faces it; the landed helicopter
+    // recedes from a ledge in front at once, without teetering (Decor.cpp:4908-4912, 4944-5030).
+    {
+        Worlds::World ledge;
+        for (std::uint16_t x = 40; x <= 50; ++x)
+            for (std::uint16_t z = 45; z <= 55; ++z)
+                ledge.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        const auto settle = [&](BlupiController& c)
+        {
+            for (int i = 0; i < 60; ++i) c.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+        };
+        BlupiController backJeep;
+        backJeep.SetPosition(0.30f, 1.0f, 0.0f); // rear wheel (0.31 behind) over the void past 50.5
+        backJeep.SetYaw(-1.5707963f);            // facing -X, onto the floor
+        backJeep.CheatVehicle(BlupiController::VehicleMode::Jeep);
+        settle(backJeep);
+        check(backJeep.GetX() < 0.30f - 0.6f && backJeep.IsOnGround(),
+              "a jeep parked with its rear wheel over a ledge rolls on, onto the floor");
+        BlupiController frontJeep;
+        frontJeep.SetPosition(0.30f, 1.0f, 0.0f);
+        frontJeep.SetYaw(1.5707963f);            // facing +X, its front wheel over the void
+        frontJeep.CheatVehicle(BlupiController::VehicleMode::Jeep);
+        settle(frontJeep);
+        check(frontJeep.GetY() < 0.9f, "a jeep parked with its front wheel over a ledge rolls off it");
+        BlupiController heli;
+        heli.SetPosition(0.42f, 1.0f, 0.0f);
+        heli.SetYaw(1.5707963f);
+        heli.CheatVehicle(BlupiController::VehicleMode::Helicopter);
+        heli.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+        bool teetered = hasEvent(heli, BlupiController::EventKind::VertigoStarted);
+        const float heliX = heli.GetX();
+        for (int i = 0; i < 20; ++i)
+        {
+            heli.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+            teetered = teetered || hasEvent(heli, BlupiController::EventKind::VertigoStarted);
+        }
+        check(!teetered && heli.GetX() < heliX - 0.1f,
+              "the landed helicopter recedes from a ledge in front at once, without teetering");
+    }
+
     // Owner reports of 2026-11-01: riding a lift (OR-0018), leaving a vehicle (OR-0020), the
     // helicopter's ceiling (OR-0019), the typed cheats' vehicles and shield (OR-0007).
     {
