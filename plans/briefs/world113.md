@@ -16,6 +16,13 @@ mines hanging above and lying below; then the long way back to the exit. Five eg
 - The start ledge (walk 20): spawn (9, 20, 50) beside the exit (it needs the treasure).
 - The gallery east: four pits of lava, a small lift in each carrying Blupi across (10-12 ticks,
   dwelling 20 rather than 3), mines hanging a cell above his head over the last two.
+- After the four lift pits, a fifth pit of lava five long (x 35-39) crossed hanging from a bar,
+  one wide between walls, a mine hanging at each end of the bar in its row (x 34 and 40, y 22): the
+  original's bar 28-32 over lava between its hanging mines 27 and 33 (added 2026-11-02, Wave E;
+  the lift pits moved closer, x 15, 20, 25, 30, to make room). Caught from a running jump at the
+  floor's edge; let go with Down short of the far end (hanging, he touches anything in the bar's
+  row within 0.44) and drift onto the floor past the second mine. The original also hangs bars over
+  its lift pits (its x 14-25, y 19) as a second way across them: not reproduced (the lifts are).
 - A curtain of lightning; the ferry room: a crate, a pit of lava crossed on a lift (2 × 3, 80
   ticks), a mine hanging over it.
 - The pool with a fish (swim across, or wait); a lift down the shaft beyond (walk 20 → 10); a

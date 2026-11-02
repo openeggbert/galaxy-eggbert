@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from kit import MACHINE_FACES, MACHINE_FLOOR, O, World, lift, mine, wall  # noqa: E402
 from station import water  # noqa: E402
 
-LAVA = 68
+LAVA, BAR = 68, 138
 BLITZ, EMITTER = 305, 304
 WALK, LOW, HIGHWAY = 20, 10, 28
 
@@ -71,7 +71,7 @@ def main(argv) -> int:
     w.spawn = (9, WALK, 50)
     w.place(O.EXIT, 7, WALK, 48)
     carve(13, WALK, 49, 40, WALK + 2, 51)
-    for k, x0 in enumerate((15, 21, 27, 33)):
+    for k, x0 in enumerate((15, 20, 25, 30)):
         carve(x0, WALK - 4, 49, x0 + 3, WALK - 1, 51)
         w.fill(x0, WALK - 4, 49, x0 + 3, WALK - 3, 51, LAVA)
         # The original's gallery lifts carry 2 cells in 10 or 12 ticks (4.0 / 3.33 cells/s,
@@ -80,7 +80,21 @@ def main(argv) -> int:
         lifts(x0, x0, WALK - 1, 49, 51, (3, 0, 0), 15 + 3 * (k % 2), 20)
         if k >= 2:
             hazard(x0 + 1, WALK + 1, 50, hanging=True)
-    w.place(O.EGG, 25, WALK, 49)
+    w.place(O.EGG, 24, WALK, 49)
+    # Then a pit of lava five long crossed hanging from a bar (the original's bar 28-32 over lava,
+    # a mine hanging at each end, its 27 and 33): one wide between walls, so the mines over the
+    # floor at either end are passed only by catching the bar from a jump and dropping off it
+    # beyond.
+    panel(35, WALK, 49, 39, WALK + 2, 49)
+    panel(35, WALK, 51, 39, WALK + 2, 51)
+    carve(35, WALK - 4, 50, 39, WALK - 1, 50)
+    if calm:
+        w.fill(35, WALK - 4, 50, 39, WALK - 1, 50, MACHINE_FLOOR)
+    else:
+        w.fill(35, WALK - 4, 50, 39, WALK - 3, 50, LAVA)
+    w.fill(35, WALK + 2, 50, 39, WALK + 2, 50, BAR)
+    hazard(34, WALK + 2, 50, hanging=True)
+    hazard(40, WALK + 2, 50, hanging=True)
 
     # ---- the lightning and the ferry over the pit (walk 20) ----
     lightning(41, WALK, WALK + 2, 49, 51)

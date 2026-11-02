@@ -148,6 +148,10 @@ ledgers before repeating any discovery. Where it stands:
   sweeping mine on the way west (an updraught jump peaks at y 24.8, the mine sweeps at 25), and
   lightning columns on the north and east ways. Playthroughs 114 and 110 pass;
   `plans/evidence/world114-lessons.png`. Open there: the original's sideways wind rooms.
+- Done 2026-11-02 (Wave E, LV-0069): world 113 gets the original's bar over lava between two
+  hanging mines (x 35-39, one wide; the lift pits moved to x 15, 20, 25, 30). Learned: hanging,
+  Blupi touches anything in the bar's row within 0.44 (the hanging mine's box is the top 24 px of
+  its cell); a jump off a bar under a ceiling regrabs it, Down held 5 ticks drops him.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not

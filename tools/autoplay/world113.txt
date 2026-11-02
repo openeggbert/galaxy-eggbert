@@ -3,28 +3,43 @@
 wait 30
 expect mission = 113
 # The gallery (walk 20, z 49-51): four pits of lava, a small lift in each carrying him three
-# cells east (lane z 51: mines hang over z 50 above the last two).
+# cells east (lane z 51: mines hang over z 50 above the last two), a cell of floor between.
 go 13 51
 go 14.3 51 tol 0.1
 lift 15 20 51 max 600
 go 15 51 tol 0.15
 lift 18 20 51 max 300
-go 19.6 51 tol 0.15
-go 20.3 51 tol 0.1
-lift 21 20 51 max 600
-go 21 51 tol 0.15
-lift 24 20 51 max 300
-go 25.6 51 tol 0.15
-go 26.3 51 tol 0.1
-lift 27 20 51 max 600
-go 27 51 tol 0.15
-lift 30 20 51 max 300
-go 31.6 51 tol 0.15
-go 32.3 51 tol 0.1
-lift 33 20 51 max 600
-go 33 51 tol 0.15
-lift 36 20 51 max 300
-go 37.6 51 tol 0.15
+go 19 51 tol 0.15
+go 19.3 51 tol 0.1
+lift 20 20 51 max 600
+go 20 51 tol 0.15
+lift 23 20 51 max 300
+go 24 51 tol 0.15
+go 24.3 51 tol 0.1
+lift 25 20 51 max 600
+go 25 51 tol 0.15
+lift 28 20 51 max 300
+go 29 51 tol 0.15
+go 29.3 51 tol 0.1
+lift 30 20 51 max 600
+go 30 51 tol 0.15
+lift 33 20 51 max 300
+go 34 51 tol 0.15
+# The bar over the last pit (x 35-39, z 50, one wide), a mine hanging at each end (x 34 and 40,
+# y 22): a running jump from the floor's edge catches it clear of the first; hanging, east along
+# it; let go short of its end (Down held 5 ticks: hanging, he touches anything in the bar's row
+# within 0.44; jumping off, he would hit the ceiling and catch the bar again), he drops below the
+# second mine's reach and on onto the floor (x 40).
+go 34.3 50 tol 0.1
+face 90
+go 36 50 jump 1.6 tol 0.3
+wait 20
+expect y >= 21.9
+go 38.8 50 tol 0.08
+hold 18 crouch
+go 40.3 50 tol 0.15 max 300
+until ground = 1
+expect x >= 39.6
 # The first curtain of lightning (x 41), just after a strike.
 go 40.3 50 tol 0.1
 until blitz = 52 max 400
