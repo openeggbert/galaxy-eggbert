@@ -432,6 +432,8 @@ namespace GalaxyEggbert::CNA
         // 10 -- water (Decor.cpp:5415-5435), a spring (2835-2893) and the helicopter's ceiling
         // (5264-5283).
         void WreckVehicle();
+        // Whether Blupi's death is shown by his element.png sprite instead of the model (OR-0015).
+        [[nodiscard]] bool BlupiDrawnAsDeathSprite() const;
         // The skateboard on its way between the ground and his hands (OR-0003): put down at
         // TakeSkate's tick 8 is when the original deletes the board from the ground
         // (Decor.cpp:4510-4518), DeposeSkate's tick 12 when it starts it there.

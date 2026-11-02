@@ -1633,6 +1633,19 @@ namespace GalaxyEggbert::CNA
         return speed;
     }
 
+    bool GalaxyEggbertGame::BlupiDrawnAsDeathSprite() const
+    {
+        // Clear1 (lightning, mines, dynamite: charred, crumbling to smoking ash), Clear3 (lava)
+        // and Glu (glue) are drawn from element.png in the original (Decor.cpp:2403-2410), not
+        // from Blupi's sheet; the 3D clips built from those icon numbers took Blupi-sheet icons
+        // instead -- 46/47 are his raised-arms wave, so he seemed to cheer as he died (OR-0015).
+        // No Ray Dream scene of the charred Blupi exists, so the original's own sprite stands
+        // in for the model while it shows.
+        return cameraMode_ == CameraMode::ThirdPersonModel && blupiModelIsReal_ &&
+               blupi_.GetAnimState() == BlupiController::AnimState::DeathLocked &&
+               blupi_.AnimIconUsesElementSheet() && !blupi_.IsAnimIconInvisible() && !blupi_.IsDeathHidden();
+    }
+
     void GalaxyEggbertGame::WreckVehicle()
     {
         if (!blupi_.IsInVehicle())
@@ -4935,7 +4948,8 @@ namespace GalaxyEggbert::CNA
             // aborted with "Unknown animation clip").
             if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
                 blupiModel_->Clips.count(blupiActiveClipName_) != 0 &&
-                !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()))
+                !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) &&
+                !BlupiDrawnAsDeathSprite())
             {
                 constexpr float kPlaceholderModelScale = 0.009095f;
                 constexpr float kPlaceholderModelYOffset = -0.5f;
@@ -5348,7 +5362,7 @@ namespace GalaxyEggbert::CNA
         // (MeshBuilder::AddBillboard faces the camera's right/up) -- convenient,
         // since it also means the icon lookup naturally re-runs every frame
         // with the latest phase.
-        if (objectEffect_ && !worldRuntime_.GetMobileObjects().empty())
+        if (objectEffect_ && (!worldRuntime_.GetMobileObjects().empty() || BlupiDrawnAsDeathSprite()))
         {
             // Camera-facing basis: the inverse view matrix's Right/Up rows
             // give the camera's world-space right/up vectors (standard
@@ -5404,6 +5418,16 @@ namespace GalaxyEggbert::CNA
                     Microsoft::Xna::Framework::Vector3(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize), cameraRight, cameraUp,
+                    CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+            }
+            // His own death sprite (BlupiDrawnAsDeathSprite()): the 60 px icon, its centre 30 px
+            // over his feet, as the original draws it.
+            if (BlupiDrawnAsDeathSprite())
+            {
+                const auto uv = GetElementIconUv(blupi_.GetDisplayAnimIcon());
+                mesh.AddBillboard(
+                    Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + 30.0f / 64.0f, blupi_.GetZ()),
+                    Microsoft::Xna::Framework::Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp,
                     CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
 
