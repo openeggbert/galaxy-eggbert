@@ -611,3 +611,13 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   glue on the floor, Decor.cpp:5867-5910) played 51. Found reviewing channel 74's call sites.
 - Fix: channel 51 at both.
 - Validation: build, ctest 112/112.
+
+## BD-0037 — footsteps every 0.3 s while walking; the original has none (audio) — FIXED_AND_VERIFIED
+
+- Original: channel 3 and its material remaps (78-90, SoundEnviron) play only as Blupi lands --
+  on the ground (Decor.cpp:2986), on a lift (3018, 4220, 4392), in a vehicle (4204, 4365) -- and
+  as an item arrives at the HUD (10268-10303). No sound accompanies the march.
+- Galaxy played a footstep every 0.3 s while marching (its own comment called the interval an
+  unsourced approximation).
+- Fix: the march timer and `Sound::PlayStep` are gone; the landing keeps its material remap.
+- Validation: build, ctest 112/112; every channel 3 call site of Decor.cpp read.

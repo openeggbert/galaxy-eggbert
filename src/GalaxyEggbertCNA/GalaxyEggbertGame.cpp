@@ -3367,24 +3367,9 @@ namespace GalaxyEggbert::CNA
             {
                 sound_.PlayLand(groundIcon);
             }
-            if (blupi_.GetAnimState() == BlupiController::AnimState::March)
-            {
-                // kStepSoundInterval is a reasonable-sounding approximation,
-                // NOT sourced from mobile-eggbert's real march-cycle timing
-                // (unverified against Decor.cpp/Tables.cpp) -- revisit once
-                // that's checked, same as kMarchFrames' own animation timing.
-                constexpr float kStepSoundInterval = 0.3f;
-                stepSoundTimer_ += dt;
-                if (stepSoundTimer_ >= kStepSoundInterval)
-                {
-                    stepSoundTimer_ -= kStepSoundInterval;
-                    sound_.PlayStep(groundIcon);
-                }
-            }
-            else
-            {
-                stepSoundTimer_ = 0.0f;
-            }
+            // No footsteps while he walks: the original plays channel 3 (and its material remaps)
+            // only as he lands, on the ground, a lift or in a vehicle (Decor.cpp:2986, 3018, 4204,
+            // 4220, 4365, 4392); a step sound every 0.3 s was Galaxy's own (BD-0037).
 
             // Real crouch/look-up transition sounds (SOUND-017/030/031,
             // added 2026-07-20, Decor.cpp:3278-3287/3628-3633) -- ch7/ch21

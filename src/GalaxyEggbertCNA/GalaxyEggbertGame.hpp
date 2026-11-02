@@ -264,12 +264,9 @@ namespace GalaxyEggbert::CNA
 
         // Real mobile-eggbert sound playback (2026-07-10, see Sound.hpp).
         // jumpKeyWasDown_ edge-detects the jump key the same way
-        // cameraModeKeyWasDown_ edge-detects F3 above; stepSoundTimer_
-        // paces footstep sounds while marching (reset whenever Blupi isn't
-        // marching, so it doesn't fire immediately on the next step).
+        // cameraModeKeyWasDown_ edge-detects F3 above.
         GalaxyEggbert::Game::Sound sound_;
         bool jumpKeyWasDown_ = false;
-        float stepSoundTimer_ = 0.0f;
 
         // Real "Bye" farewell freeze (plan.md BLUPI-049) -- the mission to
         // load once `blupi_.IsBye()` naturally clears; set only at the world-

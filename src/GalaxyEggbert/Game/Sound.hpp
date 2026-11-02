@@ -60,14 +60,14 @@ namespace GalaxyEggbert::Game
         void PlayJump() { Play(GalaxyEggbert::Def::SoundChannel::SoundChannel1); }
 
         // Real mobile-eggbert (mobile-eggbert-reference/07-sounds.md,
-        // channels 0-9): channel 3 covers BOTH footstep AND landing -- one
+        // channels 0-9): channel 3 is the landing (no footsteps while walking: BD-0037) -- one
         // shared sound, not two separate events. Channel 4 is a distinct
         // real event (head-bump/ceiling-hit, triggered when Blupi's upward
         // jump arc hits an obstacle above) that has nothing to do with
         // landing. This class's original `PlayLand()` played channel 4 -- a
         // real, confirmed bug found by the independently verified channel
         // research in 07-sounds.md, not a deliberate choice.
-        // Fixed here to channel 3, matching PlayStep() (plan.md
+        // Fixed here to channel 3, matching the landing (plan.md
         // E3D-MIG-084's terrain-remap task surfaced this while researching
         // the real channels 78-91 the same shared sound remaps to).
         // Channel 4 and its 79/81/83/85/87/89/91 remaps: a ceiling met rising
@@ -78,7 +78,6 @@ namespace GalaxyEggbert::Game
         // of the 7 real terrain-specific variants when it falls in one of
         // Decor::SoundEnviron()'s real icon ranges, channel 3 (this same
         // generic sound) otherwise.
-        void PlayStep(std::uint16_t groundIcon) { Play(FootstepChannelFor(groundIcon)); }
         void PlayLand(std::uint16_t groundIcon) { Play(FootstepChannelFor(groundIcon)); }
 
         // Decor::SoundEnviron()'s real landing/footstep terrain remap
