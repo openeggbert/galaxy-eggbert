@@ -4,10 +4,15 @@
 # Options: yaw=STEP (also try turned about the vertical), vflip=1 (also upside down), camera=PART
 # (a part of the camera's name without spaces, e.g. 2 for "Caméra 2"), recolour=R,G,B>R,G,B[;...],
 # min_iou=X (icons matching worse stay billboards), shift=N (each icon's offset within +-N pixels),
-# drop=I,J (leave out the scene's top-level parts I, J: 0-based, cameras and lights counted).
+# drop=I,J (leave out the scene's top-level parts I, J: 0-based, cameras and lights counted),
+# alpha=X (a sprite pixel counts when more opaque than X, default 0.5: for half-transparent sprites).
 treasure    element 0-11    Blupi/coffre.rd4
 egg         element 21-28   Blupi/oeuf.rd4    yaw=5
 exit        element 29-36   Blupi/fleche.rd4  yaw=5 tone=1.30,3
+# The death angel (element 230-241: the Clear2 death's soul rising 300 px, Decor::BlupiDead,
+# VoyageStep cycling the icons every 2 ticks; owner 2026-11-02): Blupi/blupi-ange.rd4 turning 30
+# degrees a frame as its wings beat (IoU 0.965-0.982); drawn half transparent in the sheet (alpha).
+angel       element 230-241 Blupi/blupi-ange.rd4 alpha=0.25 yaw=15 tone=1.03,-27
 projectile  element 176     Blupi/balle-glu.rd4
 ammo        element 177     Blupi/munitions-glu.rd4
 drink       element 178     Blupi/bouteille.rd4

@@ -3417,20 +3417,24 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
+        const int tickBefore = static_cast<int>(voyagePhase_);
         voyagePhase_ += dt * 20.0f; // same dt*20 real-20Hz-tick convention as AdvancePatrolStep
         // Real icon-cycle animation (`Decor::VoyageStep`'s own `if
         // (m_voyagePhase < m_voyageTotal) { if (m_time % ScaleTime(2) == 0
         // && icon in [230,241]) icon++ }`, Decor.cpp:10241-10252) -- uses
         // this voyage's own phase as the tick source (ScaleTime(2)==2 at
         // this build's reference rate), since this engine has no single
-        // global `m_time` frame counter to match exactly.
-        if (voyageKind_ == VoyageKind::Clear2Ascend && voyagePhase_ < voyageTotal_ &&
-            static_cast<int>(voyagePhase_) % 2 == 0)
+        // global `m_time` frame counter to match exactly. Once per even tick reached, not every
+        // frame while the tick is even (that turned the angel about three times too fast at 60
+        // frames a second; OR-0047).
+        if (voyageKind_ == VoyageKind::Clear2Ascend && voyagePhase_ < voyageTotal_)
         {
-            ++voyageIconId_;
-            if (voyageIconId_ > 241)
+            for (int tick = tickBefore + 1; tick <= static_cast<int>(voyagePhase_); ++tick)
             {
-                voyageIconId_ = 230;
+                if (tick % 2 == 0 && ++voyageIconId_ > 241)
+                {
+                    voyageIconId_ = 230;
+                }
             }
         }
         if (voyageKind_ == VoyageKind::Clear3Ascend)

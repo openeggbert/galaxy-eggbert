@@ -1,5 +1,6 @@
 # avatars3d/objects/<directory>/, one per line; export_objects.py
 ammo_munitions-glu
+angel_blupi-ange
 barre_barre
 barreplain_barre
 bd_big0108_big0108

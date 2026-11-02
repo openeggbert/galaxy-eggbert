@@ -81,6 +81,7 @@ class ObjectSpec:
     shift: int = 0
     tone: tuple[float, float] | None = None
     drop: frozenset[int] = frozenset()
+    alpha: float = 0.5
 
 
 @dataclass
@@ -169,7 +170,8 @@ def read_specs(path: Path) -> list[ObjectSpec]:
                                 opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1", recolour,
                                 float(opts.get("min_iou", 0)), int(opts.get("shift", 0)),
                                 tuple(float(x) for x in opts["tone"].split(",")) if "tone" in opts else None,
-                                frozenset(int(x) for x in opts["drop"].split(",")) if "drop" in opts else frozenset()))
+                                frozenset(int(x) for x in opts["drop"].split(",")) if "drop" in opts else frozenset(),
+                                float(opts.get("alpha", 0.5))))
     return specs
 
 
@@ -397,7 +399,7 @@ def main(argv=None) -> int:
         if len(sizes) != 1:
             raise SystemExit(f"{spec.name}: icons of several sizes {sorted(sizes)}; split the object")
         icon_px = sizes.pop()
-        icon_rgb, icon_mask = survey.load_sheet(args.sheets / f"{spec.sheet}.png", grid)
+        icon_rgb, icon_mask = survey.load_sheet(args.sheets / f"{spec.sheet}.png", grid, spec.alpha)
         # The icon's own square: explo.png's icons sit in the top-left of their 144-pixel cells.
         icon_rgb, icon_mask = icon_rgb[:, :icon_px, :icon_px], icon_mask[:, :icon_px, :icon_px]
         # Every (scene, orthographic camera); then per scene the camera that wins most icons.

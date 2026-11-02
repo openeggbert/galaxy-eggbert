@@ -52,15 +52,16 @@ def icon_size(sheet: str, icon: int) -> int:
     return GRIDS[sheet][0]
 
 
-def load_sheet(sheet: Path, grid: tuple[int, int, int]) -> tuple[np.ndarray, np.ndarray]:
-    """(rgb (n, size, size, 3), mask (n, size, size)) of every icon of a sheet, row-major."""
+def load_sheet(sheet: Path, grid: tuple[int, int, int], alpha: float = 0.5) -> tuple[np.ndarray, np.ndarray]:
+    """(rgb (n, size, size, 3), mask (n, size, size)) of every icon of a sheet, row-major; the mask
+    is the pixels more opaque than ``alpha`` (the death angel, element 230-241, is all at 127/255)."""
     size, pitch, origin = grid
     img = np.array(Image.open(sheet).convert("RGBA")).astype(np.float64) / 255.0
     cols = (img.shape[1] - origin + pitch - size) // pitch
     rows = (img.shape[0] - origin + pitch - size) // pitch
     tiles = np.stack([img[origin + r * pitch:origin + r * pitch + size, origin + c * pitch:origin + c * pitch + size]
                       for r in range(rows) for c in range(cols)])
-    return tiles[..., :3], tiles[..., 3] > 0.5
+    return tiles[..., :3], tiles[..., 3] > alpha
 
 
 def folder_of(path: Path, originals: Path) -> str:

@@ -873,6 +873,16 @@ namespace GalaxyEggbert::Game
         // position in the same 640x480 reference space.
         [[nodiscard]] bool VoyageActive() const noexcept { return voyageKind_ != VoyageKind::None; }
         [[nodiscard]] int VoyageIconId() const noexcept { return voyageIconId_; }
+        // The Clear2 death's soul (the angel, element 230-241) on its way up: where it set off
+        // (the death's world point) and how far it is, 0..1 of its 300 px (OR-0047: drawn in 3D).
+        [[nodiscard]] bool VoyageIsSoul() const noexcept { return voyageKind_ == VoyageKind::Clear2Ascend; }
+        [[nodiscard]] float VoyageProgress() const noexcept
+        {
+            return voyageTotal_ > 0.0f ? std::clamp(voyagePhase_ / voyageTotal_, 0.0f, 1.0f) : 1.0f;
+        }
+        [[nodiscard]] float VoyageWorldAnchorX() const noexcept { return voyageWorldAnchorX_; }
+        [[nodiscard]] float VoyageWorldAnchorY() const noexcept { return voyageWorldAnchorY_; }
+        [[nodiscard]] float VoyageWorldAnchorZ() const noexcept { return voyageWorldAnchorZ_; }
         [[nodiscard]] bool VoyageIsButtonChannel() const noexcept { return voyageIsButton_; }
         // The life-loss voyage flies the lives row's small Blupi (the blupi.png sheet).
         [[nodiscard]] bool VoyageIsBlupiChannel() const noexcept { return voyageKind_ == VoyageKind::LifeLoss; }

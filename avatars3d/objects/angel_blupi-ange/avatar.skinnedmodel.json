@@ -1,0 +1,50 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "angel_rd_tex_p02_Corps",
+      "vertices": "angel_rd_tex_p02_Corps.verts.bin",
+      "indices": "angel_rd_tex_p02_Corps.idx.bin",
+      "vertexStride": 52,
+      "texture": "angel_rd_tex_p02_Corps.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "angel_rd_ebebeb",
+      "vertices": "angel_rd_ebebeb.verts.bin",
+      "indices": "angel_rd_ebebeb.idx.bin",
+      "vertexStride": 52,
+      "texture": "angel_rd_ebebeb.png",
+      "diffuseColor": [
+        0.8357426333732239,
+        0.8357426333732239,
+        0.8357426333732239,
+        1.0
+      ]
+    },
+    {
+      "name": "angel_rd_000000",
+      "vertices": "angel_rd_000000.verts.bin",
+      "indices": "angel_rd_000000.idx.bin",
+      "vertexStride": 52,
+      "texture": "angel_rd_000000.png",
+      "diffuseColor": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

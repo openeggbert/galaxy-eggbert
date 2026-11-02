@@ -4991,6 +4991,8 @@ namespace GalaxyEggbert::CNA
     {
         (void)gameTime;
         auto& device = getGraphicsDeviceProperty();
+        // The Clear2 death's soul drawn as its 3D model this frame: the HUD leaves out its sprite.
+        bool soulDrawnIn3D = false;
 
         // Root-caused 2026-07-13 (NEXT.md §5's "screenshot_hud.png blue-
         // background anomaly", Vulkan-only): calling GetBackBufferData()
@@ -5581,6 +5583,29 @@ namespace GalaxyEggbert::CNA
                         }
                         drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
                                   turn);
+                    }
+                }
+                // The Clear2 death's soul (OR-0047): element 230-241 as Blupi/blupi-ange.rd4, the
+                // turn its icons show, rising 300 px from where he died (Decor::BlupiDead,
+                // VoyageDraw), half transparent as the sheet's sprite (alpha 127).
+                if (interaction_.VoyageActive() && interaction_.VoyageIsSoul())
+                {
+                    if (const ObjectModelPose* pose =
+                            objectModelTable_.Find(ObjectTextureSource::Element, interaction_.VoyageIconId()))
+                    {
+                        constexpr float kSoulRise = 300.0f / 64.0f;
+                        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                        device.setDepthStencilStateProperty(
+                            Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
+                        blupiEffect_->setAlphaProperty(0.5f);
+                        drawModel(*pose, interaction_.VoyageWorldAnchorX(),
+                                  interaction_.VoyageWorldAnchorY() + interaction_.VoyageProgress() * kSoulRise,
+                                  interaction_.VoyageWorldAnchorZ());
+                        blupiEffect_->setAlphaProperty(1.0f);
+                        device.setDepthStencilStateProperty(
+                            Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
+                        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+                        soulDrawnIn3D = true;
                     }
                 }
                 // The fan cells (VIS-0127): the original fan model turned to blow the cell's way, its
@@ -6189,7 +6214,7 @@ namespace GalaxyEggbert::CNA
                           // Not while the lava death's ascent holds (VoyageDraw draws icon 40 only
                           // once it moves, Decor.cpp:10328-10331; OR-0015): Blupi's own charred
                           // sprite is still on the spot then.
-                          interaction_.VoyageActive() && interaction_.VoyageIconVisible(),
+                          interaction_.VoyageActive() && interaction_.VoyageIconVisible() && !soulDrawnIn3D,
                           interaction_.VoyageIconId(),
                           interaction_.VoyageIsButtonChannel(), interaction_.VoyageIsBlupiChannel(),
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
