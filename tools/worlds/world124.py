@@ -25,6 +25,7 @@ from kit import O, World, lift, mine  # noqa: E402
 from station import brick, treasure_door, water  # noqa: E402
 
 WALK = 20
+LAVA = 68
 FAN_EAST, WIND_EAST = 129, 114
 
 
@@ -70,6 +71,9 @@ def main(argv) -> int:
     hazard(12, WALK + 1, 50, hanging=True)
     hazard(16, WALK, 48)
     w.place(O.EGG, 18, WALK, 53)
+    # A strip of lava two wide across it (x 13-14), jumped on the way out (the original's lava in
+    #    its brick floors, LV-0076); teleporter 332 brings him back west of it, by the exit.
+    w.fill(13, WALK - 1, 46, 14, WALK - 1, 54, LAVA)
 
     # ---- tank 1 (x 21-37, three deep): treasures 1-4 ----
     carve(21, WALK, 40, 37, WALK + 4, 60)

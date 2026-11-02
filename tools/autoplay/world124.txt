@@ -2,10 +2,14 @@
 # tanks' bottoms and rims, dives timed past the fish, the treasure doors, the wind tunnel.
 wait 30
 expect mission = 124
-# The start passage (walk 20): past the hanging mine (12, 21, 50) and the mine (16, 48) in lane
-# z 52, into tank 1's hall; treasure (36, 41) on the tank's north rim, along z 40 clear of
-# teleporter 330's pillar over (22, 41).
-go 10 52
+# The start passage (walk 20): past the hanging mine (12, 21, 50), over its strip of lava (x 13-14)
+# in a jump, past the mine (16, 48), in lane z 52, into tank 1's hall; treasure (36, 41) on the
+# tank's north rim, along z 40 clear of teleporter 330's pillar over (22, 41).
+go 12.3 52 tol 0.1
+face 90
+go 15.5 52 jump 3.2 tol 0.2
+until ground = 1
+expect y >= 19.95
 go 21.3 52
 go 21.3 40.3
 go 35 40.3
