@@ -125,9 +125,11 @@ ledgers before repeating any discovery. Where it stands:
 - Done 2026-11-02 (Wave C): BD-0026 (an exit checked every 51 ticks while he stands on it, the
   original's `m_goalPhase`: the last treasure landing while he is on it wins), BD-0027 (no
   dynamite or decoy put down on a lift, `m_blupiTransport`); matching after review: the
-  lollipop, the drink, taking dynamite, the shooters 32/33 (`behavior_differences.md`). Left of
-  the 29 types the original's worlds use: the bulldozer (4), the fish (17) and the bird (20)
-  beyond their speeds, the balloon (46), the secret exit's `m_bFoundCle` (no consumer).
+  lollipop, the drink, taking dynamite, the shooters 32/33, the overcraft (46: boarding ends
+  Cloud and Hide, as every vehicle); BD-0028 (a decoy meets the bulldozer and the shooters by
+  the original's boxes). Left of the 29 types the original's worlds use: the fish (17) and the
+  bird (20) beyond their speeds; the secret exit's `m_bFoundCle` (no consumer); a close look at
+  the shooters' and the big creature's height (the original draws them 6 px lower).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always
