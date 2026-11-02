@@ -309,6 +309,10 @@ expect y <= 31.75
 go 92 22 tol 0.5 with lookup max 600
 wait 30
 expect x >= 91
+# Settled first: the overcraft is left only standing (both feet's probes on ground,
+# Decor.cpp:4010-4031, OR-0020); Down sinks it.
+hold 40 crouch
+until ground = 1 max 300
 hold 2 action
 wait 30
 # The stair up to the north-east (x 93-94, z 27 -> 20): eight steps two up, a cell deep, each

@@ -839,6 +839,16 @@ namespace GalaxyEggbert::Game
         // every other Trigger*() here, even though this one isn't gated
         // on anything when turning on).
         bool ToggleGhost(const Worlds::World& world) noexcept;
+
+        // The typed cheats' direct effects on him (Decor::CheatAction, Decor.cpp:1774-2095;
+        // OR-0007). CheatVehicle: funskate, givecopter, jeepdrive, drivetank, iovercraft -- he is
+        // in that vehicle at once, any other one gone, out of the water and the hanging (the jeep
+        // and the tank also end the Cloud and Hide). CheatShield: roundshield -- the shield, any
+        // other power gone. CheatClearForAction: quicklollypop, powercharge, hidedrink -- no
+        // vehicle, no power, before the Sucette/Charge/Drink clip (TriggerPickupFreeze) gives one.
+        void CheatVehicle(VehicleMode mode) noexcept;
+        void CheatShield() noexcept;
+        void CheatClearForAction() noexcept;
         [[nodiscard]] bool IsGhost() const noexcept { return m_ghost; }
 
         // Vehicle mounts (plan.md E3D-MIG-171, see VehicleMode's own
@@ -1220,6 +1230,21 @@ namespace GalaxyEggbert::Game
         // Whether his collision point (feet and head) is clear at (x, y, z), ground or not.
         [[nodiscard]] static bool IsClearAt(const Worlds::World& world, float x, float y, float z,
                                             bool tempPassable = false);
+
+        // Whether the action button may leave the vehicle he rides (Decor.cpp:3889-3915, 4010-4031,
+        // 4294-4300, 4437-4446, 4499-4508): never in the air (`flag2`, no ground under him) nor on
+        // a lift (`m_blupiTransport`, the caller's ridingLift); the helicopter and the overcraft
+        // only with both feet's probes on ground (9 px either side of his middle, along his
+        // facing: the original's left/right); the skateboard only below 8 px a tick (OR-0020).
+        [[nodiscard]] bool CanLeaveVehicle(const Worlds::World& world, bool ridingLift, bool tempPassable = false) const;
+        // The helicopter's crash into a ceiling (Decor.cpp:5264-5283): a band from 40 to 56 px
+        // above his feet (BlupiRect's top 11 px under his box top, the band from 4 to 20 px)
+        // meets the decor. His head point stops 49 px up, so this is a ceiling within 7 px over
+        // his head (OR-0019).
+        [[nodiscard]] bool HelicopterHitsCeiling(const Worlds::World& world, bool tempPassable = false) const;
+        static constexpr float kHelicoCrashBandTop = 56.0f / 64.0f;
+        // His ground speed in a vehicle (cells a second along his facing).
+        [[nodiscard]] float GetVehicleSpeed() const noexcept { return m_vehicleSpeed; }
 
         // Whether the caller is turning him round on foot this frame (Down's turn-around): shows
         // AnimState::Turn while he stands.

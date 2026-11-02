@@ -3013,6 +3013,97 @@ int main(int argc, char** argv)
               "then he steps back from the edge and stands");
     }
 
+    // Owner reports of 2026-11-01: riding a lift (OR-0018), leaving a vehicle (OR-0020), the
+    // helicopter's ceiling (OR-0019), the typed cheats' vehicles and shield (OR-0007).
+    {
+        Worlds::World room;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            for (std::uint16_t z = 40; z <= 60; ++z)
+                room.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        room.setBlock(45, 3, 45, Worlds::Block::make(BlockTypes::Ground)); // a ceiling block
+
+        // A lift carries him (RideLift each frame, as the host does): his clip is Stop, not Air.
+        BlupiController rider;
+        rider.SetPosition(0.0f - 10.0f, 6.0f, 0.0f); // raw (40, 6, 50): open air under him
+        rider.SetRidingLift(true);
+        bool everAir = false;
+        for (int i = 0; i < 10; ++i)
+        {
+            rider.Step(room, 0.0f, 0.0f, false, false, false, dt);
+            everAir = everAir || rider.GetAnimState() == BlupiController::AnimState::Air;
+            rider.RideLift(rider.GetX(), 6.0f, rider.GetZ());
+        }
+        check(!everAir && rider.GetAnimState() == BlupiController::AnimState::Stop &&
+                  std::fabs(rider.GetY() - 6.0f) < 1e-5f,
+              "riding a lift his clip is Stop, never Air (OR-0018)");
+        rider.Step(room, 0.0f, 0.0f, true, false, false, dt);
+        check(rider.GetVelocityY() > 0.0f && rider.GetAnimState() == BlupiController::AnimState::Jump,
+              "and he jumps off it (Jump)");
+        rider.SetRidingLift(false);
+        for (int i = 0; i < 5; ++i)
+            rider.Step(room, 0.0f, 0.0f, false, false, false, dt);
+        check(!rider.IsOnGround(), "off the lift he falls");
+
+        // Leaving a vehicle: on the ground only, off lifts; the helicopter on both feet.
+        BlupiController pilot;
+        pilot.SetPosition(0.0f, 1.0f, 0.0f);
+        pilot.SetYaw(1.5707963f);
+        for (int i = 0; i < 5; ++i)
+            pilot.Step(room, 0.0f, 0.0f, false, false, false, dt);
+        pilot.CheatVehicle(BlupiController::VehicleMode::Helicopter);
+        for (int i = 0; i < 5; ++i)
+            pilot.Step(room, 0.0f, 0.0f, false, false, false, dt);
+        check(pilot.IsOnGround() && pilot.CanLeaveVehicle(room, false), "the landed helicopter can be left");
+        check(!pilot.CanLeaveVehicle(room, true), "not on a lift (m_blupiTransport)");
+        pilot.SetPosition(0.0f, 4.0f, 0.0f);
+        pilot.Step(room, 0.0f, 0.0f, false, false, false, dt);
+        check(!pilot.IsOnGround() && !pilot.CanLeaveVehicle(room, false),
+              "in the air the helicopter cannot be left (OR-0020)");
+        pilot.SetPosition(60.45f - 50.0f, 1.0f, 0.0f); // the floor ends at raw 60.5
+        for (int i = 0; i < 3; ++i)
+            pilot.Step(room, 0.0f, 0.0f, false, false, false, dt);
+        check(pilot.IsOnGround() && !pilot.CanLeaveVehicle(room, false),
+              "nor with one foot's probe over the edge (both probes, Decor.cpp:3891-3902)");
+
+        BlupiController skater;
+        skater.SetPosition(0.0f, 1.0f, 5.0f);
+        skater.SetYaw(1.5707963f);
+        for (int i = 0; i < 5; ++i)
+            skater.Step(room, 0.0f, 0.0f, false, false, false, dt);
+        skater.CheatVehicle(BlupiController::VehicleMode::Skateboard);
+        for (int i = 0; i < 30; ++i)
+            skater.Step(room, 0.0f, 1.0f, false, false, false, dt);
+        const bool fastLeave = skater.CanLeaveVehicle(room, false);
+        for (int i = 0; i < 180; ++i)
+            skater.Step(room, 0.0f, 0.0f, false, false, false, dt);
+        check(!fastLeave && skater.CanLeaveVehicle(room, false),
+              "the skateboard is left only below 8 px a tick (Decor.cpp:4499)");
+
+        // The helicopter's ceiling: within 7 px over his head it crashes; a little lower, not.
+        BlupiController flyer;
+        flyer.CheatVehicle(BlupiController::VehicleMode::Helicopter);
+        flyer.SetPosition(45.0f - 50.0f, 2.2f, 45.0f - 50.0f); // head 2.97, the band to 3.08
+        check(flyer.HelicopterHitsCeiling(room), "flown up to a ceiling, the helicopter hits it (OR-0019)");
+        flyer.SetPosition(45.0f - 50.0f, 2.1f, 45.0f - 50.0f); // the band to 2.98
+        check(!flyer.HelicopterHitsCeiling(room), "a few pixels lower it does not");
+        BlupiController walker;
+        walker.SetPosition(45.0f - 50.0f, 2.2f, 45.0f - 50.0f);
+        check(!walker.HelicopterHitsCeiling(room), "on foot there is no such crash");
+
+        // The cheats' shield and vehicles (Decor::CheatAction).
+        BlupiController cheater;
+        check(cheater.TriggerHide(), "Hide to begin with");
+        cheater.CheatVehicle(BlupiController::VehicleMode::Jeep);
+        check(cheater.GetVehicleMode() == BlupiController::VehicleMode::Jeep &&
+                  cheater.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
+              "jeepdrive: in the jeep at once, the Hide gone");
+        cheater.CheatShield();
+        check(cheater.IsShielded(), "roundshield: the shield");
+        cheater.CheatClearForAction();
+        check(!cheater.IsInVehicle() && cheater.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
+              "before the lollipop/charge/drink clip: no vehicle, no power");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

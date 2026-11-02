@@ -71,6 +71,9 @@ namespace GalaxyEggbert::Game
         int lives = 0;
         int keys = 0; // the coloured keys held
         int dynamite = 0; // the stick carried (0 or 1)
+        // The vehicle he rides: 0 none, 1 helicopter, 2 jeep, 3 tank, 4 skateboard, 5 overcraft
+        // (BlupiController::VehicleMode's order). The trace records each change.
+        int vehicle = 0;
         // Every active lift, as where a rider stands on it: raw x, feet y, raw z.
         std::vector<std::array<float, 3>> lifts;
         // Every crate: raw x, y (its cell), raw z. The trace records them whenever one moves.
@@ -103,7 +106,7 @@ namespace GalaxyEggbert::Game
 
     private:
         enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, End };
-        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Ground, Dead, Exit, Blitz, Temp, Crush, Phase };
+        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Exit, Blitz, Temp, Crush, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {

@@ -218,6 +218,14 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   The 24 playthroughs with crates: see `test_coverage.csv` (push targets recomputed: Blupi stops
   57 px behind the crate's goal, `crate ... tol 0.06`).
 
+## BD-0015 — a spring put the vehicle down instead of wrecking it (gameplay) — FIXED_AND_VERIFIED
+
+- Found checking OR-0003's dismount code. Reference `Decor.cpp:2835-2893`: on a spring
+  (`IsRessort`), the helicopter, overcraft, jeep, tank and skateboard are wrecked (ObjectType9 at
+  his position, small shake, sound 10) unless the shield, Hide or SuperBlupi protect him. Galaxy
+  deposited the vehicle's pickup intact. Now `WreckVehicle()`, shared with water and the
+  helicopter's ceiling (OR-0019).
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

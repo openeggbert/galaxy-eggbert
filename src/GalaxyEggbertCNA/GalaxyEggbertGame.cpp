@@ -28,6 +28,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <optional>
@@ -1069,7 +1070,10 @@ namespace GalaxyEggbert::CNA
         autoplay_ = std::move(autoplay);
         // Each Update() steps the game by a fixed 1/60 s (see Update()'s dt), so the run is the
         // same tick for tick however fast it goes; unthrottled it goes as fast as the machine draws.
-        setIsFixedTimeStepProperty(false);
+        // AUTOPLAY_REALTIME=1 keeps the 60 Hz pacing, for watching or screenshotting a run
+        // (tools/qa_live.sh with --autoplay).
+        const char* realtime = std::getenv("AUTOPLAY_REALTIME");
+        setIsFixedTimeStepProperty(realtime != nullptr && std::strcmp(realtime, "1") == 0);
         return true;
     }
 
@@ -1101,6 +1105,7 @@ namespace GalaxyEggbert::CNA
         state.lives = interaction_.Lives();
         state.keys = interaction_.Key1Count() + interaction_.Key2Count() + interaction_.Key3Count();
         state.dynamite = interaction_.DynamiteCount();
+        state.vehicle = static_cast<int>(blupi_.GetVehicleMode());
         for (const auto& object : worldRuntime_.GetMobileObjects())
         {
             if (object.active && GetObjectDefinition(object.type).semanticKind == ObjectSemanticKind::Lift)
@@ -1150,6 +1155,7 @@ namespace GalaxyEggbert::CNA
     {
         titleSceneActive_ = false;
         winCheerActive_ = false;
+        pendingSkate_ = {};
         char path[64];
         std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
         if (!worldRuntime_.LoadFromVwrFile(path))
@@ -1518,6 +1524,24 @@ namespace GalaxyEggbert::CNA
                                  voyageEvent->voyageIsButtonChannel, startX, startY, endX, endY, sound_);
     }
 
+    namespace
+    {
+        // Puts `spec` in the first free slot of the world's mobile objects (or at the end).
+        void PlaceMobileObject(GalaxyEggbert::Game::WorldRuntime& worldRuntime, const GalaxyEggbert::Game::MobileObjSpec& spec)
+        {
+            auto& objects = worldRuntime.GetMobileObjectsMutable();
+            for (auto& slot : objects)
+            {
+                if (!slot.active)
+                {
+                    slot = spec;
+                    return;
+                }
+            }
+            objects.push_back(spec);
+        }
+    }
+
     void GalaxyEggbertGame::DismountAndDepositVehicle()
     {
         if (!blupi_.IsInVehicle())
@@ -1525,36 +1549,68 @@ namespace GalaxyEggbert::CNA
             return;
         }
         const GalaxyEggbert::Def::ObjectType depositType = VehicleModeToObjectType(blupi_.GetVehicleMode());
-        // Real DeposeSkate anim (plan.md BLUPI-091 gap, table_blupi ID 43,
-        // wired 2026-07-19) -- Skateboard is the only vehicle with a
-        // dedicated dismount pose (checked the reference doc for the
-        // other 4 modes; none exist), so this fires only for it.
-        if (blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard)
-        {
-            blupi_.TriggerOneShotAnim(BlupiController::AnimState::DeposeSkate,
-                                       BlupiController::kDeposeSkateDuration);
-        }
-        blupi_.TriggerDismount();
-        auto& objects = worldRuntime_.GetMobileObjectsMutable();
         MobileObjSpec deposited;
         deposited.type = depositType;
         deposited.active = true;
         deposited.posStartX = deposited.posEndX = deposited.currentX = blupi_.GetX();
         deposited.posStartY = deposited.posEndY = deposited.currentY = blupi_.GetY();
         deposited.posStartZ = deposited.posEndZ = deposited.currentZ = blupi_.GetZ();
-        bool placed = false;
-        for (auto& slot : objects)
+        // Real DeposeSkate anim (plan.md BLUPI-091 gap, table_blupi ID 43, wired 2026-07-19) --
+        // Skateboard is the only vehicle with a dedicated dismount pose. Its board goes down on
+        // the clip's tick 12 (Decor.cpp:4527-4533); the others appear at once (ObjectStart in the
+        // same tick as the dismount).
+        if (blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard)
         {
-            if (!slot.active)
+            blupi_.TriggerOneShotAnim(BlupiController::AnimState::DeposeSkate,
+                                       BlupiController::kDeposeSkateDuration);
+            blupi_.TriggerDismount();
+            pendingSkate_ = {};
+            pendingSkate_.active = true;
+            pendingSkate_.take = false;
+            pendingSkate_.seconds = 12.0f / 20.0f;
+            pendingSkate_.deposit = deposited;
+            return;
+        }
+        blupi_.TriggerDismount();
+        PlaceMobileObject(worldRuntime_, deposited);
+    }
+
+    void GalaxyEggbertGame::WreckVehicle()
+    {
+        if (!blupi_.IsInVehicle())
+        {
+            return;
+        }
+        interaction_.SpawnWreck(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+        blupi_.TriggerDismount();
+        cameraShake_.Trigger(CameraShakeType::Small);
+        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+    }
+
+    void GalaxyEggbertGame::TickPendingSkate(float dt)
+    {
+        if (!pendingSkate_.active)
+        {
+            return;
+        }
+        pendingSkate_.seconds -= dt;
+        if (pendingSkate_.seconds > 0.0f)
+        {
+            return;
+        }
+        pendingSkate_.active = false;
+        auto& objects = worldRuntime_.GetMobileObjectsMutable();
+        if (pendingSkate_.take)
+        {
+            if (pendingSkate_.objectIndex < objects.size() &&
+                objects[pendingSkate_.objectIndex].type == GalaxyEggbert::Def::ObjectType::ObjectType24)
             {
-                slot = deposited;
-                placed = true;
-                break;
+                objects[pendingSkate_.objectIndex].active = false;
             }
         }
-        if (!placed)
+        else
         {
-            objects.push_back(deposited);
+            PlaceMobileObject(worldRuntime_, pendingSkate_.deposit);
         }
     }
 
@@ -1752,11 +1808,18 @@ namespace GalaxyEggbert::CNA
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel62);
                 break;
             case BlupiController::PickupFreezeKind::Charge:
+                // The clip's end gives the Cloud (Decor.cpp:3048-3057): already on after a
+                // pickup's contact, the cheat's only source (powercharge).
+                blupi_.TriggerCloud();
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel55);
                 break;
         }
-        interaction_.RespawnPickupItem(worldRuntime_, pendingPickupX_, pendingPickupY_, pendingPickupZ_,
-                                        pendingPickupType_);
+        // A cheat's clip had no pickup to put back (ObjectType0).
+        if (pendingPickupType_ != GalaxyEggbert::Def::ObjectType::ObjectType0)
+        {
+            interaction_.RespawnPickupItem(worldRuntime_, pendingPickupX_, pendingPickupY_, pendingPickupZ_,
+                                            pendingPickupType_);
+        }
     }
 
     GalaxyEggbertGame::ParkedVehicleDraw GalaxyEggbertGame::ParkedVehicleModel(
@@ -1849,6 +1912,75 @@ namespace GalaxyEggbert::CNA
             }
             default:
                 break;
+        }
+    }
+
+    void GalaxyEggbertGame::ApplyTypedCheat(GalaxyEggbert::Game::InputPad::TypedCheat cheat)
+    {
+        using TC = GalaxyEggbert::Game::InputPad::TypedCheat;
+        using VM = BlupiController::VehicleMode;
+        using GalaxyEggbert::Def::SoundChannel;
+        const auto vehicle = [this](VM mode)
+        {
+            blupi_.CheatVehicle(mode);
+        };
+        // Sucette/Charge/Drink without a pickup: the clip, then the power (ResolvePickupFreeze(),
+        // no item to put back).
+        const auto action = [this](BlupiController::PickupFreezeKind kind, SoundChannel sound)
+        {
+            blupi_.CheatClearForAction();
+            if (blupi_.TriggerPickupFreeze(kind))
+            {
+                sound_.Play(sound);
+                pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType0;
+            }
+        };
+        switch (cheat)
+        {
+            case TC::OpenDoors:
+                ApplyCheat(1);
+                interaction_.CheatAllKeys(); // InputPad.cpp:838-841
+                break;
+            case TC::CleanAll: ApplyCheat(7); break;
+            case TC::MegaBlupi: ApplyCheat(2); break;
+            case TC::LayEgg: ApplyCheat(4); break;
+            case TC::KillEgg: break; // no case in Decor::CheatAction
+            case TC::FunSkate: vehicle(VM::Skateboard); break;
+            case TC::GiveCopter: vehicle(VM::Helicopter); break;
+            case TC::JeepDrive: vehicle(VM::Jeep); break;
+            case TC::DriveTank: vehicle(VM::Tank); break;
+            case TC::IOvercraft: vehicle(VM::Overcraft); break;
+            case TC::AllTreasure: ApplyCheat(8); break;
+            case TC::EndGoal: ApplyCheat(9); break;
+            case TC::ShowSecret: ApplyCheat(3); break;
+            case TC::RoundShield:
+                sound_.Play(SoundChannel::SoundChannel42);
+                blupi_.CheatShield();
+                interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                break;
+            case TC::QuickLollipop:
+                action(BlupiController::PickupFreezeKind::Sucette, SoundChannel::SoundChannel50);
+                break;
+            case TC::PowerCharge:
+                action(BlupiController::PickupFreezeKind::Charge, SoundChannel::SoundChannel58);
+                break;
+            case TC::HideDrink:
+                action(BlupiController::PickupFreezeKind::Drink, SoundChannel::SoundChannel57);
+                break;
+            case TC::TenBombs:
+                interaction_.CheatSetPerso(10);
+                sound_.Play(SoundChannel::SoundChannel60);
+                break;
+            case TC::BirdLime: interaction_.CheatSetBullets(10); break;
+            case TC::UDynamite:
+                interaction_.CheatSetDynamite(1);
+                sound_.Play(SoundChannel::SoundChannel60);
+                break;
+            case TC::WeelKeys: interaction_.CheatAllKeys(); break;
+            case TC::Ghost:
+            case TC::Quick:
+            case TC::None:
+                break; // ghost and quick: handled by the caller
         }
     }
 
@@ -2021,6 +2153,7 @@ namespace GalaxyEggbert::CNA
                 // menu above, same "layered" idiom already established
                 // there.
                 const auto typedCheat = inputPad_.UpdateTypedGhostCheat(phaseKeys, /*isPlayPhase=*/true);
+                ApplyTypedCheat(typedCheat.cheat);
                 if (typedCheat.ghostTyped)
                 {
                     blupi_.ToggleGhost(worldRuntime_.GetWorld());
@@ -2642,10 +2775,7 @@ namespace GalaxyEggbert::CNA
                 !blupi_.IsDeathLocked() &&
                 GalaxyEggbert::BlockTypes::isWater(blupi_.GetBlockTypeAt(worldRuntime_.GetWorld())))
             {
-                interaction_.SpawnWreck(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-                blupi_.TriggerDismount();
-                cameraShake_.Trigger(CameraShakeType::Small);
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                WreckVehicle();
             }
             const bool canEnterWater = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased();
             const auto waterBlockAt = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
@@ -2701,6 +2831,15 @@ namespace GalaxyEggbert::CNA
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
+            TickPendingSkate(simDt);
+            // The helicopter flown into a ceiling is wrecked (Decor.cpp:5264-5283, OR-0019), unless
+            // the shield, the drink's Hide or SuperBlupi protect it.
+            if (blupi_.HelicopterHitsCeiling(worldRuntime_.GetWorld(), tempPassable) && !blupi_.IsDeathLocked() &&
+                !blupi_.IsTeleporting() && !blupi_.IsOneShotAnimPlaying() /* m_blupiFocus */ && blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Shield &&
+                blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Hide && !blupi_.GetCheatSuperBlupi())
+            {
+                WreckVehicle();
+            }
 
             // INFRA-002's behavioral-trace capture (plan.md §7) -- one line
             // per tick, POST-step so it reflects this frame's real result.
@@ -3160,13 +3299,12 @@ namespace GalaxyEggbert::CNA
             // action-button dismount uses) -- the bounce itself still
             // applies on the same contact, real source does not treat
             // these as mutually exclusive.
+            // The vehicle is wrecked there (an explosion, ObjectType9), not put down: BD-0015.
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
                 blupi_.IsInVehicle() && blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Shield &&
-                blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Hide)
+                blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Hide && !blupi_.GetCheatSuperBlupi())
             {
-                DismountAndDepositVehicle();
-                cameraShake_.Trigger(CameraShakeType::Small);
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                WreckVehicle();
             }
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
                 blupi_.TriggerSpringBounce(jumpPressed))
@@ -3295,6 +3433,10 @@ namespace GalaxyEggbert::CNA
             // marker AT my own position" -- mere contact, exactly as the
             // real 2D game and this engine's own pre-INFRA-005 (buggier)
             // collision both allowed by different, unrelated routes.
+            // Only while not already saying goodbye (Decor.cpp:5476 `m_blupiAction != Bye`): he still
+            // stands on the marker during the farewell, and returning here every frame skipped the
+            // rest of the update, the Bye clip's playback with it (OR-0002: the farewell froze).
+            if (!blupi_.IsBye())
             {
                 const auto groundBlock = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
                 if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
@@ -3634,9 +3776,14 @@ namespace GalaxyEggbert::CNA
                 // (`Decor::IsFloatingObject`) is NOT modeled.
                 if (blupi_.IsInVehicle())
                 {
-                    DismountAndDepositVehicle();
+                    // Only on the ground, off any lift, the helicopter and the overcraft on both feet,
+                    // the skateboard slow (OR-0020: Space in the air left the helicopter hanging).
+                    if (blupi_.CanLeaveVehicle(worldRuntime_.GetWorld(), interaction_.IsRidingLift(), tempPassable))
+                    {
+                        DismountAndDepositVehicle();
+                    }
                 }
-                else
+                else if (!pendingSkate_.active)
                 {
                     constexpr float kVehicleMountRadius = 1.1f;
                     for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
@@ -3661,6 +3808,15 @@ namespace GalaxyEggbert::CNA
                             {
                                 blupi_.TriggerOneShotAnim(BlupiController::AnimState::TakeSkate,
                                                            BlupiController::kTakeSkateDuration);
+                                // The board leaves the ground at TakeSkate's tick 8, when his hands
+                                // reach it (Decor.cpp:4510-4518; OR-0003).
+                                pendingSkate_ = {};
+                                pendingSkate_.active = true;
+                                pendingSkate_.take = true;
+                                pendingSkate_.seconds = 8.0f / 20.0f;
+                                pendingSkate_.objectIndex = static_cast<std::size_t>(
+                                    &obj - worldRuntime_.GetMobileObjectsMutable().data());
+                                break;
                             }
                             obj.active = false;
                             break;

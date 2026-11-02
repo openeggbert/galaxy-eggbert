@@ -49,8 +49,11 @@ until treasures = 7 max 200
 # Back west over the mines, into the hall, south through its passage into the crates' room; up
 # over the crates and the two walls onto the high shelf's treasures 8-9 (40, 93), (60, 93).
 go 92 50 tol 0 with lookup until y >= 21.2 max 300
-go 71 50 tol 0.3 max 900
-go 70 50 tol 0 with crouch until ground = 1 max 300
+go 72.5 50 tol 0.3 max 900
+# Down well before the hall's lintel (x 69-70, a cell lower): the helicopter drifts on a cell
+# after the stop, and drifting under the lintel's edge it meets its crash band
+# (Decor.cpp:5264-5283, OR-0019).
+go 73 50 tol 0 with crouch until ground = 1 max 300
 go 55 50
 go 50 58
 go 50 69

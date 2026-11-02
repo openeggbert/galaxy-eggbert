@@ -128,7 +128,7 @@ namespace GalaxyEggbert::Game
                 static const std::pair<const char*, Field> kFields[] = {
                     {"x", Field::X},         {"y", Field::Y},         {"z", Field::Z},
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mtick", Field::MissionTick}, {"mission", Field::Mission},
-                    {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite},
+                    {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite}, {"vehicle", Field::Vehicle},
                     {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp}, {"crush", Field::Crush},
                     {"phase", Field::Phase}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
@@ -336,6 +336,7 @@ namespace GalaxyEggbert::Game
         case Field::Lives: value = static_cast<float>(state.lives); break;
         case Field::Keys: value = static_cast<float>(state.keys); break;
         case Field::Dynamite: value = static_cast<float>(state.dynamite); break;
+        case Field::Vehicle: value = static_cast<float>(state.vehicle); break;
         case Field::Ground: value = state.onGround ? 1.0f : 0.0f; break;
         case Field::Dead: value = state.dead ? 1.0f : 0.0f; break;
         case Field::Exit: value = state.exitReached ? 1.0f : 0.0f; break;
@@ -382,6 +383,12 @@ namespace GalaxyEggbert::Game
         if (!havePrevious_ || state.mission != previous_.mission)
         {
             Write(state, "mission " + std::to_string(state.mission));
+        }
+        if (havePrevious_ && state.vehicle != previous_.vehicle)
+        {
+            static const char* const kVehicles[] = {"none", "helicopter", "jeep", "tank", "skateboard", "overcraft"};
+            Write(state, std::string("vehicle ") +
+                             (state.vehicle >= 0 && state.vehicle < 6 ? kVehicles[state.vehicle] : "?"));
         }
         if (havePrevious_ && (state.treasures != previous_.treasures || state.eggs != previous_.eggs ||
                               state.lives != previous_.lives || state.keys != previous_.keys ||

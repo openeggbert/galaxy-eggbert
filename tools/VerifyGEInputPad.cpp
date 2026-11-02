@@ -3,6 +3,8 @@
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
 #include <iostream>
+#include <string>
+#include <utility>
 
 // Scripted, non-interactive verification of InputPad (2026-07-13,
 // plan.md MENU-021..027/028..039) -- proves the on-screen D-pad/Jump/
@@ -551,6 +553,44 @@ int main()
             (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
         }
         check(anyQuick, "Typed cheat: typing \"quick\" letter by letter fires quickTyped exactly once");
+    }
+    {
+        // OR-0007: the original's whole word table (InputPad.cpp:715-741), each word firing its cheat.
+        using Keys = Microsoft::Xna::Framework::Input::Keys;
+        using KeyboardState = Microsoft::Xna::Framework::Input::KeyboardState;
+        using TC = InputPad::TypedCheat;
+        const auto type = [](InputPad& pad, const std::string& word)
+        {
+            TC fired = TC::None;
+            int firings = 0;
+            for (const char c : word)
+            {
+                const auto key = static_cast<Keys>(static_cast<int>(Keys::A) + (c - 'a'));
+                const auto result = pad.UpdateTypedGhostCheat(KeyboardState{key}, true);
+                if (result.cheat != TC::None)
+                {
+                    fired = result.cheat;
+                    ++firings;
+                }
+                (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
+            }
+            return std::make_pair(fired, firings);
+        };
+        int count = 0;
+        const auto* words = InputPad::TypedCheatWords(count);
+        bool all = count == 23;
+        for (int i = 0; i < count; ++i)
+        {
+            InputPad pad;
+            const auto [fired, firings] = type(pad, words[i].word);
+            const bool quickInside = words[i].cheat == TC::QuickLollipop; // "quick" fires on the way
+            all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
+        }
+        check(all, "Typed cheats: each of the original's 21 words and ghost/quick fires its own cheat");
+        InputPad pad;
+        check(type(pad, "givecopter").first == TC::GiveCopter && type(pad, "copter").first == TC::None,
+              "Typed cheats: givecopter fires; the buffer is cleared after a word (\"copter\" alone is nothing)");
+        check(type(pad, "xxjeepdrive").first == TC::JeepDrive, "Typed cheats: a word after other letters still fires");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

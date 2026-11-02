@@ -11,6 +11,7 @@
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
 #include <array>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -410,35 +411,57 @@ namespace GalaxyEggbert::Game
         void DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                            int viewportW, int viewportH);
 
-        // Real SECOND, independent cheat-entry method (confirmed via a
-        // direct read of `InputPad.cpp:686-753`, plan.md BLUPI-111) --
-        // distinct from the on-screen button-glyph cheat menu above
-        // (UpdateCheatGesture/UpdateCheatMenu), which only reaches a
-        // handful of cheats. Real mechanism: a rolling lowercase-letter
-        // buffer (A-Z keys, capped at 32 chars, oldest dropped), built
-        // ONLY during real `Phase::Play`, appending on each key's
-        // down-edge (not held-repeat). Each real cheat name is matched
-        // against the buffer's own SUFFIX (not a full-buffer-reset
-        // match), so typing "...ghost" anywhere fires it without needing
-        // to clear the buffer first. "ghost" and "quick" are wired here
-        // (plan.md BLUPI-111, SCORE-009/010/011's game-speed follow-up,
-        // added 2026-07-20) -- the real table has ~26 entries total (most
-        // of the already-implemented CHEAT-001..009 plus several requiring
-        // features this engine doesn't have yet, e.g. Debug overlay/Zoom
-        // levels) -- extending this to more names is a real, faithful, but
-        // separate task each time (needs its own verification pass per
-        // name, same as every other secret power/cheat this session), not
-        // a blind mass-port. Both share the SAME rolling buffer (real
-        // source's own `cheatEntries[]` loop checks all known suffixes
-        // against one shared buffer too, not a separate buffer per cheat).
+        // The original's second cheat entry (`InputPad.cpp:686-860`): a rolling lowercase-letter
+        // buffer (A-Z down-edges, capped at 32, oldest dropped), built only in Play; a cheat fires
+        // when the buffer ENDS with its word, and the buffer is then cleared. The words and what
+        // each does are the original's `cheatEntries[]` (the desktop words of the C++ port,
+        // OR-0007: "givecopter" and the rest did nothing in Galaxy, which knew only "ghost" and
+        // "quick"). `buildofficialmissions` (a world-building switch) is not a player cheat here;
+        // `debug`, `zoom` and `cheats` (the port's MODERN extras for its 2D view) have no
+        // counterpart. "killegg" is in the original's list but `Decor::CheatAction` has no case
+        // for it: it does nothing there either.
+        enum class TypedCheat : std::uint8_t
+        {
+            None,
+            OpenDoors,    // "opendoors": doors toggle (and every key, InputPad.cpp:838-841)
+            CleanAll,     // "cleanall"
+            MegaBlupi,    // "megablupi": SuperBlupi
+            LayEgg,       // "layegg": nine lives
+            KillEgg,      // "killegg": no effect (no case in Decor::CheatAction)
+            FunSkate,     // "funskate": on the skateboard
+            GiveCopter,   // "givecopter": in the helicopter
+            JeepDrive,    // "jeepdrive": in the jeep
+            AllTreasure,  // "alltreasure"
+            EndGoal,      // "endgoal"
+            ShowSecret,   // "showsecret"
+            RoundShield,  // "roundshield": the shield
+            QuickLollipop, // "quicklollypop" (sic): the lollipop's Power
+            TenBombs,     // "tenbombs": ten bombs (m_blupiPerso = 10)
+            BirdLime,     // "birdlime": ten glue shots (m_blupiBullet = 10)
+            DriveTank,    // "drivetank": in the tank
+            PowerCharge,  // "powercharge": the charge's Cloud
+            HideDrink,    // "hidedrink": the drink's Hide
+            IOvercraft,   // "iovercraft": on the overcraft
+            UDynamite,    // "udynamite": one dynamite stick
+            WeelKeys,     // "weelkeys" (sic): every key
+            Ghost,        // "ghost" (MODERN): walk through walls
+            Quick,        // "quick" (MODERN): F7/F8 unlocked
+        };
         struct TypedCheatResult
         {
             bool ghostTyped = false;
             bool quickTyped = false;
+            // The cheat whose word was completed this call (one-shot), None otherwise.
+            TypedCheat cheat = TypedCheat::None;
         };
-        // Each flag is true for exactly the one Update() call where that
-        // word was just completed (one-shot signal, same idiom as this
-        // class's edge-triggered button presses) -- both always false
+        // The word table, in the original's order (`InputPad.cpp:715-741`).
+        struct TypedCheatWord
+        {
+            const char* word;
+            TypedCheat cheat;
+        };
+        [[nodiscard]] static const TypedCheatWord* TypedCheatWords(int& count) noexcept;
+        // Each result is set for exactly the one call where its word was completed; always empty
         // outside Play.
         [[nodiscard]] TypedCheatResult UpdateTypedGhostCheat(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept;

@@ -1572,6 +1572,37 @@ namespace GalaxyEggbert::Game
         return pressedCheat;
     }
 
+    const InputPad::TypedCheatWord* InputPad::TypedCheatWords(int& count) noexcept
+    {
+        static constexpr TypedCheatWord kWords[] = {
+            {"opendoors", TypedCheat::OpenDoors},
+            {"cleanall", TypedCheat::CleanAll},
+            {"megablupi", TypedCheat::MegaBlupi},
+            {"layegg", TypedCheat::LayEgg},
+            {"killegg", TypedCheat::KillEgg},
+            {"funskate", TypedCheat::FunSkate},
+            {"givecopter", TypedCheat::GiveCopter},
+            {"jeepdrive", TypedCheat::JeepDrive},
+            {"alltreasure", TypedCheat::AllTreasure},
+            {"endgoal", TypedCheat::EndGoal},
+            {"showsecret", TypedCheat::ShowSecret},
+            {"roundshield", TypedCheat::RoundShield},
+            {"quicklollypop", TypedCheat::QuickLollipop},
+            {"tenbombs", TypedCheat::TenBombs},
+            {"birdlime", TypedCheat::BirdLime},
+            {"drivetank", TypedCheat::DriveTank},
+            {"powercharge", TypedCheat::PowerCharge},
+            {"hidedrink", TypedCheat::HideDrink},
+            {"iovercraft", TypedCheat::IOvercraft},
+            {"udynamite", TypedCheat::UDynamite},
+            {"weelkeys", TypedCheat::WeelKeys},
+            {"quick", TypedCheat::Quick},
+            {"ghost", TypedCheat::Ghost},
+        };
+        count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
+        return kWords;
+    }
+
     InputPad::TypedCheatResult InputPad::UpdateTypedGhostCheat(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept
     {
@@ -1600,17 +1631,26 @@ namespace GalaxyEggbert::Game
                     typedCheatBuffer_ = typedCheatBuffer_.substr(typedCheatBuffer_.size() - 32);
                 }
 
-                static const std::string kGhostName = "ghost";
-                if (typedCheatBuffer_.size() >= kGhostName.size() &&
-                    typedCheatBuffer_.substr(typedCheatBuffer_.size() - kGhostName.size()) == kGhostName)
+                int count = 0;
+                const TypedCheatWord* words = TypedCheatWords(count);
+                for (int ci = 0; ci < count; ++ci)
                 {
-                    result.ghostTyped = true;
-                }
-                static const std::string kQuickName = "quick";
-                if (typedCheatBuffer_.size() >= kQuickName.size() &&
-                    typedCheatBuffer_.substr(typedCheatBuffer_.size() - kQuickName.size()) == kQuickName)
-                {
-                    result.quickTyped = true;
+                    const std::string name = words[ci].word;
+                    if (typedCheatBuffer_.size() >= name.size() &&
+                        typedCheatBuffer_.compare(typedCheatBuffer_.size() - name.size(), name.size(), name) == 0)
+                    {
+                        result.cheat = words[ci].cheat;
+                        result.ghostTyped = result.cheat == TypedCheat::Ghost;
+                        result.quickTyped = result.cheat == TypedCheat::Quick;
+                        // The original clears the buffer after every word; after "quick" that made
+                        // "quicklollypop" impossible to type in the port's MODERN build (its first
+                        // five letters fire "quick"). Kept here so both words work.
+                        if (result.cheat != TypedCheat::Quick)
+                        {
+                            typedCheatBuffer_.clear();
+                        }
+                        break;
+                    }
                 }
             }
             letterKeyWasDown_[li] = down;

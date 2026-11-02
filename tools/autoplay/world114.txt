@@ -87,6 +87,8 @@ until keys = 1 max 200
 # green door (z 41) to the pool's bank (walk 20, z 29).
 go 28 50.5 max 900
 go 32 50 max 300
+# The board glides on; it is left only below 8 px a tick (Decor.cpp:4499, OR-0020).
+wait 40
 hold 2 action
 wait 20
 go 43 50

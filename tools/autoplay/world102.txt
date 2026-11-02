@@ -13,7 +13,10 @@ go 12 14.2 tol 0.15
 hold 2 action
 wait 20
 go 21 12 max 600
-go 37 12 max 900
+go 35 12 max 900
+# The board glides on; it is left only below 8 px a tick and not on the lift it would glide
+# onto from x 37 (Decor.cpp:4499, OR-0020).
+wait 40
 hold 2 action
 wait 20
 # The lift (2 x 2 at x 39-40, z 11-12) up out of the pit to walk 28; west over the caterpillars

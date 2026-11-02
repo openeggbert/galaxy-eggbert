@@ -422,13 +422,28 @@ namespace GalaxyEggbert::CNA
         // `ResolvePendingVoyage()` above.
         void ResolveDeathLock();
 
-        // Forces Blupi off whatever vehicle he's currently riding and deposits the matching real
-        // pickup back into the world at his position (real "deposits vehicle pickup back into
-        // the world" behavior) -- shared by the voluntary action-button dismount and the real
-        // spring-forces-a-dismount case (`Decor.cpp:2837-2893`, found 2026-07-16). A no-op if not
-        // currently in a vehicle. Does NOT play any sound itself -- callers differ on which real
-        // sound applies (or none).
+        // Takes Blupi off the vehicle he rides with the action button and puts its pickup back
+        // into the world where he is. The skateboard goes down 12 ticks into DeposeSkate, as the
+        // original's (Decor.cpp:4527-4533): until then it is in his hands (OR-0003). A no-op if
+        // not in a vehicle; plays no sound.
         void DismountAndDepositVehicle();
+        // The vehicle he rides is wrecked: gone, an explosion (ObjectType9), a small shake, sound
+        // 10 -- water (Decor.cpp:5415-5435), a spring (2835-2893) and the helicopter's ceiling
+        // (5264-5283).
+        void WreckVehicle();
+        // The skateboard on its way between the ground and his hands (OR-0003): put down at
+        // TakeSkate's tick 8 is when the original deletes the board from the ground
+        // (Decor.cpp:4510-4518), DeposeSkate's tick 12 when it starts it there.
+        struct PendingSkate
+        {
+            bool active = false;
+            bool take = false;        // true: delete `objectIndex`; false: place `deposit`
+            float seconds = 0.0f;     // until it happens
+            std::size_t objectIndex = 0;
+            GalaxyEggbert::Game::MobileObjSpec deposit;
+        };
+        PendingSkate pendingSkate_;
+        void TickPendingSkate(float dt);
 
         // Hub/mission-progression system (plan.md `MENU-035`/`036`,
         // `SCORE-013`-`019`, found/implemented 2026-07-17). Rebuilds
@@ -546,6 +561,9 @@ namespace GalaxyEggbert::CNA
         // (ObjectType12) whose icon is not 32-34 (Decor.cpp:896); Galaxy's crates are 3D models
         // without that icon field, so that half is not reproduced.
         void ApplyCheat(int cheatNumber);
+        // The original's typed cheats (InputPad::TypedCheat; `Decor::CheatAction` for each word,
+        // OR-0007); the menu's nine go through ApplyCheat().
+        void ApplyTypedCheat(GalaxyEggbert::Game::InputPad::TypedCheat cheat);
         GalaxyEggbert::Def::GamePhase phase_ = GalaxyEggbert::Def::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;

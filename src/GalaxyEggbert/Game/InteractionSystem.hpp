@@ -3,6 +3,7 @@
 #include "Sound.hpp"
 #include "WorldRuntime.hpp"
 
+#include <algorithm>
 #include <array>
 #include <functional>
 #include <random>
@@ -645,6 +646,18 @@ namespace GalaxyEggbert::Game
         // SaveData, since this engine has no `GameData`-style per-gamer
         // slot to read lives from directly.
         void SetLives(int lives) noexcept { lives_ = lives; }
+        // The typed cheats' inventory (Decor::CheatAction, OR-0007): tenbombs m_blupiPerso = 10,
+        // birdlime m_blupiBullet = 10, udynamite m_blupiDynamite = 1, weelkeys (and opendoors)
+        // every key.
+        void CheatSetPerso(int count) noexcept { persoCount_ = count; }
+        void CheatSetBullets(int count) noexcept { bulletCount_ = count; }
+        void CheatSetDynamite(int count) noexcept { dynamiteCount_ = count; }
+        void CheatAllKeys() noexcept
+        {
+            keys1_ = std::max(keys1_, 1);
+            keys2_ = std::max(keys2_, 1);
+            keys3_ = std::max(keys3_, 1);
+        }
         // Diagnostic only: real DoorsLost() (Decor.cpp:11716) resets
         // m_nbVies back to 3 on game-over rather than a permanent
         // depletion -- this counter is how a caller/verification tool can

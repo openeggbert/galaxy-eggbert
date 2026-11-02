@@ -92,6 +92,9 @@ until treasures = 6 max 200
 hold 12 lookup
 wait 30
 go 72.5 46.5 tol 0.3
+# Down into the tube's mouth first: flown in at hover height, each lower step of its ceiling
+# meets the helicopter's crash band (7 px over his head, Decor.cpp:5264-5283, OR-0019).
+hold 60 crouch
 go 61 61 tol 0.4 with crouch
 go 58 63 tol 0.3 with crouch
 until ground = 1 max 200
@@ -125,7 +128,9 @@ expect y >= 46.2
 # The dome: treasure 10 on the ledge six high (walk 52), treasure 11 on the ledge four high
 # (walk 50), the egg on its floor.
 go 47 61 tol 0.3
-hold 125 lookup
+# Not up to the dome's ceiling: over the ledge's edge it is a cell lower (y 54), and the climb's
+# drift there met the helicopter's crash band (OR-0019; 100-120 pass, autoplay_search).
+hold 110 lookup
 wait 60
 go 44.4 64.4 tol 0.3
 hold 60 crouch

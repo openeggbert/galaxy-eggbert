@@ -88,6 +88,8 @@ go 42.1 62 tol 0.15
 hold 2 action
 wait 30
 go 62 62
+# The board glides on; it is left only below 8 px a tick (Decor.cpp:4499, OR-0020).
+wait 40
 hold 2 action
 wait 30
 # The hall: a stick from the depot (walk 12), put down beside the plug of crates over the

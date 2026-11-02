@@ -6,8 +6,10 @@ expect mission = 125
 go 17.3 49
 hold 2 action
 wait 30
-# Up above the corridor's tube (its top walk 26), the pool and every patrol (the bird at 28).
-go 20 49 tol 0 with lookup until y >= 35 max 900
+# Up above the corridor's tube (its top walk 26), the pool and every patrol (the bird at 28),
+# clear of the tube's edge (x 21, y 24): under it the climb meets the helicopter's crash band
+# (Decor.cpp:5264-5283, OR-0019).
+go 19 49 tol 0 with lookup until y >= 35 max 900
 # East over the cave to above the key's pillar (86, 50), then straight down onto the key: the
 # bobbing mines stand at least 2.8 from it.
 go 86 50 tol 0.2 max 1800

@@ -383,6 +383,48 @@ namespace GalaxyEggbert::Game
                !IsPointSolid(world, x, y + kHeadHeight, z, tempPassable);
     }
 
+    bool BlupiController::CanLeaveVehicle(const Worlds::World& world, bool ridingLift, bool tempPassable) const
+    {
+        if (!IsInVehicle() || !m_onGround || ridingLift)
+        {
+            return false;
+        }
+        if (m_vehicleMode == VehicleMode::Helicopter || m_vehicleMode == VehicleMode::Overcraft)
+        {
+            // The probes at x + 20..22 and x + 38..40 of his 60 px box: 9 px either side.
+            constexpr float kProbe = 9.0f / 64.0f;
+            const float fx = std::sin(m_yaw);
+            const float fz = -std::cos(m_yaw);
+            return IsPointSolid(world, m_x + fx * kProbe, m_y - 0.05f, m_z + fz * kProbe, tempPassable, false) &&
+                   IsPointSolid(world, m_x - fx * kProbe, m_y - 0.05f, m_z - fz * kProbe, tempPassable, false);
+        }
+        if (m_vehicleMode == VehicleMode::Skateboard)
+        {
+            // m_blupiVitesseX < 8 (px a 20 Hz tick); the original's sign test is its screen's
+            // left/right, read here as the speed either way.
+            constexpr float kSkateLeaveSpeed = 8.0f * 20.0f / 64.0f;
+            return std::fabs(m_vehicleSpeed) < kSkateLeaveSpeed;
+        }
+        return true;
+    }
+
+    bool BlupiController::HelicopterHitsCeiling(const Worlds::World& world, bool tempPassable) const
+    {
+        if (m_vehicleMode != VehicleMode::Helicopter)
+        {
+            return false;
+        }
+        const float probeY = m_y + kHelicoCrashBandTop;
+        // m_blupiPos.Y > 2: not against the world's top edge.
+        if (probeY >= static_cast<float>(world.blocksPerAxis()))
+        {
+            return false;
+        }
+        // The blocks' quarter-cell masks, as DecorDetect's and his own horizontal collision: a
+        // whole-cell test caught him where a mask let him in sideways (043's dome, the playthrough).
+        return IsPointSolid(world, m_x, probeY, m_z, tempPassable, true);
+    }
+
     bool BlupiController::CanStandAt(const Worlds::World& world, float x, float y, float z, bool tempPassable)
     {
         return !IsPointSolid(world, x, y + 0.05f, z, tempPassable) &&
@@ -841,6 +883,40 @@ namespace GalaxyEggbert::Game
         }
         m_vehicleMode = VehicleMode::None;
         m_vehicleSpeed = 0.0f;
+    }
+
+    void BlupiController::CheatVehicle(VehicleMode mode) noexcept
+    {
+        m_vehicleMode = mode;
+        m_vehicleSpeed = 0.0f;
+        m_nage = false;
+        m_surf = false;
+        m_suspended = false;
+        if ((mode == VehicleMode::Jeep || mode == VehicleMode::Tank) &&
+            (m_secretPower == GalaxyEggbert::Def::SecretPower::Cloud ||
+             m_secretPower == GalaxyEggbert::Def::SecretPower::Hide))
+        {
+            m_secretPower = GalaxyEggbert::Def::SecretPower::None;
+            m_secretPowerLevel = 0;
+            m_secretPowerTimer = 0.0f;
+        }
+    }
+
+    void BlupiController::CheatShield() noexcept
+    {
+        m_secretPower = GalaxyEggbert::Def::SecretPower::Shield;
+        m_secretPowerLevel = kSecretPowerMax;
+        m_secretPowerTimer = 0.0f;
+    }
+
+    void BlupiController::CheatClearForAction() noexcept
+    {
+        m_vehicleMode = VehicleMode::None;
+        m_vehicleSpeed = 0.0f;
+        m_secretPower = GalaxyEggbert::Def::SecretPower::None;
+        m_secretPowerLevel = 0;
+        m_secretPowerTimer = 0.0f;
+        m_jumpAieArmed = false;
     }
 
     bool BlupiController::ToggleGhost(const Worlds::World& world) noexcept
@@ -2162,7 +2238,12 @@ namespace GalaxyEggbert::Game
         // ACTION_AIRSKATE, table_blupi actions 40/41), wired 2026-07-19 --
         // the only vehicle mode with a distinct airborne icon pair, mirroring
         // the base Jump/Air ascending-vs-falling split below.
-        const auto vehicleAnimState = [this, moving]() -> AnimState
+        // On a lift (the caller's SetRidingLift, the original's m_blupiTransport) and not rising,
+        // he stands for his clip: the lift is no ground to this step, which ends a frame's fall
+        // below it before RideLift() puts him back, and played Air while he rode (OR-0018). Only
+        // the clip: the riding itself stays as it is (D52-D57).
+        const bool standsForClip = m_onGround || (m_ridingLift && m_velocityY <= 0.0f);
+        const auto vehicleAnimState = [this, moving, standsForClip]() -> AnimState
         {
             switch (m_vehicleMode)
             {
@@ -2170,7 +2251,7 @@ namespace GalaxyEggbert::Game
                 case VehicleMode::Jeep:       return moving ? AnimState::MarchJeep   : AnimState::StopJeep;
                 case VehicleMode::Tank:       return moving ? AnimState::MarchTank   : AnimState::StopTank;
                 case VehicleMode::Skateboard:
-                    if (!m_onGround)
+                    if (!standsForClip)
                     {
                         return m_velocityY > 0.0f ? AnimState::JumpSkate : AnimState::AirSkate;
                     }
@@ -2205,12 +2286,12 @@ namespace GalaxyEggbert::Game
                                   : IsInVehicle() ? vehicleAnimState()
                                   : pushingCrate  ? AnimState::Push
                                   : holdingCrate  ? (moving ? AnimState::Pop : AnimState::StopPop)
-                                  : m_turning && m_onGround && !moving ? AnimState::Turn
+                                  : m_turning && standsForClip && !moving ? AnimState::Turn
                                   : m_recedeTimer > 0.0f ? AnimState::Recede
                                   : m_vertigoTimer > 0.0f ? AnimState::Vertigo
                                   : m_mockeryActive ? m_mockeryVariant
                                   : m_reactionTimer > 0.0f ? m_reaction
-                                  : !m_onGround   ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
+                                  : !standsForClip ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
                                   : lookUpHeld    ? AnimState::Up
                                   : moving        ? AnimState::March

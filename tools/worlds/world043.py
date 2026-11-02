@@ -115,7 +115,10 @@ def flight(w: World, rng: random.Random):
     w.set(62, 27, 69, 248)
     w.place(O.TREASURE, 62, 28, 69)
     # The chimney up from chamber 2's west side to the dome, a niche halfway with treasure 9.
-    shaft(w, 50, 62, 24, 46, 2.2)
+    # Up to y 49, open into the dome's height: capped flush with the dome floor (46), the
+    # helicopter had to stop rising within 8 px to fly out without its crash band touching the
+    # cap (Decor.cpp:5264-5283, OR-0019; found by the playthrough, LV-0041).
+    shaft(w, 50, 62, 24, 49, 2.2)
     tube(w, (53, 26, 63), (50, 26, 62), 1.8)                             # its foot from chamber 2
     tube(w, (50, 36, 63), (50, 36, 68), 1.3)                             # the niche
     w.set(50, 35, 68, 247)
