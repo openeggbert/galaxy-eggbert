@@ -64,7 +64,7 @@ Machine checks pass for each (tests, playthroughs, measured windows); only a per
   from low angles too. Before/after images: `plans/evidence/lava-before-after.png`,
   `fan-before-after.png`.
 
-## MR-0005 — the original editor's auto-tiling in 3D (ED-0007) — OPEN
+## MR-0005 — the original editor's auto-tiling in 3D (ED-0007) — DECIDED 2026-11-02
 
 - The original's editor re-tiles a placed cell and its four neighbours by which of them are
   "borders" (below, above, right, left), choosing each family's variant from
@@ -75,4 +75,17 @@ Machine checks pass for each (tests, playthroughs, measured windows); only a per
   bordered), so a block's top and underside variants follow what is over and under it, as the
   bar's mounts already do at draw time; keep every placed icon otherwise. Alternative: leave
   placement as is (today), the owner choosing variants by cycling (ED-0001).
+- Owner's decision (2026-11-02, asked interactively): **fully, horizontal too** -- right and left
+  are read from both X and Z (a side counts as bordered when a neighbour on either axis is), so
+  placing or removing a cell re-tiles it and its neighbours on all four horizontal sides and above
+  and below. Chosen over the vertical-only proposal and over leaving placement as is.
 
+
+## MR-0006 — decisions taken interactively on 2026-11-02
+
+- World signs 174-181 (VIS-0175..0182): **the 3D model from `Decor/world1.rd4` with the digit** --
+  the digit cut from the original sign sprite and put on the model's face as a decal (the scene
+  itself has none: they were painted on the renders).
+- OR-0006 (lifts too fast): the owner has not tried the 2026-11-01 build yet; stays FIXED (to
+  confirm).
+- Next priority: Wave E, the per-world reviews of genuine 3D playability and fidelity.

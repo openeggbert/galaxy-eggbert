@@ -78,7 +78,12 @@ ledgers before repeating any discovery. Where it stands:
   bar jump-off 35, hanging fidget 36, idle taps 37, crate grip 39), as `BlupiController`
   events. Hanging Blupi has his clips now (StopSuspend/MarchSuspend from `suspendu*.rd4`, only
   those two exported into `avatars3d/blupi/`; a full re-export would also change Hide and
-  StopTank -- converter drift to look at first), and the 10-tick JumpSuspend wind-up before he
+  StopTank -- converter drift to look at first; checked 2026-11-02: the converters of 048c4c0
+  and of today build a byte-identical `blupi.glb`, so the day's converter changes (planar caps,
+  baked texture repeats) do not touch Blupi; the shipped library differs from any full export in
+  ~10 clips (Stop, Mockery(i), Ouf4, Charge, Switch, Teleporting, Vertigo, Hide, StopTank) and
+  holds one face more (`face_18abc13655.png`), being assembled clip by clip from builds of
+  different days: do not export the whole library blind, compare clip by clip), and the 10-tick JumpSuspend wind-up before he
   lets go of a bar (bars in 064 065 066 071 074 075 083 084).
 - Done: BD-0019, the head shake (Non) when the action button has nothing to do: the host's
   `actionUsed` collects every use of the press; BD-0020, Advance: the void behind him, he steps
@@ -124,6 +129,10 @@ ledgers before repeating any discovery. Where it stands:
   (`grotte01-19.rd4`, 0.81-0.91; ~6,000 cells). The switch 384/385 (`interrupteur.rd4`, outline
   1.000): its scene does not swap the lamps (385's sprite has them recoloured: `recolour=`), and
   most switches sit in walls, where the pillar box's four faces still suit.
+- Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
+  the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
+  174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
+  tried yet by the owner; next priority **Wave E** (per-world reviews).
 - Done 2026-11-02 (Wave C): BD-0026 (an exit checked every 51 ticks while he stands on it, the
   original's `m_goalPhase`: the last treasure landing while he is on it wins), BD-0027 (no
   dynamite or decoy put down on a lift, `m_blupiTransport`); matching after review: the
