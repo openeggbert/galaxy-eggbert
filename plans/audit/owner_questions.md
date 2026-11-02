@@ -28,6 +28,15 @@ asked for a clay texture on top. `Decor/terre.tif` (a clay texture) exists but n
 Options: (a) map `terre.tif` onto the bridge model's top (recommended), (b) leave the scene's
 colour. Meanwhile: the scene's colour.
 
+### Q-004 — The terrain tiles as their Ray Dream models?
+
+`plans/audit/model_sources.md`: 129 scenes are the terrain tiles (rock, cave, wood, techno,
+slime, cheese, toys, houses, pipes, grass). Galaxy draws them as cubes textured with their sprite,
+so that neighbours join into floors and walls; their scenes are lumpy blocks that would leave gaps
+and seams between cells and cost far more to draw. Options: (a) keep the textured cubes (the
+recommendation; the sprites are those renders), (b) models for the free-standing pieces only
+(pillars, pipes' ends), (c) every tile as its model. Meanwhile: (a).
+
 ## Answered
 
 ### Q-000 — Wind and fans along Z (2026-11-02)

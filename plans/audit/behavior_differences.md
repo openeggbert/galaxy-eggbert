@@ -557,3 +557,15 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Also: the original's squash ends any vehicle (lost), the balloon, swim, surf, the bar and the
   secret powers (Decor.cpp:5556-5573); Galaxy's `TriggerCrush` only squashed. Now as the original
   (045's corridor can be crossed in the helicopter on the ground).
+
+## BD-0033 — the slime drip read as a floor and drawn still (gameplay, render) — REPRODUCED_DEFECT
+
+- Original (`Decor::IsGoutte`, Decor.cpp:7220-7240, 5513; the draw at 1041): the drip 404 is a
+  tile of a ceiling row; Blupi dies when his own cell is the drip's (his centre 15-49 px into it),
+  whatever its frame; it is drawn through `table_decor_goutte` (404-410 and gaps, 48 steps of 2
+  ticks, each cell's phase offset by `i * 13 + j * 7`).
+- Galaxy: the drip is a ground hazard (`GetGroundBlockType() == Drip`, standing on it) and has no
+  animation (`BlockDefinitionRegistry` sets none): a still drop.
+- To do (next): the drip as the crusher was (BD-0032): detection in his own cell, the tile
+  passable where it hangs, `goutte01-04.rds` as its model frame by frame, the worlds with drips
+  (062, 066) replayed.
