@@ -34,9 +34,12 @@ OBJECTS = {
     31: "charge", 40: "invert", 55: "dynamite", 200: "Blupi", 201: "Blupi", 202: "Blupi",
     203: "Blupi", 53: "tentacle",
 }
-# Signature tiles (include/GalaxyEggbert/BlockTypes.hpp and the anim groups it names).
+# Signature tiles (include/GalaxyEggbert/BlockTypes.hpp and the anim groups it names). Spikes are
+# 373 alone: the map stores the trap as 373 and only its drawing cycles 347/373/374
+# (Decor.cpp:1032, table_decor_piege1/2); 347 in a map is a plain slime tile, swapped with 362 by
+# the auto-tiling (Decor.cpp:10786), and counting it reported slime as spikes (010, 199).
 TILES = [
-    ("lava", range(68, 73)), ("spikes", (347, 373, 374)), ("crusher", range(317, 324)),
+    ("lava", range(68, 73)), ("spikes", (373,)), ("crusher", range(317, 324)),
     ("saw", range(378, 384)), ("drip", (404,)), ("water", tuple(range(92, 100))),
     ("spring", (211,)), ("fan", range(126, 138)), ("blitz", (304, 305)),
     ("teleport", range(330, 334)), ("switch", (384, 385)), ("bridge", (364,)),
