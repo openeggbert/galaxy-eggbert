@@ -112,6 +112,13 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   names (`shading.ascii_name`: "Cône" -> "Cone"), 2026-10-24.
 - **Fix upstream (suggested):** read those fields with `ParseJson` (or decode escapes in
   `ExtractJsonStringField`), or have `convert_avatar.py` write `ensure_ascii=False`.
+- **Status: fixed** in libcna/cna `next` `4bfe6a740` (2026-11-02; local commit, not pushed yet,
+  pushes are the CNA owner's decision). The `.skinnedmodel.json` reader parses the whole manifest
+  with `ParseJson` and reads every field (`skeleton`, part `name`/`vertices`/`indices`/`texture`,
+  animation `name`/`clip`) decoded; a malformed manifest now raises `ContentLoadException`.
+  CNA's `ContentManagerSkinnedModelTest.EscapedNonAsciiPartNamesAndFilesAreDecoded` loads a part
+  spelled `"Cône"` from `Cône.verts.bin`. Not re-verified here with a real avatar yet, so the
+  ASCII-name workaround stays; it can go once CI pins a CNA that contains the fix.
 
 ## UB-005 — cna-engine: `AddPlate` and `AddCrossedPlates` draw their region upside down, one side mirrored
 
