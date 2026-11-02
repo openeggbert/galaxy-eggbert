@@ -213,7 +213,12 @@ ledgers before repeating any discovery. Where it stands:
   helicopter parked at the well's foot then could not be boarded again (LV-0027, open). Web build
   refreshed (`CURRENT.md`). Rods are `ROD = 202` at the walk over a drop
   (`go ... max 600` crosses them in a script); levelcheck stages put a floor under them.
-- Next: the glue death (Q-006), the lightning bolt and grass (Q-001/Q-002)
+- Done after (2026-11-02, late night): a full 78-world regression run passed after all of the
+  above; the inventory's spikes are icon 373 alone (`f27de41`: 347 is slime); **the glue death in
+  3D** (`433b01d`): `glu.rd4` holds only a yellow Blupi, the sprites' green was added afterwards,
+  so the converter's new `texrecolour` turns its yellow (texture skin too) green, and the game
+  lays his flattened model under it as the puddle (strands not drawn; Q-006 updated).
+- Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
   `plans/audit/lesson_inventory.md` (bars of 046/052/061/125, lava, water, teleporters of 105,
   199's many); a full 78-world regression run after these world changes.
