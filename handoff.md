@@ -200,8 +200,8 @@ ledgers before repeating any discovery. Where it stands:
   (mission 995: lightning spawn 50,1,42,90; spikes 50,1,44,90; drip/conveyor/switch 50,1,48,90;
   bridge 44,1,56,90). Note for qa_live: a mine kills by a coin flip (Clear1 or the angel); the
   lightning is always Clear1; only spike 373 kills (347/374 are its animation). Measure a
-  model's size at its frame-0 pose (`$CLAUDE_JOB_DIR`-style helper: skin the glb by its clip),
-  not from the accessor bounds: the bridge's bind pose sat 0.109 off.
+  model's size at its frame-0 pose (`tools/rd4_to_gltf/posed_bounds.py`), not from the accessor
+  bounds: the bridge's bind pose sat 0.109 off.
 - Next: the conveyor lifts 47/48 (textured cubes) as the chenille model; the column 375 from
   `Decor/smooth/colonne1.a3d`; the glue death (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: 084's five crushers (gates in
