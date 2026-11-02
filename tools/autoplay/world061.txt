@@ -108,7 +108,8 @@ until ground = 1 max 300
 expect y <= 25.05
 # Through the door "4" in E's south side onto the ledge over the lava hall H, down into it
 # (walk 15): its three eggs (z 46), over the first lava trench (z 48) in a jump, across the second
-# (z 52-53) on the machine blocks (x 66-67), treasure 5 (74, 15, 56); back to the door "5" in its
+# (z 52-53) on the machine blocks (x 66-67), over the clay bridge (x 69-74, z 56) to treasure 5
+# (75, 15, 56) and back over it once it has grown again; back to the door "5" in its
 # west wall (x 58-59, z 50) into the start chamber.
 go 72 40
 go 72 43.6
@@ -125,8 +126,13 @@ until ground = 1
 expect z >= 48.6
 go 66.5 51
 go 66.5 54.6
-go 74 56 tol 0.2
+go 67.6 56 tol 0.15
+face 90
+go 75.5 56 tol 0.2
 until treasures = 5 max 120
+# The clay bridge crumbled behind him: back over it once it has grown again (156 ticks of 20).
+wait 520
+go 67.6 56 tol 0.2
 go 66.5 54.6
 go 66.5 51
 go 60.5 50.3

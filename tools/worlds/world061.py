@@ -9,7 +9,7 @@ lava crossed on machine blocks, and two big creatures that kill while they rest 
 their walk and are harmless while they walk. Here the cave becomes rooms round the start
 chamber: west a shaft climbed on the shuttles (treasure 1), north a chasm crossed on the lift
 chain between slime islands (treasures 2-3; a fall means the climb back) to a tower lift (treasure 4),
-east a lava hall (treasure 5), south down a stair the creatures' halls (treasures 6-7).
+east a lava hall (treasure 5 over a clay bridge), south down a stair the creatures' halls (treasures 6-7).
 
     python3 tools/worlds/world061.py                 # writes worlds3d/world061.vwr
     python3 tools/worlds/world061.py --stage K out   # K treasures taken: the doors needing at
@@ -27,6 +27,7 @@ from kit import MACHINE_FLOOR, O, World, lift, mine  # noqa: E402
 from slime import skin, slime  # noqa: E402
 
 LAVA = 68
+CLAY_BRIDGE = 364           # crumbles under Blupi and grows back (Tables::table_bridge)
 WATER = 92
 
 
@@ -151,7 +152,12 @@ def main(argv) -> int:
     w.fill(60, 14, 48, 76, 14, 48, LAVA)
     w.fill(60, 14, 52, 76, 14, 53, LAVA)
     w.fill(66, 14, 52, 67, 14, 53, 10)
-    w.place(O.TREASURE, 74, 15, 56)
+    # Treasure 5 on a platform (x 75-76) in a pool of lava, reached over a clay bridge (x 69-74,
+    #    z 56) that crumbles under him and grows back (table_bridge; the original's bridge of
+    #    seven over lava, LV-0035): over and, once it is back, over again.
+    w.fill(69, 14, 54, 74, 14, 57, LAVA)
+    w.fill(69, 14, 56, 74, 14, 56, CLAY_BRIDGE)
+    w.place(O.TREASURE, 75, 15, 56)
     mine(w, 64, 15, 56)
     mine(w, 70, 15, 50)
     for x in (62, 66, 72):
