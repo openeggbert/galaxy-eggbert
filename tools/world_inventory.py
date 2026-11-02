@@ -30,7 +30,7 @@ OBJECTS = {
     17: "fish", 20: "bird", 32: "robot", 33: "creature", 44: "wasp", 54: "big creature",
     96: "follow star", 97: "follow star", 5: "treasure", 6: "egg", 7: "exit", 21: "secret exit",
     49: "key", 50: "key", 51: "key", 12: "crate", 13: "helicopter", 19: "jeep", 24: "skateboard",
-    28: "tank", 46: "balloon", 25: "shield", 26: "lollipop", 29: "ammo", 30: "drink",
+    28: "tank", 46: "overcraft", 25: "shield", 26: "lollipop", 29: "ammo", 30: "drink",
     31: "charge", 40: "invert", 55: "dynamite", 200: "Blupi", 201: "Blupi", 202: "Blupi",
     203: "Blupi", 53: "tentacle",
 }

@@ -47,7 +47,7 @@ enum class ObjectType : uint8_t
     ObjectType30  =  30, // drink power-up
     ObjectType31  =  31, // charge/cloud power-up (100 ticks)
     ObjectType40  =  40, // mirror/invert power-up (100 ticks)
-    ObjectType46  =  46, // balloon
+    ObjectType46  =  46, // overcraft (m_blupiOver, Decor.cpp:5668)
     ObjectType55  =  55, // dynamite stick
 
     // Explosions and visual effects (transient, auto-expire)
