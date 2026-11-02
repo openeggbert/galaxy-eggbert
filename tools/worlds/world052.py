@@ -29,7 +29,6 @@ from kit import O, World, lift, rect  # noqa: E402
 from station import GRILLE, PLATE_EDGES, WATER, metal, treasure_door  # noqa: E402
 
 SKY = 13
-LAVA = 68
 ROD = 202                        # a bar along X Blupi hangs from (ThinBar), seen from every side
 RING = (40, 40, 60, 60)          # the station block round the well (x0, z0, x1, z1), y 10-42
 WELL = (47, 47, 53, 53)          # the well's inside, open from its floor (walk 11) to the sky
@@ -87,11 +86,11 @@ def main(argv) -> int:
     carve(rect(43, 43, 45, 45), S3[1], S2[1] + 2)    # north-west: S2 -> S3
     carve(rect(43, 55, 45, 57), S4[1], S3[1] + 2)    # south-west: S3 -> S4
     carve(rect(55, 55, 57, 57), S5[1], S4[1] + 2)    # south-east: S4 -> S5
-    # The north-east corner: the drop from S1 lands on a row of rods over a pit of lava (x 53-57,
-    #    z 45), hung from westward onto S2's floor (the original's bars under its shafts,
-    #    LV-0027); for levelcheck (any stage) a floor under them, as it cannot hang.
-    carve(rect(53, 43, 57, 45), 27, 30)
-    w.fill(53, 26, 43, 57, 26, 45, LAVA)
+    # The north-east corner: the drop from S1 lands on a row of rods over a pit two deep (x 53-57,
+    #    z 43-45), hung from westward onto S2's floor (the original's bars under its shafts over a
+    #    room, LV-0027): a fall is a setback, a jump back up, as there (no lava: 052 has none);
+    #    for levelcheck (any stage) a floor under them, as it cannot hang.
+    carve(rect(53, 43, 57, 45), 29, 30)
     if stage:
         w.fill(53, 30, 45, 57, 30, 45, 82)
     else:

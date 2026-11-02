@@ -26,8 +26,8 @@ expect y <= 35.05
 go 56 47
 go 56 45 tol 0.1
 until y <= 31.05 max 300
-# The drop lands on the rods over the corner's pit of lava (x 53-57, z 45): hung from westward
-# onto S2's floor.
+# The drop lands on the rods over the corner's pit (x 53-57, z 45): hung from westward onto S2's
+# floor.
 go 52.3 45 max 600
 expect y >= 30.95
 # S2 (walk 31): west along z 45, under and beside the four stars asleep under the ceiling
