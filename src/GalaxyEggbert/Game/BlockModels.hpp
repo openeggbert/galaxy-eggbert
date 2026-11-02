@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string_view>
 
 namespace GalaxyEggbert::Game
 {
@@ -137,6 +138,51 @@ namespace GalaxyEggbert::Game
     // and letter, the trestle's frame), turned toward the cell's open side
     // (TerrainRenderer::ModelCell::openSide).
     inline constexpr std::array<std::uint16_t, 8> kFrontModelIcons{330, 331, 332, 333, 199, 304, 384, 385};
+
+    // The teleporters 330-333 (Decor/teleporteur1-4.rd4) are a blue box the size of the cell with
+    // the letter plate and two lights on its front only: the original's sprite shows that front
+    // whichever way Blupi comes, but in 3D three sides were blank and, where the open side the
+    // front turns to is not the one Blupi comes from, the letter could not be seen (owner
+    // 2026-11-02, OR-0056). The plate and lights are drawn on all four sides, as a sign's painting
+    // is drawn front and back; the box once.
+    [[nodiscard]] constexpr bool IsTeleporterIcon(int objectMIcon) noexcept
+    {
+        return objectMIcon >= 330 && objectMIcon <= 333;
+    }
+    // How far each copy of the plate stands out to sit on its side of the box as the front's sits on
+    // the front: the box is not centred (posed, X -0.508 to 0.497, Z -0.552 to 0.488, the front at
+    // +Z), so a copy turned a quarter (to +X) moves out 0.009, a half (to -Z) 0.064 -- else the
+    // back's plate lies inside the box -- and three quarters (to -X) 0.020.
+    inline constexpr std::array<float, 4> kBoothSideOffsets{0.0f, 0.497f - 0.488f, 0.552f - 0.488f, 0.508f - 0.488f};
+    // A teleporter model's body: the part of a plain colour (`_rd_RRGGBB`) whose blue is its
+    // strongest component, as against the letter plate (a texture, `_rd_tex_...`) and the red and
+    // yellow lights.
+    [[nodiscard]] inline bool IsBoothBodyPart(std::string_view name) noexcept
+    {
+        const auto at = name.rfind("_rd_");
+        if (at == std::string_view::npos || name.size() != at + 4 + 6)
+        {
+            return false;
+        }
+        const auto hex = [&](std::size_t i) -> int
+        {
+            int v = 0;
+            for (std::size_t k = i; k < i + 2; ++k)
+            {
+                const char c = name[k];
+                const int d = c >= '0' && c <= '9' ? c - '0' : c >= 'a' && c <= 'f' ? c - 'a' + 10
+                            : c >= 'A' && c <= 'F' ? c - 'A' + 10 : -1;
+                if (d < 0)
+                {
+                    return -1;
+                }
+                v = v * 16 + d;
+            }
+            return v;
+        };
+        const int r = hex(at + 4), g = hex(at + 6), b = hex(at + 8);
+        return r >= 0 && g >= 0 && b >= 0 && b > r && b > g;
+    }
 
     // The turn about Y (radians) putting a model's front, +Z at no turn, toward side 0 +X, 1 -X,
     // 2 +Z, 3 -Z: CreateRotationY(a) turns +Z to (sin a, 0, cos a).

@@ -5617,7 +5617,8 @@ namespace GalaxyEggbert::CNA
                 auto& decalCells = signDecalCells_;
                 decalCells.clear();
                 const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
-                                           float rollRadians = 0.0f, float depthScale = 1.0f)
+                                           float rollRadians = 0.0f, float depthScale = 1.0f,
+                                           bool boothFrontOnly = false)
                 {
                     auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
                     model.ComputeBoneTransformsEXT(
@@ -5641,6 +5642,10 @@ namespace GalaxyEggbert::CNA
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     for (const auto& part : model.Parts)
                     {
+                        if (boothFrontOnly && GalaxyEggbert::Game::IsBoothBodyPart(part.Name))
+                        {
+                            continue; // a teleporter's other sides: its plate and lights only
+                        }
                         blupiEffect_->setTextureProperty(part.Texture);
                         blupiEffect_->Apply();
                         device.SetVertexBuffer(part.Part->getVertexBufferProperty());
@@ -5815,6 +5820,21 @@ namespace GalaxyEggbert::CNA
                                 {
                                     drawModel(*still, cell.x, cell.y, cell.z,
                                               GalaxyEggbert::Game::FrontModelYaw(cell.openSide));
+                                    if (GalaxyEggbert::Game::IsTeleporterIcon(cell.base))
+                                    {
+                                        // The letter plate and lights on its other three sides too
+                                        // (BlockModels.hpp IsTeleporterIcon, OR-0056).
+                                        for (int quarter = 1; quarter < 4; ++quarter)
+                                        {
+                                            const float yaw = GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
+                                                              1.57079632f * static_cast<float>(quarter);
+                                            const float out = GalaxyEggbert::Game::kBoothSideOffsets[
+                                                static_cast<std::size_t>(quarter)];
+                                            drawModel(*still, cell.x + out * std::sin(yaw), cell.y,
+                                                      cell.z + out * std::cos(yaw), yaw, 0.0f, 1.0f,
+                                                      /*boothFrontOnly=*/true);
+                                        }
+                                    }
                                     if (signDecals_.count(cell.base) != 0)
                                     {
                                         decalCells.push_back({cell.base, cell.x, cell.y, cell.z,

@@ -290,6 +290,28 @@ int main()
               "the clay bridge's icons are 364-372");
     }
 
+    // A teleporter's body is its blue box; its letter plate and lights are not (OR-0056: those are
+    // drawn on all four sides).
+    {
+        namespace G = GalaxyEggbert::Game;
+        bool bodies = true, fronts = true;
+        for (const char* name : {"teleporter1_rd_1099c6", "teleporter2_rd_109bc9", "teleporter3_rd_119ac7",
+                                 "teleporter4_rd_1099c6"})
+        {
+            bodies = bodies && G::IsBoothBodyPart(name);
+        }
+        for (const char* name : {"teleporter1_rd_c71010", "teleporter1_rd_c6c610", "teleporter2_rd_ca1010",
+                                 "teleporter2_rd_c9c910", "teleporter3_rd_c81111", "teleporter3_rd_c7c711",
+                                 "teleporter1_rd_tex_p08_mur_sud", "teleporter4_rd_tex_p08_mur_sud"})
+        {
+            fronts = fronts && !G::IsBoothBodyPart(name);
+        }
+        check(bodies, "each teleporter's blue box is its body");
+        check(fronts, "its lights and letter plate are not its body");
+        check(G::IsTeleporterIcon(330) && G::IsTeleporterIcon(333) && !G::IsTeleporterIcon(334),
+              "the teleporters are 330-333");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }
