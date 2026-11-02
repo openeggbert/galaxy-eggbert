@@ -4520,52 +4520,9 @@ int main(int argc, char** argv)
         {
             InteractionSystem cheatInteraction;
 
-            // 5.1 CheatOpenDoors: opens both real door families (key-gated
-            // Door1/2/3 AND treasure-gated icon>=421) regardless of
-            // whether Blupi actually holds the matching key/treasure.
-            {
-                auto& terrain = cheatWorld.GetWorldMutable();
-                const int axis = static_cast<int>(terrain.blocksPerAxis());
-                bool foundKeyDoor = false, foundTreasureDoor = false;
-                for (int gx = 0; gx < axis && !(foundKeyDoor && foundTreasureDoor); ++gx)
-                {
-                    for (int gy = 0; gy < axis && !(foundKeyDoor && foundTreasureDoor); ++gy)
-                    {
-                        for (int gz = 0; gz < axis && !(foundKeyDoor && foundTreasureDoor); ++gz)
-                        {
-                            const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                                                static_cast<std::uint16_t>(gz))
-                                                   .type();
-                            if (BlockTypes::isDoor(icon)) foundKeyDoor = true;
-                            if (icon >= 421 && icon <= 440) foundTreasureDoor = true;
-                        }
-                    }
-                }
-                check(foundKeyDoor, "cheat tests: sample world has at least one key-gated door before CheatOpenDoors()");
-                check(foundTreasureDoor,
-                      "cheat tests: sample world has at least one treasure-gated door before CheatOpenDoors()");
-
-                cheatInteraction.CheatOpenDoors(cheatWorld, sound);
-
-                bool stillHasKeyDoor = false, stillHasTreasureDoor = false;
-                for (int gx = 0; gx < axis; ++gx)
-                {
-                    for (int gy = 0; gy < axis; ++gy)
-                    {
-                        for (int gz = 0; gz < axis; ++gz)
-                        {
-                            const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                                                static_cast<std::uint16_t>(gz))
-                                                   .type();
-                            if (BlockTypes::isDoor(icon)) stillHasKeyDoor = true;
-                            if (icon >= 421 && icon <= 440) stillHasTreasureDoor = true;
-                        }
-                    }
-                }
-                check(!stillHasKeyDoor, "CheatOpenDoors(): opens every key-gated door, even without holding the key");
-                check(!stillHasTreasureDoor,
-                      "CheatOpenDoors(): opens every treasure-gated door, even without enough treasures");
-            }
+            // 5.1 CheatOpenDoors was removed (owner 2026-11-02): the opendoors cheat opens the
+            // hubs' doors (Decor::AdaptDoors(), HubDoorsTests' AdaptHubDoors test), never a
+            // mission's key or treasure doors (the typed word gives the keys only).
 
             // 5.2 CheatCleanAll: deactivates every active instance of the
             // 12-type hazard/enemy list, leaves everything else (e.g. the

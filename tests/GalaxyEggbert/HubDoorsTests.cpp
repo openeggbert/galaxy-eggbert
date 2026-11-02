@@ -53,6 +53,42 @@ TEST(HubDoorsTests, GoldDoorsOpenLowestFirstThenFromPlusX) {
     EXPECT_EQ(doors[2], (HubCell{40, 2, 40}));
 }
 
+// Decor::CheatAction(OpenDoors) -> AdaptDoors(): the cheat opens every hub door, the main hub's
+// gold bars and signs as the world hubs' mission doors (owner 2026-11-02: it did nothing).
+TEST(HubDoorsTests, AdaptHubDoorsOpensWhatIsUnlockedAndEverythingWithTheCheat) {
+    Worlds::World hub;
+    Put(hub, 40, 1, 40, BlockTypes::GoldDoor);
+    Put(hub, 44, 1, 40, BlockTypes::GoldDoor);
+    Put(hub, 48, 1, 40, BlockTypes::GoldDoor);
+    Put(hub, 50, 1, 50, BlockTypes::WorldSelect1);     // world 1
+    Put(hub, 52, 1, 50, BlockTypes::WorldSelect1 + 1); // world 2
+    const auto worldOneDone = [](int index) { return index == 181; };
+    auto adapted = AdaptHubDoors(hub, 1, worldOneDone, false);
+    ASSERT_EQ(adapted.goldDoors.size(), 1u);
+    EXPECT_EQ(adapted.goldDoors[0], (HubCell{48, 1, 40}));
+    ASSERT_EQ(adapted.completedSigns.size(), 1u);
+    EXPECT_EQ(adapted.completedSigns[0], (HubCell{50, 1, 50}));
+    adapted = AdaptHubDoors(hub, 1, worldOneDone, true);
+    EXPECT_EQ(adapted.goldDoors.size(), 3u);
+    EXPECT_EQ(adapted.completedSigns.size(), 2u);
+
+    Worlds::World worldHub;
+    Put(worldHub, 40, 1, 40, BlockTypes::MissionSign1);     // sign 1
+    Put(worldHub, 41, 1, 40, BlockTypes::HubDoor);
+    Put(worldHub, 50, 1, 40, BlockTypes::MissionSign1 + 2); // sign 3
+    Put(worldHub, 50, 1, 42, BlockTypes::HubDoor);
+    const auto none = [](int) { return false; };
+    EXPECT_TRUE(AdaptHubDoors(worldHub, 20, none, false).missionDoors.empty());
+    const auto cheated = AdaptHubDoors(worldHub, 20, none, true);
+    ASSERT_EQ(cheated.missionDoors.size(), 2u);
+    EXPECT_EQ(cheated.missionDoors[0].door, (HubCell{41, 1, 40}));
+    EXPECT_EQ(cheated.missionDoors[1].door, (HubCell{50, 1, 42}));
+    const auto missionOne = [](int index) { return index == 21; };
+    ASSERT_EQ(AdaptHubDoors(worldHub, 20, missionOne, false).missionDoors.size(), 1u);
+    // In a mission AdaptDoors() returns at once: the cheat gives the keys only.
+    EXPECT_TRUE(AdaptHubDoors(worldHub, 23, none, true).missionDoors.empty());
+}
+
 TEST(HubDoorsTests, WorldSignsAndTheirCompletedIcons) {
     Worlds::World world;
     Put(world, 50, 1, 50, BlockTypes::WorldSelect10 + 2);  // world 12

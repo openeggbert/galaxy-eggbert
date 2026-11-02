@@ -3,6 +3,7 @@
 #include "GalaxyEggbert/Worlds/World.hpp"
 
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <vector>
 
@@ -48,6 +49,21 @@ std::uint16_t CompletedWorldSignIcon(std::uint16_t icon) noexcept;
 // Beside a world sign (SearchWorld()): the first free, floored neighbour along -X, +X, -Z, +Z,
 // facing the sign.
 std::optional<HubArrival> ArrivalBesideSign(const Worlds::World& world, HubCell sign);
+
+// What Decor::AdaptDoors() opens in a hub, as it loads and each time the opendoors cheat is
+// toggled (Decor::CheatAction(OpenDoors) flips m_bCheatDoors and adapts again). `unlocked(index)`
+// reads m_doors[index]: 180 + world in the main hub (mission 1), mission + sign in a world hub
+// (mission % 10 == 0); `cheatDoors` opens them all. The main hub opens one gold bar per completed
+// world (FindGoldDoors()'s order) and shows the signs of completed worlds completed; a world hub
+// opens the doors of every mission unlocked. A door already opened is gone from the world, so a
+// second call finds only those still shut. Any other mission: nothing (AdaptDoors() returns).
+struct HubAdaptation {
+    std::vector<HubCell> goldDoors;         // main hub: the bars to slide up
+    std::vector<HubCell> completedSigns;    // main hub: the signs to show completed
+    std::vector<MissionDoor> missionDoors;  // world hub: the doors to slide up, in sign order
+};
+HubAdaptation AdaptHubDoors(const Worlds::World& world, int mission, const std::function<bool(int)>& unlocked,
+                            bool cheatDoors);
 
 // Past an opened door (SearchDoor()): the cell beyond `door` on the side away from `sign`,
 // facing the door, when it is free and floored.

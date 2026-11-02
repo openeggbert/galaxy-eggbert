@@ -114,6 +114,41 @@ std::uint16_t CompletedWorldSignIcon(std::uint16_t icon) noexcept {
     return icon;
 }
 
+HubAdaptation AdaptHubDoors(const Worlds::World& world, int mission, const std::function<bool(int)>& unlocked,
+                            bool cheatDoors) {
+    HubAdaptation result;
+    const auto open = [&](int index) { return cheatDoors || (unlocked && unlocked(index)); };
+    if (mission == 1) {
+        int completedWorlds = 0;
+        for (int worldIndex = 0; worldIndex < 20; ++worldIndex) {
+            completedWorlds += open(180 + worldIndex) ? 1 : 0;
+        }
+        const auto golds = FindGoldDoors(world);
+        const auto count = std::min(static_cast<std::size_t>(completedWorlds), golds.size());
+        result.goldDoors.assign(golds.begin(), golds.begin() + static_cast<std::ptrdiff_t>(count));
+        for (int worldIndex = 1; worldIndex <= 14; ++worldIndex) {
+            if (!open(180 + worldIndex)) {
+                continue;
+            }
+            for (const auto& sign : FindWorldSigns(world, worldIndex)) {
+                if (CompletedWorldSignIcon(IconAt(world, sign.x, sign.y, sign.z)) != IconAt(world, sign.x, sign.y, sign.z)) {
+                    result.completedSigns.push_back(sign);
+                }
+            }
+        }
+    } else if (mission > 0 && mission % 10 == 0) {
+        for (int sign = 1; sign <= 8; ++sign) {
+            if (!open(mission + sign)) {
+                continue;
+            }
+            for (const auto& door : FindMissionDoors(world, sign)) {
+                result.missionDoors.push_back(door);
+            }
+        }
+    }
+    return result;
+}
+
 std::optional<HubArrival> ArrivalBesideSign(const Worlds::World& world, HubCell sign) {
     for (const auto& axis : kAxes) {
         const HubCell cell{sign.x + axis[0], sign.y, sign.z + axis[1]};

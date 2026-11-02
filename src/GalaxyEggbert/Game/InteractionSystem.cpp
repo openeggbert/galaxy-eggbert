@@ -2598,35 +2598,6 @@ namespace GalaxyEggbert::Game
         return true;
     }
 
-    void InteractionSystem::CheatOpenDoors(WorldRuntime& worldRuntime, Sound& sound)
-    {
-        auto& terrain = worldRuntime.GetWorldMutable();
-        const int axis = static_cast<int>(terrain.blocksPerAxis());
-        for (int gx = 0; gx < axis; ++gx)
-        {
-            for (int gy = 0; gy < axis; ++gy)
-            {
-                for (int gz = 0; gz < axis; ++gz)
-                {
-                    const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                                        static_cast<std::uint16_t>(gz))
-                                           .type();
-                    // Both real door families, opened regardless of
-                    // whether Blupi actually holds the matching key/
-                    // treasure count -- see this method's own header
-                    // comment for the real-vs-adapted reasoning (440 is
-                    // this session's own confirmed real total icon
-                    // ceiling, a safe upper bound for the treasure-door
-                    // family's icon range).
-                    if (GalaxyEggbert::BlockTypes::isDoor(icon) || (icon >= 421 && icon <= 440))
-                    {
-                        OpenDoorAt(worldRuntime, gx, gy, gz, sound);
-                    }
-                }
-            }
-        }
-    }
-
     bool InteractionSystem::CheatCleanAll(WorldRuntime& worldRuntime)
     {
         bool anyDestroyed = false;

@@ -1244,6 +1244,38 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    std::optional<GalaxyEggbert::HubArrival> GalaxyEggbertGame::AdaptHubDoors(int missionNumber)
+    {
+        // Decor::AdaptDoors(): m_doors[] from the save (IsMissionDoorUnlocked), or every door with
+        // the opendoors cheat (Decor::CheatAction(OpenDoors) flips m_bCheatDoors and adapts again).
+        auto& terrain = worldRuntime_.GetWorldMutable();
+        const auto adapted = GalaxyEggbert::AdaptHubDoors(
+            terrain, missionNumber, [this](int index) { return saveData_.IsMissionDoorUnlocked(index); },
+            cheatDoors_);
+        for (const auto& gold : adapted.goldDoors)
+        {
+            InteractionSystem::OpenDoor(worldRuntime_, gold.x, gold.y, gold.z, sound_);
+        }
+        for (const auto& sign : adapted.completedSigns)
+        {
+            const auto x = static_cast<std::uint16_t>(sign.x);
+            const auto y = static_cast<std::uint16_t>(sign.y);
+            const auto z = static_cast<std::uint16_t>(sign.z);
+            terrain.setBlock(x, y, z, GalaxyEggbert::Worlds::Block::make(
+                                          GalaxyEggbert::CompletedWorldSignIcon(terrain.getBlock(x, y, z).type())));
+        }
+        std::optional<GalaxyEggbert::HubArrival> arrival;
+        for (const auto& door : adapted.missionDoors)
+        {
+            InteractionSystem::OpenDoor(worldRuntime_, door.door.x, door.door.y, door.door.z, sound_);
+            if (const auto past = GalaxyEggbert::ArrivalPastDoor(worldRuntime_.GetWorld(), door.door, door.sign))
+            {
+                arrival = past;
+            }
+        }
+        return arrival;
+    }
+
     void GalaxyEggbertGame::LoadMission(int missionNumber)
     {
         titleSceneActive_ = false;
@@ -1270,57 +1302,13 @@ namespace GalaxyEggbert::CNA
         {
             saveData_.SetLastWorld(missionNumber / 10);
         }
-        std::optional<GalaxyEggbert::HubArrival> hubArrival;
+        std::optional<GalaxyEggbert::HubArrival> hubArrival = AdaptHubDoors(missionNumber);
         if (missionNumber == 1)
         {
-            auto& terrain = worldRuntime_.GetWorldMutable();
-            int completedWorlds = 0;
-            for (int world = 0; world < 20; ++world)
-            {
-                completedWorlds += saveData_.IsMissionDoorUnlocked(180 + world) ? 1 : 0;
-            }
-            const auto golds = GalaxyEggbert::FindGoldDoors(terrain);
-            for (int i = 0; i < completedWorlds && i < static_cast<int>(golds.size()); ++i)
-            {
-                InteractionSystem::OpenDoor(worldRuntime_, golds[i].x, golds[i].y, golds[i].z, sound_);
-            }
-            for (int world = 1; world <= 14; ++world)
-            {
-                if (!saveData_.IsMissionDoorUnlocked(180 + world))
-                {
-                    continue;
-                }
-                for (const auto& sign : GalaxyEggbert::FindWorldSigns(terrain, world))
-                {
-                    const auto x = static_cast<std::uint16_t>(sign.x);
-                    const auto y = static_cast<std::uint16_t>(sign.y);
-                    const auto z = static_cast<std::uint16_t>(sign.z);
-                    terrain.setBlock(x, y, z, GalaxyEggbert::Worlds::Block::make(
-                                                  GalaxyEggbert::CompletedWorldSignIcon(terrain.getBlock(x, y, z).type())));
-                }
-            }
-            const auto lastWorldSigns = GalaxyEggbert::FindWorldSigns(terrain, saveData_.GetLastWorld());
+            const auto lastWorldSigns = GalaxyEggbert::FindWorldSigns(worldRuntime_.GetWorld(), saveData_.GetLastWorld());
             if (!lastWorldSigns.empty())
             {
-                hubArrival = GalaxyEggbert::ArrivalBesideSign(terrain, lastWorldSigns.front());
-            }
-        }
-        else if (missionNumber % 10 == 0)
-        {
-            for (int sign = 1; sign <= 8; ++sign)
-            {
-                if (!saveData_.IsMissionDoorUnlocked(missionNumber + sign))
-                {
-                    continue;
-                }
-                for (const auto& door : GalaxyEggbert::FindMissionDoors(worldRuntime_.GetWorld(), sign))
-                {
-                    InteractionSystem::OpenDoor(worldRuntime_, door.door.x, door.door.y, door.door.z, sound_);
-                    if (const auto arrival = GalaxyEggbert::ArrivalPastDoor(worldRuntime_.GetWorld(), door.door, door.sign))
-                    {
-                        hubArrival = arrival;
-                    }
-                }
+                hubArrival = GalaxyEggbert::ArrivalBesideSign(worldRuntime_.GetWorld(), lastWorldSigns.front());
             }
         }
         RefreshTerrainMeshIfChanged();
@@ -2085,8 +2073,12 @@ namespace GalaxyEggbert::CNA
     {
         switch (cheatNumber)
         {
-            case 1: // OpenDoors
-                interaction_.CheatOpenDoors(worldRuntime_, sound_);
+            case 1: // OpenDoors: Decor::CheatAction flips m_bCheatDoors and calls AdaptDoors(): in a
+                    // hub every door slides up (sound 33); elsewhere nothing opens (the typed
+                    // word also gives the keys, ApplyTypedCheat()).
+                cheatDoors_ = !cheatDoors_;
+                AdaptHubDoors(worldRuntime_.GetMissionNumber());
+                RefreshTerrainMeshIfChanged();
                 break;
             case 2: // SuperBlupi -- pure invincibility toggle, NOT "all abilities" (an earlier draft was wrong)
                 blupi_.SetCheatSuperBlupi(!blupi_.GetCheatSuperBlupi());

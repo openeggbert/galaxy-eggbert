@@ -926,17 +926,8 @@ namespace GalaxyEggbert::Game
         // no confirmation) -- these methods mirror that: called once, not
         // every frame, from the caller's own button-press handler.
         //
-        // Cheat1 "OpenDoors": real `m_bCheatDoors` is a persistent toggle
-        // re-applied via `AdaptDoors()`; ported here as a one-shot "open
-        // every door in the world right now" instead (this engine has no
-        // reversible "close it back up" bookkeeping, and the toggle's
-        // OBSERVABLE effect -- every door open -- is what matters).
-        // Scans the whole grid for both real door families: key-gated
-        // (`BlockTypes::isDoor()`, icons 334-336) and treasure-gated
-        // (icon 421+N, scanned up to this session's own confirmed real
-        // total icon ceiling of 440) -- opens both regardless of whether
-        // Blupi actually holds the matching key/treasure count.
-        void CheatOpenDoors(WorldRuntime& worldRuntime, Sound& sound);
+        // Cheat1 "OpenDoors" is the host's (GalaxyEggbertGame::AdaptHubDoors(), Decor::
+        // AdaptDoors() with m_bCheatDoors): it opens the hubs' doors only.
 
         // Cheat7 "CleanAll": real effect converts a SPECIFIC hazard/enemy
         // type list (`2,3,4,16,17,20,32,33,44,54,96,97` -- exactly this

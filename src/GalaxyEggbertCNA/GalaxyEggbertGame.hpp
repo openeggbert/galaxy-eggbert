@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
+#include <GalaxyEggbert/HubDoors.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
 #include <GalaxyEggbert/Game/TerrainRenderer.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
@@ -33,6 +34,7 @@
 #include <Microsoft/Xna/Framework/Media/Song.hpp>
 
 #include <cstdint>
+#include <optional>
 #include <cstdio>
 #include <filesystem>
 #include <memory>
@@ -594,6 +596,13 @@ namespace GalaxyEggbert::CNA
         void ApplyTypedCheat(GalaxyEggbert::Game::InputPad::TypedCheat cheat);
         // The persistent typed cheats now on, as Mobile Eggbert lists them top-left in Play.
         std::vector<std::string> activeCheats_;
+        // The opendoors cheat (Decor's m_bCheatDoors): every hub door opens, at once and as each
+        // hub loads (AdaptHubDoors()). Toggled by the cheat, kept for the session.
+        bool cheatDoors_ = false;
+        // Decor::AdaptDoors() for the hub loaded: slides up the doors unlocked (or all, with
+        // cheatDoors_), sound 33, and shows the completed worlds' signs. Returns where Blupi
+        // starts in a world hub: past the last door opened.
+        std::optional<GalaxyEggbert::HubArrival> AdaptHubDoors(int missionNumber);
         // Enter (or a gamepad's A) held in the main menu last frame: Play fires on its press.
         bool initEnterWasDown_ = true;
         // Frames left in which the mouse is ignored after the last finger on the screen.
