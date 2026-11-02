@@ -219,7 +219,7 @@ int main()
     // engine's 480 reference height -- used unadapted (see
     // InputPad.hpp's UpdateSetup() class comment). SetupSounds
     // (X 20-90, Y 180-250) and SetupReturn (X 508-620, Y 348-460) are
-    // functional; SetupJump/Zoom/Accel/Reset are real-position but inert.
+    // functional, as are SetupJump/Zoom/Accel since OR-0010 (2026-11-02).
     {
         InputPad pad;
         (void)pad.UpdateSetup(mouse(55, 215, true), kViewportW, kViewportH, false);
@@ -239,8 +239,40 @@ int main()
         // SetupJump rect: X 20-90, Y 250-320 -> center (55,285).
         (void)pad.UpdateSetup(mouse(55, 285, true), kViewportW, kViewportH, false);
         const auto release = pad.UpdateSetup(mouse(55, 285, false), kViewportW, kViewportH, false);
-        check(!release.soundsToggled && !release.returnPressed,
-              "Setup: Jump button press/release fires neither Sounds nor Return (documented inert placeholder)");
+        check(release.jumpToggled && !release.soundsToggled && !release.returnPressed,
+              "Setup: the Jump-side toggle fires on release (OR-0010)");
+    }
+    {
+        // SetupZoom (Y 320-390) and SetupAccel (Y 390-460) toggle too (OR-0010).
+        InputPad pad;
+        (void)pad.UpdateSetup(mouse(55, 355, true), kViewportW, kViewportH, false);
+        const auto zoom = pad.UpdateSetup(mouse(55, 355, false), kViewportW, kViewportH, false);
+        (void)pad.UpdateSetup(mouse(55, 425, true), kViewportW, kViewportH, false);
+        const auto accel = pad.UpdateSetup(mouse(55, 425, false), kViewportW, kViewportH, false);
+        check(zoom.zoomToggled && !zoom.jumpToggled && accel.accelToggled && !accel.zoomToggled,
+              "Setup: the automatic zoom and accelerometer toggles fire on release (OR-0010)");
+    }
+    {
+        // Jump on the left (the setting off): the stick and the buttons trade sides.
+        InputPad pad;
+        InputPad::PlayInput right;
+        (void)pad.UpdatePlay(mouse(67, 412, true), kViewportW, kViewportH, right);
+        (void)pad.UpdatePlay(mouse(67, 412, false), kViewportW, kViewportH, right);
+        pad.SetJumpRight(false);
+        InputPad::PlayInput stick;
+        (void)pad.UpdatePlay(mouse(540, 380, true), kViewportW, kViewportH, stick);
+        (void)pad.UpdatePlay(mouse(610, 380, true), kViewportW, kViewportH, stick);
+        (void)pad.UpdatePlay(mouse(610, 380, false), kViewportW, kViewportH, stick);
+        InputPad::PlayInput jump;
+        (void)pad.UpdatePlay(mouse(67, 412, true), kViewportW, kViewportH, jump);
+        check(!right.jumpHeld && stick.turnInput == 0.0f && jump.jumpHeld,
+              "Play: with the Jump button on the left, Jump is pressed there (the bottom left is the stick otherwise)");
+        InputPad::PlayInput drag;
+        InputPad mirrored;
+        mirrored.SetJumpRight(false);
+        (void)mirrored.UpdatePlay(mouse(540, 380, true), kViewportW, kViewportH, drag);
+        (void)mirrored.UpdatePlay(mouse(610, 380, true), kViewportW, kViewportH, drag);
+        check(drag.turnInput == 1.0f, "Play: and the stick works on the right (mirrored layout, OR-0010)");
     }
 
     // --- SetupReset (real: MainSetup-only, plan.md MENU-006..020): rect

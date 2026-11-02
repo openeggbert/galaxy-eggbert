@@ -28,6 +28,18 @@ namespace GalaxyEggbert::Game
             {
                 soundEnabled_ = (value == "1");
             }
+            else if (key == "jumpRight")
+            {
+                jumpRight_ = (value == "1");
+            }
+            else if (key == "autoZoom")
+            {
+                autoZoom_ = (value == "1");
+            }
+            else if (key == "accelActive")
+            {
+                accelActive_ = (value == "1");
+            }
             else if (key == "selectedGamer")
             {
                 // Out-of-range guard (a hand-edited or corrupted save file
@@ -85,6 +97,9 @@ namespace GalaxyEggbert::Game
             return;
         }
         out << "soundEnabled=" << (soundEnabled_ ? "1" : "0") << "\n";
+        out << "jumpRight=" << (jumpRight_ ? "1" : "0") << "\n";
+        out << "autoZoom=" << (autoZoom_ ? "1" : "0") << "\n";
+        out << "accelActive=" << (accelActive_ ? "1" : "0") << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         for (int gamer = 0; gamer < kGamerCount; ++gamer)
         {

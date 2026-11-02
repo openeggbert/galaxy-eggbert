@@ -234,11 +234,10 @@ namespace GalaxyEggbert::Game
         // 21 (off), not just an opacity change (confirmed via
         // `Pixmap.cpp`'s own `selected ? 13 : 21` -- a DIFFERENT real
         // "pressed" convention from every other button in this class).
-        // SetupJump/SetupZoom/SetupAccel render at their real positions/
-        // icons/labels but stay intentionally inert: Jump-button-side and
-        // accelerometer-tilt controls have no meaningful desktop
-        // equivalent, auto-zoom has no camera-zoom concept in this engine
-        // yet -- documented gaps, not silent omissions.
+        // SetupJump/SetupZoom/SetupAccel toggle and are saved like Sounds (OR-0010, 2026-11-02):
+        // the Jump button's side mirrors the play controls, automatic zoom brings the chase
+        // camera in while he walks (Decor::MoveHotSpot), the accelerometer steers with the
+        // device's tilt where there is one (Microsoft::Devices::Sensors::Accelerometer).
         //
         // SetupReset (`showReset` -- real: shown ONLY on `MainSetup`,
         // confirmed via `Game1::DrawButtonsText()`'s own `if (phase ==
@@ -286,13 +285,20 @@ namespace GalaxyEggbert::Game
         struct SetupInput
         {
             bool soundsToggled = false;
+            bool jumpToggled = false;  // SetupJump: the Jump button's side (OR-0010)
+            bool zoomToggled = false;  // SetupZoom: automatic zoom on action
+            bool accelToggled = false; // SetupAccel: the accelerometer
             bool resetPressed = false;
             bool returnPressed = false;
         };
+        // The Setup's "Jump button on the right" (on by default): off, the stick and the Jump and
+        // Action buttons trade sides (the original's getJumpRightProperty()).
+        void SetJumpRight(bool jumpRight) noexcept { jumpRight_ = jumpRight; }
         [[nodiscard]] SetupInput UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH, bool showReset) noexcept;
         void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                       int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer,
+                       int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom, bool accel,
+                       bool showReset, int selectedGamer,
                        float phaseTimeSeconds,
                        GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 
@@ -711,5 +717,6 @@ namespace GalaxyEggbert::Game
         // lowercase-letter buffer plus per-key down-edge tracking.
         std::string typedCheatBuffer_;
         bool letterKeyWasDown_[26] = {};
+        bool jumpRight_ = true; // SetJumpRight()
     };
 }

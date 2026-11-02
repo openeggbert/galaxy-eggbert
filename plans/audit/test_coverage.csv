@@ -29,5 +29,6 @@ lift rider's clip (OR-0018),gameplay,unit,VerifyBlupiMovement,pass,clip only; ri
 typed cheats (OR-0007),input,unit,VerifyGEInputPad; VerifyBlupiMovement (cheat effects),pass,the effects' host wiring has no automated test (live check to do)
 skateboard put down at DeposeSkate tick 12 / taken at TakeSkate tick 8 (OR-0003),gameplay,live,qa_live (to do),open,host timing; no unit test
 Bye farewell clip plays (OR-0002),gameplay,live,qa_live with AUTOPLAY_REALTIME=1; plans/evidence/bye-farewell.png,pass,
+setup toggles saved and mirrored pad (OR-0010),ui,unit+live,VerifyGEInputPad; VerifyGESaveData; plans/evidence/auto-zoom.png,pass,accelerometer untested (no sensor here)
 drink Hide drawn translucent (OR-0016),render,live,plans/evidence/hide-drink.png,pass,
 editor animates tiles and objects (OR-0013),editor,code,host editor branch runs WorldRuntime::Update,open,live look to do

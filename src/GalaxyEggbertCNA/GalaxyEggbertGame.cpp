@@ -902,6 +902,7 @@ namespace GalaxyEggbert::CNA
         // (sound on/off) from the previous run, if any.
         saveData_.Load();
         sound_.SetEnabled(saveData_.GetSoundEnabled());
+        inputPad_.SetJumpRight(saveData_.GetJumpRight());
 
         // Real Wait->Resume-or-Init branch (plan.md MENU-001..020) now
         // decides this at the END of the real 5.0s Wait timer, in
@@ -1156,6 +1157,7 @@ namespace GalaxyEggbert::CNA
         titleSceneActive_ = false;
         winCheerActive_ = false;
         pendingSkate_ = {};
+        accelWaitZero_ = true; // StartMission(): the first tilt waits for a level device
         char path[64];
         std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
         if (!worldRuntime_.LoadFromVwrFile(path))
@@ -1575,6 +1577,62 @@ namespace GalaxyEggbert::CNA
         PlaceMobileObject(worldRuntime_, deposited);
     }
 
+    float GalaxyEggbertGame::AccelTurnInput()
+    {
+        using Microsoft::Devices::Sensors::Accelerometer;
+        const bool wanted = saveData_.GetAccelActive() && !autoplay_ && Accelerometer::getIsSupportedProperty();
+        if (wanted && !accel_)
+        {
+            try
+            {
+                accel_ = std::make_unique<Accelerometer>();
+                accel_->Start();
+            }
+            catch (...)
+            {
+                accel_.reset(); // no permission or no sensor after all (the original's StartAccel)
+                return 0.0f;
+            }
+            accelLastState_ = false;
+            accelWaitZero_ = true;
+        }
+        else if (!wanted && accel_)
+        {
+            accel_->Stop();
+            accel_.reset();
+        }
+        if (!accel_ || !accel_->getIsDataValidProperty())
+        {
+            return 0.0f;
+        }
+        // HandleAccelSensorCurrentValueChanged: a dead zone from the sensitivity (GameData data[7],
+        // 50 by default; the Setup's slider is not drawn yet), narrower while already tilted, a
+        // speed from a quarter up; nothing until the device has once been level (accelWaitZero).
+        constexpr float kSensitivity = 0.5f;
+        const float y = accel_->getCurrentValueProperty().getAccelerationProperty().Y;
+        const float threshold = (1.0f - kSensitivity) * 0.06f + 0.04f;
+        const float adjusted = accelLastState_ ? threshold * 0.6f : threshold;
+        float speed = 0.0f;
+        if (y > adjusted)
+        {
+            speed = -std::min(y * 0.25f / threshold + 0.25f, 1.0f);
+        }
+        else if (y < -adjusted)
+        {
+            speed = std::min(-y * 0.25f / threshold + 0.25f, 1.0f);
+        }
+        accelLastState_ = speed != 0.0f;
+        if (accelWaitZero_)
+        {
+            if (speed == 0.0f)
+            {
+                accelWaitZero_ = false;
+            }
+            return 0.0f;
+        }
+        return speed;
+    }
+
     void GalaxyEggbertGame::WreckVehicle()
     {
         if (!blupi_.IsInVehicle())
@@ -1888,6 +1946,7 @@ namespace GalaxyEggbert::CNA
             case 5: // Reset gamer progress
                 saveData_.Reset();
                 saveData_.Save();
+                inputPad_.SetJumpRight(saveData_.GetJumpRight());
                 break;
             case 6: // Trial mode simulate-toggle -- no observable effect here, Trial phase is unreachable
                 break;
@@ -2276,6 +2335,23 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetSoundEnabled(sound_.IsEnabled());
                     saveData_.Save();
                 }
+                // The other toggles (OR-0010), saved at once as the original's GameData::Write().
+                if (setupInput.jumpToggled)
+                {
+                    saveData_.SetJumpRight(!saveData_.GetJumpRight());
+                    inputPad_.SetJumpRight(saveData_.GetJumpRight());
+                    saveData_.Save();
+                }
+                if (setupInput.zoomToggled)
+                {
+                    saveData_.SetAutoZoom(!saveData_.GetAutoZoom());
+                    saveData_.Save();
+                }
+                if (setupInput.accelToggled)
+                {
+                    saveData_.SetAccelActive(!saveData_.GetAccelActive());
+                    saveData_.Save();
+                }
                 if (setupInput.resetPressed)
                 {
                     // Real SetupReset: `gameData.Reset(); gameData.Write();`
@@ -2284,6 +2360,7 @@ namespace GalaxyEggbert::CNA
                     // MainSetup (isMainSetup gates its rect/visibility).
                     saveData_.Reset();
                     saveData_.Save();
+                    inputPad_.SetJumpRight(saveData_.GetJumpRight());
                 }
                 if (setupInput.returnPressed ||
                     (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
@@ -2692,6 +2769,7 @@ namespace GalaxyEggbert::CNA
             // without needing a separate "which source wins" rule.
             turnInput = std::clamp(turnInput + padPlayInput.turnInput, -1.0f, 1.0f);
             moveInput = std::clamp(moveInput + padPlayInput.moveInput, -1.0f, 1.0f);
+            turnInput = std::clamp(turnInput + AccelTurnInput(), -1.0f, 1.0f);
             bool jumpPressed = keys.IsKeyDown(Keys::LeftControl) || padPlayInput.jumpHeld;
             // INFRA-002's behavioral-trace scripted input (plan.md §7) --
             // walk forward down the tested corridor for the whole capture,
@@ -2841,6 +2919,30 @@ namespace GalaxyEggbert::CNA
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
             TickPendingSkate(simDt);
+            // Automatic zoom on action (Decor::MoveHotSpot, Decor.cpp:538-600; the Setup's
+            // SetupZoom, on by default; OR-0010): while he walks with his focus, not flying the
+            // helicopter nor under Power, the view eases in to 1.3x (1/30 a tick); it stays 30
+            // ticks after he stops unless he loses his focus or crouches or looks up.
+            {
+                const bool focus = !blupi_.IsOneShotAnimPlaying() && !blupi_.IsDeathLocked() &&
+                                   !blupi_.IsTeleporting() && !blupi_.IsBye() && !blupi_.IsPickupFrozen();
+                bool zoomIn = saveData_.GetAutoZoom() && focus && (moveInput != 0.0f || turnInput != 0.0f) &&
+                              blupi_.GetVehicleMode() != BlupiController::VehicleMode::Helicopter &&
+                              blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Power;
+                if (zoomIn)
+                {
+                    chaseZoomLingerSeconds_ = 30.0f / 20.0f;
+                }
+                else if (chaseZoomLingerSeconds_ > 0.0f)
+                {
+                    chaseZoomLingerSeconds_ =
+                        (!focus || crouchHeld || lookUpHeld) ? 0.0f : chaseZoomLingerSeconds_ - simDt;
+                    zoomIn = chaseZoomLingerSeconds_ > 0.0f;
+                }
+                const float target = zoomIn ? 1.3f : 1.0f;
+                const float step = simDt * 20.0f / 30.0f;
+                chaseZoom_ = chaseZoom_ < target ? std::min(chaseZoom_ + step, target) : std::max(chaseZoom_ - step, target);
+            }
             // The helicopter flown into a ceiling is wrecked (Decor.cpp:5264-5283, OR-0019), unless
             // the shield, the drink's Hide or SuperBlupi protect it.
             if (blupi_.HelicopterHitsCeiling(worldRuntime_.GetWorld(), tempPassable) && !blupi_.IsDeathLocked() &&
@@ -4363,7 +4465,8 @@ namespace GalaxyEggbert::CNA
                 // slightly down at him. A fixed offset, not a real
                 // spring-arm/collision-aware orbit camera -- sufficient to
                 // show the placeholder model, not a final camera design.
-                constexpr float kChaseDistance = 4.0f;
+                // The Setup's automatic zoom brings it in while he walks (chaseZoom_, OR-0010).
+                const float kChaseDistance = 4.0f / chaseZoom_;
                 constexpr float kChaseLookHeight = 1.0f;
                 // Base elevation reproduces the previous fixed offset
                 // (height 1.2 over distance 4); mouse-look pitch orbits the
@@ -5640,7 +5743,8 @@ namespace GalaxyEggbert::CNA
                      phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
             {
                 inputPad_.DrawSetup(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                    sound_.IsEnabled(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
+                                    sound_.IsEnabled(), saveData_.GetJumpRight(), saveData_.GetAutoZoom(),
+                                    saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), phaseTimeSeconds_, fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)

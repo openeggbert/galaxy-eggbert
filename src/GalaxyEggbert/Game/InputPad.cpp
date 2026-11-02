@@ -92,19 +92,28 @@ namespace GalaxyEggbert::Game
         constexpr float kDPadDrawRadius = 70.0f;   // real padRadius / 2: ring and knob
         constexpr float kDPadThreshold = 20.0f;    // pixels per axis for the discrete -1/0/+1 read
 
-        Microsoft::Xna::Framework::Vector2 DPadCenter(const ScreenMetrics& m) noexcept
+        // The Setup's "Jump button on the right" (GameData data[4], on by default): off, the stick
+        // goes right and Jump and Action left (InputPad.cpp:232-240, 1718-1760: mirrored).
+        Rect MirrorX(const Rect& r, const ScreenMetrics& m) noexcept
         {
-            return {100.0f * m.s, m.h - 100.0f * m.s};
+            return Rect{m.w - r.x1, r.y0, m.w - r.x0, r.y1};
         }
 
-        Rect PlayJumpRect(const ScreenMetrics& m) noexcept
+        Microsoft::Xna::Framework::Vector2 DPadCenter(const ScreenMetrics& m, bool jumpRight) noexcept
         {
-            return Rect{m.w - m.f1 * 1.2f, m.h - m.f1 * 1.2f, m.w - m.f1 * 0.2f, m.h - m.f1 * 0.2f};
+            return {jumpRight ? 100.0f * m.s : m.w - 100.0f * m.s, m.h - 100.0f * m.s};
         }
 
-        Rect PlayActionRect(const ScreenMetrics& m) noexcept
+        Rect PlayJumpRect(const ScreenMetrics& m, bool jumpRight) noexcept
         {
-            return Rect{m.w - m.f1 * 1.2f, m.h - m.f1 * 2.6f, m.w - m.f1 * 0.2f, m.h - m.f1 * 1.6f};
+            const Rect right{m.w - m.f1 * 1.2f, m.h - m.f1 * 1.2f, m.w - m.f1 * 0.2f, m.h - m.f1 * 0.2f};
+            return jumpRight ? right : MirrorX(right, m);
+        }
+
+        Rect PlayActionRect(const ScreenMetrics& m, bool jumpRight) noexcept
+        {
+            const Rect right{m.w - m.f1 * 1.2f, m.h - m.f1 * 2.6f, m.w - m.f1 * 0.2f, m.h - m.f1 * 1.6f};
+            return jumpRight ? right : MirrorX(right, m);
         }
 
         Rect PlayPauseRect(const ScreenMetrics& m) noexcept
@@ -767,12 +776,12 @@ namespace GalaxyEggbert::Game
         const float mouseY = static_cast<float>(mouse.getYProperty());
         const bool mouseDown = mouse.getLeftButtonProperty() == ButtonState::Pressed;
 
-        const auto padCenter = DPadCenter(m);
+        const auto padCenter = DPadCenter(m, jumpRight_);
         const float padHalf = kDPadRadius * m.s;
         const bool overDPad = InRect(mouseX, mouseY, Rect{padCenter.X - padHalf, padCenter.Y - padHalf,
                                                           padCenter.X + padHalf, padCenter.Y + padHalf});
-        const bool overJump = InRect(mouseX, mouseY, PlayJumpRect(m));
-        const bool overAction = InRect(mouseX, mouseY, PlayActionRect(m));
+        const bool overJump = InRect(mouseX, mouseY, PlayJumpRect(m, jumpRight_));
+        const bool overAction = InRect(mouseX, mouseY, PlayActionRect(m, jumpRight_));
         const bool overPause = InRect(mouseX, mouseY, PlayPauseRect(m));
 
         if (mouseDown && !mouseWasDown_)
@@ -855,7 +864,7 @@ namespace GalaxyEggbert::Game
 
         // D-pad: ring always centered; thumb offset by the live drag (zero
         // when not actively dragging, snapping back to center).
-        const auto padCenter = DPadCenter(m);
+        const auto padCenter = DPadCenter(m, jumpRight_);
         const float drawHalf = kDPadDrawRadius * m.s;
         appendIconQuad(normalQuads, padCenter.X - drawHalf, padCenter.Y - drawHalf, padCenter.X + drawHalf,
                        padCenter.Y + drawHalf, kIconDPadRing);
@@ -869,8 +878,8 @@ namespace GalaxyEggbert::Game
         {
             appendIconQuad(bucket, r.x0, r.y0, r.x1, r.y1, icon);
         };
-        appendRect(activeControl_ == kPlayControlJump ? pressedQuads : normalQuads, PlayJumpRect(m), kIconPlayJump);
-        appendRect(activeControl_ == kPlayControlAction ? pressedQuads : normalQuads, PlayActionRect(m),
+        appendRect(activeControl_ == kPlayControlJump ? pressedQuads : normalQuads, PlayJumpRect(m, jumpRight_), kIconPlayJump);
+        appendRect(activeControl_ == kPlayControlAction ? pressedQuads : normalQuads, PlayActionRect(m, jumpRight_),
                    kIconPlayAction);
         appendRect(activeControl_ == kPlayControlPause ? pressedQuads : normalQuads, PlayPauseRect(m),
                    kIconPlayPause);
@@ -1209,11 +1218,11 @@ namespace GalaxyEggbert::Game
 
         if (!mouseDown && mouseWasDown_)
         {
-            // Sounds/Reset (both real, meaningful desktop behavior now)
-            // and Return are wired -- Jump/Zoom/Accel render at their
-            // real position/icon/label but stay intentionally inert (see
-            // InputPad.hpp's UpdateSetup() class comment).
+            // Every toggle is wired (OR-0010, 2026-11-02): the caller flips and saves them.
             if (activeControl_ == kSetupControlSounds) result.soundsToggled = true;
+            else if (activeControl_ == kSetupControlJump && overJump) result.jumpToggled = true;
+            else if (activeControl_ == kSetupControlZoom && overZoom) result.zoomToggled = true;
+            else if (activeControl_ == kSetupControlAccel && overAccel) result.accelToggled = true;
             else if (activeControl_ == kSetupControlReset) result.resetPressed = true;
             else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
             activeControl_ = -1;
@@ -1224,7 +1233,8 @@ namespace GalaxyEggbert::Game
     }
 
     void InputPad::DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                              int viewportW, int viewportH, bool soundsOn, bool showReset, int selectedGamer,
+                              int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom,
+                              bool accel, bool showReset, int selectedGamer,
                               float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase)
     {
         if (!loaded_)
@@ -1322,9 +1332,9 @@ namespace GalaxyEggbert::Game
             // this engine (no meaningful desktop equivalent, see class
             // comment), so they always render the "off" icon.
             appendButton(SetupSoundsRect(m), soundsOn ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlSounds);
-            appendButton(SetupJumpRect(m), kIconSetupToggleOff, kSetupControlJump);
-            appendButton(SetupZoomRect(m), kIconSetupToggleOff, kSetupControlZoom);
-            appendButton(SetupAccelRect(m), kIconSetupToggleOff, kSetupControlAccel);
+            appendButton(SetupJumpRect(m), jumpRight ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlJump);
+            appendButton(SetupZoomRect(m), autoZoom ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlZoom);
+            appendButton(SetupAccelRect(m), accel ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlAccel);
             if (showReset)
             {
                 appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);

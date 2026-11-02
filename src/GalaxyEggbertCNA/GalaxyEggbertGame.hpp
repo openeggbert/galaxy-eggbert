@@ -29,6 +29,7 @@
 #include <Microsoft/Xna/Framework/GraphicsDeviceManager.hpp>
 #include <Microsoft/Xna/Framework/Input/KeyboardState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
+#include <Microsoft/Devices/Sensors/Accelerometer.hpp>
 
 #include <cstdint>
 #include <cstdio>
@@ -443,6 +444,16 @@ namespace GalaxyEggbert::CNA
             GalaxyEggbert::Game::MobileObjSpec deposit;
         };
         PendingSkate pendingSkate_;
+        // Automatic zoom on action (the Setup's SetupZoom, Decor::MoveHotSpot; OR-0010): the
+        // chase camera's distance is divided by it (1.0 .. 1.3).
+        float chaseZoom_ = 1.0f;
+        float chaseZoomLingerSeconds_ = 0.0f;
+        // The Setup's accelerometer (OR-0010): started while the setting is on and the device has
+        // one; its sideways tilt steers as the pad's horizontal axis (InputPad.cpp:1932-1969).
+        std::unique_ptr<Microsoft::Devices::Sensors::Accelerometer> accel_;
+        bool accelLastState_ = false;
+        bool accelWaitZero_ = true;
+        float AccelTurnInput();
         void TickPendingSkate(float dt);
 
         // Hub/mission-progression system (plan.md `MENU-035`/`036`,

@@ -108,6 +108,14 @@ namespace GalaxyEggbert::Game
 
         [[nodiscard]] bool GetSoundEnabled() const noexcept { return soundEnabled_; }
         void SetSoundEnabled(bool enabled) noexcept { soundEnabled_ = enabled; }
+        // The Setup's other toggles (GameData data[4..6]; GameData::Initialize: jump right and
+        // automatic zoom on, the accelerometer off). OR-0010.
+        [[nodiscard]] bool GetJumpRight() const noexcept { return jumpRight_; }
+        void SetJumpRight(bool on) noexcept { jumpRight_ = on; }
+        [[nodiscard]] bool GetAutoZoom() const noexcept { return autoZoom_; }
+        void SetAutoZoom(bool on) noexcept { autoZoom_ = on; }
+        [[nodiscard]] bool GetAccelActive() const noexcept { return accelActive_; }
+        void SetAccelActive(bool on) noexcept { accelActive_ = on; }
 
         // Real `data[2]`/`SetGamer()` (`Game1.cpp`): a single tap on an
         // Init gamer-slot button immediately selects AND persists that
@@ -192,6 +200,9 @@ namespace GalaxyEggbert::Game
         static constexpr const char* kSavePath = "savedata.txt";
 #endif
         bool soundEnabled_ = true;
+        bool jumpRight_ = true;
+        bool autoZoom_ = true;
+        bool accelActive_ = false;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
     };

@@ -48,6 +48,24 @@ int main()
         check(reloaded.GetSoundEnabled(), "Save()/Load(): round-trips soundEnabled=true correctly");
     }
     {
+        // The Setup's other toggles (OR-0010): the original's defaults, and a round trip.
+        SaveData fresh;
+        check(fresh.GetJumpRight() && fresh.GetAutoZoom() && !fresh.GetAccelActive(),
+              "defaults: Jump on the right, automatic zoom on, accelerometer off (GameData::Initialize)");
+        SaveData data;
+        data.SetJumpRight(false);
+        data.SetAutoZoom(false);
+        data.SetAccelActive(true);
+        data.Save();
+        SaveData reloaded;
+        reloaded.Load();
+        check(!reloaded.GetJumpRight() && !reloaded.GetAutoZoom() && reloaded.GetAccelActive(),
+              "Save()/Load(): round-trips the jump side, automatic zoom and accelerometer settings");
+        reloaded.Reset();
+        check(reloaded.GetJumpRight() && reloaded.GetAutoZoom() && !reloaded.GetAccelActive(),
+              "Reset(): the settings back to their defaults (GameData::Reset -> Initialize)");
+    }
+    {
         SaveData data;
         data.SetLives(1);
         data.SetMissionNumber(11);
