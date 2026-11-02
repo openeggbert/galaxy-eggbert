@@ -314,6 +314,7 @@ namespace GalaxyEggbert::CNA
                 case S::Ouf1b: return "Ouf1b";
                 case S::Ouf3: return "Ouf3";
                 case S::Ouf4: return "Ouf4";
+                case S::Ouf5: return "Ouf5";
                 case S::Ouf2: return "Ouf2";
                 case S::StopMarch: return "StopMarch";
                 case S::StopJump: return "StopJump";
@@ -3432,6 +3433,9 @@ namespace GalaxyEggbert::CNA
                                 break;
                             case BlupiController::AnimState::Ouf4:
                                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel49);
+                                break;
+                            case BlupiController::AnimState::Ouf5: // Decor.cpp:3134-3139 (ch47, its 4th tick)
+                                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel47);
                                 break;
                             default:
                                 break;

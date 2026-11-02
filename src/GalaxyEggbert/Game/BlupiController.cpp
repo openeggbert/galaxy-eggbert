@@ -170,7 +170,7 @@ namespace GalaxyEggbert::Game
             331, 331, 331, 332, 332, 332, 333, 333, 333, 334, 334, 334, 333, 333,
             333, 332, 332, 332, 331, 331, 331, 330, 330, 330, 329, 329, 329, 329,
             329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329,
-            329, 329, 329, 329, 329, 329, 329, 329, 329, 329};
+            329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329, 329};
         constexpr int kGluFrames[] = {
             168, 168, 169, 169, 170, 170, 171, 171, 170, 170, 169, 169, 168, 168,
             169, 169, 169, 168, 168, 169, 169, 170, 170, 169, 168};
@@ -298,6 +298,10 @@ namespace GalaxyEggbert::Game
         constexpr int kStopJumpFrames[] = {34, 35, 34, 34, 33};
         constexpr int kOuf2Frames[] = {1, 1, 227, 227, 228, 228, 229, 229, 228, 228, 227, 227, 226, 226, 227, 227,
                                        228, 228, 229, 229, 228, 228, 227, 227, 226, 226, 227, 227, 228, 228, 1, 1};
+        // table_blupi Ouf5 (65): dropped off a bar, he shakes it off (blupi-ouf5.rd4).
+        constexpr int kOuf5Frames[] = {1, 1, 288, 288, 289, 289, 290, 290, 290, 289, 288, 288, 289, 289, 290,
+                                       290, 290, 289, 288, 288, 289, 289, 290, 290, 290, 289, 288, 288, 289, 289,
+                                       290, 290, 290, 289, 288, 288, 289, 289, 290, 290, 290, 289, 1, 1};
         constexpr int kOuf4Frames[] = {0, 0, 135, 135, 136, 136, 137, 137, 232, 233, 232, 233, 232, 233,
                                        232, 233, 232, 233, 232, 233, 232, 233, 232, 233, 232, 233, 232,
                                        233, 232, 233, 232, 233, 137, 137, 136, 136, 135, 135, 0, 0};
@@ -1668,6 +1672,7 @@ namespace GalaxyEggbert::Game
                     m_onGround = false;
                     m_velocityY = 0.0f;
                     m_suspendGraceTimer = kSuspendNoRegrabSeconds;
+                    ArmOuf(AnimState::Ouf5); // Decor.cpp:4758-4767
                 }
             }
             else if (cellHere == BarreCellType::None)
@@ -1677,6 +1682,7 @@ namespace GalaxyEggbert::Game
                 m_velocityY = 0.0f;
                 m_suspendGraceTimer = kSuspendNoRegrabSeconds;
                 m_suspendDropHoldTimer = 0.0f;
+                ArmOuf(AnimState::Ouf5); // Decor.cpp:4758-4767
             }
             else
             {
@@ -2433,6 +2439,12 @@ namespace GalaxyEggbert::Game
                             startReaction(m_oufArmed, kOuf4Duration);
                         }
                         break;
+                    case AnimState::Ouf5:
+                        if (m_oufTime > kOuf5After && m_oufTime < kOuf5Within)
+                        {
+                            startReaction(m_oufArmed, kOuf5Duration);
+                        }
+                        break;
                     default:
                         break;
                 }
@@ -2788,6 +2800,8 @@ namespace GalaxyEggbert::Game
                 return kOuf4Frames[m_animPhase % (sizeof(kOuf4Frames) / sizeof(kOuf4Frames[0]))];
             case AnimState::Ouf2:
                 return kOuf2Frames[m_animPhase % (sizeof(kOuf2Frames) / sizeof(kOuf2Frames[0]))];
+            case AnimState::Ouf5:
+                return kOuf5Frames[m_animPhase % (sizeof(kOuf5Frames) / sizeof(kOuf5Frames[0]))];
             case AnimState::StopMarch:
                 return kStopMarchFrames[m_animPhase % (sizeof(kStopMarchFrames) / sizeof(kStopMarchFrames[0]))];
             case AnimState::StopJump:

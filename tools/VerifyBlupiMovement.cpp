@@ -539,6 +539,36 @@ int main(int argc, char** argv)
             check(sawFreefall, "walking off the bar's near end (no bar tile, gap below) drops Blupi "
                                 "into free-fall instead of releasing gracefully");
 
+            // Ouf5 (Decor.cpp:4758-4767, 6277-6284): dropped off a bar, he shakes it off on landing
+            // when he stands idle 10 to 50 ticks after letting go.
+            {
+                Worlds::World oufWorld;
+                for (std::uint16_t z = 70; z <= 74; ++z)
+                {
+                    oufWorld.setBlock(kBarreX, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                }
+                for (std::uint16_t z = 71; z <= 73; ++z)
+                {
+                    oufWorld.setBlock(kBarreX, 5, z, Worlds::Block::make(static_cast<std::uint16_t>(138)));
+                }
+                BlupiController faller;
+                faller.SetPosition(barreWorldX, 5.0f, 72.0f - 50.0f);
+                faller.Step(oufWorld, 0.0f, 0.0f, false, false, false, dt);
+                check(faller.IsSuspended(), "sanity: hanging from the high bar");
+                for (int i = 0; i < 30 && faller.IsSuspended(); ++i)
+                {
+                    faller.Step(oufWorld, 0.0f, 0.0f, false, true, false, dt); // Down held: let go
+                }
+                bool shook = false;
+                for (int i = 0; i < 240 && !shook; ++i)
+                {
+                    faller.Step(oufWorld, 0.0f, 0.0f, false, false, false, dt);
+                    shook = faller.GetAnimState() == BlupiController::AnimState::Ouf5;
+                }
+                check(!faller.IsSuspended() && faller.IsOnGround() && shook,
+                      "dropped off a bar onto a floor four below, he plays Ouf5 standing idle");
+            }
+
             // OR-0017 (render only): near a wall face his model is drawn kBodyHalfWidth from it.
             {
                 Worlds::World wallWorld;

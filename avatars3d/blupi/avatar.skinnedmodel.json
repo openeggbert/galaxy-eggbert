@@ -314,6 +314,10 @@
       "clip": "clips/Ouf2.clip.bin"
     },
     {
+      "name": "Ouf5",
+      "clip": "clips/Ouf5.clip.bin"
+    },
+    {
       "name": "StopMarch",
       "clip": "clips/StopMarch.clip.bin"
     },

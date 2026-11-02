@@ -621,3 +621,25 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   unsourced approximation).
 - Fix: the march timer and `Sound::PlayStep` are gone; the landing keeps its material remap.
 - Validation: build, ctest 112/112; every channel 3 call site of Decor.cpp read.
+
+## BD-0038 — no reaction after dropping off a bar (Ouf5 missing) (gameplay, animation) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:4758-4767, 6277-6284, 3134-3139; table_blupi action 65): letting go of a bar
+  by holding Down, or the bar ending under him, arms Ouf5; standing idle 10 to 50 ticks later he
+  plays it (icons 288-290, 44 ticks, `blupi-ouf5.rd4`), channel 47 at its 4th tick.
+- Galaxy had no Ouf5 (AnimState, table, arming, sound or clip).
+- Fix: `AnimState::Ouf5`, `kOuf5Frames` (table_blupi's), armed in both drops of the hanging code,
+  played in the window `kOuf5After`..`kOuf5Within`; its sound with the other reactions'; its clip
+  built by `build_clip_library.py` from `blupi-ouf5.rd4` (icons 288-290 matched confidently) and
+  only the new clip taken into `avatars3d/blupi` (with Clear4's, BD-0039; the rest of the library
+  unchanged).
+- Validation: `VerifyBlupiMovement` (dropped off a bar four above the floor, he plays Ouf5); seen
+  live (`plans/evidence/ouf5-reaction.png`); ctest 112/112.
+
+## BD-0039 — the saw death's frame table was two ticks short (animation) — FIXED_AND_VERIFIED
+
+- `kClear4Frames` had 108 of table_blupi's 110 entries for Clear4 (two closing 329s missing); the
+  death lasts 110 ticks, so its last two ticks wrapped round to the first frames (324, 325).
+  Found comparing every Galaxy frame table with table_blupi by action (all others equal).
+- Fix: the two entries; the DeathLocked.Clear4 clip rebuilt from it.
+- Validation: the table comparison; ctest.

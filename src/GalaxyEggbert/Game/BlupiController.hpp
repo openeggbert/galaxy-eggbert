@@ -621,7 +621,7 @@ namespace GalaxyEggbert::Game
             // passed close by (ArmOuf()). kJumpAieSpeed's comment has when each plays. Ouf3 is
             // also his shrug when a decoy cannot be put down (TriggerReaction()), and Ouf2 (46)
             // putting one down, held (TriggerOneShotAnim(), Decor.cpp:4833-4848).
-            JumpAie, Ouf1a, Ouf1b, Ouf3, Ouf4, Ouf2,
+            JumpAie, Ouf1a, Ouf1b, Ouf3, Ouf4, Ouf2, Ouf5,
             // The original's short poses between moves (Decor.cpp:2989-2998, 3194-3203,
             // 3616-3626), played in the reactions' slot: StopMarch (60, 3 ticks) as he stops after
             // walking at least 10 ticks, StopJump (61, 5 ticks) as he lands.
@@ -1311,9 +1311,11 @@ namespace GalaxyEggbert::Game
         // 6251-6323). JumpAie: a ceiling met while still rising faster than 14 of the jump's 16
         // px a tick (not on the skateboard) plays on landing, for 30 ticks. An Ouf is armed by
         // its cause (in the water: Ouf1a; starting a push: Ouf1b; pulling: Ouf3; an enemy
-        // passing close: Ouf4, ArmOuf()), counts the time since, is disarmed by walking on (not
-        // in the water), and plays when he next stands idle if that time fits its window: Ouf1a
-        // and Ouf1b after more than 50 ticks, Ouf3 after more than 60, Ouf4 within 10.
+        // passing close: Ouf4, ArmOuf(); dropping off a bar or the bar ending under him: Ouf5,
+        // Decor.cpp:4758-4767), counts the time since, is disarmed by walking on (not in the
+        // water), and plays when he next stands idle if that time fits its window: Ouf1a and Ouf1b
+        // after more than 50 ticks, Ouf3 after more than 60, Ouf4 within 10, Ouf5 between 10 and
+        // 50 (Decor.cpp:6277-6284).
         static constexpr float kJumpAieSpeed = kJumpSpeed * (14.0f / 16.0f);
         static constexpr float kJumpAieDuration = 30.0f / 20.0f;
         static constexpr float kOuf1Duration = 29.0f / 20.0f;
@@ -1327,6 +1329,9 @@ namespace GalaxyEggbert::Game
         static constexpr float kOuf1After = 50.0f / 20.0f;
         static constexpr float kOuf3After = 60.0f / 20.0f;
         static constexpr float kOuf4Within = 10.0f / 20.0f;
+        static constexpr float kOuf5After = 10.0f / 20.0f;
+        static constexpr float kOuf5Within = 50.0f / 20.0f;
+        static constexpr float kOuf5Duration = 44.0f / 20.0f;
 
         // Arms an Ouf from a cause this class cannot see (Ouf4: InteractionSystem's near miss).
         void ArmOuf(AnimState ouf) noexcept
