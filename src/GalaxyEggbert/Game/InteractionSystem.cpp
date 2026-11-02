@@ -2121,11 +2121,26 @@ namespace GalaxyEggbert::Game
                 // spawned immediately at touch time, NOT deferred to voyage
                 // completion.
                 case GalaxyEggbert::Def::ObjectType::ObjectType5:  // treasure
+                    TryCollectBasicPickup(obj, pendingSpawns);
+                    break;
                 case GalaxyEggbert::Def::ObjectType::ObjectType49: // key 1
                 case GalaxyEggbert::Def::ObjectType::ObjectType50: // key 2
                 case GalaxyEggbert::Def::ObjectType::ObjectType51: // key 3
-                    TryCollectBasicPickup(obj, pendingSpawns);
+                {
+                    // A key is held or not (the original's m_blupiCle flags): one of a colour he
+                    // holds, or one still flying to the panel, stays where it is until a door has
+                    // used his (Decor.cpp:5962-6001; a door clears it, 5619). Taken anyway, it was
+                    // lost when the first door cleared the colour (BD-0023).
+                    const bool k1 = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType49;
+                    const bool k2 = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType50;
+                    const int held = k1 ? keys1_ : k2 ? keys2_ : keys3_;
+                    const VoyageKind flying = k1 ? VoyageKind::Key1 : k2 ? VoyageKind::Key2 : VoyageKind::Key3;
+                    if (held == 0 && voyageKind_ != flying)
+                    {
+                        TryCollectBasicPickup(obj, pendingSpawns);
+                    }
                     break;
+                }
                 case GalaxyEggbert::Def::ObjectType::ObjectType55: // dynamite stick
                     // Real gate (Decor.cpp:6116-6119): taken only with the action button, none
                     // carried and no stick still flying to the panel (the count rises when it
@@ -2855,6 +2870,11 @@ namespace GalaxyEggbert::Game
         objects.push_back(spec);
     }
 
+    bool InteractionSystem::BlupiTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz)
+    {
+        return MoveObjectTouches(type, dx, dy, dz);
+    }
+
     void InteractionSystem::SpawnTeleportArrival(WorldRuntime& worldRuntime, float x, float y, float z)
     {
         // Decor.cpp:6355-6356: `ObjectStart(m_blupiPos, ObjectType27, 20)` and `(..., -20)` -- two
@@ -3521,15 +3541,15 @@ namespace GalaxyEggbert::Game
                 sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Key1:
-                ++keys1_;
+                keys1_ = 1; // held, not counted (m_blupiCle |= Key1, Decor.cpp:10278)
                 sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Key2:
-                ++keys2_;
+                keys2_ = 1; // held, not counted (m_blupiCle |= Key2, Decor.cpp:10283)
                 sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Key3:
-                ++keys3_;
+                keys3_ = 1; // held, not counted (m_blupiCle |= Key3, Decor.cpp:10288)
                 sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::Egg:

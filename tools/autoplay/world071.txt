@@ -41,7 +41,7 @@ until ground = 1
 expect y >= 43.9
 # The jeep (13, 44, 81): off the top's north edge onto the court, north through the cleft over
 # its fifteen mines (the jeep runs them over) to the chasm.
-go 12.2 81 tol 0.15
+go 12.85 81 tol 0.15
 hold 2 action
 wait 30
 go 14 76 max 600

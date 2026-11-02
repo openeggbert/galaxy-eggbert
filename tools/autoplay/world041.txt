@@ -128,7 +128,7 @@ wait 30
 go 60 43.5
 # E: the corridor. A landing helicopter, one up over the water (y 39); before each gate of
 # rising and falling mines (z 35, 30, 25) wait for its mines at the top, then on past it.
-go 60 42.6 tol 0.3
+go 60 42.15 tol 0.3
 hold 6 action
 wait 30
 hold 34 lookup
@@ -157,7 +157,7 @@ go 61 19.8
 go 61.9 20 tol 0.1
 until eggs = 5 max 200
 go 60.5 19.5
-go 60 20.6 tol 0.15
+go 60 20.85 tol 0.15
 hold 6 action
 wait 30
 go 60 19.5 tol 0.3

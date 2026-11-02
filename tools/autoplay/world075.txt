@@ -36,7 +36,7 @@ go 13 12
 expect y >= 39.9
 # C, the yard: a skateboard (19, 7), east along the mine corridor (z 10) over its mines (x 31-32,
 # two deep: run over), off it before the eggs' alcove; up onto the ledge (walk 42) for its eggs.
-go 19 7.7 tol 0.1
+go 19 7.15 tol 0.1
 hold 2 action
 wait 30
 go 22 10 max 300
@@ -94,7 +94,7 @@ expect y <= 10.1
 # G, the basin: a skateboard from the garage (75, 14); south along the course (x 80) over its two
 # mine fields (z 20-21, 28-29), hopping the humps after each (z 24-25, 33-34); off it before the
 # funnel room.
-go 75 13.4 tol 0.1
+go 75 13.85 tol 0.1
 hold 2 action
 wait 30
 go 80 17 max 300
@@ -188,7 +188,7 @@ go 40 61
 go 32 61 max 600
 expect y >= 24.9
 go 30 61
-go 29 63.4 tol 0.1
+go 29 63.85 tol 0.1
 hold 2 action
 wait 30
 go 25 58 max 300

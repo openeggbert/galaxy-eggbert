@@ -869,6 +869,32 @@ int main(int argc, char** argv)
             }
         }
         check(keySparkleCount == 4, "collecting a key spawns the real 4-instance ObjectType39 sparkle burst too");
+
+        // A key is held or not (BD-0023, the original's m_blupiCle): a second of the same colour
+        // stays where it is while he holds the first.
+        MobileObjSpec second;
+        second.type = GalaxyEggbert::Def::ObjectType::ObjectType49;
+        second.active = true;
+        second.currentX = second.posStartX = second.posEndX = kx;
+        second.currentY = second.posStartY = second.posEndY = ky;
+        second.currentZ = second.posStartZ = second.posEndZ = kz;
+        world.GetMobileObjectsMutable().push_back(second);
+        const std::size_t secondIndex = world.GetMobileObjects().size() - 1;
+        for (int i = 0; i < 4; ++i)
+        {
+            interaction.Update(dt, world, kx, ky, kz, 0.0f, sound);
+        }
+        check(world.GetMobileObjects()[secondIndex].active && interaction.Key1Count() == 1,
+              "a second key of a colour he holds stays where it is (one key a colour, Decor.cpp:5962)");
+        // ... and holding keys does not stop a treasure.
+        interaction.CheatAllKeys();
+        MobileObjSpec treasure = second;
+        treasure.type = GalaxyEggbert::Def::ObjectType::ObjectType5;
+        world.GetMobileObjectsMutable()[secondIndex].active = false;
+        world.GetMobileObjectsMutable().push_back(treasure);
+        const std::size_t treasureIndex = world.GetMobileObjects().size() - 1;
+        interaction.Update(dt, world, kx, ky, kz, 0.0f, sound);
+        check(!world.GetMobileObjects()[treasureIndex].active, "holding all three keys, he still takes a treasure");
     }
     else
     {

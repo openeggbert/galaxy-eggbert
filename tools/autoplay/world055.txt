@@ -139,7 +139,7 @@ expect y <= 12.05
 # Into an overcraft (54, 12, 12) and over the lava (x 38-48) with Up (lookup) held, which keeps
 # it hovering over it; let down past it, treasure 7 (32, 12, 7), out of the overcraft by the
 # door "7" (x 29, z 9-11).
-go 53.3 12 tol 0.1
+go 53.85 12 tol 0.1
 face 90
 hold 2 action
 wait 20

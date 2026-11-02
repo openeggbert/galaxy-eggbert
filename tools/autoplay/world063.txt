@@ -44,7 +44,7 @@ expect y >= 19.95
 # The machine yard: onto the skateboard (49, 20, 31), east along the corridor (z 30-31), riding
 # over its six mines (they blow up under the board), into the saw yard; off the board there.
 go 49 32
-go 49 31.9 tol 0.1
+go 49 31.15 tol 0.1
 hold 2 action
 wait 20
 go 58 30.5

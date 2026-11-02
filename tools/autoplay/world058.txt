@@ -184,7 +184,7 @@ go 94.6 55.5
 # turn there lets it catch up), back round by (60, 86) as it leaves (62, 84), into the
 # helicopter again.
 go 89.5 62
-go 88.9 64 tol 0.1
+go 88.15 64 tol 0.1
 face 270
 hold 2 action
 wait 20

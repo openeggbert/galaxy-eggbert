@@ -38,7 +38,7 @@ go 40 51 tol 0.15
 go 46 51
 # The hangar (walk 6): a helicopter from the row along z 44 (Action beside it).
 go 52 46
-go 52 44.8 tol 0.15
+go 52 44.15 tol 0.15
 hold 2 action
 wait 20
 # Up the shaft to each ledge's treasure: over it, then down onto it. Ledge 1 (walk 12), 2 (18),

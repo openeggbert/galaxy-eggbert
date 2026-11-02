@@ -5,7 +5,7 @@ expect mission = 46
 # the red key; down to the red door (24, 80), off, through it.
 go 10 92 tol 0.15
 until eggs = 1 max 200
-go 17.6 88.6 tol 0.15
+go 17.92 88.12 tol 0.15
 hold 6 action
 wait 30
 hold 242 lookup

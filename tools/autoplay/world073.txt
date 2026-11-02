@@ -102,7 +102,7 @@ expect y >= 24.9
 # A skateboard (49, 34); off the shelf onto the landing, east into the skate corridor K (walk 20)
 # along z 38: over its first row of mines (x 59-63, run over), jumping the lava cells x 68 and
 # x 73, over the second row (x 78-82); off the skateboard before its east end.
-go 49 33.2 tol 0.1
+go 49 33.85 tol 0.1
 hold 2 action
 wait 30
 go 49 37.5 max 300

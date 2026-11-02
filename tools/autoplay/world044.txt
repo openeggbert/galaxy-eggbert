@@ -103,7 +103,7 @@ until ground = 1 max 300
 expect y <= 12.05
 go 19 82 tol 0.15
 until treasures = 11 max 200
-go 20.6 78.2 tol 0.15
+go 20.87 78.07 tol 0.15
 hold 6 action
 wait 30
 go 20 72.5 tol 0.3

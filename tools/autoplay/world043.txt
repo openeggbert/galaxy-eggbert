@@ -74,7 +74,7 @@ go 66 29.4 tol 0.15
 until treasures = 5 max 200
 go 67 30 tol 0.15
 until eggs = 1 max 200
-go 69.4 30 tol 0.15
+go 69.85 30 tol 0.15
 hold 6 action
 wait 30
 go 71 38.5 tol 0.3

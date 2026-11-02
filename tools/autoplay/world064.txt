@@ -252,7 +252,7 @@ expect y >= 69.95
 # the column just over his head): under (66, 77-80, 21) at 76; on (64, 70-77, 25) at 78; under
 # (61, 78-80, 25) at 77; on (59, 70-75, 23) at 76. Short hops from rest, each let go a third of
 # the way short so the helicopter coasts to the point.
-go 66 19.9 tol 0.1
+go 66 19.15 tol 0.1
 face 0
 hold 2 action
 wait 20

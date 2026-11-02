@@ -9,7 +9,7 @@ clear 19 6 50 2.5 max 900
 go 13.6 52.2
 # A helicopter of the hangar's row (x 10), Action beside it.
 go 11 50
-go 10.8 50 tol 0.1
+go 10.15 50 tol 0.1
 hold 2 action
 wait 20
 # Up to the gallery (walk 18) and down onto treasure 1 at its west end (4, 42), clear of the

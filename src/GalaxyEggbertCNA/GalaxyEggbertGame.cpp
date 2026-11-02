@@ -4011,7 +4011,8 @@ namespace GalaxyEggbert::CNA
                 }
                 else if (!pendingSkate_.active)
                 {
-                    constexpr float kVehicleMountRadius = 1.1f;
+                    // Touching it, as the original's boxes have it (the `bNear` contact the mount
+                    // sits in, Decor.cpp:5646-5760; it was a 1.1-cell sphere, BD-0024).
                     for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
                     {
                         if (!obj.active) continue;
@@ -4023,7 +4024,7 @@ namespace GalaxyEggbert::CNA
                         const float mdx = obj.currentX - blupi_.GetX();
                         const float mdy = obj.currentY - blupi_.GetY();
                         const float mdz = obj.currentZ - blupi_.GetZ();
-                        if (mdx * mdx + mdy * mdy + mdz * mdz < kVehicleMountRadius * kVehicleMountRadius &&
+                        if (InteractionSystem::BlupiTouches(obj.type, mdx, mdy, mdz) &&
                             blupi_.TriggerMount(mode, blupi_.IsNage(), blupi_.IsSurf()))
                         {
                             actionUsed = true;
@@ -4052,6 +4053,40 @@ namespace GalaxyEggbert::CNA
                 }
             }
             actionKeyWasDown_ = actionPressed;
+
+            // A helicopter floating over nothing (the cell under it passable, Decor::IsFloatingObject)
+            // is boarded by touching it, without the button (Decor.cpp:5646-5650; BD-0024): he
+            // jumps or drops into it.
+            if (!blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased() && !blupi_.IsNage() &&
+                !blupi_.IsSurf() && !blupi_.IsSuspended() && !pendingSkate_.active)
+            {
+                const auto& world = worldRuntime_.GetWorld();
+                for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
+                {
+                    if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType13)
+                    {
+                        continue;
+                    }
+                    const int gx = static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX;
+                    const int gz = static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ;
+                    const int gy = static_cast<int>(std::floor(obj.currentY + 0.001f)) - 1;
+                    const int n = static_cast<int>(world.blocksPerAxis());
+                    const bool floating =
+                        gx >= 0 && gx < n && gz >= 0 && gz < n && gy >= 0 && gy < n &&
+                        GalaxyEggbert::GetBlockDefinition(
+                            world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                           static_cast<std::uint16_t>(gz)).type())
+                                .collisionMask == 0;
+                    if (floating &&
+                        InteractionSystem::BlupiTouches(obj.type, obj.currentX - blupi_.GetX(), obj.currentY - blupi_.GetY(),
+                                                        obj.currentZ - blupi_.GetZ()) &&
+                        blupi_.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false))
+                    {
+                        obj.active = false;
+                        break;
+                    }
+                }
+            }
 
             // Interactive objects (2026-07-10, see InteractionSystem.hpp)
             // -- platform lift patrol + riding (plan.md E3D-MIG-152, 2026-

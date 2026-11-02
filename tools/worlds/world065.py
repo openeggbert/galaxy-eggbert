@@ -313,6 +313,11 @@ def main(argv) -> int:
     w.place(O.EGG, 74, 5, 66)
 
     skin(w, rng)
+    # The garage's floor under each jeep, set last so the random faces above keep their draws: a
+    # jeep is boarded by touching it (BD-0024), so he stands in its cell, and the grate there
+    # (passable) dropped him through.
+    for x in (84, 86, 88, 90):
+        w.set(x, 45, 10, 362)
     w.spawn = (48, 30, 66)
     w.save(out)
     print(f"wrote {out}")

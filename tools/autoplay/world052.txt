@@ -129,7 +129,7 @@ expect y >= 18.95
 # Through the door "7" onto the hangar's ledge (walk 19), into the helicopter (57, 19, 35).
 go 56 40
 go 57 36.2
-go 57 36 tol 0.1
+go 57 35.15 tol 0.1
 face 0
 hold 2 action
 wait 30

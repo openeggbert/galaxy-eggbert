@@ -90,6 +90,10 @@ ledgers before repeating any discovery. Where it stands:
   (detours onto items, lick points, exits, dives; found with a temporary probe that logged every
   item the old sphere would have taken -- the method is in BD-0021). BD-0022: a pickup's reward
   was lost when its HUD flight started off screen (projection now clamped).
+- Done: BD-0023, keys held as the original's flags (a second key of a held colour stays put;
+  Galaxy took it and lost it at the first door). Egg and treasure reviewed: match.
+- Done: BD-0024, vehicles boarded by the original's box contact (was a 1.1-cell sphere), and a
+  helicopter floating over nothing boarded on contact without the button.
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

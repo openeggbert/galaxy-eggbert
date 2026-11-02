@@ -44,3 +44,5 @@ head shake on an unused action press (BD-0019),gameplay+render,unit+live,VerifyB
 stepping forward off a ledge behind him (BD-0020),gameplay,unit+autoplay,VerifyBlupiMovement (Advance; vehicles at a ledge); all playthroughs,pass,
 contact boxes of MoveObjectDetect for hazards and pickups (BD-0021),gameplay,unit+autoplay,VerifyInteractionSystem (0.5 misses / 0.4 touches / a cell below misses; grace 30 px); all playthroughs,pass,
 pickup reward when its flight starts off screen (BD-0022),gameplay,unit+autoplay,VerifyInteractionSystem (projection clamped); 043,pass,
+one key a colour; a treasure with keys held (BD-0023),gameplay,unit+autoplay,VerifyInteractionSystem; 023 199; all playthroughs,pass,
+vehicle boarding by box contact; floating helicopter on contact (BD-0024),gameplay,autoplay,all playthroughs,pass,

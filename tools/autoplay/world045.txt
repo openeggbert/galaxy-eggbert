@@ -98,7 +98,7 @@ until treasures = 2 max 200
 # A helicopter (91, 61), flown north through the hangar's opening, over the balcony and down
 # into the core; off it on the cellar floor (walk 8).
 go 90.5 52
-go 91 60.4 tol 0.15
+go 91 60.85 tol 0.15
 hold 6 action
 wait 30
 hold 40 lookup
@@ -147,7 +147,7 @@ go 62 36.6 tol 0.15
 until eggs = 7 max 200
 # A floor helicopter (60, 33) up over the cage on its column (walls 44-46, open above), down
 # into it: treasure 3 beside its pillar.
-go 60.4 33.6 tol 0.15
+go 60.08 33.12 tol 0.15
 hold 6 action
 wait 30
 hold 760 lookup

@@ -371,6 +371,39 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyInteractionSystem` (a point almost level with the camera lands on the edge);
   043 passes; all playthroughs.
 
+## BD-0023 — keys were counted, so a second key of a colour was taken and then lost (gameplay) — FIXED_AND_VERIFIED
+
+- Wave C, the keys (ObjectType 49/50/51). The original holds a key or not (m_blupiCle flags):
+  a key of a colour he holds, or one still flying to the panel, is not taken (Decor.cpp:5962,
+  5977, 5992); a door clears his key (5619), after which the next is taken. Galaxy counted keys
+  (`++keys1_`) and took every one, while its doors clear the colour to 0 -- so a second key of a
+  colour picked up early was lost at the first door, and a world with two doors of a colour
+  could not be finished that way.
+- Now the original's gate and `keysN_ = 1` on arrival. (A first cut let the treasure, which
+  shared the keys' switch case, fall into the key gate: caught by 023, and the verifier now
+  checks a treasure taken with all keys held.)
+- Also reviewed against the source and matching: the egg (6: MAX_EGG_COUNT 10, nothing at the
+  cap, icon 21 to the lives row), the treasure (5: icon 6 to (430, 430), the four sparkles).
+- Validation: `VerifyInteractionSystem` (a second key of a held colour stays; a treasure is taken
+  with all keys held); the worlds with repeated key colours (023, 199) and all playthroughs.
+
+## BD-0024 — vehicles were boarded from 1.1 cells; a floating helicopter needed the button (gameplay) — FIXED_AND_VERIFIED
+
+- Wave C, the vehicle pickups (helicopter 13, jeep 19, skateboard 24, tank 28, overcraft 46). The
+  original boards one inside MoveObjectDetect's `bNear` contact (Decor.cpp:5646-5760): the
+  boxes of BD-0021, with the action button -- except a helicopter floating over nothing (the cell
+  under it passable, Decor::IsFloatingObject), boarded by touching it: he jumps or drops in.
+  Galaxy boarded any vehicle from a 1.1-cell sphere on the button, and a floating helicopter only
+  with it.
+- Now `InteractionSystem::BlupiTouches` (the boxes) for boarding, and the floating helicopter
+  boarded on contact. The playthroughs' 36 boardings made from outside the box re-aimed to 0.15
+  from their vehicle (two jump landings in 074 and a helicopter left in 105 by hand).
+- World 065's garage had its four jeeps on grates, which are passable: within a jeep's box he
+  stands in its cell and fell through. The cells under the jeeps are the garage's floor now (set
+  last in the builder, so no other cell's random face changes); the original's garage had them
+  on lifts.
+- Validation: all playthroughs.
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

@@ -298,7 +298,7 @@ expect y <= 30.05
 # An overcraft (80, 30, 22) mounted; east over the cavern's lava (x 83-90) with Up held all the
 # way: it climbs only while the ground lies within 1.25 under it (D46), so it hovers 1-1.6 over
 # the lava, never higher, and comes down on the far floor; off it there.
-go 80 22.9 tol 0.08
+go 80 22.15 tol 0.08
 face 0
 hold 2 action
 wait 30
@@ -348,7 +348,7 @@ expect y >= 45.95
 # (z 12, walk 42) as the lift arrives: the jeep runs over its seven mines (x 73-79).
 go 88 14
 go 85.5 11
-go 84 10.9 tol 0.1
+go 84 10.15 tol 0.1
 hold 2 action
 wait 30
 lift 84 46 12 max 600

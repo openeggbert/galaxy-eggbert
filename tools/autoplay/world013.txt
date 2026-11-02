@@ -4,7 +4,7 @@ expect mission = 13
 expect lives >= 3
 # A. The hangar: take a helicopter (Space), climb to the window (RightShift; held T s and let
 # go, it rises 3.125 T cells) and fly through it onto the pool hall's ledge (walk 6).
-go 44 60.8
+go 44 60.15
 hold 2 action
 wait 20
 hold 100 lookup
@@ -29,7 +29,7 @@ go 46 29 jump 2
 until ground = 1
 expect y >= 4.95
 # C. The second helicopter, up the shaft for the three treasures (y 10, 14, 18).
-go 44 26.9
+go 44 26.15
 hold 2 action
 wait 20
 hold 96 lookup
@@ -57,7 +57,7 @@ wait 30
 # D. West through the door into the skate room for a skateboard, then east along the tunnel:
 # over the mines at x 64-65 and 80-81 (the skateboard runs them over), jumping the water
 # trenches at x 70-71 and 86-87, to the red arrow.
-go 34.9 14 tol 0.1
+go 34.15 14 tol 0.1
 hold 2 action
 wait 30
 go 57 14

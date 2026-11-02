@@ -3,7 +3,7 @@
 wait 30
 expect mission = 125
 # A helicopter on the start ledge's east edge (18, 20, 49): Action beside it mounts it.
-go 17.3 49
+go 17.85 49
 hold 2 action
 wait 30
 # Up above the corridor's tube (its top walk 26), the pool and every patrol (the bird at 28),

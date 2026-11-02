@@ -9,7 +9,7 @@ go 39 74 until x <= 30 max 900
 until x <= 30 max 900
 # A skateboard (12, 15), east along the yard (z 11-13) through its block of mines (x 26-28),
 # off it before the lava pit (x 39-41).
-go 12 14.2 tol 0.15
+go 12 14.85 tol 0.15
 hold 2 action
 wait 20
 go 21 12 max 600

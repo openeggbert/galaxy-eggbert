@@ -5,7 +5,7 @@ wait 30
 expect mission = 105
 # A helicopter on the start ledge (15, 47); up to cruise at 30.5, between the birds' heights
 # (26, 28 below, 34 above) and well under the roof's mines (40).
-go 14.2 47 tol 0.1
+go 14.85 47 tol 0.1
 hold 2 action
 wait 20
 go 14.5 47 tol 0 with lookup until y >= 29 max 600
@@ -60,7 +60,8 @@ go 76.7 48 tol 0.1 with crouch max 300
 until blitz = 52 max 400
 go 71.4 48 tol 0.2 with crouch max 600
 go 67 48
-go 66.8 48 tol 0.1
+# Onto the helicopter where he left it (65.95, 48.07): boarded by touching it (BD-0024).
+go 66.1 48 tol 0.1
 hold 2 action
 wait 20
 # Over to the middle island (walk 18), down beside its hut's west door, out, in to the exit.

@@ -73,7 +73,7 @@ expect keys = 1
 # their alcoves (18, 45) and (10, 55) kept clear of.
 go 43 50
 go 31 50
-go 29 50 tol 0.1
+go 28.15 50 tol 0.1
 hold 2 action
 wait 20
 go 19 50 max 600
@@ -216,7 +216,7 @@ until treasures = 14 max 200
 # A helicopter from the row by the west wall (73, 44), up to the exit's platform (walk 34) and
 # down onto the exit (89, 59).
 go 74 42
-go 73.8 44 tol 0.1
+go 73.15 44 tol 0.1
 hold 2 action
 wait 20
 go 75 46 tol 0 with lookup until y >= 33.5 max 900

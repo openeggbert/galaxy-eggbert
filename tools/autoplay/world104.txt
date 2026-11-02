@@ -40,7 +40,7 @@ go 7 56 with crouch max 600
 # jeep sets them off), the step down and the block in the passage beyond, into the hall (walk
 # 28); out of it (Action).
 go 16 49
-go 17.2 49 tol 0.1
+go 17.85 49 tol 0.1
 hold 2 action
 wait 20
 go 22 50 max 600
@@ -141,7 +141,7 @@ until ground = 1
 expect y <= 18.1
 # The seventh jeep (58, 60) east through the gallery's two blocks of mines to treasure 6 (88, 61);
 # out of it.
-go 57.2 60 tol 0.1
+go 57.85 60 tol 0.1
 hold 2 action
 wait 20
 go 88 61 until treasures = 6 max 900

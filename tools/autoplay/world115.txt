@@ -8,7 +8,7 @@ expect mission = 115
 go 50 40
 go 50 30
 go 45 27.4
-go 44 26.8 tol 0.1
+go 44 26.15 tol 0.1
 hold 2 action
 wait 20
 # Treasures 1-4 on the ledges round the gallery's walls (walk 26, 30, 34, 38): over each, then

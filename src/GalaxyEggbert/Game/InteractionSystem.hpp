@@ -447,6 +447,9 @@ namespace GalaxyEggbert::Game
             graceZ_ = z;
         }
         [[nodiscard]] bool ContactGraceActive() const noexcept { return contactGrace_; }
+        // Blupi touches an object of this type (object minus Blupi, cells): the original's boxes
+        // (Decor::MoveObjectDetect, BD-0021), for the caller's own contacts (vehicles, BD-0024).
+        [[nodiscard]] static bool BlupiTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz);
         // The last Update() spent the action press (a dynamite stick taken): the caller's "nothing
         // to do" head shake (Non) must not follow it.
         [[nodiscard]] bool ActionPressSpent() const noexcept { return actionSpent_; }

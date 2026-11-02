@@ -11,6 +11,8 @@ face 270
 go 17.6 75.3 jump 2.0 tol 0.15
 until ground = 1
 expect y >= 10.9
+# Onto the board: boarded by touching it (BD-0024).
+go 17.9 75.85 tol 0.1
 hold 2 action
 wait 30
 # B: north up the street on it (x 19-21) over both rows of mines (z 60-63, 44-46).
@@ -84,6 +86,8 @@ face 90
 go 74.8 40.5 jump 1.5 tol 0.15
 until ground = 1
 expect y >= 24.9
+# Onto the board: boarded by touching it (BD-0024).
+go 74.95 40.15 tol 0.1
 hold 2 action
 wait 30
 go 73 42 max 300
@@ -118,7 +122,7 @@ go 74 66 until eggs = 2 max 300
 go 76 66 until eggs = 3 max 300
 until eggs = 3 max 200
 go 75 66 tol 0.15
-go 75 65 tol 0.15 max 300
+go 74.15 65 tol 0.15 max 300
 until ground = 1
 hold 2 action
 wait 30
