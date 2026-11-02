@@ -39,9 +39,9 @@ namespace GalaxyEggbert::Editor
 
         // Edge-triggered on release, matching InputPad's own click idiom.
         // Deleting is a real two-tap confirm: the first click on a row's
-        // "X" arms it (drawn highlighted); a second click on the SAME "X"
-        // actually deletes and re-Refresh()es; clicking anything else
-        // cancels the armed state without deleting.
+        // trash button arms it (drawn as a tick, the caption asks "Delete?");
+        // a second click on the SAME button actually deletes and
+        // re-Refresh()es; clicking anything else cancels the armed state.
         UpdateResult Update(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                            int viewportWidth, int viewportHeight,
                            bool backPressed = false);
@@ -50,7 +50,8 @@ namespace GalaxyEggbert::Editor
                  int viewportWidth, int viewportHeight);
 
         // Screen rects, public for the tests (raw 800x480 pixels like the rest of
-        // the editor UI): slot rows 0-9, the older worlds' rows, Back.
+        // the editor UI): slots 0-9 (a grid of five by two, each the numbered button and
+        // its caption), each occupied slot's trash button, the older worlds' rows, Back.
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect SlotRect(int slotIndex) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect DeleteButtonRect(int slotIndex) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect OlderRect(int index) noexcept;
@@ -65,13 +66,16 @@ namespace GalaxyEggbert::Editor
         int armedDeleteIndex_ = -1; // the slot index whose delete is armed, -1 none
         bool slotsFull_ = false;    // an older world was clicked with no slot free
         bool mouseWasDown_ = false;
+        float mouseX_ = -1.0f; // where the mouse was at the last Update(), for the held button
+        float mouseY_ = -1.0f;
         bool backWasDown_ = false;
 
         bool loaded_ = false;
         Microsoft::Xna::Framework::Graphics::Texture2D textTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> textRenderer_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> flatEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> flatRenderer_;
+        Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> padRenderer_;
     };
 }

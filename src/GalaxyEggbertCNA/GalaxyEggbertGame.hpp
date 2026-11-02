@@ -703,6 +703,9 @@ namespace GalaxyEggbert::CNA
         // number to persist).
         bool editorPlayTestActive_ = false;
         bool titleSceneRequested_ = false;
+        // worlds3d/title.vwr failed to load: the loading screen (OR-0009) and the editor's
+        // world list (OR-0012) stop asking for the title scene and draw their plain screens.
+        bool titleSceneUnavailable_ = false;
         bool titleSceneActive_ = false;
         float titleSceneTime_ = 0.0f;
         std::filesystem::path editorPlayTestWorldPath_;

@@ -171,7 +171,8 @@ int main()
         EditorBrowserScreen browser;
         browser.Refresh(kBrowserSlot);
         const auto [s1x, s1y] = centre(EditorBrowserScreen::SlotRect(0));
-        const auto open = clickBrowser(browser, s1x - 60, s1y);
+        // The cell's centre: its trash button is on the number button's corner.
+        const auto open = clickBrowser(browser, s1x, s1y);
         check(open.action == EditorBrowserScreen::Action::Open && open.path == SlotWorldPath(kBrowserSlot, 1),
               "an occupied slot row opens its world");
         const auto [s2x, s2y] = centre(EditorBrowserScreen::SlotRect(1));

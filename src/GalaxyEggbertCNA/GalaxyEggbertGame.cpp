@@ -1350,6 +1350,7 @@ namespace GalaxyEggbert::CNA
         if (!std::filesystem::exists("worlds3d/title.vwr") || !worldRuntime_.LoadFromVwrFile("worlds3d/title.vwr"))
         {
             titleSceneActive_ = false;
+            titleSceneUnavailable_ = true; // Wait and the editor's list fall back to their plain screens
             return;
         }
         RebuildWorldPresentation();
@@ -1439,7 +1440,7 @@ namespace GalaxyEggbert::CNA
         // (Game1.cpp:979-1058) -- this engine's own equivalent is just the
         // 2 key-debounce trackers below.
         phase_ = next;
-        if (next == GalaxyEggbert::Def::GamePhase::Init)
+        if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)
         {
             titleSceneRequested_ = true;
         }
@@ -2773,11 +2774,22 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        // Galaxy's loading screen (OR-0009) and the editor's world list (OR-0012) stand on the
+        // title scene as the menu does; a world left in the editor gives way to it.
+        const bool editorBrowsing =
+            phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing();
+        if ((phase_ == GalaxyEggbert::Def::GamePhase::Wait || editorBrowsing) && !titleSceneActive_ &&
+            !titleSceneUnavailable_)
+        {
+            titleSceneRequested_ = true;
+        }
         if (titleSceneRequested_)
         {
             LoadTitleScene();
         }
-        if (phase_ == GalaxyEggbert::Def::GamePhase::Init && titleSceneActive_)
+        if ((phase_ == GalaxyEggbert::Def::GamePhase::Init || phase_ == GalaxyEggbert::Def::GamePhase::Wait ||
+             editorBrowsing) &&
+            titleSceneActive_)
         {
             UpdateTitleScene(dt);
         }
@@ -4763,9 +4775,9 @@ namespace GalaxyEggbert::CNA
         // once a world is actually being edited, IsBrowsing() is false and
         // this block draws it same as any other phase.
         // The menu (Init) shows the world when it is Galaxy's title scene.
-        if (phase_ != GalaxyEggbert::Def::GamePhase::Wait &&
+        if ((phase_ != GalaxyEggbert::Def::GamePhase::Wait || titleSceneActive_) &&
             (phase_ != GalaxyEggbert::Def::GamePhase::Init || titleSceneActive_) &&
-            !(phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing()))
+            !(phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing() && !titleSceneActive_))
         {
         // Real background image backdrop (NEXT.md §3, 2026-07-09) -- one
         // huge camera-facing billboard quad placed far behind the scene
@@ -5820,8 +5832,16 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Wait)
             {
-                inputPad_.DrawWait(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                   phaseTimeSeconds_);
+                if (titleSceneActive_)
+                {
+                    inputPad_.DrawGalaxyLoading(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                                phaseTimeSeconds_);
+                }
+                else
+                {
+                    inputPad_.DrawWait(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                       phaseTimeSeconds_);
+                }
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Init)
             {

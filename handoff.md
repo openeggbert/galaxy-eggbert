@@ -6,8 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-01 (fidelity audit, milestone G: crates D60, lifts BD-0006, BD-0003/0004,
-editor variants ED-0001/0006, .a3d reader, lava/fan/pillars from the original sources)._
+_Last updated: 2026-11-02 (fidelity audit, milestone G: the owner's reports OR-0001..0023)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -51,11 +50,17 @@ ledgers before repeating any discovery. Where it stands:
   a world's `musicTrack()` (header sky word, second byte), the originals' `music=` for every
   world (`worldkit.ORIGINAL_MUSIC`), the editor's M key; not on the web yet. OR-0015's death
   clips: Clear1/Clear3/Glu show the original element.png sprite (live look to do).
+- Done: OR-0009 (Galaxy's loading screen: the title scene with "Loading" and the original's gauge
+  on a menu panel, `InputPad::DrawGalaxyLoading`; Mobile Eggbert's picture only as the fallback),
+  OR-0012 (the editor's world list stands on the title scene: a 5 x 2 grid of pad buttons under
+  the tile letters, trash/tick to delete, Setup's return arrow; `EditorBrowserScreen`). The host
+  loads `title.vwr` for Wait and for the list (`titleSceneUnavailable_` stops retrying when it
+  fails). Evidence `plans/evidence/loading.png`, `editor-browser.png`.
 - OR-0017 (Blupi partly in walls): a body half-width (18 px) in the horizontal collision was
   tried and reverted -- 55 of the first 70 playthroughs failed (wall-hugging targets, ledges,
   crates). Doing it needs every route re-planned; meanwhile it stays open.
-- Open owner reports: OR-0004 (teleporters: no detail -- ask), OR-0009 (a Galaxy loading
-  screen), OR-0011 (Android), OR-0012 (editor menu look), OR-0015's death clips, OR-0017 (his collision is a point: a body
+- Open owner reports: OR-0004 (teleporters: no detail -- ask), OR-0011 (Android), OR-0015's
+  death clips, OR-0017 (his collision is a point: a body
   half-width of 18 px, the original's BlupiRect, for horizontal moves only, then all
   playthroughs).
 - Script lessons from the vehicle rules: wait ~40 frames for a skateboard to slow before Action

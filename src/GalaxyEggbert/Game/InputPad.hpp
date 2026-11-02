@@ -487,6 +487,12 @@ namespace GalaxyEggbert::Game
         // gauge fill here is purely cosmetic too. The caller owns the
         // actual phase-transition timing (checking phaseTimeSeconds >=
         // 5.0f and moving to Init/Resume) -- this just draws.
+        // Galaxy's own loading screen (OR-0009, 2026-11-02): drawn over the 3D title scene
+        // (title.vwr, whose tile letters are the title) instead of Mobile Eggbert's wait.png --
+        // "Loading" and the gauge (the same waitTable fill) on a menu panel between the letters
+        // and Blupi. DrawWait() stays the fallback.
+        void DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                               int viewportH, float phaseTimeSeconds);
         void DrawWait(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds);
 

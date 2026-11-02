@@ -33,3 +33,5 @@ setup toggles saved and mirrored pad (OR-0010),ui,unit+live,VerifyGEInputPad; Ve
 drink Hide drawn translucent (OR-0016),render,live,plans/evidence/hide-drink.png,pass,
 editor animates tiles and objects (OR-0013),editor,code,host editor branch runs WorldRuntime::Update,open,live look to do
 world music stored and played (OR-0014),format+editor,unit+live log,WorldTests (music beside sky); VerifyGEWorldEditor (M steps it; undo); game.log 'music ... playing',pass,not heard (silent runs)
+Galaxy loading screen over the title scene (OR-0009),menu,live,plans/evidence/loading.png,pass,
+editor world list on the title scene (OR-0012),editor,unit+live,VerifyGEEditorStorage (slot/trash/back rects); plans/evidence/editor-browser.png,pass,

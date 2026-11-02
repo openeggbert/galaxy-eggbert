@@ -1710,6 +1710,85 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    void InputPad::DrawGalaxyLoading(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                      int viewportH, float phaseTimeSeconds)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+        const float scale = static_cast<float>(viewportH) / kRefH;
+        const float w = static_cast<float>(viewportW);
+        const float h = static_cast<float>(viewportH);
+
+        // The scene's own tile letters are the title; "Loading" and the gauge sit on one of the
+        // menu's translucent panels in the band of sky between them and Blupi.
+        std::vector<Quad> labelQuads;
+        const int dots = static_cast<int>(phaseTimeSeconds * 3.0f) % 4;
+        AppendCenteredLabel(labelQuads, std::string("Loading") + std::string(static_cast<std::size_t>(dots), '.'),
+                            w * 0.5f, h * 0.43f, scale);
+
+        // The gauge, centred under it, filled as Wait's (the original's waitTable curve).
+        const float progress = std::clamp(phaseTimeSeconds / kWaitDurationSeconds, 0.0f, 1.0f);
+        int level = 100;
+        for (const auto& entry : kWaitTable)
+        {
+            if (progress <= entry.threshold)
+            {
+                level = entry.level;
+                break;
+            }
+        }
+        const int filledWidth = level * 114 / 100;
+        const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
+        const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
+        const float gaugeW = kJaugeCellW * kJaugeZoom * scale;
+        const float gaugeH = kJaugeCellH * kJaugeZoom * scale;
+        const float x0 = (w - gaugeW) * 0.5f;
+        const float y0 = h * 0.51f;
+        std::vector<Quad> panelQuads;
+        {
+            Quad q{x0 - 24.0f * scale, h * 0.40f, x0 + gaugeW + 24.0f * scale, y0 + gaugeH + 14.0f * scale,
+                   0.0f, 0.0f, 0.0f, 0.0f};
+            PadIconUv(kInitPanelIcon, static_cast<float>(padTexture_.getWidthProperty()),
+                      static_cast<float>(padTexture_.getHeightProperty()), q.u0, q.v0, q.u1, q.v1);
+            panelQuads.push_back(q);
+        }
+        std::vector<Quad> jaugeQuads;
+        {
+            Quad q;
+            q.x0 = x0;
+            q.y0 = y0;
+            q.x1 = x0 + gaugeW;
+            q.y1 = y0 + gaugeH;
+            q.u0 = 0.0f;
+            q.v0 = 0.0f;
+            q.u1 = kJaugeCellW / jaugeSheetW;
+            q.v1 = kJaugeCellH / jaugeSheetH;
+            jaugeQuads.push_back(q);
+        }
+        if (filledWidth > 0)
+        {
+            const float fillW = 6.0f + static_cast<float>(filledWidth);
+            Quad q;
+            q.x0 = x0;
+            q.y0 = y0;
+            q.x1 = x0 + fillW * kJaugeZoom * scale;
+            q.y1 = y0 + gaugeH;
+            q.u0 = 0.0f;
+            q.v0 = (kJaugeCellH * static_cast<float>(kJaugeModeYellow)) / jaugeSheetH;
+            q.u1 = fillW / jaugeSheetW;
+            q.v1 = (kJaugeCellH * static_cast<float>(kJaugeModeYellow + 1)) / jaugeSheetH;
+            jaugeQuads.push_back(q);
+        }
+
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *padEffect_, padRenderer_, panelQuads, viewportW, viewportH, kInitPanelOpacity);
+        FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *jaugeEffect_, jaugeRenderer_, jaugeQuads, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     void InputPad::DrawWait(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                               int viewportH, float phaseTimeSeconds)
     {
