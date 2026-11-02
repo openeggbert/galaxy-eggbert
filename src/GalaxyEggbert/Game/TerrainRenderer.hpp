@@ -89,6 +89,14 @@ namespace GalaxyEggbert::Game
             m_modelBases = std::move(bases);
             m_lastAnimPhase = -1;
         }
+        // Cells of these bases stay in the mesh as the floor around them (AnimBlock::floorIcon) and
+        // are listed by ModelCells() one cell up, where the caller draws their model standing on
+        // that floor (the saw, BlockModels.hpp kModelOverFloorBases; owner 2026-11-02).
+        void SetModelOverFloorBases(std::vector<std::uint16_t> bases)
+        {
+            m_modelOverFloorBases = std::move(bases);
+            m_lastAnimPhase = -1;
+        }
         struct ModelCell
         {
             float x, y, z; // the cell's centre (world space)
@@ -109,6 +117,13 @@ namespace GalaxyEggbert::Game
                 {
                     cells.push_back({block.x, block.y, block.z, block.base, 0, 2});
                 }
+                else if (std::find(m_modelOverFloorBases.begin(), m_modelOverFloorBases.end(), block.base) !=
+                         m_modelOverFloorBases.end())
+                {
+                    // openSide carries the blade's turn: 0 (+X) when turned to X, else 2 (+Z).
+                    cells.push_back({block.x, block.y + 1.0f, block.z, block.base, 0,
+                                     static_cast<std::uint8_t>(block.rotated ? 0 : 2)});
+                }
             }
             return cells;
         }
@@ -122,6 +137,10 @@ namespace GalaxyEggbert::Game
             std::uint16_t base;
             // Lava (VIS-0069): bit 0..3 lava at +X, -X, +Z, -Z; bit 4 something under it.
             std::uint8_t lavaSides = 0;
+            // A saw's cell (the floor it stands on, Galaxy's convention): the icon of the floor around
+            // it, drawn in its place (0: none found, the rock); and whether its blade turns to X.
+            std::uint16_t floorIcon = 0;
+            bool rotated = false;
         };
 
         // Shared rebuild logic for m_animRenderer/m_waterRenderer: computes
@@ -158,6 +177,7 @@ namespace GalaxyEggbert::Game
         float m_centroidZ = 0.0f;
         int m_lastAnimPhase = -1;
         std::vector<std::uint16_t> m_modelBases;
+        std::vector<std::uint16_t> m_modelOverFloorBases;
         std::vector<ModelCell> m_staticModelCells;
     };
 }

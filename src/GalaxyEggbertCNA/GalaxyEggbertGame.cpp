@@ -1133,6 +1133,11 @@ namespace GalaxyEggbert::CNA
         {
             terrainRenderer_->SetModelDrawnBases(std::move(bases));
         }
+        if (objectModelTable_.Find(ObjectTextureSource::ObjectM, GalaxyEggbert::BlockTypes::Saw) != nullptr)
+        {
+            terrainRenderer_->SetModelOverFloorBases(std::vector<std::uint16_t>(
+                GalaxyEggbert::Game::kModelOverFloorBases.begin(), GalaxyEggbert::Game::kModelOverFloorBases.end()));
+        }
     }
 
     bool GalaxyEggbertGame::TerrainDrawSecret() const noexcept
@@ -5556,6 +5561,27 @@ namespace GalaxyEggbert::CNA
                 {
                     for (const auto& cell : terrainRenderer_->ModelCells())
                     {
+                        const bool overFloor =
+                            std::find(GalaxyEggbert::Game::kModelOverFloorBases.begin(),
+                                      GalaxyEggbert::Game::kModelOverFloorBases.end(),
+                                      cell.base) != GalaxyEggbert::Game::kModelOverFloorBases.end();
+                        if (overFloor)
+                        {
+                            // The saw standing on its floor cell (the cell listed is the one above),
+                            // its blade along the corridor (openSide carries the placement's turn).
+                            const int icon =
+                                GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase());
+                            if (icon >= 0)
+                            {
+                                if (const ObjectModelPose* pose = objectModelTable_.Find(
+                                        ObjectTextureSource::ObjectM, static_cast<std::uint16_t>(icon)))
+                                {
+                                    drawModel(*pose, cell.x, cell.y, cell.z,
+                                              GalaxyEggbert::Game::FrontModelYaw(cell.openSide));
+                                }
+                            }
+                            continue;
+                        }
                         if (std::find(GalaxyEggbert::Game::kAnimatedModelBases.begin(),
                                       GalaxyEggbert::Game::kAnimatedModelBases.end(),
                                       cell.base) != GalaxyEggbert::Game::kAnimatedModelBases.end())

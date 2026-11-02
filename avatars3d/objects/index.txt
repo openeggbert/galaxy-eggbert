@@ -71,6 +71,7 @@ pillar_colonne2
 pillar_colonne3
 post182_porte1
 projectile_balle-glu
+saw378_scie
 secretexit_cle
 statue_statue
 support3_support3

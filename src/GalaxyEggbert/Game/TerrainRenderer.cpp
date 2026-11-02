@@ -623,7 +623,74 @@ namespace GalaxyEggbert::Game
                                 (sideIs(0, 0, 1, true) ? 4 : 0) | (sideIs(0, 0, -1, true) ? 8 : 0) |
                                 (sideIs(0, -1, 0, false) ? 16 : 0));
                         }
-                        m_animBlocks.push_back({worldX, worldY, worldZ, animBase, lavaSides});
+                        std::uint16_t floorIcon = 0;
+                        if (definition.renderMode == GalaxyEggbert::BlockRenderMode::GroundAnchoredPlate)
+                        {
+                            // The saw's floor: the commonest plain solid block around it, at its
+                            // height within 3 cells (a row of saws on a catwalk has only saws
+                            // beside each), else under it; RockPile only when none.
+                            std::array<std::pair<std::uint16_t, int>, 8> seen{};
+                            const auto consider = [&](int dx, int dy, int dz) {
+                                const int nx = x + dx, ny = y + dy, nz = z + dz;
+                                if (nx < 0 || ny < 0 || nz < 0 || nx >= blocksPerAxis || ny >= blocksPerAxis ||
+                                    nz >= blocksPerAxis)
+                                {
+                                    return;
+                                }
+                                const auto other = world.getBlock(static_cast<std::uint16_t>(nx),
+                                                                  static_cast<std::uint16_t>(ny),
+                                                                  static_cast<std::uint16_t>(nz));
+                                if (other.isAir())
+                                {
+                                    return;
+                                }
+                                const auto& od = GalaxyEggbert::GetBlockDefinition(other.type());
+                                if (od.collisionMask != 0xFFFF || od.animation.IsAnimated() ||
+                                    od.hazard != GalaxyEggbert::BlockHazardKind::None)
+                                {
+                                    return;
+                                }
+                                for (auto& entry : seen)
+                                {
+                                    if (entry.second == 0 || entry.first == other.type())
+                                    {
+                                        entry.first = other.type();
+                                        ++entry.second;
+                                        return;
+                                    }
+                                }
+                            };
+                            for (int dy : {0, -1})
+                            {
+                                for (int dz = -3; dz <= 3; ++dz)
+                                {
+                                    for (int dx = -3; dx <= 3; ++dx)
+                                    {
+                                        if (dx != 0 || dz != 0 || dy != 0)
+                                        {
+                                            consider(dx, dy, dz);
+                                        }
+                                    }
+                                }
+                                int best = 0;
+                                for (const auto& entry : seen)
+                                {
+                                    if (entry.second > best)
+                                    {
+                                        best = entry.second;
+                                        floorIcon = entry.first;
+                                    }
+                                }
+                                if (floorIcon != 0)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        AnimBlock animBlock{worldX, worldY, worldZ, animBase, lavaSides};
+                        animBlock.floorIcon = floorIcon;
+                        animBlock.rotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
+                        m_animBlocks.push_back(animBlock);
                         continue;
                     }
 
@@ -849,6 +916,10 @@ namespace GalaxyEggbert::Game
                 // pursue exact-180-degree in-plane rotation or size/offset
                 // tweaks again without explicit new user direction; several
                 // rounds of that were tried and reverted.
+                // With the saw's model (kModelOverFloorBases: Decor/scie.rd4, owner 2026-11-02) the
+                // caller draws the saw standing on this floor; the sprite plate is only the fallback.
+                if (std::find(m_modelOverFloorBases.begin(), m_modelOverFloorBases.end(), block.base) ==
+                    m_modelOverFloorBases.end())
                 {
                     constexpr float kSawPlateHeight = 0.6f;
                     mesh.AddPlate(
@@ -869,9 +940,12 @@ namespace GalaxyEggbert::Game
                 // below y+0.5 instead removes the ambiguity as real,
                 // unambiguous geometry rather than relying on depth-test
                 // tie-breaking at all.
+                // The floor as the floor around it (owner 2026-11-02: a rock cube showed in the saw's
+                // place whatever the floor; RockPile only when nothing plain lies beside or under).
                 AddCenteredBox(cubes, Microsoft::Xna::Framework::Vector3(block.x, block.y - kSawPlateEpsilon, block.z),
                                Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
-                               m_tileAtlas->GetTileUv(GalaxyEggbert::BlockTypes::RockPile));
+                               m_tileAtlas->GetTileUv(block.floorIcon != 0 ? block.floorIcon
+                                                                           : GalaxyEggbert::BlockTypes::RockPile));
                 continue;
             }
 

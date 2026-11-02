@@ -133,3 +133,6 @@ temp324     object-m 324-329 Decor/temporaire.rd4 min_iou=0.6 tone=0.72,16
 # The crusher (317-323; owner 2026-11-02: the blue spring and the red block striking down, in 3D):
 # Decor/aplatisseur.rd4, a piston hanging from the ceiling of its cell (IoU 0.95-0.975, survey).
 crusher317  object-m 317-323 Decor/aplatisseur.rd4 min_iou=0.6
+# The saw (378-383, the stopped 379; owner 2026-11-02: a rock cube showed in its place), drawn standing
+# on its floor cell: Decor/scie.rd4, its six icons at IoU 0.986-0.990 (mirrored).
+saw378      object-m 378-383 Decor/scie.rd4 min_iou=0.6 tone=1.6,60
