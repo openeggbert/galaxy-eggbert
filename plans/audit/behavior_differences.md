@@ -455,7 +455,9 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Also reviewed and matching: the Cloud's aura destroying them (BlupiElectro, BD-0012) and the
   bulldozer's patrol (BD-0016). Open: the original draws 4, 32, 33 (and 54) 2 px right and 6 px
   (BLUPIOFFY) lower than their position (Decor.cpp:867-875); Galaxy places every object at its
-  cell (ResolveObjectVisualCenterY): whether their tracks or feet then float wants a live look.
+  cell (ResolveObjectVisualCenterY). Seen live (probe world 992, 2026-11-02): the bulldozer's
+  model rests its tracks on the floor (its model carries the offset); the shooters and the big
+  creature still want a close look.
 - Validation: `VerifyInteractionSystem` (32 px beside: not met; 26 px: met). No playthrough has
   a decoy and a small enemy in one world.
 
