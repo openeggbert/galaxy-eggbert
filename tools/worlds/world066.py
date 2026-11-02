@@ -27,6 +27,7 @@ from kit import O, World, lift, mine  # noqa: E402
 from slime import POLES, SLIME_TRAP, skin, slime  # noqa: E402
 
 LAVA = 68
+CLAY_BRIDGE = 364           # crumbles under Blupi and grows back (Tables::table_bridge)
 SAW, BAR, ROD, DRIP, KNOB = 378, 138, 202, 404, 410
 BLITZ, EMITTER = 305, 304
 FAN_LEFT, FAN_RIGHT = 126, 129        # blowing toward -X, toward +X
@@ -118,6 +119,9 @@ def main(argv) -> int:
     w.place(O.EGG, 46, 32, 46)
     for x in (44, 45):
         w.set(x, 34, 46, DRIP)
+    # A clay bridge in the corridor's floor (x 40) over a shaft of lava: walked over without
+    #    stopping it crumbles behind him, and back west its hole is a gap to jump until it grows
+    #    again (the original's bridge in a floor over a drop, (10, 3)); for levelcheck plain floor.
 
     # ---- the wind tunnels (walk 20, 26) ----
     # The lower, along X: a fan at its west end blowing east, the wind in its whole bore, three
@@ -177,6 +181,10 @@ def main(argv) -> int:
     w.place(O.SECRET_EXIT, 98, 32, 61)
 
     skin(w, rng)
+    if not solved:                                                   # the corridor's clay bridge
+        carve(40, 27, 46, 40, 30, 46)
+        w.set(40, 26, 46, LAVA)
+        w.set(40, 31, 46, CLAY_BRIDGE)
     w.spawn = (19, 20, 60)
     w.save(out)
     print(f"wrote {out}")

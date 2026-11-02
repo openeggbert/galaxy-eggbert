@@ -169,11 +169,15 @@ go 35 45.55 jump 1.8 tol 0.1
 until ground = 1
 go 46 46 tol 0.1
 until eggs = 3 max 200
-# Back west: the traps (x 34, 32); the moving mine jumped as it comes east toward him (106 ticks
+# Back west: the clay bridge's hole (x 40; it crumbled behind him on the way east), the traps
+# (x 34, 32); the moving mine jumped as it comes east toward him (106 ticks
 # after it turned at its east end, x 30), the still mine and the trap (x 16); under teleporter 1
 # (x 12), which takes him to teleporter 2 on the east cave's west ledge (walk 32), under it
 # (81, 57).
 face 270
+go 40.7 45.55 tol 0.05
+go 39 45.55 jump 1.8 tol 0.1
+until ground = 1
 go 34.7 45.55 tol 0.05
 go 33 45.55 jump 1.8 tol 0.1
 until ground = 1
