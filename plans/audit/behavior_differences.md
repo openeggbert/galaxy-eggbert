@@ -590,3 +590,14 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   remap's second sound of each material).
 - Validation: `VerifyBlupiMovement` (an ordinary jump under a ceiling taps it, the ceiling's icon
   reported), `VerifyInteractionSystem` (the seven remaps and the fallback); ctest 112/112.
+
+## BD-0035 — the mockery's sound played at once and ran on after he left it (audio) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:3147-3183, 6457-6470): Mockery plays channel 65 at its tick 1, Mockeryi
+  channel 65 at its tick 6, Mockeryp channel 47 at its tick 4; leaving the action stops its sound.
+- Galaxy played it the moment the mockery was triggered and never stopped it, so it ran on after
+  he walked off (found by the use case ledger: the original's StopSound calls had no Galaxy
+  counterpart).
+- Fix: `GalaxyEggbertGame::UpdateMockerySound` plays it at the variant's tick and stops it when
+  the anim state leaves the variant.
+- Validation: build, ctest 112/112; sound timing, not covered by a verifier.

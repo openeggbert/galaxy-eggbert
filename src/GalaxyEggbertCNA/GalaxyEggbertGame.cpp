@@ -1785,6 +1785,35 @@ namespace GalaxyEggbert::CNA
         return GalaxyEggbert::Game::CharredModelShape(blupi_.GetRawAnimIcon());
     }
 
+    void GalaxyEggbertGame::UpdateMockerySound(float dt)
+    {
+        using AnimState = GalaxyEggbert::Game::BlupiController::AnimState;
+        if (mockeryVariant_ == AnimState::Stop)
+        {
+            return;
+        }
+        // Mockery and Mockeryi play channel 65 (at ticks 1 and 6), Mockeryp channel 47 (at tick 4),
+        // Decor.cpp:3147-3183; leaving the action stops it (6457-6470).
+        const auto channel = mockeryVariant_ == AnimState::Mockeryp ? GalaxyEggbert::Def::SoundChannel::SoundChannel47
+                                                                    : GalaxyEggbert::Def::SoundChannel::SoundChannel65;
+        if (blupi_.GetAnimState() != mockeryVariant_)
+        {
+            if (mockerySounded_)
+            {
+                sound_.Stop(channel);
+            }
+            mockeryVariant_ = AnimState::Stop;
+            return;
+        }
+        const float tick = mockeryVariant_ == AnimState::Mockery ? 1.0f : mockeryVariant_ == AnimState::Mockeryi ? 6.0f : 4.0f;
+        mockeryElapsed_ += dt;
+        if (!mockerySounded_ && mockeryElapsed_ * 20.0f >= tick)
+        {
+            sound_.Play(channel);
+            mockerySounded_ = true;
+        }
+    }
+
     void GalaxyEggbertGame::UpdateMusic()
     {
         using Microsoft::Xna::Framework::Media::MediaPlayer;
@@ -3364,6 +3393,7 @@ namespace GalaxyEggbert::CNA
             // BlupiController::UpdateAnim()'s own comment for why the
             // real speedX==0/speedY==0 gate needs no separate modeling
             // here.
+            UpdateMockerySound(dt);
             for (const auto& blupiEvent : blupi_.EventsThisFrame())
             {
                 switch (blupiEvent.kind)
@@ -3862,13 +3892,10 @@ namespace GalaxyEggbert::CNA
                     }
                     if (blupi_.TriggerMockery(variant))
                     {
-                        // Real per-variant entry sound (Decor.cpp:3151/3165/3179):
-                        // Mockery/Mockeryi both use ch65, but Mockeryp uses a
-                        // DIFFERENT channel (ch47) -- confirmed directly, not
-                        // assumed from the other two.
-                        sound_.Play(variant == BlupiController::AnimState::Mockeryp
-                                        ? GalaxyEggbert::Def::SoundChannel::SoundChannel47
-                                        : GalaxyEggbert::Def::SoundChannel::SoundChannel65);
+                        // Its sound at the variant's own tick, cut if he leaves it (UpdateMockerySound).
+                        mockeryVariant_ = variant;
+                        mockeryElapsed_ = 0.0f;
+                        mockerySounded_ = false;
                     }
                     break;
                 }

@@ -294,6 +294,13 @@ namespace GalaxyEggbert::CNA
         // through "no motor", so a plain this-frame/last-frame bool (like wasPushingCrate_ above)
         // isn't enough -- see UpdateVehicleMotorSound()'s own comment for the full crossfade.
         GalaxyEggbert::Def::SoundChannel activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
+        // The mockery's sound (Decor.cpp:3147-3183, 6457-6470): played at its variant's tick (Mockery
+        // 1, Mockeryi 6, Mockeryp 4) and cut when he leaves it. The variant playing (Stop: none),
+        // the seconds since it began, whether its sound has played.
+        GalaxyEggbert::Game::BlupiController::AnimState mockeryVariant_ =
+            GalaxyEggbert::Game::BlupiController::AnimState::Stop;
+        float mockeryElapsed_ = 0.0f;
+        bool mockerySounded_ = false;
 
         // Platform lift patrol, crate push, and pickup collection
         // (2026-07-10, see InteractionSystem.hpp).
@@ -438,6 +445,8 @@ namespace GalaxyEggbert::CNA
         void WreckVehicle();
         // Whether Blupi's death is shown by his element.png sprite instead of the model (OR-0015).
         [[nodiscard]] bool BlupiDrawnAsDeathSprite() const;
+        // The mockery's sound at its tick, cut when he leaves it (mockeryVariant_).
+        void UpdateMockerySound(float dt);
         // His charred frames (element.png 40-47, Clear1 and Clear3) drawn as his model
         // (CharredBlupi.hpp); not charred otherwise, or without the real model.
         [[nodiscard]] GalaxyEggbert::Game::CharredShape BlupiCharredShape() const;
