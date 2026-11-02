@@ -452,8 +452,10 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   cell's top), the decoy's an object's (28 px, its bottom 24). Galaxy used the 0.7-cell sphere
   BD-0021 left only here, which met a decoy up to 45 px off.
 - Now `MoveObjectTouches` with the enemy in Blupi's place; the sphere is gone.
-- Also reviewed and matching: the Cloud's aura destroying them (BlupiElectro, BD-0012), the
-  bulldozer's draw offset (2 px, BLUPIOFFY) and its patrol (BD-0016).
+- Also reviewed and matching: the Cloud's aura destroying them (BlupiElectro, BD-0012) and the
+  bulldozer's patrol (BD-0016). Open: the original draws 4, 32, 33 (and 54) 2 px right and 6 px
+  (BLUPIOFFY) lower than their position (Decor.cpp:867-875); Galaxy places every object at its
+  cell (ResolveObjectVisualCenterY): whether their tracks or feet then float wants a live look.
 - Validation: `VerifyInteractionSystem` (32 px beside: not met; 26 px: met). No playthrough has
   a decoy and a small enemy in one world.
 
