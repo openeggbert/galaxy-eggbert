@@ -9,9 +9,11 @@ above) and a hanging mine, bars over a pit where mines sweep; a hall with a shut
 a second curtain of lightning and lifts meeting in pairs over lava; a drop to a hall where a
 fan's wind blows over a shuttle across water and bars over lava; birds over lava; rows of mines
 on a pipe walkway; hanging mines, a lift moving across and up, and the chain of lifts out to the
-key over a pool. Fifteen eggs, no treasure. Here the works wind round the sky in 3D: the catwalk
+key over a pool; and five crushers, each in a gap of a wall (passed under while it is up). Fifteen
+eggs, no treasure. Here the works wind round the sky in 3D: the catwalk
 north, the corridor east, the hall north again, the wind hall east, the birds south, the mines
-west and the chain out south-east.
+west and the chain out south-east; three gates of crushers stand across the corridor, the wind
+hall and the walkway.
 
     python3 tools/worlds/world084.py                 # writes worlds3d/world084.vwr
     python3 tools/worlds/world084.py --stage 1 out   # for levelcheck: no mines, moving or hanging
@@ -31,6 +33,7 @@ LAVA, WATER = 68, 92
 ROD = 202                   # a bar along X (ThinBar), seen from every side; 138 is a flat plate
 BLITZ, EMITTER = 305, 304
 WIND_EAST, FAN_EAST = 114, 129
+CRUSHER = 317               # hangs in Blupi's own cell of a passage one high (BD-0032)
 
 
 def main(argv) -> int:
@@ -78,6 +81,13 @@ def main(argv) -> int:
         else:
             w.fill(x0, y, z, x1, y, z, ROD)
 
+    def crusher_gate(x, y, z0, z1, top):
+        """A gate across a way along X: a lintel of panel from y + 1 to `top`, under it a row of
+        crushers (z0..z1), one high: pass while they are up (the original's five crushers stand
+        in gaps of its walls, LV-0051)."""
+        w.fill(x, y + 1, z0, x, top, z1, PANEL)
+        w.fill(x, y, z0, x, y, z1, CRUSHER)
+
     # ---- the masses ----
     w.fill(8, 58, 56, 12, 59, 94, PANEL)                                # the catwalk's deck
     panel(w, 7, 46, 54, 42, 52, 58, rng, fitting_chance=0.0)            # the corridor's block
@@ -118,10 +128,11 @@ def main(argv) -> int:
     lifts(9, 10, 59, 56, 57, (0, -12, 0), 90, 30)
 
     # ---- the corridor (walk 48, west to east, z 55-57) ----
-    # Two mines, warning panels, a curtain of lightning across it (on for 2.5 s of every 5), a
-    # hanging mine; a pit across it, lava at its foot and two mines sweeping it, crossed hanging
+    # A gate of crushers just past the lift down; two mines, warning panels, a curtain of lightning
+    # across it (on for 2.5 s of every 5), a hanging mine; a pit across it, lava at its foot and two mines sweeping it, crossed hanging
     # from bars; at its east end a hole down into the hall.
     carve(8, 48, 55, 41, 50, 57)
+    crusher_gate(12, 48, 55, 57, 50)                                    # a gate of crushers
     still(15, 48, 55)
     still(15, 48, 57)
     w.set(18, 49, 54, WARNING)
@@ -171,8 +182,8 @@ def main(argv) -> int:
 
     # ---- the wind hall (walk 24, west to east, lanes z 3-9) ----
     # A drop from the ledge's far end through the roof; a fan in the west wall blowing east over a
-    # shuttle across a pool and over bars across a trench of lava; the east ledge and a stair down
-    # south out of it.
+    # shuttle across a pool and over bars across a trench of lava; a gate of crushers; the east
+    # ledge and a stair down south out of it.
     carve(55, 24, 3, 88, 28, 9)
     carve(55, 29, 3, 57, 29, 7)                                         # the drop
     w.set(54, 27, 6, FAN_EAST)
@@ -183,6 +194,7 @@ def main(argv) -> int:
     carve(73, 20, 3, 79, 23, 9)
     w.fill(73, 20, 3, 79, 20, 9, LAVA)
     bars(73, 24, 6, 79)
+    crusher_gate(82, 24, 3, 9, 28)                                      # a gate of crushers
     w.place(O.EGG, 86, 24, 4)
     still(84, 24, 8)
     carve(84, 22, 9, 86, 23, 9)                                         # the stair down: 22, 20, 18
@@ -211,7 +223,8 @@ def main(argv) -> int:
 
     # ---- the mines (walk 18, east to west, lanes z 43-45) ----
     # A pipe walkway: rows of mines across it, each row leaving a different lane free (weave
-    # through), eggs between the rows; at its west end the platform the chain leaves from.
+    # through), eggs between the rows; a gate of crushers, then at its west end the platform the
+    # chain leaves from.
     w.fill(54, 16, 42, 89, 17, 46, PANEL)
     for x in range(54, 90):
         for z in (42, 46):
@@ -225,6 +238,8 @@ def main(argv) -> int:
                 still(x, 18, z)
     w.place(O.EGG, 79, 18, 43)
     w.place(O.EGG, 70, 18, 44)
+    crusher_gate(62, 18, 43, 45, 19)                                    # a gate of crushers
+    w.fill(62, 19, 42, 62, 19, 46, PANEL)                               # its lintel on the rails
 
     # ---- the chain to the golden key (walk 18 -> 26, out south-east) ----
     # The platform: two mines and a hanging mine. A lift moving out and up at once, a lift along

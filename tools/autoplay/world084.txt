@@ -45,10 +45,15 @@ lift 9 60 56 max 600
 go 9.5 56.5 tol 0.15
 lift 9 48 56 max 400
 expect y <= 48.05
-# The corridor (walk 48, z 55-57) east: between its two mines (x 15) in lane 56; through the
+# The corridor (walk 48, z 55-57) east: under its gate of crushers (x 12) while they are up (they
+# squash at 0-2 of their 10 steps); between its two mines (x 15) in lane 56; through the
 # curtain of lightning (x 20) just after a flash ends; under the hanging mine (24 49 56); the
 # egg; across the pit (x 28-33) hanging from its rods (z 56) over the sweeping mines; down the
 # hole (x 38-40) into the hall (walk 36).
+go 10.8 56 tol 0.15
+face 90
+until crush = 3 max 100
+go 13.4 56 tol 0.15
 go 18.9 56 tol 0.15
 face 90
 until blitz = 52 max 400
@@ -131,6 +136,11 @@ lift 71 24 6 max 400
 go 72 6 tol 0.15
 go 81 6 max 600
 expect y >= 23.95
+# The gate of crushers (x 82) while they are up.
+go 80.9 6 tol 0.15
+face 90
+until crush = 3 max 100
+go 83.4 6 tol 0.15
 go 86 4 until eggs = 9
 until eggs = 9 max 120
 go 86 8.5
@@ -185,7 +195,11 @@ go 70 44 tol 0.15
 go 70.5 43 tol 0.1
 go 67.5 43 tol 0.1
 go 67.5 44 tol 0.1
-go 63 44
+# The gate of crushers (x 62) while they are up.
+go 63.2 44 tol 0.15
+face 270
+until crush = 3 max 100
+go 60.6 44 tol 0.15
 # The chain to the golden key from the walkway's west platform (under its hanging mine, clear
 # of its mines): four lifts in step, two seconds at each end. The first (x 56-57) out south and
 # up at once to wait beside the second (z 55-56), which carries him east to its start beside the
