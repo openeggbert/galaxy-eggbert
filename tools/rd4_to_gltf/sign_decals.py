@@ -8,6 +8,9 @@ and their completed twins). Within a group of icons drawn from one scene, the pi
 icons differ are the painting; the per-pixel median over the group is the bare sign. Each icon's
 decal is its sprite in that region, opaque where it differs from the bare sign.
 
+With ``--plate`` the painting is a light grey plate carrying a number (the treasure doors 421-439
+on the golden post 183's scene, Decor/porte2.rd4): each decal is the plate's rectangle, opaque.
+
 Writes ``<model dir>/decals/<icon>.png`` and ``<model dir>/decals.txt``:
 ``decal <icon> <png> <x0> <y0> <x1> <y1> <z>`` -- the region in the icon's 64-pixel square
 (pixels, right and down from its top-left) and the depth of the model's front (model units, +Z
@@ -50,13 +53,29 @@ def main(argv=None) -> int:
     ap.add_argument("--glb", type=Path, help="the converter's model.glb (default: none, read --depth)")
     ap.add_argument("--depth", type=float, help="the model's front depth when no --glb is given")
     ap.add_argument("--icons", required=True)
+    ap.add_argument("--plate", action="store_true",
+                    help="the painting is a light grey plate with its number (the treasure doors): "
+                         "each decal is the plate's whole rectangle, opaque")
     args = ap.parse_args(argv)
     icons = parse_icons(args.icons)
     rgb, mask = survey.load_sheet(args.sheet, survey.GRIDS["object-m"])
-    stack = np.stack([rgb[i] for i in icons])
-    bare = np.median(stack, axis=0)
-    painted = [np.linalg.norm(rgb[i] - bare, axis=2) > THRESHOLD for i in icons]
-    union = np.any(painted, axis=0) & np.all([mask[i] for i in icons], axis=0)
+    if args.plate:
+        # The plate: light grey pixels (channels within 0.08, value over 0.55), the same rectangle
+        # on every icon; the number painted on it differs.
+        # The rows and columns where most icons are grey hold the plate, not a highlight on a ball.
+        grey = np.mean([(np.ptp(rgb[i], axis=2) < 0.08) & (rgb[i].min(axis=2) > 0.55) & mask[i]
+                        for i in icons], axis=0) > 0.5
+        rows = np.where(grey.sum(axis=1) >= 8)[0]
+        cols = np.where(grey[rows.min():rows.max() + 1].sum(axis=0) >= 4)[0]
+        box = np.zeros_like(grey)
+        box[rows.min():rows.max() + 1, cols.min():cols.max() + 1] = True
+        painted = [box & mask[i] for i in icons]
+        union = box
+    else:
+        stack = np.stack([rgb[i] for i in icons])
+        bare = np.median(stack, axis=0)
+        painted = [np.linalg.norm(rgb[i] - bare, axis=2) > THRESHOLD for i in icons]
+        union = np.any(painted, axis=0) & np.all([mask[i] for i in icons], axis=0)
     ys, xs = np.where(union)
     x0, x1, y0, y1 = int(xs.min()), int(xs.max()) + 1, int(ys.min()), int(ys.max()) + 1
     depth = front_depth(args.glb) if args.glb else float(args.depth)

@@ -1,0 +1,20 @@
+# treasure421_porte2: the painted faces of icons 421-439 (tools/rd4_to_gltf/sign_decals.py)
+decal 421 decals/421.png 20 20 43 44 0.2285
+decal 422 decals/422.png 20 20 43 44 0.2285
+decal 423 decals/423.png 20 20 43 44 0.2285
+decal 424 decals/424.png 20 20 43 44 0.2285
+decal 425 decals/425.png 20 20 43 44 0.2285
+decal 426 decals/426.png 20 20 43 44 0.2285
+decal 427 decals/427.png 20 20 43 44 0.2285
+decal 428 decals/428.png 20 20 43 44 0.2285
+decal 429 decals/429.png 20 20 43 44 0.2285
+decal 430 decals/430.png 20 20 43 44 0.2285
+decal 431 decals/431.png 20 20 43 44 0.2285
+decal 432 decals/432.png 20 20 43 44 0.2285
+decal 433 decals/433.png 20 20 43 44 0.2285
+decal 434 decals/434.png 20 20 43 44 0.2285
+decal 435 decals/435.png 20 20 43 44 0.2285
+decal 436 decals/436.png 20 20 43 44 0.2285
+decal 437 decals/437.png 20 20 43 44 0.2285
+decal 438 decals/438.png 20 20 43 44 0.2285
+decal 439 decals/439.png 20 20 43 44 0.2285

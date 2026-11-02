@@ -1,0 +1,24 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "treasure421_rd_cea70d",
+      "vertices": "treasure421_rd_cea70d.verts.bin",
+      "indices": "treasure421_rd_cea70d.idx.bin",
+      "vertexStride": 52,
+      "texture": "treasure421_rd_cea70d.png",
+      "diffuseColor": [
+        0.6226400290750774,
+        0.3878654884740334,
+        0.004026504358339251,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

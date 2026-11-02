@@ -111,6 +111,7 @@ tentacle_tenta14
 tentacle_tenta15
 tentacle_tenta16
 tentacle_tenta17
+treasure421_porte2
 treasure_coffre
 wasp_guepe
 wasp_guepe-tourne

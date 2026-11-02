@@ -118,10 +118,13 @@ namespace GalaxyEggbert::Game
     // 166-173, 310, 416-420 (world2b.rd4), IoU 0.995; what was painted on them (the digit, the
     // world's picture) is a decal (avatars3d/objects/<sign>/decals.txt, tools/rd4_to_gltf/
     // sign_decals.py). Turned toward the cell's open side like the front models below.
-    inline constexpr std::array<std::uint16_t, 36> kSignModelIcons{
+    // The treasure doors 421-439 too: the golden post 183's scene (Decor/porte2.rd4) with the grey
+    // plate of the number of treasures that opens it as the decal (sign_decals.py --plate).
+    inline constexpr std::array<std::uint16_t, 55> kSignModelIcons{
         174, 175, 176, 177, 178, 179, 180, 181,
         158, 159, 160, 161, 162, 163, 164, 165, 309, 411, 412, 413, 414, 415,
-        166, 167, 168, 169, 170, 171, 172, 173, 310, 416, 417, 418, 419, 420};
+        166, 167, 168, 169, 170, 171, 172, 173, 310, 416, 417, 418, 419, 420,
+        421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439};
     [[nodiscard]] constexpr bool IsSignModelIcon(std::uint16_t icon) noexcept
     {
         for (const auto sign : kSignModelIcons)

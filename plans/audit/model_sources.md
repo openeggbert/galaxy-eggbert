@@ -4,12 +4,12 @@
 
 | State | Scenes |
 |---|---|
-| in game | 161 |
+| in game | 162 |
 | in game otherwise | 8 |
 | converted, not exported | 0 |
 | terrain tile (Q-004) | 129 |
 | matched, not converted | 2 |
-| no game sprite | 228 |
+| no game sprite | 227 |
 
 ## Matched, not converted
 
@@ -218,6 +218,7 @@
 | `Blupi/fleche.rd4` | element:29 element:30 element:33 element:34 |
 | `Blupi/gagne.rd4` | blupi:41 blupi:42 blupi:43 blupi:179 |
 | `Blupi/genou-profil.rd4` | blupi:2 blupi:33 blupi:34 blupi:35 |
+| `Blupi/glu.rd4` | - |
 | `Blupi/guepe-tourne.rd4` | element:195 element:199 element:203 element:204 element:205 element:206 element:207 |
 | `Blupi/guepe.rd4` | element:196 element:197 element:200 element:201 |
 | `Blupi/helico-seul2.rd4` | element:68 |
@@ -341,4 +342,4 @@
 - `.max`: 56 files, BLOCKED until 3D Studio MAX with a genuine licence (MR-0001).
 - `.a3d`: 105 files, decoded (`tools/a3d/`): the lava's wave and the columns are converted; the rest are frames of the same objects.
 
-The 228 scenes without a game sprite are backdrops, menu and editor art, revisions and tests: nothing in the game is drawn from them.
+The 227 scenes without a game sprite are backdrops, menu and editor art, revisions and tests: nothing in the game is drawn from them.
