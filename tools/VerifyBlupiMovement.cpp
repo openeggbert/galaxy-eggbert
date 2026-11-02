@@ -277,8 +277,11 @@ int main(int argc, char** argv)
               "grounded crouch input enters the Down anim state");
         check(crouching.GetAnimIcon() == 33, "Down anim icon starts at the real first frame (icon 33)");
 
-        const int expectedCycle[] = {34, 35, 33};
-        for (int expectedIcon : expectedCycle)
+        // ... then stops at 35: table_blupi's third column holds Down at its last frame
+        // (Decor.cpp:2397; owner 2026-11-02: looping it pumped him up and down like
+        // kick-starting a motorbike).
+        const int expectedSequence[] = {34, 35};
+        for (int expectedIcon : expectedSequence)
         {
             int steps = 0;
             const int previousIcon = crouching.GetAnimIcon();
