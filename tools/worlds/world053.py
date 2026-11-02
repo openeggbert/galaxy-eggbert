@@ -247,14 +247,16 @@ def main(argv) -> int:
         for y in (30, 31):
             w.set(58, y, z, 0 if stage >= 5 else treasure_door(14))
         w.set(58, 32, z, GRILLE)
-    # The crusher passage (x 59-69, z 18-20, walk 30), narrowed to one cell at x 64 where a
-    #    crusher waits in the floor: squashed, Blupi cannot jump for a while.
+    # The crusher passage (x 59-69, z 18-20, walk 30), narrowed at x 64 to one cell, one high,
+    #    where a crusher hangs in Blupi's own cell (the original's, Decor::IsEcraseur): squashed,
+    #    Blupi cannot jump for a while.
     plates(59, 26, 17, 69, 29, 21)
     plates(59, 30, 17, 69, 33, 17)
     plates(59, 30, 21, 69, 33, 21)
     for z in (18, 20):
         w.fill(64, 30, z, 64, 33, z, 82)
-    w.set(64, 29, 19, 82 if stage >= 6 else CRUSHER)
+    w.fill(64, 31, 19, 64, 33, 19, 82)
+    w.set(64, 30, 19, 0 if stage >= 6 else CRUSHER)
     # The lava slope (x 70-74, z 18-44): terraces heading south, each two below the last, a strip
     #    of lava across each one to jump.
     walk = 30
@@ -282,10 +284,12 @@ def main(argv) -> int:
     #    treasures in a row, two columns of four stars stacked over the row.
     plates(59, 15, 57, 83, 19, 67)
     walls(59, 57, 83, 67, 20, 28)
-    carve(71, 20, 57, 73, 22, 57)
-    for x in (71, 72, 73):                          # two deep: no jump clears them
-        for z in (58, 59):
-            w.set(x, 19, z, 82 if stage >= 6 else CRUSHER)
+    carve(71, 20, 57, 73, 20, 57)                   # the doorway, one high
+    w.fill(70, 20, 58, 74, 22, 58, 82)              # and a cell deep into the hall
+    carve(71, 20, 58, 73, 20, 58)
+    for x in (71, 72, 73):                          # two deep, under the lintel
+        for z in (57, 58):
+            w.set(x, 20, z, 0 if stage >= 6 else CRUSHER)
     for x in (64, 66, 68, 70, 72, 74, 76):
         w.place(O.TREASURE, x, 20, 62)
     for x in (67, 73):

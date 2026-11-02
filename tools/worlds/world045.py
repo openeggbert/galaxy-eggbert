@@ -188,16 +188,20 @@ def core(w: World, rng: random.Random):
 
 def cellar(w: World, rng: random.Random):
     """R: the core's floor (walk 8): two lava pools, six treasures, nine helicopters, two eggs,
-    a crusher before one treasure, a mine, an invert; in its east wall a wall of secret cheese
+    a crusher in the doorway of one treasure's booth, a mine, an invert; in its east wall a wall of secret cheese
     in front of a pocket with three eggs."""
     for x0, z0 in ((64, 18), (78, 28)):
         carve(w, x0, 6, z0, x0 + 3, 7, z0 + 3)
         w.fill(x0, 6, z0, x0 + 3, 6, z0 + 3, LAVA)
-    for x, z in ((64, 13), (70, 32), (86, 14), (88, 30), (66, 22), (75, 12)):
+    for x, z in ((64, 13), (70, 32), (86, 14), (88, 30), (66, 23), (75, 12)):
         w.place(O.TREASURE, x, 8, z)
-    w.set(66, 7, 23, CRUSHER)                              # before the treasure at (66, 22)
-    w.set(65, 7, 23, CRUSHER)
-    w.set(67, 7, 23, CRUSHER)
+    # The treasure at (66, 23) in a cheese booth, its one-high doorway (z 24) a crusher: the
+    #    original's crushers hang in Blupi's own cell of a passage one tile high (Decor::
+    #    IsEcraseur, 13 of 13 in its maps), so he must pass under it.
+    gate = random.Random(4517)
+    cheese(w, 65, 8, 22, 67, 9, 24, gate)
+    carve(w, 66, 8, 23, 66, 8, 24)
+    w.set(66, 8, 24, CRUSHER)
     helicopters(w, [(58, 8, 30), (60, 8, 33), (62, 8, 30), (72, 8, 20), (74, 8, 36), (82, 8, 16),
                     (84, 8, 22), (88, 8, 34), (78, 8, 20)])
     w.place(O.EGG, 62, 8, 37)
@@ -215,13 +219,15 @@ def cellar(w: World, rng: random.Random):
 
 def exit_and_cage(w: World, rng: random.Random):
     """X: the exit landing in the core's west wall (walk 36) with a helicopter and an invert;
-    a corridor west with a crusher across it, the red arrow at its end. C: the cage on a
-    column in the middle (walk 44): machine panels round it, gratings in its west and east
-    walls, a crusher across each landing before them, treasure 3 inside beside a pillar."""
+    a corridor west with a row of crushers under a lintel across it, the red arrow at its end.
+    C: the cage on a column in the middle (walk 44): machine panels round it, gratings in its west
+    and east walls, a gate of crushers across each landing before them, treasure 3 inside beside a pillar."""
     cheese(w, 56, 8, 20, 62, 35, 26, rng)                   # the landing's buttress
     carve(w, 48, 36, 22, 56, 38, 24)                        # the corridor
+    gate = random.Random(4518)
+    cheese(w, 53, 37, 22, 53, 38, 24, gate)                 # a lintel: one high under it
     for z in (22, 23, 24):
-        w.set(53, 35, z, CRUSHER)
+        w.set(53, 36, z, CRUSHER)
     w.place(O.EXIT, 50, 36, 23)
     helicopters(w, [(60, 36, 23)])
     w.place(O.INVERT, 58, 36, 21)
@@ -230,9 +236,13 @@ def exit_and_cage(w: World, rng: random.Random):
     cheese(w, 71, 8, 21, 77, 43, 27, rng)
     cheese(w, 65, 41, 23, 70, 43, 25, rng)
     cheese(w, 78, 41, 23, 83, 43, 25, rng)
-    for z in (23, 24, 25):                                 # a cell short of the gratings
-        w.set(69, 43, z, CRUSHER)
-        w.set(79, 43, z, CRUSHER)
+    gate = random.Random(4519)
+    for x in (69, 79):                                     # a cell short of the gratings: a gate
+        cheese(w, x, 45, 22, x, 47, 26, gate)              # its lintel, too high to jump onto
+        cheese(w, x, 41, 22, x, 44, 22, gate)              # and its posts beside the landing
+        cheese(w, x, 41, 26, x, 44, 26, gate)
+        for z in (23, 24, 25):
+            w.set(x, 44, z, CRUSHER)                       # one high under the lintel
     w.box(71, 44, 21, 77, 46, 27, MACHINE, hollow=True, floor=False, roof=False)
     for x in (71, 77):
         for z in (23, 24, 25):

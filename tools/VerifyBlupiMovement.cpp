@@ -681,6 +681,15 @@ int main(int argc, char** argv)
         check(crushed.TriggerCrush(), "TriggerCrush() returns true on a genuinely new trigger");
         check(crushed.IsEcrased(), "IsEcrased() is true immediately after TriggerCrush()");
         check(!crushed.TriggerCrush(), "TriggerCrush() is a no-op (returns false) while already squashed");
+        {
+            // BD-0032: the squash ends a vehicle, as the original's (Decor.cpp:5556-5573).
+            BlupiController flyer;
+            flyer.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
+            flyer.CheatVehicle(BlupiController::VehicleMode::Helicopter);
+            check(flyer.GetVehicleMode() == BlupiController::VehicleMode::Helicopter, "the helicopter cheat mounts him");
+            check(flyer.TriggerCrush() && flyer.GetVehicleMode() == BlupiController::VehicleMode::None,
+                  "a crusher squashing him ends his helicopter (BD-0032)");
+        }
 
         // Animation indicator (plan.md E3D-MIG-064, 2026-07-11, real
         // GalaxyEggbert::Def::BlupiAction IDs 72/73, `table_blupi` icon data transcribed with
@@ -1686,6 +1695,28 @@ int main(int argc, char** argv)
                 walker.SetYaw(3.14159265f); // facing +Z
                 for (int i = 0; i < 120; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
                 check(walker.GetZ() + 50.0f < 62.6f, "a fan stops him at its side: it is a whole block (M3D-0004)");
+            }
+
+            // BD-0032: a crusher hangs in Blupi's own cell of a one-high passage (Decor::
+            // IsEcraseur): he walks into it and through, under the ceiling over it, and is in it.
+            {
+                for (std::uint16_t z = 60; z <= 66; ++z)
+                {
+                    synthetic.setBlock(81, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                }
+                synthetic.setBlock(81, 2, 63, Worlds::Block::make(BlockTypes::Ground)); // the lintel
+                synthetic.setBlock(81, 1, 63, Worlds::Block::make(BlockTypes::Crusher));
+                BlupiController walker;
+                walker.SetPosition(81.0f - 50.0f, 1.0f, 61.0f - 50.0f);
+                walker.SetYaw(3.14159265f); // facing +Z
+                bool wasIn = false;
+                for (int i = 0; i < 200 && walker.GetZ() + 50.0f < 65.0f; ++i)
+                {
+                    walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
+                    wasIn = wasIn || walker.GetBlockTypeAt(synthetic) == BlockTypes::Crusher;
+                }
+                check(wasIn && walker.GetZ() + 50.0f >= 65.0f && std::fabs(walker.GetY() - 1.0f) < 0.05f,
+                      "he walks through a crusher's cell under its lintel, standing in it on the way");
             }
 
             // BD-0030 (Decor::IsNormalJump -> IsPassIcon): only a tile with a quarter of its mask set

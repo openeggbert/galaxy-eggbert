@@ -537,6 +537,12 @@ namespace GalaxyEggbert::Game
             // through fans; at its mouth he dies (WorldRuntime::TryConsumeFan, Decor::IsVentillo).
             return true;
         }
+        if (GalaxyEggbert::BlockTypes::isCrusher(blockType))
+        {
+            // It hangs in Blupi's own cell of a one-high passage and squashes him there (Decor::
+            // IsEcraseur, its table_decor_quart mask empty): he walks into it, nothing stands on it.
+            return false;
+        }
         if (GalaxyEggbert::BlockTypes::isTeleporter(blockType) ||
             GalaxyEggbert::BlockTypes::isWind(blockType) ||
             GalaxyEggbert::BlockTypes::isWater(blockType) ||
@@ -852,6 +858,18 @@ namespace GalaxyEggbert::Game
         m_ecrase = true;
         m_ecraseTimer = kEcraseDuration;
         m_velocityY = 0.0f;
+        // The squash ends every mount and state but Invert (Decor.cpp:5556-5573): a vehicle is
+        // lost (no ObjectStart puts it back), the balloon, swim, surf, the bar, the secret powers.
+        m_vehicleMode = VehicleMode::None;
+        m_vehicleSpeed = 0.0f;
+        m_balloon = false;
+        m_nage = false;
+        m_surf = false;
+        m_suspended = false;
+        m_jumpAieArmed = false;
+        m_secretPower = GalaxyEggbert::Def::SecretPower::None;
+        m_secretPowerLevel = 0;
+        m_secretPowerTimer = 0.0f;
         return true;
     }
 

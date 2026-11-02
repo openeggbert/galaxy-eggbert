@@ -108,7 +108,9 @@ constexpr uint16_t GoldDoor = 183;
 // Hazard tiles — same rule: value = icon index. Gameplay checks use these.
 constexpr uint16_t Lava     =  68;   // kills Blupi on contact (anim group 68–72)
 constexpr uint16_t Spike    = 373;   // kills Blupi on contact (anim group 347,373,374)
-constexpr uint16_t Crusher  = 317;   // kills Blupi on contact (anim group 317–323)
+constexpr uint16_t Crusher  = 317;   // squashes Blupi in its cell (anim group 317–323)
+// The crusher's frames: it hangs in Blupi's own cell of a one-high passage (Decor::IsEcraseur).
+inline bool isCrusher(uint16_t bt) { return bt >= 317 && bt <= 323; }
 constexpr uint16_t Saw      = 378;   // kills Blupi on contact (anim group 378–383)
 // "Water drip" (real Decor::IsGoutte, confirmed 2026-07-14 via direct
 // Decor.cpp read: icon 404 kills on contact, real GalaxyEggbert::Def::BlupiAction::Glu, same
@@ -256,8 +258,9 @@ inline int toIconIndex(uint16_t t) {
 
 // True for icon IDs that have all-zero table_decor_quart sub-cells in
 // mobile-eggbert (fully transparent/decorative — no collision).
-// Icons 68 (Lava) and 317 (Crusher) are excluded and kept solid for the
-// galaxy-eggbert hazard system even though they are quart-passable.
+// Icons 68 (Lava) and 317 (Crusher) are excluded and kept in the world even though they are
+// quart-passable (lava as the floor it is; the crusher passable in Blupi's own cell,
+// BlupiController::IsPointSolid).
 inline bool isMobileTransparent(int icon) {
     return icon >= 0 && GalaxyEggbert::IsSupportedBlockType(static_cast<uint16_t>(icon)) &&
            GalaxyEggbert::GetBlockDefinition(static_cast<uint16_t>(icon)).mobileTransparent;

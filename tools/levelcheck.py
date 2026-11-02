@@ -17,8 +17,9 @@ since BD-0017). Hub doors (the bars 182/183) count as open: they open as the pla
 a hub every sign must be reachable too. Block classes come from tools/data/blocks.csv
 (BlockDefinitionRegistry; DumpBlockDefinitions keeps it current): a cell is free when it holds
 air, water or a teleporter (a fan is a whole block, M3D-0004), or a block whose collision mask is empty; it is a floor when
-the block below is solid. Cells holding or standing on a hazard (lava, spikes, crusher, saw,
-blitz, drip) and cells next to mines and enemies are avoided. A world can be more reachable than
+the block below is solid (a crusher is no floor: it hangs in a walk cell, BD-0032). Cells holding
+or standing on a hazard (lava, spikes, saw, blitz, drip; a crusher's own cell is a way) and cells
+next to mines and enemies are avoided. A world can be more reachable than
 this says (dynamite, vehicles, crates, springs are not modelled yet); when it says reachable,
 the route exists.
 
@@ -38,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import vwr_inspect  # noqa: E402
 
 SIZE = 100
+CRUSHER_HAZARD = 3  # BlockHazardKind::Crusher (tools/data/blocks.csv)
 LIFTS = {1, 47, 48}
 DANGEROUS = {2, 3, 4, 16, 17, 20, 32, 33, 44, 54, 96, 97}   # mines and enemies
 TARGETS = {5: "treasure", 6: "egg", 49: "key", 50: "key", 51: "key"}
@@ -90,11 +92,14 @@ class Grid:
     def floor(self, p) -> bool:
         x, y, z = p
         below = (x, y - 1, z)
-        return y > 0 and (self.info(below)["solid"] == 1 or below in self.solid_objects)
+        b = self.info(below)
+        # A crusher hangs in a walk cell (BD-0032): nothing stands on it.
+        return y > 0 and ((b["solid"] == 1 and b["hazard"] != CRUSHER_HAZARD) or below in self.solid_objects)
 
     def safe(self, p) -> bool:
         x, y, z = p
-        return (p not in self.danger and self.info(p)["hazard"] == 0 and
+        # A crusher only squashes him for a while (BD-0032): its cell is a way, not a danger.
+        return (p not in self.danger and self.info(p)["hazard"] in (0, CRUSHER_HAZARD) and
                 self.info((x, y - 1, z))["hazard"] == 0)
 
     def water(self, p) -> bool:

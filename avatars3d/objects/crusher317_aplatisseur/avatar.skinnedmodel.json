@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "crusher317_rd_0381aa",
+      "vertices": "crusher317_rd_0381aa.verts.bin",
+      "indices": "crusher317_rd_0381aa.idx.bin",
+      "vertexStride": 52,
+      "texture": "crusher317_rd_0381aa.png",
+      "diffuseColor": [
+        0.0009287925696594428,
+        0.220577522385371,
+        0.4051041159644398,
+        1.0
+      ]
+    },
+    {
+      "name": "crusher317_rd_ab0303",
+      "vertices": "crusher317_rd_ab0303.verts.bin",
+      "indices": "crusher317_rd_ab0303.idx.bin",
+      "vertexStride": 52,
+      "texture": "crusher317_rd_ab0303.png",
+      "diffuseColor": [
+        0.4091444674721517,
+        0.0009287925696594428,
+        0.0009287925696594428,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

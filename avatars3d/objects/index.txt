@@ -42,6 +42,7 @@ creature_creature2
 creature_creature3
 creature_creature4
 creature_creature5
+crusher317_aplatisseur
 decoy_bombe
 decoygreen_bombe
 door334_porte-r

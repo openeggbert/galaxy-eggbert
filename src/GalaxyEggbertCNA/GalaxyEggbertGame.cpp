@@ -3636,8 +3636,10 @@ namespace GalaxyEggbert::CNA
             // no-op while already squashed, matching the real
             // `!m_blupiEcrase` re-trigger guard) -- only play the real
             // entry sound (channel 70) when it actually starts a NEW squash.
+            // Blupi's own cell, as IsEcraseur(m_blupiPos) (BD-0032): the crusher hangs in the cell
+            // he walks through, not in the floor.
             if (!blupi_.IsInvincible() &&
-                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
+                blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
                 WorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
                 blupi_.TriggerCrush())
             {

@@ -24,8 +24,11 @@ namespace GalaxyEggbert::Game
     // Animated terrain drawn as its original scene's model frame by frame: the cell's animation
     // icon (ResolveBlockAnimationIcon) picks the pose its model draws for that icon; a frame with
     // no icon (-1: gone) draws nothing. The vanishing saucer 324-329 (Decor/temporaire.rd4, its
-    // six icons at IoU 0.985-0.992; owner 2026-11-02: a billboard, wrong from above).
-    inline constexpr std::array<std::uint16_t, 1> kAnimatedModelBases{GalaxyEggbert::BlockTypes::Temp};
+    // six icons at IoU 0.985-0.992; owner 2026-11-02: a billboard, wrong from above) and the
+    // crusher 317-323 hanging in its cell (Decor/aplatisseur.rd4, seven icons at IoU 0.948-0.99:
+    // the blue spring and the red block striking down).
+    inline constexpr std::array<std::uint16_t, 2> kAnimatedModelBases{GalaxyEggbert::BlockTypes::Temp,
+                                                                      GalaxyEggbert::BlockTypes::Crusher};
 
     // Animated terrain whose cell is the floor (Galaxy's convention: the space over it is deadly)
     // and whose model stands on it, one cell up: the saw 378-383 and the stopped saw 379

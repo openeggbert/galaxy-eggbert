@@ -38,7 +38,7 @@ STAR = 231
 BOOKCASES = (139, 140, 141, 142, 143)
 WINDOWS = (186, 187, 188, 189)
 SLATE = (196, 197)
-SAW, SWITCH, CRUSHER = 378, 384, 317
+SAW, SWITCH = 378, 384
 LOW, HIGH = 20, 30                    # the plaza's floor and the ring gallery: walking levels
 P0, P1 = 34, 66                       # the plaza's interior, x and z
 
@@ -229,15 +229,10 @@ def main(argv) -> int:
     put(village, O.EGG, 11, 1)
     put(village, O.EGG, 11, 11)
 
-    # South, the cheese (green door): a row of crushers in its floor across it (cross in their
-    # open phase: a crusher squashes him standing on it), two mines bobbing, the blue key and a
-    # second green key at its far end.
+    # South, the cheese (green door): two mines bobbing, the blue key and a second green key at
+    # its far end. (Its row of crushers is gone: the original's 199 has none, lesson_inventory.)
     cheese_room = Room("S", 57, LOW)
     enclave(cheese_room, "cheese", GREEN_DOOR)
-    for u in range(0, 13):
-        x, z = cheese_room.at(u, 6)
-        if not calm:
-            w.set(x, LOW - 1, z, CRUSHER)
     for u in (3, 9):
         x, z = cheese_room.at(u, 9)
         bob(x, LOW, z, 2, 16)

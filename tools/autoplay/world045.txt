@@ -113,7 +113,7 @@ expect y <= 8.05
 hold 6 action
 wait 30
 # R, the cellar on foot: six treasures round the lava pools, beside its mine (87, 31) and its
-# invert (70, 29), the one at (66, 22) between a pool and the row of crushers; two eggs.
+# invert (70, 29), the one at (66, 23) in a booth behind a crusher; two eggs.
 go 89.4 33
 go 88.4 29.6 tol 0.15
 until treasures = 3 max 200
@@ -129,11 +129,16 @@ until treasures = 6 max 200
 go 63 16
 go 69 17.5
 go 69.4 22
-# Onto the item (the original's 28 px boxes, BD-0021).
-go 66 22 tol 0.15
-go 66.3 22 tol 0.15
+# The treasure in its booth (66, 23), the doorway (66, 24) a crusher under a lintel: in and out
+# while it is up (it squashes at 0-2 of its 10 steps).
+go 68.5 25.6
+go 66 25.6 tol 0.15
+until crush = 3 max 100
+go 66 23 tol 0.15
 until treasures = 7 max 200
-go 68.5 24
+until crush = 3 max 100
+go 66 25.6 tol 0.15
+go 68.5 25.6
 go 68.5 31.4
 # Onto the item (the original's 28 px boxes, BD-0021).
 go 70 32 tol 0.15
@@ -189,8 +194,8 @@ go 52 11.2 tol 0.2
 until eggs = 9 max 200
 go 53 11.2 tol 0.2
 until eggs = 10 max 200
-# X: out through the cheese, down to the exit landing (walk 36), west along the corridor over
-# its row of crushers to the red arrow.
+# X: out through the cheese, down to the exit landing (walk 36), west along the corridor under
+# its lintel of crushers (x 53, one high) while they are up, to the red arrow.
 hold 12 lookup
 wait 30
 go 53.5 15 tol 0.3
@@ -201,9 +206,8 @@ go 59.5 23.5 tol 0.3
 hold 60 crouch
 until ground = 1 max 200
 expect y <= 36.05
-hold 12 lookup
-wait 30
-go 56 23 tol 0.3
+go 55 23 tol 0.3
+until crush = 3 max 100
 go 50 23 tol 0.3 until exit = 1
 until exit = 1 max 200
 expect treasures = 11

@@ -535,3 +535,25 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   (ObjectType38), the wasp's sting effect (90), the creature's glue splat (53), the balloon pop
   effect (91) are not drawn. Open (visual).
 - Validation for BD-0010..0013: 110/110 and all 78 playthroughs pass (2026-11-01).
+
+## BD-0032 — the crusher sat in the floor, solid; the original's hangs in Blupi's own cell (gameplay, worlds) — FIXED_AND_VERIFIED
+
+- Original (`Decor::IsEcraseur`, Decor.cpp:7277-7289, 5549-5591): Blupi's own cell (`m_blupiPos`
+  + 30 px across) holds icon 317 while `m_time / 3 % 10 <= 2`: he is squashed (`m_blupiEcrase`,
+  sound 70, the shield gauge as its timer). Icon 317's `table_decor_quart` mask is empty: he walks
+  into its cell. In the original's maps all 13 crushers hang in a passage one tile high, solid
+  above and below (`build-probe/wave-e/icon_ctx.py 317`).
+- Galaxy: crushers placed as floor tiles (045, 053; and an invented row in 199, whose original has
+  none), kept solid, detected under his feet.
+- Fix: a crusher's cell is passable (`BlupiController::IsPointSolid`, `BlockTypes::isCrusher`),
+  detected in his own cell (`GetBlockTypeAt`), drawn as `Decor/aplatisseur.rd4` frame by frame
+  (`kAnimatedModelBases`; owner OR-0031). Worlds: 045's booth doorway (66, 8, 24), the corridor's
+  lintel row (53, 36, 22-24) and the cage landings' gates (69/79, 44, 23-25); 053's narrowing
+  (64, 30, 19) and the treasure hall's two-deep doorway (71-73, 20, 57-58); 199's row removed.
+  levelcheck: a crusher is a way, not a floor.
+- Validation: `VerifyBlupiMovement` (he walks through a crusher's cell under its lintel);
+  playthroughs 045 (in and out of the booth while it is up), 053 (squashed, waits), 199 pass;
+  live `plans/evidence/crusher-053.png`.
+- Also: the original's squash ends any vehicle (lost), the balloon, swim, surf, the bar and the
+  secret powers (Decor.cpp:5556-5573); Galaxy's `TriggerCrush` only squashed. Now as the original
+  (045's corridor can be crossed in the helicopter on the ground).
