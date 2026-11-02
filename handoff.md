@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-02 night (fidelity audit, milestone G: the owner's reports up to OR-0055)._
+_Last updated: 2026-11-02 night (fidelity audit, milestone G: the owner's reports up to OR-0056)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -202,10 +202,16 @@ ledgers before repeating any discovery. Where it stands:
   lightning is always Clear1; only spike 373 kills (347/374 are its animation). Measure a
   model's size at its frame-0 pose (`tools/rd4_to_gltf/posed_bounds.py`), not from the accessor
   bounds: the bridge's bind pose sat 0.109 off.
-- Done after: the conveyor lifts 47/48 as the chenille model (`bda333e`, world 102).
+- Done after: the conveyor lifts 47/48 as the chenille model (`bda333e`, world 102); Wave E:
+  084's three gates of crushers (`0cf9a4f`, LV-0051), 024's rods over the lava hall's last gap
+  (`7fc63b9`, LV-0011), 034's lava pit across the gallery crossed on rods (`1e99936`, LV-0017),
+  each with its playthrough; **OR-0056** the teleporters' letter plate and lights on all four sides
+  (`3be74e6`). Web build refreshed (`CURRENT.md`). Rods are `ROD = 202` at the walk over a drop
+  (`go ... max 600` crosses them in a script); levelcheck stages put a floor under them.
 - Next: the glue death (Q-006), the lightning bolt and grass (Q-001/Q-002)
-  wait for the owner (`plans/audit/owner_questions.md`); Wave E: 084's five crushers (gates in
-  walls in the original), the bars of 024/034/052/125; a fresh web build.
+  wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
+  `plans/audit/lesson_inventory.md` (bars of 046/052/061/106/125, bridges of 061/066, lava, water,
+  teleporters of 105, 199's many).
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
