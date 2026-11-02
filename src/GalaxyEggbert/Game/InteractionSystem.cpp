@@ -2318,14 +2318,15 @@ namespace GalaxyEggbert::Game
                     // `158`, Decor.cpp:5620-5624) -- purely cosmetic, the
                     // key bit is already cleared above, before the voyage
                     // even starts (no reward at completion). Reversed
-                    // direction from every pickup above: start = the
-                    // fixed HUD position of whichever key was consumed
-                    // (matching Key1/2/3's own real end points), end = the
+                    // direction from every pickup above: start = a fixed
+                    // HUD position (see startX), end = the
                     // door's own world position (needs projecting, unlike
                     // every pickup's fixed end). Real icon is dynamic per
                     // door: `214 + (doorIcon-334)*7` = 214/221/228 for
                     // door1/2/3.
-                    const float startX = (keyType == 49) ? 520.0f : (keyType == 50) ? 530.0f : 540.0f;
+                    // It starts at x 520 for every door (Decor.cpp:5620-5621), where the first
+                    // key's own icon arrived, also for the second and third keys (530, 540; BD-0043).
+                    const float startX = 520.0f;
                     const int doorIconId = 214 + (static_cast<int>(icon) - 334) * 7;
                     const float doorWorldX = static_cast<float>(gx) - static_cast<float>(WorldRuntime::kWorldCenterX);
                     const float doorWorldY = static_cast<float>(probeGY);
