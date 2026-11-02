@@ -79,7 +79,7 @@ verified native and WebGL 2 configurations:
 |---|---|
 | `build-cna-opengl3` (`OPENGL33`) | Build succeeds; 93/93 CTest cases pass with the then-quarantined `easy-gl-resource-smoke-tests` excluded; normal startup and the three-frame golden capture run successfully under Xvfb (2026-10-17, before cna-engine; on 2026-10-20 an `OPENGL33` build on cna-engine ran the menus and the editor under Xvfb) |
 | `OPENGLES3` on cna-engine (2026-10-20) | 93/93 CTest cases pass; golden frames, behavioral trace and startup screenshots byte-identical to the easy-3d build under Xvfb and on the GPU (`NEXT.md` §3, "Moved from easy-3d to cna-engine") |
-| `build-cna-webgl2` (`WEBGL2`) | Emscripten Release build of 2026-11-02 (`GalaxyEggbert.{html,js,wasm,data}`, the data pack with the gallery world998); headless Chrome under Xvfb (SwiftShader WebGL 2, driven over DevTools) loads `world001`, the object models and 93/93 sound channels and draws the gamer-select menu over the title scene with no exception in the console (CNA + cna-engine of that day) |
+| `build-cna-webgl2` (`WEBGL2`) | Emscripten Release build of 2026-11-02 night (`GalaxyEggbert.{html,js,wasm,data}`, the data pack with the gallery world998, the drip, switch and conveyor models and the re-exported clay bridge); headless Chrome under Xvfb (SwiftShader WebGL 2, driven over DevTools) loads `world001`, the object models and 93/93 sound channels and draws the gamer-select menu over the title scene with no exception in the console (CNA + cna-engine of that day) |
 
 The deterministic golden-frame and behavioral-trace harnesses are manual `xvfb-run` checks, not
 default CTest cases. Full commands and sibling-repository pins live in `handoff.md`.
