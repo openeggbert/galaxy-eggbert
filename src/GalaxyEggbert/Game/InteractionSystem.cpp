@@ -1090,6 +1090,7 @@ namespace GalaxyEggbert::Game
         // The action press a dynamite stick's pickup spends (the original clears the button,
         // Decor.cpp:6119), so one press takes one stick.
         bool actionUnspent = blupiActionPressedEdge;
+        actionSpent_ = false;
         auto& objects = worldRuntime.GetMobileObjectsMutable();
         const Worlds::World& world = worldRuntime.GetWorld();
 
@@ -2098,6 +2099,7 @@ namespace GalaxyEggbert::Game
                     if (actionUnspent && dynamiteCount_ == 0 && voyageKind_ != VoyageKind::Dynamite)
                     {
                         actionUnspent = false;
+                        actionSpent_ = true;
                         TryCollectBasicPickup(obj, pendingSpawns);
                     }
                     break;

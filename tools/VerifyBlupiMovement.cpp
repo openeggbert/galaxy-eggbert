@@ -425,6 +425,25 @@ int main(int argc, char** argv)
                   "gripping a crate and starting to pull it each give the grip sound's event, once");
         }
 
+        // The action button with nothing to do: Non, his head shake, 18 ticks then Stop again
+        // (Decor.cpp:6366-6372, 3188; the host decides when, this is the controller's part).
+        {
+            Worlds::World nonWorld;
+            nonWorld.setBlock(30, 0, 30, Worlds::Block::make(BlockTypes::Ground));
+            BlupiController shaker;
+            shaker.SetPosition(30.0f - 50.0f, 1.0f, 30.0f - 50.0f);
+            shaker.Step(nonWorld, 0.0f, 0.0f, false, false, false, dt);
+            shaker.TriggerReaction(BlupiController::AnimState::Non, BlupiController::kNonDuration);
+            int nonFrames = 0;
+            for (int frame = 0; frame < 120; ++frame)
+            {
+                shaker.Step(nonWorld, 0.0f, 0.0f, false, false, false, dt);
+                nonFrames += shaker.GetAnimState() == BlupiController::AnimState::Non ? 1 : 0;
+            }
+            check(nonFrames >= 52 && nonFrames <= 55 && shaker.GetAnimState() == BlupiController::AnimState::Stop,
+                  "the head shake (Non) lasts its 18 ticks, then he stands again");
+        }
+
         // Stop's idle cycle taps (channel 37) at its ticks 125, 129, ... of 330 (Decor.cpp:2371-2378).
         {
             Worlds::World idleWorld;
@@ -3094,6 +3113,30 @@ int main(int argc, char** argv)
         }
         check(receded && teeter.GetX() < startX - 0.1f && teeter.GetAnimState() == BlupiController::AnimState::Stop,
               "then he steps back from the edge and stands");
+    }
+
+    // Advance: the void behind him instead, he steps forward off it, 4 px a tick for 5 ticks,
+    // with the teeter's sound (Decor.cpp:4935-4943, 3657-3664, 5064).
+    {
+        Worlds::World ledge;
+        for (std::uint16_t x = 40; x <= 50; ++x)
+            for (std::uint16_t z = 45; z <= 55; ++z)
+                ledge.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        BlupiController stepper;
+        stepper.SetPosition(0.42f, 1.0f, 0.0f); // raw 50.42: the floor ends at 50.5 behind him
+        stepper.SetYaw(-1.5707963f);            // facing -X, his back to the edge
+        stepper.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+        check(stepper.GetAnimState() == BlupiController::AnimState::Advance &&
+                  hasEvent(stepper, BlupiController::EventKind::VertigoStarted),
+              "with a ledge behind him Blupi steps forward (Advance, with the teeter's sound)");
+        const float startX = stepper.GetX();
+        for (int i = 0; i < 40; ++i)
+        {
+            stepper.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+        }
+        const float moved = startX - stepper.GetX();
+        check(moved > 0.28f && moved < 0.35f && stepper.GetAnimState() == BlupiController::AnimState::Stop,
+              "he steps 20 px (0.31 cell) forward, then stands");
     }
 
     // Owner reports of 2026-11-01: riding a lift (OR-0018), leaving a vehicle (OR-0020), the

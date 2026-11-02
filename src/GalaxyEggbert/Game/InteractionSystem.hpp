@@ -447,6 +447,9 @@ namespace GalaxyEggbert::Game
             graceZ_ = z;
         }
         [[nodiscard]] bool ContactGraceActive() const noexcept { return contactGrace_; }
+        // The last Update() spent the action press (a dynamite stick taken): the caller's "nothing
+        // to do" head shake (Non) must not follow it.
+        [[nodiscard]] bool ActionPressSpent() const noexcept { return actionSpent_; }
 
         // Re-spawns a pickup at its original position as a static, active
         // object (real `ObjectStart(pos, type, 0)`, speed=0) -- called by
@@ -1092,6 +1095,7 @@ namespace GalaxyEggbert::Game
         int persoCount_ = 0;
         bool crateBeingPushedThisFrame_ = false; // set by UpdateCratePush(); NOT part of events_ (see its own comment)
         bool contactGrace_ = false;
+        bool actionSpent_ = false;
         float graceX_ = 0.0f, graceY_ = 0.0f, graceZ_ = 0.0f;
         int crateAction_ = 0;            // 0 none, 1 Push, 2 Pop: the action the speed ramps in
         float crateActionSeconds_ = 0.0f; // time in that action (the original's m_blupiPhase)

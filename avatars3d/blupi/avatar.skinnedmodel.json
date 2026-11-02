@@ -250,6 +250,10 @@
       "clip": "clips/JumpSuspend.clip.bin"
     },
     {
+      "name": "Non",
+      "clip": "clips/Non.clip.bin"
+    },
+    {
       "name": "Hide",
       "clip": "clips/Hide.clip.bin"
     },
@@ -276,6 +280,10 @@
     {
       "name": "Vertigo",
       "clip": "clips/Vertigo.clip.bin"
+    },
+    {
+      "name": "Advance",
+      "clip": "clips/Advance.clip.bin"
     },
     {
       "name": "Recede",

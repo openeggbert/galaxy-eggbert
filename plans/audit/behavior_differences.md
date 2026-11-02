@@ -299,6 +299,32 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   same, with the JumpSuspend clip (`suspendu-jump.rd4`, table_blupi 34). The playthroughs leave
   bars at their ends, so the eight bar worlds replay unchanged.
 
+## BD-0019 — the action button with nothing to do did nothing; the original shakes his head (gameplay) — FIXED_AND_VERIFIED
+
+- Found listing the original's Blupi actions with no Galaxy state: Non (84). Decor.cpp:6366-6372:
+  the action button pressed while he is still in Stop -- nothing before it in the tick used the
+  press (a switch, dynamite, the decoy, a vehicle, a dynamite stick taken) -- makes him shake his
+  head (Non, 18 ticks, 3188) with channel 27.
+- Galaxy: `AnimState::Non` with the original's table (table_blupi 84) and its clip from Ray Dream's
+  `blupi-ouf2.rd4` (icons 226-229 matched confidently; exported alone). The host marks every use
+  of the press (`actionUsed`; `InteractionSystem::ActionPressSpent()` for the dynamite stick) and,
+  if none, standing in Stop, starts the reaction (cut short by moving) and plays channel 27.
+- Validation: `VerifyBlupiMovement` (18 ticks, then Stop); live `plans/evidence/head-shake.png`;
+  all playthroughs.
+
+## BD-0020 — with a ledge behind him Blupi stood still; the original steps forward off it (gameplay) — FIXED_AND_VERIFIED
+
+- Found listing the original's actions with no Galaxy state: Advance (10). Decor.cpp:4935-4943:
+  standing still with one foot over the void and not facing it (the teeter, Vertigo, is for the
+  void in front), he steps forward, 4 px a tick (3657-3664) for 5 ticks (5064), with the teeter's
+  channel 6. Galaxy had only the front case (Vertigo, then Recede).
+- Now the same on foot (`m_advanceTimer`, `AnimState::Advance` with table_blupi 10 -- the
+  Recede icons, so its clip equals Recede's). 20 px is 0.31 of a cell.
+- Open: the vehicles. The original's helicopter and overcraft at a ledge in front recede at once
+  without teetering (4908-4912); the jeep, tank and skateboard stopped with a side over the void
+  roll forward 5 px a tick for 10 ticks (4944-5030, 3667-3680). Galaxy's vehicles do neither.
+- Validation: `VerifyBlupiMovement` (state, sound, 0.31 cell forward then Stop); all playthroughs.
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

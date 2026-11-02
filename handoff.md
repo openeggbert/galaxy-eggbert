@@ -77,14 +77,23 @@ ledgers before repeating any discovery. Where it stands:
   those two exported into `avatars3d/blupi/`; a full re-export would also change Hide and
   StopTank -- converter drift to look at first), and the 10-tick JumpSuspend wind-up before he
   lets go of a bar (bars in 064 065 066 071 074 075 083 084).
+- Done: BD-0019, the head shake (Non) when the action button has nothing to do: the host's
+  `actionUsed` collects every use of the press; BD-0020, Advance: the void behind him, he steps
+  forward 0.31 of a cell (on foot; the vehicles' ledge rules are open). All 78 playthroughs pass
+  with both (2026-11-02). New clips are exported one at a time
+  (`build_clip_library.py --skip-check` into `build-probe/rd4-blupi/library-susp/`, then copy
+  only the new clip, `avatar.skinnedmodel.json` and `clips.txt`).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always
   starts mission 1, so copy the map to watch over the copy's `worlds/world001.txt`. Use it
   whenever the source leaves a behaviour open.
 - Open owner reports: OR-0004 (anything else about teleporters: the owner's word), OR-0011
-  (Android: SDK, NDK 29 and emulator images are in ~/Android/Sdk; gradle wants NDK 30.0.14904198,
-  CMake 4.1.2 is there; an APK build compiles everything for two ABIs), OR-0017 (his
+  (Android: SDK, NDK 29 and emulator images (android-35 x86_64) are in ~/Android/Sdk; gradle
+  wants NDK 30.0.14904198, CMake 4.1.2 is there; an APK build compiles everything for two ABIs.
+  `android/app/src/main/assets/` links only `Content` and the old 2D `worlds` (May): the 3D game
+  also needs `worlds3d`, `avatars3d`, `textures3d`, and CNA's Android file access for them is
+  untested), OR-0017 (his
   collision is a point: a body
   half-width of 18 px, the original's BlupiRect, for horizontal moves only, then all
   playthroughs).

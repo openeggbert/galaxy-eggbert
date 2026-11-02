@@ -538,6 +538,8 @@ namespace GalaxyEggbert::Game
             StopSuspend, MarchSuspend,
             // Winding up to jump off the bar (JumpSuspend 34: the original's Jump while hanging).
             JumpSuspend,
+            // Shaking his head: the action button with nothing to do (Non 84, Decor.cpp:6366-6372).
+            Non,
             // Hide (plan.md BLUPI-051, found 2026-07-18): real single
             // static pose (`table_blupi` ID 35, 9-frame idle-fidget cycle,
             // same shape as Stop's own long idle table) while
@@ -605,8 +607,9 @@ namespace GalaxyEggbert::Game
             // (SetTurning()).
             Turn,
             // Standing at a ledge with his front foot over the void: he teeters (table_blupi 8,
-            // ACTION_VERTIGO, 16 ticks), then steps back from it (9, ACTION_RECEDE, 3 ticks).
-            Vertigo, Recede,
+            // ACTION_VERTIGO, 16 ticks), then steps back from it (9, ACTION_RECEDE, 3 ticks); with
+            // the void behind him he steps forward off it (10, ACTION_ADVANCE, 5 ticks).
+            Vertigo, Recede, Advance,
             // His reactions, standing (Decor.cpp, 2026-10-26), cut short as soon as he moves (the
             // original keeps his focus): JumpAie (36) rubs the head he bumped on a ceiling in a
             // fast jump; the "phews" after effort or a close call: Ouf1a (44) after a swim, Ouf1b
@@ -1292,6 +1295,7 @@ namespace GalaxyEggbert::Game
         static constexpr float kJumpAieDuration = 30.0f / 20.0f;
         static constexpr float kOuf1Duration = 29.0f / 20.0f;
         static constexpr float kOuf3Duration = 34.0f / 20.0f;
+        static constexpr float kNonDuration = 18.0f / 20.0f; // ScaleTime(18), Decor.cpp:3188
         static constexpr float kOuf4Duration = 40.0f / 20.0f;
         static constexpr float kOuf2Duration = 32.0f / 20.0f;
         static constexpr float kStopMarchDuration = 3.0f / 20.0f;
@@ -1333,6 +1337,7 @@ namespace GalaxyEggbert::Game
         bool m_turning = false;
         float m_vertigoTimer = 0.0f;   // teetering at a ledge (AnimState::Vertigo)
         float m_recedeTimer = 0.0f;    // stepping back from it (AnimState::Recede)
+        float m_advanceTimer = 0.0f;   // stepping forward from a ledge behind him (AnimState::Advance)
         bool m_vertigoStarted = false; // VertigoStarted is due this frame
         AnimState m_reaction = AnimState::Stop; // the reaction playing (kJumpAieSpeed's comment)
         float m_reactionTimer = 0.0f;

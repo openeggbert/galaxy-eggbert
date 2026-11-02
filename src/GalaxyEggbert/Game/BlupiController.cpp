@@ -265,6 +265,7 @@ namespace GalaxyEggbert::Game
             163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
             163, 163, 164, 164, 163, 163, 162, 162, 163, 163, 164, 164, 163, 163, 162, 162,
             151, 151, 143, 143, 144, 144, 157, 157};
+        constexpr int kNonFrames[] = {1, 1, 227, 227, 228, 228, 229, 229, 228, 228, 227, 227, 226, 226, 227, 227, 1, 1}; // table_blupi 84
         constexpr int kJumpSuspendFrames[] = {157, 157, 165, 165, 165, 165, 166, 166, 166, 166}; // table_blupi 34
         constexpr int kMarchSuspendFrames[] = {
             144, 144, 145, 145, 146, 146, 145, 145, 144, 144, 143, 143};
@@ -279,6 +280,7 @@ namespace GalaxyEggbert::Game
         // table_blupi Vertigo (8) and Recede (9): teetering at a ledge, stepping back from it.
         constexpr int kVertigoFrames[] = {0, 169, 26, 170, 27, 171, 28, 172};
         constexpr int kRecedeFrames[] = {5, 6, 7, 8, 9, 10};
+        constexpr int kAdvanceFrames[] = {5, 6, 7, 8, 9, 10}; // table_blupi 10, the same icons
         // table_blupi JumpAie (36), Ouf1a/Ouf1b (44/45, one table), Ouf3 (47), Ouf4 (48): his
         // reactions (BlupiController::kJumpAieSpeed's comment).
         constexpr int kJumpAieFrames[] = {135, 177, 177, 178, 178, 179, 179, 180, 180, 179, 179,
@@ -2105,7 +2107,9 @@ namespace GalaxyEggbert::Game
 
         // Vertigo (Decor.cpp ~4880-4935, 5040-5050): standing still at a ledge with his front
         // foot over the void and the back one on the ground, Blupi teeters for 16 ticks, then
-        // steps back 4 px a tick for 3 ticks. Walking, jumping or a vehicle cuts it short.
+        // steps back 4 px a tick for 3 ticks. With the void behind him instead he steps forward
+        // 4 px a tick for 5 ticks, Advance, with the teeter's sound (Decor.cpp:4935-4943, 3657-3664,
+        // 5064). Walking, jumping or a vehicle cuts it short.
         {
             constexpr float kFoot = 0.15f;                   // the original's feet, +/-5 of 60 px, a little wider
             constexpr float kRecedeSpeed = 4.0f * 20.0f / 64.0f;
@@ -2117,6 +2121,19 @@ namespace GalaxyEggbert::Game
             {
                 m_vertigoTimer = 0.0f;
                 m_recedeTimer = 0.0f;
+                m_advanceTimer = 0.0f;
+            }
+            else if (m_advanceTimer > 0.0f)
+            {
+                m_advanceTimer -= dt;
+                const float ax = m_x + fx * kRecedeSpeed * dt;
+                const float az = m_z + fz * kRecedeSpeed * dt;
+                if (!IsPointSolid(world, ax, m_y + 0.05f, az, tempPassable, true) &&
+                    IsPointSolid(world, ax, m_y - 0.05f, az, tempPassable, false))
+                {
+                    m_x = ax;
+                    m_z = az;
+                }
             }
             else if (m_recedeTimer > 0.0f)
             {
@@ -2143,6 +2160,12 @@ namespace GalaxyEggbert::Game
             {
                 m_vertigoTimer = 16.0f / 20.0f;
                 m_vertigoStarted = true;
+            }
+            else if (IsPointSolid(world, m_x + fx * kFoot, m_y - 0.05f, m_z + fz * kFoot, tempPassable, false) &&
+                     !IsPointSolid(world, m_x - fx * kFoot, m_y - 0.05f, m_z - fz * kFoot, tempPassable, false))
+            {
+                m_advanceTimer = 5.0f / 20.0f;
+                m_vertigoStarted = true; // channel 6, as the teeter's
             }
         }
 
@@ -2339,6 +2362,7 @@ namespace GalaxyEggbert::Game
                                   : holdingCrate  ? (moving ? AnimState::Pop : AnimState::StopPop)
                                   : m_turning && standsForClip && !moving ? AnimState::Turn
                                   : m_recedeTimer > 0.0f ? AnimState::Recede
+                                  : m_advanceTimer > 0.0f ? AnimState::Advance
                                   : m_vertigoTimer > 0.0f ? AnimState::Vertigo
                                   : m_mockeryActive ? m_mockeryVariant
                                   : m_reactionTimer > 0.0f ? m_reaction
@@ -2536,6 +2560,8 @@ namespace GalaxyEggbert::Game
                 return kMarchSuspendFrames[m_animPhase % (sizeof(kMarchSuspendFrames) / sizeof(kMarchSuspendFrames[0]))];
             case AnimState::JumpSuspend:
                 return kJumpSuspendFrames[m_animPhase % (sizeof(kJumpSuspendFrames) / sizeof(kJumpSuspendFrames[0]))];
+            case AnimState::Non:
+                return kNonFrames[m_animPhase % (sizeof(kNonFrames) / sizeof(kNonFrames[0]))];
             case AnimState::Hide:
                 return kHideFrames[m_animPhase % (sizeof(kHideFrames) / sizeof(kHideFrames[0]))];
             case AnimState::Push:
@@ -2550,6 +2576,8 @@ namespace GalaxyEggbert::Game
                 return kTurnFrames[m_animPhase % (sizeof(kTurnFrames) / sizeof(kTurnFrames[0]))];
             case AnimState::Vertigo:
                 return kVertigoFrames[m_animPhase % (sizeof(kVertigoFrames) / sizeof(kVertigoFrames[0]))];
+            case AnimState::Advance:
+                return kAdvanceFrames[m_animPhase % (sizeof(kAdvanceFrames) / sizeof(kAdvanceFrames[0]))];
             case AnimState::Recede:
                 return kRecedeFrames[m_animPhase % (sizeof(kRecedeFrames) / sizeof(kRecedeFrames[0]))];
             case AnimState::JumpAie:

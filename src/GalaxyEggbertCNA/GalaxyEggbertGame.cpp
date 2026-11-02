@@ -104,6 +104,7 @@ namespace GalaxyEggbert::CNA
                 case BlupiController::AnimState::StopSurf:
                 case BlupiController::AnimState::StopSuspend:
                 case BlupiController::AnimState::JumpSuspend:
+                case BlupiController::AnimState::Non:
                 case BlupiController::AnimState::Hide:
                 case BlupiController::AnimState::Mockery:
                 case BlupiController::AnimState::Mockeryi:
@@ -234,6 +235,7 @@ namespace GalaxyEggbert::CNA
                 case S::StopSuspend: return "StopSuspend";
                 case S::MarchSuspend: return "MarchSuspend";
                 case S::JumpSuspend: return "JumpSuspend";
+                case S::Non: return "Non";
                 case S::Hide: return "Hide";
                 case S::Push: return "Push";
                 case S::StopPop: return "StopPop";
@@ -242,6 +244,7 @@ namespace GalaxyEggbert::CNA
                 case S::Turn: return "Turn";
                 case S::Vertigo: return "Vertigo";
                 case S::Recede: return "Recede";
+                case S::Advance: return "Advance";
                 case S::JumpAie: return "JumpAie";
                 case S::Ouf1a: return "Ouf1a";
                 case S::Ouf1b: return "Ouf1b";
@@ -3868,6 +3871,9 @@ namespace GalaxyEggbert::CNA
             // actionKeyWasDown_ has already been overwritten with this
             // frame's raw actionPressed (see its own assignment below).
             const bool actionPressedEdge = actionPressed && !actionKeyWasDown_;
+            // Whether a switch, dynamite, the decoy or a vehicle used this press: if none did (nor a
+            // dynamite stick taken in interaction_.Update()), he shakes his head (Non, below).
+            bool actionUsed = false;
             if (actionPressedEdge)
             {
                 // Real switch-activation gate (found 2026-07-16, Decor.cpp:5529-5531) also
@@ -3892,6 +3898,7 @@ namespace GalaxyEggbert::CNA
                     if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
                             blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
                     {
+                        actionUsed = true;
                         sound_.Play(*turnedOn ? GalaxyEggbert::Def::SoundChannel::SoundChannel77
                                               : GalaxyEggbert::Def::SoundChannel::SoundChannel76);
                         // Real Switch animation (plan.md BLUPI-073, found
@@ -3919,6 +3926,7 @@ namespace GalaxyEggbert::CNA
                 if (interaction_.PlaceDynamite(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                                 blupi_.IsOnGround(), blupiCanUseHands))
                 {
+                    actionUsed = true;
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
                     // Real PutDynamite animation (plan.md BLUPI-076, found
                     // 2026-07-18) -- same "cosmetic on top of an action
@@ -3944,6 +3952,7 @@ namespace GalaxyEggbert::CNA
                     const bool persoUsed = interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
                                                                  blupi_.GetZ(), blupi_.IsOnGround(),
                                                                  blupiCanUseHands);
+                    actionUsed = actionUsed || persoUsed || (persoBefore > 0 && blupiCanUseHands);
                     if (persoUsed && interaction_.PersoCount() < persoBefore)
                     {
                         // Putting the decoy down: Ouf2, held (Decor.cpp:4833-4840).
@@ -3982,6 +3991,7 @@ namespace GalaxyEggbert::CNA
                 {
                     // Only on the ground, off any lift, the helicopter and the overcraft on both feet,
                     // the skateboard slow (OR-0020: Space in the air left the helicopter hanging).
+                    actionUsed = true; // riding, he is never in Stop: no head shake
                     if (blupi_.CanLeaveVehicle(worldRuntime_.GetWorld(), interaction_.IsRidingLift(), tempPassable))
                     {
                         DismountAndDepositVehicle();
@@ -4004,6 +4014,7 @@ namespace GalaxyEggbert::CNA
                         if (mdx * mdx + mdy * mdy + mdz * mdz < kVehicleMountRadius * kVehicleMountRadius &&
                             blupi_.TriggerMount(mode, blupi_.IsNage(), blupi_.IsSurf()))
                         {
+                            actionUsed = true;
                             // Real TakeSkate anim (plan.md BLUPI-091 gap,
                             // table_blupi ID 42, wired 2026-07-19) -- same
                             // "only Skateboard has this" reasoning as
@@ -4177,6 +4188,15 @@ namespace GalaxyEggbert::CNA
                                      blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard,
                                  inHelicopter, blupi_.IsHidden());
             RefreshTerrainMeshIfChanged();
+
+            // The action button with nothing to do, standing still: he shakes his head (Non, 18
+            // ticks, channel 27; Decor.cpp:6366-6372, 3188). Moving cuts it short.
+            if (actionPressedEdge && !actionUsed && !interaction_.ActionPressSpent() &&
+                blupi_.GetAnimState() == BlupiController::AnimState::Stop)
+            {
+                blupi_.TriggerReaction(BlupiController::AnimState::Non, BlupiController::kNonDuration);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel27);
+            }
 
             // Voyage (plan.md `158`) -- a pickup touched above may have
             // recorded a this-frame voyage request (InteractionSystem has
