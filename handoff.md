@@ -117,7 +117,11 @@ ledgers before repeating any discovery. Where it stands:
   yellow trestle 199 as `Decor/support3.rd4` (front to the open side like the teleporters). The
   numbered world signs 174-181 (`Decor/world1.rd4`, outline 0.995) wait: the scene has no digits
   (painted on the renders) and its face converts as a disc; a digit decal needs the owner's word.
-  All 78 playthroughs pass after the bar row change (2026-11-02).
+  All 78 playthroughs pass after the bar row change (2026-11-02). The posts 182/183 are their
+  models too (`porte1/2.rd4`). Waiting on instanced drawing: the cave rocks 285-303
+  (`grotte01-19.rd4`, 0.81-0.91; ~6,000 cells). The switch 384/385 (`interrupteur.rd4`, outline
+  1.000): its scene does not swap the lamps (385's sprite has them recoloured: `recolour=`), and
+  most switches sit in walls, where the pillar box's four faces still suit.
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always
