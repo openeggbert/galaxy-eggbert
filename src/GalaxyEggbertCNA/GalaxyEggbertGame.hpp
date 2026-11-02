@@ -469,6 +469,8 @@ namespace GalaxyEggbert::CNA
         std::unique_ptr<Microsoft::Xna::Framework::Media::Song> music_;
         std::uint32_t musicPlaying_ = 0;
         void UpdateMusic();
+        // MediaPlayer's volume from the Setup's music slider (0.5 at 100, OR-0014's mix).
+        void ApplyMusicVolume();
         void TickPendingSkate(float dt);
 
         // Hub/mission-progression system (plan.md `MENU-035`/`036`,

@@ -290,6 +290,11 @@ namespace GalaxyEggbert::Game
             bool accelToggled = false; // SetupAccel: the accelerometer
             bool resetPressed = false;
             bool returnPressed = false;
+            // The volume sliders (0..100) while one is dragged, -1 otherwise; volumeReleased the
+            // frame the slider is let go (save then).
+            int effectsVolume = -1;
+            int musicVolume = -1;
+            bool volumeReleased = false;
         };
         // The Setup's "Jump button on the right" (on by default): off, the stick and the Jump and
         // Action buttons trade sides (the original's getJumpRightProperty()).
@@ -298,7 +303,7 @@ namespace GalaxyEggbert::Game
                                              int viewportW, int viewportH, bool showReset) noexcept;
         void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom, bool accel,
-                       bool showReset, int selectedGamer,
+                       bool showReset, int selectedGamer, int effectsVolume, int musicVolume,
                        float phaseTimeSeconds,
                        GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 

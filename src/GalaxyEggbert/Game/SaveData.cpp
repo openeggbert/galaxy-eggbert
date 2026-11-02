@@ -40,6 +40,14 @@ namespace GalaxyEggbert::Game
             {
                 accelActive_ = (value == "1");
             }
+            else if (key == "effectsVolume")
+            {
+                effectsVolume_ = ClampVolume(std::atoi(value.c_str()));
+            }
+            else if (key == "musicVolume")
+            {
+                musicVolume_ = ClampVolume(std::atoi(value.c_str()));
+            }
             else if (key == "selectedGamer")
             {
                 // Out-of-range guard (a hand-edited or corrupted save file
@@ -100,6 +108,8 @@ namespace GalaxyEggbert::Game
         out << "jumpRight=" << (jumpRight_ ? "1" : "0") << "\n";
         out << "autoZoom=" << (autoZoom_ ? "1" : "0") << "\n";
         out << "accelActive=" << (accelActive_ ? "1" : "0") << "\n";
+        out << "effectsVolume=" << effectsVolume_ << "\n";
+        out << "musicVolume=" << musicVolume_ << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         for (int gamer = 0; gamer < kGamerCount; ++gamer)
         {

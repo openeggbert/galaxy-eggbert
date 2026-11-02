@@ -66,6 +66,24 @@ int main()
               "Reset(): the settings back to their defaults (GameData::Reset -> Initialize)");
     }
     {
+        // The Setup's volume sliders (2026-11-02): 100 by default, clamped to 0..100, saved.
+        SaveData fresh;
+        check(fresh.GetEffectsVolume() == 100 && fresh.GetMusicVolume() == 100,
+              "defaults: the effects and the music at full volume (the original's loudness)");
+        SaveData data;
+        data.SetEffectsVolume(35);
+        data.SetMusicVolume(140);
+        data.Save();
+        SaveData reloaded;
+        reloaded.Load();
+        check(reloaded.GetEffectsVolume() == 35 && reloaded.GetMusicVolume() == 100,
+              "Save()/Load(): round-trips the volumes (clamped to 0..100)");
+        reloaded.SetMusicVolume(-5);
+        check(reloaded.GetMusicVolume() == 0, "a volume below 0 is 0");
+        reloaded.Reset();
+        check(reloaded.GetEffectsVolume() == 100, "Reset(): the volumes back to full");
+    }
+    {
         SaveData data;
         data.SetLives(1);
         data.SetMissionNumber(11);

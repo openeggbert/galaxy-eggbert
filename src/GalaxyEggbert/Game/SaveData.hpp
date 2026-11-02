@@ -117,6 +117,15 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool GetAccelActive() const noexcept { return accelActive_; }
         void SetAccelActive(bool on) noexcept { accelActive_ = on; }
 
+        // The Setup's two volume sliders (a Galaxy addition, the owner's request of 2026-11-02;
+        // the original has Sounds on/off only): the effects' and the music's volume, 0..100,
+        // 100 being the original's loudness. Saved as `effectsVolume=` / `musicVolume=`.
+        [[nodiscard]] int GetEffectsVolume() const noexcept { return effectsVolume_; }
+        void SetEffectsVolume(int volume) noexcept { effectsVolume_ = ClampVolume(volume); }
+        [[nodiscard]] int GetMusicVolume() const noexcept { return musicVolume_; }
+        void SetMusicVolume(int volume) noexcept { musicVolume_ = ClampVolume(volume); }
+        [[nodiscard]] static int ClampVolume(int volume) noexcept { return volume < 0 ? 0 : volume > 100 ? 100 : volume; }
+
         // Real `data[2]`/`SetGamer()` (`Game1.cpp`): a single tap on an
         // Init gamer-slot button immediately selects AND persists that
         // slot, independent of entering Play.
@@ -203,6 +212,8 @@ namespace GalaxyEggbert::Game
         bool jumpRight_ = true;
         bool autoZoom_ = true;
         bool accelActive_ = false;
+        int effectsVolume_ = 100;
+        int musicVolume_ = 100;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
     };

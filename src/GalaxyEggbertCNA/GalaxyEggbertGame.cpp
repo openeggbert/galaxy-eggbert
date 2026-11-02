@@ -912,6 +912,7 @@ namespace GalaxyEggbert::CNA
         // (sound on/off) from the previous run, if any.
         saveData_.Load();
         sound_.SetEnabled(saveData_.GetSoundEnabled());
+        sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
         inputPad_.SetJumpRight(saveData_.GetJumpRight());
 
         // Real Wait->Resume-or-Init branch (plan.md MENU-001..020) now
@@ -1688,7 +1689,7 @@ namespace GalaxyEggbert::CNA
         {
             music_.reset(Song::FromUri("music", std::string(path)));
             MediaPlayer::setIsRepeatingProperty(true);
-            MediaPlayer::setVolumeProperty(0.5f);
+            ApplyMusicVolume();
             MediaPlayer::Play(music_.get());
             std::cout << "GalaxyEggbert: music " << path << " playing." << std::endl;
         }
@@ -1697,6 +1698,13 @@ namespace GalaxyEggbert::CNA
             std::cout << "GalaxyEggbert: music " << path << " not played: " << e.what() << std::endl;
             music_.reset();
         }
+    }
+
+    void GalaxyEggbertGame::ApplyMusicVolume()
+    {
+        // Half volume under the effects (OR-0014's mix), scaled by the Setup's music slider.
+        Microsoft::Xna::Framework::Media::MediaPlayer::setVolumeProperty(
+            0.5f * static_cast<float>(saveData_.GetMusicVolume()) / 100.0f);
     }
 
     void GalaxyEggbertGame::WreckVehicle()
@@ -2402,6 +2410,24 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetSoundEnabled(sound_.IsEnabled());
                     saveData_.Save();
                 }
+                // The volume sliders (a Galaxy addition, the owner's request of 2026-11-02): live
+                // while dragged, saved when let go.
+                if (setupInput.effectsVolume >= 0)
+                {
+                    saveData_.SetEffectsVolume(setupInput.effectsVolume);
+                    sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
+                }
+                if (setupInput.musicVolume >= 0)
+                {
+                    saveData_.SetMusicVolume(setupInput.musicVolume);
+                    ApplyMusicVolume();
+                }
+                if (setupInput.volumeReleased)
+                {
+                    saveData_.Save();
+                    // A sample of the effects at the new volume (the Sounds toggle's own click).
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel0);
+                }
                 // The other toggles (OR-0010), saved at once as the original's GameData::Write().
                 if (setupInput.jumpToggled)
                 {
@@ -2428,6 +2454,8 @@ namespace GalaxyEggbert::CNA
                     saveData_.Reset();
                     saveData_.Save();
                     inputPad_.SetJumpRight(saveData_.GetJumpRight());
+                    sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
+                    ApplyMusicVolume();
                 }
                 if (setupInput.returnPressed ||
                     (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_))
@@ -4323,17 +4351,16 @@ namespace GalaxyEggbert::CNA
                 blupi_.ArmOuf(BlupiController::AnimState::Ouf4);
             }
 
-            // Real crate-push loop sound (found 2026-07-16, Decor.cpp:6138/6147 start, `:3637`
-            // stop on leaving `GalaxyEggbert::Def::BlupiAction::Push`) -- ch38, not "electric arc (long)" as
-            // plan.md's own SOUND-048 entry claimed. `CrateBeingPushedThisFrame()` is a plain
-            // per-frame fact (true only while a push is actually moving a crate this frame, no
-            // memory of its own); comparing it against the previous frame's value here is what
-            // turns that into a real start-once/stop-once loop, matching the real source's own
-            // one-shot `PlaySound()`-on-entry/`StopSound()`-on-exit shape (not a per-frame replay).
+            // The crate push's effort (Decor.cpp:6138/6147 start, `:3637` stop on leaving
+            // `GalaxyEggbert::Def::BlupiAction::Push`) -- ch38, played ONCE as the push starts
+            // (PlaySound -> PlayImage's bLoop defaults to false) and cut if the push ends first;
+            // it was looped here, a sigh repeated for as long as he pushed (BD-0031, owner report
+            // 2026-11-02). `CrateBeingPushedThisFrame()` is a plain per-frame fact; comparing it
+            // with the previous frame's value gives the start and the end.
             const bool isPushingCrate = interaction_.CrateBeingPushedThisFrame();
             if (isPushingCrate && !wasPushingCrate_)
             {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel38, /*loop=*/true);
+                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel38);
             }
             else if (!isPushingCrate && wasPushingCrate_)
             {
@@ -5961,7 +5988,8 @@ namespace GalaxyEggbert::CNA
                 inputPad_.DrawSetup(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                     sound_.IsEnabled(), saveData_.GetJumpRight(), saveData_.GetAutoZoom(),
                                     saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
-                                    saveData_.GetSelectedGamer(), phaseTimeSeconds_, fadeOutPhase_);
+                                    saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
+                                    saveData_.GetMusicVolume(), phaseTimeSeconds_, fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {

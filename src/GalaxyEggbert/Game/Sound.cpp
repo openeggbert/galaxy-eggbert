@@ -2,6 +2,7 @@
 
 #include <Microsoft/Xna/Framework/Audio/SoundState.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
 
@@ -11,8 +12,7 @@ namespace GalaxyEggbert::Game
     {
         // Ported verbatim, with approval, from mobile-eggbert Sound.hpp's
         // tableVolumePitch. Index [ch*2] = volume multiplier,
-        // [ch*2+1] = pitch
-        // (not applied here -- see Sound.hpp's class comment).
+        // [ch*2+1] = pitch (XNA octaves; BD-0031).
         constexpr float kVolumePitch[200] = {
             1.0f, 0.0f,  0.5f, 1.0f,  0.5f, 1.0f,  1.0f, 0.2f,  1.0f, 0.2f,
             1.0f, 0.1f,  1.0f, 0.3f,  1.0f, 0.2f,  1.0f, 0.3f,  1.0f, 0.5f,
@@ -117,8 +117,14 @@ namespace GalaxyEggbert::Game
             ch.instance->Stop();
         }
 
-        const float volume = kVolumePitch[static_cast<std::size_t>(idx) * 2];
+        // The original's Sound::Play (mobile-eggbert Sound.cpp:96-110): the table's volume
+        // multiplies, its pitch replaces the caller's (XNA's Pitch, octaves from -1 to 1, clamped
+        // below at 0): most channels play 0.1-0.5 octave up, Blupi's push and pull efforts (38,
+        // 39) and the life-loss sounds (1, 2) a whole octave up (BD-0031).
+        const float volume = kVolumePitch[static_cast<std::size_t>(idx) * 2] * effectsVolume_;
+        const float pitch = std::max(0.0f, kVolumePitch[static_cast<std::size_t>(idx) * 2 + 1]);
         ch.instance->setVolumeProperty(volume);
+        ch.instance->setPitchProperty(pitch);
         ch.instance->Play();
     }
 

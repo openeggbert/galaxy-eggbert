@@ -498,6 +498,19 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   wind tunnel's jump now rose above the wind: the wind fills the tunnel's height) re-planned, and
   their chains 100/120: all 78 pass (2026-11-02).
 
+## BD-0031 — every sound effect played at its file's pitch; the original pitches each channel (gameplay audio) — FIXED
+
+- Original (mobile-eggbert Sound.cpp:96-110, `tableVolumePitch`): each channel's volume multiplier
+  and pitch (XNA SoundEffectInstance.Pitch, octaves -1..1, clamped below 0) are applied at play:
+  most effects 0.1-0.5 octave up; Blupi's crate efforts (38 push, 39 pull) and channels 1-2 a whole
+  octave up at half volume. The push's effort plays once (`PlayImage(..., bLoop = false)`), cut by
+  StopSound when the push ends (Decor.cpp:6138/6147, 3637).
+- Galaxy: the table's volume only (its pitch was "never verified"), so every effect sounded lower,
+  the crate efforts a full octave (owner OR-0028: a moan); and ch38 was played looped.
+- Fix: `Sound::Play` sets the table's pitch; ch38 plays once. Also new: the Setup's effects volume
+  multiplies the table's (OR-0029).
+- Validation: ctest; the owner to listen (runs here are silent).
+
 ## Reviewed, not changed (yet)
 
 - Matching (2026-11-02): the shooters 32 (blupih: one shot straight down at tick 21 of each

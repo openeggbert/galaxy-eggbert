@@ -16,13 +16,10 @@ namespace GalaxyEggbert::Game
     // already copied build-time from mobile-eggbert alongside icons/
     // backgrounds) and the real per-channel volume table and conflict
     // policy documented in mobile-eggbert-reference/07-sounds.md and
-    // sourced from Sound.hpp/Sound.cpp. Pitch is intentionally NOT applied
-    // yet --
-    // CNA's SoundEffectInstance does support a Pitch property, but the
-    // table's exact pitch encoding/units were never independently verified
-    // against real mobile-eggbert source, so applying it here without that
-    // verification would risk audibly wrong pitch shifts rather than
-    // silence.
+    // sourced from Sound.hpp/Sound.cpp. The table's pitch is applied as the
+    // original applies it (Sound::Play: `sei.setPitchProperty(pitch)`, XNA's
+    // octaves, BD-0031); it was left out until 2026-11-02, so every effect
+    // played lower than the original's, Blupi's crate efforts a whole octave.
     class Sound
     {
     public:
@@ -42,14 +39,20 @@ namespace GalaxyEggbert::Game
         // silent no-op, not an error.
         void Play(GalaxyEggbert::Def::SoundChannel channel, bool loop = false);
         // Stops just one channel's instance (a no-op if it isn't currently playing/doesn't
-        // exist) -- needed for real looped sounds with a distinct stop trigger (e.g. the
-        // crate-push loop, ch38) where StopAll() would incorrectly also kill every other
+        // exist) -- needed for sounds with a distinct stop trigger (e.g. the crate push's
+        // ch38, cut when the push ends) where StopAll() would incorrectly also kill every other
         // currently-playing sound.
         void Stop(GalaxyEggbert::Def::SoundChannel channel);
         void StopAll();
 
         void SetEnabled(bool enabled) { enabled_ = enabled; if (!enabled) StopAll(); }
         [[nodiscard]] bool IsEnabled() const noexcept { return enabled_; }
+
+        // The effects' volume from Setup (0 silent .. 1 as the original), multiplying every
+        // channel's table volume from the next Play() on (a Galaxy addition, the owner's request
+        // of 2026-11-02: the original has only Sounds on/off).
+        void SetEffectsVolume(float volume) noexcept { effectsVolume_ = volume < 0.0f ? 0.0f : volume > 1.0f ? 1.0f : volume; }
+        [[nodiscard]] float GetEffectsVolume() const noexcept { return effectsVolume_; }
 
         // Named shortcuts for movement/jump/landing events. The complete
         // real channel map is maintained in
@@ -96,5 +99,6 @@ namespace GalaxyEggbert::Game
 
         std::array<Channel, kNumChannels> channels_;
         bool enabled_ = true;
+        float effectsVolume_ = 1.0f;
     };
 }

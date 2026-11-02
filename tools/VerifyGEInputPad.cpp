@@ -253,6 +253,26 @@ int main()
               "Setup: the automatic zoom and accelerometer toggles fire on release (OR-0010)");
     }
     {
+        // The volume sliders (2026-11-02, the owner's request): right of "Sound effects" in its row
+        // (Y 180-250), the effects' then the music's; pressed and dragged they report 0..100 and
+        // the release; the Sounds toggle does not fire. Erase progress moved a row lower.
+        InputPad pad;
+        const auto press = pad.UpdateSetup(mouse(400, 230, true), kViewportW, kViewportH, true);
+        const auto dragLeft = pad.UpdateSetup(mouse(100, 230, true), kViewportW, kViewportH, true);
+        const auto release = pad.UpdateSetup(mouse(100, 230, false), kViewportW, kViewportH, true);
+        check(press.effectsVolume > 0 && press.effectsVolume < 100 && press.musicVolume < 0 &&
+                  dragLeft.effectsVolume == 0 && release.volumeReleased && !release.soundsToggled,
+              "Setup: the effects' volume slider follows a drag and reports its release");
+        InputPad music;
+        const auto pressMusic = music.UpdateSetup(mouse(kViewportW - 35, 230, true), kViewportW, kViewportH, true);
+        check(pressMusic.musicVolume == 100 && pressMusic.effectsVolume < 0,
+              "Setup: the music's slider is right of the effects' (its right end: 100)");
+        InputPad reset;
+        (void)reset.UpdateSetup(mouse(470, 285, true), kViewportW, kViewportH, true);
+        const auto erased = reset.UpdateSetup(mouse(470, 285, false), kViewportW, kViewportH, true);
+        check(erased.resetPressed, "Setup: Erase progress is a row lower (the Jump row), right of it");
+    }
+    {
         // Jump on the left (the setting off): the stick and the buttons trade sides.
         InputPad pad;
         InputPad::PlayInput right;
@@ -276,19 +296,20 @@ int main()
     }
 
     // --- SetupReset (real: MainSetup-only, plan.md MENU-006..020): rect
-    // X 450-520, Y 180-250 -> center (485,215). showReset gates both hit-
+    // X 450-520, Y 250-320 -> center (485,285) since 2026-11-02 (the original's Y 180-250, the
+    // Sounds row, holds the volume sliders now). showReset gates both hit-
     // testing and firing -- confirms PlaySetup's own call (showReset=
     // false) can't ever trigger it even if a press lands in that rect.
     {
         InputPad pad;
-        (void)pad.UpdateSetup(mouse(485, 215, true), kViewportW, kViewportH, true);
-        const auto release = pad.UpdateSetup(mouse(485, 215, false), kViewportW, kViewportH, true);
+        (void)pad.UpdateSetup(mouse(485, 285, true), kViewportW, kViewportH, true);
+        const auto release = pad.UpdateSetup(mouse(485, 285, false), kViewportW, kViewportH, true);
         check(release.resetPressed, "Setup: Reset fires on release when showReset=true (MainSetup)");
     }
     {
         InputPad pad;
-        (void)pad.UpdateSetup(mouse(485, 215, true), kViewportW, kViewportH, false);
-        const auto release = pad.UpdateSetup(mouse(485, 215, false), kViewportW, kViewportH, false);
+        (void)pad.UpdateSetup(mouse(485, 285, true), kViewportW, kViewportH, false);
+        const auto release = pad.UpdateSetup(mouse(485, 285, false), kViewportW, kViewportH, false);
         check(!release.resetPressed, "Setup: Reset never fires when showReset=false (PlaySetup)");
     }
 

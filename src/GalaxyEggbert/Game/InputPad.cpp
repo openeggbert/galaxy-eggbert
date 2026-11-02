@@ -152,10 +152,36 @@ namespace GalaxyEggbert::Game
         Rect SetupJumpRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(1.5f, 1.0f, m); }
         Rect SetupZoomRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(1.0f, 0.5f, m); }
         Rect SetupAccelRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(0.5f, 0.0f, m); }
+        // The original puts SetupReset right of SetupSounds (its row); since 2026-11-02 that row
+        // holds the volume sliders (the owner's request), so Erase progress is a row lower.
         Rect SetupResetRect(const ScreenMetrics& m) noexcept
         {
-            const Rect row = SetupSoundsRect(m);
+            const Rect row = SetupJumpRect(m);
             return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
+        }
+        // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
+        // of its label, the effects' (0) then the music's (1); each its label over a track drawn
+        // as the original's Slider (Slider.cpp: jauge.png's empty cell, pad icon 1 for the knob).
+        Rect SetupSliderRect(int which, const ScreenMetrics& m) noexcept
+        {
+            const Rect row = SetupSoundsRect(m);
+            const float left = 250.0f * m.s;
+            const float width = (m.w - 20.0f * m.s - left) * 0.5f;
+            const float x0 = left + width * static_cast<float>(which);
+            return Rect{x0 + 10.0f * m.s, row.y0, x0 + width - 10.0f * m.s, row.y1};
+        }
+        Rect SetupSliderTrackRect(int which, const ScreenMetrics& m) noexcept
+        {
+            const Rect block = SetupSliderRect(which, m);
+            const float cy = block.y0 + (block.y1 - block.y0) * 0.70f;
+            const float half = 13.0f * m.s;
+            return Rect{block.x0 + 16.0f * m.s, cy - half, block.x1 - 16.0f * m.s, cy + half};
+        }
+        float SetupSliderValueAt(int which, float x, const ScreenMetrics& m) noexcept
+        {
+            const Rect track = SetupSliderTrackRect(which, m);
+            const float v = (x - track.x0) / (track.x1 - track.x0);
+            return v < 0.0f ? 0.0f : v > 1.0f ? 1.0f : v;
         }
         Rect SetupReturnRect(const ScreenMetrics& m) noexcept
         {
@@ -231,6 +257,9 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlAccel = 3;
         constexpr int kSetupControlReset = 4;
         constexpr int kSetupControlReturn = 5;
+        constexpr int kSetupControlEffectsVolume = 6;
+        constexpr int kSetupControlMusicVolume = 7;
+        constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
         constexpr int kResumeControlContinue = 1;
@@ -1204,16 +1233,34 @@ namespace GalaxyEggbert::Game
         const bool overAccel = InRect(mouseX, mouseY, SetupAccelRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
+        const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
+        const bool overMusic = InRect(mouseX, mouseY, SetupSliderRect(1, m));
 
         if (mouseDown && !mouseWasDown_)
         {
-            if (overSounds) activeControl_ = kSetupControlSounds;
+            if (overEffects) activeControl_ = kSetupControlEffectsVolume;
+            else if (overMusic) activeControl_ = kSetupControlMusicVolume;
+            else if (overSounds) activeControl_ = kSetupControlSounds;
             else if (overJump) activeControl_ = kSetupControlJump;
             else if (overZoom) activeControl_ = kSetupControlZoom;
             else if (overAccel) activeControl_ = kSetupControlAccel;
             else if (overReset) activeControl_ = kSetupControlReset;
             else if (overReturn) activeControl_ = kSetupControlReturn;
             else activeControl_ = -1;
+        }
+
+        // A slider follows the pointer while it is held (pressed on the slider, as Slider::Move
+        // takes the touch while it is near); the caller saves the value once it is let go.
+        if (mouseDown && (activeControl_ == kSetupControlEffectsVolume || activeControl_ == kSetupControlMusicVolume))
+        {
+            const int which = activeControl_ == kSetupControlEffectsVolume ? 0 : 1;
+            const int volume = static_cast<int>(std::lround(SetupSliderValueAt(which, mouseX, m) * 100.0f));
+            (which == 0 ? result.effectsVolume : result.musicVolume) = volume;
+        }
+        if (!mouseDown && mouseWasDown_ &&
+            (activeControl_ == kSetupControlEffectsVolume || activeControl_ == kSetupControlMusicVolume))
+        {
+            result.volumeReleased = true;
         }
 
         if (!mouseDown && mouseWasDown_)
@@ -1234,8 +1281,8 @@ namespace GalaxyEggbert::Game
 
     void InputPad::DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                               int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom,
-                              bool accel, bool showReset, int selectedGamer,
-                              float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase)
+                              bool accel, bool showReset, int selectedGamer, int effectsVolume,
+                              int musicVolume, float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase)
     {
         if (!loaded_)
         {
@@ -1293,6 +1340,7 @@ namespace GalaxyEggbert::Game
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
+        std::vector<Quad> sliderBarQuads;
 
         // Real: buttons/labels are hidden entirely while an exit fade is
         // active, not during the entry decoration (which plays as a
@@ -1342,6 +1390,36 @@ namespace GalaxyEggbert::Game
             appendButton(SetupReturnRect(m), kIconSetupReturn, kSetupControlReturn);
 
             appendLabel(SetupSoundsRect(m), "Sound effects");
+            // The two volume sliders right of it: label over the track, the knob at the value.
+            {
+                const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
+                const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
+                const int volumes[2] = {effectsVolume, musicVolume};
+                const char* const names[2] = {"Sound effects", "Music"};
+                for (int which = 0; which < 2; ++which)
+                {
+                    const Rect block = SetupSliderRect(which, m);
+                    const Rect track = SetupSliderTrackRect(which, m);
+                    AppendCenteredLabel(labelQuads, names[which], (block.x0 + block.x1) * 0.5f,
+                                        block.y0 + 2.0f * scale, scale);
+                    Quad bar;
+                    bar.x0 = track.x0;
+                    bar.y0 = track.y0;
+                    bar.x1 = track.x1;
+                    bar.y1 = track.y1;
+                    bar.u0 = 0.0f;
+                    bar.v0 = 0.0f;
+                    bar.u1 = kJaugeCellW / jaugeSheetW;
+                    bar.v1 = kJaugeCellH / jaugeSheetH;
+                    sliderBarQuads.push_back(bar);
+                    const int volume = volumes[which] < 0 ? 0 : volumes[which] > 100 ? 100 : volumes[which];
+                    const float knobX = track.x0 + (track.x1 - track.x0) * static_cast<float>(volume) / 100.0f;
+                    const float knobY = (track.y0 + track.y1) * 0.5f;
+                    const float half = 24.0f * scale;
+                    appendButton(Rect{knobX - half, knobY - half, knobX + half, knobY + half}, kSetupSliderKnobIcon,
+                                 which == 0 ? kSetupControlEffectsVolume : kSetupControlMusicVolume);
+                }
+            }
             appendLabel(SetupJumpRect(m), "Jump button on the right");
             appendLabel(SetupZoomRect(m), "Automatic zoom on action");
             appendLabel(SetupAccelRect(m), "Accelerometer");
@@ -1369,6 +1447,7 @@ namespace GalaxyEggbert::Game
         gearRenderer_ = UploadTexturedMesh(device, gearMesh.Mesh());
         gearRenderer_->Draw(device, *gearEffect_);
         gearEffect_->setAlphaProperty(1.0f);
+        FlushQuads(device, *jaugeEffect_, jaugeRenderer_, sliderBarQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labelQuads, viewportW, viewportH, 1.0f);
