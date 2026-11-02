@@ -468,6 +468,11 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   (23) travels 5 ticks a cell to the first solid cell (ObjectStart), and sound 52 plays even
   against a wall (ObjectStart returns the freed slot, not -1). Galaxy's FireBlupihShot /
   FireBlupitShot do the same; in 3D the blupit fires along whichever axis it walks.
+- Matching (2026-11-02): the fish (17) and the bird (20) met by Blupi (Decor.cpp:5782-5815): the
+  creature goes (sound 10, flash 10, the big shake; the others flash 8 and shake small), he dies
+  unless in the jeep, the tank or on the skateboard, shielded, hidden or in the contact grace;
+  their speeds and rests are BD-0016's. The overcraft (46) boards as every vehicle, ending Cloud
+  and Hide (Decor.cpp:5668-5684).
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px
   across (0.44 of a cell) with type-specific vertical bands (`MoveObjectDetect`, 9689-9767). A
