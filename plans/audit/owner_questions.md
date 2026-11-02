@@ -37,6 +37,21 @@ and seams between cells and cost far more to draw. Options: (a) keep the texture
 recommendation; the sprites are those renders), (b) models for the free-standing pieces only
 (pillars, pipes' ends), (c) every tile as its model. Meanwhile: (a).
 
+### Q-005 — The electrode (238-242) without its sparks?
+
+`Decor/electro.rd4` gives the ball on its spring (IoU 0.79-0.81), but the sparks round the ball
+were painted on the renders: the model alone looks dead. Options: (a) the model with the sprite's
+sparks as a camera-facing decal (recommended), (b) the model alone, (c) keep the sprite.
+Meanwhile: the sprite.
+
+### Q-006 — The glue death (element 168-171) from `Blupi/glu.rd4`
+
+The scene gives Blupi's struggling pose (IoU 0.80-0.85) but converts yellow: the green slime on
+him and the strands of glue at his feet are a material and extrusions the converter does not read
+yet. Options: (a) teach the converter the scene's glue (recommended, some work), (b) the yellow
+pose tinted green, (c) keep the sprite. Meanwhile: the sprite (as for the burn death, which has no
+scene at all).
+
 ## Answered
 
 ### Q-000 — Wind and fans along Z (2026-11-02)
