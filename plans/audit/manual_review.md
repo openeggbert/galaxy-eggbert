@@ -63,3 +63,16 @@ Machine checks pass for each (tests, playthroughs, measured windows); only a per
 - Looks (VIS-0069/0127/0077/0078): lava in 062 and 083, fans in 051 and 999, pillars in 023 and 094;
   from low angles too. Before/after images: `plans/evidence/lava-before-after.png`,
   `fan-before-after.png`.
+
+## MR-0005 — the original editor's auto-tiling in 3D (ED-0007) — OPEN
+
+- The original's editor re-tiles a placed cell and its four neighbours by which of them are
+  "borders" (below, above, right, left), choosing each family's variant from
+  `Tables::table_adapt_decor` (grass edges, rock edges, the bar's mounts, cheese, ...).
+- In 3D, above and below are Y; right and left would be X or Z or both. Galaxy's cubes draw each
+  face from the cell's icon, and the worlds are hand-built with chosen icons.
+- Proposed: apply the vertical half only (above/below bits from Y, the horizontal bits as if
+  bordered), so a block's top and underside variants follow what is over and under it, as the
+  bar's mounts already do at draw time; keep every placed icon otherwise. Alternative: leave
+  placement as is (today), the owner choosing variants by cycling (ED-0001).
+
