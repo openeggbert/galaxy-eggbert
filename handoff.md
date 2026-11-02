@@ -166,22 +166,25 @@ ledgers before repeating any discovery. Where it stands:
   (`blupi-plat.rd4`), the clay bridge (`grotte-fragile1.rd4`), the spring (`ressort.rd4`), the
   lightning and the charred Blupi (no scene: to model), grass, the glue death (`glu.rd4`; its
   icons are element.png's, the clip library matches blupi.png's only), the world signs.
-- Done 2026-11-02 late (OR-0038..0050, all 78 playthroughs passed with the saw and fan
-  changes): the saw as `Decor/scie.rd4` standing on the floor around it (`kModelOverFloorBases`,
-  the cell drawn as the commonest plain floor within 3 cells); a fan a whole block in collision
-  (M3D-0004; levelcheck agrees); Down and Air hold their last frame (`GetAnimHoldFrame`, the
-  crouch no longer pumps); opendoors as `Decor::AdaptDoors` with `m_bCheatDoors`
-  (`HubDoors::AdaptHubDoors`, live in hub 10); the back-up button just over the stick's ring;
-  `build_clip_library.py` `ease_doubled` (a pose shown two ticks moves over both; 35 clips
-  replaced only where a `--no-ease` rebuild matched the shipped clip byte for byte; vehicles
-  excepted). `GenerateSampleWorld3D` now writes only world999 (it overwrote every world before).
-  Uncommitted, in progress: the crusher (worlds 045/053 moved into one-high passages, 199's
-  invented crusher row removed, `objects.txt` tone for `aplatisseur.rd4`; code next: non-solid,
-  own-cell detection, model via `kAnimatedModelBases`, playthroughs 045/053/199), the death angel
-  (`objects.txt` `angel`: element 230-241 from `blupi-ange.rd4` at IoU 0.965-0.982 with the new
-  `alpha=` option; to draw in 3D at 50 % opacity instead of the HUD voyage sprite). Queued: the
-  all-variants demo world (OR-0044, a gallery above world999's ground), a sweep of every model
-  source (OR-0050), a new web build.
+- Done 2026-11-02 late (OR-0038..0054): the saw as `Decor/scie.rd4` on the floor around it, its
+  floor cubes drawn opaque (`m_sawFloorRenderer`: in the depth-read animated pass the blade's lower
+  half showed through, OR-0051); a fan a whole block (M3D-0004); Down and Air hold their last frame
+  (`GetAnimHoldFrame`); opendoors as `Decor::AdaptDoors` with `m_bCheatDoors`
+  (`HubDoors::AdaptHubDoors`); the back-up button just over the stick's ring;
+  `build_clip_library.py` `ease_doubled` (35 clips replaced, vehicles excepted; compare clip by
+  clip with `--no-ease` before replacing anything); **BD-0032 the crusher** hangs in Blupi's own
+  cell of a one-high passage, passable, `aplatisseur.rd4` via `kAnimatedModelBases`, the squash
+  ends vehicles and powers (045/053 rebuilt, 199's invented row removed; levelcheck: a way, not a
+  floor); the death angel (element 230-241) as `blupi-ange.rd4` in 3D at half opacity
+  (`build_object_library` `alpha=`); water drawn after the models (`DrawOpaque`/`DrawTransparent`,
+  OR-0052); the region background a panorama turning with the camera (OR-0053); the world's music
+  in the editor palette's Background group (OR-0054). `GenerateSampleWorld3D` writes only world999
+  (it overwrote every world). All 112 tests pass; playthroughs: all 78 after the saw/fan, then
+  045/053/199 after the crusher (render-only changes since).
+- Next: the web build (`build-cna-webgl2`, §4), the all-variants demo world (OR-0044: a gallery
+  above world999's ground, `tools/GenerateSampleWorld3D.cpp`), the sweep of every model source
+  (OR-0050), then the queued 3D conversions (signs, clay bridge, spring, lightning, grass, glue
+  and burn deaths) and Wave E.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
