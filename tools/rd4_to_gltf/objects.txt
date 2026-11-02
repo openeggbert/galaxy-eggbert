@@ -3,7 +3,8 @@
 # Sheets: element, object-m, explo, blupi, blupi1 (mobile-eggbert/Content/icons/<sheet>.png).
 # Options: yaw=STEP (also try turned about the vertical), vflip=1 (also upside down), camera=PART
 # (a part of the camera's name without spaces, e.g. 2 for "Caméra 2"), recolour=R,G,B>R,G,B[;...],
-# min_iou=X (icons matching worse stay billboards), shift=N (each icon's offset within +-N pixels).
+# min_iou=X (icons matching worse stay billboards), shift=N (each icon's offset within +-N pixels),
+# drop=I,J (leave out the scene's top-level parts I, J: 0-based, cameras and lights counted).
 treasure    element 0-11    Blupi/coffre.rd4
 egg         element 21-28   Blupi/oeuf.rd4    yaw=5
 exit        element 29-36   Blupi/fleche.rd4  yaw=5 tone=1.30,3
@@ -101,3 +102,9 @@ pillar399   object-m 399     Decor/palais/big0108.rds
 # The steel girder 201 (passable decor; Decor/structure1.rd4, IoU 0.79: the truss frame), drawn as a
 # lattice box: the frame on every side of the cell not shared with another girder (BlockModels.hpp).
 girder201   object-m 201     Decor/structure1.rd4
+# The hanging bar (owner 2026-11-02: in 3D, not a plate), block models drawn as two pipes along
+# their row (BarRows.hpp): 138 with its ceiling mounts (Decor/barre.rd4, IoU 0.89); 202, shown where
+# no block is over the bar (Decor::AdaptMidBorder), the scene's pipe alone without the two spheres
+# and four cylinders of the mounts (its top-level parts 3-4 and 6-9; IoU 0.83).
+barre       object-m 138     Decor/barre.rd4
+barreplain  object-m 202     Decor/barre.rd4 drop=3,4,6,7,8,9

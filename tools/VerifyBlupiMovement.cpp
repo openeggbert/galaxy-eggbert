@@ -525,6 +525,27 @@ int main(int argc, char** argv)
             check(sawFreefall, "walking off the bar's near end (no bar tile, gap below) drops Blupi "
                                 "into free-fall instead of releasing gracefully");
 
+            // In 3D the bar's row is the original's bar (BarRows.hpp): grabbed off its centre line and
+            // turned off its way, he hangs on the line facing along the row, the end nearest his
+            // yaw, and moves along it only, his hands on its two pipes.
+            BlupiController rowHanger;
+            rowHanger.SetPosition(barreWorldX + 0.3f, 1.0f, 72.0f - 50.0f);
+            rowHanger.SetYaw(2.0f); // forward (0.91, 0, 0.42): more +X than +Z
+            rowHanger.Step(barreWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(rowHanger.IsSuspended() && std::fabs(rowHanger.GetX() - barreWorldX) < 1e-5f &&
+                      std::fabs(rowHanger.GetYaw() - 3.14159265f) < 1e-4f &&
+                      std::fabs(rowHanger.GetHangFacingYaw() - 3.14159265f) < 1e-4f,
+                  "grabbing a row along Z puts him on its centre line, facing along it (+Z, the end nearest his yaw)");
+            rowHanger.Step(barreWorld, 0.4f, 0.0f, false, false, false, dt); // turning a little stays on the row
+            const float zBefore = rowHanger.GetZ();
+            for (int i = 0; i < 5; ++i)
+            {
+                rowHanger.Step(barreWorld, 0.0f, 1.0f, false, false, false, dt);
+            }
+            check(rowHanger.IsSuspended() && std::fabs(rowHanger.GetX() - barreWorldX) < 1e-5f &&
+                      rowHanger.GetZ() > zBefore,
+                  "hanging, he moves along the row only, not off its line the way he is turned");
+
             // Jump-to-release: immediate upward velocity, not a delayed
             // wind-up (no visible model exists to show one).
             BlupiController jumper;

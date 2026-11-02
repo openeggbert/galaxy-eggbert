@@ -1,4 +1,5 @@
 #include "BlupiController.hpp"
+#include "BarRows.hpp"
 #include "WorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
@@ -775,6 +776,31 @@ namespace GalaxyEggbert::Game
         return belowSolid ? BarreCellType::LandingAvailable : BarreCellType::Hanging;
     }
 
+    void BlupiController::KeepOnBarRow(const Worlds::World& world, int gx, int gy, int gz)
+    {
+        const auto bar = [&](int x, int z)
+        {
+            return GetBarreCellType(world, x, gy, z) != BarreCellType::None;
+        };
+        const BarRow row = ClassifyBarRow(bar(gx - 1, gz) || bar(gx + 1, gz), bar(gx, gz - 1) || bar(gx, gz + 1));
+        // GetYaw()'s forward is (sin yaw, 0, -cos yaw): +X at pi/2, -X at -pi/2, +Z at pi, -Z at 0.
+        constexpr float kPi = 3.14159265358979f;
+        if (row == BarRow::AlongX)
+        {
+            m_z = static_cast<float>(gz - kWorldCenterZ);
+            m_hangFacingYaw = std::sin(m_yaw) >= 0.0f ? kPi / 2.0f : -kPi / 2.0f;
+        }
+        else if (row == BarRow::AlongZ)
+        {
+            m_x = static_cast<float>(gx - kWorldCenterX);
+            m_hangFacingYaw = -std::cos(m_yaw) >= 0.0f ? kPi : 0.0f;
+        }
+        else
+        {
+            m_hangFacingYaw = m_yaw;
+        }
+    }
+
     bool BlupiController::TriggerCrush() noexcept
     {
         if (m_ecrase)
@@ -1498,6 +1524,11 @@ namespace GalaxyEggbert::Game
                 m_suspendDropHoldTimer = 0.0f;
                 m_barJumpTicks = -1.0f;
                 m_barGrabbed = true;
+                // Onto the row's centre line, turned along it: the original's grab snaps him onto
+                // the bar's height only (BLUPISUSPEND); in 3D the row's line takes its place, his
+                // hands on its two pipes (BarRows.hpp).
+                KeepOnBarRow(world, gx, gy, gz);
+                m_yaw = m_hangFacingYaw;
             }
         }
 
@@ -1514,18 +1545,29 @@ namespace GalaxyEggbert::Game
             // Real "speedX*5, no ramp" -- reuses the same instant
             // target-speed shape this engine's normal walk already uses
             // (see kSuspendMoveSpeed's own comment).
+            // Along the bar's row only, as the original moves him along its bar (BarRows.hpp): the
+            // way he faces on it (m_hangFacingYaw), in a field the way he faces.
             const bool moving = std::fabs(moveInput) > 0.001f;
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            const auto cellOf = [&](float v, int centre)
+            {
+                return ClampGrid(static_cast<int>(std::lround(v + static_cast<float>(centre))), blocksPerAxis);
+            };
+            const int gy = ClampGrid(static_cast<int>(std::lround(m_y)), blocksPerAxis);
+            KeepOnBarRow(world, cellOf(m_x, kWorldCenterX), gy, cellOf(m_z, kWorldCenterZ));
             if (moving)
             {
-                m_x += std::sin(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
-                m_z += -std::cos(m_yaw) * kSuspendMoveSpeed * moveInput * dt;
+                m_x += std::sin(m_hangFacingYaw) * kSuspendMoveSpeed * moveInput * dt;
+                m_z += -std::cos(m_hangFacingYaw) * kSuspendMoveSpeed * moveInput * dt;
             }
 
-            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-            const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
-            const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
-            const int gy = ClampGrid(static_cast<int>(std::lround(m_y)), blocksPerAxis);
+            const int gx = cellOf(m_x, kWorldCenterX);
+            const int gz = cellOf(m_z, kWorldCenterZ);
             const BarreCellType cellHere = GetBarreCellType(world, gx, gy, gz);
+            if (cellHere != BarreCellType::None)
+            {
+                KeepOnBarRow(world, gx, gy, gz);
+            }
 
             // Jumping off (Decor.cpp:4769-4789): Jump or Up held starts JumpSuspend's wind-up; after
             // its 10 ticks he lets go upward; released earlier, he hangs on.

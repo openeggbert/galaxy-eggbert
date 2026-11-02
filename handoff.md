@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-02 (fidelity audit, milestone G: the owner's reports OR-0001..0023)._
+_Last updated: 2026-11-02 (fidelity audit, milestone G: the owner's reports OR-0001..0027)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -94,6 +94,21 @@ ledgers before repeating any discovery. Where it stands:
   Galaxy took it and lost it at the first door). Egg and treasure reviewed: match.
 - Done: BD-0024, vehicles boarded by the original's box contact (was a 1.1-cell sphere), and a
   helicopter floating over nothing boarded on contact without the button.
+- Done: BD-0025 (an invert sign is taken again while inverted, Decor.cpp:6040). **The bar in 3D**
+  (OR-0024/0026/0027, M3D-0003, `BarRows.hpp`): a bar cell is two parallel pipes of the original
+  model (`barre_barre`; 202 = its pipe alone, `barreplain_barre`, built with the new
+  `objects.txt` option `drop=` that leaves scene parts out) along its row, one under each of
+  Blupi's hands; the cell shows its mounts only under a block (`ShownBarIcon`, the original
+  editor's rule, true for all 303 bars of its levels), whichever bar icon the world holds. On a
+  row Blupi hangs on its centre line facing along it and moves along it only; fields (071, 074,
+  075) stay free. His model hangs 6 px lower (BLUPISUSPEND) with his right palm on his pipe per
+  icon (`HangingModelShift`, measured on the clip library). Evidence
+  `plans/evidence/bar-two-pipes.png`; probe world 995 (bar row along Z under a two-cell beam).
+  Next: the teleporter (OR-0025) -- one cell, the device its top third, the tip under it: the
+  scenes `Decor/teleporteur1-4.rd4` (letters alpha, beta, chi, delta: tele01-04 textures; icons
+  330 alpha, 331 beta, 332 delta, 333 chi to confirm on the sheet), but the converter draws the
+  letter panel white (texture placement flph/flpv/cnth/cntv unverified, `shading.py`), and one
+  scene won all four icons on the silhouette alone: one entry per letter.
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

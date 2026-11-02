@@ -1,6 +1,7 @@
 // The faces DirectionalCube tiles show (src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp): which
 // side of a fan is its base and which is open, and where flat-colour faces sample their tile.
 #include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/LavaSurface.hpp>
@@ -220,6 +221,30 @@ int main()
         check(near(blows(126), Vector3(-1.0f, 0.0f, 0.0f)) && near(blows(129), Vector3(1.0f, 0.0f, 0.0f)) &&
                   near(blows(132), Vector3(0.0f, 1.0f, 0.0f)) && near(blows(135), Vector3(0.0f, -1.0f, 0.0f)),
               "the fan model turned for each fan cell blows the cell's way (-X, +X, up, down)");
+    }
+
+    // The hanging bar shows its ceiling mounts (138) only under a block they can hold, as every bar
+    // of the original's levels: under nothing, another bar, or a block without an underside edge
+    // (Decor::IsRightBorder), the plain pipe 202. Both bars are one row of models.
+    {
+        using GalaxyEggbert::Game::ShownBarIcon;
+        check(ShownBarIcon(0, false) == 202 && ShownBarIcon(10, true) == 138 && ShownBarIcon(138, false) == 202 &&
+                  ShownBarIcon(202, false) == 202 && ShownBarIcon(25, true) == 202 && ShownBarIcon(15, true) == 202 &&
+                  ShownBarIcon(230, true) == 138,
+              "a bar shows its mounts only under a block with an underside edge");
+        check(GalaxyEggbert::Game::ModelRowFamily(202) == GalaxyEggbert::Game::ModelRowFamily(138) &&
+                  GalaxyEggbert::Game::ModelRowFamily(201) == 201,
+              "the mounted and the plain bar continue one row");
+    }
+
+    // A bar cell's row (BarRows.hpp): along its bar neighbours, a lone cell along X, a field where
+    // it has them on both axes.
+    {
+        using GalaxyEggbert::Game::BarRow;
+        using GalaxyEggbert::Game::ClassifyBarRow;
+        check(ClassifyBarRow(true, false) == BarRow::AlongX && ClassifyBarRow(false, true) == BarRow::AlongZ &&
+                  ClassifyBarRow(false, false) == BarRow::AlongX && ClassifyBarRow(true, true) == BarRow::Field,
+              "a bar runs along its row; a lone bar along X; neighbours on both axes make a field");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

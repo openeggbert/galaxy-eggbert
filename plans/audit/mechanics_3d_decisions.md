@@ -48,3 +48,28 @@ the key opening a door's whole block of cells D58, ...) and §11.
   in the lane the move goes on. Farther off, nothing moves, as the original.
 - Evidence: `VerifyInteractionSystem` ("a crate a pixel off its lane ... slides", "a third of a
   cell off ... stays blocked"); mission 041's playthrough.
+
+## M3D-0003 — a bar is two pipes along its row; Blupi hangs on its centre line (2026-11-02)
+
+- 2D: a bar is a line across the screen; Blupi hangs in profile under it, facing the way he moves
+  (table_blupi 31/32/34: icons 156-158, 143-146, 165-166), his position snapped onto its height
+  (BLUPISUSPEND, Decor.cpp:5442) and moved along it only.
+- The Ray Dream poses behind those sprites (Blupi/suspendu*.rd4, no bar in the scenes) hold his
+  two hands side by side across him, 0.35 of a cell apart (the palms of 156-158), which the side
+  view shows as one grip. Under one pipe in 3D, neither hand would touch it (owner 2026-11-02:
+  "the hands on the bar are wrong", and: the 3D game probably needs two bars, one per hand).
+- Reading (BarRows.hpp): a bar cell is two parallel pipes along its row, 0.175 either side of its
+  centre line -- from the original's side view still one pipe, as the tile. Its row runs along X
+  or Z by its bar neighbours (a lone cell along X); with neighbours on both axes it is a field
+  (worlds 071, 074, 075), where he moves freely as before. On a row, grabbing puts him on the
+  centre line facing along it (the end nearest his yaw) and he moves along it only; turning picks
+  the other end once past the perpendicular. His model hangs 6 px lower than standing in the
+  bar's cell (BLUPISUSPEND 12 against BLUPIOFFY 6), and drawn with his right palm on his right
+  pipe per icon (`HangingModelShift`): in the two-handed poses both palms on their pipes; in the
+  pause hanging by one hand (162-164) his body under that pipe.
+- Rejected: one pipe and Blupi turned across it (the sprites show him in profile, facing his
+  travel); one pipe on his centre line (both hands miss it by 0.15-0.2 cell).
+- Evidence: `VerifyBlupiMovement` (grabbed off the line and turned, he hangs on it facing along the
+  row and moves along it only), `VerifyTileFaces` (rows and fields); live probe world 995,
+  plans/evidence/bar-two-pipes.png (the original's sprites and tiles above); the playthroughs of
+  every world with bars (064, 065, 066, 071, 074, 075, 083, 084) pass.

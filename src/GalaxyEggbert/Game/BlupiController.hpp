@@ -830,6 +830,9 @@ namespace GalaxyEggbert::Game
         // Suspended/hanging bar-and-rope mode (plan.md TILE-045, see
         // kSuspendMoveSpeed's own comment).
         [[nodiscard]] bool IsSuspended() const noexcept { return m_suspended; }
+        // The way his model faces while hanging (BarRows.hpp): along the bar's row, the end nearest
+        // GetYaw(); in a bar field GetYaw() itself.
+        [[nodiscard]] float GetHangFacingYaw() const noexcept { return m_hangFacingYaw; }
 
         // Ghost mode (plan.md BLUPI-111), real trigger confirmed by the
         // user (2026-07-14): activated by typing "ghost" during Play, via
@@ -1512,6 +1515,9 @@ namespace GalaxyEggbert::Game
         // separate DecorDetect landing-rect check aren't modeled.
         enum class BarreCellType { None, Hanging, LandingAvailable };
         [[nodiscard]] static BarreCellType GetBarreCellType(const Worlds::World& world, int gx, int gy, int gz);
+        // Puts him on the row of the bar cell (gx, gz) he hangs in (BarRows.hpp): on its centre line,
+        // facing along it, the end nearest his yaw; in a field only m_hangFacingYaw follows his yaw.
+        void KeepOnBarRow(const Worlds::World& world, int gx, int gy, int gz);
         void UpdateAnim(bool moving, bool crouchHeld, bool lookUpHeld, float dt, bool pushingCrate = false,
                         bool holdingCrate = false);
 
@@ -1559,6 +1565,7 @@ namespace GalaxyEggbert::Game
         bool m_suspended = false;
         float m_suspendGraceTimer = 0.0f; // real m_blupiNoBarre, prevents an immediate re-grab
         float m_suspendDropHoldTimer = 0.0f; // real "holding Down >5 ticks drops him" accumulator
+        float m_hangFacingYaw = 0.0f;        // GetHangFacingYaw()
         // The grab / jump-off of this step, for their sounds.
         bool m_barGrabbed = false;
         bool m_barJumpedOff = false;

@@ -1,5 +1,6 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 
 #include <fstream>
@@ -5112,7 +5113,11 @@ namespace GalaxyEggbert::CNA
                 // walked him sideways or backwards, the symmetric egg body
                 // showing the wrong turn as his face sliding around it.
                 constexpr float kPi = 3.14159265358979f;
-                const float modelYaw = blupiModelIsReal_ ? kPi - blupi_.GetYaw() : blupi_.GetYaw();
+                // Hanging, along the bar's row with his right hand on his pipe (BarRows.hpp).
+                const bool hanging = blupi_.IsSuspended() && blupiModelIsReal_;
+                const float facingYaw = hanging ? blupi_.GetHangFacingYaw() : blupi_.GetYaw();
+                const float modelYaw = blupiModelIsReal_ ? kPi - facingYaw : facingYaw;
+                const float hangShift = hanging ? GalaxyEggbert::Game::HangingModelShift(blupi_.GetAnimIcon()) : 0.0f;
                 // No render-only Balloon offset here: Blupi's own physics
                 // now genuinely lift him while ballooned (BlupiController's
                 // kBalloonRiseSpeed, a direct port of the real
@@ -5123,12 +5128,18 @@ namespace GalaxyEggbert::CNA
                 // stand-in with no real-source basis, and is removed now that
                 // the real behaviour is in place (CLAUDE.md's faithful-remake
                 // rule: nothing that isn't in mobile-eggbert).
+                // Hanging, he is drawn 6 px lower than standing in the bar's cell: the original sets
+                // his position 12 px under the bar cell's top (BLUPISUSPEND, Decor.cpp:5442), where
+                // standing in a cell puts it 6 px under (BLUPIOFFY); so his hands hold the pipe
+                // (owner 2026-11-02: they were above it). Render only, as the original's sprite.
+                constexpr float kSuspendModelDrop = 6.0f / 64.0f;
+                const float suspendDrop = blupi_.IsSuspended() ? kSuspendModelDrop : 0.0f;
                 const auto world =
                     Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
-                    Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.0f, modelDepthOffset) *
+                    Microsoft::Xna::Framework::Matrix::CreateTranslation(hangShift, 0.0f, modelDepthOffset) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                        blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset, blupi_.GetZ());
+                        blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop, blupi_.GetZ());
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiModel_->ComputeBoneTransformsEXT(
                     blupiActiveClipName_,
@@ -5369,6 +5380,23 @@ namespace GalaxyEggbert::CNA
                                         {
                                             drawModel(*still, cell.x + side.dx, cell.y, cell.z + side.dz, side.yaw);
                                         }
+                                    }
+                                }
+                                else if (std::find(GalaxyEggbert::Game::kRowModelIcons.begin(),
+                                                   GalaxyEggbert::Game::kRowModelIcons.end(),
+                                                   cell.base) != GalaxyEggbert::Game::kRowModelIcons.end())
+                                {
+                                    // A bar is two pipes along its row, one under each of Blupi's hands
+                                    // (BarRows.hpp); the model runs along X, turned where the row runs
+                                    // along Z.
+                                    const bool alongZ = GalaxyEggbert::Game::ClassifyBarRow(
+                                                            (cell.sameSides & 3) != 0, (cell.sameSides & 12) != 0) ==
+                                                        GalaxyEggbert::Game::BarRow::AlongZ;
+                                    for (const float side : {-1.0f, 1.0f})
+                                    {
+                                        const float offset = side * GalaxyEggbert::Game::kBarPipeOffset;
+                                        drawModel(*still, cell.x + (alongZ ? offset : 0.0f), cell.y,
+                                                  cell.z + (alongZ ? 0.0f : offset), alongZ ? 1.57079632f : 0.0f);
                                     }
                                 }
                                 else

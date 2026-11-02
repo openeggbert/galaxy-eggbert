@@ -10,13 +10,15 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 
 | Model directory | Source scene(s) | Parts | Clips | Replaces | IoU min / mean |
 |---|---|---|---|---|---|
-| `avatars3d/blupi` | Blupi/*.rd4 (geometry, skeleton, camera: Blupi/marche-profil.rd4) | 10 | 62 | - | - |
+| `avatars3d/blupi` | Blupi/*.rd4 (geometry, skeleton, camera: Blupi/marche-profil.rd4) | 10 | 67 | - | - |
 | `avatars3d/blupi/vehicles/helico` | Blupi/*.rd4 (the helico scenes; tools/rd4_to_gltf/ README) | 5 | 3 | - | - |
 | `avatars3d/blupi/vehicles/jeep` | Blupi/*.rd4 (the jeep scenes; tools/rd4_to_gltf/ README) | 6 | 2 | - | - |
 | `avatars3d/blupi/vehicles/over` | Blupi/*.rd4 (the over scenes; tools/rd4_to_gltf/ README) | 5 | 2 | - | - |
 | `avatars3d/blupi/vehicles/skate` | Blupi/*.rd4 (the skate scenes; tools/rd4_to_gltf/ README) | 3 | 7 | - | - |
 | `avatars3d/blupi/vehicles/tank` | Blupi/*.rd4 (the tank scenes; tools/rd4_to_gltf/ README) | 5 | 3 | - | - |
 | `avatars3d/objects/ammo_munitions-glu` | Blupi/munitions-glu.rd4, camera 'Caméra 2' | 1 | 1 | element 177 | 0.99 / 0.99 |
+| `avatars3d/objects/barre_barre` | Decor/barre.rd4, camera 'Caméra 2' | 1 | 1 | object-m 138 | 0.89 / 0.89 |
+| `avatars3d/objects/barreplain_barre` | Decor/barre.rd4, camera 'Caméra 2' | 1 | 1 | object-m 202 | 0.83 / 0.83 |
 | `avatars3d/objects/bd_big0108_big0108` | Decor/palais/big0108.rds, camera 'Caméra 2' | 1 | 1 | explo 87 | 0.98 / 0.98 |
 | `avatars3d/objects/bd_big02_big02` | Decor/palais/big02.rds, camera 'Caméra 2' | 1 | 1 | explo 88 | 0.99 / 0.99 |
 | `avatars3d/objects/bd_cabane_cabane` | Explo/cabane.rd4, camera 'Caméra Jeu' | 12 | 1 | explo 27 | 0.99 / 0.99 |
@@ -105,4 +107,4 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/wasp_guepe` | Blupi/guepe.rd4, camera 'Caméra 2' | 4 | 1 | element 195-202 | 0.95 / 0.96 |
 | `avatars3d/objects/wasp_guepe-tourne` | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 4 | 1 | element 203-207 | 0.96 / 0.96 |
 
-94 models.
+96 models.

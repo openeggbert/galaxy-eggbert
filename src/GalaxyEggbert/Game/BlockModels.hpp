@@ -25,7 +25,52 @@ namespace GalaxyEggbert::Game
     // their object-m icon (VIS-0077/0078/0378/0400): the stone column 76 (Decor/support1.rd4), the
     // golden support 77 (Decor/support2.rd4), the barrel stack 377 (Decor/pile1.rd4) and the white
     // column 399 (Decor/palais/big0108.rds). Their roles and collision are unchanged.
-    inline constexpr std::array<std::uint16_t, 5> kStillModelIcons{76, 77, 377, 399, 201};
+    // The hanging bar's two icons too (Decor/barre.rd4, owner 2026-11-02: in 3D, not a plate).
+    inline constexpr std::array<std::uint16_t, 7> kStillModelIcons{76, 77, 377, 399, 201, 138, 202};
+
+    // The hanging bar's icons, both rendered from Decor/barre.rd4: 138 with the two mounts that hold
+    // it to a ceiling, 202 the pipe alone (its model leaves the mounts out, objects.txt drop=).
+    inline constexpr std::uint16_t kBarMountedIcon = 138;
+    inline constexpr std::uint16_t kBarPlainIcon = 202;
+    [[nodiscard]] constexpr bool IsBarIcon(std::uint16_t icon) noexcept
+    {
+        return icon == kBarMountedIcon || icon == kBarPlainIcon;
+    }
+
+    // Icons whose underside is no edge for the mounts to hold: Decor::IsRightBorder (Decor.cpp:10367)
+    // answers false for them seen from below (dy == 1).
+    inline constexpr std::array<std::uint16_t, 18> kNoUndersideEdgeIcons{
+        15, 16, 17, 18, 19, 21, 25, 26, 28, 74, 75, 87, 88, 89, 90, 154, 155, 317};
+
+    // The bar a cell shows, by the icon above it and whether that one is solid (a quarter-cell
+    // collision mask). The original's editor keeps a bar so (Decor::AdaptMidBorder, the "above" bit of
+    // Tables::table_adapt_decor's bar row: 138 with it, 202 without): all 303 bars of its levels
+    // follow this. Galaxy's worlds place either icon anywhere, so the cell's own icon is not used.
+    [[nodiscard]] constexpr std::uint16_t ShownBarIcon(std::uint16_t above, bool aboveSolid) noexcept
+    {
+        if (!aboveSolid || IsBarIcon(above))
+        {
+            return kBarPlainIcon;
+        }
+        for (const auto icon : kNoUndersideEdgeIcons)
+        {
+            if (icon == above)
+            {
+                return kBarPlainIcon;
+            }
+        }
+        return kBarMountedIcon;
+    }
+
+    // The icon a model cell continues a row of: the two bars are one row.
+    [[nodiscard]] constexpr std::uint16_t ModelRowFamily(std::uint16_t icon) noexcept
+    {
+        return icon == kBarPlainIcon ? kBarMountedIcon : icon;
+    }
+
+    // Still icons whose model runs along X and is turned to run along Z where its row does (no
+    // neighbour of its row on X, one on Z): the hanging bars.
+    inline constexpr std::array<std::uint16_t, 2> kRowModelIcons{kBarMountedIcon, kBarPlainIcon};
 
     // Still icons whose model is a flat frame drawn on each side of the cell (a lattice box), left
     // out on a side shared with the same icon: the steel girder 201 (Decor/structure1.rd4, its

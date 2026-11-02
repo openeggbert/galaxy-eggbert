@@ -80,6 +80,7 @@ class ObjectSpec:
     min_iou: float = 0.0
     shift: int = 0
     tone: tuple[float, float] | None = None
+    drop: frozenset[int] = frozenset()
 
 
 @dataclass
@@ -167,7 +168,8 @@ def read_specs(path: Path) -> list[ObjectSpec]:
         specs.append(ObjectSpec(fields[0], fields[1], parse_icons(fields[2]), fields[3].split(","),
                                 opts.get("camera"), float(opts.get("yaw", 0)), opts.get("vflip") == "1", recolour,
                                 float(opts.get("min_iou", 0)), int(opts.get("shift", 0)),
-                                tuple(float(x) for x in opts["tone"].split(",")) if "tone" in opts else None))
+                                tuple(float(x) for x in opts["tone"].split(",")) if "tone" in opts else None,
+                                frozenset(int(x) for x in opts["drop"].split(",")) if "drop" in opts else frozenset()))
     return specs
 
 
@@ -402,6 +404,9 @@ def main(argv=None) -> int:
         candidates, owner = [], []
         for si, s in enumerate(spec.scenes):
             scene = sc.read_scene(rd4.parse_file(args.originals / s))
+            if spec.drop:
+                # Parts the icons were rendered without (the bar's plain icon 202 is its pipe alone).
+                scene.universe.children = [c for k, c in enumerate(scene.universe.children) if k not in spec.drop]
             try:
                 cams = ortho_cameras(scene, spec.camera)
             except NotImplementedError:

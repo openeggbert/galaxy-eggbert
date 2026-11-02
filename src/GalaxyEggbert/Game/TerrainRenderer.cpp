@@ -1,6 +1,7 @@
 #include "TerrainRenderer.hpp"
 
 #include "LavaSurface.hpp"
+#include "BlockModels.hpp"
 #include "DirectionalCubeTiles.hpp"
 #include "InnerFlatPlateTiles.hpp"
 #include "InnerPillarBoxTiles.hpp"
@@ -508,13 +509,31 @@ namespace GalaxyEggbert::Game
                         {
                             const int nx = x + dx, nz = z + dz;
                             return nx >= 0 && nz >= 0 && nx < blocksPerAxis && nz < blocksPerAxis &&
-                                   world.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(y),
-                                                  static_cast<std::uint16_t>(nz))
-                                           .type() == block.type();
+                                   ModelRowFamily(world.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(y),
+                                                                 static_cast<std::uint16_t>(nz))
+                                                      .type()) == ModelRowFamily(block.type());
                         };
                         const auto sides = static_cast<std::uint8_t>((same(1, 0) ? 1 : 0) | (same(-1, 0) ? 2 : 0) |
                                                                      (same(0, 1) ? 4 : 0) | (same(0, -1) ? 8 : 0));
-                        m_staticModelCells.push_back({worldX, worldY, worldZ, block.type(), sides}); // drawn as a model
+                        // A bar shows its ceiling mounts only under a block (ShownBarIcon), when that
+                        // icon's model is loaded too.
+                        std::uint16_t shown = block.type();
+                        if (IsBarIcon(shown))
+                        {
+                            const std::uint16_t above =
+                                y + 1 < blocksPerAxis
+                                    ? world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y + 1),
+                                                     static_cast<std::uint16_t>(z))
+                                          .type()
+                                    : std::uint16_t{0};
+                            const std::uint16_t bar = ShownBarIcon(
+                                above, above != 0 && GalaxyEggbert::GetBlockDefinition(above).collisionMask != 0);
+                            if (std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), bar) != modelDrawnIcons.end())
+                            {
+                                shown = bar;
+                            }
+                        }
+                        m_staticModelCells.push_back({worldX, worldY, worldZ, shown, sides}); // drawn as a model
                         continue;
                     }
                     sumX += worldX;

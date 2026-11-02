@@ -7,6 +7,8 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | Model | Source | Icons | IoU mean | IoU worst | Verdict |
 |---|---|---|---|---|---|
 | ammo_munitions-glu | Blupi/munitions-glu.rd4, camera 'Caméra 2' | 1 | 0.992 | 0.992 | faithful |
+| barre_barre | Decor/barre.rd4, camera 'Caméra 2' | 1 | 0.888 | 0.888 | faithful |
+| barreplain_barre | Decor/barre.rd4, camera 'Caméra 2' | 1 | 0.833 | 0.833 | to look at |
 | bd_big0108_big0108 | Decor/palais/big0108.rds, camera 'Caméra 2' | 1 | 0.979 | 0.979 | faithful |
 | bd_big02_big02 | Decor/palais/big02.rds, camera 'Caméra 2' | 1 | 0.992 | 0.992 | faithful |
 | bd_cabane_cabane | Explo/cabane.rd4, camera 'Caméra Jeu' | 1 | 0.993 | 0.993 | faithful |
@@ -95,4 +97,4 @@ Colour is not measured: the procedural textures are flatter than the sprites' (o
 | wasp_guepe | Blupi/guepe.rd4, camera 'Caméra 2' | 8 | 0.955 | 0.950 | faithful |
 | wasp_guepe-tourne | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 5 | 0.962 | 0.956 | faithful |
 
-88 models: 80 match every icon at 0.85 or better; 8 below, each with its verdict.
+90 models: 81 match every icon at 0.85 or better; 9 below, each with its verdict.
