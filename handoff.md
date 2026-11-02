@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-02 late (fidelity audit, milestone G: the owner's reports up to OR-0050)._
+_Last updated: 2026-11-02 night (fidelity audit, milestone G: the owner's reports up to OR-0055)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -186,8 +186,26 @@ ledgers before repeating any discovery. Where it stands:
   unedited, `SeedGallerySlot`); the web build of 2026-11-02 with it (checked in headless Chrome
   under Xvfb over DevTools: `--use-angle=swiftshader --enable-unsafe-swiftshader
   --remote-debugging-port=9333 --remote-allow-origins=...`, serve the build dir over HTTP first).
-- Next: the sweep of every model source (OR-0050), the queued 3D conversions (signs, clay bridge,
-  spring, lightning, grass, glue and burn deaths), the editor's wind tiles beside fans, Wave E.
+- Done 2026-11-02 night (after a full 78-world regression run, all passing): **BD-0033 the slime
+  drip** (`a0d31de`: passable, kills in his own cell as `IsGoutte`, animated by
+  `table_decor_goutte`, drawn as `goutte01-04.rds`; 062/063/066 replayed); OR-0050's sweep
+  (`04c66c0`: the switch 384/385 and the conveyor 311-316 as models, the conveyor stretched along Z
+  by `ModelDepthScale`; `tools/audit/model_sources.py` lists what is left: `electro.rd4` Q-005,
+  the terrain tiles Q-004, `colonne1`); **OR-0055 the clay bridge** covers its cell: its one row of
+  lumps drawn four times across, every other turned round (`kBridgeRows`), the scene's teal
+  surface dropped (`drop=2`); the charred deaths (Clear1, Clear3's first half) as his own model
+  burnt black and shrinking to the heap (`39d800a`, `CharredBlupi.hpp`), the glue sprite now on
+  his feet (it hung half a cell up); the column 375 back to its sprite (`b887345`:
+  `Decor/colonne1.rds` is a plain box). Probe world for these: `build-probe/wave-e/probe_burn.py`
+  (mission 995: lightning spawn 50,1,42,90; spikes 50,1,44,90; drip/conveyor/switch 50,1,48,90;
+  bridge 44,1,56,90). Note for qa_live: a mine kills by a coin flip (Clear1 or the angel); the
+  lightning is always Clear1; only spike 373 kills (347/374 are its animation). Measure a
+  model's size at its frame-0 pose (`$CLAUDE_JOB_DIR`-style helper: skin the glb by its clip),
+  not from the accessor bounds: the bridge's bind pose sat 0.109 off.
+- Next: the conveyor lifts 47/48 (textured cubes) as the chenille model; the column 375 from
+  `Decor/smooth/colonne1.a3d`; the glue death (Q-006), the lightning bolt and grass (Q-001/Q-002)
+  wait for the owner (`plans/audit/owner_questions.md`); Wave E: 084's five crushers (gates in
+  walls in the original), the bars of 024/034/052/125; a fresh web build.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
