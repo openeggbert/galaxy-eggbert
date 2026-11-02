@@ -27,6 +27,7 @@ from kit import O, World, lift, mine  # noqa: E402
 from village import STONE  # noqa: E402
 
 LAVA = 68
+ROD = 202                   # a bar along X Blupi hangs from (ThinBar), seen from every side
 BARRIER = 214               # the flight barrier: a plain wall on foot
 TP_WEST, TP_EAST, TP_SOUTH, TP_HIGH = 330, 331, 332, 333
 FLOOR, WALK = 9, 10         # the atrium; the wells' rooms walk 30
@@ -79,8 +80,8 @@ def main(argv) -> int:
 
     # ---- west: the stair down (walk 10 -> 4) ----
     # Through the west door a cave stepping down a cell at a time, eggs on the steps, two mines
-    # hanging in its walking cells (step round or crouch under them); at its foot the teleporter
-    # to the west well.
+    # hanging in its walking cells (step round or crouch under them); at its foot a pit of lava
+    # crossed hanging from rods to the teleporter to the west well.
     for k, x in enumerate(range(39, 13, -2)):
         walk = max(WALK - k // 2, 4)
         carve(w, x - 1, walk, 47, x, walk + 3, 53)
@@ -89,6 +90,15 @@ def main(argv) -> int:
     hazard("hanging", 29, 8, 50)
     hazard("hanging", 21, 6, 50)
     carve(w, 6, 4, 46, 13, 7, 54)
+    # Before the teleporter a pit of lava across the room (x 10-13), four rods at the walk over it
+    # in lane 50 (the original's four bars under the ceiling beside its teleporter 331, LV-0064);
+    # in the calm stage a floor under them (levelcheck cannot hang).
+    carve(w, 10, 1, 46, 13, 3, 54)
+    w.fill(10, 0, 46, 13, 0, 54, LAVA)
+    if calm:
+        w.fill(10, 3, 50, 13, 3, 50, STONE)
+    else:
+        w.fill(10, 4, 50, 13, 4, 50, ROD)
     teleporter(TP_WEST, 8, 4, 49)
 
     # ---- east: the bulldozers' hall (walk 10) ----
