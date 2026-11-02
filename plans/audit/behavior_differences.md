@@ -417,6 +417,19 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyBlupiMovement` (taken again 60 frames into an inversion); the ten worlds
   with invert signs (034, 044, 045, 055, 095, 111, 114, 121, 122, 199) pass.
 
+## BD-0026 — an exit checked only once per contact; the original checks every 51 ticks (gameplay) — FIXED_AND_VERIFIED
+
+- Wave C, the exits (ObjectType 7 and the secret exit 21). The original keeps `m_goalPhase`
+  (Decor.cpp:6158-6189): touching an exit with the phase at 0 checks it -- every treasure held,
+  the fanfare (14) and the win; else the refusal (13) -- and sets the phase to 50, counted down
+  each tick he stays on it; stepping off sets it to 0. So a refusal repeats every 51 ticks, and
+  when the last treasure's reward lands (it flies to the HUD first) while he stands on the exit,
+  the next check wins. Galaxy checked once per contact: there he had to step off and on again.
+- Now the original's counter (`exitGoalTicks_`); no check after the win. The `m_blupiFocus`
+  gate stays unmodelled, as everywhere in InteractionSystem.
+- Validation: `VerifyInteractionSystem` (refused, the reward lands, the win 51 ticks after the
+  refusal without stepping off); all playthroughs.
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

@@ -2060,23 +2060,22 @@ namespace GalaxyEggbert::Game
             // recognized ObjectType7, so a secret exit did nothing at all on contact.
             if (GetObjectDefinition(obj.type).levelExit)
             {
-                // Level-exit goal: debounced to fire once per contact
-                // "session" (real mobile-eggbert re-checks every 50 ticks
-                // of continued contact via m_goalPhase; approximated here
-                // as "once per entry" rather than exactly replicating that
-                // tick-based re-fire, which needs no equivalent without a
-                // HUD/rejection-sound spam concern this simpler debounce
-                // already avoids). Gated on having all treasure, per
-                // `13-object-pickups.md`'s real m_nbTresor >= m_totalTresor
-                // check -- win fanfare (channel 14) if so, rejection sound
-                // (channel 13) if not. Never removed (active stays true) --
-                // it's a goal marker you touch, not a consumable pickup.
-                if (touching)
+                // Level-exit goal (Decor.cpp:6158-6189): checked when m_goalPhase is 0, then not for
+                // 50 ticks while he stays on it (so every 51), reset when he leaves. Every treasure
+                // held (m_nbTresor >= m_totalTresor): the fanfare (channel 14) and the win; else the
+                // refusal (13), again each 51 ticks -- and the last treasure's reward landing while
+                // he stands there wins without stepping off (BD-0026; this was once per contact).
+                // Never removed: a goal marker, not a pickup.
+                if (touching && !exitReached_)
                 {
                     touchingExitThisFrame = true;
-                    if (!exitContactActive_)
+                    if (exitGoalTicks_ > 0.0f)
                     {
-                        exitContactActive_ = true;
+                        exitGoalTicks_ -= dt * 20.0f;
+                    }
+                    else
+                    {
+                        exitGoalTicks_ = 50.0f;
                         if (treasuresCollected_ >= totalTreasures_)
                         {
                             exitReached_ = true;
@@ -2227,7 +2226,7 @@ namespace GalaxyEggbert::Game
 
         if (!touchingExitThisFrame)
         {
-            exitContactActive_ = false;
+            exitGoalTicks_ = 0.0f;
         }
 
         // Key-gated doors (plan.md E3D-MIG-160/161, real `Decor::IsDoor`

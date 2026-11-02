@@ -1688,6 +1688,48 @@ int main(int argc, char** argv)
               "exit-gate win condition, same as the regular exit");
     }
 
+    // 3.77. The exit's m_goalPhase (Decor.cpp:6158-6189, BD-0026): touched without every treasure
+    // it refuses, then checks again every 51 ticks while he stays on it, so the last treasure's
+    // reward landing while he stands there wins without stepping off.
+    {
+        WorldRuntime goalWorld;
+        InteractionSystem goal;
+        MobileObjSpec exitMarker;
+        exitMarker.type = GalaxyEggbert::Def::ObjectType::ObjectType7;
+        exitMarker.active = true;
+        exitMarker.posStartX = exitMarker.posEndX = exitMarker.currentX = 700.0f;
+        exitMarker.posStartY = exitMarker.posEndY = exitMarker.currentY = 1.0f;
+        exitMarker.posStartZ = exitMarker.posEndZ = exitMarker.currentZ = 700.0f;
+        MobileObjSpec chest = exitMarker;
+        chest.type = GalaxyEggbert::Def::ObjectType::ObjectType5;
+        chest.posStartX = chest.posEndX = chest.currentX = 720.0f;
+        goalWorld.GetMobileObjectsMutable().push_back(exitMarker);
+        goalWorld.GetMobileObjectsMutable().push_back(chest);
+        constexpr float tick = 1.0f / 20.0f;
+        goal.Update(tick, goalWorld, 720.0f, 1.0f, 700.0f, 0.0f, sound); // takes the treasure
+        const auto* flight = findEvent(goal, InteractionSystem::EventKind::VoyageRequested);
+        check(flight != nullptr, "exit goal test: the treasure's reward starts its flight");
+        const auto kind = flight ? flight->voyageKind : InteractionSystem::VoyageKind{};
+        const int iconId = flight ? flight->voyageIconId : 0;
+        const bool button = flight ? flight->voyageIsButtonChannel : false;
+        goal.Update(tick, goalWorld, 700.0f, 1.0f, 700.0f, 0.0f, sound); // onto the exit: refused
+        check(!goal.ExitReached(), "on the exit before the last treasure's reward lands: refused");
+        goal.BeginVoyage(goalWorld, kind, iconId, button, 0.0f, 0.0f, 0.0f, 0.0f, sound);
+        goalWorld.Update(tick);
+        goal.Update(tick, goalWorld, 700.0f, 1.0f, 700.0f, 0.0f, sound); // the reward lands
+        check(goal.TreasuresCollected() == 1 && !goal.ExitReached(),
+              "the reward landed: the exit is not checked again before its 50 ticks are out");
+        int ticksOn = 2;
+        while (!goal.ExitReached() && ticksOn < 80)
+        {
+            goalWorld.Update(tick);
+            goal.Update(tick, goalWorld, 700.0f, 1.0f, 700.0f, 0.0f, sound);
+            ++ticksOn;
+        }
+        check(goal.ExitReached() && ticksOn == 52,
+              "staying on the exit, it is checked again 51 ticks after the refusal and wins");
+    }
+
     // 3.8. Doors (plan.md E3D-MIG-160/161/162) -- the sample world's own
     // doors demo (tools/GenerateSampleWorld3D.cpp): a key-gated Door1 at
     // grid (48,1,90) with its Key1 at (46,1,88), and a treasure-gated

@@ -999,7 +999,9 @@ namespace GalaxyEggbert::Game
         int blitzEmitterPresent_ = -1;
         bool exitReached_ = false;
         bool exitWasGoldenKey_ = false;
-        bool exitContactActive_ = false; // debounces the exit-touch sound/check to once per contact
+        // The original's m_goalPhase (Decor.cpp:6158-6189): ticks until an exit he stands on is checked
+        // again; 0 when he is off every exit.
+        float exitGoalTicks_ = 0.0f;
         int keys1_ = 0;
         int keys2_ = 0;
         int keys3_ = 0;
