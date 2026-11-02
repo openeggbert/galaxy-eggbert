@@ -1,0 +1,63 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "support3_rd_ffb406",
+      "vertices": "support3_rd_ffb406.verts.bin",
+      "indices": "support3_rd_ffb406.idx.bin",
+      "vertexStride": 52,
+      "texture": "support3_rd_ffb406.png",
+      "diffuseColor": [
+        1.0,
+        0.4565804093443875,
+        0.0018575851393188856,
+        1.0
+      ]
+    },
+    {
+      "name": "support3_rd_tex_p08_Cube",
+      "vertices": "support3_rd_tex_p08_Cube.verts.bin",
+      "indices": "support3_rd_tex_p08_Cube.idx.bin",
+      "vertexStride": 52,
+      "texture": "support3_rd_tex_p08_Cube.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "support3_rd_tex_p09_Cube",
+      "vertices": "support3_rd_tex_p09_Cube.verts.bin",
+      "indices": "support3_rd_tex_p09_Cube.idx.bin",
+      "vertexStride": 52,
+      "texture": "support3_rd_tex_p09_Cube.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "support3_rd_tex_p10_Cube",
+      "vertices": "support3_rd_tex_p10_Cube.verts.bin",
+      "indices": "support3_rd_tex_p10_Cube.idx.bin",
+      "vertexStride": 52,
+      "texture": "support3_rd_tex_p10_Cube.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

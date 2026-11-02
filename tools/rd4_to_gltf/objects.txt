@@ -114,3 +114,6 @@ teleporter1 object-m 330     Decor/teleporteur1.rd4 tone=0.72,16
 teleporter2 object-m 331     Decor/teleporteur2.rd4 tone=0.73,16
 teleporter4 object-m 332     Decor/teleporteur4.rd4 tone=0.72,16
 teleporter3 object-m 333     Decor/teleporteur3.rd4 tone=0.72,17
+# The yellow trestle 199 (passable decor; Decor/support3.rd4, IoU 0.989), a block model turned to
+# face the room as the teleporters (BlockModels.hpp kFrontModelIcons).
+support3    object-m 199     Decor/support3.rd4 tone=1.01,6

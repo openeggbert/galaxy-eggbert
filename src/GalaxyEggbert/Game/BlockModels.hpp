@@ -27,13 +27,15 @@ namespace GalaxyEggbert::Game
     // column 399 (Decor/palais/big0108.rds). Their roles and collision are unchanged.
     // The hanging bar's two icons too (Decor/barre.rd4, owner 2026-11-02: in 3D, not a plate).
     // The teleporters 330-333 (Decor/teleporteur1-4.rd4, one scene a letter; owner 2026-11-02: in
-    // one cell as the tile shows it, the device its top third, the tip under it).
-    inline constexpr std::array<std::uint16_t, 11> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
-                                                                     330, 331, 332, 333};
+    // one cell as the tile shows it, the device its top third, the tip under it), and the yellow
+    // trestle 199 (Decor/support3.rd4).
+    inline constexpr std::array<std::uint16_t, 12> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+                                                                     330, 331, 332, 333, 199};
 
-    // Still icons whose model has a front (the teleporters' lights and letter: the original is a
-    // front view), turned toward the cell's open side (TerrainRenderer::ModelCell::openSide).
-    inline constexpr std::array<std::uint16_t, 4> kFrontModelIcons{330, 331, 332, 333};
+    // Still icons whose model has a front (the original is a front view: the teleporters' lights
+    // and letter, the trestle's frame), turned toward the cell's open side
+    // (TerrainRenderer::ModelCell::openSide).
+    inline constexpr std::array<std::uint16_t, 5> kFrontModelIcons{330, 331, 332, 333, 199};
 
     // The turn about Y (radians) putting a model's front, +Z at no turn, toward side 0 +X, 1 -X,
     // 2 +Z, 3 -Z: CreateRotationY(a) turns +Z to (sin a, 0, cos a).

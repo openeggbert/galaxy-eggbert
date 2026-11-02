@@ -111,6 +111,12 @@ ledgers before repeating any discovery. Where it stands:
   only the fallback. The converter's flat end caps of prisms now take the whole image
   (`freeform_mesh.planar_caps`, kept out of `split_seam`): the letter panels were a magnified
   corner. Evidence `plans/evidence/teleporter-model.png`; probe world 998 (four teleporters).
+  Also: texture repeats (`tile 1`, `cnth`/`cntv`) baked into the image for every mapping (the
+  house's flowers at their size; the trees `plante2a-c` not re-exported: +0.0015 for 8 MB); the
+  yellow trestle 199 as `Decor/support3.rd4` (front to the open side like the teleporters). The
+  numbered world signs 174-181 (`Decor/world1.rd4`, outline 0.995) wait: the scene has no digits
+  (painted on the renders) and its face converts as a disc; a digit decal needs the owner's word.
+  All 78 playthroughs pass after the bar row change (2026-11-02).
 - **The original can be watched running**: `tools/qa_original.sh` drives the Linux build of the
   mobile-eggbert port (a copy in `build-probe/orig-port/` of the owner's
   `~/Downloads/SpeedyBlupi2013Linux`; never touch that one) like `qa_live.sh`; its Play always

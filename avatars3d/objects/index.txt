@@ -68,6 +68,7 @@ pillar_colonne3
 projectile_balle-glu
 secretexit_cle
 statue_statue
+support3_support3
 support_support2
 teleporter1_teleporteur1
 teleporter2_teleporteur2

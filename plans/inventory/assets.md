@@ -85,6 +85,7 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/projectile_balle-glu` | Blupi/balle-glu.rd4, camera 'Caméra 2' | 1 | 1 | element 176 | 0.99 / 0.99 |
 | `avatars3d/objects/secretexit_cle` | Blupi/cle.rd4, camera 'Caméra 2' | 1 | 1 | element 122-128 | 0.94 / 0.96 |
 | `avatars3d/objects/statue_statue` | Decor/palais/statue.rds, camera 'Caméra Jeu' | 4 | 1 | explo 89 | 0.99 / 0.99 |
+| `avatars3d/objects/support3_support3` | Decor/support3.rd4, camera 'Caméra Jeu' | 4 | 1 | object-m 199 | 0.99 / 0.99 |
 | `avatars3d/objects/support_support2` | Decor/support2.rd4, camera 'Caméra Jeu' | 2 | 1 | object-m 77 | 0.99 / 0.99 |
 | `avatars3d/objects/teleporter1_teleporteur1` | Decor/teleporteur1.rd4, camera 'Caméra 2' | 4 | 1 | object-m 330 | 1.00 / 1.00 |
 | `avatars3d/objects/teleporter2_teleporteur2` | Decor/teleporteur2.rd4, camera 'Caméra 2' | 4 | 1 | object-m 331 | 1.00 / 1.00 |
@@ -111,4 +112,4 @@ no model here (effects, the charge 31, the shield 25) stay billboards by decisio
 | `avatars3d/objects/wasp_guepe` | Blupi/guepe.rd4, camera 'Caméra 2' | 4 | 1 | element 195-202 | 0.95 / 0.96 |
 | `avatars3d/objects/wasp_guepe-tourne` | Blupi/guepe-tourne.rd4, camera 'Caméra 2' | 4 | 1 | element 203-207 | 0.96 / 0.96 |
 
-100 models.
+101 models.
