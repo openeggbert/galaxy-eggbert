@@ -1148,6 +1148,11 @@ namespace GalaxyEggbert::Game
         // mobile-eggbert draws nothing (Teleporting's, Clear2, Clear3's tail),
         // where GetAnimIcon() shows the idle icon for the HUD indicator.
         [[nodiscard]] int GetRawAnimIcon() const noexcept;
+        // The frame the state's icon table stops at once played (Tables::table_blupi's third
+        // column, Decor.cpp:2397: Air holds its 5th icon, Down its 3rd, owner 2026-11-02: the
+        // crouch pumped up and down like kick-starting a motorbike), or -1 when it loops.
+        // The host holds the 3D clip there too.
+        [[nodiscard]] int GetAnimHoldFrame() const noexcept;
         [[nodiscard]] bool IsAnimIconInvisible() const noexcept { return GetRawAnimIcon() < 0; }
 
         // Real one-shot sound cues SOUND-017/030/031 (added 2026-07-20) --

@@ -288,9 +288,14 @@ int main(int argc, char** argv)
                 ++steps;
             }
             check(steps < 200, "Down anim icon advances to its next frame within a bounded time");
-            check(crouching.GetAnimIcon() == expectedIcon,
-                  "Down anim icon cycles through its real 3-frame sequence (33, 34, 35, then back to 33)");
+            check(crouching.GetAnimIcon() == expectedIcon, "Down anim icon plays its real frames 33, 34, 35");
         }
+        for (int i = 0; i < 100; ++i)
+        {
+            crouching.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+        }
+        check(crouching.GetAnimIcon() == 35 && crouching.GetAnimHoldFrame() == 2,
+              "Down holds its last frame (35) while crouched, as table_blupi's hold column says");
     }
 
     // 4e. Real crouch/look-up one-shot sound signals (SOUND-017/030/031,

@@ -4975,6 +4975,12 @@ namespace GalaxyEggbert::CNA
                     blupiClipTimeSeconds_ = 0.0;
                 }
                 blupiClipTimeSeconds_ += static_cast<double>(dt);
+                // Air and Down stop at their last icon (BlupiController::GetAnimHoldFrame()): the
+                // clip's key k sits at k / rate seconds.
+                if (const int hold = blupi_.GetAnimHoldFrame(); blupiModelIsReal_ && hold >= 0 && blupiFaceRate_ > 0.0)
+                {
+                    blupiClipTimeSeconds_ = std::min(blupiClipTimeSeconds_, static_cast<double>(hold) / blupiFaceRate_);
+                }
             }
         }
 

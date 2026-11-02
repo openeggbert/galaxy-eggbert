@@ -2589,6 +2589,18 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    int BlupiController::GetAnimHoldFrame() const noexcept
+    {
+        // Tables::table_blupi's third column: Air {169,26,170,170,27} stops at 27 (index 4) and
+        // Down {33,34,35} at 35 (index 2), Decor.cpp:2393-2400; every other table loops.
+        switch (m_animState)
+        {
+            case AnimState::Air: return 4;
+            case AnimState::Down: return 2;
+            default: return -1;
+        }
+    }
+
     int BlupiController::GetRawAnimIcon() const noexcept
     {
         switch (m_animState)
@@ -2598,9 +2610,9 @@ namespace GalaxyEggbert::Game
             case AnimState::Jump:
                 return kJumpFrames[m_animPhase % (sizeof(kJumpFrames) / sizeof(kJumpFrames[0]))];
             case AnimState::Air:
-                return kAirFrames[m_animPhase % (sizeof(kAirFrames) / sizeof(kAirFrames[0]))];
+                return kAirFrames[std::min(m_animPhase, GetAnimHoldFrame())];
             case AnimState::Down:
-                return kDownFrames[m_animPhase % (sizeof(kDownFrames) / sizeof(kDownFrames[0]))];
+                return kDownFrames[std::min(m_animPhase, GetAnimHoldFrame())];
             case AnimState::Up:
                 return kUpFrames[m_animPhase % (sizeof(kUpFrames) / sizeof(kUpFrames[0]))];
             case AnimState::StopEcrase:
