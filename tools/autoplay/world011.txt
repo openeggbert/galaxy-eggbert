@@ -14,7 +14,7 @@ go 64 49.6
 go 64 45.5 jump 2.4
 until ground = 1
 go 64 45.6
-go 64 40.5 jump 3.4
+go 64 40.5 jump 3.25
 until ground = 1
 go 64 34
 # B: elevator 1 (x 58) up the wall, down into the trough, elevator 2 (x 53) jumped onto and off.

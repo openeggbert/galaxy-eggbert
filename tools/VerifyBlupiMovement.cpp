@@ -1621,18 +1621,33 @@ int main(int argc, char** argv)
             for (int i = 0; i < 30; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
             check(walker.GetX() < before && walker.GetAnimState() == BlupiController::AnimState::Push,
                   "walking against it he loses ground, leaning into it (Push)");
+            // BD-0029 (Decor.cpp:2965-2968, 2785-2789): standing in an updraught he is lifted
+            // 20 px a tick until his growing fall (2 px a tick more each tick, moved twice over)
+            // outweighs it: he bobs up to about a block and comes down again; never held.
             BlupiController lifted;
             lifted.SetPosition(79.0f - 50.0f, 1.0f, 99.0f - 50.0f);
             float topY = 0.0f;
-            for (int i = 0; i < 60; ++i)
+            bool backDown = false;
+            for (int i = 0; i < 120; ++i)
             {
                 lifted.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
                 topY = std::max(topY, lifted.GetY());
+                backDown = backDown || (topY > 1.4f && lifted.GetY() < 1.1f);
             }
-            const float heldY = lifted.GetY();
-            for (int i = 0; i < 60; ++i) lifted.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-            check(topY > 2.5f && std::fabs(lifted.GetY() - heldY) < 0.2f,
-                  "an updraught lifts him off the floor and holds him there");
+            check(topY > 1.4f && topY < 2.6f && backDown,
+                  "an updraught lifts him off the floor, then he comes down again (it holds no one)");
+            // Falling down an updraught column he sinks at half his fastest fall: 20 px a tick
+            // net (40 down, 20 up), 6.25 blocks a second.
+            BlupiController sinker;
+            sinker.SetPosition(79.0f - 50.0f, 8.0f, 99.0f - 50.0f);
+            for (int i = 0; i < 30; ++i) sinker.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            const float sinkFrom = sinker.GetY();
+            for (int i = 0; i < 12; ++i) sinker.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            const float sinkRate = (sinkFrom - sinker.GetY()) / (12.0f * dt);
+            check(sinkRate > 5.6f && sinkRate < 6.9f,
+                  "falling down an updraught he sinks at half his fastest fall (20 px a tick)");
+            // Out of the wind his fastest fall is 40 px a tick (12.5 blocks a second).
+            check(BlupiController::kFallLimit == -12.5f, "his fastest fall is the original's 40 px a tick");
             synthetic.setBlock(71, 3, 99, Worlds::Block::make(110));
             BlupiController faller;
             faller.SetPosition(71.0f - 50.0f, 5.0f, 99.0f - 50.0f);

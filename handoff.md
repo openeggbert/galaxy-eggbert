@@ -129,6 +129,11 @@ ledgers before repeating any discovery. Where it stands:
   (`grotte01-19.rd4`, 0.81-0.91; ~6,000 cells). The switch 384/385 (`interrupteur.rd4`, outline
   1.000): its scene does not swap the lamps (385's sprite has them recoloured: `recolour=`), and
   most switches sit in walls, where the pillar box's four faces still suit.
+- Done 2026-11-02 (Wave E): BD-0029, an updraught held a falling Blupi in the air (the fall cap
+  was 10 blocks/s, the original's is 40 px a tick = 12.5; the wind's 20 px a tick only halves it):
+  `kFallLimit` -12.5, `kWindVerticalSpeed` 6.25; found in world 102, whose plate works go down a
+  fan's updraught shaft. `tools/audit/lesson_inventory.py` lists per world what the original has
+  and Galaxy leaves out (`plans/audit/lesson_inventory.md`).
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not

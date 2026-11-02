@@ -461,6 +461,25 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyInteractionSystem` (32 px beside: not met; 26 px: met). No playthrough has
   a decoy and a small enemy in one world.
 
+## BD-0029 — an updraught held a falling Blupi in the air; the original only slows his fall (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:2965-2968, 2785-2789): in the air `m_blupiVitesseY` grows by 2 a tick while
+  under 20 and moves him `2 * m_blupiVitesseY` px: his fastest fall is 40 px a tick (12.5 blocks/s).
+  The updraught (wind 118) takes 20 px a tick off, so a falling Blupi sinks at 20 px a tick, and one
+  standing in it is lifted until his fall outweighs it: he bobs about a block over the floor. The
+  downdraught (122) adds 20.
+- Galaxy: `kFallLimit` was 10 blocks/s (the cap read as 20 px a tick) and `kWindVerticalSpeed` the
+  same, so in an updraught he hung in the air for ever: a shaft with a fan at its foot (the
+  original's world 102 descends one, Wave E) could not be gone down.
+- Found: Wave E, world 102's grey works (video 4:02:10-4:02:16: he sinks down the updraught shaft in
+  about two seconds and the fan at its foot kills him and is wrecked).
+- Fix: `kFallLimit` -12.5, `kWindVerticalSpeed` 6.25 (20 px a tick). No shipped world had an up- or
+  downdraught (only the showcase 999).
+- Validation: `VerifyBlupiMovement` (lifted and comes down again; sinks at 20 px a tick; the cap);
+  ctest 111/111; 76 of 78 playthroughs passed unchanged, 011 (and 010, which plays it) missed the
+  water channel's bank by a hair (a jump's last moment falls a little faster): its take-off moved
+  0.15 closer to the channel (`jump 3.25`), both pass.
+
 ## Reviewed, not changed (yet)
 
 - Matching (2026-11-02): the shooters 32 (blupih: one shot straight down at tick 21 of each

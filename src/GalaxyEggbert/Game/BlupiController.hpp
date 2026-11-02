@@ -74,7 +74,10 @@ namespace GalaxyEggbert::Game
         static constexpr float kSkateboardJumpSpeedPowered = kJumpSpeed * (17.0f / 16.0f);
 
         static constexpr float kGravity   = 25.0f;
-        static constexpr float kFallLimit = -10.0f;
+        // His fastest fall: the original adds 2 to m_blupiVitesseY a tick while it is under 20
+        // and moves him 2 * m_blupiVitesseY px (Decor.cpp:2965-2968), so he falls at most 40 px
+        // a tick, 40 * 20 / 64 = 12.5 blocks/s (BD-0029; it was 10 here, read as 20 px a tick).
+        static constexpr float kFallLimit = -12.5f;
         // Blupi's height for collision: his head, the top of the original's BlupiRect (pos.Y + 11
         // of his 60-pixel sprite, feet at + 60), 49/64 of a block above his feet (2026-10-26).
         // He fits under a one-block ceiling standing; rising, his head stops on a ceiling, where
@@ -1283,12 +1286,12 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool IsInWind() const noexcept { return m_inWind; }
 
         // The wind's push (Decor.cpp:2771-2798): 9 px a tick along X (his walk is 8, so he
-        // loses ground walking against it), 20 px a tick up or down, the original's fastest
-        // fall, so an updraught holds a falling Blupi where he is. In this engine's units the
-        // sideways push is real time; the vertical one matches kFallLimit as the original's
-        // matches its fall.
+        // loses ground walking against it), 20 px a tick up or down: half his fastest fall
+        // (kFallLimit), so an updraught slows a falling Blupi to half that speed and lifts one
+        // standing in it only until gravity takes over (he bobs about a block over the floor);
+        // it holds no one in the air (BD-0029).
         static constexpr float kWindSideSpeed = 9.0f * 20.0f / 64.0f;
-        static constexpr float kWindVerticalSpeed = 10.0f;
+        static constexpr float kWindVerticalSpeed = 20.0f * 20.0f / 64.0f;
 
         // Holding a crate (Step()'s holdingCrate: crouching, a crate right in front) Blupi cannot
         // turn or step; pulling it, he backs away with it at the crate's speed (CratePush.hpp).
