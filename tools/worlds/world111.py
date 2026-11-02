@@ -24,6 +24,7 @@ from kit import MACHINE_FACES, MACHINE_FLOOR, O, World, lift, mine, wall  # noqa
 from station import water  # noqa: E402
 
 WALK, TOPWALK = 6, 34
+LAVA = 68
 
 
 def main(argv) -> int:
@@ -47,7 +48,7 @@ def main(argv) -> int:
 
     # ---- the start cave and the passage of pits (walk 6) ----
     # Two pits crossed on lifts (3 wide) under four mines hanging a cell above Blupi's head (walk
-    # on, never jump); then three small pits, a lift bobbing in each, mines on the posts between
+    # on, never jump), the second over lava; then three small pits, a lift bobbing in each, mines on the posts between
     # them (hop from lift to post to lift).
     carve(6, WALK, 44, 14, WALK + 4, 56)
     w.spawn = (8, WALK, 50)
@@ -60,6 +61,8 @@ def main(argv) -> int:
         for x in range(x0, x0 + 5, 2):
             hazard(x, WALK + 1, 50, hanging=True)
         hazard(x0 + 1, WALK + 1, 49, hanging=True)
+    # The second pit's floor is lava, as the original's trough of four under its lifts (LV-0067).
+    w.fill(23, 1, 48, 27, 1, 52, LAVA)
     for x in (29, 32, 35):
         carve(x, 1, 48, x + 1, WALK - 1, 52)
         for z in (49, 50, 51):

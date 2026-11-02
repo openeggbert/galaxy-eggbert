@@ -11,7 +11,6 @@ Clusters are the original map's cells (x, y; 64 px tiles), `xN` the cells in the
 | 052 | bar: (71,34)x11 (70,22)x8 | - | - |
 | 061 | bar: (63,38)x6 | - | - |
 | 105 | lava: (22,44)x21; teleport: (19,33)x1 (21,1)x1 | - | - |
-| 111 | lava: (24,80)x4 | - | - |
 | 112 | saw: (38,31)x2; water: (22,26)x11 (19,17)x2 | - | - |
 | 113 | fan: (50,35)x1 | - | - |
 | 122 | lift 3; lava: (67,78)x6 (74,68)x5 | - | - |
