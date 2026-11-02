@@ -4129,10 +4129,9 @@ namespace GalaxyEggbert::CNA
             const bool canGrantHide = secretPower != GalaxyEggbert::Def::SecretPower::Shield &&
                                        secretPower != GalaxyEggbert::Def::SecretPower::Cloud &&
                                        !blupiVehicleOrSquashed;
-            // Invert/Mirror (plan.md PICKUP-011) -- mirrors
-            // BlupiController::TriggerInvert()'s own gate exactly (not
-            // already Invert, not Hide); independent of the 4 powers above.
-            const bool canGrantInvert = !blupi_.IsInverted() && secretPower != GalaxyEggbert::Def::SecretPower::Hide;
+            // Invert/Mirror (plan.md PICKUP-011) -- BlupiController::TriggerInvert()'s gate: not
+            // while Hide; taken again while inverted (Decor.cpp:6040, BD-0025).
+            const bool canGrantInvert = secretPower != GalaxyEggbert::Def::SecretPower::Hide;
             // Real Tank "Fire" (2026-07-13, plan.md BULLET-001) -- a
             // dedicated key (real `GalaxyEggbert::Def::KeyPressFlags::Fire`), NOT the Action
             // button used for dynamite/Perso/switches/vehicle mount above.

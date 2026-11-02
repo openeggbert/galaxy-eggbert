@@ -404,6 +404,19 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   on lifts.
 - Validation: all playthroughs.
 
+## BD-0025 — an invert sign touched while inverted was left in place (gameplay) — FIXED_AND_VERIFIED
+
+- Wave C, the invert sign (ObjectType 40). The original takes it whenever Blupi is not hidden
+  (`!m_blupiHide && m_blupiFocus`, Decor.cpp:6040): touched while already inverted it is taken
+  again and the inversion starts over (`m_blupiTimeShield = 100`, sound 66, the four sparkles).
+  Galaxy refused it while inverted (`TriggerInvert` and the host's `canGrantInvert`), so the
+  sign stayed and the old inversion ran out.
+- Now only Hide refuses it. Reviewed, not changed: the original's invert shares
+  `m_blupiTimeShield` with the powers' gauges, so an invert taken under a power cuts that power's
+  time; Galaxy keeps separate timers (a rare combination, open).
+- Validation: `VerifyBlupiMovement` (taken again 60 frames into an inversion); the ten worlds
+  with invert signs (034, 044, 045, 055, 095, 111, 114, 121, 122, 199) pass.
+
 ## Reviewed, not changed (yet)
 
 - Contact reach: Galaxy's hazard contact is a 0.7-cell sphere; the original's boxes are 28 px

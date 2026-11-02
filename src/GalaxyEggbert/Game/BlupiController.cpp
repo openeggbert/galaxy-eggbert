@@ -874,7 +874,9 @@ namespace GalaxyEggbert::Game
 
     bool BlupiController::TriggerInvert() noexcept
     {
-        if (m_invert || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide)
+        // Already inverted, another invert is taken all the same and starts it again (the
+        // original's gate is only `!m_blupiHide`, Decor.cpp:6040; BD-0025).
+        if (m_secretPower == GalaxyEggbert::Def::SecretPower::Hide)
         {
             return false;
         }

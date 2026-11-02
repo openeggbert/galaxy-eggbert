@@ -817,9 +817,9 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool JustCrossedSecretPowerWarning() const noexcept { return m_secretPowerJustWarned; }
 
         // Invert/Mirror (plan.md PICKUP-011, see kInvertMax's own comment).
-        // Real gate: blocked only while already Invert itself, or while
-        // Hide is active -- independent of Shield/Power/Cloud/vehicles.
-        bool TriggerInvert() noexcept; // real gate: not already Invert, not Hide
+        // Gate: not while Hide (Decor.cpp:6040) -- independent of Shield/Power/Cloud/vehicles, and
+        // taken again while inverted, which restarts it (BD-0025).
+        bool TriggerInvert() noexcept;
         [[nodiscard]] bool IsInverted() const noexcept { return m_invert; }
         [[nodiscard]] int GetInvertLevel() const noexcept { return m_invertLevel; }
         // True for exactly the one Step() call where Invert's gauge reaches

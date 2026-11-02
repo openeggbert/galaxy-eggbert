@@ -1851,8 +1851,12 @@ int main(int argc, char** argv)
             BlupiController inverted;
             check(inverted.TriggerInvert(), "TriggerInvert() succeeds from no state at all");
             check(inverted.IsInverted(), "IsInverted() reflects the new state");
-            check(!inverted.TriggerInvert(),
-                  "TriggerInvert() fails while already Invert (real: blocked while already active)");
+            for (int i = 0; i < 60; ++i)
+            {
+                inverted.Step(Worlds::World(), 0.0f, 0.0f, false, false, false, dt);
+            }
+            check(inverted.TriggerInvert(),
+                  "TriggerInvert() is taken again while already Invert (Decor.cpp:6040 gates only on Hide)");
 
             BlupiController shieldedThenInvert;
             shieldedThenInvert.TriggerShield();
