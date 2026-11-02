@@ -232,6 +232,16 @@ ledgers before repeating any discovery. Where it stands:
   flagged cubes left in use (render ledger: toy balls/badges 215-236, pipes 250-260, gates 86-90,
   187-192) match `Decor/enfant*`, `tuyau*`, `meca*` scenes: they wait on Q-004 (terrain tiles as
   models).
+- Then (2026-11-03): 052's rods (`35f8b4a`, `f3c8ec2`: the first try's failure was the script's
+  re-boarding at the edge of the helicopter's box, found with a trace of parked helicopters; the
+  pit is two deep, no lava: 052 has none). The use case ledger worked through by kind: every sound
+  channel's call sites compared with Decor.cpp (`$CLAUDE_JOB_DIR`-free method: grep both sides),
+  every action's frame table compared with table_blupi. Found and fixed: the ceiling tap (BD-0034,
+  channel 4 + remaps), the mockery's timing and cut (BD-0035), the glue shot's sound (BD-0036),
+  invented march footsteps removed (BD-0037), Ouf5 after dropping off a bar (BD-0038, its clip
+  built with `build_clip_library.py --skip-check` in 38 s and only the new clip copied: a full
+  rebuild changes Hide and StopTank, which were assembled selectively), Clear4's two missing frames
+  (BD-0039). Ledger: 331 UNREVIEWED left (objects, functions).
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
   `plans/audit/lesson_inventory.md` (bars of 046/052/061/125, lava, water, teleporters of 105,
