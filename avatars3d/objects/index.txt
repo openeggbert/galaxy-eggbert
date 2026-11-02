@@ -53,6 +53,7 @@ door336_porte-b
 drink_bouteille
 dynamite_dynamite
 egg_oeuf
+emitter304_eclair
 exit_fleche
 fan_ventillo-h
 fish_poisson

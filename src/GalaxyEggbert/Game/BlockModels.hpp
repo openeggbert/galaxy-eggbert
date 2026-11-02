@@ -50,9 +50,10 @@ namespace GalaxyEggbert::Game
     // owner 2026-11-02: a cube with a sprite), its frame per tick (SpringFrameIcon below).
     // The clay bridge 364 and its shaking 365-366 (Decor/grotte-fragile1.rd4; its crumbling pieces
     // 367-372 are the ObjectType52's, drawn in the same cell).
-    inline constexpr std::array<std::uint16_t, 21> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+    // The lightning's emitter 304 (Decor/eclair.rd4, IoU 0.94), its front toward the open side.
+    inline constexpr std::array<std::uint16_t, 22> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
-                                                                     334, 335, 336, 211, 364, 365, 366};
+                                                                     334, 335, 336, 211, 364, 365, 366, 304};
 
     // The spring 211 is drawn as Decor/ressort.rd4 always bouncing as the original draws it:
     // Tables::table_ressort[(m_time / 2 + column * 7) % 8] (Decor.cpp:926-929; the column's 7
@@ -88,7 +89,7 @@ namespace GalaxyEggbert::Game
     // Still icons whose model has a front (the original is a front view: the teleporters' lights
     // and letter, the trestle's frame), turned toward the cell's open side
     // (TerrainRenderer::ModelCell::openSide).
-    inline constexpr std::array<std::uint16_t, 5> kFrontModelIcons{330, 331, 332, 333, 199};
+    inline constexpr std::array<std::uint16_t, 6> kFrontModelIcons{330, 331, 332, 333, 199, 304};
 
     // The turn about Y (radians) putting a model's front, +Z at no turn, toward side 0 +X, 1 -X,
     // 2 +Z, 3 -Z: CreateRotationY(a) turns +Z to (sin a, 0, cos a).

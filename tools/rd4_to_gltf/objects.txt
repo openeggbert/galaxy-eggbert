@@ -155,3 +155,6 @@ worlddone166 object-m 166-173,310,416-420 Decor/world2b.rd4 tone=0.50,48
 # plain brown slab, a lump of clay over it as it crumbled): Decor/grotte-fragile1.rd4, its frames
 # 1-8 the nine icons (IoU 0.848-0.865; tone 17.2 -> 6.9).
 bridge364   object-m 364-372 Decor/grotte-fragile1.rd4 tone=0.84,-3
+# The lightning's emitter (304; owner 2026-11-02: the lightning in 3D): Decor/eclair.rd4 (IoU 0.94,
+# tone 29.5 -> 19.9). The bolt between two emitters (305-307) has no scene.
+emitter304  object-m 304 Decor/eclair.rd4 tone=0.75,13

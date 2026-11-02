@@ -1,0 +1,76 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "emitter304_rd_0dcb0d",
+      "vertices": "emitter304_rd_0dcb0d.verts.bin",
+      "indices": "emitter304_rd_0dcb0d.idx.bin",
+      "vertexStride": 52,
+      "texture": "emitter304_rd_0dcb0d.png",
+      "diffuseColor": [
+        0.004026504358339251,
+        0.6004429799825834,
+        0.004026504358339251,
+        1.0
+      ]
+    },
+    {
+      "name": "emitter304_rd_cb0d0d",
+      "vertices": "emitter304_rd_cb0d0d.verts.bin",
+      "indices": "emitter304_rd_cb0d0d.idx.bin",
+      "vertexStride": 52,
+      "texture": "emitter304_rd_cb0d0d.png",
+      "diffuseColor": [
+        0.6004429799825834,
+        0.004026504358339251,
+        0.004026504358339251,
+        1.0
+      ]
+    },
+    {
+      "name": "emitter304_rd_0d9ccb",
+      "vertices": "emitter304_rd_0d9ccb.verts.bin",
+      "indices": "emitter304_rd_0d9ccb.idx.bin",
+      "vertexStride": 52,
+      "texture": "emitter304_rd_0d9ccb.png",
+      "diffuseColor": [
+        0.004026504358339251,
+        0.3339316680220639,
+        0.6004429799825834,
+        1.0
+      ]
+    },
+    {
+      "name": "emitter304_rd_cca50d",
+      "vertices": "emitter304_rd_cca50d.verts.bin",
+      "indices": "emitter304_rd_cca50d.idx.bin",
+      "vertexStride": 52,
+      "texture": "emitter304_rd_cca50d.png",
+      "diffuseColor": [
+        0.6055236806869145,
+        0.37747385542687173,
+        0.004026504358339251,
+        1.0
+      ]
+    },
+    {
+      "name": "emitter304_rd_6e0d0d",
+      "vertices": "emitter304_rd_6e0d0d.verts.bin",
+      "indices": "emitter304_rd_6e0d0d.idx.bin",
+      "vertexStride": 52,
+      "texture": "emitter304_rd_6e0d0d.png",
+      "diffuseColor": [
+        0.15718158711848615,
+        0.004026504358339251,
+        0.004026504358339251,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}
