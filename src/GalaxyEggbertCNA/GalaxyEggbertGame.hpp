@@ -441,6 +441,10 @@ namespace GalaxyEggbert::CNA
         // His charred frames (element.png 40-47, Clear1 and Clear3) drawn as his model
         // (CharredBlupi.hpp); not charred otherwise, or without the real model.
         [[nodiscard]] GalaxyEggbert::Game::CharredShape BlupiCharredShape() const;
+        // A conveyor lift's (47/48) tread model for its current frame (Decor/chenille.rds,
+        // table_chenille/chenillei's 311-316), or null: then it is drawn as a textured cube.
+        [[nodiscard]] const GalaxyEggbert::Game::ObjectModelPose* ConveyorLiftModel(
+            const GalaxyEggbert::Game::MobileObjSpec& obj) const;
         // The skateboard on its way between the ground and his hands (OR-0003): put down at
         // TakeSkate's tick 8 is when the original deletes the board from the ground
         // (Decor.cpp:4510-4518), DeposeSkate's tick 12 when it starts it there.

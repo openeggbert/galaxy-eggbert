@@ -2114,6 +2114,21 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    const ObjectModelPose* GalaxyEggbertGame::ConveyorLiftModel(const MobileObjSpec& obj) const
+    {
+        if (obj.type != GalaxyEggbert::Def::ObjectType::ObjectType47 &&
+            obj.type != GalaxyEggbert::Def::ObjectType::ObjectType48)
+        {
+            return nullptr;
+        }
+        const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+        if (!obj.active || !visual.visible)
+        {
+            return nullptr;
+        }
+        return objectModelTable_.Find(ObjectTextureSource::ObjectM, visual.icon);
+    }
+
     void GalaxyEggbertGame::ApplyCheat(int cheatNumber)
     {
         switch (cheatNumber)
@@ -5231,6 +5246,10 @@ namespace GalaxyEggbert::CNA
                     {
                         continue;
                     }
+                    if (ConveyorLiftModel(obj) != nullptr)
+                    {
+                        continue; // drawn as Decor/chenille.rds in the model pass
+                    }
                     const Microsoft::Xna::Framework::Vector3 center(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
                     const auto tileUv = tileAtlas_.GetTileUv(visual.icon);
@@ -5655,6 +5674,13 @@ namespace GalaxyEggbert::CNA
                     {
                         drawBridgeRows(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
                                        obj.currentZ);
+                    }
+                    else if (const ObjectModelPose* conveyor = ConveyorLiftModel(obj))
+                    {
+                        // The conveyor lift (47/48): its tread on the frame table_chenille(i) shows,
+                        // stretched across the cell as the terrain conveyor (ModelDepthScale).
+                        drawModel(*conveyor, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
+                                  obj.currentZ, 0.0f, 0.0f, GalaxyEggbert::Game::ModelDepthScale(311));
                     }
                     else if (pose != nullptr)
                     {
