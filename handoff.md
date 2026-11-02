@@ -134,6 +134,15 @@ ledgers before repeating any discovery. Where it stands:
   `kFallLimit` -12.5, `kWindVerticalSpeed` 6.25; found in world 102, whose plate works go down a
   fan's updraught shaft. `tools/audit/lesson_inventory.py` lists per world what the original has
   and Galaxy leaves out (`plans/audit/lesson_inventory.md`).
+- Done 2026-11-02 (Wave E, LV-0060): world 102 gets the original's lessons it lacked: two
+  lightning curtains across the machine yard (x 23, 31; passed in one quiet half on the board),
+  the plate works' way out (a fan's updraught shaft at (86, 17) down to a gallery, the switch
+  stopping a saw on its row, a wind channel with a bar over it to a fourth teleporter 333, the
+  atrium's (61, 82)), the red key on a crumbling bridge over lava. Playthroughs 102 and 100 pass;
+  `plans/evidence/world102-lessons.png`. The lightning (305) seen live: drawn while deadly.
+  `lesson_inventory.py` now counts the bars too: 22 worlds still leave out a mechanic of their
+  original (bars in 024, 034, 046, 052, 061, 106, 113, 114, 125, 199); next by weight: 114, 113,
+  115, 107, 105, 199, then the bars and the small ones (lava pits, single fans, crushers in 084).
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not

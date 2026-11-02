@@ -3,7 +3,7 @@
 
 For every campaign world with a Mobile Eggbert counterpart: the object roles (tools/world_inventory.py
 OBJECTS) and the signature mechanic tiles (world_inventory.TILES: lava, spikes, crusher, saw, drip,
-water, spring, fan, blitz, teleport, switch, bridge, door, temp) the original uses, counted, beside
+water, spring, fan, blitz, teleport, switch, bridge, door, temp; and the bars 138/202) the original uses, counted, beside
 Galaxy's own. A role or tile the original has and Galaxy has not is listed as MISSING with the
 original's cells grouped in clusters (map x, y), so the brief can be read against it: is it a lesson
 on the original's route, or scenery? A role kept at under a third of the original's count is listed
@@ -23,11 +23,13 @@ import vwr_inspect  # noqa: E402
 import world_inventory as wi  # noqa: E402
 
 OUT = REPO / "plans" / "audit" / "lesson_inventory.md"
+# world_inventory.TILES and the mechanics it leaves out: the bars Blupi hangs from (138, 202).
+TILES = list(wi.TILES) + [("bar", (138, 202))]
 CLUSTER = 9  # cells: marks closer than this on both axes belong to one place
 
 
 def tile_cells(icons_at, name):
-    rng = dict(wi.TILES)[name]
+    rng = dict(TILES)[name]
     return sorted(p for p, v in icons_at.items() if v in rng)
 
 
@@ -66,12 +68,12 @@ def report(ref_dir):
                 missing.append("%s %d" % (role, count))
             elif go[role] * 3 < count:
                 thinned.append("%s %d -> %d" % (role, count, go[role]))
-        for name, rng in wi.TILES:
+        for name, rng in TILES:
             cells = tile_cells(ref["grid"], name)
             if cells and not any(gicons[i] for i in rng):
                 missing.append("%s: %s" % (name, " ".join(clusters(cells))))
         added = ["%s %d" % (r, c) for r, c in sorted(go.items()) if r not in ro]
-        added += [name for name, rng in wi.TILES
+        added += [name for name, rng in TILES
                   if any(gicons[i] for i in rng) and not tile_cells(ref["grid"], name)]
         if missing or thinned or added:
             lines.append("| %03d | %s | %s | %s |" % (n, "; ".join(missing) or "-", "; ".join(thinned) or "-",

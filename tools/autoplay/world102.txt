@@ -12,7 +12,14 @@ until x <= 30 max 900
 go 12 14.85 tol 0.15
 hold 2 action
 wait 20
-go 21 12 max 600
+# Through both columns of lightning (x 23 and 31) in one quiet half of their cycle (it strikes
+# on the even ticks of 0-49), the mines between going off under the board: from a standstill at
+# x 14 the board is at full speed by the first column.
+go 14 12 tol 0.3 max 600
+wait 90
+log board stopped
+trace 400
+until blitz = 6 max 400
 go 35 12 max 900
 # The board glides on; it is left only below 8 px a tick and not on the lift it would glide
 # onto from x 37 (Decor.cpp:4499, OR-0020).
@@ -77,8 +84,25 @@ face 0
 hold 8 up jump
 hold 30 up
 until ground = 1
-go 62 8
-go 60 7 until z >= 60 max 900
+# East to the shaft (86, 17) and down it in the fan's updraught, stepping off the column east at
+# the bottom (the fan's mouth at its foot kills) beside the switch (88, 17), which stops the saw
+# (81, 17); round the fan's mouth (z 16), west through the saw's passage, north to the wind
+# channel (z 12), blown west to teleporter 333 (70, 12), back to the atrium's fourth alcove
+# (61, 82).
+go 86 8.5
+go 86 16 tol 0.1
+go 86 17.2 tol 0.15
+until y <= 10.5 max 120
+go 88 17 tol 0.15 max 600
+until ground = 1
+hold 2 action
+wait 30
+go 87.5 15.8 tol 0.15
+go 84.5 15.8 tol 0.15
+go 83 17 tol 0.1
+go 76 17 tol 0.1 max 900
+go 76 12.5 tol 0.1
+go 74 12 until z >= 60 max 900
 until z >= 60 max 900
 # Teleporter 332 (west wall, (39, 82)) to the rock cave (walk 10, arriving at (10, 50)). South
 # through the low passage (x 10-11) crouching under its hanging mines; the wasp's lane (z 75,
@@ -94,8 +118,15 @@ go 11 73.4 tol 0.15
 near 20 10 75 0.3 lane x max 900
 go 11 77
 go 15 77
-go 15 84 until keys = 3 max 600
-until keys = 3 max 200
+go 16 80.5 tol 0.15
+# The red key on the crumbling bridge (x 17-22, z 82, lava under it): along it without stopping
+# (each cell gives way 16 ticks after he steps on it), the key taken on the way, off its east
+# end and back round the pool's north side.
+go 16 82 tol 0.1
+go 24 82 tol 0.2 max 600
+expect keys = 3
+go 23.5 78.6 tol 0.15
+go 16 78.6 tol 0.15
 # Back north past the wasp and through the passage, teleporter 332's pillar (10, 50) back.
 go 15 77
 go 11 76.6 tol 0.15

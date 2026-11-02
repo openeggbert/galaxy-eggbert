@@ -7,14 +7,19 @@ other works, each holding a key: blue machine panels where Blupi rides a skatebo
 row of mines, takes a lift up and crosses on caterpillar platforms (47) carrying him along to
 the green key; grey riveted plates round a pool where two fish swim over the blue key; a cave of
 brown rock where seven hanging mines hang over a low passage (crouch), a wasp flies and the red
-key lies by lava. Here the atrium is a hall cut in cobble with its three doors and three
-teleporters, and each work floats in the sky round it: the machine deck, the plate hall, the
-rock cave.
+key lies on a crumbling bridge (364) over lava. The machine works' way passes two columns of lightning (304/305), one each side
+of the mines; from the plate works' pool a shaft goes down in a fan's updraught (132) to a
+gallery where a switch (384) stops a saw (378), and a fan's wind (126) blows Blupi along to a
+fourth teleporter (333) back to the atrium. Here the atrium is a hall cut in cobble with its
+three doors and four teleporters, and each work floats in the sky round it: the machine deck,
+the plate hall, the rock cave.
 
     python3 tools/worlds/world102.py                 # writes worlds3d/world102.vwr
     python3 tools/worlds/world102.py --stage K out   # for levelcheck: K >= 1 the mines ridden over,
                                                      # the hanging mines crouched under, the
-                                                     # caterpillars as floors; K >= 2 the doors open
+                                                     # caterpillars as floors, the lightning
+                                                     # passed between flashes, the saw stopped;
+                                                     # K >= 2 the doors open
 """
 
 import random
@@ -25,12 +30,17 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from cobbles import carve, dress, rock  # noqa: E402
 from kit import MACHINE_FACES, MACHINE_FLOOR, O, World, lift, mine, wall  # noqa: E402
-from station import metal, water  # noqa: E402
+from station import BLITZ, BLITZ_EMITTER, metal, water  # noqa: E402
 from village import ROCK, ROCK_FACES  # noqa: E402
 
 RED_DOOR, GREEN_DOOR, BLUE_DOOR = 334, 335, 336
-TP_MACHINE, TP_PLATES, TP_ROCK = 330, 331, 332
+TP_MACHINE, TP_PLATES, TP_ROCK, TP_BACK = 330, 331, 332, 333
 LAVA = 68
+BRIDGE = 364                           # crumbles under Blupi and comes back (Decor::IsBridge)
+BAR = 138
+SAW, SWITCH = 378, 384                 # the switch on: its saws turn (Decor::ActiveSwitch)
+FAN_UP, WIND_UP = 132, 118             # blowing +Y; its wind tiles over it
+FAN_WEST, WIND_WEST = 126, 110         # blowing -X; its wind tiles before it
 
 
 def main(argv) -> int:
@@ -56,7 +66,9 @@ def main(argv) -> int:
         if not opened:
             w.fill(x, 6, 67, x, 7, 67, door)
         w.place(O.TREASURE, x, 6, 65)
-    for icon, x, z in ((TP_MACHINE, 39, 74), (TP_ROCK, 39, 82), (TP_PLATES, 61, 74)):
+    # The fourth (333): the plate works' way back. The first 333 in the scan (x first, as
+    # Decor::SearchTeleporte), so the gallery's sends Blupi here, and this one to the gallery.
+    for icon, x, z in ((TP_MACHINE, 39, 74), (TP_ROCK, 39, 82), (TP_PLATES, 61, 74), (TP_BACK, 61, 82)):
         carve(w, x, 6, z, x, 7, z + 1)
         teleporter(icon, x, 6, z)
     w.place(O.EXIT, 50, 6, 89)
@@ -83,6 +95,15 @@ def main(argv) -> int:
         for x in (26, 27, 28):
             for z in (11, 12, 13):
                 mine(w, x, 20, z)
+    # Two columns of lightning across the yard, one before the mines and one after them, as the
+    # original's way has (its x 34 and 45): an emitter beam over the lane, the lightning down to
+    # the floor. Both strike together (Decor::BlitzActif's one 100-tick cycle): eight cells apart,
+    # a board at full speed (~4.6 cells/s) passes both in one quiet half (2.5 s) with ~0.5 s to
+    # spare.
+    for x in (23, 31):
+        w.fill(x, 23, 11, x, 23, 13, BLITZ_EMITTER)
+        if not ridden:
+            w.fill(x, 20, 11, x, 22, 13, BLITZ)
     carve(w, 39, 18, 11, 41, 19, 13)
     w.fill(39, 18, 11, 41, 18, 13, LAVA)
     for x in (39, 40):
@@ -117,6 +138,33 @@ def main(argv) -> int:
     if not ridden:
         mine(w, 63, 12, 17)
 
+    # ---- the gallery under the plate hall (walk 2) ----
+    # East of the pool a shaft goes down from the hall's floor in the updraught of a fan at its
+    # foot: it slows his fall to half (BD-0029); landing on the fan's mouth kills him and wrecks
+    # it, stepping off the column at the bottom lands him beside it. In the room at its foot, east
+    # of the shaft, the switch; west, a passage one wide with a saw in its floor (the switch's
+    # row, z 17), then north to a channel along X where a fan's wind blows him west to the
+    # teleporter (333) back to the atrium. The original's grey works: the shaft at its x 18, the
+    # switch at 16, the saw at 21, the wind channel to the teleporter (333) at 33.
+    metal(w, 68, 0, 10, 90, 5, 20, rng)
+    metal(w, 85, 5, 16, 87, 9, 18, rng)                                 # the shaft's casing
+    carve(w, 84, 2, 15, 89, 4, 19)                                       # the room at its foot
+    carve(w, 86, 5, 17, 86, 11, 17)                                      # the shaft
+    w.set(86, 1, 17, FAN_UP)
+    w.fill(86, 2, 17, 86, 11, 17, WIND_UP)
+    w.set(88, 1, 17, SWITCH)
+    carve(w, 76, 2, 17, 83, 3, 17)                                       # the saw's passage
+    w.set(81, 1, 17, MACHINE_FLOOR if ridden else SAW)
+    carve(w, 76, 2, 13, 76, 3, 16)                                       # north to the channel
+    carve(w, 70, 2, 12, 88, 3, 12)                                       # the wind channel
+    w.set(89, 2, 12, FAN_WEST)
+    w.fill(71, 2, 12, 88, 2, 12, WIND_WEST)
+    # A bar two over its floor (the original's 138 at its x 26-30 over the wind): hanging from
+    # it he is out of the wind and goes hand over hand against it.
+    carve(w, 72, 4, 12, 80, 4, 12)
+    w.fill(73, 4, 12, 79, 4, 12, BAR)
+    teleporter(TP_BACK, 70, 2, 12)
+
     # ---- the rock cave (walk 10), south-west in the sky ----
     # The arrival cave; south of it a low passage two wide where seven mines hang in Blupi's way
     # (crouch under them); the cave beyond, pools of lava, a wasp, the red key in a pocket
@@ -139,7 +187,12 @@ def main(argv) -> int:
     for x0, z0, x1, z1 in ((8, 78, 13, 83), (17, 80, 22, 85), (14, 86, 19, 90)):
         w.fill(x0, 9, z0, x1, 9, z1, LAVA)
     w.place(O.WASP, 10, 10, 75, end=(20, 10, 75), advance=24, recede=24, stop_start=8, stop_end=8)
-    w.place(O.KEY1, 15, 10, 84)
+    # The red key on a crumbling bridge (364) one wide across the middle pool, lava under it, as
+    # the original lays it on its bridge of five over lava (its x 74-78): each cell shakes 16
+    # ticks under him and gives way, so he takes the key walking and goes on.
+    w.fill(17, 8, 82, 22, 8, 82, LAVA)
+    w.fill(17, 9, 82, 22, 9, 82, BRIDGE)
+    w.place(O.KEY1, 20, 10, 82)
 
     w.save(out)
     print(f"wrote {out}")

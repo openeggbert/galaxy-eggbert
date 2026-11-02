@@ -8,11 +8,17 @@ the hanging mines crouched under, the caterpillars as floors; K ≥ 2 the three 
 starts by the exit, three treasures beside it, each behind a coloured door (334 red, 335 green,
 336 blue), and teleporters (330-333, 4:02:52) to three other works, each holding a key:
 - blue machine panels (10): five skateboards (24) by a row of nine mines (the skateboard sets
-  them off and rides on), a lift up from lava, five caterpillar platforms (47) carrying Blupi
-  along with a gap between each, the green key (50);
+  them off and rides on) between two columns of lightning (304/305, its x 34 and 45), a lift up
+  from lava, five caterpillar platforms (47) carrying Blupi along with a gap between each, the
+  green key (50);
 - grey riveted plates (78-83): a pool where two fish (17) swim, the blue key (51) in it, a mine;
+  from it a shaft down in the updraught of a fan at its foot (132; video 4:02:10: he sinks down
+  it, lands on the fan and dies, wrecking it), a switch (384) beside the foot that stops the saw
+  (378) in the passage on, and a channel where a fan's wind (129) blows him to a fourth
+  teleporter (333) back to the start, a bar (138) over it;
 - brown rock (284, 301): seven hanging mines (3) over a low passage (crouch under them), a wasp
-  (44), lava, the red key (49).
+  (44), the red key (49) on a crumbling bridge of five (364) over lava, a teleporter (333) on
+  beyond it back to the start.
 
 **3D design**: the atrium cut in cobble, each work floating in the sky round it, a teleporter
 pair to each (Blupi walks back to the pillar he came by).
@@ -25,13 +31,26 @@ pair to each (Blupi walks back to the pillar he came by).
   platforms (48, carrying west: the original's 47 mirrored to bring him back over the yard), a
   gap of one between them, to the green key's platform; from it a drop back onto the deck.
 - The plate hall (walk 12, north-east): a pool level with the floor (climb out anywhere), two fish
-  crossing it, the blue key on its bottom, a mine by it.
+  crossing it, the blue key on its bottom, a mine by it. East of the pool a shaft (86, 17) down
+  in a fan's updraught (the fan in the floor at its foot, walk 2: it halves his fall, BD-0029;
+  its mouth kills, so he steps off the column at the bottom); in the room at its foot the switch
+  (88, 17), west of it a passage one wide with a saw in its floor (81, 17) on the switch's row;
+  north to a channel (z 12) where a fan (89, 12) blows him west to teleporter 333 (70, 12) (a bar
+  two over its floor, x 73-79, to go against the wind hand over hand, as the original's), whose
+  partner is the atrium's fourth alcove (61, 82, east wall). Added 2026-11-02 (Wave E,
+  `plans/audit/lesson_inventory.md`).
+- The machine yard's lightning: two columns across the lane (x 23 and 31, emitters at y 23),
+  before and after the mines, passed in the cycle's quiet half (Decor::BlitzActif). Added
+  2026-11-02.
 - The rock cave (walk 10, south-west): the arrival cave; a low passage two wide and two high,
   seven mines hanging in Blupi's walking cells (only a crouching Blupi passes them); the cave
-  beyond: three pools of lava, a wasp crossing at his height, the red key between the pools.
+  beyond: three pools of lava, a wasp crossing at his height, the red key on a crumbling bridge
+  one wide across the middle pool (x 17-22, z 82; added 2026-11-02). He returns by the teleporter
+  he came by: a third 333 here would come first in the teleporters' scan (x first) and take the
+  plate works' way back (a 3D layout adaptation).
 
 **Checks**: `levelcheck.py`: stage 2 reaches the three keys, the three treasures and the exit;
-stage 1 stops at the doors; the real world stops at the mines and the hanging mines.
+stage 1 (also the lightning and the saw passed) stops at the doors; the real world stops at the mines and the hanging mines.
 `VerifyShippedWorlds`. Live (`--mission 102`, direct view F3 at spawns in each part): the atrium's
 doors, a teleporter alcove, the deck's skateboards, the yard's mines, the plate hall's pool, the
 passage's hanging mines, the cave's lava and wasp. Played live: crouching through the passage
