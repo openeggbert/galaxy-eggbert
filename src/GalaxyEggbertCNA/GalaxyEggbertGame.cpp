@@ -5563,7 +5563,7 @@ namespace GalaxyEggbert::CNA
                 auto& decalCells = signDecalCells_;
                 decalCells.clear();
                 const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
-                                           float rollRadians = 0.0f)
+                                           float rollRadians = 0.0f, float depthScale = 1.0f)
                 {
                     auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
                     model.ComputeBoneTransformsEXT(
@@ -5580,6 +5580,7 @@ namespace GalaxyEggbert::CNA
                             (pose.mirror == 1 ? -kFlipShift : 0.0f) + static_cast<float>(pose.offsetX) / 64.0f,
                             (pose.mirror == 2 ? kFlipShift : 0.0f) - static_cast<float>(pose.offsetY) / 64.0f,
                             0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateScale(1.0f, 1.0f, depthScale) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationZ(rollRadians) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(turnRadians) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(x, y, z));
@@ -5599,13 +5600,28 @@ namespace GalaxyEggbert::CNA
                             part.Part->getPrimitiveCountProperty());
                     }
                 };
+                // The clay bridge: its row of lumps across the whole cell (BlockModels.hpp).
+                const auto drawBridgeRows = [&](const ObjectModelPose& pose, float x, float y, float z)
+                {
+                    for (int row = 0; row < GalaxyEggbert::Game::kBridgeRows; ++row)
+                    {
+                        const auto placement = GalaxyEggbert::Game::BridgeRowPlacement(row);
+                        drawModel(pose, x, y, z + placement.dz, placement.yaw);
+                    }
+                };
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
                 {
                     ObjectTextureSource sheet{};
                     int icon = 0;
                     const ObjectModelPose* pose =
                         ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
-                    if (pose != nullptr)
+                    if (pose != nullptr && sheet == ObjectTextureSource::ObjectM &&
+                        GalaxyEggbert::Game::IsClayBridgeIcon(icon))
+                    {
+                        drawBridgeRows(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
+                                       obj.currentZ);
+                    }
+                    else if (pose != nullptr)
                     {
                         // A sprite only faces left or right, along X, by its travel along X. One
                         // patrolling mainly along Z is turned from that facing to its real one.
@@ -5744,9 +5760,14 @@ namespace GalaxyEggbert::CNA
                                                               GalaxyEggbert::Game::FrontModelYaw(cell.openSide)});
                                     }
                                 }
+                                else if (GalaxyEggbert::Game::IsClayBridgeIcon(cell.base))
+                                {
+                                    drawBridgeRows(*still, cell.x, cell.y, cell.z);
+                                }
                                 else
                                 {
-                                    drawModel(*still, cell.x, cell.y, cell.z);
+                                    drawModel(*still, cell.x, cell.y, cell.z, 0.0f, 0.0f,
+                                              GalaxyEggbert::Game::ModelDepthScale(cell.base));
                                 }
                             }
                             continue;

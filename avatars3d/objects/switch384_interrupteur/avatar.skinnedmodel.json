@@ -1,0 +1,102 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "switch384_rd_680f0f",
+      "vertices": "switch384_rd_680f0f.verts.bin",
+      "indices": "switch384_rd_680f0f.idx.bin",
+      "vertexStride": 52,
+      "texture": "switch384_rd_680f0f.png",
+      "diffuseColor": [
+        0.13926348218780052,
+        0.004794747485689938,
+        0.004794747485689938,
+        1.0
+      ]
+    },
+    {
+      "name": "switch384_rd_0fc00f",
+      "vertices": "switch384_rd_0fc00f.verts.bin",
+      "indices": "switch384_rd_0fc00f.idx.bin",
+      "vertexStride": 52,
+      "texture": "switch384_rd_0fc00f.png",
+      "diffuseColor": [
+        0.004794747485689938,
+        0.5319173385877727,
+        0.004794747485689938,
+        1.0
+      ]
+    },
+    {
+      "name": "switch384_rd_0f94c0",
+      "vertices": "switch384_rd_0f94c0.verts.bin",
+      "indices": "switch384_rd_0f94c0.idx.bin",
+      "vertexStride": 52,
+      "texture": "switch384_rd_0f94c0.png",
+      "diffuseColor": [
+        0.004794747485689938,
+        0.3001899555074033,
+        0.5319173385877727,
+        1.0
+      ]
+    },
+    {
+      "name": "switch384_rd_4a4a4a",
+      "vertices": "switch384_rd_4a4a4a.verts.bin",
+      "indices": "switch384_rd_4a4a4a.idx.bin",
+      "vertexStride": 52,
+      "texture": "switch384_rd_4a4a4a.png",
+      "diffuseColor": [
+        0.06934015951084317,
+        0.06934015951084317,
+        0.06934015951084317,
+        1.0
+      ]
+    },
+    {
+      "name": "switch384_rd_c19d0f",
+      "vertices": "switch384_rd_c19d0f.verts.bin",
+      "indices": "switch384_rd_c19d0f.idx.bin",
+      "vertexStride": 52,
+      "texture": "switch384_rd_c19d0f.png",
+      "diffuseColor": [
+        0.5366518966727282,
+        0.3375422533305345,
+        0.004794747485689938,
+        1.0
+      ]
+    },
+    {
+      "name": "switch384_rd_tex_p11_Cube_1",
+      "vertices": "switch384_rd_tex_p11_Cube_1.verts.bin",
+      "indices": "switch384_rd_tex_p11_Cube_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "switch384_rd_tex_p11_Cube_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "switch384_rd_tex_p12_Cube_1",
+      "vertices": "switch384_rd_tex_p12_Cube_1.verts.bin",
+      "indices": "switch384_rd_tex_p12_Cube_1.idx.bin",
+      "vertexStride": 52,
+      "texture": "switch384_rd_tex_p12_Cube_1.png",
+      "diffuseColor": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

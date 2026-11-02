@@ -2,19 +2,6 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "bridge364_rd_00d3d3",
-      "vertices": "bridge364_rd_00d3d3.verts.bin",
-      "indices": "bridge364_rd_00d3d3.idx.bin",
-      "vertexStride": 52,
-      "texture": "bridge364_rd_00d3d3.png",
-      "diffuseColor": [
-        0.0,
-        0.6523787187331539,
-        0.6523787187331539,
-        1.0
-      ]
-    },
-    {
       "name": "bridge364_rd_955107",
       "vertices": "bridge364_rd_955107.verts.bin",
       "indices": "bridge364_rd_955107.idx.bin",

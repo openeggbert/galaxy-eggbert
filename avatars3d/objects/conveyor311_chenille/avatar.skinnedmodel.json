@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "conveyor311_rd_0a89b2",
+      "vertices": "conveyor311_rd_0a89b2.verts.bin",
+      "indices": "conveyor311_rd_0a89b2.idx.bin",
+      "vertexStride": 52,
+      "texture": "conveyor311_rd_0a89b2.png",
+      "diffuseColor": [
+        0.0033353136322752906,
+        0.25091426984647414,
+        0.44798841244188325,
+        1.0
+      ]
+    },
+    {
+      "name": "conveyor311_rd_5f5f5f",
+      "vertices": "conveyor311_rd_5f5f5f.verts.bin",
+      "indices": "conveyor311_rd_5f5f5f.idx.bin",
+      "vertexStride": 52,
+      "texture": "conveyor311_rd_5f5f5f.png",
+      "diffuseColor": [
+        0.11472528427893856,
+        0.11472528427893856,
+        0.11472528427893856,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

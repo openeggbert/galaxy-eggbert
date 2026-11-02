@@ -4,25 +4,18 @@
 
 | State | Scenes |
 |---|---|
-| in game | 155 |
+| in game | 162 |
 | in game otherwise | 8 |
 | converted, not exported | 0 |
 | terrain tile (Q-004) | 129 |
-| matched, not converted | 8 |
+| matched, not converted | 1 |
 | no game sprite | 228 |
 
 ## Matched, not converted
 
 | Scene | Sprites rendered from it |
 |---|---|
-| `Decor/chenille.rds` | object-m:311 object-m:312 object-m:313 object-m:314 object-m:315 object-m:316 |
-| `Decor/colonne1.rds` | object-m:375 |
 | `Decor/electro.rd4` | object-m:238 object-m:239 object-m:240 object-m:242 |
-| `Decor/goutte/goutte01.rds` | object-m:404 |
-| `Decor/goutte/goutte02.rds` | object-m:405 |
-| `Decor/goutte/goutte03.rds` | object-m:406 |
-| `Decor/goutte/goutte04.rds` | object-m:407 |
-| `Decor/interrupteur.rd4` | object-m:384 object-m:385 |
 
 ## Terrain tile (q-004)
 
@@ -259,9 +252,16 @@
 | `Blupi/tracks-profil.rd4` | element:57 |
 | `Decor/aplatisseur.rd4` | object-m:317 object-m:318 object-m:319 object-m:320 |
 | `Decor/barre.rd4` | object-m:138 |
+| `Decor/chenille.rds` | object-m:311 object-m:312 object-m:313 object-m:314 object-m:315 object-m:316 |
+| `Decor/colonne1.rds` | object-m:375 |
 | `Decor/dynamite.rd4` | element:252 element:253 element:254 element:255 |
 | `Decor/eclair.rd4` | object-m:304 |
+| `Decor/goutte/goutte01.rds` | object-m:404 |
+| `Decor/goutte/goutte02.rds` | object-m:405 |
+| `Decor/goutte/goutte03.rds` | object-m:406 |
+| `Decor/goutte/goutte04.rds` | object-m:407 |
 | `Decor/grotte-fragile1.rd4` | object-m:364 object-m:365 object-m:366 object-m:367 |
+| `Decor/interrupteur.rd4` | object-m:384 object-m:385 |
 | `Decor/palais/big0108.rds` | object-m:399 |
 | `Decor/palais/big02.rds` | - |
 | `Decor/palais/statue.rds` | - |

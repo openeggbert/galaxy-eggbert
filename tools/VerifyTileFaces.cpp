@@ -260,6 +260,36 @@ int main()
               "a teleporter's front turns to its open side (+X, -X, +Z, -Z)");
     }
 
+    // The clay bridge's row of lumps is drawn across its whole cell (BlockModels.hpp, owner
+    // 2026-11-02): the rows, placed and turned, span the cell from edge to edge without a gap,
+    // every other one turned round.
+    {
+        using Microsoft::Xna::Framework::Matrix;
+        using Microsoft::Xna::Framework::Vector3;
+        namespace G = GalaxyEggbert::Game;
+        float lo = 1.0f, hi = -1.0f, lastFar = -0.5f;
+        bool noGap = true, alternate = true;
+        for (int row = 0; row < G::kBridgeRows; ++row)
+        {
+            const auto placement = G::BridgeRowPlacement(row);
+            const auto centre = Vector3::Transform(Vector3(0.0f, 0.0f, G::kBridgeRowCentreZ),
+                                                   Matrix::CreateRotationY(placement.yaw));
+            const float near = centre.Z + placement.dz - G::kBridgeRowDepth / 2.0f;
+            const float far = centre.Z + placement.dz + G::kBridgeRowDepth / 2.0f;
+            noGap = noGap && near <= lastFar + 1e-4f;
+            lastFar = far;
+            lo = std::min(lo, near);
+            hi = std::max(hi, far);
+            alternate = alternate && ((row % 2 == 1) == (placement.yaw > 1.0f));
+        }
+        check(std::fabs(lo + 0.5f) < 1e-3f && std::fabs(hi - 0.5f) < 1e-3f && noGap,
+              "the clay bridge's rows cover its cell from edge to edge without a gap");
+        check(alternate, "every other row of the clay bridge is turned round");
+        check(G::IsClayBridgeIcon(364) && G::IsClayBridgeIcon(372) && !G::IsClayBridgeIcon(363) &&
+                  !G::IsClayBridgeIcon(373),
+              "the clay bridge's icons are 364-372");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

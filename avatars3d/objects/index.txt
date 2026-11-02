@@ -37,7 +37,9 @@ bd_vase1_vase1
 bird_oiseau
 bridge364_grotte-fragile1
 bulldozer_tracks-profil
+column375_colonne1
 column_support1
+conveyor311_chenille
 creature_creature1
 creature_creature1y
 creature_creature2
@@ -86,6 +88,7 @@ spring211_ressort
 statue_statue
 support3_support3
 support_support2
+switch384_interrupteur
 teleporter1_teleporteur1
 teleporter2_teleporteur2
 teleporter3_teleporteur3

@@ -153,11 +153,18 @@ worldsign158 object-m 158-165,309,411-415 Decor/world2a.rd4 tone=0.50,70
 worlddone166 object-m 166-173,310,416-420 Decor/world2b.rd4 tone=0.50,48
 # The clay bridge (364, shaking 365-366, crumbling 367-372: Tables::table_bridge; owner 2026-11-02: a
 # plain brown slab, a lump of clay over it as it crumbled): Decor/grotte-fragile1.rd4, its frames
-# 1-8 the nine icons (IoU 0.848-0.865; tone 17.2 -> 6.9).
-bridge364   object-m 364-372 Decor/grotte-fragile1.rd4 tone=0.84,-3
+# 1-8 the nine icons (IoU 0.858-0.903; tone 17.2 -> 8.2). Part 2, a teal 'Flat Surface' under the
+# camera's frame, is left out: it showed in 3D as cyan balls in the gap under the bridge. The game
+# draws the row of lumps four times across the cell (BlockModels.hpp kBridgeRows).
+bridge364   object-m 364-372 Decor/grotte-fragile1.rd4 drop=2 tone=0.84,-3
 # The slime drip (BD-0033): Decor/goutte/goutte01-04.rds, 404-408 (its smallest drops 409-410 have
 # no scene and are not drawn).
 drip404     object-m 404-410 Decor/goutte/goutte01.rds,Decor/goutte/goutte02.rds,Decor/goutte/goutte03.rds,Decor/goutte/goutte04.rds min_iou=0.3 tone=0.57,68
 # The lightning's emitter (304; owner 2026-11-02: the lightning in 3D): Decor/eclair.rd4 (IoU 0.94,
 # tone 29.5 -> 19.9). The bolt between two emitters (305-307) has no scene.
 emitter304  object-m 304 Decor/eclair.rd4 tone=0.75,13
+# OR-0050's sweep (plans/audit/model_sources.md): the saws' switch, the conveyor (stretched along Z
+# to the cell's depth, BlockModels.hpp ModelDepthScale) and a column.
+switch384   object-m 384-385 Decor/interrupteur.rd4 tone=0.70,15
+conveyor311 object-m 311-316 Decor/chenille.rds tone=0.66,11
+column375   object-m 375 Decor/colonne1.rds tone=0.86,-13

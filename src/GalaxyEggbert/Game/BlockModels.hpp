@@ -54,9 +54,14 @@ namespace GalaxyEggbert::Game
     // The clay bridge 364 and its shaking 365-366 (Decor/grotte-fragile1.rd4; its crumbling pieces
     // 367-372 are the ObjectType52's, drawn in the same cell).
     // The lightning's emitter 304 (Decor/eclair.rd4, IoU 0.94), its front toward the open side.
-    inline constexpr std::array<std::uint16_t, 22> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+    // The saws' switch 384/385 (Decor/interrupteur.rd4, IoU 1.0, front toward the open side), the
+    // conveyor 311-316 (Decor/chenille.rds, 0.95-0.96) and the column 375 (Decor/colonne1.rds, 0.90)
+    // (OR-0050's sweep).
+    inline constexpr std::array<std::uint16_t, 31> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
-                                                                     334, 335, 336, 211, 364, 365, 366, 304};
+                                                                     334, 335, 336, 211, 364, 365, 366, 304,
+                                                                     384, 385, 311, 312, 313, 314, 315, 316,
+                                                                     375};
 
     // The spring 211 is drawn as Decor/ressort.rd4 always bouncing as the original draws it:
     // Tables::table_ressort[(m_time / 2 + column * 7) % 8] (Decor.cpp:926-929; the column's 7
@@ -66,6 +71,45 @@ namespace GalaxyEggbert::Game
     {
         const int k = ((animPhase / 2 + (gridX + gridZ) * 7) % 8 + 8) % 8;
         return kSpringFrames[static_cast<std::size_t>(k)];
+    }
+
+    // The conveyor 311-316 (Decor/chenille.rds) is a tread only 0.206 of a cell deep (Z -0.103 to
+    // 0.103 as its frames pose it), a rail in 3D where Blupi walks the whole of the cell's top; it
+    // is stretched along Z to the cell's depth, its wheels becoming rollers across it (a belt
+    // stretches where the clay bridge's lumps would not; OR-0055).
+    inline constexpr float kConveyorDepth = 0.206f;
+    [[nodiscard]] constexpr float ModelDepthScale(int objectMIcon) noexcept
+    {
+        return objectMIcon >= 311 && objectMIcon <= 316 ? 1.0f / kConveyorDepth : 1.0f;
+    }
+
+    // The clay bridge (364-372, Decor/grotte-fragile1.rd4) covers its cell's whole top in 3D (owner
+    // 2026-11-02: a slab of clay lumps over the whole cell, not a strip along its edge). The scene
+    // is one row of five lumps along X, only 0.284 of a cell deep (Z -0.142 to 0.142 as its frames
+    // pose it): the side view needed no more. So the row is drawn kBridgeRows times across the
+    // cell, every other one turned round so that the lumps do not line up; the outer rows' edges
+    // lie on the cell's, the rows overlapping a little. The slab keeps the scene's height, the
+    // lumps from 0.13 to 0.55 over the cell's centre (the sprite's top 24 of 64 rows).
+    inline constexpr int kBridgeRows = 4;
+    inline constexpr float kBridgeRowDepth = 0.284f;
+    inline constexpr float kBridgeRowCentreZ = 0.0f; // the row's centre along Z, posed
+    [[nodiscard]] constexpr bool IsClayBridgeIcon(int objectMIcon) noexcept
+    {
+        return objectMIcon >= 364 && objectMIcon <= 372;
+    }
+    struct BridgeRow
+    {
+        float dz;  // the model's origin from the cell's centre, along Z
+        float yaw; // its turn about Y (0 or pi)
+    };
+    [[nodiscard]] constexpr BridgeRow BridgeRowPlacement(int row) noexcept
+    {
+        constexpr float kPi = 3.14159265359f;
+        const float pitch = (1.0f - kBridgeRowDepth) / static_cast<float>(kBridgeRows - 1);
+        const float centre = -0.5f + kBridgeRowDepth / 2.0f + pitch * static_cast<float>(row);
+        const bool turned = row % 2 == 1;
+        // Turned round, the row's centre lies at -kBridgeRowCentreZ from the origin.
+        return {turned ? centre + kBridgeRowCentreZ : centre - kBridgeRowCentreZ, turned ? kPi : 0.0f};
     }
 
     // The signs as their Ray Dream models (owner's decision MR-0006): the missions' 174-181
@@ -92,7 +136,7 @@ namespace GalaxyEggbert::Game
     // Still icons whose model has a front (the original is a front view: the teleporters' lights
     // and letter, the trestle's frame), turned toward the cell's open side
     // (TerrainRenderer::ModelCell::openSide).
-    inline constexpr std::array<std::uint16_t, 6> kFrontModelIcons{330, 331, 332, 333, 199, 304};
+    inline constexpr std::array<std::uint16_t, 8> kFrontModelIcons{330, 331, 332, 333, 199, 304, 384, 385};
 
     // The turn about Y (radians) putting a model's front, +Z at no turn, toward side 0 +X, 1 -X,
     // 2 +Z, 3 -Z: CreateRotationY(a) turns +Z to (sin a, 0, cos a).
