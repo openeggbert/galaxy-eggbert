@@ -1,5 +1,7 @@
 #include "EditCommandStack.hpp"
 
+#include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
+
 #include <utility>
 
 namespace GalaxyEggbert::Editor
@@ -96,6 +98,10 @@ namespace GalaxyEggbert::Editor
         {
             ApplyBigDecorState(world, command, command.bigDecorBefore);
         }
+        else if (command.kind == EditCommand::Kind::TurnEdit)
+        {
+            Game::SetPlateRotated(world, command.turnX, command.turnY, command.turnZ, command.turnBefore);
+        }
 
         redoStack_.push_back(std::move(command));
         return true;
@@ -136,6 +142,10 @@ namespace GalaxyEggbert::Editor
         else if (command.kind == EditCommand::Kind::BigDecorEdit)
         {
             ApplyBigDecorState(world, command, command.bigDecorAfter);
+        }
+        else if (command.kind == EditCommand::Kind::TurnEdit)
+        {
+            Game::SetPlateRotated(world, command.turnX, command.turnY, command.turnZ, !command.turnBefore);
         }
 
         undoStack_.push_back(std::move(command));

@@ -29,6 +29,7 @@ set(GE_SHARED_SOURCES
     src/GalaxyEggbert/HintZoneRecord.cpp
     src/GalaxyEggbert/HubDoors.cpp
     src/GalaxyEggbert/BlockDefinitionRegistry.cpp
+    src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
 )
 
 # =============================================================================
@@ -137,7 +138,6 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/InnerPillarBoxTiles.cpp
         src/GalaxyEggbert/Game/ThinBarTiles.cpp
         src/GalaxyEggbert/Game/InnerFlatPlateTiles.cpp
-        src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
         src/GalaxyEggbert/Game/BlupiController.cpp
         src/GalaxyEggbert/Game/CameraShake.cpp
         src/GalaxyEggbert/Game/ChaseCameraYaw.cpp
@@ -560,7 +560,6 @@ add_executable(GenerateSampleWorld3D
         tools/GenerateSampleWorld3D.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
         src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
-        src/GalaxyEggbert/Game/PlateRotationMetadata.cpp
         ${GE_SHARED_SOURCES}
 )
 

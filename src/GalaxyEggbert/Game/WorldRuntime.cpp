@@ -1,4 +1,5 @@
 #include "WorldRuntime.hpp"
+#include "PlateRotationMetadata.hpp"
 
 #include "ObjectDefinitionRegistry.hpp"
 #include "ObjectVerticalPlacement.hpp"
@@ -528,28 +529,45 @@ namespace GalaxyEggbert::Game
                                     static_cast<std::uint16_t>(z))
                 .type();
         };
+        const auto turned = [&](int x, int y, int z)
+        {
+            return x >= 0 && y >= 0 && z >= 0 && x < n && y < n && z < n &&
+                   IsPlateRotated(*world_, static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                  static_cast<std::uint16_t>(z));
+        };
         for (const auto& mouth : kFans)
         {
-            // The fan sits one cell behind Blupi, against the way it blows.
-            const int fx = gx - mouth.dx;
-            const int fy = gy - mouth.dy;
-            if (iconAt(fx, fy, gz) != mouth.fan)
+            // The fan sits one cell behind Blupi, against the way it blows; a turned side fan
+            // (M3D-0005) blows along Z, -X/+X becoming -Z/+Z.
+            for (const bool alongZ : {false, true})
             {
-                continue;
-            }
-            world_->setBlock(static_cast<std::uint16_t>(fx), static_cast<std::uint16_t>(fy),
-                             static_cast<std::uint16_t>(gz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
-            for (int x = fx + mouth.dx, y = fy + mouth.dy;; x += mouth.dx, y += mouth.dy)
-            {
-                const auto icon = iconAt(x, y, gz);
-                if (icon < mouth.wind || icon > mouth.wind + 3)
+                if (alongZ && mouth.dx == 0)
                 {
-                    break;
+                    continue;
                 }
-                world_->setBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
-                                 static_cast<std::uint16_t>(gz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                const int stepX = alongZ ? 0 : mouth.dx;
+                const int stepZ = alongZ ? mouth.dx : 0;
+                const int fx = gx - stepX;
+                const int fy = gy - mouth.dy;
+                const int fz = gz - stepZ;
+                if (iconAt(fx, fy, fz) != mouth.fan || turned(fx, fy, fz) != alongZ)
+                {
+                    continue;
+                }
+                world_->setBlock(static_cast<std::uint16_t>(fx), static_cast<std::uint16_t>(fy),
+                                 static_cast<std::uint16_t>(fz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                for (int x = fx + stepX, y = fy + mouth.dy, z = fz + stepZ;; x += stepX, y += mouth.dy, z += stepZ)
+                {
+                    const auto icon = iconAt(x, y, z);
+                    if (icon < mouth.wind || icon > mouth.wind + 3)
+                    {
+                        break;
+                    }
+                    world_->setBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                     static_cast<std::uint16_t>(z), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                }
+                return mouth.fan;
             }
-            return mouth.fan;
         }
         return std::nullopt;
     }

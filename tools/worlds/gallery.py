@@ -96,6 +96,13 @@ def main() -> int:
     w.fill(43, 1, 56, 46, 1, 56, 114)
     note("fans: up 132 with wind 118, down 135 with wind 122, left 126 with wind 110, right 129 "
          "with wind 114", "(28, 1, 56), (32, 5, 56), (40, 1, 56), (42, 1, 56)")
+    # A turned left fan blowing along -Z with its turned wind (M3D-0005: the editor's O key).
+    w.set(47, 1, 60, 126)
+    w.rotate_plate(47, 1, 60)
+    for z in (56, 57, 58, 59):
+        w.set(47, 1, z, 110)
+        w.rotate_plate(47, 1, z)
+    note("a turned left fan 126 blowing along -Z, its turned wind 110 (M3D-0005)", "(47, 1, 60), (47, 1, 56-59)")
     # Vanishing saucers over a gap.
     for x in (6, 8, 10, 12):
         w.set(x, 1, 62, 324)

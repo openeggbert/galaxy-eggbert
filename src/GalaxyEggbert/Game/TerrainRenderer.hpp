@@ -124,7 +124,9 @@ namespace GalaxyEggbert::Game
             {
                 if (std::find(m_modelBases.begin(), m_modelBases.end(), block.base) != m_modelBases.end())
                 {
-                    cells.push_back({block.x, block.y, block.z, block.base, 0, 2});
+                    // openSide 0: the tile is turned (a side fan blowing along Z, M3D-0005).
+                    cells.push_back({block.x, block.y, block.z, block.base, 0,
+                                     static_cast<std::uint8_t>(block.rotated ? 0 : 2)});
                 }
                 else if (std::find(m_modelOverFloorBases.begin(), m_modelOverFloorBases.end(), block.base) !=
                          m_modelOverFloorBases.end())

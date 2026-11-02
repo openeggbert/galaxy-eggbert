@@ -5755,7 +5755,9 @@ namespace GalaxyEggbert::CNA
                             ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon + std::max(0, frame));
                         if (pose != nullptr)
                         {
-                            drawModel(*pose, cell.x, cell.y, cell.z, 0.0f, GalaxyEggbert::Game::FanModelRoll(cell.base));
+                            // A turned side fan blows along Z (M3D-0005): -X turned to -Z is -90 degrees.
+                            drawModel(*pose, cell.x, cell.y, cell.z, cell.openSide == 0 ? -1.57079632f : 0.0f,
+                                      GalaxyEggbert::Game::FanModelRoll(cell.base));
                         }
                     }
                 }

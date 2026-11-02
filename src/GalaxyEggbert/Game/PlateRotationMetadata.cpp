@@ -8,6 +8,12 @@ namespace GalaxyEggbert::Game
                                      {static_cast<std::uint8_t>(rotated ? 1 : 0)});
     }
 
+    bool IsPlateRotated(const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z)
+    {
+        const auto* payload = world.findBlockExtraMetadata(x, y, z, kPlateRotationMetadataType);
+        return payload != nullptr && !payload->empty() && (*payload)[0] != 0;
+    }
+
     std::vector<std::array<std::uint16_t, 3>> CollectRotatedPlatePositions(const Worlds::World& world)
     {
         std::vector<std::array<std::uint16_t, 3>> result;

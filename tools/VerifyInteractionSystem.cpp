@@ -1,3 +1,4 @@
+#include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/CratePush.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
@@ -2929,6 +2930,17 @@ int main(int argc, char** argv)
               "the fan and its column of wind are cleared (ModifDecor(pos, -1) along the blast)");
         check(!world.TryConsumeFan(rx(39), 20.0f, rz(40)).has_value(), "the second time there is no fan any more");
         check(world.TryConsumeFan(rx(44), 20.0f, rz(44)).has_value(), "standing on an upward fan touches its mouth");
+
+        // M3D-0005: a turned side fan blows along Z (-X becomes -Z): its mouth and wind there.
+        put(50, 20, 50, BlockTypes::FanLeft);
+        Game::SetPlateRotated(mutableWorld, 50, 20, 50, true);
+        put(50, 20, 49, 110);
+        Game::SetPlateRotated(mutableWorld, 50, 20, 49, true);
+        check(!world.TryConsumeFan(rx(49), 20.0f, rz(50)).has_value(),
+              "beside a turned fan, where it would blow unturned, Blupi is safe");
+        const auto turned = world.TryConsumeFan(rx(50), 20.0f, rz(49));
+        check(turned.has_value() && at(50, 20, 50) == BlockTypes::Air && at(50, 20, 49) == BlockTypes::Air,
+              "in front of a turned fan's mouth (-Z) Blupi touches it; it and its wind go (M3D-0005)");
     }
 
     // 17.5. Fan-hit shockwave flash (plan.md VISUAL-008-adjacent,

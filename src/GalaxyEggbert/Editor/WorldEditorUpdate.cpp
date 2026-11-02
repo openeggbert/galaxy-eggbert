@@ -1,3 +1,4 @@
+#include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include "WorldEditor.hpp"
 
 #include "BoxRegion.hpp"
@@ -278,6 +279,7 @@ namespace GalaxyEggbert::Editor
             keyboard.IsKeyDown(Keys::Right),
             keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl),
             keyboard.IsKeyDown(Keys::M),
+            keyboard.IsKeyDown(Keys::O),
         };
     }
 
@@ -635,6 +637,29 @@ namespace GalaxyEggbert::Editor
         return true;
     }
 
+    bool WorldEditor::HandleTurn(const FrameInput& input, Worlds::World& world)
+    {
+        if (!input.turnHeld || turnKeyHeldLastFrame_ || !hasRaycastHit_)
+        {
+            return false;
+        }
+        if (world.getBlock(hitCellX_, hitCellY_, hitCellZ_).isAir())
+        {
+            return true;
+        }
+        const bool before = Game::IsPlateRotated(world, hitCellX_, hitCellY_, hitCellZ_);
+        Game::SetPlateRotated(world, hitCellX_, hitCellY_, hitCellZ_, !before);
+        EditCommand command;
+        command.kind = EditCommand::Kind::TurnEdit;
+        command.turnX = hitCellX_;
+        command.turnY = hitCellY_;
+        command.turnZ = hitCellZ_;
+        command.turnBefore = before;
+        commandStack_.Push(std::move(command));
+        MarkMutated();
+        return true;
+    }
+
     bool WorldEditor::HandleSkyRegion(const FrameInput& input, Worlds::World& world)
     {
         constexpr std::uint32_t kRegionCount = 32;
@@ -818,6 +843,7 @@ namespace GalaxyEggbert::Editor
         skyRegionPrevKeyHeldLastFrame_ = input.skyPreviousHeld;
         skyRegionNextKeyHeldLastFrame_ = input.skyNextHeld;
         musicKeyHeldLastFrame_ = input.musicNextHeld;
+        turnKeyHeldLastFrame_ = input.turnHeld;
         placementOffsetKeyHeldLastFrame_ = placementOffsetKeyHeld;
     }
 }

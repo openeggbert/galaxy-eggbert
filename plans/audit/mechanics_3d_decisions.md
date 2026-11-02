@@ -88,3 +88,19 @@ the key opening a door's whole block of cells D58, ...) and §11.
   (`VerifyDefinitionRegistries`).
 - Evidence: `VerifyBlupiMovement` (walking at a fan along Z he stops at its face); levelcheck's
   reachability of every world with fans unchanged; the playthroughs (run 2026-11-02).
+
+## M3D-0005 — fans and wind turned to blow along Z (2026-11-02, the owner's decision)
+
+- Original: a 2D side view; the side fans (126 left, 129 right) and their wind (110 west, 114
+  east) push along the screen's X only; up and down fans and winds (132/135, 118/122) vertically.
+- 3D: a fan or wind tile can be turned 90 degrees about the vertical (the cell's plate-rotation
+  metadata, as for saws and signs): -X/+X become -Z/+Z. The owner asked for wind tiles beside a
+  fan turned to any side and chose to add this (Q-000 in `owner_questions.md`).
+- Where: `BlupiController` (a turned 110/114 at his middle pushes along Z), `WorldRuntime::
+  TryConsumeFan` (a turned side fan's mouth, and its wind, along Z), the fan model turned -90
+  degrees, the wind plate turned by the existing plate rotation; the editor's O key turns the aimed
+  tile (undoable); `World::findBlockExtraMetadata` reads it per cell; setting it counts as a block
+  change for the renderer.
+- Evidence: `VerifyBlupiMovement` (a turned east wind pushes along +Z), `VerifyInteractionSystem`
+  (a turned fan's mouth along -Z, safe beside it); the gallery (world998) holds a turned fan and
+  wind at (47, 1, 56-60).

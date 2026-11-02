@@ -455,6 +455,7 @@ Icon i stands at X = 6 + 2 (i mod 20), Z = 4 + 2 (i div 20), Y 1; the ones that 
 | saws in the floor (378; 10 turned), stopped saw 379, switch on 384 / off 385 | (6-12, 0, 56), (14, 1, 56), (16, 1, 56) |
 | crusher 317 in a one-high passage | (22, 1, 56) |
 | fans: up 132 with wind 118, down 135 with wind 122, left 126 with wind 110, right 129 with wind 114 | (28, 1, 56), (32, 5, 56), (40, 1, 56), (42, 1, 56) |
+| a turned left fan 126 blowing along -Z, its turned wind 110 (M3D-0005) | (47, 1, 60), (47, 1, 56-59) |
 | vanishing saucers 324 | (6-12, 1, 62) |
 | doors 334-336 in a wall, their keys | (17 / 20 / 23, 1-2, 63) |
 | teleporter pairs 331 and 332 | (28 / 34, 2, 62) and (28 / 34, 2, 66) |

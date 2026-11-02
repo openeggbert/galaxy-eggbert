@@ -227,6 +227,15 @@ public:
         std::uint16_t metadataType) const;
 
     /**
+     * @brief The payload of the block's sparse metadata of @p metadataType, or nullptr when it
+     * has none (a per-cell lookup, e.g. a turned fan or wind tile, M3D-0005).
+     */
+    [[nodiscard]] const std::vector<std::uint8_t>* findBlockExtraMetadata(std::uint16_t x,
+                                                                          std::uint16_t y,
+                                                                          std::uint16_t z,
+                                                                          std::uint16_t metadataType) const;
+
+    /**
      * @brief Saves the world in the `.vwr` binary file format (header v2,
      * 2026-07-09).
      *

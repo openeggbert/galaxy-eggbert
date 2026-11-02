@@ -1,4 +1,5 @@
 #include "BlupiController.hpp"
+#include "PlateRotationMetadata.hpp"
 #include "BarRows.hpp"
 #include "WorldRuntime.hpp"
 
@@ -2119,6 +2120,7 @@ namespace GalaxyEggbert::Game
         // The wind at his middle (kWindSideSpeed's comment), not on a lift nor in the jeep, the
         // tank or on the skateboard.
         std::uint16_t wind = 0;
+        bool windTurned = false; // M3D-0005: a turned 110/114 pushes along -Z/+Z
         if (!m_ridingLift && m_vehicleMode != VehicleMode::Jeep && m_vehicleMode != VehicleMode::Tank &&
             m_vehicleMode != VehicleMode::Skateboard)
         {
@@ -2131,10 +2133,14 @@ namespace GalaxyEggbert::Game
                 wind = world.getBlock(static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(wy),
                                       static_cast<std::uint16_t>(wz))
                            .type();
+                windTurned = (wind == 110 || wind == 114) &&
+                             IsPlateRotated(world, static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(wy),
+                                            static_cast<std::uint16_t>(wz));
             }
         }
         m_inWind = GalaxyEggbert::BlockTypes::isWind(wind);
-        dx += wind == 110 ? -kWindSideSpeed * dt : wind == 114 ? kWindSideSpeed * dt : 0.0f;
+        const float windSide = wind == 110 ? -kWindSideSpeed * dt : wind == 114 ? kWindSideSpeed * dt : 0.0f;
+        (windTurned ? dz : dx) += windSide;
         const float windDy = wind == 118 ? kWindVerticalSpeed * dt : wind == 122 ? -kWindVerticalSpeed * dt : 0.0f;
         const float dy = m_velocityY * dt + windDy;
         const bool wasOnGroundBeforeMove = m_onGround; // landing this frame: StopJump

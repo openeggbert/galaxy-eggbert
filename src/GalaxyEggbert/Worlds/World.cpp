@@ -152,6 +152,26 @@ void World::setBlockExtraMetadata(std::uint16_t x,
 
     const auto localBlockIndex = static_cast<std::uint32_t>(Chunk::linearIndex(localX, localY, localZ));
     chunk(chunkX, chunkY, chunkZ).setExtraMetadata(localBlockIndex, metadataType, std::move(payload));
+    ++blockRevision_; // a turned tile draws and acts otherwise (M3D-0005)
+}
+
+const std::vector<std::uint8_t>* World::findBlockExtraMetadata(std::uint16_t x,
+                                                               std::uint16_t y,
+                                                               std::uint16_t z,
+                                                               std::uint16_t metadataType) const {
+    validateBlockPosition(x, y, z);
+    const auto& owner = chunk(static_cast<std::uint8_t>(x / VoxelConfig::ChunkSize),
+                              static_cast<std::uint8_t>(y / VoxelConfig::ChunkSize),
+                              static_cast<std::uint8_t>(z / VoxelConfig::ChunkSize));
+    const auto localBlockIndex = static_cast<std::uint32_t>(Chunk::linearIndex(
+        static_cast<std::uint8_t>(x % VoxelConfig::ChunkSize), static_cast<std::uint8_t>(y % VoxelConfig::ChunkSize),
+        static_cast<std::uint8_t>(z % VoxelConfig::ChunkSize)));
+    for (const auto& record : owner.extraMetadata()) {
+        if (record.localBlockIndex == localBlockIndex && record.metadataType == metadataType) {
+            return &record.payload;
+        }
+    }
+    return nullptr;
 }
 
 bool World::removeBlockExtraMetadata(std::uint16_t x,
@@ -169,7 +189,11 @@ bool World::removeBlockExtraMetadata(std::uint16_t x,
     const auto localZ = static_cast<std::uint8_t>(z % VoxelConfig::ChunkSize);
 
     const auto localBlockIndex = static_cast<std::uint32_t>(Chunk::linearIndex(localX, localY, localZ));
-    return chunk(chunkX, chunkY, chunkZ).removeExtraMetadata(localBlockIndex, metadataType);
+    const bool removed = chunk(chunkX, chunkY, chunkZ).removeExtraMetadata(localBlockIndex, metadataType);
+    if (removed) {
+        ++blockRevision_;
+    }
+    return removed;
 }
 
 std::vector<World::BlockExtraMetadataRecord> World::collectExtraMetadata(std::uint16_t metadataType) const {

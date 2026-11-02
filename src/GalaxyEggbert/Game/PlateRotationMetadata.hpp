@@ -39,4 +39,8 @@ namespace GalaxyEggbert::Game
     // render rebuild (metadata is sparse: real worlds have at most a
     // handful of rotated plates, not one per block).
     [[nodiscard]] std::vector<std::array<std::uint16_t, 3>> CollectRotatedPlatePositions(const Worlds::World& world);
+
+    // Whether the block at (x, y, z) is turned 90 degrees: a plate's axis, and (M3D-0005, owner
+    // 2026-11-02) a fan's or wind tile's horizontal way, -X/+X becoming -Z/+Z.
+    [[nodiscard]] bool IsPlateRotated(const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z);
 }

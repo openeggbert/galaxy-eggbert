@@ -136,6 +136,7 @@ namespace GalaxyEggbert::Editor
             bool skyNextHeld = false;
             bool ctrlHeld = false; // place without cycling (ED-0001)
             bool musicNextHeld = false; // M: the world's next background music (OR-0014)
+            bool turnHeld = false;      // O: turn the aimed tile 90 degrees (M3D-0005)
         };
 
         [[nodiscard]] Microsoft::Xna::Framework::Vector3 UpdateCamera(
@@ -158,6 +159,11 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool HandleBoxFill(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSkyRegion(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleMusic(const FrameInput& input, Worlds::World& world);
+        // O turns the aimed tile 90 degrees about the vertical (the plate-rotation metadata): a side
+        // fan or wind tile then blows along Z instead of X (M3D-0005), a saw or sign faces the
+        // other way. Undoable.
+        [[nodiscard]] bool HandleTurn(const FrameInput& input, Worlds::World& world);
+        bool turnKeyHeldLastFrame_ = false;
         bool musicKeyHeldLastFrame_ = false;
         [[nodiscard]] bool HandleObjectEditing(
             const FrameInput& input, CnaEngine::Graphics::Camera& camera,

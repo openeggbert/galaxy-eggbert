@@ -1,3 +1,4 @@
+#include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
@@ -1695,6 +1696,21 @@ int main(int argc, char** argv)
                 walker.SetYaw(3.14159265f); // facing +Z
                 for (int i = 0; i < 120; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
                 check(walker.GetZ() + 50.0f < 62.6f, "a fan stops him at its side: it is a whole block (M3D-0004)");
+            }
+
+            // M3D-0005: a turned east wind (114) pushes him along +Z, not +X.
+            {
+                for (std::uint16_t z = 66; z <= 72; ++z)
+                {
+                    synthetic.setBlock(88, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                    synthetic.setBlock(88, 1, z, Worlds::Block::make(114));
+                    Game::SetPlateRotated(synthetic, 88, 1, z, true);
+                }
+                BlupiController drifter;
+                drifter.SetPosition(88.0f - 50.0f, 1.0f, 67.0f - 50.0f);
+                for (int i = 0; i < 40; ++i) drifter.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                check(drifter.GetZ() + 50.0f > 67.5f && std::fabs(drifter.GetX() + 50.0f - 88.0f) < 0.01f,
+                      "a turned east wind pushes him along +Z (M3D-0005)");
             }
 
             // BD-0032: a crusher hangs in Blupi's own cell of a one-high passage (Decor::
