@@ -177,10 +177,12 @@ namespace GalaxyEggbert
         SetAnimation(definitions_[SawStopped], SawStopped, sawStoppedFrames, 1);
         SetAnimation(definitions_[Water1], Water1, water1Frames, 3);
         SetAnimation(definitions_[Water2], Water2, water2Frames, 3);
-        SetAnimation(definitions_[FanLeft], FanLeft, fanLeftFrames, 3);
-        SetAnimation(definitions_[FanRight], FanRight, fanRightFrames, 3);
-        SetAnimation(definitions_[FanUp], FanUp, fanUpFrames, 3);
-        SetAnimation(definitions_[FanDown], FanDown, fanDownFrames, 3);
+        // The fans turn a frame every 2 ticks (Decor.cpp:1104-1122: table_decor_ventillog/d/h/b
+        // [m_time / ScaleDiv(2) % 3]); they ran at 3 (owner report 2026-11-02: too slow).
+        SetAnimation(definitions_[FanLeft], FanLeft, fanLeftFrames, 2);
+        SetAnimation(definitions_[FanRight], FanRight, fanRightFrames, 2);
+        SetAnimation(definitions_[FanUp], FanUp, fanUpFrames, 2);
+        SetAnimation(definitions_[FanDown], FanDown, fanDownFrames, 2);
         SetAnimation(definitions_[Temp], Temp, tempFrames, 4);
         SetAnimation(definitions_[Marine], Marine, marineFrames, 3);
         SetAnimation(definitions_[Blitz], Blitz, blitzFrames, 1);

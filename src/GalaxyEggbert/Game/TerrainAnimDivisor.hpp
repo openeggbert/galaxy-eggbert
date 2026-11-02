@@ -15,16 +15,10 @@ namespace GalaxyEggbert::Game
     // ripple-offset detail) -- not modeled here, every instance of a given
     // type shares one phase; only the base speed is fixed.
     //
-    // Fan's divisor is NOT from mobile-eggbert source -- the FanLeft/
-    // Right/Up/Down BLOCK icons (126-137) have no dedicated table_decor_*
-    // animation entry in Decor.cpp at all (only a same-numbered-looking
-    // but unrelated table_decor_ventg/ventd/venth/ventb exists, animating
-    // icons 110-125, a separate wind "particle stream" decor effect, not
-    // these cube blocks -- an initial 2026-07-09 fix wrongly matched fans
-    // to that table's divisor 1/50ms and was reported live as "now too
-    // fast"; reverted to divisor 3/150ms here, the same rate as the other
-    // real mechanical/moving elements (Water1/Crusher/Marine) for lack of
-    // a real per-type source value to match.
+    // The fans' divisor is the original's 2 (Decor.cpp:1104-1122: the block icons 126/129/132/135
+    // draw table_decor_ventillog/d/h/b[m_time / ScaleDiv(2) % 3], three frames each). It was
+    // believed to have no table (only the wind's table_decor_ventg/d/h/b, divisor 1, which a
+    // 2026-07-09 fix took and was "too fast") and ran at 3 until 2026-11-02 (owner: too slow).
     //
     // Extracted out of TerrainRenderer.cpp's anonymous namespace
     // (plan.md TEST-007, 2026-07-14) so it can be exercised by a scripted

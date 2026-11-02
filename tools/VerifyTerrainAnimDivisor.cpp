@@ -7,7 +7,7 @@
 // Scripted verification of TerrainAnimDivisor's AnimDivisor() (plan.md
 // TEST-007) -- locks in the real per-type ScaleDiv() divisor mapping
 // against regression: Saw=1 (50ms/frame), Lava=2 (100ms/frame),
-// Water1/Crusher/Water2/Marine/the 4 Fan icons=3 (150ms/frame),
+// Water1/Crusher/Water2/Marine=3 (150ms/frame), the 4 Fan icons=2 (100ms/frame),
 // Spike/Temp=4 (200ms/frame). No graphics context needed -- AnimDivisor()
 // is a pure function of a BlockTypes icon id.
 int main()
@@ -28,10 +28,10 @@ int main()
     check(AnimDivisor(Crusher) == 3, "Crusher divisor is 3 (150ms/frame)");
     check(AnimDivisor(Water2) == 3, "Water2 divisor is 3 (150ms/frame)");
     check(AnimDivisor(Marine) == 3, "Marine divisor is 3 (150ms/frame)");
-    check(AnimDivisor(FanLeft) == 3, "FanLeft divisor is 3 (150ms/frame)");
-    check(AnimDivisor(FanRight) == 3, "FanRight divisor is 3 (150ms/frame)");
-    check(AnimDivisor(FanUp) == 3, "FanUp divisor is 3 (150ms/frame)");
-    check(AnimDivisor(FanDown) == 3, "FanDown divisor is 3 (150ms/frame)");
+    check(AnimDivisor(FanLeft) == 2, "FanLeft divisor is 2 (100ms/frame, Decor.cpp:1104-1122)");
+    check(AnimDivisor(FanRight) == 2, "FanRight divisor is 2 (100ms/frame)");
+    check(AnimDivisor(FanUp) == 2, "FanUp divisor is 2 (100ms/frame)");
+    check(AnimDivisor(FanDown) == 2, "FanDown divisor is 2 (100ms/frame)");
     check(AnimDivisor(Spike) == 4, "Spike divisor is 4 (200ms/frame)");
     check(AnimDivisor(Temp) == 4, "Temp divisor is 4 (200ms/frame)");
 
