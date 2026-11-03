@@ -67,8 +67,10 @@ wait 20
 go 19.4 46
 until ground = 1
 go 17 45
-go 15.3 46
-go 15.3 48 tol 0.1
+# The passage at x 15 (z 47-48) is one cell wide: x 15.2 is as far east in it as his body goes
+# (OR-0017), and the stair's first jump wants that run-up.
+go 15.2 46
+go 15.2 48 tol 0.05
 face 270
 # The stair round the core, each step two up and jumped from 0.7-0.8 short of its face: the
 # first (its saws stopped) and the second along z 48, then the switch (12, 41, 47) raised on the
