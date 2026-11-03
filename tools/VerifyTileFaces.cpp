@@ -314,6 +314,29 @@ int main()
               "the teleporters are 330-333");
     }
 
+    // A tile textured on one side only turns that side to the room (the owner's answer: its side is
+    // per block; it was always +Z, so most walls of them showed their plain colour).
+    {
+        namespace G = GalaxyEggbert::Game;
+        constexpr std::uint8_t kPosZ = 1u << 0, kNegZ = 1u << 1, kPosX = 1u << 2;
+        const int open[4] = {0, 0, 0, 5};
+        check(G::SingleTexturedSide(190, 0, open) == 0, "a window tile open on its own side (+Z) keeps it");
+        check(G::SingleTexturedSide(190, kPosZ | kNegZ | kPosX, open) == 3,
+              "a window tile open only on -X shows its window there");
+        const int room[4] = {0, 2, 6, 0};
+        check(G::SingleTexturedSide(10, kPosZ, room) == 2, "of two open sides, the one with more room");
+        check(G::SingleTexturedSide(10, 0x0F, room) == 0, "no open side: its default");
+        check(G::SingleTexturedSide(392, 0, open) == 3, "the trim tile 392 keeps its own default side (-X)");
+        check(G::SingleTexturedSide(2, 0, open) == -1, "a tile textured all round has no single side");
+        BoxFaces turned;
+        ConfigureDirectionalCubeFaces(190, atlas.GetTileUv(190), atlas.GetTileUv(107), turned, 2);
+        const auto window = atlas.GetTileUv(190);
+        check(face(turned, BoxFace::PositiveX).uv.u0 == window.u0 && face(turned, BoxFace::PositiveX).uv.u1 == window.u1 &&
+                  face(turned, BoxFace::PositiveZ).uv.u1 - face(turned, BoxFace::PositiveZ).uv.u0 <
+                      window.u1 - window.u0,
+              "turned to +X, the window is on +X and +Z takes the plain colour");
+    }
+
     // A front model turns to the side with the most room to stand in (OR-0056 reopened): a model
     // standing on the floor counts the floor right beside it, a booth over Blupi's head the floor
     // two cells down; without room anywhere a row faces across itself.

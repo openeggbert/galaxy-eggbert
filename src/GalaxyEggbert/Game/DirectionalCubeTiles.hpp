@@ -2,6 +2,8 @@
 
 #include <CnaEngine/Graphics/MeshBuilder.hpp>
 
+#include <cstdint>
+
 namespace GalaxyEggbert::Game
 {
     // Per-icon face configuration for the "DirectionalCube" render mode
@@ -53,9 +55,24 @@ namespace GalaxyEggbert::Game
     // callers already compute a UV per block anyway, so this is just
     // threading one extra, cheap, already-available value through rather
     // than growing this function's own icon-lookup responsibilities.
+    //
+    // @p texturedSide turns a tile textured on one side only (SingleTexturedSide()) to that side
+    // (a BoxFace index, 0-3); -1 keeps its default side.
     void ConfigureDirectionalCubeFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
                                        const CnaEngine::Graphics::UvRect& icon107Uv,
-                                       CnaEngine::Graphics::BoxFaces& outFaces);
+                                       CnaEngine::Graphics::BoxFaces& outFaces, int texturedSide = -1);
+
+    // The side (a BoxFace index: 0 +Z, 1 -Z, 2 +X, 3 -X) a tile textured on one side only shows its
+    // texture on, or -1 for any other tile. The owner's answer for these tiles (questionnaire round
+    // 2, e.g. the machine panel 10 and the house window 190): "the texture on one side only, the
+    // other five a plain colour; which of the four sides is stored per block". The worlds store
+    // none, and the side was always +Z, so three of every four walls built of them showed the plain
+    // colour to the player (the play pass of 2026-11-03: 27 % of their visible sides textured).
+    // Now the side faces the room: the tile's own default side where it lies open, else the open
+    // side with the most room before it (`room[f]`, free cells in a row along that side), ties to
+    // the earlier side; with no open side, the default. `hiddenFaces`: a bit per BoxFace hidden by a
+    // neighbour (TerrainRenderer's HiddenFaceMask).
+    [[nodiscard]] int SingleTexturedSide(int icon, std::uint8_t hiddenFaces, const int (&room)[4]);
 
     // True for a DirectionalCube icon whose six faces are all drawn (its texture or a colour
     // swatch on each, no open side such as icon 200's top and bottom): with opaque texels it hides

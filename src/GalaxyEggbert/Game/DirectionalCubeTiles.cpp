@@ -307,9 +307,35 @@ namespace GalaxyEggbert::Game
         return true;
     }
 
+    int SingleTexturedSide(int icon, std::uint8_t hiddenFaces, const int (&room)[4])
+    {
+        for (const auto& entry : kDirectionalEntries)
+        {
+            if (entry.Icon != icon || entry.EntryPattern != Pattern::SingleFaceRestColor)
+            {
+                continue;
+            }
+            const int primary = static_cast<int>(entry.Primary);
+            if (primary < 4 && (hiddenFaces & (1u << primary)) == 0)
+            {
+                return primary;
+            }
+            int best = -1;
+            for (int side = 0; side < 4; ++side)
+            {
+                if ((hiddenFaces & (1u << side)) == 0 && (best < 0 || room[side] > room[best]))
+                {
+                    best = side;
+                }
+            }
+            return best >= 0 ? best : primary;
+        }
+        return -1;
+    }
+
     void ConfigureDirectionalCubeFaces(int icon, const CnaEngine::Graphics::UvRect& tileUv,
                                        const CnaEngine::Graphics::UvRect& icon107Uv,
-                                       CnaEngine::Graphics::BoxFaces& outFaces)
+                                       CnaEngine::Graphics::BoxFaces& outFaces, int texturedSide)
     {
         using CnaEngine::Graphics::BoxFace;
 
@@ -428,16 +454,21 @@ namespace GalaxyEggbert::Game
             switch (entry.EntryPattern)
             {
                 case Pattern::SingleFaceRestColor:
-                    setTex(entry.Primary);
+                {
+                    // Turned to its block's side (SingleTexturedSide()), else its own default.
+                    const BoxFace primary =
+                        texturedSide >= 0 && texturedSide < 4 ? static_cast<BoxFace>(texturedSide) : entry.Primary;
+                    setTex(primary);
                     for (int i = 0; i < 6; ++i)
                     {
                         const auto f = static_cast<BoxFace>(i);
-                        if (f != entry.Primary)
+                        if (f != primary)
                         {
                             setColor(f, vFracFor(f));
                         }
                     }
                     break;
+                }
                 case Pattern::SingleFaceTopColorRestOpen:
                     setTex(entry.Primary);
                     setColor(BoxFace::PositiveY, kTopSwatchV);

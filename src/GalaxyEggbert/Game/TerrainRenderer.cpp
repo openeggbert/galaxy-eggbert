@@ -228,7 +228,7 @@ namespace GalaxyEggbert::Game
                                    const Microsoft::Xna::Framework::Vector3& center,
                                    bool plateRotated,
                                    CnaEngine::Graphics::MeshBuilder& mesh,
-                                   std::uint8_t hiddenFaces = 0)
+                                   std::uint8_t hiddenFaces = 0, int texturedSide = -1)
         {
             using CnaEngine::Graphics::BoxFace;
             const int lookupIcon = static_cast<int>(definition.type);
@@ -236,7 +236,7 @@ namespace GalaxyEggbert::Game
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube)
             {
                 ConfigureDirectionalCubeFaces(
-                    lookupIcon, tileUv, icon107Uv, directionalFaces);
+                    lookupIcon, tileUv, icon107Uv, directionalFaces, texturedSide);
                 for (int face = 0; face < 6; ++face)
                 {
                     if (hiddenFaces & (1u << face))
@@ -733,7 +733,31 @@ namespace GalaxyEggbert::Game
                         definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube
                             ? HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage)
                             : std::uint8_t{0};
-                    if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh, hiddenFaces))
+                    // A tile textured on one side only turns that side to the room (DirectionalCubeTiles.hpp
+                    // SingleTexturedSide): the free cells in a row before each side, up to kRoomRun.
+                    int texturedSide = -1;
+                    if (definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube)
+                    {
+                        constexpr int kRoomRun = 8;
+                        constexpr int kSideDx[4] = {0, 0, 1, -1}; // BoxFace order: +Z, -Z, +X, -X
+                        constexpr int kSideDz[4] = {1, -1, 0, 0};
+                        int room[4] = {0, 0, 0, 0};
+                        if (SingleTexturedSide(icon, 0, room) >= 0)
+                        {
+                            for (int side = 0; side < 4; ++side)
+                            {
+                                while (room[side] < kRoomRun &&
+                                       !IsOccluderBlock(world, blocksPerAxis, x + kSideDx[side] * (room[side] + 1), y,
+                                                        z + kSideDz[side] * (room[side] + 1), tileCoverage))
+                                {
+                                    ++room[side];
+                                }
+                            }
+                            texturedSide = SingleTexturedSide(icon, hiddenFaces, room);
+                        }
+                    }
+                    if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh, hiddenFaces,
+                                              texturedSide))
                     {
                         continue;
                     }
