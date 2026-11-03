@@ -198,6 +198,60 @@ namespace GalaxyEggbert::Game
         return r >= 0 && g >= 0 && b >= 0 && b > r && b > g;
     }
 
+    // The side (0 +X, 1 -X, 2 +Z, 3 -Z) a front model's cell turns to: the one facing the most room
+    // to stand in. Along each side, up to kOpenRun cells while `open(x, y, z)` holds at the
+    // model's height, each with a floor (a cell `open` does not hold for) at most kFloorDepth
+    // below counts; ties go to the earlier side. The floor may lie right under the neighbour:
+    // a sign, a numbered post or a trestle stands at Blupi's own height, its room the floor
+    // beside it (until 2026-11-03 only a floor two or more cells down counted, which suited the
+    // teleporters hanging over Blupi's head but left every model standing on a floor at +X,
+    // whatever its room: owner, OR-0056 reopened). Where no side has room (a lightning emitter
+    // set in a ceiling row, a switch in the floor), a row of the same model along X faces +Z and
+    // one along Z faces +X, across the row as the sprites show it; anything else faces +X.
+    // `sameSides` as TerrainRenderer::ModelCell (1 +X, 2 -X, 4 +Z, 8 -Z).
+    template <typename Open>
+    [[nodiscard]] constexpr std::uint8_t FrontModelOpenSide(int x, int y, int z, std::uint8_t sameSides,
+                                                            Open&& open)
+    {
+        constexpr int kOpenRun = 8;
+        constexpr int kFloorDepth = 4;
+        constexpr int kSideDx[4] = {1, -1, 0, 0};
+        constexpr int kSideDz[4] = {0, 0, 1, -1};
+        int bestRun = 0;
+        int best = -1;
+        for (int side = 0; side < 4; ++side)
+        {
+            int run = 0;
+            for (int k = 1; k <= kOpenRun; ++k)
+            {
+                const int cx = x + kSideDx[side] * k, cz = z + kSideDz[side] * k;
+                if (!open(cx, y, cz))
+                {
+                    break;
+                }
+                for (int d = 1; d <= kFloorDepth; ++d)
+                {
+                    if (!open(cx, y - d, cz))
+                    {
+                        ++run;
+                        break;
+                    }
+                }
+            }
+            if (run > bestRun)
+            {
+                bestRun = run;
+                best = side;
+            }
+        }
+        if (best >= 0)
+        {
+            return static_cast<std::uint8_t>(best);
+        }
+        const bool alongX = (sameSides & 3) != 0, alongZ = (sameSides & 12) != 0;
+        return alongX && !alongZ ? std::uint8_t{2} : std::uint8_t{0};
+    }
+
     // The turn about Y (radians) putting a model's front, +Z at no turn, toward side 0 +X, 1 -X,
     // 2 +Z, 3 -Z: CreateRotationY(a) turns +Z to (sin a, 0, cos a).
     [[nodiscard]] constexpr float FrontModelYaw(int side) noexcept

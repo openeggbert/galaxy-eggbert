@@ -10,7 +10,9 @@
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <initializer_list>
 #include <iostream>
 #include <vector>
 
@@ -310,6 +312,46 @@ int main()
         check(fronts, "its lights and letter plate are not its body");
         check(G::IsTeleporterIcon(330) && G::IsTeleporterIcon(333) && !G::IsTeleporterIcon(334),
               "the teleporters are 330-333");
+    }
+
+    // A front model turns to the side with the most room to stand in (OR-0056 reopened): a model
+    // standing on the floor counts the floor right beside it, a booth over Blupi's head the floor
+    // two cells down; without room anywhere a row faces across itself.
+    {
+        namespace G = GalaxyEggbert::Game;
+        // A room: floor at y 0, walls at x 0 and x 10, z 0 and z 10; `solid` adds cells.
+        const auto room = [](std::initializer_list<std::array<int, 3>> solid)
+        {
+            return [solid](int x, int y, int z)
+            {
+                if (y <= 0 || x <= 0 || x >= 10 || z <= 0 || z >= 10)
+                {
+                    return false;
+                }
+                for (const auto& c : solid)
+                {
+                    if (c[0] == x && c[1] == y && c[2] == z)
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            };
+        };
+        // A sign on the floor against the north wall (z 1): its room is to the south, +Z.
+        check(G::FrontModelOpenSide(5, 1, 1, 0, room({})) == 2,
+              "a sign on the floor against a wall faces the room, not +X");
+        // A sign on the floor against the east wall (x 9): -X.
+        check(G::FrontModelOpenSide(9, 1, 5, 0, room({})) == 1, "a sign against the east wall faces -X");
+        // A booth hanging at y 2 over Blupi, in a corridor along X (walls at z 4 and z 6 from y 1 up).
+        const auto corridor = [](int x, int y, int z) { return y > 0 && z == 5 && x > 0 && x < 10; };
+        const auto side = G::FrontModelOpenSide(2, 2, 5, 0, corridor);
+        check(side == 0, "a booth in a corridor faces along it, toward the longer run");
+        // No room on any side: a row along X faces +Z, a row along Z +X.
+        const auto shut = [](int, int, int) { return false; };
+        check(G::FrontModelOpenSide(5, 5, 5, 1 | 2, shut) == 2, "a ceiling row along X faces across it (+Z)");
+        check(G::FrontModelOpenSide(5, 5, 5, 4 | 8, shut) == 0, "a ceiling row along Z faces across it (+X)");
+        check(G::FrontModelOpenSide(5, 5, 5, 0, shut) == 0, "a lone model without room faces +X");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

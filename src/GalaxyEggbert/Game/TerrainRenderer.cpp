@@ -535,12 +535,10 @@ namespace GalaxyEggbert::Game
                                 shown = bar;
                             }
                         }
-                        // The side facing the most room to stand in: along each side, up to kOpenRun
-                        // cells while the cell's own height stays passable, those with a floor at
-                        // most kFloorDepth below; ties to the earlier of +X, -X, +Z, -Z.
-                        constexpr int kOpenRun = 8;
-                        constexpr int kFloorDepth = 4;
-                        const auto passable = [&](int cx, int cy, int cz)
+                        // The side facing the most room to stand in (BlockModels.hpp
+                        // FrontModelOpenSide). A hub door's bar counts as open: the hub lifts it as
+                        // the missions are won, and the sign in its niche faces the doorway.
+                        const auto open = [&](int cx, int cy, int cz)
                         {
                             if (cx < 0 || cy < 0 || cz < 0 || cx >= blocksPerAxis || cy >= blocksPerAxis ||
                                 cz >= blocksPerAxis)
@@ -550,37 +548,10 @@ namespace GalaxyEggbert::Game
                             const auto type = world.getBlock(static_cast<std::uint16_t>(cx), static_cast<std::uint16_t>(cy),
                                                              static_cast<std::uint16_t>(cz))
                                                   .type();
-                            return type == 0 || GalaxyEggbert::GetBlockDefinition(type).collisionMask == 0;
+                            return type == 0 || type == GalaxyEggbert::BlockTypes::HubDoor ||
+                                   GalaxyEggbert::GetBlockDefinition(type).collisionMask == 0;
                         };
-                        constexpr int kSideDx[4] = {1, -1, 0, 0};
-                        constexpr int kSideDz[4] = {0, 0, 1, -1};
-                        std::uint8_t openSide = 2;
-                        int bestRun = -1;
-                        for (int side = 0; side < 4; ++side)
-                        {
-                            int run = 0;
-                            for (int k = 1; k <= kOpenRun; ++k)
-                            {
-                                const int cx = x + kSideDx[side] * k, cz = z + kSideDz[side] * k;
-                                if (!passable(cx, y, cz))
-                                {
-                                    break;
-                                }
-                                for (int d = 1; d <= kFloorDepth; ++d)
-                                {
-                                    if (!passable(cx, y - d, cz))
-                                    {
-                                        run += d > 1 ? 1 : 0; // a floor below, room over it
-                                        break;
-                                    }
-                                }
-                            }
-                            if (run > bestRun)
-                            {
-                                bestRun = run;
-                                openSide = static_cast<std::uint8_t>(side);
-                            }
-                        }
+                        const std::uint8_t openSide = FrontModelOpenSide(x, y, z, sides, open);
                         m_staticModelCells.push_back({worldX, worldY, worldZ, shown, sides, openSide}); // drawn as a model
                         continue;
                     }
