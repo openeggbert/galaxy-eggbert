@@ -20,7 +20,7 @@ floor 37, 54 / ring 34, 54; 331 south: floor 42, 62 / ring 41, 66), as the origi
 rooms one above another; two spike traps (373) alone in the slime floor (35, 45 and 47, 66) and
 two drips (404) hung over the village's passage (x 33, walk 22), as the original's; the wasp's well
 (x 59-63, z 49-53, seven deep, a dead end) with the wasp sweeping its foot and a moving mine across it
-halfway up, as the original's (38-41, 26-31): its sting's balloon is the way out; a pool with a fish, helicopters, two bulldozers, three birds, four
+halfway up, as the original's (38-41, 26-31): its sting's balloon is the way out; a pool (no fish: the original's has none), helicopters, two bulldozers, three birds, four
 bobbing mines, four sleeping follow stars, eight eggs. Off it eight enclaves, each of one world's
 material, reached by a passage three wide through the plaza's walls:
 - at the floor: **east, the machine** (open): its passage under a curtain of lightning (304 over

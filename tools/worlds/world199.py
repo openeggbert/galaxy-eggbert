@@ -175,10 +175,10 @@ def main(argv) -> int:
     else:
         w.place(O.WASP, 60, WELL, 51, end=(63, WELL, 51))
         mover(O.MOVING_MINE, (59, WELL + 4, 51), (63, WELL + 4, 51), 40, stop=0)
-    # The pool with a fish, the plaza's creatures, its helicopters and eggs.
+    # The pool (the original's 199 has water, but no fish: lesson_inventory), the plaza's creatures,
+    # its helicopters and eggs.
     carve(41, LOW - 5, 53, 49, LOW - 1, 60)
     water(w, 41, LOW - 5, 53, 49, LOW - 1, 60)
-    mover(O.FISH, (42, LOW - 3, 56), (48, LOW - 3, 56), 45, stop=47)
     for x, z in ((40, 42), (60, 46), (46, 62)):
         w.place(O.HELICOPTER, x, LOW, z)
     w.place(O.HELICOPTER, 36, HIGH, 60)
