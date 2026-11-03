@@ -1,4 +1,4 @@
-# worldsign158_world2a: the painted faces of icons 158-165,309,411-415 (tools/rd4_to_gltf/sign_decals.py)
+# worldsign158_world2a: the painted faces of icons 158-165,309,411-415,184 (tools/rd4_to_gltf/sign_decals.py)
 decal 158 decals/158.png 19 11 45 37 0.2971
 decal 159 decals/159.png 19 11 45 37 0.2971
 decal 160 decals/160.png 19 11 45 37 0.2971
@@ -13,3 +13,4 @@ decal 412 decals/412.png 19 11 45 37 0.2971
 decal 413 decals/413.png 19 11 45 37 0.2971
 decal 414 decals/414.png 19 11 45 37 0.2971
 decal 415 decals/415.png 19 11 45 37 0.2971
+decal 184 decals/184.png 19 11 45 37 0.2971
