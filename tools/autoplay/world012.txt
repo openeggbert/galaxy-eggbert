@@ -13,7 +13,7 @@ expect y >= 3.95
 # 2. Into the alcove (z 50), hold the crate (54) and pull it two cells -X to the red dot.
 go 52 52
 go 52 50 tol 0.1
-go 52.95 50 tol 0.08
+go 52.95 50 tol 0.03
 face 90
 hold 10 crouch
 # Pulled two cells, 54 -> 52, at the original's pull speed (CaisseGetMove(3): 26 px over the
@@ -39,6 +39,8 @@ go 48.89 38.00 tol 0.05 max 300
 go 48 38 jump 1.5
 until ground = 1
 expect y >= 8.95
+# Centred on the crate first: off x 48 his body's corner is under the block over x 49 (y 11).
+go 48 37.9 tol 0.05
 go 48 35.5 jump 3
 until ground = 1
 expect y >= 10.95
@@ -62,6 +64,9 @@ go 52.89 26.00 tol 0.05 max 300
 go 52 26 jump 1.5
 until ground = 1
 expect y >= 13.95
+# Centred on the crate first, as at the first step: off x 52 his body's corner meets the ledge over
+# x 53 and cuts the jump short.
+go 52 25.9 tol 0.05
 go 52 23.5 jump 3
 until ground = 1
 expect y >= 15.95
