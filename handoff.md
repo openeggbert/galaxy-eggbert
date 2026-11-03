@@ -317,7 +317,9 @@ ledgers before repeating any discovery. Where it stands:
   (the candidates sheet was made from a stale library); the fountain bowl and column are white in
   every channel of their shaders -- the sprites' dark bowl is Ray Dream's single light without
   ambient, a lighting difference. OR-0011: no APK built here yet (the build pins NDK 30, the SDK
-  has 29); AVDs for an x86_64 emulator run exist.
+  has 29); AVDs for an x86_64 emulator run exist. The platform lift (type 1) is drawn as its Ray
+  Dream model `Decor/techno29.rd4` (`7fc68ac`, IoU 0.94; the survey had filed it with the terrain
+  for its folder; no other misfiled piece left there but the cave rocks, which need instancing).
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list (the
   candidates regenerated from a fresh library); OR-0011's APK and an emulator run; the shooters' and
