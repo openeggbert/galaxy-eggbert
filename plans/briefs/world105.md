@@ -12,7 +12,11 @@ under more hanging mines past columns of lightning (305) into a chamber with a b
 the last treasure; lifts, a wasp (44), two moving mines (16), a mine. Seven treasures, eleven eggs.
 
 **3D design**: a bottomless hall of cobble (x 10–70, z 20–80, roof at 41; a fall is the end: a
-lava floor of that size would be rebuilt every tick).
+lava floor of that size would be rebuilt every tick -- measured 2026-11-03, a full one made the
+playthrough ~6x slower).
+- A teleporter pair (330) between the exit's hut (its booth over the north-east cell, 37, 48) and a
+  ledge under the roof (walk 36, x 19-22, z 47-52) with two helicopters, as the original's between
+  the pocket of its exit (19, 33) and its roof over a stack of helicopters (21, 1).
 - The start ledge on the west wall (walk 16): spawn (12, 16, 50), four helicopters, an egg; a ferry
   of two lifts (2 × 2) meeting midway (80 ticks, dwell 40) to the hut's island.
 - Islands of cobble at many heights round and across the hall: treasures 1–6, eggs, spare

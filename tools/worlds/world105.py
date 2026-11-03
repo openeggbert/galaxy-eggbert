@@ -27,6 +27,7 @@ from village import STONE  # noqa: E402
 
 BLITZ, EMITTER = 305, 304
 ROOF = 41                   # the cavern's roof; its mines hang at 40
+TELEPORTER = 330
 
 
 def main(argv) -> int:
@@ -63,6 +64,15 @@ def main(argv) -> int:
             lift(w, (x, 15, z), (x + 6, 17, z), ticks=80, stop=40)       # ends at x 24-25
             lift(w, (x + 11, 17, z), (x + 8, 17, z), ticks=80, stop=40)  # ends at x 26-27
 
+    # A teleporter pair (330) between the exit's hut and the top of the cavern, as the original's
+    # between the pocket of its exit ((19, 33)) and its roof among the hanging mines ((21, 1)),
+    # where a stack of helicopters waits under it: a little ledge under the roof (walk 36) with
+    # two of them. (Its booth in the hut is set with the hut, below.)
+    island(19, 47, 22, 52, 36)
+    w.set(20, 37, 50, TELEPORTER)
+    heli(21, 36, 48)
+    heli(21, 36, 52)
+
     # ---- the islands ----
     # Treasures 1-6, eggs, parked helicopters, a mine; the hut of the exit on the middle island.
     island(22, 28, 26, 32, 20)
@@ -92,6 +102,7 @@ def main(argv) -> int:
     carve(w, 35, 18, 48, 37, 20, 51)
     carve(w, 34, 18, 49, 34, 19, 50)                                    # its door, west
     w.place(O.EXIT, 36, 18, 50)
+    w.set(37, 19, 48, TELEPORTER)                                       # over the hut's north-east cell
     heli(40, 18, 46)
     heli(40, 18, 53)
     w.place(O.EGG, 32, 18, 46)
