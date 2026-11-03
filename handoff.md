@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-03 (fidelity audit, milestone G: the use case ledger finished, BD-0040..0056; world 199's lessons)._
+_Last updated: 2026-11-03 (fidelity audit, milestone G: the Android port (OR-0011, UB-006/007); wave F's release audit)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -316,8 +316,15 @@ ledgers before repeating any discovery. Where it stands:
   trigger tiles the gallery shows on pillars). D11: the house's flower paper was fixed in `9582fc9`
   (the candidates sheet was made from a stale library); the fountain bowl and column are white in
   every channel of their shaders -- the sprites' dark bowl is Ray Dream's single light without
-  ambient, a lighting difference. OR-0011: no APK built here yet (the build pins NDK 30, the SDK
-  has 29); AVDs for an x86_64 emulator run exist. The platform lift (type 1) is drawn as its Ray
+  ambient, a lighting difference. OR-0011 (later the same day): the Android port brought to the CNA
+  game (`c5dcdc5`, `c48ee08`, `37ca3b3`; `ANDROID.md`): `libmain.so` with CNA's `Entrypoint.hpp`,
+  the assets copied into internal storage on first start (`AndroidAssets.cpp`, Gradle's
+  `assets.txt`), NDK r29 / API 24 / GLES 3, SDL's Java glue from CNA's SDL, stdout in logcat (tag
+  `GalaxyEggbert`). The x86_64 APK runs in the API 35 emulator (`-read-only`; no KVM here, so
+  software emulation, minutes per screen) through the menu into the main hub
+  (`plans/evidence/android-emulator-*.png`), but draws no 3D model: CNA's skinned shader needs
+  more than 256 vertex uniform vectors (UB-007, CNA's to fix). UB-006 (CNA lists the APK per
+  missing `.xnb`) is worked around by an absolute content root. Q-009: KVM or a phone. The platform lift (type 1) is drawn as its Ray
   Dream model `Decor/techno29.rd4` (`7fc68ac`, IoU 0.94; the survey had filed it with the terrain
   for its folder; no other misfiled piece left there but the cave rocks, which need instancing).
   D11's candidates regenerated from a fresh library (`570aa48`, `c34dc2b`: 119 models; the known
@@ -325,8 +332,8 @@ ledgers before repeating any discovery. Where it stands:
   rebuilt after all of it: 120 models, 93/93 sounds, no error in headless Chrome.
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list (the
-  candidates regenerated from a fresh library); OR-0011's APK and an emulator run; the shooters' and
-  the big creature's 6 px draw offset (BD-0028, a still look); a human play pass of every world.
+  candidates regenerated from a fresh library); Android on a device once Q-009 is answered and CNA
+  fixes UB-007; a human play pass of every world. Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
@@ -615,7 +622,8 @@ is a full library built 2026-10-27 with the current settings).
 
 | Repo | Verified commit | Date |
 |---|---|---|
-| `../../libcna/cna` (live tree; what `build-cna-opengl3` compiles) | `090c998a1` | 2026-11-03 (112/112, 78/78 playthroughs, web build) |
+| `../../libcna/cna` (live tree; what `build-cna-opengl3` compiles) | `5a754159d` | 2026-11-03 (112/112, wave F's playthroughs, Android APK) |
+| `../../libcna/cna` | `090c998a1` | 2026-11-03 (112/112, 78/78 playthroughs, web build) |
 | `../../libcna/cna-engine` | `2a93b7e` | 2026-11-03 (same) |
 | `../../libcna/easy-gl` (via `CNA_EASYGL_ROOT`) | `b582bd8` (v0.1.1+2) | 2026-11-03 (same) |
 | `../../libcna/meta-gl` | `795bcdc` (v0.4.1+2) | 2026-11-03 |
