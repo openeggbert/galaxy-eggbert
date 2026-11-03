@@ -201,7 +201,7 @@ wait 30
 # end, and down into the courtyard (walk 11).
 go 52 31
 go 50.5 32.5
-go 50.5 44.6
+go 50.5 44.0 tol 0.1
 until ground = 1
 expect y <= 11.05
 # The twin lifts on the key tower's south face (x 49-50, z 51, feet 11 -> 19, 3 ticks at each
