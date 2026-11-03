@@ -42,6 +42,7 @@ SAW, SWITCH = 378, 384
 BLITZ, EMITTER = 305, 304
 BRIDGE = 364                          # crumbles under Blupi and grows back
 DRIP = 404                            # kills in its own cell (Decor::IsGoutte, BD-0033)
+BAR = 202                             # a bar in the open, Blupi hangs from it (Decor::GetTypeBarre)
 LOW, HIGH = 20, 30                    # the plaza's floor and the ring gallery: walking levels
 P0, P1 = 34, 66                       # the plaza's interior, x and z
 
@@ -220,6 +221,11 @@ def main(argv) -> int:
     for u in (2, 10):
         x, z = machine.at(u, 6)
         bob(x, LOW - 1, z, 3, 18)
+    # A row of bars two over the floor across the pit along its north side (u 1, z 38; x 73-79, bank
+    # to bank), as the original's bars over its lava ((90-92, 97) over (89-92, 98)): the way back
+    # west hanging from them, a cell from the mine bobbing at u 2.
+    bx0, bz0, bx1, bz1 = machine.box(1, 3, 1, 9)
+    w.fill(bx0, LOW + 2, bz0, bx1, LOW + 2, bz1, BAR)
     put(machine, O.KEY1, 6, 11)
     put(machine, O.HELICOPTER, 1, 1)
     put(machine, O.HELICOPTER, 11, 1)
