@@ -21,7 +21,7 @@ evidence named in each row; nothing here is claimed from compilation alone._
 | Target | Directory | Result | Evidence |
 |---|---|---|---|
 | Linux desktop (OpenGL 3.3, Release) | `build-cna-opengl3/` | builds; `GalaxyEggbert` | 2026-11-03 rebuild after the Android entry point |
-| Web (WebGL 2, Emscripten) | `build-cna-webgl2/` | builds; `GalaxyEggbert.{html,js,wasm,data}`; loads in headless Chrome (menu drawn, 120 models, 93/93 sounds) | `handoff.md` 2026-11-03, built before the Android commits, which change nothing Emscripten compiles but `main.cpp`'s include of CNA's `Entrypoint.hpp` (empty there); music is not preloaded on the web (OR-0014) |
+| Web (WebGL 2, Emscripten) | `build-cna-webgl2/` | builds; `GalaxyEggbert.{html,js,wasm,data}`; loads in headless Chrome (menu drawn, 120 models, 93/93 sounds) | `handoff.md` 2026-11-03, built before the Android commits, which change nothing Emscripten compiles but `main.cpp`'s include of CNA's `Entrypoint.hpp` (empty there); the music is served beside the page and fetched per track since `789ceee` (OR-0014) |
 | Android (x86_64 debug APK) | `android/app/build/`, `android/app/.cxx/` | builds and runs to the hub; no 3D models (UB-007), see §4 | OR-0011 |
 
 ## 3. Tests and regression
@@ -79,7 +79,6 @@ Open engineering items:
 - OR-0017: Blupi's collision is a point; the original's 36 px box (`or0017-body-width.patch`)
   fails 55 of 78 playthroughs until they are re-planned world by world. His model is kept out of
   walls (render only).
-- OR-0014: the web build does not carry the music.
 - OR-0011: Android draws no 3D models until CNA fixes UB-007; UB-006 is worked around; no
   device or KVM here to play it (Q-009).
 

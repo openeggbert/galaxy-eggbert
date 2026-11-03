@@ -312,6 +312,8 @@ ledgers before repeating any discovery. Where it stands:
   hall columns (y 21-24) and cage choreography, 052's S2 drop timed to its lift and its hangar and
   well stars re-laid from a traced flight (`tools/autoplay` `trace`; the star-free probe world
   trick: generate the world with `star` stubbed into `build-probe/probe-worlds-052/`). 78/78.
+- OR-0014 on the web (`789ceee`): the music served beside the page and fetched per track (see the
+  web build section; checked in headless Chrome).
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
   `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
@@ -543,8 +545,10 @@ emcmake cmake -S . -B build-cna-webgl2 \
 cmake --build build-cna-webgl2 --target GalaxyEggbertCNA -j2
 ```
 
-The four deployable files are `build-cna-webgl2/GalaxyEggbert.{html,js,wasm,data}`. Serve them
-over HTTP; opening the HTML directly as a `file:` URL is not a valid runtime check.
+The deployable files are `build-cna-webgl2/GalaxyEggbert.{html,js,wasm,data}` and the folder
+`build-cna-webgl2/Content/music/` beside them (the music is fetched a track at a time, not packed;
+OR-0014). Serve them over HTTP; opening the HTML directly as a `file:` URL is not a valid runtime
+check.
 
 Only existing build directories (`build-cna-opengl3/`, `build-cna-webgl2/`; `build-probe/` for
 probes and converter output). Never build in `/tmp` or the scratchpad. Reconfigure only when broken:
