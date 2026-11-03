@@ -596,9 +596,69 @@ namespace GalaxyEggbert::Game
                                                                   float startY, float startZ, float dx, float dy,
                                                                   float dz, bool tempPassable,
                                                                   bool checkSubcellHorizontal,
-                                                                  bool checkSubcellVertical)
+                                                                  bool checkSubcellVertical, float halfWidth)
     {
         MoveResult result;
+        // A wall stops the box's leading face (OR-0017): its middle and both corners, at his feet
+        // and his head. The corners stand a hair inside the box, so a wall along his side does not
+        // catch him. Crates keep stopping his middle, as before: their push already places him
+        // (CratePush.hpp, the original's distances).
+        const float side = std::max(0.0f, halfWidth - 0.01f);
+        // The box's bottom stands 2 px over his feet (Decor::BlupiRect: Bottom = pos.Y + 60 - 2), so
+        // floor at his own level (a lift's top a hair under the deck's) is no wall to it.
+        const float foot = halfWidth > 0.0f ? 2.0f / 64.0f : 0.0f;
+        const auto pointSolid = [&](float qx, float qy, float qz)
+        {
+            return IsPointSolid(world, qx, qy + foot, qz, tempPassable, checkSubcellHorizontal) ||
+                   IsPointSolid(world, qx, qy + kHeadHeight, qz, tempPassable, checkSubcellHorizontal);
+        };
+        const auto faceSolid = [&](float cx, float cy, float cz, float fx, float fz, bool alongX)
+        {
+            if (pointSolid(cx, cy, cz))
+            {
+                return true;
+            }
+            if (halfWidth <= 0.0f)
+            {
+                return false;
+            }
+            const auto* crates = g_crateCells;
+            g_crateCells = nullptr;
+            bool solid = false;
+            for (const float o : {0.0f, -side, side})
+            {
+                solid = solid || pointSolid(alongX ? fx : fx + o, cy, alongX ? fz + o : fz);
+            }
+            g_crateCells = crates;
+            return solid;
+        };
+        // His box's corners under his feet and, rising, over his head (OR-0017): the original
+        // stands him while any of his 36 px box is over ground (Decor::BlupiIsGround tests the box's
+        // width under his feet) and stops him under a ceiling the same way.
+        // Under his feet a corner counts only over a top (solid there, free at the box's bottom 2 px
+        // up): a block beside him, as tall as he is, is a wall to his face, not ground (a saw's cell
+        // he jumps past).
+        const auto footprintSolid = [&](float px, float py, float pz, bool ground)
+        {
+            if (halfWidth <= 0.0f)
+            {
+                return false;
+            }
+            for (const float ox : {-side, side})
+            {
+                for (const float oz : {-side, side})
+                {
+                    // The corners read a cell's own shape, as his face does (a saw's cell is solid
+                    // only at its foot), not the whole cell as the middle's ground test does.
+                    if (IsPointSolid(world, px + ox, py, pz + oz, tempPassable, true) &&
+                        (!ground || !IsPointSolid(world, px + ox, py + 0.05f + foot, pz + oz, tempPassable, true)))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        };
         result.x = startX;
         result.y = startY;
         result.z = startZ;
@@ -646,8 +706,8 @@ namespace GalaxyEggbert::Game
             if (!xBlocked)
             {
                 const float candidateX = startX + stepDx * static_cast<float>(i);
-                if (IsPointSolid(world, candidateX, clearY, clearZ, tempPassable, checkSubcellHorizontal) ||
-                    IsPointSolid(world, candidateX, clearY + kHeadHeight, clearZ, tempPassable, checkSubcellHorizontal))
+                const float faceX = candidateX + (stepDx > 0.0f ? halfWidth : stepDx < 0.0f ? -halfWidth : 0.0f);
+                if (faceSolid(candidateX, clearY, clearZ, faceX, clearZ, true))
                 {
                     xBlocked = true;
                 }
@@ -661,7 +721,8 @@ namespace GalaxyEggbert::Game
                 const float candidateY = startY + stepDy * static_cast<float>(i);
                 if (IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcellVertical) ||
                     (stepDy > 0.0f &&
-                     IsPointSolid(world, clearX, candidateY + kHeadHeight, clearZ, tempPassable, checkSubcellVertical)))
+                     IsPointSolid(world, clearX, candidateY + kHeadHeight, clearZ, tempPassable, checkSubcellVertical)) ||
+                    footprintSolid(clearX, stepDy > 0.0f ? candidateY + kHeadHeight : candidateY, clearZ, stepDy <= 0.0f))
                 {
                     yBlocked = true;
                 }
@@ -673,8 +734,8 @@ namespace GalaxyEggbert::Game
             if (!zBlocked)
             {
                 const float candidateZ = startZ + stepDz * static_cast<float>(i);
-                if (IsPointSolid(world, clearX, clearY, candidateZ, tempPassable, checkSubcellHorizontal) ||
-                    IsPointSolid(world, clearX, clearY + kHeadHeight, candidateZ, tempPassable, checkSubcellHorizontal))
+                const float faceZ = candidateZ + (stepDz > 0.0f ? halfWidth : stepDz < 0.0f ? -halfWidth : 0.0f);
+                if (faceSolid(clearX, clearY, candidateZ, clearX, faceZ, false))
                 {
                     zBlocked = true;
                 }
@@ -698,7 +759,8 @@ namespace GalaxyEggbert::Game
         // onGround is always a ground-detection question, regardless of this
         // call's own checkSubcellVertical -- always coarse (see
         // IsPointSolid()'s own comment for why).
-        result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false);
+        result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false) ||
+                          footprintSolid(result.x, result.y - 0.05f, result.z, true);
         return result;
     }
 
@@ -818,33 +880,6 @@ namespace GalaxyEggbert::Game
                          (!below.isAir() && GalaxyEggbert::GetBlockDefinition(below.type()).collisionMask != 0);
         }
         return belowSolid ? BarreCellType::LandingAvailable : BarreCellType::Hanging;
-    }
-
-    std::pair<float, float> BlupiController::WallClearanceOffset(const Worlds::World& world) const
-    {
-        // Each side's free run up to the half-width, in pixel steps, at his body (above the step
-        // limit) and his head: a wall face closer than that pushes the model back by the rest.
-        constexpr int kSteps = 18;
-        const float step = kBodyHalfWidth / static_cast<float>(kSteps);
-        const float heights[2] = {m_y + 0.15f, m_y + kHeadHeight};
-        const auto freeRun = [&](float ux, float uz)
-        {
-            for (int k = 1; k <= kSteps; ++k)
-            {
-                const float d = step * static_cast<float>(k);
-                for (const float h : heights)
-                {
-                    if (IsPointSolid(world, m_x + ux * d, h, m_z + uz * d, false))
-                    {
-                        return d - step;
-                    }
-                }
-            }
-            return kBodyHalfWidth;
-        };
-        const float dx = (kBodyHalfWidth - freeRun(-1.0f, 0.0f)) - (kBodyHalfWidth - freeRun(1.0f, 0.0f));
-        const float dz = (kBodyHalfWidth - freeRun(0.0f, -1.0f)) - (kBodyHalfWidth - freeRun(0.0f, 1.0f));
-        return {dx, dz};
     }
 
     void BlupiController::KeepOnBarRow(const Worlds::World& world, int gx, int gy, int gz)
@@ -2200,8 +2235,10 @@ namespace GalaxyEggbert::Game
         const float dy = m_velocityY * dt + windDy;
         const bool wasOnGroundBeforeMove = m_onGround; // landing this frame: StopJump
         const float velocityYBeforeMove = m_velocityY;  // ... from a real fall, not a settle
+        const float bodyHalfWidth = m_vehicleMode == VehicleMode::None ? kBodyHalfWidth : 0.0f;
         const MoveResult moveResult = ResolveMove(world, m_x, m_y, m_z, dx, dy, dz, tempPassable,
-                                                   /*checkSubcellHorizontal=*/true, /*checkSubcellVertical=*/false);
+                                                   /*checkSubcellHorizontal=*/true, /*checkSubcellVertical=*/false,
+                                                   bodyHalfWidth);
 
         // Step-up (FindColumnGroundY's own comment) is a separate,
         // explicitly CNA-only fallback tried only when grounded and the
@@ -2216,9 +2253,17 @@ namespace GalaxyEggbert::Game
         float newZ = moveResult.z;
         float newY = moveResult.y;
         bool steppedUp = false;
+        // With his body's width the step is met by its leading face: only a real step there (ground
+        // higher than his feet, within the limit) lifts him; a wall stays a wall (OR-0017).
+        const auto stepAhead = [&](float faceX, float faceZ)
+        {
+            const float g = FindColumnGroundY(world, faceX, faceZ, m_y + kStepLimit, tempPassable);
+            return bodyHalfWidth <= 0.0f || g > m_y + 0.001f ? g : -1.0f;
+        };
         if (moveResult.blockedX && dx != 0.0f && m_onGround)
         {
-            const float steppedGroundY = FindColumnGroundY(world, m_x + dx, moveResult.z, m_y + kStepLimit, tempPassable);
+            const float steppedGroundY =
+                stepAhead(m_x + dx + (dx > 0.0f ? bodyHalfWidth : -bodyHalfWidth), moveResult.z);
             if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
             {
                 newX = m_x + dx;
@@ -2231,7 +2276,8 @@ namespace GalaxyEggbert::Game
         }
         if (moveResult.blockedZ && dz != 0.0f && m_onGround)
         {
-            const float steppedGroundY = FindColumnGroundY(world, moveResult.x, m_z + dz, m_y + kStepLimit, tempPassable);
+            const float steppedGroundY =
+                stepAhead(moveResult.x, m_z + dz + (dz > 0.0f ? bodyHalfWidth : -bodyHalfWidth));
             if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
             {
                 newZ = m_z + dz;

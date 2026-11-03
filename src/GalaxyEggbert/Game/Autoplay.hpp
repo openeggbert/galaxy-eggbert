@@ -152,6 +152,12 @@ namespace GalaxyEggbert::Game
         int jumpTicksLeft_ = 0;
         int traceTicksLeft_ = 0;
         bool jumped_ = false;
+        // A go's last position and how many ticks he has not moved from it (pressed against a wall).
+        float goLastX_ = 0.0f;
+        float goLastZ_ = 0.0f;
+        float goLastYaw_ = 0.0f;
+        float goLastY_ = 0.0f;
+        int goStillTicks_ = 0;
         bool finished_ = false;
         int failures_ = 0;
         bool havePrevious_ = false;

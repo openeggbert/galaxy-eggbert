@@ -490,6 +490,11 @@ namespace GalaxyEggbert::Game
                 commandStartTick_ = state.tick;
                 jumped_ = false;
                 jumpTicksLeft_ = 0;
+                goLastX_ = state.x;
+                goLastZ_ = state.z;
+                goStillTicks_ = 0;
+                goLastYaw_ = state.yawDegrees;
+                goLastY_ = state.y;
                 if (command.kind != Kind::Log && command.kind != Kind::Expect && command.kind != Kind::Trace)
                 {
                     Write(state, command.Where() + ": " + command.text);
@@ -520,13 +525,33 @@ namespace GalaxyEggbert::Game
                 const float dx = command.x - state.x;
                 const float dz = command.z - state.z;
                 const float distance = std::sqrt(dx * dx + dz * dz);
-                if (command.jumpAt >= 0.0f && !jumped_ && distance <= command.jumpAt)
+                // Pressed against a wall short of a point within his body's half-width of it (his
+                // body has width against walls, OR-0017; the scripts' points were chosen without
+                // it): he has arrived when he has not moved for 2 ticks that close, and a jump
+                // asked for at a distance is taken there too (a step's face meets his body early).
+                constexpr float kBodyHalfWidth = 18.0f / 64.0f;
+                // Still and not turning (he turns on the spot before he sets off), past a go's first ticks.
+                // ... and not rising or sinking (diving straight down, swimming up: not a wall).
+                const bool still = std::fabs(state.x - goLastX_) < 0.001f && std::fabs(state.z - goLastZ_) < 0.001f &&
+                                   std::fabs(state.yawDegrees - goLastYaw_) < 0.5f &&
+                                   std::fabs(state.y - goLastY_) < 0.001f;
+                goStillTicks_ = still && state.tick - commandStartTick_ >= 6 ? goStillTicks_ + 1 : 0;
+                goLastX_ = state.x;
+                goLastZ_ = state.z;
+                goLastYaw_ = state.yawDegrees;
+                goLastY_ = state.y;
+                if (command.jumpAt >= 0.0f && !jumped_ &&
+                    (distance <= command.jumpAt ||
+                     (goStillTicks_ >= 2 && distance <= command.jumpAt + kBodyHalfWidth + 0.02f)))
                 {
                     jumped_ = true;
                     jumpTicksLeft_ = kJumpTicks;
                 }
+                // Not for `tol 0` (held at a point until something happens).
+                const bool againstWall = command.tolerance > 0.0f && goStillTicks_ >= 2 &&
+                                         distance <= command.tolerance + kBodyHalfWidth + 0.02f;
                 // The jump is played out even when he arrives before it ends.
-                done = (distance <= command.tolerance && jumpTicksLeft_ == 0) ||
+                done = ((distance <= command.tolerance || againstWall) && jumpTicksLeft_ == 0) ||
                        (command.hasCondition && Holds(command.condition, state));
                 if (!done)
                 {

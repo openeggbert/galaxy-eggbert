@@ -84,6 +84,10 @@ namespace GalaxyEggbert::Game
         // only his feet were checked before (in a three-high tunnel a jump took his body and the
         // camera up into the ceiling, reported by the world authoring).
         static constexpr float kHeadHeight = 49.0f / 64.0f;
+        // His body across, against walls (OR-0017): the original's box runs from pos.X + 12 to
+        // + 48 of 60 px (Decor::BlupiRect), 18 px each side of his middle. In 3D on X and Z alike;
+        // on foot and swimming (a vehicle keeps its point).
+        static constexpr float kBodyHalfWidth = 18.0f / 64.0f;
         // Not a step-up: real Decor::TestPath() has none, so a one-tile step
         // stops Blupi until he jumps onto it (user report 2026-10-25: he
         // walked up steps by himself; this was 1.0, a whole block, until then).
@@ -841,13 +845,6 @@ namespace GalaxyEggbert::Game
         // Suspended/hanging bar-and-rope mode (plan.md TILE-045, see
         // kSuspendMoveSpeed's own comment).
         [[nodiscard]] bool IsSuspended() const noexcept { return m_suspended; }
-        // Where his model is drawn off his position so it does not show sunk into a wall (OR-0017):
-        // the original's box is 36 px across (Decor::BlupiRect, pos.X + 12 to + 48) while Galaxy
-        // collides at his centre, so near a wall face his model keeps kBodyHalfWidth from it. Render
-        // only: his position, collision and contacts are unchanged (the collision box itself broke
-        // most playthroughs, plans/audit/or0017-body-width.patch). Returns (dx, dz).
-        static constexpr float kBodyHalfWidth = 18.0f / 64.0f;
-        [[nodiscard]] std::pair<float, float> WallClearanceOffset(const Worlds::World& world) const;
 
         // The way his model faces while hanging (BarRows.hpp): along the bar's row, the end nearest
         // GetYaw(); in a bar field GetYaw() itself.
@@ -1516,7 +1513,8 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] static MoveResult ResolveMove(const Worlds::World& world, float startX, float startY,
                                                      float startZ, float dx, float dy, float dz, bool tempPassable,
                                                      bool checkSubcellHorizontal = true,
-                                                     bool checkSubcellVertical = false);
+                                                     bool checkSubcellVertical = false,
+                                                     float halfWidth = 0.0f);
 
         // Real Decor::BlupiAdjust() equivalent (INFRA-005, plan.md §7):
         // penetration recovery, called once at the top of Step() before any

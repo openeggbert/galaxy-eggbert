@@ -585,23 +585,44 @@ int main(int argc, char** argv)
                       "dropped off a bar onto a floor four below, he plays Ouf5 standing idle");
             }
 
-            // OR-0017 (render only): near a wall face his model is drawn kBodyHalfWidth from it.
+            // OR-0017: his body is the original's 36 px box (Decor::BlupiRect, 18 px each side of his
+            // middle): walking into a wall he stops with its face at his half-width, and at a ledge he
+            // stands while a corner of the box is still over the floor (Decor::BlupiIsGround).
             {
-                Worlds::World wallWorld;
-                wallWorld.setBlock(30, 0, 30, Worlds::Block::make(BlockTypes::Ground));
-                wallWorld.setBlock(31, 0, 30, Worlds::Block::make(BlockTypes::Ground));
-                wallWorld.setBlock(31, 1, 30, Worlds::Block::make(BlockTypes::Ground)); // a wall at +X
-                BlupiController nearWall;
-                nearWall.SetPosition(30.0f - 50.0f + 0.4f, 1.0f, 30.0f - 50.0f); // 0.1 from its face
-                const auto offset = nearWall.WallClearanceOffset(wallWorld);
-                check(std::fabs(offset.first + (BlupiController::kBodyHalfWidth - 0.1f)) < 0.02f &&
-                          std::fabs(offset.second) < 1e-6f,
-                      "0.1 from a wall face his model is drawn back to his half-width from it (OR-0017)");
-                BlupiController inTheOpen;
-                inTheOpen.SetPosition(30.0f - 50.0f - 0.2f, 1.0f, 30.0f - 50.0f);
-                const auto none = inTheOpen.WallClearanceOffset(wallWorld);
-                check(std::fabs(none.first) < 1e-6f && std::fabs(none.second) < 1e-6f,
-                      "away from walls his model is drawn where he is");
+                Worlds::World boxWorld;
+                for (int x = 22; x <= 31; ++x)
+                {
+                    boxWorld.setBlock(static_cast<std::uint16_t>(x), 0, 30, Worlds::Block::make(BlockTypes::Ground));
+                }
+                boxWorld.setBlock(31, 1, 30, Worlds::Block::make(BlockTypes::Ground)); // a wall at +X
+                const float wallFace = 31.0f - 50.0f - 0.5f;
+                BlupiController walker;
+                walker.SetPosition(27.0f - 50.0f, 1.0f, 30.0f - 50.0f);
+                walker.SetYaw(1.57079633f); // +X
+                for (int i = 0; i < 300; ++i)
+                {
+                    walker.Step(boxWorld, 0.0f, 1.0f, false, false, false, dt);
+                }
+                const float reach = wallFace - walker.GetX();
+                check(reach >= BlupiController::kBodyHalfWidth - 0.01f && reach <= BlupiController::kBodyHalfWidth + 0.05f,
+                      "walking into a wall he stops with his body's face at it, 18 px from his middle (OR-0017)");
+
+                const float ledge = 22.0f - 50.0f - 0.5f; // the floor's west edge
+                BlupiController onEdge;
+                onEdge.SetPosition(ledge - 0.2f, 1.0f, 30.0f - 50.0f); // his middle over air, a corner over floor
+                for (int i = 0; i < 30; ++i)
+                {
+                    onEdge.Step(boxWorld, 0.0f, 0.0f, false, false, false, dt);
+                }
+                check(onEdge.IsOnGround() && std::fabs(onEdge.GetY() - 1.0f) < 1e-3f,
+                      "his middle past a ledge, he stands while his box's corner is over the floor (OR-0017)");
+                BlupiController offEdge;
+                offEdge.SetPosition(ledge - 0.35f, 1.0f, 30.0f - 50.0f); // the whole box over air
+                for (int i = 0; i < 30; ++i)
+                {
+                    offEdge.Step(boxWorld, 0.0f, 0.0f, false, false, false, dt);
+                }
+                check(offEdge.GetY() < 0.9f, "his whole box past the ledge, he falls");
             }
 
             // In 3D the bar's row is the original's bar (BarRows.hpp): grabbed off its centre line and
@@ -3204,17 +3225,17 @@ int main(int argc, char** argv)
             airborneWallWorld.setBlock(static_cast<std::uint16_t>(kFloorX + 5), dy, kFloorZ,
                                         Worlds::Block::make(BlockTypes::Ground));
         }
-        // Starts RIGHT NEXT TO the wall (0.7 units away -- the wall's own
-        // solid footprint is center-anchored, spanning [wallX-0.5,
-        // wallX+0.5), so anything closer than 0.5 would already be
-        // INSIDE it) so the jump's own brief airborne window is what
-        // actually meets the wall -- placing him further back would let
-        // him LAND again (back to normal, already-tested grounded wall
-        // collision) well before ever reaching it, never exercising the
-        // airborne case this test exists for at all.
+        // Starts RIGHT NEXT TO the wall (0.85 units from its centre: its
+        // solid footprint spans [wallX-0.5, wallX+0.5), and his body reaches
+        // kBodyHalfWidth from his middle (OR-0017), so anything closer than
+        // 0.78 would already have his body in it) so the jump's own brief
+        // airborne window is what actually meets the wall -- placing him
+        // further back would let him LAND again (back to normal,
+        // already-tested grounded wall collision) well before ever reaching
+        // it, never exercising the airborne case this test exists for at all.
         const float wallX = static_cast<float>(kFloorX + 5) - 50.0f;
         BlupiController jumper;
-        jumper.SetPosition(wallX - 0.7f, 1.0f, static_cast<float>(kFloorZ) - 50.0f);
+        jumper.SetPosition(wallX - 0.85f, 1.0f, static_cast<float>(kFloorZ) - 50.0f);
         jumper.SetYaw(0.0f);
         jumper.Step(airborneWallWorld, 0.0f, 0.0f, false, false, false, dt);
         check(jumper.IsOnGround(), "sanity: airborne-wall test's jumper starts grounded next to the wall");
@@ -3231,8 +3252,9 @@ int main(int argc, char** argv)
         {
             jumper.Step(airborneWallWorld, 0.0f, 1.0f, false, false, false, dt);
         }
-        check(jumper.GetX() < wallX - 0.45f,
-              "airborne movement is blocked by a wall, same as grounded movement (the INFRA-005 fix)");
+        check(jumper.GetX() <= wallX - 0.5f - BlupiController::kBodyHalfWidth + 0.01f,
+              "airborne movement is blocked by a wall at his body's face, same as grounded movement "
+              "(the INFRA-005 fix; OR-0017)");
     }
 
     // WorldSelect hub-navigation marker contact detection (live bug report,
