@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cheese import cheese  # noqa: E402
 from kit import MACHINE_FACES, MACHINE_FLOOR, O, World, lift, mine, wall  # noqa: E402
 from palace import stone as white_stone  # noqa: E402
-from slime import SLIME, skin, slime  # noqa: E402
+from slime import SLIME, SLIME_TRAP, skin, slime  # noqa: E402
 from station import brick, water  # noqa: E402
 from village import ROCK, ROCK_FACES, STONE, STONE_FACES  # noqa: E402
 
@@ -41,6 +41,7 @@ SLATE = (196, 197)
 SAW, SWITCH = 378, 384
 BLITZ, EMITTER = 305, 304
 BRIDGE = 364                          # crumbles under Blupi and grows back
+DRIP = 404                            # kills in its own cell (Decor::IsGoutte, BD-0033)
 LOW, HIGH = 20, 30                    # the plaza's floor and the ring gallery: walking levels
 P0, P1 = 34, 66                       # the plaza's interior, x and z
 
@@ -157,6 +158,10 @@ def main(argv) -> int:
     for icon, floor, ring in ((330, (37, 54), (34, 54)), (331, (42, 62), (41, 66))):
         w.set(floor[0], LOW + 1, floor[1], icon)
         w.set(ring[0], HIGH + 1, ring[1], icon)
+    # Two spike traps alone in the slime floor, as the original's two (its (41, 61) and (53, 77)): on
+    # the way down the west side (35, 45) and along the south (47, 66).
+    for x, z in ((35, 45), (47, 66)):
+        w.set(x, LOW - 1, z, SLIME_TRAP)
     # The pool with a fish, the plaza's creatures, its helicopters and eggs.
     carve(41, LOW - 5, 53, 49, LOW - 1, 60)
     water(w, 41, LOW - 5, 53, 49, LOW - 1, 60)
@@ -239,6 +244,11 @@ def main(argv) -> int:
     for u, v in ((5, 5), (9, 8)):
         x, z = village.at(u, v)
         hazard(x, LOW, z)
+    # Two drips hung from the slime over its passage (x 33, the top cell, walk + 2), as the original's
+    # drip under a slime ledge over a way (its (44, 67)): walked under, deadly to a jump.
+    for u in (5, 7):
+        x, z = village.at(u, -3)
+        w.set(x, LOW + 2, z, DRIP)
     put(village, O.KEY3, 7, 12)
     put(village, O.EGG, 11, 1)
     put(village, O.EGG, 11, 11)

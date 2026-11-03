@@ -84,10 +84,20 @@ go 43 35.5
 go 36 36 until eggs = 6
 until eggs = 6 max 120
 go 35.3 40
+# The spike trap in the floor (35, 45) jumped.
+go 35.3 44.3 tol 0.05
+go 35.3 46.2 jump 1.9 tol 0.1
+until ground = 1
+expect z >= 45.6
 go 35.3 63
 go 36 64 until eggs = 7
 until eggs = 7 max 120
 go 36.5 66.3 tol 0.15
+# The spike trap in the floor (47, 66) jumped.
+go 46.3 66.3 tol 0.05
+go 48.2 66.3 jump 1.9 tol 0.1
+until ground = 1
+expect x >= 47.6
 go 57 66.3 tol 0.15
 face 180
 go 57 67.6 tol 0.15

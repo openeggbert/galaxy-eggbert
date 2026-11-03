@@ -17,7 +17,8 @@ inverts (40); the red arrow at the end in a frame of star blocks.
 walk 30 where Blupi starts (65, 30, 35), a stair of slime from the ring down to the floor, two lifts
 (60 ticks, dwelling 40) back up and two teleporter pairs between the floor and the ring (330 west:
 floor 37, 54 / ring 34, 54; 331 south: floor 42, 62 / ring 41, 66), as the original's two pairs link
-rooms one above another; a pool with a fish, helicopters, two bulldozers, three birds, four
+rooms one above another; two spike traps (373) alone in the slime floor (35, 45 and 47, 66) and
+two drips (404) hung over the village's passage (x 33, walk 22), as the original's; a pool with a fish, helicopters, two bulldozers, three birds, four
 bobbing mines, four sleeping follow stars, eight eggs. Off it eight enclaves, each of one world's
 material, reached by a passage three wide through the plaza's walls:
 - at the floor: **east, the machine** (open): its passage under a curtain of lightning (304 over
