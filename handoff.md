@@ -289,10 +289,27 @@ ledgers before repeating any discovery. Where it stands:
   (the animated mesh is rebuilt every tick), so the void stays -- Q-008 asks about a cheaper lava.
   `lesson_inventory.md` now lists only 105's lava, 112's water pipes (scenery, LV-0068), 046's bar,
   013/124's thinned counts.
+- Then (2026-11-03, latest): **ED-0007, the original editor's auto-tiling** (`fb76c3f`,
+  `src/GalaxyEggbert/Editor/AutoTile.hpp`: `IsRightBorder` rule by rule, `table_adapt_decor`, the
+  random twins, the lightning column; run after every placement, erase and box-fill cell as the PC
+  editor's `decdesign.cpp` does; right/left from X or Z as the owner chose in MR-0005; one change per
+  cell so one undo restores all; the cheese/cave edge plates in empty cells are not laid). Ledgers:
+  the render ledger reviewed by the model library's render-back IoU (`cf221a1`: 13 rows left, D11's
+  candidates), the asset sources classified from the survey's evidence (`6961504`: 60 left, a3d files
+  without a Ray Dream twin and the root test files). Run the editor verifiers from the build
+  directory (`ctest`): run from the repository root they write `customworlds/` there.
+  Also: ED-0003's moving mechanisms (`cdd8503`: the four lifts are type 1 at the PC editor's speeds
+  per cell, scaled when the end is set; the conveyor lift 47; the slime creature 54, not 18); the
+  balustrade 398 as its Ray Dream model (`e60f61f`, `Decor/palais/mur06.rds`, a front model);
+  **world 199's spare enclaves played to the win** by `tools/autoplay/spare/world199.txt`
+  (`051fd54`; not in the playthrough set, run it alone); **the 57 unreviewed world lessons reviewed**
+  (`042dafd`: 53 CONFIRMED_MATCH by brief + lesson_inventory + the regression + a spawn look, 013 an
+  adaptation, 998/999 not applicable; at six spawns the camera starts overhead). **Regression of
+  2026-11-03 after all of it: 78/78 playthroughs pass; ctest 112/112.**
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
-  wait for the owner (`plans/audit/owner_questions.md`); the 57 UNREVIEWED rows of
-  `plans/audit/world_lessons.csv` (spawn shots in `build-probe/wave-e/review/<world>/`); the spare
-  enclaves of 199 (toys, palace, rock) are not played through.
+  wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list; the
+  editor's other menu groups entry by entry (ED-0003) and its UI scripts (ED-0002/0004/0005); the
+  a3d files without a Ray Dream twin (asset ledger); a human play pass of every world.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
