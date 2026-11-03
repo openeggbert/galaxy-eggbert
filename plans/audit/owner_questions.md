@@ -111,3 +111,14 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
 - Whatever the choice: on a GPU whose vertex uniform limit is 256 (the emulator; many Adreno
   phones) no 3D model is drawn until CNA fixes UB-007; a Mali or newer Adreno phone may not hit it.
 - Nothing is changed on the machine without the owner.
+
+## Q-010 — the cheese with holes (339): see through, or the holes as dents? (2026-11-03)
+
+- Tile 339 is cheese with two round holes that are clear in the sprite (857 of its 4,290 texels):
+  in the original's 2D the backdrop shows through them. In 3D it is a cube drawn with an alpha
+  test, so through a hole one sees the cube's own inside, unlit: black dots on the cheese walls
+  (18 cells: 042 and 045; found by the play pass, `build-probe/qa-shots/cheese339/v.png`).
+- Options: (a) see-through holes (the cube's inner faces drawn, so a hole shows the room behind
+  the wall where there is one, cheese where the wall goes on); (b) holes as dents: the clear texels
+  drawn in a darker cheese colour, the cube closed; (c) leave it.
+  Recommendation: (b) -- the walls stay walls, as everywhere else in the cheese worlds.
