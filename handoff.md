@@ -314,27 +314,31 @@ ledgers before repeating any discovery. Where it stands:
   trick: generate the world with `star` stubbed into `build-probe/probe-worlds-052/`). 78/78.
 - OR-0014 on the web (`789ceee`): the music served beside the page and fetched per track (see the
   web build section; checked in headless Chrome).
-- OR-0017's collision box (2026-11-03, in progress, not yet in the game): `plans/audit/or0017-body-width.patch`
-  v6 (apply with `git apply`): his 36 px box against walls (the box's bottom 2 px over his feet),
-  ground and ceiling under its whole width read by each cell's own shape, a corner as ground only
-  over a top; the harness counts a `go` as against a wall (arrived, or its jump taken) only when he
-  is still -- not moving, turning, rising or sinking -- past its first ticks (v6 added the vertical
-  stillness for 124's dive; not yet built: see below). Full run with v5: **60/78**
-  (`build-probe/wave-e/or17-latest.txt`); since then 074, 083, 091, 093, 094, 101, 113, 114 pass
-  with it one by one. The committed game stays 78/78 (every re-planned script passes with and
-  without the box; each committed alone): 012, 014, 022, 024, 025, 031 (a bird sync), 043, 044,
-  046, 051, 053 (its cage's north row re-laid), 055, 057, 062, 065, 066's lower tunnel, 074, 083,
-  091, 093, 094, 101, 113, 114. Left: 066's upper tunnel (one cell wide; its lesson keeps him half a
-  cell off the mines' line, which his body cannot: a world change), 124 (v6), 199. The usual
-  causes: a target within a half-width of a wall or a one-cell passage (go along its middle), a
-  ledge left with his body's corner still on it (go further), a jump under an overhang (start
-  further back), an `until x >=` his body's face never lets him reach.
-  Working method: a box binary in `build-probe/or17-bin/` (build with the patch applied, copy
-  `GalaxyEggbert` there, revert, rebuild), runs with `tools/autoplay.sh build-probe/or17-bin ...`
-  beside the committed build. **At the end of 2026-11-03 `build-probe/or17-bin/` holds the
-  committed binary** (a rebuild failed while the cna session had CNA mid-edit: its configure-time
-  audit `platform-nonproduction-sdl` refused uncommitted test changes); rebuild it first. When all
-  78 pass with the patch: apply it, drop `WallClearanceOffset`, commit, update OR-0017.
+- **OR-0017 done (`a45e785`)**: Blupi's body is the original's 36 px box (BlupiController
+  `kBodyHalfWidth`, `ResolveMove`'s `halfWidth`): his face stops 18 px from a wall, he stands while a
+  corner of the box is over a top, ceilings stop its whole width; on foot and swimming, vehicles keep
+  their point. `WallClearanceOffset` is gone. The harness takes a `go` pressed against a wall short
+  of its point as arrived only when he is still in x, z, yaw and y past its first ticks. 78/78 with
+  it (066 last: `e5111ab`, its one-wide tunnels walked 0.3 off the mines' line). When a script now
+  fails by a wall, the usual causes: a target within a half-width of a wall (go along the middle),
+  a ledge left with the box's corner still on it (go further), a jump under an overhang (start
+  further back), an `until x >=` the body's face never reaches.
+- **The play pass (`06f1323`)**: `AUTOPLAY_SHOTS=N` saves a frame every N ticks of an autoplay run;
+  `tools/play_pass.sh <build> <out> [worlds]` plays every script in lanes with it (4 lanes:
+  `PLAY_PASS_JOBS=4`, ~75 min) and writes contact sheets `<out>/<world>-pN.jpg` (tick and Blupi's
+  place on each frame) plus `results.txt` -- a full regression and a look at the whole campaign as
+  the player sees it. Never run two passes at once: they share `build-probe/play-pass-run-<n>/`.
+  The first pass (2026-11-03, `build-probe/play-pass-1/`) found: (1) **single-textured-side tiles
+  always textured on +Z** (the machine panel 10 and kin, house walls 186-192, palace 390-397: 27 %
+  of their visible sides textured; the owner's questionnaire answer has the side per block) --
+  fixed `0b401be` (`SingleTexturedSide`: the open side facing the most room; 88 %); (2) **the
+  camera cut Blupi at the picture's bottom** whenever a wall pulled it within ~2 cells (the look
+  point a block over his feet, 45-degree picture) -- `ChaseLookHeight` (ChaseCameraYaw.hpp) lowers
+  the look point toward his middle as it comes in; it changes the pickups' flight time to the HUD
+  (Voyage, by screen distance, as the original), so it waits on a full pass before its commit;
+  (3) 045's cheese floor shows clusters of black dots near (59.6, 52.6, 15.4) and (49.4, 55.1, 12.1),
+  not looked into yet; (4) frames with Blupi out of view while he walks down a stairwell (024
+  t3600) or flies the helicopter in a shaft (043 t6120) -- to recheck with (2).
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
   `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
