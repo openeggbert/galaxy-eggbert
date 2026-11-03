@@ -5047,6 +5047,25 @@ namespace GalaxyEggbert::CNA
                 cameraEyeSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraEyeSmoothed_, rawEye, alpha);
                 cameraTargetSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraTargetSmoothed_, rawTarget, alpha);
             }
+            // The smoothed eye trails the raw one, which the wall check placed: swinging round a
+            // corner or a pillar it cut through what the raw eye went round, showing a wall from
+            // inside or putting it between the eye and Blupi (the play pass of 2026-11-03: 092,
+            // 094, 101, 102, 121, 122, ...). It is kept on this side of any wall along its own line
+            // to him, as the raw eye is.
+            if (cameraMode_ == CameraMode::ThirdPersonModel)
+            {
+                const Microsoft::Xna::Framework::Vector3 toEye = cameraEyeSmoothed_ - cameraTargetSmoothed_;
+                const float eyeDistance = toEye.Length();
+                if (eyeDistance > 0.06f)
+                {
+                    const float safe = RaymarchWallDistance(worldRuntime_.GetWorld(), cameraTargetSmoothed_,
+                                                            toEye * (1.0f / eyeDistance), eyeDistance);
+                    if (safe < eyeDistance)
+                    {
+                        cameraEyeSmoothed_ = cameraTargetSmoothed_ + toEye * (std::max(safe, 0.05f) / eyeDistance);
+                    }
+                }
+            }
 
             // Real screen-shake/forced-pan effect (plan.md CAM-008..013,
             // see CameraShake.hpp's own comment) -- only ticks during
