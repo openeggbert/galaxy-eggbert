@@ -39,6 +39,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <memory>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -506,6 +507,8 @@ namespace GalaxyEggbert::CNA
         // the editor, if sound is on; never in autoplay.
         std::unique_ptr<Microsoft::Xna::Framework::Media::Song> music_;
         std::uint32_t musicPlaying_ = 0;
+        // Web only: the tracks asked of the server so far (UpdateMusic; OR-0014).
+        std::set<std::uint32_t> musicRequested_;
         void UpdateMusic();
         // MediaPlayer's volume from the Setup's music slider (0.5 at 100, OR-0014's mix).
         void ApplyMusicVolume();

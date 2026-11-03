@@ -1,5 +1,8 @@
 #include "GalaxyEggbertGame.hpp"
 
+#if defined(__EMSCRIPTEN__)
+#include <emscripten.h>
+#endif
 #include <GalaxyEggbert/Game/GamepadInput.hpp>
 #include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
@@ -1870,6 +1873,24 @@ namespace GalaxyEggbert::CNA
         }
         char path[48];
         std::snprintf(path, sizeof(path), "Content/music/music%03u.ogg", wanted - 1u);
+#if defined(__EMSCRIPTEN__)
+        // The web build does not pack the music (27 MB, OR-0014): it lies beside the page in
+        // Content/music/ and a track is fetched into the virtual filesystem the first time a world
+        // asks for it; until it is there, nothing plays and the next frame asks again.
+        if (!std::filesystem::exists(path))
+        {
+            musicPlaying_ = 0;
+            if (musicRequested_.insert(wanted).second)
+            {
+                std::error_code error;
+                std::filesystem::create_directories("Content/music", error);
+                emscripten_async_wget(
+                    path, path, [](const char* file) { std::cout << "GalaxyEggbert: fetched " << file << std::endl; },
+                    [](const char* file) { std::cout << "GalaxyEggbert: could not fetch " << file << std::endl; });
+            }
+            return;
+        }
+#endif
         try
         {
             music_.reset(Song::FromUri("music", std::string(path)));

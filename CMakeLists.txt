@@ -347,6 +347,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
                     "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/${_own_dir}@/${_own_dir}")
             endif()
         endforeach()
+
+        # The music (27 MB) is not packed: it is served beside the page in Content/music/ and the
+        # game fetches a track when a world first plays it (GalaxyEggbertGame::UpdateMusic, OR-0014).
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Content/music")
+            ge_stage_runtime_directory("${CMAKE_CURRENT_SOURCE_DIR}/Content/music" "Content/music")
+        endif()
     endif()
 
     message(STATUS "GalaxyEggbertCNA target enabled (maintained playable game).")
