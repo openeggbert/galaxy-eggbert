@@ -128,16 +128,20 @@ go 43 67.6 tol 0.15
 wait 30
 go 43 70.5
 expect keys = 1
-# Back out and down off the arm's inner edge to the floor, west to the village's green door
+# Back out and down by teleporter 331 (its booth on the arm's outer edge beside the passage,
+# x 41, z 66) to its partner on the floor (42, 62); west to the village's green door
 # (x 32, z 56-58): the second green key opens it. Along the village's south side (z 62, clear of
 # its mines) to its west end; the blue key lies at the end of the street (18, 58) that the enemy
 # Blupi walks (x 20-28), firing both ways along it at each end: taken once he has turned at the
 # west end and fired, as he walks away east. He is let turn at the east end and fire before
 # Blupi comes in, and the passage is walked at its south side, out of the shots' line.
 go 43 65
-go 43 62.4
-until ground = 1
+go 41 66 tol 0.05 until y <= 21 max 900
 expect y <= 20.05
+expect x >= 41.9
+expect x <= 42.1
+expect z >= 61.9
+expect z <= 62.1
 go 40 61.6
 go 37 58
 go 35 56.4
@@ -161,19 +165,14 @@ go 29.4 61.8
 go 30.4 56.4
 go 34 56.4
 expect y <= 20.05
-# Up the west lift (x 37-38, z 49-50) from under the ring's west arm, off at its top west onto
-# the arm (walk 30); south and east round the ring to the finale, through its hall to the inner
+# Up by teleporter 330 (its booth on the floor at 37, 54) to its partner on the ring's west arm
+# (34, 54, walk 30); south and east round the ring to the finale, through its hall to the inner
 # blue door (x 42-44, z 76): the blue key opens it; the red arrow in its frame of star blocks.
-go 35.8 52
-go 35.8 49.5 tol 0.1
-face 90
-lift 37 30 49 max 600
-lift 37 20 49 max 600
-go 37.6 49.5 tol 0.15
-lift 37 30 49 max 400
-face 270
-go 35.2 49.5 tol 0.15
+go 37 54 tol 0.05 until y >= 29 max 900
 expect y >= 29.95
+expect x >= 33.9
+expect x <= 34.1
+go 35 54
 go 35 65
 go 43 65
 go 43 67.6

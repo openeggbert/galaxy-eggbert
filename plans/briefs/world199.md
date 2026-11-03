@@ -15,7 +15,9 @@ inverts (40); the red arrow at the end in a frame of star blocks.
 
 **3D design**: a plaza cut in slime (x 34–66, z 34–66, floor walk 20), a ring gallery round it at
 walk 30 where Blupi starts (65, 30, 35), a stair of slime from the ring down to the floor, two lifts
-(60 ticks, dwelling 40) back up; a pool with a fish, helicopters, two bulldozers, three birds, four
+(60 ticks, dwelling 40) back up and two teleporter pairs between the floor and the ring (330 west:
+floor 37, 54 / ring 34, 54; 331 south: floor 42, 62 / ring 41, 66), as the original's two pairs link
+rooms one above another; a pool with a fish, helicopters, two bulldozers, three birds, four
 bobbing mines, four sleeping follow stars, eight eggs. Off it eight enclaves, each of one world's
 material, reached by a passage three wide through the plaza's walls:
 - at the floor: **east, the machine** (open): its passage under a curtain of lightning (304 over
@@ -44,7 +46,8 @@ Played live: walking into the red arrow from inside the finale's frame shows the
 Played through in one run by `tools/autoplay/world199.txt` (each key spent on one door): the
 machine's red key, the library (red door) for a green key, the cheese (green door) for a blue
 and a second green key, the finale's outer blue door, the village (green door) for a second
-blue key, the inner blue door and the red arrow; the win screen. The other enclaves (toys,
+blue key, the inner blue door and the red arrow; the win screen. It goes down from the ring
+by teleporter 331 and back up by 330. The other enclaves (toys,
 palace, rock) are spare routes it does not take.
 
 The cheese's row of crushers was removed (the original's 199 has none, lesson_inventory).

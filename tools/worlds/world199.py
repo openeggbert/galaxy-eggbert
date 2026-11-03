@@ -150,6 +150,13 @@ def main(argv) -> int:
         for k in range(4):
             slime(w, 38 + k, LOW, 51, 38 + k, LOW + 1 + 2 * k, 51)
             slime(w, 51, LOW, 60 - k, 51, LOW + 1 + 2 * k, 60 - k)
+    # Two teleporter pairs between the floor and the ring, as the original's two (331 and 330) link
+    # rooms one above another (its (1, 1) and (2, 29), (1, 10) and (1, 22)): each booth hangs over
+    # the cell it takes Blupi from (BD-0017). 330 on the west side (the ring's booth at its west
+    # arm's outer edge, off the way along it), 331 on the south side beside the finale's passage.
+    for icon, floor, ring in ((330, (37, 54), (34, 54)), (331, (42, 62), (41, 66))):
+        w.set(floor[0], LOW + 1, floor[1], icon)
+        w.set(ring[0], HIGH + 1, ring[1], icon)
     # The pool with a fish, the plaza's creatures, its helicopters and eggs.
     carve(41, LOW - 5, 53, 49, LOW - 1, 60)
     water(w, 41, LOW - 5, 53, 49, LOW - 1, 60)
