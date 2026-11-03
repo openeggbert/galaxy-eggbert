@@ -32,7 +32,10 @@ mines hanging above and lying below; then the long way back to the exit. Five eg
   original's closing cage became bridges that come and go); mines hanging a cell above them and
   lying in the pit below.
 - The way back: a lift up from beside the cage to the high way (walk 28), back west over the whole
-  loop, a third curtain and three mines in it, an egg; a hole down onto the start ledge.
+  loop: first a windy stretch (x 62-70, one wide at z 56), as the original's corridor beyond its
+  lightning (47-64, 33-36): a fan (126) in its upper row at the east end blowing west, bars (138)
+  in its top row over two mines lying in the lane, passed hanging (caught from a jump beyond the
+  fan's mouth); then a third curtain and three mines, an egg; a hole down onto the start ledge.
 
 **Checks**: `levelcheck.py`: stage 1 reaches the treasure, five eggs and the exit; the real world
 stops at the first hanging mines. `VerifyShippedWorlds`. Live (`--mission 113`, direct view F3):

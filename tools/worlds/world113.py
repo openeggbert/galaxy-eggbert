@@ -26,6 +26,7 @@ from kit import MACHINE_FACES, MACHINE_FLOOR, O, World, lift, mine, wall  # noqa
 from station import water  # noqa: E402
 
 LAVA, BAR = 68, 138
+FAN_LEFT, WIND_LEFT = 126, 110         # blowing -X; its wind before it
 BLITZ, EMITTER = 305, 304
 WALK, LOW, HIGHWAY = 20, 10, 28
 
@@ -155,7 +156,18 @@ def main(argv) -> int:
     carve(77, LOW - 1, 55, 77, LOW - 1, 57)
     carve(8, HIGHWAY, 55, 79, HIGHWAY + 2, 57)
     lightning(40, HIGHWAY, HIGHWAY + 2, 55, 57)
-    for x, z in ((60, 55), (30, 57), (20, 56)):
+    # A windy stretch (x 62-70), as the original's corridor beyond its lightning (its (47-64,
+    # 33-36)): one wide (z 56) between walls; a fan (126) in its upper row at the east end blowing
+    # west along it, the way he goes (the wind, 110, in the upper row); bars (138, under the
+    # ceiling) in the top row over two mines lying in the lane, as the original's bars over its
+    # mines. Passed hanging from the bars, caught from a jump beyond the fan's mouth (x 69, which
+    # kills) and let go past the last mine, the wind carrying him on west.
+    panel(62, HIGHWAY, 55, 70, HIGHWAY + 2, 55)
+    panel(62, HIGHWAY, 57, 70, HIGHWAY + 2, 57)
+    w.set(70, HIGHWAY + 1, 56, FAN_LEFT)
+    w.fill(62, HIGHWAY + 1, 56, 69, HIGHWAY + 1, 56, WIND_LEFT)
+    w.fill(63, HIGHWAY + 2, 56, 68, HIGHWAY + 2, 56, BAR)
+    for x, z in ((64, 56), (66, 56), (60, 55), (30, 57), (20, 56)):
         hazard(x, HIGHWAY, z)
     w.place(O.EGG, 50, HIGHWAY, 56)
     carve(8, WALK + 5, 52, 10, HIGHWAY - 1, 56)                          # the hole down

@@ -95,9 +95,22 @@ go 78.3 56 tol 0.1
 lift 77 10 56 max 900
 go 77 56 tol 0.15
 until y >= 27.9 max 900
-# The high way west (walk 28, z 55-57): the mine (60, 55) in lane z 57, the egg (50, 56), the
-# third curtain (x 40) just after a strike, the mines (30, 57) and (20, 56) in lane z 55.
-go 70 57
+# The high way west (walk 28, z 55-57): its windy stretch (x 62-70, one wide at z 56) under the
+# fan (x 70, upper row) to x 68, a jump up to the bars (top row, x 63-68) beyond the fan's mouth,
+# hand over hand west over the two mines (64, 66), let go past them (the wind carries him on);
+# the mine (60, 55) in lane z 57, the egg (50, 56), the third curtain (x 40) just after a strike,
+# the mines (30, 57) and (20, 56) in lane z 55.
+go 72 56 tol 0.15
+go 68.2 56 tol 0.08
+face 270
+hold 4 jump
+wait 20
+expect y >= 29.9
+go 62.7 56 tol 0.08
+hold 18 crouch
+until ground = 1
+expect y <= 28.05
+expect x <= 63.2
 go 61 57
 go 51 56
 go 41.7 56 tol 0.1
