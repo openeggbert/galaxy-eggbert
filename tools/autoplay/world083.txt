@@ -25,7 +25,7 @@ go 11 50 until treasures = 1
 until treasures = 1 max 120
 # Down the stair again and east along the hall's north rim (z 60) past the pool to door "1"
 # (x 31, z 66-67), open with one treasure, onto the ledge over the cavern (walk 30).
-go 11.5 60
+go 11.5 60.3 tol 0.1
 until ground = 1
 expect y <= 30.05
 go 28 60 tol 0.15
@@ -102,18 +102,18 @@ go 70.8 56.3
 go 76 57 until treasures = 2
 until treasures = 2 max 120
 # East out of the block (x 80-81, z 60-64), east of the sweeper's run and north of the mine
-# (79 31 64), into the east shafts (walk 31); along their south side (z 64.3), clear of the
+# (79 31 64), into the east shafts (walk 31); along their middle (z 64: one cell wide for his body, OR-0017), clear of the
 # shafts' rising mines (x 84 and 86, z 63), to the pocket under the gallery: treasure 3.
 go 79.6 56.4
 go 79.6 61.5
-go 81 64.3
-go 88.5 64.3
+go 81 64
+go 88.5 64
 go 91 65 until treasures = 3
 until treasures = 3 max 120
 # Back west to the lift moving across and up at once (x 81-82, z 62 -> x 86-87, z 60, walk 31
 # -> 36), boarded from beside it as it returns, off onto the gallery (walk 36).
-go 88 64.3
-go 81.5 64.3
+go 88 64
+go 81.5 64
 go 81.5 63.1 tol 0.1
 face 0
 lift 86 36 60 max 600
