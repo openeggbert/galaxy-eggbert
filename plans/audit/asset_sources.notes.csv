@@ -377,7 +377,7 @@ AS-0387,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:24),Q-004
 AS-0388,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:25),Q-004
 AS-0389,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:26),Q-004
 AS-0390,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:27),Q-004
-AS-0391,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:29),Q-004
+AS-0391,FIXED_AND_VERIFIED,2026-11-03,2026-11-03: the platform lift (type 1; object-m:29's tile) drawn as this scene's model (lift29_techno29; 7fc68ac; IoU 0.942; live in the gallery and the play pass),
 AS-0392,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0393,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0394,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
