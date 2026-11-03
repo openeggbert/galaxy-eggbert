@@ -320,6 +320,9 @@ ledgers before repeating any discovery. Where it stands:
   has 29); AVDs for an x86_64 emulator run exist. The platform lift (type 1) is drawn as its Ray
   Dream model `Decor/techno29.rd4` (`7fc68ac`, IoU 0.94; the survey had filed it with the terrain
   for its folder; no other misfiled piece left there but the cave rocks, which need instancing).
+  D11's candidates regenerated from a fresh library (`570aa48`, `c34dc2b`: 119 models; the known
+  reasons now written in the list: decals, the fountain's lighting, the saw's specular). Web build
+  rebuilt after all of it: 120 models, 93/93 sounds, no error in headless Chrome.
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list (the
   candidates regenerated from a fresh library); OR-0011's APK and an emulator run; the shooters' and
