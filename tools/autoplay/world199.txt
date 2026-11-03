@@ -13,7 +13,7 @@ expect y <= 20.05
 # East: the machine (walk 20, x 70-82): its passage's curtain of lightning (x 68, z 42-44)
 # crossed just after a strike; the pit of lava (x 74-78) on its lift (z 42-44) carrying him
 # three east, boarded at the start of its dwell at the west end; the red key and the two eggs
-# beyond; back west hanging from the bars over the pit, under the curtain again after a strike.
+# beyond (between the key and the south egg the fan's wind, z 46, blowing him west a cell); back west hanging from the bars over the pit, under the curtain again after a strike.
 go 66 43.5
 go 67.3 43.5 tol 0.1
 until blitz = 52 max 400

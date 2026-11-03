@@ -44,6 +44,7 @@ BRIDGE = 364                          # crumbles under Blupi and grows back
 DRIP = 404                            # kills in its own cell (Decor::IsGoutte, BD-0033)
 BAR = 202                             # a bar in the open, Blupi hangs from it (Decor::GetTypeBarre)
 TEMP = 324                            # the vanishing saucer: gone 8 ticks in every 80
+FAN_LEFT, WIND_LEFT = 126, 110         # blowing -X; its wind before it
 LOW, HIGH = 20, 30                    # the plaza's floor and the ring gallery: walking levels
 P0, P1 = 34, 66                       # the plaza's interior, x and z
 
@@ -236,6 +237,13 @@ def main(argv) -> int:
     # west hanging from them, a cell from the mine bobbing at u 2.
     bx0, bz0, bx1, bz1 = machine.box(1, 3, 1, 9)
     w.fill(bx0, LOW + 2, bz0, bx1, LOW + 2, bz1, BAR)
+    # A fan in the east wall (u 9, z 46) blowing west across the far bank toward the pit, as the
+    # original's fans in walls blowing their wind west (its (96, 18-24), (96, 45), (85, 25)): the
+    # way from the key to the south egg crosses it; its mouth (x 82) kills.
+    fx, fz = machine.at(9, 13)
+    w.set(fx, LOW, fz, FAN_LEFT)
+    wx0, wz0, wx1, wz1 = machine.box(9, 9, 9, 12)
+    w.fill(wx0, LOW, wz0, wx1, LOW, wz1, WIND_LEFT)
     put(machine, O.KEY1, 6, 11)
     put(machine, O.HELICOPTER, 1, 1)
     put(machine, O.HELICOPTER, 11, 1)
