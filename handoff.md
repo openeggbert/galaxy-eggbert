@@ -65,9 +65,8 @@ ledgers before repeating any discovery. Where it stands:
 - OR-0017 (Blupi partly in walls): his model is drawn out of walls now (render only,
   `WallClearanceOffset`, 2026-11-02). The collision box (18 px each side) tried three times: the
   patch fails 55 of 78 playthroughs on today's tree, mostly timing and points by walls.
-  The second try is kept as `plans/audit/or0017-body-width.patch` (collision + step-up + the
-  harness's wall arrival): still 31 of 42 playthroughs failed, mostly from drifted timing (lift
-  and mission-clock waits) and walkways along walls; apply it and re-plan world by world.
+  The second try became the patch the playthroughs were re-planned for; in the game since
+  2026-11-03 (`a45e785`, see below).
 - Done: OR-0004 as far as it can go without detail -- teleporters looked at live (world034) and
   one difference fixed, BD-0017: Blupi lands under the partner pillar (was one cell +Z, turned
   about) and a teleporter takes him only once the contact grace (`m_blupiPosHelico`) is over;

@@ -109,8 +109,7 @@ Owner's queue of 2026-11-02 (asked during the session; in this order after the c
 
 1. The owner's answers: MR-0005 (auto-tiling in 3D), the world signs' digits (VIS-0175..0182),
    OR-0006, the human play pass (MR-0004).
-2. OR-0017 (Blupi's body in walls): `plans/audit/or0017-body-width.patch` with the playthroughs
-   re-planned world by world.
+2. OR-0017 (Blupi's body in walls): done 2026-11-03 (`a45e785`), all 78 playthroughs with the box.
 3. The cave rocks 285-303 as models need hardware instancing (~5,500 vertices a rock, ~6,000
    cells; CNA's SkinnedEffect has none, CNA read-only: upstream request) or a decimated model.
 4. Wave E: every world's lesson and bypasses (ledger generated), then Wave F.

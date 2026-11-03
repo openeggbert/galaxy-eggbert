@@ -76,9 +76,8 @@ Owner decisions (`owner_questions.md`, `manual_review.md`), none of which the co
 
 Open engineering items:
 
-- OR-0017: Blupi's collision is a point; the original's 36 px box (`or0017-body-width.patch`)
-  fails 55 of 78 playthroughs until they are re-planned world by world. His model is kept out of
-  walls (render only).
+- OR-0017: done after this audit (2026-11-03, `a45e785`): Blupi's collision is the original's
+  36 px box, all 78 playthroughs re-planned for it.
 - OR-0011: Android draws no 3D models until CNA fixes UB-007; UB-006 is worked around; no
   device or KVM here to play it (Q-009).
 
