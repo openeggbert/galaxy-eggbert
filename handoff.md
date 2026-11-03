@@ -363,7 +363,11 @@ ledgers before repeating any discovery. Where it stands:
   t10080 inside the lift's model, 101 t3600, 064 t18360) -- the camera is not inside him there;
   094 t15120 was shot live: a 1x1 dead-end pocket, walled on three sides and roofed -- no
   direction has room, the eye ends in his body and the view is in effect first person along his
-  facing; acceptable there. The others still to be shot the same way.
+  facing; acceptable there. 073's lift (t720) shot live from the same place and facing: Blupi in
+  view on the lift all the way up -- the pass caught the camera mid-swing after a turn. 084's black
+  quads are gone since `f1166e7`/`4205ae3`. Left to shoot: 092 t5760, 091 t5040, 075 t10080.
+  `0dc7592`: the drip's smallest drops 408-410 as its smallest scene's drop scaled (the render
+  ledger has no unreviewed row left); the ledgers regenerated and current (`725505e`, `80a840f`).
   Also open: decor without collision (girders, pillars) does not stop the camera, so it can stand
   behind one and hide him (056, 058, 062, 065); 084's black quads near the lightning column.
   The web build was rebuilt after all of it (again 2026-11-04 00:07, with the night's fixes) and loaded in headless Chrome:
