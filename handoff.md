@@ -278,10 +278,21 @@ ledgers before repeating any discovery. Where it stands:
   egg cap (10) stops pickups, so no extra egg on a route; an updraught (118) does not lift Blupi on
   foot, it halves his fall (6.25 of 12.5 u/s; use it as world 102 does). The spare enclaves (toys,
   palace, rock) are still not played through.
+- Then (2026-11-03, latest): **BD-0057** -- a bar over wind (any tile with an empty collision mask)
+  is hung from, as the original's `GetTypeBarre`/`IsPassIcon` (`b07711f`; Galaxy's `IsSolidAt` had
+  read wind as a floor). 113's high way got the original's windy stretch: a fan in its upper row,
+  bars over two mines in a one-wide lane (`31c4733`); 105 the teleporter pair between the exit's hut
+  and a ledge under the roof with two helicopters (`1f72bbc`); 125 a tube of four mines crossed
+  under bars off the pool's south bank (an egg at its end) and a lava strip across the corridor's
+  mouth (`7b652c9`). 046's single bar recorded as the catch of a high jump through a floor hole
+  that Galaxy's deck does not have (LV-0024). 105's lava floor: a full one made the run ~6x slower
+  (the animated mesh is rebuilt every tick), so the void stays -- Q-008 asks about a cheaper lava.
+  `lesson_inventory.md` now lists only 105's lava, 112's water pipes (scenery, LV-0068), 046's bar,
+  013/124's thinned counts.
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
-  wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
-  `plans/audit/lesson_inventory.md` (046's bar, 105's lava and teleporters, 112's water, 113's fan,
-  125's lava and bars, 013/124 thinned); a full 78-world regression run after these world changes.
+  wait for the owner (`plans/audit/owner_questions.md`); the 57 UNREVIEWED rows of
+  `plans/audit/world_lessons.csv` (spawn shots in `build-probe/wave-e/review/<world>/`); the spare
+  enclaves of 199 (toys, palace, rock) are not played through.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
