@@ -85,6 +85,14 @@ namespace GalaxyEggbert::Game
     {
         return objectMIcon >= 311 && objectMIcon <= 316 ? 1.0f / kConveyorDepth : 1.0f;
     }
+    // Its scene models the tread's belt only on the side the sprite's camera saw (Z -0.02 to 0.08
+    // of the base's -0.10 to 0.10): stretched, the belt runs along the front half and the back
+    // shows the bare base (owner 2026-11-03: the belt belongs on the other side too). So it is
+    // drawn a second time mirrored along Z, the belt's run along X unchanged.
+    [[nodiscard]] constexpr bool ModelMirroredInDepth(int objectMIcon) noexcept
+    {
+        return objectMIcon >= 311 && objectMIcon <= 316;
+    }
 
     // The clay bridge (364-372, Decor/grotte-fragile1.rd4) covers its cell's whole top in 3D (owner
     // 2026-11-02: a slab of clay lumps over the whole cell, not a strip along its edge). The scene

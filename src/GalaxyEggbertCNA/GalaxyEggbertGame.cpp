@@ -5786,10 +5786,11 @@ namespace GalaxyEggbert::CNA
                     auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
                     model.ComputeBoneTransformsEXT(
                         "Frames", System::TimeSpan::FromSeconds(pose.seconds), /*loop=*/false, boneTransforms);
-                    // Mirroring turns the triangles' winding around.
+                    // Mirroring turns the triangles' winding around (a negative depth scale too).
                     device.setRasterizerStateProperty(
-                        pose.mirror != 0 ? Microsoft::Xna::Framework::Graphics::RasterizerState::CullClockwise
-                                         : Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+                        (pose.mirror != 0) != (depthScale < 0.0f)
+                            ? Microsoft::Xna::Framework::Graphics::RasterizerState::CullClockwise
+                            : Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
                     blupiEffect_->setWorldProperty(
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(pose.yawDegrees * kDegrees) *
                         Microsoft::Xna::Framework::Matrix::CreateScale(
@@ -5849,8 +5850,15 @@ namespace GalaxyEggbert::CNA
                         // stretched across the cell as the terrain conveyor (ModelDepthScale); the
                         // plain lift (1) its round platform on a funnel and stem, as modelled.
                         const bool plainLift = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1;
+                        const float depth = plainLift ? 1.0f : GalaxyEggbert::Game::ModelDepthScale(311);
                         drawModel(*conveyor, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
-                                  obj.currentZ, 0.0f, 0.0f, plainLift ? 1.0f : GalaxyEggbert::Game::ModelDepthScale(311));
+                                  obj.currentZ, 0.0f, 0.0f, depth);
+                        if (!plainLift)
+                        {
+                            // The belt on both sides (BlockModels.hpp ModelMirroredInDepth).
+                            drawModel(*conveyor, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
+                                      obj.currentZ, 0.0f, 0.0f, -depth);
+                        }
                     }
                     else if (pose != nullptr)
                     {
@@ -6054,6 +6062,11 @@ namespace GalaxyEggbert::CNA
                                 {
                                     drawModel(*still, cell.x, cell.y, cell.z, 0.0f, 0.0f,
                                               GalaxyEggbert::Game::ModelDepthScale(cell.base));
+                                    if (GalaxyEggbert::Game::ModelMirroredInDepth(cell.base))
+                                    {
+                                        drawModel(*still, cell.x, cell.y, cell.z, 0.0f, 0.0f,
+                                                  -GalaxyEggbert::Game::ModelDepthScale(cell.base));
+                                    }
                                 }
                             }
                             continue;
