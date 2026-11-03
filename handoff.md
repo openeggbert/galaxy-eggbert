@@ -314,11 +314,23 @@ ledgers before repeating any discovery. Where it stands:
   trick: generate the world with `star` stubbed into `build-probe/probe-worlds-052/`). 78/78.
 - OR-0014 on the web (`789ceee`): the music served beside the page and fetched per track (see the
   web build section; checked in headless Chrome).
-- OR-0017's collision box, taken further but not in: `plans/audit/or0017-body-width.patch` v2 (apply
-  with `git apply`; the box's bottom 2 px over his feet, ground and ceiling under its whole width,
-  a `go` against a wall arriving after 2 still ticks) passes 36-37/78 (`build-probe/wave-e/or17-d.txt`
-  lists the failures). Next: re-plan the ~30 failing mission scripts one by one with it applied
-  (012: `go 52.95 50 tol 0.03` before the pull is the first), then commit it with all 78 passing.
+- OR-0017's collision box (2026-11-03, in progress, not yet in the game): `plans/audit/or0017-body-width.patch`
+  v5 (apply with `git apply`): his 36 px box against walls (the box's bottom 2 px over his feet),
+  ground and ceiling under its whole width read by each cell's own shape, a corner as ground only
+  over a top; the harness counts a `go` as against a wall (arrived, or its jump taken) only when he
+  is still and not turning past its first ticks. With it **60/78** playthroughs pass
+  (`build-probe/wave-e/or17-latest.txt`; 22 with v1); the committed game stays 78/78. Scripts are
+  re-planned so that they pass **with and without** the box (each committed alone): 012, 014, 022,
+  024, 025, 031 (a bird sync), 043, 044, 046, 051, 053 (its cage's north row re-laid), 055, 057, 062,
+  065, 066's lower tunnel. Left: 066's upper tunnel (one cell wide; its lesson keeps him half a cell
+  off the mines' line, which his body cannot: a world change), 074, 083, 091, 093, 094, 101, 113,
+  114, 124, 199. The usual causes: a target within a half-width of a wall or a one-cell passage
+  (go along its middle), a ledge left with his body's corner still on it (go further), a jump
+  under an overhang (start further back), a jump distance never reached against a step (patch v3).
+  Working method: a box binary kept in `build-probe/or17-bin/` (build with the patch applied, copy
+  `GalaxyEggbert` there, revert), runs with `tools/autoplay.sh build-probe/or17-bin ...` beside the
+  committed build. When all 78 pass with it: apply the patch, drop `WallClearanceOffset` (no longer
+  needed), commit, update OR-0017.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
   `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
