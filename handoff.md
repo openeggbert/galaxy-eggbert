@@ -312,6 +312,11 @@ ledgers before repeating any discovery. Where it stands:
   hall columns (y 21-24) and cage choreography, 052's S2 drop timed to its lift and its hangar and
   well stars re-laid from a traced flight (`tools/autoplay` `trace`; the star-free probe world
   trick: generate the world with `star` stubbed into `build-probe/probe-worlds-052/`). 78/78.
+- Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
+  (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
+  `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
+  cells in the campaign (3,020 in 021) would need the leaves merged and simplified into the
+  terrain mesh, not a model a cell; Q-002 (a bolt without a source scene) likewise.
 - Then (2026-11-03, last): the editor ledger has no unreviewed row (ED-0002 by the storage verifier,
   ED-0004 driven live by `tools/qa_steps/editor_playtest.txt`, ED-0005 a mixed undo history in
   `VerifyGEWorldEditor`); the asset ledger has none either (`af4a487`: the survey's root folder was
