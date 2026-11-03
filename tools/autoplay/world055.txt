@@ -97,13 +97,13 @@ go 63 28.4
 until ground = 1 max 200
 expect y <= 20.05
 go 62.6 30.9
-go 60.2 31
+go 59.9 31 tol 0.1
 until ground = 1 max 200
 expect y <= 18.05
 go 57 31 until treasures = 5
 go 58.5 29.7
 go 59.3 29.3 tol 0.15
-go 60.2 28.3
+go 60.2 28.0 tol 0.1
 until ground = 1 max 200
 expect y <= 12.05
 until treasures = 5 max 60
