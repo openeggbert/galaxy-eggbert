@@ -353,6 +353,16 @@ int main()
         check(cornered, "the machine panels' plain sides sample the panel's base at its top-left corner");
     }
 
+    // The drip's smallest drops are the smallest scene's drop scaled to their sprites' heights.
+    {
+        namespace G = GalaxyEggbert::Game;
+        check(G::DripShrink(407).modelIcon == 407 && G::DripShrink(407).scale == 1.0f, "the drop 407 is its own scene");
+        check(G::DripShrink(408).modelIcon == 407 && G::DripShrink(410).modelIcon == 407 &&
+                  G::DripShrink(408).scale > G::DripShrink(409).scale && G::DripShrink(409).scale > G::DripShrink(410).scale &&
+                  G::DripShrink(410).scale > 0.2f && G::DripShrink(410).scale < 0.25f,
+              "408-410 are 407's drop at 27, 18 and 8 of its 36 px");
+    }
+
     // A front model turns to the side with the most room to stand in (OR-0056 reopened): a model
     // standing on the floor counts the floor right beside it, a booth over Blupi's head the floor
     // two cells down; without room anywhere a row faces across itself.

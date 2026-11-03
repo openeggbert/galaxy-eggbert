@@ -5874,7 +5874,7 @@ namespace GalaxyEggbert::CNA
                 decalCells.clear();
                 const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
                                            float rollRadians = 0.0f, float depthScale = 1.0f,
-                                           bool boothFrontOnly = false)
+                                           bool boothFrontOnly = false, float topScale = 1.0f)
                 {
                     auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
                     model.ComputeBoneTransformsEXT(
@@ -5893,6 +5893,10 @@ namespace GalaxyEggbert::CNA
                             (pose.mirror == 2 ? kFlipShift : 0.0f) - static_cast<float>(pose.offsetY) / 64.0f,
                             0.0f) *
                         Microsoft::Xna::Framework::Matrix::CreateScale(1.0f, 1.0f, depthScale) *
+                        // Scaled about the cell's top (the drip's smallest drops, DripShrink).
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, -0.5f, 0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateScale(topScale) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.5f, 0.0f) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationZ(rollRadians) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(turnRadians) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(x, y, z));
@@ -6068,10 +6072,11 @@ namespace GalaxyEggbert::CNA
                                 GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase());
                             if (icon >= 0)
                             {
+                                const auto shrink = GalaxyEggbert::Game::DripShrink(icon);
                                 if (const ObjectModelPose* pose = objectModelTable_.Find(
-                                        ObjectTextureSource::ObjectM, static_cast<std::uint16_t>(icon)))
+                                        ObjectTextureSource::ObjectM, shrink.modelIcon))
                                 {
-                                    drawModel(*pose, cell.x, cell.y, cell.z);
+                                    drawModel(*pose, cell.x, cell.y, cell.z, 0.0f, 0.0f, 1.0f, false, shrink.scale);
                                 }
                             }
                             continue;

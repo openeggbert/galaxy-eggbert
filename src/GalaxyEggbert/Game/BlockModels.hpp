@@ -28,11 +28,32 @@ namespace GalaxyEggbert::Game
     // six icons at IoU 0.985-0.992; owner 2026-11-02: a billboard, wrong from above) and the
     // crusher 317-323 hanging in its cell (Decor/aplatisseur.rd4, seven icons at IoU 0.948-0.99:
     // the blue spring and the red block striking down).
-    // The slime drip 404-410 (Decor/goutte/goutte01-04.rds, 404-408; the two smallest drops 409-410
-    // have no scene and are not drawn; BD-0033).
+    // The slime drip 404-410 (Decor/goutte/goutte01-04.rds, 404-407; BD-0033). The three smallest
+    // drops 408-410 have no scene of their own: they are the smallest scene's drop (407, 36 px tall
+    // in its sprite) scaled to their sprites' heights (27, 18 and 8 px), hanging from the cell's top
+    // as the sprites do (DripShrink; until 2026-11-04 408 was the larger 407 at IoU 0.44 and 409-410
+    // were not drawn).
     inline constexpr std::array<std::uint16_t, 3> kAnimatedModelBases{GalaxyEggbert::BlockTypes::Temp,
                                                                       GalaxyEggbert::BlockTypes::Crusher,
                                                                       GalaxyEggbert::BlockTypes::Drip};
+
+    struct DripShrinkFrame
+    {
+        std::uint16_t modelIcon; // the icon whose model is drawn
+        float scale;             // its size, about the cell's top
+    };
+    [[nodiscard]] constexpr DripShrinkFrame DripShrink(int icon) noexcept
+    {
+        constexpr std::uint16_t kSmallestScene = 407;
+        constexpr float kSmallestHeight = 36.0f;
+        switch (icon)
+        {
+        case 408: return {kSmallestScene, 27.0f / kSmallestHeight};
+        case 409: return {kSmallestScene, 18.0f / kSmallestHeight};
+        case 410: return {kSmallestScene, 8.0f / kSmallestHeight};
+        default: return {static_cast<std::uint16_t>(icon), 1.0f};
+        }
+    }
 
     // Animated terrain whose cell is the floor (Galaxy's convention: the space over it is deadly)
     // and whose model stands on it, one cell up: the saw 378-383 and the stopped saw 379
