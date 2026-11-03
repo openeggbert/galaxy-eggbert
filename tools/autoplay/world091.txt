@@ -93,10 +93,11 @@ go 69 35 until eggs = 5 max 300
 go 70 35 until eggs = 6 max 300
 go 71 35 until eggs = 7 max 300
 until eggs = 7 max 200
-# West along the cave's north side (z 34.6, past the mine (58, 36)) to the crack (x 50-54) and
-# up its five steps (two up each, walk 25 ... 33) onto the stone hills (walk 34).
-go 66 34.6
-go 52 34.6
+# West along the cave's north side (z 34.8, past the mine (58, 36); at z 34.6 his body meets the
+# rock at (66, 23, 34), OR-0017) to the crack (x 50-54) and up its five steps (two up each, walk
+# 25 ... 33) onto the stone hills (walk 34).
+go 66 34.8
+go 52 34.8
 go 52 34.4 tol 0.1
 face 0
 go 52 32.5 jump 2.2 tol 0.15
