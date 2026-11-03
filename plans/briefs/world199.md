@@ -18,7 +18,9 @@ walk 30 where Blupi starts (65, 30, 35), a stair of slime from the ring down to 
 (60 ticks, dwelling 40) back up and two teleporter pairs between the floor and the ring (330 west:
 floor 37, 54 / ring 34, 54; 331 south: floor 42, 62 / ring 41, 66), as the original's two pairs link
 rooms one above another; two spike traps (373) alone in the slime floor (35, 45 and 47, 66) and
-two drips (404) hung over the village's passage (x 33, walk 22), as the original's; a pool with a fish, helicopters, two bulldozers, three birds, four
+two drips (404) hung over the village's passage (x 33, walk 22), as the original's; the wasp's well
+(x 59-63, z 49-53, seven deep, a dead end) with the wasp sweeping its foot and a moving mine across it
+halfway up, as the original's (38-41, 26-31): its sting's balloon is the way out; a pool with a fish, helicopters, two bulldozers, three birds, four
 bobbing mines, four sleeping follow stars, eight eggs. Off it eight enclaves, each of one world's
 material, reached by a passage three wide through the plaza's walls:
 - at the floor: **east, the machine** (open): its passage under a curtain of lightning (304 over
@@ -48,7 +50,10 @@ Played through in one run by `tools/autoplay/world199.txt` (each key spent on on
 machine's red key, the library (red door) for a green key, the cheese (green door) for a blue
 and a second green key, the finale's outer blue door, the village (green door) for a second
 blue key, the inner blue door and the red arrow; the win screen. It goes down from the ring
-by teleporter 331 and back up by 330. The other enclaves (toys,
+by teleporter 331 and back up by 330, and in and out of the wasp's well (the balloon up its side,
+clear of the mine's sweep). The village creature's shots fly along z 58 out through its passage (a
+door is no block to them, the original's `IsBlocIcon`) and on across the plaza: the playthrough
+crosses that line once none is on its way. The other enclaves (toys,
 palace, rock) are spare routes it does not take.
 
 The cheese's row of crushers was removed (the original's 199 has none, lesson_inventory).

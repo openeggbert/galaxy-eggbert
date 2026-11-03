@@ -162,6 +162,19 @@ def main(argv) -> int:
     # the way down the west side (35, 45) and along the south (47, 66).
     for x, z in ((35, 45), (47, 66)):
         w.set(x, LOW - 1, z, SLIME_TRAP)
+    # The wasp's well (x 59-63, z 49-53), seven deep in the slime floor: the original's wasp sweeps
+    # three cells across the foot of a dead-end well in the slime, a moving mine across it halfway
+    # up (its (38-41, 31) and (38-41, 26)), nothing else in it. Its sting is the way out: the balloon
+    # rises out of the well (faster with the jump held) and drifts off onto the floor; the mine pops
+    # it. (No egg: the original's well holds none, and the playthrough reaches the egg cap, 10.)
+    WELL = 13                                                             # its foot's walk
+    carve(59, WELL, 49, 63, LOW - 1, 53)
+    if calm:                                                              # levelcheck has no balloon
+        for k in range(3):
+            slime(w, 59 + k, WELL, 53, 59 + k, WELL + 2 * k + 1, 53)
+    else:
+        w.place(O.WASP, 60, WELL, 51, end=(63, WELL, 51))
+        mover(O.MOVING_MINE, (59, WELL + 4, 51), (63, WELL + 4, 51), 40, stop=0)
     # The pool with a fish, the plaza's creatures, its helicopters and eggs.
     carve(41, LOW - 5, 53, 49, LOW - 1, 60)
     water(w, 41, LOW - 5, 53, 49, LOW - 1, 60)

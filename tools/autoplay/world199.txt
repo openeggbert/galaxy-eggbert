@@ -40,10 +40,25 @@ go 72 43
 expect y >= 19.95
 go 68.7 43.5 tol 0.1
 until blitz = 52 max 400
+go 66 43.5
+# The wasp's well (x 59-63, z 49-53, foot walk 13; a dead end): in off its north rim; into the
+# wasp's sweep (z 51) for its sting, the balloon up the well's south side (z 52.8, clear of the
+# mine sweeping z 51 halfway up) with the jump held, drifted off south onto the floor and let down.
+go 61 47.6 tol 0.15
+go 61 49.6 tol 0.1 until y <= 19
+until ground = 1 max 300
+expect y <= 13.05
+go 61.5 51 tol 0.15
+until y >= 13.3 max 600
+go 61.5 52.8 tol 0 with jump until y >= 20.6 max 700
+go 61.5 54.8 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 19.95
+go 64.6 54.8 tol 0.15
+go 64.6 47
 # North under the ring's east arm and west under its north arm (z 35.5) to the library's red
 # door (x 42-44, z 32), open with the red key; its stair of bookcases (rows two deep, walk 22,
 # 24, 26) jumped up from the floor: the green key and two eggs on the top row, one on the first.
-go 66 43.5
 go 65.2 35.5
 go 43 35.5
 go 43 33.6 tol 0.15
@@ -89,6 +104,11 @@ go 35.3 44.3 tol 0.05
 go 35.3 46.2 jump 1.9 tol 0.1
 until ground = 1
 expect z >= 45.6
+# Across the line of the village creature's shots (z 58: they fly out through its passage, the
+# closed door no block to them, as the original's IsBlocIcon, and on across the plaza) once none
+# is on their way.
+go 35.3 56.6 tol 0.1
+clear 34 20 58 4 lane x max 900
 go 35.3 63
 go 36 64 until eggs = 7
 until eggs = 7 max 120
@@ -153,8 +173,9 @@ expect x <= 42.1
 expect z >= 61.9
 expect z <= 62.1
 go 40 61.6
-go 37 58
-go 35 56.4
+go 38 59.6 tol 0.15
+clear 34.5 20 58 4.5 lane x max 900
+go 37 56.4 tol 0.15
 go 33.6 56.4 tol 0.15
 face 270
 wait 30
