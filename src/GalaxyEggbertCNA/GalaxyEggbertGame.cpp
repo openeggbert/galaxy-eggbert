@@ -5015,7 +5015,7 @@ namespace GalaxyEggbert::CNA
                         return RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
                                                     chaseOffset(e) * (1.0f / kChaseDistance), kChaseDistance);
                     });
-                const Microsoft::Xna::Framework::Vector3 desiredOffset = chaseOffset(chaseElevation);
+                Microsoft::Xna::Framework::Vector3 desiredOffset = chaseOffset(chaseElevation);
 
                 // Wall collision (plan.md CAM-005, found 2026-07-17): pull
                 // the eye in along the same direction if a solid block
@@ -5028,6 +5028,40 @@ namespace GalaxyEggbert::CNA
                 {
                     const auto direction = desiredOffset * (1.0f / desiredDistance);
                     safeDistance = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget, direction, desiredDistance);
+                }
+                // A wall right behind him (a dead end, a narrow turn, a lift in a shaft) pulled the eye
+                // into his own body, which is not drawn from inside: he vanished from the picture (the
+                // play pass of 2026-11-03, 064, 073, 075, 091, 092, 094, ...). Then the camera looks
+                // from the side with the most room instead (beside him, aslant, in front, higher), when
+                // that is clearly more; the controls turn him, not the camera, so they stay as they are.
+                constexpr float kTooClose = 1.0f;
+                if (desiredDistance > 0.001f && safeDistance < kTooClose)
+                {
+                    float bestRoom = safeDistance;
+                    Microsoft::Xna::Framework::Vector3 bestOffset = desiredOffset;
+                    for (const float yawOffset : {0.0f, 0.7f, -0.7f, 1.4f, -1.4f, 2.2f, -2.2f, 3.14159265f})
+                    {
+                        for (const float e : {chaseElevation, 0.7f, 1.1f})
+                        {
+                            const float y = orbitYaw + yawOffset;
+                            const Microsoft::Xna::Framework::Vector3 offset(
+                                -std::sin(y) * kChaseDistance * std::cos(e), kChaseDistance * std::sin(e),
+                                std::cos(y) * kChaseDistance * std::cos(e));
+                            const float room = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
+                                                                    offset * (1.0f / kChaseDistance), kChaseDistance);
+                            if (room > bestRoom + 1e-3f)
+                            {
+                                bestRoom = room;
+                                bestOffset = offset;
+                            }
+                        }
+                    }
+                    constexpr float kClearlyMore = 0.5f;
+                    if (bestRoom > safeDistance + kClearlyMore)
+                    {
+                        desiredOffset = bestOffset * (desiredDistance / bestOffset.Length());
+                        safeDistance = std::min(bestRoom, desiredDistance);
+                    }
                 }
                 // Never onto the target itself (Camera::LookAt rejects that): at least a short
                 // way back even when a wall stands right behind him (no further, or the eye
@@ -5062,6 +5096,15 @@ namespace GalaxyEggbert::CNA
                 const float alpha = 1.0f - std::exp(-kCameraDampingPerSecond * dt);
                 cameraEyeSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraEyeSmoothed_, rawEye, alpha);
                 cameraTargetSmoothed_ = Microsoft::Xna::Framework::Vector3::Lerp(cameraTargetSmoothed_, rawTarget, alpha);
+                // Up and down it follows within a short lag: dropping a few cells (a ledge, a shaft)
+                // he fell out of the picture's bottom before the damped camera came down after him
+                // (second play pass of 2026-11-03: 092, 121, 122). The look point keeps within
+                // kMaxLookLag of his own, the eye moved with it so the view keeps its slope.
+                constexpr float kMaxLookLag = 0.35f;
+                const float lag = cameraTargetSmoothed_.Y - rawTarget.Y;
+                const float excess = lag > kMaxLookLag ? lag - kMaxLookLag : lag < -kMaxLookLag ? lag + kMaxLookLag : 0.0f;
+                cameraTargetSmoothed_.Y -= excess;
+                cameraEyeSmoothed_.Y -= excess;
             }
             // The smoothed eye trails the raw one, which the wall check placed: swinging round a
             // corner or a pillar it cut through what the raw eye went round, showing a wall from

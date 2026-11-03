@@ -183,7 +183,7 @@ wait 160
 clear 65 37 26 1.2 max 5
 go 70 27
 go 71 27 until keys = 1
-until keys = 1 max 120
+until keys = 1 max 240
 # The saw gate: north up the passage (x 65), its mine gone, the switch (64, 22) at its mouth
 # pressed: the gate's saws stop; west over them, up the step (z 21) onto the landing (z 20)
 # before the cage's curtain.

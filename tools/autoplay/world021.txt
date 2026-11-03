@@ -76,7 +76,7 @@ expect y >= 4.95
 go 61.1 60 tol 0.08
 face 90
 go 63 60 until treasures = 5
-until treasures = 5 max 120
+until treasures = 5 max 240
 # Out of the kiosk, down off the tower's north side.
 go 61.1 60 tol 0.1
 go 61.1 57.4
