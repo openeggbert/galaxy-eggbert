@@ -352,6 +352,18 @@ ledgers before repeating any discovery. Where it stands:
   squashed Blupi under a crusher (053), the saw blades (021, 024), toy-ball tiles 215-236 as
   cubes (095, Q-004). Open: moire on far floors (125's ring pattern, 105's grain) -- the atlas
   has no mipmaps (bleeding between tiles is why); a texture-array or padded atlas would be needed.
+  Night 2026-11-03/04, after the review: `2fe3aae` the smoothed camera eye kept on this side of a
+  wall (045, 051 no longer inside a block); `4205ae3` **no black where an opaque tile's sprite is
+  clear** (69 tiles: cheese 339, brick 262/263/283, slime 347-363, ... -- the black dots, slits and
+  slashes; Q-010/Q-011 updated); `90786c7` with a wall right behind him the camera looks from the
+  side with room (066 t10440, 034 t15480 fixed) and keeps within 0.35 of his height; 021/065's
+  pickup waits 240 (a camera change lengthens a pickup's flight). Play passes 4-6 and the four
+  re-runs: 78/78. **Still open (camera)**: frames with Blupi out of view right after a drop or on
+  a lift ride in the cave and toy worlds (092 t5760, 094 t15120, 091 t5040, 073 t720/t9360, 075
+  t10080 inside the lift's model, 101 t3600, 064 t18360) -- the camera is not inside him there;
+  next step is to shoot those spots live (qa_live with --spawn) and see where the eye actually is.
+  Also open: decor without collision (girders, pillars) does not stop the camera, so it can stand
+  behind one and hide him (056, 058, 062, 065); 084's black quads near the lightning column.
   The web build was rebuilt after all of it (2026-11-03, evening) and loaded in headless Chrome:
   120 models, 93/93 sounds, the menu drawn, no error but the favicon's 404.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
