@@ -88,7 +88,7 @@ until eggs = 4 max 120
 go 47 23
 go 47 25
 until ground = 1
-go 47 26 until eggs = 5
+go 47 26.3 until eggs = 5
 until eggs = 5 max 120
 go 47 29
 until ground = 1
@@ -147,8 +147,9 @@ expect y <= 20.05
 # of the egg at 64, 64, which would take him to the cap of ten before the village's): each saucer
 # jumped onto just after the saucers come back and left for the next step within their cycle;
 # from the last saucer (walk 28) up onto the south arm (z 64-66). West along the arm to the
-# finale's outer blue door (x 42-44, z 68): the blue key opens it.
-go 62.4 66.4 tol 0.15
+# finale's outer blue door (x 42-44, z 68): the blue key opens it. East along z 66.2: the wall row
+# z 67 (x 59-61) is a half-width off z 66.4 (OR-0017).
+go 62.4 66.2 tol 0.15
 go 63.3 63 tol 0.1
 face 270
 go 62 63 jump 1.6 tol 0.3
