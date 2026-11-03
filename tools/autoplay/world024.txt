@@ -54,14 +54,17 @@ expect y >= 26.95
 # The top room: walk (never jump) the corridor under the hanging mines to the blue key.
 go 50 4.3 tol 0.1
 wait 60
-# The egg in the room's west part, round the mine at (45 27 5); back down the stairwell.
+# The egg in the room's west part, round the mine at (45 27 5); back down the stairwell. The door at
+# x 48 is one cell wide (z 4): his body passes it within 0.22 of its middle.
+go 49.2 4.05 tol 0.1
+go 47.6 4.05 tol 0.15
 go 47 4.4
 go 46.5 6
 go 46 11 until eggs = 3
 until eggs = 3 max 120
 go 46.5 6
-go 47 4.2
-go 50 4.2
+go 47.2 4.05 tol 0.15
+go 50 4.05
 go 50 6
 go 50 41
 until ground = 1
@@ -86,6 +89,8 @@ expect y >= 14.95
 go 69.3 51
 go 68.7 51 tol 0.08
 face -90
+# It stops two ticks at each end: wait for it at the far end first, then step on as it arrives.
+lift 64 15 51 max 400
 lift 68 15 51 max 400
 go 68 51 tol 0.15
 lift 64 15 51 max 300
