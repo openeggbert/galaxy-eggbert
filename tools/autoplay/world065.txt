@@ -312,7 +312,9 @@ go 92 22 tol 0.5 with lookup max 600
 wait 30
 expect x >= 91
 # Settled first: the overcraft is left only standing (both feet's probes on ground,
-# Decor.cpp:4010-4031, OR-0020); Down sinks it.
+# Decor.cpp:4010-4031, OR-0020); Down sinks it. First off the stair's face (x 92.5): out of the
+# craft his body would stand in it (OR-0017).
+go 92.1 22 tol 0.08
 hold 40 crouch
 until ground = 1 max 300
 hold 2 action
@@ -364,7 +366,7 @@ clear 76 42 12 4 lane x max 5
 # eggs on its floor (68, 38), back up the step and into the row (two up each).
 hold 2 action
 wait 30
-go 69 12.2
+go 68.9 12.2 tol 0.1
 until ground = 1 max 100
 expect y <= 40.05
 go 69 13 until eggs = 8
