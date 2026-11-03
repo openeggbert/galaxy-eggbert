@@ -196,9 +196,10 @@ lift 46 21 43 max 900
 lift 46 11 43 max 900
 go 46 43 tol 0.1
 until y >= 20.95 max 400
-go 46 40.3
+go 46 40.1
 expect y >= 20.95
-go 55.4 40.3
+# East along z 40.1: the wall row z 41 is a half-width off (OR-0017).
+go 55.4 40.1
 go 57.2 39.3 tol 0.15
 go 60.6 39.2
 go 60.6 28

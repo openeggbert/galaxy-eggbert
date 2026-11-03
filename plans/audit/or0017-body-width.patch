@@ -63,10 +63,10 @@ index c54b4d07..4268ef7a 100644
          int failures_ = 0;
          bool havePrevious_ = false;
 diff --git a/src/GalaxyEggbert/Game/BlupiController.cpp b/src/GalaxyEggbert/Game/BlupiController.cpp
-index 4f233b81..693aa01a 100644
+index 4f233b81..d3a14067 100644
 --- a/src/GalaxyEggbert/Game/BlupiController.cpp
 +++ b/src/GalaxyEggbert/Game/BlupiController.cpp
-@@ -596,9 +596,63 @@ namespace GalaxyEggbert::Game
+@@ -596,9 +596,69 @@ namespace GalaxyEggbert::Game
                                                                    float startY, float startZ, float dx, float dy,
                                                                    float dz, bool tempPassable,
                                                                    bool checkSubcellHorizontal,
@@ -110,7 +110,10 @@ index 4f233b81..693aa01a 100644
 +        // His box's corners under his feet and, rising, over his head (OR-0017): the original
 +        // stands him while any of his 36 px box is over ground (Decor::BlupiIsGround tests the box's
 +        // width under his feet) and stops him under a ceiling the same way.
-+        const auto footprintSolid = [&](float px, float py, float pz)
++        // Under his feet a corner counts only over a top (solid there, free at the box's bottom 2 px
++        // up): a block beside him, as tall as he is, is a wall to his face, not ground (a saw's cell
++        // he jumps past).
++        const auto footprintSolid = [&](float px, float py, float pz, bool ground)
 +        {
 +            if (halfWidth <= 0.0f)
 +            {
@@ -120,7 +123,10 @@ index 4f233b81..693aa01a 100644
 +            {
 +                for (const float oz : {-side, side})
 +                {
-+                    if (IsPointSolid(world, px + ox, py, pz + oz, tempPassable, checkSubcellVertical))
++                    // The corners read a cell's own shape, as his face does (a saw's cell is solid
++                    // only at its foot), not the whole cell as the middle's ground test does.
++                    if (IsPointSolid(world, px + ox, py, pz + oz, tempPassable, true) &&
++                        (!ground || !IsPointSolid(world, px + ox, py + 0.05f + foot, pz + oz, tempPassable, true)))
 +                    {
 +                        return true;
 +                    }
@@ -131,7 +137,7 @@ index 4f233b81..693aa01a 100644
          result.x = startX;
          result.y = startY;
          result.z = startZ;
-@@ -646,8 +700,8 @@ namespace GalaxyEggbert::Game
+@@ -646,8 +706,8 @@ namespace GalaxyEggbert::Game
              if (!xBlocked)
              {
                  const float candidateX = startX + stepDx * static_cast<float>(i);
@@ -142,17 +148,17 @@ index 4f233b81..693aa01a 100644
                  {
                      xBlocked = true;
                  }
-@@ -661,7 +715,8 @@ namespace GalaxyEggbert::Game
+@@ -661,7 +721,8 @@ namespace GalaxyEggbert::Game
                  const float candidateY = startY + stepDy * static_cast<float>(i);
                  if (IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcellVertical) ||
                      (stepDy > 0.0f &&
 -                     IsPointSolid(world, clearX, candidateY + kHeadHeight, clearZ, tempPassable, checkSubcellVertical)))
 +                     IsPointSolid(world, clearX, candidateY + kHeadHeight, clearZ, tempPassable, checkSubcellVertical)) ||
-+                    footprintSolid(clearX, stepDy > 0.0f ? candidateY + kHeadHeight : candidateY, clearZ))
++                    footprintSolid(clearX, stepDy > 0.0f ? candidateY + kHeadHeight : candidateY, clearZ, stepDy <= 0.0f))
                  {
                      yBlocked = true;
                  }
-@@ -673,8 +728,8 @@ namespace GalaxyEggbert::Game
+@@ -673,8 +734,8 @@ namespace GalaxyEggbert::Game
              if (!zBlocked)
              {
                  const float candidateZ = startZ + stepDz * static_cast<float>(i);
@@ -163,17 +169,17 @@ index 4f233b81..693aa01a 100644
                  {
                      zBlocked = true;
                  }
-@@ -698,7 +753,8 @@ namespace GalaxyEggbert::Game
+@@ -698,7 +759,8 @@ namespace GalaxyEggbert::Game
          // onGround is always a ground-detection question, regardless of this
          // call's own checkSubcellVertical -- always coarse (see
          // IsPointSolid()'s own comment for why).
 -        result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false);
 +        result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false) ||
-+                          footprintSolid(result.x, result.y - 0.05f, result.z);
++                          footprintSolid(result.x, result.y - 0.05f, result.z, true);
          return result;
      }
  
-@@ -2200,8 +2256,10 @@ namespace GalaxyEggbert::Game
+@@ -2200,8 +2262,10 @@ namespace GalaxyEggbert::Game
          const float dy = m_velocityY * dt + windDy;
          const bool wasOnGroundBeforeMove = m_onGround; // landing this frame: StopJump
          const float velocityYBeforeMove = m_velocityY;  // ... from a real fall, not a settle
@@ -185,7 +191,7 @@ index 4f233b81..693aa01a 100644
  
          // Step-up (FindColumnGroundY's own comment) is a separate,
          // explicitly CNA-only fallback tried only when grounded and the
-@@ -2216,9 +2274,17 @@ namespace GalaxyEggbert::Game
+@@ -2216,9 +2280,17 @@ namespace GalaxyEggbert::Game
          float newZ = moveResult.z;
          float newY = moveResult.y;
          bool steppedUp = false;
@@ -204,7 +210,7 @@ index 4f233b81..693aa01a 100644
              if (steppedGroundY >= 0.0f && steppedGroundY <= m_y + kStepLimit)
              {
                  newX = m_x + dx;
-@@ -2231,7 +2297,8 @@ namespace GalaxyEggbert::Game
+@@ -2231,7 +2303,8 @@ namespace GalaxyEggbert::Game
          }
          if (moveResult.blockedZ && dz != 0.0f && m_onGround)
          {
