@@ -75,9 +75,10 @@ until ground = 1
 expect y <= 20.05
 # Out of the library and round the plaza's west and south sides under the ring (an egg in each
 # corner), outside the follow stars' waking reach (39 64, 55 64), to the cheese's green door
-# (x 56-58, z 68): the green key opens it. The row of crushers in the cheese's floor (z 76)
-# crossed each way just as they stop (the field crush 3); the green and blue keys at its far
-# end, either side of the two bobbing mines' line (z 79).
+# (x 56-58, z 68): the green key opens it. Its trench of lava (z 75-77) crossed on the clay
+# bridge (x 56-58) without stopping, which crumbles behind him; the green and blue keys at its
+# far end, either side of the two bobbing mines' line (z 79); back over the bridge once it has
+# grown again (156 ticks after he stepped on it).
 go 43 33.6
 go 43 35.5
 go 36 36 until eggs = 6
@@ -94,9 +95,7 @@ wait 30
 go 57 70.5
 go 52 72 until eggs = 8
 until eggs = 8 max 120
-go 57 75.2 tol 0.1
-face 180
-until crush = 3 max 120
+go 57 73.4 tol 0.1
 go 57 80.5 tol 0.15
 go 54 81 until keys = 1
 until keys = 1 max 120
@@ -104,9 +103,8 @@ go 57 82 until eggs = 9
 until eggs = 9 max 120
 go 60 81 until keys = 2
 until keys = 2 max 120
-go 57 76.8 tol 0.1
-face 0
-until crush = 3 max 120
+go 57 78.6 tol 0.1
+wait 120
 go 57 70.5
 go 57 66.5
 expect y <= 20.05

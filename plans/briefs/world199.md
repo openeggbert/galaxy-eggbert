@@ -23,8 +23,9 @@ material, reached by a passage three wide through the plaza's walls:
   key, two helicopters; **north, the brick library** (red door): a stair of
   bookcases, the green key on its top row, a crate; **west, the village street** (green door): a row
   of houses (windows on their street side, slate on top), an enemy Blupi walking the street, two
-  mines, the blue key; **south, the cheese** (green door): a row of crushers across it, two bobbing
-  mines, a blue key and a second green key;
+  mines, the blue key; **south, the cheese** (green door): a trench of lava across it (three wide, more
+  than a jump) crossed on a clay bridge (364) that crumbles behind Blupi and grows back, as the
+  original's bridges over lava; two bobbing mines, a blue key and a second green key;
 - at the ring: **east, the toys** (red door): sleeping follow stars along the way in, a tower of balls
   and star blocks four high that only the lollipop's jump reaches, a second red key on it; **north,
   the palace** (blue door): two rows of saws in its white floor, each stopped by the switch at its
@@ -37,7 +38,7 @@ material, reached by a passage three wide through the plaza's walls:
 **Checks**: `levelcheck.py`: stage 1 reaches the thirty eggs, every key and the exit; the real world
 stops at the first doors. `VerifyShippedWorlds`. Live (`--mission 199`, direct view F3 at a spawn in
 every part): the ring and the plaza, each enclave in its material (the machine's lift and key, the
-library's bookcases, the village's houses and mines, the cheese's crushers, the toys' tower and a
+library's bookcases, the village's houses and mines, the cheese's trench and bridge, the toys' tower and a
 follow star, the palace's saws and birds, the rock's lava, the finale's star blocks and inner door).
 Played live: walking into the red arrow from inside the finale's frame shows the win screen.
 Played through in one run by `tools/autoplay/world199.txt` (each key spent on one door): the
@@ -46,5 +47,4 @@ and a second green key, the finale's outer blue door, the village (green door) f
 blue key, the inner blue door and the red arrow; the win screen. The other enclaves (toys,
 palace, rock) are spare routes it does not take.
 
-The cheese's crushers lie in its floor (they had hung two cells above it, where a crusher, which
-squashes Blupi standing on it, did nothing; found by the playthrough).
+The cheese's row of crushers was removed (the original's 199 has none, lesson_inventory).

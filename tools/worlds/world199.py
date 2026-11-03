@@ -40,6 +40,7 @@ WINDOWS = (186, 187, 188, 189)
 SLATE = (196, 197)
 SAW, SWITCH = 378, 384
 BLITZ, EMITTER = 305, 304
+BRIDGE = 364                          # crumbles under Blupi and grows back
 LOW, HIGH = 20, 30                    # the plaza's floor and the ring gallery: walking levels
 P0, P1 = 34, 66                       # the plaza's interior, x and z
 
@@ -235,10 +236,20 @@ def main(argv) -> int:
     put(village, O.EGG, 11, 1)
     put(village, O.EGG, 11, 11)
 
-    # South, the cheese (green door): two mines bobbing, the blue key and a second green key at
-    # its far end. (Its row of crushers is gone: the original's 199 has none, lesson_inventory.)
+    # South, the cheese (green door): a trench of lava across it crossed on a clay bridge, two mines
+    # bobbing, the blue key and a second green key at its far end. (Its row of crushers is gone: the
+    # original's 199 has none, lesson_inventory.)
     cheese_room = Room("S", 57, LOW)
     enclave(cheese_room, "cheese", GREEN_DOOR)
+    # The trench (v 5-7, z 75-77), three wide, more than a jump, lava two below the floor; the
+    # bridge (u 5-7) in the floor's row crumbles behind him and grows back (the original's bridges
+    # over lava, its (71-75, 95) and (6-10, 49); Tables::table_bridge).
+    x0, z0, x1, z1 = cheese_room.box(0, 5, 12, 7)
+    material_box("cheese", x0 - 1, LOW - 5, z0 - 1, x1 + 1, LOW - 1, z1 + 1)
+    carve(x0, LOW - 4, z0, x1, LOW - 1, z1)
+    w.fill(x0, LOW - 4, z0, x1, LOW - 3, z1, LAVA)
+    bx0, bz0, bx1, bz1 = cheese_room.box(5, 5, 7, 7)
+    w.fill(bx0, LOW - 1, bz0, bx1, LOW - 1, bz1, BRIDGE)
     for u in (3, 9):
         x, z = cheese_room.at(u, 9)
         bob(x, LOW, z, 2, 16)
