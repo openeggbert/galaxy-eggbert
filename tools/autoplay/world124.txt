@@ -20,7 +20,8 @@ until treasures = 1 max 200
 go 36.4 46
 face 270
 clear 33 17 46 3 max 900
-go 33 46 with crouch until treasures = 2 max 400
+# Held diving over the treasure until it is taken (his body stays on the rim a little longer, OR-0017).
+go 33 46 tol 0 with crouch until treasures = 2 max 400
 until treasures = 2 max 200
 go 36.5 46 with lookup jump 1.2 max 400
 until ground = 1
@@ -31,7 +32,7 @@ go 37.2 59.5
 go 30 59.5
 face 0
 clear 30 17 56 4.5 max 1800
-go 30 56 with crouch until treasures = 3 max 400
+go 30 56 tol 0 with crouch until treasures = 3 max 400
 until treasures = 3 max 200
 go 30 59.5 with lookup jump 1.2 max 400
 until ground = 1
@@ -40,7 +41,7 @@ go 21.5 59.5
 go 21.5 50
 face 90
 clear 25 17 50 4 max 1800
-go 25 50 with crouch until treasures = 4 max 400
+go 25 50 tol 0 with crouch until treasures = 4 max 400
 until treasures = 4 max 200
 go 21.5 50 with lookup jump 1.2 max 400
 until ground = 1
@@ -56,7 +57,7 @@ go 40 39 until eggs = 1
 go 45 38.6
 face 180
 clear 45 15 42 3.5 max 1800
-go 45 42 with crouch until treasures = 5 max 400
+go 45 42 tol 0 with crouch until treasures = 5 max 400
 hold 90 crouch
 until treasures = 5 max 200
 go 45 39.7 tol 0.25 with lookup max 400
@@ -69,7 +70,7 @@ go 58 39 until eggs = 2
 go 58.6 47
 face 270
 clear 53 15 47 3.5 max 1800
-go 53 47 with crouch until treasures = 6 max 500
+go 53 47 tol 0 with crouch until treasures = 6 max 500
 hold 90 crouch
 until treasures = 6 max 200
 go 57.3 47 tol 0.25 with lookup max 500
@@ -80,7 +81,7 @@ until ground = 1
 go 58.6 52
 face 270
 clear 56 15 52 3.5 max 1800
-go 56 52 with crouch until treasures = 7 max 400
+go 56 52 tol 0 with crouch until treasures = 7 max 400
 # Down to the bottom: the treasure lies on it (the original's boxes, BD-0021).
 hold 200 crouch
 until treasures = 7 max 200
@@ -98,7 +99,7 @@ until treasures = 8 max 200
 go 47 61.4
 face 0
 clear 47 15 57 3.5 max 1800
-go 47 57 with crouch until treasures = 9 max 400
+go 47 57 tol 0 with crouch until treasures = 9 max 400
 hold 90 crouch
 until treasures = 9 max 200
 go 47 60.3 tol 0.25 with lookup max 400
@@ -123,7 +124,7 @@ expect x >= 69.5
 go 71.4 60
 face 90
 clear 74 14 60 4 max 1800
-go 74 60 with crouch until treasures = 10 max 600
+go 74 60 tol 0 with crouch until treasures = 10 max 600
 hold 200 crouch
 until treasures = 10 max 200
 # Up beside the rim at z 61.6, off the lane of the fish along z 60.
@@ -137,7 +138,7 @@ until ground = 1
 go 71.4 42
 face 90
 clear 75 14 42 4 max 1800
-go 75 42 with crouch until treasures = 11 max 600
+go 75 42 tol 0 with crouch until treasures = 11 max 600
 hold 200 crouch
 until treasures = 11 max 200
 go 72.6 42 tol 0.2 with crouch max 300
@@ -159,7 +160,7 @@ clear 78 16 59 3.5 max 1800
 go 78 55 with crouch max 600
 hold 60 crouch
 clear 78 14 52 3 max 600
-go 78 53 with crouch until treasures = 12 max 300
+go 78 53 tol 0 with crouch until treasures = 12 max 300
 until treasures = 12 max 200
 go 78 61.6 tol 0.2 with lookup max 600
 clear 78 17 61.6 2.5 max 900
@@ -176,7 +177,7 @@ face 0
 clear 85.5 16 61.5 2.5 max 1800
 go 85 62.3 tol 0.2 with crouch max 300
 hold 200 crouch
-go 85 59 with crouch until treasures = 13 max 400
+go 85 59 tol 0 with crouch until treasures = 13 max 400
 until treasures = 13 max 200
 go 85 62.2 tol 0.2 with crouch max 400
 clear 85.5 16 61.5 2.5 max 900
@@ -193,7 +194,7 @@ clear 92.5 16 54 2.5 max 1800
 go 92.7 54 tol 0.2 with crouch max 300
 hold 200 crouch
 clear 88 14 52 2.5 max 600
-go 88 54 with crouch until treasures = 14 max 400
+go 88 54 tol 0 with crouch until treasures = 14 max 400
 until treasures = 14 max 200
 go 92.7 54 tol 0.2 with crouch max 400
 clear 92.5 16 54 2.5 max 900
@@ -210,7 +211,7 @@ face 270
 clear 92.5 16 45 2.5 max 1800
 go 92.7 45 tol 0.2 with crouch max 300
 hold 200 crouch
-go 90 45 with crouch until treasures = 15 max 400
+go 90 45 tol 0 with crouch until treasures = 15 max 400
 until treasures = 15 max 200
 go 92.7 45 tol 0.2 with crouch max 400
 clear 92.5 16 45 2.5 max 900
@@ -228,7 +229,7 @@ face 180
 clear 83 16 38 2.5 max 1800
 go 83 37.8 tol 0.2 with crouch max 300
 hold 200 crouch
-go 83 41 with crouch until treasures = 17 max 400
+go 83 41 tol 0 with crouch until treasures = 17 max 400
 until treasures = 17 max 200
 go 83 37.8 tol 0.2 with crouch max 400
 clear 83 16 38 2.5 max 900
