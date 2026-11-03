@@ -59,8 +59,9 @@ go 36 22 until eggs = 8 max 300
 until eggs = 8 max 200
 go 37.4 26
 until ground = 1
-go 39.3 28
-go 39.3 42.6
+# Down the plinth's west side along x 39.1 (at 39.3 his body meets it, OR-0017).
+go 39.1 28
+go 39.1 42.6
 # P, the hall of pipes: the crate (43, 40) pushed north against the plinth (x 40-44, z 30-34,
 # walk 23); onto it, onto the plinth, onto its pier (walk 25) and east along pipeline P1 (z 32),
 # its mine (51, 32) jumped, into the treasure box and its two treasures (60, 31), (62, 33).
