@@ -434,6 +434,16 @@ namespace GalaxyEggbert::Game
             std::snprintf(line, sizeof(line), "at %.2f %.2f %.2f yaw %.0f%s", state.x, state.y, state.z,
                           state.yawDegrees, state.onGround ? "" : " air");
             Write(state, line);
+            // Tracing, the enemies within three cells too.
+            for (const auto& at : state.enemies)
+            {
+                const float dx = at[0] - state.x, dy = at[1] - state.y, dz = at[2] - state.z;
+                if (traceTicksLeft_ > 0 && dx * dx + dy * dy + dz * dz < 9.0f)
+                {
+                    std::snprintf(line, sizeof(line), "  enemy at %.2f %.2f %.2f", at[0], at[1], at[2]);
+                    Write(state, line);
+                }
+            }
         }
         traceTicksLeft_ = std::max(0, traceTicksLeft_ - 1);
         previous_ = state;
@@ -455,6 +465,17 @@ namespace GalaxyEggbert::Game
         LogChanges(state);
         if (justDied)
         {
+            // The enemies within two cells, for the cause (follow stars, mines, creatures...).
+            for (const auto& at : state.enemies)
+            {
+                const float dx = at[0] - state.x, dy = at[1] - state.y, dz = at[2] - state.z;
+                if (dx * dx + dy * dy + dz * dz < 4.0f)
+                {
+                    char near[96];
+                    std::snprintf(near, sizeof(near), "enemy near at %.2f %.2f %.2f", at[0], at[1], at[2]);
+                    Write(state, near);
+                }
+            }
             char line[96];
             std::snprintf(line, sizeof(line), "died at %.2f %.2f %.2f", state.x, state.y, state.z);
             Fail(state, line);
