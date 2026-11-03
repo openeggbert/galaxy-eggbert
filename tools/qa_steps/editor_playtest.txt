@@ -1,0 +1,20 @@
+# ED-0004: the editor's first slot, a block placed, the dice (save + play-test), pause, Back to the
+# editor on the same saved world. tools/qa_live.sh build-cna-opengl3 OUT tools/qa_steps/editor_playtest.txt
+sleep 14
+focus
+click 710 200
+sleep 3
+click 72 258
+sleep 4
+click 400 330
+sleep 1
+shot placed
+click 722 450
+sleep 5
+shot playtest
+click 757 45
+sleep 2
+shot pause
+click 260 380
+sleep 4
+shot back-in-editor
