@@ -1,5 +1,5 @@
 diff --git a/src/GalaxyEggbert/Game/Autoplay.cpp b/src/GalaxyEggbert/Game/Autoplay.cpp
-index a24f22b4..b534515c 100644
+index a24f22b4..a15726ec 100644
 --- a/src/GalaxyEggbert/Game/Autoplay.cpp
 +++ b/src/GalaxyEggbert/Game/Autoplay.cpp
 @@ -490,6 +490,9 @@ namespace GalaxyEggbert::Game
@@ -12,18 +12,27 @@ index a24f22b4..b534515c 100644
                  if (command.kind != Kind::Log && command.kind != Kind::Expect && command.kind != Kind::Trace)
                  {
                      Write(state, command.Where() + ": " + command.text);
-@@ -525,8 +528,19 @@ namespace GalaxyEggbert::Game
-                     jumped_ = true;
-                     jumpTicksLeft_ = kJumpTicks;
-                 }
+@@ -520,13 +523,27 @@ namespace GalaxyEggbert::Game
+                 const float dx = command.x - state.x;
+                 const float dz = command.z - state.z;
+                 const float distance = std::sqrt(dx * dx + dz * dz);
+-                if (command.jumpAt >= 0.0f && !jumped_ && distance <= command.jumpAt)
 +                // Pressed against a wall short of a point within his body's half-width of it (his
 +                // body has width against walls, OR-0017; the scripts' points were chosen without
-+                // it): he has arrived when he has not moved for 2 ticks that close.
++                // it): he has arrived when he has not moved for 2 ticks that close, and a jump
++                // asked for at a distance is taken there too (a step's face meets his body early).
 +                constexpr float kBodyHalfWidth = 18.0f / 64.0f;
 +                const bool still = std::fabs(state.x - goLastX_) < 0.001f && std::fabs(state.z - goLastZ_) < 0.001f;
 +                goStillTicks_ = still ? goStillTicks_ + 1 : 0;
 +                goLastX_ = state.x;
 +                goLastZ_ = state.z;
++                if (command.jumpAt >= 0.0f && !jumped_ &&
++                    (distance <= command.jumpAt ||
++                     (goStillTicks_ >= 2 && distance <= command.jumpAt + kBodyHalfWidth + 0.02f)))
+                 {
+                     jumped_ = true;
+                     jumpTicksLeft_ = kJumpTicks;
+                 }
 +                // Not for `tol 0` (held at a point until something happens).
 +                const bool againstWall = command.tolerance > 0.0f && goStillTicks_ >= 2 &&
 +                                         distance <= command.tolerance + kBodyHalfWidth + 0.02f;

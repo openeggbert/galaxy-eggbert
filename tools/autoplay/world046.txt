@@ -40,6 +40,7 @@ until ground = 1 max 200
 expect y >= 9.95
 go 35 79
 # C, the stair: twenty-one steps one high, two deep (z 72-74), walk 11 at x 35 to 31 at x 76,
+# Each step's jump starts 1.9 from the next step's middle: his body meets the step 0.28 early (OR-0017).
 # jumped one at a time; the mine rows on steps 4, 8, 12 and 16 passed in their free lanes
 # (73, 72, 74, 73), the moving mines on steps 6 and 14 timed with near, step 10 on its lifts.
 go 35.6 75.6 tol 0.1
@@ -47,31 +48,31 @@ go 35.6 73.4 jump 1.5 tol 0.15
 until ground = 1
 expect y >= 10.95
 face 90
-go 38 73 jump 1.6
+go 38 73 jump 1.9
 until ground = 1
-go 40 73 jump 1.6
+go 40 73 jump 1.9
 until ground = 1
 go 39.75 74 tol 0.15
 until eggs = 2 max 200
 go 39.75 73 tol 0.15
 face 90
-go 42 73 jump 1.6
+go 42 73 jump 1.9
 until ground = 1
-go 44 73 jump 1.6
+go 44 73 jump 1.9
 until ground = 1
-go 46 73 jump 1.6
+go 46 73 jump 1.9
 until ground = 1
 go 45.75 72 tol 0.15
 face 90
 near 48 17 72 0.25 max 400
 near 48 17 73 0.1 max 400
-go 48 72 jump 1.6
+go 48 72 jump 1.9
 until ground = 1
-go 50 72 jump 1.6
+go 50 72 jump 1.9
 until ground = 1
-go 52 72 jump 1.6
+go 52 72 jump 1.9
 until ground = 1
-go 54 72 jump 1.6
+go 54 72 jump 1.9
 until ground = 1
 go 54.2 72 tol 0.1
 lift 55 20 72 max 400
@@ -81,35 +82,35 @@ go 57.6 72 tol 0.15
 expect y >= 21.95
 go 57.6 74 tol 0.15
 face 90
-go 60 74 jump 1.6
+go 60 74 jump 1.9
 until ground = 1
 expect y >= 22.95
-go 62 74 jump 1.6
+go 62 74 jump 1.9
 until ground = 1
 # Step 64's mine sweeps z 72-75 (BD-0016): cross in lane 72, while it is out toward z 75.
 go 61.75 72 tol 0.15
 face 90
 near 64 25 72 0.25 max 400
 near 64 25 73 0.1 max 400
-go 64 72 jump 1.6
+go 64 72 jump 1.9
 until ground = 1
-go 66 72 jump 1.6
+go 66 72 jump 1.9
 until ground = 1
 go 65.75 73 tol 0.15
 face 90
-go 68 73 jump 1.6
+go 68 73 jump 1.9
 until ground = 1
-go 70 73 jump 1.6
+go 70 73 jump 1.9
 until ground = 1
-go 72 73 jump 1.6
+go 72 73 jump 1.9
 until ground = 1
 go 71.75 72 tol 0.15
 until eggs = 3 max 200
 go 71.75 73 tol 0.15
 face 90
-go 74 73 jump 1.6
+go 74 73 jump 1.9
 until ground = 1
-go 76 73 jump 1.6
+go 76 73 jump 1.9
 until ground = 1
 expect y >= 30.95
 go 79 70
