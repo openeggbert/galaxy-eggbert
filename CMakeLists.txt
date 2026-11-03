@@ -126,7 +126,13 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         add_subdirectory("${CNA_ENGINE_HOME}" cna_engine_dep EXCLUDE_FROM_ALL)
     endif()
 
-    add_executable(GalaxyEggbertCNA
+    if(ANDROID)
+        # SDLActivity loads the game as libmain.so and calls its SDL_main (OR-0011).
+        add_library(GalaxyEggbertCNA SHARED)
+    else()
+        add_executable(GalaxyEggbertCNA)
+    endif()
+    target_sources(GalaxyEggbertCNA PRIVATE
         src/GalaxyEggbertCNA/main.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
@@ -171,6 +177,18 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     # The game's file is GalaxyEggbert (GalaxyEggbert.exe, GalaxyEggbert.html on the web; owner,
     # OR-0008, 2026-11-01); the CMake target keeps its name, so `--target GalaxyEggbertCNA` builds it.
     set_target_properties(GalaxyEggbertCNA PROPERTIES OUTPUT_NAME GalaxyEggbert)
+    if(ANDROID)
+        # Android: libmain.so, the name SDLActivity loads; the assets copied into internal storage
+        # before the game starts (src/GalaxyEggbertCNA/AndroidAssets.hpp). SDL3::SDL3 is the
+        # imported target CNA's ThirdPartySDL.cmake made (SDL3_DIR is cached by it); find_package
+        # only re-imports it into this directory.
+        set_target_properties(GalaxyEggbertCNA PROPERTIES OUTPUT_NAME main)
+        target_sources(GalaxyEggbertCNA PRIVATE src/GalaxyEggbertCNA/AndroidAssets.cpp)
+        if(NOT TARGET SDL3::SDL3)
+            find_package(SDL3 CONFIG REQUIRED)
+        endif()
+        target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3)
+    endif()
     target_include_directories(GalaxyEggbertCNA PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src

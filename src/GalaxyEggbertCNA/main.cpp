@@ -1,11 +1,25 @@
 #include "GalaxyEggbertGame.hpp"
 
+// On Android the Java side starts the game through SDL_main: CNA's entry point header renames
+// main() to it (empty on the other platforms).
+#include <CNA/Platform/Entrypoint.hpp>
+
+#if defined(__ANDROID__)
+#include "AndroidAssets.hpp"
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 
 int main(int argc, char** argv)
 {
+#if defined(__ANDROID__)
+    if (!GalaxyEggbert::CNA::PrepareAndroidAssets())
+    {
+        return 1;
+    }
+#endif
     auto* game = new GalaxyEggbert::CNA::GalaxyEggbertGame();
     // INFRA-001 (plan.md §7): a permanent, committed deterministic
     // golden-screenshot capture mode -- loads the fixed demo world, runs a

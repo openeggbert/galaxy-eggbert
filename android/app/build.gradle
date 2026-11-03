@@ -2,6 +2,71 @@ plugins {
     id 'com.android.application'
 }
 
+// The workstation's shared compiler cache and its six-job ceiling (../../CLAUDE.md rules 1 and 5):
+// ccache only where it is installed; ninja's compile jobs pooled to six.
+def ccacheOnPath = System.getenv("PATH").split(File.pathSeparator).any { new File(it, "ccache").canExecute() }
+def nativeBuildExtraArguments = ["-DCMAKE_JOB_POOLS=compile=6", "-DCMAKE_JOB_POOL_COMPILE=compile"] +
+        (ccacheOnPath ? ["-DCMAKE_C_COMPILER_LAUNCHER=ccache", "-DCMAKE_CXX_COMPILER_LAUNCHER=ccache"] : [])
+
+// CNA and cna-engine: local.properties' cna.home / cna.engine.home, else the environment's CNA_HOME /
+// CNA_ENGINE_HOME, else the siblings ../cna and ../cna-engine of this repository (the root
+// CMakeLists.txt's own defaults). The SDL3 Java glue is CNA's own copy of SDL, so that it always
+// matches the libSDL3.so CNA builds.
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+def repoRoot = rootProject.file("..").canonicalFile
+def siblingPath = { String property, String variable, String sibling ->
+    def value = localProperties.getProperty(property) ?: System.getenv(variable)
+    return value ? new File(value).canonicalFile : new File(repoRoot, "../" + sibling).canonicalFile
+}
+def cnaHome = siblingPath("cna.home", "CNA_HOME", "cna")
+def cnaEngineHome = siblingPath("cna.engine.home", "CNA_ENGINE_HOME", "cna-engine")
+nativeBuildExtraArguments += ["-DCNA_HOME=${cnaHome}", "-DCNA_ENGINE_HOME=${cnaEngineHome}"]
+
+// The game reads its files with relative paths (std::ifstream, std::filesystem), which do not see
+// the APK's assets: on start it copies them into internal storage and works there
+// (src/GalaxyEggbertCNA/AndroidAssets.cpp). assets.txt lists every packaged file, its first line a
+// stamp over their names, sizes and times; a changed stamp copies them again.
+abstract class GalaxyAssetManifest extends DefaultTask {
+    @InputFiles
+    @PathSensitive(PathSensitivity.RELATIVE)
+    abstract ConfigurableFileCollection getAssetTree()
+
+    @Internal
+    abstract DirectoryProperty getAssetRoot()
+
+    @OutputDirectory
+    abstract DirectoryProperty getOutputDir()
+
+    @TaskAction
+    void write() {
+        def root = assetRoot.get().asFile
+        def names = []
+        root.eachFileRecurse(groovy.io.FileType.FILES) { file ->
+            def name = root.toPath().relativize(file.toPath()).toString().replace(File.separatorChar, '/' as char)
+            // aapt's default ignore pattern: hidden files, _directories, backups.
+            def parts = name.split('/')
+            if (parts.any { it.startsWith('.') } || parts[0..-2].any { it.startsWith('_') } || name.endsWith('~')) {
+                return
+            }
+            names << name
+        }
+        names.sort()
+        def digest = java.security.MessageDigest.getInstance("SHA-256")
+        names.each { name ->
+            def file = new File(root, name)
+            digest.update("${name}\t${file.length()}\t${file.lastModified()}\n".getBytes("UTF-8"))
+        }
+        def stamp = digest.digest().encodeHex().toString()
+        def out = outputDir.get().asFile
+        out.mkdirs()
+        new File(out, "assets.txt").setText("# ${stamp}\n" + names.join("\n") + "\n", "UTF-8")
+    }
+}
+
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -11,11 +76,14 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "org.openeggbert.speedyblupi"
     compileSdkVersion 35
-    ndkVersion = "30.0.14904198"
+    // NDK r29, the stable release CNA's Android SDL cache (cna/.sdl-prebuilt-Android-*) is built
+    // with; r30 is still a beta (OR-0011, 2026-11-03).
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
         applicationId "org.openeggbert.speedyblupi"
-        minSdkVersion 21
+        // API 24: CNA's minimum (cna/docs/devices-build.md).
+        minSdkVersion 24
         targetSdkVersion 35
         versionCode 1
         versionName "1.0"
@@ -23,13 +91,16 @@ android {
         externalNativeBuild {
             cmake {
                 // Pass Android platform and C++ STL config.
-                arguments "-DANDROID_PLATFORM=android-21",
+                arguments "-DANDROID_PLATFORM=android-24",
                           "-DANDROID_STL=c++_static",
                           // Disable sharp-runtime and CNA tests (they use gtest
                           // which is not needed in the APK build).
                           "-DCNA_BUILD_TESTS=OFF",
-                          "-DSHARP_RUNTIME_BUILD_TESTS=OFF"
+                          "-DSHARP_RUNTIME_BUILD_TESTS=OFF",
+                          *nativeBuildExtraArguments
                 abiFilters 'arm64-v8a', 'x86_64'
+                // Only the game (libmain.so) and what it links; not the desktop verifiers.
+                targets "GalaxyEggbertCNA"
             }
         }
     }
@@ -96,8 +167,8 @@ android {
         main {
             assets.srcDirs = ['src/main/assets']
             java.srcDirs = [
-                // SDL3 Java glue (SDLActivity, SDLAudioManager, etc.)
-                '../../../cna/third_party/SDL/android-project/app/src/main/java',
+                // SDL3 Java glue (SDLActivity, SDLAudioManager, etc.) from CNA's SDL
+                new File(cnaHome, 'third_party/SDL/android-project/app/src/main/java'),
                 // Game-specific Java (just the minimal stub subclassing SDLActivity)
                 'src/main/java'
             ]
@@ -113,4 +184,15 @@ android {
 
 dependencies {
     // No extra Java/Kotlin dependencies required – SDL provides the full activity.
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        def manifestTask = project.tasks.register("${variant.name}GalaxyAssetManifest", GalaxyAssetManifest) {
+            assetRoot.set(project.layout.projectDirectory.dir("src/main/assets"))
+            assetTree.from(project.fileTree("src/main/assets"))
+            outputDir.set(project.layout.buildDirectory.dir("generated/galaxyAssetManifest/${variant.name}"))
+        }
+        variant.sources.assets.addGeneratedSourceDirectory(manifestTask, { it.outputDir })
+    }
 }

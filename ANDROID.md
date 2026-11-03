@@ -14,16 +14,16 @@ Android APK using SDL3, the Android NDK, and CMake.
 |------|---------------------|
 | Android Studio | Ladybug (2024.2) or newer |
 | Android SDK | API level 35 |
-| Android NDK | 30.0.14904198 (installed via SDK Manager) |
-| CMake (NDK bundle) | 3.21+ (installed via SDK Manager) |
-| Java (JDK) | 17 (bundled with Android Studio) |
+| Android NDK | 29.0.14206865 (r29, installed via SDK Manager; the version CNA's Android SDL cache is built with) |
+| CMake (SDK Manager) | 4.1.2 (`android/app/build.gradle` pins it) |
+| Java (JDK) | 17 or 21 |
 | Git | any recent version |
 
 ### Install NDK and CMake via Android Studio
 
 1. Open **Android Studio → Settings → SDK Manager → SDK Tools**.
-2. Check **NDK (Side by side)** version **30.0.14904198**.
-3. Check **CMake** (version 3.21 or higher).
+2. Check **NDK (Side by side)** version **29.0.14206865**.
+3. Check **CMake** version **4.1.2**.
 4. Click **Apply** and let Android Studio download and install.
 
 ---
@@ -36,8 +36,19 @@ cd galaxy-eggbert
 git submodule update --init --recursive
 ```
 
-The vendored SDL3 / SDL_image / SDL_mixer sources are required.  They live under
-`galaxy-eggbert/../cna/third_party/`.
+CNA and cna-engine are required: by default beside this repository (`../cna`,
+`../cna-engine`). Elsewhere, name them in `android/local.properties` (see
+`local.properties.template`) or in the environment:
+
+```properties
+cna.home=/path/to/cna
+cna.engine.home=/path/to/cna-engine
+```
+
+CNA builds SDL3 and SDL3_mixer from its own `third_party/` (cached in
+`cna/.sdl-prebuilt-Android-<abi>/`), and the APK takes SDL's Java glue
+(`SDLActivity` and the rest) from the same SDL, so the two always match. The minimum
+Android version is 7.0 (API 24), CNA's own minimum.
 
 ---
 
@@ -46,7 +57,14 @@ The vendored SDL3 / SDL_image / SDL_mixer sources are required.  They live under
 ```bash
 cd galaxy-eggbert/android
 ./gradlew assembleDebug
+# only the emulator's ABI, faster:
+./gradlew assembleDebug -Pandroid.injected.build.abi=x86_64
 ```
+
+The native build is the root `CMakeLists.txt`'s `GalaxyEggbertCNA` target, built as
+`libmain.so` on Android (SDLActivity loads it and calls `SDL_main`, which CNA's
+`CNA/Platform/Entrypoint.hpp` makes of `main()`). It uses ccache when it is on `PATH`
+and at most six compile jobs.
 
 The first build downloads Gradle (≈ 150 MB) and compiles the NDK libraries, so
 it may take several minutes.  Subsequent incremental builds are much faster.
@@ -173,29 +191,33 @@ abiFilters 'arm64-v8a', 'x86_64', 'armeabi-v7a'
 
 ## Asset layout
 
-Game assets are packaged into the APK as Android assets.  At runtime they are
-read via `SDL_IOFromFile` which transparently falls back to the APK
-`AAssetManager` when a file is not found in internal storage.
+`android/app/src/main/assets/` links the game's runtime folders, which are packaged
+into the APK as they are:
 
 | Source directory | Path in APK |
 |------------------|-------------|
-| `Content/backgrounds/` | `Content/backgrounds/` |
-| `Content/icons/`       | `Content/icons/` |
-| `Content/sounds/`      | `Content/sounds/` |
-| `worlds/`              | `worlds/` |
+| `Content/` (backgrounds, icons, sounds, music) | `Content/` |
+| `worlds3d/` | `worlds3d/` |
+| `avatars3d/` | `avatars3d/` |
+| `textures3d/` | `textures3d/` |
 
----
+The game reads its files by relative paths with the C++ library (`std::ifstream`,
+`std::filesystem`), which cannot see an APK's assets. So on its first start (and after
+an update whose assets changed) it copies them into the app's internal storage and
+works there (`src/GalaxyEggbertCNA/AndroidAssets.cpp`). The build writes the list it
+copies, `assets.txt`, whose first line is a stamp over the files' names, sizes and
+times (`GalaxyAssetManifest` in `android/app/build.gradle`); a copy with the same
+stamp is kept.
 
 ## Writable / persistent storage
 
-Save data and configuration are written to the app's private internal storage
-via `SDL_GetPrefPath("org.openeggbert", "speedyblupi")`.  This storage:
+The working directory is the app's internal storage (`/data/data/org.openeggbert.speedyblupi/files`),
+so the save file (`savedata.txt`) and the editor's custom worlds (`customworlds/`) are
+written there beside the copied assets. This storage:
 
 - persists across app restarts,
 - is cleared when the app is uninstalled,
 - is **not** accessible to other apps.
-
----
 
 ## Android launcher icon
 

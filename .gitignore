@@ -18,8 +18,7 @@ android/app/build/
 android/build/
 android/local.properties
 
-android/app/.cxx/Debug
-android/app/.cxx/RelWithDebInfo
+android/app/.cxx/
 build-web/*
 
 /build-probe/

@@ -1,1 +1,5 @@
 sdk.dir={path to Android/Sdk}
+# Optional: where CNA and cna-engine are checked out (default: ../cna and ../cna-engine beside
+# galaxy-eggbert; the environment's CNA_HOME / CNA_ENGINE_HOME also work).
+# cna.home={path to cna}
+# cna.engine.home={path to cna-engine}
