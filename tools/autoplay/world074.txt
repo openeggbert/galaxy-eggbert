@@ -178,6 +178,8 @@ go 29 45 until eggs = 4 max 600
 until eggs = 4 max 200
 # I, the west relay (40 ticks, 40 dwelling): pair D (x 30) up from the court to meet pair E
 # (x 29, 31) coming down; E back up to meet pair F (x 30), F up to the landing DL (walk 27).
+# Round the post (30, 48) by its west side.
+go 28.8 48 tol 0.15
 go 30 50.5
 go 30 51.2 tol 0.1
 lift 30 19 52 max 400
