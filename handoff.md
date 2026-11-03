@@ -332,12 +332,14 @@ ledgers before repeating any discovery. Where it stands:
   of their visible sides textured; the owner's questionnaire answer has the side per block) --
   fixed `0b401be` (`SingleTexturedSide`: the open side facing the most room; 88 %); (2) **the
   camera cut Blupi at the picture's bottom** whenever a wall pulled it within ~2 cells (the look
-  point a block over his feet, 45-degree picture) -- `ChaseLookHeight` (ChaseCameraYaw.hpp) lowers
-  the look point toward his middle as it comes in; it changes the pickups' flight time to the HUD
-  (Voyage, by screen distance, as the original), so it waits on a full pass before its commit;
-  (3) 045's cheese floor shows clusters of black dots near (59.6, 52.6, 15.4) and (49.4, 55.1, 12.1),
-  not looked into yet; (4) frames with Blupi out of view while he walks down a stairwell (024
-  t3600) or flies the helicopter in a shaft (043 t6120) -- to recheck with (2).
+  point a block over his feet, 45-degree picture) -- fixed `92b78b9` (`ChaseLookHeight` lowers the
+  look point toward his middle as it comes in). A pickup's flight to its counter lasts as long as
+  its way across the screen (Decor::VoyageInit), so **any camera change shifts the scripts' timing
+  by a few ticks**: run a full pass after one (this one moved 022's lift boarding);
+  (3) 045's black dots near (59.6, 52.6, 15.4) are tile 339 (cheese with see-through holes, 18 cells
+  in 042/045): through its holes the cube's own inside shows, unlit -- open; (4) frames with Blupi out of view while he walks down a stairwell (024
+  t3600) or flies the helicopter in a shaft (043 t6120) -- fixed by (2). The second pass (with (1) and (2), `build-probe/play-pass/`, 78/78 after 022's
+  fix) is the current look at the campaign; its sheets wait to be reviewed world by world.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
   `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
