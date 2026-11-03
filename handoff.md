@@ -361,10 +361,12 @@ ledgers before repeating any discovery. Where it stands:
   re-runs: 78/78. **Still open (camera)**: frames with Blupi out of view right after a drop or on
   a lift ride in the cave and toy worlds (092 t5760, 094 t15120, 091 t5040, 073 t720/t9360, 075
   t10080 inside the lift's model, 101 t3600, 064 t18360) -- the camera is not inside him there;
-  next step is to shoot those spots live (qa_live with --spawn) and see where the eye actually is.
+  094 t15120 was shot live: a 1x1 dead-end pocket, walled on three sides and roofed -- no
+  direction has room, the eye ends in his body and the view is in effect first person along his
+  facing; acceptable there. The others still to be shot the same way.
   Also open: decor without collision (girders, pillars) does not stop the camera, so it can stand
   behind one and hide him (056, 058, 062, 065); 084's black quads near the lightning column.
-  The web build was rebuilt after all of it (2026-11-03, evening) and loaded in headless Chrome:
+  The web build was rebuilt after all of it (again 2026-11-04 00:07, with the night's fixes) and loaded in headless Chrome:
   120 models, 93/93 sounds, the menu drawn, no error but the favicon's 404.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
