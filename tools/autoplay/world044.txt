@@ -268,7 +268,7 @@ expect y >= 27.95
 until treasures = 22 max 200
 # Down, back down J's lift (into its shaft while it waits at the bottom), and the tunnel north
 # to the hub past the row of mines lying across it (51-53, 66) at its east side (x 54).
-go 34 75.2
+go 34 75.0 tol 0.1
 until ground = 1
 expect y <= 24.05
 go 40 75
