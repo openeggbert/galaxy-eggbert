@@ -600,8 +600,11 @@ is a full library built 2026-10-27 with the current settings).
 
 | Repo | Verified commit | Date |
 |---|---|---|
-| `../../libcna/cna` (live tree; what `build-cna-opengl3` compiles) | `dda46ec4d` | 2026-11-01 (110/110) |
-| `../../libcna/cna-engine` | `2a93b7e` | 2026-11-01 (110/110) |
+| `../../libcna/cna` (live tree; what `build-cna-opengl3` compiles) | `090c998a1` | 2026-11-03 (112/112, 78/78 playthroughs, web build) |
+| `../../libcna/cna-engine` | `2a93b7e` | 2026-11-03 (same) |
+| `../../libcna/easy-gl` (via `CNA_EASYGL_ROOT`) | `b582bd8` (v0.1.1+2) | 2026-11-03 (same) |
+| `../../libcna/meta-gl` | `795bcdc` (v0.4.1+2) | 2026-11-03 |
+| `../../libcna/cna` | `dda46ec4d` | 2026-11-01 (110/110) |
 | `../../libcna/cna-engine` | `d86c62da` | 2026-10-20 |
 | `~/deps/cna-baseline` | `900d0db3b` | 2026-10-20 |
 | `../../libcna/easy-gl` | `f4d6afaf` (v0.1.1) | 2026-10-20 |
