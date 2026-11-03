@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-03 (fidelity audit, milestone G: the use case ledger finished, BD-0040..0056)._
+_Last updated: 2026-11-03 (fidelity audit, milestone G: the use case ledger finished, BD-0040..0056; world 199's lessons)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -267,10 +267,21 @@ ledgers before repeating any discovery. Where it stands:
   owner decides. Probe world `build-probe/wave-e/probe_burn.py` (995) has a fan, a pool,
   a lava cell and a bulldozer for live looks; typed cheats in `qa_live` steps need
   `keydown`/`keyup` with a sleep (a bare `key` is too short to be seen by the game).
+- Then (2026-11-03, latest): **Wave E, world 199's lessons all in** (LV-0078; `lesson_inventory.md`
+  lists nothing missing for 199): a lightning curtain in the machine's passage (`d1b3222`), the
+  cheese's lava trench on a clay bridge (`8f33b24`), teleporters 330/331 floor-ring (`56661d7`),
+  two spike traps and two drips (`4251c6e`), the wasp's well with a moving mine across it, its
+  balloon the way out (`ec46f4a`), the invented fish removed (`a190777`), bars over the machine's
+  pit (`3912fe2`), a saucer climb to the south arm (`7f1c3c6`), a fan in the machine's east wall
+  (`f6ac155`). Learned on the way: a creature's shot passes a closed door (`IsBlocIcon`: a door's
+  mask is not full), so 199's script crosses the village's line of fire (z 58) with `clear`; the
+  egg cap (10) stops pickups, so no extra egg on a route; an updraught (118) does not lift Blupi on
+  foot, it halves his fall (6.25 of 12.5 u/s; use it as world 102 does). The spare enclaves (toys,
+  palace, rock) are still not played through.
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
-  `plans/audit/lesson_inventory.md` (bars of 046/052/061/125, lava, water, teleporters of 105,
-  199's many); a full 78-world regression run after these world changes.
+  `plans/audit/lesson_inventory.md` (046's bar, 105's lava and teleporters, 112's water, 113's fan,
+  125's lava and bars, 013/124 thinned); a full 78-world regression run after these world changes.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
