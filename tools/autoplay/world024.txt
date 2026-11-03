@@ -299,7 +299,7 @@ go 43 83 until eggs = 10
 until eggs = 10 max 120
 # Shelf 5 (the top, walk 24): its treasure (its egg would be the eleventh: at ten eggs the
 # original takes no more, MAX_EGG_COUNT).
-go 42.8 83.3 tol 0.1
+go 42.8 83.0 tol 0.1
 face 180
 go 42.8 84.8 jump 1.8
 until ground = 1
