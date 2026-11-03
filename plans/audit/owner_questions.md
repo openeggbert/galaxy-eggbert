@@ -65,3 +65,16 @@ option.
 ### Q-000 — Wind and fans along Z (2026-11-02)
 
 Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adaptation (M3D-0005).
+
+## Q-007 — the follower star's wake: the original's box or Galaxy's sphere? (2026-11-03)
+
+- The original wakes a sleeping star when Blupi is within 144 px across and from 149 px over
+  him to 158 under (a box, `MoveObjectFollow`); Galaxy uses a sphere of 132 px (2.06 cells).
+  The box also wakes stars two cells off on a diagonal and two cells over him.
+- With the box, 052 and 053 (101 stars, laid out with the sphere) fail their playthroughs: the
+  stars round the treasures wake as he lands or passes. 053 can be adapted (done once: a column
+  a cell higher, five route changes); 052 needs its helicopter section's stars re-laid.
+- Options: (a) the box, with 052/053 re-laid (faithful; a day's level work); (b) keep the sphere
+  as the 3D adaptation (as now). Recommendation: (a), when the levels are revisited.
+- Meanwhile: the sphere stays (BD-0053 open).
+

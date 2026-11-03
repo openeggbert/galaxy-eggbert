@@ -688,3 +688,195 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Galaxy started it from 520, 530 or 540 by the key.
 - Fix: 520 for every door. Cosmetic.
 - Validation: build, ctest.
+
+## BD-0044 — taunts: no height check, none after a jump, none over lava or a crusher, Mockeryp on cooldown (gameplay, animation) — FIXED_AND_VERIFIED
+
+- Original (`MockeryDetect`, Decor.cpp:9518-9601; called every tick he is in control and on foot
+  or swimming, 5627-5635; played 6311-6324; the actions 3147-3186): an enemy of the list (2, 4,
+  16, 20, 23, 32, 33, 44, 54, 96, 97) whose box (60 px across, the bottom 24 px of its cell) meets
+  Blupi's (60 across, 11-60 px below his top; to 150 in the air) arms a taunt in the Ouf slot:
+  Mockeryp at the big creature (54), Mockery at one ahead (none at the tracking enemy 2 ahead),
+  Mockeryi at one behind; in the air, lava or a crusher one or two cells under his middle arms
+  Mockeryi. He plays it if he stands idle within 20 ticks of the last detection, and walking on
+  does not disarm it. Mockery and Mockeryi start the 300-tick cooldown at their sound (ticks 1
+  and 6); Mockeryp starts none, and nothing is armed during the cooldown.
+- Galaxy looked only while he stood idle, within a cell across and at any height (an enemy a
+  floor above or below was taunted), never in the air (no taunt after jumping over an enemy, none
+  over lava or a crusher), kept searching past a tracking enemy ahead, and put every taunt,
+  Mockeryp too, on the cooldown at once.
+- Fix: `InteractionSystem::MockeryDetect` (the original's boxes and order; lava looked for a cell
+  further down, Galaxy's lava being the floor, GP-0447); the host arms its answer every frame
+  (`BlupiController::ArmOuf`); the controller plays an armed taunt within `kMockeryWithin`, keeps
+  it through walking, starts the cooldown at the sound tick; the host's sound follows
+  `MockeryStarted()`.
+- Validation: `VerifyInteractionSystem` (ahead, behind, the tracking enemy, the big creature, out
+  of reach, a floor above or below, below him in the air, a type off the list, over lava at three
+  heights, over a crusher); `VerifyBlupiMovement` (Mockeryp leaves no cooldown; armed while
+  walking it plays on stopping; the cooldown from the sound tick; more than 20 ticks late, none);
+  live, probe world 995: jumping over a lava cell and stopping, he turns and taunts
+  (`plans/evidence/mockery-over-lava.png`); the full playthrough regression; ctest.
+
+## BD-0045 — a switch could be pressed with the shield, Hide or SuperBlupi (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5529-5531): the switch's gate is `... && !m_blupiShield && !m_blupiHide &&
+  !m_bSuperBlupi && m_blupiFocus`, besides the vehicles and the balloon.
+- Galaxy gated it on the vehicles and the balloon only.
+- Fix: the host's `canActivateSwitch` adds `!IsInvincible()` (shield, Hide, SuperBlupi).
+- Validation: build, ctest; the switch worlds (063-065) in the full playthrough regression.
+
+## BD-0046 — the dynamite never cut a saw in the floor nor a drip; Blupi died a cell and a half from a blast (gameplay) — FIXED_AND_VERIFIED
+
+- Original (`DynamiteStart`, Decor.cpp:9064-9166): each blast clears saws (378/379) and drips
+  (404/410) in its own row and the one above; Blupi dies if his position is from 64 px before to
+  60 px past the blast's, in X and in Y.
+- Galaxy cleared saws in the blast's own row only -- its saws lie in the floor, a row lower (the
+  floor convention, GP-0450), so no blast ever cut one -- and no drips (its comment said drips had
+  no block constant; BD-0033 added it); Blupi died within 1.5 cells in X and Y.
+- Fix: saws in the floor and his own row, drips in his own row and the one above; Blupi's box the
+  original's in X and Y. Along Z (no original counterpart) the neighbouring cell stays in reach,
+  as decided on 2026-10-25.
+- Validation: `VerifyInteractionSystem` (the floor saw beside the stick and the drip over it cut, a
+  saw out of reach kept; 3.5 cells right of the stick he dies by the last blast, 4.2 he lives; the
+  2026-10-25 Z checks still pass); the full playthrough regression; ctest.
+
+## BD-0047 — no vertigo at a lift's edge (gameplay, animation) — FIXED_AND_VERIFIED
+
+- Original (`AscenseurVertigo`, Decor.cpp:9238-9269, called at 4889-4893): standing still on a lift,
+  his vertigo measures the lift's edges -- more than 26 px off its middle toward the side he faces,
+  he teeters and steps back; with the edge behind him he steps forward. On a conveyor lift
+  (icons 311-316) the sides are swapped and the lift lets go of him for 10 ticks: he walks off.
+- Galaxy measured only the ground under his feet; a lift is no ground, so he never teetered on
+  one.
+- Fix: the host passes the ridden lift's middle (`InteractionSystem::RideLiftX/Z`,
+  `RideLiftIsConveyor`) to `BlupiController::SetLiftUnder`; on a plain lift the vertigo's feet
+  test the lift's top square, 26 px in from its edges, and he counts as standing while the lift
+  holds him. Conveyors keep carrying him off their end (their swapped vertigo is not modelled).
+- Validation: `VerifyBlupiMovement` (29 px off a lift's middle facing out he teeters and steps
+  back onto it; 22 px off he stands; on a conveyor's edge no teeter); the full playthrough
+  regression; ctest.
+
+## BD-0048 — the respawn position could be taken where enemies pass, on a lift, a bridge, a ledge, with the shield (gameplay) — FIXED_AND_VERIFIED
+
+- Original (`BlupiAddFifo`'s gate, Decor.cpp:6467-6471; `SetMoveTraj` 8150-8156, `SetBalleTraj`
+  7638-7642): his position goes into the respawn FIFO only if, besides the hazards, he is not
+  shielded or hidden, not at a ledge (the vertigo's feet), not on a lift, not on a clay bridge
+  (`IsBridge`), and not in a cell any object has been in since the mission began (a lift: the
+  cell over it) or a shot has crossed (`IsMoveTraj`, `IsBalleTraj`).
+- Galaxy checked the hazards, the teleporters and the water only: he could respawn in a
+  patroller's path, on a bridge that had crumbled, at a ledge, or where he stood shielded.
+- Fix: `InteractionSystem` marks every active object's cell each frame (a lift's the cell over
+  it) and every new shot's whole path (`IsTrajectoryCell`); the host's gate adds the shield, Hide,
+  the ledge (Vertigo, Recede, Advance), the lift, the bridge and the trajectories.
+- Validation: `VerifyInteractionSystem` (an enemy's cells stay marked, a lift marks the cell over
+  it, other cells are not); the full playthrough regression (scripts that die and respawn);
+  ctest.
+
+## BD-0049 — nothing flew away: destroyed enemies, crates, the invert potion, fans and the lost helicopter (visual) — FIXED_AND_VERIFIED
+
+- Original (`ByeByeAdd` / `ByeByeStep` / `ByeByeDraw`, Decor.cpp:10058-10128; `ObjectDelete`
+  7881-7916; `ModifDecor` 7926-7934; `ByeByeHelico`, called wherever the helicopter is lost):
+  a destroyed object of the list 4, 12, 16, 17, 20, 40, 96, 97 (by the dynamite, the Cloud, a
+  decoy, its own contact with Blupi, a wall for the homing star, the invert potion taken), a fan
+  destroyed by touching it, and the helicopter lost (wrecked, stung, glued, dead, at the exit)
+  leave a copy of their picture that rises on a slowing curve for 10 ticks, falls, drifts
+  sideways 10-19 px a tick and spins (7 the bulldozer and the helicopter, 33 the fish and the
+  bird, 17 the rest; a blasted crate 7-22 either way), gone after 30 ticks (the invert potion and
+  the helicopter at half speed).
+- Galaxy just removed them.
+- Fix: `InteractionSystem::Retire` (ObjectDelete) at those deletions, `ByeByePiece`s stepped
+  once a 20 Hz tick with the original's formula (sideways along X); the host adds the fan's and
+  the helicopter's and draws each piece as its model (the crate its cube, the helicopter its
+  parked model, a sprite without a model turned as the original's), spinning about the view
+  axis. The invert potion's animated frames while it flies are not reproduced (its picture
+  stays as it was).
+- Validation: `VerifyInteractionSystem` (a bulldozer caught by the blast flies, spinning 7, rises
+  about 10 ticks, gone after 30); live, the probe world's fan and dynamite; ctest.
+
+## BD-0050 — the cleanall cheat removed the enemies without their explosions (cheat, visual) — FIXED_AND_VERIFIED
+
+- Original (`CheatAction` CleanAll, Decor.cpp:1793-1822): every enemy becomes an explosion
+  (ObjectType8) where it was, with channel 10 and the small shake.
+- Galaxy removed them with the shake only.
+- Fix: `CheatCleanAll` leaves an explosion at each; the host plays channel 10.
+- Validation: `VerifyInteractionSystem` (explosions where the enemies were); ctest.
+
+## BD-0051 — dynamite and the decoy put down at a ledge; the decoy beside a charger or with dynamite carried (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:4792-4848): the action puts dynamite down only with both feet on the ground
+  (2 px probes at 18-20 and 40-42 px of his 60); else, without dynamite, the decoy with both feet
+  down and no charger (ObjectType31) beside him (`MoveChargeDetect`: its box 10 px wider each side);
+  refused, the decoy gives his shrug (Ouf3, channel 27).
+- Galaxy asked only that he stand on the ground, and tried the decoy also when the dynamite was
+  refused.
+- Fix: `BlupiController::BothFeetOnGround` (11 px either side of his middle along his facing)
+  for both; `TryPerso` refuses beside a charger and while he carries dynamite; the shrug only
+  without dynamite.
+- Validation: `VerifyBlupiMovement` (one foot over a ledge, both inside a floor);
+  `VerifyInteractionSystem` (no decoy beside a charger nor with dynamite, one elsewhere); ctest.
+
+## BD-0052 — the overcraft could not climb over a lift beneath it, only on it (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:3936-3967, `MoveAscenseurDetect(m_blupiPos, OVERHEIGHT)` 9815-9842): the
+  overcraft climbs while the ground or a lift lies within OVERHEIGHT (80 px) under it -- a
+  lift's top from 18 px over his feet to 79 under them, within 50 px across.
+- Galaxy counted a lift only while riding it.
+- Fix: `InteractionSystem::LiftWithinOverHeight`, passed by the host
+  (`BlupiController::SetLiftBelow`) while he drives the overcraft.
+- Validation: `VerifyInteractionSystem` (in reach at 0.5 and 1.1 cells under, not at 1.4 nor
+  0.9 across); ctest.
+
+## BD-0053 — the follower star wakes within a sphere, not the original's box (gameplay) — REPRODUCED_DEFECT
+
+- Original (`MoveObjectFollow`, Decor.cpp:9646-9678; `BlupiRect` on foot 11-58 px): the dormant
+  star (96) wakes (97, channel 92) when its cell padded by 100 px meets Blupi's 16-44 px strip,
+  11-58 px under his top: 144 px either way across, from 149 px over him to 158 under.
+- Galaxy wakes it within a sphere of 132 px (2.06 cells): the same straight across, but not two
+  cells off on a diagonal nor two over him, where the box wakes it.
+- Tried 2026-11-03 (the box, X and Z alike across): 75 of the 78 playthroughs passed; 052 and
+  053 (and 050, which plays 052) failed -- their 101 stars were laid out and their routes played
+  with the sphere (`world052.py`: "it wakes within two cells of Blupi"). 053 was brought through
+  (its column stars a cell higher and five route changes), 052 not (its helicopter's column,
+  alcove and pen treasures each have stars a diagonal cell off). Reverted to the sphere. The box,
+  for when it returns: `std::fabs(dx) < 144/64 && std::fabs(dz) < 144/64 && dy < 149/64 &&
+  dy > -158/64` (dy the star over Blupi, cells); 053's adaptation: its hall's columns at y 21-24
+  or 22-25, the treasures taken from 2.38 cells off the gallery's stars, the door reached by
+  (57, 6.5), the crushers waited out at z 59.6, the hall's first treasure reached along z 59.6,
+  the cage's row woken from the doorway's west then east side only.
+- Next: the owner's call (`plans/audit/owner_questions.md` Q-007): re-lay 052's and 053's stars
+  for the box, or keep the sphere as the 3D adaptation.
+
+## BD-0054 — no sparks or flash at the crusher, no flash as the balloon bursts, no tentacle at the trap or the big creature (visual) — FIXED_AND_VERIFIED
+
+- Original: the crusher catching him plays 70 with four sparks (ObjectType41 at -60, 60, 10,
+  -10), a flash (90, 12 ticks) and the big shake (Decor.cpp:5582-5591); springing up out of it,
+  41 with the same sparks and flash (5185-5196); the balloon ending, by time or a hazard, 41 with
+  a flash (91, 6 ticks; 5165-5174, 5768-5777); the trap (373) and the big creature (54) catching
+  him, a tentacle (53, 90 ticks, its frames two ticks each) where he stands (5504-5510,
+  5871-5873).
+- Galaxy played the sounds only (the types' pictures and frame tables existed, unspawned; the
+  tentacle's table ran at one tick a frame).
+- Fix: `InteractionSystem::SpawnEffect` and the three expiring entries; the host spawns them at
+  those moments (the crusher's sparks through `SpawnInvertBurst`, the same ObjectType41 burst),
+  the creature's tentacle in `InteractionSystem`; the tentacle's frames two ticks each.
+- Validation: build, ctest; live, the probe world's crusher and spikes.
+
+## BD-0055 — the decoy trap's dissolve never went away; the Cloud's kill had no flash (visual) — FIXED_AND_VERIFIED
+
+- Original: the dissolve (ObjectType37) left where an enemy met a decoy goes after 70 ticks
+  (Decor.cpp:8976-8986); an enemy the Cloud's arc kills leaves an electric flash (ObjectType38,
+  90 ticks, its first 30 from blupi1.png) sliding down at 5 px a tick to the floor under it
+  (7976-7983; `SearchDistRight`'s fall less a cell, 7647).
+- Galaxy spawned the dissolve with no lifetime -- it looped where it was for the rest of the
+  mission -- and the Cloud's kill played channel 59 only.
+- Fix: the two expiring entries; the Cloud's kill spawns the flash with its slide.
+- Validation: `VerifyInteractionSystem` (the dissolve lasts 70 ticks); build, ctest.
+
+## BD-0056 — Hide left no trail (visual) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5236-5250, 870-881, 8391): while hidden, every 10 px he moves leaves a
+  copy of his current picture (ObjectType58) that fades from 30 % opacity to nothing over 20
+  ticks.
+- Galaxy drew him at 30 % (OR-0016) but left no copies.
+- Fix: the host keeps the copies of his pose (world transform, clip and its time, face) taken
+  every 10 px (Manhattan, over X, Y and Z) while hidden and draws them fading over 20 ticks.
+- Validation: build, ctest; live, the typed `hidedrink` and a walk.

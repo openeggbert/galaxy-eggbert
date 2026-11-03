@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-02 night (fidelity audit, milestone G: the owner's reports up to OR-0056)._
+_Last updated: 2026-11-03 (fidelity audit, milestone G: the use case ledger finished, BD-0040..0056)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -242,6 +242,25 @@ ledgers before repeating any discovery. Where it stands:
   built with `build_clip_library.py --skip-check` in 38 s and only the new clip copied: a full
   rebuild changes Hide and StopTank, which were assembled selectively), Clear4's two missing frames
   (BD-0039). Ledger: 331 UNREVIEWED left (objects, functions).
+- Then (2026-11-03, later): **the use case ledger finished** -- every function, action and object
+  type of Decor.cpp compared (`plans/audit/gameplay_use_cases.csv`: 0 UNREVIEWED; 207 match, 96
+  fixed, 53 3D adaptations, 181 not applicable). Found and fixed, each with a verifier check:
+  the Cloud ends on the water's surface (BD-0040), the jump out of the water splashes at the jump
+  (BD-0041), a fan touched with the shield still explodes (BD-0042), every door key flies from
+  x 520 (BD-0043), MockeryDetect ported whole -- height, air, lava/crusher, the 20-tick window,
+  Mockeryp without cooldown (BD-0044), no switch with the shield/Hide/SuperBlupi (BD-0045), the
+  dynamite cuts floor saws and drips and kills within the original's box (BD-0046), the vertigo
+  at a lift's edge (BD-0047), the respawn FIFO's whole gate incl. the objects' and shots'
+  trajectories (BD-0048), the pieces flying away (ByeBye: enemies, crates, the invert potion,
+  fans, the lost helicopter; BD-0049), cleanall's explosions (BD-0050), dynamite/decoy only with
+  both feet down, no decoy by a charger or with dynamite (BD-0051), the overcraft over a lift in
+  reach (BD-0052), the crusher/balloon/trap/creature effects
+  (BD-0054), the decoy trap's dissolve that never went and the Cloud kill's flash (BD-0055),
+  Hide's trail (BD-0056). Open: the follower star's wake (BD-0053, Q-007): the original's box
+  breaks 052/053's routes, which were laid out with Galaxy's sphere; the sphere stays until the
+  owner decides. Probe world `build-probe/wave-e/probe_burn.py` (995) has a fan, a pool,
+  a lava cell and a bulldozer for live looks; typed cheats in `qa_live` steps need
+  `keydown`/`keyup` with a sleep (a bare `key` is too short to be seen by the game).
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`); Wave E: the rest of
   `plans/audit/lesson_inventory.md` (bars of 046/052/061/125, lava, water, teleporters of 105,
