@@ -315,22 +315,26 @@ ledgers before repeating any discovery. Where it stands:
 - OR-0014 on the web (`789ceee`): the music served beside the page and fetched per track (see the
   web build section; checked in headless Chrome).
 - OR-0017's collision box (2026-11-03, in progress, not yet in the game): `plans/audit/or0017-body-width.patch`
-  v5 (apply with `git apply`): his 36 px box against walls (the box's bottom 2 px over his feet),
+  v6 (apply with `git apply`): his 36 px box against walls (the box's bottom 2 px over his feet),
   ground and ceiling under its whole width read by each cell's own shape, a corner as ground only
   over a top; the harness counts a `go` as against a wall (arrived, or its jump taken) only when he
-  is still and not turning past its first ticks. With it **60/78** playthroughs pass
-  (`build-probe/wave-e/or17-latest.txt`; 22 with v1); the committed game stays 78/78. Scripts are
-  re-planned so that they pass **with and without** the box (each committed alone): 012, 014, 022,
-  024, 025, 031 (a bird sync), 043, 044, 046, 051, 053 (its cage's north row re-laid), 055, 057, 062,
-  065, 066's lower tunnel. Left: 066's upper tunnel (one cell wide; its lesson keeps him half a cell
-  off the mines' line, which his body cannot: a world change), 074, 083, 091, 093, 094, 101, 113,
-  114, 124, 199. The usual causes: a target within a half-width of a wall or a one-cell passage
-  (go along its middle), a ledge left with his body's corner still on it (go further), a jump
-  under an overhang (start further back), a jump distance never reached against a step (patch v3).
-  Working method: a box binary kept in `build-probe/or17-bin/` (build with the patch applied, copy
-  `GalaxyEggbert` there, revert), runs with `tools/autoplay.sh build-probe/or17-bin ...` beside the
-  committed build. When all 78 pass with it: apply the patch, drop `WallClearanceOffset` (no longer
-  needed), commit, update OR-0017.
+  is still -- not moving, turning, rising or sinking -- past its first ticks (v6 added the vertical
+  stillness for 124's dive; not yet built: see below). Full run with v5: **60/78**
+  (`build-probe/wave-e/or17-latest.txt`); since then 074, 083, 091, 093, 094, 101, 113, 114 pass
+  with it one by one. The committed game stays 78/78 (every re-planned script passes with and
+  without the box; each committed alone): 012, 014, 022, 024, 025, 031 (a bird sync), 043, 044,
+  046, 051, 053 (its cage's north row re-laid), 055, 057, 062, 065, 066's lower tunnel, 074, 083,
+  091, 093, 094, 101, 113, 114. Left: 066's upper tunnel (one cell wide; its lesson keeps him half a
+  cell off the mines' line, which his body cannot: a world change), 124 (v6), 199. The usual
+  causes: a target within a half-width of a wall or a one-cell passage (go along its middle), a
+  ledge left with his body's corner still on it (go further), a jump under an overhang (start
+  further back), an `until x >=` his body's face never lets him reach.
+  Working method: a box binary in `build-probe/or17-bin/` (build with the patch applied, copy
+  `GalaxyEggbert` there, revert, rebuild), runs with `tools/autoplay.sh build-probe/or17-bin ...`
+  beside the committed build. **At the end of 2026-11-03 `build-probe/or17-bin/` holds the
+  committed binary** (a rebuild failed while the cna session had CNA mid-edit: its configure-time
+  audit `platform-nonproduction-sdl` refused uncommitted test changes); rebuild it first. When all
+  78 pass with the patch: apply it, drop `WallClearanceOffset`, commit, update OR-0017.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
   `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
