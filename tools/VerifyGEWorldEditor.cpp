@@ -1,6 +1,9 @@
 #include <GalaxyEggbert/Editor/AutoTile.hpp>
 #include <GalaxyEggbert/Editor/BoxRegion.hpp>
 #include <GalaxyEggbert/Editor/PaletteCategories.hpp>
+#include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
+#include <GalaxyEggbert/BigDecorRecord.hpp>
+#include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Editor/EditCommandStack.hpp>
 #include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
@@ -580,6 +583,91 @@ int main()
         check(AutoTile::IsRightBorder(AutoTile::kEmpty, 35, 0, -1) == false &&
                   AutoTile::IsRightBorder(68, 35, 0, -1) == false && AutoTile::IsRightBorder(68, 35, 0, 1) == true,
               "IsRightBorder: air is no border; lava is none under a cell, one over it");
+    }
+
+    // ED-0005: one history mixing every kind of edit -- music, spawn point, BigDecor, a turned tile,
+    // an object's end and timing -- undoes back to the start and redoes to the end, step by step.
+    {
+        using GalaxyEggbert::BigDecorRecord;
+        using GalaxyEggbert::CollectBigDecor;
+        using GalaxyEggbert::CollectMoveObjects;
+        using GalaxyEggbert::MoveObjectRecord;
+        using GalaxyEggbert::PlaceBigDecor;
+        using GalaxyEggbert::PlaceMoveObject;
+        World world;
+        world.setMusicTrack(1);
+        world.setSpawnPoint(10, 1, 10);
+        MoveObjectRecord lift;
+        lift.type = GalaxyEggbert::Def::ObjectType::ObjectType1;
+        lift.posStartX = lift.posEndX = 20.0f;
+        lift.posStartY = lift.posEndY = 1.0f;
+        lift.posStartZ = lift.posEndZ = 20.0f;
+        lift.stepAdvanceTicks = lift.stepRecedeTicks = 10.0f;
+        PlaceMoveObject(world, lift);
+        EditCommandStack stack;
+
+        EditCommand music;
+        music.kind = EditCommand::Kind::MusicEdit;
+        music.musicBefore = 1;
+        music.musicAfter = 4;
+        world.setMusicTrack(4);
+        stack.Push(music);
+
+        EditCommand spawn;
+        spawn.kind = EditCommand::Kind::SpawnPointEdit;
+        spawn.spawnBefore = {true, 10, 1, 10};
+        spawn.spawnAfter = {true, 30, 2, 30};
+        world.setSpawnPoint(30, 2, 30);
+        stack.Push(spawn);
+
+        EditCommand decor;
+        decor.kind = EditCommand::Kind::BigDecorEdit;
+        decor.bigDecorAnchorX = 40;
+        decor.bigDecorAnchorY = 1;
+        decor.bigDecorAnchorZ = 40;
+        decor.bigDecorAfter = BigDecorRecord{20, 40, 1, 40};
+        PlaceBigDecor(world, *decor.bigDecorAfter);
+        stack.Push(decor);
+
+        EditCommand turn;
+        turn.kind = EditCommand::Kind::TurnEdit;
+        world.setBlock(50, 1, 50, Block::make(126));
+        turn.turnX = 50;
+        turn.turnY = 1;
+        turn.turnZ = 50;
+        turn.turnBefore = false;
+        SetPlateRotated(world, 50, 1, 50, true);
+        stack.Push(turn);
+
+        EditCommand target;
+        target.kind = EditCommand::Kind::MoveObjectEdit;
+        target.objectAnchorX = 20;
+        target.objectAnchorY = 1;
+        target.objectAnchorZ = 20;
+        target.objectBefore = lift;
+        MoveObjectRecord moved = lift;
+        moved.posEndX = 23.0f;
+        moved.stepAdvanceTicks = moved.stepRecedeTicks = 30.0f;
+        target.objectAfter = moved;
+        PlaceMoveObject(world, moved);
+        stack.Push(target);
+
+        const auto liftEndX = [&]() {
+            const auto all = CollectMoveObjects(world);
+            return all.empty() ? -1.0f : all.front().posEndX;
+        };
+        bool undone = stack.Undo(world) && liftEndX() == 20.0f && CollectMoveObjects(world).front().stepAdvanceTicks == 10.0f;
+        undone = undone && stack.Undo(world) && !IsPlateRotated(world, 50, 1, 50);
+        undone = undone && stack.Undo(world) && CollectBigDecor(world).empty();
+        undone = undone && stack.Undo(world) && world.spawnX() == 10 && world.spawnY() == 1;
+        undone = undone && stack.Undo(world) && world.musicTrack() == 1;
+        check(undone, "undo walks a mixed history back: an object's end and timing, a turn, a BigDecor, the spawn, the music");
+        bool redone = stack.Redo(world) && world.musicTrack() == 4;
+        redone = redone && stack.Redo(world) && world.spawnX() == 30;
+        redone = redone && stack.Redo(world) && CollectBigDecor(world).size() == 1;
+        redone = redone && stack.Redo(world) && IsPlateRotated(world, 50, 1, 50);
+        redone = redone && stack.Redo(world) && liftEndX() == 23.0f;
+        check(redone, "redo walks it forward again to the last edit");
     }
 
     // ED-0003: the moving mechanisms' lifts are one type at the PC editor's four speeds (PlaceDecor4),
