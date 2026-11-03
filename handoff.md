@@ -314,6 +314,11 @@ ledgers before repeating any discovery. Where it stands:
   trick: generate the world with `star` stubbed into `build-probe/probe-worlds-052/`). 78/78.
 - OR-0014 on the web (`789ceee`): the music served beside the page and fetched per track (see the
   web build section; checked in headless Chrome).
+- OR-0017's collision box, taken further but not in: `plans/audit/or0017-body-width.patch` v2 (apply
+  with `git apply`; the box's bottom 2 px over his feet, ground and ceiling under its whole width,
+  a `go` against a wall arriving after 2 still ticks) passes 36-37/78 (`build-probe/wave-e/or17-d.txt`
+  lists the failures). Next: re-plan the ~30 failing mission scripts one by one with it applied
+  (012: `go 52.95 50 tol 0.03` before the pull is the first), then commit it with all 78 passing.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
   `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
