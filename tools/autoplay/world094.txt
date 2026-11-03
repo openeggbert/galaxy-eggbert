@@ -83,7 +83,8 @@ go 64 71.2 jump 2.0 tol 0.15
 until ground = 1
 expect y >= 19.9
 go 57 71.2
-go 56.6 58
+# North along x 57: the rocks at (56, 20, 58-60) are a half-width off x 56.6 (OR-0017).
+go 57 58
 go 59.3 57.6
 go 59.6 55
 expect y >= 19.9
