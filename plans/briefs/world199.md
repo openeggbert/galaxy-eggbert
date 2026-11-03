@@ -18,8 +18,9 @@ walk 30 where Blupi starts (65, 30, 35), a stair of slime from the ring down to 
 (60 ticks, dwelling 40) back up; a pool with a fish, helicopters, two bulldozers, three birds, four
 bobbing mines, four sleeping follow stars, eight eggs. Off it eight enclaves, each of one world's
 material, reached by a passage three wide through the plaza's walls:
-- at the floor: **east, the machine** (open): a pit of lava crossed on a lift, two mines bobbing
-  over it, the red key, two helicopters; **north, the brick library** (red door): a stair of
+- at the floor: **east, the machine** (open): its passage under a curtain of lightning (304 over
+  305, x 68, as world 113's), a pit of lava crossed on a lift, two mines bobbing over it, the red
+  key, two helicopters; **north, the brick library** (red door): a stair of
   bookcases, the green key on its top row, a crate; **west, the village street** (green door): a row
   of houses (windows on their street side, slate on top), an enemy Blupi walking the street, two
   mines, the blue key; **south, the cheese** (green door): a row of crushers across it, two bobbing

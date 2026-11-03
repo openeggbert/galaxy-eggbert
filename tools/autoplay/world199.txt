@@ -10,10 +10,13 @@ go 65 46
 go 62.4 46
 until ground = 1
 expect y <= 20.05
-# East: the machine (walk 20, x 70-82): the pit of lava (x 74-78) on its lift (z 42-44)
-# carrying him three east, boarded at the start of its dwell at the west end; the red key and
-# the two eggs beyond; back the same way.
+# East: the machine (walk 20, x 70-82): its passage's curtain of lightning (x 68, z 42-44)
+# crossed just after a strike; the pit of lava (x 74-78) on its lift (z 42-44) carrying him
+# three east, boarded at the start of its dwell at the west end; the red key and the two eggs
+# beyond; back the same way, under the curtain again after a strike.
 go 66 43.5
+go 67.3 43.5 tol 0.1
+until blitz = 52 max 400
 go 72.9 43 tol 0.1
 face 90
 lift 78 20 43 max 600
@@ -35,6 +38,8 @@ go 77.4 43 tol 0.15
 lift 74 20 43 max 300
 go 72 43
 expect y >= 19.95
+go 68.7 43.5 tol 0.1
+until blitz = 52 max 400
 # North under the ring's east arm and west under its north arm (z 35.5) to the library's red
 # door (x 42-44, z 32), open with the red key; its stair of bookcases (rows two deep, walk 22,
 # 24, 26) jumped up from the floor: the green key and two eggs on the top row, one on the first.

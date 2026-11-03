@@ -39,6 +39,7 @@ BOOKCASES = (139, 140, 141, 142, 143)
 WINDOWS = (186, 187, 188, 189)
 SLATE = (196, 197)
 SAW, SWITCH = 378, 384
+BLITZ, EMITTER = 305, 304
 LOW, HIGH = 20, 30                    # the plaza's floor and the ring gallery: walking levels
 P0, P1 = 34, 66                       # the plaza's interior, x and z
 
@@ -170,10 +171,15 @@ def main(argv) -> int:
         w.place(O.EGG, x, y, z)
 
     # ---- the four enclaves at the floor ----
-    # East, the machine (open): a pit of lava crossed on a lift, two mines bobbing over it, the red
-    # key beyond, two helicopters.
+    # East, the machine (open): its passage under a curtain of lightning (world 113's lesson), a pit
+    # of lava crossed on a lift, two mines bobbing over it, the red key beyond, two helicopters.
     machine = Room("E", 43, LOW)
     enclave(machine, "machine")
+    for u in (5, 6, 7):
+        x, z = machine.at(u, -2)
+        w.set(x, LOW + 3, z, EMITTER)
+        if not calm:
+            w.fill(x, LOW, z, x, LOW + 2, z, BLITZ)
     x0, z0, x1, z1 = machine.box(0, 4, 12, 8)
     carve(x0, LOW - 4, z0, x1, LOW - 1, z1)
     w.fill(x0, LOW - 4, z0, x1, LOW - 3, z1, LAVA)
