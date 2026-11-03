@@ -168,6 +168,9 @@ worlddone166 object-m 166-173,310,416-420 Decor/world2b.rd4 tone=0.50,48
 # 1-8 the nine icons (IoU 0.858-0.903; tone 17.2 -> 8.2). Part 2, a teal 'Flat Surface' under the
 # camera's frame, is left out: it showed in 3D as cyan balls in the gap under the bridge. The game
 # draws the row of lumps four times across the cell (BlockModels.hpp kBridgeRows).
+# After export: the originals' clay texture over it from above (Q-003, the owner's wish; no scene uses
+# Decor/terre.tif): python3 tools/rd4_to_gltf/top_texture.py --model avatars3d/objects/bridge364_grotte-fragile1
+#   --texture ../speedyblupi-data/originals/Decor/terre.tif
 bridge364   object-m 364-372 Decor/grotte-fragile1.rd4 drop=2 tone=0.84,-3
 # The slime drip (BD-0033): Decor/goutte/goutte01-04.rds, 404-408 (its smallest drops 409-410 have
 # no scene and are not drawn).

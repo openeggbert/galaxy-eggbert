@@ -6,7 +6,7 @@
       "vertices": "bridge364_rd_955107.verts.bin",
       "indices": "bridge364_rd_955107.idx.bin",
       "vertexStride": 52,
-      "texture": "bridge364_rd_955107.png",
+      "texture": "top.png",
       "diffuseColor": [
         0.3013186648809051,
         0.0835351274258047,

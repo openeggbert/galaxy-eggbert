@@ -21,12 +21,15 @@ Options: (a) a generated thin glowing 3D bolt following each sprite's path (thre
 turns as the original's frames; recommended), (b) keep the sprite plates. Meanwhile: the sprite
 plates.
 
-### Q-003 — The clay bridge's surface
+### Q-003 — The clay bridge's surface — DONE (a), the owner's request
 
 The bridge is now its scene's model; its surface is the scene's smooth clay brown. The owner
 asked for a clay texture on top. `Decor/terre.tif` (a clay texture) exists but no scene uses it.
 Options: (a) map `terre.tif` onto the bridge model's top (recommended), (b) leave the scene's
-colour. Meanwhile: the scene's colour.
+colour. Done 2026-11-03, (a), since the owner asked for it: `tools/rd4_to_gltf/top_texture.py`
+lays `terre.tif` over the exported model from above, recoloured to the scene's mean clay brown so
+the calibrated tone stays (`plans/evidence/clay-bridge-terre.png`, before and after). The sprites
+show smooth lumps; say if the grain should go again (b).
 
 ### Q-004 — The terrain tiles as their Ray Dream models?
 
