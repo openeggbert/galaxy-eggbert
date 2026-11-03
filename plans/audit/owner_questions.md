@@ -112,7 +112,7 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   phones) no 3D model is drawn until CNA fixes UB-007; a Mali or newer Adreno phone may not hit it.
 - Nothing is changed on the machine without the owner.
 
-## Q-010 — the cheese with holes (339): see through, or the holes as dents? (2026-11-03)
+## Q-010 — the cheese with holes (339): see through, or the holes as dents? (2026-11-03) — black dots fixed, holes now filled
 
 - Tile 339 is cheese with two round holes that are clear in the sprite (857 of its 4,290 texels):
   in the original's 2D the backdrop shows through them. In 3D it is a cube drawn with an alpha
@@ -123,7 +123,7 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   drawn in a darker cheese colour, the cube closed; (c) leave it.
   Recommendation: (b) -- the walls stay walls, as everywhere else in the cheese worlds.
 
-## Q-011 — the brick edge pieces (262, 263, 283): ragged edges or whole bricks in 3D? (2026-11-03)
+## Q-011 — the brick edge pieces (262, 263, 283): ragged edges or whole bricks in 3D? (2026-11-03) — slits fixed, edges now filled
 
 - The brick wall 261 has three edge pieces whose bricks stop short of the tile on one side
   (262 left, 263 right, 283 bottom; clear texels there): in the original's 2D they make a wall's
@@ -135,3 +135,12 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   the editor keeps placing the edge pieces, they just look like the wall); (b) keep the ragged
   edge only on a face that borders air on that side, whole brick elsewhere; (c) leave them.
   Recommendation: (a), simplest and without slits; (b) if the ragged ends matter.
+
+### Q-010 / Q-011 update (2026-11-04)
+
+The black was a bug, not a choice: every tile drawn opaque (under a quarter clear) showed black
+where its sprite is clear -- the cheese holes, the brick and slime edge pieces (347-363), 69 tiles
+in all. Their clear texels now take the tile's own colour round them (`TileCoverage.hpp`
+`FillOpaqueTilesClearTexels`, `plans/evidence/opaque-tiles-clear-texels.jpg`), i.e. option (a) of
+Q-011 and the closest to (b) of Q-010. Still the owner's to say: whether the cheese holes should
+be see-through or the brick ends ragged on faces that border air.

@@ -92,6 +92,35 @@ int main()
     const std::vector<std::uint8_t> real(1301u * 1431u, 255);
     check(ClassifyTileSheet(real.data(), 1301, 1431).size() == 440, "object-m.png's 1301 x 1431 hold 440 icons");
 
+    // The clear texels of an opaque tile take the colour round them, solid; other tiles keep theirs.
+    {
+        constexpr int kW = 2 * 65 + 1, kH = 65 + 1;
+        std::vector<std::uint8_t> rgba(static_cast<std::size_t>(kW) * kH * 4, 0);
+        const auto texel = [&](int icon, int x, int y) { return &rgba[(static_cast<std::size_t>(1 + y) * kW + 1 + icon * 65 + x) * 4]; };
+        for (int icon = 0; icon < 2; ++icon)
+        {
+            for (int y = 0; y < 64; ++y)
+            {
+                for (int x = 0; x < 64; ++x)
+                {
+                    std::uint8_t* t = texel(icon, x, y);
+                    const bool hole = x < 8; // a clear strip at the left: black, alpha 0
+                    t[0] = hole ? 0 : 40;
+                    t[1] = hole ? 0 : 160;
+                    t[2] = hole ? 0 : 40;
+                    t[3] = hole ? 0 : 255;
+                }
+            }
+        }
+        const std::vector<TileCoverage> table{TileCoverage::Opaque, TileCoverage::Cutout};
+        FillOpaqueTilesClearTexels(rgba.data(), kW, kH, table);
+        const std::uint8_t* edge = texel(0, 0, 30);
+        const std::uint8_t* cut = texel(1, 0, 30);
+        check(edge[0] == 40 && edge[1] == 160 && edge[2] == 40 && edge[3] == 255,
+              "An opaque tile's clear strip takes the green round it and becomes solid");
+        check(cut[0] == 0 && cut[1] == 0 && cut[2] == 0, "A cutout tile's clear texels are left as they are");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

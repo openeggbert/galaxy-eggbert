@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -87,6 +88,107 @@ namespace GalaxyEggbert::Game
             }
         }
         return coverage;
+    }
+
+    // The clear texels of the tiles drawn opaque take the colour of the solid texels round them
+    // (2026-11-03, the second play pass). Those tiles (under a quarter clear) are drawn as they are,
+    // the alpha ignored, so their clear texels showed whatever colour the sheet stores there -- mostly
+    // black: black slashes on the slime edge pieces (347-363), slits in the brick edge pieces (262,
+    // 263, 283), dots in the cheese with holes (339). In the original's 2D the backdrop showed
+    // through them; on a 3D cube the nearest colour of the tile itself is the closest to that. Each
+    // clear texel takes the mean of its solid (or already filled) 8 neighbours within the same tile,
+    // ring by ring inward, and becomes solid (the terrain's opaque pass draws with the blend state
+    // the frame left, so a clear texel let the black behind the face show through). Only tiles
+    // classified opaque are touched: the cutout and blended ones keep their shapes. `rgba`: 4 bytes
+    // a texel, row by row, the sheet as ClassifyTileSheet's.
+    inline void FillOpaqueTilesClearTexels(std::uint8_t* rgba, int width, int height,
+                                           const std::vector<TileCoverage>& coverage)
+    {
+        if (rgba == nullptr || width <= 0 || height <= 0)
+        {
+            return;
+        }
+        constexpr int kTileSize = BlockTypes::kTileSize;
+        constexpr int kSheetGap = BlockTypes::kSheetGap;
+        constexpr int kPitch = kTileSize + kSheetGap;
+        const int columns = width / kTileSize;
+        std::vector<std::uint8_t> filled(static_cast<std::size_t>(kTileSize) * kTileSize);
+        std::vector<std::uint8_t> next;
+        for (std::size_t icon = 0; icon < coverage.size(); ++icon)
+        {
+            if (coverage[icon] != TileCoverage::Opaque || columns <= 0)
+            {
+                continue;
+            }
+            const int x0 = kSheetGap + static_cast<int>(icon % static_cast<std::size_t>(columns)) * kPitch;
+            const int y0 = kSheetGap + static_cast<int>(icon / static_cast<std::size_t>(columns)) * kPitch;
+            if (x0 + kTileSize > width || y0 + kTileSize > height)
+            {
+                continue;
+            }
+            const auto at = [&](int x, int y) { return rgba + (static_cast<std::size_t>(y0 + y) * width + (x0 + x)) * 4; };
+            int clear = 0;
+            for (int y = 0; y < kTileSize; ++y)
+            {
+                for (int x = 0; x < kTileSize; ++x)
+                {
+                    const bool solid = at(x, y)[3] >= kCutoutReferenceAlpha;
+                    filled[static_cast<std::size_t>(y) * kTileSize + x] = solid ? 1 : 0;
+                    clear += solid ? 0 : 1;
+                }
+            }
+            while (clear > 0)
+            {
+                next = filled;
+                int done = 0;
+                for (int y = 0; y < kTileSize; ++y)
+                {
+                    for (int x = 0; x < kTileSize; ++x)
+                    {
+                        if (filled[static_cast<std::size_t>(y) * kTileSize + x] != 0)
+                        {
+                            continue;
+                        }
+                        int sum[3] = {0, 0, 0};
+                        int count = 0;
+                        for (int dy = -1; dy <= 1; ++dy)
+                        {
+                            for (int dx = -1; dx <= 1; ++dx)
+                            {
+                                const int nx = x + dx, ny = y + dy;
+                                if ((dx == 0 && dy == 0) || nx < 0 || ny < 0 || nx >= kTileSize || ny >= kTileSize ||
+                                    filled[static_cast<std::size_t>(ny) * kTileSize + nx] == 0)
+                                {
+                                    continue;
+                                }
+                                const std::uint8_t* n = at(nx, ny);
+                                sum[0] += n[0];
+                                sum[1] += n[1];
+                                sum[2] += n[2];
+                                ++count;
+                            }
+                        }
+                        if (count > 0)
+                        {
+                            std::uint8_t* texel = at(x, y);
+                            for (int k = 0; k < 3; ++k)
+                            {
+                                texel[k] = static_cast<std::uint8_t>(sum[k] / count);
+                            }
+                            texel[3] = 255;
+                            next[static_cast<std::size_t>(y) * kTileSize + x] = 1;
+                            ++done;
+                        }
+                    }
+                }
+                if (done == 0)
+                {
+                    break; // a tile with no solid texel at all
+                }
+                filled.swap(next);
+                clear -= done;
+            }
+        }
     }
 
     // An icon's coverage; Opaque for an icon the table does not have (no sheet classified).

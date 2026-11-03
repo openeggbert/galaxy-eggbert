@@ -678,6 +678,22 @@ namespace GalaxyEggbert::CNA
                 alpha[i] = texels[i].getAProperty();
             }
             tileCoverage_ = GalaxyEggbert::Game::ClassifyTileSheet(alpha.data(), width, height);
+            // No black where an opaque tile's sprite is clear (TileCoverage.hpp).
+            std::vector<std::uint8_t> rgba(texels.size() * 4);
+            for (std::size_t i = 0; i < texels.size(); ++i)
+            {
+                rgba[i * 4 + 0] = texels[i].getRProperty();
+                rgba[i * 4 + 1] = texels[i].getGProperty();
+                rgba[i * 4 + 2] = texels[i].getBProperty();
+                rgba[i * 4 + 3] = texels[i].getAProperty();
+            }
+            GalaxyEggbert::Game::FillOpaqueTilesClearTexels(rgba.data(), width, height, tileCoverage_);
+            for (std::size_t i = 0; i < texels.size(); ++i)
+            {
+                texels[i] = Microsoft::Xna::Framework::Color(rgba[i * 4 + 0], rgba[i * 4 + 1], rgba[i * 4 + 2],
+                                                             rgba[i * 4 + 3]);
+            }
+            terrainTexture_.SetData(texels.data(), static_cast<int>(texels.size()));
         }
         RebuildWorldPresentation();
 
