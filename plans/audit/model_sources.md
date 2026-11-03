@@ -4,10 +4,10 @@
 
 | State | Scenes |
 |---|---|
-| in game | 163 |
+| in game | 164 |
 | in game otherwise | 10 |
 | converted, not exported | 0 |
-| terrain tile (Q-004) | 128 |
+| terrain tile (Q-004) | 127 |
 | matched, not converted | 0 |
 | no game sprite | 227 |
 
@@ -137,7 +137,6 @@
 | `Decor/techno26.rd4` | object-m:25 |
 | `Decor/techno27.rd4` | object-m:26 |
 | `Decor/techno28.rd4` | object-m:27 |
-| `Decor/techno29.rd4` | object-m:29 |
 | `Decor/tuyau-lr1.rds` | object-m:251 |
 | `Decor/tuyau-lr2.rds` | object-m:252 |
 | `Decor/tuyau-lr3.rds` | object-m:253 |
@@ -282,6 +281,7 @@
 | `Decor/support1.rd4` | object-m:76 |
 | `Decor/support2.rd4` | object-m:77 |
 | `Decor/support3.rd4` | object-m:199 |
+| `Decor/techno29.rd4` | object-m:29 |
 | `Decor/teleporteur1.rd4` | object-m:330 object-m:331 object-m:332 object-m:333 |
 | `Decor/teleporteur2.rd4` | - |
 | `Decor/teleporteur3.rd4` | - |

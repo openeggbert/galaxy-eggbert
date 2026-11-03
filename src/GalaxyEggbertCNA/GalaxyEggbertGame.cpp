@@ -2178,8 +2178,10 @@ namespace GalaxyEggbert::CNA
 
     const ObjectModelPose* GalaxyEggbertGame::ConveyorLiftModel(const MobileObjSpec& obj) const
     {
+        // The plain lift (1) too: Decor/techno29.rd4 for its tile 29 (lift29), else its bar and stem.
         if (obj.type != GalaxyEggbert::Def::ObjectType::ObjectType47 &&
-            obj.type != GalaxyEggbert::Def::ObjectType::ObjectType48)
+            obj.type != GalaxyEggbert::Def::ObjectType::ObjectType48 &&
+            obj.type != GalaxyEggbert::Def::ObjectType::ObjectType1)
         {
             return nullptr;
         }
@@ -5814,9 +5816,11 @@ namespace GalaxyEggbert::CNA
                     else if (const ObjectModelPose* conveyor = ConveyorLiftModel(obj))
                     {
                         // The conveyor lift (47/48): its tread on the frame table_chenille(i) shows,
-                        // stretched across the cell as the terrain conveyor (ModelDepthScale).
+                        // stretched across the cell as the terrain conveyor (ModelDepthScale); the
+                        // plain lift (1) its round platform on a funnel and stem, as modelled.
+                        const bool plainLift = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1;
                         drawModel(*conveyor, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
-                                  obj.currentZ, 0.0f, 0.0f, GalaxyEggbert::Game::ModelDepthScale(311));
+                                  obj.currentZ, 0.0f, 0.0f, plainLift ? 1.0f : GalaxyEggbert::Game::ModelDepthScale(311));
                     }
                     else if (pose != nullptr)
                     {

@@ -70,6 +70,7 @@ invert_panneau-invert
 key1_cle1
 key2_cle2
 key3_cle3
+lift29_techno29
 lollipop_sucette
 mine_bombe
 movingmine_bombe-move

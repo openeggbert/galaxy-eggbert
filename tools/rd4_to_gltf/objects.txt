@@ -180,3 +180,6 @@ emitter304  object-m 304 Decor/eclair.rd4 tone=0.75,13
 # is a cube carrying a painted column (an embedded image and mask), its sprite already.
 switch384   object-m 384-385 Decor/interrupteur.rd4 tone=0.70,15
 conveyor311 object-m 311-316 Decor/chenille.rds tone=0.66,11
+# The platform lift (type 1, object-m 29; was the tile cut into a bar and a stem, LiftVisual.hpp):
+# Decor/techno29.rd4 (IoU 0.94), drawn at the lift's place in the model pass.
+lift29      object-m 29      Decor/techno29.rd4

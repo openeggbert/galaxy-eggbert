@@ -469,7 +469,8 @@ namespace GalaxyEggbert::CNA
         // drawn, his own model lies flattened under it as the puddle of glue.
         [[nodiscard]] const GalaxyEggbert::Game::ObjectModelPose* BlupiGlueModel() const;
         // A conveyor lift's (47/48) tread model for its current frame (Decor/chenille.rds,
-        // table_chenille/chenillei's 311-316), or null: then it is drawn as a textured cube.
+        // table_chenille/chenillei's 311-316), or the plain lift's (1, Decor/techno29.rd4), or
+        // null: then it is drawn as a textured cube (the plain lift as its bar and stem).
         [[nodiscard]] const GalaxyEggbert::Game::ObjectModelPose* ConveyorLiftModel(
             const GalaxyEggbert::Game::MobileObjSpec& obj) const;
         // The skateboard on its way between the ground and his hands (OR-0003): put down at
