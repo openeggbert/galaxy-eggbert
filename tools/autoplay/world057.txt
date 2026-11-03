@@ -125,6 +125,8 @@ expect y <= 14.05
 # by the tree; a licked jump (four up) onto the slime tree (walk 18) at z 35, clear of its bumps.
 # Seven helicopters swing over it and drop shots at the ends of their swings: treasure 3
 # (52, 18, 36), under one of the drops, taken just after its shot; the arrow (54, 18, 36).
+# Round the tree's base (x 51-55, z 34-38) along its north side first.
+go 56 32.9
 go 59 37
 go 60.6 40
 go 61.8 40 tol 0.08
