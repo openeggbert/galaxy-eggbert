@@ -75,16 +75,20 @@ def main() -> int:
         w.set(x, 0, 56, 378)
     w.rotate_plate(10, 0, 56)
     w.set(12, 0, 56, 379)
-    w.set(14, 1, 56, 384)
-    w.set(16, 1, 56, 385)
-    note("saws in the floor (378; 10 turned), stopped saw 379, switch on 384 / off 385",
-         "(6-12, 0, 56), (14, 1, 56), (16, 1, 56)")
-    # A crusher in a one-high passage between two walls.
-    w.fill(20, 1, 55, 24, 3, 55, BRICK)
-    w.fill(20, 1, 57, 24, 3, 57, BRICK)
-    w.fill(20, 2, 56, 24, 3, 56, BRICK)
+    # The switches lie in the floor of the saws' row, as the worlds lay them (102, 065): Blupi stands
+    # on one and presses Action; it turns the saws within 20 cells along X at its own height
+    # (Decor::ActiveSwitch). They stood a cell higher than the saws here, so nothing turned
+    # (owner 2026-11-03).
+    w.set(14, 0, 56, 384)
+    w.set(16, 0, 56, 385)
+    note("saws in the floor (378; 10 turned), stopped saw 379, switch on 384 / off 385 in the floor "
+         "(stand on one and press Action: the saws stop / turn)", "(6-12, 0, 56), (14, 0, 56), (16, 0, 56)")
+    # A crusher hanging from a beam over the way, open at its sides so that Blupi is seen squashed
+    # under it (the worlds hang it in one-high passages, BD-0032; it squashes him for ten seconds
+    # while its block is down, three steps of its ten).
+    w.fill(21, 2, 56, 23, 2, 56, BRICK)
     w.set(22, 1, 56, 317)
-    note("crusher 317 in a one-high passage", "(22, 1, 56)")
+    note("crusher 317 under a beam, open at its sides (walk under it while it strikes)", "(22, 1, 56)")
     # The four fans, each with its wind beside it.
     w.set(28, 1, 56, 132)                     # up: wind above
     w.fill(28, 2, 56, 28, 5, 56, 118)

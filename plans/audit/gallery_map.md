@@ -452,8 +452,8 @@ Icon i stands at X = 6 + 2 (i mod 20), Z = 4 + 2 (i div 20), Y 1; the ones that 
 
 | What | Where (X, Y, Z) |
 |---|---|
-| saws in the floor (378; 10 turned), stopped saw 379, switch on 384 / off 385 | (6-12, 0, 56), (14, 1, 56), (16, 1, 56) |
-| crusher 317 in a one-high passage | (22, 1, 56) |
+| saws in the floor (378; 10 turned), stopped saw 379, switch on 384 / off 385 in the floor (stand on one and press Action: the saws stop / turn) | (6-12, 0, 56), (14, 0, 56), (16, 0, 56) |
+| crusher 317 under a beam, open at its sides (walk under it while it strikes) | (22, 1, 56) |
 | fans: up 132 with wind 118, down 135 with wind 122, left 126 with wind 110, right 129 with wind 114 | (28, 1, 56), (32, 5, 56), (40, 1, 56), (42, 1, 56) |
 | a turned left fan 126 blowing along -Z, its turned wind 110 (M3D-0005) | (47, 1, 60), (47, 1, 56-59) |
 | vanishing saucers 324 | (6-12, 1, 62) |
