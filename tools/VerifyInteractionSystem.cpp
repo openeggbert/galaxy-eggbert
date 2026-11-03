@@ -384,7 +384,11 @@ int main(int argc, char** argv)
             InteractionSystem sys;
             sys.Update(dt, cloudWorld, 0.0f, 20.0f, 0.0f, 0.0f, sound, false, false, 0, 0, false, true, true, true,
                        true, false, false, /*blupiCloudActive=*/true);
-            return !cloudWorld.GetMobileObjects()[0].active;
+            // Gone: no bulldozer left (its slot may hold the Cloud's flash now, BD-0055).
+            for (const auto& obj : cloudWorld.GetMobileObjects())
+                if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType4)
+                    return false;
+            return true;
         };
         check(cloudReaches(1.4f) && !cloudReaches(1.7f),
               "the Cloud's arc reaches a bulldozer 1.4 cells away (it stopped at 1.125), not one at 1.7");
@@ -1641,6 +1645,9 @@ int main(int argc, char** argv)
     // (nonexistent) demo placement.
     {
         constexpr float px = 300.0f, py = 1.0f, pz = 300.0f;
+        // The dynamite tests above leave him a stick; the decoy goes down only without one (the
+        // original's else-if, BD-0051).
+        interaction.CheatSetDynamite(0);
         check(interaction.PersoCount() == 0, "PersoCount() starts at 0, matching the real default");
         check(!interaction.TryPerso(world, px, py, pz, /*grounded=*/true),
               "TryPerso() placement is a no-op while PersoCount() == 0");
@@ -2992,12 +2999,13 @@ int main(int argc, char** argv)
         // real table_tentacule oscillates within icons 70-86 and never
         // overflows explo.png, unlike the naive ascending-range assumption
         // the previous frozen-frame-86 case used).
+        // Two ticks a frame (`phase / ScaleDiv(2)`, Decor.cpp:8535; BD-0054): frame k at phase 2k.
         check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 0) == 86, "ObjectType53 icon at phase=0 is the real table_tentacule[0]=86");
-        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 3) == 83, "ObjectType53 icon at phase=3 is the real table_tentacule[3]=83 (rise peak)");
-        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 7) == -1, "ObjectType53 icon at phase=7 is the real table_tentacule[7]=-1 (blank at the peak)");
-        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 24) == 70, "ObjectType53 icon at phase=24 is the real table_tentacule[24]=70 (full extension)");
-        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 44) == -1, "ObjectType53 icon at phase=44 is the real table_tentacule[44]=-1 (fully retracted)");
-        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 45) == GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 0),
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 6) == 83, "ObjectType53 icon at phase=6 is the real table_tentacule[3]=83 (rise peak)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 14) == -1, "ObjectType53 icon at phase=14 is the real table_tentacule[7]=-1 (blank at the peak)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 48) == 70, "ObjectType53 icon at phase=48 is the real table_tentacule[24]=70 (full extension)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 88) == -1, "ObjectType53 icon at phase=88 is the real table_tentacule[44]=-1 (fully retracted)");
+        check(GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 90) == GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType53, 0),
               "ObjectType53 icon wraps around after the real 45-frame table length");
     }
 
@@ -4605,6 +4613,11 @@ int main(int argc, char** argv)
                     }
                 }
                 check(hazardsAfter == 0, "CheatCleanAll(): deactivates every hazard/enemy of the real 12-type list");
+                int explosionsAfter = 0;
+                for (const auto& obj : cheatWorld.GetMobileObjects())
+                    if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType8)
+                        ++explosionsAfter;
+                check(explosionsAfter > 0, "CheatCleanAll(): each enemy becomes an explosion where it was (Decor.cpp:1813)");
                 check(exitActiveAfter, "CheatCleanAll(): leaves unrelated objects (the exit marker) untouched");
             }
 
@@ -4704,7 +4717,8 @@ int main(int argc, char** argv)
                 bool destroyed = true;
                 for (const auto& obj : auraWorld.GetMobileObjects())
                 {
-                    if (&obj == blupih) { destroyed = !obj.active; break; }
+                    // Its slot may hold the Cloud's flash now (BD-0055): gone means no blupih there.
+                    if (&obj == blupih) { destroyed = !obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType32; break; }
                 }
                 check(destroyed, "Cloud aura ON: standing on a blupih destroys it (BlupiElectro)");
             }
@@ -5283,6 +5297,282 @@ int main(int argc, char** argv)
             check(std::fabs(far->currentZ + 50.0f - 40.3f) < 1e-5f && std::fabs(far->currentX + 50.0f - 60.0f) < 1e-5f,
                   "a crate a third of a cell off its lane stays blocked by the block it overlaps");
         }
+    }
+
+    // BD-0046: the dynamite's blast (Decor.cpp:9064-9166) cuts a saw in the floor beside it (the
+    // floor convention) and a drip hanging over it, not a saw out of reach; Blupi dies within a
+    // cell of a blast along X and Y, not a cell and a half (the last blast, 200 px right: 4.2 cells
+    // right of the stick he lives, 3.5 he dies).
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        GW::World w;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            for (std::uint16_t z = 45; z <= 55; ++z)
+                w.setBlock(x, 0, z, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        w.setBlock(51, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Saw));
+        w.setBlock(58, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Saw));
+        w.setBlock(49, 3, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        w.setBlock(49, 2, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Drip));
+        const std::filesystem::path path = "VerifyInteractionSystem-blast.vwr";
+        w.saveToFile(path);
+        const auto blast = [&](float blupiX)
+        {
+            auto rt = std::make_unique<WorldRuntime>();
+            rt->LoadFromVwrFile(path.string());
+            rt->GetMobileObjectsMutable().clear();
+            MobileObjSpec fuse;
+            fuse.type = GalaxyEggbert::Def::ObjectType::ObjectType56;
+            fuse.posStartX = fuse.posEndX = fuse.currentX = 0.0f;
+            fuse.posStartY = fuse.posEndY = fuse.currentY = 1.0f;
+            fuse.posStartZ = fuse.posEndZ = fuse.currentZ = 0.0f;
+            fuse.active = true;
+            rt->GetMobileObjectsMutable().push_back(fuse);
+            InteractionSystem sys;
+            bool died = false;
+            for (int i = 0; i < 300; ++i)
+            {
+                rt->Update(dt);
+                sys.Update(dt, *rt, blupiX, 1.0f, 0.0f, 0.0f, sound);
+                died = died || hasEvent(sys, InteractionSystem::EventKind::DeathLockRequested);
+            }
+            return std::make_pair(std::move(rt), died);
+        };
+        const auto [near, diedNear] = blast(3.5f);
+        const auto [beside, diedBeside] = blast(4.2f);
+        std::filesystem::remove(path);
+        const auto at = [](const WorldRuntime& rt, int x, int y, int z) {
+            return rt.GetWorld().getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                          static_cast<std::uint16_t>(z)).type();
+        };
+        check(at(*near, 51, 0, 50) == GalaxyEggbert::BlockTypes::Air,
+              "the blast cuts the saw in the floor beside the dynamite");
+        check(at(*near, 49, 2, 50) == GalaxyEggbert::BlockTypes::Air, "and the drip hanging over it");
+        check(at(*near, 58, 0, 50) == GalaxyEggbert::BlockTypes::Saw, "a saw out of every blast's reach stays");
+        check(diedNear && !diedBeside,
+              "Blupi 3.5 cells right of the dynamite dies (its last blast), 4.2 cells right he lives");
+    }
+
+    // BD-0054/0055: the effects expire as the original's (the crusher's flash 12 ticks, the
+    // balloon's 6, the tentacle 90, the decoy trap's dissolve 70 -- it never went).
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        const std::filesystem::path path = "VerifyInteractionSystem-effects.vwr";
+        GW::World().saveToFile(path);
+        const auto lasts = [&](GalaxyEggbert::Def::ObjectType type)
+        {
+            WorldRuntime rt;
+            rt.LoadFromVwrFile(path.string());
+            rt.GetMobileObjectsMutable().clear();
+            InteractionSystem sys;
+            sys.SpawnEffect(rt, type, 0.0f, 20.0f, 0.0f);
+            int ticks = 0;
+            while (ticks < 200 && rt.GetMobileObjects()[0].active)
+            {
+                rt.Update(1.0f / 20.0f);
+                sys.Update(1.0f / 20.0f, rt, -20.0f, 20.0f, 0.0f, 0.0f, sound);
+                ++ticks;
+            }
+            return ticks;
+        };
+        const int flash = lasts(GalaxyEggbert::Def::ObjectType::ObjectType90);
+        const int pop = lasts(GalaxyEggbert::Def::ObjectType::ObjectType91);
+        const int tentacle = lasts(GalaxyEggbert::Def::ObjectType::ObjectType53);
+        const int dissolve = lasts(GalaxyEggbert::Def::ObjectType::ObjectType37);
+        std::filesystem::remove(path);
+        check(std::abs(flash - 12) <= 1 && std::abs(pop - 6) <= 1 && std::abs(tentacle - 90) <= 1 &&
+                  std::abs(dissolve - 70) <= 1,
+              "the crusher's flash, the balloon's burst, the tentacle and the dissolve last 12, 6, 90 and 70 ticks");
+    }
+
+    // BD-0051: the decoy does not go down beside a charger (Decor::MoveChargeDetect) nor while he
+    // carries dynamite (the original's else-if).
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        GW::World w;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            w.setBlock(x, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        const std::filesystem::path path = "VerifyInteractionSystem-decoy.vwr";
+        w.saveToFile(path);
+        WorldRuntime rt;
+        rt.LoadFromVwrFile(path.string());
+        std::filesystem::remove(path);
+        auto& objs = rt.GetMobileObjectsMutable();
+        objs.clear();
+        MobileObjSpec charger;
+        charger.type = GalaxyEggbert::Def::ObjectType::ObjectType31;
+        charger.active = true;
+        charger.posStartX = charger.posEndX = charger.currentX = 5.0f;
+        charger.posStartY = charger.posEndY = charger.currentY = 1.0f;
+        objs.push_back(charger);
+        InteractionSystem sys;
+        sys.CheatSetPerso(3);
+        check(!sys.TryPerso(rt, 4.3f, 1.0f, 0.0f, true, true), "no decoy goes down beside a charger");
+        sys.CheatSetDynamite(1);
+        check(!sys.TryPerso(rt, 0.0f, 1.0f, 0.0f, true, true), "nor while he carries dynamite");
+        sys.CheatSetDynamite(0);
+        check(sys.TryPerso(rt, 0.0f, 1.0f, 0.0f, true, true) && sys.PersoCount() == 2,
+              "away from the charger, without dynamite, it goes down");
+    }
+
+    // BD-0049: a bulldozer (4) caught by the dynamite flies away (Decor::ObjectDelete's ByeByeAdd):
+    // spinning 7 a tick, rising for 10 ticks, then falling, gone after 30.
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        GW::World w;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            w.setBlock(x, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        const std::filesystem::path path = "VerifyInteractionSystem-byebye.vwr";
+        w.saveToFile(path);
+        WorldRuntime rt;
+        rt.LoadFromVwrFile(path.string());
+        std::filesystem::remove(path);
+        auto& objs = rt.GetMobileObjectsMutable();
+        objs.clear();
+        const auto add = [&](GalaxyEggbert::Def::ObjectType type, float x, float phase)
+        {
+            MobileObjSpec spec;
+            spec.type = type;
+            spec.active = true;
+            spec.posStartX = spec.posEndX = spec.currentX = x;
+            spec.posStartY = spec.posEndY = spec.currentY = 1.0f;
+            spec.posStartZ = spec.posEndZ = spec.currentZ = 0.0f;
+            spec.phase = phase;
+            objs.push_back(spec);
+        };
+        add(GalaxyEggbert::Def::ObjectType::ObjectType56, 0.0f, 49.0f); // the fuse, a tick from its blast
+        add(GalaxyEggbert::Def::ObjectType::ObjectType4, 0.5f, 0.0f);
+        InteractionSystem sys;
+        constexpr float tick = 1.0f / 20.0f;
+        bool flew = false;
+        float rotation = 0.0f;
+        float startY = 0.0f;
+        for (int i = 0; i < 10 && !flew; ++i)
+        {
+            rt.Update(tick);
+            sys.Update(tick, rt, -8.0f, 1.0f, 0.0f, 0.0f, sound);
+            if (!sys.ByeByePieces().empty())
+            {
+                flew = true;
+                rotation = sys.ByeByePieces()[0].rotationSpeed;
+                startY = sys.ByeByePieces()[0].y;
+            }
+        }
+        check(flew && rotation == 7.0f, "a bulldozer caught by the blast flies away, spinning 7 a tick");
+        float highest = startY;
+        int ticksUp = 0;
+        for (int i = 0; i < 12 && !sys.ByeByePieces().empty(); ++i)
+        {
+            sys.Update(tick, rt, -8.0f, 1.0f, 0.0f, 0.0f, sound);
+            if (!sys.ByeByePieces().empty() && sys.ByeByePieces()[0].y > highest)
+            {
+                highest = sys.ByeByePieces()[0].y;
+                ++ticksUp;
+            }
+        }
+        check(ticksUp >= 8 && highest > startY + 1.0f, "it rises for about 10 ticks");
+        for (int i = 0; i < 25; ++i)
+            sys.Update(tick, rt, -8.0f, 1.0f, 0.0f, 0.0f, sound);
+        check(sys.ByeByePieces().empty(), "and is gone after 30");
+    }
+
+    // BD-0048: the trajectories (Decor::SetMoveTraj): every cell an object has been in (a lift:
+    // the cell over it) is marked for the rest of the mission; the safe position avoids them.
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        GW::World w;
+        for (std::uint16_t x = 40; x <= 60; ++x)
+            w.setBlock(x, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        const std::filesystem::path path = "VerifyInteractionSystem-traj.vwr";
+        w.saveToFile(path);
+        WorldRuntime rt;
+        rt.LoadFromVwrFile(path.string());
+        std::filesystem::remove(path);
+        auto& objs = rt.GetMobileObjectsMutable();
+        objs.clear();
+        const auto add = [&](GalaxyEggbert::Def::ObjectType type, float x, float y)
+        {
+            MobileObjSpec spec;
+            spec.type = type;
+            spec.active = true;
+            spec.posStartX = spec.posEndX = spec.currentX = x;
+            spec.posStartY = spec.posEndY = spec.currentY = y;
+            spec.posStartZ = spec.posEndZ = spec.currentZ = 0.0f;
+            objs.push_back(spec);
+        };
+        add(GalaxyEggbert::Def::ObjectType::ObjectType4, 2.0f, 1.0f);  // an enemy
+        add(GalaxyEggbert::Def::ObjectType::ObjectType1, 6.0f, 3.0f);  // a lift
+        InteractionSystem sys;
+        sys.Update(dt, rt, -8.0f, 1.0f, 0.0f, 0.0f, sound);
+        rt.GetMobileObjectsMutable()[0].currentX = 3.0f; // the enemy moves on a cell
+        sys.Update(dt, rt, -8.0f, 1.0f, 0.0f, 0.0f, sound);
+        check(sys.IsTrajectoryCell(rt, 2.0f, 1.0f, 0.0f) && sys.IsTrajectoryCell(rt, 3.0f, 1.0f, 0.0f) &&
+                  sys.IsTrajectoryCell(rt, 2.2f, 0.9f, 0.1f),
+              "the cells an enemy has been in stay marked");
+        check(sys.IsTrajectoryCell(rt, 6.0f, 4.0f, 0.0f) && !sys.IsTrajectoryCell(rt, 6.0f, 3.0f, 0.0f),
+              "a lift marks the cell over it, where one rides it");
+        check(!sys.IsTrajectoryCell(rt, 4.0f, 1.0f, 0.0f) && !sys.IsTrajectoryCell(rt, 2.0f, 1.0f, 1.0f),
+              "cells no object has been in are not marked");
+        // BD-0052: the overcraft's reach over a lift (MoveAscenseurDetect(pos, OVERHEIGHT)): its top
+        // (one rides it at 4) up to 79 px under his feet, within 50 px across.
+        check(InteractionSystem::LiftWithinOverHeight(rt, 6.0f, 4.5f, 0.0f) &&
+                  InteractionSystem::LiftWithinOverHeight(rt, 6.5f, 5.1f, 0.0f) &&
+                  !InteractionSystem::LiftWithinOverHeight(rt, 6.0f, 5.4f, 0.0f) &&
+                  !InteractionSystem::LiftWithinOverHeight(rt, 6.9f, 4.5f, 0.0f),
+              "a lift up to 79 px under him and within 50 px across is in the overcraft's reach");
+    }
+
+    // MockeryDetect (Decor.cpp:9518-9601; BD-0044): Blupi at (50, 1, 50) facing +X (yaw pi/2) on
+    // a floor; lava in the floor at x 60, a crusher in the walking row at x 64.
+    {
+        namespace GW = GalaxyEggbert::Worlds;
+        using A = GalaxyEggbert::Def::BlupiAction;
+        using T = GalaxyEggbert::Def::ObjectType;
+        GW::World w;
+        for (std::uint16_t x = 40; x <= 70; ++x)
+            w.setBlock(x, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        w.setBlock(60, 0, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Lava));
+        w.setBlock(64, 1, 50, GW::Block::make(GalaxyEggbert::BlockTypes::Crusher));
+        const std::filesystem::path path = "VerifyInteractionSystem-mockery.vwr";
+        w.saveToFile(path);
+        WorldRuntime rt;
+        rt.LoadFromVwrFile(path.string());
+        std::filesystem::remove(path);
+        constexpr float kFacingPlusX = 1.57079632679f;
+        const auto detect = [&](T type, float dx, float dy, bool airborne, float blupiX = 0.0f, float blupiY = 1.0f)
+        {
+            auto& objs = rt.GetMobileObjectsMutable();
+            objs.clear();
+            if (type != T::ObjectType0)
+            {
+                MobileObjSpec enemy;
+                enemy.type = type;
+                enemy.active = true;
+                enemy.posStartX = enemy.posEndX = enemy.currentX = blupiX + dx;
+                enemy.posStartY = enemy.posEndY = enemy.currentY = blupiY + dy;
+                enemy.posStartZ = enemy.posEndZ = enemy.currentZ = 0.0f;
+                objs.push_back(enemy);
+            }
+            return InteractionSystem::MockeryDetect(rt, blupiX, blupiY, 0.0f, kFacingPlusX, airborne);
+        };
+        check(detect(T::ObjectType4, 0.5f, 0.0f, false) == A::Mockery, "an enemy just ahead at his height: Mockery");
+        check(detect(T::ObjectType4, -0.5f, 0.0f, false) == A::Mockeryi, "an enemy just behind: Mockeryi");
+        check(detect(T::ObjectType2, 0.5f, 0.0f, false) == A::None && detect(T::ObjectType2, -0.5f, 0.0f, false) == A::Mockeryi,
+              "the tracking enemy (2) ahead calls for nothing, behind for Mockeryi");
+        check(detect(T::ObjectType54, 0.5f, 0.0f, false) == A::Mockeryp, "the big creature (54): Mockeryp");
+        check(detect(T::ObjectType4, 1.0f, 0.0f, false) == A::None, "an enemy a cell away is out of reach (60 px)");
+        check(detect(T::ObjectType4, 0.5f, 1.0f, false) == A::None && detect(T::ObjectType4, 0.5f, -1.0f, false) == A::None,
+              "an enemy a floor above or below him is not taunted on the ground");
+        check(detect(T::ObjectType4, 0.5f, -1.0f, true) == A::Mockery,
+              "jumping, an enemy a cell below him is (the box reaches 90 px further down)");
+        check(detect(T::ObjectType1, 0.5f, 0.0f, false) == A::None, "a type off the list is never taunted");
+        check(detect(T::ObjectType0, 0.0f, 0.0f, true, 10.0f, 1.8f) == A::Mockeryi &&
+                  detect(T::ObjectType0, 0.0f, 0.0f, true, 10.0f, 2.8f) == A::Mockeryi,
+              "jumping over lava, half a cell to two cells over its floor: Mockeryi");
+        check(detect(T::ObjectType0, 0.0f, 0.0f, true, 10.0f, 1.2f) == A::None &&
+                  detect(T::ObjectType0, 0.0f, 0.0f, false, 10.0f, 1.8f) == A::None,
+              "just over the lava, or not in the air: nothing");
+        check(detect(T::ObjectType0, 0.0f, 0.0f, true, 14.0f, 2.8f) == A::Mockeryi,
+              "jumping over a crusher (in the walking row): Mockeryi");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

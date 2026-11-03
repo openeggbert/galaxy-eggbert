@@ -556,6 +556,8 @@ namespace GalaxyEggbert::Game
                 }
                 world_->setBlock(static_cast<std::uint16_t>(fx), static_cast<std::uint16_t>(fy),
                                  static_cast<std::uint16_t>(fz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                lastConsumedFan_ = {static_cast<float>(fx - kWorldCenterX), static_cast<float>(fy),
+                                    static_cast<float>(fz - kWorldCenterZ)};
                 for (int x = fx + stepX, y = fy + mouth.dy, z = fz + stepZ;; x += stepX, y += mouth.dy, z += stepZ)
                 {
                     const auto icon = iconAt(x, y, z);

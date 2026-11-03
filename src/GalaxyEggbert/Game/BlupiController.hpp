@@ -269,11 +269,18 @@ namespace GalaxyEggbert::Game
 
         // Real Mockery(63)/Mockeryi(64)/Mockeryp(83) durations (same
         // frameCount/20.0f conversion) and the real 300-tick (15s)
-        // re-trigger cooldown (`Decor.cpp:9520/3152/3166`, `m_blupiTimeMockery`).
+        // re-trigger cooldown (`Decor.cpp:9520/3152/3166`, `m_blupiTimeMockery`). The cooldown starts
+        // at the taunt's sound, tick 1 of Mockery and tick 6 of Mockeryi; Mockeryp sets none
+        // (Decor.cpp:3147-3183; BD-0044). A taunt is armed as an Ouf by the caller's MockeryDetect
+        // and plays if he stands idle within kMockeryWithin of the last detection
+        // (Decor.cpp:6311-6319); walking on does not disarm it (6321-6324).
         static constexpr float kMockeryDuration = 92.0f / 20.0f;
         static constexpr float kMockeryiDuration = 104.0f / 20.0f;
         static constexpr float kMockerypDuration = 60.0f / 20.0f;
         static constexpr float kMockeryCooldown = 300.0f / 20.0f;
+        static constexpr float kMockeryCooldownAt = 1.0f / 20.0f;
+        static constexpr float kMockeryiCooldownAt = 6.0f / 20.0f;
+        static constexpr float kMockeryWithin = 20.0f / 20.0f;
 
         // Water breath gauge (plan.md E3D-MIG-148, `m_blupiLevel`, verified
         // against mobile-eggbert-reference/12-hazards-and-interactables.md's
@@ -590,8 +597,8 @@ namespace GalaxyEggbert::Game
             // `Decor.cpp:9518-9601`'s `MockeryDetect()`: proximity-only (a
             // bounding-box overlap check, NOT contact/collision) against a
             // real, specific list of enemy ObjectTypes, gated on Blupi
-            // being idle and off a real 15s cooldown after the last
-            // trigger. Mockery(63)/Mockeryi(64) are chosen by whether the
+            // being idle within a second and off a real 15s cooldown after
+            // the last taunt's sound (BD-0044). Mockery(63)/Mockeryi(64) are chosen by whether the
             // qualifying enemy is ahead of or behind Blupi's own facing
             // direction; Mockeryp(83) always fires instead for
             // ObjectType54 (the large creature) regardless of side. NOT a
@@ -1003,13 +1010,20 @@ namespace GalaxyEggbert::Game
         // Step() below cancels it the instant `moving` becomes true (the
         // caller doesn't need to do anything special to interrupt it). A
         // no-op (returns false) while any real freeze is active, already
-        // mocking, or still on cooldown (`IsMockeryCooldownElapsed()`) --
-        // the caller (a new per-frame proximity scan, since this class has
-        // no MobileObjects access) is expected to call this only while
-        // `GetAnimState() == AnimState::Stop`, matching the real gate
-        // exactly.
+        // mocking, or still on cooldown (`IsMockeryCooldownElapsed()`).
+        // Step() calls it for a taunt armed by the caller (ArmOuf with the
+        // answer of InteractionSystem::MockeryDetect, every frame) when he
+        // stands idle within kMockeryWithin; the cooldown starts at the
+        // taunt's sound (kMockeryCooldown's comment).
+        // Both his feet on the ground, 11 px either side of his middle along his facing (the
+        // original's two 2 px probes at 18-20 and 40-42 px of his 60, Decor.cpp:4797-4806): the
+        // dynamite and the decoy go down only so (BD-0051).
+        [[nodiscard]] bool BothFeetOnGround(const Worlds::World& world, bool tempPassable) const;
+
         bool TriggerMockery(AnimState variant) noexcept;
         [[nodiscard]] bool IsMockeryCooldownElapsed() const noexcept { return m_mockeryCooldownTimer <= 0.0f; }
+        // True for the Step() (or TriggerMockery() call) that started a taunt: the caller's sound.
+        [[nodiscard]] bool MockeryStarted() const noexcept { return m_mockeryStarted; }
 
         // Real death-lock + life-loss Voyage (plan.md death-VFX follow-up, verified directly
         // against `Decor.cpp:6374-6392`'s shared per-cause duration dispatch): every real hazard
@@ -1121,11 +1135,9 @@ namespace GalaxyEggbert::Game
         // class only knows its own grounded/balloon/ecrase state, not
         // terrain hazard tile types (checked via GetGroundBlockType() by
         // the caller) or teleporter-trigger occupancy
-        // (GetBlockTypeAbove()). Real gate also includes vehicle/shield/
-        // hide/ledge-teeter/transport-riding/projectile-path checks --
-        // none of those concepts (or an occupancy grid for the last one)
-        // exist in this engine yet, same simplification as every other
-        // hazard/mechanic. Updates the tracked valid respawn position to
+        // (GetBlockTypeAbove()), with the rest of the real gate: shield, Hide,
+        // the ledge, a lift, a clay bridge, the trajectories
+        // (InteractionSystem::IsTrajectoryCell; BD-0048). Updates the tracked valid respawn position to
         // the FIFO's OLDEST entry BEFORE pushing the current position
         // (matching the real source's exact order, giving roughly the
         // same "don't respawn exactly where you died" buffer), deduping
@@ -1297,6 +1309,21 @@ namespace GalaxyEggbert::Game
         // Whether he stands on a platform lift this frame (the caller's InteractionSystem knows):
         // the wind does not push him there (Decor.cpp:2773, m_blupiTransport).
         void SetRidingLift(bool riding) noexcept { m_ridingLift = riding; }
+        // The lift he rides, its middle (cells, as his position) and whether it is a conveyor: on
+        // a plain lift his vertigo measures the lift's edges, not the ground's
+        // (Decor::AscenseurVertigo, Decor.cpp:9238-9269, 4889-4893; BD-0047): he teeters once his
+        // middle is more than 26 px off the lift's middle toward the side he faces, steps forward
+        // from the side behind him. A conveyor (47/48) carries him off its end (not modelled
+        // further: the original inverts the vertigo there and lets go of him for 10 ticks).
+        // A lift within the overcraft's reach under him (InteractionSystem::LiftWithinOverHeight):
+        // it may climb over it as over the ground (BD-0052).
+        void SetLiftBelow(bool below) noexcept { m_liftBelow = below; }
+        void SetLiftUnder(float x, float z, bool conveyor) noexcept
+        {
+            m_liftUnderX = x;
+            m_liftUnderZ = z;
+            m_liftUnderConveyor = conveyor;
+        }
         [[nodiscard]] bool IsInWind() const noexcept { return m_inWind; }
 
         // The wind's push (Decor.cpp:2771-2798): 9 px a tick along X (his walk is 8, so he
@@ -1387,6 +1414,10 @@ namespace GalaxyEggbert::Game
         float m_marchSeconds = 0.0f; // walking on foot without a break (StopMarch)
         float m_moveInput = 0.0f;    // this Step()'s movement input (SlowdownSkate)
         bool m_ridingLift = false;   // SetRidingLift()
+        float m_liftUnderX = 0.0f;   // SetLiftUnder()
+        float m_liftUnderZ = 0.0f;
+        bool m_liftUnderConveyor = false;
+        bool m_liftBelow = false;    // SetLiftBelow()
         bool m_inWind = false;       // a wind tile at his middle this frame
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):
@@ -1630,6 +1661,8 @@ namespace GalaxyEggbert::Game
         float m_mockeryTimer = 0.0f;
         AnimState m_mockeryVariant = AnimState::Stop;
         float m_mockeryCooldownTimer = 0.0f;
+        float m_mockeryElapsed = 0.0f;
+        bool m_mockeryStarted = false; // MockeryStarted()
 
         // Real ScaleTime(40)=40 ticks=2.0s, same conversion as every other duration here.
         static constexpr float kLifeLossVoyageDuration = 2.0f;

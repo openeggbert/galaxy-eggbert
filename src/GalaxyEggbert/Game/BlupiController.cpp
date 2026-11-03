@@ -1131,6 +1131,17 @@ namespace GalaxyEggbert::Game
         return true;
     }
 
+    bool BlupiController::BothFeetOnGround(const Worlds::World& world, bool tempPassable) const
+    {
+        // The crates count as ground, as the original's DecorDetect does (it tests them too).
+        const CrateCellsScope crateCells(m_crateCells);
+        constexpr float kFootOffset = 11.0f / 64.0f;
+        const float fx = std::sin(m_yaw) * kFootOffset;
+        const float fz = -std::cos(m_yaw) * kFootOffset;
+        return m_onGround && IsPointSolid(world, m_x + fx, m_y - 0.05f, m_z + fz, tempPassable, false) &&
+               IsPointSolid(world, m_x - fx, m_y - 0.05f, m_z - fz, tempPassable, false);
+    }
+
     bool BlupiController::TriggerMockery(AnimState variant) noexcept
     {
         // Real gate is implicitly satisfied by the caller only calling this
@@ -1146,7 +1157,8 @@ namespace GalaxyEggbert::Game
         }
         m_mockeryActive = true;
         m_mockeryVariant = variant;
-        m_mockeryCooldownTimer = kMockeryCooldown;
+        m_mockeryElapsed = 0.0f;
+        m_mockeryStarted = true;
         switch (variant)
         {
             case AnimState::Mockery:  m_mockeryTimer = kMockeryDuration;  break;
@@ -1373,6 +1385,7 @@ namespace GalaxyEggbert::Game
                                                m_vehicleMode == VehicleMode::Overcraft);
         m_moveInput = moveInput;
         m_jumpedOutOfWater = false;
+        m_mockeryStarted = false;
         // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
         // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)
         // { BlupiGhostStep(); return; }`, before even teleporting. Real
@@ -1841,6 +1854,15 @@ namespace GalaxyEggbert::Game
             }
             else
             {
+                // The cooldown from the taunt's sound on (kMockeryCooldown's comment).
+                const float cooldownAt = m_mockeryVariant == AnimState::Mockery    ? kMockeryCooldownAt
+                                         : m_mockeryVariant == AnimState::Mockeryi ? kMockeryiCooldownAt
+                                                                                   : -1.0f;
+                if (cooldownAt >= 0.0f && m_mockeryElapsed < cooldownAt && m_mockeryElapsed + dt >= cooldownAt)
+                {
+                    m_mockeryCooldownTimer = kMockeryCooldown;
+                }
+                m_mockeryElapsed += dt;
                 m_mockeryTimer -= dt;
                 if (m_mockeryTimer <= 0.0f)
                 {
@@ -2018,7 +2040,7 @@ namespace GalaxyEggbert::Game
             // OVERHEIGHT (80 px) under his feet; otherwise it sinks back (1 px/tick every 2
             // ticks, to 12), faster with Down (5 px/tick each tick). Water is no ground: over it
             // the overcraft comes down into it.
-            bool groundInReach = m_ridingLift || m_onGround;
+            bool groundInReach = m_ridingLift || m_onGround || m_liftBelow;
             for (float depth = 2.0f / 64.0f; !groundInReach && depth < kOverHeight; depth += 0.25f)
             {
                 groundInReach = IsPointSolid(world, m_x, m_y - depth, m_z, tempPassable, false);
@@ -2268,7 +2290,10 @@ namespace GalaxyEggbert::Game
             const bool hover = m_vehicleMode == VehicleMode::Helicopter || m_vehicleMode == VehicleMode::Overcraft;
             const bool roller = m_vehicleMode == VehicleMode::Jeep || m_vehicleMode == VehicleMode::Tank ||
                                 m_vehicleMode == VehicleMode::Skateboard;
-            const bool standing = m_onGround && !moving && (!IsInVehicle() || hover) && !m_balloon && !m_ecrase &&
+            // On a lift he is on the ground though the move fell him a little: the host snaps him
+            // back onto it after Step() (RideLift).
+            const bool grounded = m_onGround || (m_ridingLift && m_velocityY <= 0.0f);
+            const bool standing = grounded && !moving && (!IsInVehicle() || hover) && !m_balloon && !m_ecrase &&
                                   !m_nage && !m_surf && !holdingCrate && !pushingCrate;
             // Not on a lift: the original measures a lift's own edges there (AscenseurVertigo).
             const bool parked = m_onGround && !moving && roller && !m_balloon && !m_ecrase && !m_ridingLift;
@@ -2304,6 +2329,18 @@ namespace GalaxyEggbert::Game
             }
             const float fx = std::sin(m_yaw);
             const float fz = -std::cos(m_yaw);
+            // On a plain lift the ground is the lift's top, and his feet are 26 px in from its
+            // edges (AscenseurVertigo; SetLiftUnder's comment, BD-0047).
+            const bool onPlainLift = m_ridingLift && !m_liftUnderConveyor;
+            const float foot = onPlainLift ? 0.5f - 26.0f / 64.0f : kFoot;
+            const auto groundUnder = [&](float px, float pz)
+            {
+                if (onPlainLift)
+                {
+                    return std::fabs(px - m_liftUnderX) <= 0.5f && std::fabs(pz - m_liftUnderZ) <= 0.5f;
+                }
+                return IsPointSolid(world, px, m_y - 0.05f, pz, tempPassable, false);
+            };
             if (!standing)
             {
                 m_vertigoTimer = 0.0f;
@@ -2315,8 +2352,7 @@ namespace GalaxyEggbert::Game
                 m_advanceTimer -= dt;
                 const float ax = m_x + fx * kRecedeSpeed * dt;
                 const float az = m_z + fz * kRecedeSpeed * dt;
-                if (!IsPointSolid(world, ax, m_y + 0.05f, az, tempPassable, true) &&
-                    IsPointSolid(world, ax, m_y - 0.05f, az, tempPassable, false))
+                if (!IsPointSolid(world, ax, m_y + 0.05f, az, tempPassable, true) && groundUnder(ax, az))
                 {
                     m_x = ax;
                     m_z = az;
@@ -2327,8 +2363,7 @@ namespace GalaxyEggbert::Game
                 m_recedeTimer -= dt;
                 const float bx = m_x - fx * kRecedeSpeed * dt;
                 const float bz = m_z - fz * kRecedeSpeed * dt;
-                if (!IsPointSolid(world, bx, m_y + 0.05f, bz, tempPassable, true) &&
-                    IsPointSolid(world, bx, m_y - 0.05f, bz, tempPassable, false))
+                if (!IsPointSolid(world, bx, m_y + 0.05f, bz, tempPassable, true) && groundUnder(bx, bz))
                 {
                     m_x = bx;
                     m_z = bz;
@@ -2342,8 +2377,7 @@ namespace GalaxyEggbert::Game
                     m_recedeTimer = 3.0f / 20.0f;
                 }
             }
-            else if (!IsPointSolid(world, m_x + fx * kFoot, m_y - 0.05f, m_z + fz * kFoot, tempPassable, false) &&
-                     IsPointSolid(world, m_x - fx * kFoot, m_y - 0.05f, m_z - fz * kFoot, tempPassable, false))
+            else if (!groundUnder(m_x + fx * foot, m_z + fz * foot) && groundUnder(m_x - fx * foot, m_z - fz * foot))
             {
                 if (hover)
                 {
@@ -2355,8 +2389,7 @@ namespace GalaxyEggbert::Game
                     m_vertigoStarted = true;
                 }
             }
-            else if (IsPointSolid(world, m_x + fx * kFoot, m_y - 0.05f, m_z + fz * kFoot, tempPassable, false) &&
-                     !IsPointSolid(world, m_x - fx * kFoot, m_y - 0.05f, m_z - fz * kFoot, tempPassable, false))
+            else if (groundUnder(m_x + fx * foot, m_z + fz * foot) && !groundUnder(m_x - fx * foot, m_z - fz * foot))
             {
                 m_advanceTimer = 5.0f / 20.0f;
                 m_vertigoStarted = !hover; // channel 6, as the teeter's, on foot
@@ -2412,8 +2445,11 @@ namespace GalaxyEggbert::Game
             {
                 ArmOuf(AnimState::Ouf3);
             }
-            // Walking on disarms it (the original's March; jumping and falling do not).
-            if (moving && (m_onGround || IsInVehicle()) && !pushingCrate && !holdingCrate && !inWater)
+            // Walking on disarms it (the original's March; jumping and falling do not), a taunt
+            // excepted (Decor.cpp:6321-6324).
+            const bool tauntArmed = m_oufArmed == AnimState::Mockery || m_oufArmed == AnimState::Mockeryi ||
+                                    m_oufArmed == AnimState::Mockeryp;
+            if (moving && (m_onGround || IsInVehicle()) && !pushingCrate && !holdingCrate && !inWater && !tauntArmed)
             {
                 m_oufArmed = AnimState::Stop;
             }
@@ -2452,6 +2488,14 @@ namespace GalaxyEggbert::Game
                         if (m_oufTime > kOuf5After && m_oufTime < kOuf5Within)
                         {
                             startReaction(m_oufArmed, kOuf5Duration);
+                        }
+                        break;
+                    case AnimState::Mockery:
+                    case AnimState::Mockeryi:
+                    case AnimState::Mockeryp:
+                        if (m_oufTime < kMockeryWithin)
+                        {
+                            TriggerMockery(m_oufArmed);
                         }
                         break;
                     default:

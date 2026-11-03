@@ -297,6 +297,23 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Game::BlupiController::AnimState mockeryVariant_ =
             GalaxyEggbert::Game::BlupiController::AnimState::Stop;
         float mockeryElapsed_ = 0.0f;
+        // The helicopter lost, not put down (wrecked, stung, glued, dead, at the exit) flies away
+        // (Decor::ByeByeHelico; BD-0049): last frame's mode, and whether the dismount parked it.
+        bool wasInHelicopter_ = false;
+        bool helicopterDeposited_ = false;
+        // Hide's trail (ObjectType58, Decor.cpp:5236-5250, 870-881; BD-0056): every 10 px he moves
+        // while hidden, a copy of his pose that fades from 30 % to nothing over 20 ticks.
+        struct HideGhost
+        {
+            Microsoft::Xna::Framework::Matrix world;
+            std::string clip;
+            double clipSeconds = 0.0;
+            Microsoft::Xna::Framework::Graphics::Texture2D* face = nullptr;
+            float ageTicks = 0.0f;
+        };
+        std::vector<HideGhost> hideGhosts_;
+        bool hideGhostTracking_ = false;
+        float hideGhostX_ = 0.0f, hideGhostY_ = 0.0f, hideGhostZ_ = 0.0f;
         bool mockerySounded_ = false;
 
         // Platform lift patrol, crate push, and pickup collection

@@ -1358,6 +1358,9 @@ namespace GalaxyEggbert::CNA
         interaction_ = InteractionSystem();
         interaction_.SetLives(preservedLives);
         blupi_ = BlupiController();
+        wasInHelicopter_ = false;
+        hideGhosts_.clear();
+        hideGhostTracking_ = false;
 
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
@@ -1436,6 +1439,9 @@ namespace GalaxyEggbert::CNA
         // there's no real progression state to carry between play-test runs.
         interaction_ = InteractionSystem();
         blupi_ = BlupiController();
+        wasInHelicopter_ = false;
+        hideGhosts_.clear();
+        hideGhostTracking_ = false;
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
             blupi_.SetPosition(
@@ -1689,6 +1695,7 @@ namespace GalaxyEggbert::CNA
             pendingSkate_.deposit = deposited;
             return;
         }
+        helicopterDeposited_ = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Helicopter;
         blupi_.TriggerDismount();
         PlaceMobileObject(worldRuntime_, deposited);
     }
@@ -1789,6 +1796,19 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::UpdateMockerySound(float dt)
     {
         using AnimState = GalaxyEggbert::Game::BlupiController::AnimState;
+        if (blupi_.MockeryStarted())
+        {
+            // A taunt began this frame (one may follow another at once: Mockeryp has no cooldown).
+            const auto channel = mockeryVariant_ == AnimState::Mockeryp ? GalaxyEggbert::Def::SoundChannel::SoundChannel47
+                                                                        : GalaxyEggbert::Def::SoundChannel::SoundChannel65;
+            if (mockeryVariant_ != AnimState::Stop && mockerySounded_)
+            {
+                sound_.Stop(channel);
+            }
+            mockeryVariant_ = blupi_.GetAnimState();
+            mockeryElapsed_ = 0.0f;
+            mockerySounded_ = false;
+        }
         if (mockeryVariant_ == AnimState::Stop)
         {
             return;
@@ -2203,6 +2223,7 @@ namespace GalaxyEggbert::CNA
                 if (interaction_.CheatCleanAll(worldRuntime_))
                 {
                     cameraShake_.Trigger(CameraShakeType::Small);
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10); // each enemy's explosion
                 }
                 break;
             case 8: // AllTreasure
@@ -3278,6 +3299,10 @@ namespace GalaxyEggbert::CNA
             }
             blupi_.SetTurning(turnAroundRemaining_ > 0.0f && !blupi_.IsInVehicle());
             blupi_.SetRidingLift(interaction_.IsRidingLift());
+            blupi_.SetLiftUnder(interaction_.RideLiftX(), interaction_.RideLiftZ(), interaction_.RideLiftIsConveyor());
+            blupi_.SetLiftBelow(blupi_.GetVehicleMode() == BlupiController::VehicleMode::Overcraft &&
+                                InteractionSystem::LiftWithinOverHeight(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
+                                                                         blupi_.GetZ()));
             blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
@@ -3380,6 +3405,23 @@ namespace GalaxyEggbert::CNA
             // real speedX==0/speedY==0 gate needs no separate modeling
             // here.
             UpdateMockerySound(dt);
+            {
+                const bool inHelicopter = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Helicopter;
+                if (wasInHelicopter_ && !inHelicopter && !helicopterDeposited_)
+                {
+                    interaction_.ByeByeHelicopter(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                }
+                wasInHelicopter_ = inHelicopter;
+                helicopterDeposited_ = false;
+            }
+            // Hide's trail ages 20 ticks a second (ObjectType58's 20 ticks, Decor.cpp:8391).
+            for (auto& ghost : hideGhosts_)
+            {
+                ghost.ageTicks += dt * 20.0f;
+            }
+            hideGhosts_.erase(std::remove_if(hideGhosts_.begin(), hideGhosts_.end(),
+                                             [](const HideGhost& ghost) { return ghost.ageTicks >= 20.0f; }),
+                              hideGhosts_.end());
             for (const auto& blupiEvent : blupi_.EventsThisFrame())
             {
                 switch (blupiEvent.kind)
@@ -3455,6 +3497,10 @@ namespace GalaxyEggbert::CNA
             if (wasEcrased && !blupi_.IsEcrased())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
+                // He springs up out of it: four sparks and a flash (Decor.cpp:5185-5196; BD-0054).
+                interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), true);
+                interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType90, blupi_.GetX(), blupi_.GetY(),
+                                         blupi_.GetZ());
             }
 
             // Teleporter transit completion (plan.md E3D-MIG-147, real
@@ -3671,7 +3717,10 @@ namespace GalaxyEggbert::CNA
             if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
             {
-                // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510).
+                // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510);
+                // the trap's tentacle rises where he stands (ObjectType53; BD-0054).
+                interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType53, blupi_.GetX(), blupi_.GetY(),
+                                         blupi_.GetZ());
                 triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
                              GalaxyEggbert::Game::BlupiController::DeathCause::Glu, true);
             }
@@ -3740,6 +3789,11 @@ namespace GalaxyEggbert::CNA
                 blupi_.TriggerCrush())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel70);
+                // Four sparks, a flash and the big shake (Decor.cpp:5582-5591; BD-0054).
+                interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), true);
+                interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType90, blupi_.GetX(), blupi_.GetY(),
+                                         blupi_.GetZ());
+                cameraShake_.Trigger(CameraShakeType::Big);
             }
 
             // Saw hazard (plan.md E3D-MIG-142) -- real channel 75 (the
@@ -3803,90 +3857,24 @@ namespace GalaxyEggbert::CNA
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
             }
 
-            // Real Mockery/Mockeryi/Mockeryp (plan.md BLUPI-067, found
-            // 2026-07-18, user question: "does Blupi stick his tongue out
-            // at a nearby enemy?") -- ported directly from
-            // `Decor::MockeryDetect()` (`Decor.cpp:9518-9601`): proximity-
-            // only (bounding-box overlap, NOT contact/collision) against a
-            // real, specific enemy-type list, gated on Blupi already being
-            // idle (real `m_blupiAction==Stop`) so it never fights with
-            // movement/other states, and on `BlupiController`'s own
-            // cooldown. The ~1-tile radius here is a natural 3D adaptation
-            // of the real ~60px (~1 tile at 64px/tile) proximity box; real
-            // source also inflates this box when airborne (`m_blupiAir`),
-            // not modeled (a minor simplification, this engine has no
-            // equivalent "extra reach while jumping" adaptation elsewhere
-            // either). Real ObjectType54 (large creature) always gets
-            // Mockeryp regardless of side; every other qualifying type
-            // picks Mockery (ahead of Blupi's facing) or Mockeryi (behind)
-            // by a forward-vector dot product, matching the same
-            // sin(yaw)/-cos(yaw) forward convention used throughout this
-            // file -- except real ObjectType2 (standard patrol enemy)
-            // specifically does NOT trigger the "ahead" Mockery variant
-            // (only Mockeryi when behind), ported as-is even though the
-            // real reasoning isn't stated in source.
-            if (blupi_.GetAnimState() == BlupiController::AnimState::Stop && blupi_.IsMockeryCooldownElapsed())
+            // Taunts (plan.md BLUPI-067; Decor.cpp:5627-5635, MockeryDetect 9518-9601; BD-0044):
+            // every tick he is in control, on foot or swimming, an enemy beside him at his height
+            // (below him too while he jumps), or lava or a crusher under his jump, arms a taunt as
+            // an Ouf; BlupiController plays it if he stands idle within 20 ticks. Nothing is armed
+            // during the cooldown.
+            if (blupi_.IsMockeryCooldownElapsed() && !blupi_.IsInVehicle() && !blupi_.IsSuspended() &&
+                !blupi_.IsBallooned() && !blupi_.IsEcrased() && !blupi_.IsDeathLocked() && !blupi_.IsTeleporting() &&
+                !blupi_.IsBye() && !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying())
             {
-                constexpr float kMockeryRadius = 1.0f;
-                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                using A = GalaxyEggbert::Def::BlupiAction;
+                const bool airborne = !blupi_.IsOnGround() && !blupi_.IsSurf() && !blupi_.IsNage();
+                const A taunt = InteractionSystem::MockeryDetect(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
+                                                                 blupi_.GetZ(), blupi_.GetYaw(), airborne);
+                if (taunt != A::None)
                 {
-                    if (!obj.active)
-                    {
-                        continue;
-                    }
-                    const bool qualifies =
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType4 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType16 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType20 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType44 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 ||
-                        obj.type == GalaxyEggbert::Def::ObjectType::ObjectType97;
-                    if (!qualifies)
-                    {
-                        continue;
-                    }
-                    const float dx = obj.currentX - blupi_.GetX();
-                    const float dz = obj.currentZ - blupi_.GetZ();
-                    if (std::fabs(dx) > kMockeryRadius || std::fabs(dz) > kMockeryRadius)
-                    {
-                        continue;
-                    }
-                    BlupiController::AnimState variant;
-                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
-                    {
-                        variant = BlupiController::AnimState::Mockeryp;
-                    }
-                    else
-                    {
-                        const float fwdX = std::sin(blupi_.GetYaw());
-                        const float fwdZ = -std::cos(blupi_.GetYaw());
-                        const float dot = fwdX * dx + fwdZ * dz;
-                        if (dot > 0.0f)
-                        {
-                            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType2)
-                            {
-                                continue;
-                            }
-                            variant = BlupiController::AnimState::Mockery;
-                        }
-                        else
-                        {
-                            variant = BlupiController::AnimState::Mockeryi;
-                        }
-                    }
-                    if (blupi_.TriggerMockery(variant))
-                    {
-                        // Its sound at the variant's own tick, cut if he leaves it (UpdateMockerySound).
-                        mockeryVariant_ = variant;
-                        mockeryElapsed_ = 0.0f;
-                        mockerySounded_ = false;
-                    }
-                    break;
+                    blupi_.ArmOuf(taunt == A::Mockery    ? BlupiController::AnimState::Mockery
+                                  : taunt == A::Mockeryi ? BlupiController::AnimState::Mockeryi
+                                                         : BlupiController::AnimState::Mockeryp);
                 }
             }
 
@@ -3990,8 +3978,11 @@ namespace GalaxyEggbert::CNA
             // SuperBlupi, so a shielded Blupi survives the explosion he caused (BD-0042: until
             // 2026-11-03 the explosion, the shake and the sound came only with the death). The death
             // is BlupiDead(Clear1, Clear2), the 50/50 coinflip, without m_blupiRestart.
-            if (worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()))
+            if (const auto fanIcon = worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()))
             {
+                // The fan's own piece flies away (ModifDecor's ByeByeAdd, BD-0049).
+                const auto fanCell = worldRuntime_.LastConsumedFan();
+                interaction_.ByeByeFan(*fanIcon, fanCell[0], fanCell[1], fanCell[2]);
                 // Captured BEFORE triggerDeath() respawns Blupi: the flash and the ascent start
                 // where he died.
                 const float deathX = blupi_.GetX();
@@ -4106,10 +4097,7 @@ namespace GalaxyEggbert::CNA
             // computed above), and not currently Nage (plan.md E3D-MIG-148 --
             // respawning mid-drown with an already-depleted gauge would be a
             // bad experience, same reasoning as excluding active hazards) --
-            // the categories of "unsafe tile/status" this engine can
-            // actually check for; real vehicle/shield/ledge-teeter/
-            // transport-riding/projectile-path checks aren't modeled (see
-            // UpdateSafePosition's own comment).
+            // and the rest of the original's gate below (BD-0048).
             {
                 const auto safetyGroundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
                 const bool onHazardTile =
@@ -4123,7 +4111,20 @@ namespace GalaxyEggbert::CNA
                 const bool underTeleporter =
                     aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
                     aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4;
-                blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter && !blupi_.IsNage());
+                // The rest of the original's gate (Decor.cpp:6467-6471; BD-0048): not with the shield
+                // or Hide, not teetering at a ledge, not on a lift, not on (or in) a clay bridge, not
+                // in a cell an object has been in or a shot has crossed (IsMoveTraj, IsBalleTraj).
+                const auto animState = blupi_.GetAnimState();
+                const bool atLedge = animState == BlupiController::AnimState::Vertigo ||
+                                     animState == BlupiController::AnimState::Recede ||
+                                     animState == BlupiController::AnimState::Advance;
+                const bool onBridge = safetyGroundBlock == GalaxyEggbert::BlockTypes::Bridge ||
+                                      blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Bridge;
+                const bool onTrajectory =
+                    interaction_.IsTrajectoryCell(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter && !blupi_.IsNage() && !blupi_.IsShielded() &&
+                                          !blupi_.IsHidden() && !atLedge && !interaction_.IsRidingLift() && !onBridge &&
+                                          !onTrajectory);
             }
 
             // Switches (plan.md E3D-MIG-142, see WorldRuntime::
@@ -4162,7 +4163,10 @@ namespace GalaxyEggbert::CNA
                     blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Jeep &&
                     blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Tank &&
                     blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Skateboard &&
-                    !blupi_.IsBallooned();
+                    !blupi_.IsBallooned() &&
+                    // Nor with the shield, Hide or SuperBlupi (`!m_blupiShield && !m_blupiHide &&
+                    // !m_bSuperBlupi`, the same gate; BD-0045).
+                    !blupi_.IsInvincible();
                 if (canActivateSwitch)
                 {
                     if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
@@ -4195,8 +4199,10 @@ namespace GalaxyEggbert::CNA
                 // the switch check above, so both can coexist on one press
                 // without stepping on each other (real channel 61, shared
                 // with skin-swap per 07-sounds.md, unrelated here).
+                // Both feet on the ground to put one down (BlupiController::BothFeetOnGround, BD-0051).
+                const bool feetDown = blupi_.BothFeetOnGround(worldRuntime_.GetWorld(), tempPassable);
                 if (interaction_.PlaceDynamite(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                                blupi_.IsOnGround(), blupiCanUseHands))
+                                                feetDown, blupiCanUseHands))
                 {
                     actionUsed = true;
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
@@ -4222,8 +4228,7 @@ namespace GalaxyEggbert::CNA
                     // real distinguishing signal now.
                     const int persoBefore = interaction_.PersoCount();
                     const bool persoUsed = interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
-                                                                 blupi_.GetZ(), blupi_.IsOnGround(),
-                                                                 blupiCanUseHands);
+                                                                 blupi_.GetZ(), feetDown, blupiCanUseHands);
                     actionUsed = actionUsed || persoUsed || (persoBefore > 0 && blupiCanUseHands);
                     if (persoUsed && interaction_.PersoCount() < persoBefore)
                     {
@@ -4232,7 +4237,7 @@ namespace GalaxyEggbert::CNA
                         blupi_.TriggerOneShotAnim(BlupiController::AnimState::Ouf2,
                                                    BlupiController::kOuf2Duration);
                     }
-                    else if (!persoUsed && persoBefore > 0 && blupiCanUseHands)
+                    else if (!persoUsed && persoBefore > 0 && blupiCanUseHands && interaction_.DynamiteCount() == 0)
                     {
                         // It cannot go down here: his shrug, Ouf3 (Decor.cpp:4843-4848).
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel27);
@@ -4771,6 +4776,9 @@ namespace GalaxyEggbert::CNA
             if (wasBallooned && !blupi_.IsBallooned())
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
+                // The balloon bursts in a flash (ObjectType91, Decor.cpp:5165-5174, 5768-5777; BD-0054).
+                interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType91, blupi_.GetX(), blupi_.GetY(),
+                                         blupi_.GetZ());
             }
 
             // Camera-mode toggle (2026-07-09, NEXT.md §3) -- F3 since
@@ -5289,6 +5297,33 @@ namespace GalaxyEggbert::CNA
                     objectCubeEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                     objectCubeMeshRenderer_->Draw(device, *objectCubeEffect_);
                 }
+                // The crates blown away (InteractionSystem::ByeByePiece, BD-0049): each its cube,
+                // spinning about the view axis where it flies.
+                for (const auto& piece : interaction_.ByeByePieces())
+                {
+                    if (piece.helicopter || piece.fanIcon >= 0)
+                    {
+                        continue;
+                    }
+                    const auto visual = ResolveObjectVisual(piece.look.type, static_cast<int>(piece.look.phase),
+                                                            piece.look.visualIcon);
+                    if (!visual.visible || visual.renderMode != ObjectRenderMode::SolidCube)
+                    {
+                        continue;
+                    }
+                    auto pieceMesh = MakeLitTexturedMeshBuilder();
+                    AddCenteredBox(pieceMesh, Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f),
+                                   Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), tileAtlas_.GetTileUv(visual.icon));
+                    auto pieceRenderer = UploadLitTexturedMesh(device, pieceMesh.Mesh());
+                    objectCubeEffect_->View = camera_.View();
+                    objectCubeEffect_->Projection = camera_.Projection();
+                    objectCubeEffect_->World =
+                        Microsoft::Xna::Framework::Matrix::CreateRotationZ(-piece.rotationDegrees * 3.14159265f / 180.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(
+                            piece.x, ResolveObjectVisualCenterY(piece.look.type, piece.y), piece.z);
+                    pieceRenderer->Draw(device, *objectCubeEffect_);
+                    objectCubeEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                }
             }
 
             if (grassEffect_)
@@ -5568,6 +5603,49 @@ namespace GalaxyEggbert::CNA
                     device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
                     device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
                 }
+
+                // Hide's trail (BD-0056): a copy of his pose every 10 px he moves while hidden (the
+                // original's Manhattan distance, over X, Y and Z here), each fading from 30 % to
+                // nothing over its 20 ticks (TickHideGhosts ages them).
+                const bool hidden = blupi_.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Hide;
+                if (hidden && !hideGhostTracking_)
+                {
+                    hideGhostTracking_ = true;
+                    hideGhostX_ = blupi_.GetX();
+                    hideGhostY_ = blupi_.GetY();
+                    hideGhostZ_ = blupi_.GetZ();
+                }
+                hideGhostTracking_ = hidden;
+                if (hidden && std::fabs(blupi_.GetX() - hideGhostX_) + std::fabs(blupi_.GetY() - hideGhostY_) +
+                                      std::fabs(blupi_.GetZ() - hideGhostZ_) >=
+                                  10.0f / 64.0f)
+                {
+                    hideGhosts_.push_back({world, blupiActiveClipName_, blupiClipTimeSeconds_, face, 0.0f});
+                    hideGhostX_ = blupi_.GetX();
+                    hideGhostY_ = blupi_.GetY();
+                    hideGhostZ_ = blupi_.GetZ();
+                }
+                if (!hideGhosts_.empty())
+                {
+                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
+                    for (const auto& ghost : hideGhosts_)
+                    {
+                        if (blupiModel_->Clips.count(ghost.clip) == 0)
+                        {
+                            continue;
+                        }
+                        blupiModel_->ComputeBoneTransformsEXT(ghost.clip, System::TimeSpan::FromSeconds(ghost.clipSeconds),
+                                                              /*loop=*/true, boneTransforms);
+                        blupiEffect_->setWorldProperty(ghost.world);
+                        blupiEffect_->SetBoneTransforms(boneTransforms);
+                        blupiEffect_->setAlphaProperty(std::max(0.0f, (20.0f - ghost.ageTicks) * 0.3f / 20.0f));
+                        drawParts(*blupiModel_, ghost.face);
+                    }
+                    blupiEffect_->setAlphaProperty(1.0f);
+                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
+                }
             }
 
             // Parked vehicles: a helicopter, jeep, skateboard, tank or
@@ -5601,6 +5679,39 @@ namespace GalaxyEggbert::CNA
                             obj.currentX, obj.currentY - 0.5f, obj.currentZ));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     for (const auto& part : parked.model->Parts)
+                    {
+                        blupiEffect_->setTextureProperty(part.Texture);
+                        blupiEffect_->Apply();
+                        device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                        device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                        device.DrawIndexedPrimitives(
+                            Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
+                            part.Part->getVertexOffsetProperty(),
+                            0,
+                            part.Part->getNumVerticesProperty(),
+                            part.Part->getStartIndexProperty(),
+                            part.Part->getPrimitiveCountProperty());
+                    }
+                }
+                // The lost helicopter flying away (ByeByeHelico, BD-0049): its parked model, turned
+                // about its middle as the original's picture spins.
+                const auto helicopter = ParkedVehicleModel(GalaxyEggbert::Def::ObjectType::ObjectType13);
+                for (const auto& piece : interaction_.ByeByePieces())
+                {
+                    if (!piece.helicopter || helicopter.model == nullptr)
+                    {
+                        continue;
+                    }
+                    helicopter.model->ComputeBoneTransformsEXT(
+                        helicopter.clip, System::TimeSpan::FromSeconds(0.0), /*loop=*/false, boneTransforms);
+                    blupiEffect_->setWorldProperty(
+                        Microsoft::Xna::Framework::Matrix::CreateScale(kRealModelScale) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationY(kHalfPi) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, -0.5f, 0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationZ(-piece.rotationDegrees * 3.14159265f / 180.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(piece.x, piece.y, piece.z));
+                    blupiEffect_->SetBoneTransforms(boneTransforms);
+                    for (const auto& part : helicopter.model->Parts)
                     {
                         blupiEffect_->setTextureProperty(part.Texture);
                         blupiEffect_->Apply();
@@ -5721,6 +5832,36 @@ namespace GalaxyEggbert::CNA
                         }
                         drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
                                   turn);
+                    }
+                }
+                // The pieces flying away with a model (BD-0049): enemies, the invert potion, a fan,
+                // spinning about the view axis as the original's picture does.
+                for (const auto& piece : interaction_.ByeByePieces())
+                {
+                    const float spin = -piece.rotationDegrees * kDegrees;
+                    if (piece.helicopter)
+                    {
+                        continue; // the parked vehicles' pass
+                    }
+                    if (piece.fanIcon >= 0)
+                    {
+                        if (const ObjectModelPose* fan =
+                                objectModelTable_.Find(ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon))
+                        {
+                            drawModel(*fan, piece.x, piece.y, piece.z, 0.0f,
+                                      GalaxyEggbert::Game::FanModelRoll(static_cast<std::uint16_t>(piece.fanIcon)) + spin);
+                        }
+                        continue;
+                    }
+                    ObjectTextureSource sheet{};
+                    int icon = 0;
+                    if (ObjectSprite(piece.look, sheet, icon))
+                    {
+                        if (const ObjectModelPose* pose = objectModelTable_.Find(sheet, icon))
+                        {
+                            drawModel(*pose, piece.x, ResolveObjectVisualCenterY(piece.look.type, piece.y), piece.z,
+                                      0.0f, spin);
+                        }
                     }
                 }
                 // The Clear2 death's soul (OR-0047): element 230-241 as Blupi/blupi-ange.rd4, the
@@ -6130,6 +6271,26 @@ namespace GalaxyEggbert::CNA
                     Microsoft::Xna::Framework::Vector3(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
                     Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize), cameraRight, cameraUp,
+                    CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+            }
+            // A piece flying away without a model (BD-0049): its sprite, turned as the original's.
+            for (const auto& piece : interaction_.ByeByePieces())
+            {
+                ObjectTextureSource sheet{};
+                int icon = 0;
+                if (piece.helicopter || piece.fanIcon >= 0 || !ObjectSprite(piece.look, sheet, icon) ||
+                    sheet != ObjectTextureSource::Element || objectModelTable_.Find(sheet, icon) != nullptr)
+                {
+                    continue;
+                }
+                const float angle = piece.rotationDegrees * 3.14159265f / 180.0f;
+                const auto right = cameraRight * std::cos(angle) - cameraUp * std::sin(angle);
+                const auto up = cameraRight * std::sin(angle) + cameraUp * std::cos(angle);
+                const auto uv = GetElementIconUv(icon);
+                mesh.AddBillboard(
+                    Microsoft::Xna::Framework::Vector3(
+                        piece.x, ResolveObjectVisualCenterY(piece.look.type, piece.y), piece.z),
+                    Microsoft::Xna::Framework::Vector2(kObjectSize, kObjectSize), right, up,
                     CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
             // His own death sprite (BlupiDrawnAsDeathSprite()): the 60 px icon, its centre 30 px

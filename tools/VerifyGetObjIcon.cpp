@@ -278,8 +278,9 @@ int main()
     checkSequence(GalaxyEggbert::Def::ObjectType::ObjectType100, 1,
                   {-1, -1, -1, -1, -1, -1, -1, -1, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99},
                   "ObjectType100 (kSploutch3, real table_sploutch3, real leading -1 delay)");
-    // ObjectType53 (kTentacule, 45 frames per 08-animations.md's own VISUAL-021 finding).
-    checkSequence(GalaxyEggbert::Def::ObjectType::ObjectType53, 1,
+    // ObjectType53 (kTentacule, 45 frames per 08-animations.md's own VISUAL-021 finding), two
+    // ticks a frame (`phase / ScaleDiv(2)`, Decor.cpp:8535; BD-0054).
+    checkSequence(GalaxyEggbert::Def::ObjectType::ObjectType53, 2,
                   {86, 85, 84, 83, 84, 85, 86, -1, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75,
                    74, 73, 72, 71, 70, 70, 70, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82,
                    83, 84, 85, 86, -1},

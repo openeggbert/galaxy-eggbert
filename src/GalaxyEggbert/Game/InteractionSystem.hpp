@@ -3,10 +3,13 @@
 #include "Sound.hpp"
 #include "WorldRuntime.hpp"
 
+#include <GalaxyEggbert/Def/BlupiAction.hpp>
+
 #include <algorithm>
 #include <array>
 #include <functional>
 #include <random>
+#include <unordered_set>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -450,6 +453,14 @@ namespace GalaxyEggbert::Game
         // Blupi touches an object of this type (object minus Blupi, cells): the original's boxes
         // (Decor::MoveObjectDetect, BD-0021), for the caller's own contacts (vehicles, BD-0024).
         [[nodiscard]] static bool BlupiTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz);
+        // Decor::MockeryDetect (Decor.cpp:9518-9601; BD-0044): the taunt an enemy beside Blupi, or
+        // lava or a crusher under his jump, calls for -- Mockery (63) at one ahead of him, Mockeryi
+        // (64) behind him or under his jump, Mockeryp (83) at the big creature (54), None for the
+        // tracking enemy (2) ahead or nothing near. The caller gates it (no cooldown, no vehicle,
+        // bar, balloon or squash, in control) and arms the answer as an Ouf.
+        [[nodiscard]] static GalaxyEggbert::Def::BlupiAction MockeryDetect(const WorldRuntime& worldRuntime,
+                                                                          float blupiX, float blupiY, float blupiZ,
+                                                                          float yaw, bool airborne);
         // The last Update() spent the action press (a dynamite stick taken): the caller's "nothing
         // to do" head shake (Non) must not follow it.
         [[nodiscard]] bool ActionPressSpent() const noexcept { return actionSpent_; }
@@ -496,6 +507,34 @@ namespace GalaxyEggbert::Game
         // A wrecked vehicle's explosion (ObjectType9, Decor.cpp:5427: a vehicle that meets
         // water), called by the game class, which wrecks it.
         void SpawnWreck(WorldRuntime& worldRuntime, float x, float y, float z);
+        // A still effect where it is (an expiring particle: the crusher's flash 90, the balloon's
+        // end 91, the tentacle 53; BD-0054), called by the game class.
+        void SpawnEffect(WorldRuntime& worldRuntime, GalaxyEggbert::Def::ObjectType type, float x, float y, float z);
+
+        // The pieces that fly away (Decor::ByeByeAdd / ByeByeStep / ByeByeDraw, Decor.cpp:10058-10128;
+        // BD-0049). A destroyed enemy, crate or invert potion (ObjectDelete's list: 4, 12, 16, 17,
+        // 20, 40, 96, 97), a destroyed fan (ModifDecor of 126-137) and the lost helicopter
+        // (ByeByeHelico, element 68) leave a copy of their picture that rises on a slowing curve,
+        // (10 - phase)^1.5 px a tick for 10 ticks, then falls the same way, drifting sideways at
+        // 10-19 px a tick (slowing by 1 a tick) and spinning, for 30 ticks of its phase. Galaxy
+        // drifts them along X (the original's screen across) and draws them with their model.
+        struct ByeByePiece
+        {
+            MobileObjSpec look;        // the object as it was destroyed (its picture), active
+            int fanIcon = -1;          // or a fan's object-m icon
+            bool helicopter = false;   // or the helicopter
+            float x = 0.0f, y = 0.0f, z = 0.0f; // cells, y up
+            float speedX = 0.0f;       // px a tick
+            float rotationDegrees = 0.0f;
+            float rotationSpeed = 0.0f; // degrees a tick
+            float animationSpeed = 1.0f;
+            float phase = 0.0f;
+        };
+        [[nodiscard]] const std::vector<ByeByePiece>& ByeByePieces() const noexcept { return byeBye_; }
+        // The game class's own pieces: the helicopter lost (ByeByeHelico: rotation 7, speed 0.5),
+        // a fan destroyed by touching it (ModifDecor: rotation 17).
+        void ByeByeHelicopter(float x, float y, float z);
+        void ByeByeFan(std::uint16_t icon, float x, float y, float z);
 
         // Teleporter arc (plan.md VISUAL-010, ObjectType92) -- despite
         // Def/ObjectType.hpp's own "spawned when Blupi uses a charged attack"
@@ -926,6 +965,20 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] float RideDeltaX() const noexcept { return rideDeltaX_; }
         [[nodiscard]] float RideDeltaZ() const noexcept { return rideDeltaZ_; }
         [[nodiscard]] float RideStandY() const noexcept { return rideStandY_; }
+        // The ridden lift's middle after its step, and whether it is a conveyor (47/48): his
+        // vertigo at its edge (Decor::AscenseurVertigo, BlupiController::SetLiftUnder; BD-0047).
+        // Decor::SetMoveTraj / SetBalleTraj (Decor.cpp:8150-8156, 7638-7642; BD-0048): every cell an
+        // object has been in since the mission began (a lift: the cell over it, where one rides
+        // it) and every shot's whole path. The safe position he respawns at is never taken in one
+        // (IsMoveTraj / IsBalleTraj in the FIFO's gate, Decor.cpp:6471).
+        [[nodiscard]] bool IsTrajectoryCell(const WorldRuntime& worldRuntime, float x, float y, float z) const;
+        // Decor::MoveAscenseurDetect(pos, OVERHEIGHT) (Decor.cpp:3941, 9815-9842; BD-0052): a lift's
+        // top from 18 px over his feet to 79 under them, within 50 px across: the overcraft may
+        // climb over it.
+        [[nodiscard]] static bool LiftWithinOverHeight(const WorldRuntime& worldRuntime, float x, float y, float z);
+        [[nodiscard]] float RideLiftX() const noexcept { return rideLiftX_; }
+        [[nodiscard]] float RideLiftZ() const noexcept { return rideLiftZ_; }
+        [[nodiscard]] bool RideLiftIsConveyor() const noexcept { return rideLiftConveyor_; }
 
         // Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13), verified
         // directly against `Decor::CheatAction(Tables::CheatCodes)` --
@@ -983,6 +1036,16 @@ namespace GalaxyEggbert::Game
         float rideDeltaX_ = 0.0f;
         float rideDeltaZ_ = 0.0f;
         float rideStandY_ = 0.0f;
+        float rideLiftX_ = 0.0f;
+        std::unordered_set<std::uint32_t> trajectoryCells_; // IsTrajectoryCell()
+        std::vector<ByeByePiece> byeBye_;                   // ByeByePieces()
+        float byeByeTicks_ = 0.0f;                          // the 20 Hz ticks not yet stepped
+        // ObjectDelete: the object goes; one of the listed types leaves a piece (ByeByePiece).
+        void Retire(MobileObjSpec& obj);
+        void ByeByeAdd(ByeByePiece piece, float rotationSpeed, float animationSpeed);
+        void TickByeBye(float dt);
+        float rideLiftZ_ = 0.0f;
+        bool rideLiftConveyor_ = false;
 
         int treasuresCollected_ = 0;
         int totalTreasures_ = -1; // computed lazily on first Update() call

@@ -3080,6 +3080,50 @@ int main(int argc, char** argv)
         check(!mocking.TriggerMockery(BlupiController::AnimState::Mockery),
               "TriggerMockery() is a no-op while on cooldown, even though no longer actively mocking");
 
+        // BD-0044: Mockeryp sets no cooldown (Decor.cpp:3175-3186), so the big creature is taunted
+        // again and again; an armed taunt plays when he stands idle within 20 ticks, walking on
+        // does not disarm it, and after 20 ticks it is gone.
+        {
+            BlupiController mockingP;
+            mockingP.SetPosition(0.0f, 1.0f, 0.0f);
+            check(mockingP.TriggerMockery(BlupiController::AnimState::Mockeryp), "TriggerMockery(Mockeryp) starts");
+            for (int i = 0; i < 80 && mockingP.GetAnimState() == BlupiController::AnimState::Mockeryp; ++i)
+                mockingP.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            check(mockingP.IsMockeryCooldownElapsed(), "Mockeryp leaves no cooldown behind");
+
+            BlupiController armed;
+            armed.SetPosition(0.0f, 1.0f, 0.0f);
+            for (int i = 0; i < 20; ++i)
+                armed.Step(world, 0.0f, 0.0f, false, false, false, dt); // settle on the floor
+            armed.ArmOuf(BlupiController::AnimState::Mockery);
+            bool started = false;
+            for (int i = 0; i < 6; ++i)
+            {
+                armed.Step(world, 0.0f, 1.0f, false, false, false, dt); // walking on
+                started = started || armed.MockeryStarted();
+            }
+            armed.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            started = started || armed.MockeryStarted();
+            check(started && armed.GetAnimState() == BlupiController::AnimState::Mockery,
+                  "a taunt armed while he walks plays when he stops within 20 ticks");
+            check(armed.IsMockeryCooldownElapsed(), "the cooldown waits for the taunt's sound (tick 1)");
+            for (int i = 0; i < 4; ++i)
+                armed.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            check(!armed.IsMockeryCooldownElapsed(), "and runs from there");
+
+            BlupiController late;
+            late.SetPosition(0.0f, 1.0f, 0.0f);
+            for (int i = 0; i < 20; ++i)
+                late.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            late.ArmOuf(BlupiController::AnimState::Mockeryi);
+            for (int i = 0; i < 70; ++i) // crouched, not idle, for more than 20 ticks
+                late.Step(world, 0.0f, 0.0f, false, true, false, dt);
+            for (int i = 0; i < 5; ++i)
+                late.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            check(late.GetAnimState() != BlupiController::AnimState::Mockeryi,
+                  "stopping more than 20 ticks after it was armed, no taunt");
+        }
+
         // A different variant (Mockeryi) uses its own real distinct
         // duration (kMockeryiDuration), on a fresh controller so the
         // cooldown above doesn't gate it.
@@ -3393,6 +3437,63 @@ int main(int argc, char** argv)
         }
         check(receded && teeter.GetX() < startX - 0.1f && teeter.GetAnimState() == BlupiController::AnimState::Stop,
               "then he steps back from the edge and stands");
+    }
+
+    // BD-0047: on a plain lift his vertigo measures the lift's edges (Decor::AscenseurVertigo):
+    // more than 26 px off its middle toward the side he faces, he teeters and steps back; on a
+    // conveyor he does not (it carries him off its end).
+    {
+        Worlds::World air; // nothing under him but the lift
+        const auto ride = [&](BlupiController& c, bool conveyor, int frames)
+        {
+            bool teetered = false;
+            for (int i = 0; i < frames; ++i)
+            {
+                c.SetRidingLift(true);
+                c.SetLiftUnder(0.0f, 0.0f, conveyor);
+                c.Step(air, 0.0f, 0.0f, false, false, false, dt);
+                c.RideLift(c.GetX(), 5.0f, c.GetZ());
+                teetered = teetered || c.GetAnimState() == BlupiController::AnimState::Vertigo;
+            }
+            return teetered;
+        };
+        BlupiController onLift;
+        onLift.SetPosition(0.45f, 5.0f, 0.0f); // 29 px off the lift's middle, facing +X
+        onLift.SetYaw(1.5707963f);
+        onLift.RideLift(0.45f, 5.0f, 0.0f);
+        const bool teetered = ride(onLift, false, 90);
+        check(teetered && onLift.GetX() < 0.45f - 0.1f && onLift.GetX() > 0.0f,
+              "at a lift's edge he teeters and steps back onto it");
+        BlupiController inside;
+        inside.SetPosition(0.35f, 5.0f, 0.0f); // 22 px off: both feet on the lift
+        inside.SetYaw(1.5707963f);
+        inside.RideLift(0.35f, 5.0f, 0.0f);
+        check(!ride(inside, false, 30) && std::fabs(inside.GetX() - 0.35f) < 1e-4f,
+              "22 px off its middle he stands still");
+        BlupiController onConveyor;
+        onConveyor.SetPosition(0.45f, 5.0f, 0.0f);
+        onConveyor.SetYaw(1.5707963f);
+        onConveyor.RideLift(0.45f, 5.0f, 0.0f);
+        check(!ride(onConveyor, true, 30), "on a conveyor's edge he does not teeter");
+    }
+
+    // BD-0051: both feet on the ground (11 px either side of his middle) to put dynamite or the
+    // decoy down: not at a ledge with one over the void.
+    {
+        Worlds::World ledge;
+        for (std::uint16_t x = 40; x <= 50; ++x)
+            for (std::uint16_t z = 45; z <= 55; ++z)
+                ledge.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+        BlupiController atEdge;
+        atEdge.SetPosition(0.40f, 1.0f, 0.0f); // the floor ends at 0.5: his front foot at 0.57
+        atEdge.SetYaw(1.5707963f);
+        atEdge.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+        BlupiController inside;
+        inside.SetPosition(-2.0f, 1.0f, 0.0f);
+        inside.SetYaw(1.5707963f);
+        inside.Step(ledge, 0.0f, 0.0f, false, false, false, dt);
+        check(!atEdge.BothFeetOnGround(ledge, false) && inside.BothFeetOnGround(ledge, false),
+              "at a ledge one foot is over the void; inside the floor both are down");
     }
 
     // Advance: the void behind him instead, he steps forward off it, 4 px a tick for 5 ticks,

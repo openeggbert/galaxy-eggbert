@@ -99,6 +99,11 @@ namespace GalaxyEggbert::Game
         constexpr ExpiringParticleHandler kExpiringParticleHandlers[] = {
             // Always-continue family (never reaches AdvancePatrolStep()).
             {GalaxyEggbert::Def::ObjectType::ObjectType11, 9.0f, true},   // CAM-009-adjacent fan-hit shockwave flash
+            {GalaxyEggbert::Def::ObjectType::ObjectType90, 12.0f, true},  // the crusher's flash (Decor.cpp:8443, BD-0054)
+            {GalaxyEggbert::Def::ObjectType::ObjectType91, 6.0f, true},   // the balloon's end (Decor.cpp:8455, BD-0054)
+            {GalaxyEggbert::Def::ObjectType::ObjectType53, 90.0f, true},  // the tentacle (Decor.cpp:8527, BD-0054)
+            {GalaxyEggbert::Def::ObjectType::ObjectType37, 70.0f, true},  // the decoy trap's dissolve (Decor.cpp:8976, BD-0055)
+            {GalaxyEggbert::Def::ObjectType::ObjectType38, 90.0f, false}, // the Cloud's kill, sliding down (Decor.cpp:8988, BD-0055)
             {GalaxyEggbert::Def::ObjectType::ObjectType14, 14.0f, true},  // PICKUP-078/080 water splash (Plouf)
             {GalaxyEggbert::Def::ObjectType::ObjectType35, 6.0f, true},   // PICKUP-078/080 water splash (Tiplouf)
             {GalaxyEggbert::Def::ObjectType::ObjectType8, 39.0f, true},   // VISUAL-008 dynamite-blast explosion flash
@@ -912,25 +917,21 @@ namespace GalaxyEggbert::Game
         // as a circular radius (same simplification as every other
         // proximity test in this file) combining that 40px real
         // expansion with a 32px half-tile (Blupi's own box is measured
-        // from its center here, not its edge) -- same "half-tile + real
-        // px offset, /64" combination already used for
-        // kFollowerWakeRadius below.
+        // from its center here, not its edge) -- the "half-tile + real
+        // px offset, /64" combination.
         // The Cloud's arc (Decor::BlupiElectro, Decor.cpp:9614-9634): the enemy's box (28 px wide)
         // meets Blupi's inflated by 16 + 40 px: centres within 100 px across, 87 px up or down. In
         // 3D the reach across holds on X and on Z.
         constexpr float kCloudAuraAcross = 100.0f / 64.0f;
         constexpr float kCloudAuraUpDown = 87.0f / 64.0f;
 
-        // Follower wake box (ObjectType96, plan.md E3D-MIG-137, real
-        // Decor.cpp:9646-9678 MoveObjectFollow): the real check is an
-        // axis-aligned rect test (the follower's own tile padded +-100px
-        // on all sides vs. a narrow ~28px-wide strip through Blupi's
-        // default hitbox) -- approximated here as a circular distance
-        // check, same simplification as every other proximity test in
-        // this file. 100px real padding + a 32px half-tile (the real rect
-        // is measured from the follower's TILE edges, not its center)
-        // converts to grid units via the same 64px/cell convention used
-        // throughout this file (SearchAirDistance etc.).
+        // Follower wake (ObjectType96, plan.md E3D-MIG-137, Decor.cpp:9646-9678 MoveObjectFollow):
+        // the original's test is a box -- the follower's cell padded by 100 px on every side
+        // against Blupi's 16-44 px strip, 11-58 px under his top: 144 px either way across, from
+        // 149 px over him to 158 under. Galaxy keeps a sphere of 132 px (100 px of padding and a
+        // half cell): the worlds 052 and 053 (101 stars) were laid out and played through with
+        // it, and the box wakes stars two cells off on a diagonal or two over him that they leave
+        // asleep (BD-0053, open: plans/audit/owner_questions.md).
         constexpr float kFollowerWakeRadius = (100.0f + 32.0f) / 64.0f;
 
         // Real follower homing speed (ObjectType97, Decor.cpp:8025-8044):
@@ -1107,6 +1108,7 @@ namespace GalaxyEggbert::Game
     {
         events_.clear();
         ridingLift_ = false;
+        TickByeBye(dt);
         // The contact grace ends 30 px from where it began (Decor.cpp:6341-6345), out of the
         // contact box (MoveObjectTouches) by then.
         if (contactGrace_)
@@ -1241,8 +1243,26 @@ namespace GalaxyEggbert::Game
                 if (std::fabs(adx) < kCloudAuraAcross && std::fabs(adz) < kCloudAuraAcross &&
                     std::fabs(ady) < kCloudAuraUpDown)
                 {
-                    obj.active = false;
+                    Retire(obj); // its piece flies away (BD-0049)
                     sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel59);
+                    // Its electric flash slides down to the floor under it (ObjectType38 at speed
+                    // 55: down at 5 px a tick, over the fall SearchDistRight measures less a cell;
+                    // Decor.cpp:7976-7983, 7647; BD-0055).
+                    int egx = 0, egy = 0, egz = 0;
+                    ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, egx, egy, egz);
+                    const int fall = SearchAirDistance(world, egx, egy, egz, 0, -1, 0);
+                    MobileObjSpec arc;
+                    arc.type = GalaxyEggbert::Def::ObjectType::ObjectType38;
+                    arc.active = true;
+                    arc.phase = 0.0f;
+                    arc.currentX = arc.posStartX = arc.posEndX = obj.currentX;
+                    arc.currentY = arc.posStartY = obj.currentY;
+                    arc.posEndY = obj.currentY - static_cast<float>(fall);
+                    arc.currentZ = arc.posStartZ = arc.posEndZ = obj.currentZ;
+                    arc.patrolStep = 2;
+                    arc.patrolTime = 0.0f;
+                    arc.stepAdvanceTicks = 5.0f * static_cast<float>(fall);
+                    pendingSpawns.push_back(arc);
                     continue;
                 }
             }
@@ -1287,7 +1307,7 @@ namespace GalaxyEggbert::Game
                         AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType37, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
                         other.active = false;
-                        obj.active = false;
+                        Retire(obj);
                         break;
                     }
                 }
@@ -1349,6 +1369,9 @@ namespace GalaxyEggbert::Game
                     rideDeltaX_ = (obj.currentX - riddenLiftOldX) + nudgeX;
                     rideDeltaZ_ = obj.currentZ - riddenLiftOldZ;
                     rideStandY_ = LiftRiderCenterY(obj.currentY);
+                    rideLiftX_ = obj.currentX;
+                    rideLiftZ_ = obj.currentZ;
+                    rideLiftConveyor_ = GetObjectDefinition(obj.type).liftConveyorDirection != LiftConveyorDirection::None;
                 }
                 continue;
             }
@@ -1441,40 +1464,44 @@ namespace GalaxyEggbert::Game
                         // in X/Y around the blast center, same Z.
                         constexpr float kBlastHalfExtent = 1.0f;
 
-                        // Clear destructible hazard tiles by icon (real:
-                        // saws 378/379, drip hazards 404/410 -- the latter
-                        // has no placeable BlockTypes constant in this
-                        // engine yet, so only Saw/SawStopped are handled).
+                        // The tiles it clears (Decor.cpp:9078-9096): saws (378/379) and drips
+                        // (404/410) in its own row and the one above. Galaxy's saws lie in the
+                        // floor, a row under the original's (the floor convention, GP-0450), so
+                        // for saws the rows are the floor and his own; its drips hang as the
+                        // original's, from the ceiling (BD-0033). Until 2026-11-03 only his own row
+                        // was cleared and drips not at all, so a blast never cut a floor saw
+                        // (BD-0046). Across X and Z +-1 cell (in 3D each blast reaches as far along
+                        // Z as along X; 2026-10-25).
                         const int wx0 = static_cast<int>(std::round(centerX - kBlastHalfExtent)) +
                                         WorldRuntime::kWorldCenterX;
                         const int wx1 = static_cast<int>(std::round(centerX + kBlastHalfExtent)) +
                                         WorldRuntime::kWorldCenterX;
-                        // In 3D each blast reaches as far along Z as along X and Y (the
-                        // original's blasts are a 2D pattern; 2026-10-25): crates, saws and Blupi
-                        // in front of or behind the stick are caught too, not just in its slice.
                         const int wz0 = static_cast<int>(std::round(centerZ - kBlastHalfExtent)) +
                                         WorldRuntime::kWorldCenterZ;
                         const int wz1 = static_cast<int>(std::round(centerZ + kBlastHalfExtent)) +
                                         WorldRuntime::kWorldCenterZ;
-                        const int wy = static_cast<int>(std::round(centerY)) < 0
-                                           ? 0
-                                           : static_cast<int>(std::round(centerY));
+                        const int wy = static_cast<int>(std::round(centerY));
                         const int axis = static_cast<int>(world.blocksPerAxis());
-                        for (int wz = std::max(0, wz0); wy >= 0 && wy < axis && wz <= std::min(axis - 1, wz1); ++wz)
+                        for (int y = wy - 1; y <= wy + 1; ++y)
                         {
-                            for (int wx = std::max(0, wx0); wx <= std::min(axis - 1, wx1); ++wx)
+                            for (int wz = std::max(0, wz0); y >= 0 && y < axis && wz <= std::min(axis - 1, wz1); ++wz)
                             {
-                                const auto blockType = world.getBlock(static_cast<std::uint16_t>(wx),
-                                                                       static_cast<std::uint16_t>(wy),
-                                                                       static_cast<std::uint16_t>(wz))
-                                                            .type();
-                                if (blockType == GalaxyEggbert::BlockTypes::Saw ||
-                                    blockType == GalaxyEggbert::BlockTypes::SawStopped)
+                                for (int wx = std::max(0, wx0); wx <= std::min(axis - 1, wx1); ++wx)
                                 {
-                                    worldRuntime.GetWorldMutable().setBlock(
-                                        static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(wy),
-                                        static_cast<std::uint16_t>(wz),
-                                        Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                                    const auto blockType = world.getBlock(static_cast<std::uint16_t>(wx),
+                                                                           static_cast<std::uint16_t>(y),
+                                                                           static_cast<std::uint16_t>(wz))
+                                                                .type();
+                                    const bool saw = blockType == GalaxyEggbert::BlockTypes::Saw ||
+                                                     blockType == GalaxyEggbert::BlockTypes::SawStopped;
+                                    const bool drip = blockType == GalaxyEggbert::BlockTypes::Drip || blockType == 410;
+                                    if ((saw && y <= wy) || (drip && y >= wy))
+                                    {
+                                        worldRuntime.GetWorldMutable().setBlock(
+                                            static_cast<std::uint16_t>(wx), static_cast<std::uint16_t>(y),
+                                            static_cast<std::uint16_t>(wz),
+                                            Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+                                    }
                                 }
                             }
                         }
@@ -1540,22 +1567,35 @@ namespace GalaxyEggbert::Game
                                 }
                                 for (auto* member : linked)
                                 {
+                                    // Each linked crate flies away, spinning 7-22 a tick either way
+                                    // (Decor.cpp:9142-9156; BD-0049).
+                                    ByeByePiece piece;
+                                    piece.look = *member;
+                                    piece.x = member->currentX;
+                                    piece.y = member->currentY;
+                                    piece.z = member->currentZ;
+                                    const int spin = std::uniform_int_distribution<int>(7, 22)(rng_);
+                                    const bool reverse = std::uniform_int_distribution<int>(0, 99)(rng_) % 2 == 0;
+                                    ByeByeAdd(piece, static_cast<float>(reverse ? -spin : spin), 1.0f);
                                     member->active = false;
                                 }
                             }
                             else
                             {
-                                victim.active = false;
+                                Retire(victim);
                             }
                         }
 
-                        // Blupi death check (real: `m_blupiFocus && !shield
-                        // && !hide && !superblupi`) -- Shield/Hide (plan.md
-                        // E3D-MIG-170, blupiInvincible) modeled now; focus/
-                        // superBlupi don't exist in this engine yet.
-                        if (!blupiInvincible && std::fabs(blupiX - centerX) <= kBlastHalfExtent + 0.5f &&
-                            std::fabs(blupiY - centerY) <= kBlastHalfExtent + 0.5f &&
-                            std::fabs(blupiZ - centerZ) <= kBlastHalfExtent + 0.5f)
+                        // Blupi dies within a cell of the blast (Decor.cpp:9160-9166: his position
+                        // from 64 px before to 60 px past the blast's, X and Y; BD-0046: it was a
+                        // cell and a half), unless shielded, hidden or SuperBlupi
+                        // (blupiInvincible). Screen y grows downward: up in Galaxy is before.
+                        // Along Z, which the original's scattered blasts do not reach, the
+                        // neighbouring cell as well (2026-10-25: in front of or behind the stick).
+                        const float blupiDX = blupiX - centerX;
+                        const float blupiDY = centerY - blupiY; // screen y
+                        if (!blupiInvincible && blupiDX > -1.0f && blupiDX < 60.0f / 64.0f && blupiDY > -1.0f &&
+                            blupiDY < 60.0f / 64.0f && std::fabs(blupiZ - centerZ) <= kBlastHalfExtent + 0.5f)
                         {
                             events_.push_back(Event{EventKind::Died});
                             // Real LoseLife()/respawn deferred to the death-lock resolution point
@@ -1702,7 +1742,7 @@ namespace GalaxyEggbert::Game
                 ToGridCell(world, endX, endY, endZ, fgx, fgy, fgz);
                 if (IsSolidAt(worldRuntime, fgx, fgy, fgz))
                 {
-                    obj.active = false;
+                    Retire(obj);
                     sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
                     AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
                                           pendingSpawns);
@@ -1889,6 +1929,9 @@ namespace GalaxyEggbert::Game
                         deathLockEvent.deathLockShouldRespawn = true;
                         ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
                         sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel51);
+                        // Its tentacle rises where he stands (ObjectType53, Decor.cpp:5871-5873; BD-0054).
+                        AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType53, blupiX, blupiY, blupiZ,
+                                             pendingSpawns);
                     }
                 }
                 continue;
@@ -1944,7 +1987,7 @@ namespace GalaxyEggbert::Game
                     }
                     else
                     {
-                        obj.active = false;
+                        Retire(obj);
                         // The hazard's explosion, whether he dies or rides over it (Decor.cpp:5822).
                         sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
                         if (blupiArmoredVehicle)
@@ -2483,6 +2526,81 @@ namespace GalaxyEggbert::Game
                 objects.push_back(spec);
             }
         }
+
+        // The trajectories (IsTrajectoryCell's comment): each object's cell this tick, the cell over
+        // a lift, and a new shot's whole path (SearchDistRight marks it as the shot starts).
+        {
+            const auto& world = worldRuntime.GetWorld();
+            const int n = static_cast<int>(world.blocksPerAxis());
+            const auto mark = [&](float x, float y, float z)
+            {
+                const int gx = static_cast<int>(std::lround(x)) + WorldRuntime::kWorldCenterX;
+                const int gy = static_cast<int>(std::lround(y));
+                const int gz = static_cast<int>(std::lround(z)) + WorldRuntime::kWorldCenterZ;
+                if (gx >= 0 && gy >= 0 && gz >= 0 && gx < n && gy < n && gz < n)
+                {
+                    trajectoryCells_.insert(static_cast<std::uint32_t>((gx * n + gy) * n + gz));
+                }
+            };
+            for (const auto& spec : pendingSpawns)
+            {
+                if (spec.type != GalaxyEggbert::Def::ObjectType::ObjectType23)
+                {
+                    continue;
+                }
+                const float length = std::max({std::fabs(spec.posEndX - spec.posStartX),
+                                               std::fabs(spec.posEndY - spec.posStartY),
+                                               std::fabs(spec.posEndZ - spec.posStartZ)});
+                const int cells = static_cast<int>(std::ceil(length));
+                for (int k = 0; k <= cells; ++k)
+                {
+                    const float t = cells > 0 ? static_cast<float>(k) / static_cast<float>(cells) : 0.0f;
+                    mark(spec.posStartX + (spec.posEndX - spec.posStartX) * t,
+                         spec.posStartY + (spec.posEndY - spec.posStartY) * t,
+                         spec.posStartZ + (spec.posEndZ - spec.posStartZ) * t);
+                }
+            }
+            for (const auto& obj : objects)
+            {
+                if (!obj.active)
+                {
+                    continue;
+                }
+                const bool lift = GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::Lift;
+                mark(obj.currentX, lift ? LiftRiderCenterY(obj.currentY) : obj.currentY, obj.currentZ);
+            }
+        }
+    }
+
+    bool InteractionSystem::LiftWithinOverHeight(const WorldRuntime& worldRuntime, float x, float y, float z)
+    {
+        for (const auto& obj : worldRuntime.GetMobileObjects())
+        {
+            if (!obj.active || GetObjectDefinition(obj.type).semanticKind != ObjectSemanticKind::Lift)
+            {
+                continue;
+            }
+            const float under = y - LiftRiderCenterY(obj.currentY); // its top under his feet, cells
+            if (std::fabs(obj.currentX - x) < 50.0f / 64.0f && std::fabs(obj.currentZ - z) < 50.0f / 64.0f &&
+                under > -18.0f / 64.0f && under < 79.0f / 64.0f)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool InteractionSystem::IsTrajectoryCell(const WorldRuntime& worldRuntime, float x, float y, float z) const
+    {
+        const int n = static_cast<int>(worldRuntime.GetWorld().blocksPerAxis());
+        const int gx = static_cast<int>(std::lround(x)) + WorldRuntime::kWorldCenterX;
+        const int gy = static_cast<int>(std::lround(y));
+        const int gz = static_cast<int>(std::lround(z)) + WorldRuntime::kWorldCenterZ;
+        if (gx < 0 || gy < 0 || gz < 0 || gx >= n || gy >= n || gz >= n)
+        {
+            return false;
+        }
+        return trajectoryCells_.count(static_cast<std::uint32_t>((gx * n + gy) * n + gz)) != 0;
     }
 
     void InteractionSystem::LoseLife()
@@ -2576,9 +2694,27 @@ namespace GalaxyEggbert::Game
         // same simplification as PlaceDynamite() above. Real vehicle-mode
         // gate fixed 2026-07-16 -- see blupiCanUseHands's own header
         // comment; deliberately does NOT apply to the pickup branch above.
-        if (persoCount_ <= 0 || !grounded || !blupiCanUseHands)
+        // The decoy only when he carries no dynamite (the original's `else if (m_blupiPerso > 0)`
+        // after the dynamite, Decor.cpp:4795-4818).
+        if (persoCount_ <= 0 || dynamiteCount_ > 0 || !grounded || !blupiCanUseHands)
         {
             return false;
+        }
+        // Not beside a charger (Decor::MoveChargeDetect, Decor.cpp:4834, 9784-9812; BD-0051): its
+        // box 10 px wider each side, the bottom 24 px of its cell, against his (16-44 across,
+        // 11-58 down): 54 px across, from 22 px under him to 49 over him.
+        for (const auto& obj : objects)
+        {
+            if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType31)
+            {
+                continue;
+            }
+            const float dy = obj.currentY - y;
+            if (std::fabs(obj.currentX - x) < 54.0f / 64.0f && std::fabs(obj.currentZ - z) < 54.0f / 64.0f &&
+                dy > -22.0f / 64.0f && dy < 49.0f / 64.0f)
+            {
+                return false;
+            }
         }
         --persoCount_;
 
@@ -2604,7 +2740,11 @@ namespace GalaxyEggbert::Game
 
     bool InteractionSystem::CheatCleanAll(WorldRuntime& worldRuntime)
     {
+        // Decor::CheatAction CleanAll (Decor.cpp:1793-1822): each enemy becomes an explosion
+        // (ObjectType8) where it was, with channel 10 (the caller's) and the small shake; no
+        // piece flies away (the type is changed, not ObjectDelete'd).
         bool anyDestroyed = false;
+        std::vector<MobileObjSpec> explosions;
         for (auto& obj : worldRuntime.GetMobileObjectsMutable())
         {
             if (!obj.active)
@@ -2617,7 +2757,14 @@ namespace GalaxyEggbert::Game
             {
                 obj.active = false;
                 anyDestroyed = true;
+                AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
+                                     explosions);
             }
+        }
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (const auto& explosion : explosions)
+        {
+            objects.push_back(explosion);
         }
         return anyDestroyed;
     }
@@ -2773,6 +2920,138 @@ namespace GalaxyEggbert::Game
         objects.push_back(spec);
     }
 
+    void InteractionSystem::ByeByeAdd(ByeByePiece piece, float rotationSpeed, float animationSpeed)
+    {
+        // Decor::ByeByeAdd (Decor.cpp:10058-10080): rotation from 0, sideways 10-19 px a tick
+        // either way.
+        piece.rotationDegrees = 0.0f;
+        piece.phase = 0.0f;
+        piece.rotationSpeed = rotationSpeed;
+        piece.animationSpeed = animationSpeed;
+        const int across = std::uniform_int_distribution<int>(0, 9)(rng_);
+        const bool right = std::uniform_int_distribution<int>(0, 999)(rng_) % 2 == 0;
+        piece.speedX = static_cast<float>(right ? across + 10 : -(across + 10));
+        byeBye_.push_back(piece);
+    }
+
+    void InteractionSystem::Retire(MobileObjSpec& obj)
+    {
+        // Decor::ObjectDelete (Decor.cpp:7881-7916): the listed types fly away, rotating 17 a
+        // tick (the bulldozer 7, the fish and the bird 33), the invert potion at half speed.
+        using T = GalaxyEggbert::Def::ObjectType;
+        obj.active = false;
+        switch (obj.type)
+        {
+            case T::ObjectType4:
+            case T::ObjectType12:
+            case T::ObjectType16:
+            case T::ObjectType17:
+            case T::ObjectType20:
+            case T::ObjectType40:
+            case T::ObjectType96:
+            case T::ObjectType97:
+                break;
+            default:
+                return;
+        }
+        ByeByePiece piece;
+        piece.look = obj;
+        piece.look.active = true;
+        piece.x = obj.currentX;
+        piece.y = obj.currentY;
+        piece.z = obj.currentZ;
+        const float rotation = obj.type == T::ObjectType4                                  ? 7.0f
+                               : (obj.type == T::ObjectType17 || obj.type == T::ObjectType20) ? 33.0f
+                                                                                           : 17.0f;
+        ByeByeAdd(piece, rotation, obj.type == T::ObjectType40 ? 0.5f : 1.0f);
+    }
+
+    void InteractionSystem::ByeByeHelicopter(float x, float y, float z)
+    {
+        ByeByePiece piece;
+        piece.helicopter = true;
+        piece.x = x;
+        piece.y = y;
+        piece.z = z;
+        ByeByeAdd(piece, 7.0f, 0.5f);
+    }
+
+    void InteractionSystem::ByeByeFan(std::uint16_t icon, float x, float y, float z)
+    {
+        ByeByePiece piece;
+        piece.fanIcon = icon;
+        piece.x = x;
+        piece.y = y;
+        piece.z = z;
+        ByeByeAdd(piece, 17.0f, 1.0f);
+    }
+
+    void InteractionSystem::TickByeBye(float dt)
+    {
+        // Decor::ByeByeStep (Decor.cpp:10082-10117), once a 20 Hz tick; pixels to cells, screen y
+        // down to Galaxy's y up.
+        byeByeTicks_ += dt * 20.0f;
+        while (byeByeTicks_ >= 1.0f)
+        {
+            byeByeTicks_ -= 1.0f;
+            for (std::size_t k = 0; k < byeBye_.size();)
+            {
+                auto& piece = byeBye_[k];
+                const float speed = piece.animationSpeed;
+                const float rest = 10.0f - piece.phase;
+                if (rest > 0.0f)
+                {
+                    piece.y += std::pow(rest, 1.5f) * speed / 64.0f;
+                }
+                else if (rest < 0.0f)
+                {
+                    piece.y -= std::pow(-rest, 1.5f) * speed / 64.0f;
+                }
+                piece.x += piece.speedX * speed / 64.0f;
+                if (piece.speedX > 0.0f)
+                {
+                    piece.speedX -= speed;
+                }
+                else if (piece.speedX < 0.0f)
+                {
+                    piece.speedX += speed;
+                }
+                piece.rotationDegrees += piece.rotationSpeed;
+                piece.phase += speed;
+                if (piece.phase > 30.0f)
+                {
+                    byeBye_.erase(byeBye_.begin() + static_cast<std::ptrdiff_t>(k));
+                }
+                else
+                {
+                    ++k;
+                }
+            }
+        }
+    }
+
+    void InteractionSystem::SpawnEffect(WorldRuntime& worldRuntime, GalaxyEggbert::Def::ObjectType type, float x,
+                                        float y, float z)
+    {
+        MobileObjSpec spec;
+        spec.type = type;
+        spec.active = true;
+        spec.phase = 0.0f;
+        spec.currentX = spec.posStartX = spec.posEndX = x;
+        spec.currentY = spec.posStartY = spec.posEndY = y;
+        spec.currentZ = spec.posStartZ = spec.posEndZ = z;
+        auto& objects = worldRuntime.GetMobileObjectsMutable();
+        for (auto& slot : objects)
+        {
+            if (!slot.active)
+            {
+                slot = spec;
+                return;
+            }
+        }
+        objects.push_back(spec);
+    }
+
     void InteractionSystem::SpawnFanHitFlash(WorldRuntime& worldRuntime, float x, float y, float z)
     {
         MobileObjSpec spec;
@@ -2847,6 +3126,96 @@ namespace GalaxyEggbert::Game
     bool InteractionSystem::BlupiTouches(GalaxyEggbert::Def::ObjectType type, float dx, float dy, float dz)
     {
         return MoveObjectTouches(type, dx, dy, dz);
+    }
+
+    GalaxyEggbert::Def::BlupiAction InteractionSystem::MockeryDetect(const WorldRuntime& worldRuntime, float blupiX,
+                                                                     float blupiY, float blupiZ, float yaw,
+                                                                     bool airborne)
+    {
+        using A = GalaxyEggbert::Def::BlupiAction;
+        using T = GalaxyEggbert::Def::ObjectType;
+        const auto& world = worldRuntime.GetWorld();
+        if (airborne)
+        {
+            // In the air, lava or a crusher in the column under his middle, 30 or 94 px under his
+            // feet (his middle + 64 and + 128): Mockeryi. Galaxy's crushers stand in the walking
+            // row as the original's do; its lava lies a row lower, as the floor (IsLave's floor
+            // convention, GP-0447), so lava is looked for a cell further down.
+            const int n = static_cast<int>(world.blocksPerAxis());
+            const int gx = static_cast<int>(std::lround(blupiX)) + WorldRuntime::kWorldCenterX;
+            const int gz = static_cast<int>(std::lround(blupiZ)) + WorldRuntime::kWorldCenterZ;
+            const auto blockBelow = [&](float pixels) -> std::uint16_t
+            {
+                const int gy = static_cast<int>(std::floor(blupiY - pixels / 64.0f));
+                if (gx < 0 || gz < 0 || gy < 0 || gx >= n || gy >= n || gz >= n)
+                {
+                    return 0;
+                }
+                return world
+                    .getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                              static_cast<std::uint16_t>(gz))
+                    .type();
+            };
+            for (const float below : {30.0f, 94.0f})
+            {
+                if (GalaxyEggbert::BlockTypes::isCrusher(blockBelow(below)) ||
+                    GalaxyEggbert::GetBlockDefinition(blockBelow(below + 64.0f)).hazard ==
+                        GalaxyEggbert::BlockHazardKind::Lava)
+                {
+                    return A::Mockeryi;
+                }
+            }
+        }
+        // The boxes: Blupi 60 px across, from 11 to 60 px under the top of his cell (to 150 in the
+        // air); an enemy 60 across, the bottom 24 px of its cell (36-60). Across is X and Z alike.
+        const float reach = 60.0f / 64.0f;
+        const float blupiBottom = airborne ? 150.0f : 60.0f;
+        const float fwdX = std::sin(yaw);
+        const float fwdZ = -std::cos(yaw);
+        for (const auto& obj : worldRuntime.GetMobileObjects())
+        {
+            if (!obj.active)
+            {
+                continue;
+            }
+            switch (obj.type)
+            {
+                case T::ObjectType2:
+                case T::ObjectType4:
+                case T::ObjectType16:
+                case T::ObjectType20:
+                case T::ObjectType23:
+                case T::ObjectType32:
+                case T::ObjectType33:
+                case T::ObjectType44:
+                case T::ObjectType54:
+                case T::ObjectType96:
+                case T::ObjectType97:
+                    break;
+                default:
+                    continue;
+            }
+            const float dx = obj.currentX - blupiX;
+            const float dz = obj.currentZ - blupiZ;
+            const float dyScreen = -(obj.currentY - blupiY) * 64.0f; // screen y grows downward
+            if (std::fabs(dx) >= reach || std::fabs(dz) >= reach || !(36.0f + dyScreen < blupiBottom) ||
+                !(60.0f + dyScreen > 11.0f))
+            {
+                continue;
+            }
+            if (obj.type == T::ObjectType54)
+            {
+                return A::Mockeryp;
+            }
+            // Ahead of him (the original: to the side he faces), the first such enemy decides: the
+            // tracking one (2) calls for nothing, the search stops there too.
+            if (fwdX * dx + fwdZ * dz > 0.0f)
+            {
+                return obj.type == T::ObjectType2 ? A::None : A::Mockery;
+            }
+            return A::Mockeryi;
+        }
+        return A::None;
     }
 
     void InteractionSystem::SpawnTeleportArrival(WorldRuntime& worldRuntime, float x, float y, float z)
@@ -3278,7 +3647,7 @@ namespace GalaxyEggbert::Game
             }();
             if (gateOpen && (!handler.requiresActionButton || blupiActionPressedEdge))
             {
-                obj.active = false;
+                Retire(obj); // the invert potion flies away (ObjectDelete, BD-0049)
                 Event event{handler.grantedEvent};
                 if (handler.hasPositionPayload)
                 {

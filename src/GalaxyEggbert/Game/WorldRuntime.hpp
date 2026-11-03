@@ -4,6 +4,7 @@
 #include <GalaxyEggbert/Def/ObjectType.hpp>
 #include <GalaxyEggbert/HintZoneRecord.hpp>
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -163,6 +164,9 @@ namespace GalaxyEggbert::Game
         // the fan's icon is returned; the caller kills Blupi unless he is invincible. No grounded
         // gate, as in the original.
         [[nodiscard]] std::optional<std::uint16_t> TryConsumeFan(float blupiX, float blupiY, float blupiZ);
+        // The cell of the fan TryConsumeFan() last took (world coordinates, as Blupi's): its piece
+        // flies away from there (ModifDecor's ByeByeAdd, BD-0049).
+        [[nodiscard]] std::array<float, 3> LastConsumedFan() const noexcept { return lastConsumedFan_; }
 
         // Real teleporter pairing (plan.md E3D-MIG-147, `Decor::
         // SearchTeleporte` per Decor.cpp:7406-7429): a linear scan of the
@@ -351,5 +355,6 @@ namespace GalaxyEggbert::Game
         int missionNumber_ = 0;
         float animTimer_ = 0.0f;
         int animPhase_ = 0;
+        std::array<float, 3> lastConsumedFan_{};
     };
 }

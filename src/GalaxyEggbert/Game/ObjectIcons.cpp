@@ -409,7 +409,8 @@ namespace GalaxyEggbert::Game
             // 0-99 range, so the sheet-size concern was never real for
             // this type. The renderer's existing -1-skip support (already
             // used by kExplo2/kExplo7 above) handles the 2 blank frames.
-            case GalaxyEggbert::Def::ObjectType::ObjectType53:  return kTentacule[p % 45];
+            // Two ticks a frame (`phase / ScaleDiv(2)`, Decor.cpp:8535; BD-0054).
+            case GalaxyEggbert::Def::ObjectType::ObjectType53:  return kTentacule[(p / 2) % 45];
             // Fixed 2026-07-16 -- exact table_explo5 transcription (see kExplo5 above), same
             // wrong-divisor bug as every other explo case here.
             case GalaxyEggbert::Def::ObjectType::ObjectType90:  return kExplo5[p % 12];
