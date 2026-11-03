@@ -256,7 +256,13 @@ ledgers before repeating any discovery. Where it stands:
   both feet down, no decoy by a charger or with dynamite (BD-0051), the overcraft over a lift in
   reach (BD-0052), the crusher/balloon/trap/creature effects
   (BD-0054), the decoy trap's dissolve that never went and the Cloud kill's flash (BD-0055),
-  Hide's trail (BD-0056). Open: the follower star's wake (BD-0053, Q-007): the original's box
+  Hide's trail (BD-0056). All 78 playthroughs pass; the web build rebuilt and checked over
+  DevTools under Xvfb (`$CLAUDE_JOB_DIR/tmp/scripts/cdp_shot.py`, see its handoff note above:
+  world001, 118 models, 93/93 sounds, no exception). Wave E: 061's bars (`836147ae`, the lava
+  hall's first trench three wide under two bars along Z; hub 060 replayed). Looked at without a
+  change: 046's single bar (over a one-cell gap in the original's key room; its role in the
+  route is not clear from the map) and 125's bars under girders and lava strip (a helicopter
+  world; the original's on-foot route there needs the video). Open: the follower star's wake (BD-0053, Q-007): the original's box
   breaks 052/053's routes, which were laid out with Galaxy's sphere; the sphere stays until the
   owner decides. Probe world `build-probe/wave-e/probe_burn.py` (995) has a fan, a pool,
   a lava cell and a bulldozer for live looks; typed cheats in `qa_live` steps need
