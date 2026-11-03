@@ -688,6 +688,10 @@ namespace GalaxyEggbert::CNA
         std::FILE* autoplayTrace_ = nullptr;
         int autoplayTick_ = 0;
         int autoplayExitCode_ = 0;
+        // AUTOPLAY_SHOTS=N (EnableAutoplay()): a frame saved every N ticks of the run, for looking at
+        // a whole playthrough as the player sees it; pending until the next drawn frame.
+        int autoplayShotEvery_ = 0;
+        bool autoplayShotPending_ = false;
         // Live keyboard and mouse are ignored by the capture modes and the autoplay.
         [[nodiscard]] bool SuppressLiveInput() const noexcept
         {

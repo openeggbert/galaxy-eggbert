@@ -1213,6 +1213,17 @@ namespace GalaxyEggbert::CNA
         // (tools/qa_live.sh with --autoplay).
         const char* realtime = std::getenv("AUTOPLAY_REALTIME");
         setIsFixedTimeStepProperty(realtime != nullptr && std::strcmp(realtime, "1") == 0);
+        // AUTOPLAY_SHOTS=N saves the frame every N ticks into autoplay_shots/ (tick-numbered PNGs),
+        // so a playthrough can be looked at as the player sees it along its whole route.
+        if (const char* shots = std::getenv("AUTOPLAY_SHOTS"))
+        {
+            autoplayShotEvery_ = std::max(0, std::atoi(shots));
+            if (autoplayShotEvery_ > 0)
+            {
+                std::error_code ignored;
+                std::filesystem::create_directories("autoplay_shots", ignored);
+            }
+        }
         return true;
     }
 
@@ -2415,9 +2426,13 @@ namespace GalaxyEggbert::CNA
         if (autoplay_ && !autoplay_->Finished())
         {
             StepAutoplay();
+            if (autoplayShotEvery_ > 0 && autoplayTick_ % autoplayShotEvery_ == 0)
+            {
+                autoplayShotPending_ = true;
+            }
             // Drawing is most of a tick's time (software rendering under Xvfb) and changes
             // nothing in play: one frame in 30.
-            if (autoplayTick_ % 30 != 0)
+            if (autoplayTick_ % 30 != 0 && !autoplayShotPending_)
             {
                 SuppressDraw();
             }
@@ -6801,6 +6816,23 @@ namespace GalaxyEggbert::CNA
             hudScreenshot.SaveAsPng("screenshot_hud.png");
             std::cout << "GalaxyEggbertCNA: wrote screenshot_hud.png (" << w << "x" << h << ")."
                       << std::endl;
+        }
+
+        // AUTOPLAY_SHOTS (EnableAutoplay()): this frame, HUD and all, as the player would see it.
+        if (autoplayShotPending_ && drawFrameIndex_ > terrainPixelPrintedFrame_)
+        {
+            autoplayShotPending_ = false;
+            int w = 0, h = 0;
+            GetBackBufferSize(device, w, h);
+            std::vector<Microsoft::Xna::Framework::Color> backBuffer(
+                static_cast<std::size_t>(w) * static_cast<std::size_t>(h),
+                Microsoft::Xna::Framework::Color(0, 0, 0, 0));
+            device.GetBackBufferData(backBuffer.data(), 0, static_cast<int>(backBuffer.size()));
+            Microsoft::Xna::Framework::Graphics::Texture2D shot(device, w, h);
+            shot.SetData(backBuffer.data(), static_cast<int>(backBuffer.size()));
+            char filename[64];
+            std::snprintf(filename, sizeof(filename), "autoplay_shots/%07d.png", autoplayTick_);
+            shot.SaveAsPng(filename);
         }
 
         // INFRA-001 (plan.md §7) -- see EnableGoldenCaptureMode()'s own
