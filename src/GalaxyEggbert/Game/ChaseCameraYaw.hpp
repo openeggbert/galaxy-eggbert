@@ -113,4 +113,19 @@ namespace GalaxyEggbert::Game
         }
         return bestRoom > base + kGain ? best : elevation;
     }
+
+    // How high over his feet the chase camera looks (play pass of 2026-11-03): a block over them
+    // from the usual distance (kUsualDistance), dropping toward his middle as a wall behind him or a
+    // low passage pulls the camera in, so he stays in the picture (45 degrees tall) rather than
+    // sliding out of its bottom edge when the camera is two blocks off or less.
+    [[nodiscard]] constexpr float ChaseLookHeight(float cameraDistance) noexcept
+    {
+        constexpr float kUsualDistance = 4.0f;
+        constexpr float kFarLookHeight = 1.0f;
+        constexpr float kNearLookHeight = 0.45f; // about his middle (his head's top at 49/64)
+        const float closeness = cameraDistance <= 0.0f            ? 0.0f
+                                : cameraDistance >= kUsualDistance ? 1.0f
+                                                                   : cameraDistance / kUsualDistance;
+        return kNearLookHeight + (kFarLookHeight - kNearLookHeight) * closeness;
+    }
 }

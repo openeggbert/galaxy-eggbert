@@ -136,6 +136,26 @@ int main()
         check(inTunnel <= 0.05f && inTunnel >= -0.35f, "a low ceiling over him: it drops toward the level");
     }
 
+    // The look point drops toward his middle as the camera comes in (play pass 2026-11-03).
+    {
+        using GalaxyEggbert::Game::ChaseLookHeight;
+        check(near(ChaseLookHeight(4.0f), 1.0f, 1e-5f) && near(ChaseLookHeight(6.0f), 1.0f, 1e-5f),
+              "from the usual distance or further it looks a block over his feet");
+        check(near(ChaseLookHeight(0.0f), 0.45f, 1e-5f), "against him it looks at his middle");
+        check(ChaseLookHeight(1.0f) < ChaseLookHeight(2.0f) && ChaseLookHeight(2.0f) < ChaseLookHeight(3.0f),
+              "the closer, the lower");
+        // His feet in the picture from two blocks: the eye stands 2 back at the usual 0.29 rad
+        // elevation from the point a block over his feet (the game places it so) and looks at the
+        // lowered look point; his feet within the 45-degree picture's lower half (22.5 degrees).
+        const float d = 2.0f, e = 0.29f;
+        const float eyeHeight = 1.0f + d * std::sin(e);
+        const float feetAngle = std::atan2(eyeHeight, d * std::cos(e));
+        const float lowered = feetAngle - std::atan2(eyeHeight - ChaseLookHeight(d), d * std::cos(e));
+        const float unlowered = feetAngle - std::atan2(eyeHeight - 1.0f, d * std::cos(e));
+        check(lowered < 22.5f * kPi / 180.0f && unlowered > 22.5f * kPi / 180.0f,
+              "two blocks off, his feet stay in the picture (looking a block over them, they left it)");
+    }
+
     std::cout << (allOk ? "ALL PASS" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

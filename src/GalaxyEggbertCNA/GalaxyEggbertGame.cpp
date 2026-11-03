@@ -5019,6 +5019,10 @@ namespace GalaxyEggbert::CNA
                 constexpr float kMinChaseDistance = 0.05f;
                 safeDistance = std::max(safeDistance, std::min(kMinChaseDistance, desiredDistance));
                 rawEye = rawTarget + desiredOffset * (desiredDistance > 0.001f ? safeDistance / desiredDistance : 1.0f);
+                // Pulled in close (a wall behind him, a low passage), the look point drops toward his
+                // middle, so he stays in the picture (ChaseCameraYaw.hpp ChaseLookHeight).
+                rawTarget.Y = std::min(rawTarget.Y,
+                                       blupi_.GetY() + GalaxyEggbert::Game::ChaseLookHeight(safeDistance));
             }
 
             // Exponential damping toward the raw eye/target computed above

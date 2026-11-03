@@ -89,6 +89,10 @@ go 76 30 until eggs = 5
 until eggs = 5 max 120
 go 66 26
 go 66 24.35 tol 0.1
+# On as it arrives below, not late in its stop: first its top, then its return (the pickups'
+# flight to the counter takes as long as their way across the screen, so the camera shifts
+# everything before it by a few ticks).
+lift 66 10 23 max 400
 lift 66 7 23 max 400
 go 66 23 tol 0.15
 face -90
