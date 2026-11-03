@@ -66,10 +66,11 @@ expect y >= 25.95
 # F, the vault (walk 26). The stars wake within two cells and home on him at a third of a cell
 # a second, bursting on anything solid: he takes each treasure and moves on; those he wakes
 # trail him and burst on the walls and tiers. The south-west alcove (13, 19), its egg (13, 20):
-# in along z 20.3 past the star at its mouth (15, 26, 19), out along z 17.75.
+# in along z 20.2 (the alcove ends at 20.5: his body's half-width inside it) past the star at its
+# mouth (15, 26, 19), out along z 17.75.
 go 17.5 21
-go 16.6 20.3 tol 0.1
-go 13.4 20.3 tol 0.15
+go 16.6 20.2 tol 0.08
+go 13.4 20.2 tol 0.15
 go 13.3 19.2 tol 0.15 until treasures = 1
 go 13.5 18 tol 0.15
 go 16.5 17.75 tol 0.2
