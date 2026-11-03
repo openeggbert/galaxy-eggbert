@@ -6,6 +6,10 @@ go 20.5 86
 go 20.5 83 jump 1.9
 until ground = 1
 go 20.5 81.4
+# The bird a head over the second roof (x 19-25, z 80) meets the jump: go 72 ticks after it is at
+# the west end (passes 52-96 with and without his body box, OR-0017).
+near 19 14 80 0.4 max 400
+wait 72
 go 20.5 79 jump 1.9
 until ground = 1
 # Over the alley (z 76) and up onto the fourth house.
