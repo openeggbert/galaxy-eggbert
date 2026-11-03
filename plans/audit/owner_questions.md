@@ -122,3 +122,16 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   the wall where there is one, cheese where the wall goes on); (b) holes as dents: the clear texels
   drawn in a darker cheese colour, the cube closed; (c) leave it.
   Recommendation: (b) -- the walls stay walls, as everywhere else in the cheese worlds.
+
+## Q-011 — the brick edge pieces (262, 263, 283): ragged edges or whole bricks in 3D? (2026-11-03)
+
+- The brick wall 261 has three edge pieces whose bricks stop short of the tile on one side
+  (262 left, 263 right, 283 bottom; clear texels there): in the original's 2D they make a wall's
+  ragged end against the backdrop, and the auto-tiling (ED-0007) chooses them. In 3D they are
+  cubes drawn with an alpha test, so their clear strip is a slit into the cube: thin black slits
+  all over the brick walls (73,773 cells: 124, 123, 125, 122, 121, 034, 051, 120, 199; the play
+  pass of 2026-11-03, e.g. `build-probe/qa-shots/v2-after-124/v.png`).
+- Options: (a) draw them as the whole brick 261 in 3D (a cube's own shape already ends the wall;
+  the editor keeps placing the edge pieces, they just look like the wall); (b) keep the ragged
+  edge only on a face that borders air on that side, whole brick elsewhere; (c) leave them.
+  Recommendation: (a), simplest and without slits; (b) if the ragged ends matter.
