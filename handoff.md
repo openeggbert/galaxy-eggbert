@@ -308,10 +308,20 @@ ledgers before repeating any discovery. Where it stands:
   2026-11-03 after all of it: 78/78 playthroughs pass; ctest 112/112;** the web build rebuilt and
   loaded in headless Chrome over DevTools (119 models, 93/93 sounds, the menu drawn; Chrome 155 needs
   a fresh `--user-data-dir` and a few seconds before port 9333 answers).
+- Then (2026-11-03, last): the editor ledger has no unreviewed row (ED-0002 by the storage verifier,
+  ED-0004 driven live by `tools/qa_steps/editor_playtest.txt`, ED-0005 a mixed undo history in
+  `VerifyGEWorldEditor`); the asset ledger has none either (`af4a487`: the survey's root folder was
+  missed; a3d files without a twin are Amapi geometry of objects drawn from their scenes); world999's
+  creatures at their types' timing (`491cdd2`, patrol_envelope 0; regenerated, it lost 19 stray
+  trigger tiles the gallery shows on pillars). D11: the house's flower paper was fixed in `9582fc9`
+  (the candidates sheet was made from a stale library); the fountain bowl and column are white in
+  every channel of their shaders -- the sprites' dark bowl is Ray Dream's single light without
+  ambient, a lighting difference. OR-0011: no APK built here yet (the build pins NDK 30, the SDK
+  has 29); AVDs for an x86_64 emulator run exist.
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
-  wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list; the
-  editor's other menu groups entry by entry (ED-0003) and its UI scripts (ED-0002/0004/0005); the
-  a3d files without a Ray Dream twin (asset ledger); a human play pass of every world.
+  wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list (the
+  candidates regenerated from a fresh library); OR-0011's APK and an emulator run; the shooters' and
+  the big creature's 6 px draw offset (BD-0028, a still look); a human play pass of every world.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
