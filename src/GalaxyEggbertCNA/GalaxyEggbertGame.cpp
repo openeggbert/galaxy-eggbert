@@ -810,7 +810,16 @@ namespace GalaxyEggbert::CNA
             if (blupiModelIsReal_ || std::filesystem::exists(blupiModelManifest))
             {
                 auto& content = getContentProperty();
+#if defined(__ANDROID__)
+                // On Android CNA takes a relative content path for a packaged asset, and every
+                // name it misses (each texture's .xnb, tried before its .png) is looked for again
+                // ignoring case by listing the APK's assets through JNI, one listing per path
+                // component (upstream_bugs.md UB-006). The files are in internal storage, the
+                // working directory (AndroidAssets.hpp): an absolute root reads them there.
+                content.setRootDirectoryProperty((std::filesystem::current_path() / "avatars3d").string());
+#else
                 content.setRootDirectoryProperty("avatars3d");
+#endif
                 blupiModel_ = content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                     blupiModelIsReal_ ? "blupi/avatar" : "blupi_placeholder/avatar");
 

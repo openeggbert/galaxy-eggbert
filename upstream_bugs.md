@@ -144,6 +144,34 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   removed again; `tools/VerifyTileFaces.cpp` checks cna-engine's plates directly. Re-verified
   live: the hub signs of 060 and 040, the showcase's bolts, the saws of 092 and 999.
 
+## UB-006 — CNA on Android: each content name missed lists the APK's assets through JNI
+
+- **Repository:** libcna/cna (`/rv/data/development/github.com/libcna/cna`, HEAD `5a754159d`):
+  `modules/content/src/Xna/ContentManager.cpp` (`TryReadAssetBytes`, the `__ANDROID__` branch for
+  relative paths) and `modules/platform/src/Sdl3/Sdl3SystemServices.cpp`
+  (`Sdl3FileSystem::TryLoadFileIgnoringCase`, `ResolveAndroidAssetPathIgnoringCase`).
+- **What happens:** on Android a relative content path goes to `TryLoadFileIgnoringCase`; when the
+  exact name is missing, `ResolveAndroidAssetPathIgnoringCase` calls `AssetManager.list()` through
+  JNI once per path component (the APK's asset root first), and each call walks the APK's zip
+  entries (`ZipAssetsProvider::ForEachFile`). `Load<Texture2D>("x")` always misses first on
+  `x.xnb` before it finds `x.png`, so every texture of a model built from raw images costs several
+  listings of the whole APK, even when the file sits in internal storage and SDL would open it
+  directly.
+- **Seen:** Galaxy Eggbert's APK (2,563 assets, ~620 model textures) in an x86_64 API 35 emulator,
+  2026-11-03: after the assets were copied, `LoadContent` ran for more than 15 minutes of CPU with a
+  black screen; `simpleperf` put 75 % of the game thread under
+  `ContentManager::Load<Texture2D>` -> `TryLoadFileIgnoringCase` -> `AssetManager.list` ->
+  `ZipAssetsProvider::ForEachFile`. The emulator ran without KVM (software emulation), which makes
+  it extreme; on a phone it is a cost per texture that grows with the APK's asset count.
+- **Reproduce:** an Android app with many assets and a `ContentManager` whose `RootDirectory` is
+  relative; load textures that exist only as `.png`.
+- **Possible fix (CNA's call):** list each asset directory once and cache it, or try the raw image
+  extensions with SDL's exact path before the case-insensitive APK walk.
+- **Galaxy Eggbert's workaround:** on Android the game works in internal storage, where it copies
+  its assets (`src/GalaxyEggbertCNA/AndroidAssets.cpp`), and points `avatars3d`'s `ContentManager`
+  at it by an absolute path, which CNA reads without the APK walk
+  (`GalaxyEggbertGame::LoadContent`, the `__ANDROID__` branch).
+
 ## Recorded elsewhere
 
 These upstream problems were found earlier and are documented in other files; they are listed

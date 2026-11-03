@@ -92,6 +92,27 @@ adb shell am start -n org.openeggbert.speedyblupi/.SpeedyBlupiActivity
 adb logcat -s SDL SpeedyBlupi
 ```
 
+A build made with `-Pandroid.injected.build.abi=...` is marked test-only (the property is
+Android Studio's): its APK lies in `app/build/intermediates/apk/debug/` and installs with
+`adb install -t -r app-debug.apk`.
+
+### Emulator without a device
+
+```bash
+emulator -avd <an x86_64 AVD, API 24+> -read-only -no-snapshot -no-window -no-audio \
+         -no-boot-anim -gpu swiftshader_indirect
+adb wait-for-device; adb shell getprop sys.boot_completed   # 1 when booted
+adb install -t -r app/build/intermediates/apk/debug/app-debug.apk
+adb shell am start -n org.openeggbert.speedyblupi/.SpeedyBlupiActivity
+adb exec-out screencap -p > screen.png
+adb logcat -s SDL SDL/APP          # the game's own lines are SDL/APP
+```
+
+`-read-only` leaves the AVD as it was. The x86_64 images need KVM (`/dev/kvm`); without it the
+emulator falls back to software emulation (TCG), where Android itself barely runs (system
+watchdog restarts, "System UI isn't responding") and the game takes many minutes to load: enough
+to see it start, not to play.
+
 To uninstall:
 
 ```bash
