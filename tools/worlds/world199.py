@@ -43,6 +43,7 @@ BLITZ, EMITTER = 305, 304
 BRIDGE = 364                          # crumbles under Blupi and grows back
 DRIP = 404                            # kills in its own cell (Decor::IsGoutte, BD-0033)
 BAR = 202                             # a bar in the open, Blupi hangs from it (Decor::GetTypeBarre)
+TEMP = 324                            # the vanishing saucer: gone 8 ticks in every 80
 LOW, HIGH = 20, 30                    # the plaza's floor and the ring gallery: walking levels
 P0, P1 = 34, 66                       # the plaza's interior, x and z
 
@@ -176,6 +177,15 @@ def main(argv) -> int:
     else:
         w.place(O.WASP, 60, WELL, 51, end=(63, WELL, 51))
         mover(O.MOVING_MINE, (59, WELL + 4, 51), (63, WELL + 4, 51), 40, stop=0)
+    # A climb from the floor to the ring's south arm (z 63, x 59-62, west from the floor at x 63):
+    # slime steps and vanishing saucers by turns (walk 22 step, 24 saucer, 26 step, 28 saucer, then
+    # the arm at 30), as the original's saucers up a shaft in the slime (its (85-92, 6-11)); each
+    # saucer is crossed in one of its cycles from the step before it (gone 8 ticks in every 80).
+    for x, walk in ((62, 22), (61, 24), (60, 26), (59, 28)):
+        if walk % 4 == 2:
+            slime(w, x, LOW, 63, x, walk - 1, 63)
+        else:
+            w.set(x, walk - 1, 63, TEMP)
     # The pool (the original's 199 has water, but no fish: lesson_inventory), the plaza's creatures,
     # its helicopters and eggs.
     carve(41, LOW - 5, 53, 49, LOW - 1, 60)

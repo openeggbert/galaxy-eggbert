@@ -20,7 +20,9 @@ floor 37, 54 / ring 34, 54; 331 south: floor 42, 62 / ring 41, 66), as the origi
 rooms one above another; two spike traps (373) alone in the slime floor (35, 45 and 47, 66) and
 two drips (404) hung over the village's passage (x 33, walk 22), as the original's; the wasp's well
 (x 59-63, z 49-53, seven deep, a dead end) with the wasp sweeping its foot and a moving mine across it
-halfway up, as the original's (38-41, 26-31): its sting's balloon is the way out; a pool (no fish: the original's has none), helicopters, two bulldozers, three birds, four
+halfway up, as the original's (38-41, 26-31): its sting's balloon is the way out; a climb to the ring's
+south arm (z 63, x 59-62) of slime steps and vanishing saucers (324) by turns, as the original's
+saucers up a shaft (85-92, 6-11); a pool (no fish: the original's has none), helicopters, two bulldozers, three birds, four
 bobbing mines, four sleeping follow stars, eight eggs. Off it eight enclaves, each of one world's
 material, reached by a passage three wide through the plaza's walls:
 - at the floor: **east, the machine** (open): its passage under a curtain of lightning (304 over
@@ -50,8 +52,8 @@ Played live: walking into the red arrow from inside the finale's frame shows the
 Played through in one run by `tools/autoplay/world199.txt` (each key spent on one door): the
 machine's red key, the library (red door) for a green key, the cheese (green door) for a blue
 and a second green key, the finale's outer blue door, the village (green door) for a second
-blue key, the inner blue door and the red arrow; the win screen. It goes down from the ring
-by teleporter 331 and back up by 330, and in and out of the wasp's well (the balloon up its side,
+blue key, the inner blue door and the red arrow; the win screen. It climbs from the cheese to the ring by the
+saucers, goes down from the ring by teleporter 331 and back up by 330, and in and out of the wasp's well (the balloon up its side,
 clear of the mine's sweep). The village creature's shots fly along z 58 out through its passage (a
 door is no block to them, the original's `IsBlocIcon`) and on across the plaza: the playthrough
 crosses that line once none is on its way. The other enclaves (toys,
