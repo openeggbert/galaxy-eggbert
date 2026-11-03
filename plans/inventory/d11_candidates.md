@@ -5,25 +5,29 @@ the commands). For the owner to confirm or replace with their own list (D11 in
 `plans/GALAXY_EGGBERT_COMPLETION.md`). Silhouette: IoU of the model against each sprite icon (worst, mean);
 colour: mean colour error against the sprites (0-255 scale). Flagged: worst IoU below 0.85 or colour
 error above 20. Known and recorded: the bird's and the plants' low IoU is thin wings, legs and
-leaves a pixel off (faithful); the fish's head is BB3D-032.
+leaves a pixel off (faithful); the fish's head is BB3D-032; the signs' and the treasure doors' colour is
+their painted digit or picture, a decal the game lays on the model (sign_decals.py) that this
+comparison leaves out; the fountain bowl and column are white in every shader channel (the
+sprites' grey is Ray Dream's single light without ambient); the drip's smallest frames have no
+scene of their own; the girder is drawn as a lattice box (BlockModels.hpp).
 
 | Rank | Model | Icons | IoU worst | IoU mean | Colour error | Flag |
 |---|---|---|---|---|---|---|
-| 1 | bd_big02_big02 | 1 | 0.992 | 0.992 | 49.4 | colour |
-| 2 | bird_oiseau | 32 | 0.674 | 0.889 | 31.7 | silhouette, colour |
-| 3 | bd_plante3a_plante3a | 1 | 0.647 | 0.647 | 21.8 | silhouette, colour |
-| 4 | bd_plante3b_plante3b | 1 | 0.652 | 0.652 | 18.9 | silhouette |
-| 5 | bd_plante3c_plante3c | 1 | 0.686 | 0.686 | 18.7 | silhouette |
-| 6 | bd_big0108_big0108 | 1 | 0.979 | 0.979 | 33.3 | colour |
-| 7 | dynamite_dynamite | 2 | 0.970 | 0.976 | 32.1 | colour |
-| 8 | bd_maison_maison | 1 | 1.000 | 1.000 | 31.2 | colour |
-| 9 | tentacle_tenta17 | 1 | 0.973 | 0.973 | 23.5 | colour |
-| 10 | bd_enfant11_enfant11 | 1 | 0.988 | 0.988 | 23.0 | colour |
-| 11 | bd_plante1a_plante1a | 1 | 0.825 | 0.825 | 11.0 | silhouette |
-| 12 | bd_plante1b_plante1b | 1 | 0.826 | 0.826 | 9.1 | silhouette |
-| 13 | key3_cle3 | 7 | 0.945 | 0.962 | 22.3 | colour |
-| 14 | bd_cabane_cabane | 1 | 0.993 | 0.993 | 22.3 | colour |
-| 15 | bd_plante1d_plante1d | 1 | 0.835 | 0.835 | 12.1 | silhouette |
-| 16 | wasp_guepe-tourne | 5 | 0.956 | 0.962 | 9.8 | - |
+| 1 | drip404_goutte04 | 2 | 0.441 | 0.623 | 29.2 | silhouette, colour |
+| 2 | worldsign158_world2a | 15 | 0.995 | 0.995 | 55.1 | colour |
+| 3 | sign174_world1 | 8 | 0.995 | 0.995 | 52.6 | colour |
+| 4 | bd_big02_big02 | 1 | 0.992 | 0.992 | 49.4 | colour |
+| 5 | bird_oiseau | 32 | 0.674 | 0.889 | 31.7 | silhouette, colour |
+| 6 | bd_plante3a_plante3a | 1 | 0.647 | 0.647 | 21.8 | silhouette, colour |
+| 7 | worlddone166_world2b | 14 | 0.995 | 0.995 | 41.9 | colour |
+| 8 | girder201_structure1 | 1 | 0.786 | 0.786 | 34.8 | silhouette, colour |
+| 9 | saw378_scie | 6 | 0.986 | 0.991 | 40.7 | colour |
+| 10 | bd_plante3b_plante3b | 1 | 0.652 | 0.652 | 18.9 | silhouette |
+| 11 | pillar377_pile1 | 1 | 0.934 | 0.934 | 39.4 | colour |
+| 12 | treasure421_porte2 | 19 | 0.799 | 0.799 | 33.6 | silhouette, colour |
+| 13 | drip404_goutte02 | 1 | 0.871 | 0.871 | 37.2 | colour |
+| 14 | bd_plante3c_plante3c | 1 | 0.686 | 0.686 | 18.7 | silhouette |
+| 15 | drip404_goutte01 | 1 | 0.901 | 0.901 | 35.9 | colour |
+| 16 | drip404_goutte03 | 1 | 0.821 | 0.821 | 31.6 | silhouette, colour |
 
-82 models ranked; 15 flagged.
+119 models ranked; 38 flagged.

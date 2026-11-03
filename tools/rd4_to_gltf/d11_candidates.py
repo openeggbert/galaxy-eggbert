@@ -59,7 +59,11 @@ def main(argv=None) -> int:
              "`plans/GALAXY_EGGBERT_COMPLETION.md`). Silhouette: IoU of the model against each sprite icon (worst, mean);",
              f"colour: mean colour error against the sprites (0-255 scale). Flagged: worst IoU below {IOU_FLAG} or colour",
              f"error above {COLOUR_FLAG:g}. Known and recorded: the bird's and the plants' low IoU is thin wings, legs and",
-             "leaves a pixel off (faithful); the fish's head is BB3D-032.", "",
+             "leaves a pixel off (faithful); the fish's head is BB3D-032; the signs' and the treasure doors' colour is",
+             "their painted digit or picture, a decal the game lays on the model (sign_decals.py) that this",
+             "comparison leaves out; the fountain bowl and column are white in every shader channel (the",
+             "sprites' grey is Ray Dream's single light without ambient); the drip's smallest frames have no",
+             "scene of their own; the girder is drawn as a lattice box (BlockModels.hpp).", "",
              "| Rank | Model | Icons | IoU worst | IoU mean | Colour error | Flag |", "|---|---|---|---|---|---|---|"]
     for k, (score, name, worst, mean, colour, _w, n) in enumerate(lead, start=1):
         flags = [f for f, on in (("silhouette", worst < IOU_FLAG), ("colour", colour > COLOUR_FLAG)) if on]
