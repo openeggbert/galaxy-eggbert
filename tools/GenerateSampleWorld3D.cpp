@@ -1,3 +1,4 @@
+#include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 
@@ -7,6 +8,7 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <filesystem>
 #include <iostream>
@@ -895,6 +897,23 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
                      "(icons 330, 158-177 (WorldSelect/ProgressDoor/DemoPortal), and 440 excluded, see the "
                      "teleporter rooms above and the icon-440 atlas-bounds note above), "
                   << slot << " object types." << std::endl;
+    }
+
+    // Every patrolling creature at its type's original speed and rests (BD-0016, OR-0005), as the
+    // world builders (tools/worldkit.py CREATURE_TIMING) and the editor give them.
+    for (MoveObjectRecord record : CollectMoveObjects(world))
+    {
+        const auto& definition = GalaxyEggbert::Game::GetObjectDefinition(record.type);
+        const float cells = std::max({std::fabs(record.posEndX - record.posStartX),
+                                      std::fabs(record.posEndY - record.posStartY),
+                                      std::fabs(record.posEndZ - record.posStartZ)});
+        if (definition.patrolTicksPerCell > 0 && cells > 0.0f)
+        {
+            record.stepAdvanceTicks = record.stepRecedeTicks =
+                cells * static_cast<float>(definition.patrolTicksPerCell);
+            record.timeStopStartTicks = record.timeStopEndTicks = static_cast<float>(definition.patrolRestTicks);
+            PlaceMoveObject(world, record);
+        }
     }
 
     world.saveToFile(outPath);
