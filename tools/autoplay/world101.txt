@@ -111,7 +111,8 @@ go 82.5 60
 until ground = 1
 go 82.5 51.5
 go 79 51
-go 77.4 48
+# x 77.2: the rock at (78, 48) is a half-width off x 77.4 (OR-0017).
+go 77.2 48
 go 76 48
 until ground = 1
 go 68.5 48
