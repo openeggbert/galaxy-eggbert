@@ -305,7 +305,9 @@ ledgers before repeating any discovery. Where it stands:
   (`051fd54`; not in the playthrough set, run it alone); **the 57 unreviewed world lessons reviewed**
   (`042dafd`: 53 CONFIRMED_MATCH by brief + lesson_inventory + the regression + a spawn look, 013 an
   adaptation, 998/999 not applicable; at six spawns the camera starts overhead). **Regression of
-  2026-11-03 after all of it: 78/78 playthroughs pass; ctest 112/112.**
+  2026-11-03 after all of it: 78/78 playthroughs pass; ctest 112/112;** the web build rebuilt and
+  loaded in headless Chrome over DevTools (119 models, 93/93 sounds, the menu drawn; Chrome 155 needs
+  a fresh `--user-data-dir` and a few seconds before port 9333 answers).
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list; the
   editor's other menu groups entry by entry (ED-0003) and its UI scripts (ED-0002/0004/0005); the
