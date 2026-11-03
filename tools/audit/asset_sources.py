@@ -61,7 +61,9 @@ def load_survey():
     if os.path.exists(path):
         with open(path, newline="", encoding="utf-8") as f:
             for row in csv.DictReader(f):
-                survey[(row["folder"] + "/" + row["file"]).lower()] = row
+                # The data's root is folder "." in the survey, nothing in an asset's path.
+                folder = "" if row["folder"] in ("", ".") else row["folder"] + "/"
+                survey[(folder + row["file"]).lower()] = row
     return survey
 
 

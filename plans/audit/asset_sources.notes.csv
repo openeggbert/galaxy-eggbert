@@ -1,16 +1,16 @@
 id,status,verified,notes,next_action
-AS-0001,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0002,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0003,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0004,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0005,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0006,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0007,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0008,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0009,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0010,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0011,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
-AS-0012,UNREVIEWED,,"2026-11-03: not opened by the survey (at the data's root, named as a test)",open it with survey.py
+AS-0001,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (2 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0002,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (2 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0003,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (3 objects, masters cube=1 cyli=1); read by the survey, no game sprite matches it",
+AS-0004,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (2 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0005,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (2 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0006,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (2 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0007,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (2 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0008,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (2 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0009,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (4 objects, masters cyli=1); read by the survey, no game sprite matches it",
+AS-0010,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (21 objects, masters cyli=2 ex=4 sp=2, Blupi in it); read by the survey, no game sprite matches it",
+AS-0011,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (21 objects, masters cyli=2 ex=4 sp=2, Blupi in it); read by the survey, no game sprite matches it",
+AS-0012,NOT_APPLICABLE,,"2026-11-03: a test scene at the data's root (21 objects, masters cyli=2 ex=4 sp=2, Blupi in it); read by the survey, no game sprite matches it",
 AS-0013,NOT_APPLICABLE,,2026-11-03: backdrop art; the game's backgrounds are the original's 2D pictures,
 AS-0014,NOT_APPLICABLE,,2026-11-03: backdrop art; the game's backgrounds are the original's 2D pictures,
 AS-0015,NOT_APPLICABLE,,2026-11-03: backdrop art; the game's backgrounds are the original's 2D pictures,
@@ -84,7 +84,7 @@ AS-0082,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no ca
 AS-0083,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:creature,D11: the owner's list
 AS-0084,FIXED_AND_VERIFIED,Blupi's clip library,"2026-11-03: frames of Blupi's clips (silhouette IoU 0.94-0.99, plans/inventory/model_parity.md)",
 AS-0085,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:exit,D11: the owner's list
-AS-0086,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Blupi)
+AS-0086,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drill: no drill in the game (decoded by tools/a3d/a3d.py),
 AS-0087,FIXED_AND_VERIFIED,Blupi's clip library,"2026-11-03: frames of Blupi's clips (silhouette IoU 0.94-0.99, plans/inventory/model_parity.md)",
 AS-0088,FIXED_AND_VERIFIED,Blupi's clip library,"2026-11-03: frames of Blupi's clips (silhouette IoU 0.94-0.99, plans/inventory/model_parity.md)",
 AS-0089,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
@@ -139,13 +139,13 @@ AS-0137,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as 
 AS-0138,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0151,NOT_APPLICABLE,,"2026-11-03: an export of parts (DXF/3DS/RD3) of objects whose models come from their Ray Dream scenes (Blupi's clips, the chest's coffre.rd4)",
 AS-0152,NOT_APPLICABLE,,"2026-11-03: an export of parts (DXF/3DS/RD3) of objects whose models come from their Ray Dream scenes (Blupi's clips, the chest's coffre.rd4)",
-AS-0153,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Blupi/max)
-AS-0154,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Blupi/max)
+AS-0153,NOT_APPLICABLE,,2026-11-03: an Amapi part (Blupi's hand) of the 3D Studio MAX Blupi (MR-0001); his model comes from the Ray Dream clips (decoded by tools/a3d/a3d.py),
+AS-0154,NOT_APPLICABLE,,2026-11-03: an Amapi part (Blupi's hand) of the 3D Studio MAX Blupi (MR-0001); his model comes from the Ray Dream clips (decoded by tools/a3d/a3d.py),
 AS-0155,NOT_APPLICABLE,,"2026-11-03: an export of parts (DXF/3DS/RD3) of objects whose models come from their Ray Dream scenes (Blupi's clips, the chest's coffre.rd4)",
-AS-0156,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Blupi/max)
+AS-0156,NOT_APPLICABLE,,2026-11-03: an Amapi part (Blupi's hand) of the 3D Studio MAX Blupi (MR-0001); his model comes from the Ray Dream clips (decoded by tools/a3d/a3d.py),
 AS-0157,NOT_APPLICABLE,,"2026-11-03: an export of parts (DXF/3DS/RD3) of objects whose models come from their Ray Dream scenes (Blupi's clips, the chest's coffre.rd4)",
-AS-0158,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Blupi/max)
-AS-0159,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Blupi/max)
+AS-0158,NOT_APPLICABLE,,2026-11-03: an Amapi part (Blupi's hand) of the 3D Studio MAX Blupi (MR-0001); his model comes from the Ray Dream clips (decoded by tools/a3d/a3d.py),
+AS-0159,NOT_APPLICABLE,,2026-11-03: an Amapi part (Blupi's hand) of the 3D Studio MAX Blupi (MR-0001); his model comes from the Ray Dream clips (decoded by tools/a3d/a3d.py),
 AS-0160,NOT_APPLICABLE,,"2026-11-03: an export of parts (DXF/3DS/RD3) of objects whose models come from their Ray Dream scenes (Blupi's clips, the chest's coffre.rd4)",
 AS-0161,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0162,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
@@ -425,25 +425,25 @@ AS-0435,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0436,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0437,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0438,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0439,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/goutte)
+AS-0439,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drip frame; the game draws the drip from goutte01-04.rds (drip404) (decoded by tools/a3d/a3d.py),
 AS-0440,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0441,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0442,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/goutte)
+AS-0442,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drip frame; the game draws the drip from goutte01-04.rds (drip404) (decoded by tools/a3d/a3d.py),
 AS-0443,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0444,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0445,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/goutte)
+AS-0445,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drip frame; the game draws the drip from goutte01-04.rds (drip404) (decoded by tools/a3d/a3d.py),
 AS-0446,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0447,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0448,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/goutte)
+AS-0448,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drip frame; the game draws the drip from goutte01-04.rds (drip404) (decoded by tools/a3d/a3d.py),
 AS-0449,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0450,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0451,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/goutte)
+AS-0451,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drip frame; the game draws the drip from goutte01-04.rds (drip404) (decoded by tools/a3d/a3d.py),
 AS-0452,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0453,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0454,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/goutte)
+AS-0454,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drip frame; the game draws the drip from goutte01-04.rds (drip404) (decoded by tools/a3d/a3d.py),
 AS-0455,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0456,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0457,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/goutte)
+AS-0457,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of a drip frame; the game draws the drip from goutte01-04.rds (drip404) (decoded by tools/a3d/a3d.py),
 AS-0458,FIXED_AND_VERIFIED,LavaSurface.hpp,"2026-11-03: the lava's wave, read by tools/a3d/lava_surface.py",
 AS-0459,FIXED_AND_VERIFIED,LavaSurface.hpp,"2026-11-03: the lava's wave, read by tools/a3d/lava_surface.py",
 AS-0460,FIXED_AND_VERIFIED,LavaSurface.hpp,"2026-11-03: the lava's wave, read by tools/a3d/lava_surface.py",
@@ -456,7 +456,7 @@ AS-0466,INTENTIONAL_3D_ADAPTATION,,2026-11-03: drawn another way (model_sources.
 AS-0467,INTENTIONAL_3D_ADAPTATION,,2026-11-03: drawn another way (model_sources.py OTHERWISE): object-m:71 the lava pool from the .a3d wave (LavaSurface.hpp),
 AS-0468,INTENTIONAL_3D_ADAPTATION,,2026-11-03: drawn another way (model_sources.py OTHERWISE): object-m:72 the lava pool from the .a3d wave (LavaSurface.hpp),
 AS-0469,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0470,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/palais)
+AS-0470,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, panel) of the palace walls, whose scenes mur01-08.rds are the tile sources (Q-004) (decoded by tools/a3d/a3d.py)",
 AS-0471,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:bd_big0108 object:pillar399,D11: the owner's list
 AS-0472,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:bd_big02,D11: the owner's list
 AS-0473,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
@@ -473,8 +473,8 @@ AS-0483,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no ca
 AS-0484,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0485,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0486,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:398),Q-004
-AS-0487,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/palais)
-AS-0488,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/palais)
+AS-0487,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, panel) of the palace walls, whose scenes mur01-08.rds are the tile sources (Q-004) (decoded by tools/a3d/a3d.py)",
+AS-0488,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, panel) of the palace walls, whose scenes mur01-08.rds are the tile sources (Q-004) (decoded by tools/a3d/a3d.py)",
 AS-0489,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0490,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0491,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
@@ -483,28 +483,28 @@ AS-0493,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no ca
 AS-0494,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0495,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0496,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0497,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/palais)
+AS-0497,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, panel) of the palace walls, whose scenes mur01-08.rds are the tile sources (Q-004) (decoded by tools/a3d/a3d.py)",
 AS-0498,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:statue,D11: the owner's list
 AS-0499,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0500,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0501,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0502,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0503,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0504,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0505,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
+AS-0502,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0503,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0504,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0505,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
 AS-0506,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0507,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:pillar,D11: the owner's list
 AS-0508,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:pillar,D11: the owner's list
 AS-0509,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0510,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:pillar,D11: the owner's list
-AS-0511,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0512,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0513,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0514,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0515,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0516,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0517,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0518,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
+AS-0511,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0512,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0513,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0514,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0515,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0516,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0517,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0518,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
 AS-0519,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0520,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0521,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:348),Q-004
@@ -522,8 +522,8 @@ AS-0532,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no ca
 AS-0533,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:352),Q-004
 AS-0534,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0535,BLOCKED,,2026-11-03: a terrain tile's scene (object-m:349 object-m:350),Q-004
-AS-0536,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
-AS-0537,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/smooth)
+AS-0536,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
+AS-0537,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
 AS-0538,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0539,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0540,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
@@ -577,23 +577,23 @@ AS-0587,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0588,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0589,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0590,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0591,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0592,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0593,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0594,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0595,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0596,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0597,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0598,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0599,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0600,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0601,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0602,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0603,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0604,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0605,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0606,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
-AS-0607,UNREVIEWED,,2026-11-03: decoded (tools/a3d/a3d.py); no Ray Dream twin,compare with the sprites of its object (Decor/tentacule)
+AS-0591,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0592,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0593,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0594,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0595,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0596,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0597,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0598,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0599,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0600,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0601,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0602,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0603,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0604,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0605,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0606,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
+AS-0607,NOT_APPLICABLE,,2026-11-03: the Amapi geometry of one of the tentacle's 17 frames; the game draws the tentacle from the rendered scenes tenta01-17.rds (objects.txt tentacle) (decoded by tools/a3d/a3d.py),
 AS-0608,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:tentacle,D11: the owner's list
 AS-0609,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:tentacle,D11: the owner's list
 AS-0610,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:tentacle,D11: the owner's list
