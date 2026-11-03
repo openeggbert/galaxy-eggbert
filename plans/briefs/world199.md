@@ -58,6 +58,10 @@ saucers, goes down from the ring by teleporter 331 and back up by 330, and in an
 clear of the mine's sweep). The village creature's shots fly along z 58 out through its passage (a
 door is no block to them, the original's `IsBlocIcon`) and on across the plaza: the playthrough
 crosses that line once none is on its way. The other enclaves (toys,
-palace, rock) are spare routes it does not take.
+palace, rock) are played by `tools/autoplay/spare/world199.txt` (2026-11-03): the toys with the
+machine's red key (past a sleeping follow star, the lollipop's jump onto the tower for a second red
+key), the library with that, the rock with the library's green key (the blue key while the big
+creature walks off its turn), the palace with the rock's blue key (its saw rows jumped for a green
+key), then the main route from the cheese to the win (24942 ticks).
 
 The cheese's row of crushers was removed (the original's 199 has none, lesson_inventory).
