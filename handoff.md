@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-03 (fidelity audit, milestone G: the Android port (OR-0011, UB-006/007); wave F's release audit)._
+_Last updated: 2026-11-03 evening (OR-0056 reopened: front models on a floor face their room; OR-0057..0059)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -362,6 +362,21 @@ ledgers before repeating any discovery. Where it stands:
   D11's candidates regenerated from a fresh library (`570aa48`, `c34dc2b`: 119 models; the known
   reasons now written in the list: decals, the fountain's lighting, the saw's specular). Web build
   rebuilt after all of it: 120 models, 93/93 sounds, no error in headless Chrome.
+- 2026-11-03, evening (owner's reports OR-0056..0059): **OR-0056 reopened** -- the owner found the
+  numbers "mostly turned wrong" after I had closed it from the gallery alone. Cause, found only by
+  photographing the campaign: a front model's open side counted only room over a floor two or more
+  cells down (written for the teleporters over Blupi's head), so every model standing on a floor
+  -- the hubs' mission signs in their niches, the numbered posts' lower cells, 025's balustrades --
+  fell to +X. Fixed in `9d363db` (`BlockModels.hpp FrontModelOpenSide`, `VerifyTileFaces`): all 273
+  signs and numbered posts of the campaign face an open side. The booths themselves were photographed
+  from the player's approach in every campaign world (`build-probe/qa-shots/booths/`, spawns three
+  cells off each side with a floor). Lesson: check an owner's report in the
+  campaign worlds as the player meets it, not only in 998. OR-0057 the conveyor's belt mirrored onto
+  its back (`2e9e055`); OR-0058/0059 were the gallery's layout (`d8233a7`: the saw switches in the
+  floor, the crusher on an open beam). The full regression with the committed build: 78/78.
+  Noticed on the way, not yet looked into: in a dead-end one cell wide (102's booth at (70,3,12))
+  and in some low passages (095 at (30,31,20), 105 at (37,18,48)) the chase camera ends up over
+  Blupi's head or inside it.
 - Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
   wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list (the
   candidates regenerated from a fresh library); Android on a device once Q-009 is answered and CNA
