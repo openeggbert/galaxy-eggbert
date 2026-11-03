@@ -78,3 +78,17 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   as the 3D adaptation (as now). Recommendation: (a), when the levels are revisited.
 - Meanwhile: the sphere stays (BD-0053 open).
 
+
+## Q-008 — world 105's lava floor: the void, or a cheaper lava to draw it? (2026-11-03)
+
+- The original's helicopter cavern (105) has a floor of lava: a fall burns Blupi (Clear3). Galaxy's
+  hall is bottomless: a fall ends in the angel (Clear2). Same end of a life, different death.
+- A full lava floor under the hall (61 x 61 animated cells; the largest lava in any shipped world
+  is 848) made the playthrough ~6x slower (185 s against 32 s): the animated terrain mesh is
+  rebuilt and uploaded at every animation tick. Caching each frame's mesh instead would cost about
+  90 MB of vertices for that floor, too much for the web build.
+- Options: (a) keep the void (as now, documented as a 3D adaptation, LV-0063); (b) a cheaper lava
+  for large pools (a merged, coarser surface for cells with lava all round, the full wave only at
+  the edges), then the original's floor. Recommendation: (b) later, as a renderer task that also
+  speeds up the lava worlds (084, 094, 106).
+- Meanwhile: the void stays; 105's teleporter pair (the hut and the roof) is in.
