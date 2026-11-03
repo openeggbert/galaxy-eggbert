@@ -38,6 +38,12 @@ OTHERWISE = {
     "Decor/lave/lave3.rds": "the lava pool from the .a3d wave (LavaSurface.hpp)",
     "Decor/lave/lave4.rds": "the lava pool from the .a3d wave (LavaSurface.hpp)",
     "Decor/lave/lave5.rds": "the lava pool from the .a3d wave (LavaSurface.hpp)",
+    # Kept flat on purpose, with the reason:
+    "Decor/electro.rd4": "kept a billboard: the Cloud's charger (ObjectType31); the scene holds only the ball "
+                         "and its spring, the sprites' sparks are painted on (converted 2026-11-03: IoU "
+                         "0.77-0.82, no sparks); no original or campaign world places it (the gallery does)",
+    "Decor/colonne1.rds": "kept the sprite: a box carrying a painted column (an embedded image and mask), "
+                          "the column 375 reverted to it 2026-11-02",
 }
 # Terrain tiles: drawn as textured cubes so that neighbours join; their scenes are lumpy blocks
 # (owner_questions.md Q-004 asks whether the terrain should become models).
