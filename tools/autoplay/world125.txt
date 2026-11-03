@@ -10,6 +10,39 @@ wait 30
 # clear of the tube's edge (x 21, y 24): under it the climb meets the helicopter's crash band
 # (Decor.cpp:5264-5283, OR-0019).
 go 19 49 tol 0 with lookup until y >= 35 max 900
+# Over the strip of lava (x 19-21) and the tube to the pool's south bank (walk 20), down onto it
+# and out: the corridor of mines under bars (x 56, z 57-64), crossed hanging there (the egg at its
+# dead end) and back, then aboard again where the helicopter was left.
+go 56 55.6 tol 0.3 max 1800
+go 56 55.6 tol 0 with crouch until ground = 1 max 900
+expect y <= 20.05
+hold 2 action
+wait 20
+go 56 57.6 tol 0.08
+face 180
+hold 4 jump
+wait 20
+expect y >= 21.9
+go 56 63.3 tol 0.08
+hold 18 crouch
+until ground = 1
+expect z >= 62.9
+go 56 64 until eggs = 1
+until eggs = 1 max 120
+go 56 63.3 tol 0.08
+face 0
+hold 4 jump
+wait 20
+expect y >= 21.9
+go 56 57.6 tol 0.08
+hold 18 crouch
+until ground = 1
+expect z <= 58.1
+go 56 56.4 tol 0.15
+go 56 55.65 tol 0.1
+hold 2 action
+wait 20
+go 56 55.6 tol 0 with lookup until y >= 35 max 900
 # East over the cave to above the key's pillar (86, 50), then straight down onto the key: the
 # bobbing mines stand at least 2.8 from it.
 go 86 50 tol 0.2 max 1800

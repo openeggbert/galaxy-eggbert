@@ -15,7 +15,13 @@ mines (3), a bird (20), a pool with a fish (17), a bulldozer (4), crates (12), f
   mines.
 - The corridor of lightning: a tube of brick across the hall (walk 20, three high), mines hanging
   in its roof, three curtains of lightning, a mine on its floor.
-- The pool on a block of brick: a fish, an egg, two helicopters.
+- The pool on a block of brick: a fish, an egg, two helicopters. Off its south bank a tube one
+  wide (x 56, z 57-64), its floor full of mines (z 59-62) under bars (138) along its ceiling, an egg
+  at its dead end: crossed hanging there and back, as the original's corridor of mines under its
+  row of bars (41-51, 23-27).
+- A strip of lava three long beyond the start ledge's helicopters, across the corridor's mouth
+  (x 19-21, z 48-52), as the original's pocket of lava between its start room and its room of
+  mines (31-33, 6): flown over, too long to jump.
 - Ledges round the hall's east end at walk 22 to 32: rows of mines along them, crates, a bulldozer
   patrolling one, a bird crossing the hall, a helicopter on each.
 - The golden key on a pillar in the far east (walk 30), eight mines bobbing round it at different

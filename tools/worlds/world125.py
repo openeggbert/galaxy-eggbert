@@ -25,6 +25,7 @@ from kit import O, World, lift, mine  # noqa: E402
 from station import BRICK, brick, water  # noqa: E402
 
 BLITZ, EMITTER = 305, 304
+LAVA, BAR = 68, 138
 WALK = 20
 
 
@@ -55,6 +56,10 @@ def main(argv) -> int:
     w.place(O.EGG, 9, WALK, 55)
     for x, z in ((14, 45), (14, 55)):
         hazard(x, WALK, z)
+    # A strip of lava three long beyond the helicopters, across the corridor's mouth (x 19-21, z
+    # 48-52), as the original's pocket of lava between its start room and its room of mines
+    # ((31-33, 6)): flown over, too long to jump.
+    w.fill(19, WALK - 1, 48, 21, WALK - 1, 52, LAVA)
 
     # ---- the corridor of lightning (walk 20, east, z 48-52) ----
     # A tube of brick across the cave: mines hang in its roof at Blupi's head height (fly low, or
@@ -78,6 +83,17 @@ def main(argv) -> int:
     w.place(O.EGG, 52, WALK, 55)
     for x, z in ((61, 45), (61, 55)):
         w.place(O.HELICOPTER, x, WALK, z)
+
+    # ---- the corridor of mines under bars (walk 20, off the pool's south bank) ----
+    # A tube one wide (x 56, z 57-64), its floor full of mines (z 59-62), bars (138) along its
+    # ceiling (z 58-63), an egg at its dead end, as the original's corridor of mines under its row
+    # of bars ((41-51, 23-27)): crossed hanging, there and back.
+    brick(w, 55, 17, 57, 57, WALK + 3, 65, rng)
+    carve(56, WALK, 57, 56, WALK + 2, 64)
+    w.fill(56, WALK + 2, 58, 56, WALK + 2, 63, BAR)
+    for z in range(59, 63):
+        hazard(56, WALK, z)
+    w.place(O.EGG, 56, WALK, 64)
 
     # ---- the bird's hall: ledges of mines and crates ----
     # Ledges at several heights round the cave's east end with rows of mines along them, crates,
