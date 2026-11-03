@@ -45,7 +45,7 @@ expect y <= 1.05
 # Across the channel of water (z 41-43): swum and climbed out of; the golden key completes world
 # 1: the cheer, then the main hub.
 go 48.5 42.6 tol 0.3 max 600
-go 48.5 44.6 with lookup jump 1.2 max 400
+go 48.5 44.6 with lookup jump 1.5 max 400
 until ground = 1
 expect y >= 0.95
 go 51 44 until exit = 1
