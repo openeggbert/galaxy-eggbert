@@ -340,6 +340,18 @@ ledgers before repeating any discovery. Where it stands:
   in 042/045): through its holes the cube's own inside shows, unlit -- open; (4) frames with Blupi out of view while he walks down a stairwell (024
   t3600) or flies the helicopter in a shaft (043 t6120) -- fixed by (2). The second pass (with (1) and (2), `build-probe/play-pass/`, 78/78 after 022's
   fix) is the current look at the campaign; its sheets wait to be reviewed world by world.
+  Review of the second pass's 138 sheets (three agents in parallel, then each candidate checked by
+  hand): fixed `f1166e7` -- the decals drawn from both sides (124's thin posts showed the far plate
+  mirrored, a 9 as a 6) and the machine panels' plain sides sampled where a bolt or a green lamp sits
+  (stripes and green wedges on 113-115's floors); in progress -- the smoothed camera eye cut through
+  walls on turns (Blupi hidden behind a wall or the camera inside one: 022, 034, 043, 045, 051,
+  052, 053, 054, 092-094, 101, 102, 104, 112, 114, 121, 122, 124, 199), now kept on this side of
+  any wall along its line to him after the damping (needs a full pass: camera change); to the owner
+  -- Q-010 (cheese holes 339), Q-011 (the brick edge pieces' slits, 73,773 cells). Not defects:
+  the exit arrow seen edge-on (101, 113), the helicopter seen from above in a dive (111), the
+  squashed Blupi under a crusher (053), the saw blades (021, 024), toy-ball tiles 215-236 as
+  cubes (095, Q-004). Open: moire on far floors (125's ring pattern, 105's grain) -- the atlas
+  has no mipmaps (bleeding between tiles is why); a texture-array or padded atlas would be needed.
   The web build was rebuilt after all of it (2026-11-03, evening) and loaded in headless Chrome:
   120 models, 93/93 sounds, the menu drawn, no error but the favicon's 404.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
