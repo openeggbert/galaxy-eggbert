@@ -81,9 +81,10 @@ go 73 39
 expect y >= 23.9
 # G, the upper storey (walk 24): a skateboard from L2's east table (75, 25, 40), south along the
 # corridor over its mines (z 44-46), off it before the lava floor.
-go 73.6 40.5
+# Along z 40.2: the column at (75, 41) is a half-width off z 40.5 (OR-0017).
+go 73.6 40.2
 face 90
-go 74.8 40.5 jump 1.5 tol 0.15
+go 74.8 40.2 jump 1.5 tol 0.15
 until ground = 1
 expect y >= 24.9
 # Onto the board: boarded by touching it (BD-0024).
