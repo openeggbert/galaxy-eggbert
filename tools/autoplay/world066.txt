@@ -38,9 +38,11 @@ go 50 60
 # it; its egg at the end.
 go 51 60 tol 0.1
 go 51 61.4 tol 0.1
-go 59.2 61.8 jump 3.2 tol 0.3
-go 63.2 61.8 jump 3.2 tol 0.3
-go 67.2 61.8 jump 3.2 tol 0.3
+# Along z 62.05: the tunnel (z 62) is one cell wide, and off its middle his body meets the row
+# z 61 (OR-0017).
+go 59.2 62.05 jump 3.2 tol 0.3
+go 63.2 62.05 jump 3.2 tol 0.3
+go 67.2 62.05 jump 3.2 tol 0.3
 go 68.3 62 until eggs = 2
 until eggs = 2 max 120
 # East out of the wind: the two saws in the floor (x 71, 73) jumped, one jump each, landing

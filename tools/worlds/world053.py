@@ -342,7 +342,11 @@ def main(argv) -> int:
     carve(82, 27, 84, 82, 28, 84)
     w.place(O.EXIT, 82, 27, 88)
     if stage < 7:
-        for x, z in ((80, 86), (81, 86), (82, 86), (83, 86), (84, 86), (80, 87), (84, 87),
+        # The north row three across the doorway's front (81-83, z 86): woken from the doorway's middle
+        #    by the original's box (BD-0053) and led west, they burst on the wall beside it; with two
+        #    more beside them his body could not wake them apart in a one-cell doorway (OR-0017), so
+        #    those two sit by the arrow's flanks instead (79, 89), (85, 89).
+        for x, z in ((79, 89), (81, 86), (82, 86), (83, 86), (85, 89), (80, 87), (84, 87),
                      (80, 88), (84, 88), (80, 89), (84, 89), (80, 90), (81, 90), (82, 90),
                      (83, 90), (84, 90)):
             star(x, 27, z)
