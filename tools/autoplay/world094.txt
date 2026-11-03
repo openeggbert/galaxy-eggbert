@@ -65,24 +65,24 @@ expect y <= 10.1
 # Back up the stair of two-high steps along the south side (z 71-72, walk 12 ... 20), west
 # along the shelf, north along x 56.5 onto the ledge's south-west corner.
 go 73.6 70
-go 73.6 71.5 tol 0.1
+go 73.6 71.2 tol 0.1
 face 270
-go 72 71.5 jump 2.0 tol 0.15
+go 72 71.2 jump 2.0 tol 0.15
 until ground = 1
-go 71.4 71.5 tol 0.1
-go 70 71.5 jump 2.0 tol 0.15
+go 71.4 71.2 tol 0.1
+go 70 71.2 jump 2.0 tol 0.15
 until ground = 1
-go 69.4 71.5 tol 0.1
-go 68 71.5 jump 2.0 tol 0.15
+go 69.4 71.2 tol 0.1
+go 68 71.2 jump 2.0 tol 0.15
 until ground = 1
-go 67.4 71.5 tol 0.1
-go 66 71.5 jump 2.0 tol 0.15
+go 67.4 71.2 tol 0.1
+go 66 71.2 jump 2.0 tol 0.15
 until ground = 1
-go 65.4 71.5 tol 0.1
-go 64 71.5 jump 2.0 tol 0.15
+go 65.4 71.2 tol 0.1
+go 64 71.2 jump 2.0 tol 0.15
 until ground = 1
 expect y >= 19.9
-go 57 71.5
+go 57 71.2
 go 56.6 58
 go 59.3 57.6
 go 59.6 55
