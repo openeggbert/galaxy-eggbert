@@ -97,6 +97,13 @@ namespace GalaxyEggbert::Editor
             return static_cast<std::uint16_t>(selectedObjectVisualIcon_);
         }
 
+        // The button.png glyph of the entry last chosen (the menu's identity of an item: the lifts'
+        // four speeds share one object type).
+        [[nodiscard]] int SelectedButtonIcon() const noexcept
+        {
+            return selectedButtonIcon_;
+        }
+
         [[nodiscard]] std::uint16_t SelectedBigDecorIcon() const noexcept
         {
             return static_cast<std::uint16_t>(selectedBigDecorIcon_);
@@ -148,6 +155,7 @@ namespace GalaxyEggbert::Editor
         int selectedBlockType_;
         int selectedObjectType_;
         int selectedObjectVisualIcon_ = 0;
+        int selectedButtonIcon_ = 0;
         int selectedBigDecorIcon_ = 0;
         PlacementKind placementKind_ = PlacementKind::Block;
         int selectedSkyRegion_ = 0;

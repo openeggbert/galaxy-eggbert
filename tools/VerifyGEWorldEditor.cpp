@@ -1,5 +1,6 @@
 #include <GalaxyEggbert/Editor/AutoTile.hpp>
 #include <GalaxyEggbert/Editor/BoxRegion.hpp>
+#include <GalaxyEggbert/Editor/PaletteCategories.hpp>
 #include <GalaxyEggbert/Editor/EditCommandStack.hpp>
 #include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
@@ -579,6 +580,33 @@ int main()
         check(AutoTile::IsRightBorder(AutoTile::kEmpty, 35, 0, -1) == false &&
                   AutoTile::IsRightBorder(68, 35, 0, -1) == false && AutoTile::IsRightBorder(68, 35, 0, 1) == true,
               "IsRightBorder: air is no border; lava is none under a cell, one over it");
+    }
+
+    // ED-0003: the moving mechanisms' lifts are one type at the PC editor's four speeds (PlaceDecor4),
+    // the fifth entry the conveyor lift, the slime creature the big creature 54.
+    {
+        using GalaxyEggbert::Def::ObjectType;
+        bool found = false;
+        for (const auto& category : ConfirmedBlockCategories())
+        {
+            if (category.name != "Moving mechanisms")
+            {
+                continue;
+            }
+            found = true;
+            const auto& types = category.objectTypeIds;
+            check(types.size() >= 10 && types[0] == 1 && types[1] == 1 && types[2] == 1 && types[3] == 1 &&
+                      types[4] == 47 && types[9] == 54,
+                  "the four lifts are type 1, the conveyor lift 47, the slime creature 54");
+        }
+        check(found, "the palette has its moving mechanisms");
+        const auto slow = LiftPreset(ObjectType::ObjectType1, 21);
+        const auto fast = LiftPreset(ObjectType::ObjectType1, 19);
+        const auto mixed = LiftPreset(ObjectType::ObjectType1, 28);
+        check(slow && slow->advance == 20.0f && slow->rest == 20.0f && fast && fast->advance == 6.0f &&
+                  fast->rest == 3.0f && mixed && mixed->advance == 5.0f && mixed->recede == 22.0f &&
+                  !LiftPreset(ObjectType::ObjectType4, 21),
+              "the lifts' speeds per cell and rests are the PC editor's (slow 20, fast 6/3, fast-slow 5/22/2)");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

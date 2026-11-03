@@ -360,6 +360,15 @@ namespace GalaxyEggbert::Editor
             record.posEndX = record.posStartX;
             record.posEndY = record.posStartY;
             record.posEndZ = record.posStartZ;
+            // A lift takes its menu entry's speed per cell and its rests (the PC editor's
+            // PlaceDecor4: slow, normal, fast, fast/slow; the conveyor lift as the normal one);
+            // setting its end scales the step by the cells it covers.
+            if (const auto preset = LiftPreset(record.type, palette_.SelectedButtonIcon()))
+            {
+                record.stepAdvanceTicks = preset->advance;
+                record.stepRecedeTicks = preset->recede;
+                record.timeStopStartTicks = record.timeStopEndTicks = preset->rest;
+            }
             command.kind = EditCommand::Kind::MoveObjectEdit;
             command.objectAnchorX = x;
             command.objectAnchorY = y;
@@ -778,7 +787,21 @@ namespace GalaxyEggbert::Editor
             // A creature's patrol takes its type's own speed and rests, as the original editor
             // gave them (BD-0016); the fields stay editable afterwards.
             const auto& definition = Game::GetObjectDefinition(after.type);
-            if (definition.patrolTicksPerCell > 0)
+            if (IsLiftType(after.type))
+            {
+                // The original multiplies the lift's per-cell step by the cells to its end
+                // (PlaceDecor4: stepAdvance *= dist); here the step per cell is the record's over
+                // the cells it covered before, so the end can be set again.
+                const auto cellsOf = [](const MoveObjectRecord& r) {
+                    return std::max({1.0f, std::fabs(r.posEndX - r.posStartX), std::fabs(r.posEndY - r.posStartY),
+                                     std::fabs(r.posEndZ - r.posStartZ)});
+                };
+                const float before = cellsOf(selectedObject_);
+                const float now = cellsOf(after);
+                after.stepAdvanceTicks = selectedObject_.stepAdvanceTicks / before * now;
+                after.stepRecedeTicks = selectedObject_.stepRecedeTicks / before * now;
+            }
+            else if (definition.patrolTicksPerCell > 0)
             {
                 const float cells = std::max({std::fabs(after.posEndX - after.posStartX),
                                               std::fabs(after.posEndY - after.posStartY),

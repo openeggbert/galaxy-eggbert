@@ -23,6 +23,38 @@
 
 namespace GalaxyEggbert::Editor
 {
+    // A lift's speed per cell and rests by its menu entry (20 Hz ticks; the PC editor's PlaceDecor4,
+    // blupi_recon decdesign.cpp: slow 20/20/20, normal 10/10/10, fast 6/6/3, fast/slow 5 up, 22
+    // back, 2). Keyed by the entry's button.png glyph (PaletteCategories: 21, 20, 19, 28; the
+    // conveyor lift 121 as the normal one).
+    struct LiftTiming
+    {
+        float advance;
+        float recede;
+        float rest;
+    };
+    [[nodiscard]] inline bool IsLiftType(GalaxyEggbert::Def::ObjectType type) noexcept
+    {
+        using T = GalaxyEggbert::Def::ObjectType;
+        return type == T::ObjectType1 || type == T::ObjectType47 || type == T::ObjectType48;
+    }
+    [[nodiscard]] inline std::optional<LiftTiming> LiftPreset(GalaxyEggbert::Def::ObjectType type, int buttonIcon) noexcept
+    {
+        if (!IsLiftType(type))
+        {
+            return std::nullopt;
+        }
+        switch (buttonIcon)
+        {
+        case 21: return LiftTiming{20.0f, 20.0f, 20.0f};
+        case 20: return LiftTiming{10.0f, 10.0f, 10.0f};
+        case 19: return LiftTiming{6.0f, 6.0f, 3.0f};
+        case 28: return LiftTiming{5.0f, 22.0f, 2.0f};
+        case 121: return LiftTiming{10.0f, 10.0f, 10.0f};
+        default: return std::nullopt;
+        }
+    }
+
     // Owns one in-game 3D editing session: camera and placement input,
     // palette interaction, undo history, object editing, persistence and
     // transitions to the world browser or play-test mode.

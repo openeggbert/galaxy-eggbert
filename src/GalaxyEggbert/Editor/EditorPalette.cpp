@@ -169,6 +169,9 @@ namespace GalaxyEggbert::Editor
                 const int bigDecorIcon =
                     index >= 0 && index < static_cast<int>(bigDecorIconIds.size()) ?
                         bigDecorIconIds[static_cast<std::size_t>(index)] : 0;
+                const auto& buttonIconIds = ContentButtonIconIds();
+                selectedButtonIcon_ = index >= 0 && index < static_cast<int>(buttonIconIds.size()) ?
+                    buttonIconIds[static_cast<std::size_t>(index)] : 0;
                 if (spawnPoint > 0)
                 {
                     placementKind_ = PlacementKind::SpawnPoint;

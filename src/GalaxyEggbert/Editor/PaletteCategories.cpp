@@ -62,8 +62,12 @@ namespace GalaxyEggbert::Editor
                                    BlitzEmitter, Crusher},
                                   {2, 3, 96, 0, 0, 0, 0, 0, 0, 40},
                                   {8, 9, 107, 26, 42, 41, 131, 143, 132, 101, 120, 122}),
+            // The four lifts are one type at four speeds (the PC editor's PlaceDecor4, blupi_recon
+            // decdesign.cpp: slow, normal, fast, fast/slow; WorldEditor applies LiftPreset), the
+            // fifth the conveyor lift (47); the slime creature is the big creature 54 (type 18 is
+            // in no original world).
             FreeMixedMenuCategory("Moving mechanisms", {},
-                                  {1, 47, 48, 1, 1, 4, 17, 20, 44, 18, 16, 32, 33},
+                                  {1, 1, 1, 1, 47, 4, 17, 20, 44, 54, 16, 32, 33},
                                   {21, 20, 19, 28, 121, 16, 55, 60, 113, 140, 54, 95, 99}),
             FreeMixedMenuCategory("Treasures", {},
                                   {5, 6, 26, 25, 30, 29, 31, 200, 55},
