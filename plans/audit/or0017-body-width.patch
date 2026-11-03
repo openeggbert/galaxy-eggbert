@@ -1,18 +1,19 @@
 diff --git a/src/GalaxyEggbert/Game/Autoplay.cpp b/src/GalaxyEggbert/Game/Autoplay.cpp
-index a24f22b4..a15726ec 100644
+index a24f22b4..07a9c85a 100644
 --- a/src/GalaxyEggbert/Game/Autoplay.cpp
 +++ b/src/GalaxyEggbert/Game/Autoplay.cpp
-@@ -490,6 +490,9 @@ namespace GalaxyEggbert::Game
+@@ -490,6 +490,10 @@ namespace GalaxyEggbert::Game
                  commandStartTick_ = state.tick;
                  jumped_ = false;
                  jumpTicksLeft_ = 0;
 +                goLastX_ = state.x;
 +                goLastZ_ = state.z;
 +                goStillTicks_ = 0;
++                goLastYaw_ = state.yawDegrees;
                  if (command.kind != Kind::Log && command.kind != Kind::Expect && command.kind != Kind::Trace)
                  {
                      Write(state, command.Where() + ": " + command.text);
-@@ -520,13 +523,27 @@ namespace GalaxyEggbert::Game
+@@ -520,13 +524,30 @@ namespace GalaxyEggbert::Game
                  const float dx = command.x - state.x;
                  const float dz = command.z - state.z;
                  const float distance = std::sqrt(dx * dx + dz * dz);
@@ -22,10 +23,13 @@ index a24f22b4..a15726ec 100644
 +                // it): he has arrived when he has not moved for 2 ticks that close, and a jump
 +                // asked for at a distance is taken there too (a step's face meets his body early).
 +                constexpr float kBodyHalfWidth = 18.0f / 64.0f;
-+                const bool still = std::fabs(state.x - goLastX_) < 0.001f && std::fabs(state.z - goLastZ_) < 0.001f;
-+                goStillTicks_ = still ? goStillTicks_ + 1 : 0;
++                // Still and not turning (he turns on the spot before he sets off), past a go's first ticks.
++                const bool still = std::fabs(state.x - goLastX_) < 0.001f && std::fabs(state.z - goLastZ_) < 0.001f &&
++                                   std::fabs(state.yawDegrees - goLastYaw_) < 0.5f;
++                goStillTicks_ = still && state.tick - commandStartTick_ >= 6 ? goStillTicks_ + 1 : 0;
 +                goLastX_ = state.x;
 +                goLastZ_ = state.z;
++                goLastYaw_ = state.yawDegrees;
 +                if (command.jumpAt >= 0.0f && !jumped_ &&
 +                    (distance <= command.jumpAt ||
 +                     (goStillTicks_ >= 2 && distance <= command.jumpAt + kBodyHalfWidth + 0.02f)))
@@ -43,16 +47,17 @@ index a24f22b4..a15726ec 100644
                  if (!done)
                  {
 diff --git a/src/GalaxyEggbert/Game/Autoplay.hpp b/src/GalaxyEggbert/Game/Autoplay.hpp
-index c54b4d07..60aac00b 100644
+index c54b4d07..4268ef7a 100644
 --- a/src/GalaxyEggbert/Game/Autoplay.hpp
 +++ b/src/GalaxyEggbert/Game/Autoplay.hpp
-@@ -152,6 +152,10 @@ namespace GalaxyEggbert::Game
+@@ -152,6 +152,11 @@ namespace GalaxyEggbert::Game
          int jumpTicksLeft_ = 0;
          int traceTicksLeft_ = 0;
          bool jumped_ = false;
 +        // A go's last position and how many ticks he has not moved from it (pressed against a wall).
 +        float goLastX_ = 0.0f;
 +        float goLastZ_ = 0.0f;
++        float goLastYaw_ = 0.0f;
 +        int goStillTicks_ = 0;
          bool finished_ = false;
          int failures_ = 0;
