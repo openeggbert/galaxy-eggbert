@@ -340,6 +340,8 @@ ledgers before repeating any discovery. Where it stands:
   in 042/045): through its holes the cube's own inside shows, unlit -- open; (4) frames with Blupi out of view while he walks down a stairwell (024
   t3600) or flies the helicopter in a shaft (043 t6120) -- fixed by (2). The second pass (with (1) and (2), `build-probe/play-pass/`, 78/78 after 022's
   fix) is the current look at the campaign; its sheets wait to be reviewed world by world.
+  The web build was rebuilt after all of it (2026-11-03, evening) and loaded in headless Chrome:
+  120 models, 93/93 sounds, the menu drawn, no error but the favicon's 404.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
   (`tools/rd4_to_gltf/top_texture.py`, run after the bridge's export; evidence
   `plans/evidence/clay-bridge-terre.png`). Q-001 (grass leaves) stays the owner's: 8,997 grass
