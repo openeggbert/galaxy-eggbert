@@ -208,19 +208,21 @@ go 52.6 31.5 jump 1.5 tol 0.15
 until ground = 1
 expect y >= 29.95
 # The gallery's south treasure (56, 30, 30), its four eggs along x 57, its north treasure
-# (56, 30, 8), both away from the stars (54, 30, 29) and (54, 30, 9).
+# (56, 30, 8), both taken from more than 2.25 cells across the stars (54, 30, 29) and (54, 30, 9):
+# the original's wake box (BD-0053).
 go 55.5 31.6
 go 56.3 30.6 tol 0.15
 go 57 28
 go 57 13 until eggs = 8
 go 57 8.5
-go 56 8 tol 0.15
+go 56.3 8 tol 0.05
 until treasures = 13 max 120
 # G, the door "13" (x 53-55, z 4) onto the corridor of stars (z 1-3, walk 30). The drink (twenty
 # seconds unseen) does not last there and back (about 74 cells), so it is left: each curtain of
 # stars is woken from just east of it, he steps back through the door into the
 # gallery, and homing on him they run into the corridor's south wall and burst (they trail him
 # east along the corridor, then turn towards him: at most 2.5 cells, under 500 ticks).
+go 57 6.5
 go 54 5.5
 go 54 2
 go 49.6 2 tol 0.1
@@ -292,13 +294,16 @@ go 71 53.8 tol 0.1
 near 71 22 55 0.15 max 300
 go 71.5 56.2 tol 0.15
 # The treasure hall (walk 20): over the crushers in its doorway (squashed: ten seconds, no jump,
-# half speed), waited out clear of the stars.
-go 71.5 60.3 tol 0.15
+# half speed), waited out clear of the stars: z 59.6 is beyond the wake box's 2.25 cells from
+# the column at x 73 (BD-0053).
+go 71.5 59.6 tol 0.1
 wait 620
 # Seven treasures along z 62; two columns of four stars stacked at x 67 and 73 over the row. The
 # two lowest of a column wake as he takes the treasure beside it: he takes it and goes round the
 # column's south side to the next, west to east, the woken stars trailing behind him.
 # Each treasure taken from beside it within the original's 28 px boxes (BD-0021): 0.38 off.
+# The first (70, 62) reached along z 59.6, three cells from both columns.
+go 70 59.6 tol 0.1
 go 70 61.62 tol 0.05
 # West along z 59.5, beyond the x 67 column's wake reach (2 cells), so it wakes only at 66.
 go 70 59.5
@@ -352,15 +357,12 @@ go 84.6 80.6
 go 82 81.6
 go 79.5 82 tol 0.2
 wait 400
-# The cage of the arrow: from its doorway (82, 84) wake the stars of its north row one at a time
-# and step back and aside, so that homing on him they burst on the cage's wall beside the
-# doorway: (82, 27, 86) from the doorway's middle, (81, 27, 86) from its west side, then aside
-# west; (83, 27, 86) from its east side, then aside east.
+# The cage of the arrow: from its doorway (82, 84) wake the stars of its north row and step back
+# and aside, so that homing on him they burst on the cage's wall beside the doorway. The wake box
+# (BD-0053) reaches 2.25 cells across: from the doorway's west side (81.6) it wakes x 80-83, then
+# aside west; from its east side (82.4) the last, x 84, then aside east. (From the middle all
+# five would wake at once and the east one come through the doorway.)
 go 82 82.8
-go 82 84.1 tol 0.05
-go 82 82.6 tol 0.2
-go 80 82.3 tol 0.2
-wait 400
 go 81.6 82.8 tol 0.1
 go 81.6 84.3 tol 0.05
 go 81.6 82.6 tol 0.2

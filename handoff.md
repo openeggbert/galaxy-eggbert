@@ -262,9 +262,8 @@ ledgers before repeating any discovery. Where it stands:
   hall's first trench three wide under two bars along Z; hub 060 replayed). Looked at without a
   change: 046's single bar (over a one-cell gap in the original's key room; its role in the
   route is not clear from the map) and 125's bars under girders and lava strip (a helicopter
-  world; the original's on-foot route there needs the video). Open: the follower star's wake (BD-0053, Q-007): the original's box
-  breaks 052/053's routes, which were laid out with Galaxy's sphere; the sphere stays until the
-  owner decides. Probe world `build-probe/wave-e/probe_burn.py` (995) has a fan, a pool,
+  world; the original's on-foot route there needs the video). The follower star's wake (BD-0053, Q-007) was later
+  (2026-11-03) brought to the original's box, 052/053 re-laid for it (78/78). Probe world `build-probe/wave-e/probe_burn.py` (995) has a fan, a pool,
   a lava cell and a bulldozer for live looks; typed cheats in `qa_live` steps need
   `keydown`/`keyup` with a sleep (a bare `key` is too short to be seen by the game).
 - Then (2026-11-03, latest): **Wave E, world 199's lessons all in** (LV-0078; `lesson_inventory.md`
@@ -308,6 +307,11 @@ ledgers before repeating any discovery. Where it stands:
   2026-11-03 after all of it: 78/78 playthroughs pass; ctest 112/112;** the web build rebuilt and
   loaded in headless Chrome over DevTools (119 models, 93/93 sounds, the menu drawn; Chrome 155 needs
   a fresh `--user-data-dir` and a few seconds before port 9333 answers).
+- 2026-11-03, after wave F: BD-0053 fixed -- the follow star wakes in the original's box
+  (`InteractionSystem`, `VerifyInteractionSystem` 1.555); 053's crossing star, gallery approach,
+  hall columns (y 21-24) and cage choreography, 052's S2 drop timed to its lift and its hangar and
+  well stars re-laid from a traced flight (`tools/autoplay` `trace`; the star-free probe world
+  trick: generate the world with `star` stubbed into `build-probe/probe-worlds-052/`). 78/78.
 - Then (2026-11-03, last): the editor ledger has no unreviewed row (ED-0002 by the storage verifier,
   ED-0004 driven live by `tools/qa_steps/editor_playtest.txt`, ED-0005 a mixed undo history in
   `VerifyGEWorldEditor`); the asset ledger has none either (`af4a487`: the survey's root folder was

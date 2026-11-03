@@ -241,6 +241,39 @@ int main(int argc, char** argv)
               "seen again, the dormant one wakes and the awake one homes");
     }
 
+    // 1.555. BD-0053: a dormant follower wakes inside the original's box (MoveObjectFollow):
+    // 144 px across on X and on Z, from 149 px with the star over Blupi to 158 under -- so two
+    // cells off on a diagonal and 2.2 cells over him it wakes; 2.4 over or 2.3 across it sleeps.
+    {
+        WorldRuntime boxWorld;
+        boxWorld.LoadFromVwrFile(worldPath);
+        struct Case { float dx, dy, dz; bool wakes; const char* what; };
+        const Case cases[] = {
+            {2.0f, 0.0f, 2.0f, true, "two cells off on a diagonal (outside the old sphere)"},
+            {0.0f, 2.2f, 0.0f, true, "2.2 cells over him"},
+            {0.0f, -2.4f, 0.0f, true, "2.4 cells under him"},
+            {0.0f, 2.4f, 0.0f, false, "2.4 cells over him"},
+            {2.3f, 0.0f, 0.0f, false, "2.3 cells across"},
+            {0.0f, 0.0f, -2.3f, false, "2.3 cells across on Z"},
+        };
+        for (const Case& c : cases)
+        {
+            auto& objects = boxWorld.GetMobileObjectsMutable();
+            objects.clear();
+            MobileObjSpec star;
+            star.type = GalaxyEggbert::Def::ObjectType::ObjectType96;
+            star.posStartX = star.posEndX = star.currentX = 10.0f + c.dx;
+            star.posStartY = star.posEndY = star.currentY = 20.0f + c.dy;
+            star.posStartZ = star.posEndZ = star.currentZ = 10.0f + c.dz;
+            objects.push_back(star);
+            InteractionSystem boxInteraction;
+            boxInteraction.Update(dt, boxWorld, 10.0f, 20.0f, 10.0f, 0.0f, sound, false, false);
+            const bool woke = boxWorld.GetMobileObjects()[0].type == GalaxyEggbert::Def::ObjectType::ObjectType97;
+            const std::string label = std::string("BD-0053: a dormant star ") + c.what + (c.wakes ? " wakes" : " sleeps");
+            check(woke == c.wakes, label.c_str());
+        }
+    }
+
     // 1.56. BD-0004: a follow star homing on Blupi is stopped (and explodes) only by what
     // `Decor::TestPath` stops: a block with a solid quarter-cell, or a crate; it passes empty-mask
     // decor (a cobweb, 403) and water.
@@ -2200,7 +2233,7 @@ int main(int argc, char** argv)
         // ObjectDelete call at all). Placed at Y=20 -- well above the
         // sample world's real Y range [0,13] -- so it (and the touching
         // Blupi position below) can never coincide with real solid terrain;
-        // since kFollowerWakeRadius > kHazardContactRadius, touching a
+        // since the wake box reaches beyond kHazardContactRadius, touching a
         // dormant follower always wakes it too (plan.md E3D-MIG-137), so
         // this contact is expected to also promote it to 97 before the pop
         // check runs, same frame.
@@ -2659,7 +2692,7 @@ int main(int argc, char** argv)
     {
         // 14a. Wake + gradual homing progress in open air: a dormant
         // follower placed 1.5 grid units from Blupi (within
-        // kFollowerWakeRadius ~2.06, so it wakes on contact) should wake
+        // the wake box, 2.25 across, so it wakes on contact) should wake
         // (type -> 97) and creep toward Blupi over many small per-frame
         // steps -- NOT teleport there in one frame (real speed is a slow
         // 1 real px/tick).

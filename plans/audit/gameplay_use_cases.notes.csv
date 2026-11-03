@@ -93,7 +93,7 @@ GP-0091,CONFIRMED_MATCH,InteractionSystem lifts (47),"the conveyor lift: the lif
 GP-0092,CONFIRMED_MATCH,InteractionSystem lifts (48),"as 47, carrying the other way (2026-11-03)",VerifyInteractionSystem,
 GP-0093,CONFIRMED_MATCH,InteractionSystem generic hazard (2),"the patrolling enemy: its icons (ENEMY-010), contact box (BD-0021), the near miss's Ouf4, no taunt ahead (BD-0044), destroyed on contact (2026-11-03)",VerifyInteractionSystem; playthroughs,
 GP-0094,CONFIRMED_MATCH,InteractionSystem generic hazard (3),"the hanging mine: the top 24 px of its cell (BD-0021), harmless to a crouching Blupi (ENEMY-011) (2026-11-03)",VerifyInteractionSystem; playthroughs,
-GP-0095,CONFIRMED_MATCH,InteractionSystem follower (96),"dormant star: channel 92 as it wakes (ENEMY-029/031); its wake a sphere, not the original's box (BD-0053 open, GP-0496) (2026-11-03)",VerifyInteractionSystem; playthroughs,
+GP-0095,CONFIRMED_MATCH,InteractionSystem follower (96),"dormant star: channel 92 as it wakes (ENEMY-029/031); it wakes in the original's box (BD-0053, GP-0496) (2026-11-03)",VerifyInteractionSystem; playthroughs,
 GP-0096,FIXED_AND_VERIFIED,InteractionSystem follower (97),"homing 1 px a tick per axis, stopped by TestPath's blocks (BD-0004), flies away when it explodes (BD-0049) (2026-11-03)",VerifyInteractionSystem,
 GP-0097,FIXED_AND_VERIFIED,InteractionSystem generic hazard (4),"the bulldozer: icons (ENEMY-012/013), the decoy trap (MovePersoDetect), flies away spinning 7 (BD-0049) (2026-11-03)",VerifyInteractionSystem; playthroughs,
 GP-0098,CONFIRMED_MATCH,TryCollectBasicPickup (treasure),"icon 6 to (430,430), four ObjectType39 sparkles (BD-0023 review)",VerifyInteractionSystem; all playthroughs,
@@ -494,7 +494,7 @@ GP-0492,CONFIRMED_MATCH,InteractionSystem::CrateInFront,the nearest crate ahead 
 GP-0493,FIXED_AND_VERIFIED,CratePush::PixelsPerTick,transcribed (2026-11-01),VerifyInteractionSystem,
 GP-0494,FIXED_AND_VERIFIED,InteractionSystem::MockeryDetect,"the original's boxes, list, order and air reach; lava a cell further down as Galaxy's floor (BD-0044) (2026-11-03)",VerifyInteractionSystem; live probe 995,
 GP-0495,FIXED_AND_VERIFIED,InteractionSystem Cloud aura,the original's box (100 px across on X and Z; 87 up/down) since BD-0012,VerifyInteractionSystem,
-GP-0496,REPRODUCED_DEFECT,InteractionSystem follower wake,"the original wakes the star in a box (144 px across, 149 over to 158 under); Galaxy a sphere of 132 px; the box breaks 052/053's routes (BD-0053, Q-007) (2026-11-03)",,the owner's call (Q-007)
+GP-0496,FIXED_AND_VERIFIED,InteractionSystem follower wake,"the star wakes in the original's box (144 px across on X and Z, 149 over to 158 under), no longer a sphere of 132 px; 052/053 re-laid for it (BD-0053, Q-007) (2026-11-03)",VerifyInteractionSystem 1.555; playthroughs 050/052/053,
 GP-0497,FIXED_AND_VERIFIED,InteractionSystem MoveObjectTouches,"BD-0021: the boxes per type, X and Z alike, for hazards and pickups",VerifyInteractionSystem; all playthroughs,
 GP-0498,FIXED_AND_VERIFIED,InteractionSystem::LiftWithinOverHeight,a lift within OVERHEIGHT under the overcraft lets it climb (BD-0052) (2026-11-03),VerifyInteractionSystem,
 GP-0499,FIXED_AND_VERIFIED,InteractionSystem::TryPerso,"no decoy beside a charger (31), its box 10 px wider each side (BD-0051) (2026-11-03)",VerifyInteractionSystem,

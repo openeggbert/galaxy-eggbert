@@ -175,15 +175,18 @@ def main(argv) -> int:
         w.place(O.HELICOPTER, x, 11, z)
     # Three treasures only a helicopter reaches, eight stars round them: on a column in the
     #    middle (walk 21), in an alcove high in the west wall (walk 17), and in a pen on the floor
-    #    walled three high (out of a jump's reach) in the north-east corner.
+    #    walled three high (out of a jump's reach) in the north-east corner. The stars stand where
+    #    a careful flight passes them asleep by the original's wake box (BD-0053: 2.25 cells
+    #    across, 2.33 over Blupi; re-laid from the earlier sphere's places with
+    #    tools/autoplay's traced flight, every one cleared by 0.3 cells or more).
     plates(50, 11, 27, 51, 20, 28)
     w.place(O.TREASURE, 50, 21, 27)
-    for s in ((49, 22, 26), (52, 22, 29), (50, 23, 29)):
+    for s in ((49, 24, 26), (52, 24, 29), (50, 24, 29)):
         star(w, *s)
     plates(38, 15, 25, 41, 19, 29)
     w.fill(39, 17, 26, 41, 18, 28, 0)
     w.place(O.TREASURE, 39, 17, 27)
-    for s in ((42, 18, 25), (42, 18, 29), (43, 19, 27)):
+    for s in ((42, 18, 24), (42, 18, 30), (43, 20, 27)):
         star(w, *s)
     for x in range(55, 61):
         for y in (11, 12, 13):
@@ -192,7 +195,7 @@ def main(argv) -> int:
         for y in (11, 12, 13):
             w.set(55, y, z, 81)
     w.place(O.TREASURE, 58, 11, 22)
-    for s in ((57, 13, 21), (59, 13, 23)):
+    for s in ((57, 14, 20), (60, 14, 23)):
         star(w, *s)
     if stage >= 6:                         # levelcheck cannot fly: stand-in lifts
         w.place(O.LIFT, 52, walk - 1, 36, end=(50, 20, 27))     # ledge -> column
@@ -206,10 +209,12 @@ def main(argv) -> int:
     # A little water in the floor where the tunnel comes in: a helicopter that meets it is lost.
     plates(49, 9, 47, 51, 9, 47)
     w.fill(49, 10, 47, 51, 10, 47, WATER)
-    # The last two treasures in the well's far corners, four stars over them.
+    # The last two treasures in the well's far corners, four stars over them: three over the
+    #    floor, where the original's wake box (2.33 cells over Blupi, BD-0053) leaves them asleep
+    #    for him on foot but not for a jump or a flight beside them.
     w.place(O.TREASURE, 47, 11, 53)
     w.place(O.TREASURE, 53, 11, 53)
-    for s in ((47, 13, 51), (48, 13, 53), (53, 13, 51), (52, 13, 53)):
+    for s in ((47, 14, 51), (48, 14, 53), (53, 14, 51), (52, 14, 53)):
         star(w, *s)
     # Up the well: two stars in its middle; the ledge of the red arrow along its south wall
     #    (walk 38) with four stars round the arrow.

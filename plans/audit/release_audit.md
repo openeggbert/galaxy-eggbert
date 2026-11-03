@@ -55,9 +55,9 @@ played it on a device.
 
 | Ledger | Rows | Not settled |
 |---|---|---|
-| `gameplay_use_cases.csv` | 538 | 1 REPRODUCED_DEFECT: BD-0053, the follower star's wake (owner's Q-007) |
+| `gameplay_use_cases.csv` | 538 | 0 (BD-0053, the follower star's wake, fixed after the audit: the original's box, 052/053 re-laid, 78/78) |
 | `world_lessons.csv` | 80 | 0 (55 match, 21 fixed, 2 adaptations, 2 not applicable); no human play pass (MR-0004) |
-| `behavior_differences.md` | 57 | BD-0053 open (Q-007); BD-0031 fixed, its live listening waits for a run with sound |
+| `behavior_differences.md` | 57 | none open; BD-0031 fixed, its live listening waits for a run with sound |
 | `editor_parity.md` | all ED rows | 0 unreviewed |
 | `asset_sources.csv` | 703 | 185 BLOCKED: the 56 `.max` (MR-0001, no licensed 3D Studio MAX) and the files waiting on them or on Q-004 |
 | `render_representation.csv` | 564 | 10 UNREVIEWED (D11's candidates: the owner's own list), 283 BLOCKED on Q-004 (terrain tiles as models) and Q-001/Q-002 (grass, lightning) |
@@ -68,7 +68,7 @@ Owner decisions (`owner_questions.md`, `manual_review.md`), none of which the co
 
 - Q-001 grass and Q-002 the lightning bolt in 3D (task #10); Q-003 the clay bridge's surface;
   Q-004 the terrain tiles as Ray Dream models; Q-005 the electrode's sparks; Q-006 the glue
-  death's strands; Q-007 the follower star's wake (BD-0053); Q-008 world 105's lava floor;
+  death's strands; Q-008 world 105's lava floor;
   Q-009 KVM or a phone for the Android test.
 - D11: the owner's list of models that look wrong (`plans/inventory/d11_candidates.md`).
 - MR-0001: the `.max` sources need a licensed 3D Studio MAX.

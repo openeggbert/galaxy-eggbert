@@ -17,7 +17,7 @@ to the fourteenth treasure; the door "14" (434) onto a crusher (317), a lava slo
 bobbing in pairs (20 ticks), three crushers before a row of seven treasures under two columns of
 stars, a lift up seven cells (42 ticks) to the last corridor and the red arrow in a pit of stars.
 21 treasures, 17 eggs, 67 stars, 10 wasps, 9 hanging mines, 8 moving mines, 3 mines, 5 lifts,
-the drink. The lesson of the mission: the stars wake within about two cells and home slowly —
+the drink. The lesson of the mission: the stars wake within about two cells (the original's box: 2.25 across, 2.33 over Blupi; BD-0053) and home slowly —
 lure them into walls, or slip past them unseen.
 
 ## 3D design

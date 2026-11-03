@@ -829,25 +829,29 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyInteractionSystem` (in reach at 0.5 and 1.1 cells under, not at 1.4 nor
   0.9 across); ctest.
 
-## BD-0053 — the follower star wakes within a sphere, not the original's box (gameplay) — REPRODUCED_DEFECT
+## BD-0053 — the follower star woke within a sphere, not the original's box (gameplay) — FIXED_AND_VERIFIED
 
 - Original (`MoveObjectFollow`, Decor.cpp:9646-9678; `BlupiRect` on foot 11-58 px): the dormant
   star (96) wakes (97, channel 92) when its cell padded by 100 px meets Blupi's 16-44 px strip,
   11-58 px under his top: 144 px either way across, from 149 px over him to 158 under.
-- Galaxy wakes it within a sphere of 132 px (2.06 cells): the same straight across, but not two
+- Galaxy woke it within a sphere of 132 px (2.06 cells): the same straight across, but not two
   cells off on a diagonal nor two over him, where the box wakes it.
-- Tried 2026-11-03 (the box, X and Z alike across): 75 of the 78 playthroughs passed; 052 and
-  053 (and 050, which plays 052) failed -- their 101 stars were laid out and their routes played
-  with the sphere (`world052.py`: "it wakes within two cells of Blupi"). 053 was brought through
-  (its column stars a cell higher and five route changes), 052 not (its helicopter's column,
-  alcove and pen treasures each have stars a diagonal cell off). Reverted to the sphere. The box,
-  for when it returns: `std::fabs(dx) < 144/64 && std::fabs(dz) < 144/64 && dy < 149/64 &&
-  dy > -158/64` (dy the star over Blupi, cells); 053's adaptation: its hall's columns at y 21-24
-  or 22-25, the treasures taken from 2.38 cells off the gallery's stars, the door reached by
-  (57, 6.5), the crushers waited out at z 59.6, the hall's first treasure reached along z 59.6,
-  the cage's row woken from the doorway's west then east side only.
-- Next: the owner's call (`plans/audit/owner_questions.md` Q-007): re-lay 052's and 053's stars
-  for the box, or keep the sphere as the 3D adaptation.
+- Fixed 2026-11-03 (Q-007 taken as recommended, the faithful-remake rule): `InteractionSystem`
+  wakes it in the box, across on X and on Z alike (`kFollowerWakeAcross/Over/Under`);
+  `VerifyInteractionSystem` 1.555 (a diagonal two cells off and 2.2 over wake; 2.4 over and 2.3
+  across sleep). The worlds laid out with the sphere re-laid where the box would wake a star the
+  route must pass asleep:
+  - 053: the lava crossing's southern star at z 59 (it woke as he waited for lift A); the gallery's
+    north treasure taken from x 56.3 and the door "13" reached by (57, 6.5); the treasure hall's
+    columns at y 21-24, its crushers waited out at z 59.6, its first treasure reached along z
+    59.6; the cage's north row woken from the doorway's west then east side.
+  - 052: S2's stars under the ceiling now wake as he passes (as the original's would, 2.33 cells
+    over him): the drop is timed to S2's lift so that he rides up into the pocket, where they
+    burst on its floor; the hangar's eight stars round the column, the alcove and the pen re-laid
+    from the route's traced flight to clear the box by 0.3 cells or more; the well foot's four
+    stars three over the floor.
+  Validation: 050, 052, 053 pass; the full regression 78/78 (`build-probe/wave-e/bd53-full.txt`);
+  CTest 112/112.
 
 ## BD-0054 — no sparks or flash at the crusher, no flash as the balloon bursts, no tentacle at the trap or the big creature (visual) — FIXED_AND_VERIFIED
 

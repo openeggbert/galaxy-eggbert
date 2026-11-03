@@ -24,19 +24,24 @@ go 56 50 tol 0.1
 until ground = 1 max 120
 expect y <= 35.05
 go 56 47
+# The four stars asleep under S2's ceiling (51-54, 33, 44) wake as he passes under them (the
+# original's wake box reaches 2.33 cells over him, BD-0053) and need about 13 s to come down to
+# him: the drop is timed to S2's lift (49, 44), about 420 ticks a round with 30 at each end (the
+# drop to the lift takes 211), so that he reaches it in its stop at the foot and rides up into the
+# pocket, where the stars homing on him burst on its floor.
+lift 49 31 44 max 600
+wait 222
 go 56 45 tol 0.1
 until y <= 31.05 max 300
 # The drop lands on the rods over the corner's pit (x 53-57, z 45): hung from westward onto S2's
 # floor.
 go 52.3 45 max 600
 expect y >= 30.95
-# S2 (walk 31): west along z 45, under and beside the four stars asleep under the ceiling
-# (51-54, 33, 44; two cells and more away), onto the lift (49, 44) from the east, up into the
-# pocket: its treasures along z 45 and z 43, off the lift's hole.
+# S2 (walk 31): west along z 45 under the stars, onto the lift from the east, up into the pocket:
+# its treasures along z 45 and z 43, off the lift's hole.
 go 50.3 44.6 tol 0.1
 face 270
-lift 49 35 44 max 600
-lift 49 31 44 max 600
+lift 49 31 44 max 60
 go 49 44 tol 0.1
 until y >= 34.95 max 300
 go 49 45.2
@@ -192,7 +197,7 @@ go 50 37 tol 0.95
 wait 40
 go 50 37 tol 0 with crouch until ground = 1 max 400
 # Through the tunnel over the water at its mouth (z 47) into the well's foot; out of the
-# helicopter for the last two treasures in the far corners, each past its two stars at y 13:
+# helicopter for the last two treasures in the far corners, under their two stars at y 14:
 # along x 47.8 to (47, 53), along x 52.2 to (53, 53).
 go 50 48.5 tol 0.5
 wait 40

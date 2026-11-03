@@ -111,8 +111,11 @@ def main(argv) -> int:
         #    stop 12, long enough to walk across while they touch.
         lift(w, (x, 13, 61), (x, 13, 57), ticks=36, stop=12)
         lift(w, (x, 13, 51), (x, 13, 56), ticks=36, stop=12)
-    for z in (52, 54, 56, 58, 60):                   # stars asleep two above the crossing
-        star(25 if z % 4 else 26, 16, z)
+    # Stars asleep two above the crossing. The southernmost at z 59, not 60: the original's wake box
+    #    (BD-0053, 2.25 cells along Z) would wake one at 60 while Blupi waits for lift A at the
+    #    bank's edge (z 61.7); it still wakes as he rides under it.
+    for z in (52, 54, 56, 58, 59):
+        star(25 if z % 4 == 2 else 26, 16, z)
     plates(17, 14, 46, 17, 16, 66)                   # low walls on the pool's sides
     plates(35, 14, 46, 35, 16, 66)
     w.place(O.EGG, 18, 14, 47)
@@ -292,8 +295,10 @@ def main(argv) -> int:
             w.set(x, 20, z, 0 if stage >= 6 else CRUSHER)
     for x in (64, 66, 68, 70, 72, 74, 76):
         w.place(O.TREASURE, x, 20, 62)
+    # The columns from a cell over the floor (y 21-24): the original's wake box (BD-0053) reaches
+    #    2.33 cells over Blupi, so the two lowest wake as he takes a treasure beside them.
     for x in (67, 73):
-        for y in (20, 21, 22, 23):
+        for y in (21, 22, 23, 24):
             star(x, y, 62)
     w.bigdecor(BALL_MACHINES[2], 61, 20, 59)
     w.bigdecor(BALL_MACHINES[2], 61, 20, 65)

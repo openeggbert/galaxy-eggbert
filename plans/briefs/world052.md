@@ -9,7 +9,7 @@ original); `--stage K out` writes the staged variants for `levelcheck.py`.
 0/12 → 12/12 at 4:39:55). One corridor of riveted plates cut by six treasure doors that open with
 2, 4, 5, 6, 7 and 10 treasures (422, 424–427, 430). Each stretch's treasures lie in a pocket
 above it, reached by a small lift (20 ticks), or in a pit below it; follow stars (ObjectType96,
-34 of them) sleep round them and wake when Blupi comes within about two cells, then home on him
+34 of them) sleep round them and wake when Blupi comes within about two cells (the original's box: 2.25 across, 2.33 over him; BD-0053), then home on him
 slowly (one pixel a tick) and burst against any wall. Past the door "7" a room of eight
 helicopters with three treasures only flight reaches; past the door "10" two more, a little
 water (92), and a shaft Blupi flies up past more stars to the red arrow. 12 treasures, 34

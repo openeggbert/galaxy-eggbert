@@ -66,7 +66,7 @@ option.
 
 Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adaptation (M3D-0005).
 
-## Q-007 — the follower star's wake: the original's box or Galaxy's sphere? (2026-11-03)
+## Q-007 — the follower star's wake: the original's box or Galaxy's sphere? (2026-11-03) — DONE: the box
 
 - The original wakes a sleeping star when Blupi is within 144 px across and from 149 px over
   him to 158 under (a box, `MoveObjectFollow`); Galaxy uses a sphere of 132 px (2.06 cells).
@@ -76,7 +76,8 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   a cell higher, five route changes); 052 needs its helicopter section's stars re-laid.
 - Options: (a) the box, with 052/053 re-laid (faithful; a day's level work); (b) keep the sphere
   as the 3D adaptation (as now). Recommendation: (a), when the levels are revisited.
-- Meanwhile: the sphere stays (BD-0053 open).
+- Taken 2026-11-03 as recommended, (a): the box, 052 and 053 re-laid (BD-0053). Reverting is one
+  line in `InteractionSystem` and the two worlds' generators in git.
 
 
 ## Q-008 — world 105's lava floor: the void, or a cheaper lava to draw it? (2026-11-03)

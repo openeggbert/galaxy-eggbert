@@ -926,13 +926,13 @@ namespace GalaxyEggbert::Game
         constexpr float kCloudAuraUpDown = 87.0f / 64.0f;
 
         // Follower wake (ObjectType96, plan.md E3D-MIG-137, Decor.cpp:9646-9678 MoveObjectFollow):
-        // the original's test is a box -- the follower's cell padded by 100 px on every side
-        // against Blupi's 16-44 px strip, 11-58 px under his top: 144 px either way across, from
-        // 149 px over him to 158 under. Galaxy keeps a sphere of 132 px (100 px of padding and a
-        // half cell): the worlds 052 and 053 (101 stars) were laid out and played through with
-        // it, and the box wakes stars two cells off on a diagonal or two over him that they leave
-        // asleep (BD-0053, open: plans/audit/owner_questions.md).
-        constexpr float kFollowerWakeRadius = (100.0f + 32.0f) / 64.0f;
+        // the original's box -- the follower's cell padded by 100 px on every side against
+        // Blupi's 16-44 px strip, 11-58 px under his top: 144 px either way across (on X and on Z
+        // alike in 3D), from 149 px with the star over him to 158 under (BD-0053; it replaced a
+        // sphere of 132 px, which left stars two cells off on a diagonal or two over him asleep).
+        constexpr float kFollowerWakeAcross = 144.0f / 64.0f;
+        constexpr float kFollowerWakeOver = 149.0f / 64.0f;
+        constexpr float kFollowerWakeUnder = 158.0f / 64.0f;
 
         // Real follower homing speed (ObjectType97, Decor.cpp:8025-8044):
         // exactly 1 real px/tick, independently per axis (a Chebyshev-
@@ -1680,7 +1680,8 @@ namespace GalaxyEggbert::Game
                 const float fwdx = obj.currentX - blupiX;
                 const float fwdy = obj.currentY - blupiY;
                 const float fwdz = obj.currentZ - blupiZ;
-                if (fwdx * fwdx + fwdy * fwdy + fwdz * fwdz < kFollowerWakeRadius * kFollowerWakeRadius)
+                if (std::fabs(fwdx) < kFollowerWakeAcross && std::fabs(fwdz) < kFollowerWakeAcross &&
+                    fwdy < kFollowerWakeOver && fwdy > -kFollowerWakeUnder)
                 {
                     obj.type = GalaxyEggbert::Def::ObjectType::ObjectType97;
                     sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel92);
