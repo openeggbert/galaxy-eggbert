@@ -208,6 +208,10 @@ namespace GalaxyEggbert::Game
             }
         }
 
+        // The machine panels' base colour, uniform 3 texels round in each of them.
+        constexpr float kPanelBaseU = 0.0625f;
+        constexpr float kPanelBaseV = 0.047f;
+
         constexpr DirectionalEntry kDirectionalEntries[] = {
             // Group A: single face + 5 sides flat color. Confident facing:
             // icon 392 has a light trim strip on the LEFT edge of the crop,
@@ -215,18 +219,22 @@ namespace GalaxyEggbert::Game
             // matched pair from the "architectural-kit" stone set) -- every
             // other icon in this group is a small symmetric/abstract
             // decoration with no reliable edge cue, so defaults to PosZ.
-            {3, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {4, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {5, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {6, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {8, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {9, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {10, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {11, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {12, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {13, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {14, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
-            {48, Pattern::SingleFaceRestColor, BoxFace::PositiveZ},
+            // The machine panels (3-14, 48: "a piece of machine, the other sides a plain blue") take
+            // their plain blue from the panel's own base at its top-left corner, uniform in every one
+            // of them: sampled by face (top, middle, bottom) the swatch caught a bolt or a green
+            // lamp, stretched over the face as a stripe or a green wedge (play pass 2026-11-03).
+            {3, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {4, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {5, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {6, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {8, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {9, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {10, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {11, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {12, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {13, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {14, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
+            {48, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, kPanelBaseU, kPanelBaseV},
             {186, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
             {187, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},
             {188, Pattern::SingleFaceRestColor, BoxFace::PositiveZ, 0.06f, 0.94f},

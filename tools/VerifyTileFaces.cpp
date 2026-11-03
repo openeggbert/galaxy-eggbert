@@ -337,6 +337,22 @@ int main()
               "turned to +X, the window is on +X and +Z takes the plain colour");
     }
 
+    // The machine panels' plain sides take the panel's base blue from its top-left corner, not a
+    // stripe of its bolts or lamps from the middle (play pass 2026-11-03: a green wedge on 114's floor).
+    {
+        bool cornered = true;
+        for (const int icon : {3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 48})
+        {
+            const auto f = faces(icon);
+            const auto tile = atlas.GetTileUv(icon);
+            const auto& side = face(f, BoxFace::NegativeX).uv;
+            const float u = ((side.u0 + side.u1) * 0.5f - tile.u0) / (tile.u1 - tile.u0);
+            const float v = ((side.v0 + side.v1) * 0.5f - tile.v0) / (tile.v1 - tile.v0);
+            cornered = cornered && u < 0.1f && v < 0.1f;
+        }
+        check(cornered, "the machine panels' plain sides sample the panel's base at its top-left corner");
+    }
+
     // A front model turns to the side with the most room to stand in (OR-0056 reopened): a model
     // standing on the floor counts the floor right beside it, a booth over Blupi's head the floor
     // two cells down; without room anywhere a row faces across itself.

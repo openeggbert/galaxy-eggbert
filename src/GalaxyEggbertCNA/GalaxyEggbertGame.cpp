@@ -6125,7 +6125,11 @@ namespace GalaxyEggbert::CNA
                 decalEffect_->Projection = camera_.Projection();
                 decalEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-                device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullNone);
+                // Each face only from its own side (AddBillboard winds a quad clockwise as seen from
+                // the side its right x up points to): drawn from both, the plate on the far side of a
+                // thin numbered post showed beside it mirrored, a 9 read as a 6 (play pass 2026-11-03).
+                device.setRasterizerStateProperty(
+                    Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
                 for (const auto& cell : signDecalCells_)
                 {
                     const auto found = signDecals_.find(cell.icon);
