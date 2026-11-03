@@ -539,6 +539,22 @@ int main(int argc, char** argv)
             check(sawFreefall, "walking off the bar's near end (no bar tile, gap below) drops Blupi "
                                 "into free-fall instead of releasing gracefully");
 
+            // BD-0057: wind under a bar is no floor (the original's IsPassIcon: its quarter mask is
+            // empty), so he hangs from it, as over the original 113's fan corridor.
+            Worlds::World windBarWorld;
+            windBarWorld.setBlock(kBarreX, 1, 71, Worlds::Block::make(static_cast<std::uint16_t>(110)));
+            windBarWorld.setBlock(kBarreX, 2, 71, Worlds::Block::make(static_cast<std::uint16_t>(138)));
+            windBarWorld.setBlock(kBarreX, 1, 72, Worlds::Block::make(BlockTypes::Ground));
+            windBarWorld.setBlock(kBarreX, 2, 72, Worlds::Block::make(static_cast<std::uint16_t>(138)));
+            BlupiController windHanger;
+            windHanger.SetPosition(barreWorldX, 2.0f, 71.0f - 50.0f);
+            windHanger.Step(windBarWorld, 0.0f, 0.0f, false, false, false, dt);
+            BlupiController blockStander;
+            blockStander.SetPosition(barreWorldX, 2.0f, 72.0f - 50.0f);
+            blockStander.Step(windBarWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(windHanger.IsSuspended() && !blockStander.IsSuspended(),
+                  "a bar over wind is hung from (the wind is no floor), over a block it is a landing (BD-0057)");
+
             // Ouf5 (Decor.cpp:4758-4767, 6277-6284): dropped off a bar, he shakes it off on landing
             // when he stands idle 10 to 50 ticks after letting go.
             {

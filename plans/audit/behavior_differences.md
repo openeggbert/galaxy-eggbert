@@ -880,3 +880,18 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Fix: the host keeps the copies of his pose (world transform, clip and its time, face) taken
   every 10 px (Manhattan, over X, Y and Z) while hidden and draws them fading over 20 ticks.
 - Validation: build, ctest; live, the typed `hidedrink` and a walk.
+
+## BD-0057 — a bar over wind read as a landing, not hung from (gameplay) — FIXED_AND_VERIFIED
+
+- Original (`Decor::GetTypeBarre`, Decor.cpp:7158-7186): a bar (138, 202) is a landing (2) only
+  where the tile under it is not passable (`!IsPassIcon`: its quarter mask not empty); over wind,
+  water, a drip or a teleporter's pillar he hangs from it. The original's 113 hangs its bars
+  (51-53 and 55-58, row 34) right over the wind of its fan corridor (row 35, fan 129 at x 50).
+- Galaxy (`BlupiController::GetBarreCellType`) asked `IsSolidAt`, which is "not air and not
+  decor": the wind's cell counted as a floor, the bar as a landing, so a jump up to such a bar never
+  caught it (found building 113's windy stretch: he rose into the bar's cell and fell back).
+- Fix: the tile under the bar is a floor only when its collision mask (the original's quarter
+  mask) is not empty, or a crate stands there (as in Blupi's collision).
+- Validation: `VerifyBlupiMovement` (a bar over wind is hung from, over a block it is a landing);
+  ctest 112/112; 113 and its hub 110 played through (the bars over the windy stretch). No other
+  shipped world has a bar over a passable tile (scanned).

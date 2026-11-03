@@ -804,7 +804,19 @@ namespace GalaxyEggbert::Game
         {
             return BarreCellType::None;
         }
-        const bool belowSolid = gy > 0 && IsSolidAt(world, gx, gy - 1, gz);
+        // The original's `!IsPassIcon` of the tile under the bar (Decor::GetTypeBarre,
+        // Decor.cpp:7180-7183): a landing only where that tile's quarter mask is not empty. Wind,
+        // water, a drip or a teleporter's pillar under a bar let him hang from it, as the original's
+        // 113 hangs its bars over the wind of a fan (BD-0057; IsSolidAt's coarse "not air" read the
+        // wind as a floor). A crate under it stays a floor, as in Blupi's collision.
+        bool belowSolid = false;
+        if (gy > 0)
+        {
+            const auto below = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy - 1),
+                                              static_cast<std::uint16_t>(gz));
+            belowSolid = IsCrateCell(gx, gy - 1, gz) ||
+                         (!below.isAir() && GalaxyEggbert::GetBlockDefinition(below.type()).collisionMask != 0);
+        }
         return belowSolid ? BarreCellType::LandingAvailable : BarreCellType::Hanging;
     }
 
