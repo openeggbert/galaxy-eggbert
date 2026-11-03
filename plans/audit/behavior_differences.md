@@ -457,7 +457,11 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   (BLUPIOFFY) lower than their position (Decor.cpp:867-875); Galaxy places every object at its
   cell (ResolveObjectVisualCenterY). Seen live (probe world 992, 2026-11-02): the bulldozer's
   model rests its tracks on the floor (its model carries the offset); the shooters and the big
-  creature still want a close look.
+  creature still want a close look. Closed 2026-11-03 by measure: the element sprites are 60 px in
+  a 64 px cell, and BLUPIOFFY (6) brings their bottom from 4 px over the cell's floor to 2 px into
+  it, Blupi's own convention; the creature's sprites reach their box's bottom row (0 px margin),
+  the bulldozer's 1 px; Galaxy stands each model's sprite box on the floor, so what is left of
+  the offset is 2 px down and the 2 px to the right, 0.03 of a cell each: not worth a shift.
 - Validation: `VerifyInteractionSystem` (32 px beside: not met; 26 px: met). No playthrough has
   a decoy and a small enemy in one world.
 
