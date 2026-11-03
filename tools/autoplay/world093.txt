@@ -160,11 +160,12 @@ go 41 89 until eggs = 10 max 600
 until eggs = 10 max 200
 # Round the box's west side to its doorway (44, 80) in the north wall, while the helicopter over
 # it (x 41-47, z 79) waits at its east end (its drops fall at its ends); the red arrow inside.
-go 40.3 87
-go 40.3 80.6 tol 0.1
+# The way by the box's west side (x 40) is one cell wide: along its middle (OR-0017).
+go 40 87
+go 40 80.6 tol 0.1
 near 47 16 79 0.05 max 600
-go 41.5 79.3
-go 44 79.3 tol 0.15
+go 41.5 79.2
+go 44 79.2 tol 0.1
 go 44 85 until exit = 1 max 600
 expect treasures = 2
 expect eggs = 10
