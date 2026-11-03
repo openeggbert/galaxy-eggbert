@@ -142,8 +142,9 @@ expect keys = 0
 # The pool (water y 12-19, its bottom walk 12): its chain of islands (walk 20) on four ferries
 # (2 wide, 60 ticks, 40 dwelling), stepping on as each lies at its near end and off at its far
 # end; the eggs on the first three islands, the blue key on the last (58, 23). The mines hang
-# over the islands' corners.
-go 47.5 29.3 tol 0.1
+# over the islands' corners. Along the bank (z 29) at z 29.1: the wall at z 30 is a half-width off
+# z 29.3 (OR-0017).
+go 47.5 29.1 tol 0.1
 lift 47 20 28 max 900
 go 47.5 28 tol 0.15
 lift 47 20 25 max 600
