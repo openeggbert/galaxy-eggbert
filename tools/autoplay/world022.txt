@@ -14,7 +14,7 @@ until treasures = 1 max 120
 # The water channel (z 67-68) jumped, treasure 2.
 go 49 69.8
 face 0
-go 49 66.0 jump 2.0
+go 49 66.0 jump 2.6
 until ground = 1
 expect y >= 10.95
 go 49 65 until treasures = 2
