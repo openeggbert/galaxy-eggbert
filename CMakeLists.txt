@@ -187,7 +187,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         if(NOT TARGET SDL3::SDL3)
             find_package(SDL3 CONFIG REQUIRED)
         endif()
-        target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3)
+        target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3 log)
     endif()
     target_include_directories(GalaxyEggbertCNA PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

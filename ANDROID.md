@@ -105,13 +105,21 @@ adb wait-for-device; adb shell getprop sys.boot_completed   # 1 when booted
 adb install -t -r app/build/intermediates/apk/debug/app-debug.apk
 adb shell am start -n org.openeggbert.speedyblupi/.SpeedyBlupiActivity
 adb exec-out screencap -p > screen.png
-adb logcat -s SDL SDL/APP          # the game's own lines are SDL/APP
+adb logcat -s SDL SDL/APP GalaxyEggbert   # GalaxyEggbert: the game's and CNA's stdout/stderr
 ```
 
 `-read-only` leaves the AVD as it was. The x86_64 images need KVM (`/dev/kvm`); without it the
 emulator falls back to software emulation (TCG), where Android itself barely runs (system
 watchdog restarts, "System UI isn't responding") and the game takes many minutes to load: enough
-to see it start, not to play.
+to see it start, not to play. A touch must then be held for a few seconds to fall within a frame.
+
+### Known limits (2026-11-03)
+
+- No 3D model (Blupi, the objects) is drawn on a GPU whose `GL_MAX_VERTEX_UNIFORM_VECTORS` is
+  256, such as the emulator's: CNA's skinned shader needs more and does not link
+  (`upstream_bugs.md` UB-007; logcat: `skinned (vertex-lit) link failed`). Terrain, sprites and
+  the HUD draw.
+- The first start copies ~125 MB of assets into internal storage (seconds on a phone).
 
 To uninstall:
 

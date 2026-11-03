@@ -9,12 +9,17 @@
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_system.h>
 
+#include <android/log.h>
+#include <unistd.h>
+
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <thread>
 
 namespace GalaxyEggbert::CNA
 {
@@ -110,5 +115,38 @@ namespace GalaxyEggbert::CNA
         }
         SDL_Log("GalaxyEggbert: copied %d assets into %s", copied, storage);
         return true;
+    }
+
+    void RedirectStdioToLogcat()
+    {
+        int fds[2];
+        if (pipe(fds) != 0)
+        {
+            return;
+        }
+        std::setvbuf(stdout, nullptr, _IOLBF, 0);
+        std::setvbuf(stderr, nullptr, _IONBF, 0);
+        dup2(fds[1], STDOUT_FILENO);
+        dup2(fds[1], STDERR_FILENO);
+        close(fds[1]);
+        std::thread([reader = fds[0]]() {
+            std::string line;
+            char buffer[512];
+            for (ssize_t n; (n = read(reader, buffer, sizeof buffer)) > 0;)
+            {
+                for (ssize_t i = 0; i < n; ++i)
+                {
+                    if (buffer[i] == '\n')
+                    {
+                        __android_log_write(ANDROID_LOG_INFO, "GalaxyEggbert", line.c_str());
+                        line.clear();
+                    }
+                    else
+                    {
+                        line += buffer[i];
+                    }
+                }
+            }
+        }).detach();
     }
 }

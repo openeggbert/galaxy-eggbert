@@ -172,6 +172,27 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   at it by an absolute path, which CNA reads without the APK walk
   (`GalaxyEggbertGame::LoadContent`, the `__ANDROID__` branch).
 
+## UB-007 — CNA EasyGL: the skinned shader needs more vertex uniforms than OpenGL ES 3.0 guarantees
+
+- **Repository:** libcna/cna (HEAD `5a754159d`; file last changed in `cfab65534`):
+  `modules/renderers/easygl/include/CNA/Internal/Renderers/EasyGL/GlStockShaderSources.hpp`, the
+  skinned vertex shaders (lines ~1049, ~1212, ~1605): `uniform mat4 uBones[72];` beside `uWVP`,
+  `uWorld` (mat4), `uNormalMatrix` (mat3), `uFogVector` and the rest.
+- **What happens:** 72 bones as `mat4` are 288 uniform vectors on their own; OpenGL ES 3.0 only
+  guarantees `GL_MAX_VERTEX_UNIFORM_VECTORS` = 256, and many Android GPUs report exactly that. There
+  the program does not link and every `SkinnedEffect` draw is skipped: no skinned model is drawn.
+  XNA's own `SkinnedEffect` keeps its 72 bones as 4x3 matrices (216 vectors) for this reason.
+- **Seen:** Galaxy Eggbert's APK in the x86_64 API 35 emulator (SwiftShader, 2026-11-03), logcat:
+  `[CNA EasyGL 3D] skinned (vertex-lit) link failed: Vertex shader active uniforms exceed
+  GL_MAX_VERTEX_UNIFORM_VECTORS (256)`. Blupi and all 120 object models (every one is a
+  `SkinnedModelEXT`) are missing; terrain, cubes, sprites and the HUD draw. Desktop OpenGL 3.3 and
+  WebGL 2 (1024+ vectors) are not affected.
+- **Reproduce:** any `SkinnedEffect` draw on a GLES 3 context whose vertex uniform limit is 256.
+- **Possible fix (CNA's call):** bones as 3 `vec4` rows each (`mat4x3`/`vec4 uBones[216]`, as XNA),
+  or the array sized from the context's limit.
+- **Galaxy Eggbert's workaround:** none possible in the game (the shader is CNA's); on such devices
+  Android shows no 3D models until CNA changes. OR-0011, Q-009.
+
 ## Recorded elsewhere
 
 These upstream problems were found earlier and are documented in other files; they are listed

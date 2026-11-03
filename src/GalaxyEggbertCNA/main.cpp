@@ -15,6 +15,7 @@
 int main(int argc, char** argv)
 {
 #if defined(__ANDROID__)
+    GalaxyEggbert::CNA::RedirectStdioToLogcat();
     if (!GalaxyEggbert::CNA::PrepareAndroidAssets())
     {
         return 1;

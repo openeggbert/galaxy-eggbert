@@ -92,3 +92,18 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   the edges), then the original's floor. Recommendation: (b) later, as a renderer task that also
   speeds up the lava worlds (084, 094, 106).
 - Meanwhile: the void stays; 105's teleporter pair (the hut and the roof) is in.
+
+## Q-009 — Android: KVM or a phone for a real test (2026-11-03, OR-0011)
+
+- The APK builds and starts in the emulator (assets copied, the title scene drawn:
+  `plans/evidence/android-emulator-loading.png`), but this workstation has no `/dev/kvm`
+  (`kvm_amd` is not loaded; VirtualBox's `vboxdrv` is). The x86_64 emulator then runs in software
+  emulation: Android's own services time out, and the game needs minutes per screen. Enough to
+  show that the port starts, not to play it or judge touch and tilt.
+- Options: (a) load KVM for a session (`sudo modprobe kvm_amd`; VirtualBox's XP VM cannot run
+  at the same time, so only while it is off), then the emulator runs at full speed;
+  (b) a phone with USB debugging (`./gradlew assembleDebug` builds arm64-v8a too;
+  `adb install -r`); (c) leave Android at "builds and starts".
+- Whatever the choice: on a GPU whose vertex uniform limit is 256 (the emulator; many Adreno
+  phones) no 3D model is drawn until CNA fixes UB-007; a Mali or newer Adreno phone may not hit it.
+- Nothing is changed on the machine without the owner.

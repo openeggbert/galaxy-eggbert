@@ -14,4 +14,8 @@ namespace GalaxyEggbert::CNA
     // Copies the assets when they are missing or stale and changes into internal storage. False
     // (logged) when the storage or the manifest cannot be read, or a file cannot be copied.
     bool PrepareAndroidAssets();
+
+    // Sends the process's stdout and stderr (the game's and CNA's reports) to logcat under the tag
+    // GalaxyEggbert, line by line, from a thread of its own; Android discards them otherwise.
+    void RedirectStdioToLogcat();
 }
