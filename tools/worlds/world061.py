@@ -27,6 +27,7 @@ from kit import MACHINE_FLOOR, O, World, lift, mine  # noqa: E402
 from slime import skin, slime  # noqa: E402
 
 LAVA = 68
+BAR = 202                   # a bar in the open (no block above), Blupi hangs from it (Decor::GetTypeBarre)
 CLAY_BRIDGE = 364           # crumbles under Blupi and grows back (Tables::table_bridge)
 WATER = 92
 
@@ -149,7 +150,14 @@ def main(argv) -> int:
     opening(72, 25, 41, 72, 26, 41, bar=4)
     slime(w, 70, 15, 42, 76, 24, 44)                                  # the ledge in H
     # H: two lava trenches across the hall, the second crossed on machine blocks; treasure 5.
-    w.fill(60, 14, 48, 76, 14, 48, LAVA)
+    # The first, three wide, is crossed hanging from a bar (the original's row of bars over its
+    # pits of lava and water, (59-68, 38), LV-0035): two bars along Z two above the floor (x 62
+    # and 72, z 46-50), from the north bank over the trench to the south one.
+    w.fill(60, 14, 47, 76, 14, 49, LAVA)
+    for x in (62, 72):
+        w.fill(x, 17, 46, x, 17, 50, BAR)
+        if stage is not None:                                         # levelcheck cannot hang
+            w.fill(x, 14, 47, x, 14, 49, MACHINE_FLOOR)
     w.fill(60, 14, 52, 76, 14, 53, LAVA)
     w.fill(66, 14, 52, 67, 14, 53, 10)
     # Treasure 5 on a platform (x 75-76) in a pool of lava, reached over a clay bridge (x 69-74,

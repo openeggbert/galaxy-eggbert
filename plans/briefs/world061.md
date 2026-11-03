@@ -32,7 +32,9 @@ are plain slime (only 373 is the spike trap): a fall costs the climb back, not a
   room (walk 33): treasure 4. Every lift of the world runs at its original counterpart's speed
   (`tools/audit/lift_envelope.py`).
 - E's south doorway behind door "4" (424): a ledge over the lava hall H (walk 15), two lava trenches
-  across it (one a jump wide, one two wide crossed on machine blocks), treasure 5, two mines.
+  across it (one three wide crossed hanging from one of two bars along Z two above the floor, x 62
+  and 72 -- the original's row of bars over its pits, (59-68, 38); one two wide crossed on machine
+  blocks), treasure 5, two mines.
   H opens into S behind door "5" (425).
 - S's south door "5" (425): a stair of two-block steps down to the creatures' halls (walk 9). From
   the landing a corridor one wide runs west; creature 1 (80 ticks, 200 rest) walks it and rests at
