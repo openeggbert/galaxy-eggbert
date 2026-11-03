@@ -59,7 +59,9 @@ namespace GalaxyEggbert::Game
     // conveyor 311-316 (Decor/chenille.rds, 0.95-0.96) (OR-0050's sweep). Not the column 375:
     // Decor/colonne1.rds is a cube carrying a painted column (an embedded image and mask), so the
     // original was already a picture on a box, which its sprite on the cell's faces reproduces.
-    inline constexpr std::array<std::uint16_t, 30> kStillModelIcons{76, 77, 377, 399, 201, 138, 202,
+    // The palace's balustrade 398 (Decor/palais/mur06.rds, IoU 0.99; a plate before), a balcony's
+    // edge, its front toward the open side: the drop it rails.
+    inline constexpr std::array<std::uint16_t, 31> kStillModelIcons{76, 77, 377, 399, 398, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
                                                                      334, 335, 336, 211, 364, 365, 366, 304,
                                                                      384, 385, 311, 312, 313, 314, 315, 316};
@@ -141,7 +143,7 @@ namespace GalaxyEggbert::Game
     // Still icons whose model has a front (the original is a front view: the teleporters' lights
     // and letter, the trestle's frame), turned toward the cell's open side
     // (TerrainRenderer::ModelCell::openSide).
-    inline constexpr std::array<std::uint16_t, 8> kFrontModelIcons{330, 331, 332, 333, 199, 304, 384, 385};
+    inline constexpr std::array<std::uint16_t, 9> kFrontModelIcons{330, 331, 332, 333, 199, 304, 384, 385, 398};
 
     // The teleporters 330-333 (Decor/teleporteur1-4.rd4) are a blue box the size of the cell with
     // the letter plate and two lights on its front only: the original's sprite shows that front

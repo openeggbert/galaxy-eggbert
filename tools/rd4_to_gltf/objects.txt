@@ -110,6 +110,9 @@ support     object-m 77      Decor/support2.rd4
 # a plain textured cube; Decor/enfant22.rd4 a striped stick of other colours).
 pillar377   object-m 377     Decor/pile1.rd4
 pillar399   object-m 399     Decor/palais/big0108.rds
+# The palace's balustrade 398 (a balcony's edge; a plate before): Decor/palais/mur06.rds (IoU 0.99),
+# a front model turned toward the cell's open side, the drop it rails.
+rail398     object-m 398     Decor/palais/mur06.rds
 # The steel girder 201 (passable decor; Decor/structure1.rd4, IoU 0.79: the truss frame), drawn as a
 # lattice box: the frame on every side of the cell not shared with another girder (BlockModels.hpp).
 girder201   object-m 201     Decor/structure1.rd4

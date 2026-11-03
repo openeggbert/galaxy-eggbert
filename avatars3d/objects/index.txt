@@ -81,6 +81,7 @@ pillar_colonne2
 pillar_colonne3
 post182_porte1
 projectile_balle-glu
+rail398_mur06
 saw378_scie
 secretexit_cle
 sign174_world1

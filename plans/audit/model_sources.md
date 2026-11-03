@@ -4,10 +4,10 @@
 
 | State | Scenes |
 |---|---|
-| in game | 162 |
+| in game | 163 |
 | in game otherwise | 10 |
 | converted, not exported | 0 |
-| terrain tile (Q-004) | 129 |
+| terrain tile (Q-004) | 128 |
 | matched, not converted | 0 |
 | no game sprite | 227 |
 
@@ -80,7 +80,6 @@
 | `Decor/meca10.rd4` | object-m:87 |
 | `Decor/meca12.rd4` | object-m:89 |
 | `Decor/meca8.rd4` | object-m:85 |
-| `Decor/palais/mur06.rds` | object-m:398 |
 | `Decor/roc1.rd4` | object-m:245 object-m:386 object-m:391 object-m:392 object-m:393 object-m:394 object-m:396 object-m:397 |
 | `Decor/roc4a.rd4` | object-m:35 object-m:387 object-m:390 object-m:395 |
 | `Decor/roc4b.rd4` | object-m:36 object-m:389 |
@@ -265,6 +264,7 @@
 | `Decor/interrupteur.rd4` | object-m:384 object-m:385 |
 | `Decor/palais/big0108.rds` | object-m:399 |
 | `Decor/palais/big02.rds` | - |
+| `Decor/palais/mur06.rds` | object-m:398 |
 | `Decor/palais/statue.rds` | - |
 | `Decor/pile1.rd4` | object-m:377 |
 | `Decor/porte-b.rd4` | object-m:336 |
