@@ -1,3 +1,4 @@
+#include <GalaxyEggbert/Editor/AutoTile.hpp>
 #include <GalaxyEggbert/Editor/BoxRegion.hpp>
 #include <GalaxyEggbert/Editor/EditCommandStack.hpp>
 #include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
@@ -28,6 +29,19 @@ int main()
     {
         std::cout << (condition ? "PASS" : "FAIL") << ": " << message << std::endl;
         if (!condition) allOk = false;
+    };
+    // A rock placed is re-tiled to its variant for what borders it (ED-0007): any icon of the rock
+    // rows of the original's table_adapt_decor.
+    const auto isRockVariant = [](std::uint16_t icon)
+    {
+        for (std::size_t i = 0; i < 32; ++i)
+        {
+            if (AutoTile::kAdaptDecor[i] == static_cast<std::int16_t>(icon))
+            {
+                return true;
+            }
+        }
+        return false;
     };
 
     const MouseState restMouse(
@@ -147,9 +161,8 @@ int main()
             400, 200, 0, ButtonState::Pressed, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, left, 0.0f, 800, 480, camera, world);
-        check(world.getBlock(placeX, placeY, placeZ).type() ==
-                  GalaxyEggbert::BlockTypes::RockPile,
-              "left click places the selected block in the preview cell");
+        check(isRockVariant(world.getBlock(placeX, placeY, placeZ).type()),
+              "left click places the selected block in the preview cell (its rock variant, ED-0007)");
         check(editor.ConsumeNeedsPresentationRebuild(),
               "block placement requests a presentation rebuild");
         editor.Update(KeyboardState{}, left, 0.0f, 800, 480, camera, world);
@@ -400,9 +413,7 @@ int main()
                 for (std::uint16_t z = region.minZ; z <= region.maxZ; ++z)
                 {
                     ++volume;
-                    allFilled &=
-                        world.getBlock(x, y, z).type() ==
-                        GalaxyEggbert::BlockTypes::RockPile;
+                    allFilled &= isRockVariant(world.getBlock(x, y, z).type());
                 }
             }
         }
@@ -508,6 +519,66 @@ int main()
         clickStop(editor, world, camera);
         check(editor.IsBrowsing(),
               "a second Stop press confirms discarding unsaved changes");
+    }
+
+    // ED-0007: the original editor's auto-tiling (AutoTile.hpp, Decor::AdaptBorder). Dice that
+    // never swap a variant for its twin (Next() odd).
+    {
+        const auto odd = []() { return 1; };
+        World tiles;
+        for (std::uint16_t x = 48; x <= 52; ++x)
+        {
+            for (std::uint16_t z = 48; z <= 52; ++z)
+            {
+                tiles.setBlock(x, 0, z, Block::make(35));
+            }
+        }
+        std::vector<BlockChange> changes;
+        tiles.setBlock(50, 1, 50, Block::make(35));
+        changes.push_back({50, 1, 50, Block::air(), Block::make(35)});
+        AutoTile::AdaptBorder(tiles, 50, 1, 50, odd, changes);
+        check(tiles.getBlock(50, 1, 50).type() == 147,
+              "a rock placed alone on rock takes the variant bordered below only (table_adapt_decor 147)");
+        check(tiles.getBlock(50, 0, 50).type() == 35,
+              "the rock under it, bordered all round, stays the plain rock");
+        check(tiles.getBlock(51, 0, 50).type() == 35 && tiles.getBlock(48, 0, 48).type() != 0,
+              "its floor's other cells keep a rock variant");
+        int placedEntries = 0;
+        for (const auto& change : changes)
+        {
+            placedEntries += (change.x == 50 && change.y == 1 && change.z == 50) ? 1 : 0;
+        }
+        check(placedEntries == 1 && changes.front().before.isAir() && changes.front().after.type() == 147,
+              "one change per cell (undo restores the first before): the placed cell's entry ends as 147");
+
+        // A side bordered on X or on Z (the owner's MR-0005): a rock beside it on Z only.
+        tiles.setBlock(50, 1, 51, Block::make(35));
+        AutoTile::AdaptBorder(tiles, 50, 1, 51, odd, changes);
+        check(tiles.getBlock(50, 1, 50).type() == 151,
+              "with a rock beside it on +Z the cell counts as bordered on its right (mask 5: 151)");
+
+        // The bars: a mount under a block (138), the plain pipe in the open (202).
+        tiles.setBlock(60, 5, 60, Block::make(35));
+        tiles.setBlock(60, 4, 60, Block::make(202));
+        AutoTile::AdaptBorder(tiles, 60, 4, 60, odd, changes);
+        tiles.setBlock(62, 4, 60, Block::make(138));
+        AutoTile::AdaptBorder(tiles, 62, 4, 60, odd, changes);
+        check(tiles.getBlock(60, 4, 60).type() == 138 && tiles.getBlock(62, 4, 60).type() == 202,
+              "a bar under a block takes its mounts (138), one in the open the plain pipe (202)");
+
+        // The lightning column: an emitter grows its bolt into four empty cells, emptied it goes.
+        tiles.setBlock(70, 9, 70, Block::make(304));
+        AutoTile::AdaptBorder(tiles, 70, 9, 70, odd, changes);
+        check(tiles.getBlock(70, 8, 70).type() == 305 && tiles.getBlock(70, 5, 70).type() == 305 &&
+                  tiles.getBlock(70, 4, 70).isAir(),
+              "an emitter (304) placed grows its bolt (305) four cells down");
+        tiles.setBlock(70, 9, 70, Block::air());
+        AutoTile::AdaptBorder(tiles, 70, 9, 70, odd, changes);
+        check(tiles.getBlock(70, 8, 70).isAir() && tiles.getBlock(70, 5, 70).isAir(),
+              "the emitter removed takes its bolt away");
+        check(AutoTile::IsRightBorder(AutoTile::kEmpty, 35, 0, -1) == false &&
+                  AutoTile::IsRightBorder(68, 35, 0, -1) == false && AutoTile::IsRightBorder(68, 35, 0, 1) == true,
+              "IsRightBorder: air is no border; lava is none under a cell, one over it");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

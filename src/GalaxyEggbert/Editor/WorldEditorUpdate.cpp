@@ -1,5 +1,6 @@
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include "WorldEditor.hpp"
+#include "AutoTile.hpp"
 
 #include "BoxRegion.hpp"
 #include "VoxelRaycast.hpp"
@@ -388,6 +389,10 @@ namespace GalaxyEggbert::Editor
             variants_.NotePlaced(cx, cy, cz);
             command.kind = EditCommand::Kind::BlockEdit;
             command.blockChanges.push_back({cx, cy, cz, before, after});
+            // The PC editor re-tiles after every placement, a variant cycled too (decdesign.cpp,
+            // PlaceItemFromMenu*: AdaptBorder(cel); ED-0007).
+            AutoTile::AdaptBorder(world, cx, cy, cz, [this]() { return static_cast<int>(autoTileRandom_() & 0x7fffffff); },
+                                  command.blockChanges);
             commandStack_.Push(std::move(command));
             MarkMutated();
             return true;
@@ -492,6 +497,9 @@ namespace GalaxyEggbert::Editor
         EditCommand command;
         command.kind = EditCommand::Kind::BlockEdit;
         command.blockChanges.push_back({hitCellX_, hitCellY_, hitCellZ_, before, after});
+        // The PC editor's DeleteCel re-tiles round the emptied cell (ED-0007).
+        AutoTile::AdaptBorder(world, hitCellX_, hitCellY_, hitCellZ_,
+                              [this]() { return static_cast<int>(autoTileRandom_() & 0x7fffffff); }, command.blockChanges);
         commandStack_.Push(std::move(command));
         MarkMutated();
         return true;
@@ -585,6 +593,14 @@ namespace GalaxyEggbert::Editor
                         command.blockChanges.push_back({ux, uy, uz, before, fill});
                     }
                 }
+            }
+            // Each cell filled re-tiled as if placed one by one (ED-0007).
+            const std::vector<BlockChange> filled = command.blockChanges;
+            for (const auto& change : filled)
+            {
+                AutoTile::AdaptBorder(world, change.x, change.y, change.z,
+                                      [this]() { return static_cast<int>(autoTileRandom_() & 0x7fffffff); },
+                                      command.blockChanges);
             }
             if (!command.blockChanges.empty())
             {

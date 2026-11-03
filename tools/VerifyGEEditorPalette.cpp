@@ -1,9 +1,12 @@
+#include <GalaxyEggbert/Editor/AutoTile.hpp>
 #include <GalaxyEggbert/Editor/EditorPalette.hpp>
 #include <GalaxyEggbert/Editor/EditorPaletteLayout.hpp>
 #include <GalaxyEggbert/Editor/PaletteCategories.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
+
+#include <algorithm>
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
@@ -609,7 +612,11 @@ int main()
         tap(499, 451);
         check(world.getBlock(50, 0, 23).isAir(),
               "PLACE does not use the unshifted target");
-        check(world.getBlock(51, 0, 23).type() == GalaxyEggbert::BlockTypes::RockPile,
+        // The rock placed is re-tiled to its variant (ED-0007): any icon of table_adapt_decor's rock rows.
+        const auto placed = static_cast<std::int16_t>(world.getBlock(51, 0, 23).type());
+        check(std::find(GalaxyEggbert::Editor::AutoTile::kAdaptDecor.begin(),
+                        GalaxyEggbert::Editor::AutoTile::kAdaptDecor.begin() + 32, placed) !=
+                  GalaxyEggbert::Editor::AutoTile::kAdaptDecor.begin() + 32,
               "X+ followed by PLACE uses the moved preview cell");
         check(editor.ConsumeNeedsPresentationRebuild(),
               "PLACE requests a presentation rebuild");

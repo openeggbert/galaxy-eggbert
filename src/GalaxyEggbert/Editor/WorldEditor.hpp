@@ -11,6 +11,8 @@
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
+
+#include <random>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 
@@ -247,6 +249,8 @@ namespace GalaxyEggbert::Editor
         EditorPalette palette_;
         VariantCycler variants_; // the original's variant families (ED-0001)
         VariantCycler bigDecorVariants_{BigDecorVariantFamilies()}; // ED-0006
+        // The auto-tiler's dice (AutoTile.hpp: the original's random twins of a variant).
+        std::minstd_rand autoTileRandom_{20261102u};
 
         // Box-fill tool (plan.md EDITOR-105).
         bool boxFirstCornerPlaced_ = false;
