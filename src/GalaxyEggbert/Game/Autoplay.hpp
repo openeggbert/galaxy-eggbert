@@ -17,6 +17,11 @@
 //                              turn towards (X, Z) and walk until within T (0.25) of it, or until
 //                              COND holds; with `jump D`, jump once on the way when D or less from
 //                              it; `with KEY` holds KEY too (crouch dives, lookup swims up)
+//   fly X Y Z [tol T] [max N] [until COND] [with KEY]...
+//                              a go that also holds the height Y (helicopter, overcraft): lookup
+//                              below it, crouch above it, judged half a second ahead; done at the
+//                              point with the height within 0.3 (2026-11-04: the helicopter sinks
+//                              when let be, BD-0070, so a held climb no longer stays put)
 //   until COND [max N]         no keys until COND holds (at most N ticks, default 1800)
 //   lift X Y Z [max N]         no keys until a lift would carry him standing at (X, Y, Z): its
 //                              platform is there (within 0.05), Y being his feet's height on it
@@ -124,6 +129,8 @@ namespace GalaxyEggbert::Game
             AutoplayKeys keys;
             float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
             float jumpAt = -1.0f;
+            // `fly X Y Z`: a go that also holds the height Y (the helicopter, the overcraft).
+            bool fly = false;
             float radius = 0.0f;
             char lane = 0; // 'x', 'z' or 0 (a sphere)
             float tolerance = 0.25f;

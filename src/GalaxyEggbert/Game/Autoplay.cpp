@@ -245,6 +245,18 @@ namespace GalaxyEggbert::Game
                     return fail("needs X Z [jump D] [tol T] [max N] [until COND] [with KEY]...");
                 }
             }
+            else if (verb == "fly")
+            {
+                // A go that holds a height too: Up (lookup) below it, Down (crouch) above it, judged a
+                // little ahead by the climb or fall it is in (the helicopter's own speed eases in and
+                // out, BD-0070). Done at the point with the height within 0.3.
+                command.kind = Kind::Go;
+                command.fly = true;
+                if (!(words >> command.x >> command.y >> command.z) || !readOptions(true))
+                {
+                    return fail("needs X Y Z [jump D] [tol T] [max N] [until COND] [with KEY]...");
+                }
+            }
             else if (verb == "lift" || verb == "crate")
             {
                 command.kind = verb == "lift" ? Kind::Lift : Kind::Crate;
@@ -532,6 +544,7 @@ namespace GalaxyEggbert::Game
                 constexpr float kBodyHalfWidth = 18.0f / 64.0f;
                 // Still and not turning (he turns on the spot before he sets off), past a go's first ticks.
                 // ... and not rising or sinking (diving straight down, swimming up: not a wall).
+                const float flyClimbPerFrame = state.tick - commandStartTick_ >= 1 ? state.y - goLastY_ : 0.0f;
                 const bool still = std::fabs(state.x - goLastX_) < 0.001f && std::fabs(state.z - goLastZ_) < 0.001f &&
                                    std::fabs(state.yawDegrees - goLastYaw_) < 0.5f &&
                                    std::fabs(state.y - goLastY_) < 0.001f;
@@ -551,7 +564,8 @@ namespace GalaxyEggbert::Game
                 const bool againstWall = command.tolerance > 0.0f && goStillTicks_ >= 2 &&
                                          distance <= command.tolerance + kBodyHalfWidth + 0.02f;
                 // The jump is played out even when he arrives before it ends.
-                done = ((distance <= command.tolerance || againstWall) && jumpTicksLeft_ == 0) ||
+                const bool heightMet = !command.fly || std::fabs(state.y - command.y) <= 0.3f;
+                done = ((distance <= command.tolerance || againstWall) && jumpTicksLeft_ == 0 && heightMet) ||
                        (command.hasCondition && Holds(command.condition, state));
                 if (!done)
                 {
@@ -573,6 +587,15 @@ namespace GalaxyEggbert::Game
                     {
                         keys.jump = true;
                         --jumpTicksLeft_;
+                    }
+                    if (command.fly)
+                    {
+                        // Where the climb or fall it is in would take it once let be: about half a
+                        // second of it (7 px a tick easing off at 1 a tick: some 28 px).
+                        constexpr float kFlyLookAheadFrames = 12.0f;
+                        const float predicted = state.y + flyClimbPerFrame * kFlyLookAheadFrames;
+                        keys.lookUp = keys.lookUp || predicted < command.y - 0.1f;
+                        keys.crouch = keys.crouch || (!keys.lookUp && predicted > command.y + 0.25f);
                     }
                 }
                 break;
