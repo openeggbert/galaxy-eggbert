@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-04 morning (the terrain tiles as their Ray Dream scenes' reliefs near the camera: Q-001/Q-004/Q-012)._
+_Last updated: 2026-11-04 afternoon (terrain reliefs for every tile with a scene; busy Blupi and the patrol tick; golden tests current)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -493,7 +493,18 @@ ledgers before repeating any discovery. Where it stands:
   its own is a textured cube, INTENTIONAL; animation frames NOT_APPLICABLE), the asset ledger none
   either (the .max files NOT_APPLICABLE by MR-0001; terrain scenes no sprite came from NOT_APPLICABLE).
   OR-0031 closed (every billboard with a 3D source of its own is 3D). ED-0007: the editor still lays
-  no edge plates round a mass (they would stand before every corridor's faces in 3D). Open: the owner's B or C (Q-012); the tail of square
+  no edge plates round a mass (they would stand before every corridor's faces in 3D).
+- 2026-11-04 afternoon: `193caa4` the 60 relief tiles with clear texels (pipes, machine parts, toy
+  sticks, edge plates) get alpha-tested reliefs (they had kept flat cut-out cubes). `269fb28`
+  two of BD-0010's open points from Decor.cpp: a busy Blupi (taking a pickup, teleporting, waving
+  goodbye, on the ground) survives a mine or small enemy (it explodes) and does not meet a lethal
+  decoration; every patrol phase, lifts included, holds the original's extra tick. Four
+  playthroughs re-timed (032, 057, 081, 091; the chains 030/050/080/090 with them): play pass 12
+  70/78 then the 8 replayed 8/8. Golden frames and trace re-baselined (`cdface8`, then again) and
+  passing: they had been stale since July. Live editor checks ED-0006 (BigDecor cycling) and
+  ED-0007 (auto-tiling) with the saved world read back (`tools/qa_steps/editor_*.txt`). The .max
+  sources NOT_APPLICABLE (MR-0001). Still open in BD-0010's list: the cosmetic effects (debris,
+  electrocution, sting, splat, balloon pop) and BD-0025's shared shield timer; 375 has no source. Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
