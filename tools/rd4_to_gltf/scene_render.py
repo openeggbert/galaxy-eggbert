@@ -79,7 +79,9 @@ class SceneRenderer:
             elif tex is not None and ff is not None:
                 st, caps = freeform_mesh.planar_caps(
                     ff, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src], nrm, src, tex.flips)
-                self.textures[key] = (tex.image, st, caps)
+                image, cap_scale = shading.around_repeats(tex, ff.perimeter)
+                st[caps, 0] *= cap_scale
+                self.textures[key] = (image, st, caps)
             elif tex is not None:
                 prim = self.scene.masters[obj.master].chunk("prim")
                 self.textures[key] = shading.primitive_texture(

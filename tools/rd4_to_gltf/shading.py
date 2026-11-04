@@ -174,6 +174,7 @@ class TextureMap:
     warnings: list
     counts: tuple = (1, 1)   # cnth, cntv: repeats across and along (tile 1), baked into image
     flips: tuple = (False, True)  # flph, flpv
+    uv_space: int = 0        # the primary domain's uvsp (0: its bbox may be a placeholder)
 
 
 def _find_image(scene: sc.Scene, refn: str) -> rd4.Chunk | None:
@@ -283,7 +284,33 @@ def texture_map(scene: sc.Scene, obj: sc.Obj) -> TextureMap | None:
     # 0.808 once; the cabin 0.903 against 0.901; the lollipop's cylinder as before.
     image = _tone_image((rgb * 255).round().astype(np.uint8))
     image = np.tile(image, (counts[1], counts[0], 1))
-    return TextureMap(image, (u0, v0, u1, v1), int(placement.get("rotc") or 0), warnings, counts, flips)
+    return TextureMap(image, (u0, v0, u1, v1), int(placement.get("rotc") or 0), warnings, counts, flips,
+                      int(primary.leaf("uvsp") or 0))
+
+
+def around_repeats(tex: TextureMap, perimeter: float) -> tuple[np.ndarray, float]:
+    """(image, cap scale): a free-form's texture map repeated around its section as its primary
+    domain's ``bbox`` lays it out, for ``freeform_mesh.texture_coordinates`` (``s`` = u over the
+    whole perimeter): the image spans the bbox's u width and repeats, so around the perimeter it
+    runs perimeter / width times (widened here to that, a fractional last repeat cut). The cap
+    scale maps a flat cap's ``s`` (``freeform_mesh.planar_caps``, the whole image) back onto the
+    first repeat.
+
+    Only for a domain laid out in a UV space (``uvsp`` other than 0): with ``uvsp 0`` the bbox can
+    be the placeholder ``0,0,2,2`` (Blupi's face). The house's chimney (``Explo/maison.rd4``,
+    ``uvsp 8``, bbox 2 wide on a square section 8 round) so shows a whole tile on each side, its
+    flowers round and at the walls' size as in the sprite; spread once round the four sides they
+    were stretched four times across. Its walls and roof with ``uvsp 0`` already span their whole
+    perimeter (bbox 8 wide, 8 round): unchanged. Measured only on the house (the one converted
+    model whose free-forms carry a ``uvsp``)."""
+    u0, _v0, u1, _v1 = tex.domain
+    width = u1 - u0
+    if tex.uv_space == 0 or width <= 0.0 or perimeter <= width * 1.001:
+        return tex.image, 1.0
+    w = tex.image.shape[1]
+    wide = max(w + 1, int(round(w * perimeter / width)))
+    reps = -(-wide // w)
+    return np.tile(tex.image, (1, reps, 1))[:, :wide], w / wide
 
 
 def _white_texels(scene: sc.Scene, smap: rd4.Chunk) -> np.ndarray | None:

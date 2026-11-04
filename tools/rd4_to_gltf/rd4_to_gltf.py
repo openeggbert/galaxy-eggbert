@@ -395,6 +395,10 @@ def part_geometry(scene: sc.Scene, o: sc.Obj, label: str, gw: np.ndarray, scale:
         warnings.extend(tex.warnings)
         st, caps = freeform_mesh.planar_caps(ff, freeform_mesh.texture_coordinates(ff, tex.quarter_turns)[src],
                                              nrm, src, tex.flips)
+        image, cap_scale = shading.around_repeats(tex, ff.perimeter)
+        if cap_scale != 1.0:
+            st[caps, 0] *= cap_scale
+            tex = dataclasses.replace(tex, image=image)
         pos, nrm, tris, uv = freeform_mesh.split_seam(pos, nrm, tris, st, 1.0, caps)
         key = ("texture", re.sub(r"[^\w.-]", "_", label))
     wpos = pos @ m[:3, :3].T + m[:3, 3]
