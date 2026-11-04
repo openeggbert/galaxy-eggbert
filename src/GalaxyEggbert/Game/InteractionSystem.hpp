@@ -53,11 +53,9 @@ namespace GalaxyEggbert::Game
     // simplified here to always channel 74, a documented approximation of
     // the coinflip rather than an invented value. Type3's real duck-
     // immunity (skipped while Blupi's action is Down) IS modeled via the
-    // blupiCrouching parameter below; every other per-type quirk (type2's
-    // wider "thrown object" anticipation box, type17/20's bigger
-    // explosion, follower 96/97's real homing-toward-Blupi movement AI) is
-    // NOT modeled -- cosmetic/reaction polish or a genuinely separate
-    // feature (homing), not required for the kill itself.
+    // blupiCrouching parameter below. The fish/bird's (17/20) bigger burst
+    // (ObjectType10) and the follower's homing (96/97, below) are modeled
+    // too; the taunts the enemies call for are MockeryDetect()'s (BD-0044).
     //
     // Wasp (ObjectType44) "balloon" status now works (2026-07-11, plan.md
     // E3D-MIG-135), verified directly against Decor.cpp:5826-5863 (trigger)
@@ -103,12 +101,10 @@ namespace GalaxyEggbert::Game
     // ObjectDelete in that branch). Real balloon immunity IS modeled
     // (`blupiBallooned` blocks the whole branch, matching the real
     // `!m_blupiBalloon` gate) -- unlike the 4 balloon-poppable hazard
-    // types, there is no separate pop path for it. Real shield/hide/
-    // superBlupi/focus immunity and the real "destroys Blupi's current
-    // vehicle instead of killing him" branch are NOT modeled (no such
-    // concepts exist in this engine yet), so contact always takes the
-    // real no-vehicle death branch. The real unconditional taunt icon is
-    // also NOT modeled -- no idle-taunt animation system exists at all.
+    // types, there is no separate pop path for it. Shield/Hide/superBlupi
+    // (blupiInvincible) and focus (blupiFocused, BD-0060) spare him; in a
+    // vehicle or squashed he still dies and the vehicle bursts at the
+    // creature (BD-0061). Its taunt is MockeryDetect()'s Mockeryp (BD-0044).
     //
     // Follower (ObjectType96/97) real homing now works too (2026-07-11,
     // plan.md E3D-MIG-137, the last open item in Phase 13), verified
@@ -651,11 +647,8 @@ namespace GalaxyEggbert::Game
         // at Shield/Power's own grant sites, same idiom as
         // `SpawnInvertBurst()`'s grant-site call. The distance toward the
         // 40px threshold is the original's Manhattan distance, over X, Y
-        // and Z in 3D. Hide's own real afterimage trail
-        // (`ObjectType58`, a snapshot of Blupi's OWN current sprite, not a
-        // fixed icon) is NOT modeled here -- blocked on the same "no
-        // visible Blupi model/animation" gap as Pollution puff's
-        // Jeep/Tank `m_blupiPhase` simplification, not a quick add. Real
+        // and Z in 3D. Hide's own afterimage trail (`ObjectType58`, a copy of
+        // his own current picture) is the host's (BD-0056), not here. Real
         // level-load/respawn resets of `m_blupiPosMagic` (several
         // additional real call sites) are also NOT modeled -- a minor,
         // accepted simplification (a stale tracker only shifts the first
@@ -753,10 +746,9 @@ namespace GalaxyEggbert::Game
         // Perso (decoy statue) placement/pickup (plan.md HUD-017, real
         // Decor.cpp ~4818-4841 place, ~6088-6101 pickup start, ~10291-10294
         // pickup completion). A placeable `ObjectType200` decoy (same
-        // `blupi.png` look as Blupi himself) -- what it actually DOES once
-        // placed (if anything beyond existing as a marker) wasn't found in
-        // the real source by this port's own research; not modeled as a
-        // gameplay effect, just the place/retrieve/count loop itself. Real
+        // `blupi.png` look as Blupi himself) -- once placed, the bulldozer
+        // and the shooters (4, 32, 33) that meet it are destroyed with it
+        // (MovePersoDetect, BD-0028); here the place/retrieve/count loop. Real
         // cap 5 (`m_blupiPerso < 5` gates pickup), starts at 0. Real gate:
         // mutually exclusive with dynamite (an `else if` in the real
         // source -- the caller is expected to only call this when

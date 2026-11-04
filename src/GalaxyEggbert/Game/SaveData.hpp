@@ -83,9 +83,8 @@ namespace GalaxyEggbert::Game
         bool hasProgress = false;
         // Real per-sublevel door-unlock flags (plan.md hub/mission-progression
         // system, found 2026-07-17, `Decor::AdaptDoors()`'s `m_doors[]` --
-        // ONLY the per-sublevel half is ported; the per-world cosmetic-gold
-        // half (`m_doors[180..199]`) is still not modeled, see SAVE-006/007's
-        // own note). Sized to `Decor::m_doors[200]`'s own real length so
+        // the per-world golds `m_doors[180..199]` too: HubDoors.cpp raises the
+        // main hub's golden posts for them, as AdaptDoors). Sized to `Decor::m_doors[200]`'s own real length so
         // every real mission number (max 199) has a slot; index == mission
         // number directly, matching real `m_doors[mission]` semantics 1:1 --
         // no separate per-world re-indexing.

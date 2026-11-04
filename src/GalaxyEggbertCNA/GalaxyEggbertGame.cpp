@@ -3857,9 +3857,8 @@ namespace GalaxyEggbert::CNA
             // Glu-death sound, distinct from lava/fall's channel 8, per
             // 07-sounds.md). Real behavior (12-hazards-and-interactables.md)
             // gates this on vehicle immunity (Over/Jeep/Tank protect,
-            // unlike lava) and requires m_blupiFocus -- focus doesn't exist
-            // in GalaxyEggbertCNA yet, same simplification as every hazard
-            // here, but vehicle immunity now DOES exist (`HasVehicleHazard
+            // unlike lava) and requires m_blupiFocus (BlupiFocused(), BD-0060),
+            // and vehicle immunity exists (`HasVehicleHazard
             // Immunity()`, fixed 2026-07-16 -- this comment previously said
             // "neither vehicles nor a focus concept exist... yet", stale
             // since vehicles were implemented `171`). The real check also
@@ -4235,8 +4234,8 @@ namespace GalaxyEggbert::CNA
             // per 07-sounds.md's own note). Real Shield/Hide/SuperBlupi
             // immunity gates the death itself (plan.md E3D-MIG-170); the
             // gauge still depletes regardless (matches every other hazard's
-            // "still triggers, only the death is gated" pattern) -- only
-            // superBlupi isn't modeled.
+            // "still triggers, only the death is gated" pattern); superBlupi
+            // is the cheat's, in IsInvincible().
             if (blupi_.JustDrowned() && !blupi_.IsInvincible())
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Drown, m_blupiRestart=true (Decor.cpp:4640-4652).

@@ -89,11 +89,9 @@ namespace GalaxyEggbert::Game
         // (90,428), always Yellow) is shared by Shield/Power/Cloud/Hide's
         // real countdown timer (all 4 reuse the SAME `m_blupiTimeShield`
         // variable and gauge widget in the real source, confirmed via
-        // `Decor.cpp:5071-5137` -- not 4 separate gauges). Real Mirror/
-        // Invert, Balloon, and Ecrase also reuse this same gauge -- NOT
-        // wired in here since those aren't modeled by this engine's
-        // `GalaxyEggbert::Def::SecretPower` enum (Balloon/Ecrase have their own separate,
-        // un-gauged timers already; Mirror/Invert isn't modeled at all).
+        // `Decor.cpp:5071-5137` -- not 4 separate gauges). Invert, the
+        // balloon and the squash show on it too, from the one shared count
+        // (BlupiController::GetTimeShield(), BD-0025; the host, 6604d12).
         // perso added 2026-07-13 (plan.md HUD-017), verified directly
         // against `Decor.cpp:1202-1211`: button.png icon 108 (40px tiles,
         // `Pixmap.cpp:592-600`) at (0,438), plus "= N" text at (32,452) at
