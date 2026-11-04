@@ -49,7 +49,7 @@ Meanwhile: the sprite.
 Note (2026-11-04): no campaign world places the electrode (only the gallery 998 and the showcase
 999), so the choice touches no mission.
 
-### Q-006 — The glue death (element 168-171) from `Blupi/glu.rd4`
+### Q-006 — The glue death (element 168-171) from `Blupi/glu.rd4` — DONE (strands) 2026-11-04
 
 The scene gives Blupi's struggling pose (IoU 0.80-0.85) but converts yellow: the green slime on
 him and the strands of glue at his feet are a material and extrusions the converter does not read
@@ -64,6 +64,11 @@ sprites' green, its flat parts and its face texture's skin (`texrecolour`, the e
 kept), and the game draws that model with his own model flattened under it as the dark green
 puddle; the strands are not drawn. Still yours to decide: keep this, add strands, or another
 option.
+
+Answer (2026-11-04): add the strands. Done: `tools/glue/glue_strands.py` traces the thin green
+strands of each painted frame 168-171 (outside the body's silhouette) to centre lines
+(`GlueStrands.hpp`), and the game draws them as thin tubes in the strands' own green, turned with
+Blupi and stood on the puddle; evidence `plans/evidence/glue-strands.png`.
 
 ## Answered
 

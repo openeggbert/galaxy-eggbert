@@ -6,6 +6,8 @@
 #include <GalaxyEggbert/Game/GamepadInput.hpp>
 #include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
+#include <GalaxyEggbert/Game/BoltMesh.hpp>
+#include <GalaxyEggbert/Game/GlueStrands.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -6092,6 +6094,7 @@ namespace GalaxyEggbert::CNA
                     constexpr float kPi = 3.14159265358979f;
                     drawModel(*glued, blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f, blupi_.GetZ(),
                               kPi - blupi_.GetYaw());
+                    glueStrandsPending_ = true;
                 }
                 // The fan cells (VIS-0127): the original fan model turned to blow the cell's way, its
                 // rotor on the tile animation's frame.
@@ -6310,6 +6313,41 @@ namespace GalaxyEggbert::CNA
                 device.setRasterizerStateProperty(
                     Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
                 device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+            }
+
+            // The glue death's strands (owner 2026-11-04, Q-006): the painted strands from his hands to the
+            // puddle and its peaks, as thin tubes in the glue model's plane (GlueStrands.hpp), in their
+            // green from element.png, turned and placed as the glue model is.
+            if (glueStrandsPending_ && objectEffect_)
+            {
+                glueStrandsPending_ = false;
+                const int frame = std::clamp(blupi_.GetRawAnimIcon() - 168, 0, 3);
+                const auto iconUv = GetElementIconUv(168 + frame);
+                const auto& texel = GalaxyEggbert::Game::kGlueTexel[static_cast<std::size_t>(frame)];
+                const Microsoft::Xna::Framework::Vector2 uv(iconUv.U0 + texel[0] * (iconUv.U1 - iconUv.U0),
+                                                            iconUv.V0 + texel[1] * (iconUv.V1 - iconUv.V0));
+                constexpr float kPi = 3.14159265358979f;
+                const float turn = kPi - blupi_.GetYaw();
+                const float c = std::cos(turn), s = std::sin(turn);
+                const Microsoft::Xna::Framework::Vector3 origin(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f,
+                                                                blupi_.GetZ());
+                auto mesh = MakeTexturedMeshBuilder();
+                GalaxyEggbert::Game::AppendPolylineTubes(
+                    mesh, GalaxyEggbert::Game::kGluePoints.data(), GalaxyEggbert::Game::kGluePolylines.data(),
+                    GalaxyEggbert::Game::kGlueFrames[static_cast<std::size_t>(frame)], uv,
+                    Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, 0.0f),
+                    [&](const Microsoft::Xna::Framework::Vector3& p)
+                    {
+                        return Microsoft::Xna::Framework::Vector3(origin.X + p.X * c + p.Z * s, origin.Y + p.Y,
+                                                                  origin.Z - p.X * s + p.Z * c);
+                    });
+                if (auto renderer = UploadTexturedMesh(device, mesh.Mesh()))
+                {
+                    objectEffect_->View = camera_.View();
+                    objectEffect_->Projection = camera_.Projection();
+                    objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                    renderer->Draw(device, *objectEffect_);
+                }
             }
 
             // The electrode's sparks facing the camera over its model (Q-005), as its sprite shows them.
