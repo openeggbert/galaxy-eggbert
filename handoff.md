@@ -576,8 +576,18 @@ ledgers before repeating any discovery. Where it stands:
   Golden frames re-baselined twice (spheres, wind). After a model change in `avatars3d/`, sync
   the build's copy: `cmake -DGE_COPY_SOURCE=$PWD/avatars3d -DGE_COPY_DESTINATION=$PWD/build-cna-opengl3/avatars3d
   -P cmake/CopyDirectoryIfDifferent.cmake` (the POST_BUILD copy runs only when the game relinks).
+- 2026-11-04 late night, more owner reports: **OR-0040** a switch beside Blupi at his height is
+  pressed (not only the one under him); **OR-0041** landing on any fan sets it off; **OR-0042** the
+  decor that stands in his way in 3D is solid (`kSolidIn3DDecor`: columns, girder, posts, trestle,
+  balustrade, machine pieces 49-51, slime column; the original's secret passages 22/73/85/86/339
+  stay passable; 056's route and 058's pillars adjusted); **OR-0043..0045** the editor: V cycles the
+  aimed block's variant (its family or its re-tiling row), O turns front models a quarter
+  (`QuarterTurns`, the plate-turn byte 0-3), a lift's or creature's end is the next click (the
+  original's `m_liftEnd`), H shows the keys. Play pass 20 (before OR-0042): 78/78.
+  Scripted editor runs: hold keys (`keydown`/`keyup`), a tap faster than a frame is missed.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
-  library); a human play pass of every world. Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
+  library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
+  screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
