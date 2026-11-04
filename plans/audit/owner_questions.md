@@ -40,7 +40,7 @@ and seams between cells and cost far more to draw. Options: (a) keep the texture
 recommendation; the sprites are those renders), (b) models for the free-standing pieces only
 (pillars, pipes' ends), (c) every tile as its model. Meanwhile: (a).
 
-### Q-005 — The electrode (238-242) without its sparks?
+### Q-005 — The electrode (238-242) without its sparks? — DONE (a) 2026-11-04
 
 `Decor/electro.rd4` gives the ball on its spring (IoU 0.79-0.81), but the sparks round the ball
 were painted on the renders: the model alone looks dead. Options: (a) the model with the sprite's

@@ -979,6 +979,17 @@ namespace GalaxyEggbert::CNA
                         objectModels_.push_back(
                             content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                                 "objects/" + name + "/avatar"));
+                        // The electrode's sparks (Q-005; tools/rd4_to_gltf/electro_sparks.py).
+                        for (int icon = 238; icon <= 242; ++icon)
+                        {
+                            const std::string spark =
+                                "avatars3d/objects/" + name + "/sparks/" + std::to_string(icon) + ".png";
+                            if (std::filesystem::exists(spark))
+                            {
+                                electrodeSparks_[icon] =
+                                    std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(spark, device);
+                            }
+                        }
                         // A sign's painted face (sign_decals.py): decal <icon> <png> <x0> <y0> <x1> <y1> <z>.
                         std::ifstream decals("avatars3d/objects/" + name + "/decals.txt");
                         for (std::string line; std::getline(decals, line);)
@@ -5917,6 +5928,7 @@ namespace GalaxyEggbert::CNA
                 // The signs drawn this frame whose painted face is a decal (drawn after the models).
                 auto& decalCells = signDecalCells_;
                 decalCells.clear();
+                electrodeCells_.clear();
                 const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
                                            float rollRadians = 0.0f, float depthScale = 1.0f,
                                            bool boothFrontOnly = false, float topScale = 1.0f)
@@ -6203,6 +6215,11 @@ namespace GalaxyEggbert::CNA
                                 }
                                 else
                                 {
+                                    if (GalaxyEggbert::Game::IsElectrodeIcon(cell.base) &&
+                                        electrodeSparks_.count(cell.base) != 0)
+                                    {
+                                        electrodeCells_.push_back({cell.base, cell.x, cell.y, cell.z, 0.0f});
+                                    }
                                     drawModel(*still, cell.x, cell.y, cell.z, 0.0f, 0.0f,
                                               GalaxyEggbert::Game::ModelDepthScale(cell.base));
                                     if (GalaxyEggbert::Game::ModelMirroredInDepth(cell.base))
@@ -6287,6 +6304,40 @@ namespace GalaxyEggbert::CNA
                     if (auto renderer = UploadTexturedMesh(device, mesh.Mesh()))
                     {
                         decalEffect_->setTextureProperty(decal.texture.get());
+                        renderer->Draw(device, *decalEffect_);
+                    }
+                }
+                device.setRasterizerStateProperty(
+                    Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
+                device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+            }
+
+            // The electrode's sparks facing the camera over its model (Q-005), as its sprite shows them.
+            if (!electrodeCells_.empty())
+            {
+                if (!decalEffect_)
+                {
+                    decalEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+                    decalEffect_->VertexColorEnabled = false;
+                    decalEffect_->setTextureEnabledProperty(true);
+                }
+                const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
+                const auto right = invView.getRightProperty();
+                const auto up = invView.getUpProperty();
+                decalEffect_->View = camera_.View();
+                decalEffect_->Projection = camera_.Projection();
+                decalEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullNone);
+                for (const auto& cell : electrodeCells_)
+                {
+                    auto mesh = MakeTexturedMeshBuilder();
+                    mesh.AddBillboard(Microsoft::Xna::Framework::Vector3(cell.x, cell.y, cell.z),
+                                      Microsoft::Xna::Framework::Vector2(1.0f, 1.0f), right, up,
+                                      CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+                    if (auto renderer = UploadTexturedMesh(device, mesh.Mesh()))
+                    {
+                        decalEffect_->setTextureProperty(electrodeSparks_.at(cell.icon).get());
                         renderer->Draw(device, *decalEffect_);
                     }
                 }

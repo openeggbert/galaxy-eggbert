@@ -116,6 +116,9 @@ rail398     object-m 398     Decor/palais/mur06.rds
 # The steel girder 201 (passable decor; Decor/structure1.rd4, IoU 0.79: the truss frame), drawn as a
 # lattice box: the frame on every side of the cell not shared with another girder (BlockModels.hpp).
 girder201   object-m 201     Decor/structure1.rd4
+# The electrode 238-242 (Decor/electro.rd4: the ball on its spring; owner 2026-11-04, Q-005): its sparks
+# were painted on the renders, so the game draws them from the sprites as a camera-facing decal.
+electro238  object-m 238-242 Decor/electro.rd4 tone=0.89,45
 # The hanging bar (owner 2026-11-02: in 3D, not a plate), block models drawn as two pipes along
 # their row (BarRows.hpp): 138 with its ceiling mounts (Decor/barre.rd4, IoU 0.89); 202, shown where
 # no block is over the bar (Decor::AdaptMidBorder), the scene's pipe alone without the two spheres

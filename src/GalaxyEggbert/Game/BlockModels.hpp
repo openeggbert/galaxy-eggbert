@@ -82,10 +82,17 @@ namespace GalaxyEggbert::Game
     // original was already a picture on a box, which its sprite on the cell's faces reproduces.
     // The palace's balustrade 398 (Decor/palais/mur06.rds, IoU 0.99; a plate before), a balcony's
     // edge, its front toward the open side: the drop it rails.
-    inline constexpr std::array<std::uint16_t, 31> kStillModelIcons{76, 77, 377, 399, 398, 201, 138, 202,
+    // The electrode 238-242 (Decor/electro.rd4, IoU 0.79-0.81: its painted sparks drawn as a decal facing
+    // the camera, owner 2026-11-04, Q-005; IsElectrodeIcon).
+    inline constexpr std::array<std::uint16_t, 36> kStillModelIcons{76, 77, 377, 399, 398, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
                                                                      334, 335, 336, 211, 364, 365, 366, 304,
-                                                                     384, 385, 311, 312, 313, 314, 315, 316};
+                                                                     384, 385, 311, 312, 313, 314, 315, 316,
+                                                                     238, 239, 240, 241, 242};
+    [[nodiscard]] constexpr bool IsElectrodeIcon(int icon) noexcept
+    {
+        return icon >= 238 && icon <= 242;
+    }
 
     // The spring 211 is drawn as Decor/ressort.rd4 always bouncing as the original draws it:
     // Tables::table_ressort[(m_time / 2 + column * 7) % 8] (Decor.cpp:926-929; the column's 7

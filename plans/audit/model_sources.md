@@ -4,8 +4,8 @@
 
 | State | Scenes |
 |---|---|
-| in game | 164 |
-| in game otherwise | 10 |
+| in game | 165 |
+| in game otherwise | 9 |
 | converted, not exported | 0 |
 | terrain tile (Q-004) | 127 |
 | matched, not converted | 0 |
@@ -156,7 +156,6 @@
 | `Blupi/jeep-seul.rd4` | element:89 the parked jeep: its model from Blupi's clip library (vehicles/jeep) |
 | `Blupi/skate.rd4` | element:129 element:130 element:131 element:132 element:133 element:134 the parked skateboard: its model from Blupi's clip library (vehicles/skate) |
 | `Decor/colonne1.rds` | object-m:375 kept the sprite: a box carrying a painted column (an embedded image and mask), the column 375 reverted to it 2026-11-02 |
-| `Decor/electro.rd4` | object-m:238 object-m:239 object-m:240 object-m:242 kept a billboard: the Cloud's charger (ObjectType31); the scene holds only the ball and its spring, the sprites' sparks are painted on (converted 2026-11-03: IoU 0.77-0.82, no sparks); no original or campaign world places it (the gallery does) |
 | `Decor/lave/lave1.rds` | object-m:68 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave2.rds` | object-m:69 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave3.rds` | object-m:70 the lava pool from the .a3d wave (LavaSurface.hpp) |
@@ -255,6 +254,7 @@
 | `Decor/chenille.rds` | object-m:311 object-m:312 object-m:313 object-m:314 object-m:315 object-m:316 |
 | `Decor/dynamite.rd4` | element:252 element:253 element:254 element:255 |
 | `Decor/eclair.rd4` | object-m:304 |
+| `Decor/electro.rd4` | object-m:238 object-m:239 object-m:240 object-m:242 |
 | `Decor/goutte/goutte01.rds` | object-m:404 |
 | `Decor/goutte/goutte02.rds` | object-m:405 |
 | `Decor/goutte/goutte03.rds` | object-m:406 |

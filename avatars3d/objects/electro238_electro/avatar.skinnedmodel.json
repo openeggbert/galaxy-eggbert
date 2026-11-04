@@ -1,0 +1,37 @@
+{
+  "skeleton": "skeleton.bin",
+  "parts": [
+    {
+      "name": "electro238_rd_787878",
+      "vertices": "electro238_rd_787878.verts.bin",
+      "indices": "electro238_rd_787878.idx.bin",
+      "vertexStride": 52,
+      "texture": "electro238_rd_787878.png",
+      "diffuseColor": [
+        0.189895866277964,
+        0.189895866277964,
+        0.189895866277964,
+        1.0
+      ]
+    },
+    {
+      "name": "electro238_rd_2cd7ff",
+      "vertices": "electro238_rd_2cd7ff.verts.bin",
+      "indices": "electro238_rd_2cd7ff.idx.bin",
+      "vertexStride": 52,
+      "texture": "electro238_rd_2cd7ff.png",
+      "diffuseColor": [
+        0.02611336556975312,
+        0.6811101575123512,
+        1.0,
+        1.0
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "name": "Frames",
+      "clip": "clips/Frames.clip.bin"
+    }
+  ]
+}

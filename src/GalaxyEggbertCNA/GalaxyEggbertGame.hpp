@@ -989,6 +989,10 @@ namespace GalaxyEggbert::CNA
             float x, y, z, yaw;
         };
         std::vector<SignDecalCell> signDecalCells_; // this frame's signs with a decal
+        // The electrode's sparks (Q-005): per icon 238-242 its painted sparks, drawn facing the camera
+        // over its model (avatars3d/objects/electro238_electro/sparks/<icon>.png), and this frame's cells.
+        std::unordered_map<int, std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> electrodeSparks_;
+        std::vector<SignDecalCell> electrodeCells_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> decalEffect_;
         GalaxyEggbert::Game::ObjectModelTable objectModelTable_;
         // The sheet and icon a MoveObject's billboard shows this frame, picked
