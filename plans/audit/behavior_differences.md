@@ -1033,6 +1033,8 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Original (Decor.cpp:5513-5514, 5521-5522, 5551-5552): like the spike trap (BD-0060), the drip, the
   saw and the crusher meet him only with `m_blupiFocus` -- not while he takes a pickup, teleports,
   waves goodbye or cheers at the exit (on the ground). Lava and the lightning do not ask it.
-- Galaxy asked focus of the spike trap only.
-- Fix: `BlupiFocused()` in the host's drip, saw and crusher checks.
+- Galaxy asked focus of the spike trap only; nor of the bridge that builds itself under him
+  (IsBridge, 5608).
+- Fix: `BlupiFocused()` in the host's drip, saw and crusher checks; `blupiFocused` in
+  InteractionSystem's bridge trigger.
 - Validation: build, ctest; the playthroughs (play pass 18).

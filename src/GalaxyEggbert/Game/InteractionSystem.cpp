@@ -2422,9 +2422,10 @@ namespace GalaxyEggbert::Game
         {
             int bridgeGX, bridgeGY, bridgeGZ;
             ToGridCell(world, blupiX, blupiY - 1.0f, blupiZ, bridgeGX, bridgeGY, bridgeGZ);
-            if (world.getBlock(static_cast<std::uint16_t>(bridgeGX), static_cast<std::uint16_t>(bridgeGY),
-                                static_cast<std::uint16_t>(bridgeGZ))
-                    .type() == GalaxyEggbert::BlockTypes::Bridge)
+            if (blupiFocused && // m_blupiFocus (Decor.cpp:5608; BD-0066)
+                world.getBlock(static_cast<std::uint16_t>(bridgeGX), static_cast<std::uint16_t>(bridgeGY),
+                               static_cast<std::uint16_t>(bridgeGZ))
+                        .type() == GalaxyEggbert::BlockTypes::Bridge)
             {
                 bool alreadyBuilding = false;
                 for (const auto& obj : objects)
