@@ -1806,8 +1806,8 @@ namespace GalaxyEggbert::Game
         const float effectiveMoveSpeed = walkSpeed;
 
         // Vehicle horizontal speed (plan.md E3D-MIG-171): unlike normal
-        // walking (instant target speed, no ramp -- this engine's own
-        // existing simplification, not a real transcription), vehicles
+        // walking (the march table's four-tick ease-in, BD-0059, and an
+        // instant stop as the original's), vehicles
         // ramp `m_vehicleSpeed` toward the target at their own real
         // accel/decel rate, matching "a neutral input always decelerates
         // back toward zero, never instantly" -- so a vehicle keeps
