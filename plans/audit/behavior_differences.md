@@ -1038,3 +1038,14 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Fix: `BlupiFocused()` in the host's drip, saw and crusher checks; `blupiFocused` in
   InteractionSystem's bridge trigger.
 - Validation: build, ctest; the playthroughs (play pass 18).
+
+## BD-0067 — the spike traps did not snap while Blupi was not focused (visual) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:1032-1037): the trap (373) draws `table_decor_piege1` (16 frames, 4 ticks each)
+  while `m_blupiFocus`, else `table_decor_piege2` ({374, 373, 347, 373}, 2 ticks each) -- the jaws
+  snapping, e.g. on Blupi caught in one (BlupiDead clears the focus, 6559), or while he takes a pickup.
+- Galaxy always drew piege1.
+- Fix: `ResolveAnimationIconAt(..., blupiFocused)`; `TerrainRenderer::Update` takes the focus (and
+  rebuilds when it changes); the host passes `BlupiFocusRaw()` (death lock, gone, pickup, teleport,
+  goodbye, the exit's cheer).
+- Validation: `VerifyDefinitionRegistries` (piege2 while unfocused); build, ctest.

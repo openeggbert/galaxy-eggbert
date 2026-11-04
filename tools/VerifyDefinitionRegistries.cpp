@@ -329,6 +329,16 @@ int main()
             water2Paces.insert(tick);
         }
         Check(water2Paces.size() >= 2, "the second water's cells keep their own pace (3 + (17 x + 13 row) % 3)");
+        // Unfocused, the trap snaps: piege2's {374, 373, 347, 373} at 2 ticks a frame (BD-0067).
+        std::set<int> snap;
+        for (int tick = 0; tick < 8; ++tick)
+        {
+            snap.insert(ResolveBlockAnimationIconAt(BlockTypes::Spike, tick, 0, 0, 0, /*blupiFocused=*/false));
+        }
+        Check(snap == std::set<int>{347, 373, 374} &&
+                  ResolveBlockAnimationIconAt(BlockTypes::Spike, 0, 0, 0, 0, false) !=
+                      ResolveBlockAnimationIconAt(BlockTypes::Spike, 2, 0, 0, 0, false),
+              "an unfocused Blupi: the trap snaps (piege2, a frame every 2 ticks)");
     }
 
     const auto& objectRegistry = ObjectDefinitionRegistry::Instance();

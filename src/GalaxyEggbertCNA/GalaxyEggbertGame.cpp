@@ -1602,7 +1602,7 @@ namespace GalaxyEggbert::CNA
         worldRuntime_.Update(dt);
         if (terrainRenderer_)
         {
-            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
+            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
         }
         // Blupi idles (Stop's real fidget cycle) where he stands.
         blupi_.Step(worldRuntime_.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
@@ -3052,7 +3052,7 @@ namespace GalaxyEggbert::CNA
                     worldRuntime_.Update(dt);
                     if (terrainRenderer_)
                     {
-                        terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
+                        terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
                     }
                     if (worldEditor_.ConsumeNeedsPresentationRebuild())
                     {
@@ -3274,7 +3274,7 @@ namespace GalaxyEggbert::CNA
 
         if (terrainRenderer_)
         {
-            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase());
+            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
 
             // Tank controls (2026-07-05, matching mobile-eggbert's control
             // feel): Left/Right turn, Up/Down

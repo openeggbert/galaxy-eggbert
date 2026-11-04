@@ -58,7 +58,9 @@ namespace GalaxyEggbert::Game
         // Rebuilds the animated-tile mesh for animPhase (no-op if unchanged
         // since the last call). Call once per frame with
         // WorldRuntime::GetAnimPhase(). No effect on the static mesh.
-        void Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase);
+        // blupiFocused: the spike traps snap while he is not (BD-0067).
+        void Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase,
+                    bool blupiFocused = true);
 
         // The terrain reliefs (Q-001/Q-004/Q-012): the cells whose tile has a relief are kept in
         // chunks of kReliefChunkCells^3, each drawn as textured cubes, or as its cells' reliefs while
@@ -285,6 +287,7 @@ namespace GalaxyEggbert::Game
         float m_centroidY = 0.0f;
         float m_centroidZ = 0.0f;
         int m_lastAnimPhase = -1;
+        bool m_blupiFocused = true;
         std::vector<std::uint16_t> m_modelBases;
         std::vector<std::uint16_t> m_modelOverFloorBases;
         std::vector<ModelCell> m_staticModelCells;

@@ -318,11 +318,11 @@ namespace GalaxyEggbert::Game
         }
 
         // The cell's own frame (its offset in the cycle, BD-0065).
-        int AnimIconAt(std::uint16_t base, int rawTick, float x, float y, float z)
+        int AnimIconAt(std::uint16_t base, int rawTick, float x, float y, float z, bool blupiFocused)
         {
             return GalaxyEggbert::ResolveBlockAnimationIconAt(base, rawTick, static_cast<int>(std::lround(x)),
                                                               static_cast<int>(std::lround(y)),
-                                                              static_cast<int>(std::lround(z)));
+                                                              static_cast<int>(std::lround(z)), blupiFocused);
         }
 
         // Water is animated too, but drawn as its own semi-transparent pass
@@ -1138,7 +1138,7 @@ namespace GalaxyEggbert::Game
                 continue; // drawn as a model by the caller (SetModelDrawnBases)
             }
             const auto& definition = GalaxyEggbert::GetBlockDefinition(block.base);
-            const int icon = AnimIconAt(block.base, animPhase, block.x, block.y, block.z);
+            const int icon = AnimIconAt(block.base, animPhase, block.x, block.y, block.z, m_blupiFocused);
             if (icon < 0)
             {
                 // Temp tile's invisible frames — omit the cube entirely.
@@ -1279,8 +1279,14 @@ namespace GalaxyEggbert::Game
         return UploadLitTexturedMeshParts(device, combined);
     }
 
-    void TerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)
+    void TerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase,
+                                 bool blupiFocused)
     {
+        if (blupiFocused != m_blupiFocused)
+        {
+            m_blupiFocused = blupiFocused;
+            m_lastAnimPhase = -1; // the traps change their cycle now
+        }
         if (animPhase == m_lastAnimPhase ||
             (m_animBlocks.empty() && m_waterBlocks.empty() && m_lavaBlocks.empty() && m_blitzBlocks.empty()))
         {

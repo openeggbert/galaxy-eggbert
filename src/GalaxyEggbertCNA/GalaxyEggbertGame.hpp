@@ -1014,6 +1014,13 @@ namespace GalaxyEggbert::CNA
             return !blupi_.IsOnGround() ||
                    !(blupi_.IsPickupFrozen() || blupi_.IsTeleporting() || blupi_.IsBye() || winCheerActive_);
         }
+        // The original's m_blupiFocus itself (not "or in the air"): false dying, gone after it, taking a
+        // pickup, teleporting, waving goodbye or cheering. The spike traps snap then (BD-0067).
+        [[nodiscard]] bool BlupiFocusRaw() const
+        {
+            return !(blupi_.IsDeathLocked() || blupi_.IsDeathHidden() || blupi_.IsPickupFrozen() ||
+                     blupi_.IsTeleporting() || blupi_.IsBye() || winCheerActive_);
+        }
         // Out of play for the shots (Decor.cpp:5914-5917): cheering at the exit (Win), waving goodbye
         // (Bye), dying (Clear*, Glu, Electro) or gone after it (Hide). Not the busy states: a shot
         // still meets him taking a pickup or teleporting.

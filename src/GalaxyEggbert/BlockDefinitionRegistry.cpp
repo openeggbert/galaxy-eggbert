@@ -324,8 +324,8 @@ namespace GalaxyEggbert
         return animation.frames[static_cast<std::size_t>(phase % animation.frameCount)];
     }
 
-    int BlockDefinitionRegistry::ResolveAnimationIconAt(std::uint16_t type, int rawTick, int x, int y, int z) const
-        noexcept
+    int BlockDefinitionRegistry::ResolveAnimationIconAt(std::uint16_t type, int rawTick, int x, int y, int z,
+                                                        bool blupiFocused) const noexcept
     {
         using namespace BlockTypes;
         const auto& animation = Get(type).animation;
@@ -346,6 +346,11 @@ namespace GalaxyEggbert
         {
             offset = 11 * cx + 7 * row + 13 * cz;
             divisor = 3 + (17 * cx + 13 * row + 7 * cz) % 3;
+        }
+        if (type == Spike && !blupiFocused)
+        {
+            constexpr int kSnap[4] = {374, 373, 347, 373}; // table_decor_piege2
+            return kSnap[(std::max(0, rawTick) / 2 + offset) % 4];
         }
         const int phase = std::max(0, rawTick) / divisor + offset;
         return animation.frames[static_cast<std::size_t>(phase % animation.frameCount)];
