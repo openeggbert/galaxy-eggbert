@@ -157,7 +157,8 @@ wait 30
 # (19, 4); the pool across the hall (x 14-17, one deep, level with the floor) swum across along
 # z 10, out onto the west bank, the arrow (10, 6, 10).
 go 27 10
-go 24 10
+# Off the passage's end (x 25, to 24.5) with his 18 px clear of it.
+go 23.6 10 tol 0.15
 until ground = 1 max 300
 expect y <= 6.05
 go 19.5 5

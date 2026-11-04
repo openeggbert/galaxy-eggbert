@@ -152,12 +152,14 @@ expect y >= 39.95
 # The tower: three lifts stacked in one column (x 84-85, z 23-24), in step, each rising four;
 # from each one's top a jump of two up onto the shelf of the north wall (z 21-22), from which
 # the next one is boarded at the start of its dwell at the bottom. The shelves' hanging mines
-# (x 82, 88) and still mines (87 46 22, 83 52 22) stay clear of the column.
+# (x 82, 88) and still mines (87 46 22, 83 52 22) stay clear of the column. He turns back north
+# while the lift rises (`face 0`): turned at its top, his walk easing in (BD-0059), he left late.
 go 84.5 25.6
 face 0
 lift 84 44 23 max 400
 lift 84 40 23 max 400
 go 84.5 24.2 tol 0.15
+face 0
 lift 84 44 23 max 300
 go 84.5 21.6 jump 1.3 tol 0.15
 until ground = 1
@@ -165,6 +167,7 @@ expect y >= 45.95
 lift 84 50 23 max 400
 lift 84 46 23 max 400
 go 84.5 24.2 tol 0.15
+face 0
 lift 84 50 23 max 300
 go 84.5 21.6 jump 1.3 tol 0.15
 until ground = 1
@@ -172,6 +175,7 @@ expect y >= 51.95
 lift 84 56 23 max 400
 lift 84 52 23 max 400
 go 84.5 24.2 tol 0.15
+face 0
 lift 84 56 23 max 300
 go 84.5 21.6 jump 1.3 tol 0.15
 until ground = 1

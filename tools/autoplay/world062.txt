@@ -151,6 +151,9 @@ go 30 59.4
 until y <= 8.6 max 200
 go 34.5 60 tol 0.3 with crouch until y <= 4.4 max 400
 go 51 60 tol 0.3 with crouch max 900
+# Under the bank at its depth first, then up (in the water he goes 5.9 px a tick, BD-0058: rising on
+# the way he surfaced short of the bank and jumped into the water).
+go 56 60 tol 0.1 max 600
 go 56 60 tol 0 with lookup until y >= 6.28 max 400
 face 90
 hold 8 up jump

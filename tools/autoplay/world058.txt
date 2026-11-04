@@ -54,7 +54,9 @@ go 24.4 80.5 tol 0.15
 go 21.2 80.5 jump 2.7 tol 0.25
 until ground = 1
 expect y >= 24.95
-go 15 80.5
+# Clear of the walk-22 step (x 16-17, to 15.5) with his 18 px: he steps off it rather than
+# flying over it, his walk easing in again on every landing (BD-0059).
+go 14.6 80.5 tol 0.15
 until ground = 1 max 300
 expect y <= 20.05
 # B: the red door opens to the key; the mine corridor (walk 20) under the lava hall: weaving
@@ -188,11 +190,9 @@ go 88.15 64 tol 0.1
 face 270
 hold 2 action
 wait 20
-hold 135 lookup
-wait 100
-go 60.3 84.3 tol 0.95 max 1200
+fly 60.3 31.03 84.3 tol 0.95 max 1200
 wait 60
-go 60.3 84.3 tol 0.15
+fly 60.3 31.03 84.3 tol 0.15
 wait 30
 go 60.3 84.3 tol 0 with crouch until ground = 1 max 400
 expect y <= 30.1
@@ -217,11 +217,9 @@ hold 2 action
 wait 30
 # Over to the golden key's island GK, down south of its arch (z 73.5) between the drops of the
 # helicopter over it (59/61, 72), north under the arch to the golden key (60, 14, 70).
-hold 25 lookup
+fly 60 30.54 73.5 tol 0.9 max 600
 wait 60
-go 60 73.5 tol 0.9 max 600
-wait 60
-go 60 73.5 tol 0.15
+fly 60 30.54 73.5 tol 0.15
 wait 30
 go 60 73.5 tol 0 with crouch until ground = 1 max 600
 expect y <= 14.1

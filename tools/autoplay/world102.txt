@@ -33,10 +33,12 @@ wait 20
 go 38.3 11.5 tol 0.1
 lift 39 20 11 max 900
 go 39.5 11.5 tol 0.15
+# Turned west while the pillar rises: turned at its top (180 degrees, either way round) and his
+# walk easing in (BD-0059), he came off it late.
+face -90
 until y >= 27.95 max 600
-# Off onto the first caterpillar: 1-5 pass (autoplay_search, 2026-11-02, after BD-0017's
-# arrival under the pillar).
-wait 3
+# Off onto the first caterpillar: 3-30 pass, all of the range tried (autoplay_search, 2026-11-04).
+wait 15
 go 36.75 11.5 tol 0.1
 go 34.5 11.5 jump 3 tol 0.3
 until ground = 1

@@ -72,13 +72,13 @@ until ground = 1 max 300
 expect y <= 14.05
 until treasures = 2 max 120
 # Through the door "2" (x 45, z 54-56) into the corridor W: its tank swings across it at x 40,
-# passed the same way (134 frames after it reaches z 56: 110-158 pass, autoplay_search, since each
-# patrol phase holds a tick more as the original's, BD-0010 follow-up), then
+# passed the same way (84 frames after it reaches z 56: 60-108 pass, autoplay_search, since his
+# walk eases in as the original's, BD-0059), then
 # across the far shelf tank's line (z 53) to the ferry's lane.
 go 46.5 55
 go 41.4 55 tol 0.1
 near 40 14 56 0.2 max 600
-wait 134
+wait 84
 go 33 55
 go 31.5 51.7 tol 0.1
 # F, the ferry over the water pit: three pairs of lifts in step (2 x 3, z 52-54): A from the east

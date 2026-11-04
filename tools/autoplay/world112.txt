@@ -15,13 +15,13 @@ wait 20
 # Up to the gallery (walk 18) and down onto treasure 1 at its west end (4, 42), clear of the
 # posts' mines (9, 42) and (11, 42).
 go 10 50 tol 0 with lookup until y >= 18.2 max 600
-go 4 44.5 tol 0.3 max 600
+fly 4 19.60 44.5 tol 0.3 max 600
 go 4 42.5 tol 0 with crouch until treasures = 1 max 300
 until treasures = 1 max 200
 # Into the high chamber (walk 18, from the hangar's upper space at x 14-19) and down onto
 # treasure 2 (26, 48) between its two mines, from the south.
 go 6 46 tol 0 with lookup until y >= 19 max 300
-go 16 48 tol 0.3 max 600
+fly 16 20.40 48 tol 0.3 max 600
 go 26 50 tol 0.3 max 600
 go 26 48 tol 0 with crouch until treasures = 2 max 300
 until treasures = 2 max 200

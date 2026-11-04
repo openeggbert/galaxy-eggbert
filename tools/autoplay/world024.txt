@@ -122,7 +122,9 @@ until ground = 1
 expect y >= 20.95
 # L5 (z 49, feet 21, 3 ticks at each end) to east ledge 3 (walk 23): the red key, an egg.
 go 63.3 49.5
-go 63.3 49 tol 0.08
+# At the ledge's very edge: the lift dwells four ticks, and the walk eases in over its first four
+# (BD-0059), so from 63.3 he no longer reached its middle in time.
+go 63.45 49 tol 0.04
 face 90
 lift 64 21 49 max 600
 hold 12 up
@@ -159,7 +161,9 @@ until ground = 1
 expect y >= 10.95
 # The piers: onto each lift (x 30, 26, 22) when it is up, over the second cell by a jump.
 go 30.75 50 tol 0.08
-lift 30 11 50 max 400
+# From the lift's start below: 60-120+ pass (autoplay_search, after BD-0059's ease-in).
+lift 30 9 50 max 400
+wait 76
 go 30 50 tol 0.15
 go 27.6 50 jump 2.5
 until ground = 1

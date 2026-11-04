@@ -371,7 +371,9 @@ until ground = 1 max 100
 expect y <= 40.05
 go 69 13 until eggs = 8
 until eggs = 8 max 120
-go 68 13 until eggs = 9
+# Right over the floor's middle: within the default tolerance his box can rest on the step's
+# corner (68.24 stayed up at y 40 once the water's speed shifted the timing, BD-0058).
+go 68 13 tol 0.05 until eggs = 9
 until eggs = 9 max 120
 go 68 12 until eggs = 10
 until eggs = 10 max 120
@@ -439,7 +441,8 @@ hold 2 action
 wait 20
 go 31 62 jump 2.9 tol 0.2
 until ground = 1
-go 22 62 until y <= 29
+# Past the shaft's edge (he drops at x 22.2 with his 18 px clear of it), so the go ends as he falls.
+go 21.4 62 until y <= 29
 until ground = 1 max 300
 expect y <= 22.05
 # The pocket: the treasure in its north-west, back up its stair of four steps (z 60, x 25-28)

@@ -2,13 +2,15 @@
 wait 30
 expect mission = 13
 expect lives >= 3
-# A. The hangar: take a helicopter (Space), climb to the window (RightShift; held T s and let
-# go, it rises 3.125 T cells) and fly through it onto the pool hall's ledge (walk 6).
+# A. The hangar: take a helicopter (Space), climb to the window (RightShift) and fly through it
+# onto the pool hall's ledge (walk 6). It climbs as the original's (EasyMove: to 7 px a tick, 0.5
+# more a tick) and sinks 1 px a tick when let be (BD-0070): held 185 frames it peaks near y 7.4,
+# and crosses the wall's top (y 6) near 6.8, under the lintel (y 9).
 go 44 60.15
 hold 2 action
 wait 20
-hold 100 lookup
-wait 60
+hold 185 lookup
+wait 30
 face 0
 go 46 52.5
 wait 40
@@ -28,25 +30,21 @@ go 46 31.2
 go 46 29 jump 2
 until ground = 1
 expect y >= 4.95
-# C. The second helicopter, up the shaft for the three treasures (y 10, 14, 18).
+# C. The second helicopter, up the shaft for the three treasures (y 10, 14, 18). Let be, it sinks
+# 1 px a tick (BD-0070): over each treasure it climbs on the spot until it has it.
 go 44 26.15
 hold 2 action
 wait 20
-hold 96 lookup
-wait 70
-go 42 24
-until treasures = 1 max 200
-hold 77 lookup
-wait 70
-go 54 21
-until treasures = 2 max 200
-hold 77 lookup
-wait 70
-go 48 28
-until treasures = 3 max 200
-# Up onto the cliff of D (walk 21), land and leave the helicopter there.
-hold 67 lookup
-wait 70
+go 44 26.15 tol 0 with lookup until y >= 8.9 max 600
+go 42 24 tol 0.25
+go 42 24 tol 0 with lookup until treasures = 1 max 600
+go 54 21 tol 0.25
+go 54 21 tol 0 with lookup until treasures = 2 max 900
+go 48 28 tol 0.25
+go 48 28 tol 0 with lookup until treasures = 3 max 900
+# Up onto the cliff of D (walk 21), land and leave the helicopter there: high enough that the
+# sink on the way leaves it over the cliff's top.
+go 48 28 tol 0 with lookup until y >= 22.2 max 900
 go 48 15
 wait 40
 hold 120 crouch

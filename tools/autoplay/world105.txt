@@ -14,29 +14,29 @@ go 24 30 tol 0.3 max 900
 go 24 30 tol 0 with crouch until treasures = 1 max 600
 until treasures = 1 max 200
 go 24 30 tol 0 with lookup until y >= 29 max 600
-go 40 26 tol 0.3 max 900
+fly 40 30.40 26 tol 0.3 max 900
 go 40 26 tol 0 with crouch until treasures = 2 max 600
 until treasures = 2 max 200
 go 40 26 tol 0 with lookup until y >= 29 max 600
-go 56 34 tol 0.3 max 900
+fly 56 30.40 34 tol 0.3 max 900
 go 56 34 tol 0 with crouch until treasures = 3 max 600
 until treasures = 3 max 200
 go 56 34 tol 0 with lookup until y >= 29 max 600
-go 63 56 tol 0.3 max 900
+fly 63 30.40 56 tol 0.3 max 900
 go 63 56 tol 0 with crouch until treasures = 4 max 600
 until treasures = 4 max 200
 go 63 56 tol 0 with lookup until y >= 29 max 600
-go 28 72 tol 0.3 max 900
+fly 28 30.40 72 tol 0.3 max 900
 go 28 72 tol 0 with crouch until treasures = 5 max 600
 until treasures = 5 max 200
 # The highest island (walk 32): up to 33.5 and down onto its treasure (46, 64).
 go 28 72 tol 0 with lookup until y >= 32 max 600
-go 46 64 tol 0.3 max 900
+fly 46 33.40 64 tol 0.3 max 900
 go 46 64 tol 0 with crouch until treasures = 6 max 600
 until treasures = 6 max 200
 # Over to the ledge on the east wall (walk 20) and down onto it, out of the helicopter.
 go 46 64 tol 0 with lookup until y >= 32.5 max 300
-go 66 48 tol 0.3 max 900
+fly 66 33.90 48 tol 0.3 max 900
 go 66 48 tol 0 with crouch until ground = 1 max 600
 hold 2 action
 wait 20
@@ -66,7 +66,7 @@ hold 2 action
 wait 20
 # Over to the middle island (walk 18), down beside its hut's west door, out, in to the exit.
 go 66 48 tol 0 with lookup until y >= 29 max 600
-go 33 49.5 tol 0.3 max 900
+fly 33 30.40 49.5 tol 0.3 max 900
 go 32.6 49.5 tol 0 with crouch until ground = 1 max 600
 hold 2 action
 wait 20

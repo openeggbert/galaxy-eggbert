@@ -145,6 +145,9 @@ expect keys = 0
 # over the islands' corners. Along the bank (z 29) at z 29.1: the wall at z 30 is a half-width off
 # z 29.3 (OR-0017).
 go 47.5 29.1 tol 0.1
+# On as the ferry comes in (its far end first): found resting there, it could leave before his walk,
+# easing in (BD-0059), took him aboard.
+lift 47 20 25 max 900
 lift 47 20 28 max 900
 go 47.5 28 tol 0.15
 lift 47 20 25 max 600
@@ -266,7 +269,7 @@ go 73.15 44 tol 0.1
 hold 2 action
 wait 20
 go 75 46 tol 0 with lookup until y >= 33.5 max 900
-go 89 59 tol 0.3 max 900
+fly 89 34.90 59 tol 0.3 max 900
 go 89 59 tol 0 with crouch until exit = 1 max 600
 until mission = 110 max 900
 expect phase = Play

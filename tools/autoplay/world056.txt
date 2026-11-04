@@ -70,7 +70,8 @@ go 64 68 tol 0.2
 go 62 68 tol 0.2
 go 60 68 tol 0.2
 go 58 68 tol 0.2
-go 55.1 68 tol 0.15
+# The bottom (x 53-55) ends at 55.5: with his 18 px he stands on it from x 55.22 down.
+go 54.8 68 tol 0.15
 until ground = 1
 expect y <= 12.05
 until treasures = 6 max 120

@@ -189,7 +189,9 @@ until ground = 1 max 120
 expect y >= 57.95
 face 270
 lift 92 58 45 max 400
-lift 85 58 45 max 400
+# Off as B comes in past x 86: it rests only four ticks at its west end, and from the stand his
+# walk eases in (BD-0059); waiting for it to arrive, it bore him back east short of the take-off.
+lift 86 58 45 max 400
 go 83.6 45.6 jump 1.6 tol 0.2
 until ground = 1
 expect y >= 59.95
@@ -203,7 +205,8 @@ go 81 45 tol 0.15
 hold 6 jump
 wait 20
 face 270
-hold 170 up
+# Along the bars at the original's 5 px a tick (BD-0068): off their end in about 250 frames.
+hold 270 up
 until ground = 1 max 200
 expect x <= 74.6
 go 74.3 45 tol 0.1
@@ -235,7 +238,7 @@ go 66 34 jump 1.5 tol 0.15
 wait 20
 expect y >= 67.9
 face 0
-hold 150 up
+hold 240 up
 until ground = 1 max 200
 expect z <= 28.6
 wait 20
@@ -256,76 +259,59 @@ go 66 19.15 tol 0.1
 face 0
 hold 2 action
 wait 20
-hold 115 lookup
-wait 100
-go 66 21 tol 0.4
+fly 66 75.99 21 tol 0.4
 wait 60
-go 66 21 tol 0.15
+fly 66 75.99 21 tol 0.15
 wait 30
 until treasures = 5 max 120
-go 64 23.4 tol 0.8
+fly 64 75.99 23.4 tol 0.8
 wait 60
-go 64 23.4 tol 0.15
+fly 64 75.99 23.4 tol 0.15
 wait 40
-hold 52 lookup
-wait 90
-go 64 25 tol 0.5
+fly 64 78.34 25 tol 0.5
 wait 60
 go 64 25 tol 0 with crouch until ground = 1 max 300
 until treasures = 6 max 120
-go 62.6 25 tol 0.5
-wait 60
-hold 32 crouch
-wait 60
-go 61 25 tol 0.5
-wait 60
-go 61 25 tol 0.15
-wait 30
+# Treasure 7 hangs at (61, 77, 25), 8 lies on the floor at (59, 76, 23): flown to at their heights
+# (the helicopter sinks when let be, BD-0070).
+fly 62.6 78.2 25 tol 0.5 max 900
+fly 62.6 76.9 25 tol 0.3 max 900
+fly 61 76.9 25 tol 0.15 max 900
 until treasures = 7 max 120
-go 59.6 23.6 tol 0.6
-wait 60
-go 59 23 tol 0.2
-wait 40
+fly 59 76.6 23 tol 0.2 max 900
 go 59 23 tol 0 with crouch until ground = 1 max 300
 until treasures = 8 max 120
 # Up through the hole in the vault (x 62-63, z 22-23) into the upper garage (walk 82), over and
 # up through its hole (x 57-58, z 19-20) into the top cave (walk 88); down onto the ledge with the
 # egg (walk 90).
-go 61 22.8 tol 0.6
-wait 60
-go 62.5 22.5 tol 0.15
-wait 30
-hold 144 lookup
-wait 100
+fly 61 76.6 22.8 tol 0.6
+fly 62.5 76.6 22.5 tol 0.15
+fly 62.5 83.00 22.5 tol 0.3 max 2000
 expect y >= 82.5
-go 59.3 20.6 tol 0.8
+fly 59.3 83.00 20.6 tol 0.8
 wait 60
-go 57.5 19.5 tol 0.4
+fly 57.5 83.00 19.5 tol 0.4
 wait 60
-go 57.5 19.5 tol 0.15
+fly 57.5 83.00 19.5 tol 0.15
 wait 30
-hold 115 lookup
-wait 100
+fly 57.5 89.2 19.5 tol 0.15 max 2000
 expect y >= 88.5
-hold 67 lookup
-wait 100
+fly 57.5 92.70 19.5 tol 0.3 max 2000
 expect y >= 92.2
-go 55.6 20 tol 0.5
+fly 55.6 92.70 20 tol 0.5
 wait 60
-go 55.4 20 tol 0.15
+fly 55.25 92.70 20 tol 0.08
 wait 30
-go 55.4 20 tol 0 with crouch until ground = 1 max 300
+go 55.25 20 tol 0 with crouch until ground = 1 max 300
 expect y >= 89.95
 # The switch's corridor (z 26, x 55-61): landed at its mouth, out of the helicopter, the switch
 # in its floor (61, 26) pressed: its two saws stop; along it under the hanging mines to treasure
 # 10 (55, 88, 26) and back, into the helicopter again.
-hold 50 lookup
-wait 90
-go 59.6 23.6 tol 1.0
+fly 59.6 92.09 23.6 tol 1.0
 wait 60
-go 62.6 25.9 tol 0.5
+fly 62.6 92.09 25.9 tol 0.5
 wait 60
-go 62.6 25.9 tol 0.15
+fly 62.6 92.09 25.9 tol 0.15
 wait 30
 go 62.6 25.9 tol 0 with crouch until ground = 1 max 400
 expect y <= 88.05
@@ -342,13 +328,11 @@ wait 30
 # The bend of water under the north wall (x 56): landed by it, out of the helicopter, down its
 # first shaft (z 16), along under the wall (y 84), up the second (z 13) and out into the niche:
 # treasure 9 (57, 88, 12); back the same way, into the helicopter.
-hold 60 lookup
-wait 90
-go 58.6 20.6 tol 1.4
+fly 58.6 91.13 20.6 tol 1.4
 wait 60
-go 56.6 17.4 tol 0.5
+fly 56.6 91.13 17.4 tol 0.5
 wait 60
-go 56.6 17.4 tol 0.15
+fly 56.6 91.13 17.4 tol 0.15
 wait 30
 go 56.6 17.4 tol 0 with crouch until ground = 1 max 400
 expect y <= 88.05
@@ -383,14 +367,13 @@ hold 2 action
 wait 30
 # Up and over the arrow's box, down through its grate roof (no wall to a flyer) beside its egg
 # (62, 22), the arrow (63, 88, 23).
-hold 85 lookup
-wait 100
+fly 56.6 92.80 17.4 tol 0.3 max 2000
 expect y >= 92.3
-go 60.4 20.4 tol 1.2
+fly 60.4 92.80 20.4 tol 1.2
 wait 60
-go 62.4 22.4 tol 0.5
+fly 62.4 92.80 22.4 tol 0.5
 wait 60
-go 62.4 22.4 tol 0.15
+fly 62.4 92.80 22.4 tol 0.15
 wait 30
 go 62.4 22.4 tol 0 with crouch until ground = 1 max 400
 expect y <= 88.05

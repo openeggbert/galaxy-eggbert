@@ -5,7 +5,7 @@ expect mission = 33
 # treasure (50, 47) under the wasp sweeping along z 47, touched from the south.
 go 50 58
 go 50 49
-go 50 47.4 tol 0.05
+go 50 47.3 tol 0.05
 go 50 49.5
 until treasures = 1 max 200
 # Up the atrium's east side (x 56, clear of both wasps) to the north room's doorway (50, 37);
@@ -121,14 +121,15 @@ go 60.6 47
 # The bridge across the atrium (walk 19, z 46-48): two wasps sweep across it along x 53 and
 # x 47 (the original's 80 ticks to and fro, BD-0016): pass each along the bridge's north edge
 # (z 46) while it is out over the void, the treasure (50, 47) between them (frames 11295-11407
-# and 11660-11756 pass, autoplay_search).
+# and 11660-11756 passed, autoplay_search; his walk easing in (BD-0059) he comes a cycle later:
+# both wasps go round in 36 + 4 + 36 + 4 ticks and a tick more a phase, 252 frames).
 go 54.2 46 tol 0.1
-until mtick >= 11351
+until mtick >= 11603
 go 52 46
 expect y <= 19.05
 go 50 47 tol 0.1
 go 48.2 46 tol 0.1
-until mtick >= 11708
+until mtick >= 11960
 go 44 46
 expect y <= 19.05
 until treasures = 9 max 200

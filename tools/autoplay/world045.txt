@@ -101,13 +101,11 @@ go 90.5 52
 go 91 60.85 tol 0.15
 hold 6 action
 wait 30
-hold 40 lookup
-wait 40
-go 93.5 51 tol 0.4
-go 93.5 45 tol 0.4
-go 89 40 tol 0.4
-go 86 33.5 tol 0.4
-hold 240 crouch
+fly 93.5 21.39 51 tol 0.4
+fly 93.5 21.39 45 tol 0.4
+fly 89 21.39 40 tol 0.4
+fly 86 21.39 33.5 tol 0.4
+go 86 33.5 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 300
 expect y <= 8.05
 hold 6 action
@@ -155,38 +153,34 @@ until eggs = 7 max 200
 go 60.08 33.12 tol 0.15
 hold 6 action
 wait 30
-hold 760 lookup
-wait 60
+fly 60.08 47.70 33.12 tol 0.3 max 2000
 expect y >= 47.2
-go 74 23.5 tol 0.3
-hold 120 crouch
+fly 74 47.70 23.5 tol 0.3
+go 74 23.5 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 300
 expect y <= 44.05
-go 74 23.6 tol 0.2
+# The treasure at (74, 44, 24): within 28 px of it (BD-0021).
+go 74 23.85 tol 0.1
 until treasures = 9 max 200
 # A, the attic behind the walk-through cheese high in the west wall (walk 52): flown in at
 # its floor level, treasure 4 on the floor, treasure 5 on the ledge (walk 55), three eggs.
-hold 166 lookup
-wait 60
+fly 74 52.80 23.6 tol 0.3 max 2000
 expect y >= 52.3
-go 59 15 tol 0.4
-go 53 17.6 tol 0.3
-hold 40 crouch
+fly 59 52.80 15 tol 0.4
+fly 53 52.80 17.6 tol 0.3
+go 53 17.6 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 53 18 tol 0.2
 until treasures = 10 max 200
-hold 69 lookup
-wait 60
+fly 53 55.70 18 tol 0.3 max 2000
 expect y >= 55.2
-go 49.6 12.4 tol 0.3
-hold 40 crouch
+fly 49.6 55.70 12.4 tol 0.3
+go 49.6 12.4 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 49.3 12.2 tol 0.2
 until treasures = 11 max 200
-hold 10 lookup
-wait 20
-go 51.4 11.3 tol 0.2
-hold 90 crouch
+fly 51.4 55.09 11.3 tol 0.2
+go 51.4 11.3 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 51.2 11.2 tol 0.2
 until eggs = 8 max 200
@@ -196,14 +190,13 @@ go 53 11.2 tol 0.2
 until eggs = 10 max 200
 # X: out through the cheese, down to the exit landing (walk 36), west along the corridor under
 # its lintel of crushers (x 53, one high) while they are up, to the red arrow.
-hold 12 lookup
-wait 30
-go 53.5 15 tol 0.3
-go 64.5 15 tol 0.4
-hold 240 crouch
+fly 53.5 52.13 15 tol 0.3
+fly 64.5 52.13 15 tol 0.4
+# Down the shaft (no floor under it here) to 37.4, then over the landing and onto it.
+fly 64.5 37.4 15 tol 0.3 max 1200
 until y <= 38 max 300
-go 59.5 23.5 tol 0.3
-hold 60 crouch
+fly 59.5 37.4 23.5 tol 0.3
+go 59.5 23.5 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 expect y <= 36.05
 go 55 23 tol 0.3

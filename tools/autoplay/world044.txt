@@ -109,11 +109,11 @@ wait 30
 go 20 72.5 tol 0.3
 go 20 71.3 tol 0.2
 wait 30
-hold 165 lookup
-wait 60
+# Up and over in the helicopter, holding its height (it sinks when let be, BD-0070).
+fly 20 20.7 71.3 tol 0.3 max 900
 expect y >= 20.1
-go 20.5 68 tol 0.3
-hold 40 crouch
+fly 20.5 20.7 68 tol 0.3
+go 20.5 68 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 hold 6 action
 wait 30

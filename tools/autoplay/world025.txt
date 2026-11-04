@@ -42,8 +42,10 @@ lift 32 23 49 max 200
 go 30.6 49.5 jump 2.5 tol 0.15
 until ground = 1
 expect y >= 24.95
-go 29.4 47.8
-go 29.4 50.2 until eggs = 3
+# Along the eggs (x 29, z 48-50) closer to their line: a box 28 px across, and the walk's ease-in
+# (BD-0059) left him 0.45 off it past the first.
+go 29.2 47.8
+go 29.2 50 tol 0.05 until eggs = 3
 until eggs = 3 max 200
 # The lightning bridge (walk 25, z 50) west through the wall: up to the gate (x 26).
 go 29 50
@@ -60,8 +62,9 @@ hold 2 action
 wait 10
 go 10 50 until treasures = 1
 until treasures = 1 max 120
-# Off the platform's south end down onto the lava terrace (walk 11).
-go 10 59
+# Off the platform's south end down onto the lava terrace (walk 11): well past its edge (z 58.5),
+# or his box rests on it (BD-0059's ease-in stopped him at its very edge).
+go 10 59.5 tol 0.1
 until ground = 1
 expect y <= 11.05
 # The lava terrace east along z 62: the one-cell lift (x 17-18) over the first lava.
@@ -149,9 +152,8 @@ wait 20
 go 65 66
 go 67 65
 wait 40
-hold 211 lookup
-wait 70
-go 67 61
+fly 67 11.99 65 tol 0.3 max 2000
+fly 67 11.99 61
 wait 40
 hold 120 crouch
 until ground = 1 max 200
@@ -179,16 +181,16 @@ go 72 28.15 tol 0.15
 face 0
 hold 2 action
 wait 20
-hold 39 lookup
-wait 40
-go 70 31
+fly 72 24.32 28.15 tol 0.3 max 2000
+fly 70 24.32 31
 wait 60
-go 68 31 tol 0.15
+fly 68 24.32 31 tol 0.15
 wait 60
 face -90
 near 65 24 31 0.15 max 400
 wait 10
-go 56 31
+# Over the treasure (55, 23, 31) itself: the slower helicopter no longer overshoots the point.
+fly 55.2 24.32 31 tol 0.15
 wait 60
 # Down onto the west ledge (walk 23): treasure 3 (the fourth); the helicopter left there.
 hold 120 crouch

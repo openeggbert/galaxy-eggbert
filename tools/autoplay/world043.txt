@@ -81,19 +81,16 @@ go 71 38.5 tol 0.3
 wait 40
 go 71 39 tol 0.15
 wait 40
-hold 451 lookup
-wait 60
+fly 71 37.70 39 tol 0.3 max 2000
 expect y >= 37.2
-go 76 46 tol 0.3
-hold 60 crouch
+fly 76 37.70 46 tol 0.3
+go 76 46 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 76 46 tol 0.2
 until treasures = 6 max 200
 # F: the tube down south-west (from (72, 36, 47) to (61, 27, 61)) into chamber 2 (walk 24),
 # flown along its floor: treasure 7 on chamber 2's floor.
-hold 12 lookup
-wait 30
-go 72.5 46.5 tol 0.3
+fly 72.5 37.13 46.5 tol 0.3
 # Down into the tube's mouth first: flown in at hover height, each lower step of its ceiling
 # meets the helicopter's crash band (7 px over his head, Decor.cpp:5264-5283, OR-0019).
 hold 60 crouch
@@ -103,13 +100,12 @@ until ground = 1 max 200
 go 58 63 tol 0.2
 until treasures = 7 max 200
 # Treasure 8 in the niche high in the south wall (from (60, 28, 66) to (62, 28, 69)).
-hold 85 lookup
-wait 60
+fly 58 28.60 63 tol 0.3 max 2000
 expect y >= 28.1
-go 60.3 65.8 tol 0.3
+fly 60.3 28.60 65.8 tol 0.3
 # Onto the item, dipping toward its floor: the original's boxes reach 22 px below his feet
 # (BD-0021).
-go 62 69 tol 0.15
+fly 62 28.60 69 tol 0.15
 # 10-14 pass (autoplay_search).
 hold 12 crouch
 go 62 69 tol 0.1
@@ -117,47 +113,37 @@ until treasures = 8 max 200
 go 60.3 65.8 tol 0.3
 # The chimney: its foot (a tube west at y 26), up to the side niche (y 36, north to z 68) for
 # treasure 9, on up to the dome (walk 46).
-hold 50 crouch
-wait 40
-go 54 63.2 tol 0.3
-go 50 62 tol 0.3
-wait 30
-hold 200 lookup
-wait 60
+# The heights as the hovering helicopter's run before BD-0070 (it sinks when let be now): the tube
+# at 26.2, the niche at 36.2 (its floor 36: the treasure taken just above it), the dome at 46.5.
+fly 60.3 26.2 65.8 tol 0.3 max 900
+fly 54 26.2 63.2 tol 0.3
+fly 50 26.2 62 tol 0.3
+fly 50 36.5 62 tol 0.3 max 2000
 expect y >= 36
-# Dipping toward the niche's floor as at treasure 8 (16-22 pass).
-go 50 68 tol 0.15
-hold 19 crouch
-go 50 68 tol 0.1
+fly 50 36.5 67.5 tol 0.3
+fly 50 36.15 68 tol 0.1 max 900
 until treasures = 9 max 200
-go 50 62.2 tol 0.3
-wait 30
-hold 196 lookup
-wait 60
+fly 50 36.5 62.2 tol 0.3
+fly 50 46.5 62.2 tol 0.3 max 2000
 expect y >= 46.2
 # The dome: treasure 10 on the ledge six high (walk 52), treasure 11 on the ledge four high
 # (walk 50), the egg on its floor.
-go 47 61 tol 0.3
+fly 47 46.6 61 tol 0.3
+fly 47 52.17 61 tol 0.3 max 2000
 # Not up to the dome's ceiling: over the ledge's edge it is a cell lower (y 54), and the climb's
 # drift there met the helicopter's crash band (OR-0019; 100-120 pass, autoplay_search).
-hold 110 lookup
-wait 60
-go 44.4 64.4 tol 0.3
-hold 60 crouch
+fly 44.4 52.17 64.4 tol 0.3
+go 44.4 64.4 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 44 64 tol 0.2
 until treasures = 10 max 200
-hold 12 lookup
-wait 30
-go 39.3 56.4 tol 0.3
-hold 60 crouch
+fly 39.3 52.13 56.4 tol 0.3
+go 39.3 56.4 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 39 56 tol 0.2
 until treasures = 11 max 200
-hold 12 lookup
-wait 30
-go 42 56.4 tol 0.3
-hold 90 crouch
+fly 42 50.13 56.4 tol 0.3
+go 42 56.4 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 expect y <= 46.05
 go 42 56 tol 0.2
@@ -165,23 +151,18 @@ until eggs = 2 max 200
 # R: the way back, a tube from the dome's north side at y 51: up into it, along it to the block
 # under the pocket in its roof, up into the pocket and down onto the block (treasure 12), on
 # to its end, down the shaft and the tube into the start cave's roof.
-hold 102 lookup
-wait 60
+fly 42 51.50 56 tol 0.3 max 2000
 expect y >= 51
-go 41 55.2 tol 0.3
-go 38.5 51.0 tol 0.3
-go 37.6 49.3 tol 0.25
-hold 47 lookup
-wait 40
-go 37 48 tol 0.3
-hold 40 crouch
+fly 41 51.50 55.2 tol 0.3
+fly 38.5 51.50 51.0 tol 0.3
+fly 37.6 51.50 49.3 tol 0.25
+fly 37 53.23 48 tol 0.3
+go 37 48 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 37 48 tol 0.2
 until treasures = 12 max 200
-hold 15 lookup
-wait 20
-go 36.4 47 tol 0.3
-hold 20 crouch
+fly 36.4 52.20 47 tol 0.3
+go 36.4 47 tol 0 with crouch until ground = 1 max 600
 wait 30
 go 32.4 41.6 tol 0.3
 go 32 39.5 tol 0.3

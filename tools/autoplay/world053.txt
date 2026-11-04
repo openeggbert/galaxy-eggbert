@@ -74,10 +74,13 @@ go 13.4 20.2 tol 0.15
 go 13.3 19.2 tol 0.15 until treasures = 1
 go 13.5 18 tol 0.15
 go 16.5 17.75 tol 0.2
-# The north-west alcove (13, 10): in along z 11.25 past its star (15, 26, 10), out along z 8.75.
+# The north-west alcove (13, 10): in along z 11.15 past its star (15, 26, 10), out along z 8.75.
+# The alcove ends at 11.5 and his body is 18 px either side: from z 11.22 up its north wall's
+# corner (14.5, 11.5) stops him at x 14.78, and the star, awake since he came within 144 px,
+# catches him there.
 go 17 12
-go 16.6 11.25 tol 0.1
-go 13.4 11.25 tol 0.15
+go 16.3 11.15 tol 0.1
+go 13.4 11.1 tol 0.15
 go 13.3 10.3 tol 0.15 until treasures = 2
 go 13.5 8.8 tol 0.15
 go 17 8.75 tol 0.2

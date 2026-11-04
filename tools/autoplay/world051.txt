@@ -43,6 +43,9 @@ expect x >= 70
 # east side (x 62) and out onto the gallery's north bank.
 go 69 39.6
 go 69 45 tol 0.2 with crouch until y <= 31.3 max 600
+# West along the channel at its depth first (in the water he goes 5.9 px a tick, BD-0058: rising
+# on the way, he met the tank's shaft before the pool), then up the pool.
+go 62.2 44 tol 0.2 max 600
 go 62.2 44 tol 0.2 with lookup max 600
 go 62 43 tol 0 with lookup until y >= 33.28 max 300
 face 0

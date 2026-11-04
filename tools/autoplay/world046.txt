@@ -8,19 +8,16 @@ until eggs = 1 max 200
 go 17.92 88.12 tol 0.15
 hold 6 action
 wait 30
-hold 242 lookup
-wait 60
+fly 17.8 22.7 88.2 tol 0.3 max 1200
 expect y >= 22.2
-go 12 82.3 tol 0.3
-hold 60 crouch
+fly 12 22.7 82.3 tol 0.3
+go 12 82.3 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 expect y >= 21.95
 go 12 82 tol 0.2
 until keys > 0 max 200
-hold 12 lookup
-wait 30
-go 21.5 80 tol 0.3
-hold 300 crouch
+fly 21.5 22.13 80 tol 0.3
+go 21.5 80 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 300
 expect y <= 10.05
 hold 6 action

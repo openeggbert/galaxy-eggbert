@@ -44,35 +44,35 @@ wait 20
 # Up the shaft to each ledge's treasure: over it, then down onto it. Ledge 1 (walk 12), 2 (18),
 # 3 (24), 4 (30); the invert's ledge (54-57, 42-43, walk 22) is kept clear of.
 go 52 46 tol 0 with lookup until y >= 13.5 max 600
-go 47 43 tol 0.2 max 600
+fly 47 14.90 43 tol 0.2 max 600
 go 47 43 tol 0 with crouch until treasures = 1 max 300
 until treasures = 1 max 200
 go 50 46 tol 0 with lookup until y >= 19.5 max 600
-go 63 43 tol 0.2 max 600
+fly 63 20.90 43 tol 0.2 max 600
 go 63 43 tol 0 with crouch until treasures = 2 max 300
 until treasures = 2 max 200
 go 60 50 tol 0 with lookup until y >= 25.5 max 600
-go 63 57 tol 0.2 max 600
+fly 63 26.90 57 tol 0.2 max 600
 go 63 57 tol 0 with crouch until treasures = 3 max 300
 until treasures = 3 max 200
 go 58 53 tol 0 with lookup until y >= 31.5 max 600
-go 47 57 tol 0.2 max 600
+fly 47 32.90 57 tol 0.2 max 600
 go 47 57 tol 0 with crouch until treasures = 4 max 300
 until treasures = 4 max 200
 # Up to the corridor (walk 34, three high: the helicopter climbs on a while after the key, so
 # stop at 33.2), along it weaving round its mines (67, 49), (70, 51), (73, 49), (75, 51), into
 # the exit's room.
 go 52 50 tol 0 with lookup until y >= 33.2 max 600
-go 63 50 tol 0.2 max 600
-go 66.5 51.8 tol 0.3 max 600
-go 68.5 51.8 tol 0.3 max 600
-go 70 48.3 tol 0.3 max 600
-go 71.5 48.3 tol 0.3 max 600
-go 73 51.8 tol 0.3 max 600
-go 74 51.8 tol 0.3 max 600
-go 75.5 48.3 tol 0.3 max 600
-go 78 50 max 900
-go 82 54 tol 0.3 max 600
+fly 63 34.60 50 tol 0.2 max 600
+fly 66.5 34.60 51.8 tol 0.3 max 600
+fly 68.5 34.60 51.8 tol 0.3 max 600
+fly 70 34.60 48.3 tol 0.3 max 600
+fly 71.5 34.60 48.3 tol 0.3 max 600
+fly 73 34.60 51.8 tol 0.3 max 600
+fly 74 34.60 51.8 tol 0.3 max 600
+fly 75.5 34.60 48.3 tol 0.3 max 600
+fly 78 34.60 50 max 900
+fly 82 34.60 54 tol 0.3 max 600
 go 82 54 tol 0 with crouch until exit = 1 max 300
 until mission = 110 max 900
 expect phase = Play

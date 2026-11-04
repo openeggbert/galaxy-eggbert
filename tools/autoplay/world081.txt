@@ -4,7 +4,8 @@
 # platform's edge, started a set delay after the saucers come back (temp turning from 19 to 0),
 # so that no saucer is under him while they are gone and the bird crossing the chain's middle
 # misses him. The delays were found by trying every sixth tick over the cycle (the run is
-# deterministic): each is the middle of the first run of delays that pass.
+# deterministic): each is the middle of the first run of delays that pass (re-timed 2026-11-04 for
+# the walk's ease-in, BD-0059, every third tick).
 wait 30
 expect mission = 81
 # Chain 0: platform 0 (walk 20) to 1 (walk 23), 3 saucers.
@@ -12,7 +13,7 @@ go 13.50 76.60 tol 0.15
 face 0
 until temp = 19 max 600
 until temp = 0 max 60
-wait 12
+wait 6
 go 13.50 73.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 13.50 70.50 jump 2.05 tol 0.3 max 300
@@ -29,7 +30,7 @@ until temp = 19 max 600
 until temp = 0 max 60
 # Two vanishing cycles later than the first return: the bird (the original's 2.5 cells/s,
 # BD-0016) is then away from the chain's middle (252-732 pass, autoplay_search).
-wait 492
+wait 486
 go 18.50 63.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 21.50 63.50 jump 2.05 tol 0.3 max 300
@@ -45,7 +46,7 @@ face 0
 until temp = 19 max 600
 until temp = 0 max 60
 # Re-timed for the original creature speeds (BD-0016): [252, 492, 732, 1212, 1452, 1692] pass (autoplay_search).
-wait 492
+wait 486
 go 29.50 57.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 29.50 54.50 jump 2.05 tol 0.3 max 300
@@ -77,7 +78,9 @@ go 13.50 44.60 tol 0.15
 face 0
 until temp = 19 max 600
 until temp = 0 max 60
-wait 12
+# Off in the cycle before: he lands on the first saucer just after they come back (156-168 pass;
+# from their return, 3 alone: four saucers, his walk easing in after every landing, BD-0059).
+wait 162
 go 13.50 41.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 13.50 38.50 jump 2.05 tol 0.3 max 300
@@ -94,7 +97,7 @@ go 15.40 29.50 tol 0.15
 face 90
 until temp = 19 max 600
 until temp = 0 max 60
-wait 18
+wait 6
 go 18.50 29.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 21.50 29.50 jump 2.05 tol 0.3 max 300
@@ -139,7 +142,7 @@ go 76.50 25.40 tol 0.15
 face 180
 until temp = 19 max 600
 until temp = 0 max 60
-wait 18
+wait 6
 go 76.50 28.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 76.50 31.50 jump 2.05 tol 0.3 max 300
@@ -154,7 +157,7 @@ go 72.60 39.50 tol 0.15
 face 270
 until temp = 19 max 600
 until temp = 0 max 60
-wait 18
+wait 6
 go 69.50 39.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 66.50 39.50 jump 2.05 tol 0.3 max 300
@@ -167,7 +170,9 @@ go 60.50 41.40 tol 0.15
 face 180
 until temp = 19 max 600
 until temp = 0 max 60
-wait 18
+# Off in the cycle before: he lands on the first saucer just after they come back (156-168 pass;
+# from their return, 3 alone: four saucers, his walk easing in after every landing, BD-0059).
+wait 162
 go 60.50 44.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 60.50 47.50 jump 2.05 tol 0.3 max 300
@@ -182,7 +187,8 @@ go 63.40 55.50 tol 0.15
 face 90
 until temp = 19 max 600
 until temp = 0 max 60
-wait 18
+# Off in the cycle before (156-234 pass, all of it tried; from their return none, the bird).
+wait 195
 go 66.50 55.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 69.50 55.50 jump 2.05 tol 0.3 max 300
@@ -195,8 +201,9 @@ go 78.50 57.40 tol 0.15
 face 180
 until temp = 19 max 600
 until temp = 0 max 60
-# Re-timed for the original creature speeds (BD-0016): [264, 504, 744, 984, 1224, 1464, 1704] pass (autoplay_search).
-wait 984
+# Re-timed for the original creature speeds (BD-0016), then for the walk's ease-in (BD-0059): off in
+# the cycle before, 882-888 pass (none in 960-984 now: the bird).
+wait 885
 go 78.50 60.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 78.50 63.50 jump 2.05 tol 0.3 max 300
