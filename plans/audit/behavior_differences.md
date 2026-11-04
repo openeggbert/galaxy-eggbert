@@ -148,7 +148,7 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: 110/110; live in worlds 999 and 051 (before/after). Left: the owner's look; the
   wind column tiles (110-125, `Decor/vent-norm/`) are the next candidates.
 
-## BD-0009 — pillars drawn as sprites on boxes (visual) — FIXED_AND_VERIFIED for 76, 77, 377, 399; 375/376 open
+## BD-0009 — pillars drawn as sprites on boxes (visual) — FIXED_AND_VERIFIED for 76, 77, 377, 399, 376; 375 has no source
 
 - 76 (a stone column) and 77 (the golden branched support) were sprite tiles on an inner box. Their
   original scenes: `Decor/support1.rd4` (IoU 0.92) and `Decor/support2.rd4` (0.995). Converted and
@@ -157,7 +157,9 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Also 377 (the barrel stack, `Decor/pile1.rd4`, 0.93) and 399 (the white column,
   `Decor/palais/big0108.rds`, 0.99), sources found by the earlier tile survey
   (`build-probe/rd4-survey/object-m_icons.csv`); live in world999.
-- Open: 375/376 (turned and twisted wooden columns): no source found. `Decor/colonne1.rds` (the
+- 2026-11-04: 376 (the twisted column) is `Decor/enfant22.rd4`'s relief (Q-012, by its pixels;
+  the toy sticks 235/236 share the scene). 375 (the turned column) still has no source:
+- Earlier: 375/376 (turned and twisted wooden columns): no source found. `Decor/colonne1.rds` (the
   survey's best match, 0.90) holds one plain `Cube` primitive with a procedural wood shader and no
   deformer (its tree read 2026-11-01): a narrow rectangle scoring against a narrow column, not the
   turned column's scene. (An earlier note here guessed a deformer; the scene shows none.)
@@ -533,8 +535,16 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   documented approximation (InteractionSystem.cpp); narrowing it changes every encounter in the
   campaign: a decision for a session of its own, with all playthroughs.
 - Kills during busy actions: the original kills only with `m_blupiFocus` (or in Air/JumpAie),
-  otherwise the hazard explodes and he survives (5789); Galaxy always kills. Rare; open.
-- The patrol step machine spends one tick more per phase in the original (8077-8141); minor; open.
+  otherwise the hazard explodes and he survives (5789); Galaxy always killed. Fixed 2026-11-04:
+  `InteractionSystem::Update`'s `blupiFocused` (the host: in the air, or not taking a pickup,
+  teleporting or waving goodbye): a mine or small enemy met while he is busy explodes and he lives,
+  a lethal decoration (201-203) is not met at all (6088 gates its whole block on m_blupiFocus);
+  `VerifyInteractionSystem`.
+- The patrol step machine spends one tick more per phase in the original (8065-8140: a phase's
+  time advances while short of its end, and only the next tick sees it done and switches), lifts
+  included: a cycle is the four counts plus four ticks. Fixed 2026-11-04
+  (`AdvancePatrolStep`'s `kPatrolSwitchTick`; `VerifyInteractionSystem`'s lift and projectile
+  timings follow it).
 - Cosmetic: the destroyed enemy's spinning debris, the bulldozer's 90-tick electrocution
   (ObjectType38), the wasp's sting effect (90), the creature's glue splat (53), the balloon pop
   effect (91) are not drawn. Open (visual).

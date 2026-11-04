@@ -70,7 +70,7 @@ wait 25
 go 64 51 until eggs = 4 max 300
 until eggs = 4 max 200
 go 66.3 52.5 tol 0.1
-lift 67 23 52 max 600
+lift 67 23 52 max 900
 lift 67 14 52 max 600
 go 67.5 52.5 tol 0.15
 until y >= 22.99 max 600

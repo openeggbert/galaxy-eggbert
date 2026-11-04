@@ -60,8 +60,9 @@ go 26.60 47.50 tol 0.15
 face 270
 until temp = 19 max 600
 until temp = 0 max 60
-# Re-timed for the original creature speeds (BD-0016): [252, 492, 732, 1212, 1452, 1692] pass (autoplay_search).
-wait 492
+# Re-timed for the original creature speeds (BD-0016) and the original's tick at the end of each
+# patrol phase (BD-0010 follow-up): of the saucers' cycles only 232-264 pass (autoplay_search).
+wait 248
 go 23.50 47.50 jump 2.05 tol 0.3 max 300
 until ground = 1 max 200
 go 20.50 47.50 jump 2.05 tol 0.3 max 300

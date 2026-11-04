@@ -94,10 +94,11 @@ expect y <= 8.1
 # (their clock, measured, runs 123 ticks ahead of the mission's here): pass each in its gap.
 go 48 36.6 tol 0.1
 # One shared cycle later than first planned (curtains 300, mines 240): the original's boxes
-# made the way here longer (BD-0021).
+# made the way here longer (BD-0021). The mines' cycle is 244 since each patrol phase holds the
+# original's extra tick: the gate at mtick 9140-9308 (autoplay_search), 9224 taken.
 until mtick >= 8912
 go 48 42 tol 0.1
-until mtick >= 9077
+until mtick >= 9224
 go 48 48.6 tol 0.1
 until mtick >= 9492
 go 48 52

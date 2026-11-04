@@ -263,7 +263,13 @@ namespace GalaxyEggbert::Game
                     // Under the drink's Hide no follower sees him: a dormant one does not wake
                     // (Decor::MoveObjectFollow returns while m_blupiHide) and an awake one stops
                     // homing (Decor.cpp:8026's `!m_blupiHide`).
-                    bool blupiHidden = false);
+                    bool blupiHidden = false,
+                    // Whether he may be killed by what he touches (the original's m_blupiFocus, or
+                    // he is in the air: Decor.cpp:5788-5790): false while he is busy taking a
+                    // pickup, teleporting or waving goodbye. A mine or small enemy touched then
+                    // still explodes, but he lives; a lethal decoration (201-203) is not met at
+                    // all (Decor.cpp:6088, the whole block gated on m_blupiFocus).
+                    bool blupiFocused = true);
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.

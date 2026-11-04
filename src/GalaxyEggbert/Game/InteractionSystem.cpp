@@ -523,6 +523,13 @@ namespace GalaxyEggbert::Game
             return PatrolArrivalAction::None;
         }
 
+        // Each phase lasts one tick longer than its count (BD-0010 follow-up): the original advances
+        // a phase's time while it is short of its end (time < timeStopStart; posCurrent != posEnd)
+        // and only on the next tick sees it done and switches (Decor.cpp:8065-8140), so a dwell of N
+        // ticks holds N + 1, a move of N ticks moves for N and rests a tick at its end, and the
+        // cycle is the four counts plus four.
+        constexpr float kPatrolSwitchTick = 1.0f;
+
         void AdvancePatrolStep(MobileObjSpec& obj, float dt)
         {
             const float dtTicks = dt * kTicksPerSecond;
@@ -530,7 +537,7 @@ namespace GalaxyEggbert::Game
             {
                 case 1: // dwell at posStart
                     obj.patrolTime += dtTicks;
-                    if (obj.patrolTime >= obj.timeStopStartTicks)
+                    if (obj.patrolTime >= obj.timeStopStartTicks + kPatrolSwitchTick)
                     {
                         obj.patrolStep = 2;
                         obj.patrolTime = 0.0f;
@@ -544,7 +551,7 @@ namespace GalaxyEggbert::Game
                     obj.currentX = obj.posStartX + (obj.posEndX - obj.posStartX) * t;
                     obj.currentY = obj.posStartY + (obj.posEndY - obj.posStartY) * t;
                     obj.currentZ = obj.posStartZ + (obj.posEndZ - obj.posStartZ) * t;
-                    if (t >= 1.0f)
+                    if (t >= 1.0f && obj.patrolTime >= std::max(obj.stepAdvanceTicks, 0.0f) + kPatrolSwitchTick)
                     {
                         switch (GetPatrolArrivalAction(obj.type))
                         {
@@ -566,7 +573,7 @@ namespace GalaxyEggbert::Game
                 }
                 case 3: // dwell at posEnd
                     obj.patrolTime += dtTicks;
-                    if (obj.patrolTime >= obj.timeStopEndTicks)
+                    if (obj.patrolTime >= obj.timeStopEndTicks + kPatrolSwitchTick)
                     {
                         obj.patrolStep = 4;
                         obj.patrolTime = 0.0f;
@@ -580,7 +587,7 @@ namespace GalaxyEggbert::Game
                     obj.currentX = obj.posEndX + (obj.posStartX - obj.posEndX) * t;
                     obj.currentY = obj.posEndY + (obj.posStartY - obj.posEndY) * t;
                     obj.currentZ = obj.posEndZ + (obj.posStartZ - obj.posEndZ) * t;
-                    if (t >= 1.0f)
+                    if (t >= 1.0f && obj.patrolTime >= std::max(obj.stepRecedeTicks, 0.0f) + kPatrolSwitchTick)
                     {
                         obj.patrolStep = 1;
                         obj.patrolTime = 0.0f;
@@ -1104,7 +1111,8 @@ namespace GalaxyEggbert::Game
                                       bool blupiFirePressed, bool blupiCanFire, bool blupiCloudActive,
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
                                       bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
-                                      bool blupiArmoredVehicle, bool blupiDropsGlue, bool blupiHidden)
+                                      bool blupiArmoredVehicle, bool blupiDropsGlue, bool blupiHidden,
+                                      bool blupiFocused)
     {
         events_.clear();
         ridingLift_ = false;
@@ -1991,10 +1999,11 @@ namespace GalaxyEggbert::Game
                         Retire(obj);
                         // The hazard's explosion, whether he dies or rides over it (Decor.cpp:5822).
                         sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
-                        if (blupiArmoredVehicle)
+                        if (blupiArmoredVehicle || !blupiFocused)
                         {
-                            // Run over in the jeep, the tank or on the skateboard: only the
-                            // hazard goes (the real site's shake and flash below).
+                            // Run over in the jeep, the tank or on the skateboard, or met while he
+                            // is busy (no m_blupiFocus, on the ground: Decor.cpp:5788-5790): only
+                            // the hazard goes (the real site's shake and flash below).
                         }
                         else
                         {
@@ -2056,7 +2065,8 @@ namespace GalaxyEggbert::Game
                 const float sdx = obj.currentX - blupiX;
                 const float sdy = obj.currentY - blupiY;
                 const float sdz = obj.currentZ - blupiZ;
-                if (!blupiInvincible && MoveObjectTouches(obj.type, sdx, sdy, sdz))
+                // Not met at all while he is busy (Decor.cpp:6088 gates the block on m_blupiFocus).
+                if (blupiFocused && !blupiInvincible && MoveObjectTouches(obj.type, sdx, sdy, sdz))
                 {
                     obj.active = false;
                     events_.push_back(Event{EventKind::Died});

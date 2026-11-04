@@ -461,25 +461,27 @@ int main(int argc, char** argv)
             }
         };
         const auto y = [&liftWorld](std::size_t i) { return liftWorld.GetMobileObjects()[i].currentY; };
-        runTo(0.4f);
+        // Each phase lasts its count plus the tick on which the original sees it done
+        // (Decor.cpp:8065-8140): the dwell 11 ticks, the advance 20 moving + 1 at the end.
+        runTo(0.5f);
         check(std::fabs(y(0) - 5.0f) < 0.01f && std::fabs(y(1) - 5.0f) < 0.01f,
-              "a lift dwells timeStopStart ticks before it leaves (10 ticks = 0.5 s)");
-        runTo(1.0f);
+              "a lift dwells timeStopStart ticks and the switching tick before it leaves (11 ticks = 0.55 s)");
+        runTo(1.05f);
         check(std::fabs(y(0) - 7.0f) < 0.1f && std::fabs(y(1) - 7.5f) < 0.1f,
               "half way through its 20-tick advance, each lift is half way, whatever its length");
         runTo(1.75f);
         check(std::fabs(y(0) - 9.0f) < 0.01f && std::fabs(y(1) - 10.0f) < 0.01f,
               "both reach their ends together and dwell there (timeStopEnd)");
-        runTo(2.5f);
-        std::cout << "Lifts at 2.5 s: " << y(0) << ", " << y(1) << std::endl;
+        runTo(2.65f); // the advance ends at 1.6 s, the dwell at 2.15 s: half the recede at 2.65 s
+        std::cout << "Lifts at 2.65 s: " << y(0) << ", " << y(1) << std::endl;
         // Each phase change restarts the tick count (as the original's `time = 0`), so a
         // frame of slack per phase.
         check(std::fabs(y(0) - 7.0f) < 0.25f && std::fabs(y(1) - 7.5f) < 0.3f,
               "then recede over stepRecede ticks");
 
         // Riding: Blupi on the second lift while it rises is carried to its new stand height.
-        runTo(3.5f);   // back at the start, dwelling
-        runTo(3.75f);  // rising again
+        runTo(3.5f);   // back at the start (3.2 s), dwelling
+        runTo(3.85f);  // rising again (from 3.75 s)
         const float before = y(1);
         liftInteraction.Update(dt, liftWorld, 1.0f, LiftRiderCenterY(before), 0.0f, 0.0f, sound);
         check(liftInteraction.IsRidingLift() &&
@@ -1569,6 +1571,37 @@ int main(int argc, char** argv)
               "touching ObjectType201 with blupiInvincible=true does not kill Blupi (real Shield/Hide gate)");
         check(lethalDecorWorld.GetMobileObjects().front().active,
               "ObjectType201 survives contact while Blupi is invincible");
+
+        // Busy (no m_blupiFocus: taking a pickup, teleporting): the lethal decoration is not met at
+        // all (Decor.cpp:6088).
+        lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound, false, false, 0, 0, false,
+                                       true, true, true, true, false, false, false, true, false, true, 0.0f, false,
+                                       false, false, false, /*blupiFocused=*/false);
+        check(!hasEvent(lethalDecorInteraction, InteractionSystem::EventKind::Died) &&
+                  lethalDecorWorld.GetMobileObjects().front().active,
+              "a lethal decoration touched while Blupi is busy neither kills him nor goes (Decor.cpp:6088)");
+
+        // A mine touched while he is busy explodes, and he lives (Decor.cpp:5788-5790).
+        {
+            WorldRuntime busyWorld;
+            InteractionSystem busyInteraction;
+            MobileObjSpec mine;
+            mine.type = GalaxyEggbert::Def::ObjectType::ObjectType2;
+            mine.posStartX = mine.posEndX = mine.currentX = 300.0f;
+            mine.posStartY = mine.posEndY = mine.currentY = 1.0f;
+            mine.posStartZ = mine.posEndZ = mine.currentZ = 300.0f;
+            busyWorld.GetMobileObjectsMutable().push_back(mine);
+            busyInteraction.Update(dt, busyWorld, 300.0f, 1.0f, 300.0f, 0.0f, sound, false, false, 0, 0, false, true,
+                                   true, true, true, false, false, false, true, false, true, 0.0f, false, false, false,
+                                   false, /*blupiFocused=*/false);
+            // (Its slot may be reused by the explosion spawned the same frame.)
+            const bool mineLeft = std::any_of(busyWorld.GetMobileObjects().begin(), busyWorld.GetMobileObjects().end(),
+                                              [](const auto& o)
+                                              { return o.active && o.type == GalaxyEggbert::Def::ObjectType::ObjectType2; });
+            check(!hasEvent(busyInteraction, InteractionSystem::EventKind::Died) &&
+                      hasEvent(busyInteraction, InteractionSystem::EventKind::SmallShakeTriggered) && !mineLeft,
+                  "a mine touched while Blupi is busy explodes and he lives (Decor.cpp:5788-5790)");
+        }
 
         // Now without invincibility -- lethal, real Clear1/Clear2 coinflip + effects.
         lethalDecorInteraction.Update(dt, lethalDecorWorld, 400.0f, 1.0f, 400.0f, 0.0f, sound);
@@ -4285,7 +4318,7 @@ int main(int argc, char** argv)
         check(std::fabs(bubbleIt->posEndY - bubbleIt->posStartY - 4.0f) < 0.01f,
               "the bubble's posEnd is exactly the real water-column height (4 clear tiles) above its start");
 
-        for (int i = 0; i < 40; ++i)
+        for (int i = 0; i < 46; ++i) // its advance and the tick that sees it arrived
         {
             bubbleWorld.Update(dt);
             bubbleInteraction.Update(dt, bubbleWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f, sound);
@@ -4310,13 +4343,17 @@ int main(int argc, char** argv)
         projectile.patrolStep = 2;
         projectile.stepAdvanceTicks = 1.0f;
         projectileArrivalWorld.GetMobileObjectsMutable().push_back(projectile);
-        projectileArrivalInteraction.Update(dt, projectileArrivalWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f,
-                                            sound);
+        // Its one tick of flight, then the tick on which the original sees it arrived (dt is a tick).
+        for (int tick = 0; tick < 2; ++tick)
+        {
+            projectileArrivalInteraction.Update(dt, projectileArrivalWorld, 100000.0f, 100000.0f, 100000.0f, 0.0f,
+                                                sound);
+        }
         const auto projectileIt = std::find_if(
             projectileArrivalWorld.GetMobileObjects().begin(), projectileArrivalWorld.GetMobileObjects().end(),
             [](const auto& o) { return o.type == GalaxyEggbert::Def::ObjectType::ObjectType23; });
         check(projectileIt != projectileArrivalWorld.GetMobileObjects().end() && !projectileIt->active,
-              "the fired projectile self-deletes exactly on reaching posEnd (the shared ObjectType23/15 arrival handler)");
+              "the fired projectile self-deletes on the tick after reaching posEnd (the shared ObjectType23/15 arrival handler)");
 
         // No-op guard: no water column above (dry tile immediately above the spawn point).
         WorldRuntime dryWorld;
