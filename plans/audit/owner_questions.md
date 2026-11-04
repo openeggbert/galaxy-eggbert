@@ -46,6 +46,8 @@ recommendation; the sprites are those renders), (b) models for the free-standing
 were painted on the renders: the model alone looks dead. Options: (a) the model with the sprite's
 sparks as a camera-facing decal (recommended), (b) the model alone, (c) keep the sprite.
 Meanwhile: the sprite.
+Note (2026-11-04): no campaign world places the electrode (only the gallery 998 and the showcase
+999), so the choice touches no mission.
 
 ### Q-006 — The glue death (element 168-171) from `Blupi/glu.rd4`
 
