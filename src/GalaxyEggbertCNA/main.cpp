@@ -11,8 +11,37 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
+#include <iostream>
+
+namespace
+{
+    int RunGame(int argc, char** argv);
+}
 
 int main(int argc, char** argv)
+{
+    // An exception escaping to the browser arrives as a bare pointer (no type, no text): say what
+    // it was first, then let it go on as before.
+    try
+    {
+        return RunGame(argc, argv);
+    }
+    catch (const std::exception& error)
+    {
+        std::cerr << "GalaxyEggbertCNA: fatal exception: " << error.what() << std::endl;
+        throw;
+    }
+    catch (...)
+    {
+        std::cerr << "GalaxyEggbertCNA: fatal exception (not a std::exception)" << std::endl;
+        throw;
+    }
+}
+
+namespace
+{
+int RunGame(int argc, char** argv)
 {
 #if defined(__ANDROID__)
     GalaxyEggbert::CNA::RedirectStdioToLogcat();
@@ -65,4 +94,5 @@ int main(int argc, char** argv)
     const int exitCode = game->AutoplayExitCode();
     delete game;
     return exitCode;
+}
 }
