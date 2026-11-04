@@ -327,17 +327,21 @@ namespace GalaxyEggbert::Game
             // frame the slider is let go (save then).
             int effectsVolume = -1;
             int musicVolume = -1;
+            // The accelerometer's sensitivity slider (0..100) while dragged (shown only with the
+            // accelerometer on, as the original's accelSlider), -1 otherwise.
+            int accelSensitivity = -1;
             bool volumeReleased = false;
         };
         // The Setup's "Jump button on the right" (on by default): off, the stick and the Jump and
         // Action buttons trade sides (the original's getJumpRightProperty()).
         void SetJumpRight(bool jumpRight) noexcept { jumpRight_ = jumpRight; }
         [[nodiscard]] SetupInput UpdateSetup(const Microsoft::Xna::Framework::Input::MouseState& mouse,
-                                             int viewportW, int viewportH, bool showReset) noexcept;
+                                             int viewportW, int viewportH, bool showReset,
+                                             bool accelOn = false) noexcept;
         void DrawSetup(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom, bool accel,
                        bool showReset, int selectedGamer, int effectsVolume, int musicVolume,
-                       float phaseTimeSeconds,
+                       int accelSensitivity, float phaseTimeSeconds,
                        GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
 
         // Resume screen (plan.md MENU-040..045). Real background is

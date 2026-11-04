@@ -1837,9 +1837,9 @@ namespace GalaxyEggbert::CNA
             return 0.0f;
         }
         // HandleAccelSensorCurrentValueChanged: a dead zone from the sensitivity (GameData data[7],
-        // 50 by default; the Setup's slider is not drawn yet), narrower while already tilted, a
-        // speed from a quarter up; nothing until the device has once been level (accelWaitZero).
-        constexpr float kSensitivity = 0.5f;
+        // 50 by default; the Setup's slider), narrower while already tilted, a speed from a quarter
+        // up; nothing until the device has once been level (accelWaitZero).
+        const float kSensitivity = static_cast<float>(saveData_.GetAccelSensitivity()) / 100.0f;
         const float y = accel_->getCurrentValueProperty().getAccelerationProperty().Y;
         const float threshold = (1.0f - kSensitivity) * 0.06f + 0.04f;
         const float adjusted = accelLastState_ ? threshold * 0.6f : threshold;
@@ -2786,7 +2786,8 @@ namespace GalaxyEggbert::CNA
                 const bool isMainSetup = phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
                 const auto mouse = ReadMouseState(SuppressLiveInput());
                 const auto setupInput = inputPad_.UpdateSetup(
-                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup);
+                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup,
+                    saveData_.GetAccelActive());
                 if (setupInput.soundsToggled)
                 {
                     // Real SetupSounds toggle -- a genuinely meaningful
@@ -2812,6 +2813,10 @@ namespace GalaxyEggbert::CNA
                 {
                     saveData_.SetMusicVolume(setupInput.musicVolume);
                     ApplyMusicVolume();
+                }
+                if (setupInput.accelSensitivity >= 0)
+                {
+                    saveData_.SetAccelSensitivity(setupInput.accelSensitivity);
                 }
                 if (setupInput.volumeReleased)
                 {
@@ -6994,7 +6999,8 @@ namespace GalaxyEggbert::CNA
                                     sound_.IsEnabled(), saveData_.GetJumpRight(), saveData_.GetAutoZoom(),
                                     saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
-                                    saveData_.GetMusicVolume(), phaseTimeSeconds_, fadeOutPhase_);
+                                    saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
+                                    fadeOutPhase_);
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {

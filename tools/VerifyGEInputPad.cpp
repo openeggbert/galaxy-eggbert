@@ -255,6 +255,18 @@ int main()
               "Setup: the automatic zoom and accelerometer toggles fire on release (OR-0010)");
     }
     {
+        // The accelerometer's sensitivity (the original's accelSlider, GameData data[7]): right of
+        // "Accelerometer" in its row (Y 390-460), live only while the accelerometer is on.
+        InputPad off;
+        const auto none = off.UpdateSetup(mouse(342, 439, true), kViewportW, kViewportH, false, false);
+        check(none.accelSensitivity < 0, "Setup: no sensitivity slider while the accelerometer is off");
+        InputPad on;
+        const auto mid = on.UpdateSetup(mouse(342, 439, true), kViewportW, kViewportH, false, true);
+        const auto end = on.UpdateSetup(mouse(342, 439, false), kViewportW, kViewportH, false, true);
+        check(mid.accelSensitivity >= 45 && mid.accelSensitivity <= 55 && end.volumeReleased && !end.accelToggled,
+              "Setup: with the accelerometer on, its sensitivity slider reads about 50 at the track's middle");
+    }
+    {
         // The volume sliders (2026-11-02, the owner's request): right of "Sound effects" in its row
         // (Y 180-250), the effects' then the music's; pressed and dragged they report 0..100 and
         // the release; the Sounds toggle does not fire. Erase progress moved a row lower.

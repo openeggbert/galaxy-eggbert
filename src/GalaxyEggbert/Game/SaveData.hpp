@@ -122,6 +122,10 @@ namespace GalaxyEggbert::Game
         // 100 being the original's loudness. Saved as `effectsVolume=` / `musicVolume=`.
         [[nodiscard]] int GetEffectsVolume() const noexcept { return effectsVolume_; }
         void SetEffectsVolume(int volume) noexcept { effectsVolume_ = ClampVolume(volume); }
+        // The accelerometer's sensitivity (GameData data[7]: 0..100, 50 by default; the Setup's slider
+        // under the Accelerometer toggle, shown while it is on, InputPad.cpp:250, 932, 1172).
+        [[nodiscard]] int GetAccelSensitivity() const noexcept { return accelSensitivity_; }
+        void SetAccelSensitivity(int value) noexcept { accelSensitivity_ = ClampVolume(value); }
         [[nodiscard]] int GetMusicVolume() const noexcept { return musicVolume_; }
         void SetMusicVolume(int volume) noexcept { musicVolume_ = ClampVolume(volume); }
         [[nodiscard]] static int ClampVolume(int volume) noexcept { return volume < 0 ? 0 : volume > 100 ? 100 : volume; }
@@ -214,6 +218,7 @@ namespace GalaxyEggbert::Game
         bool accelActive_ = false;
         int effectsVolume_ = 100;
         int musicVolume_ = 100;
+        int accelSensitivity_ = 50;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
     };
