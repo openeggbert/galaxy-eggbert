@@ -2152,6 +2152,23 @@ int main(int argc, char** argv)
         check(turnedOff.has_value() && !*turnedOff, "TryActivateSwitch() toggles back off on a second press");
         check(getSwitchType() == BlockTypes::SwitchOff, "switch tile is SwitchOff again");
         check(getSawType() == BlockTypes::SawStopped, "linked saw is SawStopped again (safe)");
+
+        // OR-0040: a switch machine at his own height, beside him: his body against it works, a
+        // step away does not.
+        auto& mutableWorld = world.GetWorldMutable();
+        mutableWorld.setBlock(30, 1, 30, Worlds::Block::make(BlockTypes::SwitchOff));
+        mutableWorld.setBlock(33, 1, 30, Worlds::Block::make(BlockTypes::SawStopped));
+        const float sx = static_cast<float>(30 - WorldRuntime::kWorldCenterX);
+        const float sz = static_cast<float>(30 - WorldRuntime::kWorldCenterZ);
+        check(!world.TryActivateSwitch(sx + 1.6f, 1.0f, sz, true).has_value(),
+              "a switch machine a step away from Blupi is out of reach");
+        const auto besideOn = world.TryActivateSwitch(sx + 0.5f + 18.0f / 64.0f, 1.0f, sz, true);
+        check(besideOn.has_value() && *besideOn &&
+                  world.GetWorld().getBlock(30, 1, 30).type() == BlockTypes::Switch &&
+                  world.GetWorld().getBlock(33, 1, 30).type() == BlockTypes::Saw,
+              "walked up against a switch machine beside him, Blupi turns it and its saws on");
+        mutableWorld.setBlock(30, 1, 30, Worlds::Block::make(BlockTypes::Air));
+        mutableWorld.setBlock(33, 1, 30, Worlds::Block::make(BlockTypes::Air));
     }
 
     // 7. Shared kill list widened beyond ObjectType2/3 (plan.md E3D-MIG-132,

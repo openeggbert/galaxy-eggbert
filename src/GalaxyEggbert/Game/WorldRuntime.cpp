@@ -452,22 +452,66 @@ namespace GalaxyEggbert::Game
         {
             return std::nullopt;
         }
+        // The original's switch is a tile in Blupi's own cell, in front of which he stands
+        // (Decor::IsSwitch: his middle within it, 4 px from its sides). In 3D it is a block: the one
+        // he stands on (a switch in the floor), or one beside him at his own height that his body
+        // touches (a switch machine standing on the floor or in a wall; owner 2026-11-04, OR-0040:
+        // only the block under him counted, so walking up to the machine did nothing).
         const int blocksPerAxis = static_cast<int>(world_->blocksPerAxis());
-        const int gx = std::clamp(static_cast<int>(std::lround(blupiX)) + kWorldCenterX, 0, blocksPerAxis - 1);
-        const int gz = std::clamp(static_cast<int>(std::lround(blupiZ)) + kWorldCenterZ, 0, blocksPerAxis - 1);
-        const int gy = static_cast<int>(std::lround(blupiY)) - 1;
-        if (gy < 0 || gy >= blocksPerAxis)
+        const float wx = blupiX + static_cast<float>(kWorldCenterX);
+        const float wz = blupiZ + static_cast<float>(kWorldCenterZ);
+        const int cx = static_cast<int>(std::lround(wx));
+        const int cz = static_cast<int>(std::lround(wz));
+        const int level = static_cast<int>(std::lround(blupiY));
+        const auto isSwitchAt = [&](int x, int y, int z)
         {
-            return std::nullopt;
+            if (x < 0 || y < 0 || z < 0 || x >= blocksPerAxis || y >= blocksPerAxis || z >= blocksPerAxis)
+            {
+                return false;
+            }
+            const auto type = world_->getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                               static_cast<std::uint16_t>(z))
+                                  .type();
+            return type == GalaxyEggbert::BlockTypes::Switch || type == GalaxyEggbert::BlockTypes::SwitchOff;
+        };
+        constexpr float kReach = BlupiController::kBodyHalfWidth + 8.0f / 64.0f;
+        int gx = cx;
+        int gy = level - 1;
+        int gz = cz;
+        if (!isSwitchAt(gx, gy, gz))
+        {
+            float best = kReach;
+            bool found = false;
+            for (int dz = -1; dz <= 1; ++dz)
+            {
+                for (int dx = -1; dx <= 1; ++dx)
+                {
+                    if ((dx == 0 && dz == 0) || !isSwitchAt(cx + dx, level, cz + dz))
+                    {
+                        continue;
+                    }
+                    // His middle's distance from the block's footprint.
+                    const float ox = std::max(0.0f, std::fabs(wx - static_cast<float>(cx + dx)) - 0.5f);
+                    const float oz = std::max(0.0f, std::fabs(wz - static_cast<float>(cz + dz)) - 0.5f);
+                    const float distance = std::sqrt(ox * ox + oz * oz);
+                    if (distance <= best)
+                    {
+                        best = distance;
+                        gx = cx + dx;
+                        gy = level;
+                        gz = cz + dz;
+                        found = true;
+                    }
+                }
+            }
+            if (!found)
+            {
+                return std::nullopt;
+            }
         }
-
         const auto switchType = world_->getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
                                                    static_cast<std::uint16_t>(gz))
                                      .type();
-        if (switchType != GalaxyEggbert::BlockTypes::Switch && switchType != GalaxyEggbert::BlockTypes::SwitchOff)
-        {
-            return std::nullopt;
-        }
 
         // Real behavior: always toggles to the opposite of its current
         // state (Decor.cpp's own call site passes `currentIcon == 385`).

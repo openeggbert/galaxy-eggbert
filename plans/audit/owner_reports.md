@@ -209,3 +209,19 @@ rewritten).
 - Validation: live, world 115's draught tunnel from its mouth: before, one faint line at its first
   curtain; after, the four curtains of streaks, moving between two shots 0.1 s apart. Golden
   frames re-baselined (the demo world's wind tiles: 87-90 pixels, at most 12 levels); ctest.
+
+## OR-0040 — at the saw's switch machine Space does nothing; it works only from above (owner 2026-11-04) — FIXED
+
+- Report: when Blupi comes to the machine that switches the saw on and off, pressing Space does
+  nothing; it works only when he is above it.
+- Cause: `WorldRuntime::TryActivateSwitch` looked only at the block under his feet. The original's
+  switch (384/385, an ON/OFF panel) is a tile in Blupi's own cell, which he stands in front of
+  (Decor::IsSwitch: his middle within it, 4 px from its sides; its `table_decor_quart` mask empty).
+  A switch standing at his height -- a machine on the floor or on a pillar, as world 065's on its
+  stepping stone -- could only be pressed by jumping on top of it.
+- Fix: the switch he stands on, or else one beside him at his own height whose footprint his body
+  touches (his middle within 18 + 8 px of it; the nearest of the eight around him). Its saws are
+  toggled as before (its row, X +-20).
+- Validation: `VerifyInteractionSystem` (a machine beside him a step away is out of reach, against
+  it he turns it and its saws on); every playthrough with a switch (023, 025, 063, 064, 065, 092,
+  102) passes with it.
