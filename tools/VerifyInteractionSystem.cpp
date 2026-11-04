@@ -2692,6 +2692,24 @@ int main(int argc, char** argv)
         check(!hasEvent(interaction, InteractionSystem::EventKind::Died), "large creature contact is harmless during turn-dwell while ballooned");
         check(!hasEvent(interaction, InteractionSystem::EventKind::BalloonPopped), "large creature contact does not pop the balloon either (no pop path for type 54)");
         check(interaction.Lives() == livesBefore, "no life lost touching the creature during turn-dwell while ballooned");
+
+        // In a vehicle or squashed (Decor.cpp:5884-5905, BD-0061): the vehicle bursts where the
+        // creature is (ObjectType10), channel 10 and a small shake; on foot only channel 51.
+        if (auto* c = findCreature()) c->patrolStep = 1;
+        interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound, false, false, 0, 0, false, true, true, true,
+                           true, false, false, false, true, false, /*blupiCanPushCrate=*/false);
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died) &&
+                  hasEvent(interaction, InteractionSystem::EventKind::SmallShakeTriggered),
+              "the creature catching him in a vehicle bursts it: a small shake (Decor.cpp:5903)");
+        BlupiController ridingDeathBlupi;
+        completeDeathLock(world, interaction, ridingDeathBlupi);
+        if (auto* c = findCreature()) c->patrolStep = 1;
+        interaction.Update(dt, world, 60.0f, 1.0f, 60.0f, 0.0f, sound);
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died) &&
+                  !hasEvent(interaction, InteractionSystem::EventKind::SmallShakeTriggered),
+              "on foot the creature's catch shakes nothing (channel 51 only)");
+        BlupiController footDeathBlupi;
+        completeDeathLock(world, interaction, footDeathBlupi);
     }
 
     // 13. Real playable placement -- the sample world's own large creature

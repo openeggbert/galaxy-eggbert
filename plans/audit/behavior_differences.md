@@ -963,3 +963,15 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   the code said "focus isn't modeled" for: `GalaxyEggbertGame::BlupiFocused()`.
 - Validation: ctest 112/112; the playthroughs (play pass 17: 102 has the conveyor -- its caterpillars
   re-timed --, 061, 062, 065, 066, 199 the creature).
+
+## BD-0061 — the big creature catching him in a vehicle did not burst it (audio-visual) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5884-5905): when the creature (54) catches him in a vehicle (helicopter,
+  overcraft, jeep, tank, skate) or squashed, the vehicle bursts where the creature is
+  (`ObjectStart(..., ObjectType10)`), channel 10 plays and the screen gives a small shake; on foot
+  only channel 51.
+- Galaxy always played channel 51 (the code said InteractionSystem could not tell; the caller already
+  passes "neither in a vehicle nor squashed" for the crates).
+- Fix: `InteractionSystem` creature branch: ObjectType10 at the creature, channel 10,
+  `SmallShakeTriggered` when `!blupiCanPushCrate`.
+- Validation: `VerifyInteractionSystem` (a shake in a vehicle, none on foot); ctest.

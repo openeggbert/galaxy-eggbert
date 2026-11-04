@@ -1909,17 +1909,10 @@ namespace GalaxyEggbert::Game
             // (Decor.cpp:5884-5905) -- mirroring what `BlupiDead()` already
             // does unconditionally for every other real death cause
             // (`BlupiController::TriggerDeathLock()` now does this too,
-            // fixed alongside this same research). The one remaining gap is
-            // purely cosmetic: this engine always plays the plain channel-51
-            // sound here regardless of vehicle/Balloon/Ecrase state at
-            // contact, since `InteractionSystem` has no `BlupiController`
-            // access to know which applies -- not worth new plumbing for an
-            // audio-only distinction (the actual game-state outcome, death +
-            // full state clear, is now faithful either way). The real
-            // unconditional taunt icon (mockery `83` regardless of
-            // facing, Decor.cpp:9575-9578) is also NOT modeled -- no idle-
-            // taunt animation system exists in this engine at all yet
-            // (cosmetic, same as type2's taunt-suppression above).
+            // fixed alongside this same research). In a vehicle or squashed the
+            // vehicle bursts where the creature is (ObjectType10, channel 10, a
+            // small shake) instead of channel 51 (BD-0061, below). The taunt that
+            // the creature calls for is MockeryDetect()'s (Mockeryp, BD-0044).
             if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
             {
                 // m_blupiFocus too (Decor.cpp:5867-5868): busy, he is not caught.
@@ -1940,7 +1933,20 @@ namespace GalaxyEggbert::Game
                         deathLockEvent.deathLockKind = PendingDeathKind::Glu;
                         deathLockEvent.deathLockShouldRespawn = true;
                         ReplaceEvent(EventKind::DeathLockRequested, deathLockEvent);
-                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel51);
+                        // In a vehicle or squashed (Decor.cpp:5884-5905; blupiCanPushCrate is exactly
+                        // "neither", and the balloon cannot be on here): the vehicle bursts where the
+                        // creature is (ObjectType10, channel 10, a small shake); else channel 51 (BD-0061).
+                        if (!blupiCanPushCrate)
+                        {
+                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                            AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType10, obj.currentX, obj.currentY,
+                                                 obj.currentZ, pendingSpawns);
+                            events_.push_back(Event{EventKind::SmallShakeTriggered});
+                        }
+                        else
+                        {
+                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel51);
+                        }
                         // Its tentacle rises where he stands (ObjectType53, Decor.cpp:5871-5873; BD-0054).
                         AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType53, blupiX, blupiY, blupiZ,
                                              pendingSpawns);
