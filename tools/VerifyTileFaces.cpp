@@ -483,7 +483,17 @@ int main()
         // The top (+Y) face of a cell with a solid neighbour only at +X: its overhangs into -X, +y (-Z)
         // and -y (+Z) lead into air.
         const auto top = G::ReliefAirSides(4, [](int dx, int dy, int dz) { return dx == 1 && dy == 0 && dz == 0; });
-        check(top == (2 | 4 | 8), "a relief hangs only into solid neighbours (top face, solid at +X only)");
+        check((top & 15) == (2 | 4 | 8), "a relief hangs only into solid neighbours (top face, solid at +X only)");
+        // Its four corners' cells are air too (bits 16-128): nothing hangs into a corner there.
+        check((top & 0xF0) == 0xF0, "a relief hangs into a corner only when that corner's cell is solid");
+        // Solid at +X and +Z (+y of the top face is -Z, -y is +Z) but not at their corner: the corner
+        // square there stays out (a hub door's sign beside it was hidden, owner 2026-11-04).
+        const auto notch = G::ReliefAirSides(4, [](int dx, int dy, int dz)
+        {
+            return dy == 0 && ((dx == 1 && dz == 0) || (dx == 0 && dz == 1));
+        });
+        check((notch & 1) == 0 && (notch & 8) == 0 && (notch & 64) != 0,
+              "two solid sides with an open cell between them: their corner (r+, u-) counts as air");
 
         // A relief of two triangles, written and read back: one in the face's square, one overhanging +x.
         G::TerrainRelief relief;

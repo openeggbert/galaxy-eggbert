@@ -137,9 +137,20 @@ namespace GalaxyEggbert::Game
             }
             return remap[i];
         };
+        // The corner a triangle hangs into (both a side bit and an up/down bit): its diagonal bit.
+        const auto cornerBit = [](std::uint8_t sides) -> std::uint8_t
+        {
+            const bool right = (sides & 1) != 0, left = (sides & 2) != 0, up = (sides & 4) != 0, down = (sides & 8) != 0;
+            std::uint8_t bits = 0;
+            if (right && up) bits |= 16;
+            if (left && up) bits |= 32;
+            if (right && down) bits |= 64;
+            if (left && down) bits |= 128;
+            return bits;
+        };
         for (std::size_t t = 0; t < relief.triangles.size(); ++t)
         {
-            if ((relief.overhang[t] & airSides) != 0)
+            if ((relief.overhang[t] & airSides & 15) != 0 || (cornerBit(relief.overhang[t]) & airSides) != 0)
             {
                 continue;
             }
@@ -168,6 +179,15 @@ namespace GalaxyEggbert::Game
                     if (x1 - x0 <= 0.0f || y1 - y0 <= 0.0f)
                     {
                         continue;
+                    }
+                    // A corner square only into a solid corner cell (ReliefAirSides' bits 16-128).
+                    if (rx != 0 && ry != 0)
+                    {
+                        const std::uint8_t diagonal = rx > 0 ? (ry > 0 ? 16 : 64) : (ry > 0 ? 32 : 128);
+                        if ((airSides & diagonal) != 0)
+                        {
+                            continue;
+                        }
                     }
                     // Texture coordinates as the relief's: u = x + 0.5 - rx, v = 0.5 - y + ry.
                     const auto corner = [&](float x, float y)

@@ -71,7 +71,10 @@ namespace GalaxyEggbert::Game
 
     // The overhang bits of `face` whose neighbour (the cell beside this one across that edge of the
     // face) is not solid: a relief hangs only into solid cells, never into the air Blupi moves in
-    // (Q-012 B). `solid(dx, dy, dz)` tells whether the cell at that offset is solid.
+    // (Q-012 B). `solid(dx, dy, dz)` tells whether the cell at that offset is solid. Bits 16-128 the
+    // four cells across its corners (r+u+, r-u+, r+u-, r-u-): the lumps and backing that hang into a
+    // corner need that cell solid too (a hub door's sign in the corner square of the panels over it
+    // was hidden, owner 2026-11-04).
     template <typename Solid>
     [[nodiscard]] std::uint8_t ReliefAirSides(int face, Solid&& solid)
     {
@@ -81,6 +84,10 @@ namespace GalaxyEggbert::Game
         if (!solid(-f.r[0], -f.r[1], -f.r[2])) air |= 2;
         if (!solid(f.u[0], f.u[1], f.u[2])) air |= 4;
         if (!solid(-f.u[0], -f.u[1], -f.u[2])) air |= 8;
+        if (!solid(f.r[0] + f.u[0], f.r[1] + f.u[1], f.r[2] + f.u[2])) air |= 16;
+        if (!solid(-f.r[0] + f.u[0], -f.r[1] + f.u[1], -f.r[2] + f.u[2])) air |= 32;
+        if (!solid(f.r[0] - f.u[0], f.r[1] - f.u[1], f.r[2] - f.u[2])) air |= 64;
+        if (!solid(-f.r[0] - f.u[0], -f.r[1] - f.u[1], -f.r[2] - f.u[2])) air |= 128;
         return air;
     }
 
@@ -88,7 +95,7 @@ namespace GalaxyEggbert::Game
     // slab twice, back to back: the reliefs of a grass cell's +Z and -Z faces are both laid whenever
     // its top is open (their leaves cover the top; neither hangs the leaves' tips off: kGrassAirMask),
     // and the crosswise ones on +X and -X only where the row ends (the faces left open there).
-    inline constexpr std::uint8_t kGrassAirMask = static_cast<std::uint8_t>(~4u); // +y (up) never air
+    inline constexpr std::uint8_t kGrassAirMask = static_cast<std::uint8_t>(~(4u | 16u | 32u)); // +y (up) never air
 
     // Appends `relief` on face `face` of the cell centred at `center`, its triangles overhanging into
     // `airSides` left out, textured by the atlas's `tile`; with `backing`, also the face's square at

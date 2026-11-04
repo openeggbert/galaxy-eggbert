@@ -107,3 +107,18 @@ rewritten).
   `GALAXY_TERRAIN_RELIEF=0/1` still overrides it (tests, measurements).
 - Validation: live, Setup shows the toggle; off, the hub plays with the flat textures and the save has
   `terrainRelief=0`; ctest.
+
+## OR-0034 — the hub's world doors: a piece of the blue wall over their signs (owner 2026-11-04) — FIXED
+
+- Report (screenshot of the main hub, 17:12): a piece of the blue part covers the door's sign
+  ("teleport" in the owner's words: the doors one walks into to enter a world).
+- Cause: a relief's lumps and backing hung into the corner square of its face whenever the two cells
+  beside that corner were solid, whatever the corner cell itself was. Over a door in a wall (158 at
+  (55, 1, 73), 160 at (55, 3, 70)) the panels diagonally above it hung into the front of the door's
+  cell: the lower sign showed a monitor, the upper one lost its board. (OR-0032 had only covered the
+  edges.)
+- Fix: `ReliefAirSides` returns the four corner cells too (bits 16-128); `AppendReliefFace` leaves out
+  the triangles and the backing square hanging into a corner whose cell is not solid (a cell drawn as
+  its model counts as not solid).
+- Validation: live, the hub's two doors at (55, 1-3, 70-73), their signs whole with the reliefs on (as
+  with them off); `VerifyTileFaces` (corner bits); ctest; golden frames unchanged.
