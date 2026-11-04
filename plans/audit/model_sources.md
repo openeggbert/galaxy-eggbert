@@ -5,11 +5,11 @@
 | State | Scenes |
 |---|---|
 | in game | 165 |
-| in game otherwise | 85 |
+| in game otherwise | 91 |
 | converted, not exported | 0 |
-| terrain tile, scene unconfirmed (Q-012) | 71 |
+| terrain tile, scene unconfirmed (Q-012) | 69 |
 | matched, not converted | 0 |
-| no game sprite | 207 |
+| no game sprite | 203 |
 
 ## Matched, not converted
 
@@ -46,7 +46,6 @@
 | `Decor/grotte13.rd4` | object-m:297 |
 | `Decor/grotte14.rd4` | object-m:298 |
 | `Decor/grotte15.rd4` | object-m:299 |
-| `Decor/grotte16.rd4` | object-m:300 |
 | `Decor/grotte20.rd4` | object-m:337 |
 | `Decor/grotte21.rd4` | object-m:338 |
 | `Decor/maison07.rd4` | object-m:388 |
@@ -86,7 +85,6 @@
 | `Decor/techno26.rd4` | object-m:25 |
 | `Decor/techno27.rd4` | object-m:26 |
 | `Decor/techno28.rd4` | object-m:27 |
-| `Decor/tuyau-ud2.rds` | object-m:255 |
 | `Decor/tuyau-udl.rds` | object-m:257 |
 | `Decor/tuyau-ul.rds` | object-m:259 |
 | `Decor/tuyau-ulr.rds` | object-m:256 |
@@ -122,6 +120,7 @@
 | `Decor/grotte00.rd4` | object-m:284 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte01.rd4` | object-m:285 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte02.rd4` | object-m:286 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/grotte16.rd4` | object-m:300 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte17.rd4` | object-m:301 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte18.rd4` | object-m:302 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte19.rd4` | object-m:303 the terrain relief near the camera (avatars3d/terrain) |
@@ -131,7 +130,9 @@
 | `Decor/lave/lave3.rds` | object-m:70 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave4.rds` | object-m:71 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave5.rds` | object-m:72 the lava pool from the .a3d wave (LavaSurface.hpp) |
+| `Decor/maison04.rd4` | object-m:193 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/maison05.rd4` | object-m:194 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/maison06.rd4` | object-m:192 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/maison08.rd4` | object-m:186 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/maison09.rd4` | object-m:187 object-m:188 object-m:189 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/meuble1.rd4` | object-m:139 the terrain relief near the camera (avatars3d/terrain) |
@@ -141,7 +142,7 @@
 | `Decor/palais/mur02.rds` | object-m:387 object-m:397 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/palais/mur03.rds` | object-m:388 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/palais/mur05.rds` | object-m:390 the terrain relief near the camera (avatars3d/terrain) |
-| `Decor/palais/mur10.rds` | object-m:198 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/palais/mur10.rds` | object-m:198 object-m:400 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4a.rd4` | object-m:35 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4aa.rd4` | object-m:156 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4b.rd4` | object-m:36 the terrain relief near the camera (avatars3d/terrain) |
@@ -160,6 +161,7 @@
 | `Decor/roc4p.rd4` | object-m:153 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth-l.rds` | object-m:350 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth-lr.rds` | object-m:349 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/smooth/smooth-u-a.rds` | object-m:373 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth-u.rds` | object-m:347 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth-u2.rds` | object-m:362 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth01.rds` | object-m:341 the terrain relief near the camera (avatars3d/terrain) |
@@ -168,9 +170,10 @@
 | `Decor/smooth/smooth04.rds` | object-m:344 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth05.rds` | object-m:345 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth06.rds` | object-m:346 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/techno02.rd4` | object-m:1 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno03.rd4` | object-m:2 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno10.rd4` | object-m:9 the terrain relief near the camera (avatars3d/terrain) |
-| `Decor/techno11.rd4` | object-m:10 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/techno11.rd4` | object-m:10 object-m:73 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno12.rd4` | object-m:17 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno15.rd4` | object-m:14 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno17.rd4` | object-m:16 the terrain relief near the camera (avatars3d/terrain) |
@@ -180,6 +183,7 @@
 | `Decor/tuyau-lr2.rds` | object-m:252 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/tuyau-lr3.rds` | object-m:51 object-m:253 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/tuyau-ud1.rds` | object-m:254 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/tuyau-ud2.rds` | object-m:255 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/tuyau-udlr.rds` | object-m:250 the terrain relief near the camera (avatars3d/terrain) |
 
 ## Converted, not exported
@@ -362,4 +366,4 @@
 - `.max`: 56 files, BLOCKED until 3D Studio MAX with a genuine licence (MR-0001).
 - `.a3d`: 105 files, decoded (`tools/a3d/`): the lava's wave and the columns are converted; the rest are frames of the same objects.
 
-The 207 scenes without a game sprite are backdrops, menu and editor art, revisions and tests: nothing in the game is drawn from them.
+The 203 scenes without a game sprite are backdrops, menu and editor art, revisions and tests: nothing in the game is drawn from them.

@@ -484,7 +484,7 @@ ledgers before repeating any discovery. Where it stands:
   The cave's edge plates 285/302 (InnerFlatPlate) are their scenes' reliefs too, both ways from the
   cell's middle (`7716fa0`; probe world 991). `abe0e5a`: 28 more (the next 40 used tiles reviewed:
   pipes, bookshelves, windows, the palace's column and arch, machine parts, toys, slime edges, two
-  more edge plates): **83 tiles** now. `e5e8631`: a one-sided panel chose its room side wrongly
+  more edge plates) and 8 more of the remaining used tiles: **91 tiles** now. `e5e8631`: a one-sided panel chose its room side wrongly
   beside relief cells (082's near wall showed its plain side). Play pass 10 (the first version's
   binary) passed its 54 worlds before it was stopped for pass 11 with the final binary. Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,

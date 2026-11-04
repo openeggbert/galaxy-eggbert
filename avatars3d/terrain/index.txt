@@ -1,6 +1,7 @@
 # icon <icon> <relief> [<texture icon>]: the terrain tile drawn as that relief, textured by
 # the texture icon's sprite (default its own); tools/terrain_relief/build_relief.py from
 # tools/terrain_relief/tiles.txt
+icon 1 r_techno02.gtr
 icon 2 r_techno03.gtr
 icon 9 r_techno10.gtr
 icon 10 r_techno11.gtr
@@ -15,6 +16,7 @@ icon 37 r_roc4c.gtr
 icon 38 r_roc4d.gtr
 icon 39 r_roc4e.gtr
 icon 51 r_tuyau_lr3.m.gtr
+icon 73 r_techno11.gtr
 icon 107 r_herbe1.gtr 107
 icon 108 r_herbe1.gtr 107
 icon 109 r_herbe1.gtr 107
@@ -36,6 +38,8 @@ icon 186 r_maison08.m.gtr
 icon 187 r_maison09.m.gtr
 icon 188 r_maison09.gtr
 icon 189 r_maison09.gtr
+icon 192 r_maison06.gtr
+icon 193 r_maison04.gtr
 icon 194 r_maison05.gtr
 icon 198 r_palais_mur10.gtr
 icon 215 r_enfant01.gtr
@@ -62,9 +66,11 @@ icon 251 r_tuyau_lr1.gtr
 icon 252 r_tuyau_lr2.gtr
 icon 253 r_tuyau_lr3.gtr
 icon 254 r_tuyau_ud1.m.gtr
+icon 255 r_tuyau_ud2.gtr
 icon 284 r_grotte00.gtr
 icon 285 r_grotte01.gtr
 icon 286 r_grotte02.gtr
+icon 300 r_grotte16.gtr
 icon 301 r_grotte17.gtr
 icon 302 r_grotte18.gtr
 icon 303 r_grotte19.gtr
@@ -78,9 +84,11 @@ icon 347 r_smooth_smooth_u.gtr
 icon 349 r_smooth_smooth_lr.gtr
 icon 350 r_smooth_smooth_l.gtr
 icon 362 r_smooth_smooth_u2.gtr
+icon 373 r_smooth_smooth_u_a.gtr
 icon 386 r_palais_mur01.gtr
 icon 387 r_palais_mur02.gtr
 icon 388 r_palais_mur03.gtr
 icon 390 r_palais_mur05.gtr
 icon 393 r_palais_mur01.gtr
 icon 397 r_palais_mur02.gtr
+icon 400 r_palais_mur10.gtr

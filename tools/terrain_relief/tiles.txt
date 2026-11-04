@@ -96,3 +96,13 @@
  388 Decor/palais/mur03.rds       0  # pixels 0.42
  286 Decor/grotte02.rd4           0  # the survey's silhouette (an edge plate)
  303 Decor/grotte19.rd4           0  # the survey's silhouette IoU 0.81 (an edge plate)
+
+# The remaining used tiles, reviewed the same way (2026-11-04):
+   1 Decor/techno02.rd4           0  # pixels 0.30
+  73 Decor/techno11.rd4           0  # pixels 0.36
+ 192 Decor/maison06.rd4           0  # pixels 0.83
+ 193 Decor/maison04.rd4           0  # pixels 0.39
+ 255 Decor/tuyau-ud2.rds          0  # pixels 0.42
+ 300 Decor/grotte16.rd4           0  # pixels 0.44
+ 373 Decor/smooth/smooth-u-a.rds  0  # pixels 0.43
+ 400 Decor/palais/mur10.rds       0  # pixels 0.44
