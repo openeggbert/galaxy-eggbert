@@ -678,6 +678,7 @@ namespace GalaxyEggbert::CNA
                 alpha[i] = texels[i].getAProperty();
             }
             tileCoverage_ = GalaxyEggbert::Game::ClassifyTileSheet(alpha.data(), width, height);
+            GalaxyEggbert::Game::MarkSeeThroughTiles(tileCoverage_); // the cheese's holes (Q-010)
             // No black where an opaque tile's sprite is clear (TileCoverage.hpp).
             std::vector<std::uint8_t> rgba(texels.size() * 4);
             for (std::size_t i = 0; i < texels.size(); ++i)

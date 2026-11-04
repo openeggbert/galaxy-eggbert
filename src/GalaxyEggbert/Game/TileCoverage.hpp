@@ -90,6 +90,21 @@ namespace GalaxyEggbert::Game
         return coverage;
     }
 
+    // Tiles whose clear texels are holes to see through, though under a quarter of them is clear: the
+    // cheese with holes 339 (owner 2026-11-04, Q-010: see-through holes). Drawn as a cutout, so its
+    // neighbours' faces stay and a hole shows what lies behind; left out of the clear-texel fill.
+    inline constexpr int kSeeThroughTiles[] = {339};
+    inline void MarkSeeThroughTiles(std::vector<TileCoverage>& coverage)
+    {
+        for (const int icon : kSeeThroughTiles)
+        {
+            if (icon >= 0 && static_cast<std::size_t>(icon) < coverage.size())
+            {
+                coverage[static_cast<std::size_t>(icon)] = TileCoverage::Cutout;
+            }
+        }
+    }
+
     // The clear texels of the tiles drawn opaque take the colour of the solid texels round them
     // (2026-11-03, the second play pass). Those tiles (under a quarter clear) are drawn as they are,
     // the alpha ignored, so their clear texels showed whatever colour the sheet stores there -- mostly

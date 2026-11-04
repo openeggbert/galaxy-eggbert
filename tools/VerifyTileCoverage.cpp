@@ -121,6 +121,14 @@ int main()
         check(cut[0] == 0 && cut[1] == 0 && cut[2] == 0, "A cutout tile's clear texels are left as they are");
     }
 
+    // The cheese with holes is a cutout whatever its count (Q-010: see-through holes).
+    {
+        std::vector<TileCoverage> table(440, TileCoverage::Opaque);
+        MarkSeeThroughTiles(table);
+        check(table[339] == TileCoverage::Cutout && table[338] == TileCoverage::Opaque,
+              "the cheese with holes 339 is see-through, its neighbours not");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }
