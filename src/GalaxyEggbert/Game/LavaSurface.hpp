@@ -20,6 +20,10 @@ namespace GalaxyEggbert::Game
     // Colour: the tile's own pixels, sampled in its opaque body (the lowest 0.30 of the tile, under
     // every column's silhouette) at a height proportional to the vertex's: troughs dark orange,
     // crests the yellow of the tile's wave.
+    // A pool's inner cells' coarser wave grid (AppendLavaCell).
+    inline constexpr int kLavaInnerGridX = 4;
+    inline constexpr int kLavaInnerGridZ = 3;
+
     struct LavaNeighbours
     {
         // Whether the cell on that side is lava too (no wall drawn between two lava cells) or, for
@@ -74,11 +78,18 @@ namespace GalaxyEggbert::Game
         const float x0 = center.X - 0.5f;
         const float z0 = center.Z - 0.5f;
         const float y0 = center.Y - 0.5f;
-        constexpr int nx = kLavaGridX;
-        constexpr int nz = kLavaGridZ;
-        const auto& h = kLavaHeights[frame];
-        const auto heightAt = [&](int ix, int iz) { return h[iz][ix]; };
-
+        // A cell with lava on all four sides, inside a pool, draws its wave on a coarser grid (the
+        // same surface, bilinearly sampled): a pool's cells all move at every animation step and
+        // the animated terrain is rebuilt then, so a large pool (105's floor, 61 x 61 cells) was
+        // ~6x slower to play (Q-008). The full grid stays on the cells at a pool's edges.
+        const bool inner = beside.posX && beside.negX && beside.posZ && beside.negZ;
+        const int nx = inner ? kLavaInnerGridX : kLavaGridX;
+        const int nz = inner ? kLavaInnerGridZ : kLavaGridZ;
+        const auto heightAt = [&](int ix, int iz)
+        {
+            return LavaSurfaceHeight(frame, static_cast<float>(ix) / static_cast<float>(nx - 1),
+                                     static_cast<float>(iz) / static_cast<float>(nz - 1));
+        };
         // The top: one vertex per grid point, its normal from the neighbouring heights.
         std::uint32_t first = 0;
         for (int iz = 0; iz < nz; ++iz)
@@ -118,7 +129,6 @@ namespace GalaxyEggbert::Game
                 mesh.AddTriangle(a, d, c);
             }
         }
-
         // The body's walls up to the rim (the grid's border is the rim), and its floor.
         const float rim = y0 + kLavaRimHeight;
         const auto wall = [&](const Vector3& p0, const Vector3& p1, const Vector3& normal)

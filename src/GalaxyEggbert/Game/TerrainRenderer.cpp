@@ -661,7 +661,14 @@ namespace GalaxyEggbert::Game
                         AnimBlock animBlock{worldX, worldY, worldZ, animBase, lavaSides};
                         animBlock.floorIcon = floorIcon;
                         animBlock.rotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
-                        m_animBlocks.push_back(animBlock);
+                        if (animBase == GalaxyEggbert::BlockTypes::Lava)
+                        {
+                            m_lavaBlocks.push_back(animBlock); // its frames built once each (Update)
+                        }
+                        else
+                        {
+                            m_animBlocks.push_back(animBlock);
+                        }
                         continue;
                     }
 
@@ -1003,15 +1010,29 @@ namespace GalaxyEggbert::Game
 
     void TerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)
     {
-        if (animPhase == m_lastAnimPhase || (m_animBlocks.empty() && m_waterBlocks.empty()))
+        if (animPhase == m_lastAnimPhase || (m_animBlocks.empty() && m_waterBlocks.empty() && m_lavaBlocks.empty()))
         {
             m_lastAnimPhase = animPhase;
             return;
         }
         m_lastAnimPhase = animPhase;
 
-        m_animRenderer = RebuildAnimatedRenderer(device, m_animBlocks, animPhase);
-        m_waterRenderer = RebuildAnimatedRenderer(device, m_waterBlocks, animPhase);
+        if (!m_animBlocks.empty() || m_animRenderer)
+        {
+            m_animRenderer = RebuildAnimatedRenderer(device, m_animBlocks, animPhase);
+        }
+        if (!m_waterBlocks.empty() || m_waterRenderer)
+        {
+            m_waterRenderer = RebuildAnimatedRenderer(device, m_waterBlocks, animPhase);
+        }
+        if (!m_lavaBlocks.empty())
+        {
+            m_lavaIcon = AnimIcon(GalaxyEggbert::BlockTypes::Lava, animPhase);
+            if (m_lavaFrames.find(m_lavaIcon) == m_lavaFrames.end())
+            {
+                m_lavaFrames[m_lavaIcon] = RebuildAnimatedRenderer(device, m_lavaBlocks, animPhase);
+            }
+        }
     }
 
     void TerrainRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -1047,7 +1068,9 @@ namespace GalaxyEggbert::Game
     void TerrainRenderer::DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                             Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
     {
-        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer)
+        const auto lava = m_lavaFrames.find(m_lavaIcon);
+        const GpuMeshParts* lavaRenderer = lava != m_lavaFrames.end() ? lava->second.get() : nullptr;
+        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || lavaRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
             // NEXT.md §8, extended 2026-07-09 to also cover m_animRenderer):
@@ -1082,6 +1105,10 @@ namespace GalaxyEggbert::Game
             {
                 m_animRenderer->Draw(device, effect);
             }
+            if (lavaRenderer)
+            {
+                lavaRenderer->Draw(device, effect);
+            }
             if (m_waterRenderer)
             {
                 m_waterRenderer->Draw(device, effect);
@@ -1106,6 +1133,7 @@ namespace GalaxyEggbert::Game
                (m_transparentStaticRenderer ? m_transparentStaticRenderer->VertexCount() : 0) +
                (m_cutoutRenderer ? m_cutoutRenderer->VertexCount() : 0) +
                (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
+               (m_lavaFrames.count(m_lavaIcon) != 0 && m_lavaFrames.at(m_lavaIcon) ? m_lavaFrames.at(m_lavaIcon)->VertexCount() : 0) +
                (m_sawFloorRenderer ? m_sawFloorRenderer->VertexCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->VertexCount() : 0) +
                (m_grassRenderer ? m_grassRenderer->VertexCount() : 0);
@@ -1117,6 +1145,7 @@ namespace GalaxyEggbert::Game
                (m_transparentStaticRenderer ? m_transparentStaticRenderer->PrimitiveCount() : 0) +
                (m_cutoutRenderer ? m_cutoutRenderer->PrimitiveCount() : 0) +
                (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0) +
+               (m_lavaFrames.count(m_lavaIcon) != 0 && m_lavaFrames.at(m_lavaIcon) ? m_lavaFrames.at(m_lavaIcon)->PrimitiveCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0) +
                (m_grassRenderer ? m_grassRenderer->PrimitiveCount() : 0);
     }

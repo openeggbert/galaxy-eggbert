@@ -208,8 +208,14 @@ int main()
         CnaEngine::Graphics::MeshBuilder surrounded = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
         GalaxyEggbert::Game::AppendLavaCell(surrounded, Vector3(0.0f, 0.5f, 0.0f), 0, tile, {true, true, true, true, true});
         const std::size_t top = static_cast<std::size_t>(GalaxyEggbert::Game::kLavaGridX * GalaxyEggbert::Game::kLavaGridZ);
-        check(surrounded.Mesh().VertexCount() == top && open.Mesh().VertexCount() == top + 5 * 4,
+        const std::size_t innerTop =
+            static_cast<std::size_t>(GalaxyEggbert::Game::kLavaInnerGridX * GalaxyEggbert::Game::kLavaInnerGridZ);
+        check(surrounded.Mesh().VertexCount() == innerTop && open.Mesh().VertexCount() == top + 5 * 4,
               "walls and floor only where no lava (or, below, nothing solid) is beside the cell");
+        CnaEngine::Graphics::MeshBuilder edge = GalaxyEggbert::Game::MakeLitTexturedMeshBuilder();
+        GalaxyEggbert::Game::AppendLavaCell(edge, Vector3(0.0f, 0.5f, 0.0f), 0, tile, {true, false, true, true, true});
+        check(innerTop * 4 < top && edge.Mesh().VertexCount() == top + 4 && frontFacesAgreeWithNormals(surrounded.Mesh()),
+              "a pool's inner cell has a coarser wave (Q-008), its edge cells the full one");
     }
 
     // The fan model (VIS-0127) blows up; turned by FanModelRoll it blows each fan cell's way:

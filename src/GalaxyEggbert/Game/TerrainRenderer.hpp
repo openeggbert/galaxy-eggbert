@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -78,7 +79,10 @@ namespace GalaxyEggbert::Game
                        Microsoft::Xna::Framework::Graphics::BasicEffect& grassEffect) const;
 
         [[nodiscard]] int BlockCount() const noexcept { return m_blockCount; }
-        [[nodiscard]] int AnimatedBlockCount() const noexcept { return static_cast<int>(m_animBlocks.size()); }
+        [[nodiscard]] int AnimatedBlockCount() const noexcept
+        {
+            return static_cast<int>(m_animBlocks.size() + m_lavaBlocks.size());
+        }
         [[nodiscard]] int WaterBlockCount() const noexcept { return static_cast<int>(m_waterBlocks.size()); }
         [[nodiscard]] int VertexCount() const noexcept;
         [[nodiscard]] int PrimitiveCount() const noexcept;
@@ -176,6 +180,12 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<GpuMeshParts> m_grassRenderer;
         std::vector<AnimBlock> m_animBlocks;
         std::vector<AnimBlock> m_waterBlocks;
+        // The lava cells, apart from m_animBlocks: all of them show the same frame (68-72) at a time,
+        // so each frame's mesh is built once, when first shown, and kept (Q-008: rebuilding a large
+        // pool at every animation step made 105's lava floor ~2.7-6x slower to play).
+        std::vector<AnimBlock> m_lavaBlocks;
+        std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_lavaFrames;
+        int m_lavaIcon = -1;
         // Positions with InnerFlatPlate rotation metadata set (plan.md
         // E3D-MIG-149, 2026-07-11 -- see InnerFlatPlateTiles.hpp's
         // kPlateRotationMetadataType comment), collected once here so
