@@ -207,10 +207,27 @@ namespace GalaxyEggbert::Game
             std::array<std::uint8_t, 6> air{};
             bool grass = false; // laid as the grass's strips (TerrainRelief.hpp kGrassAirMask)
             bool plate = false; // an InnerFlatPlate: the relief both ways from the cell's middle
+            bool cutout = false; // its sprite has clear texels: the relief alpha-tested, no backing
             // Faces drawn flat near the focus too, with their own texture rectangle: a DirectionalCube's
             // faces that do not wear the tile (the machine panels' plain sides, SingleTexturedSide).
             std::uint8_t flatFaces = 0;
             std::array<CnaEngine::Graphics::UvRect, 6> flatUv{};
+        };
+        // A chunk's reliefs: the opaque tiles' (lit) and the clear-texelled tiles' (alpha-tested,
+        // drawn with the cutout effect).
+        struct ReliefMeshData
+        {
+            CnaEngine::Graphics::MeshData lit;
+            CnaEngine::Graphics::MeshData cut;
+        };
+        struct ReliefMeshes
+        {
+            std::unique_ptr<GpuMeshParts> lit;
+            std::unique_ptr<GpuMeshParts> cut;
+            [[nodiscard]] int PrimitiveCount() const noexcept
+            {
+                return (lit ? lit->PrimitiveCount() : 0) + (cut ? cut->PrimitiveCount() : 0);
+            }
         };
         struct ReliefChunk
         {
@@ -220,13 +237,13 @@ namespace GalaxyEggbert::Game
             std::unique_ptr<GpuMeshParts> cubes;
             std::unique_ptr<GpuMeshParts> grassTops; // far: the grass cells' top plates (DrawGrass)
             std::unique_ptr<GpuMeshParts> cutouts;   // far: the plates, alpha-tested (the cutout pass)
-            std::unique_ptr<GpuMeshParts> relief;
-            std::future<CnaEngine::Graphics::MeshData> pending; // its relief being built
+            std::unique_ptr<ReliefMeshes> relief;               // built (null: not yet, or released)
+            std::future<ReliefMeshData> pending;                 // its relief being built
             std::uint64_t signature = 0;                         // of its cells (AdoptReliefs)
             bool near = false;
         };
         // The chunk's relief mesh; touches nothing of the renderer (it runs on a worker thread).
-        static CnaEngine::Graphics::MeshData BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
+        static ReliefMeshData BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
                                                              bool overhangs, const std::vector<ReliefCell>& cells);
         static std::uint64_t ReliefSignature(const std::vector<ReliefCell>& cells);
         const TerrainReliefTable* m_reliefs = nullptr;

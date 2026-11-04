@@ -888,7 +888,7 @@ namespace GalaxyEggbert::Game
                             texturedSide = SingleTexturedSide(icon, occludedFaces, room);
                         }
                     }
-                    if (m_reliefs != nullptr && mesh == &staticMesh &&
+                    if (m_reliefs != nullptr && (mesh == &staticMesh || mesh == &cutoutMesh) &&
                         definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube &&
                         !IsTeleporterTipIcon(icon) && m_reliefs->Find(block.type()) != nullptr)
                     {
@@ -927,8 +927,9 @@ namespace GalaxyEggbert::Game
                                 cell.flatUv[static_cast<std::size_t>(face)] = style.uv;
                             }
                         }
-                        AddCenteredBox(reliefChunkCubes[chunkIndex], center,
-                                       Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), cubeFaces);
+                        cell.cutout = mesh == &cutoutMesh;
+                        AddCenteredBox(mesh == &cutoutMesh ? reliefChunkCutouts[chunkIndex] : reliefChunkCubes[chunkIndex],
+                                       center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), cubeFaces);
                         if ((cell.faces | cell.flatFaces) != 0)
                         {
                             m_reliefChunks[chunkIndex].cells.push_back(cell);
@@ -949,6 +950,7 @@ namespace GalaxyEggbert::Game
                         cell.center = center;
                         cell.icon = block.type();
                         cell.plate = true;
+                        cell.cutout = mesh == &cutoutMesh;
                         const auto axis = GetInnerFlatPlateAxis(icon, plateRotated);
                         cell.faces = axis == CnaEngine::Graphics::PlateAxis::X   ? std::uint8_t{4 | 8}
                                      : axis == CnaEngine::Graphics::PlateAxis::Y ? std::uint8_t{16 | 32}
@@ -963,8 +965,8 @@ namespace GalaxyEggbert::Game
                     }
 
                     using CnaEngine::Graphics::BoxFace;
-                    const bool reliefTile =
-                        m_reliefs != nullptr && mesh == &staticMesh && m_reliefs->Find(block.type()) != nullptr;
+                    const bool reliefTile = m_reliefs != nullptr && (mesh == &staticMesh || mesh == &cutoutMesh) &&
+                                            m_reliefs->Find(block.type()) != nullptr;
                     const std::uint8_t besideRelief = reliefTile ? std::uint8_t{0} : reliefNeighbourFaces(x, y, z);
                     CnaEngine::Graphics::BoxFaces faces;
                     faces[static_cast<int>(BoxFace::PositiveZ)] =
@@ -991,11 +993,12 @@ namespace GalaxyEggbert::Game
                         // A relief tile (Q-012): its cube goes to its chunk, drawn as cubes far from the
                         // focus and as the cells' reliefs near it.
                         const std::size_t chunkIndex = reliefChunkFor(x, y, z);
-                        AddCenteredBox(reliefChunkCubes[chunkIndex], center,
-                                       Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
+                        AddCenteredBox(mesh == &cutoutMesh ? reliefChunkCutouts[chunkIndex] : reliefChunkCubes[chunkIndex],
+                                       center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
                         ReliefCell cell;
                         cell.center = center;
                         cell.icon = block.type();
+                        cell.cutout = mesh == &cutoutMesh;
                         for (int face = 0; face < 6; ++face)
                         {
                             if (!faces[face].visible)
@@ -1304,12 +1307,14 @@ namespace GalaxyEggbert::Game
         }
     }
 
-    CnaEngine::Graphics::MeshData TerrainRenderer::BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
-                                                                   bool overhangs, const std::vector<ReliefCell>& cells)
+    TerrainRenderer::ReliefMeshData TerrainRenderer::BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
+                                                                     bool overhangs, const std::vector<ReliefCell>& cells)
     {
-        auto mesh = MakeLitTexturedMeshBuilder();
+        auto litMesh = MakeLitTexturedMeshBuilder();
+        auto cutMesh = MakeLitTexturedMeshBuilder();
         for (const auto& cell : cells)
         {
+            auto& mesh = cell.cutout ? cutMesh : litMesh;
             const TerrainRelief* relief = reliefs.Find(cell.icon);
             if (relief == nullptr)
             {
@@ -1356,10 +1361,11 @@ namespace GalaxyEggbert::Game
                     continue;
                 }
                 AppendReliefFace(mesh, *relief, cell.center, face, tile,
-                                 overhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)], !cell.grass);
+                                 overhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)],
+                                 !cell.grass && !cell.cutout);
             }
         }
-        return mesh.Take();
+        return ReliefMeshData{litMesh.Take(), cutMesh.Take()};
     }
 
     std::uint64_t TerrainRenderer::ReliefSignature(const std::vector<ReliefCell>& cells)
@@ -1381,7 +1387,8 @@ namespace GalaxyEggbert::Game
             mix(&cell.icon, sizeof(cell.icon));
             mix(&cell.faces, sizeof(cell.faces));
             mix(cell.air.data(), cell.air.size());
-            const unsigned char kind = static_cast<unsigned char>((cell.grass ? 1 : 0) | (cell.plate ? 2 : 0));
+            const unsigned char kind =
+                static_cast<unsigned char>((cell.grass ? 1 : 0) | (cell.plate ? 2 : 0) | (cell.cutout ? 4 : 0));
             mix(&kind, 1);
             mix(&cell.flatFaces, sizeof(cell.flatFaces));
             for (const auto& uv : cell.flatUv)
@@ -1423,8 +1430,19 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
-        const auto upload = [&device](const CnaEngine::Graphics::MeshData& data) -> std::unique_ptr<GpuMeshParts>
-        { return data.Empty() ? nullptr : UploadLitTexturedMeshParts(device, data); };
+        const auto upload = [&device](ReliefMeshData data) -> std::unique_ptr<ReliefMeshes>
+        {
+            auto meshes = std::make_unique<ReliefMeshes>();
+            if (!data.lit.Empty())
+            {
+                meshes->lit = UploadLitTexturedMeshParts(device, data.lit);
+            }
+            if (!data.cut.Empty())
+            {
+                meshes->cut = UploadBakedLitTexturedMeshParts(device, std::move(data.cut));
+            }
+            return meshes;
+        };
         // Nearest chunks first, so a capped call builds what is closest.
         std::vector<std::pair<float, std::size_t>> wanted;
         int inFlight = 0;
@@ -1443,10 +1461,10 @@ namespace GalaxyEggbert::Game
                     ++inFlight;
                     continue;
                 }
-                const auto data = chunk.pending.get();
+                auto data = chunk.pending.get();
                 if (distance <= radius + kReliefRelease)
                 {
-                    chunk.relief = upload(data);
+                    chunk.relief = upload(std::move(data));
                 }
             }
             if (chunk.near && !chunk.relief && !chunk.cells.empty())
@@ -1472,7 +1490,7 @@ namespace GalaxyEggbert::Game
             constexpr std::size_t kLoadThreads = 4;
             for (std::size_t first = 0; first < wanted.size(); first += kLoadThreads)
             {
-                std::vector<std::future<CnaEngine::Graphics::MeshData>> batch;
+                std::vector<std::future<ReliefMeshData>> batch;
                 for (std::size_t k = first; k < wanted.size() && k < first + kLoadThreads; ++k)
                 {
                     batch.push_back(std::async(std::launch::async, &TerrainRenderer::BuildReliefMesh,
@@ -1548,7 +1566,10 @@ namespace GalaxyEggbert::Game
         {
             if (chunk.near && chunk.relief)
             {
-                chunk.relief->Draw(device, effect);
+                if (chunk.relief->lit)
+                {
+                    chunk.relief->lit->Draw(device, effect);
+                }
             }
             else if (chunk.cubes)
             {
@@ -1573,7 +1594,14 @@ namespace GalaxyEggbert::Game
             }
             for (const auto& chunk : m_reliefChunks)
             {
-                if (chunk.cutouts && !(chunk.near && chunk.relief))
+                if (chunk.near && chunk.relief)
+                {
+                    if (chunk.relief->cut)
+                    {
+                        chunk.relief->cut->Draw(device, *m_cutoutEffect);
+                    }
+                }
+                else if (chunk.cutouts)
                 {
                     chunk.cutouts->Draw(device, *m_cutoutEffect);
                 }
