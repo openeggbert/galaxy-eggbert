@@ -370,9 +370,8 @@ ledgers before repeating any discovery. Where it stands:
   over such an edge (092's low stairwell: his head shows; play pass 7: 78/78).
   `90da71f`: **the terrain mipmapped** from its own padded copy of object-m.png (TileAtlas
   Layout::Padded: 16 px borders, 96 px pitch, box-filtered levels): 125's ring moire gone. The web
-  build of 01:07 (2026-11-04) predates it; its rebuild at 02:xx failed inside CNA, which the cna
-  session has mid-edit (`GraphicsResource.cpp`: DeferredCreationEXT undeclared) -- rebuild it when
-  CNA builds again (`cmake --build build-cna-webgl2 --target GalaxyEggbertCNA --parallel 6`).
+  build was rebuilt with it at 01:25 (2026-11-04, after a first try failed while the cna session had
+  CNA mid-edit) and loaded in headless Chrome: 120 models, 93/93 sounds, the title scene drawn.
   `0dc7592`: the drip's smallest drops 408-410 as its smallest scene's drop scaled (the render
   ledger has no unreviewed row left); the ledgers regenerated and current (`725505e`, `80a840f`).
   Also open: decor without collision (the girder 201) does not stop the camera; its lattice is
