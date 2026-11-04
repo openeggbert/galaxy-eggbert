@@ -133,8 +133,8 @@ namespace GalaxyEggbert::Game
     // prevention (the 30px swept multi-step probe) is NOT modeled -- this
     // engine's own gravity/dt doesn't cross a lift's height in one frame
     // under normal conditions. Types 47/48's real conveyor nudge is folded
-    // into RideDeltaX() directly (kConveyorNudgeSpeed is an approximation,
-    // the real 2px/tick has no exact unit-conversion established here).
+    // into RideDeltaX() directly (kConveyorNudgeSpeed: the real 2 px a tick, 0.625 blocks a
+    // second).
     //
     // NOT yet implemented (deliberately, not an oversight):
     //  - Every other pickup type in IsPickup() (helicopter, shield, drink,

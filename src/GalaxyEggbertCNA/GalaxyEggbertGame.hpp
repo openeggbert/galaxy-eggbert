@@ -1006,6 +1006,12 @@ namespace GalaxyEggbert::CNA
         // over 25 and every other pair of ticks after; behind him, as the original draws them
         // first. Returns the power to draw, None for none.
         [[nodiscard]] GalaxyEggbert::Def::SecretPower BlupiAuraShown() const;
+        // The original's m_blupiFocus: false while he is busy -- taking a pickup, teleporting, waving
+        // goodbye -- on the ground (in the air he counts as focused for the hazards, Decor.cpp:5788).
+        [[nodiscard]] bool BlupiFocused() const
+        {
+            return !blupi_.IsOnGround() || !(blupi_.IsPickupFrozen() || blupi_.IsTeleporting() || blupi_.IsBye());
+        }
         // The terrain tiles' reliefs (Q-001/Q-004/Q-012, avatars3d/terrain/), loaded on the first
         // terrain build; drawn within terrainReliefRadius_ of the camera's target.
         // GALAXY_TERRAIN_RELIEF=0 turns them off, GALAXY_TERRAIN_RELIEF_DIR reads another directory,

@@ -1358,7 +1358,9 @@ namespace GalaxyEggbert::Game
                 // BlupiController::RideLift().
                 if (&obj == riddenLift)
                 {
-                    constexpr float kConveyorNudgeSpeed = 0.3f;
+                    // The original's 2 px a tick (Decor.cpp:8161-8168, m_blupiVector.X += 2 / -= 2):
+                    // 2 * 20 / 64 blocks a second. It was 0.3 ("no unit conversion established").
+                    constexpr float kConveyorNudgeSpeed = 2.0f * 20.0f / 64.0f;
                     float nudgeX = 0.0f;
                     switch (GetObjectDefinition(obj.type).liftConveyorDirection)
                     {
@@ -1920,7 +1922,8 @@ namespace GalaxyEggbert::Game
             // (cosmetic, same as type2's taunt-suppression above).
             if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType54)
             {
-                if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned && !blupiInvincible)
+                // m_blupiFocus too (Decor.cpp:5867-5868): busy, he is not caught.
+                if ((obj.patrolStep == 1 || obj.patrolStep == 3) && !blupiBallooned && !blupiInvincible && blupiFocused)
                 {
                     const float gdx = obj.currentX - blupiX;
                     const float gdy = obj.currentY - blupiY;

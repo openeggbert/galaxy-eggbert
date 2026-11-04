@@ -951,3 +951,15 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Playthroughs: the scripts that walked off a ledge to an endpoint just past its edge (055, 056, 058)
   now go a body's half-width (18 px) clear of it; 053's north-west alcove is entered along z 11.15
   (its wall's corner stopped him from 11.22); 057's tank corridor waits 84 frames (60-108 pass).
+
+## BD-0060 — the conveyor carried him at half the original's pace; the big creature caught him busy (gameplay) — FIXED_AND_VERIFIED
+
+- Original: a conveyor lift (47/48) adds 2 px a tick to his motion (Decor.cpp:8161-8168), 0.625 blocks
+  a second; the big creature (54) catches him only with `m_blupiFocus` (5867-5868).
+- Galaxy: 0.3 blocks a second ("no unit conversion established"); the creature caught him while he
+  took a pickup or teleported.
+- Fix: `kConveyorNudgeSpeed` 2 * 20 / 64; the creature's gate takes `blupiFocused` (BD-0010's busy
+  Blupi). The same gate for the spike trap (Decor.cpp:5504-5505) and the teleporter (5593-5594), which
+  the code said "focus isn't modeled" for: `GalaxyEggbertGame::BlupiFocused()`.
+- Validation: ctest 112/112; the playthroughs (play pass 17: 102 has the conveyor -- its caterpillars
+  re-timed --, 061, 062, 065, 066, 199 the creature).

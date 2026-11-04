@@ -3868,7 +3868,8 @@ namespace GalaxyEggbert::CNA
             // count) -- not modeled, since BlupiController's single-point
             // 3D collision has no sub-tile position within a cell to test
             // against; the whole tile is lethal here.
-            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
+            // m_blupiFocus too (Decor.cpp:5504-5505): busy, he is not caught.
+            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
                 blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510);
@@ -4101,8 +4102,8 @@ namespace GalaxyEggbert::CNA
             // (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate &&
             // !m_blupiAir && m_blupiFocus`) is checked inside
             // TriggerTeleport() itself (grounded, not ballooned/squashed,
-            // and -- fixed 2026-07-16 -- not in any vehicle mode either;
-            // focus alone still isn't modeled). Idempotent, same shape as
+            // and -- fixed 2026-07-16 -- not in any vehicle mode either);
+            // focus by BlupiFocused() (2026-11-04). Idempotent, same shape as
             // every other Trigger*() here, so channel 71 only plays on an
             // actual new trigger.
             // Not while m_blupiPosHelico is set (Decor.cpp:5594): just off a vehicle, out of a
@@ -4116,7 +4117,7 @@ namespace GalaxyEggbert::CNA
                 teleportArrivalGuard_ = false; // he has left the cell he arrived in
             }
             if (GalaxyEggbert::BlockTypes::isTeleporter(aboveIcon) && !interaction_.ContactGraceActive() &&
-                !teleportArrivalGuard_ &&
+                !teleportArrivalGuard_ && BlupiFocused() /* m_blupiFocus, Decor.cpp:5594 */ &&
                 blupi_.TriggerTeleport(aboveIcon))
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
@@ -4654,7 +4655,7 @@ namespace GalaxyEggbert::CNA
                                  inHelicopter, blupi_.IsHidden(),
                                  // m_blupiFocus or in the air (Decor.cpp:5788-5790): not while he
                                  // takes a pickup, teleports or waves goodbye on the ground.
-                                 !blupi_.IsOnGround() || !(blupi_.IsPickupFrozen() || blupi_.IsTeleporting() || blupi_.IsBye()));
+                                 BlupiFocused());
             RefreshTerrainMeshIfChanged();
 
             // The action button with nothing to do, standing still: he shakes his head (Non, 18
