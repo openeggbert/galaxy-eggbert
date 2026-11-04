@@ -61,7 +61,7 @@ namespace GalaxyEggbert::Editor
             SpawnPointEdit,
             MusicEdit, // the world's background music (OR-0014)
             BigDecorEdit,
-            TurnEdit, // a tile turned (M3D-0005, OR-0044): its quarter turns changed
+            TurnEdit, // a tile turned (M3D-0005, OR-0071): its quarter turns changed
         };
 
         Kind kind = Kind::BlockEdit;

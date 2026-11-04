@@ -94,7 +94,7 @@ namespace GalaxyEggbert
     };
 
     // Decor the original's Blupi walks in front of in 2D (an empty quarter mask) that stands in his
-    // way in 3D, a whole block each (OR-0042, owner 2026-11-04): the columns (76, the toys' striped
+    // way in 3D, a whole block each (OR-0069, owner 2026-11-04): the columns (76, the toys' striped
     // posts 235/236), the girder (201), the machine pieces (49, 50, 51), the golden support (77),
     // the trestle (199), the posts (200), the slime column (300), the balustrade (398). Not the
     // original's secret passages, walls one walks through by design (the editor's "secret"

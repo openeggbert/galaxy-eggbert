@@ -455,7 +455,7 @@ namespace GalaxyEggbert::Game
         // The original's switch is a tile in Blupi's own cell, in front of which he stands
         // (Decor::IsSwitch: his middle within it, 4 px from its sides). In 3D it is a block: the one
         // he stands on (a switch in the floor), or one beside him at his own height that his body
-        // touches (a switch machine standing on the floor or in a wall; owner 2026-11-04, OR-0040:
+        // touches (a switch machine standing on the floor or in a wall; owner 2026-11-04, OR-0067:
         // only the block under him counted, so walking up to the machine did nothing).
         const int blocksPerAxis = static_cast<int>(world_->blocksPerAxis());
         const float wx = blupiX + static_cast<float>(kWorldCenterX);
@@ -558,7 +558,7 @@ namespace GalaxyEggbert::Game
         // fan, into its mouth). Here a fan is a whole block (M3D-0004), so that is contact with
         // its mouth face: his middle within the fan's cross-section and his body against the face
         // -- standing on a floor fan, pressed into a side fan's mouth, his head up against a
-        // ceiling fan. Beside a fan, a cell in front of it, he is safe (owner 2026-11-04, OR-0039:
+        // ceiling fan. Beside a fan, a cell in front of it, he is safe (owner 2026-11-04, OR-0066:
         // the whole cell in front counted until then).
         struct FanMouth { std::uint16_t fan; int dx, dy; std::uint16_t wind; };
         static constexpr FanMouth kFans[] = {
@@ -614,7 +614,7 @@ namespace GalaxyEggbert::Game
             }
             return mouth.fan;
         };
-        // Landed on a fan, whichever way it blows (owner 2026-11-04, OR-0041: on a side fan he stood
+        // Landed on a fan, whichever way it blows (owner 2026-11-04, OR-0068: on a side fan he stood
         // on its block's invisible top): his middle over it, his feet on its top. In the original
         // he would sink into its open cell; a whole block here, so its top is the contact.
         {

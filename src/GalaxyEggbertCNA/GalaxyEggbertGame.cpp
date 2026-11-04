@@ -2381,7 +2381,7 @@ namespace GalaxyEggbert::CNA
         icon = visual.icon;
         // The patrol enemies' per-direction/turn icon tables (see the
         // element.png billboard pass, the one place with their patrol state).
-        // On element.png, and blupi1.png for the enemy Blupis (OR-0035).
+        // On element.png, and blupi1.png for the enemy Blupis (OR-0063).
         int patrolIcon = 0;
         if (TryGetPatrolIcon(obj.type, obj.posStartX > obj.posEndX, obj.patrolStep,
                              static_cast<int>(obj.patrolTime), patrolIcon))
@@ -2483,7 +2483,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
     {
-        // OR-0035 (EnemyBlupi.hpp): his model and his helicopter or tank in the clip and frame the
+        // OR-0063 (EnemyBlupi.hpp): his model and his helicopter or tank in the clip and frame the
         // original's icon shows, the textures turned green and blue as blupi1.png's, facing along
         // the patrol. A turn swings his front past the camera, as the sprites turn through their
         // viewer (the tank's mid-turn frames point the gun out of the screen).
@@ -6213,7 +6213,7 @@ namespace GalaxyEggbert::CNA
                     }
                     parked.model->ComputeBoneTransformsEXT(
                         parked.clip, System::TimeSpan::FromSeconds(0.0), /*loop=*/false, boneTransforms);
-                    // Facing +X, turned in the editor a quarter at a time (OR-0044).
+                    // Facing +X, turned in the editor a quarter at a time (OR-0071).
                     blupiEffect_->setWorldProperty(
                         Microsoft::Xna::Framework::Matrix::CreateScale(kRealModelScale) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(
@@ -6408,7 +6408,7 @@ namespace GalaxyEggbert::CNA
                             const float spriteFacing = obj.posStartX > obj.posEndX ? 3.14159265f : 0.0f;
                             turn = std::atan2(-dz, dx) - spriteFacing;
                         }
-                        // A still object turned in the editor (OR-0044: its cell's quarter turns).
+                        // A still object turned in the editor (OR-0071: its cell's quarter turns).
                         if (dx == 0.0f && dz == 0.0f && obj.posStartY == obj.posEndY)
                         {
                             turn += 1.57079632f * static_cast<float>(
@@ -6581,7 +6581,7 @@ namespace GalaxyEggbert::CNA
                                          GalaxyEggbert::Game::IsSignModelIcon(cell.base))
                                 {
                                     // Turned in the editor a quarter at a time from the side it faces
-                                    // by itself (OR-0044).
+                                    // by itself (OR-0071).
                                     const float frontYaw = GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
                                                            1.57079632f * static_cast<float>(CellQuarterTurns(cell.x, cell.y, cell.z));
                                     drawModel(*still, cell.x, cell.y, cell.z, frontYaw);

@@ -274,7 +274,7 @@ namespace GalaxyEggbert::Game
         std::vector<AnimBlock> m_blitzBlocks;
         std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_blitzFrames;
         int m_blitzIcon = -1;
-        // The wind cells (110-125, OR-0038): the original's streaks move a frame every tick
+        // The wind cells (110-125, OR-0065): the original's streaks move a frame every tick
         // (Decor.cpp:1085-1102, table_decor_ventg/d/h/b[m_time % 4], every cell on the same frame);
         // each of the four frames' meshes built once, when first shown. Each cell is two crossed
         // plates holding the way it blows, so its streaks show from every side.

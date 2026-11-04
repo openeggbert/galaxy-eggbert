@@ -2153,7 +2153,7 @@ int main(int argc, char** argv)
         check(getSwitchType() == BlockTypes::SwitchOff, "switch tile is SwitchOff again");
         check(getSawType() == BlockTypes::SawStopped, "linked saw is SawStopped again (safe)");
 
-        // OR-0040: a switch machine at his own height, beside him: his body against it works, a
+        // OR-0067: a switch machine at his own height, beside him: his body against it works, a
         // step away does not.
         auto& mutableWorld = world.GetWorldMutable();
         mutableWorld.setBlock(30, 1, 30, Worlds::Block::make(BlockTypes::SwitchOff));
@@ -3064,7 +3064,7 @@ int main(int argc, char** argv)
         check(!world.TryConsumeFan(0.0f, 1.0f, 0.0f).has_value(), "TryConsumeFan() is a no-op away from any fan");
         check(!world.TryConsumeFan(rx(41) - 0.25f, 20.0f, rz(40)).has_value(),
               "behind a left-blowing fan Blupi is safe (its mouth faces -X)");
-        // OR-0039: a cell in front of the mouth is not touching it; his body against its face is.
+        // OR-0066: a cell in front of the mouth is not touching it; his body against its face is.
         check(!world.TryConsumeFan(rx(39), 20.0f, rz(40)).has_value(),
               "beside a fan, a cell in front of its mouth, Blupi is safe (owner 2026-11-04)");
         check(!world.TryConsumeFan(rx(39) + 0.25f, 20.0f, rz(40) + 0.6f).has_value(),
@@ -3078,7 +3078,7 @@ int main(int argc, char** argv)
         check(!world.TryConsumeFan(rx(44), 20.4f, rz(44)).has_value(), "over an upward fan in the air Blupi is safe");
         check(!world.TryConsumeFan(rx(45), 20.0f, rz(44)).has_value(), "on the floor beside an upward fan Blupi is safe");
         check(world.TryConsumeFan(rx(44), 20.0f, rz(44)).has_value(), "standing on an upward fan touches its mouth");
-        // OR-0041: landed on a side fan (a whole block, its top open air): it goes off too.
+        // OR-0068: landed on a side fan (a whole block, its top open air): it goes off too.
         put(46, 19, 46, BlockTypes::FanRight);
         put(47, 19, 46, 114);
         check(!world.TryConsumeFan(rx(46) + 0.7f, 20.0f, rz(46)).has_value(),

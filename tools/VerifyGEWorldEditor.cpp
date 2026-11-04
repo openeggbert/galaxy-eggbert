@@ -184,7 +184,7 @@ int main()
               "removing the nearest block preserves the slab below it");
     }
 
-    // OR-0043: V turns the aimed block to its next variant: its family's (a fan), else its auto-tile
+    // OR-0070: V turns the aimed block to its next variant: its family's (a fan), else its auto-tile
     // row's (the grass's ends 157, 109, 108, 107). Undoable.
     {
         World world = slab;
@@ -198,7 +198,7 @@ int main()
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::V}, rest, 0.0f, 800, 480, camera, world);
         check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 107,
-              "V turns the aimed grass end to the next of its row (OR-0043)");
+              "V turns the aimed grass end to the next of its row (OR-0070)");
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::V}, rest, 0.0f, 800, 480, camera, world);
         check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 157, "and on, wrapping round its row");
@@ -211,7 +211,7 @@ int main()
         check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 126, "undone, the fan again");
     }
 
-    // OR-0044: O turns a model with a front a quarter at a time; a fan only between its two axes.
+    // OR-0071: O turns a model with a front a quarter at a time; a fan only between its two axes.
     {
         World world = slab;
         WorldEditor editor;
@@ -250,13 +250,13 @@ int main()
         editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
         check(ObjectQuarterTurns(world, placeX, placeY, placeZ) == 1 && QuarterTurns(world, placeX, placeY, placeZ) == 0 &&
                   QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 0,
-              "O turns the object in the preview's cell (its own turns, not the cell's wind), not the block under it (OR-0044)");
+              "O turns the object in the preview's cell (its own turns, not the cell's wind), not the block under it (OR-0071)");
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::U}, rest, 0.0f, 800, 480, camera, world);
         check(ObjectQuarterTurns(world, placeX, placeY, placeZ) == 0, "undone, the object faces as before");
     }
 
-    // OR-0045: a lift placed, the next click elsewhere is its end (the original's m_liftEnd).
+    // OR-0072: a lift placed, the next click elsewhere is its end (the original's m_liftEnd).
     {
         const auto FindMoveObjectAt = [](const World& w, std::uint16_t x, std::uint16_t y, std::uint16_t z)
             -> std::optional<GalaxyEggbert::MoveObjectRecord>
@@ -296,7 +296,7 @@ int main()
         const auto ended = FindMoveObjectAt(world, placeX, placeY, placeZ);
         check(ended.has_value() && ended->posEndY == static_cast<float>(placeY + 2) &&
                   ended->posEndX == static_cast<float>(placeX) && ended->stepAdvanceTicks > placed->stepAdvanceTicks,
-              "the next click sets its end two up, its step scaled to the cells (OR-0045)");
+              "the next click sets its end two up, its step scaled to the cells (OR-0072)");
         check(!FindMoveObjectAt(world, placeX, static_cast<std::uint16_t>(placeY + 2), placeZ).has_value(),
               "and places no second lift");
     }

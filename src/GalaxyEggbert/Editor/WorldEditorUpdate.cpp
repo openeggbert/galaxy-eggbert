@@ -406,7 +406,7 @@ namespace GalaxyEggbert::Editor
             command.objectBefore = FindMoveObjectAt(world, x, y, z);
             command.objectAfter = record;
             PlaceMoveObject(world, record);
-            // A lift or a creature on a patrol: the next click sets where it goes (OR-0045).
+            // A lift or a creature on a patrol: the next click sets where it goes (OR-0072).
             if (IsLiftType(record.type) || Game::GetObjectDefinition(record.type).patrolTicksPerCell > 0)
             {
                 variants_.Forget();
@@ -840,7 +840,7 @@ namespace GalaxyEggbert::Editor
             return false;
         }
         // An object or a BigDecor in the cell the preview shows (where a click would put one)
-        // turns a quarter at a time (OR-0044): its cell's quarter turns.
+        // turns a quarter at a time (OR-0071): its cell's quarter turns.
         if (hasHighlight_ && (FindMoveObjectAt(world, placementCellX_, placementCellY_, placementCellZ_) ||
                               FindBigDecorAt(world, placementCellX_, placementCellY_, placementCellZ_)))
         {
@@ -863,7 +863,7 @@ namespace GalaxyEggbert::Editor
         {
             return true;
         }
-        // A model with a front turns a quarter at a time (OR-0044); a plate, fan or wind tile
+        // A model with a front turns a quarter at a time (OR-0071); a plate, fan or wind tile
         // between its two axes (M3D-0005).
         const std::uint16_t icon = world.getBlock(hitCellX_, hitCellY_, hitCellZ_).type();
         const bool front = std::find(Game::kFrontModelIcons.begin(), Game::kFrontModelIcons.end(), icon) !=

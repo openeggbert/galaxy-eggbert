@@ -963,7 +963,7 @@ namespace GalaxyEggbert::CNA
         // with the vehicle clips' names, drawn with his transform and time.
         std::vector<std::pair<std::string, std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>>
             blupiVehicles_;
-        // The enemy Blupis (EnemyBlupi.hpp, OR-0035): a copy of every texture of his model, his
+        // The enemy Blupis (EnemyBlupi.hpp, OR-0063): a copy of every texture of his model, his
         // faces, his helicopter and his tank, the hue turned as blupi1.png's, keyed by the
         // original; built with the real model (BuildEnemyBlupiTextures), empty without it, when
         // they stay blupi1.png billboards.
@@ -972,9 +972,9 @@ namespace GalaxyEggbert::CNA
             enemyBlupiTextures_;
         void BuildEnemyBlupiTextures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         [[nodiscard]] bool EnemyBlupiModelDrawn(const GalaxyEggbert::Game::MobileObjSpec& obj) const;
-        // A cell's quarter turns from the editor (PlateRotationMetadata.hpp, OR-0044); world coordinates.
+        // A cell's quarter turns from the editor (PlateRotationMetadata.hpp, OR-0071); world coordinates.
         [[nodiscard]] int CellQuarterTurns(float x, float y, float z) const;
-        // An object's or BigDecor's quarter turns at its cell (kObjectTurnMetadataType, OR-0044).
+        // An object's or BigDecor's quarter turns at its cell (kObjectTurnMetadataType, OR-0071).
         [[nodiscard]] int CellObjectQuarterTurns(float x, float y, float z) const;
         void DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         // Draw()'s body; Draw() times it for GALAXY_PERF.

@@ -77,7 +77,7 @@ namespace GalaxyEggbert
             }
         }
 
-        // Solid in 3D (OR-0042, kSolidIn3DDecor): a whole block each, as the fans (M3D-0004). Drawn
+        // Solid in 3D (OR-0069, kSolidIn3DDecor): a whole block each, as the fans (M3D-0004). Drawn
         // as before (mobileTransparent is the original's). The secret passages stay passable.
         for (const auto icon : kSolidIn3DDecor)
         {

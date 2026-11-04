@@ -2530,7 +2530,7 @@ int main(int argc, char** argv)
             // D41: decor (an empty-mask tile with no role: the cobweb 403) is neither a floor nor
             // a ceiling: standing on one Blupi falls through, and a jump from under one is not cut
             // short. Hazards with empty masks (lava) stay the ground their hazard reads. The decor
-            // that is solid in 3D (OR-0042, the girder 201 among it) holds him.
+            // that is solid in 3D (OR-0069, the girder 201 among it) holds him.
             {
                 Worlds::World decorWorld;
                 for (std::uint16_t x = 45; x <= 55; ++x)
@@ -2559,7 +2559,7 @@ int main(int argc, char** argv)
                     highest = std::max(highest, jumper.GetY());
                 }
                 check(highest > 3.5f, "a jump from under decor rises through it (D41)");
-                // OR-0042: on a floor of girders he stands.
+                // OR-0069: on a floor of girders he stands.
                 Worlds::World girderWorld;
                 for (std::uint16_t x = 45; x <= 55; ++x)
                 {
@@ -2576,7 +2576,7 @@ int main(int argc, char** argv)
                     stander.Step(girderWorld, 0.0f, 0.0f, false, false, false, dt);
                 }
                 check(stander.GetY() > 6.9f && !GalaxyEggbert::GetBlockDefinition(201).decor,
-                      "the girder is solid in 3D: Blupi stands on it (OR-0042)");
+                      "the girder is solid in 3D: Blupi stands on it (OR-0069)");
                 check(!GalaxyEggbert::GetBlockDefinition(68).decor && !GalaxyEggbert::GetBlockDefinition(379).decor &&
                           !GalaxyEggbert::GetBlockDefinition(384).decor,
                       "lava, the stopped saw and the switch are no decor: still the ground under him");

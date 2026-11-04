@@ -174,8 +174,8 @@ namespace GalaxyEggbert::Editor
             bool ctrlHeld = false; // place without cycling (ED-0001)
             bool musicNextHeld = false; // M: the world's next background music (OR-0014)
             bool turnHeld = false;      // O: turn the aimed tile 90 degrees (M3D-0005)
-            bool variantHeld = false;   // V: the aimed block's next variant (OR-0043)
-            bool helpHeld = false;      // H: the editor's keys on screen (OR-0043-0045)
+            bool variantHeld = false;   // V: the aimed block's next variant (OR-0070)
+            bool helpHeld = false;      // H: the editor's keys on screen (OR-0070-0072)
         };
 
         [[nodiscard]] Microsoft::Xna::Framework::Vector3 UpdateCamera(
@@ -204,7 +204,7 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool HandleTurn(const FrameInput& input, Worlds::World& world);
         bool turnKeyHeldLastFrame_ = false;
         bool musicKeyHeldLastFrame_ = false;
-        // V cycles the aimed block through its variants (OR-0043, owner 2026-11-04: changing a
+        // V cycles the aimed block through its variants (OR-0070, owner 2026-11-04: changing a
         // variant failed for many icons): the original's variant family (EditorVariants.hpp), else
         // the auto-tile family it belongs to (AutoTile.hpp kAdaptDecor: the rock's, slime's, ...
         // edge pieces), so an edge the re-tiling chose can be changed by hand. Undoable.
@@ -215,7 +215,7 @@ namespace GalaxyEggbert::Editor
         bool helpVisible_ = false;
         // A moving object (a lift, a creature on a patrol) just placed waits for its end: the next
         // click elsewhere sets it, a click on it again leaves it still (the original editor's
-        // m_liftEnd, decdesign.cpp:479-506; OR-0045, owner 2026-11-04: placing a moving platform
+        // m_liftEnd, decdesign.cpp:479-506; OR-0072, owner 2026-11-04: placing a moving platform
         // seemed impossible, its end was only on the G and T keys).
         std::optional<std::array<std::uint16_t, 3>> pendingEnd_;
         // The record with its end at (x, y, z), its step scaled as the T key and the original's

@@ -339,7 +339,7 @@ in the chunk and ignore it, and every existing world (none has type 4) reads as 
 Type 2 (`kPlateRotationMetadataType`, `src/GalaxyEggbert/Game/PlateRotationMetadata.hpp`) is a
 cell's tile turn, one byte: bit 0 swaps a plate's, a fan's or a wind tile's axis (X and Z,
 M3D-0005), and the byte as 0-3 is the quarter turns a model with a front (teleporters, signs, the
-switch, balustrade, trestle, emitter) takes from the side it faces by itself (OR-0044). Worlds
+switch, balustrade, trestle, emitter) takes from the side it faces by itself (OR-0071). Worlds
 saved before carry 0 or 1 and read as before.
 
 Type 5 (`kObjectTurnMetadataType`) is the quarter turns, one byte 0-3, of the object (a still

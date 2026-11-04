@@ -1,7 +1,14 @@
 # Owner reports (OR-NNNN)
 
 The owner's own findings, recorded as given (translated from Czech), each to be reproduced against
-the reference and fixed or answered. The owner stresses these come from a spot check only: the audit
+the reference and fixed or answered.
+
+Renumbered 2026-11-04: the reports of 2026-11-04 were first filed as OR-0032..0045, numbers the
+table of 2026-11-02 below already used (it runs to OR-0059); they are OR-0060..0072 now. In commit
+messages of that day the old numbers stand: OR-0032 -> 0060 (teleporter booth), 0033 -> 0061 (3D
+terrain setting), 0034 -> 0062 (hub doors), 0035 -> 0063 (enemy Blupis), 0036 -> 0064 (steering at
+F6-F8), 0038 -> 0065 (wind), 0039 -> 0066 (fan beside), 0040 -> 0067 (switch), 0041 -> 0068 (side
+fan's top), 0042 -> 0069 (solid decor), 0043/0044/0045 -> 0070/0071/0072 (editor). The owner stresses these come from a spot check only: the audit
 must be deep and complete, not limited to this list. Status values as in
 `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2. Newest batch first.
 
@@ -82,7 +89,7 @@ rewritten).
 | OR-0026 | Make the bar 3D, not just a billboard; the 3D game probably needs two bars side by side, one per hand: find out and decide. | Decided two pipes (M3D-0003): the original's hanging poses hold the hands 0.35 cell apart across him. A first reading (one pipe, Blupi turned across it) was wrong: the sprites show him in profile. Both bars are the original model (Decor/barre.rd4; 202 its pipe alone). | FIXED_AND_VERIFIED |
 | OR-0027 | The bar with its mounts shows even where no block is above it: probably a bug. | Confirmed: the original's editor gives a bar its mounts (138) only under a tile they hold to, else the plain pipe (202) (Decor::AdaptMidBorder, table_adapt_decor, Decor::IsRightBorder: under nothing, another bar and 84 listed tiles none; 301 of the 303 bars of its levels so). Galaxy's worlds place either anywhere; the cell now shows the variant its tile above calls for (ShownBarIcon; a first cut asked for a solid block and was 296 of 303). | FIXED_AND_VERIFIED |
 
-## OR-0032 — the teleporter's booth half hidden by the rocks beside its niche (owner 2026-11-04) — FIXED
+## OR-0060 — the teleporter's booth half hidden by the rocks beside its niche (owner 2026-11-04) — FIXED
 
 - Report: "the teleporters can be entered, but why is a piece of them covered?"
 - Cause: the terrain reliefs overhang half a block into a solid neighbour (Q-012 B); the booth's cell
@@ -93,7 +100,7 @@ rewritten).
 - Validation: live, 102's teleporter from its niche (the booth whole, Blupi teleporting); ctest; golden
   frames unchanged.
 
-## OR-0033 — what the 3D terrain reliefs cost; a setting for textures or 3D (owner 2026-11-04) — DONE
+## OR-0061 — what the 3D terrain reliefs cost; a setting for textures or 3D (owner 2026-11-04) — DONE
 
 - Question: what do the generated stones (the reliefs) cost in place of the textures; phones will not
   manage; a setting for textures or 3D.
@@ -125,14 +132,14 @@ rewritten).
   the chest 68 068 -> ~8 200, the girder 19 348 -> ~1 100, rendered side by side alike. Golden frames
   re-baselined: 39 / 43 / 252 pixels of the small models' outlines.
 
-## OR-0034 — the hub's world doors: a piece of the blue wall over their signs (owner 2026-11-04) — FIXED
+## OR-0062 — the hub's world doors: a piece of the blue wall over their signs (owner 2026-11-04) — FIXED
 
 - Report (screenshot of the main hub, 17:12): a piece of the blue part covers the door's sign
   ("teleport" in the owner's words: the doors one walks into to enter a world).
 - Cause: a relief's lumps and backing hung into the corner square of its face whenever the two cells
   beside that corner were solid, whatever the corner cell itself was. Over a door in a wall (158 at
   (55, 1, 73), 160 at (55, 3, 70)) the panels diagonally above it hung into the front of the door's
-  cell: the lower sign showed a monitor, the upper one lost its board. (OR-0032 had only covered the
+  cell: the lower sign showed a monitor, the upper one lost its board. (OR-0060 had only covered the
   edges.)
 - Fix: `ReliefAirSides` returns the four corner cells too (bits 16-128); `AppendReliefFace` leaves out
   the triangles and the backing square hanging into a corner whose cell is not solid (a cell drawn as
@@ -140,7 +147,7 @@ rewritten).
 - Validation: live, the hub's two doors at (55, 1-3, 70-73), their signs whole with the reliefs on (as
   with them off); `VerifyTileFaces` (corner bits); ctest; golden frames unchanged.
 
-## OR-0035 — the enemy Blupis drawn as the bulldozer, mines, shield, angel and bomb (owner 2026-11-04) — FIXED
+## OR-0063 — the enemy Blupis drawn as the bulldozer, mines, shield, angel and bomb (owner 2026-11-04) — FIXED
 
 - Reports: "the blue Blupi that should throw green bombs ... turns into a bulldozer, a mine and a
   shield instead of the blue Blupi"; "the green slime that moves shows a white angel and a bomb --
@@ -168,7 +175,7 @@ rewritten).
   phase; the rest Element) all match the registry's `textureSource` now. 32 / 33 were the only ones
   off.
 
-## OR-0036 — at the higher game speeds (F6-F8) he turns terribly fast (owner 2026-11-04) — FIXED
+## OR-0064 — at the higher game speeds (F6-F8) he turns terribly fast (owner 2026-11-04) — FIXED
 
 - Report: raising the speed should not change how fast he turns; at F6/F7/F8 he turns terribly fast.
 - Cause: the game speed scales the simulation's dt (`GameSpeedFactor`: 2, 3, 4), and the steering
@@ -178,7 +185,7 @@ rewritten).
   the original's Turn action, its ticks played at the game's speed as the original plays them.
 - Validation: live, Left held 0.6 s in world 001 at normal speed and at F6 (2x): the same turn; ctest.
 
-## OR-0039 — a fan explodes when Blupi is beside it, not only when he jumps onto it (owner 2026-11-04) — FIXED
+## OR-0066 — a fan explodes when Blupi is beside it, not only when he jumps onto it (owner 2026-11-04) — FIXED
 
 - Report: the fan should explode only when Blupi jumps directly onto it, not when he is next to it.
 - Cause: `WorldRuntime::TryConsumeFan` went off with Blupi anywhere in the cell in front of a fan's
@@ -193,7 +200,7 @@ rewritten).
   still explodes it. `VerifyInteractionSystem` (beside / against / on the fan); world 115's gap
   81 now blows him onto the east mine (the brief and LV-0071 updated).
 
-## OR-0038 — the wind from a fan is barely visible and does not seem to move (owner 2026-11-04) — FIXED
+## OR-0065 — the wind from a fan is barely visible and does not seem to move (owner 2026-11-04) — FIXED
 
 - Report: the wind object (from the fan) is hardly visible at all and seems not to move.
 - Cause: the wind tiles (110-125) were still plates: one 0.75 x 0.9 plate in the middle of each
@@ -210,7 +217,7 @@ rewritten).
   curtain; after, the four curtains of streaks, moving between two shots 0.1 s apart. Golden
   frames re-baselined (the demo world's wind tiles: 87-90 pixels, at most 12 levels); ctest.
 
-## OR-0040 — at the saw's switch machine Space does nothing; it works only from above (owner 2026-11-04) — FIXED
+## OR-0067 — at the saw's switch machine Space does nothing; it works only from above (owner 2026-11-04) — FIXED
 
 - Report: when Blupi comes to the machine that switches the saw on and off, pressing Space does
   nothing; it works only when he is above it.
@@ -226,12 +233,12 @@ rewritten).
   it he turns it and its saws on); every playthrough with a switch (023, 025, 063, 064, 065, 092,
   102) passes with it.
 
-## OR-0041 — Blupi stands on a side fan's invisible floor instead of setting it off (owner 2026-11-04) — FIXED
+## OR-0068 — Blupi stands on a side fan's invisible floor instead of setting it off (owner 2026-11-04) — FIXED
 
 - Report: Blupi jumps onto a fan blowing sideways and stands on a transparent floor instead of the
   fan exploding.
 - Cause: a fan is a whole block (M3D-0004), so its top held him; only a floor fan counted his feet
-  on it as contact (OR-0039 kept the mouth contact of the side and ceiling fans). Its model does not
+  on it as contact (OR-0066 kept the mouth contact of the side and ceiling fans). Its model does not
   fill the cell, so he stood on air.
 - Fix: landed on any fan (his middle over it, his feet on its top) he sets it off, with the wind it
   blows (`WorldRuntime::TryConsumeFan`), as the owner asked of the fans in general.
@@ -240,7 +247,7 @@ rewritten).
   on it it goes with its wind); the playthroughs with fans (034, 051, 066, 084, 102, 107, 113, 114,
   115, 124) and with switches (023, 025, 063, 064, 065, 092) pass.
 
-## OR-0043 / OR-0044 / OR-0045 — the 3D editor: variants, turning, moving platforms (owner 2026-11-04) — FIXED
+## OR-0070 / OR-0071 / OR-0072 — the 3D editor: variants, turning, moving platforms (owner 2026-11-04) — FIXED
 
 - Reports: in the 3D editor changing the variant does not work for many icons; it should be
   possible to set an element's rotation, which the world file probably stores; placing moving
@@ -253,14 +260,14 @@ rewritten).
   themselves. A lift's or creature's end was set only by G (pick it) and T (its end at the aim);
   and no key was shown anywhere.
 - Fixes: **V** turns the aimed block to its next variant: its family's, else its re-tiling row's
-  edge pieces (an edge the re-tiling chose can be changed by hand), undoable (OR-0043). **O** turns
+  edge pieces (an edge the re-tiling chose can be changed by hand), undoable (OR-0070). **O** turns
   a model with a front (teleporters, signs, the switch, balustrade, trestle, emitter) a quarter at a
   time from the side it faces by itself, stored in the same per-cell byte as the plates' turn
   (`PlateRotationMetadata.hpp` `QuarterTurns`: 0-3; a plate, fan or wind tile reads only its odd
-  bit, so the saved worlds read as before), undoable (OR-0044). A lift or a creature on a patrol
+  bit, so the saved worlds read as before), undoable (OR-0071). A lift or a creature on a patrol
   placed, **the next click sets where it goes**, its step scaled to the cells, as the original
   editor's `m_liftEnd` (decdesign.cpp:479-506); a click on it again or Escape leaves it still
-  (OR-0045). **H** shows the editor's keys over the view; a prompt there while an end is awaited.
+  (OR-0072). **H** shows the editor's keys over the view; a prompt there while an end is awaited.
   Later the same night: **O** also turns an object or a BigDecor in the preview's cell (where a
   click would put one) a quarter at a time, stored as that cell's metadata type 5
   (`kObjectTurnMetadataType`, its own, so a treasure lying in a wind cell turns without turning
@@ -272,7 +279,7 @@ rewritten).
   end 108 to 107, saved; a treasure placed and turned twice (`build-probe/qa-shots/turnobj/`). Note for scripted runs: a key tapped faster than a frame is missed (the
   editor reads the keyboard each frame); hold it.
 
-## OR-0042 — the decorations Blupi passes through in 2D should be impassable in 3D (owner 2026-11-04) — DONE
+## OR-0069 — the decorations Blupi passes through in 2D should be impassable in 3D (owner 2026-11-04) — DONE
 
 - Request: the various decorations Blupi can walk through in Mobile Eggbert should probably be
   impassable in Galaxy Eggbert: in 2D he walks in front of them, but this is 3D.

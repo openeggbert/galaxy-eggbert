@@ -1,6 +1,6 @@
 #pragma once
 
-// The enemy Blupis (OR-0035): ObjectType32 (blupih) on his helicopter, dropping bombs, and
+// The enemy Blupis (OR-0063): ObjectType32 (blupih) on his helicopter, dropping bombs, and
 // ObjectType33 (blupit) in his tank, firing to both sides. The original draws them from blupi1.png
 // (the channel the world file gives them, 11-13, all one sheet: Pixmap.cpp:717-719), which is his
 // own blupi.png with every hue turned 25 degrees (the yellow body green, the cyan vehicles blue;

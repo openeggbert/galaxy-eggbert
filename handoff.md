@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-04 late night (BD-0058..0072; OR-0032..0036: enemy Blupis as his model, steering at F6-F8; Q-013)._
+_Last updated: 2026-11-04 late night (BD-0058..0072; OR-0060..0064: enemy Blupis as his model, steering at F6-F8; Q-013)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -529,10 +529,10 @@ ledgers before repeating any discovery. Where it stands:
   squashed: his own pace and the slow drift down; BD-0070 the helicopter's EasyMove figures (12 px,
   climb 7, dive 8) and its slow sink when let be -- `Def::EasyMove` is always true, Galaxy flew the
   unused branch; BD-0071 the jeep and tank's heavy fall, the jeep rolling and tipping off an edge.
-  Owner reports: OR-0032 the teleporter's booth no longer hidden by the reliefs beside its niche;
-  OR-0033 the Setup's "3D terrain" toggle (the reliefs cost 0.35-0.73 GB of RAM and 0.4-1.4 ms a
+  Owner reports: OR-0060 the teleporter's booth no longer hidden by the reliefs beside its niche;
+  OR-0061 the Setup's "3D terrain" toggle (the reliefs cost 0.35-0.73 GB of RAM and 0.4-1.4 ms a
   frame; off by default everywhere, the owner's call; `GALAXY_TERRAIN_RELIEF=1` forces it on for a
-  run). OR-0034: a relief no longer hangs into a corner whose cell is not solid (the hub doors' signs).
+  run). OR-0062: a relief no longer hangs into a corner whose cell is not solid (the hub doors' signs).
   `VerifyGESaveData` now runs in `<build>/verify-savedata/`: it deleted the game's own savedata.txt in
   the build directory on every ctest. Golden frames/trace re-baselined (`85fa28f`,
   `6f20045`, `949c3c7`); stale "not modeled" notes corrected (`e8887d4`).
@@ -550,12 +550,12 @@ ledgers before repeating any discovery. Where it stands:
   back to the original 10 px (BD-0070 follow-up) -- neither met by a playthrough. Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
-- 2026-11-04 late night, owner reports: **OR-0035** the enemy Blupis (32 on his helicopter, 33 in
+- 2026-11-04 late night, owner reports: **OR-0063** the enemy Blupis (32 on his helicopter, 33 in
   his tank) were looked up on element.png (the bulldozer, mines, shield, angel, slime, dynamite);
   they are blupi1.png's (channels 11-13), his own frames with the hue turned 25 degrees, and are now
   drawn as his real model in the helicopter/tank clips the original's icons show, recoloured
   (`EnemyBlupi.hpp`, `DrawEnemyBlupis`, `BuildEnemyBlupiTextures`; billboards from blupi1.png
-  without the model). **OR-0036** the steering (Left/Right) turns at the player's pace at F6-F8
+  without the model). **OR-0064** the steering (Left/Right) turns at the player's pace at F6-F8
   (`turnInput / GameSpeedFactor`); Down's turn-around stays the original's Turn in game ticks.
   **Q-013** the "lattice cube textured only outside": the girder 201 model checked from outside and
   inside in 054/056, not reproduced (its rivets are only in front; mirroring them was tried and
@@ -570,21 +570,21 @@ ledgers before repeating any discovery. Where it stands:
   frustum are not drawn (`objectModelRadii_`; `GALAXY_PERF=1` prints draw ms, models, triangles,
   culled; `GALAXY_MODEL_CULL=0` draws all): the hub 17 -> 8 ms, world 063 from under 3 fps to
   16 ms (llvmpipe). Spheres tessellated to their size (`tools/rd4_to_gltf/lower_spheres.py`, run by
-  `export_objects.py`): 41 parts 246 k -> 107 k triangles, the chest 68 k -> 8 k. **OR-0038** the
+  `export_objects.py`): 41 parts 246 k -> 107 k triangles, the chest 68 k -> 8 k. **OR-0065** the
   wind animated (a frame a tick) on crossed full-cell plates (`TerrainRenderer::BuildWindFrame`).
-  **OR-0039** a fan goes off only at contact with its mouth (`WorldRuntime::TryConsumeFan`).
+  **OR-0066** a fan goes off only at contact with its mouth (`WorldRuntime::TryConsumeFan`).
   Golden frames re-baselined twice (spheres, wind). After a model change in `avatars3d/`, sync
   the build's copy: `cmake -DGE_COPY_SOURCE=$PWD/avatars3d -DGE_COPY_DESTINATION=$PWD/build-cna-opengl3/avatars3d
   -P cmake/CopyDirectoryIfDifferent.cmake` (the POST_BUILD copy runs only when the game relinks).
-- 2026-11-04 late night, more owner reports: **OR-0040** a switch beside Blupi at his height is
-  pressed (not only the one under him); **OR-0041** landing on any fan sets it off; **OR-0042** the
+- 2026-11-04 late night, more owner reports: **OR-0067** a switch beside Blupi at his height is
+  pressed (not only the one under him); **OR-0068** landing on any fan sets it off; **OR-0069** the
   decor that stands in his way in 3D is solid (`kSolidIn3DDecor`: columns, girder, posts, trestle,
   balustrade, machine pieces 49-51, slime column; the original's secret passages 22/73/85/86/339
-  stay passable; 056's route and 058's pillars adjusted); **OR-0043..0045** the editor: V cycles the
+  stay passable; 056's route and 058's pillars adjusted); **OR-0070..0072** the editor: V cycles the
   aimed block's variant (its family or its re-tiling row), O turns front models a quarter
   (`QuarterTurns`, the plate-turn byte 0-3), a lift's or creature's end is the next click (the
   original's `m_liftEnd`), H shows the keys; O also turns still objects and BigDecor (metadata type
-  5, `World Format.md` "Turns"). Play pass 20 (before OR-0042): 78/78; **play pass 22 (all of it):
+  5, `World Format.md` "Turns"). Play pass 20 (before OR-0069): 78/78; **play pass 22 (all of it):
   78/78**; web build rebuilt and loads. After it: world 115's stream east of the gallery (the
   original's row 17, `f1e0eb38`): a helicopter carried over two treasures into an updraught to a
   landing; LV-0071 complete; 115 and the 110 chain pass. The Android debug APK (arm64-v8a,

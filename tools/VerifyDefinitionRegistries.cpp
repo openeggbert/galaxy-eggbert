@@ -79,7 +79,7 @@ namespace
         if (IsOneOf(raw, {8, 9, 10, 11, 53, 90, 91, 92, 93, 98, 99, 100}))
             return ObjectTextureSource::Explo;
         if (raw == 200) return ObjectTextureSource::Blupi;
-        // The enemy Blupis' channels 11-13 are blupi1.png (OR-0035).
+        // The enemy Blupis' channels 11-13 are blupi1.png (OR-0063).
         if (IsOneOf(raw, {32, 33, 201, 202, 203})) return ObjectTextureSource::Blupi1;
         if (raw == 38) return ObjectTextureSource::PhaseDependent;
         return ObjectTextureSource::Element;
@@ -214,11 +214,11 @@ int main()
         if (std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(), icon) !=
             GalaxyEggbert::kSolidIn3DDecor.end())
         {
-            expectedMask = 0xFFFF; // OR-0042: solid in 3D, a whole block
+            expectedMask = 0xFFFF; // OR-0069: solid in 3D, a whole block
         }
         Check(definition.collisionMask == expectedMask,
-              "registry collision mask matches table_decor_quart (OR-0042's solid decor whole)");
-        // The original's own decision (its empty mask), kept for OR-0042's solid decor too.
+              "registry collision mask matches table_decor_quart (OR-0069's solid decor whole)");
+        // The original's own decision (its empty mask), kept for OR-0069's solid decor too.
         const bool solidIn3D = std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(),
                                          icon) != GalaxyEggbert::kSolidIn3DDecor.end();
         Check(definition.mobileTransparent ==
@@ -448,7 +448,7 @@ int main()
     Check(GetBirdIcon(true, 2, 0) != GetBirdIcon(false, 2, 0),
           "directional patrol animation remains direction-sensitive");
 
-    // The enemy Blupis (OR-0035): blupi1.png is blupi.png with the hue turned 25 degrees.
+    // The enemy Blupis (OR-0063): blupi1.png is blupi.png with the hue turned 25 degrees.
     {
         using GalaxyEggbert::Game::RecolorEnemyBlupi;
         const auto recolor = [](std::uint8_t r, std::uint8_t g, std::uint8_t b)

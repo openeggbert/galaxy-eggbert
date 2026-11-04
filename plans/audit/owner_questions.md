@@ -229,7 +229,7 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - **Q-006 glue death**: add the strands.
 - **MR-0001 3ds Max**: no licence; leave the .max files unused.
 
-## Q-013 — the lattice cube "textured only outside" (owner 2026-11-04): where was it seen? — likely fixed by OR-0042
+## Q-013 — the lattice cube "textured only outside" (owner 2026-11-04): where was it seen? — likely fixed by OR-0069
 
 - Report: "the cube of grids has textures only outside and not inside; it should probably be 3D";
   then "only the outer side is visible on the cube of grids of metal, probably rods as edges".
@@ -245,7 +245,7 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - Not found: any place where 201 is a flat textured cube (that would be textured outside only,
   back faces culled). Needed: a screenshot or the world and place, and whether it was in the game,
   the editor or the web build.
-- Likely explained and fixed by OR-0042 (later the same night): the girder had no collision, and
+- Likely explained and fixed by OR-0069 (later the same night): the girder had no collision, and
   the chase camera stops only at blocks with collision (`BlocksCamera`), so it looked through a
   girder tower, or from inside one, where the frames' backs are bare (no plates, no rivets). World
   056's lift beside its tower (`plans/evidence/girder-camera-before-after.jpg`: play pass 20 above,
@@ -254,7 +254,7 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 
 ## Q-014 — the big decorations (BigDecor: trees, palms, plants, houses, machines, palace columns): solid too? (2026-11-04)
 
-- OR-0042 made the decor tiles that stand in Blupi's way solid. The BigDecor -- the original's
+- OR-0069 made the decor tiles that stand in Blupi's way solid. The BigDecor -- the original's
   background pictures (trees 20-22, palms 16-19, plants 23-25, houses 26-27, machines 28-31, the
   kids' toys 36-47, the slime 66-69, the palace's columns and fountain 87-89), drawn in Galaxy as
   their Ray Dream models standing in the rooms -- are still walked through: 316 of them in 35
