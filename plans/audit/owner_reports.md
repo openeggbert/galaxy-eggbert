@@ -147,6 +147,11 @@ rewritten).
   in mid-turn facing the camera; the helicopter one with the blue rotor pack dropping its green
   bomb; `VerifyDefinitionRegistries` (sheet, recolour, poses); ctest 112/112; golden frames
   unchanged.
+- The same class checked for every type (2026-11-04): the channels the original's world files give
+  (types 1, 12, 47 Object; 32 / 33 Blupi1; the rest Element) and those Decor.cpp sets each tick
+  (Explosion 8-11, 53, 90-93, 98-100; Object 14, 15, 31, 35, 52; Blupi 200; Blupi1 201-203; 38 by
+  phase; the rest Element) all match the registry's `textureSource` now. 32 / 33 were the only ones
+  off.
 
 ## OR-0036 — at the higher game speeds (F6-F8) he turns terribly fast (owner 2026-11-04) — FIXED
 
