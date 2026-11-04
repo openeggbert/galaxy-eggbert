@@ -560,6 +560,12 @@ ledgers before repeating any discovery. Where it stands:
   **Q-013** the "lattice cube textured only outside": the girder 201 model checked from outside and
   inside in 054/056, not reproduced (its rivets are only in front; mirroring them was tried and
   dropped, see Q-013): needs the owner's screenshot or place.
+- 2026-11-04 late night: **world 115's wind wing** (`8af1de8`, LV-0071): the original's sideways
+  wind corridors -- a corridor one high with two fans back to back blowing onto a mine in each
+  stream, blocks over it with one-cell gaps, treasure 3 on the block over the far mine; a second
+  stream with treasure 4 a cell from its fan, reached only by dropping in from above. Treasures 3-4
+  left the gallery's ledges (walk 34, 38). Playthrough 115 and the 110 chain pass. 114's sideways
+  wind is the original's sealed decor (LV-0070 closed as such).
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world. Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
