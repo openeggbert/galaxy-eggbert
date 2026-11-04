@@ -1,0 +1,23 @@
+# ED-0006: the editor (a fresh save: QA_LIVE_RUN=<empty dir>), slot 1, the trees group, its first family,
+# PLACE three times on one cell (each click cycles the family), the dice saves custom_001.vwr.
+sleep 14
+focus
+click 710 200
+sleep 3
+click 72 258
+sleep 4
+click 30 70
+sleep 1.5
+click 75 70
+sleep 1.5
+click 500 450
+sleep 1
+shot first
+click 500 450
+sleep 1
+shot second
+click 500 450
+sleep 1
+shot third
+click 722 450
+sleep 4
