@@ -3045,14 +3045,21 @@ int main(int argc, char** argv)
         put(44, 19, 44, BlockTypes::FanUp);                  // blows upward
 
         check(!world.TryConsumeFan(0.0f, 1.0f, 0.0f).has_value(), "TryConsumeFan() is a no-op away from any fan");
-        check(!world.TryConsumeFan(rx(41), 20.0f, rz(40)).has_value(),
+        check(!world.TryConsumeFan(rx(41) - 0.25f, 20.0f, rz(40)).has_value(),
               "behind a left-blowing fan Blupi is safe (its mouth faces -X)");
-        const auto consumed = world.TryConsumeFan(rx(39), 20.0f, rz(40));
+        // OR-0039: a cell in front of the mouth is not touching it; his body against its face is.
+        check(!world.TryConsumeFan(rx(39), 20.0f, rz(40)).has_value(),
+              "beside a fan, a cell in front of its mouth, Blupi is safe (owner 2026-11-04)");
+        check(!world.TryConsumeFan(rx(39) + 0.25f, 20.0f, rz(40) + 0.6f).has_value(),
+              "against the mouth's plane but beside the fan's cell, Blupi is safe");
+        const auto consumed = world.TryConsumeFan(rx(39) + 0.25f, 20.0f, rz(40));
         check(consumed.has_value() && *consumed == BlockTypes::FanLeft,
-              "in front of its mouth Blupi touches the fan");
+              "his body against its mouth, Blupi touches the fan");
         check(at(40, 20, 40) == BlockTypes::Air && at(39, 20, 40) == BlockTypes::Air && at(38, 20, 40) == BlockTypes::Air,
               "the fan and its column of wind are cleared (ModifDecor(pos, -1) along the blast)");
-        check(!world.TryConsumeFan(rx(39), 20.0f, rz(40)).has_value(), "the second time there is no fan any more");
+        check(!world.TryConsumeFan(rx(39) + 0.25f, 20.0f, rz(40)).has_value(), "the second time there is no fan any more");
+        check(!world.TryConsumeFan(rx(44), 20.4f, rz(44)).has_value(), "over an upward fan in the air Blupi is safe");
+        check(!world.TryConsumeFan(rx(45), 20.0f, rz(44)).has_value(), "on the floor beside an upward fan Blupi is safe");
         check(world.TryConsumeFan(rx(44), 20.0f, rz(44)).has_value(), "standing on an upward fan touches its mouth");
 
         // M3D-0005: a turned side fan blows along Z (-X becomes -Z): its mouth and wind there.
@@ -3060,9 +3067,9 @@ int main(int argc, char** argv)
         Game::SetPlateRotated(mutableWorld, 50, 20, 50, true);
         put(50, 20, 49, 110);
         Game::SetPlateRotated(mutableWorld, 50, 20, 49, true);
-        check(!world.TryConsumeFan(rx(49), 20.0f, rz(50)).has_value(),
+        check(!world.TryConsumeFan(rx(49) + 0.25f, 20.0f, rz(50)).has_value(),
               "beside a turned fan, where it would blow unturned, Blupi is safe");
-        const auto turned = world.TryConsumeFan(rx(50), 20.0f, rz(49));
+        const auto turned = world.TryConsumeFan(rx(50), 20.0f, rz(49) + 0.25f);
         check(turned.has_value() && at(50, 20, 50) == BlockTypes::Air && at(50, 20, 49) == BlockTypes::Air,
               "in front of a turned fan's mouth (-Z) Blupi touches it; it and its wind go (M3D-0005)");
     }

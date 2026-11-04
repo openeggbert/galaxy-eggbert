@@ -177,3 +177,18 @@ rewritten).
   the player's pace: the game passes `turnInput / GameSpeedFactor` to Step. Down's turn-around stays
   the original's Turn action, its ticks played at the game's speed as the original plays them.
 - Validation: live, Left held 0.6 s in world 001 at normal speed and at F6 (2x): the same turn; ctest.
+
+## OR-0039 — a fan explodes when Blupi is beside it, not only when he jumps onto it (owner 2026-11-04) — FIXED
+
+- Report: the fan should explode only when Blupi jumps directly onto it, not when he is next to it.
+- Cause: `WorldRuntime::TryConsumeFan` went off with Blupi anywhere in the cell in front of a fan's
+  mouth. The original (`Decor::IsVentillo`, Decor.cpp:7667-7735) needs his middle inside the fan's
+  own cell, within 16 px of the mouth: its fans are open but for a 16 px housing at the back
+  (`table_decor_quart`), so he sinks into a floor fan or pushes into a side fan's mouth.
+- Fix: a Galaxy fan is a whole block (M3D-0004), so the rule is contact with the mouth's face: his
+  middle within the fan's cross-section and his body against the face (18 px + 2), his feet on a
+  floor fan's top, his head against a ceiling fan's bottom (4 px). Beside a fan he is safe.
+- Validation: live in world 102: standing in the cell before its side fan (89, 2, 12) the old
+  binary killed him at once, now the wind blows him west; jumping onto its floor fan (86, 1, 17)
+  still explodes it. `VerifyInteractionSystem` (beside / against / on the fan); world 115's gap
+  81 now blows him onto the east mine (the brief and LV-0071 updated).

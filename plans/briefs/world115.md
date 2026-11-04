@@ -30,7 +30,7 @@ columns of lightning (305), pits of lava, a fish (17) in a pool, five eggs.
   stream (x 73, 83), as the original's row 11 (x 7-24: fans 13 and 15, mines 9 and 19). Over the
   corridor blocks with one-cell gaps (the original's single blocks stand 5 apart and are met from
   above; a jump spans ~2.3 cells, so here they are walked and jumped): a gap blows the fallen onto
-  a mine (x 74; x 81 kills at once by the fan) or to a wall (x 71, 84); treasure 3 on the block over
+  a mine (x 74, 81) or to a wall (x 71, 84); treasure 3 on the block over
   the east mine (83, 22, 66), as the original's (19, 9) over its mine. From the end (x 85-87) south
   to a hole over a second stream (z 74, its fan at x 87 blowing west): treasure 4 under the hole a
   cell from the fan, as the original's (39, 11) from its fan (41, 11), reached only from above

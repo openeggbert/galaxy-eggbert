@@ -3,6 +3,7 @@
 
 #include "ObjectDefinitionRegistry.hpp"
 #include "ObjectVerticalPlacement.hpp"
+#include "BlupiController.hpp"
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -507,7 +508,14 @@ namespace GalaxyEggbert::Game
         // Decor::IsVentillo(), in 3D: Blupi touches a fan at its mouth, the side it blows from --
         // left (126) toward -X, right (129) toward +X, up (132) toward +Y, down (135) toward -Y --
         // and the fan goes with the column of wind tiles in front of it (110, 114, 118, 122 and
-        // their frames).
+        // their frames). The original's fan is open but for its housing (table_decor_quart: a
+        // 16 px strip at its back) and goes off only with Blupi's middle inside its cell, within
+        // 16 px of the mouth (Decor.cpp:7667-7735: on a floor fan, sunk into it; against a side
+        // fan, into its mouth). Here a fan is a whole block (M3D-0004), so that is contact with
+        // its mouth face: his middle within the fan's cross-section and his body against the face
+        // -- standing on a floor fan, pressed into a side fan's mouth, his head up against a
+        // ceiling fan. Beside a fan, a cell in front of it, he is safe (owner 2026-11-04, OR-0039:
+        // the whole cell in front counted until then).
         struct FanMouth { std::uint16_t fan; int dx, dy; std::uint16_t wind; };
         static constexpr FanMouth kFans[] = {
             {GalaxyEggbert::BlockTypes::FanLeft, -1, 0, 110},
@@ -515,10 +523,14 @@ namespace GalaxyEggbert::Game
             {GalaxyEggbert::BlockTypes::FanUp, 0, 1, 118},
             {GalaxyEggbert::BlockTypes::FanDown, 0, -1, 122},
         };
+        constexpr float kContact = BlupiController::kBodyHalfWidth + 2.0f / 64.0f; // against a side face
+        constexpr float kFootContact = 4.0f / 64.0f;  // feet on a floor fan, head on a ceiling fan
         const int n = static_cast<int>(world_->blocksPerAxis());
-        const int gx = static_cast<int>(std::lround(blupiX)) + kWorldCenterX;
+        const float wx = blupiX + static_cast<float>(kWorldCenterX);
+        const float wz = blupiZ + static_cast<float>(kWorldCenterZ);
+        const int gx = static_cast<int>(std::lround(wx));
         const int gy = static_cast<int>(std::lround(blupiY));
-        const int gz = static_cast<int>(std::lround(blupiZ)) + kWorldCenterZ;
+        const int gz = static_cast<int>(std::lround(wz));
         const auto iconAt = [&](int x, int y, int z) -> std::uint16_t
         {
             if (x < 0 || y < 0 || z < 0 || x >= n || y >= n || z >= n)
@@ -535,10 +547,12 @@ namespace GalaxyEggbert::Game
                    IsPlateRotated(*world_, static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
                                   static_cast<std::uint16_t>(z));
         };
+        const float feet = blupiY - 0.5f;
+        const float head = feet + BlupiController::kHeadHeight;
         for (const auto& mouth : kFans)
         {
-            // The fan sits one cell behind Blupi, against the way it blows; a turned side fan
-            // (M3D-0005) blows along Z, -X/+X becoming -Z/+Z.
+            // The fan sits behind Blupi, against the way it blows; a turned side fan (M3D-0005)
+            // blows along Z, -X/+X becoming -Z/+Z.
             for (const bool alongZ : {false, true})
             {
                 if (alongZ && mouth.dx == 0)
@@ -551,6 +565,28 @@ namespace GalaxyEggbert::Game
                 const int fy = gy - mouth.dy;
                 const int fz = gz - stepZ;
                 if (iconAt(fx, fy, fz) != mouth.fan || turned(fx, fy, fz) != alongZ)
+                {
+                    continue;
+                }
+                bool touching = false;
+                if (mouth.dy == 0)
+                {
+                    // His middle across the fan's cell, his body against its mouth's face.
+                    const float along = alongZ ? (wz - static_cast<float>(fz)) * static_cast<float>(mouth.dx)
+                                               : (wx - static_cast<float>(fx)) * static_cast<float>(mouth.dx);
+                    const float across = alongZ ? std::fabs(wx - static_cast<float>(fx))
+                                                : std::fabs(wz - static_cast<float>(fz));
+                    touching = across < 0.5f && along - 0.5f <= kContact;
+                }
+                else
+                {
+                    // Over (under) the fan, his feet on its top (his head at its bottom).
+                    const bool over = std::fabs(wx - static_cast<float>(fx)) < 0.5f &&
+                                      std::fabs(wz - static_cast<float>(fz)) < 0.5f;
+                    touching = over && (mouth.dy > 0 ? feet - (static_cast<float>(fy) + 0.5f) <= kFootContact
+                                                     : (static_cast<float>(fy) - 0.5f) - head <= kFootContact);
+                }
+                if (!touching)
                 {
                     continue;
                 }
