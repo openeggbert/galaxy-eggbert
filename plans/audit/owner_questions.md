@@ -251,3 +251,16 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
   056's lift beside its tower (`plans/evidence/girder-camera-before-after.jpg`: play pass 20 above,
   the tower between the camera and Blupi; play pass 22 below, the camera at the open side). The
   girder is solid now: neither Blupi nor the camera goes inside it. To be confirmed by the owner.
+
+## Q-014 — the big decorations (BigDecor: trees, palms, plants, houses, machines, palace columns): solid too? (2026-11-04)
+
+- OR-0042 made the decor tiles that stand in Blupi's way solid. The BigDecor -- the original's
+  background pictures (trees 20-22, palms 16-19, plants 23-25, houses 26-27, machines 28-31, the
+  kids' toys 36-47, the slime 66-69, the palace's columns and fountain 87-89), drawn in Galaxy as
+  their Ray Dream models standing in the rooms -- are still walked through: 316 of them in 35
+  campaign worlds (020-025, 030-034, 040-046, 051-058, 070-075, 090-095).
+- Options: (a) solid, a column of cells over its anchor as high as its picture (a tree 2-3 cells,
+  a plant one); every route through one checked and the worlds adjusted where it blocks a way;
+  (b) solid only the large ones (trees, palms, houses, machines, columns, fountain), the plants
+  and toys passable as grass; (c) leave them passable (background pictures, as the original).
+  Recommendation: (b).
