@@ -365,7 +365,10 @@ ledgers before repeating any discovery. Where it stands:
   direction has room, the eye ends in his body and the view is in effect first person along his
   facing; acceptable there. 073's lift (t720) shot live from the same place and facing: Blupi in
   view on the lift all the way up -- the pass caught the camera mid-swing after a turn. 084's black
-  quads are gone since `f1166e7`/`4205ae3`. Left to shoot: 092 t5760, 091 t5040, 075 t10080.
+  quads are gone since `f1166e7`/`4205ae3`. Shot live too: 075 (in view on its lift), 091 (in view
+  once the lift clears the ledge); 092 walking down a stair away from the camera was hidden by the
+  step's edge -- `d800d3c`: the camera's height now also needs a line to his middle, so it rises
+  over such an edge (092's low stairwell: his head shows; play pass 7: 78/78).
   `0dc7592`: the drip's smallest drops 408-410 as its smallest scene's drop scaled (the render
   ledger has no unreviewed row left); the ledgers regenerated and current (`725505e`, `80a840f`).
   Also open: decor without collision (girders, pillars) does not stop the camera, so it can stand
