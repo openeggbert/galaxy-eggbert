@@ -1013,3 +1013,17 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   NUL byte) and take `accelerometer`; the host passes the Setup's accelerometer switch.
 - Validation: `VerifyInteractionSystem` (the original texts, the accelerometer's); live, mission 11's
   first hint shows the wheel inline ("Use the directional wheel" + the wheel, its right lit).
+
+## BD-0065 — every animated tile of a kind on one frame; the original offsets each cell (visual) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:1036-1078): lava, the spike trap, the drip, the saw and the first water draw
+  `table[(i * 13 + j * 7 + m_time / div) % n]` -- each cell its own place in the cycle; the second
+  water `table_decor_eau2[(i * 11 + j * 7 + m_time / (3 + (i * 17 + j * 13) % 3)) % 6]`, its own pace
+  as well. The crusher, Temp, the wind and the fans are in step.
+- Galaxy drew every cell of a kind on the same frame (`TerrainAnimDivisor.hpp` said "not modeled").
+- Fix: `BlockDefinitionRegistry::ResolveAnimationIconAt` (row = -y; depth adds 11 z / 13 z, Galaxy's
+  own, so cells side by side in depth differ too); `TerrainRenderer` builds each cell on its frame (the
+  lava's meshes cached by the cycle's step), the host's animated models (saw, drips) likewise.
+- Validation: `VerifyDefinitionRegistries` (lava's neighbour 13 frames on, the crusher in step, the
+  second water's paces); live, 082's lava pit; the golden frames re-baselined (an animated model
+  at the right edge on its own cell's frame).

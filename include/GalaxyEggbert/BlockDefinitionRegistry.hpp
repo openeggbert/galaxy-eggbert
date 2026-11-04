@@ -104,6 +104,13 @@ namespace GalaxyEggbert
         [[nodiscard]] const BlockDefinition& Get(std::uint16_t type) const noexcept;
         [[nodiscard]] bool IsSupported(std::uint16_t type) const noexcept;
         [[nodiscard]] int ResolveAnimationIcon(std::uint16_t type, int rawTick) const noexcept;
+        // The frame of the tile in cell (x, y, z) (world cells, y up): lava, the spike trap, the
+        // drip, the saw and the first water start each cell 13 x + 7 row frames on, the second water
+        // 11 x + 7 row on and at its own pace (a divisor of 3 + (17 x + 13 row) % 3), as the
+        // original draws them (Decor.cpp:1069-1078, 1032-1043, 1055-1061; row = its j, down);
+        // depth adds 11 z (or 13 z) -- Galaxy's own, so cells side by side in depth differ too
+        // (BD-0065). Every other tile as ResolveAnimationIcon.
+        [[nodiscard]] int ResolveAnimationIconAt(std::uint16_t type, int rawTick, int x, int y, int z) const noexcept;
 
     private:
         BlockDefinitionRegistry() noexcept;
@@ -125,5 +132,10 @@ namespace GalaxyEggbert
     [[nodiscard]] inline int ResolveBlockAnimationIcon(std::uint16_t type, int rawTick) noexcept
     {
         return BlockDefinitionRegistry::Instance().ResolveAnimationIcon(type, rawTick);
+    }
+
+    [[nodiscard]] inline int ResolveBlockAnimationIconAt(std::uint16_t type, int rawTick, int x, int y, int z) noexcept
+    {
+        return BlockDefinitionRegistry::Instance().ResolveAnimationIconAt(type, rawTick, x, y, z);
     }
 }

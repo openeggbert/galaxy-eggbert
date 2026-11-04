@@ -6180,7 +6180,9 @@ namespace GalaxyEggbert::CNA
                             // The saw standing on its floor cell (the cell listed is the one above),
                             // its blade along the corridor (openSide carries the placement's turn).
                             const int icon =
-                                GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase());
+                                GalaxyEggbert::ResolveBlockAnimationIconAt(
+                                    cell.base, worldRuntime_.GetAnimPhase(), static_cast<int>(std::lround(cell.x)),
+                                    static_cast<int>(std::lround(cell.y)), static_cast<int>(std::lround(cell.z)));
                             if (icon >= 0)
                             {
                                 if (const ObjectModelPose* pose = objectModelTable_.Find(
@@ -6198,7 +6200,9 @@ namespace GalaxyEggbert::CNA
                         {
                             // An animated tile as its scene's model, on the tile's frame (gone: none).
                             const int icon =
-                                GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase());
+                                GalaxyEggbert::ResolveBlockAnimationIconAt(
+                                    cell.base, worldRuntime_.GetAnimPhase(), static_cast<int>(std::lround(cell.x)),
+                                    static_cast<int>(std::lround(cell.y)), static_cast<int>(std::lround(cell.z)));
                             if (icon >= 0)
                             {
                                 const auto shrink = GalaxyEggbert::Game::DripShrink(icon);

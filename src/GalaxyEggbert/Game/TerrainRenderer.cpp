@@ -317,6 +317,14 @@ namespace GalaxyEggbert::Game
             return GalaxyEggbert::ResolveBlockAnimationIcon(base, rawTick);
         }
 
+        // The cell's own frame (its offset in the cycle, BD-0065).
+        int AnimIconAt(std::uint16_t base, int rawTick, float x, float y, float z)
+        {
+            return GalaxyEggbert::ResolveBlockAnimationIconAt(base, rawTick, static_cast<int>(std::lround(x)),
+                                                              static_cast<int>(std::lround(y)),
+                                                              static_cast<int>(std::lround(z)));
+        }
+
         // Water is animated too, but drawn as its own semi-transparent pass
         // (see TerrainRenderer::Draw) -- IsAnimated() deliberately
         // EXCLUDES it so the constructor/Update() route water blocks to
@@ -1130,7 +1138,7 @@ namespace GalaxyEggbert::Game
                 continue; // drawn as a model by the caller (SetModelDrawnBases)
             }
             const auto& definition = GalaxyEggbert::GetBlockDefinition(block.base);
-            const int icon = AnimIcon(block.base, animPhase);
+            const int icon = AnimIconAt(block.base, animPhase, block.x, block.y, block.z);
             if (icon < 0)
             {
                 // Temp tile's invisible frames — omit the cube entirely.
@@ -1291,7 +1299,10 @@ namespace GalaxyEggbert::Game
         }
         if (!m_lavaBlocks.empty())
         {
-            m_lavaIcon = AnimIcon(GalaxyEggbert::BlockTypes::Lava, animPhase);
+            // Cached by the step of the cycle (each cell its own frame on it, BD-0065).
+            const auto& lavaAnimation = GalaxyEggbert::GetBlockDefinition(GalaxyEggbert::BlockTypes::Lava).animation;
+            m_lavaIcon = std::max(0, animPhase) / std::max(1, static_cast<int>(lavaAnimation.divisor)) %
+                         std::max(1, static_cast<int>(lavaAnimation.frameCount));
             if (m_lavaFrames.find(m_lavaIcon) == m_lavaFrames.end())
             {
                 m_lavaFrames[m_lavaIcon] = RebuildAnimatedRenderer(device, m_lavaBlocks, animPhase);

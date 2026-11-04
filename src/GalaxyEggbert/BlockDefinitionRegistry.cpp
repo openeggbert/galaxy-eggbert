@@ -323,4 +323,31 @@ namespace GalaxyEggbert
         const int phase = nonNegativeTick / std::max(1, static_cast<int>(animation.divisor));
         return animation.frames[static_cast<std::size_t>(phase % animation.frameCount)];
     }
+
+    int BlockDefinitionRegistry::ResolveAnimationIconAt(std::uint16_t type, int rawTick, int x, int y, int z) const
+        noexcept
+    {
+        using namespace BlockTypes;
+        const auto& animation = Get(type).animation;
+        if (!animation.IsAnimated())
+        {
+            return static_cast<int>(Get(type).textureIcon);
+        }
+        // Non-negative terms whatever the cell (the offsets matter only modulo the cycle): the
+        // original's row j grows downward, so -y.
+        const int cx = x + 4096, row = 4096 - y, cz = z + 4096;
+        int offset = 0;
+        int divisor = std::max(1, static_cast<int>(animation.divisor));
+        if (type == Lava || type == Spike || type == Drip || type == Saw || type == Water1)
+        {
+            offset = 13 * cx + 7 * row + 11 * cz;
+        }
+        else if (type == Water2)
+        {
+            offset = 11 * cx + 7 * row + 13 * cz;
+            divisor = 3 + (17 * cx + 13 * row + 7 * cz) % 3;
+        }
+        const int phase = std::max(0, rawTick) / divisor + offset;
+        return animation.frames[static_cast<std::size_t>(phase % animation.frameCount)];
+    }
 }

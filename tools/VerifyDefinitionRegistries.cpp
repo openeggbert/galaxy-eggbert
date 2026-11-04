@@ -1,3 +1,4 @@
+#include <set>
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Game/DecorQuartTable.hpp>
@@ -296,6 +297,39 @@ int main()
               ResolveBlockAnimationIcon(BlockTypes::Lava, 2) == 69 &&
               ResolveBlockAnimationIcon(BlockTypes::Temp, 72) == -1,
           "representative block animation parity");
+
+    // Each cell its own frame (BD-0065, Decor.cpp:1036-1078): lava one cell to the right is 13 frames
+    // on (13 % 8 = 5: icon 71 where the cell beside is on 68), one cell up 7 back; the crusher and
+    // the fans are all in step; the second water's pace is the cell's own (3, 4 or 5 ticks a frame).
+    {
+        const int origin = ResolveBlockAnimationIconAt(BlockTypes::Lava, 0, 0, 0, 0);
+        const int right = ResolveBlockAnimationIconAt(BlockTypes::Lava, 0, 1, 0, 0);
+        const int lavaFrames[8] = {68, 69, 70, 71, 72, 71, 70, 69};
+        int originStep = 0;
+        // origin's step: find it from the tick-0 icon of a cell whose offset is known relative to it
+        for (int step = 0; step < 8; ++step)
+        {
+            if (lavaFrames[step] == origin && lavaFrames[(step + 13) % 8] == right)
+            {
+                originStep = step + 1;
+                break;
+            }
+        }
+        Check(originStep != 0, "lava: the cell to the right is 13 frames further on its cycle");
+        Check(ResolveBlockAnimationIconAt(BlockTypes::Crusher, 9, 0, 0, 0) ==
+                  ResolveBlockAnimationIconAt(BlockTypes::Crusher, 9, 5, 3, 2),
+              "the crusher has no per-cell offset (all in step, Decor.cpp:1055)");
+        std::set<int> water2Paces;
+        for (int x = 0; x < 3; ++x)
+        {
+            // the first tick at which the cell's frame changes from its tick-0 frame
+            const int first = ResolveBlockAnimationIconAt(BlockTypes::Water2, 0, x, 0, 0);
+            int tick = 1;
+            while (tick < 20 && ResolveBlockAnimationIconAt(BlockTypes::Water2, tick, x, 0, 0) == first) ++tick;
+            water2Paces.insert(tick);
+        }
+        Check(water2Paces.size() >= 2, "the second water's cells keep their own pace (3 + (17 x + 13 row) % 3)");
+    }
 
     const auto& objectRegistry = ObjectDefinitionRegistry::Instance();
     for (int raw = 0; raw <= ObjectDefinitionRegistry::MaxObjectType; ++raw)

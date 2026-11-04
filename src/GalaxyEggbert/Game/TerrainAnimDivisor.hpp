@@ -10,10 +10,9 @@ namespace GalaxyEggbert::Game
     // piege1/piege2/temp, table_marine) divides the same 20fps base tick
     // per type via Config::ScaleDiv(N), NOT a flat rate shared by every
     // animated tile -- confirmed by direct source line, e.g.
-    // `table_decor_lave[... + m_time/ScaleDiv(2)]`. Water2/Marine's real
-    // divisor also varies per-instance (3 + position%3, a visual
-    // ripple-offset detail) -- not modeled here, every instance of a given
-    // type shares one phase; only the base speed is fixed.
+    // `table_decor_lave[... + m_time/ScaleDiv(2)]`. The per-cell offsets
+    // (i * 13 + j * 7) and the second water's per-cell pace are
+    // BlockDefinitionRegistry::ResolveAnimationIconAt's (BD-0065).
     //
     // The fans' divisor is the original's 2 (Decor.cpp:1104-1122: the block icons 126/129/132/135
     // draw table_decor_ventillog/d/h/b[m_time / ScaleDiv(2) % 3], three frames each). It was

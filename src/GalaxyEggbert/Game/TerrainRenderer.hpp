@@ -267,7 +267,7 @@ namespace GalaxyEggbert::Game
         // pool at every animation step made 105's lava floor ~2.7-6x slower to play).
         std::vector<AnimBlock> m_lavaBlocks;
         std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_lavaFrames;
-        int m_lavaIcon = -1;
+        int m_lavaIcon = -1; // the step of the lava cycle shown (each cell its own frame on it, BD-0065)
         // The lightning cells likewise (Q-002: each frame's 3D bolt built once).
         std::vector<AnimBlock> m_blitzBlocks;
         std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_blitzFrames;
