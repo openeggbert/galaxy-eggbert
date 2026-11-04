@@ -810,6 +810,25 @@ int main(int argc, char** argv)
         check(crushedDelta > 0.0f && crushedDelta < normalDelta,
               "squashed Blupi moves slower than normal, but still moves (not fully immobilized)");
 
+        // The helicopter as the original flies it (EasyMove, Decor.cpp:3724-3835; BD-0070): idle in
+        // the air it sinks at 1 px a tick (10 px in ten ticks); along it gains 0.5 px a tick (0.5 + 1 +
+        // ... + 10 = 105 px in twenty ticks, its 12 not yet reached).
+        {
+            BlupiController heli;
+            heli.SetPosition(0.0f, 20.0f, 0.0f);
+            heli.CheatVehicle(BlupiController::VehicleMode::Helicopter);
+            const float y0 = heli.GetY();
+            for (int i = 0; i < 10; ++i) heli.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            const float sank = (y0 - heli.GetY()) * 64.0f;
+            const float z0 = heli.GetZ();
+            for (int i = 0; i < 20; ++i) heli.Step(synthetic, 0.0f, 1.0f, false, false, false, 0.05f);
+            const float flown = std::fabs(heli.GetZ() - z0) * 64.0f;
+            std::cout << "Helicopter: sank " << sank << " px idle in ten ticks, flew " << flown << " px in twenty"
+                      << std::endl;
+            check(sank > 8.0f && sank < 11.0f, "idle in the air the helicopter sinks at 1 px a tick");
+            check(std::fabs(flown - 105.0f) < 3.0f, "the helicopter gains 0.5 px a tick along (105 px in twenty ticks)");
+        }
+
         // Jump blocked while squashed.
         crushed.Step(synthetic, 0.0f, 0.0f, true, false, false, dt);
         check(crushed.IsOnGround(), "jump input is ignored while squashed (still on ground, not launched)");

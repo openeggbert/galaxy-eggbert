@@ -450,8 +450,16 @@ namespace GalaxyEggbert::Game
         static constexpr float kOvercraftDecel = kVehicleAccel * 1.0f;  // real decel 1.0/tick
         static constexpr float kSkateboardMaxSpeed = kMoveSpeed * 1.875f; // real 15px/tick
         static constexpr float kSkateboardDecel = kVehicleAccel * 1.0f; // real decel 1.0/tick
-        static constexpr float kHelicopterMaxSpeed = kMoveSpeed * 2.0f; // real 16px/tick (normal setting)
+        // The helicopter as the original flies it: Def::EasyMove is always true (Def.hpp:210), so its
+        // "easy" figures are the real ones (Decor.cpp:3724-3835): 12 px a tick along, gaining 0.5 a
+        // tick, losing 2; up to 7 px a tick, down to 8, 0.5 a tick either way; with neither, his speed
+        // goes by 1 a tick to 1 px a tick down -- he sinks slowly. Galaxy flew the never-used "normal"
+        // setting (16, 1; -10, +12) and hovered still (BD-0070).
+        static constexpr float kHelicopterMaxSpeed = kMoveSpeed * 1.5f; // real 12px/tick (EasyMove)
+        static constexpr float kHelicopterAccel = kVehicleAccel * 0.5f; // real accel 0.5/tick
         static constexpr float kHelicopterDecel = kVehicleAccel * 2.0f; // real decel 2.0/tick
+        static constexpr float kHelicopterSink = 1.0f * 20.0f / 64.0f;  // real 1 px/tick down, idle
+        static constexpr float kHelicopterSinkAccel = kVehicleAccel;    // real 1.0/tick toward it
 
         // Vertical flight (Helicopter/Overcraft only -- Jeep/Tank/Skateboard
         // use the existing ground gravity path unchanged for FALLING,
@@ -464,8 +472,8 @@ namespace GalaxyEggbert::Game
         // targets (Helicopter -10/+12 px/tick, Overcraft -5/+12) are scaled
         // by the same technique as the horizontal speeds above, anchored to
         // each vehicle's own already-scaled horizontal max speed.
-        static constexpr float kHelicopterAscendSpeed = kHelicopterMaxSpeed * (10.0f / 16.0f);
-        static constexpr float kHelicopterDescendSpeed = kHelicopterMaxSpeed * (12.0f / 16.0f);
+        static constexpr float kHelicopterAscendSpeed = 7.0f * 20.0f / 64.0f;   // real -7 px/tick (EasyMove)
+        static constexpr float kHelicopterDescendSpeed = 8.0f * 20.0f / 64.0f;  // real +8 px/tick (EasyMove)
         static constexpr float kOvercraftAscendSpeed = kOvercraftMaxSpeed * (5.0f / 12.0f);
         static constexpr float kOvercraftDescendSpeed = kOvercraftMaxSpeed * (12.0f / 12.0f);
         static constexpr float kVehicleVerticalAccel = kVehicleAccel * 0.5f; // real accel 0.5/tick (both flying modes)

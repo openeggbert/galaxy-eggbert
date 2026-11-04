@@ -1073,3 +1073,16 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   in the vertical step.
 - Validation: `VerifyBlupiMovement` (34 px in ten ticks, a 2 px slide, 19 px of fall in ten ticks);
   ctest; the playthroughs with crushers (play pass 18).
+
+## BD-0070 — the helicopter flew the original's unused "normal" figures and hovered still (gameplay, timing) — FIXED_AND_VERIFIED
+
+- Original: `Def::EasyMove` is always true (Def.hpp:210), so the helicopter's "easy" branch is the one
+  played (Decor.cpp:3724-3835): along, up to 12 px a tick gaining 0.5 a tick (2 lost a tick without
+  the stick); up to 7 px a tick climbing, 8 diving, 0.5 a tick either way; with neither, its vertical
+  speed goes by 1 a tick to 1 px a tick down -- in the air it sinks slowly.
+- Galaxy flew the other branch (16 px a tick, gaining 1; -10/+12) -- its comment said "easy move isn't
+  modeled, always using the normal-setting figures" -- and held still in the air without input.
+- Fix: `kHelicopterMaxSpeed` 12 px, `kHelicopterAccel` 0.5, `kHelicopterAscendSpeed`/`DescendSpeed` 7/8
+  px, the idle sink (`kHelicopterSink`, 1 a tick toward it); the 0.5 to 1 px lift-off snap.
+- Validation: `VerifyBlupiMovement` (10 px of sink in ten idle ticks, 105 px along in twenty); ctest;
+  the helicopter playthroughs (play pass 18).

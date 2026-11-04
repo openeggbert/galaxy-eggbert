@@ -1873,7 +1873,8 @@ namespace GalaxyEggbert::Game
                 default: break;
             }
             const float target = moveInput * maxSpeed;
-            const float rate = (std::fabs(target) > std::fabs(m_vehicleSpeed)) ? kVehicleAccel : decel;
+            const float accel = m_vehicleMode == VehicleMode::Helicopter ? kHelicopterAccel : kVehicleAccel;
+            const float rate = (std::fabs(target) > std::fabs(m_vehicleSpeed)) ? accel : decel;
             if (m_vehicleSpeed < target)
             {
                 m_vehicleSpeed = std::min(m_vehicleSpeed + rate * dt, target);
@@ -2187,26 +2188,36 @@ namespace GalaxyEggbert::Game
         }
         else if (m_vehicleMode == VehicleMode::Helicopter)
         {
-            const float ascendSpeed = kHelicopterAscendSpeed;
-            const float descendSpeed = kHelicopterDescendSpeed;
-            float targetVelocityY = 0.0f;
             // Up or Jump climbs (Decor.cpp:3725/3760: `m_blupiSpeedY <= -1.0 || m_keyPress & Jump`;
-            // owner 2026-11-02: Left Ctrl should climb).
+            // owner 2026-11-02: Left Ctrl should climb); Down descends; neither, he sinks at 1 px a
+            // tick (kHelicopterMaxSpeed's comment, Decor.cpp:3724-3755). Each climbs or dives only
+            // until its limit, a faster speed it does not cut back.
             if (lookUpHeld || jumpPressed)
             {
-                targetVelocityY = ascendSpeed;
+                if (m_velocityY < kHelicopterAscendSpeed)
+                {
+                    m_velocityY = std::min(m_velocityY + kVehicleVerticalAccel * dt, kHelicopterAscendSpeed);
+                }
+                // -0.5 becomes -1 at once (3732-3735): he lifts off at 1 px a tick.
+                if (m_velocityY > 0.0f && m_velocityY < kHelicopterSink)
+                {
+                    m_velocityY = kHelicopterSink;
+                }
             }
             else if (crouchHeld)
             {
-                targetVelocityY = -descendSpeed;
+                if (m_velocityY > -kHelicopterDescendSpeed)
+                {
+                    m_velocityY = std::max(m_velocityY - kVehicleVerticalAccel * dt, -kHelicopterDescendSpeed);
+                }
             }
-            if (m_velocityY < targetVelocityY)
+            else if (m_velocityY > -kHelicopterSink)
             {
-                m_velocityY = std::min(m_velocityY + kVehicleVerticalAccel * dt, targetVelocityY);
+                m_velocityY = std::max(m_velocityY - kHelicopterSinkAccel * dt, -kHelicopterSink);
             }
-            else if (m_velocityY > targetVelocityY)
+            else
             {
-                m_velocityY = std::max(m_velocityY - kVehicleVerticalAccel * dt, targetVelocityY);
+                m_velocityY = std::min(m_velocityY + kHelicopterSinkAccel * dt, -kHelicopterSink);
             }
         }
         else if (m_balloon)
