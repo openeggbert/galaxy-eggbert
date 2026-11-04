@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-03 evening (OR-0056 reopened: front models on a floor face their room; OR-0057..0059)._
+_Last updated: 2026-11-04 morning (the owner's answers Q-001..Q-010: cheese holes, the 3D bolt, the electrode, the glue strands done; every terrain tile as its model next)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -441,10 +441,22 @@ ledgers before repeating any discovery. Where it stands:
   Noticed on the way, not yet looked into: in a dead-end one cell wide (102's booth at (70,3,12))
   and in some low passages (095 at (30,31,20), 105 at (37,18,48)) the chase camera ends up over
   Blupi's head or inside it.
-- Next: the glue death's strands if the owner wants them (Q-006), the lightning bolt and grass (Q-001/Q-002)
-  wait for the owner (`plans/audit/owner_questions.md`, Q-001..Q-008); D11's model list (the
-  candidates regenerated from a fresh library); Android on a device once Q-009 is answered and CNA
-  fixes UB-007; a human play pass of every world. Wave F's release audit: `plans/audit/release_audit.md`.
+- 2026-11-04 morning, **the owner answered** (asked interactively, recorded in
+  `plans/audit/owner_questions.md`, `58aec2f`): Q-009 Android stays as it is; MR-0001 no 3ds Max
+  licence, the .max files stay unused; Q-010 the cheese 339's holes see-through (`dcbb7d8`,
+  `TileCoverage.hpp kSeeThroughTiles`; Q-011's brick slits stay filled); Q-002 the lightning
+  305-307 as a generated 3D bolt (`707a09d`: `tools/bolt/bolt_paths.py` traces each painted frame's
+  centre lines to `BoltPaths.hpp`, `BoltMesh.hpp` builds 6-sided tubes, each column cell turned by
+  `BoltCellYaw`); Q-005 the electrode 238-242 as `Decor/electro.rd4` with its painted sparks as a
+  camera-facing decal (`4818a92`, `electro238_electro`, `tools/rd4_to_gltf/electro_sparks.py`);
+  Q-006 the glue death's strands (`3eb4e4b`: `tools/glue/glue_strands.py` -> `GlueStrands.hpp`,
+  drawn with the shared `AppendPolylineTubes`, `plans/evidence/glue-strands.png`, probe world 995).
+  **Q-001 + Q-004: every terrain tile as its Ray Dream model, the grass as its whole lumpy models
+  with the joining variants** ("hlina s listy nahore ma i preci varianty ze se pojí se sousednim
+  hlinou s travou nahore, pouzij cely hrbolaty modely") -- in progress: inventory and vertex
+  budget first (`plans/audit/model_sources.md`), then staged, measured per world and on the web.
+- Next: Q-001/Q-004 (above); D11's model list (the candidates regenerated from a fresh library);
+  a human play pass of every world. Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
