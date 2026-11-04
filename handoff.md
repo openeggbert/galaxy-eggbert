@@ -723,7 +723,8 @@ the owner's list arrives:
   reaches that wall fully. Faithful as a 3D object; not a model defect. The `uvsp` lead was real for
   the chimney instead: a domain with `uvsp` other than 0 has a real `bbox`, the map repeats every
   bbox width round the section, and the chimney now shows round flowers at the walls' size as the
-  sprite does (`65a532cc`, README rule; only the house carries a `uvsp` among converted models).
+  sprite does (`65a532cc`, README rule; only the house carries a `uvsp` among converted models;
+  sprite / before / after: `plans/evidence/house-chimney-before-after.jpg`).
   Left: the window recess is dark in the sprite (the scene's cast shadow inside the house), lit in
   the game (no cast shadows on models).
 - `bd_big02` (fountain bowl) and `bd_big0108` (column): grey in the sprites, near white in the
