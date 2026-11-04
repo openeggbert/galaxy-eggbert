@@ -16,8 +16,10 @@
 // +X or +Z, left -X or -Z), and the neighbours re-tiled are the six round the cell.
 //
 // Not carried over: the edges the original lays in EMPTY cells round a mass of cheese or of cave
-// rock (table_adapt_fromage, 264-282 and 285-303): in 3D they would be flat plates standing in the
-// air before every face of the mass (billboards, Q-004), where the cubes' own faces show its edge;
+// rock (table_adapt_fromage, 264-282 and 285-303): in 3D they would stand in the air before every
+// face of the mass, every corridor's (the edge plates a world places are their scenes' reliefs
+// since Q-004/Q-012, but laid round every mass they would fill its passages), where the mass's own
+// faces show its scenes' lumps;
 // and the original's deletion of a moving object in a cell made solid (the editor's objects have
 // their own commands).
 
