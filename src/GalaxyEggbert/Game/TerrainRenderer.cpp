@@ -858,11 +858,13 @@ namespace GalaxyEggbert::Game
                     case TileCoverage::Opaque:
                         break;
                     }
-                    const std::uint8_t hiddenFaces =
+                    // The faces its neighbours hide; a relief neighbour does not hide the faces of a cell
+                    // drawn otherwise (reliefNeighbourFaces), but which side is the room's is the same.
+                    const std::uint8_t occludedFaces =
                         definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube
-                            ? static_cast<std::uint8_t>(HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage) &
-                                                        ~reliefNeighbourFaces(x, y, z))
+                            ? HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage)
                             : std::uint8_t{0};
+                    const std::uint8_t hiddenFaces = static_cast<std::uint8_t>(occludedFaces & ~reliefNeighbourFaces(x, y, z));
                     // A tile textured on one side only turns that side to the room (DirectionalCubeTiles.hpp
                     // SingleTexturedSide): the free cells in a row before each side, up to kRoomRun.
                     int texturedSide = -1;
@@ -883,7 +885,7 @@ namespace GalaxyEggbert::Game
                                     ++room[side];
                                 }
                             }
-                            texturedSide = SingleTexturedSide(icon, hiddenFaces, room);
+                            texturedSide = SingleTexturedSide(icon, occludedFaces, room);
                         }
                     }
                     if (m_reliefs != nullptr && mesh == &staticMesh &&
@@ -894,7 +896,7 @@ namespace GalaxyEggbert::Game
                         // faces that wear the tile become the relief near the focus, the others stay flat.
                         CnaEngine::Graphics::BoxFaces cubeFaces;
                         ConfigureDirectionalCubeFaces(icon, tileUv, icon107Uv, cubeFaces, texturedSide);
-                        const std::uint8_t ownHidden = HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage);
+                        const std::uint8_t ownHidden = occludedFaces;
                         const std::size_t chunkIndex = reliefChunkFor(x, y, z);
                         ReliefCell cell;
                         cell.center = center;
