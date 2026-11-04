@@ -125,6 +125,18 @@ namespace GalaxyEggbert::Game
         // under the Accelerometer toggle, shown while it is on, InputPad.cpp:250, 932, 1172).
         [[nodiscard]] int GetAccelSensitivity() const noexcept { return accelSensitivity_; }
         void SetAccelSensitivity(int value) noexcept { accelSensitivity_ = ClampVolume(value); }
+        // The terrain drawn in 3D relief near the camera (the Ray Dream tiles' lumps, Q-001/Q-004) or
+        // as flat textured cubes: a Galaxy setting (the owner's request of 2026-11-04: the reliefs cost
+        // memory and GPU time a phone may not have). On by default on the desktop, off on Android and
+        // the web. Saved as `terrainRelief=`.
+        [[nodiscard]] bool GetTerrainRelief() const noexcept { return terrainRelief_; }
+        void SetTerrainRelief(bool on) noexcept { terrainRelief_ = on; }
+        static constexpr bool kTerrainReliefDefault =
+#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
+            false;
+#else
+            true;
+#endif
         [[nodiscard]] int GetMusicVolume() const noexcept { return musicVolume_; }
         void SetMusicVolume(int volume) noexcept { musicVolume_ = ClampVolume(volume); }
         [[nodiscard]] static int ClampVolume(int volume) noexcept { return volume < 0 ? 0 : volume > 100 ? 100 : volume; }
@@ -218,6 +230,7 @@ namespace GalaxyEggbert::Game
         int effectsVolume_ = 100;
         int musicVolume_ = 100;
         int accelSensitivity_ = 50;
+        bool terrainRelief_ = kTerrainReliefDefault;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
     };

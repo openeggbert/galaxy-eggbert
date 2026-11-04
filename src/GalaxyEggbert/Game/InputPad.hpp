@@ -321,6 +321,7 @@ namespace GalaxyEggbert::Game
             bool jumpToggled = false;  // SetupJump: the Jump button's side (OR-0010)
             bool zoomToggled = false;  // SetupZoom: automatic zoom on action
             bool accelToggled = false; // SetupAccel: the accelerometer
+            bool terrainToggled = false; // 3D terrain (a Galaxy setting, SaveData::GetTerrainRelief)
             bool resetPressed = false;
             bool returnPressed = false;
             // The volume sliders (0..100) while one is dragged, -1 otherwise; volumeReleased the
@@ -342,7 +343,8 @@ namespace GalaxyEggbert::Game
                        int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom, bool accel,
                        bool showReset, int selectedGamer, int effectsVolume, int musicVolume,
                        int accelSensitivity, float phaseTimeSeconds,
-                       GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
+                       GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
+                       bool terrainRelief = true);
 
         // Resume screen (plan.md MENU-040..045). Real background is
         // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s

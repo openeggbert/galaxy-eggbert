@@ -1016,6 +1016,10 @@ namespace GalaxyEggbert::CNA
         }
         // The original's m_blupiFocus itself (not "or in the air"): false dying, gone after it, taking a
         // pickup, teleporting, waving goodbye or cheering. The spike traps snap then (BD-0067).
+        // The Setup's "3D terrain" (SaveData::GetTerrainRelief), or GALAXY_TERRAIN_RELIEF when set.
+        [[nodiscard]] bool TerrainReliefWanted() const;
+        // After the setting changed: the reliefs loaded or dropped, the terrain built again.
+        void ApplyTerrainReliefSetting();
         [[nodiscard]] bool BlupiFocusRaw() const
         {
             return !(blupi_.IsDeathLocked() || blupi_.IsDeathHidden() || blupi_.IsPickupFrozen() ||

@@ -179,6 +179,13 @@ namespace GalaxyEggbert::Game
             const Rect row = SetupJumpRect(m);
             return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
         }
+        // "3D terrain" (a Galaxy setting, 2026-11-04: the reliefs or flat textures), under Erase
+        // progress, at x 450 on the Zoom row.
+        Rect SetupTerrainRect(const ScreenMetrics& m) noexcept
+        {
+            const Rect row = SetupZoomRect(m);
+            return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
+        }
         // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
         // of its label, the effects' (0) then the music's (1); each its label over a track drawn
         // as the original's Slider (Slider.cpp: jauge.png's empty cell, pad icon 1 for the knob).
@@ -284,6 +291,7 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlEffectsVolume = 6;
         constexpr int kSetupControlMusicVolume = 7;
         constexpr int kSetupControlAccelSensitivity = 8;
+        constexpr int kSetupControlTerrain = 9;
         constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
@@ -1409,6 +1417,7 @@ namespace GalaxyEggbert::Game
         const bool overJump = InRect(mouseX, mouseY, SetupJumpRect(m));
         const bool overZoom = InRect(mouseX, mouseY, SetupZoomRect(m));
         const bool overAccel = InRect(mouseX, mouseY, SetupAccelRect(m));
+        const bool overTerrain = InRect(mouseX, mouseY, SetupTerrainRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
@@ -1424,6 +1433,7 @@ namespace GalaxyEggbert::Game
             else if (overJump) activeControl_ = kSetupControlJump;
             else if (overZoom) activeControl_ = kSetupControlZoom;
             else if (overAccel) activeControl_ = kSetupControlAccel;
+            else if (overTerrain) activeControl_ = kSetupControlTerrain;
             else if (overReset) activeControl_ = kSetupControlReset;
             else if (overReturn) activeControl_ = kSetupControlReturn;
             else activeControl_ = -1;
@@ -1455,6 +1465,7 @@ namespace GalaxyEggbert::Game
             else if (activeControl_ == kSetupControlJump && overJump) result.jumpToggled = true;
             else if (activeControl_ == kSetupControlZoom && overZoom) result.zoomToggled = true;
             else if (activeControl_ == kSetupControlAccel && overAccel) result.accelToggled = true;
+            else if (activeControl_ == kSetupControlTerrain && overTerrain) result.terrainToggled = true;
             else if (activeControl_ == kSetupControlReset) result.resetPressed = true;
             else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
             activeControl_ = -1;
@@ -1468,7 +1479,7 @@ namespace GalaxyEggbert::Game
                               int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom,
                               bool accel, bool showReset, int selectedGamer, int effectsVolume,
                               int musicVolume, int accelSensitivity, float phaseTimeSeconds,
-                              GalaxyEggbert::Def::GamePhase fadeOutPhase)
+                              GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief)
     {
         if (!loaded_)
         {
@@ -1569,6 +1580,8 @@ namespace GalaxyEggbert::Game
             appendButton(SetupJumpRect(m), jumpRight ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlJump);
             appendButton(SetupZoomRect(m), autoZoom ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlZoom);
             appendButton(SetupAccelRect(m), accel ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlAccel);
+            appendButton(SetupTerrainRect(m), terrainRelief ? kIconSetupToggleOn : kIconSetupToggleOff,
+                         kSetupControlTerrain);
             if (showReset)
             {
                 appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);
@@ -1611,6 +1624,7 @@ namespace GalaxyEggbert::Game
             appendLabel(SetupJumpRect(m), "Jump button on the right");
             appendLabel(SetupZoomRect(m), "Automatic zoom on action");
             appendLabel(SetupAccelRect(m), "Accelerometer");
+            appendLabel(SetupTerrainRect(m), "3D terrain");
             if (showReset)
             {
                 // Real TX_BUTTON_SETUP_RESET, two lines ("Player {0} :\nErase

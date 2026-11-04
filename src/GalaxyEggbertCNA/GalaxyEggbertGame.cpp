@@ -1202,8 +1202,7 @@ namespace GalaxyEggbert::CNA
         if (!terrainReliefsLoaded_)
         {
             terrainReliefsLoaded_ = true;
-            const char* on = std::getenv("GALAXY_TERRAIN_RELIEF");
-            if (on == nullptr || std::string(on) != "0")
+            if (TerrainReliefWanted())
             {
                 const char* dir = std::getenv("GALAXY_TERRAIN_RELIEF_DIR");
                 const int icons = terrainReliefs_.Load(dir != nullptr && *dir != '\0' ? dir : "avatars3d/terrain");
@@ -1218,6 +1217,37 @@ namespace GalaxyEggbert::CNA
             terrainReliefOverhangs_ = overhang != nullptr && std::string(overhang) == "1";
         }
         return terrainReliefs_.Empty() ? nullptr : &terrainReliefs_;
+    }
+
+    bool GalaxyEggbertGame::TerrainReliefWanted() const
+    {
+        // GALAXY_TERRAIN_RELIEF=0 or =1 overrides the Setup's "3D terrain" (tests, measurements).
+        if (const char* on = std::getenv("GALAXY_TERRAIN_RELIEF"); on != nullptr && *on != '\0')
+        {
+            return std::string(on) != "0";
+        }
+        return saveData_.GetTerrainRelief();
+    }
+
+    void GalaxyEggbertGame::ApplyTerrainReliefSetting()
+    {
+        // The table loaded or dropped (its memory with it), and the terrain built again, when a
+        // world is up. The old renderer goes first: its background relief builds read the table
+        // (destroying it waits for them).
+        const bool hadRenderer = terrainRenderer_ != nullptr;
+        terrainRenderer_.reset();
+        terrainReliefs_ = GalaxyEggbert::Game::TerrainReliefTable{};
+        terrainReliefsLoaded_ = false;
+        if (hadRenderer)
+        {
+            terrainRenderer_ = std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(),
+                                                                 terrainTileAtlas_, tileCoverage_, terrainDrawSecret_,
+                                                                 StillModelIcons(), TerrainReliefs());
+            terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
+            terrainReliefWarm_ = false;
+            ApplyBlockModels();
+            terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
+        }
     }
 
     std::vector<std::uint16_t> GalaxyEggbertGame::StillModelIcons() const
@@ -2857,6 +2887,14 @@ namespace GalaxyEggbert::CNA
                 {
                     saveData_.SetAccelActive(!saveData_.GetAccelActive());
                     saveData_.Save();
+                }
+                if (setupInput.terrainToggled)
+                {
+                    // 3D terrain on or off (SaveData::GetTerrainRelief): the terrain is built again
+                    // with the reliefs or without them, their memory freed when off.
+                    saveData_.SetTerrainRelief(!saveData_.GetTerrainRelief());
+                    saveData_.Save();
+                    ApplyTerrainReliefSetting();
                 }
                 if (setupInput.resetPressed)
                 {
@@ -7130,7 +7168,7 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
                                     saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
-                                    fadeOutPhase_);
+                                    fadeOutPhase_, TerrainReliefWanted());
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {

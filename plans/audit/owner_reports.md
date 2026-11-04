@@ -92,3 +92,18 @@ rewritten).
   for them.
 - Validation: live, 102's teleporter from its niche (the booth whole, Blupi teleporting); ctest; golden
   frames unchanged.
+
+## OR-0033 — what the 3D terrain reliefs cost; a setting for textures or 3D (owner 2026-11-04) — DONE
+
+- Question: what do the generated stones (the reliefs) cost in place of the textures; phones will not
+  manage; a setting for textures or 3D.
+- Measured (`/usr/bin/time -v`, llvmpipe under Xvfb, 25 s into the world): peak RAM with the reliefs
+  1.65 GB (030) and 1.29 GB (021), without them 0.92 GB and 0.94 GB -- the reliefs take 0.35-0.73 GB.
+  GPU time on the desktop's radeonsi: 0.4-1.4 ms a frame (Q-012's table); the vertex count doubles
+  (the hub at the title: 67 172 against 33 288).
+- Done: the Setup's "3D terrain" toggle (under Erase progress; `SaveData::GetTerrainRelief`, saved as
+  `terrainRelief=`): on by default on the desktop, off on Android and the web build. Switching it
+  builds the terrain again with or without the reliefs and frees their table when off.
+  `GALAXY_TERRAIN_RELIEF=0/1` still overrides it (tests, measurements).
+- Validation: live, Setup shows the toggle; off, the hub plays with the flat textures and the save has
+  `terrainRelief=0`; ctest.

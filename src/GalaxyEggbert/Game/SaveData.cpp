@@ -48,6 +48,10 @@ namespace GalaxyEggbert::Game
             {
                 musicVolume_ = ClampVolume(std::atoi(value.c_str()));
             }
+            else if (key == "terrainRelief")
+            {
+                terrainRelief_ = (value == "1");
+            }
             else if (key == "accelSensitivity")
             {
                 accelSensitivity_ = ClampVolume(std::atoi(value.c_str()));
@@ -115,6 +119,7 @@ namespace GalaxyEggbert::Game
         out << "effectsVolume=" << effectsVolume_ << "\n";
         out << "musicVolume=" << musicVolume_ << "\n";
         out << "accelSensitivity=" << accelSensitivity_ << "\n";
+        out << "terrainRelief=" << (terrainRelief_ ? "1" : "0") << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         for (int gamer = 0; gamer < kGamerCount; ++gamer)
         {
