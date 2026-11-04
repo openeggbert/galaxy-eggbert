@@ -11,8 +11,8 @@ lifts dwell/travel/ride (D43 D52 D54 D57),gameplay,unit,VerifyInteractionSystem;
 moving-platform jump windows,gameplay,engine search (autoplay_search),build-probe/fb-061-*.out,pass (061),BD-0006: 061 ladder ~5 frames at 8.33 cells/s -> 4-56 frames at 3.33 + 30-tick dwell; a human play pass still to do
 lift speeds within the original envelope,world data,static,tools/audit/lift_envelope.py,pass,0 lifts over the original's 4.01 cells/s (was 31; BD-0006)
 crate support needs a solid mask,gameplay,unit,VerifyInteractionSystem (over water),pass,BD-0003
-editor variant cycling,editor,unit+integration,VerifyGEWorldEditor (ED-0001),pass,block families; BigDecor families open (ED-0006); a live UI run to do
-editor slots 3x10 save/edit/play-test/reopen,editor,unit,VerifyGEEditorStorage,pass (earlier),end-to-end UI script open
+editor variant cycling and auto-tiling,editor,unit+integration+live,VerifyGEWorldEditor (ED-0001/0006/0007); tools/qa_steps/editor_bigdecor_cycle.txt; tools/qa_steps/editor_autotile.txt,pass,block and BigDecor families; live 2026-11-04 with the saved world read back
+editor slots 3x10 save/edit/play-test/reopen,editor,unit+live,VerifyGEEditorStorage; tools/qa_steps/editor_playtest.txt,pass,live 2026-11-03 (ED-0004): place / dice (save + play-test) / back in the editor on the saved world
 world format round trip (BMD1 types 1-4),format,unit,VerifyShippedWorlds; MoveObjectRecordTests; BigDecorRecordTests; HintZoneRecordTests,pass,a BMD1 record with type > 4 is not yet round-tripped
 golden frames,render,golden,tools/verify_golden_frames.sh,stale,known stale since Phase 7B
 follow star vs decor/water/blocks,gameplay,unit,VerifyInteractionSystem (BD-0004),pass,
