@@ -29,6 +29,8 @@ BLITZ, EMITTER = 305, 304
 WALK = 20
 FAN_UP, WIND_UP = 132, 118             # in a floor, blowing +Y
 FAN_DOWN, WIND_DOWN = 135, 122         # in a ceiling, blowing -Y
+FAN_LEFT, WIND_LEFT = 126, 110         # in a wall, blowing -X
+FAN_RIGHT, WIND_RIGHT = 129, 114       # in a wall, blowing +X
 
 
 def main(argv) -> int:
@@ -66,8 +68,9 @@ def main(argv) -> int:
     w.place(O.EGG, 58, WALK, 42)
 
     # ---- north: the helicopters' gallery (walk 20, open up to 42) ----
-    # Eight helicopters on its floor, five on a ledge; treasures 1-4 on ledges round its walls at
-    # walk 26, 30, 34 and 38, two pits of lava in its floor.
+    # Eight helicopters on its floor, five on a ledge; treasure 2 on a ledge of its walls at walk 30
+    # (an egg on the one at 26), two pits of lava in its floor. (Treasures 3 and 4 were on ledges at
+    # walk 34 and 38 until 2026-11-04; they are in the wind wing now, as the original's.)
     carve(49, WALK, 30, 51, WALK + 2, 39)
     carve(34, WALK, 6, 66, 42, 29)
     for x in range(40, 48):
@@ -75,8 +78,7 @@ def main(argv) -> int:
     for x0, z0, x1, z1 in ((36, 8, 42, 14), (56, 8, 62, 14)):
         carve(x0, WALK - 3, z0, x1, WALK - 1, z1)
         w.fill(x0, WALK - 3, z0, x1, WALK - 2, z1, LAVA)
-    for walk, x0, z0, x1, z1, tx, tz in ((26, 34, 6, 37, 9, 35, 7), (30, 63, 6, 66, 9, 65, 7),
-                                        (34, 63, 25, 66, 29, 65, 27), (38, 34, 25, 37, 29, 35, 27)):
+    for walk, x0, z0, x1, z1, tx, tz in ((26, 34, 6, 37, 9, 35, 7), (30, 63, 6, 66, 9, 65, 7)):
         panel(x0, walk - 2, z0, x1, walk - 1, z1)
         if (tx, tz) != (35, 7):
             w.place(O.TREASURE, tx, walk, tz)
@@ -100,6 +102,45 @@ def main(argv) -> int:
     for x in range(49, 54):
         w.place(O.HELICOPTER, x, 32, 7)
     w.place(O.EGG, 51, 32, 9)
+
+    # ---- south-east: the wind wing (walk 20 / 22), the original's sideways wind ----
+    # Its row 11 (x 7-24): two fans back to back in a corridor one high, each blowing out along it
+    # onto a mine in its stream (9, 11) and (19, 11); over the corridor single blocks with gaps
+    # between, a treasure on the one over the far mine (19, 9). Fallen into a gap, the wind (9 px a
+    # tick, his walk 8) carries him onto the mine; the gaps nearest the ends blow him to a wall
+    # instead. Its row 11 (x 34-42) too: a stream blowing away from its fan with a treasure beside
+    # the fan (39, 11): no walking up to it against the wind, only dropping onto it from above.
+    # Here, east out of the hall (z 57-58): the corridor along X (z 66), its floor at walk 20; over
+    # it blocks at y 21 with one-cell gaps (the original's are 2-4 wide between single blocks, met
+    # from above; a jump spans ~2.3 cells, so the course is walked and jumped here): the start (x
+    # 69-70), a gap blowing back to it (71), a block over the west mine (72-73), a gap blowing onto
+    # that mine (74), blocks over the fans (75-80), a gap blowing onto the east mine (81), the block
+    # over that mine with treasure 3 (82-83), a gap blowing to the end (84), the end (85-87). South
+    # from the end to a hole over the second stream (z 74, its fan at x 87 blowing west, treasure 4
+    # under the hole a cell from the fan, as the original's (39, 11) from its fan (41, 11): its blades
+    # kill), which blows him west into the crates' room (x 64, z 73-75).
+    carve(61, WALK, 57, 67, WALK + 2, 58)
+    carve(66, WALK, 59, 70, WALK + 6, 65)
+    panel(68, WALK, 63, 70, WALK + 1, 65)                                 # the step up, walk 22
+    carve(71, WALK, 66, 84, WALK, 66)                                     # the corridor
+    carve(69, WALK + 1, 66, 87, WALK + 6, 66)                             # over it
+    for x0, x1 in ((69, 70), (79, 79), (85, 87)):                         # the ends, the fans' wall
+        panel(x0, WALK, 66, x1, WALK + 1, 66)
+    for x0, x1 in ((72, 73), (75, 80), (82, 83)):                         # the blocks over it
+        panel(x0, WALK + 1, 66, x1, WALK + 1, 66)
+    w.set(78, WALK, 66, FAN_LEFT)
+    w.fill(71, WALK, 66, 77, WALK, 66, WIND_LEFT)
+    w.set(80, WALK, 66, FAN_RIGHT)
+    w.fill(81, WALK, 66, 84, WALK, 66, WIND_RIGHT)
+    mines([(73, WALK, 66), (83, WALK, 66)])                               # in the streams
+    w.place(O.TREASURE, 83, WALK + 2, 66)
+    carve(85, WALK + 2, 67, 86, WALK + 4, 74)                             # south from the end
+    carve(85, WALK + 1, 74, 85, WALK + 1, 74)                             # the hole
+    carve(65, WALK, 74, 86, WALK, 74)                                     # the second stream
+    w.set(87, WALK, 74, FAN_LEFT)
+    w.fill(71, WALK, 74, 86, WALK, 74, WIND_LEFT)
+    carve(65, WALK, 73, 70, WALK + 2, 75)                                 # into the crates' room
+    w.place(O.TREASURE, 85, WALK, 74)
 
     # ---- east: the skate run (walk 20) ----
     # Five skateboards at its head; two blocks of mines two deep across it (the skateboard rides

@@ -1,7 +1,8 @@
 # Mission 115 played through (plans/briefs/world115.md): a helicopter from the north gallery to
-# the eleven treasures (the gallery's four ledges, the high shelf over the crates' walls, the
-# skate run's end, the west wing past its curtains of lightning), then the golden key in the
-# hall's alcove, which ends in the main hub.
+# nine of the eleven treasures (the draught tunnel's end, the gallery's ledge, the skate run's end,
+# the high shelf over the crates' walls, the west wing past its curtains of lightning); on foot the
+# wind wing's two (over its corridor of winds and mines, and dropped into its second stream); then
+# the golden key in the hall's alcove, which ends in the main hub.
 wait 30
 expect mission = 115
 # North to the gallery (walk 20): a helicopter of the row along z 26.
@@ -11,8 +12,8 @@ go 45 27.4
 go 44 26.15 tol 0.1
 hold 2 action
 wait 20
-# Treasures 2-4 on the ledges round the gallery's walls (walk 30, 34, 38): over each, then down
-# onto it; south of the helicopters' ledge (x 48-54, z 6-9, walk 32) on the way.
+# Treasure 2 on the ledge of the gallery's wall (walk 30): over it, then down onto it; south of
+# the helicopters' ledge (x 48-54, z 6-9, walk 32) on the way.
 # Treasure 1 at the end of the draught tunnel (west out of the gallery's wall, z 16-18, walk 28,
 # five high): in low and on at full speed through its four curtains of wind (up, down, up, down),
 # each moving him a cell or so; back out high (the first curtain met is then a downdraught: grounded
@@ -32,17 +33,9 @@ fly 58 32.00 12 tol 0.3 max 900
 go 64.5 7.5 tol 0.3 max 900
 go 65 7 tol 0 with crouch until treasures = 2 max 300
 until treasures = 2 max 200
-go 62 14 tol 0 with lookup until y >= 33.5 max 900
-fly 64.5 34.90 26.5 tol 0.3 max 900
-go 65 27 tol 0 with crouch until treasures = 3 max 300
-until treasures = 3 max 200
-go 60 22 tol 0 with lookup until y >= 37.5 max 900
-fly 35.5 38.90 26.5 tol 0.3 max 900
-go 35 27 tol 0 with crouch until treasures = 4 max 300
-until treasures = 4 max 200
 # Down to the gallery's floor and on the ground through the passage (three high) into the hall,
 # east along the corridor; over the skate run's two blocks of mines a little above them; down
-# onto treasures 5-7 at its end (93, 47), (93, 50), (93, 53).
+# onto treasures 3-5 at its end (93, 47), (93, 50), (93, 53).
 hold 20 lookup
 go 50 28 tol 0 with crouch until y <= 20.2 max 900
 go 50 38
@@ -50,14 +43,14 @@ go 50 50
 go 70 50
 go 72 50 tol 0 with lookup until y >= 21.2 max 300
 fly 92.5 22.60 50 tol 0.3 max 900
-go 93 50 tol 0 with crouch until treasures = 5 max 300
+go 93 50 tol 0 with crouch until treasures = 3 max 300
+until treasures = 3 max 200
+go 93 47 until treasures = 4 max 300
+until treasures = 4 max 200
+go 93 53 until treasures = 5 max 300
 until treasures = 5 max 200
-go 93 47 until treasures = 6 max 300
-until treasures = 6 max 200
-go 93 53 until treasures = 7 max 300
-until treasures = 7 max 200
 # Back west over the mines, into the hall, south through its passage into the crates' room; up
-# over the crates and the two walls onto the high shelf's treasures 8-9 (40, 93), (60, 93).
+# over the crates and the two walls onto the high shelf's treasures 6-7 (40, 93), (60, 93).
 go 92 50 tol 0 with lookup until y >= 21.2 max 300
 fly 72.5 22.60 50 tol 0.3 max 900
 # Down well before the hall's lintel (x 69-70, a cell lower): the helicopter drifts on a cell
@@ -69,14 +62,14 @@ go 50 58
 go 50 69
 go 50 72 tol 0 with lookup until y >= 26.5 max 600
 fly 40.5 27.90 92.5 tol 0.3 max 900
-go 40 93 tol 0 with crouch until treasures = 8 max 300
-until treasures = 8 max 200
+go 40 93 tol 0 with crouch until treasures = 6 max 300
+until treasures = 6 max 200
 go 59.5 92.5 tol 0.3 max 900
-go 60 93 tol 0 with crouch until treasures = 9 max 300
-until treasures = 9 max 200
+go 60 93 tol 0 with crouch until treasures = 7 max 300
+until treasures = 7 max 200
 # Off the shelf, down to the crates' room's floor by its passage, north into the hall and west
 # along the corridor: its curtain of lightning (x 35) on the ground just after a strike; over the
-# pool to treasures 11 (5, 58) and 10 (5, 42) west of the second curtain (x 7, z 40-46).
+# pool to treasures 9 (5, 58) and 8 (5, 42) west of the second curtain (x 7, z 40-46).
 hold 20 lookup
 go 50 71 tol 0.3 max 900
 go 50 71 tol 0 with crouch until y <= 20.2 max 900
@@ -88,12 +81,12 @@ go 31 50
 go 29 50 tol 0 with lookup until y >= 21.2 max 300
 fly 12 22.60 57 tol 0.3 max 900
 go 5.5 58 tol 0.3 max 600
-go 5 58 tol 0 with crouch until treasures = 10 max 300
-until treasures = 10 max 200
+go 5 58 tol 0 with crouch until treasures = 8 max 300
+until treasures = 8 max 200
 go 5 47.5 max 600
-go 5 42 until treasures = 11 max 600
-until treasures = 11 max 200
-# Back east through the corridor's curtain and the hall to the golden key in its alcove (47, 62).
+go 5 42 until treasures = 9 max 600
+until treasures = 9 max 200
+# Back east through the corridor's curtain into the hall.
 go 5 50
 # Over the pool just above its water: let be, the helicopter would sink into it (BD-0070).
 fly 28 20.5 50
@@ -101,7 +94,48 @@ go 29 50 tol 0 with crouch until y <= 20.2 max 300
 go 33.3 50 tol 0.1
 until blitz = 52 max 400
 go 40 50
-go 47 58
+# On foot to the wind wing (east out of the hall, z 57-58): up the step (walk 22) onto the start of
+# its corridor's blocks (z 66), the gaps jumped: a fall into one blows him onto a mine or to a
+# wall. Treasure 10 on the block over the east mine; south from the end, down the hole onto
+# treasure 11, a cell from the second stream's fan, which blows him west to the crates' room.
+hold 6 action
+wait 30
+go 55 57.5
+go 66 57.5
+go 66.6 60
+go 66.6 64 tol 0.1
+face 90
+go 69 64 jump 1.6 tol 0.1
+until ground = 1
+expect y >= 21.95
+go 69.2 65.2 tol 0.1
+go 69.2 66 tol 0.05
+face 90
+go 73 66 jump 2.4 tol 0.1
+until ground = 1
+expect y >= 21.95
+go 76 66 jump 2.4 tol 0.1
+until ground = 1
+expect y >= 21.95
+go 82.5 66 jump 1.9 tol 0.1
+until ground = 1
+expect y >= 21.95
+go 83.2 66 tol 0.1 until treasures = 10 max 200
+until treasures = 10 max 100
+go 86 66 jump 2.4 tol 0.1
+until ground = 1
+expect y >= 21.95
+go 85.4 70
+go 85 73.6 tol 0.1
+go 85 74.4 tol 0.05 until treasures = 11 max 600
+until treasures = 11 max 200
+until x <= 70.6 max 300
+# West into the crates' room, north up its passage into the hall, the golden key in its alcove
+# (47, 62).
+go 64 74
+go 50 71
+go 50 64
+go 47.5 60
 go 47 62 until exit = 1 max 600
 until mission = 1 max 900
 expect phase = Play
