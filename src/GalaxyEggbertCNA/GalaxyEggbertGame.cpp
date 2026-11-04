@@ -6714,6 +6714,60 @@ namespace GalaxyEggbert::CNA
                 objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 objectMeshRenderer_->Draw(device, *objectEffect_);
             }
+
+            // The drink's bubbles (Decor.cpp:882-895): over each bottle three bubbles (element
+            // 274 + n % 5) rise 3 px a tick for 50 ticks, a third apart (table_drinkoffset 0, 7, 22),
+            // fading from whole to nothing. The fade in five steps: one mesh and alpha each.
+            {
+                static constexpr int kDrinkOffsets[3] = {0, 7, 22};
+                constexpr int kFadeSteps = 5;
+                std::vector<CnaEngine::Graphics::MeshBuilder> fades;
+                for (int k = 0; k < kFadeSteps; ++k)
+                {
+                    fades.push_back(MakeTexturedMeshBuilder());
+                }
+                bool any = false;
+                for (const auto& obj : worldRuntime_.GetMobileObjects())
+                {
+                    if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType30)
+                    {
+                        continue;
+                    }
+                    const float centreY = ResolveObjectVisualCenterY(obj.type, obj.currentY);
+                    for (const int offset : kDrinkOffsets)
+                    {
+                        const int n = (worldRuntime_.GetAnimPhase() + offset) % 50;
+                        const int step = std::min(kFadeSteps - 1, n * kFadeSteps / 50);
+                        const auto uv = GetElementIconUv(274 + n % 5);
+                        fades[static_cast<std::size_t>(step)].AddBillboard(
+                            Microsoft::Xna::Framework::Vector3(obj.currentX, centreY + static_cast<float>(n) * 3.0f / 64.0f,
+                                                               obj.currentZ) +
+                                cameraRight * (2.0f / 64.0f),
+                            Microsoft::Xna::Framework::Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp,
+                            CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+                        any = true;
+                    }
+                }
+                if (any)
+                {
+                    objectEffect_->View = camera_.View();
+                    objectEffect_->Projection = camera_.Projection();
+                    objectEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
+                    for (int k = 0; k < kFadeSteps; ++k)
+                    {
+                        if (fades[static_cast<std::size_t>(k)].Mesh().Empty())
+                        {
+                            continue;
+                        }
+                        // (50 - n) / 50 at the step's middle.
+                        objectEffect_->setAlphaProperty(1.0f - (static_cast<float>(k) + 0.5f) / static_cast<float>(kFadeSteps));
+                        drinkBubbleRenderers_[static_cast<std::size_t>(k)] =
+                            UploadTexturedMesh(device, fades[static_cast<std::size_t>(k)].Mesh());
+                        drinkBubbleRenderers_[static_cast<std::size_t>(k)]->Draw(device, *objectEffect_);
+                    }
+                    objectEffect_->setAlphaProperty(1.0f);
+                }
+            }
         }
 
         // Billboard rendering for object-m.png-sourced MoveObjects

@@ -38,6 +38,7 @@
 #include <optional>
 #include <cstdio>
 #include <filesystem>
+#include <array>
 #include <memory>
 #include <set>
 #include <string>
@@ -848,6 +849,7 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Graphics::Texture2D objectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> objectMeshRenderer_;
+        std::array<std::unique_ptr<CnaEngine::Graphics::GpuMesh>, 5> drinkBubbleRenderers_; // the drink's bubbles
 
         // Billboard rendering for the confirmed object-m.png-sourced
         // MoveObjects (ObjectDefinitionRegistry, NEXT.md §3,

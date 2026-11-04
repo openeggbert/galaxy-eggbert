@@ -29,4 +29,5 @@ ticks once the count is down to 25, were not drawn (only the trails left behind 
 FIXED_AND_VERIFIED 2026-11-04 (`GalaxyEggbertGame::BlupiAuraShown`; camera-facing sprites a little
 behind him, as the original draws them before him; live in probe worlds 987-989,
 `plans/evidence/power-auras.png`). The drink's rising bubbles over the bottle (table_drinkeffect /
-table_drinkoffset, Decor.cpp:882-895) remain to do.
+table_drinkoffset, Decor.cpp:882-895: three bubbles rising 3 px a tick for 50 ticks, fading) are drawn
+too since 2026-11-04 (the fade in five steps; probe world 986, `plans/evidence/drink-bubbles.png`).
