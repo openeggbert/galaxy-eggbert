@@ -167,8 +167,10 @@ def main():
             status = "UNREVIEWED"
             next_action = "fidelity review of the runtime model(s)"
         elif ext == ".max":
-            status = "BLOCKED"
-            next_action = "needs 3ds Max (owner request in plans/audit/manual_review.md)"
+            # The owner has no 3ds Max licence and leaves the .max files unused (MR-0001, 2026-11-04);
+            # their Ray Dream twins are what the game converts.
+            status = "NOT_APPLICABLE"
+            next_action = ""
         elif ext == ".a3d":
             status = "UNREVIEWED"
             next_action = "classify; a .rds of the same object is the richer source when one exists (materials, cameras)"
