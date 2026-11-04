@@ -381,7 +381,10 @@ ledgers before repeating any discovery. Where it stands:
   105's lava lake back as the original's (a fall burns him, Clear3): 105 plays in 18.7 s against
   17.3 s for the void. Play pass 8 with mipmaps, the lava cache and 105's lake: 78/78
   (`build-probe/play-pass-8/`); the web build rebuilt with all of it (02:31) and checked in
-  headless Chrome. Q-005's electrode is placed in no campaign world.
+  headless Chrome. Q-005's electrode is placed in no campaign world. Passes 7 and 8 compared frame
+  by frame (2,204 frames, the same ticks): outside 105 (its new lake) the largest changes are the
+  mipmaps' -- 125's rings, 053's and 123's far grain gone, nothing worse
+  (`plans/evidence/mipmaps-pass7-vs-pass8.jpg`).
   The web build was rebuilt after all of it (again 2026-11-04 00:07, with the night's fixes) and loaded in headless Chrome:
   120 models, 93/93 sounds, the menu drawn, no error but the favicon's 404.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
