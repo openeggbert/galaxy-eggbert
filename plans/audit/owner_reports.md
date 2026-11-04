@@ -192,3 +192,20 @@ rewritten).
   binary killed him at once, now the wind blows him west; jumping onto its floor fan (86, 1, 17)
   still explodes it. `VerifyInteractionSystem` (beside / against / on the fan); world 115's gap
   81 now blows him onto the east mine (the brief and LV-0071 updated).
+
+## OR-0038 — the wind from a fan is barely visible and does not seem to move (owner 2026-11-04) — FIXED
+
+- Report: the wind object (from the fan) is hardly visible at all and seems not to move.
+- Cause: the wind tiles (110-125) were still plates: one 0.75 x 0.9 plate in the middle of each
+  cell, seen edge-on along the very corridor it blows through, and never animated (no animation
+  entry: always the first frame). Their sprites are thin streaks, every texel at alpha 127.
+- Fix: the original moves the streaks a frame every tick, every cell on the same frame
+  (Decor.cpp:1085-1102, `table_decor_ventg/d/h/b[m_time % 4]`): `TerrainRenderer` keeps the wind
+  cells apart (`m_windBlocks`) and builds each of the four frames' meshes once (`BuildWindFrame`),
+  drawn in the semi-transparent pass (an alpha-tested pass would drop texels at 127). Each cell is
+  two crossed plates a cell across, both holding the way it blows (its streaks along it): a side
+  wind upright and level (turned, M3D-0005, along Z), an updraught or downdraught on two upright
+  plates. So the streams join from cell to cell and show from every side.
+- Validation: live, world 115's draught tunnel from its mouth: before, one faint line at its first
+  curtain; after, the four curtains of streaks, moving between two shots 0.1 s apart. Golden
+  frames re-baselined (the demo world's wind tiles: 87-90 pixels, at most 12 levels); ctest.

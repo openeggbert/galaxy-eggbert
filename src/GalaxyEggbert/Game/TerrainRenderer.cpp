@@ -657,6 +657,15 @@ namespace GalaxyEggbert::Game
 
                     const auto& definition = GalaxyEggbert::GetBlockDefinition(block.type());
                     const std::uint16_t animBase = definition.animation.baseIcon;
+                    if (GalaxyEggbert::BlockTypes::isWind(block.type()))
+                    {
+                        // Its family's first frame (110, 114, 118, 122); BuildWindFrame draws it.
+                        AnimBlock wind{worldX, worldY, worldZ,
+                                       static_cast<std::uint16_t>(110 + (block.type() - 110) / 4 * 4)};
+                        wind.rotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
+                        m_windBlocks.push_back(wind);
+                        continue;
+                    }
                     if (IsWater(animBase))
                     {
                         m_waterBlocks.push_back({worldX, worldY, worldZ, animBase});
@@ -1300,7 +1309,8 @@ namespace GalaxyEggbert::Game
             m_lastAnimPhase = -1; // the traps change their cycle now
         }
         if (animPhase == m_lastAnimPhase ||
-            (m_animBlocks.empty() && m_waterBlocks.empty() && m_lavaBlocks.empty() && m_blitzBlocks.empty()))
+            (m_animBlocks.empty() && m_waterBlocks.empty() && m_lavaBlocks.empty() && m_blitzBlocks.empty() &&
+             m_windBlocks.empty()))
         {
             m_lastAnimPhase = animPhase;
             return;
@@ -1334,6 +1344,52 @@ namespace GalaxyEggbert::Game
                 m_blitzFrames[m_blitzIcon] = RebuildAnimatedRenderer(device, m_blitzBlocks, animPhase);
             }
         }
+        if (!m_windBlocks.empty())
+        {
+            m_windFrame = std::max(0, animPhase) % 4;
+            if (!m_windFrames[static_cast<std::size_t>(m_windFrame)])
+            {
+                m_windFrames[static_cast<std::size_t>(m_windFrame)] = BuildWindFrame(device, m_windFrame);
+            }
+        }
+    }
+
+    std::unique_ptr<GpuMeshParts> TerrainRenderer::BuildWindFrame(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int frame) const
+    {
+        // Two crossed plates a cell across, both holding the way the wind blows, its streaks along
+        // it: a side wind (110 -X, 114 +X; turned, M3D-0005, along Z) on an upright plate and a
+        // level one, an updraught or downdraught (118, 122) on two upright plates.
+        using Microsoft::Xna::Framework::Vector2;
+        using Microsoft::Xna::Framework::Vector3;
+        auto mesh = MakeLitTexturedMeshBuilder();
+        constexpr float h = 0.5f;
+        for (const auto& block : m_windBlocks)
+        {
+            const auto uv = m_tileAtlas->GetTileUv(block.base + frame);
+            const Vector3 c(block.x, block.y, block.z);
+            const bool side = block.base == 110 || block.base == 114;
+            if (side && !block.rotated)
+            {
+                mesh.AddPlate(c, 1.0f, 1.0f, CnaEngine::Graphics::PlateAxis::Z, uv);
+                mesh.AddPlate(c, 1.0f, 1.0f, CnaEngine::Graphics::PlateAxis::Y, uv);
+            }
+            else if (side)
+            {
+                mesh.AddPlate(c, 1.0f, 1.0f, CnaEngine::Graphics::PlateAxis::X, uv);
+                // Level, its u along +Z (AddPlate's level plate runs u along X).
+                mesh.AddDoubleSidedQuad({Vector3(c.X - h, c.Y, c.Z - h), Vector3(c.X - h, c.Y, c.Z + h),
+                                         Vector3(c.X + h, c.Y, c.Z + h), Vector3(c.X + h, c.Y, c.Z - h)},
+                                        {Vector2(uv.u0, uv.v1), Vector2(uv.u1, uv.v1), Vector2(uv.u1, uv.v0),
+                                         Vector2(uv.u0, uv.v0)});
+            }
+            else
+            {
+                mesh.AddPlate(c, 1.0f, 1.0f, CnaEngine::Graphics::PlateAxis::Z, uv);
+                mesh.AddPlate(c, 1.0f, 1.0f, CnaEngine::Graphics::PlateAxis::X, uv);
+            }
+        }
+        return mesh.Mesh().Empty() ? nullptr : UploadLitTexturedMeshParts(device, mesh.Mesh());
     }
 
     TerrainRenderer::ReliefMeshData TerrainRenderer::BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
@@ -1645,7 +1701,10 @@ namespace GalaxyEggbert::Game
         const GpuMeshParts* lavaRenderer = lava != m_lavaFrames.end() ? lava->second.get() : nullptr;
         const auto blitz = m_blitzFrames.find(m_blitzIcon);
         const GpuMeshParts* blitzRenderer = blitz != m_blitzFrames.end() ? blitz->second.get() : nullptr;
-        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || lavaRenderer || blitzRenderer)
+        const GpuMeshParts* windRenderer =
+            m_windFrame >= 0 ? m_windFrames[static_cast<std::size_t>(m_windFrame)].get() : nullptr;
+        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || lavaRenderer || blitzRenderer ||
+            windRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
             // NEXT.md §8, extended 2026-07-09 to also cover m_animRenderer):
@@ -1687,6 +1746,10 @@ namespace GalaxyEggbert::Game
             if (blitzRenderer)
             {
                 blitzRenderer->Draw(device, effect);
+            }
+            if (windRenderer)
+            {
+                windRenderer->Draw(device, effect);
             }
             if (m_waterRenderer)
             {
