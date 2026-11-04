@@ -118,6 +118,12 @@ rewritten).
   171 ms -> 15-20 / 0.26-0.38 M / 88-106 ms; world 063 under 3 frames a second -> 16 ms. Golden
   frames and trace unchanged; the hub and 115 shot with and without culling show the same models.
   `GALAXY_MODEL_CULL=0` draws them all.
+- And the spheres: the converter made every Ray Dream sphere 960 triangles whatever its size (the
+  chest's 59 studs of 2.5 sprite pixels were 56 640 of its 68 068). `tools/rd4_to_gltf/lower_spheres.py`
+  (run by `export_objects.py`, and once on the shipped objects and vehicles) tessellates each to its
+  size: full detail from a quarter block, 8 x 4 for a stud. 41 parts, 245 988 -> 107 268 triangles;
+  the chest 68 068 -> ~8 200, the girder 19 348 -> ~1 100, rendered side by side alike. Golden frames
+  re-baselined: 39 / 43 / 252 pixels of the small models' outlines.
 
 ## OR-0034 — the hub's world doors: a piece of the blue wall over their signs (owner 2026-11-04) — FIXED
 

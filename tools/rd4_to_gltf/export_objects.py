@@ -2,7 +2,8 @@
 """Turn build_object_library.py's models into the game's ``avatars3d/objects/``.
 
 Every ``<library>/<object>_<scene>/model.glb`` becomes ``<out>/<object>_<scene>/`` through
-``export_cna_avatar.py`` (CNA's SkinnedModelEXT directory), with its ``icons.txt`` beside it;
+``export_cna_avatar.py`` (CNA's SkinnedModelEXT directory), with its ``icons.txt`` beside it, its
+spheres then tessellated to their size (``lower_spheres.py``);
 ``<out>/index.txt`` lists the directories, which the game loads in that order. Directories of
 ``<out>`` that the library no longer has are removed.
 
@@ -20,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import export_cna_avatar  # noqa: E402
+import lower_spheres  # noqa: E402
 
 
 def main(argv=None) -> int:
@@ -41,6 +43,9 @@ def main(argv=None) -> int:
         export_cna_avatar.main(["--glb", str(args.library / name / "model.glb"), "--cna-home", str(args.cna_home),
                                 "--out", str(out)])
         shutil.copyfile(args.library / name / "icons.txt", out / "icons.txt")
+        # Its spheres tessellated to their size (lower_spheres.py: a stud needs no 960 triangles).
+        for line in lower_spheres.lower_spheres(out):
+            print(line)
     (args.out / "index.txt").write_text("# avatars3d/objects/<directory>/, one per line; export_objects.py\n"
                                         + "".join(f"{n}\n" for n in names))
     print(f"{len(names)} object model(s) -> {args.out}")
