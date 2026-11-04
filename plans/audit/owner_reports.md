@@ -261,10 +261,14 @@ rewritten).
   placed, **the next click sets where it goes**, its step scaled to the cells, as the original
   editor's `m_liftEnd` (decdesign.cpp:479-506); a click on it again or Escape leaves it still
   (OR-0045). **H** shows the editor's keys over the view; a prompt there while an end is awaited.
+  Later the same night: **O** also turns an object or a BigDecor in the preview's cell (where a
+  click would put one) a quarter at a time, its cell's quarter turns in the same byte (a cell's
+  metadata, air or not): drawn turned are the still objects (treasures, eggs, keys, pickups), the
+  parked vehicles and the BigDecor models; a moving one keeps the facing of its travel.
 - Validation: `VerifyGEWorldEditor` (V on a grass end and a fan, undone; O round a teleporter and
   a fan's two axes; a lift's end two up by the next click, no second lift); live: the keys shown by
   H; a lift placed and its end clicked, saved (49, 5, 26) -> (49, 7, 26); V turned the aimed grass
-  end 108 to 107, saved. Note for scripted runs: a key tapped faster than a frame is missed (the
+  end 108 to 107, saved; a treasure placed and turned twice (`build-probe/qa-shots/turnobj/`). Note for scripted runs: a key tapped faster than a frame is missed (the
   editor reads the keyboard each frame); hold it.
 
 ## OR-0042 — the decorations Blupi passes through in 2D should be impassable in 3D (owner 2026-11-04) — DONE

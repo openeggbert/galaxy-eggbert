@@ -6199,9 +6199,11 @@ namespace GalaxyEggbert::CNA
                     }
                     parked.model->ComputeBoneTransformsEXT(
                         parked.clip, System::TimeSpan::FromSeconds(0.0), /*loop=*/false, boneTransforms);
+                    // Facing +X, turned in the editor a quarter at a time (OR-0044).
                     blupiEffect_->setWorldProperty(
                         Microsoft::Xna::Framework::Matrix::CreateScale(kRealModelScale) *
-                        Microsoft::Xna::Framework::Matrix::CreateRotationY(kHalfPi) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationY(
+                            kHalfPi * static_cast<float>(1 + CellQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ))) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(
                             obj.currentX, obj.currentY - 0.5f, obj.currentZ));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
@@ -6391,6 +6393,12 @@ namespace GalaxyEggbert::CNA
                         {
                             const float spriteFacing = obj.posStartX > obj.posEndX ? 3.14159265f : 0.0f;
                             turn = std::atan2(-dz, dx) - spriteFacing;
+                        }
+                        // A still object turned in the editor (OR-0044: its cell's quarter turns).
+                        if (dx == 0.0f && dz == 0.0f && obj.posStartY == obj.posEndY)
+                        {
+                            turn += 1.57079632f * static_cast<float>(
+                                                      CellQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ));
                         }
                         drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
                                   turn);
@@ -6622,7 +6630,8 @@ namespace GalaxyEggbert::CNA
                     if (pose != nullptr)
                     {
                         const float halfBlocks = static_cast<float>(pose->iconPixels > 0 ? pose->iconPixels : 128) / 128.0f;
-                        drawModel(*pose, cell.worldX, cell.worldY - 0.5f + halfBlocks, cell.worldZ);
+                        drawModel(*pose, cell.worldX, cell.worldY - 0.5f + halfBlocks, cell.worldZ,
+                                  1.57079632f * static_cast<float>(CellQuarterTurns(cell.worldX, cell.worldY, cell.worldZ)));
                     }
                 }
                 device.setRasterizerStateProperty(

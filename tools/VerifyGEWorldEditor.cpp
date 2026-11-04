@@ -239,6 +239,17 @@ int main()
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
         check(one && QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 0, "a fan swaps its axis, back and forth");
+        // An object in the preview's cell turns a quarter, its cell's turns (a treasure).
+        GalaxyEggbert::MoveObjectRecord treasure;
+        treasure.type = GalaxyEggbert::Def::ObjectType::ObjectType5;
+        treasure.posStartX = treasure.posEndX = static_cast<float>(placeX);
+        treasure.posStartY = treasure.posEndY = static_cast<float>(placeY);
+        treasure.posStartZ = treasure.posEndZ = static_cast<float>(placeZ);
+        GalaxyEggbert::PlaceMoveObject(world, treasure);
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
+        check(QuarterTurns(world, placeX, placeY, placeZ) == 1 && QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 0,
+              "O turns the object in the preview's cell, not the block under it (OR-0044)");
     }
 
     // OR-0045: a lift placed, the next click elsewhere is its end (the original's m_liftEnd).

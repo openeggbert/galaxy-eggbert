@@ -819,7 +819,7 @@ namespace GalaxyEggbert::Editor
             lines.emplace_back("LEFT CLICK/PLACE: place   MIDDLE CLICK: remove");
             lines.emplace_back("Click the block just placed again: its next variant");
             lines.emplace_back("V: next variant of the aimed block   CTRL+click: no cycling");
-            lines.emplace_back("O: turn the aimed tile or model");
+            lines.emplace_back("O: turn the aimed tile, model, object or decor");
             lines.emplace_back("Lift or creature: place it, then click where it goes");
             lines.emplace_back("G: pick object  T: its end  TAB +/-: its values  DEL: remove");
             lines.emplace_back("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save");
@@ -838,6 +838,25 @@ namespace GalaxyEggbert::Editor
         if (!input.turnHeld || turnKeyHeldLastFrame_ || !hasRaycastHit_)
         {
             return false;
+        }
+        // An object or a BigDecor in the cell the preview shows (where a click would put one)
+        // turns a quarter at a time (OR-0044): its cell's quarter turns.
+        if (hasHighlight_ && (FindMoveObjectAt(world, placementCellX_, placementCellY_, placementCellZ_) ||
+                              FindBigDecorAt(world, placementCellX_, placementCellY_, placementCellZ_)))
+        {
+            const int before = Game::QuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_);
+            const int after = (before + 1) % 4;
+            Game::SetQuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_, after);
+            EditCommand command;
+            command.kind = EditCommand::Kind::TurnEdit;
+            command.turnX = placementCellX_;
+            command.turnY = placementCellY_;
+            command.turnZ = placementCellZ_;
+            command.turnBefore = before;
+            command.turnAfter = after;
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+            return true;
         }
         if (world.getBlock(hitCellX_, hitCellY_, hitCellZ_).isAir())
         {
