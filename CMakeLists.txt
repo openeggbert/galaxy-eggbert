@@ -874,7 +874,12 @@ endif()
 if(BUILD_TESTING)
     add_test(NAME VerifyBlupiMovement COMMAND VerifyBlupiMovement
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    add_test(NAME VerifyGESaveData COMMAND VerifyGESaveData)
+    # In its own directory: it creates and removes savedata.txt where it runs, and the build
+    # directory's own is the game's save when it is played from there (CLAUDE.md), which every
+    # ctest run deleted (2026-11-04).
+    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/verify-savedata)
+    add_test(NAME VerifyGESaveData COMMAND VerifyGESaveData
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/verify-savedata)
     add_test(NAME VerifyMoveObjectTypesCna COMMAND VerifyMoveObjectTypesCna
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
     add_test(NAME VerifyBigDecorParsingCna COMMAND VerifyBigDecorParsingCna
