@@ -35,6 +35,7 @@ namespace GalaxyEggbert::Game
         constexpr int kIconPlayJump = 2;
         constexpr int kIconPlayPause = 3;
         constexpr int kIconPlayAction = 12;
+        constexpr int kIconPlayDown = 23; // Pixmap.cpp: PlayDown
         constexpr int kIconPauseBack = 8;
         constexpr int kIconPauseRestart = 9;
         constexpr int kIconPauseContinue = 10;
@@ -124,6 +125,15 @@ namespace GalaxyEggbert::Game
             const float half = 28.0f * m.s;
             const float cy = c.Y - (kDPadDrawRadius + 14.0f) * m.s - half;
             return Rect{c.X - half, cy - half, c.X + half, cy + half};
+        }
+
+        // The crouch button (the original's PlayDown): in the original it takes the stick's corner
+        // when the accelerometer hides the stick (InputPad.cpp:1754-1771); Galaxy keeps its stick,
+        // so the button stands beside Jump, one button further in, the same size.
+        Rect PlayCrouchRect(const ScreenMetrics& m, bool jumpRight) noexcept
+        {
+            const Rect right{m.w - m.f1 * 2.4f, m.h - m.f1 * 1.2f, m.w - m.f1 * 1.4f, m.h - m.f1 * 0.2f};
+            return jumpRight ? right : MirrorX(right, m);
         }
 
         Rect PlayPauseRect(const ScreenMetrics& m) noexcept
@@ -253,6 +263,7 @@ namespace GalaxyEggbert::Game
         constexpr int kPlayControlAction = 2;
         constexpr int kPlayControlPause = 3;
         constexpr int kPlayControlBackUp = 4;
+        constexpr int kPlayControlCrouch = 5;
 
         constexpr int kPauseControlMenu = 0;
         constexpr int kPauseControlBack = 1;
@@ -867,10 +878,12 @@ namespace GalaxyEggbert::Game
         const bool overAction = InRect(mouseX, mouseY, PlayActionRect(m, jumpRight_));
         const bool overPause = InRect(mouseX, mouseY, PlayPauseRect(m));
         const bool overBackUp = InRect(mouseX, mouseY, PlayBackUpRect(m, jumpRight_));
+        const bool overCrouch = InRect(mouseX, mouseY, PlayCrouchRect(m, jumpRight_));
 
         if (mouseDown && !mouseWasDown_)
         {
             if (overBackUp) activeControl_ = kPlayControlBackUp;
+            else if (overCrouch) activeControl_ = kPlayControlCrouch;
             else if (overDPad) activeControl_ = kPlayControlDPad;
             else if (overJump) activeControl_ = kPlayControlJump;
             else if (overAction) activeControl_ = kPlayControlAction;
@@ -883,6 +896,7 @@ namespace GalaxyEggbert::Game
         // of where the press started (see InputPad.hpp's class comment).
         outInput.jumpHeld = mouseDown && overJump;
         outInput.backUpHeld = mouseDown && activeControl_ == kPlayControlBackUp;
+        outInput.crouchHeld = mouseDown && activeControl_ == kPlayControlCrouch;
 
         // Real discrete D-pad: only active while the drag that STARTED on
         // the pad continues, using the CURRENT drag point each frame (not
@@ -933,6 +947,7 @@ namespace GalaxyEggbert::Game
         const Rect actionRect = PlayActionRect(m, jumpRight_);
         const Rect pauseRect = PlayPauseRect(m);
         const Rect backRect = PlayBackUpRect(m, jumpRight_);
+        const Rect crouchRect = PlayCrouchRect(m, jumpRight_);
         bool onControl = false;
         bool dpadSeen = false;
         for (const auto& t : touches)
@@ -940,6 +955,7 @@ namespace GalaxyEggbert::Game
             if (t.pressed)
             {
                 if (InRect(t.x, t.y, backRect) && backUpTouchId_ < 0) backUpTouchId_ = t.id;
+                else if (InRect(t.x, t.y, crouchRect) && crouchTouchId_ < 0) crouchTouchId_ = t.id;
                 else if (InRect(t.x, t.y, padRect) && dpadTouchId_ < 0) dpadTouchId_ = t.id;
                 else if (InRect(t.x, t.y, actionRect)) actionTouchId_ = t.id;
                 else if (InRect(t.x, t.y, pauseRect)) pauseTouchId_ = t.id;
@@ -975,6 +991,12 @@ namespace GalaxyEggbert::Game
                 if (down) outInput.backUpHeld = true;
                 else backUpTouchId_ = -1;
             }
+            if (t.id == crouchTouchId_)
+            {
+                onControl = true;
+                if (down) outInput.crouchHeld = true;
+                else crouchTouchId_ = -1;
+            }
             if (t.id == actionTouchId_)
             {
                 onControl = true;
@@ -1005,6 +1027,7 @@ namespace GalaxyEggbert::Game
             return std::any_of(touches.begin(), touches.end(), [id](const TouchPoint& t) { return t.id == id; });
         };
         if (backUpTouchId_ >= 0 && !present(backUpTouchId_)) backUpTouchId_ = -1;
+        if (crouchTouchId_ >= 0 && !present(crouchTouchId_)) crouchTouchId_ = -1;
         if (actionTouchId_ >= 0 && !present(actionTouchId_)) actionTouchId_ = -1;
         if (pauseTouchId_ >= 0 && !present(pauseTouchId_)) pauseTouchId_ = -1;
         return onControl;
@@ -1061,6 +1084,8 @@ namespace GalaxyEggbert::Game
         // The back-up button (Galaxy's, 2026-11-02), the Setup's return arrow over the stick.
         appendRect(activeControl_ == kPlayControlBackUp || backUpTouchId_ >= 0 ? pressedQuads : normalQuads,
                    PlayBackUpRect(m, jumpRight_), kIconSetupReturn);
+        appendRect(activeControl_ == kPlayControlCrouch || crouchTouchId_ >= 0 ? pressedQuads : normalQuads,
+                   PlayCrouchRect(m, jumpRight_), kIconPlayDown);
 
         // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
         // straight alpha, while AlphaBlend expects the premultiplied colours

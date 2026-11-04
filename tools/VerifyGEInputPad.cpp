@@ -294,6 +294,18 @@ int main()
         check(in.backUpHeld && in.moveInput == 0.0f, "touch: a finger pressed on the back-up button holds it");
         (void)pad.UpdatePlayTouches({TP{3, 100.0f, 268.0f, false, true}}, kViewportW, kViewportH, in);
         check(!in.backUpHeld, "touch: lifted, the back-up button lets go");
+        // The crouch button (the original's PlayDown) beside Jump, held while a finger is on it,
+        // together with Jump under another finger.
+        (void)pad.UpdatePlayTouches({TP{4, 457.0f, 413.0f, true, false}, TP{5, 570.0f, 410.0f, true, false}},
+                                    kViewportW, kViewportH, in);
+        check(in.crouchHeld && in.jumpHeld, "touch: the crouch button beside Jump is held with Jump");
+        (void)pad.UpdatePlayTouches({TP{4, 457.0f, 413.0f, false, true}}, kViewportW, kViewportH, in);
+        check(!in.crouchHeld, "touch: lifted, the crouch button lets go");
+        // The mouse: pressed on it, held while the button stays down.
+        InputPad mousePad;
+        InputPad::PlayInput mouseIn;
+        (void)mousePad.UpdatePlay(mouse(457, 413, true), kViewportW, kViewportH, mouseIn);
+        check(mouseIn.crouchHeld, "mouse: pressed on the crouch button, it is held");
     }
     {
         // A gamepad as keys (GamepadInput.hpp, owner 2026-11-02): none when unplugged; the stick past

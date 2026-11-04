@@ -3290,7 +3290,7 @@ namespace GalaxyEggbert::CNA
                 moveInput = 1.0f;
                 jumpPressed = goldenTraceTick_ >= 40 && goldenTraceTick_ < 46;
             }
-            const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift);
+            const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift) || padPlayInput.crouchHeld;
             // Holding a crate (crouching, one right in front) is the one time he backs up: Down
             // pulls it (the original's Pop) instead of turning him round.
             const bool pullingStance =

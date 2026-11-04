@@ -93,6 +93,10 @@ namespace GalaxyEggbert::Game
             bool actionPressed = false; // PlayAction, edge-triggered (single-fire)
             bool pausePressed = false;  // PlayPause, edge-triggered (single-fire)
             bool backUpHeld = false;    // the back-up button (Galaxy's, 2026-11-02), held
+            // The crouch button, held: the original's PlayDown (pad icon 23, Down while held,
+            // InputPad.cpp:943). The original shows it only with the accelerometer, where its stick
+            // is gone; Galaxy's stick moves forward and back, so crouching needs it always.
+            bool crouchHeld = false;
         };
         // One finger on a touch screen (CNA's TouchLocation, in screen pixels).
         struct TouchPoint
@@ -732,7 +736,7 @@ namespace GalaxyEggbert::Game
         int activeControl_ = -1;
         bool mouseWasDown_ = false;
         // UpdatePlayTouches(): the finger holding each control (-1: none).
-        int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1;
+        int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;
 
         // Live D-pad drag offset (reference-space pixels from the pad's
         // center), used only to position the thumb icon in DrawPlay --

@@ -21,12 +21,13 @@
 #   key <keysym...>          press and release (xdotool names: Escape, Up, F3, ...)
 #   keydown <keysym> / keyup <keysym>
 #   click <x> <y>            left click at window coordinates
+#   mousedown <x> <y> / mouseup   hold the left button at window coordinates / let it go
 #   move <x> <y>             move the mouse to window coordinates
 #   focus                    give the game window the keyboard focus again
 set -u
 
 if [[ $# -lt 3 ]]; then
-    sed -n '2,24p' "$0" >&2
+    sed -n '2,25p' "$0" >&2
     exit 2
 fi
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -87,6 +88,11 @@ while read -r cmd a b; do
         move)
             eval "$(geometry)"
             xdotool mousemove $((X + a)) $((Y + b)) ;;
+        mousedown)
+            eval "$(geometry)"
+            xdotool mousemove $((X + a)) $((Y + b)); sleep 0.2
+            xdotool mousedown 1 ;;
+        mouseup) xdotool mouseup 1 ;;
         focus) xdotool windowfocus "$wid" 2>/dev/null ;;
         "#"*|"") ;;
         *) echo "qa_live.sh: unknown step '$cmd'" >&2 ;;
