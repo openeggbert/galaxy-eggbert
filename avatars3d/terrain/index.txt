@@ -1,0 +1,58 @@
+# icon <icon> <relief> [<texture icon>]: the terrain tile drawn as that relief, textured by
+# the texture icon's sprite (default its own); tools/terrain_relief/build_relief.py from
+# tools/terrain_relief/tiles.txt
+icon 2 r_techno03.gtr
+icon 9 r_techno10.gtr
+icon 10 r_techno11.gtr
+icon 14 r_techno15.gtr
+icon 35 r_roc4a.gtr
+icon 36 r_roc4b.gtr
+icon 37 r_roc4c.gtr
+icon 38 r_roc4d.gtr
+icon 39 r_roc4e.gtr
+icon 107 r_herbe1.gtr 107
+icon 108 r_herbe1.gtr 107
+icon 109 r_herbe1.gtr 107
+icon 144 r_roc4g.gtr
+icon 145 r_roc4h.gtr
+icon 146 r_roc4i.gtr
+icon 147 r_roc4j.gtr
+icon 148 r_roc4k.gtr
+icon 149 r_roc4l.gtr
+icon 150 r_roc4m.gtr
+icon 151 r_roc4n.gtr
+icon 152 r_roc4o.gtr
+icon 153 r_roc4p.gtr
+icon 156 r_roc4aa.gtr
+icon 215 r_enfant01.gtr
+icon 216 r_enfant02.gtr
+icon 217 r_enfant03.gtr
+icon 218 r_enfant04.gtr
+icon 219 r_enfant05.gtr
+icon 220 r_enfant06.gtr
+icon 221 r_enfant07.gtr
+icon 222 r_enfant08.gtr
+icon 223 r_enfant09.gtr
+icon 233 r_enfant19.gtr
+icon 234 r_enfant20.gtr
+icon 246 r_fromage2.gtr
+icon 247 r_fromage3.gtr
+icon 248 r_fromage4.gtr
+icon 249 r_fromage5.gtr
+icon 284 r_grotte00.gtr
+icon 285 r_grotte01.gtr
+icon 301 r_grotte17.gtr
+icon 302 r_grotte18.gtr
+icon 341 r_smooth_smooth01.gtr
+icon 342 r_smooth_smooth02.gtr
+icon 343 r_smooth_smooth03.gtr
+icon 344 r_smooth_smooth04.gtr
+icon 345 r_smooth_smooth05.gtr
+icon 346 r_smooth_smooth06.gtr
+icon 347 r_smooth_smooth_u.gtr
+icon 362 r_smooth_smooth_u2.gtr
+icon 386 r_palais_mur01.gtr
+icon 387 r_palais_mur02.gtr
+icon 390 r_palais_mur05.gtr
+icon 393 r_palais_mur01.gtr
+icon 397 r_palais_mur02.gtr

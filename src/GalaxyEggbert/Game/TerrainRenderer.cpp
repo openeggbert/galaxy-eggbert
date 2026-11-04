@@ -502,6 +502,27 @@ namespace GalaxyEggbert::Game
         // The relief tiles' cubes, by chunk (UpdateRelief).
         std::unordered_map<std::uint32_t, std::size_t> reliefChunkOf;
         std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkCubes;
+        std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkGrass;
+        const auto reliefChunkFor = [&](int x, int y, int z)
+        {
+            const int k = TerrainRenderer::kReliefChunkCells;
+            const auto key = static_cast<std::uint32_t>((x / k) << 20 | (y / k) << 10 | (z / k));
+            auto found = reliefChunkOf.find(key);
+            if (found == reliefChunkOf.end())
+            {
+                found = reliefChunkOf.emplace(key, m_reliefChunks.size()).first;
+                ReliefChunk chunk;
+                const Microsoft::Xna::Framework::Vector3 low(static_cast<float>((x / k) * k - kWorldCenterX) - 0.5f,
+                                                             static_cast<float>((y / k) * k) - 0.5f,
+                                                             static_cast<float>((z / k) * k - kWorldCenterZ) - 0.5f);
+                chunk.boxMin = low;
+                chunk.boxMax = low + Microsoft::Xna::Framework::Vector3(static_cast<float>(k));
+                m_reliefChunks.push_back(std::move(chunk));
+                reliefChunkCubes.push_back(MakeLitTexturedMeshBuilder());
+                reliefChunkGrass.push_back(MakeLitTexturedMeshBuilder());
+            }
+            return found->second;
+        };
         // A relief tile's cell, near the focus, is its relief, which lies inside the cell: it does not
         // hide the faces of a neighbour drawn otherwise (they would leave a gap down to its lumps).
         const auto isReliefCell = [&](int nx, int ny, int nz)
@@ -743,6 +764,48 @@ namespace GalaxyEggbert::Game
                         continue;
                     }
 
+                    const bool grassRelief = definition.grassTop && m_reliefs != nullptr &&
+                                             m_reliefs->Find(block.type()) != nullptr &&
+                                             CoverageOf(tileCoverage, icon) == TileCoverage::Opaque;
+                    if (grassRelief)
+                    {
+                        // The grass as its scene's strips near the focus (TerrainRelief.hpp
+                        // kGrassAirMask); far, its cube and top plate as below, kept in its chunk.
+                        const std::size_t chunkIndex = reliefChunkFor(x, y, z);
+                        reliefChunkGrass[chunkIndex].AddPlate(
+                            Microsoft::Xna::Framework::Vector3(worldX, worldY + 0.5f, worldZ), kGrassPlateWidth,
+                            kGrassPlateDepth, CnaEngine::Graphics::PlateAxis::Y,
+                            CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+                        // Hidden by its neighbours as any cell (a relief cell does not show its faces to
+                        // other relief cells: reliefNeighbourFaces is for the cells drawn otherwise).
+                        const std::uint8_t hidden = HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage);
+                        AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated,
+                                              reliefChunkCubes[chunkIndex], hidden, -1);
+                        ReliefCell cell;
+                        cell.center = center;
+                        cell.icon = block.type();
+                        cell.grass = true;
+                        const bool topOpen = (hidden & (1u << 4)) == 0;
+                        for (int face = 0; face < 6; ++face)
+                        {
+                            const bool open = (hidden & (1u << face)) == 0;
+                            const bool strip = face <= 1 && topOpen; // +Z and -Z: the leaves on top
+                            if (face == 4 || !(open || strip))
+                            {
+                                continue;
+                            }
+                            cell.faces = static_cast<std::uint8_t>(cell.faces | (1u << face));
+                            cell.air[static_cast<std::size_t>(face)] = static_cast<std::uint8_t>(
+                                ReliefAirSides(face, [&](int dx, int dy, int dz) {
+                                    return IsOccluderBlock(world, blocksPerAxis, x + dx, y + dy, z + dz, tileCoverage);
+                                }) & kGrassAirMask);
+                        }
+                        if (cell.faces != 0)
+                        {
+                            m_reliefChunks[chunkIndex].cells.push_back(cell);
+                        }
+                        continue;
+                    }
                     if (definition.grassTop)
                     {
                         // Additive, not exclusive: the block's sides/bottom
@@ -819,6 +882,53 @@ namespace GalaxyEggbert::Game
                             texturedSide = SingleTexturedSide(icon, hiddenFaces, room);
                         }
                     }
+                    if (m_reliefs != nullptr && mesh == &staticMesh &&
+                        definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube &&
+                        !IsTeleporterTipIcon(icon) && m_reliefs->Find(block.type()) != nullptr)
+                    {
+                        // A relief tile that is a DirectionalCube (the machine panel 10 and its kin): its
+                        // faces that wear the tile become the relief near the focus, the others stay flat.
+                        CnaEngine::Graphics::BoxFaces cubeFaces;
+                        ConfigureDirectionalCubeFaces(icon, tileUv, icon107Uv, cubeFaces, texturedSide);
+                        const std::uint8_t ownHidden = HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage);
+                        const std::size_t chunkIndex = reliefChunkFor(x, y, z);
+                        ReliefCell cell;
+                        cell.center = center;
+                        cell.icon = block.type();
+                        for (int face = 0; face < 6; ++face)
+                        {
+                            auto& style = cubeFaces[face];
+                            if ((ownHidden & (1u << face)) != 0)
+                            {
+                                style.visible = false;
+                            }
+                            if (!style.visible)
+                            {
+                                continue;
+                            }
+                            const bool wearsTile = style.uv.u0 == tileUv.u0 && style.uv.u1 == tileUv.u1 &&
+                                                   style.uv.v0 == tileUv.v0 && style.uv.v1 == tileUv.v1;
+                            if (wearsTile)
+                            {
+                                cell.faces = static_cast<std::uint8_t>(cell.faces | (1u << face));
+                                cell.air[static_cast<std::size_t>(face)] = ReliefAirSides(face, [&](int dx, int dy, int dz) {
+                                    return IsOccluderBlock(world, blocksPerAxis, x + dx, y + dy, z + dz, tileCoverage);
+                                });
+                            }
+                            else
+                            {
+                                cell.flatFaces = static_cast<std::uint8_t>(cell.flatFaces | (1u << face));
+                                cell.flatUv[static_cast<std::size_t>(face)] = style.uv;
+                            }
+                        }
+                        AddCenteredBox(reliefChunkCubes[chunkIndex], center,
+                                       Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), cubeFaces);
+                        if ((cell.faces | cell.flatFaces) != 0)
+                        {
+                            m_reliefChunks[chunkIndex].cells.push_back(cell);
+                        }
+                        continue;
+                    }
                     if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh, hiddenFaces,
                                               texturedSide))
                     {
@@ -853,23 +963,8 @@ namespace GalaxyEggbert::Game
                     {
                         // A relief tile (Q-012): its cube goes to its chunk, drawn as cubes far from the
                         // focus and as the cells' reliefs near it.
-                        const int k = TerrainRenderer::kReliefChunkCells;
-                        const auto key = static_cast<std::uint32_t>((x / k) << 20 | (y / k) << 10 | (z / k));
-                        auto found = reliefChunkOf.find(key);
-                        if (found == reliefChunkOf.end())
-                        {
-                            found = reliefChunkOf.emplace(key, m_reliefChunks.size()).first;
-                            ReliefChunk chunk;
-                            const Microsoft::Xna::Framework::Vector3 low(
-                                static_cast<float>((x / k) * k - kWorldCenterX) - 0.5f,
-                                static_cast<float>((y / k) * k) - 0.5f,
-                                static_cast<float>((z / k) * k - kWorldCenterZ) - 0.5f);
-                            chunk.boxMin = low;
-                            chunk.boxMax = low + Microsoft::Xna::Framework::Vector3(static_cast<float>(k));
-                            m_reliefChunks.push_back(std::move(chunk));
-                            reliefChunkCubes.push_back(MakeLitTexturedMeshBuilder());
-                        }
-                        AddCenteredBox(reliefChunkCubes[found->second], center,
+                        const std::size_t chunkIndex = reliefChunkFor(x, y, z);
+                        AddCenteredBox(reliefChunkCubes[chunkIndex], center,
                                        Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
                         ReliefCell cell;
                         cell.center = center;
@@ -887,7 +982,7 @@ namespace GalaxyEggbert::Game
                         }
                         if (cell.faces != 0)
                         {
-                            m_reliefChunks[found->second].cells.push_back(cell);
+                            m_reliefChunks[chunkIndex].cells.push_back(cell);
                         }
                         continue;
                     }
@@ -922,6 +1017,10 @@ namespace GalaxyEggbert::Game
             if (!reliefChunkCubes[i].Mesh().Empty())
             {
                 m_reliefChunks[i].cubes = UploadLitTexturedMeshParts(device, reliefChunkCubes[i].Mesh());
+            }
+            if (!reliefChunkGrass[i].Mesh().Empty())
+            {
+                m_reliefChunks[i].grassTops = UploadLitTexturedMeshParts(device, reliefChunkGrass[i].Mesh());
             }
         }
 
@@ -1179,14 +1278,39 @@ namespace GalaxyEggbert::Game
             {
                 continue;
             }
-            const auto tile = m_tileAtlas->GetTileUv(cell.icon);
+            const auto tile = m_tileAtlas->GetTileUv(m_reliefs->TextureIcon(cell.icon));
+            if (cell.flatFaces != 0)
+            {
+                CnaEngine::Graphics::BoxFaces flat;
+                for (int face = 0; face < 6; ++face)
+                {
+                    flat[face].visible = (cell.flatFaces & (1u << face)) != 0;
+                    flat[face].uv = cell.flatUv[static_cast<std::size_t>(face)];
+                }
+                AddCenteredBox(mesh, cell.center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), flat);
+            }
             for (int face = 0; face < 6; ++face)
             {
-                if ((cell.faces & (1u << face)) != 0)
+                if ((cell.faces & (1u << face)) == 0)
                 {
-                    AppendReliefFace(mesh, *relief, cell.center, face, tile,
-                                     m_reliefOverhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)], true);
+                    continue;
                 }
+                if (cell.grass && face == 5)
+                {
+                    // The grass's underside: its soil's colour (the sprite's bottom rows), flat.
+                    const float u = tile.u0 + 0.5f * (tile.u1 - tile.u0);
+                    const float v = tile.v0 + 0.92f * (tile.v1 - tile.v0);
+                    CnaEngine::Graphics::BoxFaces bottom;
+                    for (int k = 0; k < 6; ++k)
+                    {
+                        bottom[k].visible = k == 5;
+                        bottom[k].uv = CnaEngine::Graphics::UvRect{u, v, u, v};
+                    }
+                    AddCenteredBox(mesh, cell.center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), bottom);
+                    continue;
+                }
+                AppendReliefFace(mesh, *relief, cell.center, face, tile,
+                                 m_reliefOverhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)], !cell.grass);
             }
         }
         if (mesh.Mesh().Empty())
@@ -1357,6 +1481,13 @@ namespace GalaxyEggbert::Game
         if (m_grassRenderer)
         {
             m_grassRenderer->Draw(device, grassEffect);
+        }
+        for (const auto& chunk : m_reliefChunks)
+        {
+            if (chunk.grassTops && !(chunk.near && chunk.relief))
+            {
+                chunk.grassTops->Draw(device, grassEffect);
+            }
         }
     }
 

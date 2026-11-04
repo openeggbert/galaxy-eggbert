@@ -34,18 +34,22 @@ namespace GalaxyEggbert::Game
     // Reads a .gtr file (build_relief.py); false when it is missing or malformed.
     bool ReadTerrainRelief(const std::string& path, TerrainRelief& out);
 
-    // The reliefs of avatars3d/terrain/ by tile icon (index.txt: "icon <icon> <file>").
+    // The reliefs of avatars3d/terrain/ by tile icon (index.txt: "icon <icon> <file> [<texture icon>]":
+    // the relief is textured by the texture icon's sprite, by default the tile's own; the grass's
+    // ends 108/109 wear the middle 107, whose sprite is whole).
     class TerrainReliefTable
     {
     public:
         // Loads <directory>/index.txt and the files it names; returns how many icons have a relief.
         int Load(const std::string& directory);
         [[nodiscard]] const TerrainRelief* Find(std::uint16_t icon) const;
+        [[nodiscard]] std::uint16_t TextureIcon(std::uint16_t icon) const;
         [[nodiscard]] bool Empty() const noexcept { return m_icons.empty(); }
 
     private:
         std::unordered_map<std::string, std::shared_ptr<TerrainRelief>> m_files;
         std::unordered_map<std::uint16_t, const TerrainRelief*> m_icons;
+        std::unordered_map<std::uint16_t, std::uint16_t> m_textures;
     };
 
     // A cell face's frame, in CnaEngine::Graphics::BoxFace order (+Z, -Z, +X, -X, +Y, -Y): the outward
@@ -80,9 +84,16 @@ namespace GalaxyEggbert::Game
         return air;
     }
 
+    // The grass (107-109, Q-001: "the whole lumpy models with the joining variants") is its scene's
+    // slab twice, back to back: the reliefs of a grass cell's +Z and -Z faces are both laid whenever
+    // its top is open (their leaves cover the top; neither hangs the leaves' tips off: kGrassAirMask),
+    // and the crosswise ones on +X and -X only where the row ends (the faces left open there).
+    inline constexpr std::uint8_t kGrassAirMask = static_cast<std::uint8_t>(~4u); // +y (up) never air
+
     // Appends `relief` on face `face` of the cell centred at `center`, its triangles overhanging into
     // `airSides` left out, textured by the atlas's `tile`; with `backing`, also the face's square at
-    // the relief's depth (it fills what the lumps leave open), textured by the tile too.
+    // the relief's depth (it fills what the lumps leave open), reaching half a block into each solid
+    // neighbour as the overhangs do, textured by the tile too.
     void AppendReliefFace(CnaEngine::Graphics::MeshBuilder& mesh, const TerrainRelief& relief,
                           const Microsoft::Xna::Framework::Vector3& center, int face,
                           const CnaEngine::Graphics::UvRect& tile, std::uint8_t airSides, bool backing);

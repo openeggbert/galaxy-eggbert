@@ -95,6 +95,16 @@ still the plain per-face relief, to be replaced by the strips):
 
 Meanwhile: B is being built (C is the same relief with the overhangs kept, a switch).
 
+Found next (2026-11-04): the "127 terrain scenes" of `model_sources.md` came from the survey's
+silhouette match, which cannot tell tiles that fill their square apart (every square scene scores
+an IoU of 1): the bookshelves 139-141 were given a ball on a plate, the planks 32/33 and the bricks
+261 the cave's lumps, the machine panels 6/10/73 one panel. `tools/terrain_relief/match_tiles.py`
+now ranks every Decor scene by the tile's pixels, and the 80 tiles with the most exposed faces in
+the campaign (98.7 % of them) were checked by eye: `tools/terrain_relief/tiles.txt` lists the 54
+whose scene is certain (rocks, caves, cheese, slime, toys, four machine panels, the palace's
+facades, the grass). The others stay textured cubes: no scene of the archive is theirs (the bricks
+261-263/283, the grey metal plates 78-84/396, the panels 4-8/11-13, the stars, the roof tiles).
+
 ## Answered
 
 ### Q-000 — Wind and fans along Z (2026-11-02)

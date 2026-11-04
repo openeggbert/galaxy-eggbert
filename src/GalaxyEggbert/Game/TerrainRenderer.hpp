@@ -197,6 +197,11 @@ namespace GalaxyEggbert::Game
             std::uint16_t icon = 0;
             std::uint8_t faces = 0;
             std::array<std::uint8_t, 6> air{};
+            bool grass = false; // laid as the grass's strips (TerrainRelief.hpp kGrassAirMask)
+            // Faces drawn flat near the focus too, with their own texture rectangle: a DirectionalCube's
+            // faces that do not wear the tile (the machine panels' plain sides, SingleTexturedSide).
+            std::uint8_t flatFaces = 0;
+            std::array<CnaEngine::Graphics::UvRect, 6> flatUv{};
         };
         struct ReliefChunk
         {
@@ -204,6 +209,7 @@ namespace GalaxyEggbert::Game
             Microsoft::Xna::Framework::Vector3 boxMax;
             std::vector<ReliefCell> cells;
             std::unique_ptr<GpuMeshParts> cubes;
+            std::unique_ptr<GpuMeshParts> grassTops; // far: the grass cells' top plates (DrawGrass)
             std::unique_ptr<GpuMeshParts> relief;
             bool near = false;
         };

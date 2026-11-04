@@ -513,7 +513,9 @@ int main()
         auto mesh = G::MakeLitTexturedMeshBuilder();
         G::AppendReliefFace(mesh, read, center, 0, tile, 1, true); // +Z face, the +x overhang into air
         const auto& data = mesh.Mesh();
-        check(data.indices.size() == 3 * 3, "the overhang into air is left out; the backing is two triangles");
+        // Backing: the square and, toward the solid -x, +y and -y, five more squares (the +x side is air).
+        check(data.indices.size() == 3 * (1 + 2 * 6),
+              "the overhang into air is left out; the backing reaches only into the solid sides");
         bool inward = true;
         for (std::size_t t = 0; t + 2 < data.indices.size(); t += 3)
         {
@@ -532,6 +534,14 @@ int main()
               "a relief's texture coordinates map into the tile's rectangle");
         const Vector3 back = data.positions[data.indices[3 * 1]];
         check(std::fabs(back.Z - (-2.5f - 0.2f * 0.9f)) < 1e-5f, "the backing lies at nine tenths of the relief's depth");
+        float lowX = 1e9f, highX = -1e9f;
+        for (std::size_t k = 3; k < data.indices.size(); ++k)
+        {
+            lowX = std::min(lowX, data.positions[data.indices[k]].X);
+            highX = std::max(highX, data.positions[data.indices[k]].X);
+        }
+        check(std::fabs(lowX - 9.0f) < 1e-5f && std::fabs(highX - 10.5f) < 1e-5f,
+              "the backing reaches half a block into the solid -x side and stops at the air +x edge");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

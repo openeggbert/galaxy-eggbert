@@ -8,6 +8,11 @@
 
 namespace GalaxyEggbert::Game
 {
+    namespace
+    {
+        constexpr float kBackingReach = 0.5f;
+    }
+
     bool ReadTerrainRelief(const std::string& path, TerrainRelief& out)
     {
         std::ifstream file(path, std::ios::binary);
@@ -56,6 +61,7 @@ namespace GalaxyEggbert::Game
     {
         m_files.clear();
         m_icons.clear();
+        m_textures.clear();
         std::ifstream index(directory + "/index.txt");
         std::string line;
         while (std::getline(index, line))
@@ -67,6 +73,11 @@ namespace GalaxyEggbert::Game
                 icon > std::numeric_limits<std::uint16_t>::max())
             {
                 continue;
+            }
+            int texture = -1;
+            if (words >> texture && texture >= 0 && texture <= std::numeric_limits<std::uint16_t>::max())
+            {
+                m_textures[static_cast<std::uint16_t>(icon)] = static_cast<std::uint16_t>(texture);
             }
             auto found = m_files.find(file);
             if (found == m_files.end())
@@ -90,6 +101,12 @@ namespace GalaxyEggbert::Game
     {
         const auto found = m_icons.find(icon);
         return found == m_icons.end() ? nullptr : found->second;
+    }
+
+    std::uint16_t TerrainReliefTable::TextureIcon(std::uint16_t icon) const
+    {
+        const auto found = m_textures.find(icon);
+        return found == m_textures.end() ? icon : found->second;
     }
 
     void AppendReliefFace(CnaEngine::Graphics::MeshBuilder& mesh, const TerrainRelief& relief,
@@ -133,23 +150,42 @@ namespace GalaxyEggbert::Game
         }
         if (backing)
         {
+            // The face's square at the relief's depth, and as far again into each solid neighbour the
+            // relief hangs into (half a block): in an inner corner the two walls' lumps overhang into
+            // the same solid cells, and their backings must meet there or the gap shows the sky.
+            // Each of the up to nine squares wears its part of the tile (the reliefs' own wrap).
             const Vector3 base = origin - n * (relief.depth * 0.9f);
-            const Vector3 corners[4] = {base - r * 0.5f + u * 0.5f, base + r * 0.5f + u * 0.5f,
-                                        base + r * 0.5f - u * 0.5f, base - r * 0.5f - u * 0.5f};
-            const Vector2 uvs[4] = {Vector2(tile.u0, tile.v0), Vector2(tile.u1, tile.v0), Vector2(tile.u1, tile.v1),
-                                    Vector2(tile.u0, tile.v1)};
-            std::uint32_t ids[4];
-            for (int k = 0; k < 4; ++k)
+            const float reach[4] = {(airSides & 1) != 0 ? 0.0f : kBackingReach, (airSides & 2) != 0 ? 0.0f : kBackingReach,
+                                    (airSides & 4) != 0 ? 0.0f : kBackingReach, (airSides & 8) != 0 ? 0.0f : kBackingReach};
+            for (int ry = -1; ry <= 1; ++ry)
             {
-                CnaEngine::Graphics::BuilderVertex out;
-                out.position = corners[k];
-                out.normal = n;
-                out.texCoord0 = uvs[k];
-                ids[k] = mesh.AddVertex(out);
+                for (int rx = -1; rx <= 1; ++rx)
+                {
+                    const float x0 = rx < 0 ? -0.5f - reach[1] : (rx == 0 ? -0.5f : 0.5f);
+                    const float x1 = rx < 0 ? -0.5f : (rx == 0 ? 0.5f : 0.5f + reach[0]);
+                    const float y0 = ry < 0 ? -0.5f - reach[3] : (ry == 0 ? -0.5f : 0.5f);
+                    const float y1 = ry < 0 ? -0.5f : (ry == 0 ? 0.5f : 0.5f + reach[2]);
+                    if (x1 - x0 <= 0.0f || y1 - y0 <= 0.0f)
+                    {
+                        continue;
+                    }
+                    // Texture coordinates as the relief's: u = x + 0.5 - rx, v = 0.5 - y + ry.
+                    const auto corner = [&](float x, float y)
+                    {
+                        CnaEngine::Graphics::BuilderVertex out;
+                        out.position = base + r * x + u * y;
+                        out.normal = n;
+                        out.texCoord0 = Vector2(tile.u0 + (x + 0.5f - static_cast<float>(rx)) * du,
+                                                tile.v0 + (0.5f - y + static_cast<float>(ry)) * dv);
+                        return mesh.AddVertex(out);
+                    };
+                    const std::uint32_t topLeft = corner(x0, y1), topRight = corner(x1, y1);
+                    const std::uint32_t bottomRight = corner(x1, y0), bottomLeft = corner(x0, y0);
+                    // Top-left, top-right, bottom-right turn clockwise seen from outside (right x up = out).
+                    mesh.AddTriangle(topLeft, topRight, bottomRight);
+                    mesh.AddTriangle(topLeft, bottomRight, bottomLeft);
+                }
             }
-            // Top-left, top-right, bottom-right turn clockwise seen from outside (right x up = out).
-            mesh.AddTriangle(ids[0], ids[1], ids[2]);
-            mesh.AddTriangle(ids[0], ids[2], ids[3]);
         }
     }
 }

@@ -6,8 +6,9 @@ The terrain scenes are not blocks: each is a slab modelled to be seen from the f
 of a block deep, up to 1.37 blocks wide, so that the lumps of neighbouring tiles overlap and the
 cropped renders join). A relief is that slab's front half:
 
-1. the model of ``build_object_library.py`` (``--library``: one ``<object>_<scene>/`` per scene, its
-   ``icons.txt`` naming the sprite icons it draws and whether mirrored), posed at the icon's frame;
+1. the model of ``build_object_library.py`` (``--library``: one ``r_<scene>_<stem>/`` per scene) of the
+   scene ``tiles.txt`` gives the tile (reviewed by eye; ``match_tiles.py`` ranks the candidates),
+   mirrored as it says;
 2. its triangles facing away from the camera dropped (they lie inside the cell);
 3. welded, decimated to ``--budget`` triangles and smoothed by angle in Blender
    (``blender_decimate.py``);
@@ -21,15 +22,20 @@ cropped renders join). A relief is that slab's front half:
    cell's back half).
 
 ``reliefs.txt`` beside this script holds per-model settings (``drop=R,G,B``: scene props the
-sprites were rendered without).
+sprites were rendered without; ``texture=ICON``: the sprite its icons wear).
 
-Writes ``<out>/<model>[.m].gtr`` (little-endian: ``GTR1``, uint32 vertex and triangle counts,
+Writes ``<out>/r_<scene>[.m].gtr`` (little-endian: ``GTR1``, uint32 vertex and triangle counts,
 float32 x y z nx ny nz u v per vertex, uint32 a b c per triangle, uint8 overhang mask per
 triangle) and ``<out>/index.txt`` (``icon <icon> <file>`` per icon). Model space: +x right,
 +y up, +z toward the viewer, in blocks.
 
     python3 tools/terrain_relief/build_relief.py --library build-probe/rd4-terrain \\
-        --out avatars3d/terrain [--only t_roc4a_roc4a] [--budget 1500]
+        --write-objects build-probe/rd4-terrain/objects.txt
+    python3 tools/rd4_to_gltf/build_object_library.py --originals ../speedyblupi-data/originals \\
+        --sheets ../mobile-eggbert/Content/icons --objects build-probe/rd4-terrain/objects.txt \\
+        --out build-probe/rd4-terrain
+    python3 tools/terrain_relief/build_relief.py --library build-probe/rd4-terrain \\
+        --out avatars3d/terrain [--only 35,36] [--budget 1500]
 """
 
 from __future__ import annotations
@@ -201,46 +207,85 @@ def write_gtr(path: Path, verts: np.ndarray, tris: np.ndarray, masks: np.ndarray
         f.write(masks.astype("u1").tobytes())
 
 
+def read_tiles(path: Path) -> list[tuple[int, str, int, str | None]]:
+    """(icon, scene, mirrored, texture icon or None) per line of tiles.txt."""
+    out = []
+    for line in path.read_text().splitlines():
+        p = line.split("#", 1)[0].split()
+        if len(p) >= 3:
+            options = dict(o.split("=", 1) for o in p[3:] if "=" in o)
+            out.append((int(p[0]), p[1], int(p[2]), options.get("texture")))
+    return out
+
+
+def object_name(scene: str) -> str:
+    """The library's object name for a scene: r_<folder>_<stem> (Decor/ left out)."""
+    stem = scene.rsplit(".", 1)[0]
+    if stem.startswith("Decor/"):
+        stem = stem[len("Decor/"):]
+    return "r_" + stem.replace("/", "_").replace("-", "_")
+
+
+def model_dir_of(library: Path, scene: str) -> Path:
+    return library / f"{object_name(scene)}_{Path(scene).stem}"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--library", required=True, type=Path)
-    ap.add_argument("--out", required=True, type=Path)
-    ap.add_argument("--only", help="comma-separated model directory names")
+    ap.add_argument("--out", type=Path)
+    ap.add_argument("--tiles", type=Path, default=HERE / "tiles.txt")
+    ap.add_argument("--write-objects", type=Path,
+                    help="only write the objects list of build_object_library.py for the tiles' scenes")
+    ap.add_argument("--only", help="comma-separated icons")
     ap.add_argument("--budget", type=int, default=1500, help="triangles of the front half before the cut")
     ap.add_argument("--angle", type=float, default=40.0, help="smooth-by-angle threshold, degrees")
     ap.add_argument("--max-depth", type=float, default=0.5, help="triangles wholly deeper are dropped")
     ap.add_argument("--blender", default="blender")
     args = ap.parse_args(argv)
+    tiles = read_tiles(args.tiles)
+    if args.write_objects:
+        scenes: dict[str, list[int]] = {}
+        for icon, scene, _mirror, _texture in tiles:
+            scenes.setdefault(scene, []).append(icon)
+        args.write_objects.write_text("".join(
+            f"{object_name(scene)} object-m {','.join(map(str, sorted(icons)))} {scene} min_iou=0\n"
+            for scene, icons in sorted(scenes.items())))
+        return 0
+    if args.out is None:
+        ap.error("--out is needed")
     settings = read_settings(HERE / "reliefs.txt")
     args.out.mkdir(parents=True, exist_ok=True)
-    keep = set(args.only.split(",")) if args.only else None
+    keep = {int(i) for i in args.only.split(",")} if args.only else None
     index_path = args.out / "index.txt"
-    index = {}
-    if index_path.exists():
+    index: dict[int, str] = {}
+    if keep is not None and index_path.exists():
         for line in index_path.read_text().splitlines():
             p = line.split()
             if p and p[0] == "icon":
-                index[int(p[1])] = p[2]
-    for model_dir in sorted(d for d in args.library.iterdir() if (d / "icons.txt").exists()):
-        if keep is not None and model_dir.name not in keep:
+                index[int(p[1])] = " ".join(p[2:])
+    done: dict[tuple[str, int], str] = {}
+    for icon, scene, mirror, texture in tiles:
+        if keep is not None and icon not in keep:
             continue
-        done: dict[tuple[float, int], str] = {}
-        for icon, seconds, mirror in read_icons(model_dir):
-            if (seconds, mirror) not in done:
-                options = settings_for(model_dir.name, settings)
-                drop = [tuple(float(x) for x in c.split(",")) for c in options.get("drop", "").split(";") if c]
-                pos, tris = posed_front(model_dir, seconds, mirror, drop)
-                dpos, dnrm, faces = decimate(pos, tris, args.budget, args.angle, args.blender)
-                dpos[:, 2] -= dpos[:, 2].max()  # the front-most point on the face's plane
-                faces = [f for f in faces if max(dpos[p][2] for p, _ in f) >= -args.max_depth]
-                verts, out_tris, masks = cut_and_project(dpos, dnrm, faces)
-                name = model_dir.name + (".m" if mirror else "") + (f".{seconds:g}" if seconds else "") + ".gtr"
-                write_gtr(args.out / name, verts, out_tris, masks)
-                done[(seconds, mirror)] = name
-                print(f"{name}: {len(tris)} front triangles -> {len(faces)} -> {len(out_tris)} cut, "
-                      f"{len(verts)} vertices, depth {-dpos[:, 2].min():.2f}", flush=True)
-            index[icon] = done[(seconds, mirror)]
-    index_path.write_text("# icon <icon> <relief>: the terrain tile drawn as that relief (build_relief.py)\n" +
+        model_dir = model_dir_of(args.library, scene)
+        if (scene, mirror) not in done:
+            options = settings_for(model_dir.name, settings)
+            drop = [tuple(float(x) for x in c.split(",")) for c in options.get("drop", "").split(";") if c]
+            pos, tris = posed_front(model_dir, 0.0, mirror, drop)
+            dpos, dnrm, faces = decimate(pos, tris, args.budget, args.angle, args.blender)
+            dpos[:, 2] -= dpos[:, 2].max()  # the front-most point on the face's plane
+            faces = [f for f in faces if max(dpos[p][2] for p, _ in f) >= -args.max_depth]
+            verts, out_tris, masks = cut_and_project(dpos, dnrm, faces)
+            name = object_name(scene) + (".m" if mirror else "") + ".gtr"
+            write_gtr(args.out / name, verts, out_tris, masks)
+            done[(scene, mirror)] = name
+            print(f"{name}: {len(tris)} front triangles -> {len(faces)} -> {len(out_tris)} cut, "
+                  f"{len(verts)} vertices, depth {-dpos[:, 2].min():.2f}", flush=True)
+        index[icon] = done[(scene, mirror)] + (f" {texture}" if texture else "")
+    index_path.write_text("# icon <icon> <relief> [<texture icon>]: the terrain tile drawn as that relief, textured by\n"
+                          "# the texture icon's sprite (default its own); tools/terrain_relief/build_relief.py from\n"
+                          "# tools/terrain_relief/tiles.txt\n" +
                           "".join(f"icon {i} {n}\n" for i, n in sorted(index.items())))
     return 0
 

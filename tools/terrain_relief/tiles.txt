@@ -1,0 +1,65 @@
+# The terrain tiles drawn as their Ray Dream scene's relief (Q-001/Q-004/Q-012), reviewed by eye:
+# <icon> <scene under speedyblupi-data/originals> <mirrored 0/1> [texture=ICON]  # how it was matched
+# match_tiles.py ranks the scenes by the tile's pixels (luminance NCC x IoU); each line below was
+# checked against its render (2026-11-04, the 80 tiles with the most exposed faces in the campaign,
+# 98.7 % of them). Tiles without a line stay textured cubes: no scene of the archive is theirs
+# (the bricks 261-263/283, the grey metal plates 78-84/396, the panels 4-8/11-13, the stars 230/231,
+# the roof tiles 196/197, the column 190, the numbered tiles 30/31).
+
+   2 Decor/techno03.rd4           0  # pixels 0.42
+   9 Decor/techno10.rd4           0  # pixels 0.45
+  10 Decor/techno11.rd4           0  # pixels 0.39
+  14 Decor/techno15.rd4           0  # pixels 0.46
+  35 Decor/roc4a.rd4              0  # pixels 0.45
+  36 Decor/roc4b.rd4              0  # pixels 0.55
+  37 Decor/roc4c.rd4              0  # pixels 0.52
+  38 Decor/roc4d.rd4              0  # pixels 0.51
+  39 Decor/roc4e.rd4              0  # pixels 0.53
+ 144 Decor/roc4g.rd4              0  # pixels 0.47
+ 145 Decor/roc4h.rd4              0  # pixels 0.51
+ 146 Decor/roc4i.rd4              0  # pixels 0.45
+ 147 Decor/roc4j.rd4              0  # pixels 0.48
+ 148 Decor/roc4k.rd4              0  # pixels 0.49
+ 149 Decor/roc4l.rd4              0  # pixels 0.51
+ 150 Decor/roc4m.rd4              0  # pixels 0.46
+ 151 Decor/roc4n.rd4              0  # pixels 0.49
+ 152 Decor/roc4o.rd4              0  # pixels 0.48
+ 153 Decor/roc4p.rd4              0  # pixels 0.50
+ 156 Decor/roc4aa.rd4             0  # pixels 0.50
+ 215 Decor/enfant01.rd4           0  # pixels 0.84
+ 216 Decor/enfant02.rd4           0  # pixels 0.89
+ 217 Decor/enfant03.rd4           0  # pixels 0.81
+ 218 Decor/enfant04.rd4           0  # pixels 0.85
+ 219 Decor/enfant05.rd4           0  # pixels 0.91
+ 220 Decor/enfant06.rd4           0  # pixels 0.87
+ 221 Decor/enfant07.rd4           0  # pixels 0.89
+ 222 Decor/enfant08.rd4           0  # pixels 0.85
+ 223 Decor/enfant09.rd4           0  # pixels 0.94
+ 233 Decor/enfant19.rd4           0  # pixels 0.73
+ 234 Decor/enfant20.rd4           0  # pixels 0.84
+ 246 Decor/fromage2.rds           0  # pixels 0.65
+ 247 Decor/fromage3.rds           0  # pixels 0.58
+ 248 Decor/fromage4.rds           0  # pixels 0.68
+ 249 Decor/fromage5.rds           0  # pixels 0.61
+ 284 Decor/grotte00.rd4           0  # pixels 0.38
+ 301 Decor/grotte17.rd4           0  # pixels 0.40
+ 302 Decor/grotte18.rd4           0  # pixels 0.36
+ 342 Decor/smooth/smooth02.rds    0  # pixels 0.46
+ 343 Decor/smooth/smooth03.rds    0  # pixels 0.36
+ 345 Decor/smooth/smooth05.rds    0  # pixels 0.46
+ 346 Decor/smooth/smooth06.rds    0  # pixels 0.48
+ 347 Decor/smooth/smooth-u.rds    0  # pixels 0.39
+ 362 Decor/smooth/smooth-u2.rds   0  # pixels 0.56
+ 386 Decor/palais/mur01.rds       0  # pixels 0.67
+ 387 Decor/palais/mur02.rds       0  # pixels 0.76
+ 390 Decor/palais/mur05.rds       0  # pixels 0.55
+ 393 Decor/palais/mur01.rds       0  # pixels 0.73
+ 397 Decor/palais/mur02.rds       0  # pixels 0.58
+# By the scenes' numbering, which the matcher's ranking follows for 342, 343, 345 and 346:
+ 341 Decor/smooth/smooth01.rds    0  # numbering (the pixels' best are wrong: a house, a panel)
+ 344 Decor/smooth/smooth04.rds    0  # numbering
+# By the silhouette, which tells these apart (their sprites do not fill the square):
+ 285 Decor/grotte01.rd4           0  # survey IoU 0.88 (the cave ceiling's hanging lumps)
+ 107 Decor/herbe1.rd4             0  texture=107  # survey IoU 0.91 (the owner: the whole lumpy model)
+ 108 Decor/herbe1.rd4             0  texture=107  # the row's right end: 107 cut (the geometry ends it)
+ 109 Decor/herbe1.rd4             0  texture=107  # the row's left end

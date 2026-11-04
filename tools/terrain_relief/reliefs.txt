@@ -1,5 +1,5 @@
 # Per-model settings of build_relief.py: <model directory glob> <options>
 #   drop=R,G,B[;R,G,B]  leave out the parts of exactly that colour: scene props the sprites were
 #                       rendered without (the caves' cyan ball, the slime's red backdrop box)
-t_grotte*   drop=0,1,1
-t_smooth*   drop=1,0,0
+r_grotte*   drop=0,1,1
+r_smooth*   drop=1,0,0
