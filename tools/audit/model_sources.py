@@ -47,6 +47,13 @@ OTHERWISE = {
 }
 # Terrain tiles: drawn as textured cubes so that neighbours join; their scenes are lumpy blocks
 # (owner_questions.md Q-004 asks whether the terrain should become models).
+# The terrain tiles drawn as their scene's relief, by scene (tools/terrain_relief/tiles.txt).
+RELIEFS: dict[str, list[int]] = {}
+for _line in (REPO / "tools" / "terrain_relief" / "tiles.txt").read_text().splitlines():
+    _p = _line.split("#", 1)[0].split()
+    if len(_p) >= 3:
+        RELIEFS.setdefault(_p[1], []).append(int(_p[0]))
+
 TERRAIN_PREFIXES = ("Decor/bois", "Decor/grotte", "Decor/roc", "Decor/techno", "Decor/smooth/", "Decor/fromage",
                     "Decor/enfant", "Decor/maison", "Decor/meca", "Decor/palais/mur", "Decor/tuyau", "Decor/herbe")
 
@@ -91,7 +98,7 @@ def main() -> int:
         return (name is not None and f"{name}_{stem}" in exported) or scene in blupi_scenes
 
     groups = collections.OrderedDict((k, []) for k in (
-        "in game", "in game otherwise", "converted, not exported", "terrain tile (Q-004)",
+        "in game", "in game otherwise", "converted, not exported", "terrain tile, scene unconfirmed (Q-012)",
         "matched, not converted", "no game sprite"))
     for scene in sorted(set(scenes) | set(matched)):
         icons = matched.get(scene, [])
@@ -99,10 +106,14 @@ def main() -> int:
             groups["in game"].append((scene, icons))
         elif scene in OTHERWISE:
             groups["in game otherwise"].append((scene, icons + [OTHERWISE[scene]]))
+        elif scene in RELIEFS:
+            # The terrain reliefs (Q-012): the tiles tools/terrain_relief/tiles.txt gives the scene.
+            groups["in game otherwise"].append((scene, [f"object-m:{i}" for i in RELIEFS[scene]] +
+                                               ["the terrain relief near the camera (avatars3d/terrain)"]))
         elif scene in converted:
             groups["converted, not exported"].append((scene, icons))
         elif icons and scene.startswith(TERRAIN_PREFIXES):
-            groups["terrain tile (Q-004)"].append((scene, icons))
+            groups["terrain tile, scene unconfirmed (Q-012)"].append((scene, icons))
         elif icons:
             groups["matched, not converted"].append((scene, icons))
         else:
@@ -115,7 +126,7 @@ def main() -> int:
              "still drawn flat that have a scene.", "",
              "| State | Scenes |", "|---|---|"]
     lines += [f"| {k} | {len(v)} |" for k, v in groups.items()]
-    for state in ("matched, not converted", "terrain tile (Q-004)", "in game otherwise", "converted, not exported",
+    for state in ("matched, not converted", "terrain tile, scene unconfirmed (Q-012)", "in game otherwise", "converted, not exported",
                   "in game"):
         lines += ["", f"## {state.capitalize()}", "", "| Scene | Sprites rendered from it |", "|---|---|"]
         for scene, icons in groups[state]:

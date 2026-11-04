@@ -40,9 +40,7 @@ icon 247 r_fromage3.gtr
 icon 248 r_fromage4.gtr
 icon 249 r_fromage5.gtr
 icon 284 r_grotte00.gtr
-icon 285 r_grotte01.gtr
 icon 301 r_grotte17.gtr
-icon 302 r_grotte18.gtr
 icon 341 r_smooth_smooth01.gtr
 icon 342 r_smooth_smooth02.gtr
 icon 343 r_smooth_smooth03.gtr
