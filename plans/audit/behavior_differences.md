@@ -413,9 +413,13 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   again and the inversion starts over (`m_blupiTimeShield = 100`, sound 66, the four sparkles).
   Galaxy refused it while inverted (`TriggerInvert` and the host's `canGrantInvert`), so the
   sign stayed and the old inversion ran out.
-- Now only Hide refuses it. Reviewed, not changed: the original's invert shares
-  `m_blupiTimeShield` with the powers' gauges, so an invert taken under a power cuts that power's
-  time; Galaxy keeps separate timers (a rare combination, open).
+- Now only Hide refuses it. The original's invert shares `m_blupiTimeShield` with the powers,
+  the balloon and the squash (Decor.cpp:5071-5205): each state that starts sets it to 100 (an
+  invert taken under a power restarts the power's time too), each active one counts it down at its
+  own pace, all of them end when it reaches 0, and a popped balloon zeroes it (5771), ending an
+  invert running with it. Galaxy kept separate timers until 2026-11-04; now one count
+  (`BlupiController::GetTimeShield`, the four states' accumulators; `VerifyBlupiMovement`: the
+  restart, the two paces ending together, the pop).
 - Validation: `VerifyBlupiMovement` (taken again 60 frames into an inversion); the ten worlds
   with invert signs (034, 044, 045, 055, 095, 111, 114, 121, 122, 199) pass.
 

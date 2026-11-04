@@ -914,7 +914,8 @@ namespace GalaxyEggbert::Game
             return false;
         }
         m_ecrase = true;
-        m_ecraseTimer = kEcraseDuration;
+        m_ecraseTimer = 0.0f;
+        m_timeShield = kSecretPowerMax; // Decor.cpp:5572
         m_velocityY = 0.0f;
         // The squash ends every mount and state but Invert (Decor.cpp:5556-5573): a vehicle is
         // lost (no ObjectStart puts it back), the balloon, swim, surf, the bar, the secret powers.
@@ -926,7 +927,6 @@ namespace GalaxyEggbert::Game
         m_suspended = false;
         m_jumpAieArmed = false;
         m_secretPower = GalaxyEggbert::Def::SecretPower::None;
-        m_secretPowerLevel = 0;
         m_secretPowerTimer = 0.0f;
         return true;
     }
@@ -938,7 +938,8 @@ namespace GalaxyEggbert::Game
             return false;
         }
         m_balloon = true;
-        m_balloonTimer = kBalloonDuration;
+        m_balloonTimer = 0.0f;
+        m_timeShield = kSecretPowerMax; // Decor.cpp:5850
         m_velocityY = 0.0f;
         m_balloonHorizontalSpeed = 0.0f;
         // Real trigger (Decor.cpp:5826-5849) force-exits any vehicle mode
@@ -951,7 +952,6 @@ namespace GalaxyEggbert::Game
         m_vehicleSpeed = 0.0f;
         // The sting also ends any secret power (Decor.cpp:5845-5847: Shield, Power, Cloud, Hide).
         m_secretPower = GalaxyEggbert::Def::SecretPower::None;
-        m_secretPowerLevel = 0;
         m_secretPowerTimer = 0.0f;
         return true;
     }
@@ -964,6 +964,7 @@ namespace GalaxyEggbert::Game
         }
         m_balloon = false;
         m_balloonTimer = 0.0f;
+        m_timeShield = 0; // Decor.cpp:5771: an invert running with it ends too
         m_onGround = false; // real m_blupiAir = true
     }
 
@@ -975,7 +976,7 @@ namespace GalaxyEggbert::Game
             return false;
         }
         m_secretPower = GalaxyEggbert::Def::SecretPower::Shield;
-        m_secretPowerLevel = kSecretPowerMax;
+        m_timeShield = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
     }
@@ -987,7 +988,7 @@ namespace GalaxyEggbert::Game
             return false;
         }
         m_secretPower = GalaxyEggbert::Def::SecretPower::Power;
-        m_secretPowerLevel = kSecretPowerMax;
+        m_timeShield = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
     }
@@ -999,7 +1000,7 @@ namespace GalaxyEggbert::Game
             return false;
         }
         m_secretPower = GalaxyEggbert::Def::SecretPower::Cloud;
-        m_secretPowerLevel = kSecretPowerMax;
+        m_timeShield = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
     }
@@ -1011,7 +1012,7 @@ namespace GalaxyEggbert::Game
             return false;
         }
         m_secretPower = GalaxyEggbert::Def::SecretPower::Hide;
-        m_secretPowerLevel = kSecretPowerMax;
+        m_timeShield = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
         return true;
     }
@@ -1025,7 +1026,7 @@ namespace GalaxyEggbert::Game
             return false;
         }
         m_invert = true;
-        m_invertLevel = kInvertMax;
+        m_timeShield = kInvertMax; // Decor.cpp:6044: a power running with it starts again too
         m_invertTimer = 0.0f;
         return true;
     }
@@ -1045,7 +1046,6 @@ namespace GalaxyEggbert::Game
         if (m_secretPower == GalaxyEggbert::Def::SecretPower::Cloud || m_secretPower == GalaxyEggbert::Def::SecretPower::Hide)
         {
             m_secretPower = GalaxyEggbert::Def::SecretPower::None;
-            m_secretPowerLevel = 0;
             m_secretPowerTimer = 0.0f;
         }
         return true;
@@ -1073,7 +1073,6 @@ namespace GalaxyEggbert::Game
              m_secretPower == GalaxyEggbert::Def::SecretPower::Hide))
         {
             m_secretPower = GalaxyEggbert::Def::SecretPower::None;
-            m_secretPowerLevel = 0;
             m_secretPowerTimer = 0.0f;
         }
     }
@@ -1081,7 +1080,7 @@ namespace GalaxyEggbert::Game
     void BlupiController::CheatShield() noexcept
     {
         m_secretPower = GalaxyEggbert::Def::SecretPower::Shield;
-        m_secretPowerLevel = kSecretPowerMax;
+        m_timeShield = kSecretPowerMax;
         m_secretPowerTimer = 0.0f;
     }
 
@@ -1090,7 +1089,6 @@ namespace GalaxyEggbert::Game
         m_vehicleMode = VehicleMode::None;
         m_vehicleSpeed = 0.0f;
         m_secretPower = GalaxyEggbert::Def::SecretPower::None;
-        m_secretPowerLevel = 0;
         m_secretPowerTimer = 0.0f;
         m_jumpAieArmed = false;
     }
@@ -1255,11 +1253,10 @@ namespace GalaxyEggbert::Game
         m_balloon = false;
         m_ecrase = false;
         m_secretPower = GalaxyEggbert::Def::SecretPower::None;
-        m_secretPowerLevel = 0;
         m_secretPowerTimer = 0.0f;
         m_invert = false;
-        m_invertLevel = 0;
         m_invertTimer = 0.0f;
+        m_timeShield = 0;
         m_nage = false;
         m_surf = false;
         m_waterExitJump = false;
@@ -1990,78 +1987,73 @@ namespace GalaxyEggbert::Game
             m_onGround = false;
         }
 
-        if (m_ecrase)
+        // The timed states share one count (the original's m_blupiTimeShield, Decor.cpp:5071-5205):
+        // each active one takes it down a level at its own pace -- the shield every 5 ticks, the
+        // power and Invert every 3, Cloud and Hide every 4, the balloon and the squash every 2 --
+        // and every active one ends when it reaches 0. The powers' warning sounds at their levels.
+        m_secretPowerJustWarned = false;
+        m_invertJustExpired = false;
+        const int shieldBefore = m_timeShield;
+        const auto countDown = [this, dt](float& accumulator, float tickSeconds)
         {
-            m_ecraseTimer -= dt;
-            if (m_ecraseTimer <= 0.0f)
+            accumulator += dt;
+            while (accumulator >= tickSeconds && m_timeShield > 0)
             {
-                m_ecrase = false;
-                m_ecraseTimer = 0.0f;
+                accumulator -= tickSeconds;
+                --m_timeShield;
             }
+        };
+        const bool powered = m_secretPower != GalaxyEggbert::Def::SecretPower::None;
+        if (powered)
+        {
+            countDown(m_secretPowerTimer, m_secretPower == GalaxyEggbert::Def::SecretPower::Shield  ? kShieldTickSeconds
+                                          : m_secretPower == GalaxyEggbert::Def::SecretPower::Power ? kPowerTickSeconds
+                                          : m_secretPower == GalaxyEggbert::Def::SecretPower::Hide  ? kHideTickSeconds
+                                                                                                     : kCloudTickSeconds);
         }
-
+        if (m_invert)
+        {
+            countDown(m_invertTimer, kInvertTickSeconds);
+        }
         if (m_balloon)
         {
-            m_balloonTimer -= dt;
-            if (m_balloonTimer <= 0.0f)
-            {
-                m_balloon = false;
-                m_balloonTimer = 0.0f;
-            }
+            countDown(m_balloonTimer, kBalloonTickSeconds);
         }
-
-        // Secret powers (plan.md E3D-MIG-170/172): the shared gauge ticks
-        // down at whichever real rate matches the currently-active power
-        // (see kShieldTickSeconds/kPowerTickSeconds/kCloudTickSeconds/
-        // kHideTickSeconds's own comment) until it reaches 0, then clears
-        // to None -- real warning-sound thresholds are exposed via
-        // JustCrossedSecretPowerWarning() below for the caller to play the
-        // real per-power channel.
-        m_secretPowerJustWarned = false;
-        if (m_secretPower != GalaxyEggbert::Def::SecretPower::None)
+        if (m_ecrase)
         {
-            const float tickSeconds = m_secretPower == GalaxyEggbert::Def::SecretPower::Shield ? kShieldTickSeconds
-                                     : m_secretPower == GalaxyEggbert::Def::SecretPower::Power  ? kPowerTickSeconds
-                                     : m_secretPower == GalaxyEggbert::Def::SecretPower::Hide   ? kHideTickSeconds
-                                                                            : kCloudTickSeconds;
+            countDown(m_ecraseTimer, kEcraseTickSeconds);
+        }
+        if (powered)
+        {
             const int warnLevel = m_secretPower == GalaxyEggbert::Def::SecretPower::Shield ? kShieldWarnLevel
                                  : m_secretPower == GalaxyEggbert::Def::SecretPower::Power  ? kPowerWarnLevel
                                  : m_secretPower == GalaxyEggbert::Def::SecretPower::Hide   ? kHideWarnLevel
-                                                                        : kCloudWarnLevel;
-            m_secretPowerTimer += dt;
-            while (m_secretPowerTimer >= tickSeconds && m_secretPowerLevel > 0)
-            {
-                m_secretPowerTimer -= tickSeconds;
-                --m_secretPowerLevel;
-                if (m_secretPowerLevel == warnLevel)
-                {
-                    m_secretPowerJustWarned = true;
-                }
-            }
-            if (m_secretPowerLevel <= 0)
+                                                                                            : kCloudWarnLevel;
+            m_secretPowerJustWarned = shieldBefore > warnLevel && m_timeShield <= warnLevel && m_timeShield > 0;
+        }
+        if (m_timeShield <= 0)
+        {
+            m_timeShield = 0;
+            if (powered)
             {
                 m_secretPower = GalaxyEggbert::Def::SecretPower::None;
                 m_secretPowerTimer = 0.0f;
             }
-        }
-
-        // Invert/Mirror (plan.md PICKUP-011): independent gauge, same shape
-        // as the secret-power tick above but no warning stage (see
-        // kInvertMax's own comment) -- just a one-shot expiry flag.
-        m_invertJustExpired = false;
-        if (m_invert)
-        {
-            m_invertTimer += dt;
-            while (m_invertTimer >= kInvertTickSeconds && m_invertLevel > 0)
-            {
-                m_invertTimer -= kInvertTickSeconds;
-                --m_invertLevel;
-            }
-            if (m_invertLevel <= 0)
+            if (m_invert)
             {
                 m_invert = false;
                 m_invertTimer = 0.0f;
                 m_invertJustExpired = true;
+            }
+            if (m_balloon)
+            {
+                m_balloon = false;
+                m_balloonTimer = 0.0f;
+            }
+            if (m_ecrase)
+            {
+                m_ecrase = false;
+                m_ecraseTimer = 0.0f;
             }
         }
 

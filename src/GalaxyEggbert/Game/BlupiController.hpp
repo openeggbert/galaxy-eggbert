@@ -111,7 +111,8 @@ namespace GalaxyEggbert::Game
         // table (10-blupi-mechanics.md's vehicle/mode movement table) gives
         // a "grounded x4 of m_blupiSpeedX" figure that doesn't cleanly
         // convert to a fraction of kMoveSpeed without further research.
-        static constexpr float kEcraseDuration = 10.0f;
+        static constexpr float kEcraseDuration = 10.0f; // 100 levels, one every 2 ticks, when alone
+        static constexpr float kEcraseTickSeconds = 2.0f / 20.0f;
         static constexpr float kEcraseSpeedMultiplier = 0.5f;
 
         // Wasp "balloon" status (plan.md E3D-MIG-135, `m_blupiBalloon` per
@@ -208,7 +209,8 @@ namespace GalaxyEggbert::Game
         //   10.0 px/tick       -> 3.125 units/s     (kBalloonHorizontalSpeed)
         //   1.0 px/tick/tick   -> 6.25 units/s^2    (kBalloonHorizontalAccel)
         //   2.0 px/tick/tick   -> 12.5 units/s^2    (kBalloonHorizontalDecel)
-        static constexpr float kBalloonDuration = 10.0f;
+        static constexpr float kBalloonDuration = 10.0f; // 100 levels, one every 2 ticks, when alone
+        static constexpr float kBalloonTickSeconds = 2.0f / 20.0f;
         static constexpr float kBalloonRiseSpeed = 0.9375f;
         static constexpr float kBalloonRiseSpeedFast = 1.5625f;
         static constexpr float kBalloonRiseAccel = 1.0417f;
@@ -824,7 +826,15 @@ namespace GalaxyEggbert::Game
         }
         void SetCheatSuperBlupi(bool enabled) noexcept { m_cheatSuperBlupi = enabled; }
         [[nodiscard]] bool GetCheatSuperBlupi() const noexcept { return m_cheatSuperBlupi; }
-        [[nodiscard]] int GetSecretPowerLevel() const noexcept { return m_secretPowerLevel; }
+        // The original's one m_blupiTimeShield serves every timed state (the powers, Invert, the
+        // balloon, the squash; Decor.cpp:5071-5205, BD-0025): each state that starts sets it to 100,
+        // each active one counts it down at its own pace, and all of them end when it reaches 0. So
+        // an invert taken under a power restarts the power's time too, and both end together.
+        [[nodiscard]] int GetTimeShield() const noexcept { return m_timeShield; }
+        [[nodiscard]] int GetSecretPowerLevel() const noexcept
+        {
+            return m_secretPower != GalaxyEggbert::Def::SecretPower::None ? m_timeShield : 0;
+        }
         // True for exactly the one Step() call where the active power's
         // gauge crosses its own real warning threshold (Shield@10/Power@20/
         // Cloud@25/Hide@20) -- the caller plays the real per-power warning
@@ -836,7 +846,7 @@ namespace GalaxyEggbert::Game
         // taken again while inverted, which restarts it (BD-0025).
         bool TriggerInvert() noexcept;
         [[nodiscard]] bool IsInverted() const noexcept { return m_invert; }
-        [[nodiscard]] int GetInvertLevel() const noexcept { return m_invertLevel; }
+        [[nodiscard]] int GetInvertLevel() const noexcept { return m_invert ? m_timeShield : 0; }
         // True for exactly the one Step() call where Invert's gauge reaches
         // 0 naturally (no warning stage, unlike the 4 powers above) -- the
         // caller plays the real expiry channel (67) once.
@@ -1606,11 +1616,14 @@ namespace GalaxyEggbert::Game
         static constexpr float kDownUpSoundDelay = 4.0f / 20.0f; // real Config::ScaleTime(4)
         std::vector<Event> m_eventsThisFrame;
 
+        // The shared m_blupiTimeShield (GetTimeShield()).
+        int m_timeShield = 0;
+
         bool m_ecrase = false;
-        float m_ecraseTimer = 0.0f;
+        float m_ecraseTimer = 0.0f; // its count-down's accumulator (one level every 2 ticks)
 
         bool m_balloon = false;
-        float m_balloonTimer = 0.0f;
+        float m_balloonTimer = 0.0f; // its count-down's accumulator (one level every 2 ticks)
         // Real "vitesse" momentum ramp for the Balloon status's own
         // horizontal drift (kBalloonHorizontalSpeed's own comment) -- same
         // shape as m_vehicleSpeed below, kept separate since the two are
@@ -1619,12 +1632,10 @@ namespace GalaxyEggbert::Game
         float m_balloonHorizontalSpeed = 0.0f;
 
         GalaxyEggbert::Def::SecretPower m_secretPower = GalaxyEggbert::Def::SecretPower::None;
-        int m_secretPowerLevel = 0;
         float m_secretPowerTimer = 0.0f;
         bool m_secretPowerJustWarned = false;
 
         bool m_invert = false;
-        int m_invertLevel = 0;
         float m_invertTimer = 0.0f;
         bool m_invertJustExpired = false;
 

@@ -2118,6 +2118,43 @@ int main(int argc, char** argv)
             check(powerTiming.GetSecretPowerLevel() == BlupiController::kSecretPowerMax - 30,
                   "Power's gauge ticks down at exactly the real 0.15s/level rate");
 
+            // The shared m_blupiTimeShield (BD-0025): an invert taken 30 levels into a shield sets the
+            // one count back to 100 for both; together they take it down at both paces (every 5 ticks
+            // and every 3), and both end at once.
+            {
+                BlupiController both;
+                both.TriggerShield();
+                for (int i = 0; i < 30; ++i)
+                {
+                    both.Step(synthetic, 0.0f, 0.0f, false, false, false, BlupiController::kShieldTickSeconds);
+                }
+                check(both.TriggerInvert() && both.GetSecretPowerLevel() == BlupiController::kSecretPowerMax &&
+                          both.GetInvertLevel() == BlupiController::kSecretPowerMax,
+                      "an invert taken under the shield restarts the one shared count for both (Decor.cpp:6044)");
+                int frames = 0;
+                while ((both.IsShielded() || both.IsInverted()) && frames < 2000)
+                {
+                    both.Step(synthetic, 0.0f, 0.0f, false, false, false, 1.0f / 20.0f);
+                    ++frames;
+                    if (both.IsShielded() != both.IsInverted())
+                    {
+                        break; // one ended without the other
+                    }
+                }
+                // 100 levels at 1/5 + 1/3 a tick: about 188 ticks (alone: 500 for the shield, 300 for Invert).
+                check(frames > 170 && frames < 200 && !both.IsShielded() && !both.IsInverted(),
+                      "together the shield and Invert take the count down at both paces and end on the same tick");
+            }
+            {
+                BlupiController stung;
+                stung.TriggerInvert();
+                stung.TriggerBalloon();
+                stung.PopBalloon();
+                stung.Step(synthetic, 0.0f, 0.0f, false, false, false, 1.0f / 20.0f);
+                check(!stung.IsInverted() && stung.JustExpiredInvert(),
+                      "a popped balloon zeroes the shared count, so an invert running with it ends (Decor.cpp:5771)");
+            }
+
             // Expiry: the real ~25s Shield duration (100 levels * 0.25s).
             BlupiController expiring;
             expiring.TriggerShield();
