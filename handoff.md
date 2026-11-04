@@ -566,6 +566,16 @@ ledgers before repeating any discovery. Where it stands:
   stream with treasure 4 a cell from its fan, reached only by dropping in from above. Treasures 3-4
   left the gallery's ledges (walk 34, 38). Playthrough 115 and the 110 chain pass. 114's sideways
   wind is the original's sealed decor (LV-0070 closed as such).
+- 2026-11-04 late night, performance and the owner's next reports: models out of the camera's
+  frustum are not drawn (`objectModelRadii_`; `GALAXY_PERF=1` prints draw ms, models, triangles,
+  culled; `GALAXY_MODEL_CULL=0` draws all): the hub 17 -> 8 ms, world 063 from under 3 fps to
+  16 ms (llvmpipe). Spheres tessellated to their size (`tools/rd4_to_gltf/lower_spheres.py`, run by
+  `export_objects.py`): 41 parts 246 k -> 107 k triangles, the chest 68 k -> 8 k. **OR-0038** the
+  wind animated (a frame a tick) on crossed full-cell plates (`TerrainRenderer::BuildWindFrame`).
+  **OR-0039** a fan goes off only at contact with its mouth (`WorldRuntime::TryConsumeFan`).
+  Golden frames re-baselined twice (spheres, wind). After a model change in `avatars3d/`, sync
+  the build's copy: `cmake -DGE_COPY_SOURCE=$PWD/avatars3d -DGE_COPY_DESTINATION=$PWD/build-cna-opengl3/avatars3d
+  -P cmake/CopyDirectoryIfDifferent.cmake` (the POST_BUILD copy runs only when the game relinks).
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world. Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
