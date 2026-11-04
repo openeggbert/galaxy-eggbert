@@ -262,8 +262,9 @@ rewritten).
   editor's `m_liftEnd` (decdesign.cpp:479-506); a click on it again or Escape leaves it still
   (OR-0045). **H** shows the editor's keys over the view; a prompt there while an end is awaited.
   Later the same night: **O** also turns an object or a BigDecor in the preview's cell (where a
-  click would put one) a quarter at a time, its cell's quarter turns in the same byte (a cell's
-  metadata, air or not): drawn turned are the still objects (treasures, eggs, keys, pickups), the
+  click would put one) a quarter at a time, stored as that cell's metadata type 5
+  (`kObjectTurnMetadataType`, its own, so a treasure lying in a wind cell turns without turning
+  the wind; `World Format.md` "Turns"): drawn turned are the still objects (treasures, eggs, keys, pickups), the
   parked vehicles and the BigDecor models; a moving one keeps the facing of its travel.
 - Validation: `VerifyGEWorldEditor` (V on a grass end and a fan, undone; O round a teleporter and
   a fan's two axes; a lift's end two up by the next click, no second lift); live: the keys shown by
