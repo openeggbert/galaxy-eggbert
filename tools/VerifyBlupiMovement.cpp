@@ -1940,6 +1940,15 @@ int main(int argc, char** argv)
             for (int i = 0; i < 60; ++i) blown.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
             check(blown.GetX() < 76.0f - 50.0f - 2.0f && blown.GetX() > 76.0f - 50.0f - 3.2f,
                   "standing in wind toward -X he is pushed along it, 9 px a tick");
+            // Busy (taking a pickup) he is not: the push asks m_blupiFocus (Decor.cpp:2773; BD-0072).
+            BlupiController busy;
+            busy.SetPosition(76.0f - 50.0f, 1.0f, 99.0f - 50.0f);
+            busy.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            const float busyX = busy.GetX();
+            busy.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Sucette);
+            for (int i = 0; i < 10; ++i) busy.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            check(busy.IsPickupFrozen() && std::fabs(busy.GetX() - busyX) < 0.02f,
+                  "taking a pickup in the wind he is not pushed (the push needs focus)");
             BlupiController walker;
             walker.SetPosition(75.0f - 50.0f, 1.0f, 99.0f - 50.0f);
             walker.SetYaw(1.57079632679f);

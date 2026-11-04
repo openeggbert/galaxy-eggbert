@@ -2340,11 +2340,12 @@ namespace GalaxyEggbert::Game
         // correctly non-solid on horizontal contact, while thin Lava/
         // Crusher/Saw/Blitz/Drip still read as solid GROUND to stand on.
         // The wind at his middle (kWindSideSpeed's comment), not on a lift nor in the jeep, the
-        // tank or on the skateboard.
+        // tank or on the skateboard; and only focused (Decor.cpp:2773, m_blupiFocus): not while he
+        // takes a pickup, teleports or waves goodbye (BD-0072).
         std::uint16_t wind = 0;
         bool windTurned = false; // M3D-0005: a turned 110/114 pushes along -Z/+Z
         if (!m_ridingLift && m_vehicleMode != VehicleMode::Jeep && m_vehicleMode != VehicleMode::Tank &&
-            m_vehicleMode != VehicleMode::Skateboard)
+            m_vehicleMode != VehicleMode::Skateboard && !m_pickupFrozen && !m_teleporting && !m_bye)
         {
             const int blocks = static_cast<int>(world.blocksPerAxis());
             const int wx = static_cast<int>(std::lround(m_x)) + kWorldCenterX;

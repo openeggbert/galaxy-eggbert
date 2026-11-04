@@ -1102,3 +1102,11 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyBlupiMovement` (front over the void: it rolls forward unasked and tips nose down;
   on the middle of its block: still and level; BD-0020's parked checks still pass); ctest; the jeep
   and tank playthroughs (play pass 19).
+
+## BD-0072 — the wind pushed him while he took a pickup (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:2773-2798): the wind's push asks `m_blupiFocus` besides no lift, jeep, tank or
+  skate; its strengths (9 px a tick across, 20 up or down) Galaxy had already.
+- Galaxy pushed him through a pickup's freeze, a teleport and the goodbye wave.
+- Fix: `BlupiController`'s wind lookup skipped while `m_pickupFrozen`, `m_teleporting` or `m_bye`.
+- Validation: `VerifyBlupiMovement` (taking a pickup in the wind he stays put); ctest.
