@@ -6,7 +6,7 @@ of them parked about it): its roof hung with mines (3), birds (20) crossing it, 
 eggs on little ledges round its walls and on blocks in its middle, the exit in a hut of cobble on
 one of them; at its east side a passage under more hanging mines past columns of lightning into a
 chamber with a bulldozer (4) and the last treasure; a lift, a wasp (44), two moving mines (16).
-Seven treasures, eleven eggs. Here the cavern is a bottomless hall in 3D: islands of cobble at
+Seven treasures, eleven eggs. Here the cavern is a hall in 3D over a lake of lava: islands of cobble at
 many heights round and across it, rows of mines along its roof, the birds between the islands,
 a long ferry of lifts from the start ledge to the hut, the east passage and its chamber.
 
@@ -26,6 +26,7 @@ from kit import O, World, lift, mine  # noqa: E402
 from village import STONE  # noqa: E402
 
 BLITZ, EMITTER = 305, 304
+LAVA = 68
 ROOF = 41                   # the cavern's roof; its mines hang at 40
 TELEPORTER = 330
 
@@ -46,10 +47,15 @@ def main(argv) -> int:
     def bird(start, end, ticks):
         w.place(O.BIRD, *start, end=end, advance=ticks, recede=ticks, stop_start=8, stop_end=8)
 
-    # The cavern: a hall of cobble open below (a fall is the end), its roof at 41.
+    # The cavern: a hall of cobble, its roof at 41, its floor a lake of lava as the original's: a fall
+    # burns Blupi (Clear3). (Until 2026-11-04 the hall was bottomless, a fall the angel: its 61 x 61
+    # lava cells made the game ~6x slower to play until the renderer kept each lava frame's mesh
+    # instead of rebuilding it at every animation step, Q-008.)
     rock(w, 6, 4, 16, 74, ROOF + 4, 84)
     carve(w, 10, 4, 20, 70, ROOF - 1, 80)
     carve(w, 6, 0, 16, 74, 3, 84)
+    rock(w, 6, 1, 16, 74, 2, 84)
+    w.fill(6, 3, 16, 74, 3, 84, LAVA)
 
     # ---- the start ledge (walk 16) on the west wall ----
     island(10, 42, 17, 58, 16, thick=3)

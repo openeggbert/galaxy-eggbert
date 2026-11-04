@@ -83,7 +83,7 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   line in `InteractionSystem` and the two worlds' generators in git.
 
 
-## Q-008 — world 105's lava floor: the void, or a cheaper lava to draw it? (2026-11-03)
+## Q-008 — world 105's lava floor: the void, or a cheaper lava to draw it? (2026-11-03) — DONE (b) 2026-11-04
 
 - The original's helicopter cavern (105) has a floor of lava: a fall burns Blupi (Clear3). Galaxy's
   hall is bottomless: a fall ends in the angel (Clear2). Same end of a life, different death.
@@ -144,3 +144,13 @@ in all. Their clear texels now take the tile's own colour round them (`TileCover
 `FillOpaqueTilesClearTexels`, `plans/evidence/opaque-tiles-clear-texels.jpg`), i.e. option (a) of
 Q-011 and the closest to (b) of Q-010. Still the owner's to say: whether the cheese holes should
 be see-through or the brick ends ragged on faces that border air.
+
+### Q-008 done (2026-11-04)
+
+Option (b) without coarsening anything visible: all lava cells show the same frame at a time, so
+the renderer now keeps each frame's mesh once built (`TerrainRenderer` `m_lavaFrames`) and a
+pool's inner cells draw their wave on a 4 x 3 grid (`AppendLavaCell`, VerifyTileFaces). 105's
+playthrough with the original's lava floor (61 x 61 cells): 18.7 s against 17.3 s for the void
+(it was ~60 s before the cache). 105 has its lava lake again (`tools/worlds/world105.py`): a
+fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 100 chain pass.
+`plans/evidence/lava-floor-105.png`. LV-0063 updated.
