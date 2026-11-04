@@ -1007,10 +1007,19 @@ namespace GalaxyEggbert::CNA
         // first. Returns the power to draw, None for none.
         [[nodiscard]] GalaxyEggbert::Def::SecretPower BlupiAuraShown() const;
         // The original's m_blupiFocus: false while he is busy -- taking a pickup, teleporting, waving
-        // goodbye -- on the ground (in the air he counts as focused for the hazards, Decor.cpp:5788).
+        // goodbye, cheering at the exit (Win, Decor.cpp:1904, 6176) -- on the ground (in the air he
+        // counts as focused for the hazards, Decor.cpp:5788).
         [[nodiscard]] bool BlupiFocused() const
         {
-            return !blupi_.IsOnGround() || !(blupi_.IsPickupFrozen() || blupi_.IsTeleporting() || blupi_.IsBye());
+            return !blupi_.IsOnGround() ||
+                   !(blupi_.IsPickupFrozen() || blupi_.IsTeleporting() || blupi_.IsBye() || winCheerActive_);
+        }
+        // Out of play for the shots (Decor.cpp:5914-5917): cheering at the exit (Win), waving goodbye
+        // (Bye), dying (Clear*, Glu, Electro) or gone after it (Hide). Not the busy states: a shot
+        // still meets him taking a pickup or teleporting.
+        [[nodiscard]] bool BlupiOutOfPlay() const
+        {
+            return winCheerActive_ || blupi_.IsBye() || blupi_.IsDeathLocked() || blupi_.IsDeathHidden();
         }
         // The terrain tiles' reliefs (Q-001/Q-004/Q-012, avatars3d/terrain/), loaded on the first
         // terrain build; drawn within terrainReliefRadius_ of the camera's target.

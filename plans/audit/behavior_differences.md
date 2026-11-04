@@ -975,3 +975,16 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Fix: `InteractionSystem` creature branch: ObjectType10 at the creature, channel 10,
   `SmallShakeTriggered` when `!blupiCanPushCrate`.
 - Validation: `VerifyInteractionSystem` (a shake in a vehicle, none on foot); ctest.
+
+## BD-0062 — a shot or a hazard could kill him cheering at the exit; a shot, waving goodbye (gameplay) — FIXED_AND_VERIFIED
+
+- Original: Win (the exit, Decor.cpp:1902-1904, 6174-6176) and Bye (a world's door, 5486-5488) clear
+  `m_blupiFocus`, so a hazard he touches then explodes and he lives (5788-5790, BD-0010); a shot (23)
+  meets him only outside Win, Bye, the deaths (Clear1-8, Glu, Electro) and the gone phase after them
+  (Hide) (5914-5917) -- not gated by focus, so it still meets him taking a pickup or teleporting.
+- Galaxy: `BlupiFocused()` left out the exit's cheer (`winCheerActive_`), and the shot asked only for
+  the shield, the drink or superBlupi: shot while cheering or waving goodbye, he died there.
+- Fix: `BlupiFocused()` counts the cheer; `BlupiOutOfPlay()` (cheer, goodbye, death lock, gone) gates
+  the shot (`InteractionSystem::Update`'s `blupiOutOfPlay`).
+- Validation: `VerifyInteractionSystem` (a shot passes him out of play and goes on, kills him in play);
+  ctest 112/112.

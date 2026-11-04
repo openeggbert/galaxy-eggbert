@@ -4654,8 +4654,8 @@ namespace GalaxyEggbert::CNA
                                      blupi_.GetVehicleMode() == BlupiController::VehicleMode::Skateboard,
                                  inHelicopter, blupi_.IsHidden(),
                                  // m_blupiFocus or in the air (Decor.cpp:5788-5790): not while he
-                                 // takes a pickup, teleports or waves goodbye on the ground.
-                                 BlupiFocused());
+                                 // takes a pickup, teleports, waves goodbye or cheers on the ground.
+                                 BlupiFocused(), BlupiOutOfPlay());
             RefreshTerrainMeshIfChanged();
 
             // The action button with nothing to do, standing still: he shakes his head (Non, 18

@@ -269,7 +269,10 @@ namespace GalaxyEggbert::Game
                     // pickup, teleporting or waving goodbye. A mine or small enemy touched then
                     // still explodes, but he lives; a lethal decoration (201-203) is not met at
                     // all (Decor.cpp:6088, the whole block gated on m_blupiFocus).
-                    bool blupiFocused = true);
+                    bool blupiFocused = true,
+                    // Cheering at the exit, waving goodbye, dying or gone after it: a shot (23) does
+                    // not meet him then (Decor.cpp:5914-5917; BD-0062).
+                    bool blupiOutOfPlay = false);
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.

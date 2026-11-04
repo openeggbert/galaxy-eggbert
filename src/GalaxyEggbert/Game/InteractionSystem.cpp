@@ -1112,7 +1112,7 @@ namespace GalaxyEggbert::Game
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
                                       bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
                                       bool blupiArmoredVehicle, bool blupiDropsGlue, bool blupiHidden,
-                                      bool blupiFocused)
+                                      bool blupiFocused, bool blupiOutOfPlay)
     {
         events_.clear();
         ridingLift_ = false;
@@ -1822,9 +1822,8 @@ namespace GalaxyEggbert::Game
             // Fired projectile contact (ObjectType23, plan.md E3D-MIG-134):
             // verified directly against Decor.cpp:5914-5947 -- always fatal
             // (real Glu/glue-style death) and destroys the bullet itself.
-            // Real Shield/Hide immunity IS modeled now (plan.md E3D-MIG-170,
-            // blupiInvincible); win-and-death-action/superBlupi gates are
-            // NOT modeled -- neither concept exists in this engine yet.
+            // Real Shield/Hide/superBlupi immunity (blupiInvincible) and the
+            // Win/Bye/dying/gone gate (blupiOutOfPlay, BD-0062): the shot passes.
             // Real death has no distinct sound call of
             // its own (StartSploutchGlu only spawns silent splash-effect
             // debris, now modeled -- plan.md VISUAL-009, see
@@ -1840,7 +1839,7 @@ namespace GalaxyEggbert::Game
                 const float bdx = obj.currentX - blupiX;
                 const float bdy = obj.currentY - blupiY;
                 const float bdz = obj.currentZ - blupiZ;
-                if (!blupiInvincible && MoveObjectTouches(obj.type, bdx, bdy, bdz))
+                if (!blupiInvincible && !blupiOutOfPlay && MoveObjectTouches(obj.type, bdx, bdy, bdz))
                 {
                     AppendSplatEffect(obj.currentX, obj.currentY, obj.currentZ, pendingSpawns);
                     obj.active = false;

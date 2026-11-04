@@ -2712,6 +2712,39 @@ int main(int argc, char** argv)
         completeDeathLock(world, interaction, footDeathBlupi);
     }
 
+    // A shot (23) meets him only in play (Decor.cpp:5914-5917, BD-0062): not cheering at the exit,
+    // waving goodbye, dying or gone after it -- it passes on; in play it kills him.
+    {
+        MobileObjSpec shot;
+        shot.type = GalaxyEggbert::Def::ObjectType::ObjectType23;
+        shot.posStartX = shot.posEndX = shot.currentX = 70.0f;
+        shot.posStartY = shot.posEndY = shot.currentY = 1.0f;
+        shot.posStartZ = shot.posEndZ = shot.currentZ = 70.0f;
+        world.GetMobileObjectsMutable().push_back(shot);
+        const auto shotActive = [&world]()
+        {
+            for (const auto& obj : world.GetMobileObjects())
+            {
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.posStartX == 70.0f &&
+                    obj.posStartZ == 70.0f)
+                {
+                    return obj.active;
+                }
+            }
+            return false;
+        };
+        interaction.Update(dt, world, 70.0f, 1.0f, 70.0f, 0.0f, sound, false, false, 0, 0, false, true, true, true,
+                           true, false, false, false, true, false, true, 0.0f, false, false, false, false, true,
+                           /*blupiOutOfPlay=*/true);
+        check(!hasEvent(interaction, InteractionSystem::EventKind::Died) && shotActive(),
+              "a shot passes Blupi out of play (cheering, goodbye, dying): no death, the shot goes on");
+        interaction.Update(dt, world, 70.0f, 1.0f, 70.0f, 0.0f, sound);
+        check(hasEvent(interaction, InteractionSystem::EventKind::Died) && !shotActive(),
+              "in play the same shot kills him and is spent");
+        BlupiController shotDeathBlupi;
+        completeDeathLock(world, interaction, shotDeathBlupi);
+    }
+
     // 13. Real playable placement -- the sample world's own large creature
     // (tools/GenerateSampleWorld3D.cpp's "walled room" guardian) has a real
     // posStart != posEnd patrol path, unlike the old zero-range placement
