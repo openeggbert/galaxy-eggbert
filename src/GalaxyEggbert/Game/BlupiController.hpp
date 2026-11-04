@@ -224,8 +224,8 @@ namespace GalaxyEggbert::Game
         // contact and whether the "Power" (GalaxyEggbert::Def::SecretPower) state is active:
         // held+Power=-25, held+noPower=-19, not-held+Power=-16,
         // not-held+noPower=-10 (negative=upward in the real source's own
-        // convention) -- Power isn't modeled yet (Phase 17), so only the
-        // two noPower magnitudes apply here. kJumpSpeed itself has no
+        // convention); the Power's two since 2026-11-04 (BD-0063, it said
+        // "Power isn't modeled yet"). kJumpSpeed itself has no
         // documented real-value derivation (tuned by feel, not
         // transcribed), so these preserve the REAL PROPORTION between the
         // spring's two magnitudes and the real baseline ground-jump
@@ -234,6 +234,8 @@ namespace GalaxyEggbert::Game
         // absolute-unit re-derivation.
         static constexpr float kSpringBounceHeld = kJumpSpeed * (19.0f / 16.0f);
         static constexpr float kSpringBounceNotHeld = kJumpSpeed * (10.0f / 16.0f);
+        static constexpr float kSpringBounceHeldPowered = kJumpSpeed * (25.0f / 16.0f);
+        static constexpr float kSpringBounceNotHeldPowered = kJumpSpeed * (16.0f / 16.0f);
 
         // Teleporter transit duration (plan.md E3D-MIG-147, icons 330-333,
         // verified directly against Decor.cpp:6349, `Config::ScaleTime(128)`

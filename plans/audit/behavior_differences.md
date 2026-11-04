@@ -988,3 +988,14 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   the shot (`InteractionSystem::Update`'s `blupiOutOfPlay`).
 - Validation: `VerifyInteractionSystem` (a shot passes him out of play and goes on, kills him in play);
   ctest 112/112.
+
+## BD-0063 — the spring threw him no higher with the Power (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:2900-2907): the spring's launch is -25 with Jump held and the Power, -19 held
+  without it, -16 not held with it, -10 without; "held" counts only with `m_blupiFocus`.
+- Galaxy had only the two without the Power (its comment: "Power isn't modeled yet", stale since the
+  Power came) and took the held Jump whatever his focus.
+- Fix: `kSpringBounceHeldPowered`/`NotHeldPowered` (25/16 and 16/16 of `kJumpSpeed`, the same
+  anchoring as the others); the caller passes Jump held and focused.
+- Validation: `VerifyBlupiMovement` (with the Power a held bounce goes higher); ctest; the
+  playthroughs (play pass 17).

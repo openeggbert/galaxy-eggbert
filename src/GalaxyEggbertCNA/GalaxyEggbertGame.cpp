@@ -4007,7 +4007,7 @@ namespace GalaxyEggbert::CNA
                 WreckVehicle();
             }
             if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
-                blupi_.TriggerSpringBounce(jumpPressed))
+                blupi_.TriggerSpringBounce(jumpPressed && BlupiFocused())) // held counts with focus (2900)
             {
                 sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
             }

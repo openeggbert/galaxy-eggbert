@@ -1125,7 +1125,10 @@ namespace GalaxyEggbert::Game
         {
             return false;
         }
-        m_velocityY = jumpHeld ? kSpringBounceHeld : kSpringBounceNotHeld;
+        // Decor.cpp:2900-2907: -25 / -19 with Jump held, -16 / -10 without, the Power's first.
+        const bool powered = m_secretPower == GalaxyEggbert::Def::SecretPower::Power;
+        m_velocityY = jumpHeld ? (powered ? kSpringBounceHeldPowered : kSpringBounceHeld)
+                               : (powered ? kSpringBounceNotHeldPowered : kSpringBounceNotHeld);
         m_onGround = false;
         return true;
     }

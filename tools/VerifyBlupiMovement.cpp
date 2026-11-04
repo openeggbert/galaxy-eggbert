@@ -1032,6 +1032,19 @@ int main(int argc, char** argv)
         check(bounceHeld.GetY() > bounceNotHeld.GetY(),
               "holding Jump on contact launches Blupi noticeably higher than not holding it");
 
+        // With the Power the spring throws higher (Decor.cpp:2900-2907: -25 held, -16 not; BD-0063).
+        BlupiController bouncePowered;
+        bouncePowered.SetPosition(static_cast<float>(kSpringX) - 50.0f, 1.0f, static_cast<float>(kSpringZ) - 50.0f);
+        bouncePowered.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        bouncePowered.TriggerPower();
+        bouncePowered.TriggerSpringBounce(/*jumpHeld=*/true);
+        for (int i = 0; i < kBounceSampleSteps; ++i)
+        {
+            bouncePowered.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+        }
+        check(bouncePowered.GetY() > bounceHeld.GetY(),
+              "with the Power a held spring bounce throws him higher than without (-25 against -19)");
+
         // Vanishing/Temp tile (plan.md E3D-MIG-146) -- a real Ground block
         // (Y=0) with a Temp tile directly above it (Y=1), so
         // tempPassable=true has a genuine lower floor to fall through TO,
