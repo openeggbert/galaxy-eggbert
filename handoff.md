@@ -583,7 +583,9 @@ ledgers before repeating any discovery. Where it stands:
   stay passable; 056's route and 058's pillars adjusted); **OR-0043..0045** the editor: V cycles the
   aimed block's variant (its family or its re-tiling row), O turns front models a quarter
   (`QuarterTurns`, the plate-turn byte 0-3), a lift's or creature's end is the next click (the
-  original's `m_liftEnd`), H shows the keys. Play pass 20 (before OR-0042): 78/78.
+  original's `m_liftEnd`), H shows the keys; O also turns still objects and BigDecor (metadata type
+  5, `World Format.md` "Turns"). Play pass 20 (before OR-0042): 78/78; **play pass 22 (all of it):
+  78/78**; web build rebuilt and loads.
   Scripted editor runs: hold keys (`keydown`/`keyup`), a tap faster than a frame is missed.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
