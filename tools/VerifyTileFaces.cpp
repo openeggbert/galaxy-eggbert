@@ -7,12 +7,15 @@
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/LavaSurface.hpp>
 #include <GalaxyEggbert/Game/MeshParts.hpp>
+#include <GalaxyEggbert/Game/TerrainRelief.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdio>
+#include <fstream>
 #include <initializer_list>
 #include <iostream>
 #include <vector>
@@ -462,6 +465,73 @@ int main()
         check(G::FrontModelOpenSide(5, 5, 5, 1 | 2, shut) == 2, "a ceiling row along X faces across it (+Z)");
         check(G::FrontModelOpenSide(5, 5, 5, 4 | 8, shut) == 0, "a ceiling row along Z faces across it (+X)");
         check(G::FrontModelOpenSide(5, 5, 5, 0, shut) == 0, "a lone model without room faces +X");
+    }
+
+    // The terrain reliefs (Q-012, TerrainRelief.hpp).
+    {
+        namespace G = GalaxyEggbert::Game;
+        using Microsoft::Xna::Framework::Vector3;
+        bool frames = true;
+        for (const auto& f : G::kReliefFaceFrames)
+        {
+            const int cx = f.r[1] * f.u[2] - f.r[2] * f.u[1];
+            const int cy = f.r[2] * f.u[0] - f.r[0] * f.u[2];
+            const int cz = f.r[0] * f.u[1] - f.r[1] * f.u[0];
+            frames = frames && cx == f.n[0] && cy == f.n[1] && cz == f.n[2];
+        }
+        check(frames, "every relief face frame has right x up = its outward normal (the relief is not mirrored)");
+        // The top (+Y) face of a cell with a solid neighbour only at +X: its overhangs into -X, +y (-Z)
+        // and -y (+Z) lead into air.
+        const auto top = G::ReliefAirSides(4, [](int dx, int dy, int dz) { return dx == 1 && dy == 0 && dz == 0; });
+        check(top == (2 | 4 | 8), "a relief hangs only into solid neighbours (top face, solid at +X only)");
+
+        // A relief of two triangles, written and read back: one in the face's square, one overhanging +x.
+        G::TerrainRelief relief;
+        relief.vertices = {{-0.25f, -0.25f, 0.0f, 0, 0, 1, 0.25f, 0.75f},
+                           {0.25f, -0.25f, -0.1f, 0, 0, 1, 0.75f, 0.75f},
+                           {0.0f, 0.25f, -0.2f, 0, 0, 1, 0.5f, 0.25f},
+                           {0.75f, 0.0f, 0.0f, 0, 0, 1, 0.25f, 0.5f}};
+        relief.triangles = {{0, 1, 2}, {1, 3, 2}};
+        relief.overhang = {0, 1};
+        {
+            std::ofstream out("verify_relief.gtr", std::ios::binary);
+            const std::uint32_t counts[2] = {4, 2};
+            out.write("GTR1", 4);
+            out.write(reinterpret_cast<const char*>(counts), sizeof(counts));
+            out.write(reinterpret_cast<const char*>(relief.vertices.data()), 4 * sizeof(G::TerrainRelief::Vertex));
+            out.write(reinterpret_cast<const char*>(relief.triangles.data()), 2 * sizeof(relief.triangles[0]));
+            out.write(reinterpret_cast<const char*>(relief.overhang.data()), 2);
+        }
+        G::TerrainRelief read;
+        check(G::ReadTerrainRelief("verify_relief.gtr", read) && read.vertices.size() == 4 &&
+                  read.triangles.size() == 2 && read.overhang[1] == 1 && std::fabs(read.depth - 0.2f) < 1e-6f,
+              "a .gtr relief reads back with its depth (0.2)");
+        std::remove("verify_relief.gtr");
+
+        const CnaEngine::Graphics::UvRect tile{0.5f, 0.25f, 0.75f, 0.5f};
+        const Vector3 center(10.0f, 2.0f, -3.0f);
+        auto mesh = G::MakeLitTexturedMeshBuilder();
+        G::AppendReliefFace(mesh, read, center, 0, tile, 1, true); // +Z face, the +x overhang into air
+        const auto& data = mesh.Mesh();
+        check(data.indices.size() == 3 * 3, "the overhang into air is left out; the backing is two triangles");
+        bool inward = true;
+        for (std::size_t t = 0; t + 2 < data.indices.size(); t += 3)
+        {
+            const Vector3 a = data.positions[data.indices[t]], b = data.positions[data.indices[t + 1]],
+                          c = data.positions[data.indices[t + 2]];
+            const Vector3 cross = Vector3::Cross(b - a, c - a);
+            inward = inward && cross.Z < 0.0f; // the builder's front faces turn clockwise seen from outside
+        }
+        check(inward, "relief and backing triangles face out of the cell (+Z)");
+        const Vector3 first = data.positions[data.indices[0]];
+        check(std::fabs(first.X - 9.75f) < 1e-5f && std::fabs(first.Y - 1.75f) < 1e-5f &&
+                  std::fabs(first.Z - -2.5f) < 1e-5f,
+              "a relief vertex lies at the face's plane plus its offset (front-most at the plane)");
+        const auto uv = data.texCoords0[data.indices[0]];
+        check(std::fabs(uv.X - 0.5625f) < 1e-6f && std::fabs(uv.Y - 0.4375f) < 1e-6f,
+              "a relief's texture coordinates map into the tile's rectangle");
+        const Vector3 back = data.positions[data.indices[3 * 1]];
+        check(std::fabs(back.Z - (-2.5f - 0.2f * 0.9f)) < 1e-5f, "the backing lies at nine tenths of the relief's depth");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -138,6 +138,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/TerrainRenderer.cpp
+        src/GalaxyEggbert/Game/TerrainRelief.cpp
         src/GalaxyEggbert/Game/TerrainAnimDivisor.cpp
         src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp
         src/GalaxyEggbert/Game/SwatchUv.cpp
@@ -457,6 +458,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp
+        src/GalaxyEggbert/Game/TerrainRelief.cpp
         src/GalaxyEggbert/Game/SwatchUv.cpp
         src/GalaxyEggbert/Game/Hud.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp

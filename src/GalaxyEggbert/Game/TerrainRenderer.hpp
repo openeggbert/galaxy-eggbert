@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "TerrainRelief.hpp"
 #include "TileAtlas.hpp"
 #include "TileCoverage.hpp"
 
@@ -12,6 +13,7 @@
 
 #include <Microsoft/Xna/Framework/Graphics/AlphaTestEffect.hpp>
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -47,12 +49,31 @@ namespace GalaxyEggbert::Game
                           bool drawSecret = false,
                           // Still (not animated) icons the caller draws as models (BlockModels.hpp:
                           // the pillars): left out of the mesh, listed by ModelCells().
-                          std::vector<std::uint16_t> modelDrawnIcons = {});
+                          std::vector<std::uint16_t> modelDrawnIcons = {},
+                          // Tiles drawn as their scene's relief near the focus (UpdateRelief, Q-012);
+                          // must outlive the renderer.
+                          const TerrainReliefTable* reliefs = nullptr);
 
         // Rebuilds the animated-tile mesh for animPhase (no-op if unchanged
         // since the last call). Call once per frame with
         // WorldRuntime::GetAnimPhase(). No effect on the static mesh.
         void Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase);
+
+        // The terrain reliefs (Q-001/Q-004/Q-012): the cells whose tile has a relief are kept in
+        // chunks of kReliefChunkCells^3, each drawn as textured cubes, or as its cells' reliefs while
+        // the chunk lies within `radius` blocks of `focus` (built here when it comes near, the nearest
+        // first, at most `maxBuilds` chunks a call, all of them when negative; released when it is
+        // kReliefRelease blocks farther). Call once a frame before drawing; never called, every
+        // chunk stays cubes.
+        void UpdateRelief(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                          const Microsoft::Xna::Framework::Vector3& focus, float radius, int maxBuilds = 2);
+        // Keep the overhangs into the air too (Q-012 C), for comparison; takes effect on rebuilt chunks.
+        void SetReliefOverhangs(bool keep) noexcept { m_reliefOverhangs = keep; }
+        [[nodiscard]] int ReliefChunkCount() const noexcept { return static_cast<int>(m_reliefChunks.size()); }
+        [[nodiscard]] int ReliefChunksShown() const noexcept;
+        [[nodiscard]] int ReliefPrimitiveCount() const noexcept;
+        static constexpr int kReliefChunkCells = 8;
+        static constexpr float kReliefRelease = 4.0f;
 
         // The cutout pass takes @p effect's World/View/Projection and texture.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -167,6 +188,30 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] std::unique_ptr<GpuMeshParts> RebuildAnimatedRenderer(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
             const std::vector<AnimBlock>& blocks, int animPhase) const;
+
+        // A relief tile's cell: its centre, icon, the faces shown (bit per BoxFace) and per face the
+        // overhang sides that lead into air (TerrainRelief.hpp ReliefAirSides).
+        struct ReliefCell
+        {
+            Microsoft::Xna::Framework::Vector3 center;
+            std::uint16_t icon = 0;
+            std::uint8_t faces = 0;
+            std::array<std::uint8_t, 6> air{};
+        };
+        struct ReliefChunk
+        {
+            Microsoft::Xna::Framework::Vector3 boxMin;
+            Microsoft::Xna::Framework::Vector3 boxMax;
+            std::vector<ReliefCell> cells;
+            std::unique_ptr<GpuMeshParts> cubes;
+            std::unique_ptr<GpuMeshParts> relief;
+            bool near = false;
+        };
+        std::unique_ptr<GpuMeshParts> BuildReliefChunk(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                                       const ReliefChunk& chunk) const;
+        const TerrainReliefTable* m_reliefs = nullptr;
+        std::vector<ReliefChunk> m_reliefChunks;
+        bool m_reliefOverhangs = false;
 
         std::unique_ptr<GpuMeshParts> m_staticRenderer;
         std::unique_ptr<GpuMeshParts> m_transparentStaticRenderer;

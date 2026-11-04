@@ -16,7 +16,12 @@ cropped renders join). A relief is that slab's front half:
    sides it overhangs (bit 0 +x, 1 -x, 2 +y, 3 -y), and textured by the tile's sprite projected from
    the front (the camera the sprite was rendered with), wrapped into the tile: the front view is
    exactly the sprite, and an overhang shows the tile's own continuation;
-5. moved so its front-most point lies at z = 0 (the face's plane; the relief is inside the cell).
+5. moved so its front-most point lies at z = 0 (the face's plane; the relief is inside the cell),
+   its triangles wholly deeper than ``--max-depth`` dropped (the opposite face's relief covers the
+   cell's back half).
+
+``reliefs.txt`` beside this script holds per-model settings (``drop=R,G,B``: scene props the
+sprites were rendered without).
 
 Writes ``<out>/<model>[.m].gtr`` (little-endian: ``GTR1``, uint32 vertex and triangle counts,
 float32 x y z nx ny nz u v per vertex, uint32 a b c per triangle, uint8 overhang mask per
@@ -30,6 +35,7 @@ triangle) and ``<out>/index.txt`` (``icon <icon> <file>`` per icon). Model space
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import struct
 import subprocess
 import sys
@@ -56,12 +62,32 @@ def read_icons(model_dir: Path) -> list[tuple[int, float, int]]:
     return out
 
 
-def posed_front(model_dir: Path, seconds: float, mirror: int) -> tuple[np.ndarray, np.ndarray]:
+def read_settings(path: Path) -> list[tuple[str, dict[str, str]]]:
+    out = []
+    if path.exists():
+        for line in path.read_text().splitlines():
+            p = line.split("#", 1)[0].split()
+            if p:
+                out.append((p[0], dict(o.split("=", 1) for o in p[1:])))
+    return out
+
+
+def settings_for(name: str, settings) -> dict[str, str]:
+    found: dict[str, str] = {}
+    for pattern, options in settings:
+        if fnmatch.fnmatch(name, pattern):
+            found.update(options)
+    return found
+
+
+def posed_front(model_dir: Path, seconds: float, mirror: int, drop=()) -> tuple[np.ndarray, np.ndarray]:
     """The model's triangles facing the camera: positions (n, 3) and triangles (m, 3)."""
     model = vs.Model(model_dir / "model.glb")
     model.select_clip("Frames")
     positions, triangles, base = [], [], 0
-    for pos, nrm, tris, *_ in model.skinned(seconds):
+    for pos, nrm, tris, color, *_ in model.skinned(seconds):
+        if any(np.allclose(np.asarray(color, float), d, atol=0.01) for d in drop):
+            continue
         if mirror:
             pos = pos * np.array([-1.0, 1.0, 1.0])
             nrm = nrm * np.array([-1.0, 1.0, 1.0])
@@ -182,8 +208,10 @@ def main(argv=None) -> int:
     ap.add_argument("--only", help="comma-separated model directory names")
     ap.add_argument("--budget", type=int, default=1500, help="triangles of the front half before the cut")
     ap.add_argument("--angle", type=float, default=40.0, help="smooth-by-angle threshold, degrees")
+    ap.add_argument("--max-depth", type=float, default=0.5, help="triangles wholly deeper are dropped")
     ap.add_argument("--blender", default="blender")
     args = ap.parse_args(argv)
+    settings = read_settings(HERE / "reliefs.txt")
     args.out.mkdir(parents=True, exist_ok=True)
     keep = set(args.only.split(",")) if args.only else None
     index_path = args.out / "index.txt"
@@ -199,9 +227,12 @@ def main(argv=None) -> int:
         done: dict[tuple[float, int], str] = {}
         for icon, seconds, mirror in read_icons(model_dir):
             if (seconds, mirror) not in done:
-                pos, tris = posed_front(model_dir, seconds, mirror)
+                options = settings_for(model_dir.name, settings)
+                drop = [tuple(float(x) for x in c.split(",")) for c in options.get("drop", "").split(";") if c]
+                pos, tris = posed_front(model_dir, seconds, mirror, drop)
                 dpos, dnrm, faces = decimate(pos, tris, args.budget, args.angle, args.blender)
                 dpos[:, 2] -= dpos[:, 2].max()  # the front-most point on the face's plane
+                faces = [f for f in faces if max(dpos[p][2] for p, _ in f) >= -args.max_depth]
                 verts, out_tris, masks = cut_and_project(dpos, dnrm, faces)
                 name = model_dir.name + (".m" if mirror else "") + (f".{seconds:g}" if seconds else "") + ".gtr"
                 write_gtr(args.out / name, verts, out_tris, masks)

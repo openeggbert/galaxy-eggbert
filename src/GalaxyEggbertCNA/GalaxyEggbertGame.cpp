@@ -1145,7 +1145,9 @@ namespace GalaxyEggbert::CNA
 
         terrainDrawSecret_ = TerrainDrawSecret();
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), terrainTileAtlas_, tileCoverage_,
-                                                             terrainDrawSecret_, StillModelIcons());
+                                                             terrainDrawSecret_, StillModelIcons(), TerrainReliefs());
+        terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
+        terrainReliefWarm_ = false;
         ApplyBlockModels();
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         std::cout << "GalaxyEggbertCNA: world terrain built — " << terrainRenderer_->BlockCount() << " blocks, "
@@ -1184,10 +1186,35 @@ namespace GalaxyEggbert::CNA
             terrainDrawSecret_ = TerrainDrawSecret();
             terrainRenderer_ =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), terrainTileAtlas_,
-                                                  tileCoverage_, terrainDrawSecret_, StillModelIcons());
+                                                  tileCoverage_, terrainDrawSecret_, StillModelIcons(), TerrainReliefs());
+            terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
+            terrainReliefWarm_ = false;
             ApplyBlockModels();
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         }
+    }
+
+    const GalaxyEggbert::Game::TerrainReliefTable* GalaxyEggbertGame::TerrainReliefs()
+    {
+        if (!terrainReliefsLoaded_)
+        {
+            terrainReliefsLoaded_ = true;
+            const char* on = std::getenv("GALAXY_TERRAIN_RELIEF");
+            if (on == nullptr || std::string(on) != "0")
+            {
+                const char* dir = std::getenv("GALAXY_TERRAIN_RELIEF_DIR");
+                const int icons = terrainReliefs_.Load(dir != nullptr && *dir != '\0' ? dir : "avatars3d/terrain");
+                std::cout << "GalaxyEggbertCNA: " << icons << " terrain tile(s) drawn as their relief near the camera."
+                          << std::endl;
+            }
+            if (const char* radius = std::getenv("GALAXY_TERRAIN_RELIEF_RADIUS"))
+            {
+                terrainReliefRadius_ = std::max(0.0f, static_cast<float>(std::atof(radius)));
+            }
+            const char* overhang = std::getenv("GALAXY_TERRAIN_RELIEF_OVERHANG");
+            terrainReliefOverhangs_ = overhang != nullptr && std::string(overhang) == "1";
+        }
+        return terrainReliefs_.Empty() ? nullptr : &terrainReliefs_;
     }
 
     std::vector<std::uint16_t> GalaxyEggbertGame::StillModelIcons() const
@@ -5424,7 +5451,10 @@ namespace GalaxyEggbert::CNA
             terrainEffect_->View = camera_.View();
             terrainEffect_->Projection = camera_.Projection();
             terrainEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
-            // The opaque terrain now; its semi-transparent pass (water) after the models below.
+            // The reliefs near the camera's target (Q-012), then the opaque terrain; its
+            // semi-transparent pass (water) after the models below.
+            terrainRenderer_->UpdateRelief(device, cameraTarget_, terrainReliefRadius_, terrainReliefWarm_ ? 2 : -1);
+            terrainReliefWarm_ = true;
             terrainRenderer_->DrawOpaque(device, *terrainEffect_);
 
             if (objectCubeEffect_)

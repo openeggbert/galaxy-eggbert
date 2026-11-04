@@ -20,6 +20,7 @@
 #include <Microsoft/Xna/Framework/Graphics/CompareFunction.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
 
+#include <algorithm>
 #include <cmath>
 
 namespace GalaxyEggbert::Game
@@ -460,12 +461,31 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    namespace
+    {
+        // The relief chunks' cube meshes, counted as the static terrain they replace.
+        template <typename Chunks>
+        int ReliefCubeCount(const Chunks& chunks, bool vertices)
+        {
+            int count = 0;
+            for (const auto& chunk : chunks)
+            {
+                if (chunk.cubes)
+                {
+                    count += vertices ? chunk.cubes->VertexCount() : chunk.cubes->PrimitiveCount();
+                }
+            }
+            return count;
+        }
+    }
+
     TerrainRenderer::TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                          const Worlds::World& world,
                                          const TileAtlas& tileAtlas,
                                          const std::vector<TileCoverage>& tileCoverage, bool drawSecret,
-                                         std::vector<std::uint16_t> modelDrawnIcons)
-        : m_tileAtlas(&tileAtlas)
+                                         std::vector<std::uint16_t> modelDrawnIcons,
+                                         const TerrainReliefTable* reliefs)
+        : m_reliefs(reliefs != nullptr && !reliefs->Empty() ? reliefs : nullptr), m_tileAtlas(&tileAtlas)
     {
         // Icons 108/109's DirectionalCube entry reuses icon 107's own side
         // texture (DirectionalCubeTiles.cpp) -- computed once here since
@@ -479,6 +499,36 @@ namespace GalaxyEggbert::Game
         auto transparentStaticMesh = MakeLitTexturedMeshBuilder();
         auto cutoutMesh = MakeLitTexturedMeshBuilder();
         auto grassMesh = MakeLitTexturedMeshBuilder();
+        // The relief tiles' cubes, by chunk (UpdateRelief).
+        std::unordered_map<std::uint32_t, std::size_t> reliefChunkOf;
+        std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkCubes;
+        // A relief tile's cell, near the focus, is its relief, which lies inside the cell: it does not
+        // hide the faces of a neighbour drawn otherwise (they would leave a gap down to its lumps).
+        const auto isReliefCell = [&](int nx, int ny, int nz)
+        {
+            if (m_reliefs == nullptr || nx < 0 || ny < 0 || nz < 0 || nx >= static_cast<int>(world.blocksPerAxis()) ||
+                ny >= static_cast<int>(world.blocksPerAxis()) || nz >= static_cast<int>(world.blocksPerAxis()))
+            {
+                return false;
+            }
+            const auto other = world.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(ny),
+                                              static_cast<std::uint16_t>(nz));
+            return !other.isAir() && m_reliefs->Find(other.type()) != nullptr;
+        };
+        // The faces (bit per BoxFace) whose neighbour is a relief tile's cell.
+        const auto reliefNeighbourFaces = [&](int cx, int cy, int cz)
+        {
+            static constexpr int kOffsets[6][3] = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}};
+            std::uint8_t mask = 0;
+            for (int face = 0; face < 6; ++face)
+            {
+                if (isReliefCell(cx + kOffsets[face][0], cy + kOffsets[face][1], cz + kOffsets[face][2]))
+                {
+                    mask = static_cast<std::uint8_t>(mask | (1u << face));
+                }
+            }
+            return mask;
+        };
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -743,7 +793,8 @@ namespace GalaxyEggbert::Game
                     }
                     const std::uint8_t hiddenFaces =
                         definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube
-                            ? HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage)
+                            ? static_cast<std::uint8_t>(HiddenFaceMask(world, blocksPerAxis, x, y, z, tileCoverage) &
+                                                        ~reliefNeighbourFaces(x, y, z))
                             : std::uint8_t{0};
                     // A tile textured on one side only turns that side to the room (DirectionalCubeTiles.hpp
                     // SingleTexturedSide): the free cells in a row before each side, up to kRoomRun.
@@ -775,6 +826,9 @@ namespace GalaxyEggbert::Game
                     }
 
                     using CnaEngine::Graphics::BoxFace;
+                    const bool reliefTile =
+                        m_reliefs != nullptr && mesh == &staticMesh && m_reliefs->Find(block.type()) != nullptr;
+                    const std::uint8_t besideRelief = reliefTile ? std::uint8_t{0} : reliefNeighbourFaces(x, y, z);
                     CnaEngine::Graphics::BoxFaces faces;
                     faces[static_cast<int>(BoxFace::PositiveZ)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x, y, z + 1, tileCoverage), tileUv};
@@ -788,6 +842,55 @@ namespace GalaxyEggbert::Game
                         {!IsOccluderBlock(world, blocksPerAxis, x, y + 1, z, tileCoverage), tileUv};
                     faces[static_cast<int>(BoxFace::NegativeY)] =
                         {!IsOccluderBlock(world, blocksPerAxis, x, y - 1, z, tileCoverage), tileUv};
+                    for (int face = 0; face < 6; ++face)
+                    {
+                        if ((besideRelief & (1u << face)) != 0)
+                        {
+                            faces[face].visible = true;
+                        }
+                    }
+                    if (reliefTile)
+                    {
+                        // A relief tile (Q-012): its cube goes to its chunk, drawn as cubes far from the
+                        // focus and as the cells' reliefs near it.
+                        const int k = TerrainRenderer::kReliefChunkCells;
+                        const auto key = static_cast<std::uint32_t>((x / k) << 20 | (y / k) << 10 | (z / k));
+                        auto found = reliefChunkOf.find(key);
+                        if (found == reliefChunkOf.end())
+                        {
+                            found = reliefChunkOf.emplace(key, m_reliefChunks.size()).first;
+                            ReliefChunk chunk;
+                            const Microsoft::Xna::Framework::Vector3 low(
+                                static_cast<float>((x / k) * k - kWorldCenterX) - 0.5f,
+                                static_cast<float>((y / k) * k) - 0.5f,
+                                static_cast<float>((z / k) * k - kWorldCenterZ) - 0.5f);
+                            chunk.boxMin = low;
+                            chunk.boxMax = low + Microsoft::Xna::Framework::Vector3(static_cast<float>(k));
+                            m_reliefChunks.push_back(std::move(chunk));
+                            reliefChunkCubes.push_back(MakeLitTexturedMeshBuilder());
+                        }
+                        AddCenteredBox(reliefChunkCubes[found->second], center,
+                                       Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
+                        ReliefCell cell;
+                        cell.center = center;
+                        cell.icon = block.type();
+                        for (int face = 0; face < 6; ++face)
+                        {
+                            if (!faces[face].visible)
+                            {
+                                continue;
+                            }
+                            cell.faces = static_cast<std::uint8_t>(cell.faces | (1u << face));
+                            cell.air[static_cast<std::size_t>(face)] = ReliefAirSides(face, [&](int dx, int dy, int dz) {
+                                return IsOccluderBlock(world, blocksPerAxis, x + dx, y + dy, z + dz, tileCoverage);
+                            });
+                        }
+                        if (cell.faces != 0)
+                        {
+                            m_reliefChunks[found->second].cells.push_back(cell);
+                        }
+                        continue;
+                    }
                     AddCenteredBox(*mesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
                 }
             }
@@ -812,6 +915,14 @@ namespace GalaxyEggbert::Game
         if (!staticMesh.Mesh().Empty())
         {
             m_staticRenderer = UploadLitTexturedMeshParts(device, staticMesh.Mesh());
+        }
+
+        for (std::size_t i = 0; i < m_reliefChunks.size(); ++i)
+        {
+            if (!reliefChunkCubes[i].Mesh().Empty())
+            {
+                m_reliefChunks[i].cubes = UploadLitTexturedMeshParts(device, reliefChunkCubes[i].Mesh());
+            }
         }
 
         if (!cutoutMesh.Mesh().Empty())
@@ -1057,6 +1168,89 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    std::unique_ptr<GpuMeshParts> TerrainRenderer::BuildReliefChunk(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const ReliefChunk& chunk) const
+    {
+        auto mesh = MakeLitTexturedMeshBuilder();
+        for (const auto& cell : chunk.cells)
+        {
+            const TerrainRelief* relief = m_reliefs->Find(cell.icon);
+            if (relief == nullptr)
+            {
+                continue;
+            }
+            const auto tile = m_tileAtlas->GetTileUv(cell.icon);
+            for (int face = 0; face < 6; ++face)
+            {
+                if ((cell.faces & (1u << face)) != 0)
+                {
+                    AppendReliefFace(mesh, *relief, cell.center, face, tile,
+                                     m_reliefOverhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)], true);
+                }
+            }
+        }
+        if (mesh.Mesh().Empty())
+        {
+            return nullptr;
+        }
+        return UploadLitTexturedMeshParts(device, mesh.Mesh());
+    }
+
+    void TerrainRenderer::UpdateRelief(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                       const Microsoft::Xna::Framework::Vector3& focus, float radius, int maxBuilds)
+    {
+        if (m_reliefs == nullptr)
+        {
+            return;
+        }
+        // Nearest chunks first, so a capped call builds what is closest.
+        std::vector<std::pair<float, std::size_t>> wanted;
+        for (std::size_t i = 0; i < m_reliefChunks.size(); ++i)
+        {
+            auto& chunk = m_reliefChunks[i];
+            const float dx = std::max({chunk.boxMin.X - focus.X, 0.0f, focus.X - chunk.boxMax.X});
+            const float dy = std::max({chunk.boxMin.Y - focus.Y, 0.0f, focus.Y - chunk.boxMax.Y});
+            const float dz = std::max({chunk.boxMin.Z - focus.Z, 0.0f, focus.Z - chunk.boxMax.Z});
+            const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+            chunk.near = distance <= radius;
+            if (chunk.near && !chunk.relief && !chunk.cells.empty())
+            {
+                wanted.emplace_back(distance, i);
+            }
+            else if (!chunk.near && chunk.relief && distance > radius + kReliefRelease)
+            {
+                chunk.relief.reset();
+            }
+        }
+        std::sort(wanted.begin(), wanted.end());
+        const std::size_t builds = maxBuilds < 0 ? wanted.size() : static_cast<std::size_t>(maxBuilds);
+        for (std::size_t k = 0; k < wanted.size() && k < builds; ++k)
+        {
+            auto& chunk = m_reliefChunks[wanted[k].second];
+            chunk.relief = BuildReliefChunk(device, chunk);
+        }
+    }
+
+    int TerrainRenderer::ReliefChunksShown() const noexcept
+    {
+        int shown = 0;
+        for (const auto& chunk : m_reliefChunks)
+        {
+            shown += chunk.near && chunk.relief ? 1 : 0;
+        }
+        return shown;
+    }
+
+    int TerrainRenderer::ReliefPrimitiveCount() const noexcept
+    {
+        int count = 0;
+        for (const auto& chunk : m_reliefChunks)
+        {
+            count += chunk.near && chunk.relief ? chunk.relief->PrimitiveCount() : 0;
+        }
+        return count;
+    }
+
     void TerrainRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                  Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
     {
@@ -1070,6 +1264,17 @@ namespace GalaxyEggbert::Game
         if (m_staticRenderer)
         {
             m_staticRenderer->Draw(device, effect);
+        }
+        for (const auto& chunk : m_reliefChunks)
+        {
+            if (chunk.near && chunk.relief)
+            {
+                chunk.relief->Draw(device, effect);
+            }
+            else if (chunk.cubes)
+            {
+                chunk.cubes->Draw(device, effect);
+            }
         }
         if (m_sawFloorRenderer)
         {
@@ -1164,7 +1369,7 @@ namespace GalaxyEggbert::Game
                (m_lavaFrames.count(m_lavaIcon) != 0 && m_lavaFrames.at(m_lavaIcon) ? m_lavaFrames.at(m_lavaIcon)->VertexCount() : 0) +
                (m_sawFloorRenderer ? m_sawFloorRenderer->VertexCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->VertexCount() : 0) +
-               (m_grassRenderer ? m_grassRenderer->VertexCount() : 0);
+               (m_grassRenderer ? m_grassRenderer->VertexCount() : 0) + ReliefCubeCount(m_reliefChunks, true);
     }
 
     int TerrainRenderer::PrimitiveCount() const noexcept
@@ -1175,6 +1380,6 @@ namespace GalaxyEggbert::Game
                (m_animRenderer ? m_animRenderer->PrimitiveCount() : 0) +
                (m_lavaFrames.count(m_lavaIcon) != 0 && m_lavaFrames.at(m_lavaIcon) ? m_lavaFrames.at(m_lavaIcon)->PrimitiveCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->PrimitiveCount() : 0) +
-               (m_grassRenderer ? m_grassRenderer->PrimitiveCount() : 0);
+               (m_grassRenderer ? m_grassRenderer->PrimitiveCount() : 0) + ReliefCubeCount(m_reliefChunks, false);
     }
 }

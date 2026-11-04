@@ -997,6 +997,18 @@ namespace GalaxyEggbert::CNA
         bool glueStrandsPending_ = false;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> decalEffect_;
         GalaxyEggbert::Game::ObjectModelTable objectModelTable_;
+        // The terrain tiles' reliefs (Q-001/Q-004/Q-012, avatars3d/terrain/), loaded on the first
+        // terrain build; drawn within terrainReliefRadius_ of the camera's target.
+        // GALAXY_TERRAIN_RELIEF=0 turns them off, GALAXY_TERRAIN_RELIEF_DIR reads another directory,
+        // GALAXY_TERRAIN_RELIEF_RADIUS sets the radius, GALAXY_TERRAIN_RELIEF_OVERHANG=1 keeps the
+        // overhangs into the air (Q-012 C).
+        const GalaxyEggbert::Game::TerrainReliefTable* TerrainReliefs();
+        GalaxyEggbert::Game::TerrainReliefTable terrainReliefs_;
+        bool terrainReliefsLoaded_ = false;
+        bool terrainReliefOverhangs_ = false;
+        float terrainReliefRadius_ = 12.0f;
+        // A fresh terrain builds every near relief chunk at once (no cubes popping into reliefs).
+        bool terrainReliefWarm_ = false;
         // The sheet and icon a MoveObject's billboard shows this frame, picked
         // as the billboard passes pick them; false when it shows none (hidden,
         // inactive, a cube, a parked vehicle, an invisible frame).
