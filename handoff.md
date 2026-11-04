@@ -370,7 +370,9 @@ ledgers before repeating any discovery. Where it stands:
   over such an edge (092's low stairwell: his head shows; play pass 7: 78/78). A taller stairwell
   (cut to walk + 6, probe in `build-probe/probe-worlds-092/`) does not help: the higher step's
   edge right behind him holds the look point under it, so the elevation search finds no room at
-  any height; a fix needs the look point moved off that edge (a camera change: full pass after).
+  any height. The actual cause (found with a debug print of the chosen elevation): the line of sight
+  went to a point half a block over his feet. Fixed by a line to his real feet: 092 shows him whole
+  (play pass 9: 78/78; `plans/evidence/camera-stair-092.png`, `camera-feet-pass8-vs-pass9.jpg`).
   `90da71f`: **the terrain mipmapped** from its own padded copy of object-m.png (TileAtlas
   Layout::Padded: 16 px borders, 96 px pitch, box-filtered levels): 125's ring moire gone. The web
   build was rebuilt with it at 01:25 (2026-11-04, after a first try failed while the cna session had
