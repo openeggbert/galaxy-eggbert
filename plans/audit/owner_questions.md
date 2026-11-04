@@ -229,7 +229,7 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - **Q-006 glue death**: add the strands.
 - **MR-0001 3ds Max**: no licence; leave the .max files unused.
 
-## Q-013 — the lattice cube "textured only outside" (owner 2026-11-04): where was it seen?
+## Q-013 — the lattice cube "textured only outside" (owner 2026-11-04): where was it seen? — likely fixed by OR-0042
 
 - Report: "the cube of grids has textures only outside and not inside; it should probably be 3D";
   then "only the outer side is visible on the cube of grids of metal, probably rods as edges".
@@ -245,3 +245,9 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - Not found: any place where 201 is a flat textured cube (that would be textured outside only,
   back faces culled). Needed: a screenshot or the world and place, and whether it was in the game,
   the editor or the web build.
+- Likely explained and fixed by OR-0042 (later the same night): the girder had no collision, and
+  the chase camera stops only at blocks with collision (`BlocksCamera`), so it looked through a
+  girder tower, or from inside one, where the frames' backs are bare (no plates, no rivets). World
+  056's lift beside its tower (`plans/evidence/girder-camera-before-after.jpg`: play pass 20 above,
+  the tower between the camera and Blupi; play pass 22 below, the camera at the open side). The
+  girder is solid now: neither Blupi nor the camera goes inside it. To be confirmed by the owner.
