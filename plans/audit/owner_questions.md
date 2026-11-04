@@ -70,6 +70,31 @@ strands of each painted frame 168-171 (outside the body's silhouette) to centre 
 (`GlueStrands.hpp`), and the game draws them as thin tubes in the strands' own green, turned with
 Blupi and stood on the puddle; evidence `plans/evidence/glue-strands.png`.
 
+### Q-012 — The terrain models: what the scenes turned out to be, and B or C? (2026-11-04)
+
+Found while starting Q-001/Q-004: the 127 terrain scenes are **not blocks**. Each is a slab modelled
+for the front view only: 0.15-0.55 of a block deep and up to 1.37 blocks wide (the lumps of
+neighbouring tiles overlap, so the cropped renders join). The heavy ones are 30,000-58,000
+triangles each (rock, cave, grass); the campaign has 1.32 million exposed terrain cells (world125
+alone 56,000 exposed faces). So a cell is drawn as its scene's **relief on each exposed face**
+(`tools/terrain_relief/build_relief.py`: the front half, decimated to ~1,500 triangles, which keeps
+the lumps; 500 does not), textured by the tile's own sprite projected from the front (so head-on it
+is exactly the original tile), and only **near the camera**: farther terrain stays the textured cubes
+(the whole world at 1,500 triangles a face would be ~80 million triangles; this machine has an
+integrated GPU). The grass gets its own composition: the model as two strips back to back (their
+leaves cover the top) and crosswise strips at the row's open ends (the joining variants 107/108/109/157:
+middle, right end, left end, single).
+
+Mock-up (`plans/evidence/terrain-relief-mockup.png`; rock above, grass below; the grass's top there is
+still the plain per-face relief, to be replaced by the strips):
+- **A** today's cubes;
+- **B** the relief clipped where it would hang into air: the cell's shape stays exact, so what you
+  see is what Blupi stands on (recommended);
+- **C** the whole relief with its overhangs: more organic, but lumps stick ~0.18 of a block past
+  edges into the air, where Blupi does not collide with them.
+
+Meanwhile: B is being built (C is the same relief with the overhangs kept, a switch).
+
 ## Answered
 
 ### Q-000 — Wind and fans along Z (2026-11-02)
