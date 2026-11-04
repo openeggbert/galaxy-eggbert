@@ -106,3 +106,72 @@
  300 Decor/grotte16.rd4           0  # pixels 0.44
  373 Decor/smooth/smooth-u-a.rds  0  # pixels 0.43
  400 Decor/palais/mur10.rds       0  # pixels 0.44
+
+# The tiles used in no campaign world (the galleries 998/999 show them), reviewed the same way (2026-11-04):
+  19 Decor/techno20.rd4           0  # pixels 0.36
+  20 Decor/techno21.rd4           0  # pixels 0.30
+  21 Decor/techno22.rd4           0  # pixels 0.31
+  23 Decor/techno24.rd4           0  # pixels 0.44
+  24 Decor/techno25.rd4           0  # pixels 0.36 (rank 2)
+  25 Decor/techno26.rd4           0  # pixels 0.56
+  26 Decor/techno27.rd4           0  # pixels 0.45
+  27 Decor/techno28.rd4           0  # pixels 0.34
+  28 Decor/techno01.rd4           0  # pixels 0.65
+  33 Decor/caisse2.rd4            0  # pixels 0.42
+  40 Decor/roc4f.rd4              0  # pixels 0.48
+  41 Decor/bois1.rd4              0  # pixels 0.25
+  42 Decor/bois2.rd4              0  # pixels 0.30
+  43 Decor/bois3.rd4              0  # pixels 0.36
+  44 Decor/bois4.rd4              0  # pixels 0.36
+  45 Decor/bois5.rd4              0  # pixels 0.32
+  46 Decor/bois6.rd4              0  # pixels 0.41
+  47 Decor/bois7.rd4              0  # pixels 0.43
+  74 Decor/roc4s.rd4              0  # pixels 0.51
+  75 Decor/roc4t.rd4              0  # pixels 0.47
+ 154 Decor/roc4q.rd4              0  # pixels 0.44
+ 155 Decor/roc4r.rd4              0  # pixels 0.41
+ 185 Decor/roc4u.rd4              0  # pixels 0.42
+ 191 Decor/maison10.rd4           0  # pixels 0.39
+ 226 Decor/enfant12.rd4           0  # pixels 0.73
+ 227 Decor/enfant13.rd4           0  # pixels 0.86
+ 228 Decor/enfant14.rd4           0  # pixels 0.65
+ 229 Decor/enfant15.rd4           0  # pixels 0.93
+ 232 Decor/enfant18.rd4           0  # pixels 0.83
+ 256 Decor/tuyau-ulr.rds          0  # pixels 0.74
+ 257 Decor/tuyau-udl.rds          0  # pixels 0.73
+ 258 Decor/tuyau-udlr.rds         0  # pixels 0.69
+ 259 Decor/tuyau-ul.rds           0  # pixels 0.70
+ 260 Decor/tuyau-ur.rds           0  # pixels 0.60
+ 287 Decor/grotte03.rd4           0  # pixels 0.22
+ 288 Decor/grotte04.rd4           0  # pixels 0.38
+ 289 Decor/grotte05.rd4           0  # pixels 0.31
+ 290 Decor/grotte06.rd4           1  # pixels 0.27
+ 291 Decor/grotte07.rd4           0  # pixels 0.30
+ 292 Decor/grotte08.rd4           0  # pixels 0.37
+ 293 Decor/grotte09.rd4           0  # pixels 0.35
+ 294 Decor/grotte10.rd4           0  # pixels 0.33
+ 295 Decor/grotte11.rd4           0  # pixels 0.25
+ 296 Decor/grotte12.rd4           0  # pixels 0.25
+ 297 Decor/grotte13.rd4           0  # pixels 0.24 (rank 2)
+ 298 Decor/grotte14.rd4           0  # pixels 0.33
+ 299 Decor/grotte15.rd4           0  # pixels 0.36
+ 337 Decor/grotte20.rd4           0  # pixels 0.38
+ 338 Decor/grotte21.rd4           0  # pixels 0.41
+ 340 Decor/fromage3.rds           0  # pixels 0.29
+ 351 Decor/smooth/smooth-ud.rds   0  # pixels 0.48
+ 352 Decor/smooth/smooth-lr.rds   0  # pixels 0.54
+ 354 Decor/smooth/smooth-ul.rds   0  # pixels 0.45
+ 355 Decor/smooth/smooth-dr.rds   0  # pixels 0.39
+ 356 Decor/smooth/smooth-dl.rds   0  # pixels 0.54
+ 357 Decor/smooth/smooth-udr.rds  0  # pixels 0.29
+ 358 Decor/smooth/smooth-udl.rds  0  # pixels 0.46
+ 359 Decor/smooth/smooth-ulr.rds  0  # pixels 0.56
+ 360 Decor/smooth/smooth-dlr.rds  0  # pixels 0.50
+ 361 Decor/smooth/smooth-udlr.rds 0  # pixels 0.55
+ 363 Decor/smooth/smooth-d2.rds   0  # pixels 0.37
+ 376 Decor/enfant22.rd4           0  # pixels 0.20
+ 389 Decor/palais/mur04.rds       0  # pixels 0.50
+ 394 Decor/palais/mur02.rds       0  # pixels 0.57
+ 395 Decor/palais/mur02.rds       0  # pixels 0.77
+ 348 Decor/smooth/smooth-d.rds    0  # the survey's (the slime pieces follow their scenes' names: d, ur ...)
+ 353 Decor/smooth/smooth-ur.rds   0  # the survey's
