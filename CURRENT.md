@@ -39,7 +39,7 @@ content-authoring UX, but not new gameplay mechanics.
 - Terrain, its grass and the cube objects are lit (one directional light + ambient,
   `TerrainLighting.hpp`); sprite tiles are cut out (`TileCoverage.hpp`), faint ones blended; lifts
   are drawn as their tile's bar and stem; the chase camera rises over obstacles behind Blupi.
-- Since 2026-11-04 (owner, Q-001/Q-004/Q-012) 91 terrain tiles show their Ray Dream scene's relief on
+- Since 2026-11-04 (owner, Q-001/Q-004/Q-012) 158 terrain tiles (every one with a scene of its own) show their Ray Dream scene's relief on
   their exposed faces within 8 blocks of the camera's target (`TerrainRelief.hpp`,
   `avatars3d/terrain/`, `tools/terrain_relief/`): rocks, caves, cheese, slime, toys, pipes, machine
   panels, the palace, windows, bookshelves; the grass as its scene's slabs back to back. Farther off,

@@ -487,7 +487,13 @@ ledgers before repeating any discovery. Where it stands:
   more edge plates) and 8 more of the remaining used tiles: **91 tiles** now. `e5e8631`: a one-sided panel chose its room side wrongly
   beside relief cells (082's near wall showed its plain side). Play pass 10 (the first version's
   binary) passed its 54 worlds before it was stopped; **play pass 11 with the final binary: 78/78**
-  (`build-probe/play-pass-11/`, sheets per world: the reliefs seen along every playthrough). Open: the owner's B or C (Q-012); the tail of square
+  (`build-probe/play-pass-11/`, sheets per world: the reliefs seen along every playthrough).
+  Later (`1e35bf0`): the tiles used only in the galleries reviewed too: **158 tiles** with a relief
+  (`avatars3d/terrain/` 5.7 MB); the render ledger has no row left BLOCKED (a tile without a scene of
+  its own is a textured cube, INTENTIONAL; animation frames NOT_APPLICABLE), the asset ledger none
+  either (the .max files NOT_APPLICABLE by MR-0001; terrain scenes no sprite came from NOT_APPLICABLE).
+  OR-0031 closed (every billboard with a 3D source of its own is 3D). ED-0007: the editor still lays
+  no edge plates round a mass (they would stand before every corridor's faces in 3D). Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
