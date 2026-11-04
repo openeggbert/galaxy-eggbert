@@ -551,7 +551,9 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   timings follow it).
 - Cosmetic: the destroyed enemy's spinning debris, the bulldozer's 90-tick electrocution
   (ObjectType38), the wasp's sting effect (90), the creature's glue splat (53), the balloon pop
-  effect (91) are not drawn. Open (visual).
+  effect (91) were not drawn when this was written. Done since: the flying pieces (ByeByeAdd /
+  ByeByeStep, `InteractionSystem::ByeByePieces`), the flashes 90 and 91 and the tentacle 53
+  (BD-0054), the Cloud's kill sliding down (38, BD-0055). Nothing open here (checked 2026-11-04).
 - Validation for BD-0010..0013: 110/110 and all 78 playthroughs pass (2026-11-01).
 
 ## BD-0032 — the crusher sat in the floor, solid; the original's hangs in Blupi's own cell (gameplay, worlds) — FIXED_AND_VERIFIED
