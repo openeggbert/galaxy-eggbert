@@ -111,9 +111,12 @@ whose scene is certain (rocks, caves, cheese, slime, toys, four machine panels, 
 facades, the grass). The others stay textured cubes: no scene of the archive is theirs (the bricks
 261-263/283, the grey metal plates 78-84/396, the panels 4-8/11-13, the stars, the roof tiles).
 
-Built 2026-11-04 (B): 53 tiles in `avatars3d/terrain/`, each relief ~700 triangles, drawn within 8
-blocks of the camera's target and built on worker threads (093: 1.5 million triangles near the camera,
-0.4 s to build at load; a door opening rebuilds only its chunk). Evidence
+Built 2026-11-04 (B): now 158 tiles in `avatars3d/terrain/` (5.7 MB), each relief ~700 triangles, drawn
+within 8 blocks of the camera's target and built on worker threads (093: 1.5 million triangles near the
+camera, 0.4 s to build at load; a door opening rebuilds only its chunk). Measured on this machine's GPU
+(AMD Phoenix, radeonsi; SDL's offscreen driver, each playthrough's whole run including its load, a frame
+every tick): 021 0.40 -> 0.69 ms a frame, 082 0.28 -> 0.43, 093 0.93 -> 1.40, 101 0.27 -> 0.50, 125
+1.21 -> 1.22: well inside 16.7 ms. Evidence
 `plans/evidence/terrain-reliefs-7-worlds.png`. Still yours to say: B or C; whether the toys' floors
 (a ball standing proud of its plate, the plate 0.37 under the face: Blupi walks on the balls' tops)
 should rather have the plate at the face. Also done: the cave's edge plates 285/302 (3,000 cells each in

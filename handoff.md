@@ -503,8 +503,13 @@ ledgers before repeating any discovery. Where it stands:
   70/78 then the 8 replayed 8/8. Golden frames and trace re-baselined (`cdface8`, then again) and
   passing: they had been stale since July. Live editor checks ED-0006 (BigDecor cycling) and
   ED-0007 (auto-tiling) with the saved world read back (`tools/qa_steps/editor_*.txt`). The .max
-  sources NOT_APPLICABLE (MR-0001). Still open in BD-0010's list: the cosmetic effects (debris,
-  electrocution, sting, splat, balloon pop) and BD-0025's shared shield timer; 375 has no source. Open: the owner's B or C (Q-012); the tail of square
+  sources NOT_APPLICABLE (MR-0001). `fe43883` BD-0025: the timed states share the original's one
+  count (an invert under a power restarts both; both end together; a pop ends an invert): the 17
+  worlds with invert signs or wasps 17/17. BD-0010's cosmetic list turned out done (BD-0054/0055,
+  ByeBye). 375 has no source. GPU cost measured on the real GPU (SDL offscreen uses radeonsi:
+  `LIBGL_DEBUG=verbose EGL_LOG_LEVEL=debug` shows it): with the reliefs 0.4-1.4 ms a frame (021,
+  082, 093, 101, 125; Q-012 has the table). Perf runner: an autoplay script with
+  `SDL_VIDEODRIVER=offscreen`, wall time / ticks. Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
