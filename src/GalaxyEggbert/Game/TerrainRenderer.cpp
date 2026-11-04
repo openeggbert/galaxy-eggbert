@@ -549,6 +549,18 @@ namespace GalaxyEggbert::Game
             return !other.isAir() && m_reliefs->Find(other.type()) != nullptr;
         };
         // The faces (bit per BoxFace) whose neighbour is a relief tile's cell.
+        // A relief overhangs only into solid cells: not into a cell drawn as its model (the teleporter's
+        // booth fills its cell; the rocks beside a teleporter's niche hid its ends, owner 2026-11-04).
+        const auto reliefSolid = [&](int cx, int cy, int cz)
+        {
+            if (!IsOccluderBlock(world, static_cast<int>(world.blocksPerAxis()), cx, cy, cz, tileCoverage))
+            {
+                return false;
+            }
+            const auto type = world.getBlock(static_cast<std::uint16_t>(cx), static_cast<std::uint16_t>(cy),
+                                             static_cast<std::uint16_t>(cz)).type();
+            return std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), type) == modelDrawnIcons.end();
+        };
         const auto reliefNeighbourFaces = [&](int cx, int cy, int cz)
         {
             static constexpr int kOffsets[6][3] = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}};
@@ -809,7 +821,7 @@ namespace GalaxyEggbert::Game
                             cell.faces = static_cast<std::uint8_t>(cell.faces | (1u << face));
                             cell.air[static_cast<std::size_t>(face)] = static_cast<std::uint8_t>(
                                 ReliefAirSides(face, [&](int dx, int dy, int dz) {
-                                    return IsOccluderBlock(world, blocksPerAxis, x + dx, y + dy, z + dz, tileCoverage);
+                                    return reliefSolid(x + dx, y + dy, z + dz);
                                 }) & kGrassAirMask);
                         }
                         if (cell.faces != 0)
@@ -926,7 +938,7 @@ namespace GalaxyEggbert::Game
                             {
                                 cell.faces = static_cast<std::uint8_t>(cell.faces | (1u << face));
                                 cell.air[static_cast<std::size_t>(face)] = ReliefAirSides(face, [&](int dx, int dy, int dz) {
-                                    return IsOccluderBlock(world, blocksPerAxis, x + dx, y + dy, z + dz, tileCoverage);
+                                    return reliefSolid(x + dx, y + dy, z + dz);
                                 });
                             }
                             else
@@ -1015,7 +1027,7 @@ namespace GalaxyEggbert::Game
                             }
                             cell.faces = static_cast<std::uint8_t>(cell.faces | (1u << face));
                             cell.air[static_cast<std::size_t>(face)] = ReliefAirSides(face, [&](int dx, int dy, int dz) {
-                                return IsOccluderBlock(world, blocksPerAxis, x + dx, y + dy, z + dz, tileCoverage);
+                                return reliefSolid(x + dx, y + dy, z + dz);
                             });
                         }
                         if (cell.faces != 0)
