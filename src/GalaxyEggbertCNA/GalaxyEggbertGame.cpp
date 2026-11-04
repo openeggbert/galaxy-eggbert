@@ -3649,7 +3649,12 @@ namespace GalaxyEggbert::CNA
             blupi_.SetLiftBelow(blupi_.GetVehicleMode() == BlupiController::VehicleMode::Overcraft &&
                                 InteractionSystem::LiftWithinOverHeight(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
                                                                          blupi_.GetZ()));
-            blupi_.Step(worldRuntime_.GetWorld(), turnInput, moveInput, jumpPressed,
+            // Steering (Left/Right, a Galaxy control: the original's Blupi only faces left or right)
+            // turns him at the player's pace whatever the game speed (owner 2026-11-04: at F6-F8 he
+            // spun far too fast). Step turns by turnInput * kTurnSpeed * its sped-up dt, so the rate
+            // is scaled back. Down's turn-around stays the original's Turn action, in game ticks.
+            const float steering = turnInput / GameSpeedFactor(gameSpeed_);
+            blupi_.Step(worldRuntime_.GetWorld(), steering, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
             TickPendingSkate(simDt);

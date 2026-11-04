@@ -147,3 +147,13 @@ rewritten).
   in mid-turn facing the camera; the helicopter one with the blue rotor pack dropping its green
   bomb; `VerifyDefinitionRegistries` (sheet, recolour, poses); ctest 112/112; golden frames
   unchanged.
+
+## OR-0036 — at the higher game speeds (F6-F8) he turns terribly fast (owner 2026-11-04) — FIXED
+
+- Report: raising the speed should not change how fast he turns; at F6/F7/F8 he turns terribly fast.
+- Cause: the game speed scales the simulation's dt (`GameSpeedFactor`: 2, 3, 4), and the steering
+  (Left/Right, `m_yaw += turnInput * kTurnSpeed * dt` in `BlupiController::Step`) turned with it.
+- Fix: the steering is a Galaxy control (the original's Blupi only faces left or right), so it turns at
+  the player's pace: the game passes `turnInput / GameSpeedFactor` to Step. Down's turn-around stays
+  the original's Turn action, its ticks played at the game's speed as the original plays them.
+- Validation: live, Left held 0.6 s in world 001 at normal speed and at F6 (2x): the same turn; ctest.
