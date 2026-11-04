@@ -999,6 +999,11 @@ namespace GalaxyEggbert::CNA
         bool glueStrandsPending_ = false;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> decalEffect_;
         GalaxyEggbert::Game::ObjectModelTable objectModelTable_;
+        // The power drawn on him (Decor.cpp:782-818): the shield's orb and sparkles, the power's
+        // stars (element.png), the Cloud's three sparks (explo.png), shown while the shared count is
+        // over 25 and every other pair of ticks after; behind him, as the original draws them
+        // first. Returns the power to draw, None for none.
+        [[nodiscard]] GalaxyEggbert::Def::SecretPower BlupiAuraShown() const;
         // The terrain tiles' reliefs (Q-001/Q-004/Q-012, avatars3d/terrain/), loaded on the first
         // terrain build; drawn within terrainReliefRadius_ of the camera's target.
         // GALAXY_TERRAIN_RELIEF=0 turns them off, GALAXY_TERRAIN_RELIEF_DIR reads another directory,

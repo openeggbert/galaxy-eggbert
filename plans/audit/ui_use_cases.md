@@ -21,3 +21,12 @@ Also from InputPad.cpp: the Setup's accelerometer sensitivity slider (`accelSlid
 was missing (the sensitivity was a fixed 50). Now in the Accelerometer row, saved as
 `accelSensitivity=`, read by the tilt's dead zone. FIXED_AND_VERIFIED 2026-11-04 (`VerifyGEInputPad`;
 live `plans/evidence/setup-accel-sensitivity.png`). The tilt itself was not tried on a device.
+
+From Decor.cpp's drawing of Blupi (782-818), found by the tables Galaxy did not cite: the shield's
+orb and sparkles (table_shield_blupi, table_shieldloop), the power's stars (table_magicloop) and the
+Cloud's three sparks (explo.png 48-53) drawn on him while the power lasts, flashing every other pair of
+ticks once the count is down to 25, were not drawn (only the trails left behind him were).
+FIXED_AND_VERIFIED 2026-11-04 (`GalaxyEggbertGame::BlupiAuraShown`; camera-facing sprites a little
+behind him, as the original draws them before him; live in probe worlds 987-989,
+`plans/evidence/power-auras.png`). The drink's rising bubbles over the bottle (table_drinkeffect /
+table_drinkoffset, Decor.cpp:882-895) remain to do.

@@ -1864,6 +1864,23 @@ namespace GalaxyEggbert::CNA
         return speed;
     }
 
+    GalaxyEggbert::Def::SecretPower GalaxyEggbertGame::BlupiAuraShown() const
+    {
+        using GalaxyEggbert::Def::SecretPower;
+        const SecretPower power = blupi_.GetSecretPower();
+        if (power != SecretPower::Shield && power != SecretPower::Power && power != SecretPower::Cloud)
+        {
+            return SecretPower::None;
+        }
+        if (cameraMode_ != CameraMode::ThirdPersonModel || blupi_.IsDeathLocked() || blupi_.IsTeleporting())
+        {
+            return SecretPower::None;
+        }
+        // m_blupiTimeShield > 25 || (m_time / ScaleDiv(1)) % 4 < 2
+        const bool shown = blupi_.GetTimeShield() > 25 || worldRuntime_.GetAnimPhase() % 4 < 2;
+        return shown ? power : SecretPower::None;
+    }
+
     bool GalaxyEggbertGame::BlupiDrawnAsDeathSprite() const
     {
         // Clear1 (lightning, mines, dynamite: charred, crumbling to smoking ash), Clear3 (lava)
@@ -6550,7 +6567,8 @@ namespace GalaxyEggbert::CNA
         // since it also means the icon lookup naturally re-runs every frame
         // with the latest phase.
         if (objectEffect_ &&
-            (!worldRuntime_.GetMobileObjects().empty() || BlupiDrawnAsDeathSprite() || BlupiCharredShape().smokes))
+            (!worldRuntime_.GetMobileObjects().empty() || BlupiDrawnAsDeathSprite() || BlupiCharredShape().smokes ||
+             BlupiAuraShown() != GalaxyEggbert::Def::SecretPower::None))
         {
             // Camera-facing basis: the inverse view matrix's Right/Up rows
             // give the camera's world-space right/up vectors (standard
@@ -6641,6 +6659,38 @@ namespace GalaxyEggbert::CNA
                     Microsoft::Xna::Framework::Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp,
                     CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
             }
+            // The shield's orb (table_shield_blupi, 2 px higher) and sparkles (table_shieldloop), the
+            // power's stars (table_magicloop), a frame every 2 ticks, on his sprite's place (its
+            // centre 30 px over his feet), a little behind him from the camera: the original draws
+            // them before him (Decor.cpp:782-806).
+            if (const auto aura = BlupiAuraShown();
+                aura == GalaxyEggbert::Def::SecretPower::Shield || aura == GalaxyEggbert::Def::SecretPower::Power)
+            {
+                static constexpr int kShieldBlupi[16] = {144, 145, 146, 147, 148, 149, 150, 151,
+                                                         266, 267, 268, 269, 270, 271, 272, 273};
+                static constexpr int kShieldLoop[5] = {274, 275, 276, 277, 278};
+                static constexpr int kMagicLoop[5] = {152, 153, 154, 155, 156};
+                const int frame = worldRuntime_.GetAnimPhase() / 2;
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                const Microsoft::Xna::Framework::Vector3 centre(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f,
+                                                                blupi_.GetZ());
+                const auto add = [&](int icon, float raise)
+                {
+                    const auto uv = GetElementIconUv(icon);
+                    mesh.AddBillboard(centre + behind + Microsoft::Xna::Framework::Vector3(0.0f, raise, 0.0f),
+                                      Microsoft::Xna::Framework::Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight,
+                                      cameraUp, CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+                };
+                if (aura == GalaxyEggbert::Def::SecretPower::Shield)
+                {
+                    add(kShieldBlupi[frame % 16], 2.0f / 64.0f);
+                    add(kShieldLoop[frame % 5], 0.0f);
+                }
+                else
+                {
+                    add(kMagicLoop[frame % 5], 0.0f);
+                }
+            }
             // The smoke over his heap of ash (46/47, CharredBlupi.hpp): the icon's rows above the
             // heap, its bottom where the sprite's would be over the model's feet (GetY() - 0.5,
             // as the model's kPlaceholderModelYOffset).
@@ -6717,7 +6767,8 @@ namespace GalaxyEggbert::CNA
         // same camera-facing billboard technique as the batches above, but
         // exploTexture_ (a genuinely new texture) via exploEffect_, and
         // GetExploIconUv() instead of GetElementIconUv()/tileAtlas_.
-        if (exploEffect_ && !worldRuntime_.GetMobileObjects().empty())
+        if (exploEffect_ &&
+            (!worldRuntime_.GetMobileObjects().empty() || BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud))
         {
             const auto invView = Microsoft::Xna::Framework::Matrix::Invert(camera_.View());
             const auto cameraRight = invView.getRightProperty();
@@ -6725,6 +6776,20 @@ namespace GalaxyEggbert::CNA
 
             auto mesh = MakeTexturedMeshBuilder();
             constexpr float kObjectSize = 1.0f;
+            // The Cloud's three sparks round him (explo.png 48 + (t + k) % 6, 128 px centred on his
+            // sprite: pos - 34, Decor.cpp:807-818), a little behind him as the original draws them first.
+            if (BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud)
+            {
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                const Microsoft::Xna::Framework::Vector3 centre(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f,
+                                                                blupi_.GetZ());
+                for (int k = 0; k < 3; ++k)
+                {
+                    const auto uv = GetExploIconUv(48 + (worldRuntime_.GetAnimPhase() + k) % 6);
+                    mesh.AddBillboard(centre + behind, Microsoft::Xna::Framework::Vector2(128.0f / 64.0f, 128.0f / 64.0f),
+                                      cameraRight, cameraUp, CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1});
+                }
+            }
             for (const auto& obj : worldRuntime_.GetMobileObjects())
             {
                 const auto visual = ResolveObjectVisual(
