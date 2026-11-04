@@ -1027,3 +1027,12 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyDefinitionRegistries` (lava's neighbour 13 frames on, the crusher in step, the
   second water's paces); live, 082's lava pit; the golden frames re-baselined (an animated model
   at the right edge on its own cell's frame).
+
+## BD-0066 — the drip, the saw and the crusher caught him busy (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:5513-5514, 5521-5522, 5551-5552): like the spike trap (BD-0060), the drip, the
+  saw and the crusher meet him only with `m_blupiFocus` -- not while he takes a pickup, teleports,
+  waves goodbye or cheers at the exit (on the ground). Lava and the lightning do not ask it.
+- Galaxy asked focus of the spike trap only.
+- Fix: `BlupiFocused()` in the host's drip, saw and crusher checks.
+- Validation: build, ctest; the playthroughs (play pass 18).

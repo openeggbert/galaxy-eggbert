@@ -3888,7 +3888,8 @@ namespace GalaxyEggbert::CNA
             // immunity (fixed 2026-07-16, same as Spike above).
             // His own cell, as IsGoutte(m_blupiPos) (no +60 as IsPiege has; BD-0033): the drip
             // hangs under a ceiling, he dies going into it.
-            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
+            // m_blupiFocus too (Decor.cpp:5513-5514; BD-0066): busy, he is not caught.
+            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
                 blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
             {
                 // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
@@ -3928,16 +3929,15 @@ namespace GalaxyEggbert::CNA
             // Crusher hazard (plan.md E3D-MIG-143) -- unlike every hazard
             // above, this is NOT lethal: it squashes Blupi (reduced move
             // speed, no jump, ~10s auto-recovery) rather than costing a
-            // life. Real `IsEcraseur()`'s 3-out-of-10 danger window is
-            // approximated via `IsCrusherActiveAtPhase()` (see its own
-            // comment for why the real unnormalized timer has no exact
-            // equivalent here). `TriggerCrush()` itself is idempotent (a
+            // life. Real `IsEcraseur()`'s 3-out-of-10 danger window
+            // (`m_time / 3 % 10 <= 2`) is `IsCrusherActiveAtPhase()`. `TriggerCrush()` itself is idempotent (a
             // no-op while already squashed, matching the real
             // `!m_blupiEcrase` re-trigger guard) -- only play the real
             // entry sound (channel 70) when it actually starts a NEW squash.
             // Blupi's own cell, as IsEcraseur(m_blupiPos) (BD-0032): the crusher hangs in the cell
             // he walks through, not in the floor.
-            if (!blupi_.IsInvincible() &&
+            // m_blupiFocus too (Decor.cpp:5551-5552; BD-0066).
+            if (!blupi_.IsInvincible() && BlupiFocused() &&
                 blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
                 WorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
                 blupi_.TriggerCrush())
@@ -3964,7 +3964,8 @@ namespace GalaxyEggbert::CNA
             // saw starts active or stopped per however the world was
             // authored; TryActivateSwitch() below is what flips it between
             // the two.
-            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() &&
+            // m_blupiFocus too (Decor.cpp:5521-5522; BD-0066).
+            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
                 (blockUnder == GalaxyEggbert::BlockTypes::Saw || blockHere == GalaxyEggbert::BlockTypes::Saw))
             {
                 const float deathX = blupi_.GetX();
