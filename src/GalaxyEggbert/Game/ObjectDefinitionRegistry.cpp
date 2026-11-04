@@ -195,7 +195,10 @@ namespace GalaxyEggbert::Game
         });
 
         definitions_[200].textureSource = ObjectTextureSource::Blupi;
-        ForTypes(definitions_, {201, 202, 203}, [](ObjectDefinition& definition)
+        // The enemy Blupis too: the world files give them channels 11-13, all blupi1.png
+        // (Pixmap.cpp:717-719; OR-0035). On element.png their icons were the bulldozer, the
+        // mines, the angel, the slime and the dynamite.
+        ForTypes(definitions_, {32, 33, 201, 202, 203}, [](ObjectDefinition& definition)
         {
             definition.textureSource = ObjectTextureSource::Blupi1;
         });

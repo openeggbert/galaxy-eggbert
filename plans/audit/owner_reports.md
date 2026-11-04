@@ -124,3 +124,26 @@ rewritten).
   its model counts as not solid).
 - Validation: live, the hub's two doors at (55, 1-3, 70-73), their signs whole with the reliefs on (as
   with them off); `VerifyTileFaces` (corner bits); ctest; golden frames unchanged.
+
+## OR-0035 — the enemy Blupis drawn as the bulldozer, mines, shield, angel and bomb (owner 2026-11-04) — FIXED
+
+- Reports: "the blue Blupi that should throw green bombs ... turns into a bulldozer, a mine and a
+  shield instead of the blue Blupi"; "the green slime that moves shows a white angel and a bomb --
+  that is not ok".
+- Cause: the enemy Blupis (32 blupih on his helicopter, 33 blupit in his tank) were looked up on
+  element.png, where their icons (61-75, 271-275; 237-252) are the bulldozer, the mines and the
+  shield's flask, the angel, the slime and the dynamite, and the objects with a 3D model for those
+  icons drew that model. The world files give them channels 11-13, all blupi1.png
+  (Pixmap.cpp:717-719): his own frames (blupi.png) with every hue turned 25 degrees, the body green,
+  the vehicles blue (measured over the whole sheet, 99.8 % of its pixels within 2 levels).
+- Fix: both read blupi1.png (`ObjectDefinitionRegistry`), with their patrol tables on any sheet
+  (`ObjectSprite`); with the real model they are drawn as it (`EnemyBlupi.hpp`,
+  `DrawEnemyBlupis`): his model with the helicopter or the tank in the clips the original's icons
+  show (MarchHelico, its turn and the glue drop HelicoGlu with its bomb at tick 21; MarchTank, the
+  shot FireTank at 3 and 21 and the turn between), every texture recoloured as blupi1.png's
+  (`BuildEnemyBlupiTextures`), facing along the patrol and turning through the camera's side, as
+  the sprites turn through their viewer. Without the real model they are blupi1.png billboards.
+- Validation: live, world 056's slime cave: green Blupis in blue tanks on their lines, firing, one
+  in mid-turn facing the camera; the helicopter one with the blue rotor pack dropping its green
+  bomb; `VerifyDefinitionRegistries` (sheet, recolour, poses); ctest 112/112; golden frames
+  unchanged.

@@ -963,6 +963,16 @@ namespace GalaxyEggbert::CNA
         // with the vehicle clips' names, drawn with his transform and time.
         std::vector<std::pair<std::string, std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>>
             blupiVehicles_;
+        // The enemy Blupis (EnemyBlupi.hpp, OR-0035): a copy of every texture of his model, his
+        // faces, his helicopter and his tank, the hue turned as blupi1.png's, keyed by the
+        // original; built with the real model (BuildEnemyBlupiTextures), empty without it, when
+        // they stay blupi1.png billboards.
+        std::unordered_map<const Microsoft::Xna::Framework::Graphics::Texture2D*,
+                           std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>>
+            enemyBlupiTextures_;
+        void BuildEnemyBlupiTextures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        [[nodiscard]] bool EnemyBlupiModelDrawn(const GalaxyEggbert::Game::MobileObjSpec& obj) const;
+        void DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         // A vehicle pickup's model and standing clip when the real vehicle
         // model replaces its billboard (kParkedVehicles); model is nullptr
         // otherwise.

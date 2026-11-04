@@ -7,6 +7,7 @@
 #include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/BoltMesh.hpp>
+#include <GalaxyEggbert/Game/EnemyBlupi.hpp>
 #include <GalaxyEggbert/Game/GlueStrands.hpp>
 
 #include <fstream>
@@ -1027,6 +1028,7 @@ namespace GalaxyEggbert::CNA
                     // A terrain built before the models came leaves the still model icons in its
                     // mesh: build it again (the next frame).
                     --terrainRevision_;
+                    BuildEnemyBlupiTextures(device);
                 }
                 blupiModelLoaded_ = true;
                 std::cout << "GalaxyEggbertCNA: third-person model loaded — "
@@ -2339,14 +2341,166 @@ namespace GalaxyEggbert::CNA
         icon = visual.icon;
         // The patrol enemies' per-direction/turn icon tables (see the
         // element.png billboard pass, the one place with their patrol state).
+        // On element.png, and blupi1.png for the enemy Blupis (OR-0035).
         int patrolIcon = 0;
-        if (sheet == ObjectTextureSource::Element &&
-            TryGetPatrolIcon(obj.type, obj.posStartX > obj.posEndX, obj.patrolStep,
+        if (TryGetPatrolIcon(obj.type, obj.posStartX > obj.posEndX, obj.patrolStep,
                              static_cast<int>(obj.patrolTime), patrolIcon))
         {
             icon = patrolIcon;
         }
         return true;
+    }
+
+    void GalaxyEggbertGame::BuildEnemyBlupiTextures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        using Microsoft::Xna::Framework::Color;
+        using Microsoft::Xna::Framework::Graphics::Texture2D;
+        enemyBlupiTextures_.clear();
+        if (!blupiModelIsReal_ || !blupiModel_)
+        {
+            return;
+        }
+        const auto add = [&](const Texture2D* source)
+        {
+            if (source == nullptr || enemyBlupiTextures_.count(source) != 0)
+            {
+                return;
+            }
+            const int width = source->getWidthProperty();
+            const int height = source->getHeightProperty();
+            if (width <= 0 || height <= 0)
+            {
+                return;
+            }
+            std::vector<Color> texels(static_cast<std::size_t>(width) * static_cast<std::size_t>(height));
+            source->GetData(texels.data(), static_cast<int>(texels.size()));
+            for (auto& texel : texels)
+            {
+                std::uint8_t r = texel.getRProperty();
+                std::uint8_t g = texel.getGProperty();
+                std::uint8_t b = texel.getBProperty();
+                GalaxyEggbert::Game::RecolorEnemyBlupi(r, g, b);
+                texel = Color(r, g, b, texel.getAProperty());
+            }
+            auto copy = std::make_unique<Texture2D>(device, width, height);
+            copy->SetData(texels.data(), static_cast<int>(texels.size()));
+            enemyBlupiTextures_.emplace(source, std::move(copy));
+        };
+        for (const auto& part : blupiModel_->Parts)
+        {
+            add(part.Texture);
+        }
+        for (const auto& face : blupiFaces_)
+        {
+            add(&face);
+        }
+        for (const auto& [name, vehicle] : blupiVehicles_)
+        {
+            if (name == "helico" || name == "tank")
+            {
+                for (const auto& part : vehicle->Parts)
+                {
+                    add(part.Texture);
+                }
+            }
+        }
+    }
+
+    bool GalaxyEggbertGame::EnemyBlupiModelDrawn(const MobileObjSpec& obj) const
+    {
+        return (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
+                obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33) &&
+               blupiEffect_ && !enemyBlupiTextures_.empty();
+    }
+
+    void GalaxyEggbertGame::DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        // OR-0035 (EnemyBlupi.hpp): his model and his helicopter or tank in the clip and frame the
+        // original's icon shows, the textures turned green and blue as blupi1.png's, facing along
+        // the patrol. A turn swings his front past the camera, as the sprites turn through their
+        // viewer (the tank's mid-turn frames point the gun out of the screen).
+        using Microsoft::Xna::Framework::Matrix;
+        using Microsoft::Xna::Framework::Graphics::Texture2D;
+        constexpr float kPi = 3.14159265358979f;
+        const auto cameraPosition = Matrix::Invert(camera_.View()).getTranslationProperty();
+        std::vector<Matrix> boneTransforms;
+        const auto recolored = [&](Texture2D* texture) -> Texture2D*
+        {
+            const auto found = enemyBlupiTextures_.find(texture);
+            return found != enemyBlupiTextures_.end() ? found->second.get() : texture;
+        };
+        const auto drawParts = [&](const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT& model, Texture2D* face)
+        {
+            for (const auto& part : model.Parts)
+            {
+                blupiEffect_->setTextureProperty(face != nullptr && part.Name == blupiFacePart_ ? face
+                                                                                                 : recolored(part.Texture));
+                blupiEffect_->Apply();
+                device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                device.DrawIndexedPrimitives(Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
+                                             part.Part->getVertexOffsetProperty(), 0,
+                                             part.Part->getNumVerticesProperty(), part.Part->getStartIndexProperty(),
+                                             part.Part->getPrimitiveCountProperty());
+            }
+        };
+        for (const auto& obj : worldRuntime_.GetMobileObjects())
+        {
+            if (!obj.active || !EnemyBlupiModelDrawn(obj) ||
+                !ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon).visible)
+            {
+                continue;
+            }
+            const bool tank = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33;
+            const auto pose = GalaxyEggbert::Game::ResolveEnemyBlupiPose(tank, obj.patrolStep, obj.patrolTime);
+            const std::string clip = GalaxyEggbert::Game::EnemyBlupiClipName(pose.clip);
+            if (blupiModel_->Clips.count(clip) == 0)
+            {
+                continue;
+            }
+            // Facing posStart (yaw0) and posEnd (yaw0 + pi); a model's +Z turned by a yaw a points
+            // along (sin a, cos a). Standing still (posStart = posEnd) he faces +X, the sprites'
+            // right.
+            const float dx = obj.posEndX - obj.posStartX;
+            const float dz = obj.posEndZ - obj.posStartZ;
+            const bool still = dx == 0.0f && dz == 0.0f;
+            const float yawStart = still ? -kPi * 0.5f : std::atan2(-dx, -dz);
+            const float towardEnd = still ? 1.0f : pose.towardEnd;
+            // The side the turn swings through: the one facing the camera half way.
+            const float toCameraX = cameraPosition.X - obj.currentX;
+            const float toCameraZ = cameraPosition.Z - obj.currentZ;
+            const float midLeft = yawStart + kPi * 0.5f;
+            const float side = std::sin(midLeft) * toCameraX + std::cos(midLeft) * toCameraZ >= 0.0f ? 1.0f : -1.0f;
+            const float yaw = yawStart + side * kPi * towardEnd;
+            const float seconds = pose.clipTicks / 20.0f;
+            blupiEffect_->setWorldProperty(Matrix::CreateScale(kRealModelScale) * Matrix::CreateRotationY(yaw) *
+                                           Matrix::CreateTranslation(obj.currentX, obj.currentY - 0.5f, obj.currentZ));
+            Texture2D* face = nullptr;
+            if (const auto faces = blupiClipFaces_.find(clip); faces != blupiClipFaces_.end() && !faces->second.empty())
+            {
+                const auto frame = static_cast<std::size_t>(seconds * blupiFaceRate_) % faces->second.size();
+                const int index = faces->second[frame];
+                if (index >= 0 && index < static_cast<int>(blupiFaces_.size()))
+                {
+                    face = recolored(&blupiFaces_[static_cast<std::size_t>(index)]);
+                }
+            }
+            blupiModel_->ComputeBoneTransformsEXT(clip, System::TimeSpan::FromSeconds(seconds), /*loop=*/true,
+                                                  boneTransforms);
+            blupiEffect_->SetBoneTransforms(boneTransforms);
+            drawParts(*blupiModel_, face);
+            for (const auto& [vehicleName, vehicle] : blupiVehicles_)
+            {
+                if (vehicle->Clips.count(clip) == 0)
+                {
+                    continue;
+                }
+                vehicle->ComputeBoneTransformsEXT(clip, System::TimeSpan::FromSeconds(seconds), /*loop=*/true,
+                                                  boneTransforms);
+                blupiEffect_->SetBoneTransforms(boneTransforms);
+                drawParts(*vehicle, nullptr);
+            }
+        }
     }
 
     const ObjectModelPose* GalaxyEggbertGame::ConveyorLiftModel(const MobileObjSpec& obj) const
@@ -5987,6 +6141,7 @@ namespace GalaxyEggbert::CNA
                             part.Part->getPrimitiveCountProperty());
                     }
                 }
+                DrawEnemyBlupis(device);
                 // The lost helicopter flying away (ByeByeHelico, BD-0049): its parked model, turned
                 // about its middle as the original's picture spins.
                 const auto helicopter = ParkedVehicleModel(GalaxyEggbert::Def::ObjectType::ObjectType13);
@@ -6956,11 +7111,15 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
-                if (objectModelTable_.Find(visual.textureSource, visual.icon) != nullptr)
+                // The enemy Blupis' patrol tables (ObjectSprite), unless drawn as his model.
+                ObjectTextureSource sheet{};
+                int icon = visual.icon;
+                if (EnemyBlupiModelDrawn(obj) || !ObjectSprite(obj, sheet, icon) ||
+                    objectModelTable_.Find(visual.textureSource, icon) != nullptr)
                 {
                     continue;  // drawn as its 3D model
                 }
-                const auto uv = GetBlupiIconUv(visual.icon);
+                const auto uv = GetBlupiIconUv(icon);
                 auto& mesh = visual.textureSource == ObjectTextureSource::Blupi1
                     ? blupi1Mesh : blupiMesh;
                 mesh.AddBillboard(

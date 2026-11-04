@@ -2,9 +2,11 @@
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Game/DecorQuartTable.hpp>
+#include <GalaxyEggbert/Game/EnemyBlupi.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
 
+#include <array>
 #include <cstdint>
 #include <initializer_list>
 #include <iostream>
@@ -76,7 +78,8 @@ namespace
         if (IsOneOf(raw, {8, 9, 10, 11, 53, 90, 91, 92, 93, 98, 99, 100}))
             return ObjectTextureSource::Explo;
         if (raw == 200) return ObjectTextureSource::Blupi;
-        if (IsOneOf(raw, {201, 202, 203})) return ObjectTextureSource::Blupi1;
+        // The enemy Blupis' channels 11-13 are blupi1.png (OR-0035).
+        if (IsOneOf(raw, {32, 33, 201, 202, 203})) return ObjectTextureSource::Blupi1;
         if (raw == 38) return ObjectTextureSource::PhaseDependent;
         return ObjectTextureSource::Element;
     }
@@ -435,6 +438,50 @@ int main()
 
     Check(GetBirdIcon(true, 2, 0) != GetBirdIcon(false, 2, 0),
           "directional patrol animation remains direction-sensitive");
+
+    // The enemy Blupis (OR-0035): blupi1.png is blupi.png with the hue turned 25 degrees.
+    {
+        using GalaxyEggbert::Game::RecolorEnemyBlupi;
+        const auto recolor = [](std::uint8_t r, std::uint8_t g, std::uint8_t b)
+        {
+            RecolorEnemyBlupi(r, g, b);
+            return std::array<int, 3>{r, g, b};
+        };
+        // His yellow body (60 degrees) to green (85), the cyan helicopter (180) to blue (205).
+        Check(recolor(255, 255, 0) == std::array<int, 3>{149, 255, 0}, "enemy Blupi: yellow turns green");
+        Check(recolor(0, 255, 255) == std::array<int, 3>{0, 149, 255}, "enemy Blupi: cyan turns blue");
+        Check(recolor(128, 128, 128) == std::array<int, 3>{128, 128, 128} &&
+                  recolor(255, 255, 255) == std::array<int, 3>{255, 255, 255},
+              "enemy Blupi: greys and white stay");
+
+        using GalaxyEggbert::Game::EnemyBlupiClip;
+        using GalaxyEggbert::Game::ResolveEnemyBlupiPose;
+        // On the way: his helicopter's or tank's drive, facing where he goes.
+        const auto flying = ResolveEnemyBlupiPose(false, 2, 5.0f);
+        Check(flying.clip == EnemyBlupiClip::MarchHelico && flying.towardEnd == 1.0f &&
+                  ResolveEnemyBlupiPose(true, 4, 5.0f).towardEnd == 0.0f &&
+                  ResolveEnemyBlupiPose(true, 4, 5.0f).clip == EnemyBlupiClip::MarchTank,
+              "enemy Blupi: drives facing his way");
+        // The helicopter's turn (table_blupih_turn2*): turned round by tick 10, the glue drop
+        // (HelicoGlu) from 12, its bomb at 21 its 10th frame.
+        Check(ResolveEnemyBlupiPose(false, 1, 0.0f).towardEnd < 0.2f &&
+                  ResolveEnemyBlupiPose(false, 1, 10.0f).towardEnd == 1.0f &&
+                  ResolveEnemyBlupiPose(false, 3, 10.0f).towardEnd == 0.0f,
+              "enemy Blupi: the helicopter turns round in 10 ticks");
+        const auto drop = ResolveEnemyBlupiPose(false, 1, 21.0f);
+        Check(ResolveEnemyBlupiPose(false, 1, 11.0f).clip == EnemyBlupiClip::MarchHelico &&
+                  drop.clip == EnemyBlupiClip::HelicoGlu && drop.clipTicks == 9.0f,
+              "enemy Blupi: the helicopter drops its bomb in HelicoGlu");
+        // The tank (table_blupit_turn2*): a shot the way he came (3), the turn (6-17), a shot the
+        // new way (21).
+        const auto firstShot = ResolveEnemyBlupiPose(true, 1, 3.0f);
+        const auto secondShot = ResolveEnemyBlupiPose(true, 1, 21.0f);
+        Check(firstShot.clip == EnemyBlupiClip::FireTank && firstShot.clipTicks == 1.0f &&
+                  firstShot.towardEnd == 0.0f && secondShot.clip == EnemyBlupiClip::FireTank &&
+                  secondShot.towardEnd == 1.0f && ResolveEnemyBlupiPose(true, 1, 11.5f).towardEnd == 0.5f &&
+                  ResolveEnemyBlupiPose(true, 1, 11.5f).clip == EnemyBlupiClip::MarchTank,
+              "enemy Blupi: the tank fires, turns, fires");
+    }
 
     if (failures != 0)
     {
