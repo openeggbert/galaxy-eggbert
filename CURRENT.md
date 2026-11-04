@@ -1,7 +1,7 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-02 (native build, 112/112 CTest, all 78 playthroughs after the saw and fan
-changes, 045/053/199 after the crusher; the Web/Emscripten build 2026-11-02; the whole-campaign run
+_Last verified: 2026-11-04 (native build, 112/112 CTest, all 78 playthroughs with the terrain reliefs
+(play pass 11); the Web/Emscripten build 2026-11-04 in headless Chrome; the whole-campaign run
 remains the 2026-10-27 verification). Update this file
 whenever a change alters the current state, a known limitation, a supported build, or the actionable
 backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`), where work stands in
@@ -39,6 +39,12 @@ content-authoring UX, but not new gameplay mechanics.
 - Terrain, its grass and the cube objects are lit (one directional light + ambient,
   `TerrainLighting.hpp`); sprite tiles are cut out (`TileCoverage.hpp`), faint ones blended; lifts
   are drawn as their tile's bar and stem; the chase camera rises over obstacles behind Blupi.
+- Since 2026-11-04 (owner, Q-001/Q-004/Q-012) 91 terrain tiles show their Ray Dream scene's relief on
+  their exposed faces within 8 blocks of the camera's target (`TerrainRelief.hpp`,
+  `avatars3d/terrain/`, `tools/terrain_relief/`): rocks, caves, cheese, slime, toys, pipes, machine
+  panels, the palace, windows, bookshelves; the grass as its scene's slabs back to back. Farther off,
+  and for the tiles whose scene the archive lacks (bricks, grey metal plates, some panels), textured
+  cubes.
 - Blupi's 3D model (from the Ray Dream originals) has clips for every live table_blupi action,
   including Win, Turn, Vertigo, Recede, the reactions (JumpAie, Ouf*) and the poses between moves.
 

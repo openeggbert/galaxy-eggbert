@@ -486,7 +486,8 @@ ledgers before repeating any discovery. Where it stands:
   pipes, bookshelves, windows, the palace's column and arch, machine parts, toys, slime edges, two
   more edge plates) and 8 more of the remaining used tiles: **91 tiles** now. `e5e8631`: a one-sided panel chose its room side wrongly
   beside relief cells (082's near wall showed its plain side). Play pass 10 (the first version's
-  binary) passed its 54 worlds before it was stopped for pass 11 with the final binary. Open: the owner's B or C (Q-012); the tail of square
+  binary) passed its 54 worlds before it was stopped; **play pass 11 with the final binary: 78/78**
+  (`build-probe/play-pass-11/`, sheets per world: the reliefs seen along every playthrough). Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
