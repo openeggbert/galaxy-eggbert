@@ -77,6 +77,13 @@ namespace GalaxyEggbert
             }
         }
 
+        // Solid in 3D (OR-0042, kSolidIn3DDecor): a whole block each, as the fans (M3D-0004). Drawn
+        // as before (mobileTransparent is the original's). The secret passages stay passable.
+        for (const auto icon : kSolidIn3DDecor)
+        {
+            definitions_[static_cast<std::size_t>(icon)].collisionMask = 0xFFFF;
+        }
+
         // Central render-mode classification. Per-face mesh construction
         // remains in the focused renderer helpers, but no renderer chooses a
         // mode by maintaining its own parallel icon list.

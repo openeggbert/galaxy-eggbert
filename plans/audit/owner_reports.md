@@ -266,3 +266,26 @@ rewritten).
   H; a lift placed and its end clicked, saved (49, 5, 26) -> (49, 7, 26); V turned the aimed grass
   end 108 to 107, saved. Note for scripted runs: a key tapped faster than a frame is missed (the
   editor reads the keyboard each frame); hold it.
+
+## OR-0042 — the decorations Blupi passes through in 2D should be impassable in 3D (owner 2026-11-04) — DONE
+
+- Request: the various decorations Blupi can walk through in Mobile Eggbert should probably be
+  impassable in Galaxy Eggbert: in 2D he walks in front of them, but this is 3D.
+- The original's decor has an empty quarter mask (`table_decor_quart`), so the registry made it
+  `decor`: no collision (D41). The 58 such icons the campaign places were sorted by eye
+  (`kSolidIn3DDecor`, BlockDefinitionRegistry.hpp):
+  - solid now, a whole block each (as the fans, M3D-0004): the columns (76; the toys' striped
+    posts 235/236), the girder (201), the machine pieces 49, 50, 51, the golden support (77), the
+    trestle (199), the posts (200), the slime column (300), the balustrade (398);
+  - passable still: the original's **secret passages**, walls one walks through by design (the
+    original editor's "secret" families: tech-blocks 22/73, machine pieces 85/86; the cheese 339,
+    `worlds/cheese.py` SECRET), the cobwebs (401-403), the small bolts and knobs at a cell's edge
+    (53-64), the slime's lumps (285, 286, 302, 303), the drip (410), the arches (198, 400: ways
+    through) and the world and mission signs (touched to travel).
+- Worlds and playthroughs: 056's way to the lift goes round the girder tower (32, 62); 058's two
+  pillars stood on its stepping stones over the lava, moved to the landing's and the pedestal's
+  corners. `tools/data/blocks.csv` regenerated; flightcheck over every world: no target lost.
+- Validation: `VerifyBlupiMovement` (Blupi stands on girders; a cobweb is still passed through),
+  `VerifyDefinitionRegistries`; play pass 21 found the routes through the walls first made solid
+  (the secret cheese and tech-blocks among them, since returned to passable); 042, 045, 056, 058,
+  064 and the chains 040, 050, 060 pass with the final list.

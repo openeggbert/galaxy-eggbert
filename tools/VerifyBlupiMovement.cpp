@@ -2527,9 +2527,10 @@ int main(int argc, char** argv)
                 check(escapes(BlupiController::VehicleMode::Helicopter), "the helicopter flies through the flight barrier");
                 check(escapes(BlupiController::VehicleMode::Overcraft), "the overcraft flies through the flight barrier");
             }
-            // D41: decor (an empty-mask tile with no role: the lattice 201) is neither a floor nor
+            // D41: decor (an empty-mask tile with no role: the cobweb 403) is neither a floor nor
             // a ceiling: standing on one Blupi falls through, and a jump from under one is not cut
-            // short. Hazards with empty masks (lava) stay the ground their hazard reads.
+            // short. Hazards with empty masks (lava) stay the ground their hazard reads. The decor
+            // that is solid in 3D (OR-0042, the girder 201 among it) holds him.
             {
                 Worlds::World decorWorld;
                 for (std::uint16_t x = 45; x <= 55; ++x)
@@ -2537,7 +2538,7 @@ int main(int argc, char** argv)
                     for (std::uint16_t z = 45; z <= 55; ++z)
                     {
                         decorWorld.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
-                        decorWorld.setBlock(x, 6, z, Worlds::Block::make(201));
+                        decorWorld.setBlock(x, 6, z, Worlds::Block::make(403));
                     }
                 }
                 BlupiController faller;
@@ -2547,7 +2548,7 @@ int main(int argc, char** argv)
                     faller.Step(decorWorld, 0.0f, 0.0f, false, false, false, dt);
                 }
                 check(faller.GetY() < 1.5f, "Blupi falls through decor he stands on (D41)");
-                decorWorld.setBlock(50, 3, 50, Worlds::Block::make(201));
+                decorWorld.setBlock(50, 3, 50, Worlds::Block::make(403));
                 BlupiController jumper;
                 jumper.SetPosition(0.0f, 1.0f, 0.0f);
                 jumper.Step(decorWorld, 0.0f, 0.0f, false, false, false, dt);
@@ -2558,6 +2559,24 @@ int main(int argc, char** argv)
                     highest = std::max(highest, jumper.GetY());
                 }
                 check(highest > 3.5f, "a jump from under decor rises through it (D41)");
+                // OR-0042: on a floor of girders he stands.
+                Worlds::World girderWorld;
+                for (std::uint16_t x = 45; x <= 55; ++x)
+                {
+                    for (std::uint16_t z = 45; z <= 55; ++z)
+                    {
+                        girderWorld.setBlock(x, 0, z, Worlds::Block::make(BlockTypes::Ground));
+                        girderWorld.setBlock(x, 6, z, Worlds::Block::make(201));
+                    }
+                }
+                BlupiController stander;
+                stander.SetPosition(0.0f, 7.0f, 0.0f);
+                for (int i = 0; i < 120; ++i)
+                {
+                    stander.Step(girderWorld, 0.0f, 0.0f, false, false, false, dt);
+                }
+                check(stander.GetY() > 6.9f && !GalaxyEggbert::GetBlockDefinition(201).decor,
+                      "the girder is solid in 3D: Blupi stands on it (OR-0042)");
                 check(!GalaxyEggbert::GetBlockDefinition(68).decor && !GalaxyEggbert::GetBlockDefinition(379).decor &&
                           !GalaxyEggbert::GetBlockDefinition(384).decor,
                       "lava, the stopped saw and the switch are no decor: still the ground under him");

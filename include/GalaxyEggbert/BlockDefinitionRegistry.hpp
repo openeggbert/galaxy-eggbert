@@ -93,6 +93,16 @@ namespace GalaxyEggbert
         std::int16_t worldSelectIndex = -1; // Decor::IsWorld(): 1-14, 199 for the return sign
     };
 
+    // Decor the original's Blupi walks in front of in 2D (an empty quarter mask) that stands in his
+    // way in 3D, a whole block each (OR-0042, owner 2026-11-04): the columns (76, the toys' striped
+    // posts 235/236), the girder (201), the machine pieces (49, 50, 51), the golden support (77),
+    // the trestle (199), the posts (200), the slime column (300), the balustrade (398). Not the
+    // original's secret passages, walls one walks through by design (the editor's "secret"
+    // families: the tech-blocks 22/73, the machine pieces 85/86; the cheese 339), nor the cobwebs,
+    // bolts, knobs, lumps, the drip, the arches and the signs.
+    inline constexpr std::array<std::uint16_t, 12> kSolidIn3DDecor{
+        49, 50, 51, 76, 77, 199, 200, 201, 235, 236, 300, 398};
+
     class BlockDefinitionRegistry final
     {
     public:

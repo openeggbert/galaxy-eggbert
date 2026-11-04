@@ -111,8 +111,9 @@ def main(argv) -> int:
         plates(x0, 24, z0, x0 + 1, 24, z0 + 1)
     plates(36, 24, 83, 38, 25, 86)                    # the pedestal, walk 26
     w.place(O.KEY1, 37, 26, 85)
-    for x, z in ((24, 81), (31, 83)):
-        w.set(x, 25, z, PILLARS)
+    # Two pillars, out of the way: solid in 3D (OR-0042), on the stones they narrowed the jumps.
+    w.set(20, 25, 79, PILLARS)                        # the landing's corner
+    w.set(36, 26, 86, PILLARS)                        # the pedestal's back corner
 
     # ---- C, the slime cave (inside x 42-78, z 52-96, floor walk 8, open above) ----------------
     goo(41, 4, 51, 79, 7, 97)                          # its floor

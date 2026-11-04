@@ -9,6 +9,8 @@ hold 2 action
 go 14.5 77.5
 go 33 78
 go 33 63
+# North first, then west to the lift: the girder tower (32, 62) is solid in 3D (OR-0042).
+go 33 61.2 tol 0.15
 go 31.65 61.2 tol 0.1
 face 270
 # The lift: ten cells up to the deck's tongue (walk 20), off north.
