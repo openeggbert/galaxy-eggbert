@@ -216,6 +216,8 @@ namespace GalaxyEggbert::CNA
         // Static (non-animated) terrain mesh for the loaded world (plan.md
         // E3D-MIG-054). Lazily constructed in LoadContent() since it needs a
         // live GraphicsDevice.
+        // Declared before the renderer, which reads it on worker threads: destroyed after it.
+        GalaxyEggbert::Game::TerrainReliefTable terrainReliefs_;
         std::unique_ptr<GalaxyEggbert::Game::TerrainRenderer> terrainRenderer_;
         std::uint32_t terrainRevision_ = 0; // World::blockRevision() terrainRenderer_ was built from
         // The ShowSecret cheat (3, Decor::CheatAction's m_bDrawSecret): the flight barrier (214),
@@ -1003,10 +1005,9 @@ namespace GalaxyEggbert::CNA
         // GALAXY_TERRAIN_RELIEF_RADIUS sets the radius, GALAXY_TERRAIN_RELIEF_OVERHANG=1 keeps the
         // overhangs into the air (Q-012 C).
         const GalaxyEggbert::Game::TerrainReliefTable* TerrainReliefs();
-        GalaxyEggbert::Game::TerrainReliefTable terrainReliefs_;
         bool terrainReliefsLoaded_ = false;
         bool terrainReliefOverhangs_ = false;
-        float terrainReliefRadius_ = 12.0f;
+        float terrainReliefRadius_ = 8.0f;
         // A fresh terrain builds every near relief chunk at once (no cubes popping into reliefs).
         bool terrainReliefWarm_ = false;
         // The sheet and icon a MoveObject's billboard shows this frame, picked

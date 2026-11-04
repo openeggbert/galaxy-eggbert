@@ -10,7 +10,8 @@ cropped renders join). A relief is that slab's front half:
    scene ``tiles.txt`` gives the tile (reviewed by eye; ``match_tiles.py`` ranks the candidates),
    mirrored as it says;
 2. its triangles facing away from the camera dropped (they lie inside the cell);
-3. welded, decimated to ``--budget`` triangles and smoothed by angle in Blender
+3. welded, decimated to ``--budget`` triangles (700: the lumps keep their shape at play distance; 1,500
+   made 4-8 million triangles near the camera in the largest worlds) and smoothed by angle in Blender
    (``blender_decimate.py``);
 4. cut along the cell's edges (x = +-0.5, y = +-0.5): every triangle then lies in one of nine
    squares of the face's plane, the face's own or an overhang into a neighbour's, tagged with the
@@ -35,7 +36,7 @@ triangle) and ``<out>/index.txt`` (``icon <icon> <file>`` per icon). Model space
         --sheets ../mobile-eggbert/Content/icons --objects build-probe/rd4-terrain/objects.txt \\
         --out build-probe/rd4-terrain
     python3 tools/terrain_relief/build_relief.py --library build-probe/rd4-terrain \\
-        --out avatars3d/terrain [--only 35,36] [--budget 1500]
+        --out avatars3d/terrain [--only 35,36] [--budget 700]
 """
 
 from __future__ import annotations
@@ -238,7 +239,7 @@ def main(argv=None) -> int:
     ap.add_argument("--write-objects", type=Path,
                     help="only write the objects list of build_object_library.py for the tiles' scenes")
     ap.add_argument("--only", help="comma-separated icons")
-    ap.add_argument("--budget", type=int, default=1500, help="triangles of the front half before the cut")
+    ap.add_argument("--budget", type=int, default=700, help="triangles of the front half before the cut")
     ap.add_argument("--angle", type=float, default=40.0, help="smooth-by-angle threshold, degrees")
     ap.add_argument("--max-depth", type=float, default=0.5, help="triangles wholly deeper are dropped")
     ap.add_argument("--blender", default="blender")

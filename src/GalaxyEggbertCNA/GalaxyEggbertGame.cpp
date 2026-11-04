@@ -35,6 +35,7 @@
 #include <Microsoft/Xna/Framework/Graphics/SamplerState.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <unordered_set>
 #include <cmath>
 #include <cstdint>
@@ -1184,11 +1185,13 @@ namespace GalaxyEggbert::CNA
                                  TerrainDrawSecret() != terrainDrawSecret_))
         {
             terrainDrawSecret_ = TerrainDrawSecret();
-            terrainRenderer_ =
+            auto rebuilt =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), terrainTileAtlas_,
                                                   tileCoverage_, terrainDrawSecret_, StillModelIcons(), TerrainReliefs());
-            terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
-            terrainReliefWarm_ = false;
+            rebuilt->SetReliefOverhangs(terrainReliefOverhangs_);
+            // The unchanged chunks keep their reliefs; the changed ones are built in the background.
+            rebuilt->AdoptReliefs(*terrainRenderer_);
+            terrainRenderer_ = std::move(rebuilt);
             ApplyBlockModels();
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         }
@@ -5453,8 +5456,19 @@ namespace GalaxyEggbert::CNA
             terrainEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
             // The reliefs near the camera's target (Q-012), then the opaque terrain; its
             // semi-transparent pass (water) after the models below.
-            terrainRenderer_->UpdateRelief(device, cameraTarget_, terrainReliefRadius_, terrainReliefWarm_ ? 2 : -1);
-            terrainReliefWarm_ = true;
+            {
+                const auto reliefStart = std::chrono::steady_clock::now();
+                const int shownBefore = terrainRenderer_->ReliefChunksShown();
+                terrainRenderer_->UpdateRelief(device, cameraTarget_, terrainReliefRadius_, terrainReliefWarm_ ? 1 : -1);
+                if (!terrainReliefWarm_ && std::getenv("GALAXY_TERRAIN_RELIEF_TIMING") != nullptr)
+                {
+                    const auto ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - reliefStart);
+                    std::cout << "GalaxyEggbertCNA: relief: " << terrainRenderer_->ReliefChunksShown() - shownBefore
+                              << " chunk(s), " << terrainRenderer_->ReliefPrimitiveCount() << " triangles built in "
+                              << ms.count() << " ms." << std::endl;
+                }
+                terrainReliefWarm_ = true;
+            }
             terrainRenderer_->DrawOpaque(device, *terrainEffect_);
 
             if (objectCubeEffect_)

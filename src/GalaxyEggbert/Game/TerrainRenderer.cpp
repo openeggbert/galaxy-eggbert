@@ -21,7 +21,9 @@
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <functional>
 
 namespace GalaxyEggbert::Game
 {
@@ -1022,6 +1024,7 @@ namespace GalaxyEggbert::Game
             {
                 m_reliefChunks[i].grassTops = UploadLitTexturedMeshParts(device, reliefChunkGrass[i].Mesh());
             }
+            m_reliefChunks[i].signature = ReliefSignature(m_reliefChunks[i].cells);
         }
 
         if (!cutoutMesh.Mesh().Empty())
@@ -1267,18 +1270,18 @@ namespace GalaxyEggbert::Game
         }
     }
 
-    std::unique_ptr<GpuMeshParts> TerrainRenderer::BuildReliefChunk(
-        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const ReliefChunk& chunk) const
+    CnaEngine::Graphics::MeshData TerrainRenderer::BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
+                                                                   bool overhangs, const std::vector<ReliefCell>& cells)
     {
         auto mesh = MakeLitTexturedMeshBuilder();
-        for (const auto& cell : chunk.cells)
+        for (const auto& cell : cells)
         {
-            const TerrainRelief* relief = m_reliefs->Find(cell.icon);
+            const TerrainRelief* relief = reliefs.Find(cell.icon);
             if (relief == nullptr)
             {
                 continue;
             }
-            const auto tile = m_tileAtlas->GetTileUv(m_reliefs->TextureIcon(cell.icon));
+            const auto tile = atlas.GetTileUv(reliefs.TextureIcon(cell.icon));
             if (cell.flatFaces != 0)
             {
                 CnaEngine::Graphics::BoxFaces flat;
@@ -1310,14 +1313,64 @@ namespace GalaxyEggbert::Game
                     continue;
                 }
                 AppendReliefFace(mesh, *relief, cell.center, face, tile,
-                                 m_reliefOverhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)], !cell.grass);
+                                 overhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)], !cell.grass);
             }
         }
-        if (mesh.Mesh().Empty())
+        return mesh.Take();
+    }
+
+    std::uint64_t TerrainRenderer::ReliefSignature(const std::vector<ReliefCell>& cells)
+    {
+        // FNV-1a over what a cell's relief is made of.
+        std::uint64_t hash = 1469598103934665603ull;
+        const auto mix = [&hash](const void* data, std::size_t size)
         {
-            return nullptr;
+            const auto* bytes = static_cast<const unsigned char*>(data);
+            for (std::size_t k = 0; k < size; ++k)
+            {
+                hash = (hash ^ bytes[k]) * 1099511628211ull;
+            }
+        };
+        for (const auto& cell : cells)
+        {
+            const float centre[3] = {cell.center.X, cell.center.Y, cell.center.Z};
+            mix(centre, sizeof(centre));
+            mix(&cell.icon, sizeof(cell.icon));
+            mix(&cell.faces, sizeof(cell.faces));
+            mix(cell.air.data(), cell.air.size());
+            const unsigned char grass = cell.grass ? 1 : 0;
+            mix(&grass, 1);
+            mix(&cell.flatFaces, sizeof(cell.flatFaces));
+            for (const auto& uv : cell.flatUv)
+            {
+                const float rect[4] = {uv.u0, uv.v0, uv.u1, uv.v1};
+                mix(rect, sizeof(rect));
+            }
         }
-        return UploadLitTexturedMeshParts(device, mesh.Mesh());
+        return hash;
+    }
+
+    void TerrainRenderer::AdoptReliefs(TerrainRenderer& previous)
+    {
+        if (m_reliefs == nullptr || previous.m_reliefs != m_reliefs || previous.m_reliefOverhangs != m_reliefOverhangs)
+        {
+            return;
+        }
+        for (auto& chunk : m_reliefChunks)
+        {
+            for (auto& old : previous.m_reliefChunks)
+            {
+                if (old.boxMin.X == chunk.boxMin.X && old.boxMin.Y == chunk.boxMin.Y && old.boxMin.Z == chunk.boxMin.Z)
+                {
+                    if (old.signature == chunk.signature)
+                    {
+                        chunk.relief = std::move(old.relief);
+                        chunk.pending = std::move(old.pending);
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     void TerrainRenderer::UpdateRelief(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -1327,8 +1380,11 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
+        const auto upload = [&device](const CnaEngine::Graphics::MeshData& data) -> std::unique_ptr<GpuMeshParts>
+        { return data.Empty() ? nullptr : UploadLitTexturedMeshParts(device, data); };
         // Nearest chunks first, so a capped call builds what is closest.
         std::vector<std::pair<float, std::size_t>> wanted;
+        int inFlight = 0;
         for (std::size_t i = 0; i < m_reliefChunks.size(); ++i)
         {
             auto& chunk = m_reliefChunks[i];
@@ -1337,6 +1393,19 @@ namespace GalaxyEggbert::Game
             const float dz = std::max({chunk.boxMin.Z - focus.Z, 0.0f, focus.Z - chunk.boxMax.Z});
             const float distance = std::sqrt(dx * dx + dy * dy + dz * dz);
             chunk.near = distance <= radius;
+            if (chunk.pending.valid())
+            {
+                if (chunk.pending.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
+                {
+                    ++inFlight;
+                    continue;
+                }
+                const auto data = chunk.pending.get();
+                if (distance <= radius + kReliefRelease)
+                {
+                    chunk.relief = upload(data);
+                }
+            }
             if (chunk.near && !chunk.relief && !chunk.cells.empty())
             {
                 wanted.emplace_back(distance, i);
@@ -1347,11 +1416,54 @@ namespace GalaxyEggbert::Game
             }
         }
         std::sort(wanted.begin(), wanted.end());
-        const std::size_t builds = maxBuilds < 0 ? wanted.size() : static_cast<std::size_t>(maxBuilds);
-        for (std::size_t k = 0; k < wanted.size() && k < builds; ++k)
+        if (maxBuilds < 0)
+        {
+            // All of them now (a world just loaded), kLoadThreads at a time where there are threads.
+#if defined(__EMSCRIPTEN__)
+            for (const auto& entry : wanted)
+            {
+                auto& chunk = m_reliefChunks[entry.second];
+                chunk.relief = upload(BuildReliefMesh(*m_reliefs, *m_tileAtlas, m_reliefOverhangs, chunk.cells));
+            }
+#else
+            constexpr std::size_t kLoadThreads = 4;
+            for (std::size_t first = 0; first < wanted.size(); first += kLoadThreads)
+            {
+                std::vector<std::future<CnaEngine::Graphics::MeshData>> batch;
+                for (std::size_t k = first; k < wanted.size() && k < first + kLoadThreads; ++k)
+                {
+                    batch.push_back(std::async(std::launch::async, &TerrainRenderer::BuildReliefMesh,
+                                               std::cref(*m_reliefs), std::cref(*m_tileAtlas), m_reliefOverhangs,
+                                               std::cref(m_reliefChunks[wanted[k].second].cells)));
+                }
+                for (std::size_t k = 0; k < batch.size(); ++k)
+                {
+                    m_reliefChunks[wanted[first + k].second].relief = upload(batch[k].get());
+                }
+            }
+#endif
+            return;
+        }
+        for (std::size_t k = 0; k < wanted.size(); ++k)
         {
             auto& chunk = m_reliefChunks[wanted[k].second];
-            chunk.relief = BuildReliefChunk(device, chunk);
+#if defined(__EMSCRIPTEN__)
+            if (static_cast<int>(k) >= maxBuilds)
+            {
+                break;
+            }
+            chunk.relief = upload(BuildReliefMesh(*m_reliefs, *m_tileAtlas, m_reliefOverhangs, chunk.cells));
+#else
+            if (inFlight >= kReliefBuildsInFlight)
+            {
+                break;
+            }
+            // The task holds its own copy of the cells; the table and the atlas outlive the renderer,
+            // whose destruction waits for the task (the future's).
+            chunk.pending = std::async(std::launch::async, &TerrainRenderer::BuildReliefMesh, std::cref(*m_reliefs),
+                                       std::cref(*m_tileAtlas), m_reliefOverhangs, chunk.cells);
+            ++inFlight;
+#endif
         }
     }
 

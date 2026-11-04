@@ -15,6 +15,7 @@
 
 #include <array>
 #include <cstdint>
+#include <future>
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
@@ -63,10 +64,16 @@ namespace GalaxyEggbert::Game
         // chunks of kReliefChunkCells^3, each drawn as textured cubes, or as its cells' reliefs while
         // the chunk lies within `radius` blocks of `focus` (built here when it comes near, the nearest
         // first, at most `maxBuilds` chunks a call, all of them when negative; released when it is
-        // kReliefRelease blocks farther). Call once a frame before drawing; never called, every
-        // chunk stays cubes.
+        // kReliefRelease blocks farther). A capped call builds on worker threads (at most
+        // kReliefBuildsInFlight at a time; on the web, where there are none, `maxBuilds` chunks in the
+        // call) and uploads what they finished; a chunk shows its cubes until its relief is ready.
+        // Call once a frame before drawing; never called, every chunk stays cubes.
         void UpdateRelief(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                           const Microsoft::Xna::Framework::Vector3& focus, float radius, int maxBuilds = 2);
+        // Takes over `previous`'s built (or building) reliefs of the chunks whose cells are the same,
+        // so a terrain built again for a few changed blocks (a door opened) does not build every near
+        // relief again: only the changed chunks are, a frame or two later.
+        void AdoptReliefs(TerrainRenderer& previous);
         // Keep the overhangs into the air too (Q-012 C), for comparison; takes effect on rebuilt chunks.
         void SetReliefOverhangs(bool keep) noexcept { m_reliefOverhangs = keep; }
         [[nodiscard]] int ReliefChunkCount() const noexcept { return static_cast<int>(m_reliefChunks.size()); }
@@ -74,6 +81,7 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] int ReliefPrimitiveCount() const noexcept;
         static constexpr int kReliefChunkCells = 8;
         static constexpr float kReliefRelease = 4.0f;
+        static constexpr int kReliefBuildsInFlight = 2;
 
         // The cutout pass takes @p effect's World/View/Projection and texture.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -211,10 +219,14 @@ namespace GalaxyEggbert::Game
             std::unique_ptr<GpuMeshParts> cubes;
             std::unique_ptr<GpuMeshParts> grassTops; // far: the grass cells' top plates (DrawGrass)
             std::unique_ptr<GpuMeshParts> relief;
+            std::future<CnaEngine::Graphics::MeshData> pending; // its relief being built
+            std::uint64_t signature = 0;                         // of its cells (AdoptReliefs)
             bool near = false;
         };
-        std::unique_ptr<GpuMeshParts> BuildReliefChunk(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                                       const ReliefChunk& chunk) const;
+        // The chunk's relief mesh; touches nothing of the renderer (it runs on a worker thread).
+        static CnaEngine::Graphics::MeshData BuildReliefMesh(const TerrainReliefTable& reliefs, const TileAtlas& atlas,
+                                                             bool overhangs, const std::vector<ReliefCell>& cells);
+        static std::uint64_t ReliefSignature(const std::vector<ReliefCell>& cells);
         const TerrainReliefTable* m_reliefs = nullptr;
         std::vector<ReliefChunk> m_reliefChunks;
         bool m_reliefOverhangs = false;

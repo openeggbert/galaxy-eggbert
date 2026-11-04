@@ -2,7 +2,7 @@
 
 Each `.gtr` is a terrain tile's original Ray Dream scene (`../speedyblupi-data/originals/Decor/`) as
 the relief the game lays on a cell's exposed faces near the camera (`TerrainRelief.hpp`,
-`TerrainRenderer::UpdateRelief`): the scene's front half, decimated to about 1,500 triangles, cut
+`TerrainRenderer::UpdateRelief`): the scene's front half, decimated to about 700 triangles, cut
 along the cell's edges and textured by the tile's sprite projected from the front. `index.txt` maps
 the tile icons to them. Generated; do not edit by hand:
 
