@@ -49,4 +49,10 @@ namespace GalaxyEggbert::Game
     // or 270 degrees: X and Z swapped), so the worlds saved with 0/1 read as before.
     [[nodiscard]] int QuarterTurns(const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z);
     void SetQuarterTurns(Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z, int turns);
+
+    // An object's or a BigDecor's quarter turns, 0-3, at the cell it stands in (OR-0044): a type of
+    // its own, so that turning a treasure in a wind cell does not turn the wind.
+    constexpr std::uint16_t kObjectTurnMetadataType = 5; // 1 objects, 2 plate turns, 3 BigDecor, 4 hints
+    [[nodiscard]] int ObjectQuarterTurns(const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z);
+    void SetObjectQuarterTurns(Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z, int turns);
 }

@@ -20,6 +20,18 @@ namespace GalaxyEggbert::Game
         return payload != nullptr && !payload->empty() ? ((*payload)[0] & 3) : 0;
     }
 
+    int ObjectQuarterTurns(const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z)
+    {
+        const auto* payload = world.findBlockExtraMetadata(x, y, z, kObjectTurnMetadataType);
+        return payload != nullptr && !payload->empty() ? ((*payload)[0] & 3) : 0;
+    }
+
+    void SetObjectQuarterTurns(Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z, int turns)
+    {
+        world.setBlockExtraMetadata(x, y, z, kObjectTurnMetadataType,
+                                     {static_cast<std::uint8_t>(((turns % 4) + 4) % 4)});
+    }
+
     void SetQuarterTurns(Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z, int turns)
     {
         world.setBlockExtraMetadata(x, y, z, kPlateRotationMetadataType,

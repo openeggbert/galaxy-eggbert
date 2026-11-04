@@ -2460,6 +2460,20 @@ namespace GalaxyEggbert::CNA
                                                  static_cast<std::uint16_t>(ry), static_cast<std::uint16_t>(rz));
     }
 
+    int GalaxyEggbertGame::CellObjectQuarterTurns(float x, float y, float z) const
+    {
+        const long rx = std::lround(x) + WorldRuntime::kWorldCenterX;
+        const long ry = std::lround(y);
+        const long rz = std::lround(z) + WorldRuntime::kWorldCenterZ;
+        const long n = static_cast<long>(worldRuntime_.GetWorld().blocksPerAxis());
+        if (rx < 0 || ry < 0 || rz < 0 || rx >= n || ry >= n || rz >= n)
+        {
+            return 0;
+        }
+        return GalaxyEggbert::Game::ObjectQuarterTurns(worldRuntime_.GetWorld(), static_cast<std::uint16_t>(rx),
+                                                       static_cast<std::uint16_t>(ry), static_cast<std::uint16_t>(rz));
+    }
+
     bool GalaxyEggbertGame::EnemyBlupiModelDrawn(const MobileObjSpec& obj) const
     {
         return (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType32 ||
@@ -6203,7 +6217,7 @@ namespace GalaxyEggbert::CNA
                     blupiEffect_->setWorldProperty(
                         Microsoft::Xna::Framework::Matrix::CreateScale(kRealModelScale) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(
-                            kHalfPi * static_cast<float>(1 + CellQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ))) *
+                            kHalfPi * static_cast<float>(1 + CellObjectQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ))) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(
                             obj.currentX, obj.currentY - 0.5f, obj.currentZ));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
@@ -6398,7 +6412,7 @@ namespace GalaxyEggbert::CNA
                         if (dx == 0.0f && dz == 0.0f && obj.posStartY == obj.posEndY)
                         {
                             turn += 1.57079632f * static_cast<float>(
-                                                      CellQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ));
+                                                      CellObjectQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ));
                         }
                         drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
                                   turn);
@@ -6631,7 +6645,7 @@ namespace GalaxyEggbert::CNA
                     {
                         const float halfBlocks = static_cast<float>(pose->iconPixels > 0 ? pose->iconPixels : 128) / 128.0f;
                         drawModel(*pose, cell.worldX, cell.worldY - 0.5f + halfBlocks, cell.worldZ,
-                                  1.57079632f * static_cast<float>(CellQuarterTurns(cell.worldX, cell.worldY, cell.worldZ)));
+                                  1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.worldX, cell.worldY, cell.worldZ)));
                     }
                 }
                 device.setRasterizerStateProperty(

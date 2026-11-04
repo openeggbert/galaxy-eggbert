@@ -91,6 +91,7 @@ namespace GalaxyEggbert::Editor
         std::uint16_t turnZ = 0;
         int turnBefore = 0; // quarter turns before and after (PlateRotationMetadata.hpp QuarterTurns)
         int turnAfter = 0;
+        bool turnObject = false; // an object's or BigDecor's turns (kObjectTurnMetadataType)
     };
 
     // Undo/redo stack of EditCommand actions against a Worlds::World.

@@ -844,9 +844,9 @@ namespace GalaxyEggbert::Editor
         if (hasHighlight_ && (FindMoveObjectAt(world, placementCellX_, placementCellY_, placementCellZ_) ||
                               FindBigDecorAt(world, placementCellX_, placementCellY_, placementCellZ_)))
         {
-            const int before = Game::QuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_);
+            const int before = Game::ObjectQuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_);
             const int after = (before + 1) % 4;
-            Game::SetQuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_, after);
+            Game::SetObjectQuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_, after);
             EditCommand command;
             command.kind = EditCommand::Kind::TurnEdit;
             command.turnX = placementCellX_;
@@ -854,6 +854,7 @@ namespace GalaxyEggbert::Editor
             command.turnZ = placementCellZ_;
             command.turnBefore = before;
             command.turnAfter = after;
+            command.turnObject = true;
             commandStack_.Push(std::move(command));
             MarkMutated();
             return true;

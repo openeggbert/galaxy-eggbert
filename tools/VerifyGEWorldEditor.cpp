@@ -248,8 +248,12 @@ int main()
         GalaxyEggbert::PlaceMoveObject(world, treasure);
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
-        check(QuarterTurns(world, placeX, placeY, placeZ) == 1 && QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 0,
-              "O turns the object in the preview's cell, not the block under it (OR-0044)");
+        check(ObjectQuarterTurns(world, placeX, placeY, placeZ) == 1 && QuarterTurns(world, placeX, placeY, placeZ) == 0 &&
+                  QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 0,
+              "O turns the object in the preview's cell (its own turns, not the cell's wind), not the block under it (OR-0044)");
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::U}, rest, 0.0f, 800, 480, camera, world);
+        check(ObjectQuarterTurns(world, placeX, placeY, placeZ) == 0, "undone, the object faces as before");
     }
 
     // OR-0045: a lift placed, the next click elsewhere is its end (the original's m_liftEnd).

@@ -334,6 +334,20 @@ in the chunk and ignore it, and every existing world (none has type 4) reads as 
 `tools/worldkit.py` writes zones (`World.hint_zone`), `tools/vwr_inspect.py` lists them, and
 `VerifyShippedWorlds` checks they survive load → save → load.
 
+### Turns (metadata types 2 and 5, 2026-11-04)
+
+Type 2 (`kPlateRotationMetadataType`, `src/GalaxyEggbert/Game/PlateRotationMetadata.hpp`) is a
+cell's tile turn, one byte: bit 0 swaps a plate's, a fan's or a wind tile's axis (X and Z,
+M3D-0005), and the byte as 0-3 is the quarter turns a model with a front (teleporters, signs, the
+switch, balustrade, trestle, emitter) takes from the side it faces by itself (OR-0044). Worlds
+saved before carry 0 or 1 and read as before.
+
+Type 5 (`kObjectTurnMetadataType`) is the quarter turns, one byte 0-3, of the object (a still
+MoveObject) or BigDecor anchored in that cell: drawn turned are the still objects, the parked
+vehicles and the BigDecor models; a moving object keeps the facing of its travel. A type of its
+own, so turning a treasure that lies in a wind cell does not turn the wind. Both are set by the
+editor's O key. Compatibility: additive, as type 4.
+
 ## World File `VWR1`
 
 The world file contains:

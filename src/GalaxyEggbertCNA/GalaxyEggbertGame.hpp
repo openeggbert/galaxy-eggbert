@@ -974,6 +974,8 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool EnemyBlupiModelDrawn(const GalaxyEggbert::Game::MobileObjSpec& obj) const;
         // A cell's quarter turns from the editor (PlateRotationMetadata.hpp, OR-0044); world coordinates.
         [[nodiscard]] int CellQuarterTurns(float x, float y, float z) const;
+        // An object's or BigDecor's quarter turns at its cell (kObjectTurnMetadataType, OR-0044).
+        [[nodiscard]] int CellObjectQuarterTurns(float x, float y, float z) const;
         void DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         // Draw()'s body; Draw() times it for GALAXY_PERF.
         void DrawFrame();

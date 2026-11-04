@@ -29,6 +29,7 @@ MOVE_OBJECT_TYPE = 1      # MoveObjectRecord.hpp, kMoveObjectMetadataType
 PLATE_ROTATION_TYPE = 2   # PlateRotationMetadata.hpp
 BIG_DECOR_TYPE = 3        # BigDecorRecord.hpp, kBigDecorMetadataType
 HINT_ZONE_TYPE = 4        # HintZoneRecord.hpp, kHintZoneMetadataType
+OBJECT_TURN_TYPE = 5      # PlateRotationMetadata.hpp, kObjectTurnMetadataType (an object's or BigDecor's turns)
 
 
 def packed_index(words: list[int], i: int, bits: int) -> int:
