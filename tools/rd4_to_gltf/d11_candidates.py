@@ -63,7 +63,8 @@ def main(argv=None) -> int:
              "their painted digit or picture, a decal the game lays on the model (sign_decals.py) that this",
              "comparison leaves out; the fountain bowl and column are white in every shader channel (the",
              "sprites' grey is Ray Dream's single light without ambient); the drip's smallest frames have no",
-             "scene of their own; the girder is drawn as a lattice box (BlockModels.hpp); the saw's blade is a",
+             "scene of their own: the game draws 408-410 as 407's drop scaled to their sprites (BlockModels.hpp",
+             "DripShrink), not as the 0.44 match listed here; the girder is drawn as a lattice box (BlockModels.hpp); the saw's blade is a",
              "dark metal (0.33) with highlight 0.85 and shininess 0.90 in Decor/scie.rd4: its bright side in the",
              "sprites is a specular highlight, which the game's model lighting (no specular) does not draw.", "",
              "| Rank | Model | Icons | IoU worst | IoU mean | Colour error | Flag |", "|---|---|---|---|---|---|---|"]
