@@ -5,8 +5,8 @@
 # 98.7 % of them). Tiles without a line stay textured cubes: no scene of the archive is theirs
 # (the bricks 261-263/283, the grey metal plates 78-84/396, the panels 4-8/11-13, the stars 230/231,
 # the roof tiles 196/197, the column 190, the numbered tiles 30/31). Only cube tiles (UniformCube,
-# DirectionalCube) take a relief: the cave and cheese edge plates (InnerFlatPlate, 285-303: their
-# scenes grotte01-21 are known) are another matter.
+# DirectionalCube) and the cave's edge plates (InnerFlatPlate: the relief both ways from the cell's
+# middle) take a relief.
 
    2 Decor/techno03.rd4           0  # pixels 0.42
    9 Decor/techno10.rd4           0  # pixels 0.45
@@ -61,6 +61,8 @@
  341 Decor/smooth/smooth01.rds    0  # numbering (the pixels' best are wrong: a house, a panel)
  344 Decor/smooth/smooth04.rds    0  # numbering
 # By the silhouette, which tells these apart (their sprites do not fill the square):
+ 285 Decor/grotte01.rd4           0  # survey IoU 0.88 (the cave's edge plate: lumps hanging from the mass)
+ 302 Decor/grotte18.rd4           0  # survey IoU 0.86; pixels 0.36 (the other edge plate)
  107 Decor/herbe1.rd4             0  texture=107  # survey IoU 0.91 (the owner: the whole lumpy model)
  108 Decor/herbe1.rd4             0  texture=107  # the row's right end: 107 cut (the geometry ends it)
  109 Decor/herbe1.rd4             0  texture=107  # the row's left end

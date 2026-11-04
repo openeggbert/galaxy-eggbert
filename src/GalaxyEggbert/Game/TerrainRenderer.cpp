@@ -505,6 +505,7 @@ namespace GalaxyEggbert::Game
         std::unordered_map<std::uint32_t, std::size_t> reliefChunkOf;
         std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkCubes;
         std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkGrass;
+        std::vector<CnaEngine::Graphics::MeshBuilder> reliefChunkCutouts;
         const auto reliefChunkFor = [&](int x, int y, int z)
         {
             const int k = TerrainRenderer::kReliefChunkCells;
@@ -522,6 +523,7 @@ namespace GalaxyEggbert::Game
                 m_reliefChunks.push_back(std::move(chunk));
                 reliefChunkCubes.push_back(MakeLitTexturedMeshBuilder());
                 reliefChunkGrass.push_back(MakeLitTexturedMeshBuilder());
+                reliefChunkCutouts.push_back(MakeLitTexturedMeshBuilder());
             }
             return found->second;
         };
@@ -931,6 +933,27 @@ namespace GalaxyEggbert::Game
                         }
                         continue;
                     }
+                    if (m_reliefs != nullptr && definition.renderMode == GalaxyEggbert::BlockRenderMode::InnerFlatPlate &&
+                        mesh != &transparentStaticMesh && m_reliefs->Find(block.type()) != nullptr)
+                    {
+                        // A plate tile with a relief (the cave's edge plates 285/302): near the focus its
+                        // scene both ways from the cell's middle, overhanging freely (it is decor in an
+                        // empty cell); far off the plate as before, in its chunk.
+                        const std::size_t chunkIndex = reliefChunkFor(x, y, z);
+                        auto& far = mesh == &cutoutMesh ? reliefChunkCutouts[chunkIndex] : reliefChunkCubes[chunkIndex];
+                        AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, far, hiddenFaces,
+                                              texturedSide);
+                        ReliefCell cell;
+                        cell.center = center;
+                        cell.icon = block.type();
+                        cell.plate = true;
+                        const auto axis = GetInnerFlatPlateAxis(icon, plateRotated);
+                        cell.faces = axis == CnaEngine::Graphics::PlateAxis::X   ? std::uint8_t{4 | 8}
+                                     : axis == CnaEngine::Graphics::PlateAxis::Y ? std::uint8_t{16 | 32}
+                                                                                 : std::uint8_t{1 | 2};
+                        m_reliefChunks[chunkIndex].cells.push_back(cell);
+                        continue;
+                    }
                     if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh, hiddenFaces,
                                               texturedSide))
                     {
@@ -1024,12 +1047,21 @@ namespace GalaxyEggbert::Game
             {
                 m_reliefChunks[i].grassTops = UploadLitTexturedMeshParts(device, reliefChunkGrass[i].Mesh());
             }
+            if (!reliefChunkCutouts[i].Mesh().Empty())
+            {
+                m_reliefChunks[i].cutouts = UploadBakedLitTexturedMeshParts(device, reliefChunkCutouts[i].Take());
+            }
             m_reliefChunks[i].signature = ReliefSignature(m_reliefChunks[i].cells);
         }
 
-        if (!cutoutMesh.Mesh().Empty())
+        const bool chunkCutouts = std::any_of(m_reliefChunks.begin(), m_reliefChunks.end(),
+                                              [](const ReliefChunk& chunk) { return chunk.cutouts != nullptr; });
+        if (!cutoutMesh.Mesh().Empty() || chunkCutouts)
         {
-            m_cutoutRenderer = UploadBakedLitTexturedMeshParts(device, cutoutMesh.Take());
+            if (!cutoutMesh.Mesh().Empty())
+            {
+                m_cutoutRenderer = UploadBakedLitTexturedMeshParts(device, cutoutMesh.Take());
+            }
             m_cutoutEffect = std::make_unique<Microsoft::Xna::Framework::Graphics::AlphaTestEffect>(device);
             m_cutoutEffect->setVertexColorEnabledProperty(true);
             m_cutoutEffect->setAlphaFunctionProperty(
@@ -1312,6 +1344,15 @@ namespace GalaxyEggbert::Game
                     AddCenteredBox(mesh, cell.center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), bottom);
                     continue;
                 }
+                if (cell.plate)
+                {
+                    // From the cell's middle (AppendReliefFace lays a relief half a block out).
+                    const auto& f = kReliefFaceFrames[static_cast<std::size_t>(face)];
+                    const Microsoft::Xna::Framework::Vector3 n(static_cast<float>(f.n[0]), static_cast<float>(f.n[1]),
+                                                               static_cast<float>(f.n[2]));
+                    AppendReliefFace(mesh, *relief, cell.center - n * 0.5f, face, tile, 0, false);
+                    continue;
+                }
                 AppendReliefFace(mesh, *relief, cell.center, face, tile,
                                  overhangs ? std::uint8_t{0} : cell.air[static_cast<std::size_t>(face)], !cell.grass);
             }
@@ -1338,8 +1379,8 @@ namespace GalaxyEggbert::Game
             mix(&cell.icon, sizeof(cell.icon));
             mix(&cell.faces, sizeof(cell.faces));
             mix(cell.air.data(), cell.air.size());
-            const unsigned char grass = cell.grass ? 1 : 0;
-            mix(&grass, 1);
+            const unsigned char kind = static_cast<unsigned char>((cell.grass ? 1 : 0) | (cell.plate ? 2 : 0));
+            mix(&kind, 1);
             mix(&cell.flatFaces, sizeof(cell.flatFaces));
             for (const auto& uv : cell.flatUv)
             {
@@ -1516,7 +1557,7 @@ namespace GalaxyEggbert::Game
         {
             m_sawFloorRenderer->Draw(device, effect);
         }
-        if (m_cutoutRenderer)
+        if (m_cutoutEffect)
         {
             // Opaque where drawn, so it writes depth like the static mesh;
             // the clear texels are discarded by the alpha test.
@@ -1524,7 +1565,17 @@ namespace GalaxyEggbert::Game
             m_cutoutEffect->setViewProperty(effect.getViewProperty());
             m_cutoutEffect->setProjectionProperty(effect.getProjectionProperty());
             m_cutoutEffect->setTextureProperty(effect.getTextureProperty());
-            m_cutoutRenderer->Draw(device, *m_cutoutEffect);
+            if (m_cutoutRenderer)
+            {
+                m_cutoutRenderer->Draw(device, *m_cutoutEffect);
+            }
+            for (const auto& chunk : m_reliefChunks)
+            {
+                if (chunk.cutouts && !(chunk.near && chunk.relief))
+                {
+                    chunk.cutouts->Draw(device, *m_cutoutEffect);
+                }
+            }
         }
     }
 

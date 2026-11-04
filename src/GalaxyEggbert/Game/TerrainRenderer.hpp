@@ -206,6 +206,7 @@ namespace GalaxyEggbert::Game
             std::uint8_t faces = 0;
             std::array<std::uint8_t, 6> air{};
             bool grass = false; // laid as the grass's strips (TerrainRelief.hpp kGrassAirMask)
+            bool plate = false; // an InnerFlatPlate: the relief both ways from the cell's middle
             // Faces drawn flat near the focus too, with their own texture rectangle: a DirectionalCube's
             // faces that do not wear the tile (the machine panels' plain sides, SingleTexturedSide).
             std::uint8_t flatFaces = 0;
@@ -218,6 +219,7 @@ namespace GalaxyEggbert::Game
             std::vector<ReliefCell> cells;
             std::unique_ptr<GpuMeshParts> cubes;
             std::unique_ptr<GpuMeshParts> grassTops; // far: the grass cells' top plates (DrawGrass)
+            std::unique_ptr<GpuMeshParts> cutouts;   // far: the plates, alpha-tested (the cutout pass)
             std::unique_ptr<GpuMeshParts> relief;
             std::future<CnaEngine::Graphics::MeshData> pending; // its relief being built
             std::uint64_t signature = 0;                         // of its cells (AdoptReliefs)

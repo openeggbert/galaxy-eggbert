@@ -5,9 +5,9 @@
 | State | Scenes |
 |---|---|
 | in game | 165 |
-| in game otherwise | 58 |
+| in game otherwise | 60 |
 | converted, not exported | 0 |
-| terrain tile, scene unconfirmed (Q-012) | 89 |
+| terrain tile, scene unconfirmed (Q-012) | 87 |
 | matched, not converted | 0 |
 | no game sprite | 216 |
 
@@ -37,7 +37,6 @@
 | `Decor/enfant18.rd4` | object-m:232 |
 | `Decor/enfant21.rd4` | object-m:235 |
 | `Decor/enfant22.rd4` | object-m:236 object-m:376 object-m:421 object-m:422 object-m:423 object-m:424 object-m:425 object-m:426 object-m:427 object-m:428 object-m:429 object-m:430 (+9) |
-| `Decor/grotte01.rd4` | object-m:285 |
 | `Decor/grotte02.rd4` | object-m:286 |
 | `Decor/grotte03.rd4` | object-m:287 |
 | `Decor/grotte04.rd4` | object-m:288 |
@@ -53,7 +52,6 @@
 | `Decor/grotte14.rd4` | object-m:298 |
 | `Decor/grotte15.rd4` | object-m:299 |
 | `Decor/grotte16.rd4` | object-m:300 |
-| `Decor/grotte18.rd4` | object-m:302 |
 | `Decor/grotte19.rd4` | object-m:303 |
 | `Decor/grotte20.rd4` | object-m:337 |
 | `Decor/grotte21.rd4` | object-m:338 |
@@ -134,7 +132,9 @@
 | `Decor/fromage4.rds` | object-m:248 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/fromage5.rds` | object-m:249 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte00.rd4` | object-m:284 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/grotte01.rd4` | object-m:285 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte17.rd4` | object-m:301 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/grotte18.rd4` | object-m:302 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/herbe1.rd4` | object-m:107 object-m:108 object-m:109 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/lave/lave1.rds` | object-m:68 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave2.rds` | object-m:69 the lava pool from the .a3d wave (LavaSurface.hpp) |
