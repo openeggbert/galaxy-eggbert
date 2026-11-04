@@ -546,7 +546,8 @@ ledgers before repeating any discovery. Where it stands:
   hovering helicopter's runs before (a climb `until y >= H` used to level near H + 1.4), the water
   crossings held just above the water, landings `go X Z tol 0 with crouch until ground = 1`, and a
   landing before a dismount. Play pass 19 (every change above): 78/78. Web build rebuilt and loads
-  in headless Chrome. Open: the owner's B or C (Q-012); the tail of square
+  in headless Chrome. After it: BD-0072 (the wind pushes him only focused) and the glue drop's kick
+  back to the original 10 px (BD-0070 follow-up) -- neither met by a playthrough. Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
