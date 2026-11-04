@@ -587,7 +587,8 @@ ledgers before repeating any discovery. Where it stands:
   5, `World Format.md` "Turns"). Play pass 20 (before OR-0042): 78/78; **play pass 22 (all of it):
   78/78**; web build rebuilt and loads. After it: world 115's stream east of the gallery (the
   original's row 17, `f1e0eb38`): a helicopter carried over two treasures into an updraught to a
-  landing; LV-0071 complete; 115 and the 110 chain pass.
+  landing; LV-0071 complete; 115 and the 110 chain pass. The Android debug APK (arm64-v8a,
+  `./gradlew assembleDebug -Pandroid.injected.build.abi=arm64-v8a`) builds with all of it.
   Scripted editor runs: hold keys (`keydown`/`keyup`), a tap faster than a frame is missed.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
