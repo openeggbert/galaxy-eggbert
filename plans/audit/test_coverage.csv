@@ -14,7 +14,7 @@ crate support needs a solid mask,gameplay,unit,VerifyInteractionSystem (over wat
 editor variant cycling and auto-tiling,editor,unit+integration+live,VerifyGEWorldEditor (ED-0001/0006/0007); tools/qa_steps/editor_bigdecor_cycle.txt; tools/qa_steps/editor_autotile.txt,pass,block and BigDecor families; live 2026-11-04 with the saved world read back
 editor slots 3x10 save/edit/play-test/reopen,editor,unit+live,VerifyGEEditorStorage; tools/qa_steps/editor_playtest.txt,pass,live 2026-11-03 (ED-0004): place / dice (save + play-test) / back in the editor on the saved world
 world format round trip (BMD1 types 1-4),format,unit,VerifyShippedWorlds; MoveObjectRecordTests; BigDecorRecordTests; HintZoneRecordTests,pass,a BMD1 record with type > 4 is not yet round-tripped
-golden frames,render,golden,tools/verify_golden_frames.sh,stale,known stale since Phase 7B
+golden frames and trace,render+behaviour,golden,tools/verify_golden_frames.sh; tools/verify_golden_trace.sh,pass,re-baselined 2026-11-04 (the references were from July: the old walking speed and camera); byte-exact and deterministic: any later visual or movement change fails them on purpose
 follow star vs decor/water/blocks,gameplay,unit,VerifyInteractionSystem (BD-0004),pass,
 all playthroughs after D60/BD-0006/BD-0003/BD-0004,gameplay,autoplay,tools/autoplay_all.sh (78 scripts) + campaign.txt,pass,2026-11-01: 78/78; campaign 761140 ticks
 crate rests anywhere / stops on release (OR-0022),gameplay,unit,VerifyInteractionSystem (Crates in 3D; timing),pass,BD-0014
