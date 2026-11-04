@@ -222,7 +222,8 @@ namespace GalaxyEggbert::Editor
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         int viewportWidth, int viewportHeight, bool stopConfirmArmed,
         bool hasPlacementPreview,
-        int placementX, int placementY, int placementZ)
+        int placementX, int placementY, int placementZ,
+        const std::vector<std::string>& statusLines)
     {
         const EditorPaletteRenderer::State state{
             categories_,
@@ -248,6 +249,7 @@ namespace GalaxyEggbert::Editor
             placementX,
             placementY,
             placementZ,
+            statusLines,
         };
         renderer_.Draw(device, layout_, state, viewportWidth, viewportHeight);
     }

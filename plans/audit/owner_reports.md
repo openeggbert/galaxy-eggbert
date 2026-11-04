@@ -239,3 +239,30 @@ rewritten).
   at y 2.00, now it explodes on landing. `VerifyInteractionSystem` (beside a side fan's top safe,
   on it it goes with its wind); the playthroughs with fans (034, 051, 066, 084, 102, 107, 113, 114,
   115, 124) and with switches (023, 025, 063, 064, 065, 092) pass.
+
+## OR-0043 / OR-0044 / OR-0045 — the 3D editor: variants, turning, moving platforms (owner 2026-11-04) — FIXED
+
+- Reports: in the 3D editor changing the variant does not work for many icons; it should be
+  possible to set an element's rotation, which the world file probably stores; placing moving
+  platforms seems impossible too.
+- Causes: the original's variant cycling (ED-0001) works only by clicking again the block the
+  previous click placed, and only within the original's variant families; the many tiles the
+  re-tiling chooses (rock, grass, slime, brick, pipes, palace edges) have no family, and the
+  re-tiling itself could change the block just placed, ending the cycle. The turn key O swapped only
+  a plate's, fan's or wind tile's axis; the models with a front faced their open side by
+  themselves. A lift's or creature's end was set only by G (pick it) and T (its end at the aim);
+  and no key was shown anywhere.
+- Fixes: **V** turns the aimed block to its next variant: its family's, else its re-tiling row's
+  edge pieces (an edge the re-tiling chose can be changed by hand), undoable (OR-0043). **O** turns
+  a model with a front (teleporters, signs, the switch, balustrade, trestle, emitter) a quarter at a
+  time from the side it faces by itself, stored in the same per-cell byte as the plates' turn
+  (`PlateRotationMetadata.hpp` `QuarterTurns`: 0-3; a plate, fan or wind tile reads only its odd
+  bit, so the saved worlds read as before), undoable (OR-0044). A lift or a creature on a patrol
+  placed, **the next click sets where it goes**, its step scaled to the cells, as the original
+  editor's `m_liftEnd` (decdesign.cpp:479-506); a click on it again or Escape leaves it still
+  (OR-0045). **H** shows the editor's keys over the view; a prompt there while an end is awaited.
+- Validation: `VerifyGEWorldEditor` (V on a grass end and a fan, undone; O round a teleporter and
+  a fan's two axes; a lift's end two up by the next click, no second lift); live: the keys shown by
+  H; a lift placed and its end clicked, saved (49, 5, 26) -> (49, 7, 26); V turned the aimed grass
+  end 108 to 107, saved. Note for scripted runs: a key tapped faster than a frame is missed (the
+  editor reads the keyboard each frame); hold it.

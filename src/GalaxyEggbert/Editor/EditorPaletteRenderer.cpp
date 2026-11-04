@@ -489,6 +489,37 @@ namespace GalaxyEggbert::Editor
             }
         }
 
+        // The status lines (a prompt, the keys) over the view, right of the menu column.
+        if (!state.statusLines.empty() && impl_->textTexture && impl_->textEffect)
+        {
+            const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
+            const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
+            const float lineHeight = kGlyphCellPx * kTextScale + 4.0f;
+            float widest = 0.0f;
+            for (const auto& line : state.statusLines)
+            {
+                widest = std::max(widest, LabelWidth(line.c_str()));
+            }
+            constexpr float kLeft = 104.0f;
+            constexpr float kTop = 8.0f;
+            const std::vector<GalaxyEggbert::Game::QuadBatch::Quad> background = {
+                {kLeft - 6.0f, kTop - 4.0f, kLeft + widest + 6.0f,
+                 kTop + lineHeight * static_cast<float>(state.statusLines.size()) + 2.0f, 0, 0, 1, 1},
+            };
+            impl_->flatEffect->setDiffuseColorProperty({1.0f, 1.0f, 1.0f});
+            GalaxyEggbert::Game::QuadBatch::FlushQuads(
+                device, *impl_->flatEffect, impl_->flatRenderer, background, viewportWidth, viewportHeight, 0.78f);
+            std::vector<GalaxyEggbert::Game::QuadBatch::Quad> labels;
+            for (std::size_t i = 0; i < state.statusLines.size(); ++i)
+            {
+                AppendLabel(labels, state.statusLines[i].c_str(), kLeft, kTop + lineHeight * static_cast<float>(i),
+                            sheetWidth, sheetHeight);
+            }
+            impl_->textEffect->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
+            GalaxyEggbert::Game::QuadBatch::FlushQuads(
+                device, *impl_->textEffect, impl_->textRenderer, labels, viewportWidth, viewportHeight, 1.0f);
+        }
+
         if (state.noticeVisible && impl_->textTexture && impl_->textEffect)
         {
             constexpr const char* kMessage = "Not yet implemented.";

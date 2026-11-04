@@ -61,7 +61,7 @@ namespace GalaxyEggbert::Editor
             SpawnPointEdit,
             MusicEdit, // the world's background music (OR-0014)
             BigDecorEdit,
-            TurnEdit, // a tile turned 90 degrees (M3D-0005): the plate-rotation flag toggled
+            TurnEdit, // a tile turned (M3D-0005, OR-0044): its quarter turns changed
         };
 
         Kind kind = Kind::BlockEdit;
@@ -89,7 +89,8 @@ namespace GalaxyEggbert::Editor
         std::uint16_t turnX = 0;
         std::uint16_t turnY = 0;
         std::uint16_t turnZ = 0;
-        bool turnBefore = false; // after is its opposite
+        int turnBefore = 0; // quarter turns before and after (PlateRotationMetadata.hpp QuarterTurns)
+        int turnAfter = 0;
     };
 
     // Undo/redo stack of EditCommand actions against a Worlds::World.

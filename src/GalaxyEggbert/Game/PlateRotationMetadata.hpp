@@ -43,4 +43,10 @@ namespace GalaxyEggbert::Game
     // Whether the block at (x, y, z) is turned 90 degrees: a plate's axis, and (M3D-0005, owner
     // 2026-11-02) a fan's or wind tile's horizontal way, -X/+X becoming -Z/+Z.
     [[nodiscard]] bool IsPlateRotated(const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z);
+    // The same byte read as quarter turns, 0-3 (OR-0044, owner 2026-11-04: the editor turns a
+    // model with a front -- teleporter, sign, switch, balustrade, trestle, emitter -- a quarter at a
+    // time from the side it faces by itself). A plate, fan or wind tile reads only its odd bit (90
+    // or 270 degrees: X and Z swapped), so the worlds saved with 0/1 read as before.
+    [[nodiscard]] int QuarterTurns(const Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z);
+    void SetQuarterTurns(Worlds::World& world, std::uint16_t x, std::uint16_t y, std::uint16_t z, int turns);
 }

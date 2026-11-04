@@ -8,6 +8,7 @@
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/BoltMesh.hpp>
 #include <GalaxyEggbert/Game/EnemyBlupi.hpp>
+#include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/Game/GlueStrands.hpp>
 
 #include <fstream>
@@ -2443,6 +2444,20 @@ namespace GalaxyEggbert::CNA
                 }
             }
         }
+    }
+
+    int GalaxyEggbertGame::CellQuarterTurns(float x, float y, float z) const
+    {
+        const long rx = std::lround(x) + WorldRuntime::kWorldCenterX;
+        const long ry = std::lround(y);
+        const long rz = std::lround(z) + WorldRuntime::kWorldCenterZ;
+        const long n = static_cast<long>(worldRuntime_.GetWorld().blocksPerAxis());
+        if (rx < 0 || ry < 0 || rz < 0 || rx >= n || ry >= n || rz >= n)
+        {
+            return 0;
+        }
+        return GalaxyEggbert::Game::QuarterTurns(worldRuntime_.GetWorld(), static_cast<std::uint16_t>(rx),
+                                                 static_cast<std::uint16_t>(ry), static_cast<std::uint16_t>(rz));
     }
 
     bool GalaxyEggbertGame::EnemyBlupiModelDrawn(const MobileObjSpec& obj) const
@@ -6469,7 +6484,8 @@ namespace GalaxyEggbert::CNA
                                         ObjectTextureSource::ObjectM, static_cast<std::uint16_t>(icon)))
                                 {
                                     drawModel(*pose, cell.x, cell.y, cell.z,
-                                              GalaxyEggbert::Game::FrontModelYaw(cell.openSide));
+                                              GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
+                                                  1.57079632f * static_cast<float>(CellQuarterTurns(cell.x, cell.y, cell.z)));
                                 }
                             }
                             continue;
@@ -6542,16 +6558,18 @@ namespace GalaxyEggbert::CNA
                                                    cell.base) != GalaxyEggbert::Game::kFrontModelIcons.end() ||
                                          GalaxyEggbert::Game::IsSignModelIcon(cell.base))
                                 {
-                                    drawModel(*still, cell.x, cell.y, cell.z,
-                                              GalaxyEggbert::Game::FrontModelYaw(cell.openSide));
+                                    // Turned in the editor a quarter at a time from the side it faces
+                                    // by itself (OR-0044).
+                                    const float frontYaw = GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
+                                                           1.57079632f * static_cast<float>(CellQuarterTurns(cell.x, cell.y, cell.z));
+                                    drawModel(*still, cell.x, cell.y, cell.z, frontYaw);
                                     if (GalaxyEggbert::Game::IsTeleporterIcon(cell.base))
                                     {
                                         // The letter plate and lights on its other three sides too
                                         // (BlockModels.hpp IsTeleporterIcon, OR-0056).
                                         for (int quarter = 1; quarter < 4; ++quarter)
                                         {
-                                            const float yaw = GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
-                                                              1.57079632f * static_cast<float>(quarter);
+                                            const float yaw = frontYaw + 1.57079632f * static_cast<float>(quarter);
                                             const float out = GalaxyEggbert::Game::kBoothSideOffsets[
                                                 static_cast<std::size_t>(quarter)];
                                             drawModel(*still, cell.x + out * std::sin(yaw), cell.y,
@@ -6561,8 +6579,7 @@ namespace GalaxyEggbert::CNA
                                     }
                                     if (signDecals_.count(cell.base) != 0)
                                     {
-                                        decalCells.push_back({cell.base, cell.x, cell.y, cell.z,
-                                                              GalaxyEggbert::Game::FrontModelYaw(cell.openSide)});
+                                        decalCells.push_back({cell.base, cell.x, cell.y, cell.z, frontYaw});
                                     }
                                 }
                                 else if (GalaxyEggbert::Game::IsClayBridgeIcon(cell.base))

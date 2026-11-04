@@ -14,6 +14,7 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <cmath>
+#include <optional>
 #include <cstdio>
 #include <iostream>
 
@@ -181,6 +182,108 @@ int main()
               "middle click removes the aimed-at block");
         check(!world.getBlock(slabHit.x, slabHit.y, slabHit.z).isAir(),
               "removing the nearest block preserves the slab below it");
+    }
+
+    // OR-0043: V turns the aimed block to its next variant: its family's (a fan), else its auto-tile
+    // row's (the grass's ends 157, 109, 108, 107). Undoable.
+    {
+        World world = slab;
+        world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(108));
+        WorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        CnaEngine::Graphics::Camera camera;
+        const MouseState rest(
+            400, 200, 0, ButtonState::Released, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::V}, rest, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 107,
+              "V turns the aimed grass end to the next of its row (OR-0043)");
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::V}, rest, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 157, "and on, wrapping round its row");
+        world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(126));
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::V}, rest, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 129, "a fan to the next of its family");
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::U}, rest, 0.0f, 800, 480, camera, world);
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 126, "undone, the fan again");
+    }
+
+    // OR-0044: O turns a model with a front a quarter at a time; a fan only between its two axes.
+    {
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        CnaEngine::Graphics::Camera camera;
+        const MouseState rest(
+            400, 200, 0, ButtonState::Released, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(330)); // a teleporter
+        int turns = -1;
+        bool quarters = true;
+        for (int expected : {1, 2, 3, 0})
+        {
+            editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
+            turns = QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z);
+            quarters = quarters && turns == expected;
+        }
+        check(quarters, "O turns a teleporter a quarter at a time, round to where it began");
+        world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(126));
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
+        const bool one = QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 1 &&
+                         IsPlateRotated(world, slabHit.x, slabHit.y, slabHit.z);
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
+        check(one && QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 0, "a fan swaps its axis, back and forth");
+    }
+
+    // OR-0045: a lift placed, the next click elsewhere is its end (the original's m_liftEnd).
+    {
+        const auto FindMoveObjectAt = [](const World& w, std::uint16_t x, std::uint16_t y, std::uint16_t z)
+            -> std::optional<GalaxyEggbert::MoveObjectRecord>
+        {
+            for (const auto& record : GalaxyEggbert::CollectMoveObjects(w))
+            {
+                if (record.posStartX == static_cast<float>(x) && record.posStartY == static_cast<float>(y) &&
+                    record.posStartZ == static_cast<float>(z))
+                {
+                    return record;
+                }
+            }
+            return std::nullopt;
+        };
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        CnaEngine::Graphics::Camera camera;
+        editor.Palette().SelectObject(GalaxyEggbert::Def::ObjectType::ObjectType1);
+        const MouseState press(
+            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        const MouseState rest(
+            400, 200, 0, ButtonState::Released, ButtonState::Released,
+            ButtonState::Released, ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, press, 0.0f, 800, 480, camera, world);
+        const auto placed = FindMoveObjectAt(world, placeX, placeY, placeZ);
+        check(placed.has_value(), "a lift is placed in the preview cell");
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        // The preview moved two up (NumPad 9) and a click there: the lift's end.
+        editor.Update(KeyboardState{Keys::NumPad9}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::NumPad9}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, press, 0.0f, 800, 480, camera, world);
+        const auto ended = FindMoveObjectAt(world, placeX, placeY, placeZ);
+        check(ended.has_value() && ended->posEndY == static_cast<float>(placeY + 2) &&
+                  ended->posEndX == static_cast<float>(placeX) && ended->stepAdvanceTicks > placed->stepAdvanceTicks,
+              "the next click sets its end two up, its step scaled to the cells (OR-0045)");
+        check(!FindMoveObjectAt(world, placeX, static_cast<std::uint16_t>(placeY + 2), placeZ).has_value(),
+              "and places no second lift");
     }
 
     // ED-0001 (the original's variant cycling, MR-0003): a click on the block the previous click
@@ -635,7 +738,8 @@ int main()
         turn.turnX = 50;
         turn.turnY = 1;
         turn.turnZ = 50;
-        turn.turnBefore = false;
+        turn.turnBefore = 0;
+        turn.turnAfter = 1;
         SetPlateRotated(world, 50, 1, 50, true);
         stack.Push(turn);
 

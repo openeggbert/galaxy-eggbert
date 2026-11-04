@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 #include "EditorPaletteLayout.hpp"
 #include "PaletteCategories.hpp"
@@ -38,6 +39,8 @@ namespace GalaxyEggbert::Editor
             int placementX = 0;
             int placementY = 0;
             int placementZ = 0;
+            // Lines over the view, top left of it (WorldEditor::StatusLines: a prompt, the keys).
+            std::vector<std::string> statusLines;
         };
 
         EditorPaletteRenderer();

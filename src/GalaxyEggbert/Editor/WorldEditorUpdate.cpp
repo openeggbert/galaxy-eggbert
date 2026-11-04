@@ -4,6 +4,7 @@
 
 #include "BoxRegion.hpp"
 #include "VoxelRaycast.hpp"
+#include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
@@ -281,6 +282,8 @@ namespace GalaxyEggbert::Editor
             keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl),
             keyboard.IsKeyDown(Keys::M),
             keyboard.IsKeyDown(Keys::O),
+            keyboard.IsKeyDown(Keys::V),
+            keyboard.IsKeyDown(Keys::H),
         };
     }
 
@@ -316,6 +319,10 @@ namespace GalaxyEggbert::Editor
         const auto y = placementCellY_;
         const auto z = placementCellZ_;
         EditCommand command;
+        if (!palette_.IsObjectMode())
+        {
+            pendingEnd_.reset(); // another menu: the moving object stays where it is
+        }
         if (palette_.IsSpawnPointMode())
         {
             command.kind = EditCommand::Kind::SpawnPointEdit;
@@ -349,6 +356,29 @@ namespace GalaxyEggbert::Editor
             MarkMutated();
             return true;
         }
+        else if (palette_.IsObjectMode() && pendingEnd_)
+        {
+            // The moving object placed by the previous click takes this cell as its end (the
+            // original's m_liftEnd); a click on it again leaves it still.
+            const auto anchor = *pendingEnd_;
+            pendingEnd_.reset();
+            const auto placed = FindMoveObjectAt(world, anchor[0], anchor[1], anchor[2]);
+            if (!placed || (x == anchor[0] && y == anchor[1] && z == anchor[2]))
+            {
+                return true;
+            }
+            const MoveObjectRecord after = WithEndAt(*placed, x, y, z);
+            command.kind = EditCommand::Kind::MoveObjectEdit;
+            command.objectAnchorX = anchor[0];
+            command.objectAnchorY = anchor[1];
+            command.objectAnchorZ = anchor[2];
+            command.objectBefore = placed;
+            command.objectAfter = after;
+            PlaceMoveObject(world, after);
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+            return true;
+        }
         else if (palette_.IsObjectMode())
         {
             MoveObjectRecord record;
@@ -376,6 +406,15 @@ namespace GalaxyEggbert::Editor
             command.objectBefore = FindMoveObjectAt(world, x, y, z);
             command.objectAfter = record;
             PlaceMoveObject(world, record);
+            // A lift or a creature on a patrol: the next click sets where it goes (OR-0045).
+            if (IsLiftType(record.type) || Game::GetObjectDefinition(record.type).patrolTicksPerCell > 0)
+            {
+                variants_.Forget();
+                commandStack_.Push(std::move(command));
+                MarkMutated();
+                pendingEnd_ = std::array<std::uint16_t, 3>{x, y, z};
+                return true;
+            }
         }
         else
         {
@@ -523,8 +562,14 @@ namespace GalaxyEggbert::Editor
             stopConfirmArmed_ = false;
             return true;
         }
+        if (input.escapeHeld && !escapeKeyHeldLastFrame_ && pendingEnd_ && !boxFirstCornerPlaced_)
+        {
+            pendingEnd_.reset(); // the moving object stays still
+            return true;
+        }
         if (input.undoHeld && !undoKeyHeldLastFrame_)
         {
+            pendingEnd_.reset();
             if (commandStack_.Undo(world))
             {
                 MarkMutated();
@@ -534,6 +579,7 @@ namespace GalaxyEggbert::Editor
         }
         if (input.redoHeld && !redoKeyHeldLastFrame_)
         {
+            pendingEnd_.reset();
             if (commandStack_.Redo(world))
             {
                 MarkMutated();
@@ -662,6 +708,131 @@ namespace GalaxyEggbert::Editor
         return true;
     }
 
+    MoveObjectRecord WorldEditor::WithEndAt(const MoveObjectRecord& record, std::uint16_t x, std::uint16_t y,
+                                            std::uint16_t z) const
+    {
+        MoveObjectRecord after = record;
+        after.posEndX = static_cast<float>(x);
+        after.posEndY = static_cast<float>(y);
+        after.posEndZ = static_cast<float>(z);
+        // A creature's patrol takes its type's own speed and rests, as the original editor
+        // gave them (BD-0016); the fields stay editable afterwards.
+        const auto& definition = Game::GetObjectDefinition(after.type);
+        if (IsLiftType(after.type))
+        {
+            // The original multiplies the lift's per-cell step by the cells to its end
+            // (PlaceDecor4: stepAdvance *= dist); here the step per cell is the record's over
+            // the cells it covered before, so the end can be set again.
+            const auto cellsOf = [](const MoveObjectRecord& r) {
+                return std::max({1.0f, std::fabs(r.posEndX - r.posStartX), std::fabs(r.posEndY - r.posStartY),
+                                 std::fabs(r.posEndZ - r.posStartZ)});
+            };
+            const float before = cellsOf(record);
+            const float now = cellsOf(after);
+            after.stepAdvanceTicks = record.stepAdvanceTicks / before * now;
+            after.stepRecedeTicks = record.stepRecedeTicks / before * now;
+        }
+        else if (definition.patrolTicksPerCell > 0)
+        {
+            const float cells = std::max({std::fabs(after.posEndX - after.posStartX),
+                                          std::fabs(after.posEndY - after.posStartY),
+                                          std::fabs(after.posEndZ - after.posStartZ)});
+            after.stepAdvanceTicks = after.stepRecedeTicks = cells * static_cast<float>(definition.patrolTicksPerCell);
+            after.timeStopStartTicks = after.timeStopEndTicks = static_cast<float>(definition.patrolRestTicks);
+        }
+        return after;
+    }
+
+    namespace
+    {
+        // The icon after `icon` in its variant family, else in its auto-tile family (the distinct
+        // icons of its kAdaptDecor row, in their order), else none.
+        std::optional<std::uint16_t> NextVariant(std::uint16_t icon)
+        {
+            const int family = FindVariantFamily(icon);
+            if (family >= 0)
+            {
+                const auto& icons = VariantFamilies()[static_cast<std::size_t>(family)].icons;
+                for (std::size_t i = 0; i < icons.size(); ++i)
+                {
+                    if (icons[i] == icon)
+                    {
+                        return icons[(i + 1) % icons.size()];
+                    }
+                }
+            }
+            for (std::size_t row = 0; row < AutoTile::kAdaptDecor.size() / 16; ++row)
+            {
+                std::vector<std::uint16_t> distinct;
+                for (std::size_t i = 0; i < 16; ++i)
+                {
+                    const auto v = static_cast<std::uint16_t>(AutoTile::kAdaptDecor[row * 16 + i]);
+                    if (std::find(distinct.begin(), distinct.end(), v) == distinct.end())
+                    {
+                        distinct.push_back(v);
+                    }
+                }
+                for (std::size_t i = 0; i < distinct.size(); ++i)
+                {
+                    if (distinct[i] == icon && distinct.size() > 1)
+                    {
+                        return distinct[(i + 1) % distinct.size()];
+                    }
+                }
+            }
+            return std::nullopt;
+        }
+    }
+
+    bool WorldEditor::HandleVariant(const FrameInput& input, Worlds::World& world)
+    {
+        if (!input.variantHeld || variantKeyHeldLastFrame_ || !hasRaycastHit_)
+        {
+            return false;
+        }
+        const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
+        const auto next = before.isAir() ? std::nullopt : NextVariant(before.type());
+        if (!next)
+        {
+            return true;
+        }
+        const Worlds::Block after = Worlds::Block::make(*next);
+        world.setBlock(hitCellX_, hitCellY_, hitCellZ_, after);
+        EditCommand command;
+        command.kind = EditCommand::Kind::BlockEdit;
+        command.blockChanges.push_back({hitCellX_, hitCellY_, hitCellZ_, before, after});
+        commandStack_.Push(std::move(command));
+        variants_.Forget();
+        MarkMutated();
+        return true;
+    }
+
+    std::vector<std::string> WorldEditor::StatusLines() const
+    {
+        std::vector<std::string> lines;
+        if (pendingEnd_)
+        {
+            lines.emplace_back("Click where it goes (its end). ESC or a click on it: it stays.");
+        }
+        if (helpVisible_)
+        {
+            lines.emplace_back("LEFT CLICK/PLACE: place   MIDDLE CLICK: remove");
+            lines.emplace_back("Click the block just placed again: its next variant");
+            lines.emplace_back("V: next variant of the aimed block   CTRL+click: no cycling");
+            lines.emplace_back("O: turn the aimed tile or model");
+            lines.emplace_back("Lift or creature: place it, then click where it goes");
+            lines.emplace_back("G: pick object  T: its end  TAB +/-: its values  DEL: remove");
+            lines.emplace_back("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save");
+            lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD SPACE CTRL: fly");
+            lines.emplace_back("NUMPAD: move the red preview   H: hide the keys");
+        }
+        else if (!pendingEnd_)
+        {
+            lines.emplace_back("H: keys");
+        }
+        return lines;
+    }
+
     bool WorldEditor::HandleTurn(const FrameInput& input, Worlds::World& world)
     {
         if (!input.turnHeld || turnKeyHeldLastFrame_ || !hasRaycastHit_)
@@ -672,14 +843,22 @@ namespace GalaxyEggbert::Editor
         {
             return true;
         }
-        const bool before = Game::IsPlateRotated(world, hitCellX_, hitCellY_, hitCellZ_);
-        Game::SetPlateRotated(world, hitCellX_, hitCellY_, hitCellZ_, !before);
+        // A model with a front turns a quarter at a time (OR-0044); a plate, fan or wind tile
+        // between its two axes (M3D-0005).
+        const std::uint16_t icon = world.getBlock(hitCellX_, hitCellY_, hitCellZ_).type();
+        const bool front = std::find(Game::kFrontModelIcons.begin(), Game::kFrontModelIcons.end(), icon) !=
+                               Game::kFrontModelIcons.end() ||
+                           Game::IsSignModelIcon(icon);
+        const int before = Game::QuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_);
+        const int after = front ? (before + 1) % 4 : (before & 1) ^ 1;
+        Game::SetQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_, after);
         EditCommand command;
         command.kind = EditCommand::Kind::TurnEdit;
         command.turnX = hitCellX_;
         command.turnY = hitCellY_;
         command.turnZ = hitCellZ_;
         command.turnBefore = before;
+        command.turnAfter = after;
         commandStack_.Push(std::move(command));
         MarkMutated();
         return true;
@@ -780,36 +959,7 @@ namespace GalaxyEggbert::Editor
         }
         if (input.targetHeld && !targetKeyHeldLastFrame_ && hasSelectedObject_ && hasHighlight_)
         {
-            MoveObjectRecord after = selectedObject_;
-            after.posEndX = static_cast<float>(hitCellX_);
-            after.posEndY = static_cast<float>(hitCellY_);
-            after.posEndZ = static_cast<float>(hitCellZ_);
-            // A creature's patrol takes its type's own speed and rests, as the original editor
-            // gave them (BD-0016); the fields stay editable afterwards.
-            const auto& definition = Game::GetObjectDefinition(after.type);
-            if (IsLiftType(after.type))
-            {
-                // The original multiplies the lift's per-cell step by the cells to its end
-                // (PlaceDecor4: stepAdvance *= dist); here the step per cell is the record's over
-                // the cells it covered before, so the end can be set again.
-                const auto cellsOf = [](const MoveObjectRecord& r) {
-                    return std::max({1.0f, std::fabs(r.posEndX - r.posStartX), std::fabs(r.posEndY - r.posStartY),
-                                     std::fabs(r.posEndZ - r.posStartZ)});
-                };
-                const float before = cellsOf(selectedObject_);
-                const float now = cellsOf(after);
-                after.stepAdvanceTicks = selectedObject_.stepAdvanceTicks / before * now;
-                after.stepRecedeTicks = selectedObject_.stepRecedeTicks / before * now;
-            }
-            else if (definition.patrolTicksPerCell > 0)
-            {
-                const float cells = std::max({std::fabs(after.posEndX - after.posStartX),
-                                              std::fabs(after.posEndY - after.posStartY),
-                                              std::fabs(after.posEndZ - after.posStartZ)});
-                after.stepAdvanceTicks = after.stepRecedeTicks =
-                    cells * static_cast<float>(definition.patrolTicksPerCell);
-                after.timeStopStartTicks = after.timeStopEndTicks = static_cast<float>(definition.patrolRestTicks);
-            }
+            const MoveObjectRecord after = WithEndAt(selectedObject_, hitCellX_, hitCellY_, hitCellZ_);
             EditCommand command;
             command.kind = EditCommand::Kind::MoveObjectEdit;
             command.objectAnchorX = selectedAnchorX_;
@@ -883,6 +1033,12 @@ namespace GalaxyEggbert::Editor
         skyRegionNextKeyHeldLastFrame_ = input.skyNextHeld;
         musicKeyHeldLastFrame_ = input.musicNextHeld;
         turnKeyHeldLastFrame_ = input.turnHeld;
+        variantKeyHeldLastFrame_ = input.variantHeld;
+        if (input.helpHeld && !helpKeyHeldLastFrame_)
+        {
+            helpVisible_ = !helpVisible_;
+        }
+        helpKeyHeldLastFrame_ = input.helpHeld;
         placementOffsetKeyHeldLastFrame_ = placementOffsetKeyHeld;
     }
 }

@@ -100,7 +100,7 @@ namespace GalaxyEggbert::Editor
         }
         else if (command.kind == EditCommand::Kind::TurnEdit)
         {
-            Game::SetPlateRotated(world, command.turnX, command.turnY, command.turnZ, command.turnBefore);
+            Game::SetQuarterTurns(world, command.turnX, command.turnY, command.turnZ, command.turnBefore);
         }
 
         redoStack_.push_back(std::move(command));
@@ -145,7 +145,7 @@ namespace GalaxyEggbert::Editor
         }
         else if (command.kind == EditCommand::Kind::TurnEdit)
         {
-            Game::SetPlateRotated(world, command.turnX, command.turnY, command.turnZ, !command.turnBefore);
+            Game::SetQuarterTurns(world, command.turnX, command.turnY, command.turnZ, command.turnAfter);
         }
 
         undoStack_.push_back(std::move(command));

@@ -119,7 +119,8 @@ namespace GalaxyEggbert::Editor
             !HandleBoxFill(input, world) &&
             !HandleSkyRegion(input, world) &&
             !HandleMusic(input, world) &&
-            !HandleTurn(input, world))
+            !HandleTurn(input, world) &&
+            !HandleVariant(input, world))
         {
             (void)HandleObjectEditing(input, camera, viewportWidth, viewportHeight, world);
         }
@@ -236,6 +237,6 @@ namespace GalaxyEggbert::Editor
 
         palette_.Draw(
             device, viewportWidth, viewportHeight, stopConfirmArmed_, hasHighlight_,
-            placementCellX_, placementCellY_, placementCellZ_);
+            placementCellX_, placementCellY_, placementCellZ_, StatusLines());
     }
 }

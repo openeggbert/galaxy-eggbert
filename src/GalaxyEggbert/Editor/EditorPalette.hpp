@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 #include "EditorPaletteInput.hpp"
 #include "EditorPaletteLayout.hpp"
@@ -116,6 +117,14 @@ namespace GalaxyEggbert::Editor
             placementKind_ = PlacementKind::Block;
         }
 
+        // Selects an object type as a click on its palette entry does (scripted checks).
+        void SelectObject(GalaxyEggbert::Def::ObjectType type) noexcept
+        {
+            selectedObjectType_ = static_cast<int>(type);
+            selectedObjectVisualIcon_ = 0;
+            placementKind_ = PlacementKind::Object;
+        }
+
         // Selects a BigDecor icon as a click on its palette entry does (scripted checks).
         void SelectBigDecor(std::uint16_t icon) noexcept
         {
@@ -137,7 +146,8 @@ namespace GalaxyEggbert::Editor
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
             int viewportWidth, int viewportHeight, bool stopConfirmArmed = false,
             bool hasPlacementPreview = false,
-            int placementX = 0, int placementY = 0, int placementZ = 0);
+            int placementX = 0, int placementY = 0, int placementZ = 0,
+            const std::vector<std::string>& statusLines = {});
 
     private:
         [[nodiscard]] const PaletteCategory* OpenCategory() const noexcept;
