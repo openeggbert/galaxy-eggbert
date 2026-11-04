@@ -4762,7 +4762,8 @@ namespace GalaxyEggbert::CNA
                                            BlupiController::kFireTankDuration);
             }
             // The helicopter's glue drop: HelicoGlu holds him while the ball leaves, and the
-            // helicopter kicks up as it goes (Decor.cpp:3067, -10 a tick: its climbing speed).
+            // helicopter kicks up as it goes (Decor.cpp:3067, 10 px a tick added: it was the climb's
+            // limit, which BD-0070 made 7).
             if (FindInteractionEvent(InteractionSystem::EventKind::GlueDropStarted))
             {
                 blupi_.TriggerOneShotAnim(BlupiController::AnimState::HelicoGlu,
@@ -4770,7 +4771,7 @@ namespace GalaxyEggbert::CNA
             }
             if (FindInteractionEvent(InteractionSystem::EventKind::GlueDropped))
             {
-                blupi_.KickUp(BlupiController::kHelicopterAscendSpeed);
+                blupi_.KickUp(BlupiController::kHelicoGluKick);
             }
             // A patrolling enemy passed close by (Decor.cpp:5639-5645): Ouf4 if he stops soon,
             // on foot, out of the water, unshielded.

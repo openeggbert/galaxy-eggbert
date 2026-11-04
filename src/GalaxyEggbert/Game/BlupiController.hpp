@@ -1048,6 +1048,7 @@ namespace GalaxyEggbert::Game
         // The helicopter's kick up as its glue ball leaves (Decor.cpp:3067,
         // m_blupiVitesseY -= 10): added to his vertical speed, blocks a second.
         void KickUp(float speed) noexcept { m_velocityY += speed; }
+        static constexpr float kHelicoGluKick = 10.0f * 20.0f / 64.0f; // 10 px a tick
 
         // Real Mockery/Mockeryi/Mockeryp (see the AnimState enum's own
         // comment) -- deliberately NOT a freeze, unlike every TriggerX()

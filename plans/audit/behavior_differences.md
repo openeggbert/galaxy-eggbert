@@ -1086,6 +1086,8 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   px, the idle sink (`kHelicopterSink`, 1 a tick toward it); the 0.5 to 1 px lift-off snap.
 - Validation: `VerifyBlupiMovement` (10 px of sink in ten idle ticks, 105 px along in twenty); ctest;
   the helicopter playthroughs (play pass 18).
+- Follow-up: the glue drop's kick up (Decor.cpp:3067, `m_blupiVitesseY -= 10`) had borrowed the climb's
+  limit and so fell to 7 px a tick with it; it is its own 10 px (`kHelicoGluKick`).
 
 ## BD-0071 — the jeep and the tank fell as Blupi; the jeep did not roll and tip over an edge (gameplay, visual) — FIXED_AND_VERIFIED
 

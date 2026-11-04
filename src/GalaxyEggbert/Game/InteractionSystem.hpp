@@ -184,15 +184,11 @@ namespace GalaxyEggbert::Game
         // real Tank-mounted "Fire" (`GalaxyEggbert::Def::KeyPressFlags::Fire`, a dedicated key
         // -- NOT the Action button used for dynamite/Perso/switches/
         // vehicle mount above) verified directly against Decor.cpp:
-        // 4308-4344. blupiCanFire is the caller's own `GetVehicleMode()==
-        // Tank` check (translated to a bool here, same
-        // don't-expose-BlupiController's-enum pattern as
-        // blupiCanGrantX above) -- Helicopter's own real firing branch
-        // (`HelicoGlu`, Decor.cpp:3691-3706) was NOT independently
-        // confirmed to actually spawn a projectile during this session's
-        // research (only that channel 52 covers both vehicle paths) --
-        // deliberately NOT modeled here until that's verified, rather
-        // than guessed. blupiFirePressed is a LEVEL state (held-down),
+        // 4308-4344. blupiCanFire is the caller's own vehicle check (the tank,
+        // or the helicopter off the ground: its glue drop, HelicoGlu,
+        // Decor.cpp:3694-3708 and 3058-3075 -- a glue ball dropped under it,
+        // the helicopter kicked up 10 px a tick; blupiDropsGlue).
+        // blupiFirePressed is a LEVEL state (held-down),
         // not edge-triggered -- the real source has no separate "must
         // release between shots" debounce, just the cooldown gate below.
         // Real gate: `m_blupiTimeFire==0` (a 0.5s/Config::ScaleTime(10)
