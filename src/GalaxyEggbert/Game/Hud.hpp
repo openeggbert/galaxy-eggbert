@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -106,7 +107,7 @@ namespace GalaxyEggbert::Game
         // shrunk down (real `min(640/textWidth, 1.0)`, approximated here
         // via this class's own fixed glyph-advance model rather than the
         // real proportional font width) if it would otherwise overflow the
-        // panel width. Pass nullptr for no hint this frame (TrainingHints
+        // panel width. Pass an empty view for no hint this frame (TrainingHints
         // handles the real mission/position/state gating -- this parameter
         // is just "what to show, if anything").
         // overlayMessage added 2026-07-13 (plan.md HUD-023, real
@@ -142,7 +143,7 @@ namespace GalaxyEggbert::Game
                   int bullets, int dynamite, int perso,
                   bool waterGaugeVisible, int waterGaugeLevel,
                   bool powerGaugeVisible, int powerGaugeLevel,
-                  const char* trainingHint,
+                  std::string_view trainingHint,
                   const char* overlayMessage,
                   int animIcon, bool animIconUsesElementSheet,
                   bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,

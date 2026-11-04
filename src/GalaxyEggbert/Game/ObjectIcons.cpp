@@ -622,9 +622,8 @@ namespace GalaxyEggbert::Game
         // (Tables.cpp:1289-1307) regardless of direction -- so, unlike the
         // 3 functions above, there is genuinely no direction parameter to
         // take here; the real data itself has no left/right distinction
-        // for this type. The real, separate "unconditional idle taunt"
-        // animation this type also has is NOT modeled (no idle-taunt
-        // system exists, same documented gap as ENEMY-026's own note).
+        // for this type. It has no taunt of its own: the one near it is
+        // Blupi's (Mockeryp, MockeryDetect, BD-0044).
         static const int kWalk[8] = {247,248,249,250,251,250,249,248};
         static const int kTurn[152] = {
             244,244,244,244,244,244,244,244,243,243,

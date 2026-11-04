@@ -243,7 +243,7 @@ namespace GalaxyEggbert::Game
                      int bullets, int dynamite, int perso,
                      bool waterGaugeVisible, int waterGaugeLevel,
                      bool powerGaugeVisible, int powerGaugeLevel,
-                     const char* trainingHint,
+                     std::string_view trainingHint,
                      const char* overlayMessage,
                      int animIcon, bool animIconUsesElementSheet,
                      bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
@@ -635,7 +635,7 @@ namespace GalaxyEggbert::Game
         // opacity 1.0 (own quad batch, NOT sharing padQuads/kPanelOpacity --
         // that panel is 0.6 in the real source), with the hint text centered and
         // shrunk to fit if needed.
-        if (trainingHint != nullptr && trainingHint[0] != '\0')
+        if (!trainingHint.empty())
         {
             Quad panel;
             panel.x0 = refToScreenX(kHintPanelX0);

@@ -4584,7 +4584,7 @@ int main(int argc, char** argv)
     // check per mission plus the real gate semantics (exact-treasure-count,
     // vehicle, dynamite) and the "matched but empty text" case.
     {
-        using std::string;
+        using namespace std::string_view_literals;
         // A 3D world's own hint zones (HintZoneRecord, 2026-10-25): the
         // original record's text and gate, the world's box.
         {
@@ -4593,72 +4593,74 @@ int main(int argc, char** argv)
                 {0, 10, 5, 10, 3, 2, 3},   // record 0 over the same box: scanned first
                 {21, 40, 5, 40, 2, 2, 2},  // record 21, "Join the red arrow."
             };
-            const char* first = FindTrainingHintInZones(11, zones, 11, 5, 11, 0, false, false);
-            check(first != nullptr && string(first) == "Use the directional wheel [Move].",
+            const std::string_view first = FindTrainingHintInZones(11, zones, 11, 5, 11, 0, false, false);
+            check(first == "Use the directional wheel \000."sv,
                   "hint zones: overlapping zones are scanned in record order");
-            const char* exit = FindTrainingHintInZones(11, zones, 41, 6, 41, 1, false, false);
-            check(exit != nullptr && string(exit) == "Join the red arrow.",
+            const std::string_view exit = FindTrainingHintInZones(11, zones, 41, 6, 41, 1, false, false);
+            check(exit == "Join the red arrow.",
                   "hint zones: a zone gives its record's original text");
-            check(FindTrainingHintInZones(11, zones, 41, 7, 41, 1, false, false) == nullptr &&
-                      FindTrainingHintInZones(11, zones, 20, 5, 20, 0, false, false) == nullptr,
+            check(FindTrainingHintInZones(11, zones, 41, 7, 41, 1, false, false).empty() &&
+                      FindTrainingHintInZones(11, zones, 20, 5, 20, 0, false, false).empty(),
                   "hint zones: outside every box (above, beside) there is no hint");
             const std::vector<GalaxyEggbert::HintZoneRecord> gated = {{1, 10, 5, 10, 3, 2, 3}};
-            check(FindTrainingHintInZones(11, gated, 11, 5, 11, 1, false, false) == nullptr,
+            check(FindTrainingHintInZones(11, gated, 11, 5, 11, 1, false, false).empty(),
                   "hint zones: the original record's gate still applies (treasures == 0)");
             const std::vector<GalaxyEggbert::HintZoneRecord> unknown = {{99, 10, 5, 10, 3, 2, 3}};
-            check(FindTrainingHintInZones(11, unknown, 11, 5, 11, 0, false, false) == nullptr,
+            check(FindTrainingHintInZones(11, unknown, 11, 5, 11, 0, false, false).empty(),
                   "hint zones: a record index the table lacks is skipped");
         }
         // Mission 11: unconditional hint in range [1,3].
         {
-            const char* hint = FindTrainingHint(11, 2, 10, 0, false, false);
-            check(hint != nullptr && string(hint) == "Use the directional wheel [Move].",
+            const std::string_view hint = FindTrainingHint(11, 2, 10, 0, false, false);
+            check(hint == "Use the directional wheel \000."sv,
                   "mission 11, grid (2,10): unconditional hint matches");
         }
         // Mission 11: exact-treasure-count gate (record at col 4 needs
         // treasuresCollected == 0).
         {
-            check(FindTrainingHint(11, 4, 10, 0, false, false) != nullptr,
+            check(FindTrainingHint(11, 4, 10, 0, false, false).empty() == false,
                   "mission 11, grid (4,10), 0 treasures: gate (==0) passes");
-            check(FindTrainingHint(11, 4, 10, 1, false, false) == nullptr,
+            check(FindTrainingHint(11, 4, 10, 1, false, false).empty(),
                   "mission 11, grid (4,10), 1 treasure: gate (==0) now fails, no hint");
         }
         // Mission 11: a real record whose text is genuinely empty (col 16)
         // -- matches but shows nothing, same as the real source.
         {
-            check(FindTrainingHint(11, 16, 10, 0, false, false) == nullptr,
+            check(FindTrainingHint(11, 16, 10, 0, false, false).empty(),
                   "mission 11, grid (16,10): matches a real but intentionally-empty hint slot");
         }
         // Mission 12: unconditional.
         {
-            const char* hint = FindTrainingHint(12, 10, 50, 0, false, false);
-            check(hint != nullptr && string(hint) == "Push the box forward until the red dot with [Action].",
+            const std::string_view hint = FindTrainingHint(12, 10, 50, 0, false, false);
+            check(hint == "Push the box forward until the red dot with \000."sv,
                   "mission 12, grid (10,50): unconditional hint matches");
         }
         // Mission 13: same rect, opposite vehicle gate -> different text.
         {
-            const char* noVehicleHint = FindTrainingHint(13, 20, 38, 0, false, false);
-            const char* vehicleHint = FindTrainingHint(13, 20, 38, 0, true, false);
-            check(noVehicleHint != nullptr && string(noVehicleHint) == "Take a helicopter with [Action].",
+            const std::string_view noVehicleHint = FindTrainingHint(13, 20, 38, 0, false, false);
+            const std::string_view vehicleHint = FindTrainingHint(13, 20, 38, 0, true, false);
+            check(noVehicleHint == "Take a helicopter with \011.",
                   "mission 13, grid (20,38), no vehicle: the -2 (noVehicle) record");
-            check(vehicleHint != nullptr &&
-                      string(vehicleHint) == "Use [Move] or [Jump] to take off. Direct with [Move] and [Move].",
+            check(vehicleHint == "Use \006 or \010 to take off. Direct with \004 and \000."sv,
                   "mission 13, grid (20,38), in a vehicle: the -3 (anyVehicle) record, different text");
         }
         // Mission 14: dynamite gate.
         {
-            const char* noDynamite = FindTrainingHint(14, 10, 50, 0, false, false);
-            const char* hasDynamite = FindTrainingHint(14, 10, 50, 0, false, true);
-            check(noDynamite != nullptr && string(noDynamite) == "Take the dynamite sticks with [Action].",
+            const std::string_view noDynamite = FindTrainingHint(14, 10, 50, 0, false, false);
+            const std::string_view hasDynamite = FindTrainingHint(14, 10, 50, 0, false, true);
+            check(noDynamite == "Take the dynamite sticks with \011.",
                   "mission 14, grid (10,50), no dynamite: the -4 (noDynamite) record");
-            check(hasDynamite != nullptr && string(hasDynamite) == "Do not put down the dynamite here!",
+            check(hasDynamite == "Do not put down the dynamite here!",
                   "mission 14, grid (10,50), carrying dynamite: the -5 (hasDynamite) record, different text");
         }
         // Outside every real rect, and outside missions 11-14 entirely.
-        check(FindTrainingHint(11, 99, 99, 0, false, false) == nullptr,
+        check(FindTrainingHint(11, 99, 99, 0, false, false).empty(),
               "mission 11, a grid position outside every real rect: no hint");
-        check(FindTrainingHint(0, 2, 10, 0, false, false) == nullptr,
+        check(FindTrainingHint(0, 2, 10, 0, false, false).empty(),
               "mission 0 (no mission): no hint anywhere, matching the real array==nullptr early-out");
+        // With the accelerometer on, its texts (TX_TRAINING101a: the tilted phone, glyph 11; BD-0064).
+        check(FindTrainingHint(11, 2, 10, 0, false, false, /*accelerometer=*/true) == "Tilt the phone \013.",
+              "mission 11 with the accelerometer: the tilted phone's text");
     }
 
     // 5. Hidden cheat menu (plan.md CHEAT-001..009, 2026-07-13) -- each

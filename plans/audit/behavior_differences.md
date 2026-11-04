@@ -999,3 +999,17 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   anchoring as the others); the caller passes Jump held and focused.
 - Validation: `VerifyBlupiMovement` (with the Power a held bounce goes higher); ctest; the
   playthroughs (play pass 17).
+
+## BD-0064 — the training hints showed "[Move]"/"[Jump]"/"[Action]", not the pad's pictograms; no accelerometer texts (UI) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:1258-1310, MyResource's TX_TRAINING101-410 and their "a" variants): the hint
+  strings carry bytes 0-13 that Text::DrawChar draws as text.png's glyphs 0-13 -- the directional
+  wheel with each of its eight directions lit, Jump, Action, Down, the tilted phone -- inline in the
+  sentence; with the accelerometer on the text's id is +10000 (the tilted phone's variants).
+- Galaxy replaced the pictograms with bracketed labels (some of them wrong: the box pushed "with
+  [Action]" where the original shows the wheel), and had no accelerometer texts.
+- Fix: `TrainingHints.cpp`'s records generated from the original tables and English strings (both
+  variants, the control bytes as octal escapes); the lookups return `std::string_view` (glyph 0 is a
+  NUL byte) and take `accelerometer`; the host passes the Setup's accelerometer switch.
+- Validation: `VerifyInteractionSystem` (the original texts, the accelerometer's); live, mission 11's
+  first hint shows the wheel inline ("Use the directional wheel" + the wheel, its right lit).

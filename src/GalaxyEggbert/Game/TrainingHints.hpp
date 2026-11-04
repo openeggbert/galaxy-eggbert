@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/HintZoneRecord.hpp>
 
+#include <string_view>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -26,23 +27,22 @@ namespace GalaxyEggbert::Game
     // vehicle" result either way -- see this file's own .cpp comment);
     // -4/-5 mean "not carrying dynamite" / "carrying dynamite".
     //
-    // Returns nullptr if no record's rect+gate matches the given position/
+    // Returns an empty view if no record's rect+gate matches the given position/
     // state, OR if the first matching record's real text happens to be
     // empty (a handful of real table_training1 slots are genuinely blank --
     // matches the real source's own "matched, but nothing to draw" case,
     // which still stops the scan rather than falling through to a later
     // record).
     //
-    // Inline control-glyph placeholders in the real strings (button-icon
-    // pictograms Text::DrawChar renders inline, e.g. the D-pad/Jump/Action
-    // icons) are NOT modeled -- this engine's text renderer only supports
-    // the printable ASCII glyph range (see Hud.hpp's own class comment).
-    // Replaced with a short bracketed label instead of being silently
-    // dropped ([Move]/[Jump]/[Action]), a documented simplification, not a
-    // fidelity claim about the exact original button icons.
-    [[nodiscard]] const char* FindTrainingHint(int mission, int gridX, int gridZ,
-                                               int treasuresCollected,
-                                               bool inAnyVehicle, bool hasDynamite) noexcept;
+    // The texts are the original's English strings with their inline pad
+    // pictograms (bytes 0-13, text.png's glyphs 0-13: the wheel's eight
+    // directions, Jump, Action, Down, the tilted phone; byte 0 included, hence
+    // std::string_view); @p accelerometer picks the accelerometer variant, as
+    // the original adds 10000 to the text's id (Decor.cpp:1287-1291; BD-0064).
+    [[nodiscard]] std::string_view FindTrainingHint(int mission, int gridX, int gridZ,
+                                                    int treasuresCollected,
+                                                    bool inAnyVehicle, bool hasDynamite,
+                                                    bool accelerometer = false) noexcept;
 
     // The same lookup for a 3D world that places its hints itself
     // (HintZoneRecord.hpp, 2026-10-25): the zones containing Blupi's cell
@@ -50,7 +50,8 @@ namespace GalaxyEggbert::Game
     // whatever order @p zones has; the first whose
     // record's gate is open wins (and, as above, an empty text still stops the
     // scan). A record index the mission's table does not have is skipped.
-    [[nodiscard]] const char* FindTrainingHintInZones(int mission, const std::vector<HintZoneRecord>& zones,
-                                                      int gridX, int gridY, int gridZ, int treasuresCollected,
-                                                      bool inAnyVehicle, bool hasDynamite) noexcept;
+    [[nodiscard]] std::string_view FindTrainingHintInZones(int mission, const std::vector<HintZoneRecord>& zones,
+                                                           int gridX, int gridY, int gridZ, int treasuresCollected,
+                                                           bool inAnyVehicle, bool hasDynamite,
+                                                           bool accelerometer = false) noexcept;
 }

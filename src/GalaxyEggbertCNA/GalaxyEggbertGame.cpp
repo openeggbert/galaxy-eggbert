@@ -7055,13 +7055,15 @@ namespace GalaxyEggbert::CNA
                 // uses them; otherwise the original tables' 2D rects apply.
                 const int hintGridY = static_cast<int>(std::floor(blupi_.GetY()));
                 const auto& hintZones = worldRuntime_.GetHintZones();
-                const char* trainingHint = hintZones.empty()
+                // The accelerometer's texts with it on (Decor.cpp:1287-1291).
+                const bool hintAccel = saveData_.GetAccelActive();
+                const std::string_view trainingHint = hintZones.empty()
                     ? FindTrainingHint(worldRuntime_.GetMissionNumber(), hintGridX, hintGridZ,
                                        interaction_.TreasuresCollected(), blupi_.IsInVehicle(),
-                                       interaction_.DynamiteCount() > 0)
+                                       interaction_.DynamiteCount() > 0, hintAccel)
                     : FindTrainingHintInZones(worldRuntime_.GetMissionNumber(), hintZones, hintGridX, hintGridY,
                                               hintGridZ, interaction_.TreasuresCollected(), blupi_.IsInVehicle(),
-                                              interaction_.DynamiteCount() > 0);
+                                              interaction_.DynamiteCount() > 0, hintAccel);
                 // Real treasure-counter hub gate (SCORE-017, Decor.cpp:1236)
                 // -- same "mission != 1 && mission % 10 != 0" expression
                 // already used for the Pause-menu showRestart gate above.
