@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-04 afternoon (terrain reliefs for every tile with a scene; busy Blupi and the patrol tick; golden tests current)._
+_Last updated: 2026-11-04 night (BD-0058..0071: speeds and focus gates against Decor.cpp; the helicopter as EasyMove; playthroughs re-timed, `fly`; OR-0032/0033)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -509,7 +509,44 @@ ledgers before repeating any discovery. Where it stands:
   ByeBye). 375 has no source. GPU cost measured on the real GPU (SDL offscreen uses radeonsi:
   `LIBGL_DEBUG=verbose EGL_LOG_LEVEL=debug` shows it): with the reliefs 0.4-1.4 ms a frame (021,
   082, 093, 101, 125; Q-012 has the table). Perf runner: an autoplay script with
-  `SDL_VIDEODRIVER=offscreen`, wall time / ticks. Open: the owner's B or C (Q-012); the tail of square
+  `SDL_VIDEODRIVER=offscreen`, wall time / ticks.
+- 2026-11-04 evening: play pass 14 (after BD-0025) 78/78. The original's screens and buttons
+  (Game1.cpp/InputPad.cpp: `Def::Phase`, `Def::ButtonGlyph`) and every `Tables::table_*` checked against
+  Galaxy (`plans/audit/ui_use_cases.md`). Found and fixed: no crouch on touch (`25a7a98`: the original's
+  PlayDown, pad icon 23, beside Jump), the Setup's accelerometer sensitivity slider (`d42db03`), the
+  powers' auras on Blupi (`c1c254a`: shield orb, power's stars, Cloud's sparks), the drink bottle's
+  bubbles (`3f80314`), the yellow gauge for Invert/balloon/squash too (`6604d12`). `qa_live.sh` has
+  `mousedown`/`mouseup`; typed cheats in it still need `keydown`/`keyup` and do not always register:
+  probe worlds 985-989 (`build-probe/probe-worlds`) place the pickups in front of the spawn instead.
+- 2026-11-04 night, the speeds and gates against Decor.cpp (`plans/audit/behavior_differences.md`
+  BD-0058..0071, each with its verifier): BD-0058 the water's eased speed and stroke; BD-0059 the
+  walk's ease-in (2, 4, 6, 8 px a tick, again after every landing; the Power 3/2); BD-0060 the
+  conveyor's 2 px a tick, focus for the creature, spike trap and teleporter; BD-0061 the creature
+  bursting a vehicle; BD-0062 no death cheering at the exit, shots pass him out of play; BD-0063 the
+  spring's Power bounce; BD-0064 the training hints' inline pad pictograms and accelerometer texts;
+  BD-0065 each animated tile cell on its own frame; BD-0066 focus for the drip, saw, crusher and the
+  bridge; BD-0067 the traps snap while he is not focused; BD-0068 5 px a tick along a bar; BD-0069
+  squashed: his own pace and the slow drift down; BD-0070 the helicopter's EasyMove figures (12 px,
+  climb 7, dive 8) and its slow sink when let be -- `Def::EasyMove` is always true, Galaxy flew the
+  unused branch; BD-0071 the jeep and tank's heavy fall, the jeep rolling and tipping off an edge.
+  Owner reports: OR-0032 the teleporter's booth no longer hidden by the reliefs beside its niche;
+  OR-0033 the Setup's "3D terrain" toggle (the reliefs cost 0.35-0.73 GB of RAM and 0.4-1.4 ms a
+  frame; off by default everywhere, the owner's call; `GALAXY_TERRAIN_RELIEF=1` forces it on for a
+  run). OR-0034: a relief no longer hangs into a corner whose cell is not solid (the hub doors' signs).
+  `VerifyGESaveData` now runs in `<build>/verify-savedata/`: it deleted the game's own savedata.txt in
+  the build directory on every ctest. Golden frames/trace re-baselined (`85fa28f`,
+  `6f20045`, `949c3c7`); stale "not modeled" notes corrected (`e8887d4`).
+- The playthroughs re-timed for them: an endpoint just past a ledge (055, 056, 058, 065: a body's
+  half-width beyond), 053's alcove (its wall's corner), 057 (`wait 84`), 033 (a wasp cycle later),
+  082 (`face 0` on the lifts), 064 (off shuttle B as it passes x 86; its bars at 5 px a tick), 102
+  (`face -90` on the pillar), 114 (its ferry boarded as it arrives), 081's saucer chains by
+  `tools/autoplay_chains.py 81` (the longer chains leave in the cycle before). The helicopter's sink
+  needed its worlds' flights rewritten with the new autoplay `fly X Y Z` (holds a height; `6737e14`):
+  013, 025, 041, 043, 044, 045, 046, 052, 058, 064, 105, 111, 112, 115 -- the heights from the
+  hovering helicopter's runs before (a climb `until y >= H` used to level near H + 1.4), the water
+  crossings held just above the water, landings `go X Z tol 0 with crouch until ground = 1`, and a
+  landing before a dismount. Play pass 19 (every change above): 78/78. Web build rebuilt and loads
+  in headless Chrome. Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
