@@ -4,7 +4,8 @@
 # checked against its render (2026-11-04, the 80 tiles with the most exposed faces in the campaign,
 # 98.7 % of them). Tiles without a line stay textured cubes: no scene of the archive is theirs
 # (the bricks 261-263/283, the grey metal plates 78-84/396, the panels 4-8/11-13, the stars 230/231,
-# the roof tiles 196/197, the column 190, the numbered tiles 30/31). Only cube tiles (UniformCube,
+# the roof tiles 196/197, the column 190, the numbered tiles 30/31; the scenes outside Decor --
+# the top level, Cadre, Element, Explo, Icon -- were matched too, none better than 0.45). Only cube tiles (UniformCube,
 # DirectionalCube) and the cave's edge plates (InnerFlatPlate: the relief both ways from the cell's
 # middle) take a relief.
 

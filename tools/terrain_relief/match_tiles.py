@@ -83,7 +83,8 @@ def main(argv=None) -> int:
     ap.add_argument("--originals", required=True, type=Path)
     ap.add_argument("--sheet", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
-    ap.add_argument("--folders", default="Decor", help="scene folders (and their subfolders) to render")
+    ap.add_argument("--folders", default="Decor",
+                    help="scene folders (and their subfolders) to render; '.' the top level alone")
     ap.add_argument("--jobs", type=int, default=6)
     ap.add_argument("--reuse", action="store_true", help="reuse <out>/renders.npz")
     args = ap.parse_args(argv)
@@ -95,7 +96,9 @@ def main(argv=None) -> int:
     else:
         keys = []
         for folder in args.folders.split(","):
-            for p in sorted((args.originals / folder).rglob("*")):
+            # "." is the archive's top level alone (its subfolders are named on their own).
+            found = (args.originals / folder).glob("*") if folder == "." else (args.originals / folder).rglob("*")
+            for p in sorted(found):
                 if p.suffix.lower() in (".rd4", ".rds"):
                     keys.append(str(p.relative_to(args.originals)))
         meta, rgbs, covs = [], [], []
