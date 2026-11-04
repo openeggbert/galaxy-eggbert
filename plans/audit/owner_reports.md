@@ -102,9 +102,11 @@ rewritten).
   GPU time on the desktop's radeonsi: 0.4-1.4 ms a frame (Q-012's table); the vertex count doubles
   (the hub at the title: 67 172 against 33 288).
 - Done: the Setup's "3D terrain" toggle (under Erase progress; `SaveData::GetTerrainRelief`, saved as
-  `terrainRelief=`): on by default on the desktop, off on Android and the web build. Switching it
+  `terrainRelief=`): at first on by default on the desktop, off on Android and the web build. Switching it
   builds the terrain again with or without the reliefs and frees their table when off.
   `GALAXY_TERRAIN_RELIEF=0/1` still overrides it (tests, measurements).
+- Owner, the same evening: off by default everywhere (it had been on on the desktop); the toggle
+  turns it on.
 - Validation: live, Setup shows the toggle; off, the hub plays with the flat textures and the save has
   `terrainRelief=0`; ctest.
 

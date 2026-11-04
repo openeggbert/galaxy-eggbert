@@ -30,6 +30,8 @@ int main()
         check(data.GetLives() == 3, "Load(): defaults lives to 3 when no save file exists");
         check(data.GetMissionNumber() == 0, "Load(): defaults missionNumber to 0 when no save file exists");
         check(!data.GetHasProgress(), "Load(): defaults hasProgress to false when no save file exists");
+        // The Setup's "3D terrain" is off until turned on (owner 2026-11-04, OR-0033).
+        check(!data.GetTerrainRelief(), "Load(): defaults terrainRelief (3D terrain) to off when no save file exists");
     }
     {
         SaveData data;
@@ -46,6 +48,14 @@ int main()
         SaveData reloaded;
         reloaded.Load();
         check(reloaded.GetSoundEnabled(), "Save()/Load(): round-trips soundEnabled=true correctly");
+    }
+    {
+        SaveData data;
+        data.SetTerrainRelief(true);
+        data.Save();
+        SaveData reloaded;
+        reloaded.Load();
+        check(reloaded.GetTerrainRelief(), "Save()/Load(): round-trips terrainRelief=1 (3D terrain on)");
     }
     {
         // The Setup's other toggles (OR-0010): the original's defaults, and a round trip.

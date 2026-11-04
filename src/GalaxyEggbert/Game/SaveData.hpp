@@ -127,16 +127,11 @@ namespace GalaxyEggbert::Game
         void SetAccelSensitivity(int value) noexcept { accelSensitivity_ = ClampVolume(value); }
         // The terrain drawn in 3D relief near the camera (the Ray Dream tiles' lumps, Q-001/Q-004) or
         // as flat textured cubes: a Galaxy setting (the owner's request of 2026-11-04: the reliefs cost
-        // memory and GPU time a phone may not have). On by default on the desktop, off on Android and
-        // the web. Saved as `terrainRelief=`.
+        // memory and GPU time a phone may not have). Off by default everywhere (the owner, 2026-11-04);
+        // the Setup's "3D terrain" turns it on. Saved as `terrainRelief=`.
         [[nodiscard]] bool GetTerrainRelief() const noexcept { return terrainRelief_; }
         void SetTerrainRelief(bool on) noexcept { terrainRelief_ = on; }
-        static constexpr bool kTerrainReliefDefault =
-#if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
-            false;
-#else
-            true;
-#endif
+        static constexpr bool kTerrainReliefDefault = false;
         [[nodiscard]] int GetMusicVolume() const noexcept { return musicVolume_; }
         void SetMusicVolume(int volume) noexcept { musicVolume_ = ClampVolume(volume); }
         [[nodiscard]] static int ClampVolume(int volume) noexcept { return volume < 0 ? 0 : volume > 100 ? 100 : volume; }
