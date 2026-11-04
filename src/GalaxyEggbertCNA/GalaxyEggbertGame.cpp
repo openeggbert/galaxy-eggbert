@@ -5008,12 +5008,28 @@ namespace GalaxyEggbert::CNA
                                                               std::cos(orbitYaw) * kChaseDistance * std::cos(e));
                 };
                 // Over what blocks it behind him rather than onto his head (D18).
+                // The room at an elevation is also how far the eye still sees his middle: walking down
+                // a stair away from the camera, a step's edge passed under the look point (a block over
+                // his feet) but hid all of him (092, the play pass of 2026-11-03); the camera then
+                // rises over the edge as over a wall behind him.
+                const Microsoft::Xna::Framework::Vector3 bodyMiddle(blupi_.GetX(), blupi_.GetY() + 0.45f,
+                                                                    blupi_.GetZ());
                 const float chaseElevation = GalaxyEggbert::Game::ChaseCameraElevation(
                     elevation, kChaseDistance,
                     [&](float e)
                     {
-                        return RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
-                                                    chaseOffset(e) * (1.0f / kChaseDistance), kChaseDistance);
+                        const auto offset = chaseOffset(e);
+                        const float room = RaymarchWallDistance(worldRuntime_.GetWorld(), rawTarget,
+                                                                offset * (1.0f / kChaseDistance), kChaseDistance);
+                        const Microsoft::Xna::Framework::Vector3 toEye = rawTarget + offset - bodyMiddle;
+                        const float length = toEye.Length();
+                        if (length < 0.001f || BlocksCamera(worldRuntime_.GetWorld(), bodyMiddle))
+                        {
+                            return room;
+                        }
+                        const float seen = RaymarchWallDistance(worldRuntime_.GetWorld(), bodyMiddle,
+                                                                toEye * (1.0f / length), length);
+                        return std::min(room, kChaseDistance * seen / length);
                     });
                 Microsoft::Xna::Framework::Vector3 desiredOffset = chaseOffset(chaseElevation);
 
