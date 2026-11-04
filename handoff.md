@@ -373,6 +373,9 @@ ledgers before repeating any discovery. Where it stands:
   any height. The actual cause (found with a debug print of the chosen elevation): the line of sight
   went to a point half a block over his feet. Fixed by a line to his real feet: 092 shows him whole
   (play pass 9: 78/78; `plans/evidence/camera-stair-092.png`, `camera-feet-pass8-vs-pass9.jpg`).
+  The same fix shows him in 094's pocket too: the camera looks into it from above (t14760, t15120,
+  t16200 in pass 9, `plans/evidence/camera-pocket-094.png`). Left of the camera list: none -- the
+  girder 201 does not stop the camera, but it is a see-through lattice and he shows through it.
   `90da71f`: **the terrain mipmapped** from its own padded copy of object-m.png (TileAtlas
   Layout::Padded: 16 px borders, 96 px pitch, box-filtered levels): 125's ring moire gone. The web
   build was rebuilt with it at 01:25 (2026-11-04, after a first try failed while the cna session had
