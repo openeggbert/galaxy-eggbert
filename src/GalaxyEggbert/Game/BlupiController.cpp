@@ -1872,9 +1872,41 @@ namespace GalaxyEggbert::Game
                 case VehicleMode::Helicopter:  maxSpeed = kHelicopterMaxSpeed; decel = kHelicopterDecel; break;
                 default: break;
             }
-            const float target = moveInput * maxSpeed;
+            float target = moveInput * maxSpeed;
             const float accel = m_vehicleMode == VehicleMode::Helicopter ? kHelicopterAccel : kVehicleAccel;
-            const float rate = (std::fabs(target) > std::fabs(m_vehicleSpeed)) ? accel : decel;
+            float rate = (std::fabs(target) > std::fabs(m_vehicleSpeed)) ? accel : decel;
+            // The jeep over an edge (kHeavyVehicleGravity's comment): ground under one end only, it
+            // rolls toward the other end, the stick unheard, and tips that way.
+            if (m_vehicleMode == VehicleMode::Jeep && m_onGround)
+            {
+                const float fx = std::sin(m_yaw), fz = -std::cos(m_yaw);
+                const auto groundAt = [&](float along)
+                {
+                    const float d = 2.0f / 64.0f;
+                    return IsPointSolid(world, m_x + fx * along, m_y - d, m_z + fz * along, tempPassable, false);
+                };
+                const bool frontOpen = !groundAt(kJeepStripNear) && !groundAt((kJeepStripNear + kJeepStripFar) * 0.5f) &&
+                                       !groundAt(kJeepStripFar);
+                const bool backOpen = !groundAt(-kJeepStripNear) &&
+                                      !groundAt(-(kJeepStripNear + kJeepStripFar) * 0.5f) && !groundAt(-kJeepStripFar);
+                const float tiltStep = kJeepTiltRate * dt;
+                if (frontOpen != backOpen)
+                {
+                    target = frontOpen ? kJeepMaxSpeed : -kJeepMaxSpeed;
+                    rate = kVehicleAccel;
+                    const float tiltTarget = frontOpen ? kJeepTiltMax : -kJeepTiltMax;
+                    m_vehicleTilt = m_vehicleTilt < tiltTarget ? std::min(m_vehicleTilt + tiltStep, tiltTarget)
+                                                               : std::max(m_vehicleTilt - tiltStep, tiltTarget);
+                }
+                else
+                {
+                    m_vehicleTilt = 0.0f;
+                }
+            }
+            else if (m_vehicleMode != VehicleMode::Jeep)
+            {
+                m_vehicleTilt = 0.0f;
+            }
             if (m_vehicleSpeed < target)
             {
                 m_vehicleSpeed = std::min(m_vehicleSpeed + rate * dt, target);
@@ -2269,6 +2301,11 @@ namespace GalaxyEggbert::Game
                 m_velocityY = m_velocityY < target ? std::min(m_velocityY + kSwimAccel * dt, target)
                                                    : std::max(m_velocityY - kSwimAccel * dt, target);
             }
+        }
+        else if ((m_vehicleMode == VehicleMode::Jeep || m_vehicleMode == VehicleMode::Tank) && !m_onGround)
+        {
+            // The heavy vehicles' fall (kHeavyVehicleGravity's comment).
+            m_velocityY = std::max(m_velocityY - kHeavyVehicleGravity * dt, -kHeavyVehicleFallLimit);
         }
         else if (m_ecrase)
         {

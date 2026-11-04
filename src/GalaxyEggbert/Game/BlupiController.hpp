@@ -472,6 +472,18 @@ namespace GalaxyEggbert::Game
         // targets (Helicopter -10/+12 px/tick, Overcraft -5/+12) are scaled
         // by the same technique as the horizontal speeds above, anchored to
         // each vehicle's own already-scaled horizontal max speed.
+        // The jeep and the tank fall heavier than he does (Decor.cpp:4193-4206, 4356-4369): 5 px a
+        // tick more each tick, to 50 (his own fall: 4, to about 40). On the ground the jeep feels for
+        // it under each end (its 16 px strips, 12-28 px from its middle, 4180-4192): with the ground
+        // under one end only it rolls toward the other at 1 px a tick more each tick, to 20, whatever
+        // the stick says, tipping toward it 5 degrees a tick, to 45 (4224-4239, 4280-4291) -- it rolls
+        // off an edge nose first (BD-0071).
+        static constexpr float kHeavyVehicleGravity = 5.0f * 20.0f * 20.0f / 64.0f; // blocks a second, a second
+        static constexpr float kHeavyVehicleFallLimit = 50.0f * 20.0f / 64.0f;      // blocks a second
+        static constexpr float kJeepStripNear = 12.0f / 64.0f;
+        static constexpr float kJeepStripFar = 28.0f / 64.0f;
+        static constexpr float kJeepTiltMax = 3.14159265f / 4.0f;            // 45 degrees
+        static constexpr float kJeepTiltRate = 5.0f * 20.0f * 3.14159265f / 180.0f; // 5 degrees a tick
         static constexpr float kHelicopterAscendSpeed = 7.0f * 20.0f / 64.0f;   // real -7 px/tick (EasyMove)
         static constexpr float kHelicopterDescendSpeed = 8.0f * 20.0f / 64.0f;  // real +8 px/tick (EasyMove)
         static constexpr float kOvercraftAscendSpeed = kOvercraftMaxSpeed * (5.0f / 12.0f);
@@ -937,6 +949,11 @@ namespace GalaxyEggbert::Game
 
         [[nodiscard]] VehicleMode GetVehicleMode() const noexcept { return m_vehicleMode; }
         [[nodiscard]] bool IsInVehicle() const noexcept { return m_vehicleMode != VehicleMode::None; }
+        // The jeep tipping over an edge (radians, + nose down; kHeavyVehicleGravity's comment).
+        [[nodiscard]] float GetVehicleTilt() const noexcept
+        {
+            return m_vehicleMode == VehicleMode::Jeep ? m_vehicleTilt : 0.0f;
+        }
 
         // Vehicle motor sound (plan.md SOUND-007/008, BLUPI-084/090/148, found 2026-07-17): real
         // `Decor::AdaptMotorVehicleSound()` crossfades a start/loop/stop sound set per vehicle,
@@ -1658,6 +1675,8 @@ namespace GalaxyEggbert::Game
         float m_marchTicks = 0.0f;
         // Squashed: his own speed along (px a tick, signed; the original's m_blupiVitesseX), BD-0069.
         float m_ecraseVitesse = 0.0f;
+        // The jeep tipped over an edge (radians, + nose down; the original's m_blupiRealRotation).
+        float m_vehicleTilt = 0.0f;
         float m_waterStrokeTicks = 0.0f;
 
         GalaxyEggbert::Def::SecretPower m_secretPower = GalaxyEggbert::Def::SecretPower::None;

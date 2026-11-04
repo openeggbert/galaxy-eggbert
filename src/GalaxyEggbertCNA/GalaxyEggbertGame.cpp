@@ -5783,6 +5783,8 @@ namespace GalaxyEggbert::CNA
                     Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
                     Microsoft::Xna::Framework::Matrix::CreateScale(charred.spread, charred.height, charred.spread) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(hangShift, 0.0f, modelDepthOffset) *
+                    // The jeep tipping over an edge, nose down (+Z is the model's front; BD-0071).
+                    Microsoft::Xna::Framework::Matrix::CreateRotationX(blupi_.GetVehicleTilt()) *
                     Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
                     Microsoft::Xna::Framework::Matrix::CreateTranslation(
                         blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop,

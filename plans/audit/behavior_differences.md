@@ -1086,3 +1086,19 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   px, the idle sink (`kHelicopterSink`, 1 a tick toward it); the 0.5 to 1 px lift-off snap.
 - Validation: `VerifyBlupiMovement` (10 px of sink in ten idle ticks, 105 px along in twenty); ctest;
   the helicopter playthroughs (play pass 18).
+
+## BD-0071 — the jeep and the tank fell as Blupi; the jeep did not roll and tip over an edge (gameplay, visual) — FIXED_AND_VERIFIED
+
+- Original: off the ground the jeep and the tank gain 5 px a tick down each tick, to 50
+  (Decor.cpp:4193-4206, 4356-4369; Blupi's own fall 4, to about 40). On the ground the jeep feels for
+  it under each end (16 px strips 2-18 px in from its sides, 4180-4192): with ground under one end
+  only, it rolls toward the other at 1 px a tick more each tick, to 20, whatever the stick says
+  (4224-4239), and tips that way 5 degrees a tick, to 45 (4280-4291, `m_blupiRealRotation`). With
+  the parked vehicles' vertigo (BD-0020) this is what takes a jeep off an edge.
+- Galaxy: the common fall for both; no strips, no tipping.
+- Fix: `kHeavyVehicleGravity`/`FallLimit` for the jeep and the tank in the air; the jeep's strips
+  (12-28 px from its middle along its facing) and `m_vehicleTilt` in its ground step; the host turns
+  the jeep's model nose down by `GetVehicleTilt()`.
+- Validation: `VerifyBlupiMovement` (front over the void: it rolls forward unasked and tips nose down;
+  on the middle of its block: still and level; BD-0020's parked checks still pass); ctest; the jeep
+  and tank playthroughs (play pass 19).

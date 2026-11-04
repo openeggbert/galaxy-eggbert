@@ -810,6 +810,32 @@ int main(int argc, char** argv)
         check(crushedDelta > 0.0f && crushedDelta < normalDelta,
               "squashed Blupi moves slower than normal, but still moves (not fully immobilized)");
 
+        // The jeep over an edge (Decor.cpp:4180-4239, 4280-4291; BD-0071): on the one block of
+        // ground with its front strip over the void, it rolls forward with no stick and tips nose down;
+        // in the middle of the block it stays.
+        {
+            BlupiController jeep;
+            jeep.SetPosition(static_cast<float>(kGroundX) + 0.35f - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
+            jeep.SetYaw(1.57079632679f); // +X
+            jeep.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
+            jeep.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            const float x0 = jeep.GetX();
+            for (int i = 0; i < 3; ++i) jeep.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            std::cout << "Jeep at the edge: rolled " << (jeep.GetX() - x0) * 64.0f << " px, tilt "
+                      << jeep.GetVehicleTilt() * 57.2958f << " deg" << std::endl;
+            check(jeep.GetX() > x0 && jeep.GetVehicleTilt() > 0.1f,
+                  "the jeep with its front over the void rolls forward unasked and tips nose down");
+            BlupiController parked;
+            parked.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
+            parked.SetYaw(1.57079632679f);
+            parked.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
+            parked.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            const float px0 = parked.GetX();
+            for (int i = 0; i < 3; ++i) parked.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            check(std::fabs(parked.GetX() - px0) < 0.001f && parked.GetVehicleTilt() == 0.0f,
+                  "on the middle of its block the jeep stays level and still");
+        }
+
         // The helicopter as the original flies it (EasyMove, Decor.cpp:3724-3835; BD-0070): idle in
         // the air it sinks at 1 px a tick (10 px in ten ticks); along it gains 0.5 px a tick (0.5 + 1 +
         // ... + 10 = 105 px in twenty ticks, its 12 not yet reached).
