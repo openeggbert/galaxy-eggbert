@@ -98,6 +98,25 @@ int main()
     }
 
     {
+        // shots N: the host saves the frame of each of the N steps from the one that read it.
+        Autoplay autoplay;
+        std::string error;
+        check(!autoplay.Parse("shots 0\n", error) && !autoplay.Parse("shots\n", error),
+              "shots needs a positive tick count");
+        check(autoplay.Parse("wait 2\nshots 3\nwait 10\n", error), "shots parses");
+        std::string wanted;
+        AutoplayState state;
+        for (int t = 0; t < 10; ++t)
+        {
+            state.tick = t;
+            autoplay.Step(state);
+            wanted += autoplay.WantsShot() ? '1' : '0';
+        }
+        check(wanted == "0011100000", "shots 3 wants the frames of three ticks, from the step that read it (" +
+                                          wanted + ")");
+    }
+
+    {
         const Run run = Play("face 90\nend\n", 200);
         check(std::fabs(run.state.yawDegrees - 90.0f) <= 1.5f, "face 90 turns him right to +X");
         check(Contains(run.log, "RESULT pass"), "face finishes");

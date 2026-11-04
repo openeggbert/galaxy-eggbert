@@ -290,6 +290,14 @@ namespace GalaxyEggbert::Game
                     return fail("needs a tick count");
                 }
             }
+            else if (verb == "shots")
+            {
+                command.kind = Kind::Shots;
+                if (!(words >> command.ticks) || command.ticks <= 0)
+                {
+                    return fail("needs a tick count");
+                }
+            }
             else if (verb == "log")
             {
                 command.kind = Kind::Log;
@@ -469,6 +477,7 @@ namespace GalaxyEggbert::Game
         {
             return keys;
         }
+        shotTicksLeft_ = std::max(0, shotTicksLeft_ - 1);
         const bool justDied = state.dead && !(havePrevious_ && previous_.dead);
         if (!havePrevious_ || state.mission != previous_.mission)
         {
@@ -507,7 +516,8 @@ namespace GalaxyEggbert::Game
                 goStillTicks_ = 0;
                 goLastYaw_ = state.yawDegrees;
                 goLastY_ = state.y;
-                if (command.kind != Kind::Log && command.kind != Kind::Expect && command.kind != Kind::Trace)
+                if (command.kind != Kind::Log && command.kind != Kind::Expect && command.kind != Kind::Trace &&
+                    command.kind != Kind::Shots)
                 {
                     Write(state, command.Where() + ": " + command.text);
                 }
@@ -651,6 +661,10 @@ namespace GalaxyEggbert::Game
                 break;
             case Kind::Trace:
                 traceTicksLeft_ = command.ticks;
+                done = true;
+                break;
+            case Kind::Shots:
+                shotTicksLeft_ = command.ticks;
                 done = true;
                 break;
             case Kind::End:

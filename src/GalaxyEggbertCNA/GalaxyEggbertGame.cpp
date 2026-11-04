@@ -2780,7 +2780,8 @@ namespace GalaxyEggbert::CNA
         if (autoplay_ && !autoplay_->Finished())
         {
             StepAutoplay();
-            if (autoplayShotEvery_ > 0 && autoplayTick_ % autoplayShotEvery_ == 0)
+            if ((autoplayShotEvery_ > 0 && autoplayTick_ % autoplayShotEvery_ == 0) ||
+                (autoplay_ && autoplay_->WantsShot()))
             {
                 autoplayShotPending_ = true;
             }
@@ -7561,6 +7562,8 @@ namespace GalaxyEggbert::CNA
             device.GetBackBufferData(backBuffer.data(), 0, static_cast<int>(backBuffer.size()));
             Microsoft::Xna::Framework::Graphics::Texture2D shot(device, w, h);
             shot.SetData(backBuffer.data(), static_cast<int>(backBuffer.size()));
+            std::error_code ignored; // `shots N` without AUTOPLAY_SHOTS: the directory may not exist yet
+            std::filesystem::create_directories("autoplay_shots", ignored);
             char filename[64];
             std::snprintf(filename, sizeof(filename), "autoplay_shots/%07d.png", autoplayTick_);
             shot.SaveAsPng(filename);

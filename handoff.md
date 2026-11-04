@@ -835,7 +835,7 @@ probes and converter output). Never build in `/tmp` or the scratchpad. Reconfigu
 - After any change that can touch gameplay or a world: replay the affected missions, and before
   calling a batch done, the campaign.
 - Writing or fixing a script (hard-won rules):
-  - Write a section, run, read the trace, repeat; `trace N` logs every tick.
+  - Write a section, run, read the trace, repeat; `trace N` logs every tick; `shots N` saves the frames of the next N ticks into the run directory's `autoplay_shots/` (a moment caught without `AUTOPLAY_SHOTS`).
   - Lifts: wait on the leading cube's unique end cell (other cubes pass through intermediate
     cells); board at the start of a dwell (wait for the far end, then the near end).
   - Jumps need a run-up and take off at an edge; jumps two up take off close to the wall.

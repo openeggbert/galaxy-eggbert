@@ -37,6 +37,8 @@
 //   expect COND                record a pass or a failure
 //   log TEXT                   write TEXT to the trace
 //   trace N                    write the position every tick for the next N ticks (else every 60)
+//   shots N                    have the game save the frame of each of the next N ticks (the host's
+//                              autoplay_shots/, tick-numbered): a moment caught without AUTOPLAY_SHOTS
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
@@ -108,9 +110,11 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool Passed() const noexcept { return finished_ && failures_ == 0; }
         // The trace lines written since the last call.
         std::string TakeLog();
+        // Whether the frame of the tick just stepped should be saved (`shots N`).
+        [[nodiscard]] bool WantsShot() const noexcept { return shotTicksLeft_ > 0; }
 
     private:
-        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, End };
+        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, End };
         enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Exit, Blitz, Temp, Crush, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
@@ -158,6 +162,7 @@ namespace GalaxyEggbert::Game
         int missionStartTick_ = 0; // the tick the current mission was first seen
         int jumpTicksLeft_ = 0;
         int traceTicksLeft_ = 0;
+        int shotTicksLeft_ = 0; // counted down as each Step() begins: N steps from the one that set it
         bool jumped_ = false;
         // A go's last position and how many ticks he has not moved from it (pressed against a wall).
         float goLastX_ = 0.0f;
