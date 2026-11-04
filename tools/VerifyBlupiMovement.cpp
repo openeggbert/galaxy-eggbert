@@ -1532,6 +1532,47 @@ int main(int argc, char** argv)
         check(unsafeCaller.GetValidX() == 0.0f && unsafeCaller.GetValidZ() == 0.0f,
               "UpdateSafePosition() is a no-op when the caller reports externallySafe=false");
 
+        // The walk's ease-in and the power's pace (Decor.cpp:3392-3404, BD-0059): from a stand 2, 4, 6,
+        // then 8 px a tick; with the power 3, 6, 9, then 12.
+        {
+            const auto walked = [&](bool powered, int ticks)
+            {
+                BlupiController walker;
+                walker.SetPosition(61.0f - 50.0f, 1.0f, static_cast<float>(kSafeStripZ) - 50.0f);
+                walker.SetYaw(1.57079632679f); // +X
+                for (int i = 0; i < 10; ++i) walker.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+                if (powered) walker.TriggerPower();
+                const float x0 = walker.GetX();
+                for (int i = 0; i < ticks; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, 0.05f);
+                return (walker.GetX() - x0) * 64.0f;
+            };
+            const float one = walked(false, 1), five = walked(false, 5), fivePowered = walked(true, 5);
+            check(std::fabs(one - 2.0f) < 0.3f, "the first tick of a walk from a stand goes 2 px (table_vitesse_march)");
+            check(std::fabs(five - 28.0f) < 0.6f, "five ticks from a stand go 2 + 4 + 6 + 8 + 8 = 28 px");
+            check(std::fabs(fivePowered - 42.0f) < 0.8f, "with the power half as fast again: 3 + 6 + 9 + 12 + 12 = 42 px");
+
+            // A landing starts the ease-in over (StopJump, then March, at phase 0: Decor.cpp:2988-2998,
+            // 3376-3380): under way, a hop, and the first tick on the ground again goes 2 px, not 8.
+            BlupiController hopper;
+            hopper.SetPosition(61.0f - 50.0f, 1.0f, static_cast<float>(kSafeStripZ) - 50.0f);
+            hopper.SetYaw(1.57079632679f);
+            for (int i = 0; i < 10; ++i) hopper.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            for (int i = 0; i < 6; ++i) hopper.Step(synthetic, 0.0f, 1.0f, false, false, false, 0.05f);
+            hopper.Step(synthetic, 0.0f, 1.0f, true, false, false, 0.05f);
+            int airTicks = 0;
+            while (!hopper.IsOnGround() && airTicks < 80)
+            {
+                hopper.Step(synthetic, 0.0f, 1.0f, false, false, false, 0.05f);
+                ++airTicks;
+            }
+            check(hopper.IsOnGround() && airTicks > 2, "sanity: the hop left the ground and came down");
+            hopper.Step(synthetic, 0.0f, 1.0f, false, false, false, 0.05f);
+            const float x0 = hopper.GetX();
+            hopper.Step(synthetic, 0.0f, 1.0f, false, false, false, 0.05f);
+            const float afterLanding = (hopper.GetX() - x0) * 64.0f;
+            check(afterLanding < 6.5f, "after a landing the walk eases in again (4 px its second tick on the ground, not 8)");
+        }
+
         // Walk across 13 distinct grid positions (one per frame), each a
         // real safe frame -- the FIFO holds only 10, so the tracked valid
         // position should lag behind Blupi's current position by roughly

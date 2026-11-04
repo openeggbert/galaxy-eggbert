@@ -934,3 +934,20 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Fix: `BlupiController` `kWaterAlongMax`/`Accel`/`Decel`, `m_waterVitesse`, `m_waterStrokeTicks`.
 - Validation: `VerifyBlupiMovement` (about a block a second at the surface; out onto a low bank in
   2.7 s); the playthroughs (play passes 15-17, re-timed with BD-0059 and BD-0060).
+
+## BD-0059 — the walk started at full speed, and the power did not quicken it (gameplay, timing) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:3392-3404, 3447-3459): walking moves `table_vitesse_march[min(m_blupiPhase, 3)]`
+  px a tick ({2, 4, 6, 8}: he eases in over four ticks from a stand; 8 in the air), times 3 / 2 with
+  the power (12 px a tick under way).
+- Galaxy walked a flat 8 from the first tick (the ease-in "not modeled") and the power only made him
+  jump higher.
+- A landing starts the ease-in over: it sets `StopJump` at phase 0 (Decor.cpp:2988-2998) and, the stick
+  held, `March` at phase 0 the same tick (3376-3380).
+- Fix: `BlupiController` `m_marchTicks` (counted on the ground only) and the march table in Step();
+  `VerifyBlupiMovement` (2 px the first tick, 28 px in five, 42 with the power; 4 px the second tick
+  after a hop's landing); the golden trace re-baselined (its walk now eases in: 2, 4, 6, then 8 px a
+  tick).
+- Playthroughs: the scripts that walked off a ledge to an endpoint just past its edge (055, 056, 058)
+  now go a body's half-width (18 px) clear of it; 053's north-west alcove is entered along z 11.15
+  (its wall's corner stopped him from 11.22); 057's tank corridor waits 84 frames (60-108 pass).

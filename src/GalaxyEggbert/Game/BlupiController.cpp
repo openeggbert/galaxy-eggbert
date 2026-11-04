@@ -1779,7 +1779,28 @@ namespace GalaxyEggbert::Game
 
         // Crusher squash state: real behavior allows movement at reduced
         // speed but blocks jump entirely while squashed.
-        const float effectiveMoveSpeed = m_ecrase ? kMoveSpeed * kEcraseSpeedMultiplier : kMoveSpeed;
+        // Walking (Decor.cpp:3392-3404, 3447-3459): table_vitesse_march {2, 4, 6, 8} px a tick by the
+        // march's tick (so he eases in over four ticks from a stand), 8 in the air, and half as fast
+        // again with the power (num3 * 3 / 2: 12 px a tick). It was a flat 8, the power's not at all.
+        // A landing starts it over: it sets StopJump at phase 0 (Decor.cpp:2988-2998) and, with the
+        // stick held, March at phase 0 the same tick (3376-3380), so the ticks count from the ground.
+        static constexpr int kMarch[4] = {2, 4, 6, 8};
+        const bool walkInput = std::fabs(moveInput) > 0.001f;
+        if (!walkInput || !m_onGround || IsInVehicle() || m_nage || m_surf || m_balloon)
+        {
+            m_marchTicks = 0.0f;
+        }
+        int marchPixels = !m_onGround ? 8 : kMarch[std::min(static_cast<int>(m_marchTicks), 3)];
+        if (walkInput && m_onGround)
+        {
+            m_marchTicks += dt * 20.0f;
+        }
+        if (m_secretPower == GalaxyEggbert::Def::SecretPower::Power)
+        {
+            marchPixels = marchPixels * 3 / 2;
+        }
+        const float walkSpeed = static_cast<float>(marchPixels) * 20.0f / 64.0f;
+        const float effectiveMoveSpeed = m_ecrase ? walkSpeed * kEcraseSpeedMultiplier : walkSpeed;
 
         // Vehicle horizontal speed (plan.md E3D-MIG-171): unlike normal
         // walking (instant target speed, no ramp -- this engine's own

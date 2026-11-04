@@ -34,7 +34,7 @@ namespace GalaxyEggbert::Game
     {
     public:
         // Real walking speed: 8 px per 20 Hz tick once under way (Decor.cpp:3392-3404,
-        // Tables::table_vitesse_march = {2, 4, 6, 8}; the 4-tick ramp is not modeled) at 64 px
+        // Tables::table_vitesse_march = {2, 4, 6, 8}: the 4-tick ease-in in Step(), BD-0059) at 64 px
         // per block, 8 * 20 / 64 = 2.5 blocks/s. It was 5.5 ("3D tuning") until 2026-10-24,
         // when the real Blupi model showed him gliding (user report: he moves too fast).
         static constexpr float kMoveSpeed = 2.5f;
@@ -1640,6 +1640,8 @@ namespace GalaxyEggbert::Game
         // In the water: the original's m_blupiVitesseX (px a tick, signed) and the stroke's tick
         // count (its m_blupiPhase while swimming), kWaterAlongMax's comment.
         float m_waterVitesse = 0.0f;
+        // Ticks of the walk since he set off (the original's m_blupiPhase in March): its ease-in.
+        float m_marchTicks = 0.0f;
         float m_waterStrokeTicks = 0.0f;
 
         GalaxyEggbert::Def::SecretPower m_secretPower = GalaxyEggbert::Def::SecretPower::None;
