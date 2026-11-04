@@ -3,6 +3,7 @@
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Game/BarRows.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
+#include <GalaxyEggbert/Game/BoltMesh.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/LavaSurface.hpp>
 #include <GalaxyEggbert/Game/MeshParts.hpp>
@@ -399,6 +400,28 @@ int main()
         std::vector<std::uint8_t> two{0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255};
         const auto half = G::DownsampleHalf(two, 2, 2);
         check(half.size() == 4 && half[0] == 128 && half[3] == 255, "a mip texel is the mean of its 2 x 2 block");
+    }
+
+    // The lightning's 3D bolt (Q-002): tubes along each frame's painted path, inside the cell, its
+    // trunk reaching the cell's top and bottom (columns join), wound as the builder's faces.
+    {
+        namespace G = GalaxyEggbert::Game;
+        bool inside = true, reachesTop = false, reachesBottom = false, wound = true;
+        for (int frame = 0; frame < 3; ++frame)
+        {
+            CnaEngine::Graphics::MeshBuilder bolt = G::MakeLitTexturedMeshBuilder();
+            G::AppendBoltCell(bolt, Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f), frame, atlas.GetTileUv(305), 0.7f);
+            const auto& m = bolt.Mesh();
+            for (const auto& p : m.positions)
+            {
+                inside = inside && std::fabs(p.X) <= 0.56f && std::fabs(p.Y) <= 0.56f && std::fabs(p.Z) <= 0.56f;
+                reachesTop = reachesTop || p.Y > 0.48f;
+                reachesBottom = reachesBottom || p.Y < -0.48f;
+            }
+            wound = wound && m.VertexCount() > 100;
+        }
+        check(inside && reachesTop && reachesBottom && wound,
+              "the 3D bolt stays in its cell and runs from its top to its bottom");
     }
 
     // A front model turns to the side with the most room to stand in (OR-0056 reopened): a model

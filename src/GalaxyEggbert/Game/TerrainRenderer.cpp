@@ -2,6 +2,7 @@
 
 #include "LavaSurface.hpp"
 #include "BlockModels.hpp"
+#include "BoltMesh.hpp"
 #include "DirectionalCubeTiles.hpp"
 #include "InnerFlatPlateTiles.hpp"
 #include "InnerPillarBoxTiles.hpp"
@@ -665,6 +666,10 @@ namespace GalaxyEggbert::Game
                         {
                             m_lavaBlocks.push_back(animBlock); // its frames built once each (Update)
                         }
+                        else if (animBase == GalaxyEggbert::BlockTypes::Blitz)
+                        {
+                            m_blitzBlocks.push_back(animBlock); // the same: one frame for all at a time
+                        }
                         else
                         {
                             m_animBlocks.push_back(animBlock);
@@ -978,6 +983,14 @@ namespace GalaxyEggbert::Game
                 continue;
             }
 
+            // The lightning (Q-002): thin tubes along the frame's painted bolt, not a cube of it.
+            if (block.base == GalaxyEggbert::BlockTypes::Blitz)
+            {
+                AppendBoltCell(mesh, center, icon - GalaxyEggbert::BlockTypes::Blitz, tileUv,
+                               BoltCellYaw(rawX, rawY, rawZ));
+                continue;
+            }
+
             // Lava (VIS-0069): a pool with the original frames' wave, not a cube of fire.
             if (block.base == GalaxyEggbert::BlockTypes::Lava)
             {
@@ -1010,7 +1023,8 @@ namespace GalaxyEggbert::Game
 
     void TerrainRenderer::Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int animPhase)
     {
-        if (animPhase == m_lastAnimPhase || (m_animBlocks.empty() && m_waterBlocks.empty() && m_lavaBlocks.empty()))
+        if (animPhase == m_lastAnimPhase ||
+            (m_animBlocks.empty() && m_waterBlocks.empty() && m_lavaBlocks.empty() && m_blitzBlocks.empty()))
         {
             m_lastAnimPhase = animPhase;
             return;
@@ -1031,6 +1045,14 @@ namespace GalaxyEggbert::Game
             if (m_lavaFrames.find(m_lavaIcon) == m_lavaFrames.end())
             {
                 m_lavaFrames[m_lavaIcon] = RebuildAnimatedRenderer(device, m_lavaBlocks, animPhase);
+            }
+        }
+        if (!m_blitzBlocks.empty())
+        {
+            m_blitzIcon = AnimIcon(GalaxyEggbert::BlockTypes::Blitz, animPhase);
+            if (m_blitzFrames.find(m_blitzIcon) == m_blitzFrames.end())
+            {
+                m_blitzFrames[m_blitzIcon] = RebuildAnimatedRenderer(device, m_blitzBlocks, animPhase);
             }
         }
     }
@@ -1070,7 +1092,9 @@ namespace GalaxyEggbert::Game
     {
         const auto lava = m_lavaFrames.find(m_lavaIcon);
         const GpuMeshParts* lavaRenderer = lava != m_lavaFrames.end() ? lava->second.get() : nullptr;
-        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || lavaRenderer)
+        const auto blitz = m_blitzFrames.find(m_blitzIcon);
+        const GpuMeshParts* blitzRenderer = blitz != m_blitzFrames.end() ? blitz->second.get() : nullptr;
+        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || lavaRenderer || blitzRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
             // NEXT.md §8, extended 2026-07-09 to also cover m_animRenderer):
@@ -1108,6 +1132,10 @@ namespace GalaxyEggbert::Game
             if (lavaRenderer)
             {
                 lavaRenderer->Draw(device, effect);
+            }
+            if (blitzRenderer)
+            {
+                blitzRenderer->Draw(device, effect);
             }
             if (m_waterRenderer)
             {

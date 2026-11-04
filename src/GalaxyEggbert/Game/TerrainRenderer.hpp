@@ -81,7 +81,7 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] int BlockCount() const noexcept { return m_blockCount; }
         [[nodiscard]] int AnimatedBlockCount() const noexcept
         {
-            return static_cast<int>(m_animBlocks.size() + m_lavaBlocks.size());
+            return static_cast<int>(m_animBlocks.size() + m_lavaBlocks.size() + m_blitzBlocks.size());
         }
         [[nodiscard]] int WaterBlockCount() const noexcept { return static_cast<int>(m_waterBlocks.size()); }
         [[nodiscard]] int VertexCount() const noexcept;
@@ -186,6 +186,10 @@ namespace GalaxyEggbert::Game
         std::vector<AnimBlock> m_lavaBlocks;
         std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_lavaFrames;
         int m_lavaIcon = -1;
+        // The lightning cells likewise (Q-002: each frame's 3D bolt built once).
+        std::vector<AnimBlock> m_blitzBlocks;
+        std::unordered_map<int, std::unique_ptr<GpuMeshParts>> m_blitzFrames;
+        int m_blitzIcon = -1;
         // Positions with InnerFlatPlate rotation metadata set (plan.md
         // E3D-MIG-149, 2026-07-11 -- see InnerFlatPlateTiles.hpp's
         // kPlateRotationMetadataType comment), collected once here so

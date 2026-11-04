@@ -14,7 +14,7 @@ As a terrain tile it would not join its neighbours (the lumps leave gaps), so th
 (recommended), (b) the whole lumpy model per cell, (c) leave the grass as it is. Meanwhile: as it
 is (a cube with the grass texture and its top overlay).
 
-### Q-002 — The lightning bolt (305-307): it has no Ray Dream scene
+### Q-002 — The lightning bolt (305-307): it has no Ray Dream scene — DONE (a) 2026-11-04
 
 The emitter is now `Decor/eclair.rd4`. The bolt between two emitters was painted, not modelled.
 Options: (a) a generated thin glowing 3D bolt following each sprite's path (three shapes taking
