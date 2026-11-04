@@ -26,7 +26,7 @@ ledgers before repeating any discovery. Where it stands:
   `GalaxyEggbertCNA`), the window "Galaxy Eggbert".
 - Done 2026-11-02: OR-0002 (Bye froze: the world-select check returned early every frame of
   the farewell), OR-0003 (the skateboard is put down at DeposeSkate's tick 12, taken at
-  TakeSkate's 8; live look still to do), OR-0007 (the port's 21 typed cheat words,
+  TakeSkate's 8; seen live frame by frame 2026-11-05, `plans/evidence/skate-take-and-dismount.png`), OR-0007 (the port's 21 typed cheat words,
   `InputPad::TypedCheat`, `ApplyTypedCheat`), OR-0018 (a lift rider's clip: Stop, not Air; the
   riding itself unchanged -- a first cut that removed his per-frame fall broke 066's lift
   boarding), OR-0019 (the helicopter's ceiling crash, `HelicopterHitsCeiling`, sub-cell masks),
