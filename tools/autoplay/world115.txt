@@ -1,5 +1,5 @@
 # Mission 115 played through (plans/briefs/world115.md): a helicopter from the north gallery to
-# nine of the eleven treasures (the draught tunnel's end, the gallery's ledge, the skate run's end,
+# nine of the eleven treasures (the draught tunnel's end, the stream east of the gallery, the skate run's end,
 # the high shelf over the crates' walls, the west wing past its curtains of lightning); on foot the
 # wind wing's two (over its corridor of winds and mines, and dropped into its second stream); then
 # the golden key in the hall's alcove, which ends in the main hub.
@@ -12,8 +12,6 @@ go 45 27.4
 go 44 26.15 tol 0.1
 hold 2 action
 wait 20
-# Treasure 2 on the ledge of the gallery's wall (walk 30): over it, then down onto it; south of
-# the helicopters' ledge (x 48-54, z 6-9, walk 32) on the way.
 # Treasure 1 at the end of the draught tunnel (west out of the gallery's wall, z 16-18, walk 28,
 # five high): in low and on at full speed through its four curtains of wind (up, down, up, down),
 # each moving him a cell or so; back out high (the first curtain met is then a downdraught: grounded
@@ -28,14 +26,20 @@ go 8 17 tol 0 with crouch until treasures = 1 max 300
 until treasures = 1 max 200
 go 9 17 tol 0 with lookup until y >= 28.9 max 300
 fly 37 30.30 17 tol 0.3 max 1500
-go 40 12 tol 0 with lookup until y >= 30.6 max 900
-fly 58 32.00 12 tol 0.3 max 900
-go 64.5 7.5 tol 0.3 max 900
-go 65 7 tol 0 with crouch until treasures = 2 max 300
-until treasures = 2 max 200
+# Treasures 2 and 3 in the stream east of the gallery (the original's row 17): across the gallery
+# into the chamber under the stream's west end (x 67-71, walk 20-28), up through its hole into the
+# stream, which carries him east over both and drops him into the updraught shaft (x 82-83); lifted
+# to the landing (walk 40), back west along the corridor over the stream to the gallery.
+fly 64 24.3 17 tol 0.3 max 1500
+fly 69.5 24.3 17 tol 0.3 max 600
+fly 69.5 30.4 17 tol 0.3 max 600
+until treasures = 3 max 600
+until y >= 39.5 max 600
+fly 82.5 40.6 17 tol 0.4 max 600
+fly 60 40.4 17 tol 0.3 max 900
 # Down to the gallery's floor and on the ground through the passage (three high) into the hall,
 # east along the corridor; over the skate run's two blocks of mines a little above them; down
-# onto treasures 3-5 at its end (93, 47), (93, 50), (93, 53).
+# onto its end, treasures 4 and 5 there (93, 47), (93, 53).
 hold 20 lookup
 go 50 28 tol 0 with crouch until y <= 20.2 max 900
 go 50 38
@@ -43,8 +47,7 @@ go 50 50
 go 70 50
 go 72 50 tol 0 with lookup until y >= 21.2 max 300
 fly 92.5 22.60 50 tol 0.3 max 900
-go 93 50 tol 0 with crouch until treasures = 3 max 300
-until treasures = 3 max 200
+go 93 50 tol 0 with crouch until ground = 1 max 300
 go 93 47 until treasures = 4 max 300
 until treasures = 4 max 200
 go 93 53 until treasures = 5 max 300

@@ -68,9 +68,10 @@ def main(argv) -> int:
     w.place(O.EGG, 58, WALK, 42)
 
     # ---- north: the helicopters' gallery (walk 20, open up to 42) ----
-    # Eight helicopters on its floor, five on a ledge; treasure 2 on a ledge of its walls at walk 30
-    # (an egg on the one at 26), two pits of lava in its floor. (Treasures 3 and 4 were on ledges at
-    # walk 34 and 38 until 2026-11-04; they are in the wind wing now, as the original's.)
+    # Eight helicopters on its floor, five on a ledge; an egg on a ledge of its walls at walk 26,
+    # two pits of lava in its floor. (Its treasures were on ledges at walk 30, 34 and 38 until
+    # 2026-11-04; they are in the winds now, as the original's: the wind wing and the stream east of
+    # the gallery.)
     carve(49, WALK, 30, 51, WALK + 2, 39)
     carve(34, WALK, 6, 66, 42, 29)
     for x in range(40, 48):
@@ -78,7 +79,7 @@ def main(argv) -> int:
     for x0, z0, x1, z1 in ((36, 8, 42, 14), (56, 8, 62, 14)):
         carve(x0, WALK - 3, z0, x1, WALK - 1, z1)
         w.fill(x0, WALK - 3, z0, x1, WALK - 2, z1, LAVA)
-    for walk, x0, z0, x1, z1, tx, tz in ((26, 34, 6, 37, 9, 35, 7), (30, 63, 6, 66, 9, 65, 7)):
+    for walk, x0, z0, x1, z1, tx, tz in ((26, 34, 6, 37, 9, 35, 7),):
         panel(x0, walk - 2, z0, x1, walk - 1, z1)
         if (tx, tz) != (35, 7):
             w.place(O.TREASURE, tx, walk, tz)
@@ -102,6 +103,31 @@ def main(argv) -> int:
     for x in range(49, 54):
         w.place(O.HELICOPTER, x, 32, 7)
     w.place(O.EGG, 51, 32, 9)
+
+    # ---- east of the gallery: the stream, the original's row 17 (x 20-29) ----
+    # A fan in the west end of a corridor blowing east along it, two treasures in the stream (24, 17)
+    # and (26, 17), an updraught shaft at its east end (x 29, from its fan at the foot) to the level
+    # above: flown in by helicopter from the room below. Here: a chamber open to the gallery (x 67-71,
+    # z 15-19, walk 20 up to 28); up through a hole (x 69-70) into the stream (x 68-81, z 16-18, walk
+    # 30, three high), its fans in its west end (x 67), treasures 2 and 3 on its floor; the updraught
+    # shaft (x 82-83, its fans at y 25, under the stream's floor) up to a landing (x 80-85, walk 40)
+    # and a corridor west
+    # back to the gallery's top.
+    carve(67, WALK, 15, 71, WALK + 8, 19)                                 # the chamber
+    carve(69, WALK + 9, 16, 70, WALK + 9, 18)                             # the hole up
+    carve(68, 30, 16, 83, 32, 18)                                         # the stream
+    w.fill(67, 30, 16, 67, 32, 18, FAN_RIGHT)
+    w.fill(68, 30, 16, 81, 32, 18, WIND_RIGHT)
+    w.place(O.TREASURE, 74, 30, 17)
+    w.place(O.TREASURE, 77, 30, 17)
+    # The shaft's fans four under the stream's floor, as the original's column rises from its fan
+    # (29, 21) four rows under the corridor: the stream drops a helicopter into the updraught, not
+    # onto a fan's mouth.
+    carve(82, 26, 16, 83, 39, 18)
+    w.fill(82, 25, 16, 83, 25, 18, FAN_UP)
+    w.fill(82, 26, 16, 83, 39, 18, WIND_UP)
+    carve(80, 40, 15, 85, 42, 19)                                         # the landing, walk 40
+    carve(67, 40, 16, 79, 41, 18)                                         # back west to the gallery
 
     # ---- south-east: the wind wing (walk 20 / 22), the original's sideways wind ----
     # Its row 11 (x 7-24): two fans back to back in a corridor one high, each blowing out along it
@@ -144,13 +170,13 @@ def main(argv) -> int:
 
     # ---- east: the skate run (walk 20) ----
     # Five skateboards at its head; two blocks of mines two deep across it (the skateboard rides
-    # through); treasures 5-7 at its end.
+    # through); treasures 4 and 5 at its end.
     carve(61, WALK, 49, 70, WALK + 2, 51)
     carve(71, WALK, 46, 95, WALK + 3, 54)
     for z in (47, 48, 50, 52, 53):
         w.place(O.SKATEBOARD, 72, WALK, z)
     mines([(x, WALK, z) for x in (78, 79, 86, 87) for z in (47, 49, 51, 53)])
-    for x, z in ((93, 47), (93, 50), (93, 53)):
+    for x, z in ((93, 47), (93, 53)):
         w.place(O.TREASURE, x, WALK, z)
     w.place(O.EGG, 90, WALK, 46)
 
