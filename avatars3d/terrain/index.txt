@@ -5,14 +5,22 @@ icon 2 r_techno03.gtr
 icon 9 r_techno10.gtr
 icon 10 r_techno11.gtr
 icon 14 r_techno15.gtr
+icon 16 r_techno17.gtr
+icon 17 r_techno12.gtr
+icon 18 r_techno19.gtr
+icon 22 r_techno23.gtr
 icon 35 r_roc4a.gtr
 icon 36 r_roc4b.gtr
 icon 37 r_roc4c.gtr
 icon 38 r_roc4d.gtr
 icon 39 r_roc4e.gtr
+icon 51 r_tuyau_lr3.m.gtr
 icon 107 r_herbe1.gtr 107
 icon 108 r_herbe1.gtr 107
 icon 109 r_herbe1.gtr 107
+icon 139 r_meuble1.gtr
+icon 140 r_meuble2.gtr
+icon 141 r_meuble3.gtr
 icon 144 r_roc4g.gtr
 icon 145 r_roc4h.gtr
 icon 146 r_roc4i.gtr
@@ -24,6 +32,12 @@ icon 151 r_roc4n.gtr
 icon 152 r_roc4o.gtr
 icon 153 r_roc4p.gtr
 icon 156 r_roc4aa.gtr
+icon 186 r_maison08.m.gtr
+icon 187 r_maison09.m.gtr
+icon 188 r_maison09.gtr
+icon 189 r_maison09.gtr
+icon 194 r_maison05.gtr
+icon 198 r_palais_mur10.gtr
 icon 215 r_enfant01.gtr
 icon 216 r_enfant02.gtr
 icon 217 r_enfant03.gtr
@@ -33,16 +47,27 @@ icon 220 r_enfant06.gtr
 icon 221 r_enfant07.gtr
 icon 222 r_enfant08.gtr
 icon 223 r_enfant09.gtr
+icon 224 r_enfant10.gtr
+icon 225 r_enfant11.gtr
 icon 233 r_enfant19.gtr
 icon 234 r_enfant20.gtr
+icon 235 r_enfant21.gtr
+icon 236 r_enfant22.gtr
 icon 246 r_fromage2.gtr
 icon 247 r_fromage3.gtr
 icon 248 r_fromage4.gtr
 icon 249 r_fromage5.gtr
+icon 250 r_tuyau_udlr.gtr
+icon 251 r_tuyau_lr1.gtr
+icon 252 r_tuyau_lr2.gtr
+icon 253 r_tuyau_lr3.gtr
+icon 254 r_tuyau_ud1.m.gtr
 icon 284 r_grotte00.gtr
 icon 285 r_grotte01.gtr
+icon 286 r_grotte02.gtr
 icon 301 r_grotte17.gtr
 icon 302 r_grotte18.gtr
+icon 303 r_grotte19.gtr
 icon 341 r_smooth_smooth01.gtr
 icon 342 r_smooth_smooth02.gtr
 icon 343 r_smooth_smooth03.gtr
@@ -50,9 +75,12 @@ icon 344 r_smooth_smooth04.gtr
 icon 345 r_smooth_smooth05.gtr
 icon 346 r_smooth_smooth06.gtr
 icon 347 r_smooth_smooth_u.gtr
+icon 349 r_smooth_smooth_lr.gtr
+icon 350 r_smooth_smooth_l.gtr
 icon 362 r_smooth_smooth_u2.gtr
 icon 386 r_palais_mur01.gtr
 icon 387 r_palais_mur02.gtr
+icon 388 r_palais_mur03.gtr
 icon 390 r_palais_mur05.gtr
 icon 393 r_palais_mur01.gtr
 icon 397 r_palais_mur02.gtr

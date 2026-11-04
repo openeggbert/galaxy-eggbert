@@ -66,3 +66,33 @@
  107 Decor/herbe1.rd4             0  texture=107  # survey IoU 0.91 (the owner: the whole lumpy model)
  108 Decor/herbe1.rd4             0  texture=107  # the row's right end: 107 cut (the geometry ends it)
  109 Decor/herbe1.rd4             0  texture=107  # the row's left end
+
+# The next 40 used tiles, reviewed the same way (2026-11-04; rank 2 where the pixels' best was wrong):
+  16 Decor/techno17.rd4           0  # pixels 0.21
+  17 Decor/techno12.rd4           0  # pixels 0.30
+  18 Decor/techno19.rd4           0  # pixels 0.43
+  22 Decor/techno23.rd4           0  # pixels 0.46
+  51 Decor/tuyau-lr3.rds          1  # pixels 0.28
+ 139 Decor/meuble1.rd4            0  # pixels 0.35 (rank 2)
+ 140 Decor/meuble2.rd4            0  # pixels 0.40 (rank 2)
+ 141 Decor/meuble3.rd4            0  # pixels 0.42 (rank 2)
+ 186 Decor/maison08.rd4           1  # pixels 0.30 (rank 2)
+ 187 Decor/maison09.rd4           1  # pixels 0.48
+ 188 Decor/maison09.rd4           0  # pixels 0.51 (rank 2)
+ 189 Decor/maison09.rd4           0  # pixels 0.55
+ 194 Decor/maison05.rd4           0  # pixels 0.46
+ 198 Decor/palais/mur10.rds       0  # pixels 0.23
+ 224 Decor/enfant10.rd4           0  # pixels 0.93
+ 225 Decor/enfant11.rd4           0  # pixels 0.94
+ 235 Decor/enfant21.rd4           0  # pixels 0.88
+ 236 Decor/enfant22.rd4           0  # pixels 0.88
+ 250 Decor/tuyau-udlr.rds         0  # pixels 0.69
+ 251 Decor/tuyau-lr1.rds          0  # pixels 0.84
+ 252 Decor/tuyau-lr2.rds          0  # pixels 0.81
+ 253 Decor/tuyau-lr3.rds          0  # pixels 0.80
+ 254 Decor/tuyau-ud1.rds          1  # pixels 0.50
+ 349 Decor/smooth/smooth-lr.rds   0  # pixels 0.44
+ 350 Decor/smooth/smooth-l.rds    0  # pixels 0.45
+ 388 Decor/palais/mur03.rds       0  # pixels 0.42
+ 286 Decor/grotte02.rd4           0  # the survey's silhouette (an edge plate)
+ 303 Decor/grotte19.rd4           0  # the survey's silhouette IoU 0.81 (an edge plate)

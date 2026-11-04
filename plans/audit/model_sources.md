@@ -5,11 +5,11 @@
 | State | Scenes |
 |---|---|
 | in game | 165 |
-| in game otherwise | 60 |
+| in game otherwise | 85 |
 | converted, not exported | 0 |
-| terrain tile, scene unconfirmed (Q-012) | 87 |
+| terrain tile, scene unconfirmed (Q-012) | 71 |
 | matched, not converted | 0 |
-| no game sprite | 216 |
+| no game sprite | 207 |
 
 ## Matched, not converted
 
@@ -27,17 +27,12 @@
 | `Decor/bois5.rd4` | object-m:45 |
 | `Decor/bois6.rd4` | object-m:46 |
 | `Decor/bois7.rd4` | object-m:47 |
-| `Decor/enfant10.rd4` | object-m:224 |
-| `Decor/enfant11.rd4` | object-m:225 |
 | `Decor/enfant12.rd4` | object-m:226 |
 | `Decor/enfant13.rd4` | object-m:227 |
 | `Decor/enfant14.rd4` | object-m:228 |
 | `Decor/enfant15.rd4` | object-m:229 |
 | `Decor/enfant16.rd4` | object-m:156 object-m:237 |
 | `Decor/enfant18.rd4` | object-m:232 |
-| `Decor/enfant21.rd4` | object-m:235 |
-| `Decor/enfant22.rd4` | object-m:236 object-m:376 object-m:421 object-m:422 object-m:423 object-m:424 object-m:425 object-m:426 object-m:427 object-m:428 object-m:429 object-m:430 (+9) |
-| `Decor/grotte02.rd4` | object-m:286 |
 | `Decor/grotte03.rd4` | object-m:287 |
 | `Decor/grotte04.rd4` | object-m:288 |
 | `Decor/grotte05.rd4` | object-m:289 |
@@ -52,7 +47,6 @@
 | `Decor/grotte14.rd4` | object-m:298 |
 | `Decor/grotte15.rd4` | object-m:299 |
 | `Decor/grotte16.rd4` | object-m:300 |
-| `Decor/grotte19.rd4` | object-m:303 |
 | `Decor/grotte20.rd4` | object-m:337 |
 | `Decor/grotte21.rd4` | object-m:338 |
 | `Decor/maison07.rd4` | object-m:388 |
@@ -72,7 +66,6 @@
 | `Decor/smooth/smooth-dl.rds` | object-m:356 |
 | `Decor/smooth/smooth-dlr.rds` | object-m:360 |
 | `Decor/smooth/smooth-dr.rds` | object-m:355 |
-| `Decor/smooth/smooth-lr.rds` | object-m:352 |
 | `Decor/smooth/smooth-r.rds` | object-m:349 object-m:350 |
 | `Decor/smooth/smooth-ud.rds` | object-m:351 |
 | `Decor/smooth/smooth-udl.rds` | object-m:358 |
@@ -84,26 +77,17 @@
 | `Decor/techno01.rd4` | object-m:28 |
 | `Decor/techno04.rd4` | object-m:12 |
 | `Decor/techno05.rd4` | object-m:8 object-m:9 object-m:14 |
-| `Decor/techno12.rd4` | object-m:6 object-m:10 object-m:73 |
-| `Decor/techno17.rd4` | object-m:16 |
 | `Decor/techno18.rd4` | object-m:15 object-m:17 |
-| `Decor/techno19.rd4` | object-m:18 |
 | `Decor/techno20.rd4` | object-m:19 |
 | `Decor/techno21.rd4` | object-m:20 |
 | `Decor/techno22.rd4` | object-m:21 |
-| `Decor/techno23.rd4` | object-m:22 |
 | `Decor/techno24.rd4` | object-m:23 |
 | `Decor/techno25.rd4` | object-m:24 |
 | `Decor/techno26.rd4` | object-m:25 |
 | `Decor/techno27.rd4` | object-m:26 |
 | `Decor/techno28.rd4` | object-m:27 |
-| `Decor/tuyau-lr1.rds` | object-m:251 |
-| `Decor/tuyau-lr2.rds` | object-m:252 |
-| `Decor/tuyau-lr3.rds` | object-m:253 |
-| `Decor/tuyau-ud1.rds` | object-m:254 |
 | `Decor/tuyau-ud2.rds` | object-m:255 |
 | `Decor/tuyau-udl.rds` | object-m:257 |
-| `Decor/tuyau-udlr.rds` | object-m:250 object-m:258 |
 | `Decor/tuyau-ul.rds` | object-m:259 |
 | `Decor/tuyau-ulr.rds` | object-m:256 |
 | `Decor/tuyau-ur.rds` | object-m:260 |
@@ -125,25 +109,39 @@
 | `Decor/enfant07.rd4` | object-m:221 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/enfant08.rd4` | object-m:222 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/enfant09.rd4` | object-m:223 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/enfant10.rd4` | object-m:224 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/enfant11.rd4` | object-m:225 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/enfant19.rd4` | object-m:233 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/enfant20.rd4` | object-m:234 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/enfant21.rd4` | object-m:235 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/enfant22.rd4` | object-m:236 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/fromage2.rds` | object-m:246 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/fromage3.rds` | object-m:247 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/fromage4.rds` | object-m:248 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/fromage5.rds` | object-m:249 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte00.rd4` | object-m:284 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte01.rd4` | object-m:285 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/grotte02.rd4` | object-m:286 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte17.rd4` | object-m:301 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/grotte18.rd4` | object-m:302 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/grotte19.rd4` | object-m:303 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/herbe1.rd4` | object-m:107 object-m:108 object-m:109 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/lave/lave1.rds` | object-m:68 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave2.rds` | object-m:69 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave3.rds` | object-m:70 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave4.rds` | object-m:71 the lava pool from the .a3d wave (LavaSurface.hpp) |
 | `Decor/lave/lave5.rds` | object-m:72 the lava pool from the .a3d wave (LavaSurface.hpp) |
+| `Decor/maison05.rd4` | object-m:194 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/maison08.rd4` | object-m:186 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/maison09.rd4` | object-m:187 object-m:188 object-m:189 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/meuble1.rd4` | object-m:139 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/meuble2.rd4` | object-m:140 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/meuble3.rd4` | object-m:141 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/palais/mur01.rds` | object-m:386 object-m:393 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/palais/mur02.rds` | object-m:387 object-m:397 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/palais/mur03.rds` | object-m:388 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/palais/mur05.rds` | object-m:390 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/palais/mur10.rds` | object-m:198 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4a.rd4` | object-m:35 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4aa.rd4` | object-m:156 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4b.rd4` | object-m:36 the terrain relief near the camera (avatars3d/terrain) |
@@ -160,6 +158,8 @@
 | `Decor/roc4n.rd4` | object-m:151 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4o.rd4` | object-m:152 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/roc4p.rd4` | object-m:153 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/smooth/smooth-l.rds` | object-m:350 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/smooth/smooth-lr.rds` | object-m:349 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth-u.rds` | object-m:347 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth-u2.rds` | object-m:362 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/smooth/smooth01.rds` | object-m:341 the terrain relief near the camera (avatars3d/terrain) |
@@ -171,7 +171,16 @@
 | `Decor/techno03.rd4` | object-m:2 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno10.rd4` | object-m:9 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno11.rd4` | object-m:10 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/techno12.rd4` | object-m:17 the terrain relief near the camera (avatars3d/terrain) |
 | `Decor/techno15.rd4` | object-m:14 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/techno17.rd4` | object-m:16 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/techno19.rd4` | object-m:18 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/techno23.rd4` | object-m:22 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/tuyau-lr1.rds` | object-m:251 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/tuyau-lr2.rds` | object-m:252 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/tuyau-lr3.rds` | object-m:51 object-m:253 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/tuyau-ud1.rds` | object-m:254 the terrain relief near the camera (avatars3d/terrain) |
+| `Decor/tuyau-udlr.rds` | object-m:250 the terrain relief near the camera (avatars3d/terrain) |
 
 ## Converted, not exported
 
@@ -353,4 +362,4 @@
 - `.max`: 56 files, BLOCKED until 3D Studio MAX with a genuine licence (MR-0001).
 - `.a3d`: 105 files, decoded (`tools/a3d/`): the lava's wave and the columns are converted; the rest are frames of the same objects.
 
-The 216 scenes without a game sprite are backdrops, menu and editor art, revisions and tests: nothing in the game is drawn from them.
+The 207 scenes without a game sprite are backdrops, menu and editor art, revisions and tests: nothing in the game is drawn from them.

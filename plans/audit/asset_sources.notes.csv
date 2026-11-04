@@ -221,8 +221,8 @@ AS-0231,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (
 AS-0232,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:221 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0233,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:222 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0234,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:223 near the camera (tools/terrain_relief/tiles.txt)",
-AS-0235,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:224); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0236,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:225); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0235,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:224 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0236,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:225 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0237,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:226); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0238,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:227); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0239,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:228); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
@@ -232,8 +232,8 @@ AS-0242,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0243,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:232); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0244,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:233 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0245,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:234 near the camera (tools/terrain_relief/tiles.txt)",
-AS-0246,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:235); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0247,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:236 object-m:376 object-m:421 object-m:422 object-m:423 object-m:424 object-m:425 object-m:426 object-m:427 object-m:428 object-m:429 object-m:430 (+9)); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0246,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:235 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0247,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:236 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0248,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0249,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:246 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0250,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:247 near the camera (tools/terrain_relief/tiles.txt)",
@@ -242,7 +242,7 @@ AS-0252,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (
 AS-0253,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0254,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:284 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0255,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of the edge plate object-m:285 near the camera (tools/terrain_relief/tiles.txt)",
-AS-0256,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:286); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0256,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:286 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0257,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:287); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0258,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:288); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0259,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:289); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
@@ -259,7 +259,7 @@ AS-0269,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:299); 2026-11-04:
 AS-0270,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:300); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0271,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:301 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0272,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of the edge plate object-m:302 near the camera (tools/terrain_relief/tiles.txt)",
-AS-0273,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:303); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0273,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:303 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0274,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:337); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0275,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:338); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0276,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:107 object-m:108 object-m:109 near the camera (tools/terrain_relief/tiles.txt)",
@@ -268,11 +268,11 @@ AS-0278,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0279,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0280,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0281,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0282,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0282,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:194 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0283,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0284,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:388); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0285,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0286,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0285,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:186 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0286,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:187 object-m:188 object-m:189 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0287,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0288,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0289,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:198 object-m:400); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
@@ -293,9 +293,9 @@ AS-0303,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0304,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0305,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:85); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0306,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0307,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0308,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0309,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0307,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:139 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0308,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:140 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0309,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:141 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0310,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0311,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0312,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
@@ -360,18 +360,18 @@ AS-0370,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0371,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0372,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:9 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0373,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:10 near the camera (tools/terrain_relief/tiles.txt)",
-AS-0374,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:6 object-m:10 object-m:73); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0374,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:17 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0375,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0376,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0377,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:14 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0378,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0379,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:16); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0379,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:16 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0380,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:15 object-m:17); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0381,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:18); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0381,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:18 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0382,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:19); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0383,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:20); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0384,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:21); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0385,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:22); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0385,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:22 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0386,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:23); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0387,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:24); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0388,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:25); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
@@ -390,13 +390,13 @@ AS-0400,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0401,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0402,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0403,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0404,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:251); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0405,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:252); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0406,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:253); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0407,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:254); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0404,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:251 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0405,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:252 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0406,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:51 object-m:253 near the camera (tools/terrain_relief/tiles.txt)",
+AS-0407,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:254 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0408,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:255); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0409,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:257); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
-AS-0410,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:250 object-m:258); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0410,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:250 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0411,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0412,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:259); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0413,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:256); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
@@ -466,7 +466,7 @@ AS-0476,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (
 AS-0477,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0478,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-001/Q-004/Q-012): the relief of object-m:387 object-m:397 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0479,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
-AS-0480,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0480,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:388 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0481,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0482,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0483,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
@@ -482,7 +482,7 @@ AS-0492,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tool
 AS-0493,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0494,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0495,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
-AS-0496,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0496,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:198 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0497,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, panel) of the palace walls, whose scenes mur01-08.rds are the tile sources (Q-004) (decoded by tools/a3d/a3d.py)",
 AS-0498,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:statue,D11: the owner's list
 AS-0499,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
@@ -517,9 +517,9 @@ AS-0527,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:360); 2026-11-04:
 AS-0528,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0529,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:355); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0530,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
-AS-0531,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0531,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:350 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0532,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
-AS-0533,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:352); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
+AS-0533,FIXED_AND_VERIFIED,the terrain reliefs (avatars3d/terrain),"2026-11-04 (owner, Q-004/Q-012): the relief of object-m:349 near the camera (tools/terrain_relief/tiles.txt)",
 AS-0534,NOT_APPLICABLE,,"2026-11-03: an Amapi geometry file (no materials, no camera) beside its Ray Dream twin, which carries the scene the sprite was rendered from",
 AS-0535,BLOCKED,,"2026-11-03: a terrain tile's scene (object-m:349 object-m:350); 2026-11-04: the survey's match is a silhouette's, not confirmed by the tile's pixels (Q-012)",Q-012
 AS-0536,NOT_APPLICABLE,,"2026-11-03: an Amapi part (base, border, middle, joint, the column's turned profile) of the smooth tiles and columns, whose .rds scenes are the sources (decoded by tools/a3d/a3d.py)",
