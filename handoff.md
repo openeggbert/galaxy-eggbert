@@ -384,7 +384,11 @@ ledgers before repeating any discovery. Where it stands:
   headless Chrome. Q-005's electrode is placed in no campaign world. Passes 7 and 8 compared frame
   by frame (2,204 frames, the same ticks): outside 105 (its new lake) the largest changes are the
   mipmaps' -- 125's rings, 053's and 123's far grain gone, nothing worse
-  (`plans/evidence/mipmaps-pass7-vs-pass8.jpg`).
+  (`plans/evidence/mipmaps-pass7-vs-pass8.jpg`). The agents' last unchecked candidates looked at in
+  pass 8 and, for 034, replayed with frames every 30 ticks: 034's blue panel is the pool seen through
+  the opened blue door; 124's blue box on the wall is a fan (129) with its wind; 066's faint panel is
+  the wind plates (INTENTIONAL, no 3D source); 043's cheese, 055's corridor and 123's ceiling are clean
+  since the texel fill and the mipmaps. No review finding is left unexamined.
   The web build was rebuilt after all of it (again 2026-11-04 00:07, with the night's fixes) and loaded in headless Chrome:
   120 models, 93/93 sounds, the menu drawn, no error but the favicon's 404.
 - Q-003 done (`22295e0`): the clay bridge wears `Decor/terre.tif` from above
