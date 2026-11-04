@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-04 night (BD-0058..0071: speeds and focus gates against Decor.cpp; the helicopter as EasyMove; playthroughs re-timed, `fly`; OR-0032/0033)._
+_Last updated: 2026-11-04 late night (BD-0058..0072; OR-0032..0036: enemy Blupis as his model, steering at F6-F8; Q-013)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -550,6 +550,16 @@ ledgers before repeating any discovery. Where it stands:
   back to the original 10 px (BD-0070 follow-up) -- neither met by a playthrough. Open: the owner's B or C (Q-012); the tail of square
   tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
   the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
+- 2026-11-04 late night, owner reports: **OR-0035** the enemy Blupis (32 on his helicopter, 33 in
+  his tank) were looked up on element.png (the bulldozer, mines, shield, angel, slime, dynamite);
+  they are blupi1.png's (channels 11-13), his own frames with the hue turned 25 degrees, and are now
+  drawn as his real model in the helicopter/tank clips the original's icons show, recoloured
+  (`EnemyBlupi.hpp`, `DrawEnemyBlupis`, `BuildEnemyBlupiTextures`; billboards from blupi1.png
+  without the model). **OR-0036** the steering (Left/Right) turns at the player's pace at F6-F8
+  (`turnInput / GameSpeedFactor`); Down's turn-around stays the original's Turn in game ticks.
+  **Q-013** the "lattice cube textured only outside": the girder 201 model checked from outside and
+  inside in 054/056, not reproduced (its rivets are only in front; mirroring them was tried and
+  dropped, see Q-013): needs the owner's screenshot or place.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world. Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
