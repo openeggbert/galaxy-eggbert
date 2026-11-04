@@ -156,3 +156,17 @@ playthrough with the original's lava floor (61 x 61 cells): 18.7 s against 17.3 
 (it was ~60 s before the cache). 105 has its lava lake again (`tools/worlds/world105.py`): a
 fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 100 chain pass.
 `plans/evidence/lava-floor-105.png`. LV-0063 updated.
+
+## Owner's answers of 2026-11-04 (asked interactively)
+
+- **Q-009 Android**: leave it at "builds and starts" (no KVM, no phone).
+- **Q-001 grass**: the whole lumpy model; the soil-with-leaves scenes have variants that join with
+  the neighbouring grassy soil -- use them (not only the leaves on the cube).
+- **Q-002 bolt**: (a) a generated thin glowing 3D bolt along each sprite's path.
+- **Q-010 cheese 339**: see-through holes.
+- **Q-011 brick edges**: not asked separately; the owner chose only the cheese's see-through holes,
+  so the brick edge pieces stay filled (as `4205ae3`).
+- **Q-004 terrain tiles**: every terrain tile as its Ray Dream model.
+- **Q-005 electrode**: the model with the sprite's sparks as a camera-facing decal.
+- **Q-006 glue death**: add the strands.
+- **MR-0001 3ds Max**: no licence; leave the .max files unused.
