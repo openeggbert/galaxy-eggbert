@@ -7074,8 +7074,12 @@ namespace GalaxyEggbert::CNA
                           interaction_.TreasuresCollected(), interaction_.TotalTreasures(), showTreasureCounter,
                           interaction_.BulletCount(), interaction_.DynamiteCount(), interaction_.PersoCount(),
                           blupi_.IsNage(), blupi_.GetWaterGaugeLevel(),
-                          blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::None,
-                          blupi_.GetSecretPowerLevel(),
+                          // The yellow gauge shows the shared count for every timed state: a power,
+                          // Invert, the balloon, the squash (Decor.cpp:5574, 5852, 6023, 6046:
+                          // m_jauges[1].SetHide(false) as each starts).
+                          blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::None || blupi_.IsInverted() ||
+                              blupi_.IsBallooned() || blupi_.IsEcrased(),
+                          blupi_.GetTimeShield(),
                           trainingHint,
                           PhaseOverlayMessage(),
                           cameraMode_ == CameraMode::FirstPerson ? blupi_.GetDisplayAnimIcon() : -1,
