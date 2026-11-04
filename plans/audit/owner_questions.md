@@ -6,13 +6,17 @@ recommendation, and what was done meanwhile. Answered entries move to the end wi
 
 ## Open
 
-### Q-001 — Grass (107-109, 157) in 3D: how?
+### Q-001 — Grass (107-109, 157) in 3D: how? — DONE (b) 2026-11-04
 
 `Decor/herbe1.rd4` matches the grass tiles (IoU 0.91): a lumpy block of soil with leaves on top.
 As a terrain tile it would not join its neighbours (the lumps leave gaps), so the options are:
 (a) keep the textured cube and put only the scene's leaves on its top as 3D geometry
 (recommended), (b) the whole lumpy model per cell, (c) leave the grass as it is. Meanwhile: as it
 is (a cube with the grass texture and its top overlay).
+Done 2026-11-04 (the owner: the whole lumpy models with the joining variants): near the camera a
+grass cell is `Decor/herbe1.rd4`'s slab twice, back to back (their leaves cover the top), with the
+crosswise slab where the row ends; farther off the cube and top plate as before (Q-012,
+`plans/evidence/terrain-reliefs-7-worlds.png`).
 
 ### Q-002 — The lightning bolt (305-307): it has no Ray Dream scene — DONE (a) 2026-11-04
 
@@ -31,7 +35,7 @@ lays `terre.tif` over the exported model from above, recoloured to the scene's m
 the calibrated tone stays (`plans/evidence/clay-bridge-terre.png`, before and after). The sprites
 show smooth lumps; say if the grain should go again (b).
 
-### Q-004 — The terrain tiles as their Ray Dream models?
+### Q-004 — The terrain tiles as their Ray Dream models? — DONE (c) for 53 tiles 2026-11-04
 
 `plans/audit/model_sources.md`: 129 scenes are the terrain tiles (rock, cave, wood, techno,
 slime, cheese, toys, houses, pipes, grass). Galaxy draws them as cubes textured with their sprite,
@@ -39,6 +43,8 @@ so that neighbours join into floors and walls; their scenes are lumpy blocks tha
 and seams between cells and cost far more to draw. Options: (a) keep the textured cubes (the
 recommendation; the sprites are those renders), (b) models for the free-standing pieces only
 (pillars, pipes' ends), (c) every tile as its model. Meanwhile: (a).
+Done 2026-11-04 (the owner: every tile as its model): 53 tiles, near the camera, as Q-012 describes;
+the tiles without a scene of their own stay cubes.
 
 ### Q-005 — The electrode (238-242) without its sparks? — DONE (a) 2026-11-04
 
@@ -104,6 +110,15 @@ the campaign (98.7 % of them) were checked by eye: `tools/terrain_relief/tiles.t
 whose scene is certain (rocks, caves, cheese, slime, toys, four machine panels, the palace's
 facades, the grass). The others stay textured cubes: no scene of the archive is theirs (the bricks
 261-263/283, the grey metal plates 78-84/396, the panels 4-8/11-13, the stars, the roof tiles).
+
+Built 2026-11-04 (B): 53 tiles in `avatars3d/terrain/`, each relief ~700 triangles, drawn within 8
+blocks of the camera's target and built on worker threads (093: 1.5 million triangles near the camera,
+0.4 s to build at load; a door opening rebuilds only its chunk). Evidence
+`plans/evidence/terrain-reliefs-7-worlds.png`. Still yours to say: B or C; whether the toys' floors
+(a ball standing proud of its plate, the plate 0.37 under the face: Blupi walks on the balls' tops)
+should rather have the plate at the face. Also done: the cave's edge plates 285/302 (3,000 cells each in
+090-095) as grotte01/grotte18's reliefs. Open on my side: the little-used square tiles whose scene is not
+confirmed yet.
 
 ## Answered
 

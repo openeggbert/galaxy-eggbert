@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-04 morning (the owner's answers Q-001..Q-010: cheese holes, the 3D bolt, the electrode, the glue strands done; every terrain tile as its model next)._
+_Last updated: 2026-11-04 morning (the terrain tiles as their Ray Dream scenes' reliefs near the camera: Q-001/Q-004/Q-012)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -453,10 +453,44 @@ ledgers before repeating any discovery. Where it stands:
   drawn with the shared `AppendPolylineTubes`, `plans/evidence/glue-strands.png`, probe world 995).
   **Q-001 + Q-004: every terrain tile as its Ray Dream model, the grass as its whole lumpy models
   with the joining variants** ("hlina s listy nahore ma i preci varianty ze se pojí se sousednim
-  hlinou s travou nahore, pouzij cely hrbolaty modely") -- in progress: inventory and vertex
-  budget first (`plans/audit/model_sources.md`), then staged, measured per world and on the web.
-- Next: Q-001/Q-004 (above); D11's model list (the candidates regenerated from a fresh library);
-  a human play pass of every world. Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
+  hlinou s travou nahore, pouzij cely hrbolaty modely"). What was found and built (Q-012 has it all):
+  the terrain scenes are **front slabs, not blocks** (0.15-0.55 deep, up to 1.37 wide, 30,000-58,000
+  triangles for the rocks and caves), and the campaign has 1.3 million exposed terrain cells, so a
+  cell shows its scene's **relief on each exposed face, near the camera only** (`TerrainRelief.hpp/
+  .cpp`, `TerrainRenderer::UpdateRelief`: 8^3 chunks drawn as cubes, or as reliefs within 8 blocks
+  of the camera's target, built on worker threads, taken over across terrain rebuilds when their
+  cells did not change; `GALAXY_TERRAIN_RELIEF*` in `GalaxyEggbertGame.hpp`, `..._TIMING=1` prints the
+  load-time build). A relief is the
+  scene's front half, decimated in Blender to ~700 triangles, cut along the cell's edges, textured
+  by the sprite projected from the front, hanging only into solid neighbours (Q-012 B; C keeps the
+  overhangs: `GALAXY_TERRAIN_RELIEF_OVERHANG=1`), with a backing that reaches into the solid
+  neighbours too (it closes the inner corners). The grass is its slab twice back to back (leaves on
+  top) plus the crosswise slab at open row ends; a DirectionalCube tile (the commonest, 10) gets the
+  relief on the faces that wear the tile only. **The survey's scene for each square tile was wrong
+  more often than not** (silhouette IoU is 1 for every square scene): `tools/terrain_relief/
+  match_tiles.py` ranks the scenes by the tile's pixels and `tools/terrain_relief/tiles.txt` holds
+  the 53 tiles checked by eye (98.7 % of the campaign's exposed faces are in the 80 reviewed; the
+  bricks, the grey metal plates and a few panels have no scene in the archive and stay cubes).
+  Generated into `avatars3d/terrain/` (3.2 MB, README there has the commands). Commits `7b3a7c0`,
+  `4a5967e`, `6c19f1f`, `ee7eb89` (main prints an escaping exception's text: on the web it was
+  only a pointer), `07501bd` (ledgers), `64eeebe` (700 triangles, radius 8, worker threads: the first
+  version, 1,500 triangles within 12 blocks, held 4-8 million triangles in 093/021 and froze 1.3-1.9 s
+  at every door opening; now 093 has 1.5 million, built in 0.4 s at load). Web build checked in
+  headless Chrome: 55 then 53 reliefs, 121 models, 93/93 sounds,
+  the title scene's grass in 3D (`plans/evidence/web-title-grass-relief.png`). **Headless Chrome needs
+  DISPLAY unset** (`env -u DISPLAY google-chrome --headless=new --remote-debugging-port=9333
+  --remote-allow-origins=* --use-angle=swiftshader --enable-unsafe-swiftshader ...`), or it has no
+  WebGL ("Could not create webgl context"). Evidence `plans/evidence/terrain-reliefs-7-worlds.png`.
+  The cave's edge plates 285/302 (InnerFlatPlate) are their scenes' reliefs too, both ways from the
+  cell's middle (`7716fa0`; probe world 991). `abe0e5a`: 28 more (the next 40 used tiles reviewed:
+  pipes, bookshelves, windows, the palace's column and arch, machine parts, toys, slime edges, two
+  more edge plates): **83 tiles** now. `e5e8631`: a one-sided panel chose its room side wrongly
+  beside relief cells (082's near wall showed its plain side). Play pass 10 (the first version's
+  binary) passed its 54 worlds before it was stopped for pass 11 with the final binary. Open: the owner's B or C (Q-012); the tail of square
+  tiles whose match is unconfirmed (195 ledger rows, little used); the toys' floors are now fields of half balls (the scene's ball stands proud of its plate,
+  the plate lies 0.37 under the face) -- authentic, but the owner may want the plate at the face.
+- Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
+  library); a human play pass of every world. Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
