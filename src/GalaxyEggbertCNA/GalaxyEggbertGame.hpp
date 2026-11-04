@@ -207,6 +207,9 @@ namespace GalaxyEggbert::CNA
 
         // Maps block types to object-m.png UV rects (plan.md E3D-MIG-053).
         GalaxyEggbert::Game::TileAtlas tileAtlas_;
+        // The terrain's own padded, mipmapped copy of object-m.png and its UVs (TileAtlas.hpp Layout::Padded).
+        GalaxyEggbert::Game::TileAtlas terrainTileAtlas_{GalaxyEggbert::Game::TileAtlas::Layout::Padded};
+        Microsoft::Xna::Framework::Graphics::Texture2D terrainMipTexture_;
         // Per object-m.png icon: drawn opaque, cut out or blended (TileCoverage.hpp).
         std::vector<GalaxyEggbert::Game::TileCoverage> tileCoverage_;
 

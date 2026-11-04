@@ -363,6 +363,38 @@ int main()
               "408-410 are 407's drop at 27, 18 and 8 of its 36 px");
     }
 
+    // The terrain's padded sheet: each tile 64 x 64 inside a 16 px border of its own edge texels.
+    {
+        namespace G = GalaxyEggbert::Game;
+        const G::TileAtlas padded(G::TileAtlas::Layout::Padded);
+        const auto uv = padded.GetTileUv(10);
+        const float u0 = 16.0f / G::TileAtlas::kPaddedWidth, v0 = 16.0f / G::TileAtlas::kPaddedHeight;
+        check(std::fabs(uv.u0 - (u0 + 10 * 96.0f / G::TileAtlas::kPaddedWidth)) < 1e-6f && std::fabs(uv.v0 - v0) < 1e-6f &&
+                  std::fabs((uv.u1 - uv.u0) * G::TileAtlas::kPaddedWidth - 64.0f) < 1e-3f,
+              "the padded atlas puts icon 10 at column 10, 64 texels inside its 16 px border");
+        // A 2 x 1 tile sheet of the real layout: tile 0 red, tile 1 green.
+        constexpr int kW = 2 * 65 + 1, kH = 65 + 1;
+        std::vector<std::uint8_t> sheet(static_cast<std::size_t>(kW) * kH * 4, 0);
+        for (int y = 1; y < 65; ++y)
+        {
+            for (int x = 1; x < kW; ++x)
+            {
+                std::uint8_t* t = &sheet[(static_cast<std::size_t>(y) * kW + x) * 4];
+                const bool green = x > 65;
+                t[0] = green ? 0 : 255;
+                t[1] = green ? 255 : 0;
+                t[3] = 255;
+            }
+        }
+        const auto out = G::BuildPaddedSheet(sheet.data(), kW, kH);
+        const auto at = [&](int x, int y) { return &out[(static_cast<std::size_t>(y) * G::TileAtlas::kPaddedWidth + x) * 4]; };
+        check(at(0, 0)[0] == 255 && at(95, 50)[0] == 255 && at(96, 0)[1] == 255 && at(96 + 95, 95)[1] == 255,
+              "each tile's border is its own edge colour, no neighbour bleeding in");
+        std::vector<std::uint8_t> two{0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255};
+        const auto half = G::DownsampleHalf(two, 2, 2);
+        check(half.size() == 4 && half[0] == 128 && half[3] == 255, "a mip texel is the mean of its 2 x 2 block");
+    }
+
     // A front model turns to the side with the most room to stand in (OR-0056 reopened): a model
     // standing on the floor counts the floor right beside it, a booth over Blupi's head the floor
     // two cells down; without room anywhere a row faces across itself.

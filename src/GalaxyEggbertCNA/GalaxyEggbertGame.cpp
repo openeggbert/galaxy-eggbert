@@ -694,6 +694,31 @@ namespace GalaxyEggbert::CNA
                                                              rgba[i * 4 + 3]);
             }
             terrainTexture_.SetData(texels.data(), static_cast<int>(texels.size()));
+            // The terrain's padded copy with its mip levels (TileAtlas.hpp Layout::Padded): distant
+            // floors no longer shimmer into rings.
+            constexpr int kPadW = GalaxyEggbert::Game::TileAtlas::kPaddedWidth;
+            constexpr int kPadH = GalaxyEggbert::Game::TileAtlas::kPaddedHeight;
+            auto level = GalaxyEggbert::Game::BuildPaddedSheet(rgba.data(), width, height);
+            terrainMipTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
+                device, kPadW, kPadH, /*mipMap=*/true, Microsoft::Xna::Framework::Graphics::SurfaceFormat::Color);
+            int levelW = kPadW, levelH = kPadH;
+            const int levels = terrainMipTexture_.getLevelCountProperty();
+            for (int mip = 0; mip < levels; ++mip)
+            {
+                std::vector<Microsoft::Xna::Framework::Color> colors(static_cast<std::size_t>(levelW) * levelH);
+                for (std::size_t i = 0; i < colors.size(); ++i)
+                {
+                    colors[i] = Microsoft::Xna::Framework::Color(level[i * 4 + 0], level[i * 4 + 1], level[i * 4 + 2],
+                                                                 level[i * 4 + 3]);
+                }
+                terrainMipTexture_.SetData(mip, nullptr, colors.data(), 0, static_cast<int>(colors.size()));
+                if (mip + 1 < levels)
+                {
+                    level = GalaxyEggbert::Game::DownsampleHalf(level, levelW, levelH);
+                    levelW = std::max(1, levelW / 2);
+                    levelH = std::max(1, levelH / 2);
+                }
+            }
         }
         RebuildWorldPresentation();
 
@@ -701,7 +726,7 @@ namespace GalaxyEggbert::CNA
         terrainEffect_->VertexColorEnabled = false;
         terrainEffect_->setTextureEnabledProperty(true);
         ApplyTerrainLighting(*terrainEffect_);
-        terrainEffect_->setTextureProperty(&terrainTexture_);
+        terrainEffect_->setTextureProperty(&terrainMipTexture_);
 
         // Icon 107's grass-top overlay (NEXT.md §8 task 3) — genuinely
         // separate from object-m.png, copied next to this binary from
@@ -1105,7 +1130,7 @@ namespace GalaxyEggbert::CNA
         }
 
         terrainDrawSecret_ = TerrainDrawSecret();
-        terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), tileAtlas_, tileCoverage_,
+        terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), terrainTileAtlas_, tileCoverage_,
                                                              terrainDrawSecret_, StillModelIcons());
         ApplyBlockModels();
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
@@ -1144,7 +1169,7 @@ namespace GalaxyEggbert::CNA
         {
             terrainDrawSecret_ = TerrainDrawSecret();
             terrainRenderer_ =
-                std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), tileAtlas_,
+                std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), terrainTileAtlas_,
                                                   tileCoverage_, terrainDrawSecret_, StillModelIcons());
             ApplyBlockModels();
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
