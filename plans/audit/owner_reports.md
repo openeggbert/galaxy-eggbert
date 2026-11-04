@@ -225,3 +225,17 @@ rewritten).
 - Validation: `VerifyInteractionSystem` (a machine beside him a step away is out of reach, against
   it he turns it and its saws on); every playthrough with a switch (023, 025, 063, 064, 065, 092,
   102) passes with it.
+
+## OR-0041 — Blupi stands on a side fan's invisible floor instead of setting it off (owner 2026-11-04) — FIXED
+
+- Report: Blupi jumps onto a fan blowing sideways and stands on a transparent floor instead of the
+  fan exploding.
+- Cause: a fan is a whole block (M3D-0004), so its top held him; only a floor fan counted his feet
+  on it as contact (OR-0039 kept the mouth contact of the side and ceiling fans). Its model does not
+  fill the cell, so he stood on air.
+- Fix: landed on any fan (his middle over it, his feet on its top) he sets it off, with the wind it
+  blows (`WorldRuntime::TryConsumeFan`), as the owner asked of the fans in general.
+- Validation: gallery 998, dropped onto its side fan (18, 1, 16): the old binary left him standing
+  at y 2.00, now it explodes on landing. `VerifyInteractionSystem` (beside a side fan's top safe,
+  on it it goes with its wind); the playthroughs with fans (034, 051, 066, 084, 102, 107, 113, 114,
+  115, 124) and with switches (023, 025, 063, 064, 065, 092) pass.

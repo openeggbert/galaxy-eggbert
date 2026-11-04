@@ -593,6 +593,47 @@ namespace GalaxyEggbert::Game
         };
         const float feet = blupiY - 0.5f;
         const float head = feet + BlupiController::kHeadHeight;
+        // The fan and the column of wind it blows go (ModifDecor(pos, -1) along the blast).
+        const auto consume = [&](const FanMouth& mouth, int fx, int fy, int fz, bool alongZ)
+        {
+            const int stepX = alongZ ? 0 : mouth.dx;
+            const int stepZ = alongZ ? mouth.dx : 0;
+            world_->setBlock(static_cast<std::uint16_t>(fx), static_cast<std::uint16_t>(fy),
+                             static_cast<std::uint16_t>(fz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+            lastConsumedFan_ = {static_cast<float>(fx - kWorldCenterX), static_cast<float>(fy),
+                                static_cast<float>(fz - kWorldCenterZ)};
+            for (int x = fx + stepX, y = fy + mouth.dy, z = fz + stepZ;; x += stepX, y += mouth.dy, z += stepZ)
+            {
+                const auto icon = iconAt(x, y, z);
+                if (icon < mouth.wind || icon > mouth.wind + 3)
+                {
+                    break;
+                }
+                world_->setBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                 static_cast<std::uint16_t>(z), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
+            }
+            return mouth.fan;
+        };
+        // Landed on a fan, whichever way it blows (owner 2026-11-04, OR-0041: on a side fan he stood
+        // on its block's invisible top): his middle over it, his feet on its top. In the original
+        // he would sink into its open cell; a whole block here, so its top is the contact.
+        {
+            const int fx = gx;
+            const int fz = gz;
+            const int fy = static_cast<int>(std::lround(feet - 0.5f));
+            const auto icon = iconAt(fx, fy, fz);
+            if (std::fabs(wx - static_cast<float>(fx)) < 0.5f && std::fabs(wz - static_cast<float>(fz)) < 0.5f &&
+                std::fabs(feet - (static_cast<float>(fy) + 0.5f)) <= kFootContact)
+            {
+                for (const auto& mouth : kFans)
+                {
+                    if (icon == mouth.fan)
+                    {
+                        return consume(mouth, fx, fy, fz, mouth.dx != 0 && turned(fx, fy, fz));
+                    }
+                }
+            }
+        }
         for (const auto& mouth : kFans)
         {
             // The fan sits behind Blupi, against the way it blows; a turned side fan (M3D-0005)
@@ -634,21 +675,7 @@ namespace GalaxyEggbert::Game
                 {
                     continue;
                 }
-                world_->setBlock(static_cast<std::uint16_t>(fx), static_cast<std::uint16_t>(fy),
-                                 static_cast<std::uint16_t>(fz), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
-                lastConsumedFan_ = {static_cast<float>(fx - kWorldCenterX), static_cast<float>(fy),
-                                    static_cast<float>(fz - kWorldCenterZ)};
-                for (int x = fx + stepX, y = fy + mouth.dy, z = fz + stepZ;; x += stepX, y += mouth.dy, z += stepZ)
-                {
-                    const auto icon = iconAt(x, y, z);
-                    if (icon < mouth.wind || icon > mouth.wind + 3)
-                    {
-                        break;
-                    }
-                    world_->setBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
-                                     static_cast<std::uint16_t>(z), Worlds::Block::make(GalaxyEggbert::BlockTypes::Air));
-                }
-                return mouth.fan;
+                return consume(mouth, fx, fy, fz, alongZ);
             }
         }
         return std::nullopt;

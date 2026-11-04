@@ -3078,6 +3078,15 @@ int main(int argc, char** argv)
         check(!world.TryConsumeFan(rx(44), 20.4f, rz(44)).has_value(), "over an upward fan in the air Blupi is safe");
         check(!world.TryConsumeFan(rx(45), 20.0f, rz(44)).has_value(), "on the floor beside an upward fan Blupi is safe");
         check(world.TryConsumeFan(rx(44), 20.0f, rz(44)).has_value(), "standing on an upward fan touches its mouth");
+        // OR-0041: landed on a side fan (a whole block, its top open air): it goes off too.
+        put(46, 19, 46, BlockTypes::FanRight);
+        put(47, 19, 46, 114);
+        check(!world.TryConsumeFan(rx(46) + 0.7f, 20.0f, rz(46)).has_value(),
+              "beside a side fan's top, not over it, Blupi is safe");
+        const auto onSide = world.TryConsumeFan(rx(46), 20.0f, rz(46));
+        check(onSide.has_value() && *onSide == BlockTypes::FanRight && at(46, 19, 46) == BlockTypes::Air &&
+                  at(47, 19, 46) == BlockTypes::Air,
+              "landed on a side fan, Blupi sets it off; it and its wind go");
 
         // M3D-0005: a turned side fan blows along Z (-X becomes -Z): its mouth and wind there.
         put(50, 20, 50, BlockTypes::FanLeft);
