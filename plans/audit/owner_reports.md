@@ -109,6 +109,15 @@ rewritten).
   turns it on.
 - Validation: live, Setup shows the toggle; off, the hub plays with the flat textures and the save has
   `terrainRelief=0`; ctest.
+- Follow-up 2026-11-04 (performance): the object and tile models were drawn every frame whether in
+  view or not, and some are heavy (the treasure chest 68 068 triangles, a plant 182 496, the
+  lightning emitter 20 600, the girder 19 348). The model pass now skips a model whose bounding
+  sphere (its vertices' farthest reach, `objectModelRadii_`, plus a block) is outside the camera's
+  frustum. Measured with `GALAXY_PERF=1` (llvmpipe under Xvfb, during a play pass): the main hub
+  25 models / 84 k triangles / 17 ms a frame -> 2 / 3 k / 8 ms; world 115's start 68 / 1.15 M /
+  171 ms -> 15-20 / 0.26-0.38 M / 88-106 ms; world 063 under 3 frames a second -> 16 ms. Golden
+  frames and trace unchanged; the hub and 115 shot with and without culling show the same models.
+  `GALAXY_MODEL_CULL=0` draws them all.
 
 ## OR-0034 — the hub's world doors: a piece of the blue wall over their signs (owner 2026-11-04) — FIXED
 

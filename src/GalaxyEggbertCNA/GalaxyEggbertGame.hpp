@@ -973,6 +973,8 @@ namespace GalaxyEggbert::CNA
         void BuildEnemyBlupiTextures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         [[nodiscard]] bool EnemyBlupiModelDrawn(const GalaxyEggbert::Game::MobileObjSpec& obj) const;
         void DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        // Draw()'s body; Draw() times it for GALAXY_PERF.
+        void DrawFrame();
         // A vehicle pickup's model and standing clip when the real vehicle
         // model replaces its billboard (kParkedVehicles); model is nullptr
         // otherwise.
@@ -989,6 +991,19 @@ namespace GalaxyEggbert::CNA
         // which sprite icon. An icon objectModelTable_ lists is drawn as its
         // model instead of its billboard; any other icon stays a billboard.
         std::vector<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>> objectModels_;
+        // Each object model's reach: its vertices' farthest distance from its origin (blocks), for
+        // the frustum test of the model pass (drawModel). Models out of view are not drawn: the
+        // treasure chest is 68 068 triangles, a plant 182 496. GALAXY_MODEL_CULL=0 draws them all.
+        std::vector<float> objectModelRadii_;
+        bool modelCulling_ = true;
+        // GALAXY_PERF=1 (measurements): every 2 s on stdout the mean Draw time and the model pass's
+        // models drawn, their triangles and the models culled, a frame each.
+        bool perfEnabled_ = false;
+        int perfFrames_ = 0;
+        double perfDrawSeconds_ = 0.0;
+        long long perfModelDraws_ = 0;
+        long long perfModelTriangles_ = 0;
+        long long perfModelCulled_ = 0;
         // A sign's painted face (its digit or world picture) as a decal on its model (MR-0006;
         // avatars3d/objects/<sign>/decals.txt): the texture and its rectangle in model space.
         struct SignDecal

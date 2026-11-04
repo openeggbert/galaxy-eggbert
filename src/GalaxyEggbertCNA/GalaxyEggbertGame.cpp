@@ -36,6 +36,9 @@
 #include <Microsoft/Xna/Framework/Graphics/SamplerState.hpp>
 
 #include <algorithm>
+#include <Microsoft/Xna/Framework/BoundingFrustum.hpp>
+#include <Microsoft/Xna/Framework/BoundingSphere.hpp>
+#include <Microsoft/Xna/Framework/ContainmentType.hpp>
 #include <chrono>
 #include <unordered_set>
 #include <cmath>
@@ -557,6 +560,33 @@ namespace GalaxyEggbert::CNA
         // OTHER frame runs one tick" behavior is approximated as a
         // continuous 0.5x here (same average effect, no frame-parity
         // bookkeeping needed).
+        // A converted model's reach (objectModelRadii_): the farthest vertex from its origin over
+        // its parts' vertex files (export_cna_avatar.py: 52-byte vertices, the position first),
+        // its bind pose; animated parts stay near it (the frustum test adds a margin).
+        float ModelFileReach(const std::string& directory)
+        {
+            constexpr std::size_t kStride = 52;
+            float reach = 0.0f;
+            std::error_code error;
+            for (const auto& entry : std::filesystem::directory_iterator(directory, error))
+            {
+                const auto path = entry.path().string();
+                if (path.size() < 10 || path.compare(path.size() - 10, 10, ".verts.bin") != 0)
+                {
+                    continue;
+                }
+                std::ifstream in(path, std::ios::binary);
+                std::vector<char> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+                for (std::size_t at = 0; at + 12 <= bytes.size(); at += kStride)
+                {
+                    float p[3];
+                    std::memcpy(p, bytes.data() + at, sizeof(p));
+                    reach = std::max(reach, std::sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]));
+                }
+            }
+            return reach > 0.0f ? reach : 4.0f;
+        }
+
         float GameSpeedFactor(GalaxyEggbert::Def::GameSpeed speed) noexcept
         {
             return (speed == GalaxyEggbert::Def::GameSpeed::Slow) ? 0.5f
@@ -590,6 +620,14 @@ namespace GalaxyEggbert::CNA
     GalaxyEggbertGame::GalaxyEggbertGame()
     {
         Game::getWindowProperty().setTitleProperty("Galaxy Eggbert");
+        if (const char* perf = std::getenv("GALAXY_PERF"); perf != nullptr && *perf == '1')
+        {
+            perfEnabled_ = true;
+        }
+        if (const char* cull = std::getenv("GALAXY_MODEL_CULL"); cull != nullptr && *cull == '0')
+        {
+            modelCulling_ = false;
+        }
         // Standard XNA pattern: the manager must be constructed and the
         // required profile selected before Run() initializes the device.
         // Galaxy's screenshot/golden-capture diagnostics use
@@ -983,6 +1021,7 @@ namespace GalaxyEggbert::CNA
                         objectModels_.push_back(
                             content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                                 "objects/" + name + "/avatar"));
+                        objectModelRadii_.push_back(ModelFileReach("avatars3d/objects/" + name));
                         // The electrode's sparks (Q-005; tools/rd4_to_gltf/electro_sparks.py).
                         for (int icon = 238; icon <= 242; ++icon)
                         {
@@ -5516,6 +5555,26 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
         (void)gameTime;
+        const auto perfStart = std::chrono::steady_clock::now();
+        DrawFrame();
+        if (perfEnabled_)
+        {
+            perfDrawSeconds_ += std::chrono::duration<double>(std::chrono::steady_clock::now() - perfStart).count();
+            if (++perfFrames_ >= 120)
+            {
+                std::cout << "GalaxyEggbertCNA perf: draw " << perfDrawSeconds_ * 1000.0 / perfFrames_
+                          << " ms, models " << perfModelDraws_ / perfFrames_ << " ("
+                          << perfModelTriangles_ / perfFrames_ << " triangles), culled "
+                          << perfModelCulled_ / perfFrames_ << " a frame" << std::endl;
+                perfFrames_ = 0;
+                perfDrawSeconds_ = 0.0;
+                perfModelDraws_ = perfModelTriangles_ = perfModelCulled_ = 0;
+            }
+        }
+    }
+
+    void GalaxyEggbertGame::DrawFrame()
+    {
         auto& device = getGraphicsDeviceProperty();
         // The Clear2 death's soul drawn as its 3D model this frame: the HUD leaves out its sprite.
         bool soulDrawnIn3D = false;
@@ -6202,11 +6261,28 @@ namespace GalaxyEggbert::CNA
                 auto& decalCells = signDecalCells_;
                 decalCells.clear();
                 electrodeCells_.clear();
+                // Models out of view are not drawn (objectModelRadii_): each one's sphere, its reach
+                // widened by its depth scale and sprite offset, a block's margin for its animation.
+                const Microsoft::Xna::Framework::BoundingFrustum viewFrustum(camera_.View() * camera_.Projection());
                 const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
                                            float rollRadians = 0.0f, float depthScale = 1.0f,
                                            bool boothFrontOnly = false, float topScale = 1.0f)
                 {
-                    auto& model = *objectModels_[static_cast<std::size_t>(pose.model)];
+                    const auto index = static_cast<std::size_t>(pose.model);
+                    if (modelCulling_ && index < objectModelRadii_.size())
+                    {
+                        const float reach = objectModelRadii_[index] * std::max(1.0f, std::fabs(depthScale)) +
+                                            static_cast<float>(std::abs(pose.offsetX) + std::abs(pose.offsetY)) / 64.0f +
+                                            1.0f;
+                        if (viewFrustum.Contains(Microsoft::Xna::Framework::BoundingSphere(
+                                Microsoft::Xna::Framework::Vector3(x, y, z), reach)) ==
+                            Microsoft::Xna::Framework::ContainmentType::Disjoint)
+                        {
+                            ++perfModelCulled_;
+                            return;
+                        }
+                    }
+                    auto& model = *objectModels_[index];
                     model.ComputeBoneTransformsEXT(
                         "Frames", System::TimeSpan::FromSeconds(pose.seconds), /*loop=*/false, boneTransforms);
                     // Mirroring turns the triangles' winding around (a negative depth scale too).
@@ -6248,7 +6324,9 @@ namespace GalaxyEggbert::CNA
                             part.Part->getNumVerticesProperty(),
                             part.Part->getStartIndexProperty(),
                             part.Part->getPrimitiveCountProperty());
+                        perfModelTriangles_ += part.Part->getPrimitiveCountProperty();
                     }
+                    ++perfModelDraws_;
                 };
                 // The clay bridge: its row of lumps across the whole cell (BlockModels.hpp).
                 const auto drawBridgeRows = [&](const ObjectModelPose& pose, float x, float y, float z)
