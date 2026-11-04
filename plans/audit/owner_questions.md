@@ -228,3 +228,20 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - **Q-005 electrode**: the model with the sprite's sparks as a camera-facing decal.
 - **Q-006 glue death**: add the strands.
 - **MR-0001 3ds Max**: no licence; leave the .max files unused.
+
+## Q-013 — the lattice cube "textured only outside" (owner 2026-11-04): where was it seen?
+
+- Report: "the cube of grids has textures only outside and not inside; it should probably be 3D";
+  then "only the outer side is visible on the cube of grids of metal, probably rods as edges".
+- What the girder 201 (the metal truss, `kLatticeModelIcons`) is now: its Ray Dream model
+  (`Decor/structure1.rd4`) on each side of the cell that does not join another 201, in every
+  campaign world that has it (050, 051, 053, 054, 056, 057, 058, 062, 063, 064, 075, 095). Checked
+  live 2026-11-04 in 054 and 056, from outside and with Blupi standing inside a tower: 3D bars from
+  every side, the far sides' backs visible through the near side.
+- Found: the model has its rivets only in front (the sprite camera's side); inside, the plates are
+  bare. Mirroring the frame onto its back covers the front plates (its diagonals lie at the back);
+  mirroring each rivet through its plate puts them where the diagonals hide them, at twice the
+  triangles (19 348 a frame, 20 rivets of 960). Neither was kept.
+- Not found: any place where 201 is a flat textured cube (that would be textured outside only,
+  back faces culled). Needed: a screenshot or the world and place, and whether it was in the game,
+  the editor or the web build.
