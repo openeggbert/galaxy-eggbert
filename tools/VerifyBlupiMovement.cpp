@@ -519,6 +519,24 @@ int main(int argc, char** argv)
             check(climber.GetZ() > 71.0f - 50.0f,
                   "the climb actually moved Blupi forward along the bar (not stuck in place)");
 
+            // Along the bar at the original's 5 px a tick (speedX * 5, Decor.cpp:4734-4743; BD-0068):
+            // ten ticks, 50 px.
+            {
+                BlupiController hanger;
+                hanger.SetPosition(barreWorldX, 1.0f, 71.0f - 50.0f);
+                hanger.SetYaw(3.14159265f);
+                hanger.Step(barreWorld, 0.0f, 0.0f, false, false, false, 0.05f);
+                const float z0 = hanger.GetZ();
+                for (int i = 0; i < 10 && hanger.IsSuspended(); ++i)
+                {
+                    hanger.Step(barreWorld, 0.0f, 1.0f, false, false, false, 0.05f);
+                }
+                const float moved = (hanger.GetZ() - z0) * 64.0f;
+                std::cout << "Hanging, ten ticks along the bar: " << moved << " px" << std::endl;
+                check(hanger.IsSuspended() && std::fabs(moved - 50.0f) < 2.0f,
+                      "hanging he goes 5 px a tick along the bar (50 px in ten ticks)");
+            }
+
             // Walking the OTHER way (back toward gz=70, off the bar
             // entirely) drops Blupi into free-fall instead.
             BlupiController dropper;

@@ -1049,3 +1049,13 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   rebuilds when it changes); the host passes `BlupiFocusRaw()` (death lock, gone, pickup, teleport,
   goodbye, the exit's cheer).
 - Validation: `VerifyDefinitionRegistries` (piege2 while unfocused); build, ctest.
+
+## BD-0068 — hanging from a bar he went at his walking speed (gameplay, timing) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:4734-4743): along a bar `end.X += (int)(m_blupiSpeedX * 5.0)` -- 5 px a tick
+  with the stick full over, no ramp: 1.56 blocks a second.
+- Galaxy reused the walk's speed (8 px a tick, 2.5 blocks a second; its comment said no anchor was
+  established for a conversion -- the walk's own 8 px = `kMoveSpeed` is that anchor).
+- Fix: `kSuspendMoveSpeed` = 5 * 20 / 64.
+- Validation: `VerifyBlupiMovement` (50 px in ten ticks along the bar); ctest; the playthroughs with
+  bars (play pass 18).

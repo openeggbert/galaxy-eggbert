@@ -378,13 +378,10 @@ namespace GalaxyEggbert::Game
         // Grab is AUTOMATIC (no button) whenever standing at a "Hanging"
         // cell (bar tile with open space below) and not already doing
         // something else exclusive -- matches the real trigger exactly.
-        // Horizontal movement while hanging reuses the plain moveInput*
-        // speed formula this engine's normal walk already uses (no
-        // acceleration ramp, matching the real "speedX*5, no ramp"
-        // behavior's overall shape) -- kSuspendMoveSpeed has no established
-        // proportional anchor to derive an exact ratio from (unlike
-        // kJumpSpeedPowered/etc.), so it reuses kMoveSpeed directly as a
-        // reasonable value, not a transcribed constant. kSuspendReleaseSpeed
+        // Horizontal movement while hanging: the original's speedX * 5 px a
+        // tick, no ramp (Decor.cpp:4734-4743), 5 * 20 / 64 blocks a second by
+        // the walk's own conversion (8 px a tick = kMoveSpeed); it reused the
+        // walk's 8 until 2026-11-04 (BD-0068). kSuspendReleaseSpeed
         // is proportionally anchored to kJumpSpeed the same way as the jump-
         // headroom constants (real fixed -11.0 vs the real jump baseline
         // -16.0 already anchored to kJumpSpeed). He lets go only after
@@ -394,7 +391,7 @@ namespace GalaxyEggbert::Game
         // no-regrab grace timer (both the free-fall-drop and jump-release
         // paths) is a direct ScaleTime(5)-at-20Hz transcription, same
         // technique as kWaterGaugeTickSeconds/kTeleportDuration.
-        static constexpr float kSuspendMoveSpeed = kMoveSpeed;
+        static constexpr float kSuspendMoveSpeed = 5.0f * 20.0f / 64.0f;
         static constexpr float kSuspendReleaseSpeed = kJumpSpeed * (11.0f / 16.0f);
         static constexpr float kSuspendJumpWindUpTicks = 10.0f; // ScaleTime(10), Decor.cpp:4780
         static constexpr float kSuspendNoRegrabSeconds = 5.0f / 20.0f;
