@@ -717,8 +717,11 @@ the owner's list arrives:
   pink with yellow and white blotches. Looks like a texture placement fault of the converter
   (a real candidate).
 - `bd_big02` (fountain bowl) and `bd_big0108` (column): grey in the sprites, near white in the
-  model; a tone fit made the bowl worse, so it got none. Look at their shaders (highlight /
-  reflection channels) rather than toning.
+  model. Checked 2026-11-04: every shader of both scenes is white (0.996) with no highlight,
+  shininess, reflection or glow (`Decor/palais/big02.rds`, `big0108.rds`; the red 0.5/0.5 ones are
+  masters' defaults the instances override), one light, shadows on: the sprites' grey bowl and dark
+  column side are that render's lighting and cast shadow, not the material. Faithful; closed unless
+  the owner names them.
 - `bd_cabane` (cabin): its logs are a procedural wood grain, flat here (decided, see below).
 - `dynamite`: the sprite's lit fuse spark is an effect, not part of the model (expected).
 - `bird`, plants 1 and 3: thin wings, legs and leaves a pixel off; faithful (recorded).
