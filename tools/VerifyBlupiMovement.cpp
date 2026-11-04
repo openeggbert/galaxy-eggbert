@@ -1745,10 +1745,24 @@ int main(int argc, char** argv)
             BlupiController wader;
             wader.SetPosition(71.0f - 50.0f, floatY, static_cast<float>(kLowBankZ) - 50.0f);
             wader.SetYaw(kFacingPlusX);
-            for (int i = 0; i < 90; ++i) stepInWater(wader, synthetic, dt, 1.0f, false, false);
+            // At the surface he goes 2.4 px a tick on average (table_vitesse_surf): two cells take him
+            // about 2.7 s.
+            for (int i = 0; i < 240; ++i) stepInWater(wader, synthetic, dt, 1.0f, false, false);
             for (int i = 0; i < 30; ++i) stepInWater(wader, synthetic, dt, 0.0f, false, false);
             check(wader.IsOnGround() && std::fabs(wader.GetY() - 2.0f) < 0.01f && wader.GetX() > 73.0f - 50.0f - 0.5f,
                   "onto a bank no higher than the float line he swims straight out");
+            // Along in the water: slower than on foot (8 px a tick), eased in, pulsing with the stroke.
+            {
+                BlupiController surfer;
+                surfer.SetPosition(71.0f - 50.0f, floatY, static_cast<float>(kLowBankZ) - 50.0f);
+                surfer.SetYaw(kFacingPlusX);
+                const float startX = surfer.GetX();
+                for (int i = 0; i < 60; ++i) stepInWater(surfer, synthetic, dt, 1.0f, false, false); // 1 s
+                const float covered = surfer.GetX() - startX;
+                // 20 ticks: the ease to 8 px a tick takes 8, then 2.4 px a tick on average: ~1 block.
+                check(surfer.IsSurf() && covered > 0.4f && covered < 1.2f,
+                      "at the surface he goes about a block a second, a third of his walk (table_vitesse_surf)");
+            }
 
             BlupiController diver;
             diver.SetPosition(71.0f - 50.0f, 1.0f, static_cast<float>(kChannelZ) - 50.0f);

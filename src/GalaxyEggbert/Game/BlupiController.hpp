@@ -318,6 +318,13 @@ namespace GalaxyEggbert::Game
         static constexpr float kSwimDriftSpeed = 1.0f * 20.0f / 64.0f;
         static constexpr float kSwimAccel = 1.0f * 20.0f * 20.0f / 64.0f;
         static constexpr float kSurfFloatHeight = 18.0f / 64.0f;
+        // Along, in the water (Decor.cpp:4574-4610 Nage, 4693-4729 Surf): his speed eases toward 8 px
+        // a tick by 1 a tick (2 a tick back to 0 with no key), and each tick he moves that times the
+        // stroke's table over 7 (Nage, table_vitesse_nage {2,1,5,10,8,6,4}, an entry 2 ticks: 5.9 px a
+        // tick on average) or over 10 (Surf, table_vitesse_surf {0,2,5,8,3,0}: 2.4). He walked at 8.
+        static constexpr float kWaterAlongMax = 8.0f;   // px a tick
+        static constexpr float kWaterAlongAccel = 1.0f; // px a tick, a tick
+        static constexpr float kWaterAlongDecel = 2.0f; // px a tick, a tick
 
         // Secret powers (plan.md E3D-MIG-170/172, real m_blupiShield/Power/
         // Cloud/Hide + shared m_blupiTimeShield, verified directly against
@@ -1630,6 +1637,10 @@ namespace GalaxyEggbert::Game
         // mutually exclusive (TriggerBalloon() force-exits any vehicle) and
         // have their own distinct real accel/decel rates.
         float m_balloonHorizontalSpeed = 0.0f;
+        // In the water: the original's m_blupiVitesseX (px a tick, signed) and the stroke's tick
+        // count (its m_blupiPhase while swimming), kWaterAlongMax's comment.
+        float m_waterVitesse = 0.0f;
+        float m_waterStrokeTicks = 0.0f;
 
         GalaxyEggbert::Def::SecretPower m_secretPower = GalaxyEggbert::Def::SecretPower::None;
         float m_secretPowerTimer = 0.0f;

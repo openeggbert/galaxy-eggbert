@@ -1866,6 +1866,39 @@ namespace GalaxyEggbert::Game
             // (FollowCrate(), InteractionSystem::UpdateCratePush()), as the original puts the
             // crate against him and takes him back when it cannot go.
             horizontalSpeed = (holdingCrate || m_crateDriven) ? 0.0f : moveInput * effectiveMoveSpeed;
+            if (m_nage || m_surf)
+            {
+                // The water's own speed and stroke (kWaterAlongMax's comment).
+                const float ticks = dt * 20.0f;
+                const float target = moveInput * kWaterAlongMax;
+                if (moveInput < 0.0f)
+                {
+                    if (m_waterVitesse > target) m_waterVitesse = std::max(m_waterVitesse - kWaterAlongAccel * ticks, target);
+                }
+                else if (moveInput > 0.0f)
+                {
+                    if (m_waterVitesse < target) m_waterVitesse = std::min(m_waterVitesse + kWaterAlongAccel * ticks, target);
+                }
+                else if (m_waterVitesse > 0.0f)
+                {
+                    m_waterVitesse = std::max(m_waterVitesse - kWaterAlongDecel * ticks, 0.0f);
+                }
+                else if (m_waterVitesse < 0.0f)
+                {
+                    m_waterVitesse = std::min(m_waterVitesse + kWaterAlongDecel * ticks, 0.0f);
+                }
+                static constexpr float kNage[7] = {2, 1, 5, 10, 8, 6, 4};
+                static constexpr float kSurf[6] = {0, 2, 5, 8, 3, 0};
+                const int phase = static_cast<int>(m_waterStrokeTicks);
+                const float factor = m_nage ? kNage[(phase % 14) / 2] / 7.0f : kSurf[(phase % 12) / 2] / 10.0f;
+                m_waterStrokeTicks += ticks;
+                horizontalSpeed = m_waterVitesse * factor * 20.0f / 64.0f; // blocks a second
+            }
+            else
+            {
+                m_waterVitesse = 0.0f;
+                m_waterStrokeTicks = 0.0f;
+            }
             // Invert/Mirror (plan.md PICKUP-011, real `Decor::SetSpeedX`:
             // "if (m_blupiInvert) speed = -speed") -- negates normal ground
             // movement only; vehicles use their own separate real speed

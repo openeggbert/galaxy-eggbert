@@ -919,3 +919,18 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyBlupiMovement` (a bar over wind is hung from, over a block it is a landing);
   ctest 112/112; 113 and its hub 110 played through (the bars over the windy stretch). No other
   shipped world has a bar over a passable tile (scanned).
+
+## BD-0058 — in the water Blupi went as fast as on foot (gameplay, timing) — FIXED_AND_VERIFIED
+
+- Found 2026-11-04 by the original's tables Galaxy did not cite (`table_vitesse_nage`,
+  `table_vitesse_surf`).
+- Original (Decor.cpp:4574-4610 Nage, 4693-4729 Surf): along, his speed `m_blupiVitesseX` eases toward
+  8 px a tick by 1 a tick (by 2 back to 0 with no key), and each tick he moves that times the stroke's
+  table: under the water `table_vitesse_nage[phase % 14 / 2] / 7` ({2,1,5,10,8,6,4}: 5.9 px a tick on
+  average, a pulse each stroke), at the surface `table_vitesse_surf[phase % 12 / 2] / 10`
+  ({0,2,5,8,3,0}: 2.4 px a tick). On foot he walks at 8.
+- Galaxy moved him at his walking speed (2.5 blocks/s) in the water: 1.4 times too fast under it, 3.3
+  times at the surface.
+- Fix: `BlupiController` `kWaterAlongMax`/`Accel`/`Decel`, `m_waterVitesse`, `m_waterStrokeTicks`.
+- Validation: `VerifyBlupiMovement` (about a block a second at the surface; out onto a low bank in
+  2.7 s); the playthroughs (play passes 15-17, re-timed with BD-0059 and BD-0060).
