@@ -106,14 +106,21 @@ namespace GalaxyEggbert::Game
         // m_blupiTimeShield set to 100, decremented every Config::ScaleTime(2)
         // ticks -> 200 normalized ticks at the 20Hz reference rate = 10s;
         // modeled here as a plain 10s real-time countdown rather than the
-        // tick-based decrement, same total duration. kEcraseSpeedMultiplier
-        // is an approximation, not a transcribed constant -- the real
-        // table (10-blupi-mechanics.md's vehicle/mode movement table) gives
-        // a "grounded x4 of m_blupiSpeedX" figure that doesn't cleanly
-        // convert to a fraction of kMoveSpeed without further research.
+        // tick-based decrement, same total duration. Squashed he moves by his
+        // own speed (Decor.cpp:4109-4175, BD-0069): up to 4 px a tick on the
+        // ground and 7 off it, gaining 1 a tick toward it with the stick held
+        // (never cut back when the limit drops), losing 2 a tick without it;
+        // he never falls as the others do -- his fall gains 1 px a tick up to
+        // 2 px a tick (a speed past it, he keeps). It was half his walk and
+        // the common gravity.
         static constexpr float kEcraseDuration = 10.0f; // 100 levels, one every 2 ticks, when alone
         static constexpr float kEcraseTickSeconds = 2.0f / 20.0f;
-        static constexpr float kEcraseSpeedMultiplier = 0.5f;
+        static constexpr float kEcraseGroundMax = 4.0f;  // px a tick
+        static constexpr float kEcraseAirMax = 7.0f;     // px a tick
+        static constexpr float kEcraseAccel = 1.0f;      // px a tick, a tick
+        static constexpr float kEcraseDecel = 2.0f;      // px a tick, a tick
+        static constexpr float kEcraseFallMax = 2.0f * 20.0f / 64.0f;         // blocks a second
+        static constexpr float kEcraseGravity = 1.0f * 20.0f / 64.0f * 20.0f;  // blocks a second, a second
 
         // Wasp "balloon" status (plan.md E3D-MIG-135, `m_blupiBalloon` per
         // mobile-eggbert-reference/04-enemy-behavior.md's ObjectType44
@@ -1641,6 +1648,8 @@ namespace GalaxyEggbert::Game
         float m_waterVitesse = 0.0f;
         // Ticks of the walk since he set off (the original's m_blupiPhase in March): its ease-in.
         float m_marchTicks = 0.0f;
+        // Squashed: his own speed along (px a tick, signed; the original's m_blupiVitesseX), BD-0069.
+        float m_ecraseVitesse = 0.0f;
         float m_waterStrokeTicks = 0.0f;
 
         GalaxyEggbert::Def::SecretPower m_secretPower = GalaxyEggbert::Def::SecretPower::None;

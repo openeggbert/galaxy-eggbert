@@ -1059,3 +1059,17 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Fix: `kSuspendMoveSpeed` = 5 * 20 / 64.
 - Validation: `VerifyBlupiMovement` (50 px in ten ticks along the bar); ctest; the playthroughs with
   bars (play pass 18).
+
+## BD-0069 — squashed he went at half his walk and fell like a stone (gameplay, timing) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:4109-4175, 2823-2833): squashed (`m_blupiEcrase`) he never enters the common
+  fall (`!m_blupiEcrase` keeps `m_blupiAir` off); his own block moves him: up to 4 px a tick on the
+  ground and 7 off it, gaining 1 a tick toward it with the stick held (never cut back when the limit
+  drops), losing 2 a tick without it; down, his speed gains 1 px a tick up to 2 (a faster one he
+  keeps) -- he drifts down off a ledge.
+- Galaxy: half his walk's speed (`kEcraseSpeedMultiplier` 0.5, "an approximation") and the common
+  gravity.
+- Fix: `m_ecraseVitesse` with `kEcraseGroundMax`/`AirMax`/`Accel`/`Decel`; `kEcraseGravity`/`FallMax`
+  in the vertical step.
+- Validation: `VerifyBlupiMovement` (34 px in ten ticks, a 2 px slide, 19 px of fall in ten ticks);
+  ctest; the playthroughs with crushers (play pass 18).

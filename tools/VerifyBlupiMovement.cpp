@@ -814,6 +814,35 @@ int main(int argc, char** argv)
         crushed.Step(synthetic, 0.0f, 0.0f, true, false, false, dt);
         check(crushed.IsOnGround(), "jump input is ignored while squashed (still on ground, not launched)");
 
+        // Squashed he goes his own pace (Decor.cpp:4109-4175, BD-0069): 1, 2, 3, then 4 px a tick on
+        // the ground (34 px in ten ticks), sliding 2 px more as he lets go; off a ledge he drifts down
+        // 1, then 2 px a tick (19 px in ten).
+        {
+            BlupiController squashed;
+            squashed.SetPosition(static_cast<float>(kGroundX) - 50.0f, 1.0f, static_cast<float>(kGroundZ) - 50.0f);
+            squashed.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            squashed.TriggerCrush();
+            squashed.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            const float z0 = squashed.GetZ();
+            for (int i = 0; i < 10; ++i) squashed.Step(synthetic, 0.0f, 1.0f, false, false, false, 0.05f);
+            const float walked = std::fabs(squashed.GetZ() - z0) * 64.0f;
+            const float z1 = squashed.GetZ();
+            for (int i = 0; i < 5; ++i) squashed.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            const float slid = std::fabs(squashed.GetZ() - z1) * 64.0f;
+            std::cout << "Squashed: " << walked << " px in ten ticks, slid " << slid << " px" << std::endl;
+            check(std::fabs(walked - 34.0f) < 1.5f, "squashed he gains 1 px a tick up to 4 (34 px in ten ticks)");
+            check(std::fabs(slid - 2.0f) < 1.0f, "letting go squashed he loses 2 px a tick (slides 2 px)");
+
+            BlupiController floater;
+            floater.SetPosition(0.0f, 20.0f, 0.0f);
+            floater.TriggerCrush();
+            const float y0 = floater.GetY();
+            for (int i = 0; i < 10; ++i) floater.Step(synthetic, 0.0f, 0.0f, false, false, false, 0.05f);
+            const float fell = (y0 - floater.GetY()) * 64.0f;
+            std::cout << "Squashed in the air: fell " << fell << " px in ten ticks" << std::endl;
+            check(fell > 15.0f && fell < 22.0f, "squashed in the air he drifts down at 2 px a tick, not falling");
+        }
+
         // Auto-recovery after kEcraseDuration seconds.
         const int stepsToRecover = static_cast<int>(BlupiController::kEcraseDuration / dt) + 5;
         for (int i = 0; i < stepsToRecover && crushed.IsEcrased(); ++i)

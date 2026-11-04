@@ -1803,7 +1803,7 @@ namespace GalaxyEggbert::Game
             marchPixels = marchPixels * 3 / 2;
         }
         const float walkSpeed = static_cast<float>(marchPixels) * 20.0f / 64.0f;
-        const float effectiveMoveSpeed = m_ecrase ? walkSpeed * kEcraseSpeedMultiplier : walkSpeed;
+        const float effectiveMoveSpeed = walkSpeed;
 
         // Vehicle horizontal speed (plan.md E3D-MIG-171): unlike normal
         // walking (instant target speed, no ramp -- this engine's own
@@ -1922,6 +1922,33 @@ namespace GalaxyEggbert::Game
             {
                 m_waterVitesse = 0.0f;
                 m_waterStrokeTicks = 0.0f;
+            }
+            if (m_ecrase && !holdingCrate && !m_crateDriven)
+            {
+                // Squashed (kEcraseGroundMax's comment, Decor.cpp:4122-4174).
+                const float ticks = dt * 20.0f;
+                const float limit = (m_onGround ? kEcraseGroundMax : kEcraseAirMax) * moveInput;
+                if (moveInput < 0.0f)
+                {
+                    if (m_ecraseVitesse > limit) m_ecraseVitesse = std::max(m_ecraseVitesse - kEcraseAccel * ticks, limit);
+                }
+                else if (moveInput > 0.0f)
+                {
+                    if (m_ecraseVitesse < limit) m_ecraseVitesse = std::min(m_ecraseVitesse + kEcraseAccel * ticks, limit);
+                }
+                else if (m_ecraseVitesse > 0.0f)
+                {
+                    m_ecraseVitesse = std::max(m_ecraseVitesse - kEcraseDecel * ticks, 0.0f);
+                }
+                else if (m_ecraseVitesse < 0.0f)
+                {
+                    m_ecraseVitesse = std::min(m_ecraseVitesse + kEcraseDecel * ticks, 0.0f);
+                }
+                horizontalSpeed = m_ecraseVitesse * 20.0f / 64.0f; // blocks a second
+            }
+            else
+            {
+                m_ecraseVitesse = 0.0f;
             }
             // Invert/Mirror (plan.md PICKUP-011, real `Decor::SetSpeedX`:
             // "if (m_blupiInvert) speed = -speed") -- negates normal ground
@@ -2230,6 +2257,14 @@ namespace GalaxyEggbert::Game
                                                                  : kSwimDriftSpeed;
                 m_velocityY = m_velocityY < target ? std::min(m_velocityY + kSwimAccel * dt, target)
                                                    : std::max(m_velocityY - kSwimAccel * dt, target);
+            }
+        }
+        else if (m_ecrase)
+        {
+            // Squashed he drifts down (kEcraseGroundMax's comment, Decor.cpp:4111-4121).
+            if (m_velocityY > -kEcraseFallMax)
+            {
+                m_velocityY = std::max(m_velocityY - kEcraseGravity * dt, -kEcraseFallMax);
             }
         }
         else
