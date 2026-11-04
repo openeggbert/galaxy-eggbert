@@ -1,0 +1,31 @@
+# ED-0007: the editor (a fresh save: QA_LIVE_RUN=<empty dir>), slot 1, the rock group, its first rock,
+# placed three times along the cursor; the dice saves custom_001.vwr (diff it against world999.vwr).
+sleep 14
+focus
+click 710 200
+sleep 3
+click 72 258
+sleep 4
+click 30 155
+sleep 1.5
+click 75 155
+sleep 1.5
+shot selected
+click 500 450
+sleep 0.8
+click 277 450
+sleep 0.5
+click 500 450
+sleep 0.8
+click 277 450
+sleep 0.5
+click 500 450
+sleep 0.8
+click 160 450
+sleep 0.5
+click 500 450
+sleep 1.5
+shot row
+click 722 450
+sleep 4
+shot saved
