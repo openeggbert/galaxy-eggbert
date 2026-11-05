@@ -1017,13 +1017,10 @@ namespace GalaxyEggbert::Game
                             faces[face].visible = true;
                         }
                     }
+                    // The toys' ball cubes: the ball's relief only on the sides; top and bottom the
+                    // tile's own picture, flat (MR-0007; a plain colour there was not right, owner
+                    // 2026-11-05).
                     const bool ballCube = IsBallCubeIcon(icon);
-                    if (ballCube)
-                    {
-                        // The ball only on the sides; top and bottom the plate's plain colour (MR-0007).
-                        faces[static_cast<int>(BoxFace::PositiveY)].uv = BallCubeCapUv(tileUv);
-                        faces[static_cast<int>(BoxFace::NegativeY)].uv = BallCubeCapUv(tileUv);
-                    }
                     if (reliefTile)
                     {
                         // A relief tile (Q-012): its cube goes to its chunk, drawn as cubes far from the
