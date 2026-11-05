@@ -594,6 +594,9 @@ ledgers before repeating any discovery. Where it stands:
   OR-0049 checked live. **Play pass 23 (all of it, `build-probe/play-pass-23/`): 78/78**, in 22
   min with 4 lanes (was ~75: the model culling); ctest 112/112; golden frames unchanged;
   campaigncheck complete; watercheck: every body of water has a way out.
+  levelcheck against the 2026-11-03 tree (`2fe3aaeb`): the same 63 of 78 worlds flagged (it does not
+  model vehicles, crates, springs, dynamite), identical except 115, whose stream treasures (74/77,
+  30, 17) are now reached by helicopter: its playthrough takes all 11 (t 3236, 3300).
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
