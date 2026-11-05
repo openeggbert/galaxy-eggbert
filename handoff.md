@@ -597,6 +597,14 @@ ledgers before repeating any discovery. Where it stands:
   levelcheck against the 2026-11-03 tree (`2fe3aaeb`): the same 63 of 78 worlds flagged (it does not
   model vehicles, crates, springs, dynamite), identical except 115, whose stream treasures (74/77,
   30, 17) are now reached by helicopter: its playthrough takes all 11 (t 3236, 3300).
+- 2026-11-05, later: **every campaign target has evidence it is reachable**
+  (`tools/audit/target_reach.py <play pass>`, `plans/audit/target_reach.md`: 921 targets, 0 unknown;
+  `levelcheck --rides` adds lift rides and the helicopter). Its probes found **BD-0073**: an egg is a
+  life, taken only under ten lives (Galaxy capped the eggs taken: 13 lives were possible). Fixed;
+  26 playthroughs re-synced (an egg wait became `until mtick >=` the tick of play pass 23, so a
+  mission keeps its timing alone or in a chain with a full lives row). **Play pass 25: 78/78.**
+  Open there: 053's four eggs in the arrow's cage corners (twenty follow stars), not probed.
+  A hub chain's lives now reach 10 early: a script that waits on an egg must use `until mtick`.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
