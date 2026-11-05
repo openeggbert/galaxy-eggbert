@@ -97,6 +97,20 @@ namespace GalaxyEggbert::Game
     // and the crosswise ones on +X and -X only where the row ends (the faces left open there).
     inline constexpr std::uint8_t kGrassAirMask = static_cast<std::uint8_t>(~(4u | 16u | 32u)); // +y (up) never air
 
+    // The toys' ball cubes (215-218, a ball on a coloured plate): the ball only on their four sides;
+    // their top and bottom are a plain colour, the plate's (owner 2026-11-05, MR-0007: from above
+    // and below no ball). BallCubeCapUv picks that colour: a texel of the sprite's plate corner.
+    [[nodiscard]] inline constexpr bool IsBallCubeIcon(std::uint16_t icon) noexcept
+    {
+        return icon >= 215 && icon <= 218;
+    }
+    [[nodiscard]] inline CnaEngine::Graphics::UvRect BallCubeCapUv(const CnaEngine::Graphics::UvRect& tile) noexcept
+    {
+        const float u = tile.u0 + 0.06f * (tile.u1 - tile.u0);
+        const float v = tile.v0 + 0.06f * (tile.v1 - tile.v0);
+        return CnaEngine::Graphics::UvRect{u, v, u, v};
+    }
+
     // Appends `relief` on face `face` of the cell centred at `center`, its triangles overhanging into
     // `airSides` left out, textured by the atlas's `tile`; with `backing`, also the face's square at
     // the relief's depth (it fills what the lumps leave open), reaching half a block into each solid

@@ -1017,6 +1017,13 @@ namespace GalaxyEggbert::Game
                             faces[face].visible = true;
                         }
                     }
+                    const bool ballCube = IsBallCubeIcon(icon);
+                    if (ballCube)
+                    {
+                        // The ball only on the sides; top and bottom the plate's plain colour (MR-0007).
+                        faces[static_cast<int>(BoxFace::PositiveY)].uv = BallCubeCapUv(tileUv);
+                        faces[static_cast<int>(BoxFace::NegativeY)].uv = BallCubeCapUv(tileUv);
+                    }
                     if (reliefTile)
                     {
                         // A relief tile (Q-012): its cube goes to its chunk, drawn as cubes far from the
@@ -1034,12 +1041,19 @@ namespace GalaxyEggbert::Game
                             {
                                 continue;
                             }
+                            if (ballCube && (face == static_cast<int>(BoxFace::PositiveY) ||
+                                             face == static_cast<int>(BoxFace::NegativeY)))
+                            {
+                                cell.flatFaces = static_cast<std::uint8_t>(cell.flatFaces | (1u << face));
+                                cell.flatUv[static_cast<std::size_t>(face)] = faces[face].uv;
+                                continue;
+                            }
                             cell.faces = static_cast<std::uint8_t>(cell.faces | (1u << face));
                             cell.air[static_cast<std::size_t>(face)] = ReliefAirSides(face, [&](int dx, int dy, int dz) {
                                 return reliefSolid(x + dx, y + dy, z + dz);
                             });
                         }
-                        if (cell.faces != 0)
+                        if ((cell.faces | cell.flatFaces) != 0)
                         {
                             m_reliefChunks[chunkIndex].cells.push_back(cell);
                         }
