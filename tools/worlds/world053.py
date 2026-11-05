@@ -352,7 +352,11 @@ def main(argv) -> int:
             star(x, 27, z)
         for x, z in ((81, 87), (83, 87), (81, 89), (83, 89)):
             star(x, 29, z)
-    for x, z in ((78, 85), (86, 85), (78, 91), (86, 91)):
+    # Four eggs along the cage's front wall, two in each front corner: lure the rows nearest the
+    #    doorway out (from the doorway one row deeper at a time, stepping back aside each time) and
+    #    the front lane is clear. (They sat in the four corners until 2026-11-05: the back two could
+    #    be reached but not left alive past the rows by the arrow; the owner had them moved, MR-0007.)
+    for x, z in ((78, 85), (79, 85), (85, 85), (86, 85)):
         w.place(O.EGG, x, 27, z)
     w.set(79, 31, 92, RED_DOT)
     w.set(85, 31, 92, RED_DOT)
