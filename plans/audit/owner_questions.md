@@ -6,16 +6,16 @@ recommendation, and what was done meanwhile. Answered entries move to the end wi
 
 ## Open
 
-### Waiting on the owner (updated 2026-11-05 after the owner's answers, `manual_review.md` MR-0007)
+### Waiting on the owner (updated 2026-11-05, MR-0007 and MR-0008)
 
-Answered 2026-11-05: Q-012 (B), Q-013 (fixed), Q-014 ((b), built: M3D-0006), 053's far cage eggs (to
-move), the playability audit (the automated playthroughs suffice), OR-0028/0029/0033/0034/0048/0053
-(fine). Still the owner's:
+Answered and built 2026-11-05: Q-012 (B; the ball cubes' plain tops), Q-013, Q-014 ((b), M3D-0006),
+053's cage eggs (moved), the playability audit (automated playthroughs suffice), D11's one item (the
+treasure doors' number plates and the mission signs' digits sat in front of their post and board:
+`83d7e4bc`), OR-0028/0029/0033/0034/0035/0038/0040/0044/0048/0053 (fine), OR-0042 (analysed: the
+original's timing, smoother in 3D). Still the owner's:
 
-- **D11**: the list of models that look wrong (sent later; candidates
-  `plans/inventory/d11_candidates.md`).
-- Owner reports not yet looked at: OR-0035 (cheats top left), OR-0038 (the saw), OR-0040 (the
-  fan), OR-0041 (Left Shift), OR-0042 (the lollipop), OR-0044 (the editor's demo world).
+- OR-0041 (Left Shift: does the crouch still look like kick-starting a motorbike?), not answered.
+- D11: any further model that looks wrong (the owner named the sign plates; nothing else so far).
 
 ### Q-001 — Grass (107-109, 157) in 3D: how? — DONE (b) 2026-11-04
 
