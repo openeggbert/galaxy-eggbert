@@ -13,8 +13,8 @@ on the golden post 183's scene, Decor/porte2.rd4): each decal is the plate's rec
 
 Writes ``<model dir>/decals/<icon>.png`` and ``<model dir>/decals.txt``:
 ``decal <icon> <png> <x0> <y0> <x1> <y1> <z>`` -- the region in the icon's 64-pixel square
-(pixels, right and down from its top-left) and the depth of the model's front (model units, +Z
-toward the camera). The game puts the decal on the front and, mirrored, on the back.
+(pixels, right and down from its top-left) and the depth of the model's front behind that region (model
+units, +Z toward the camera). The game puts the decal on the front and, mirrored, on the back.
 
     python3 tools/rd4_to_gltf/sign_decals.py --sheet ../mobile-eggbert/Content/icons/object-m.png \\
         --model avatars3d/objects/sign174_world1 --icons 174-181
@@ -37,13 +37,35 @@ from build_object_library import parse_icons  # noqa: E402
 THRESHOLD = 0.12  # colour distance (0..sqrt 3) from the bare sign counted as painted
 
 
-def front_depth(glb: Path) -> float:
-    """The largest Z of the model's vertices (its front, toward the sprite camera)."""
+def front_depth(glb: Path, region: tuple[int, int, int, int]) -> float:
+    """The largest Z of the model's vertices (its front, toward the sprite camera) behind the decal's
+    region (x0, y0, x1, y1 in the icon's 64-pixel square: model units are blocks of 64 pixels, the
+    icon's centre the origin, +Y up). The whole model's front stood the treasure doors' number
+    plate 0.09 of a block in front of their golden post (the post's base reaches further out than
+    its shaft behind the plate): owner 2026-11-05, MR-0008."""
     data = glb.read_bytes()
     length = struct.unpack("<I", data[12:16])[0]
     doc = json.loads(data[20:20 + length])
-    return max(doc["accessors"][p["attributes"]["POSITION"]]["max"][2]
-               for m in doc["meshes"] for p in m["primitives"])
+    offset = 20 + length
+    blob_length = struct.unpack("<I", data[offset:offset + 4])[0]
+    blob = data[offset + 8:offset + 8 + blob_length]
+    x0, y0, x1, y1 = region
+    lo_x, hi_x = (x0 - 32) / 64.0, (x1 - 32) / 64.0
+    lo_y, hi_y = (32 - y1) / 64.0, (32 - y0) / 64.0
+    best = None
+    for mesh in doc["meshes"]:
+        for prim in mesh["primitives"]:
+            acc = doc["accessors"][prim["attributes"]["POSITION"]]
+            view = doc["bufferViews"][acc["bufferView"]]
+            pos = np.frombuffer(blob, dtype=np.float32, count=acc["count"] * 3,
+                                offset=view.get("byteOffset", 0) + acc.get("byteOffset", 0)).reshape(-1, 3)
+            inside = (pos[:, 0] >= lo_x) & (pos[:, 0] <= hi_x) & (pos[:, 1] >= lo_y) & (pos[:, 1] <= hi_y)
+            if inside.any():
+                z = float(pos[inside, 2].max())
+                best = z if best is None else max(best, z)
+    if best is None:
+        raise ValueError(f"{glb}: no vertex behind the decal's region")
+    return best
 
 
 def main(argv=None) -> int:
@@ -78,7 +100,7 @@ def main(argv=None) -> int:
         union = np.any(painted, axis=0) & np.all([mask[i] for i in icons], axis=0)
     ys, xs = np.where(union)
     x0, x1, y0, y1 = int(xs.min()), int(xs.max()) + 1, int(ys.min()), int(ys.max()) + 1
-    depth = front_depth(args.glb) if args.glb else float(args.depth)
+    depth = front_depth(args.glb, (x0, y0, x1, y1)) if args.glb else float(args.depth)
     out = args.model / "decals"
     out.mkdir(parents=True, exist_ok=True)
     lines = [f"# {args.model.name}: the painted faces of icons {args.icons} (tools/rd4_to_gltf/sign_decals.py)"]
