@@ -603,7 +603,8 @@ ledgers before repeating any discovery. Where it stands:
   life, taken only under ten lives (Galaxy capped the eggs taken: 13 lives were possible). Fixed;
   26 playthroughs re-synced (an egg wait became `until mtick >=` the tick of play pass 23, so a
   mission keeps its timing alone or in a chain with a full lives row). **Play pass 25: 78/78.**
-  Open there: 053's four eggs in the arrow's cage corners (twenty follow stars), not probed.
+  053's cage corners: all four reached; from the far two Blupi died on the way back past the woken
+  stars (three tries): a question for the owner's play (owner_questions.md).
   A hub chain's lives now reach 10 early: a script that waits on an egg must use `until mtick`.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's

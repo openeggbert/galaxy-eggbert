@@ -16,7 +16,9 @@ water checks). What remains needs the owner:
   recommended b).
 - **D11**: the list of models that look wrong (candidates: `plans/inventory/d11_candidates.md`;
   the house's chimney done 2026-11-05).
-- **A human play pass** of every world.
+- **A human play pass** of every world. One place to look at in it: 053's arrow cage, whose two far
+  corner eggs Blupi reaches but did not survive leaving in three scripted tries (twenty follow
+  stars; `target_reach.md`): fine as a risk, or should the eggs move?
 - Owner reports waiting for an eye, an ear or hardware (`owner_reports.md`): OR-0028 (crate
   push sound), OR-0029 (volume sliders), OR-0033/0048 (backing up, its button), OR-0034 (touch
   and gamepad), OR-0035 (cheats top left), OR-0038 (the saw), OR-0040 (the fan), OR-0041 (Left
