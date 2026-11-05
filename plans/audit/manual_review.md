@@ -105,3 +105,13 @@ The owner asked to be asked ("ptej se me nyni na co potrebujes"); answers:
 - Level playability: the automated playthroughs and the target reach audit suffice (no human
   play pass required for the audit).
 - D11 (models that look wrong): the owner sends the list later.
+
+## MR-0008 — the owner's second answers of 2026-11-05 ("co ode me potrebujes")
+
+- OR-0035 (cheats top left), OR-0038 (the saw), OR-0040 (the fan), OR-0044 (the editor's demo
+  world): checked, fine.
+- OR-0041 (Left Shift): not answered; stays open.
+- OR-0042 (the lollipop): "I do not know whether it is as in Mobile Eggbert; maybe it is jerky there
+  too; analyse it."
+- D11: the world signs (the yellow columns) should stand closer to the column beside them; now
+  there is empty space between the sign and the yellow column.
