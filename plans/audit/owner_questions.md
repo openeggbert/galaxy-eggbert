@@ -6,6 +6,22 @@ recommendation, and what was done meanwhile. Answered entries move to the end wi
 
 ## Open
 
+### Waiting on the owner (2026-11-05): everything the agent cannot close alone
+
+The autonomous part stands verified (play pass 23 78/78, ctest 112/112, golden frames, campaign and
+water checks). What remains needs the owner:
+
+- Decisions: **Q-012** (terrain relief B or C, below), **Q-013** (was the lattice cube the camera
+  in the passable girder? a screenshot if it persists), **Q-014** (BigDecor solid: a, b or c;
+  recommended b).
+- **D11**: the list of models that look wrong (candidates: `plans/inventory/d11_candidates.md`;
+  the house's chimney done 2026-11-05).
+- **A human play pass** of every world.
+- Owner reports waiting for an eye, an ear or hardware (`owner_reports.md`): OR-0028 (crate
+  push sound), OR-0029 (volume sliders), OR-0033/0048 (backing up, its button), OR-0034 (touch
+  and gamepad), OR-0035 (cheats top left), OR-0038 (the saw), OR-0040 (the fan), OR-0041 (Left
+  Shift), OR-0042 (the lollipop), OR-0044 (the editor's demo world), OR-0053 (the background).
+
 ### Q-001 — Grass (107-109, 157) in 3D: how? — DONE (b) 2026-11-04
 
 `Decor/herbe1.rd4` matches the grass tiles (IoU 0.91): a lumpy block of soil with leaves on top.
