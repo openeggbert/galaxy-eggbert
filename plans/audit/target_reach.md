@@ -13,7 +13,7 @@ treasure doors the playthroughs' treasures open (061, 124), 13 on the worlds' ow
 (055's overcraft shaft, 199's key doors), 12 eggs only with timing, **0 unknown**.
 
 The 12 timed eggs, probed 2026-11-05 by short runs (a playthrough's script up to the place, then
-a detour; the egg counter rose in each):
+a detour; the egg counter rose in each but 053's, where his lives row was already full):
 
 | world | egg(s) | the detour | taken |
 |---|---|---|---|
@@ -21,7 +21,7 @@ a detour; the egg counter rose in each):
 | 054 | (44, 40, 58) in gallery G2 behind its hanging mines | off lift 46 at walk 40: `go 46 61`, `go 44 61` (the row clear of the mines), `go 44 58.1` | yes |
 | 111 | (78-81, 34, 45) in the exit room | with the helicopter past the mine corridor: `fly X 34.10 45.1` for X 78-81 (low: at 34.6 the helicopter passes over them) | all four |
 | 122 | (44, 14, 64) in the bulldozer's south tunnel | after treasure 7: `go 34 65`, `go 36 64`, `go 44 64` (lane z 64, a cell beside the bulldozer's z 63) | yes |
-| 053 | (78/86, 27, 85/91), the four corners of the arrow's cage | not probed: twenty follow stars sleep round the arrow and home on whoever wakes them | **open** |
+| 053 | (78/86, 27, 85/91), the four corners of the arrow's cage (twenty follow stars sleep round the arrow) | after the playthrough's luring: wake rows z 85-87 from the doorway three times (`go 82 85.2/86.2/87.2`, back out, `go 80 82.3`, `wait 700`: they burst on the cage's north wall), then `go 82 85`, `go 78 85` (or 86), `go 78 91` (or 86) | Blupi stood on all four (lives at 10: an egg stays). The near two are safe; **from the far two he died on the way back**, woken stars of rows z 89-90 homing into the side lane (three tries, also luring them first from z 86.8 / 88.6). Taking those two and surviving is not shown: a question for the owner's play |
 
 Also probed: 062's (47, 11, 60) beside the big creature's corridor (taken; now `from-run`). The
 probes found BD-0073 (eggs are lives: none is taken at ten lives).
