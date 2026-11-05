@@ -590,6 +590,10 @@ ledgers before repeating any discovery. Where it stands:
   landing; LV-0071 complete; 115 and the 110 chain pass. The Android debug APK (arm64-v8a,
   `./gradlew assembleDebug -Pandroid.injected.build.abi=arm64-v8a`) builds with all of it.
   Scripted editor runs: hold keys (`keydown`/`keyup`), a tap faster than a frame is missed.
+- 2026-11-05: the house's chimney mapping (`uvsp`, D11 above), autoplay `shots N`, OR-0003 and
+  OR-0049 checked live. **Play pass 23 (all of it, `build-probe/play-pass-23/`): 78/78**, in 22
+  min with 4 lanes (was ~75: the model culling); ctest 112/112; golden frames unchanged;
+  campaigncheck complete; watercheck: every body of water has a way out.
 - Next: Q-012's open points (above); D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
