@@ -38,34 +38,52 @@ THRESHOLD = 0.12  # colour distance (0..sqrt 3) from the bare sign counted as pa
 
 
 def front_depth(glb: Path, region: tuple[int, int, int, int]) -> float:
-    """The largest Z of the model's vertices (its front, toward the sprite camera) behind the decal's
-    region (x0, y0, x1, y1 in the icon's 64-pixel square: model units are blocks of 64 pixels, the
-    icon's centre the origin, +Y up). The whole model's front stood the treasure doors' number
-    plate 0.09 of a block in front of their golden post (the post's base reaches further out than
-    its shaft behind the plate): owner 2026-11-05, MR-0008."""
+    """The model's front (largest Z toward the sprite camera) over the decal's region (x0, y0, x1,
+    y1 in the icon's 64-pixel square; model units are blocks of 64 pixels, the icon's centre the
+    origin, +Y up): the surface's Z where it covers a grid of points of the region, the largest.
+    The whole model's front stood the treasure doors' number plate 0.09 of a block in front of
+    their golden post (its base reaches further out than the shaft behind the plate) and the mission
+    signs' digit 0.2 in front of their board: owner 2026-11-05, MR-0008. (Vertices alone would not
+    do: a board's lie at its corners, outside the painted region.)"""
     data = glb.read_bytes()
     length = struct.unpack("<I", data[12:16])[0]
     doc = json.loads(data[20:20 + length])
     offset = 20 + length
     blob_length = struct.unpack("<I", data[offset:offset + 4])[0]
     blob = data[offset + 8:offset + 8 + blob_length]
+
+    def accessor(index: int, components: int) -> np.ndarray:
+        acc = doc["accessors"][index]
+        view = doc["bufferViews"][acc["bufferView"]]
+        dtype = {5126: np.float32, 5125: np.uint32, 5123: np.uint16, 5121: np.uint8}[acc["componentType"]]
+        arr = np.frombuffer(blob, dtype=dtype, count=acc["count"] * components,
+                            offset=view.get("byteOffset", 0) + acc.get("byteOffset", 0))
+        return arr.reshape(-1, components) if components > 1 else arr
+
     x0, y0, x1, y1 = region
-    lo_x, hi_x = (x0 - 32) / 64.0, (x1 - 32) / 64.0
-    lo_y, hi_y = (32 - y1) / 64.0, (32 - y0) / 64.0
-    best = None
+    xs = np.linspace((x0 - 32) / 64.0, (x1 - 32) / 64.0, 9)
+    ys = np.linspace((32 - y1) / 64.0, (32 - y0) / 64.0, 9)
+    px, py = (a.ravel() for a in np.meshgrid(xs, ys))
+    best = np.full(px.shape, -np.inf)
     for mesh in doc["meshes"]:
         for prim in mesh["primitives"]:
-            acc = doc["accessors"][prim["attributes"]["POSITION"]]
-            view = doc["bufferViews"][acc["bufferView"]]
-            pos = np.frombuffer(blob, dtype=np.float32, count=acc["count"] * 3,
-                                offset=view.get("byteOffset", 0) + acc.get("byteOffset", 0)).reshape(-1, 3)
-            inside = (pos[:, 0] >= lo_x) & (pos[:, 0] <= hi_x) & (pos[:, 1] >= lo_y) & (pos[:, 1] <= hi_y)
-            if inside.any():
-                z = float(pos[inside, 2].max())
-                best = z if best is None else max(best, z)
-    if best is None:
-        raise ValueError(f"{glb}: no vertex behind the decal's region")
-    return best
+            pos = accessor(prim["attributes"]["POSITION"], 3).astype(np.float64)
+            tris = accessor(prim["indices"], 1).astype(np.int64).reshape(-1, 3)
+            a, b, c = pos[tris[:, 0]], pos[tris[:, 1]], pos[tris[:, 2]]
+            den = (b[:, 1] - c[:, 1]) * (a[:, 0] - c[:, 0]) + (c[:, 0] - b[:, 0]) * (a[:, 1] - c[:, 1])
+            ok = np.abs(den) > 1e-12
+            a, b, c, den = a[ok], b[ok], c[ok], den[ok]
+            for k in range(len(px)):
+                l1 = ((b[:, 1] - c[:, 1]) * (px[k] - c[:, 0]) + (c[:, 0] - b[:, 0]) * (py[k] - c[:, 1])) / den
+                l2 = ((c[:, 1] - a[:, 1]) * (px[k] - c[:, 0]) + (a[:, 0] - c[:, 0]) * (py[k] - c[:, 1])) / den
+                l3 = 1.0 - l1 - l2
+                inside = (l1 >= 0) & (l2 >= 0) & (l3 >= 0)
+                if inside.any():
+                    z = l1[inside] * a[inside, 2] + l2[inside] * b[inside, 2] + l3[inside] * c[inside, 2]
+                    best[k] = max(best[k], float(z.max()))
+    if not np.isfinite(best).any():
+        raise ValueError(f"{glb}: no surface behind the decal's region")
+    return float(best[np.isfinite(best)].max())
 
 
 def main(argv=None) -> int:

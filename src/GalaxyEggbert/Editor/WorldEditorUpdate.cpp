@@ -869,9 +869,19 @@ namespace GalaxyEggbert::Editor
         const bool front = std::find(Game::kFrontModelIcons.begin(), Game::kFrontModelIcons.end(), icon) !=
                                Game::kFrontModelIcons.end() ||
                            Game::IsSignModelIcon(icon);
-        const int before = Game::QuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_);
+        // A front model's turns are kept as an object's (type 5): the plate bit (type 2) of signs
+        // facing X, which the hub generators set, is no turn of the model.
+        const int before = front ? Game::ObjectQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_)
+                                 : Game::QuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_);
         const int after = front ? (before + 1) % 4 : (before & 1) ^ 1;
-        Game::SetQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_, after);
+        if (front)
+        {
+            Game::SetObjectQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_, after);
+        }
+        else
+        {
+            Game::SetQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_, after);
+        }
         EditCommand command;
         command.kind = EditCommand::Kind::TurnEdit;
         command.turnX = hitCellX_;
@@ -879,6 +889,7 @@ namespace GalaxyEggbert::Editor
         command.turnZ = hitCellZ_;
         command.turnBefore = before;
         command.turnAfter = after;
+        command.turnObject = front;
         commandStack_.Push(std::move(command));
         MarkMutated();
         return true;

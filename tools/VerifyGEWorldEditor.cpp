@@ -227,10 +227,11 @@ int main()
         {
             editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
             editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);
-            turns = QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z);
-            quarters = quarters && turns == expected;
+            turns = ObjectQuarterTurns(world, slabHit.x, slabHit.y, slabHit.z);
+            quarters = quarters && turns == expected && QuarterTurns(world, slabHit.x, slabHit.y, slabHit.z) == 0;
         }
-        check(quarters, "O turns a teleporter a quarter at a time, round to where it began");
+        check(quarters, "O turns a teleporter a quarter at a time, round to where it began (its object turns, "
+                        "not the plate bit the hub signs carry)");
         world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(126));
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::O}, rest, 0.0f, 800, 480, camera, world);

@@ -6511,7 +6511,7 @@ namespace GalaxyEggbert::CNA
                                 {
                                     drawModel(*pose, cell.x, cell.y, cell.z,
                                               GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
-                                                  1.57079632f * static_cast<float>(CellQuarterTurns(cell.x, cell.y, cell.z)));
+                                                  1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.x, cell.y, cell.z)));
                                 }
                             }
                             continue;
@@ -6585,9 +6585,12 @@ namespace GalaxyEggbert::CNA
                                          GalaxyEggbert::Game::IsSignModelIcon(cell.base))
                                 {
                                     // Turned in the editor a quarter at a time from the side it faces
-                                    // by itself (OR-0071).
+                                    // by itself (OR-0071), its turns kept as an object's (metadata type
+                                    // 5): the plate-rotation bit the hub generators set on signs facing
+                                    // X (an older plate convention) must not turn the model too (the
+                                    // signs of hub 070 stood sideways, owner 2026-11-05).
                                     const float frontYaw = GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
-                                                           1.57079632f * static_cast<float>(CellQuarterTurns(cell.x, cell.y, cell.z));
+                                                           1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.x, cell.y, cell.z));
                                     drawModel(*still, cell.x, cell.y, cell.z, frontYaw);
                                     if (GalaxyEggbert::Game::IsTeleporterIcon(cell.base))
                                     {
