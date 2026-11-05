@@ -1147,6 +1147,7 @@ namespace GalaxyEggbert::CNA
             bigDecorCells_.push_back({
                 cell.worldX, cell.worldY, cell.worldZ, cell.icon});
         }
+        solidBigDecorCells_ = worldRuntime_.SolidBigDecorCells();
 
         auto& device = getGraphicsDeviceProperty();
 
@@ -3692,6 +3693,8 @@ namespace GalaxyEggbert::CNA
                                               obj.currentZ + WorldRuntime::kWorldCenterZ});
                     }
                 }
+                // The large BigDecor stand in his way the same way (Q-014 (b)).
+                crateCells.insert(crateCells.end(), solidBigDecorCells_.begin(), solidBigDecorCells_.end());
                 blupi_.SetCrateCells(std::move(crateCells));
                 const bool canHold = crouchHeld && blupi_.IsOnGround() && !blupi_.IsInVehicle() &&
                                      !blupi_.IsBallooned() && !blupi_.IsEcrased();

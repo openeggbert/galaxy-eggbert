@@ -321,6 +321,11 @@ namespace GalaxyEggbert::Game
             return bigDecorCells_;
         }
 
+        // The cells the large BigDecor fill (IsSolidBigDecorIcon, Q-014 (b)): raw grid centres, a
+        // column of kSolidBigDecorHeight over each one's anchor; solid for Blupi as crates are
+        // (BlupiController::SetCrateCells). Only the 3D worlds' records (they stand on their cell).
+        [[nodiscard]] std::vector<std::array<float, 3>> SolidBigDecorCells() const;
+
         // The world's training-hint zones (HintZoneRecord.hpp), raw grid
         // cells, in record order; empty for worlds that have none.
         [[nodiscard]] const std::vector<HintZoneRecord>& GetHintZones() const { return hintZones_; }

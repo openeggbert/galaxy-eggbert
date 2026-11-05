@@ -361,6 +361,15 @@ namespace GalaxyEggbert::Game
                 {
                     return false;
                 }
+                // The large BigDecor's columns stop a crate as blocks do (Q-014 (b)).
+                for (const auto& cell : worldRuntime.SolidBigDecorCells())
+                {
+                    if (static_cast<int>(std::lround(cell[1])) == y && std::fabs(cell[0] - rx) < 1.0f - kCrateEps &&
+                        std::fabs(cell[2] - rz) < 1.0f - kCrateEps)
+                    {
+                        return false;
+                    }
+                }
                 for (const auto& other : objects)
                 {
                     if (!IsCrate(other) || std::find(group.begin(), group.end(), &other) != group.end() ||

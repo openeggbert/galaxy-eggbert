@@ -2,6 +2,7 @@
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 
 #include <cstdint>
@@ -131,6 +132,41 @@ int main()
         std::cout << (emptyAsExpected ? "PASS" : "FAIL")
                   << ": .vwr world source has empty BigDecor grid as expected" << std::endl;
         if (!emptyAsExpected)
+        {
+            allOk = false;
+        }
+    }
+
+    // Q-014 (b), owner 2026-11-05: the large BigDecor stand in Blupi's way, a column of two cells
+    // over the anchor; the plants and toys do not. World 041 has the house (26) at (40, 10, 70)
+    // among plants (23-25).
+    {
+        GalaxyEggbert::Game::WorldRuntime runtime;
+        const bool loaded = runtime.LoadFromVwrFile("worlds3d/world041.vwr");
+        int large = 0;
+        int small = 0;
+        for (const auto& decor : runtime.GetBigDecorCells())
+        {
+            (GalaxyEggbert::IsSolidBigDecorIcon(decor.icon) ? large : small) += 1;
+        }
+        const auto cells = runtime.SolidBigDecorCells();
+        const auto has = [&](float x, float y, float z)
+        {
+            for (const auto& c : cells)
+            {
+                if (c[0] == x && c[1] == y && c[2] == z)
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+        const bool ok = loaded && large > 0 && small > 0 &&
+                        cells.size() == static_cast<std::size_t>(large * GalaxyEggbert::kSolidBigDecorHeight) &&
+                        has(40.0f, 10.0f, 70.0f) && has(40.0f, 11.0f, 70.0f) && !has(40.0f, 12.0f, 70.0f);
+        std::cout << (ok ? "PASS" : "FAIL") << ": the large BigDecor fill a column of two cells, the small none ("
+                  << large << " large, " << small << " small, " << cells.size() << " cells)" << std::endl;
+        if (!ok)
         {
             allOk = false;
         }

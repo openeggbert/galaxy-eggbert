@@ -6,6 +6,7 @@
 #include "BlupiController.hpp"
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -758,5 +759,23 @@ namespace GalaxyEggbert::Game
         {
             obj.phase += phaseDelta;
         }
+    }
+
+    std::vector<std::array<float, 3>> WorldRuntime::SolidBigDecorCells() const
+    {
+        std::vector<std::array<float, 3>> cells;
+        for (const auto& decor : bigDecorCells_)
+        {
+            if (!IsSolidBigDecorIcon(decor.icon))
+            {
+                continue;
+            }
+            for (int h = 0; h < kSolidBigDecorHeight; ++h)
+            {
+                cells.push_back({decor.worldX + static_cast<float>(kWorldCenterX), decor.worldY + static_cast<float>(h),
+                                 decor.worldZ + static_cast<float>(kWorldCenterZ)});
+            }
+        }
+        return cells;
     }
 }

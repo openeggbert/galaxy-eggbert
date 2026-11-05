@@ -8,7 +8,7 @@ recommendation, and what was done meanwhile. Answered entries move to the end wi
 
 ### Waiting on the owner (updated 2026-11-05 after the owner's answers, `manual_review.md` MR-0007)
 
-Answered 2026-11-05: Q-012 (B), Q-013 (fixed), Q-014 ((b), being built), 053's far cage eggs (to
+Answered 2026-11-05: Q-012 (B), Q-013 (fixed), Q-014 ((b), built: M3D-0006), 053's far cage eggs (to
 move), the playability audit (the automated playthroughs suffice), OR-0028/0029/0033/0034/0048/0053
 (fine). Still the owner's:
 
@@ -275,3 +275,6 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
   (b) solid only the large ones (trees, palms, houses, machines, columns, fountain), the plants
   and toys passable as grass; (c) leave them passable (background pictures, as the original).
   Recommendation: (b).
+- **Decided (b), built 2026-11-05** (`mechanics_3d_decisions.md` M3D-0006): the palms, trees,
+  houses, machines, columns and fountain fill a column of two cells; 025 and 053's routes went round
+  a palm and a machine standing in their way.

@@ -49,6 +49,8 @@ SIZE = 100
 CRUSHER_HAZARD = 3  # BlockHazardKind::Crusher (tools/data/blocks.csv)
 DRIP_HAZARD = 6     # BlockHazardKind::Drip: hangs in an open cell (BD-0033), nothing stands on it
 LIFTS = {1, 47, 48}
+SOLID_BIGDECOR = {16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30, 31, 87, 88, 89}
+SOLID_BIGDECOR_HEIGHT = 2
 HELICOPTER = 13
 WIND_FIRST, WIND_LAST = 110, 125   # BlockTypes::isWind
 DANGEROUS = {2, 3, 4, 16, 17, 20, 32, 33, 44, 54, 96, 97}   # mines and enemies
@@ -70,6 +72,12 @@ class Grid:
         for o in self.objects:
             if o.get("type") == 12:
                 self.solid_objects.add(tuple(int(c // 1) for c in o["start"]))
+        # The large BigDecor, a column over the anchor (BlockDefinitionRegistry's
+        # kSolidBigDecorIcons / kSolidBigDecorHeight, Q-014 (b)).
+        for (x, y, z), icon in world.get("bigdecor", ()):
+            if icon in SOLID_BIGDECOR:
+                for h in range(SOLID_BIGDECOR_HEIGHT):
+                    self.solid_objects.add((x, y + h, z))
         self.danger = set()
         for o in self.objects:
             if o.get("type") in DANGEROUS:

@@ -217,6 +217,12 @@ expect y >= 29.95
 go 55.5 31.6
 go 56.3 30.6 tol 0.15
 go 57 28
+# Round the machine at (57, 19) (solid since Q-014) in lane x 56: the stars (54, 29) and (54, 9) are
+# ten cells off along Z there.
+go 57 21
+go 56 20 tol 0.15
+go 56 18 tol 0.15
+go 57 17
 go 57 13 until eggs = 8
 go 57 8.5
 go 56.3 8 tol 0.05
