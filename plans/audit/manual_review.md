@@ -89,3 +89,19 @@ Machine checks pass for each (tests, playthroughs, measured windows); only a per
 - OR-0006 (lifts too fast): the owner has not tried the 2026-11-01 build yet; stays FIXED (to
   confirm).
 - Next priority: Wave E, the per-world reviews of genuine 3D playability and fidelity.
+
+## MR-0007 — decisions taken interactively on 2026-11-05
+
+The owner asked to be asked ("ptej se me nyni na co potrebujes"); answers:
+
+- Q-014 (BigDecor): **(b)** solid only the large ones (trees, palms, houses, machines, columns,
+  fountain); plants and toys stay passable.
+- Q-012 (terrain relief): **B**, the relief clipped to the cell (as built). The toys' ball cubes:
+  the balls only on the sides; top and bottom no ball, a plain colour.
+- Q-013 (lattice cube): fixed (OR-0069's solid girder); closed.
+- 053's two far cage eggs: **move them** where they can be taken and survived.
+- OR-0028, OR-0029 (sound, settings), OR-0033, OR-0034, OR-0048 (backing up, touch, gamepad),
+  OR-0053 (background in 3D): checked by the owner, fine.
+- Level playability: the automated playthroughs and the target reach audit suffice (no human
+  play pass required for the audit).
+- D11 (models that look wrong): the owner sends the list later.

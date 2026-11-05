@@ -6,23 +6,16 @@ recommendation, and what was done meanwhile. Answered entries move to the end wi
 
 ## Open
 
-### Waiting on the owner (2026-11-05): everything the agent cannot close alone
+### Waiting on the owner (updated 2026-11-05 after the owner's answers, `manual_review.md` MR-0007)
 
-The autonomous part stands verified (play pass 23 78/78, ctest 112/112, golden frames, campaign and
-water checks). What remains needs the owner:
+Answered 2026-11-05: Q-012 (B), Q-013 (fixed), Q-014 ((b), being built), 053's far cage eggs (to
+move), the playability audit (the automated playthroughs suffice), OR-0028/0029/0033/0034/0048/0053
+(fine). Still the owner's:
 
-- Decisions: **Q-012** (terrain relief B or C, below), **Q-013** (was the lattice cube the camera
-  in the passable girder? a screenshot if it persists), **Q-014** (BigDecor solid: a, b or c;
-  recommended b).
-- **D11**: the list of models that look wrong (candidates: `plans/inventory/d11_candidates.md`;
-  the house's chimney done 2026-11-05).
-- **A human play pass** of every world. One place to look at in it: 053's arrow cage, whose two far
-  corner eggs Blupi reaches but did not survive leaving in three scripted tries (twenty follow
-  stars; `target_reach.md`): fine as a risk, or should the eggs move?
-- Owner reports waiting for an eye, an ear or hardware (`owner_reports.md`): OR-0028 (crate
-  push sound), OR-0029 (volume sliders), OR-0033/0048 (backing up, its button), OR-0034 (touch
-  and gamepad), OR-0035 (cheats top left), OR-0038 (the saw), OR-0040 (the fan), OR-0041 (Left
-  Shift), OR-0042 (the lollipop), OR-0044 (the editor's demo world), OR-0053 (the background).
+- **D11**: the list of models that look wrong (sent later; candidates
+  `plans/inventory/d11_candidates.md`).
+- Owner reports not yet looked at: OR-0035 (cheats top left), OR-0038 (the saw), OR-0040 (the
+  fan), OR-0041 (Left Shift), OR-0042 (the lollipop), OR-0044 (the editor's demo world).
 
 ### Q-001 — Grass (107-109, 157) in 3D: how? — DONE (b) 2026-11-04
 
@@ -94,7 +87,7 @@ strands of each painted frame 168-171 (outside the body's silhouette) to centre 
 (`GlueStrands.hpp`), and the game draws them as thin tubes in the strands' own green, turned with
 Blupi and stood on the puddle; evidence `plans/evidence/glue-strands.png`.
 
-### Q-012 — The terrain models: what the scenes turned out to be, and B or C? (2026-11-04)
+### Q-012 — The terrain models: what the scenes turned out to be, and B or C? (2026-11-04) — DONE: B; the toys' ball cubes balls only on the sides (2026-11-05)
 
 Found while starting Q-001/Q-004: the 127 terrain scenes are **not blocks**. Each is a slab modelled
 for the front view only: 0.15-0.55 of a block deep and up to 1.37 blocks wide (the lumps of
@@ -247,7 +240,7 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - **Q-006 glue death**: add the strands.
 - **MR-0001 3ds Max**: no licence; leave the .max files unused.
 
-## Q-013 — the lattice cube "textured only outside" (owner 2026-11-04): where was it seen? — likely fixed by OR-0069
+## Q-013 — the lattice cube "textured only outside" (owner 2026-11-04): where was it seen? — DONE: fixed by OR-0069 (owner 2026-11-05)
 
 - Report: "the cube of grids has textures only outside and not inside; it should probably be 3D";
   then "only the outer side is visible on the cube of grids of metal, probably rods as edges".
@@ -270,7 +263,7 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
   the tower between the camera and Blupi; play pass 22 below, the camera at the open side). The
   girder is solid now: neither Blupi nor the camera goes inside it. To be confirmed by the owner.
 
-## Q-014 — the big decorations (BigDecor: trees, palms, plants, houses, machines, palace columns): solid too? (2026-11-04)
+## Q-014 — the big decorations (BigDecor: trees, palms, plants, houses, machines, palace columns): solid too? (2026-11-04) — DECIDED (b) 2026-11-05
 
 - OR-0069 made the decor tiles that stand in Blupi's way solid. The BigDecor -- the original's
   background pictures (trees 20-22, palms 16-19, plants 23-25, houses 26-27, machines 28-31, the
