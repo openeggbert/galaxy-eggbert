@@ -10,7 +10,8 @@ target, in the first class that holds:
   playthrough   the playthrough took it (its counter rose near it) or stood within a cell of it;
                 every treasure and the exit count here when the playthrough took all treasures
                 and passed
-  from-run      levelcheck's graph, started from every cell the playthrough stood on and with
+  from-run      levelcheck's graph, started from every cell the playthrough stood on (in a
+                patrol's lane too: he was there) and with
                 its --rides moves (off a lift anywhere along its track, the helicopter's flight),
                 reaches it
   earned-door   as from-run with the treasure doors (420 + n) open whose n the playthrough's
@@ -116,8 +117,9 @@ def audit(world_path: Path, trace: Path, blocks):
     grid = levelcheck.Grid(world, blocks)
     seeds = {spawn}
     for _, x, y, z, air in stood:
-        c = (int(x // 1), int(math.floor(y + 0.01)), int(z // 1))
-        if not air and (grid.standable(c) or grid.water(c)):
+        c = (round(x), round(y), round(z))       # cells are centred on integers
+        # Where he stood is a fact, danger or not (a patrol's lane he crossed between its passes).
+        if not air and grid.free(c) and (grid.floor(c) or grid.water(c)):
             seeds.add(c)
     tiers = {}
     rows = []
@@ -127,10 +129,10 @@ def audit(world_path: Path, trace: Path, blocks):
         if around & plain:
             rows.append((kind, cell, "levelcheck"))
             continue
-        cx, cy, cz = cell[0] + 0.5, cell[1], cell[2] + 0.5
+        cx, cy, cz = cell            # objects and positions alike: a cell's centre is its integer
         took = any(math.dist((x, z), (cx, cz)) < 3.5 and abs(y - cy) < 3.5
                    for x, y, z in taken_at.get(kind, ()))
-        visited = any(math.dist((x, z), (cx, cz)) < 1.2 and abs(y - cy) < 1.5 for _, x, y, z, _ in stood)
+        visited = any(math.dist((x, z), (cx, cz)) < 1.0 and abs(y - cy) < 1.0 for _, x, y, z, _ in stood)
         if took or visited or (passed and (kind == "exit" or (kind == "treasure" and took_all))):
             rows.append((kind, cell, "playthrough"))
             continue

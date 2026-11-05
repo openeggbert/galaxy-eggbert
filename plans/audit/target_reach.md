@@ -1,18 +1,30 @@
 # Target reach: every treasure, egg, key and exit of the campaign, and the evidence it is reachable
 
-Generated 2026-11-05 by `python3 tools/audit/target_reach.py build-probe/play-pass-23 --md ...`
-(play pass 23, the 2026-11-05 build; classes in the tool's docstring). `tools/levelcheck.py` alone
-flags targets in 63 of 78 worlds because it does not model vehicles, crates, dynamite or timed
-passes; this puts its graph together with where each playthrough actually stood.
+Generated 2026-11-05 by `python3 tools/audit/target_reach.py build-probe/play-pass-25 --md ...`
+(play pass 25, the build with BD-0073; classes in the tool's docstring). `tools/levelcheck.py`
+alone flags targets in 63 of 78 worlds because it does not model vehicles, crates, dynamite or
+timed passes; this puts its graph together with where each playthrough actually stood.
 
-Result: of 921 targets, 216 levelcheck reaches from the spawn, 589 the playthroughs take or
-stand at (every treasure and every exit: all 78 runs pass and take all their treasures), 86
-levelcheck's graph reaches from the cells the playthroughs stood on with its `--rides` moves
-(off a lift anywhere along its track, the helicopter's flight), 4 behind treasure doors the
-playthroughs' treasures open (061, 124), 13 on the worlds' own check stages (055's overcraft
-shaft, 199's key doors), **13 eggs only with timing** past a patrol, follow stars or hanging mines
-(051's tank lane, 053, 054, 062's big creature, 111, 122: geometrically there, each world's
-generator describes the timed pass; not yet taken by a run), **0 unknown**.
+Result: of 921 targets, 216 levelcheck reaches from the spawn, 582 the playthroughs take or stand
+at (every treasure and every exit: all 78 runs pass and take all their treasures), 94 levelcheck's
+graph reaches from the cells the playthroughs stood on (a patrol's lane too: he was there) with
+its `--rides` moves (off a lift anywhere along its track, the helicopter's flight), 4 behind
+treasure doors the playthroughs' treasures open (061, 124), 13 on the worlds' own check stages
+(055's overcraft shaft, 199's key doors), 12 eggs only with timing, **0 unknown**.
+
+The 12 timed eggs, probed 2026-11-05 by short runs (a playthrough's script up to the place, then
+a detour; the egg counter rose in each):
+
+| world | egg(s) | the detour | taken |
+|---|---|---|---|
+| 051 | (16, 20, 55), (18, 20, 55) in the bay at the end of the enemy tank's lane | after `go 19.6 45`: `near 17 20 38 0.3` (the tank at the lane's north end), `wait 30`, down the lane `go 17 46`, `go 17 53`, `go 16 55`, `go 18 55` | both |
+| 054 | (44, 40, 58) in gallery G2 behind its hanging mines | off lift 46 at walk 40: `go 46 61`, `go 44 61` (the row clear of the mines), `go 44 58.1` | yes |
+| 111 | (78-81, 34, 45) in the exit room | with the helicopter past the mine corridor: `fly X 34.10 45.1` for X 78-81 (low: at 34.6 the helicopter passes over them) | all four |
+| 122 | (44, 14, 64) in the bulldozer's south tunnel | after treasure 7: `go 34 65`, `go 36 64`, `go 44 64` (lane z 64, a cell beside the bulldozer's z 63) | yes |
+| 053 | (78/86, 27, 85/91), the four corners of the arrow's cage | not probed: twenty follow stars sleep round the arrow and home on whoever wakes them | **open** |
+
+Also probed: 062's (47, 11, 60) beside the big creature's corridor (taken; now `from-run`). The
+probes found BD-0073 (eggs are lives: none is taken at ten lives).
 
 | world | levelcheck | playthrough | from-run | earned-door | timed | staged | unknown | not shown (kind and cell) |
 |---|---|---|---|---|---|---|---|---|
@@ -47,11 +59,11 @@ generator describes the timed pass; not yet taken by a run), **0 unknown**.
 | world054 |  | 4 | 4 |  | 1 |  |  | egg (44, 40, 58) |
 | world055 |  | 9 |  |  |  | 2 |  |  |
 | world056 | 29 |  |  |  |  |  |  |  |
-| world057 | 4 | 6 | 4 |  |  |  |  |  |
-| world058 | 2 | 12 | 5 |  |  |  |  |  |
+| world057 | 4 | 7 | 3 |  |  |  |  |  |
+| world058 | 2 | 13 | 4 |  |  |  |  |  |
 | world060 |  |  |  |  |  |  |  |  |
 | world061 | 4 | 19 |  | 3 |  |  |  |  |
-| world062 | 13 | 9 |  |  | 1 |  |  | egg (47, 11, 60) |
+| world062 | 13 | 9 | 1 |  |  |  |  |  |
 | world063 |  | 2 | 6 |  |  |  |  |  |
 | world064 | 2 | 17 |  |  |  |  |  |  |
 | world065 | 1 | 16 |  |  |  |  |  |  |
@@ -63,7 +75,7 @@ generator describes the timed pass; not yet taken by a run), **0 unknown**.
 | world074 |  | 14 |  |  |  |  |  |  |
 | world075 |  | 12 |  |  |  |  |  |  |
 | world080 |  |  |  |  |  |  |  |  |
-| world081 | 2 | 3 | 7 |  |  |  |  |  |
+| world081 | 2 | 1 | 9 |  |  |  |  |  |
 | world082 | 2 | 8 |  |  |  |  |  |  |
 | world083 | 1 | 4 |  |  |  |  |  |  |
 | world084 | 1 | 11 | 4 |  |  |  |  |  |
@@ -78,9 +90,9 @@ generator describes the timed pass; not yet taken by a run), **0 unknown**.
 | world102 | 2 | 5 |  |  |  |  |  |  |
 | world103 | 11 |  |  |  |  |  |  |  |
 | world104 | 2 | 8 |  |  |  |  |  |  |
-| world105 | 3 | 10 | 6 |  |  |  |  |  |
+| world105 | 3 | 7 | 9 |  |  |  |  |  |
 | world106 | 12 | 12 |  |  |  |  |  |  |
-| world107 | 1 | 6 | 2 |  |  |  |  |  |
+| world107 | 1 | 4 | 4 |  |  |  |  |  |
 | world110 |  |  |  |  |  |  |  |  |
 | world111 |  | 5 | 2 |  | 4 |  |  | egg (78, 34, 45); egg (79, 34, 45); egg (80, 34, 45); egg (81, 34, 45) |
 | world112 | 5 | 2 | 2 |  |  |  |  |  |
@@ -89,10 +101,10 @@ generator describes the timed pass; not yet taken by a run), **0 unknown**.
 | world115 | 7 | 7 | 4 |  |  |  |  |  |
 | world120 |  |  |  |  |  |  |  |  |
 | world121 | 7 | 3 |  |  |  |  |  |  |
-| world122 | 3 | 15 | 4 |  | 1 |  |  | egg (44, 14, 64) |
+| world122 | 3 | 13 | 6 |  | 1 |  |  | egg (44, 14, 64) |
 | world123 | 9 | 9 | 1 |  |  |  |  |  |
 | world124 | 11 | 11 | 1 | 1 |  |  |  |  |
 | world125 | 1 | 2 | 2 |  |  |  |  |  |
 | world199 | 11 | 13 | 4 |  |  | 11 |  |  |
 
-totals: levelcheck 216, playthrough 589, from-run 86, earned-door 4, timed 13, staged 13, unknown 0
+totals: levelcheck 216, playthrough 582, from-run 94, earned-door 4, timed 12, staged 13, unknown 0
