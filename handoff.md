@@ -612,7 +612,9 @@ ledgers before repeating any discovery. Where it stands:
   `609f28f0`: palms, trees, houses, machines, columns, fountain solid, a column of two cells; 025
   and 053 re-routed); 053's back cage eggs moved to the front wall (`e087b011`); OR-0028/0029/0033/
   0034/0048/0053 confirmed; the automated playthroughs suffice for the playability audit.
-  **Play pass 27: 78/78.** Still the owner's: D11's list, OR-0035/0038/0040/0041/0042/0044.
+  **Play pass 27: 78/78.** Web build rebuilt with all of it and loaded in headless Chrome (DevTools:
+  121 object models, 93/93 sounds, the title scene and menu). Still the owner's: D11's list,
+  OR-0035/0038/0040/0041/0042/0044.
 - Next: D11's model list when it comes; the six owner reports above; D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
