@@ -129,13 +129,13 @@ go 57 67.6 tol 0.15
 wait 30
 go 57 70.5
 go 52 72 until eggs = 8
-until eggs = 8 max 120
+until mtick >= 8813 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 57 73.4 tol 0.1
 go 57 80.5 tol 0.15
 go 54 81 until keys = 1
 until keys = 1 max 120
 go 57 82 until eggs = 9
-until eggs = 9 max 120
+until mtick >= 9519 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 60 81 until keys = 2
 until keys = 2 max 120
 go 57 78.6 tol 0.1
@@ -204,7 +204,7 @@ go 30.4 56.4
 # Onto the item (the original's 28 px boxes, BD-0021).
 go 29 62 tol 0.15
 go 29.4 61.8 until eggs = 10
-until eggs = 10 max 120
+until mtick >= 13427 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 19.4 62.2 tol 0.15
 near 20 20 58 0.2 lane x max 900
 wait 90

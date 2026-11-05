@@ -156,7 +156,7 @@ namespace GalaxyEggbert::Game
         //
         // Deliberately excluded from this table (kept as their own case
         // bodies, not an oversight): Egg(6) computes its voyage endpoint X
-        // from LIVE state (`lifeEggCount_`) at grant time -- not expressible
+        // from LIVE state (`lives_`) at grant time -- not expressible
         // as fixed table data without a per-entry function hook, which would
         // cost more real complexity than a single type is worth collapsing.
         // BulletPack(29) has a real immediate side effect
@@ -2216,18 +2216,18 @@ namespace GalaxyEggbert::Game
                     }
                     break;
                 case GalaxyEggbert::Def::ObjectType::ObjectType6: // extra-life egg
-                    // Real MAX_EGG_COUNT=10 gate: at the cap, touching an
-                    // egg does nothing at all -- not even removed (real
-                    // gate is on the WHOLE touch-time block, Decor.cpp:6007,
-                    // not just the reward).
-                    if (lifeEggCount_ < kMaxEggCount)
+                    // The egg is a life: taken only while he has fewer than MAX_EGG_COUNT=10
+                    // lives (m_nbVies < 10, Decor.cpp:6007); at ten, touching one does nothing
+                    // at all, it is not even removed. (The gate was the eggs taken so far until
+                    // 2026-11-05: with his 3 lives ten eggs made 13, and after ten he could never
+                    // take another however many he had lost.)
+                    if (lives_ < kMaxEggCount)
                     {
                         obj.active = false;
                         // Real end point VoyageGetPosVie(m_nbVies+1) =
-                        // (210+16*(lifeEggCount_+1), 417), Decor.cpp:10141-
-                        // 10147/6012.
+                        // (210+16*(lives+1), 417), Decor.cpp:10141-10147/6012.
                         RequestVoyage(VoyageKind::Egg, 21, false, obj.currentX, obj.currentY, obj.currentZ,
-                                      210.0f + 16.0f * static_cast<float>(lifeEggCount_ + 1), 417.0f, true);
+                                      210.0f + 16.0f * static_cast<float>(lives_ + 1), 417.0f, true);
                     }
                     break;
                 case GalaxyEggbert::Def::ObjectType::ObjectType29: // bullet pack
@@ -3920,11 +3920,12 @@ namespace GalaxyEggbert::Game
                 sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::Egg:
-                if (lifeEggCount_ < kMaxEggCount)
+                // m_nbVies++ while under MAX_EGG_COUNT (Decor.cpp:10264-10267).
+                if (lives_ < kMaxEggCount)
                 {
-                    ++lifeEggCount_;
                     ++lives_;
                 }
+                ++lifeEggCount_;
                 sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Dynamite:

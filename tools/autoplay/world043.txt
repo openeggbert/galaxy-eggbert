@@ -73,7 +73,7 @@ go 66 29 tol 0.15
 go 66 29.4 tol 0.15
 until treasures = 5 max 200
 go 67 30 tol 0.15
-until eggs = 1 max 200
+until mtick >= 4029 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 69.85 30 tol 0.15
 hold 6 action
 wait 30
@@ -147,7 +147,7 @@ go 42 56.4 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 expect y <= 46.05
 go 42 56 tol 0.2
-until eggs = 2 max 200
+until mtick >= 8790 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # R: the way back, a tube from the dome's north side at y 51: up into it, along it to the block
 # under the pocket in its roof, up into the pocket and down onto the block (treasure 12), on
 # to its end, down the shaft and the tube into the start cave's roof.

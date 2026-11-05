@@ -46,7 +46,7 @@ expect y >= 24.95
 # (BD-0059) left him 0.45 off it past the first.
 go 29.2 47.8
 go 29.2 50 tol 0.05 until eggs = 3
-until eggs = 3 max 200
+until mtick >= 1191 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # The lightning bridge (walk 25, z 50) west through the wall: up to the gate (x 26).
 go 29 50
 go 27.6 50 tol 0.15

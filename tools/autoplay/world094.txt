@@ -28,14 +28,14 @@ go 30.3 54 tol 0.05
 go 33 54 jump 9 tol 0.15 max 200
 until ground = 1
 go 36 54 until eggs = 1 max 300
-until eggs = 1 max 200
+until mtick >= 1372 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # B, the bridges (z 53-54): over the first (x 41-47) without stopping to the rest pillar
 # (x 48-49) and its egg (48, 55); over the second (x 50-58) under its two hanging mines to the
 # door ledge (walk 20).
 go 39.5 53.5
 go 48.5 53.5 max 300
 go 48 55 until eggs = 2 max 300
-until eggs = 2 max 200
+until mtick >= 1805 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 48.6 53.5 tol 0.15
 go 60 53.5 max 300
 expect y >= 19.9
@@ -49,7 +49,7 @@ expect y <= 10.1
 go 62.5 57.15
 go 68 57.15
 go 72 59 until eggs = 3 max 600
-until eggs = 3 max 200
+until mtick >= 2745 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 68.8 59.5
 go 68.8 64
 go 68.6 68 tol 0.1
@@ -168,7 +168,7 @@ go 48.5 24
 go 48.5 36
 go 44 36
 go 32 38 until eggs = 4 max 600
-until eggs = 4 max 200
+until mtick >= 9508 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 43.4 18
 go 43.4 13 tol 0.1
 face 270
@@ -193,7 +193,7 @@ go 48.5 24
 go 58 24
 go 72 14
 go 87 10 until eggs = 5 max 900
-until eggs = 5 max 200
+until mtick >= 12913 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # T3 at the end of the bulldozer's trench (x 84, z 18-38; it drives z 22-36 at the original's
 # 0.67 cells a second, 1 s at each end, BD-0016): in behind it once it is past the alcove
 # (85, 32), into the alcove; out once it has come back north past it, south to the treasure
@@ -221,7 +221,7 @@ go 76 12
 go 60 8
 go 60 6 until exit = 1 max 300
 expect treasures = 4
-expect eggs = 5
+expect lives >= 8   # his 5 eggs, or a lives row already full in a chain (MAX_EGG_COUNT 10, BD-0073)
 until mission = 90 max 900
 expect phase = Play
 wait 60

@@ -28,7 +28,7 @@ hold 18 crouch
 until ground = 1
 expect z >= 62.9
 go 56 64 until eggs = 1
-until eggs = 1 max 120
+until mtick >= 2099 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 56 63.3 tol 0.08
 face 0
 hold 4 jump

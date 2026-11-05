@@ -136,7 +136,7 @@ until ground = 1
 expect y >= 37.9
 go 38 14 until eggs = 8 max 300
 go 37 12 until eggs = 9 max 300
-until eggs = 9 max 200
+until mtick >= 8308 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # Back down east and along the village's front (z 11, between the houses and the pond) to the
 # red arrow before the middle house (70, 13).
 go 44 11.5
@@ -144,7 +144,7 @@ until ground = 1
 go 57 11
 go 66 11
 go 70 13 until exit = 1 max 600
-expect eggs = 9
+expect lives = 10   # his eggs fill the lives row (MAX_EGG_COUNT 10: beyond it eggs stay, BD-0073)
 until mission = 90 max 900
 expect phase = Play
 wait 60

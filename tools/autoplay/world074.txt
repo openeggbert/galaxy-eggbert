@@ -118,10 +118,10 @@ expect y >= 25.9
 go 75 66 jump 1.5 tol 0.15
 until ground = 1
 expect y >= 27.9
-until eggs = 1 max 200
+until mtick >= 5089 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 74 66 until eggs = 2 max 300
 go 76 66 until eggs = 3 max 300
-until eggs = 3 max 200
+until mtick >= 5273 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 75 66 tol 0.15
 go 74.15 65 tol 0.15 max 300
 until ground = 1
@@ -175,7 +175,7 @@ until ground = 1 max 300
 expect y >= 14.9
 # The egg in the court's corner (29, 45).
 go 29 45 until eggs = 4 max 600
-until eggs = 4 max 200
+until mtick >= 7660 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # I, the west relay (40 ticks, 40 dwelling): pair D (x 30) up from the court to meet pair E
 # (x 29, 31) coming down; E back up to meet pair F (x 30), F up to the landing DL (walk 27).
 # Round the post (30, 48) by its west side.
@@ -209,7 +209,7 @@ until ground = 1
 expect y >= 32.9
 go 19 49 until exit = 1 max 300
 expect treasures = 9
-expect eggs = 4
+expect lives >= 7   # his 4 eggs, or a lives row already full in a chain (MAX_EGG_COUNT 10, BD-0073)
 until mission = 70 max 900
 expect phase = Play
 wait 60

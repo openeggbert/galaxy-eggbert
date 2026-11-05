@@ -15,11 +15,11 @@ go 10 87 tol 0.15
 expect y >= 25.95
 until treasures = 1 max 200
 go 11 84.3 tol 0.15
-until eggs = 1 max 200
+until mtick >= 852 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 10 84.3 tol 0.15
-until eggs = 2 max 200
+until mtick >= 937 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 9 84.3 tol 0.15
-until eggs = 3 max 200
+until mtick >= 1014 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 10 80.6
 until ground = 1
 expect y <= 20.05
@@ -35,7 +35,7 @@ expect y >= 19.95
 # P, the gallery (z 56): crouching along its line of stones and pads under the three mines
 # hanging at Blupi's height, to door 1 (45, 56), open with one.
 go 22 52 tol 0.15
-until eggs = 4 max 200
+until mtick >= 2042 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 30 56
 go 33.6 56 tol 0.1
 go 40.8 56 tol 0.15 with crouch max 900
@@ -66,7 +66,7 @@ until y >= 19.98 max 400
 go 57 56.5
 expect y >= 19.95
 go 60 56 tol 0.15
-until eggs = 5 max 200
+until mtick >= 4311 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # B: the ferry (63-69, z 55-57; 40 ticks, two seconds at the ledge) boarded as it waits,
 # left from its front edge as it arrives at the road.
 go 61.5 56
@@ -145,9 +145,9 @@ until treasures = 8 max 200
 # Onto the item (the original's 28 px boxes, BD-0021).
 go 64 37 tol 0.15
 go 64 36.6 tol 0.15
-until eggs = 6 max 200
+until mtick >= 11833 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 62 36.6 tol 0.15
-until eggs = 7 max 200
+until mtick >= 11941 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # A floor helicopter (60, 33) up over the cage on its column (walls 44-46, open above), down
 # into it: treasure 3 beside its pillar.
 go 60.08 33.12 tol 0.15
@@ -183,11 +183,11 @@ fly 51.4 55.09 11.3 tol 0.2
 go 51.4 11.3 tol 0 with crouch until ground = 1 max 600
 until ground = 1 max 200
 go 51.2 11.2 tol 0.2
-until eggs = 8 max 200
+until mtick >= 15153 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 52 11.2 tol 0.2
-until eggs = 9 max 200
+until mtick >= 15254 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 53 11.2 tol 0.2
-until eggs = 10 max 200
+until mtick >= 15340 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # X: out through the cheese, down to the exit landing (walk 36), west along the corridor under
 # its lintel of crushers (x 53, one high) while they are up, to the red arrow.
 fly 53.5 52.13 15 tol 0.3

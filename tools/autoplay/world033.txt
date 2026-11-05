@@ -18,7 +18,7 @@ go 49.2 31
 go 57 29 tol 0.1
 until treasures = 2 max 200
 go 43 29.4 tol 0.1
-until eggs = 1 max 200
+until mtick >= 2136 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 49.2 31
 go 49.2 35
 go 50 38.6
@@ -73,7 +73,7 @@ go 50 55 tol 0.1
 until treasures = 6 max 200
 go 50 58
 go 45 67 tol 0.1
-until eggs = 2 max 200
+until mtick >= 7256 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 50 58
 go 50 55.9
 # North room 1 (doorway x 49-51, z 37) by the gallery's west side, past its floor mine (44, 44).

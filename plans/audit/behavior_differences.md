@@ -1112,3 +1112,22 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Galaxy pushed him through a pickup's freeze, a teleport and the goodbye wave.
 - Fix: `BlupiController`'s wind lookup skipped while `m_pickupFrozen`, `m_teleporting` or `m_bye`.
 - Validation: `VerifyBlupiMovement` (taking a pickup in the wind he stays put); ctest.
+
+## BD-0073 — eggs were capped by the eggs taken, not by his lives (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:6007, 10264-10267, `MAX_EGG_COUNT` 10 at :96): an egg is a life; it is taken
+  only while `m_nbVies` (his lives) is under 10, and its voyage ends at `VoyageGetPosVie(m_nbVies + 1)`.
+  At ten lives touching one does nothing, it stays; after a death it can be taken again.
+- Galaxy gated on `lifeEggCount_`, the eggs taken so far: from his 3 lives ten eggs made 13 (062's
+  playthrough reached 12), and once ten were taken no egg could ever be taken again. Found
+  2026-11-05 by the target audit (`tools/audit/target_reach.py`), probing 062's corridor egg.
+- Fix: `InteractionSystem` gates the touch and the voyage's reward on `lives_ < 10` and aims the
+  voyage at the lives row's next slot; `lifeEggCount_` is only the autoplay's tally.
+- Validation: `VerifyInteractionSystem` (from 4 lives six eggs make 10; at 10 an egg stays; after a
+  death the same egg is taken); ctest 112/112.
+- Playthroughs: 17 had waited for eggs a full lives row no longer takes (and 034's lift boarding
+  moved, the egg's voyage now ending at the next life slot). Each such wait became `until mtick >= T`,
+  T the mission tick the egg was taken at in play pass 23 (so a run keeps its old timing whether
+  the egg is taken or not: alone from 3 lives, or in a hub chain with the row already full); egg
+  counts expected at a mission's end became `expect lives >= min(10, 3 + eggs)`; 034 lets a lift
+  that is leaving go. Play pass 25 (below in `handoff.md`).

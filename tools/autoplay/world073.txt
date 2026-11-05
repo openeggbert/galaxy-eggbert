@@ -42,7 +42,7 @@ lift 47 15 71 max 400
 go 47 71 tol 0.15
 lift 47 10 71 max 400
 go 45 71 until eggs = 1 max 300
-until eggs = 1 max 200
+until mtick >= 4119 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 46.4 71 tol 0.1
 lift 47 15 71 max 400
 lift 47 10 71 max 400
@@ -163,7 +163,7 @@ go 63 38 tol 0.03 max 200
 go 59 38 jump 9 max 300
 until ground = 1
 go 58 38 until eggs = 3 max 300
-until eggs = 3 max 200
+until mtick >= 12622 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # F2 north to the balcony G1 (walk 27); G, the climb in the open sky. Ga (58, 18) up to G2
 # (walk 30); Gb (60, 15) down to G2b (walk 27) and treasure 4, and back up.
 go 58 37
@@ -203,7 +203,7 @@ until y >= 35.99 max 400
 wait 5
 go 54 9 until exit = 1 max 300
 expect treasures = 4
-expect eggs = 3
+expect lives >= 6   # his 3 eggs, or a lives row already full in a chain (MAX_EGG_COUNT 10, BD-0073)
 until mission = 70 max 900
 expect phase = Play
 wait 60

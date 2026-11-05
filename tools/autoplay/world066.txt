@@ -11,7 +11,7 @@ face 270
 go 18.85 60 tol 0.03
 go 16.5 60 jump 3 tol 0.2
 until ground = 1
-until eggs = 1 max 120
+until mtick >= 159 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 face 90
 go 19 60 jump 2 tol 0.05
 until ground = 1
@@ -44,7 +44,7 @@ go 59.2 62.05 jump 3.2 tol 0.3
 go 63.2 62.05 jump 3.2 tol 0.3
 go 67.2 62.05 jump 3.2 tol 0.3
 go 68.3 62 until eggs = 2
-until eggs = 2 max 120
+until mtick >= 4064 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # East out of the wind: the two saws in the floor (x 71, 73) jumped, one jump each, landing
 # between them; up the stair (x 77-78, z 63-64) to the corridor of lava cells (z 65, walk 26).
 go 72.2 62 jump 1.85 tol 0.08
@@ -170,7 +170,7 @@ until ground = 1
 go 35 45.8 jump 1.8 tol 0.1
 until ground = 1
 go 46 46 tol 0.1
-until eggs = 3 max 200
+until mtick >= 9295 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # Back west: the clay bridge's hole (x 40; it crumbled behind him on the way east), the traps
 # (x 34, 32); the moving mine jumped as it comes east toward him (106 ticks
 # after it turned at its east end, x 30), the still mine and the trap (x 16); under teleporter 1

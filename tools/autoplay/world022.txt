@@ -86,7 +86,7 @@ go 64 27
 expect y >= 6.95
 # C. The lift tower: the yard's egg, then L1 (66 23, feet 7 -> 10) to treasure 5's ledge.
 go 76 30 until eggs = 5
-until eggs = 5 max 120
+until mtick >= 5964 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 66 26
 go 66 24.35 tol 0.1
 # On as it arrives below, not late in its stop: first its top, then its return (the pickups'
@@ -158,7 +158,7 @@ expect y >= 25.95
 go 40 7 until treasures = 8
 until treasures = 8 max 120
 go 40 5 until eggs = 6
-until eggs = 6 max 120
+until mtick >= 10150 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # The bars marked 8 are open: the green key in its shrine.
 go 36 7
 face -90
@@ -175,7 +175,7 @@ go 52 13
 go 49.4 14 tol 0.1
 face -90
 go 48 14 jump 1.4 until eggs = 7
-until eggs = 7 max 120
+until mtick >= 11307 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 48 15.4
 until ground = 1
 go 36 13

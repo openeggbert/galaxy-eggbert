@@ -100,12 +100,12 @@ go 86 85
 go 90 86 tol 0.15
 until treasures = 3 max 200
 go 93 87 tol 0.15
-until eggs = 3 max 200
+until mtick >= 4034 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 93 85 tol 0.15
-until eggs = 4 max 200
+until mtick >= 4142 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 89 88
 go 89 90 tol 0.15
-until eggs = 5 max 200
+until mtick >= 4388 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 89 87
 # The relay up the north wall: onto the step at the first lift's foot (walk 19), onto the lift
 # at its bottom, then forward the whole way: each rest holds him until his lift's top, the
@@ -130,7 +130,7 @@ until ground = 1
 go 92 52 jump 3.0
 until ground = 1
 go 94 51 tol 0.15
-until eggs = 6 max 200
+until mtick >= 6955 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 92 51.4 tol 0.1
 go 92 48 jump 3.0
 until ground = 1

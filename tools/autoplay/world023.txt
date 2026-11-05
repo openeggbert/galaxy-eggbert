@@ -4,7 +4,7 @@ expect mission = 23
 expect lives >= 3
 # The hall (walk 11): its egg, then the lift (44 60, feet 11 -> 4) down into the cave.
 go 55 65 until eggs = 1
-until eggs = 1 max 120
+until mtick >= 281 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 44 61.35 tol 0.1
 face 180
 lift 44 11 60 max 600
@@ -15,7 +15,7 @@ go 44 61.6
 go 52 53
 go 59 53
 go 37 53 until eggs = 2
-until eggs = 2 max 120
+until mtick >= 2476 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 37 69
 wait 60
 # Its crate pushed +X to the ledge's foot (53 66), climbed, and the ledge (walk 7): the
@@ -60,7 +60,7 @@ go 47 49
 face -90
 go 42 49
 go 42 50 until eggs = 3
-until eggs = 3 max 120
+until mtick >= 5950 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 41.6 49
 face -90
 go 37.5 49
@@ -91,7 +91,7 @@ go 31.8 32.6 jump 1.6
 until ground = 1
 expect y >= 18.95
 go 31 33 until eggs = 4
-until eggs = 4 max 120
+until mtick >= 7065 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 31.5 32.3 tol 0.1
 face 0
 go 31.5 30.6 jump 1.6
@@ -125,7 +125,7 @@ go 45 24 tol 0.15
 hold 2 action
 wait 10
 go 46 24 until eggs = 5
-until eggs = 5 max 120
+until mtick >= 8798 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 52 24 until treasures = 2
 until treasures = 2 max 120
 go 44 24

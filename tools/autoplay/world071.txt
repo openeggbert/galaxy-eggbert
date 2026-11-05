@@ -257,7 +257,7 @@ go 42.4 12 tol 0.1
 face 90
 go 45 12 jump 2.4 until exit = 1 max 300
 until exit = 1 max 300
-expect eggs = 8
+expect lives >= 10   # his 8 eggs, or a lives row already full in a chain (MAX_EGG_COUNT 10, BD-0073)
 until mission = 70 max 900
 expect phase = Play
 wait 60

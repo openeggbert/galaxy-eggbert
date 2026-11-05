@@ -677,10 +677,9 @@ namespace GalaxyEggbert::Game
         // Real mobile-eggbert m_nbVies (lives) tracking (2026-07-11, plan.md
         // E3D-MIG-130): starts at 3 (GameData default,
         // mobile-eggbert-reference/11-save-and-progression.md), incremented
-        // by egg pickups up to MAX_EGG_COUNT=10 (see the ObjectType6 case in
-        // Update() -- lifeEggCount_ above is both "eggs collected so far"
-        // and the gate counter, same single value mobile-eggbert itself
-        // uses). Call LoseLife() on any death; a caller decides which sound
+        // by egg pickups while under MAX_EGG_COUNT=10 lives (see the ObjectType6
+        // case in Update(): the gate is this count, as the original's m_nbVies;
+        // lifeEggCount_ above only tallies the eggs taken). Call LoseLife() on any death; a caller decides which sound
         // channel fits the specific death cause (channel 8 generic/fall/
         // lava/electric, 26 drowning, 51 glue per
         // mobile-eggbert-reference/07-sounds.md) and plays it itself --
@@ -1066,10 +1065,8 @@ namespace GalaxyEggbert::Game
         int keys1_ = 0;
         int keys2_ = 0;
         int keys3_ = 0;
-        // Eggs collected so far -- also the MAX_EGG_COUNT=10 gate counter
-        // (mobile-eggbert uses a single m_nbVies-driven value for both;
-        // kept separate here only so lives_ can start at its own real
-        // default of 3 while this stays a pure 0..10 egg tally).
+        // Eggs taken so far (the autoplay's tally). The MAX_EGG_COUNT=10 gate is on lives_, the
+        // original's m_nbVies, which an egg raises (Decor.cpp:6007, 10264).
         int lifeEggCount_ = 0;
         int lives_ = 3; // real GameData default (11-save-and-progression.md)
         int gameOverCount_ = 0;

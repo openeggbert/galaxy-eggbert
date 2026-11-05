@@ -16,7 +16,7 @@ go 43.2 42 jump 1.8
 until ground = 1
 expect y >= 13.95
 go 43 41 until eggs = 1
-until eggs = 1 max 120
+until mtick >= 1018 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # North: up the stairwell's eight two-block steps along x 50 (clear of the saws at 51 30 and
 # 49 21 and the mine at 51 18), the egg on step 4.
 go 43 43
@@ -36,7 +36,7 @@ go 50 28.4 jump 2.0
 until ground = 1
 expect y >= 18.95
 go 49 27 until eggs = 2
-until eggs = 2 max 120
+until mtick >= 1762 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 50 27.4
 face 0
 go 50 25.4 jump 1.8
@@ -61,7 +61,7 @@ go 47.6 4.05 tol 0.15
 go 47 4.4
 go 46.5 6
 go 46 11 until eggs = 3
-until eggs = 3 max 120
+until mtick >= 2825 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 46.5 6
 go 47.2 4.05 tol 0.15
 go 50 4.05
@@ -98,7 +98,7 @@ go 62.4 51 jump 1.7
 until ground = 1
 expect y >= 16.95
 go 62.4 52 until eggs = 4
-until eggs = 4 max 120
+until mtick >= 5332 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # L3 (z 49, feet 17, there in 0.75 s, 2 ticks at each end): stepped on as it arrives, off
 # by a jump onto east ledge 2 (walk 19) as it stops.
 go 63.3 49.5
@@ -136,7 +136,7 @@ expect y >= 22.95
 go 69 50 tol 0.15
 go 69.4 50
 go 69.4 52 until eggs = 5
-until eggs = 5 max 120
+until mtick >= 6683 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # Off the ledge's east side down to the yard, out of the cage under the bars (z 54), round
 # to the room.
 go 72 52
@@ -169,7 +169,7 @@ go 27.6 50 jump 2.5
 until ground = 1
 expect y >= 10.95
 go 28 49 until eggs = 6
-until eggs = 6 max 120
+until mtick >= 8787 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 27.5 50
 go 26.75 50 tol 0.08
 face -90
@@ -191,7 +191,7 @@ go 13.6 50 max 600
 expect y >= 10.95
 go 13 50
 go 13 48 until eggs = 7
-until eggs = 7 max 120
+until mtick >= 9620 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # Back east: along the rods, then each pair of cells jumped from pier to pier, onto the
 # lift or past it (wait for it to be up first, so a short landing finds it there).
 go 14 50 tol 0.15
@@ -250,7 +250,7 @@ expect y >= 10.95
 go 50 77.6
 go 50.5 87
 go 52 88 until eggs = 8
-until eggs = 8 max 120
+until mtick >= 13436 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 46 89.4
 face 0
 go 46.00 86.89 tol 0.05 max 300
@@ -271,7 +271,7 @@ go 49.6 84.6 jump 1.8
 until ground = 1
 expect y >= 15.95
 go 50 84 until eggs = 9
-until eggs = 9 max 120
+until mtick >= 14282 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 50 80 until treasures = 2
 until treasures = 2 max 120
 go 50 78.7 tol 0.05
@@ -300,7 +300,7 @@ expect y >= 21.95
 go 42.4 81 until treasures = 4
 until treasures = 4 max 120
 go 43 83 until eggs = 10
-until eggs = 10 max 120
+until mtick >= 15350 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # Shelf 5 (the top, walk 24): its treasure (its egg would be the eleventh: at ten eggs the
 # original takes no more, MAX_EGG_COUNT).
 go 42.8 83.0 tol 0.1
@@ -332,6 +332,6 @@ go 50 57.6
 go 50 52 until exit = 1
 expect treasures = 5
 until mission = 20 max 900
-expect lives >= 13
+expect lives = 10   # his ten eggs fill the lives row (MAX_EGG_COUNT, BD-0073)
 expect phase = Play
 wait 120

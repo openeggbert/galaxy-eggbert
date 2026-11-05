@@ -8,7 +8,7 @@ expect mission = 93
 # mine (13, 76) in lane x 12, each row of three mines (z 71, z 65) jumped from 0.85 before it
 # (the low roof makes the jump short); the niche's three eggs (17, z 67-69) between the rows.
 go 9 89 until eggs = 1 max 300
-until eggs = 1 max 200
+until mtick >= 244 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 12 80
 go 12 74
 go 13 73
@@ -19,7 +19,7 @@ until ground = 1
 go 17 69 until eggs = 2 max 300
 go 17 68 until eggs = 3 max 300
 go 17 67 until eggs = 4 max 300
-until eggs = 4 max 200
+until mtick >= 1036 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 13 67
 go 13 65.85 tol 0.03
 face 0
@@ -37,7 +37,7 @@ expect y >= 21.9
 go 16 48 with crouch until eggs = 5 max 600
 # Down to the bottom: the egg lies on it (the original's boxes, BD-0021).
 hold 200 crouch
-until eggs = 5 max 200
+until mtick >= 2111 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 31 48 with crouch max 900
 go 34.4 48 tol 0 with lookup until y >= 19.2 max 600
 face 90
@@ -56,7 +56,7 @@ expect y >= 21.9
 go 35 22 until eggs = 6 max 300
 go 34 22 until eggs = 7 max 300
 go 36 22 until eggs = 8 max 300
-until eggs = 8 max 200
+until mtick >= 3652 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 37.4 26
 until ground = 1
 # Down the plinth's west side along x 39.1 (at 39.3 his body meets it, OR-0017).
@@ -131,7 +131,7 @@ hold 30 up
 until ground = 1 max 300
 expect y >= 11.9
 go 83 76 until eggs = 9 max 300
-until eggs = 9 max 200
+until mtick >= 8885 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # G, the guarded court: out of the alcove across the lane's line of fire (z 78; its shots fly
 # east past the bank in bursts every 200 ticks) when no shot is within 5; the drink's pocket (x 74-78, z 86-90) through its mouth (x 75-76, z 85),
 # under the mine riding up and down in x 75 while it is at the top; the drink (76, 88) taken
@@ -157,7 +157,7 @@ go 50.5 78 max 600
 go 48 79.5
 go 48 89.3
 go 41 89 until eggs = 10 max 600
-until eggs = 10 max 200
+until mtick >= 11075 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # Round the box's west side to its doorway (44, 80) in the north wall, while the helicopter over
 # it (x 41-47, z 79) waits at its east end (its drops fall at its ends); the red arrow inside.
 # The way by the box's west side (x 40) is one cell wide: along its middle (OR-0017).
@@ -168,7 +168,7 @@ go 41.5 79.2
 go 44 79.2 tol 0.1
 go 44 85 until exit = 1 max 600
 expect treasures = 2
-expect eggs = 10
+expect lives = 10   # his eggs fill the lives row (MAX_EGG_COUNT 10: beyond it eggs stay, BD-0073)
 until mission = 90 max 900
 expect phase = Play
 wait 60

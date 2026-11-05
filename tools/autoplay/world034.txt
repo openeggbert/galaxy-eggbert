@@ -29,9 +29,12 @@ expect y >= 7.95
 # The middle's egg, then east over the lava pit (x 24-29) on the sliding lifts (36 ticks,
 # 3 stop: stepped on as one arrives, left from its front edge) to the treasure (36, 36).
 go 21 33 tol 0.15
-until eggs = 1 max 200
+until mtick >= 2021 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 22.5 39
 go 23.3 39 tol 0.15
+# Let a lift that is just leaving go (one there the tick he arrives is on its way out), then
+# board the next as it arrives.
+wait 40
 lift 24 8 39 max 600
 hold 17 up
 until x >= 28.0 max 300
@@ -122,7 +125,7 @@ expect y >= 17.95
 go 62 52 tol 0.1
 until treasures = 3 max 200
 go 64 54 tol 0.1
-until eggs = 2 max 200
+until mtick >= 10990 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # Off the shelf's north edge to the floor and back to beta (64, 32): to the rock cave.
 go 64 47
 until ground = 1 max 300
@@ -190,9 +193,9 @@ expect y >= 33.95
 # lava on its rods, to the treasure in the corner beside the fan's mouth; back to alpha (18, 32).
 go 16 33.6
 go 16 31 tol 0.1
-until eggs = 3 max 200
+until mtick >= 17315 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 22 31 tol 0.1
-until eggs = 4 max 200
+until mtick >= 17690 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # The pit of lava (x 30-33) crossed hanging from its rods (lane 31), there and back.
 go 29 31 tol 0.1
 go 35 31 max 600

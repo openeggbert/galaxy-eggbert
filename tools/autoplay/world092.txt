@@ -8,9 +8,9 @@ expect mission = 92
 # lollipop (30, 70) licked, its high jump onto the step (walk 24), then plain jumps up the three
 # steps (walk 26, 28, 30) to the canyon (walk 32).
 go 10 90 until eggs = 1 max 600
-until eggs = 1 max 200
+until mtick >= 262 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 31 90 until eggs = 2 max 900
-until eggs = 2 max 200
+until mtick >= 855 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 30.5 74
 go 30 70.15 tol 0.1
 face 0
@@ -40,7 +40,7 @@ go 33 50.5
 go 41.5 50.5 max 300
 go 41 49.2 until eggs = 3 max 300
 go 42 51.8 until eggs = 4 max 300
-until eggs = 4 max 200
+until mtick >= 2503 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 42.3 50.5 tol 0.15
 go 51 50.5 max 300
 expect y >= 31.9
@@ -50,7 +50,7 @@ expect y >= 31.9
 # onto when no bird is near.
 go 59.5 48
 go 61 30 until eggs = 5 max 600
-until eggs = 5 max 200
+until mtick >= 3509 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 80 30
 go 81.4 34 tol 0.1
 face 90
@@ -59,7 +59,7 @@ go 83 34 jump 1.8 tol 0.15
 until ground = 1
 expect y >= 32.9
 go 84 34 until eggs = 6 max 300
-until eggs = 6 max 200
+until mtick >= 4309 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 81 37.5
 go 76 42.6 tol 0.1
 face 180
@@ -68,7 +68,7 @@ go 76 45.2 jump 2.4 tol 0.15
 until ground = 1
 expect y >= 33.9
 go 76 46 until eggs = 7 max 300
-until eggs = 7 max 200
+until mtick >= 4845 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 # D, the stair out of the crater's south-east corner, eleven steps of two down west to the
 # machine hall (walk 12).
 go 80 49.5
@@ -82,7 +82,7 @@ expect y <= 12.1
 go 65.5 67
 go 65.5 80
 go 62 82 until eggs = 8 max 300
-until eggs = 8 max 200
+until mtick >= 6592 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 61.3 80
 go 61.3 72
 go 60 71 tol 0.15
@@ -128,11 +128,11 @@ until ground = 1
 go 46 91 until treasures = 1 max 300
 until treasures = 1 max 200
 go 49 92 until eggs = 9 max 300
-until eggs = 9 max 200
+until mtick >= 9612 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 41 90
 go 36 90 until exit = 1 max 600
 expect treasures = 1
-expect eggs = 9
+expect lives = 10   # his eggs fill the lives row (MAX_EGG_COUNT 10: beyond it eggs stay, BD-0073)
 until mission = 90 max 900
 expect phase = Play
 wait 60

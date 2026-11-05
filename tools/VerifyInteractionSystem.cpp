@@ -628,7 +628,7 @@ int main(int argc, char** argv)
         // every other pickup here), so each touch needs its own
         // completePendingVoyage() before the next.
         constexpr float kEggCapTestX = 300.0f, kEggCapTestY = 1.0f, kEggCapTestZ = 300.0f;
-        for (int i = 0; i < 9; ++i) // already at 1 above -- 9 more reaches the real cap of 10
+        const auto touchFreshEgg = [&]()
         {
             MobileObjSpec freshEgg;
             freshEgg.type = GalaxyEggbert::Def::ObjectType::ObjectType6;
@@ -639,35 +639,39 @@ int main(int argc, char** argv)
             world.GetMobileObjectsMutable().push_back(freshEgg);
             interaction.Update(dt, world, kEggCapTestX, kEggCapTestY, kEggCapTestZ, 0.0f, sound);
             completePendingVoyage(world, interaction);
-        }
-        check(interaction.LifeEggCount() == 10, "9 more egg touches reach the real MAX_EGG_COUNT=10 cap");
-
-        // At the cap: a further touch is a total no-op -- not even
-        // removed (real gate is on the WHOLE touch-time block,
-        // Decor.cpp:6007, not just the reward).
-        MobileObjSpec eggAtCap;
-        eggAtCap.type = GalaxyEggbert::Def::ObjectType::ObjectType6;
-        eggAtCap.active = true;
-        eggAtCap.currentX = eggAtCap.posStartX = eggAtCap.posEndX = kEggCapTestX;
-        eggAtCap.currentY = eggAtCap.posStartY = eggAtCap.posEndY = kEggCapTestY;
-        eggAtCap.currentZ = eggAtCap.posStartZ = eggAtCap.posEndZ = kEggCapTestZ;
-        world.GetMobileObjectsMutable().push_back(eggAtCap);
-        const int livesBeforeCappedTouch = interaction.Lives();
-        interaction.Update(dt, world, kEggCapTestX, kEggCapTestY, kEggCapTestZ, 0.0f, sound);
-        bool cappedEggStillActive = false;
-        for (const auto& obj : world.GetMobileObjects())
+        };
+        const auto freshEggStillActive = [&]()
         {
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType6 && obj.active &&
-                std::fabs(obj.currentX - kEggCapTestX) < 0.01f && std::fabs(obj.currentZ - kEggCapTestZ) < 0.01f)
+            for (const auto& obj : world.GetMobileObjects())
             {
-                cappedEggStillActive = true;
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType6 && obj.active &&
+                    std::fabs(obj.currentX - kEggCapTestX) < 0.01f && std::fabs(obj.currentZ - kEggCapTestZ) < 0.01f)
+                {
+                    return true;
+                }
             }
+            return false;
+        };
+        // The MAX_EGG_COUNT=10 gate is on his lives (m_nbVies < 10, Decor.cpp:6007, 10264): from
+        // 4 lives six more eggs make 10.
+        for (int i = 0; i < 6; ++i)
+        {
+            touchFreshEgg();
         }
-        check(interaction.LifeEggCount() == 10,
-              "LifeEggCount() stays at the cap after touching an egg while already full");
-        check(cappedEggStillActive, "an egg touched while already at the cap is NOT removed");
-        check(interaction.Lives() == livesBeforeCappedTouch,
-              "no life is granted for touching an egg while already at the cap (no voyage requested)");
+        check(interaction.Lives() == 10 && interaction.LifeEggCount() == 7,
+              "six more eggs bring him to the cap of 10 lives (7 eggs taken)");
+        // At ten lives a further touch is a total no-op -- not even removed (the gate is on the
+        // whole touch-time block, Decor.cpp:6007, not just the reward).
+        touchFreshEgg();
+        check(interaction.Lives() == 10 && interaction.LifeEggCount() == 7,
+              "at 10 lives touching an egg grants nothing (no voyage requested)");
+        check(freshEggStillActive(), "an egg touched at 10 lives is NOT removed");
+        // A life lost, the same egg is taken: the cap is on lives, not on the eggs taken.
+        interaction.LoseLife();
+        interaction.Update(dt, world, kEggCapTestX, kEggCapTestY, kEggCapTestZ, 0.0f, sound);
+        completePendingVoyage(world, interaction);
+        check(interaction.Lives() == 10 && interaction.LifeEggCount() == 8 && !freshEggStillActive(),
+              "below 10 lives again (a death) the waiting egg is taken, back to 10");
     }
     else
     {

@@ -79,7 +79,7 @@ go 59 53 tol 0.1
 go 59 50.5
 go 59 48 tol 0.1
 go 57 48 tol 0.1
-until eggs = 4 max 200
+until mtick >= 7189 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 59 50.5
 go 59 53 tol 0.1
 go 55.5 53
