@@ -23,6 +23,13 @@ next to mines and enemies are avoided. A world can be more reachable than
 this says (dynamite, vehicles, crates, springs are not modelled yet); when it says reachable,
 the route exists.
 
+With ``--rides`` it also counts two moves that are real but harder to bound, for auditing what
+the plain check leaves unreachable (optional eggs, secret exits): stepping or jumping off a lift
+anywhere along its path (a rider is carried through every cell above the lift's track), and the
+helicopter (13): from where it stands he flies through free, safe cells two high (no water, no
+wind), takes what he flies through, and lands on any floor he can stand on, leaving it there to
+come back to.
+
     python3 tools/levelcheck.py worlds3d/world011.vwr [...]
 """
 
@@ -42,6 +49,8 @@ SIZE = 100
 CRUSHER_HAZARD = 3  # BlockHazardKind::Crusher (tools/data/blocks.csv)
 DRIP_HAZARD = 6     # BlockHazardKind::Drip: hangs in an open cell (BD-0033), nothing stands on it
 LIFTS = {1, 47, 48}
+HELICOPTER = 13
+WIND_FIRST, WIND_LAST = 110, 125   # BlockTypes::isWind
 DANGEROUS = {2, 3, 4, 16, 17, 20, 32, 33, 44, 54, 96, 97}   # mines and enemies
 TARGETS = {5: "treasure", 6: "egg", 49: "key", 50: "key", 51: "key"}
 EXITS = {7: "exit", 21: "secret exit"}
@@ -165,18 +174,71 @@ def teleport_links(grid: Grid):
     return links
 
 
-def reachable(grid: Grid, start):
-    return graph(grid, start)[0]
+def lift_ride_links(grid: Grid):
+    """--rides: every cell a rider passes through on a lift's track, linked both ways with the
+    cells where he gets on and off at its ends (lift_links): off it anywhere he can step or jump."""
+    links = collections.defaultdict(set)
+    ends = lift_links(grid)
+    for o in grid.objects:
+        if o.get("type") not in LIFTS:
+            continue
+        (x0, y0, z0), (x1, y1, z1) = o["start"], o["end"]
+        a = (int(x0 // 1), int(y0 // 1) + 1, int(z0 // 1))
+        b = (int(x1 // 1), int(y1 // 1) + 1, int(z1 // 1))
+        stops = ({a, b} | ends.get(a, set()) | ends.get(b, set()))
+        steps = int(max(abs(x1 - x0), abs(y1 - y0), abs(z1 - z0))) + 1
+        track = set()
+        for i in range(steps + 1):
+            f = i / steps
+            c = (int((x0 + (x1 - x0) * f) // 1), int((y0 + (y1 - y0) * f) // 1) + 1,
+                 int((z0 + (z1 - z0) * f) // 1))
+            if grid.free(c) and grid.safe(c):
+                track.add(c)
+        for s in stops:
+            links[s] |= track
+        for c in track:
+            links[c] |= stops
+    return links
 
 
-def graph(grid: Grid, start):
-    """The cells reachable from start and the moves between them (cell -> cells)."""
+def flight(grid: Grid, start):
+    """--rides: the cells the helicopter flies through from start (free, safe, the cell above free
+    too; no water, no wind)."""
+    def open_air(c):
+        x, y, z = c
+        return (grid.free(c) and grid.safe(c) and not grid.water(c) and grid.free((x, y + 1, z)) and
+                grid.info(c)["fan"] == 0 and not (WIND_FIRST <= grid.cells.get(c, 0) <= WIND_LAST))
+    if not open_air(start):
+        return set()
+    seen = {start}
+    queue = collections.deque([start])
+    while queue:
+        x, y, z = queue.popleft()
+        for dx, dy, dz in ((1, 0, 0), (-1, 0, 0), (0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0)):
+            n = (x + dx, y + dy, z + dz)
+            if n not in seen and open_air(n):
+                seen.add(n)
+                queue.append(n)
+    return seen
+
+
+def reachable(grid: Grid, start, rides: bool = False):
+    return graph(grid, start, rides)[0]
+
+
+def graph(grid: Grid, start, rides: bool = False):
+    """The cells reachable from start (a cell, or a set of cells) and the moves between them
+    (cell -> cells)."""
     links = lift_links(grid)
     for cell, targets in teleport_links(grid).items():
         links[cell] |= targets
-    seen = {start}
+    if rides:
+        for cell, targets in lift_ride_links(grid).items():
+            links[cell] |= targets
+    starts = {start} if isinstance(start, tuple) else set(start)
+    seen = set(starts)
     edges = collections.defaultdict(set)
-    queue = collections.deque([start])
+    queue = collections.deque(starts)
     axis = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     while queue:
         x, y, z = queue.popleft()
@@ -238,6 +300,32 @@ def graph(grid: Grid, start):
     return seen, edges
 
 
+def helicopter_reach(grid: Grid, reach: set):
+    """--rides: (cells, flown) once every helicopter he can get to is used: the cells it flies
+    through (flown: he takes what is there) and the walk on from wherever it lands (cells)."""
+    total, flown, used = set(reach), set(), set()
+    regions = []                    # flight regions found so far (a helicopter inside one reuses it)
+    helis = [tuple(int(c // 1) for c in o["start"]) for o in grid.objects if o.get("type") == HELICOPTER]
+    changed = True
+    while changed:
+        changed = False
+        for i, c in enumerate(helis):
+            near = {(c[0] + dx, c[1] + dy, c[2] + dz) for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1)}
+            if i in used or not near & total:
+                continue
+            used.add(i)
+            region = next((r for r in regions if c in r), None)
+            if region is None:
+                region = flight(grid, c)
+                regions.append(region)
+            flown |= region
+            landings = {p for p in region if p not in total and grid.standable(p)}
+            if landings:
+                total |= graph(grid, landings, True)[0]
+            changed = True
+    return total, flown
+
+
 def onward_sets(cells, edges):
     """For every cell, the bit set of the strongly connected components it can reach (one bit
     per component), and each cell's component: Kosaraju's algorithm, iteratively."""
@@ -289,12 +377,15 @@ def onward_sets(cells, edges):
     return component, reach
 
 
-def check(path: Path, blocks) -> bool:
+def check(path: Path, blocks, rides: bool = False) -> bool:
     world = vwr_inspect.read_world(path)
     grid = Grid(world, blocks)
     # Without an explicit spawn the game starts Blupi at render (0, 1, 0), raw (50, 1, 50).
     spawn = world["spawn"] or (50, 1, 50)
-    reach, edges = graph(grid, tuple(spawn))
+    reach, edges = graph(grid, tuple(spawn), rides)
+    flown = set()
+    if rides:
+        reach, flown = helicopter_reach(grid, reach)
     ok = True
     report = []
     targets = []
@@ -306,7 +397,7 @@ def check(path: Path, blocks) -> bool:
         near = {cell} | {(cell[0] + dx, cell[1] + dy, cell[2] + dz)
                          for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1)}
         targets.append((kind, cell, near))
-        got = bool(near & reach)
+        got = bool(near & (reach | flown))
         report.append(f"{kind} at {cell}: {'reachable' if got else 'NOT REACHABLE'}")
         if not got and kind != "egg":
             ok = False
@@ -330,6 +421,12 @@ def check(path: Path, blocks) -> bool:
     if not exits and world["mission"] % 10 != 0 and world["mission"] not in (0, 1):
         report.append("no exit")
         ok = False
+    if rides:
+        # The helicopter's moves are not in the graph's edges: no trap analysis here.
+        print(f"{path.name}: {'OK' if ok else 'FAIL'} ({len(reach)} cells reachable, --rides)")
+        for line in report:
+            print("  " + line)
+        return ok
     # No traps: the exit stays reachable from where each target is taken (no one-way drop into a
     # pit with no way out), and of any two treasures or keys one is reachable from the other, so
     # there is an order that takes them all before the exit.
@@ -369,9 +466,11 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("worlds", nargs="+", type=Path)
     ap.add_argument("--blocks", type=Path, default=Path(__file__).resolve().parent / "data" / "blocks.csv")
+    ap.add_argument("--rides", action="store_true",
+                    help="also off a lift anywhere along its track, and the helicopter's flight")
     args = ap.parse_args(argv)
     blocks = load_blocks(args.blocks)
-    results = [check(p, blocks) for p in args.worlds]
+    results = [check(p, blocks, args.rides) for p in args.worlds]
     return 0 if all(results) else 1
 
 
