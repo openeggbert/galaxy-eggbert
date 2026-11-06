@@ -666,9 +666,17 @@ ledgers before repeating any discovery. Where it stands:
   (`plans/evidence/android-emulator-models-ub007.jpg`; the emulator needs `-accel off` now, ~35 min
   to the title). UB-006 (each missed content name walks the APK through JNI) reported to the cna
   Claude session at the owner's request (`upstream_bugs.md`).
-- Next: nothing waits on the owner. Outside the code's reach: the `.max` sources (MR-0001), playing
-  Android on a device (Q-009), UB-006 in CNA, the release decision. A new owner report starts an
-  OR row.
+- 2026-11-06, the original's functions outside Decor.cpp that Galaxy never named (Game1, GameData,
+  Worlds, Jauge, InputPad, Sound, Text, ...; and the tables) read against their callers: **BD-0075**
+  Blupi's own 42 sound channels are not played while he is hidden (`4bc7af92`); **BD-0076** the
+  world's sounds are heard only within 15 cells of him across and 11.25 up or down, the original's
+  three screens by three (`Sound::PlayAt`; the lightning zapped through every world with a column:
+  025 recorded, 58 zaps before, 20 only within reach after; `3f72267f`); **BD-0077** (open) Resume
+  restarts the mission where the original continues the moment it was left -- asked as Q-015.
+  The rest of that list is drawing, I/O and getters, or present under other names.
+- Next: Q-015 (the owner's word on BD-0077). Outside the code's reach: the `.max` sources (MR-0001),
+  playing Android on a device (Q-009), UB-006 in CNA, the release decision. A new owner report
+  starts an OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
