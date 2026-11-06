@@ -4574,6 +4574,20 @@ int main(int argc, char** argv)
         check(sub12.GetMissionNumber() == 12, "world012.vwr reports missionNumber() == 12");
     }
 
+    // BD-0075: while Blupi is hidden, Decor::PlaySound (Decor.cpp:1521-1566) plays none of these
+    // channels; every other channel plays. The list, channel by channel.
+    {
+        const int muted[] = {1, 2, 3, 4, 5, 6, 7, 20, 21, 22, 23, 24, 25, 27, 32, 34, 35, 36, 37, 38, 39, 40,
+                             46, 47, 48, 49, 64, 65, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91};
+        bool exact = true;
+        for (int c = 0; c < Sound::kNumChannels; ++c)
+        {
+            const bool want = std::find(std::begin(muted), std::end(muted), c) != std::end(muted);
+            exact = exact && Sound::MutedWhileHidden(static_cast<GalaxyEggbert::Def::SoundChannel>(c)) == want;
+        }
+        check(exact, "hidden, Blupi's own 42 channels are left out, as Decor::PlaySound's list; the world's play");
+    }
+
     // 18. Sound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

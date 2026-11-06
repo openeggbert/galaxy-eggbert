@@ -2884,6 +2884,8 @@ namespace GalaxyEggbert::CNA
     {
         Game::Update(gameTime);
         UpdateMusic();
+        // While he is hidden his own sounds are not played (Decor::PlaySound, BD-0075); in play only.
+        sound_.SetBlupiHidden(phase_ == GalaxyEggbert::Def::GamePhase::Play && blupi_.IsHidden());
 
         if (goldenCaptureMode_ && goldenCaptureAwaitingDraw_)
         {
@@ -3893,6 +3895,7 @@ namespace GalaxyEggbert::CNA
             // spun far too fast). Step turns by turnInput * kTurnSpeed * its sped-up dt, so the rate
             // is scaled back. Down's turn-around stays the original's Turn action, in game ticks.
             const float steering = turnInput / GameSpeedFactor(gameSpeed_);
+            sound_.SetBlupiHidden(blupi_.IsHidden());
             blupi_.Step(worldRuntime_.GetWorld(), steering, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);

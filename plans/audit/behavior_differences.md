@@ -1156,3 +1156,24 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   107's low passage.
 - Validation: `VerifyBlupiMovement` (crouched, a step forward stands him up and he walks); play
   pass 30.
+
+## BD-0075 — Blupi's own sounds played while he was hidden (gameplay audio) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:1518-1572, `Decor::PlaySound`): while `m_blupiHide` (the drink's Hide power,
+  3230; 400 ticks, a level every 4) the channels 1-7, 20-25, 27, 32, 34-40, 46-49, 64, 65 and 78-91
+  -- his jumps, landings and taps, the water's, the crates' efforts, his falls -- are not played;
+  the world's sounds are. The sounds played straight through `m_sound->PlayImage` (the vehicles'
+  motors, the voyages to the HUD, the menu's click) do not pass that filter.
+- Galaxy: every sound played whether he was hidden or not (GP-0408 had compared the call sites, not
+  the filter in front of them). Found 2026-11-06 by listing the original's functions outside
+  Decor.cpp that Galaxy never names (`Sound::PosImage`, `GetBalance`, ...) and reading their callers.
+- Fix: `Sound::SetBlupiHidden` (set every frame of play from `BlupiController::IsHidden`),
+  `Sound::MutedWhileHidden` (the list), `Sound::PlayDirect` for the voyages' arrival (channel 3, the
+  only listed channel the original plays past the filter).
+- Validation: `VerifyInteractionSystem` (the list, channel by channel); a probe run of 051 (take the
+  drink, jump hidden; a temporary log of every play): the jumps before the drink played channel 1,
+  the two while hidden asked for it and were left out. 112/112.
+- Reviewed with it, unchanged: the original's volume by the sound's place on screen (full on screen,
+  silent 320 px beyond its sides or 160 px above or below, `Sound::GetVolume`) and its stereo
+  balance (GP-0412, an adaptation): see BD-0076.
+

@@ -38,6 +38,17 @@ namespace GalaxyEggbert::Game
         // channel 10. A channel with no loaded file (missing WAV) is a
         // silent no-op, not an error.
         void Play(GalaxyEggbert::Def::SoundChannel channel, bool loop = false);
+        // As Play(), past the hidden-Blupi filter below: the original's sounds played by
+        // m_sound->PlayImage directly, not through Decor::PlaySound (the voyages' arrival, 3).
+        void PlayDirect(GalaxyEggbert::Def::SoundChannel channel, bool loop = false);
+
+        // While Blupi is hidden (the lollipop's Hide power) the original's Decor::PlaySound
+        // (Decor.cpp:1518-1572) plays none of his own sounds -- his steps, landings, jumps, the
+        // water's, the crates' efforts, the taps and falls (BD-0075); the host sets it every frame
+        // of play.
+        void SetBlupiHidden(bool hidden) noexcept { blupiHidden_ = hidden; }
+        // The channels Decor::PlaySound leaves out while m_blupiHide.
+        [[nodiscard]] static bool MutedWhileHidden(GalaxyEggbert::Def::SoundChannel channel) noexcept;
         // Stops just one channel's instance (a no-op if it isn't currently playing/doesn't
         // exist) -- needed for sounds with a distinct stop trigger (e.g. the crate push's
         // ch38, cut when the push ends) where StopAll() would incorrectly also kill every other
@@ -101,5 +112,7 @@ namespace GalaxyEggbert::Game
         std::array<Channel, kNumChannels> channels_;
         bool enabled_ = true;
         float effectsVolume_ = 1.0f;
+        bool blupiHidden_ = false;
+        void PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound);
     };
 }

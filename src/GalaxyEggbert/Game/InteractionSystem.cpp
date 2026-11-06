@@ -3909,25 +3909,26 @@ namespace GalaxyEggbert::Game
         // -- applies the real reward, then plays the shared "reward
         // applied" sound (channel 3) for every kind EXCEPT DoorUnlock
         // (whose dynamic icon never matches any of VoyageStep's own
-        // fixed-icon checks, so real completion is silent for it).
+        // fixed-icon checks, so real completion is silent for it). Played as the original does,
+        // straight to the sound card (m_sound->PlayImage), past the hidden-Blupi filter (BD-0075).
         switch (voyageKind_)
         {
             case InteractionSystem::VoyageKind::Treasure:
                 ++treasuresCollected_;
                 ScanAndOpenTreasureDoors(worldRuntime, treasuresCollected_, sound);
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Key1:
                 keys1_ = 1; // held, not counted (m_blupiCle |= Key1, Decor.cpp:10278)
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Key2:
                 keys2_ = 1; // held, not counted (m_blupiCle |= Key2, Decor.cpp:10283)
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Key3:
                 keys3_ = 1; // held, not counted (m_blupiCle |= Key3, Decor.cpp:10288)
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::Egg:
                 // m_nbVies++ while under MAX_EGG_COUNT (Decor.cpp:10264-10267).
@@ -3936,21 +3937,21 @@ namespace GalaxyEggbert::Game
                     ++lives_;
                 }
                 ++lifeEggCount_;
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case InteractionSystem::VoyageKind::Dynamite:
                 ++dynamiteCount_;
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::Perso:
                 ++persoCount_;
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::BulletPack:
                 // Real reward already applied immediately at touch time
                 // (matches this engine's own bulletCount_ handling) --
                 // only the deferred completion sound fires here.
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
+                sound.PlayDirect(GalaxyEggbert::Def::SoundChannel::SoundChannel3);
                 break;
             case VoyageKind::DoorUnlock:
             // Clear2Ascend/Clear3Ascend: real completion is silent with no

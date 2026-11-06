@@ -406,7 +406,7 @@ GP-0404,INTENTIONAL_3D_ADAPTATION,BlupiController inputs,"the vertical pad speed
 GP-0405,INTENTIONAL_3D_ADAPTATION,GalaxyEggbertGame input,"the key state handed to Decor; Galaxy's host reads the keyboard, pad and touch (2026-11-03)",,
 GP-0406,NOT_APPLICABLE,,a debug accessor,,
 GP-0407,FIXED_AND_VERIFIED,"Sound::FootstepChannelFor, CeilingChannelFor",the material remaps of channels 3 and 4 (BD-0034),,
-GP-0408,CONFIRMED_MATCH,Sound::Play,every channel's call sites compared with Decor.cpp (2026-11-03),,
+GP-0408,FIXED_AND_VERIFIED,Sound::Play Sound::MutedWhileHidden,every channel's call sites compared with Decor.cpp (2026-11-03); the hidden-Blupi filter in front of them added (BD-0075; 2026-11-06),VerifyInteractionSystem,
 GP-0409,CONFIRMED_MATCH,Sound::Stop,"the stops of the motors, the crate push, the mockery (BD-0035)",,
 GP-0410,CONFIRMED_MATCH,Sound::Play loop,the looping motor sounds (AdaptMotorVehicleSound),,
 GP-0411,CONFIRMED_MATCH,GalaxyEggbertGame::UpdateMotorLoop,ported line for line (2026-11-03 sound pass),,

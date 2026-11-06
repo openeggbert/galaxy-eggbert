@@ -65,8 +65,31 @@ namespace GalaxyEggbert::Game
         return count;
     }
 
+    bool Sound::MutedWhileHidden(GalaxyEggbert::Def::SoundChannel channel) noexcept
+    {
+        // Decor.cpp:1521-1566, the list as it stands (8-19, 26, 28-31, 33, 41-45, 50-63, 66-77 and
+        // 92 still play: the world's sounds, not his).
+        const int c = static_cast<int>(GalaxyEggbert::Def::ToRaw(channel));
+        return (c >= 1 && c <= 7) || (c >= 20 && c <= 25) || c == 27 || c == 32 || (c >= 34 && c <= 40) ||
+               (c >= 46 && c <= 49) || c == 64 || c == 65 || (c >= 78 && c <= 91);
+    }
+
     void Sound::Play(GalaxyEggbert::Def::SoundChannel channel, bool loop)
     {
+        PlayChannel(channel, loop, true);
+    }
+
+    void Sound::PlayDirect(GalaxyEggbert::Def::SoundChannel channel, bool loop)
+    {
+        PlayChannel(channel, loop, false);
+    }
+
+    void Sound::PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound)
+    {
+        if (decorSound && blupiHidden_ && MutedWhileHidden(channel))
+        {
+            return;
+        }
         using Microsoft::Xna::Framework::Audio::SoundEffectInstance;
         using Microsoft::Xna::Framework::Audio::SoundState;
 
