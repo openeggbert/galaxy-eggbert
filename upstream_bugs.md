@@ -170,10 +170,20 @@ it and add the fixing commit; remove the workaround only after re-verifying.
 - **Reported** to the cna Claude session on 2026-11-06 at the owner's request (still present at cna
   `be933add6`: `TryLoadFileIgnoringCase` still calls `ResolveAndroidAssetPathIgnoringCase` per
   miss, uncached).
-- **Galaxy Eggbert's workaround:** on Android the game works in internal storage, where it copies
-  its assets (`src/GalaxyEggbertCNA/AndroidAssets.cpp`), and points `avatars3d`'s `ContentManager`
-  at it by an absolute path, which CNA reads without the APK walk
-  (`GalaxyEggbertGame::LoadContent`, the `__ANDROID__` branch).
+- **Status: fixed** in libcna/cna `next` `0b8424e9b` (2026-11-06: one case-folded
+  `AssetManager.list()` per APK directory, cached for the process, `ImmutableAssetPathCache`).
+  **Confirmed on Galaxy's APK** the same day: the x86_64 debug APK built at cna `65c1ea4d6` with
+  the relative `avatars3d` root (the workaround removed) in the API 35 emulator (software,
+  `-accel off`): `simpleperf record` over 90 s of LoadContent finds no sample in
+  `libandroidfw.so` (`ZipAssetsProvider::ForEachFile`, 75 % before the fix) and JNI calls under
+  0.2 %; the 121 object models loaded in 17 min 21 s from the terrain texture (20 min 35 s with the
+  workaround, the same software emulation) and the title scene draws them
+  (`plans/evidence/android-emulator-ub006-relative-root.jpg`).
+- **Galaxy Eggbert's workaround (removed 2026-11-06):** `avatars3d`'s `ContentManager` pointed at
+  the internal-storage copy by an absolute path (`GalaxyEggbertGame::LoadContent`, an
+  `__ANDROID__` branch); the root is relative on every platform again. The copy itself
+  (`src/GalaxyEggbertCNA/AndroidAssets.cpp`) stays: the game reads `worlds3d/`, `textures3d/` and
+  its save with `std::ifstream`, which never sees APK assets.
 
 ## UB-007 — CNA EasyGL: the skinned shader needs more vertex uniforms than OpenGL ES 3.0 guarantees
 

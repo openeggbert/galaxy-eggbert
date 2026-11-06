@@ -685,9 +685,13 @@ ledgers before repeating any discovery. Where it stands:
   self-tests report equal and both playthroughs pass. Scratch-world fallback verified without
   editing shipped worlds; a changed executable with the same compile-time timestamp also refuses
   the log and loads the checkpoint. Evidence is in `build-probe/bd0077-*.log`.
-- Next: CNA's UB-006 fix to verify on the APK (the cna session asked).
-  Outside the code's reach: the `.max` sources (MR-0001),
-  playing Android on a device (Q-009), UB-006 in CNA, the release decision. A new owner report
+- 2026-11-06, CNA's UB-006 fix confirmed on the APK (the cna session asked): with the relative
+  `avatars3d` root the x86_64 APK's LoadContent shows no APK walk in `simpleperf` and loads the
+  121 models in 17 min 21 s under software emulation (20 min 35 s with the workaround); the
+  workaround (an absolute root on Android) is removed, `AndroidAssets.cpp` stays (std::ifstream
+  reads). `plans/evidence/android-emulator-ub006-relative-root.jpg`.
+- Next: nothing open within the code's reach. Outside it: the `.max` sources (MR-0001),
+  playing Android on a device (Q-009), the release decision. A new owner report
   starts an OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs

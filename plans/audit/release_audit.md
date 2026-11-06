@@ -80,8 +80,8 @@ can settle:
   the shields stay billboards and Blupi comes from the Ray Dream scenes.
 - Q-009 / OR-0011: Android stays at "builds and starts" by the owner's choice; no device or KVM
   here to play it. UB-007 (no 3D models) is fixed in CNA (`22739f89b`) and seen working on the APK
-  2026-11-06; UB-006 (slow content lookups, worked around in the game) reported to the cna session
-  2026-11-06.
+  2026-11-06; UB-006 (slow content lookups) fixed in CNA (`0b8424e9b`) and confirmed on the APK
+  2026-11-06, the game's workaround removed.
 - A person's ear and eye: the sounds were measured, not listened to; looks were judged on
   screenshots.
 

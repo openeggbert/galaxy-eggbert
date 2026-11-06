@@ -118,6 +118,8 @@ to see it start, not to play. A touch must then be held for a few seconds to fal
 - Fixed in CNA `22739f89b` (UB-007), seen 2026-11-06: the 3D models (Blupi, the objects) now draw
   on a GPU whose `GL_MAX_VERTEX_UNIFORM_VECTORS` is 256, such as the emulator's. Before it, CNA's
   skinned shader did not link there (logcat: `skinned (vertex-lit) link failed`).
+- CNA's UB-006 fix (`0b8424e9b`): the content root is relative on Android too; LoadContent no
+  longer walks the APK per missing name (profiled 2026-11-06, `upstream_bugs.md`).
 - The emulator without KVM needs `-accel off` now (`x86_64 emulation currently requires hardware
   acceleration!` otherwise); from the start to the title scene took about 35 minutes.
 - The first start copies ~125 MB of assets into internal storage (seconds on a phone).
