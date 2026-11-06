@@ -1131,3 +1131,22 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   the egg is taken or not: alone from 3 lives, or in a hub chain with the row already full); egg
   counts expected at a mission's end became `expect lives >= min(10, 3 + eggs)`; 034 lets a lift
   that is leaving go. Play pass 25 (below in `handoff.md`).
+
+## BD-0074 — Blupi walked crouched; a step now stands him up (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:3252-3270, 3377-3383, 3435-3441): Down starts with the down key while not
+  moving and never moves him (both the march and its displacement exclude Down); the pad gives one
+  direction at a time, so going on means standing up and walking. A hanging mine (3) spares him
+  while he is down (MoveObjectDetect, 9722). All 276 of the original's hanging mines stand still.
+- Galaxy let him walk crouched (the Down pose sliding along), and its worlds used that to pass
+  hanging mines at his height. Owner 2026-11-05 (OR-0041, MR-0008): "the crouch should be
+  cancelled and Blupi walk normally as in Mobile Eggbert"; asked, the owner chose the original's
+  rule and the worlds adjusted.
+- Fix: `BlupiController::Step` drops the crouch on foot while he moves (not on a bar, swimming, in a
+  vehicle, nor pulling a crate: Down with a direction away from a held crate is the original's
+  Pop); the hanging mine's exemption follows his Down state, not the key. Worlds: the mines that
+  hung at his height over a way he must take now hang a cell higher, over his head (walked under,
+  a jump meets them): 045's gallery pads (`cheese.low_mine`, also 044's), 104's narrow passage,
+  107's low passage.
+- Validation: `VerifyBlupiMovement` (crouched, a step forward stands him up and he walks); play
+  pass 30.

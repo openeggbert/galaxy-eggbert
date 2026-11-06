@@ -85,9 +85,9 @@ def gallery(w: World, rng: random.Random):
     """P: the gallery east from the island (walk 20, three wide, four high). Across it a strip
     of lava five long; over it a line of stones one wide with, between them, three pads: lifts
     sinking a cell below the line and popping back up flush with it (5 ticks up, 22 down; the
-    middle one 6 and 6). A mine hangs in each pad's column at Blupi's height from a drop of
-    cheese: he crosses crouching (a hanging mine is harmless to a crouching Blupi) and steps
-    off a pad while it is up. In 3D a lift does not stop him sideways, so a pad never rises
+    middle one 6 and 6). A mine hangs in each pad's column just over Blupi's head from a drop of
+    cheese (cheese.low_mine): he walks under it, a jump there meets it, and steps off a pad while
+    it is up. In 3D a lift does not stop him sideways, so a pad never rises
     above the line (he would walk into it and fall through), and it rests a second at the top
     (the original's 2-3 ticks) to leave him time to step off. Door 1 at the end."""
     cheese(w, 33, 14, 52, 45, 26, 60, rng)
@@ -102,8 +102,8 @@ def gallery(w: World, rng: random.Random):
         else:
             moving_lift(w, (x, W - 2, 56), (x, W - 1, 56), ticks=5, recede=22, stops=(2, 20))
         low_mine(w, x, W, 56, rng)
-        if STAGE in ("timed", "solved"):                   # crouching, they are harmless
-            w.records.pop((x, W, 56), None)
+        if STAGE in ("timed", "solved"):                   # walked under, they are harmless
+            w.records.pop((x, W + 1, 56), None)
     w.place(O.INVERT, 34, W, 55)
 
 

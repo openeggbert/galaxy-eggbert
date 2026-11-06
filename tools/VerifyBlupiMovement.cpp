@@ -265,6 +265,24 @@ int main(int argc, char** argv)
               "while facing left (icon 168 -> 172), NOT the main table_mirror substitution");
     }
 
+    // OR-0041 (owner 2026-11-05): crouched, a step stands him up and he walks as usual (the
+    // original's Down never moves him; its pad gives one direction at a time).
+    {
+        BlupiController crouching;
+        crouching.SetPosition(0.0f, 1.0f, 0.0f);
+        for (int i = 0; i < 20; ++i)
+        {
+            crouching.Step(world, 0.0f, 0.0f, false, /*crouchHeld=*/true, false, dt);
+        }
+        const float startZ = crouching.GetZ();
+        for (int i = 0; i < 30; ++i)
+        {
+            crouching.Step(world, 0.0f, 1.0f, false, /*crouchHeld=*/true, false, dt);
+        }
+        check(crouching.GetAnimState() == BlupiController::AnimState::March && crouching.GetZ() < startZ - 0.3f,
+              "crouched, a step forward stands him up and he walks (OR-0041)");
+    }
+
     // 4d. Animation state: Down (grounded crouch) icon cycling. Real
     // GalaxyEggbert::Def::BlupiAction ID 6 has 3 real icon frames (33, 34, 35) per
     // table_blupi/mobile-eggbert-reference/08-animations.md -- this used

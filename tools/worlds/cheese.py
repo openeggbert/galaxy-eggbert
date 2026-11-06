@@ -161,18 +161,19 @@ def hang(w: World, x, y, z):
 
 
 def low_mine(w: World, x, y, z, rng: random.Random):
-    """A mine hanging at Blupi's height (walking cell y) from a drop of cheese that reaches
-    down from the ceiling to just above it: a walker passes beside it, or crouches under it
-    (a hanging mine is harmless to a crouching Blupi); walking into it explodes it."""
+    """A mine hanging just over Blupi's head (the cell above walking cell y) from a drop of cheese
+    that reaches down from the ceiling to it: he walks under it, a jump there meets it. (It hung at
+    his height until 2026-11-05, crossed crouching; but the original's Down never moves him, and a
+    step now stands him up: OR-0041, MR-0008.)"""
     from kit import mine
-    top = y + 1
+    top = y + 2
     while w.get(x, top, z) == 0:
         top += 1
         if top > 98:
             raise ValueError(f"no ceiling above ({x}, {z})")
-    for yy in range(y + 1, top):
+    for yy in range(y + 2, top):
         w.set(x, yy, z, rng.choice(CHEESE))
-    mine(w, x, y, z, hanging=True)
+    mine(w, x, y + 1, z, hanging=True)
 
 
 def helicopters(w: World, cells):

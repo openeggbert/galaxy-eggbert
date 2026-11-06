@@ -1457,6 +1457,16 @@ namespace GalaxyEggbert::Game
         m_moveInput = moveInput;
         m_jumpedOutOfWater = false;
         m_mockeryStarted = false;
+        // On foot a step cancels the crouch, as in the original (OR-0041, owner 2026-11-05): its Down
+        // never moves him (Decor.cpp's march and its displacement both exclude Down) and its pad
+        // gives one direction at a time, so going on means standing up and walking. Swimming, on a
+        // bar and in the vehicles the key means something else (dive, drop) and stays.
+        // (Down with a direction away from a crate he holds is the original's pull, Pop: kept.)
+        if (crouchHeld && std::fabs(moveInput) > 0.001f && !holdingCrate && !pushingCrate && !m_ghost &&
+            !IsInVehicle() && !m_nage && !m_surf && !m_suspended && !inSurfWater && !inDeepWater)
+        {
+            crouchHeld = false;
+        }
         // Ghost mode (plan.md BLUPI-111) -- real absolute top priority:
         // `Decor::BlupiStep()`'s very first statement is `if (m_blupiGhost)
         // { BlupiGhostStep(); return; }`, before even teleporting. Real

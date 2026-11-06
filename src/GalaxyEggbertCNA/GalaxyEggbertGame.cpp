@@ -5030,8 +5030,10 @@ namespace GalaxyEggbert::CNA
             }
             const float crateIntentDX = 0.0f;
             const float crateIntentDZ = 0.0f;
+            // A hanging mine spares him while he is down (MoveObjectDetect skips it in Down), not
+            // while the key is held as he walks on (OR-0041: a step stands him up).
             interaction_.Update(simDt, worldRuntime_, interactionBlupiX, interactionBlupiY, interactionBlupiZ,
-                                 crateIntentDX, sound_, crouchHeld,
+                                 crateIntentDX, sound_, blupi_.GetAnimState() == BlupiController::AnimState::Down,
                                  blupi_.IsBallooned(), blupiFacingDX, blupiFacingDZ, blupi_.IsInvincible(),
                                  canGrantShield, canGrantPower, canGrantCloud, canGrantHide,
                                  firePressed, canFire, cloudActive, canGrantInvert, actionPressedEdge,

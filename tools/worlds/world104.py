@@ -69,8 +69,8 @@ def main(argv) -> int:
         floor = TOP - 1 - (0 if z <= 60 else 1)                          # walk 30, then 29
         x0, x1 = (7, 7) if z in (59, 62) else (6, 8)                  # one wide where they hang
         carve(w, x0, floor + 1, z, x1, floor + 3, z)
-    hanging(7, TOP, 59)
-    hanging(7, TOP - 1, 62)
+    hanging(7, TOP + 1, 59)                                               # over his head: walked under (OR-0041)
+    hanging(7, TOP, 62)
     w.place(O.TREASURE, 7, TOP - 1, 63)
     fork_alcove(w, 16, TOP, 44, (1, 0))
 

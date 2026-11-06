@@ -5,7 +5,7 @@ plans/briefs/world107.md.
 Mobile Eggbert's level 107, the last of world 10, is one tall shaft of cobble: Blupi starts at its
 foot beside the golden key (21) and the one treasure behind the red door (334); the red key (49)
 is at the very top. Up the shaft: a lift moving across and up at once, a lollipop (26) for the
-high jump past a wasp (44), mines bobbing (16), a row of mines hanging across the way (crouch), a
+high jump past a wasp (44), mines bobbing (16), a row of mines hanging across the way (walked under), a
 lift of six cells round a pillar carrying him far up (108 ticks), ledges with mines (2), hanging
 mines (3) and eggs, the red key and two eggs at the top; then down again, the red door, the
 treasure, the golden key. Here the tower rises north of the foot's chamber in 3D: the chamber,
@@ -96,7 +96,7 @@ def main(argv) -> int:
     carve(w, 50, SHAFT, 34, 54, SHAFT + 1, 36)                            # ...the low passage through it
     for x in (51, 53):
         for z in (34, 35, 36):
-            hazard(x, SHAFT, z, hanging=True)
+            hazard(x, SHAFT + 1, z, hanging=True)     # under the passage's ceiling: walked under (OR-0041)
     rock(w, 58, SHAFT, 34, 58, 60, 36)                                     # the column
     for x in (57, 59):
         for z in (34, 35, 36):
