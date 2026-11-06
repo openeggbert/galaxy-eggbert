@@ -690,9 +690,15 @@ ledgers before repeating any discovery. Where it stands:
   121 models in 17 min 21 s under software emulation (20 min 35 s with the workaround); the
   workaround (an absolute root on Android) is removed, `AndroidAssets.cpp` stays (std::ifstream
   reads). `plans/evidence/android-emulator-ub006-relative-root.jpg`.
-- Next: nothing open within the code's reach. Outside it: the `.max` sources (MR-0001),
-  playing Android on a device (Q-009), the release decision. A new owner report
-  starts an OR row.
+- 2026-11-06, **BD-0078** Blupi starts a mission standing (`BlupiController::SettleOnGround` via
+  `GalaxyEggbertGame::PlaceBlupi` at every start, hub arrival, respawn and Resume; the original's
+  `m_blupiAir = false`): his first walking tick no longer moves at the airborne 8 px (Codex,
+  reviewed here; the golden trace's ticks 0-9 X follow).
+- 2026-11-06, the owner (MR-0010): develop pushed (352 commits, `e0e8eda7..164e4c29`); the sounds
+  "je to ok" (no listening samples needed); MR-0001 closed, the shields and the charge stay the
+  original's sprites; Android stays at "builds and starts" (Q-009).
+- Next: nothing open within the code's reach. Outside it: the release decision. A new owner
+  report starts an OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
@@ -1012,7 +1018,7 @@ is a full library built 2026-10-27 with the current settings).
 
 ## 7. Gotchas
 
-- `tests/golden/` frames are stale since Phase 7B (CURRENT.md says why).
+- `tests/golden/` is current as of 2026-11-06 (BD-0077's fixed tick, BD-0078's grounded start).
 - The chase camera orbits to Blupi's side after 3 s idle; `--spawn` yaw 0 faces -Z, 90 +X.
 - Types 32 and 33: the code's names ("blupih"/"blupit") do not match their icons; check against
   mobile-eggbert before converting.

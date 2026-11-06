@@ -1288,3 +1288,19 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   with mission history; files over 128 MiB or ten million ticks are refused. Desktop keyboard/mouse
   and synthetic touch/accelerometer serialization are verified; native touch/sensor hardware,
   Android lifecycle and Emscripten persistence still need platform testing.
+
+## BD-0078 — a fresh Blupi stood in the air for his first tick; the original starts him standing (gameplay) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:329, 400; `PlayPrepare`): a mission's start sets `m_blupiAir = false` with the
+  start position, Stop at phase 0 and focus; a respawn puts him at `m_blupiValidPos` (6386).
+- Galaxy: `BlupiController` starts with `m_onGround = false` and `SetPosition()` clears it, so on a
+  mission's first tick a walk input moved him at the airborne 8 px a tick (`kMarch`'s `!m_onGround`
+  case) instead of the march's first 2 px. Found 2026-11-06 by the golden trace (BD-0077).
+- Fix: `BlupiController::SettleOnGround` (the move resolution with no displacement, his body's
+  footprint, crates and the temporary tiles' phase; a start in the open air still falls) through
+  `GalaxyEggbertGame::PlaceBlupi` at every mission start, hub arrival, editor play-test, respawn and
+  Resume. Teleports and the other `SetPosition` callers keep their semantics. Implemented with the
+  Codex CLI to a brief; reviewed here.
+- Validation: `VerifyBlupiMovement` (the first walking tick 2 px, a respawn restarts the march, a
+  mid-air placement falls); the golden trace changes only X on ticks 0-9; 112/112; play pass 35 (with the resume self-test): 78/78, 77 equal.
+

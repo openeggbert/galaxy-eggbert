@@ -704,6 +704,12 @@ namespace GalaxyEggbert::Game
 
         void SetPosition(float x, float y, float z) noexcept;
 
+        // After spawn/respawn placement, establish standing before the first input tick
+        // (Decor::PlayPrepare sets m_blupiAir=false). Uses Step's ground probes without
+        // moving or advancing simulation: a start in open air must still fall. SetPosition
+        // alone retains its airborne semantics for teleports and other callers.
+        void SettleOnGround(const Worlds::World& world, bool tempPassable = false);
+
         // Real "continuous ride" (plan.md E3D-MIG-152, `Decor::
         // MoveObjectStepLine`'s per-tick overlap re-test): called by the
         // caller once per frame when it determines Blupi is standing on an

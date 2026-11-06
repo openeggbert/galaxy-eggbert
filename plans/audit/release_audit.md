@@ -76,14 +76,13 @@ closed with the models named (MR-0009); the playability audit by the automated p
 the target reach audit, without a human play pass (MR-0007). Still open, none of which the code
 can settle:
 
-- MR-0001: the 56 `.max` sources need a licensed 3D Studio MAX (the offered copy is not used);
-  the shields stay billboards and Blupi comes from the Ray Dream scenes.
+- MR-0001 closed by the owner (2026-11-06, MR-0010): the `.max` sources are not converted; the
+  shields and the charge stay the original's sprites, Blupi comes from the Ray Dream scenes.
 - Q-009 / OR-0011: Android stays at "builds and starts" by the owner's choice; no device or KVM
   here to play it. UB-007 (no 3D models) is fixed in CNA (`22739f89b`) and seen working on the APK
   2026-11-06; UB-006 (slow content lookups) fixed in CNA (`0b8424e9b`) and confirmed on the APK
   2026-11-06, the game's workaround removed.
-- A person's ear and eye: the sounds were measured, not listened to; looks were judged on
-  screenshots.
+- The sounds: measured, and accepted by the owner (MR-0010, "je to ok").
 
 Verdict: the desktop and web builds pass every automated check at the revisions above, and every
 ledger is settled. A release of the desktop and web builds waits only on the owner's word; Android

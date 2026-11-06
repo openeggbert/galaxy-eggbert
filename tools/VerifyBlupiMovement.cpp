@@ -49,6 +49,61 @@ int main(int argc, char** argv)
 
     constexpr float dt = 1.0f / 60.0f;
 
+    // Mission placement must establish standing BEFORE input, without a warm-up Step:
+    // Decor::PlayPrepare (Decor.cpp:400) starts with m_blupiAir=false. An airborne start
+    // still falls; SetPosition alone remains suitable for the other relocation callers.
+    {
+        BlupiController starter;
+        starter.SetPosition(0.0f, 1.0f, 0.0f);
+        starter.SettleOnGround(world);
+        check(starter.IsOnGround() && starter.GetY() == 1.0f,
+              "mission placement recognizes the floor without advancing simulation");
+        starter.Step(world, 0.0f, 1.0f, false, false, false, dt);
+        constexpr float firstMarchStep = 2.0f / 64.0f * 20.0f * dt;
+        check(std::fabs(starter.GetZ() + firstMarchStep) < 1e-6f,
+              "first walking tick after placement uses 2 px march speed, not airborne 8 px");
+
+        for (int i = 0; i < 12; ++i)
+            starter.Step(world, 0.0f, 1.0f, false, false, false, dt);
+        starter.SetPosition(0.0f, 1.0f, 0.0f);
+        check(!starter.IsOnGround(), "SetPosition alone still clears grounded state");
+        starter.SettleOnGround(world);
+        starter.Step(world, 0.0f, 1.0f, false, false, false, dt);
+        check(std::fabs(starter.GetZ() + firstMarchStep) < 1e-6f,
+              "respawn placement restarts the march at its first step");
+
+        BlupiController airborne;
+        airborne.SetPosition(0.0f, 5.0f, 0.0f);
+        airborne.SettleOnGround(world);
+        check(!airborne.IsOnGround() && airborne.GetY() == 5.0f,
+              "mid-air placement does not snap to the floor below");
+        airborne.Step(world, 0.0f, 1.0f, false, false, false, dt);
+        check(!airborne.IsOnGround() && airborne.GetY() < 5.0f && airborne.GetVelocityY() < 0.0f &&
+                  std::fabs(airborne.GetZ() + 8.0f / 64.0f * 20.0f * dt) < 1e-6f,
+              "first tick after mid-air placement falls and uses airborne walk speed");
+
+        Worlds::World ledge;
+        ledge.setBlock(50, 0, 50, Worlds::Block::make(BlockTypes::Ground));
+        BlupiController edge;
+        edge.SetPosition(0.6f, 1.0f, 0.0f); // centre past the edge, body corners still supported
+        edge.SettleOnGround(ledge);
+        check(edge.IsOnGround(), "placement uses the same footprint support as Step at a ledge");
+
+        BlupiController crate;
+        crate.SetCrateCells({{50.0f, 1.0f, 50.0f}});
+        crate.SetPosition(0.0f, 2.0f, 0.0f);
+        crate.SettleOnGround(ledge);
+        check(crate.IsOnGround(), "placement recognizes crate support before the first Step");
+
+        ledge.setBlock(50, 0, 50, Worlds::Block::make(BlockTypes::Temp));
+        BlupiController vanishing;
+        vanishing.SetPosition(0.0f, 1.0f, 0.0f);
+        vanishing.SettleOnGround(ledge, false);
+        check(vanishing.IsOnGround(), "placement stands on a visible temporary tile");
+        vanishing.SettleOnGround(ledge, true);
+        check(!vanishing.IsOnGround(), "placement does not stand on a vanished temporary tile");
+    }
+
     // 1. Spawn on the ground floor (world (0,1,0) == grid (50,*,50)); the
     // controller should recognize it is already standing on solid ground.
     BlupiController blupi;

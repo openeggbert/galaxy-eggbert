@@ -554,6 +554,8 @@ namespace GalaxyEggbert::CNA
         // exist -- same graceful-failure shape as the initial `LoadContent()`
         // load.
         void LoadMission(int missionNumber, const std::string* validatedBytes = nullptr);
+        // Spawn/respawn with the current terrain and object support checked before input.
+        void PlaceBlupi(float x, float y, float z);
 
         // Loads a player-authored custom world (plan.md EDITOR-107) for
         // editing -- NOT a mission (no hub/door-gating scan, no

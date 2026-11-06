@@ -51,6 +51,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Mission starts and respawns establish ground support before the first input tick
+  (`BlupiController::SettleOnGround`, 2026-11-06): walking starts at the original's 2 px per
+  20 Hz tick, while a mid-air spawn still falls. Mission replay uses the same placement.
+  `SetPosition` alone retains its previous semantics. The movement verifier covers first-tick
+  walking, respawn, falling, footprint/crate support and temporary platforms.
 - BD-0077 / Q-015 (2026-11-06): interrupted missions resume from their recorded moment via
   `ResumeLog` (mission start plus deterministic input replay), saved on Play deactivation and
   deleted on clean exit. Format v2 records the mission path and FNV-1a hash of the exact world
@@ -124,8 +129,6 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   2026-10-24). Effects, the charge and the shield (sparks) stay billboards; procedural
   textures (bark, metal noise, wood grain) are flat colours. First person still uses an invisible collision
   point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
-- `tests/golden/` no longer matches `develop` with CNA `900d0db3b` (the trace runs one tick ahead);
-  the references need regenerating once the CNA revision is settled.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not
   call Windows supported until both pass.
 - Editor text is deliberately limited to functional readouts/notices (XYZ coordinates, background

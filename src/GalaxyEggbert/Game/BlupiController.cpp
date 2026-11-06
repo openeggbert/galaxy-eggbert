@@ -382,6 +382,20 @@ namespace GalaxyEggbert::Game
         m_onGround = false;
     }
 
+    void BlupiController::SettleOnGround(const Worlds::World& world, bool tempPassable)
+    {
+        const CrateCellsScope crates(m_crateCells, m_solidBoxes);
+        const FlightBarrierScope flight(m_vehicleMode == VehicleMode::Helicopter ||
+                                       m_vehicleMode == VehicleMode::Overcraft);
+        m_onGround = ResolveMove(world, m_x, m_y, m_z, 0.0f, 0.0f, 0.0f, tempPassable,
+                                 true, false, IsInVehicle() ? 0.0f : kBodyHalfWidth).onGround;
+        m_marchTicks = 0.0f;
+        if (m_onGround)
+        {
+            m_velocityY = 0.0f;
+        }
+    }
+
     void BlupiController::RideLift(float x, float y, float z) noexcept
     {
         // Rising, he has just jumped (or a flying vehicle climbs) off the lift: in the original

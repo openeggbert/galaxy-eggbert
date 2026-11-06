@@ -1,6 +1,6 @@
 # For the owner (decisions, tools, files)
 
-## MR-0001 — the 56 `.max` files need 3D Studio MAX (BLOCKED)
+## MR-0001 — the 56 `.max` files need 3D Studio MAX — CLOSED by the owner 2026-11-06 (MR-0010)
 
 - Files: `originals/max/` (38), `originals/Blupi/max/` (12: `blupi1-3.max`, `blupi-marche*.max`,
   `blupi-stop.max`, `bug.max`), `originals/Element/` (6, e.g. `shield3.max`). Full list:
@@ -128,3 +128,12 @@ The owner asked to be asked ("ptej se me nyni na co potrebujes"); answers:
 - The editor (asked for proposals, then which to build): copy and paste (ED-0010) and backups with
   export (ED-0011 backups, ED-0012 export and import, ED-0013 slot thumbnails), built the same day;
   the other proposals (a level check, cut-away view, eyedropper, play-test from here) not chosen.
+
+## MR-0010 — the owner's answers of 2026-11-06 (asked when the owner asked to be asked)
+
+- Push develop: yes -- pushed (352 commits, `e0e8eda7..164e4c29`).
+- The sounds (BD-0031's pitch, BD-0075's hidden mute, BD-0076's reach): "je to ok" -- no listening
+  samples wanted.
+- MR-0001 (the `.max` sources): closed; the shields and the charge stay the original's sprites.
+- Android (Q-009): stays at "builds and starts".
+

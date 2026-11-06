@@ -1307,13 +1307,13 @@ namespace GalaxyEggbert::CNA
         // fixed sample-world default.
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
-            blupi_.SetPosition(
+            PlaceBlupi(
                 worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
                 worldRuntime_.GetSpawnRenderZ());
         }
         else
         {
-            blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+            PlaceBlupi(0.0f, 1.0f, 0.0f);
         }
 
         // Real mobile-eggbert sound playback (2026-07-10, see Sound.hpp) --
@@ -1903,7 +1903,7 @@ namespace GalaxyEggbert::CNA
         editorPlayTestActive_ = false;
         LoadMission(start.mission, &*bytes);
         interaction_.SetLives(start.lives);
-        blupi_.SetPosition(start.x, start.y, start.z);
+        PlaceBlupi(start.x, start.y, start.z);
         blupi_.SetYaw(start.yaw);
         SetPhase(GalaxyEggbert::Def::GamePhase::Play, true);
         ResetMissionInput();
@@ -2129,6 +2129,24 @@ namespace GalaxyEggbert::CNA
         return arrival;
     }
 
+    void GalaxyEggbertGame::PlaceBlupi(float x, float y, float z)
+    {
+        blupi_.SetPosition(x, y, z);
+        // As before Step(), crate support must reflect the objects' current positions.
+        std::vector<std::array<float, 3>> crateCells;
+        for (const auto& obj : worldRuntime_.GetMobileObjects())
+        {
+            if (obj.active && GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::StaticObstacle)
+            {
+                crateCells.push_back({obj.currentX + WorldRuntime::kWorldCenterX, obj.currentY,
+                                      obj.currentZ + WorldRuntime::kWorldCenterZ});
+            }
+        }
+        blupi_.SetCrateCells(std::move(crateCells));
+        blupi_.SettleOnGround(worldRuntime_.GetWorld(),
+                             WorldRuntime::IsTempPassableAtPhase(worldRuntime_.GetAnimPhase()));
+    }
+
     void GalaxyEggbertGame::LoadMission(int missionNumber, const std::string* validatedBytes)
     {
         if (!replayingResume_)
@@ -2198,19 +2216,19 @@ namespace GalaxyEggbert::CNA
 
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
-            blupi_.SetPosition(
+            PlaceBlupi(
                 worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
                 worldRuntime_.GetSpawnRenderZ());
         }
         else
         {
-            blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+            PlaceBlupi(0.0f, 1.0f, 0.0f);
         }
         if (hubArrival)
         {
-            blupi_.SetPosition(static_cast<float>(hubArrival->cell.x - WorldRuntime::kWorldCenterX),
-                               static_cast<float>(hubArrival->cell.y),
-                               static_cast<float>(hubArrival->cell.z - WorldRuntime::kWorldCenterZ));
+            PlaceBlupi(static_cast<float>(hubArrival->cell.x - WorldRuntime::kWorldCenterX),
+                       static_cast<float>(hubArrival->cell.y),
+                       static_cast<float>(hubArrival->cell.z - WorldRuntime::kWorldCenterZ));
             blupi_.SetYaw(hubArrival->yaw);
         }
         chaseCamera_.Reset(blupi_.GetYaw()); // a new world starts with the camera behind him
@@ -2279,7 +2297,7 @@ namespace GalaxyEggbert::CNA
         hideGhostTracking_ = false;
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
-            blupi_.SetPosition(
+            PlaceBlupi(
                 worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
                 worldRuntime_.GetSpawnRenderZ());
         }
@@ -2287,7 +2305,7 @@ namespace GalaxyEggbert::CNA
         {
             // Preserve the established 3x3 starter-board default for old
             // custom worlds whose formerly-reserved header slots are zero.
-            blupi_.SetPosition(
+            PlaceBlupi(
                 GalaxyEggbert::Editor::kEditorStarterSpawnRenderX,
                 GalaxyEggbert::Editor::kEditorStarterSpawnY,
                 GalaxyEggbert::Editor::kEditorStarterSpawnRenderZ);
@@ -2892,7 +2910,7 @@ namespace GalaxyEggbert::CNA
         }
         if (shouldRespawn)
         {
-            blupi_.SetPosition(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
+            PlaceBlupi(blupi_.GetValidX(), blupi_.GetValidY(), blupi_.GetValidZ());
         }
         // Real `if (m_nbVies > 0) { ...Voyage... } else { ...DoorsLost(), no
         // Voyage... }` (Decor.cpp:6382-6392) -- predict which branch BEFORE
@@ -3451,8 +3469,8 @@ namespace GalaxyEggbert::CNA
             startMission_ = 0;
             if (startSpawnSet_)
             {
-                blupi_.SetPosition(startSpawnX_ - WorldRuntime::kWorldCenterX, startSpawnY_,
-                                   startSpawnZ_ - WorldRuntime::kWorldCenterZ);
+                PlaceBlupi(startSpawnX_ - WorldRuntime::kWorldCenterX, startSpawnY_,
+                           startSpawnZ_ - WorldRuntime::kWorldCenterZ);
                 blupi_.SetYaw(startYawDegrees_ * 3.14159265f / 180.0f);
                 chaseCamera_.Reset(blupi_.GetYaw());
                 cameraSmoothedInitialized_ = false;
@@ -4171,12 +4189,12 @@ namespace GalaxyEggbert::CNA
                             // in-progress treasure/key state.
                             if (worldRuntime_.HasExplicitSpawnPoint())
                             {
-                                blupi_.SetPosition(worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
-                                                   worldRuntime_.GetSpawnRenderZ());
+                                PlaceBlupi(worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
+                                           worldRuntime_.GetSpawnRenderZ());
                             }
                             else
                             {
-                                blupi_.SetPosition(0.0f, 1.0f, 0.0f);
+                                PlaceBlupi(0.0f, 1.0f, 0.0f);
                             }
                             cameraSmoothedInitialized_ = false;
                         }
