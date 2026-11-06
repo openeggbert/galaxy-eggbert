@@ -935,6 +935,17 @@ namespace GalaxyEggbert::Game
         void CheatShield() noexcept;
         void CheatClearForAction() noexcept;
         [[nodiscard]] bool IsGhost() const noexcept { return m_ghost; }
+        // Decor.cpp:2737-2741: GhostStep returns before all BlupiStep tile/action checks.
+        // Also passed to InteractionSystem for MoveObjectDetect/Electro/Follow/Charge/Perso.
+        [[nodiscard]] bool CanInteractWithWorld() const noexcept { return !m_ghost; }
+        // Decor.cpp:820-838, 1160-1163: ghost takes precedence over the Hide drink's fade.
+        [[nodiscard]] float GetDrawOpacity(int animPhase) const noexcept
+        {
+            if (m_ghost) return 0.75f;
+            if (IsHidden()) return GetSecretPowerLevel() <= 25 && animPhase % 4 >= 2 ? 1.0f : 0.3f;
+            return 1.0f;
+        }
+
 
         // Vehicle mounts (plan.md E3D-MIG-171, see VehicleMode's own
         // comment). Real gate: blocked while already riding ANY other

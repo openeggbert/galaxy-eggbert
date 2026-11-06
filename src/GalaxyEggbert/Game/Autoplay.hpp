@@ -12,6 +12,7 @@
 //
 //   wait N                     no keys for N ticks (1/60 s each)
 //   hold N KEY...              hold the keys for N ticks: up down left right jump action crouch lookup
+//   type WORD                  type lowercase letters, each followed by a release tick (cheats)
 //   face DEG                   turn on the spot until facing DEG
 //   go X Z [jump D] [tol T] [max N] [until COND] [with KEY]...
 //                              turn towards (X, Z) and walk until within T (0.25) of it, or until
@@ -43,7 +44,7 @@
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
 // COND is FIELD OP VALUE, FIELD one of x y z yaw tick mtick mission treasures eggs lives keys dynamite
-// ground dead exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
+// ground dead ghost anim (BlupiController::AnimState: Stop=0, March=1) exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
 // it strikes on the even ticks of 0-49) temp (the vanishing saucers' place in their 20-step cycle:
 // gone at 18-19) crush (the crushers' place in their 10-step cycle: they squash at 0-2) phase, OP one of = != < <= > >=; tick counts from the script's start, mtick from
 // the current mission's (a mission's own timing holds when it is played in a chain); phase takes a name
@@ -67,6 +68,9 @@ namespace GalaxyEggbert::Game
         float yawDegrees = 0.0f;
         bool onGround = false;
         bool dead = false;
+        bool ghost = false;
+        int anim = 0; // BlupiController::AnimState: Stop=0, March=1
+
         bool exitReached = false;
         int blitz = 0;
         int temp = 0;
@@ -93,6 +97,7 @@ namespace GalaxyEggbert::Game
     {
         bool up = false, down = false, left = false, right = false;
         bool jump = false, action = false, crouch = false, lookUp = false;
+        char letter = 0;
     };
 
     class Autoplay
@@ -114,8 +119,8 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool WantsShot() const noexcept { return shotTicksLeft_ > 0; }
 
     private:
-        enum class Kind { Wait, Hold, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, End };
-        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Exit, Blitz, Temp, Crush, Phase };
+        enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, End };
+        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Ghost, Anim, Exit, Blitz, Temp, Crush, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {
@@ -129,6 +134,7 @@ namespace GalaxyEggbert::Game
             int line = 0;
             std::string source;
             std::string text;
+            std::string typedWord;
             int ticks = 0;
             AutoplayKeys keys;
             float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;

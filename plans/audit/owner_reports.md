@@ -341,3 +341,17 @@ rewritten).
   112/112; golden frames re-baselined only for world999's bridge exhibits (models instead of plates,
   ~650 pixels each), trace unchanged; screenshots `build-probe/bridge-stutter/`.
 - Left: a saw switch still rebuilds the whole terrain (~180 ms under xvfb) when it turns its saws.
+
+
+## OR-0075 — lightning kills ghost Blupi; he falls and is opaque (owner 2026-11-06) — FIXED_AND_VERIFIED
+
+- Reports: "I turned on ghost Blupi; he should not interact with his surroundings, but the
+  lightning killed him"; "In ghost mode Blupi should not have the falling animation but look
+  see-through like a ghost."
+- Fixed as MODERN Mobile Eggbert: explicit world/contact gate, March moving (including vertically),
+  Stop idle, 0.75 opacity for model and sprite fallback. Source guards, preserved reference
+  exceptions (awake homing and existing dynamite blasts), tests and screenshots: **BD-0081** in
+  `behavior_differences.md`.
+- Verified: 112/112 CTest, unchanged golden frames/trace, typed `ghost` probe through world025's
+  active lightning and standing in it for a full cycle with three lives. Clear pose screenshots
+  in `build-probe/ghost/poses-run/autoplay_shots/`.

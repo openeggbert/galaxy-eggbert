@@ -1342,3 +1342,73 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   (57, 30, 19)) stands in the approach to the door "14", leaving a lane 0.13 cells wide that the
   script threads with `tol 0.02` -- no lane for a human player; 058's pillar perimeter is tight
   too (`tol 0.05`). The BigDecor should move in the generators, not the routes squeeze past.
+
+
+## BD-0081 — ghost killed by lightning, falling pose and opaque body — FIXED_AND_VERIFIED
+
+Owner 2026-11-06 (OR-0075): lightning killed ghost Blupi; he should walk/stand see-through.
+
+Reference: read-only `../mobile-eggbert/src/WindowsPhoneSpeedyBlupi/Decor.cpp`, MODERN guards:
+
+| Reference | Galaxy implementation |
+|---|---|
+| `BlupiStep:2737-2741` returns through `BlupiGhostStep` before any tile/action checks | `BlupiController::CanInteractWithWorld`; one host block skips lava, lightning, spikes, drips, saws, crushers, springs, water, fans, world signs, teleporters, safe-position recording, switches, dynamite/Perso use and vehicle contacts. Controller free flight already skips gravity, collision, wind and conveyors. Pending skateboard actions, pollution and new power/Hide trails (3888/4009/4293/4436, 5204-5254) are suspended too. |
+| `BlupiElectro:9613-9616` | `InteractionSystem::Update` suppresses the Cloud aura. |
+| `MoveObjectFollow:9649-9652` | The same flag prevents dormant type 96 followers waking. |
+| `MoveObjectDetect:9692-9696` | After autonomous object updates, skip the contact/pickup block; no enemy, mine, shot, wasp, creature, pickup, exit or avatar contact. Lift patrol continues without riding/conveyor displacement; crate motion already started may finish but cannot hold the ghost. |
+| `MoveChargeDetect:9806-9809` | Host hand-action gate and interaction charge-pickup/fire gate. |
+| `MovePersoDetect:9838-9841` | Suppress enemy-versus-Perso/avatar detection globally, as the original guard does, as well as Blupi's own Perso pickup/use. |
+| `BlupiGhostStep:2659-2689` | Horizontal translation or vertical-only flight selects March; idle/turn-only selects Stop. Vertical movement preserves facing. This precedes all other animations and wind's Push/Vertigo override; model clips and sprite tables consume the same state. |
+| `CheatAction:2054-2055` | Clear swimming/surface flags on entry (previously left stale in Galaxy). Existing toggle-off collision rule retained. |
+| Draw `822-825`, `1160-1163` | `GetDrawOpacity` supplies 0.75 to the real model, placeholder model and first-person sprite indicator. Reuses Hide's premultiplied AlphaBlend/DepthRead; translucent models draw after opaque models, with alpha/blend/depth restored. HUD uses a separate faded sprite batch, preserving life/pickup icons. |
+
+Exceptions deliberately preserved after checking the original beyond the brief:
+
+- **Already-active type 97 followers still home** (`MoveObjectStepLine:8026-8064`, no Ghost guard),
+  but cannot touch/hurt him. They now track his real location, instead of the former far-away
+  sentinel. Hide still prevents homing.
+- **Existing dynamite blasts still kill** (`DynamiteStart:9168-9174`, outside BlupiStep, no Ghost
+  guard; `BlupiDead:6574` clears Ghost). Ghost does not place new dynamite. This is distinct from
+  mine/bomb contact, which is suppressed. No blanket invincibility was added.
+- World clocks, enemy patrols/shots and existing effects continue. `VoyageStep` is inside
+  BlupiStep (`6532`), so an already-started pickup voyage pauses during Ghost.
+
+Verification (2026-11-06):
+
+- Full existing-tree build (`--parallel 4`), **112/112 CTest**; golden frames (all three) and trace
+  byte-identical, no rebaseline. Logs: `build-probe/ghost/{build,ctest,golden-frames,golden-trace}.log`.
+- `VerifyBlupiMovement`: hazard-cell bypass contract, flight/idle/vertical/turn animation, opacity,
+  Hide precedence and interactions restored on toggle-off. `VerifyInteractionSystem`: 17 contact
+  types, ordinary mine positive control, Cloud/Perso guards and restoration, sleeping/awake
+  followers, moving conveyor lift, door/bridge gates and the dynamite exception.
+  `VerifyAutoplay`: typed word presses/releases; autoplay now supports `type WORD` through the
+  normal keyboard recognizer and `ghost`/`anim` expectations.
+- Normal mission regressions **012, 014, 025, 051, 094: all pass** (3296, 4112, 13680,
+  8357, 17738 ticks); `build-probe/ghost/regression-NNN.log`.
+- `tools/autoplay/probes/ghost_lightning.txt`: mission 025, `--spawn 24,25,50,90`, types `ghost`,
+  moves through the existing icon-305 column at (26,25..28,50), stops in it at active phase 4,
+  waits a whole cycle, exits with three lives, checks March/Stop. Trace and captures:
+  `build-probe/ghost/lightning-run/`; 635 ticks, pass.
+- Clear standing/walking model captures in the existing showcase, using
+  `tools/autoplay/probes/ghost_poses.txt`, mission 999, `--spawn 34,1,6,0`:
+  `build-probe/ghost/poses-run/autoplay_shots/0000071.png` (Stop) and `0000109.png` (March).
+  Ground pattern visibly shows through the body. First-person sprite checks:
+  `build-probe/ghost/fallback-shots/ghost-sprite-{standing,walking}.png`.
+- Hide followed by Ghost: typed `hidedrink`, waited for the drink, typed `ghost`, moved and
+  stopped; 210 ticks, pass. `build-probe/ghost/hide-combination-run/autoplay_shots/0000209.png`
+  shows the 0.75 March pose without spawning a Hide trail.
+
+Reproduce the lightning probe (silent, isolated saves):
+
+```bash
+AUTOPLAY_RUN="$PWD/build-probe/ghost/lightning-run" tools/autoplay.sh build-cna-opengl3 \
+  tools/autoplay/probes/ghost_lightning.txt 25 --spawn 24,25,50,90
+```
+
+Files changed for BD-0081: `BlupiController.{hpp,cpp}`, `InteractionSystem.{hpp,cpp}`,
+`Hud.{hpp,cpp}`, `Autoplay.{hpp,cpp}` under `src/GalaxyEggbert/Game/`;
+`src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp`; `tools/VerifyBlupiMovement.cpp` (ghost assertions
+at 2942), `tools/VerifyInteractionSystem.cpp` (ghost fixtures at 5764), `tools/VerifyAutoplay.cpp`
+(typed-cheat test at 101); the two `tools/autoplay/probes/ghost_*.txt` scripts; `CURRENT.md`,
+`handoff.md`, this ledger and `owner_reports.md`. Most of the host/interaction textual diff is
+indentation under the new gates (`git show -w` isolates the functional change).

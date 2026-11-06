@@ -1122,7 +1122,7 @@ namespace GalaxyEggbert::Game
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
                                       bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
                                       bool blupiArmoredVehicle, bool blupiDropsGlue, bool blupiHidden,
-                                      bool blupiFocused, bool blupiOutOfPlay)
+                                      bool blupiFocused, bool blupiOutOfPlay, bool blupiCanInteract)
     {
         events_.clear();
         ridingLift_ = false;
@@ -1151,7 +1151,7 @@ namespace GalaxyEggbert::Game
         // per-object pickup loop below so a treasure voyage completing
         // THIS frame is scanned for newly-satisfied doors THIS frame too
         // (ApplyVoyageReward() calls ScanAndOpenTreasureDoors() directly).
-        TickVoyage(dt, worldRuntime, sound);
+        if (blupiCanInteract) TickVoyage(dt, worldRuntime, sound); // BlupiStep:6532, after the ghost return
 
         // Platform lift riding (plan.md E3D-MIG-152) -- detect which lift
         // (if any) Blupi is standing on BEFORE it takes this frame's patrol
@@ -1163,7 +1163,7 @@ namespace GalaxyEggbert::Game
         MobileObjSpec* riddenLift = nullptr;
         for (auto& candidate : objects)
         {
-            if (!candidate.active ||
+            if (!blupiCanInteract || !candidate.active ||
                 GetObjectDefinition(candidate.type).semanticKind != ObjectSemanticKind::Lift)
             {
                 continue;
@@ -1261,7 +1261,7 @@ namespace GalaxyEggbert::Game
             // every other per-object branch so a small enemy such as Type4
             // (also in the generic-contact-hazard set) is destroyed by the aura rather
             // than also killing Blupi via hazard contact the same frame.
-            if (blupiCloudActive && GetObjectDefinition(obj.type).smallEnemy)
+            if (blupiCanInteract && blupiCloudActive && GetObjectDefinition(obj.type).smallEnemy)
             {
                 const float adx = obj.currentX - blupiX;
                 const float ady = obj.currentY - blupiY;
@@ -1304,7 +1304,7 @@ namespace GalaxyEggbert::Game
             // Checked before the Cloud aura above in real source's own per-object loop (this
             // engine's own ordering here is a natural adaptation, not a faithfulness question --
             // the two can't both apply to the same enemy the same frame regardless of order).
-            if (GetObjectDefinition(obj.type).smallEnemy)
+            if (blupiCanInteract && GetObjectDefinition(obj.type).smallEnemy)
             {
                 for (auto& other : objects)
                 {
@@ -1703,7 +1703,7 @@ namespace GalaxyEggbert::Game
             // (real channel 92) exactly once at the transition. Does NOT
             // `continue` -- a follower that wakes this exact frame also
             // takes its first homing step this same frame, below.
-            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 && !blupiHidden)
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType96 && blupiCanInteract && !blupiHidden)
             {
                 const float fwdx = obj.currentX - blupiX;
                 const float fwdy = obj.currentY - blupiY;
@@ -1828,6 +1828,10 @@ namespace GalaxyEggbert::Game
                     }
                 }
             }
+
+            // MoveObjectDetect (Decor.cpp:9692-9696) returns no contact for a ghost.
+            // All autonomous motion/attacks above still run, including active follower homing.
+            if (!blupiCanInteract) continue;
 
             // Blupih/blupit's own body (ObjectType32/33) is deliberately
             // NOT marked genericContactHazard in the registry -- real
@@ -2311,235 +2315,240 @@ namespace GalaxyEggbert::Game
             exitGoalTicks_ = 0.0f;
         }
 
-        // Key-gated doors (plan.md E3D-MIG-160/161, real `Decor::IsDoor`
-        // ~7360): probes Blupi's own cell AND one cell further in his
-        // facing direction (blupiFacingDX/DZ) for a door icon (334-336),
-        // matching the real "trigger a step before actually reaching it"
-        // detection exactly. Opens automatically if the matching key is
-        // currently held -- no action-button gate in the real source,
-        // unlike switches/dynamite. Real key flags are NOT consumed on
-        // pickup, only on use (`Decor.cpp` ~5619) -- modeled here as
-        // clearing the whole count to 0 (this engine's keys1_/keys2_/
-        // keys3_ are plain pickup counters, not a persisted bitmask, but
-        // real levels only ever grant one of each key before it must be
-        // re-collected, so "count > 0" / "clear to 0" behaves identically
-        // to the real boolean flag for the realistic case). Real voyage-
-        // deferred key-flag-setting (pickup consumed from the world
-        // immediately, but not "held" until a HUD-fly animation completes)
-        // is NOT modeled -- same simplification as every other pickup this
-        // session, applied immediately instead.
+        // BlupiStep's ghost return also skips doors, bridge triggers and firing/charge use.
+        if (blupiCanInteract)
         {
-            auto& terrain = worldRuntime.GetWorldMutable();
-            const int axis = static_cast<int>(terrain.blocksPerAxis());
-            const int probeGX[2] = {
-                static_cast<int>(std::lround(blupiX)) + WorldRuntime::kWorldCenterX,
-                static_cast<int>(std::lround(blupiX + static_cast<float>(blupiFacingDX))) +
-                    WorldRuntime::kWorldCenterX,
-            };
-            const int probeGZ[2] = {
-                static_cast<int>(std::lround(blupiZ)) + WorldRuntime::kWorldCenterZ,
-                static_cast<int>(std::lround(blupiZ + static_cast<float>(blupiFacingDZ))) +
-                    WorldRuntime::kWorldCenterZ,
-            };
-            const int probeGY = static_cast<int>(std::lround(blupiY));
-            for (int p = 0; p < 2; ++p)
+            // Key-gated doors (plan.md E3D-MIG-160/161, real `Decor::IsDoor`
+            // ~7360): probes Blupi's own cell AND one cell further in his
+            // facing direction (blupiFacingDX/DZ) for a door icon (334-336),
+            // matching the real "trigger a step before actually reaching it"
+            // detection exactly. Opens automatically if the matching key is
+            // currently held -- no action-button gate in the real source,
+            // unlike switches/dynamite. Real key flags are NOT consumed on
+            // pickup, only on use (`Decor.cpp` ~5619) -- modeled here as
+            // clearing the whole count to 0 (this engine's keys1_/keys2_/
+            // keys3_ are plain pickup counters, not a persisted bitmask, but
+            // real levels only ever grant one of each key before it must be
+            // re-collected, so "count > 0" / "clear to 0" behaves identically
+            // to the real boolean flag for the realistic case). Real voyage-
+            // deferred key-flag-setting (pickup consumed from the world
+            // immediately, but not "held" until a HUD-fly animation completes)
+            // is NOT modeled -- same simplification as every other pickup this
+            // session, applied immediately instead.
             {
-                const int gx = probeGX[p];
-                const int gz = probeGZ[p];
-                if (gx < 0 || gx >= axis || gz < 0 || gz >= axis || probeGY < 0 || probeGY >= axis)
+                auto& terrain = worldRuntime.GetWorldMutable();
+                const int axis = static_cast<int>(terrain.blocksPerAxis());
+                const int probeGX[2] = {
+                    static_cast<int>(std::lround(blupiX)) + WorldRuntime::kWorldCenterX,
+                    static_cast<int>(std::lround(blupiX + static_cast<float>(blupiFacingDX))) +
+                        WorldRuntime::kWorldCenterX,
+                };
+                const int probeGZ[2] = {
+                    static_cast<int>(std::lround(blupiZ)) + WorldRuntime::kWorldCenterZ,
+                    static_cast<int>(std::lround(blupiZ + static_cast<float>(blupiFacingDZ))) +
+                        WorldRuntime::kWorldCenterZ,
+                };
+                const int probeGY = static_cast<int>(std::lround(blupiY));
+                for (int p = 0; p < 2; ++p)
                 {
-                    continue;
-                }
-                const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(probeGY),
-                                                    static_cast<std::uint16_t>(gz))
-                                       .type();
-                if (!GalaxyEggbert::BlockTypes::isDoor(icon))
-                {
-                    continue;
-                }
-                const int keyType = GalaxyEggbert::BlockTypes::doorKeyType(icon);
-                const bool hasKey = (keyType == 49 && keys1_ > 0) || (keyType == 50 && keys2_ > 0) ||
-                                     (keyType == 51 && keys3_ > 0);
-                if (hasKey)
-                {
-                    // The whole door: a 3D door is a block of cells of its icon (a doorway's width
-                    // and height), the original's one tile. Opening only the probed cell, which a
-                    // diagonal facing can make one off his way, spent the key and left the doorway
-                    // shut (D58, 107's red door).
-                    std::vector<std::array<int, 3>> door{{gx, probeGY, gz}};
-                    for (std::size_t k = 0; k < door.size() && door.size() < 64; ++k)
+                    const int gx = probeGX[p];
+                    const int gz = probeGZ[p];
+                    if (gx < 0 || gx >= axis || gz < 0 || gz >= axis || probeGY < 0 || probeGY >= axis)
                     {
-                        const auto [cx, cy, cz] = door[k];
-                        constexpr int kSides[6][3] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
-                        for (const auto& side : kSides)
+                        continue;
+                    }
+                    const auto icon = terrain.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(probeGY),
+                                                        static_cast<std::uint16_t>(gz))
+                                           .type();
+                    if (!GalaxyEggbert::BlockTypes::isDoor(icon))
+                    {
+                        continue;
+                    }
+                    const int keyType = GalaxyEggbert::BlockTypes::doorKeyType(icon);
+                    const bool hasKey = (keyType == 49 && keys1_ > 0) || (keyType == 50 && keys2_ > 0) ||
+                                         (keyType == 51 && keys3_ > 0);
+                    if (hasKey)
+                    {
+                        // The whole door: a 3D door is a block of cells of its icon (a doorway's width
+                        // and height), the original's one tile. Opening only the probed cell, which a
+                        // diagonal facing can make one off his way, spent the key and left the doorway
+                        // shut (D58, 107's red door).
+                        std::vector<std::array<int, 3>> door{{gx, probeGY, gz}};
+                        for (std::size_t k = 0; k < door.size() && door.size() < 64; ++k)
                         {
-                            const int nx = cx + side[0], ny = cy + side[1], nz = cz + side[2];
-                            if (nx < 0 || ny < 0 || nz < 0 || nx >= axis || ny >= axis || nz >= axis ||
-                                std::find(door.begin(), door.end(), std::array<int, 3>{nx, ny, nz}) != door.end())
+                            const auto [cx, cy, cz] = door[k];
+                            constexpr int kSides[6][3] = {{1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+                            for (const auto& side : kSides)
                             {
-                                continue;
-                            }
-                            if (terrain.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(ny),
-                                                 static_cast<std::uint16_t>(nz))
-                                    .type() == icon)
-                            {
-                                door.push_back({nx, ny, nz});
+                                const int nx = cx + side[0], ny = cy + side[1], nz = cz + side[2];
+                                if (nx < 0 || ny < 0 || nz < 0 || nx >= axis || ny >= axis || nz >= axis ||
+                                    std::find(door.begin(), door.end(), std::array<int, 3>{nx, ny, nz}) != door.end())
+                                {
+                                    continue;
+                                }
+                                if (terrain.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(ny),
+                                                     static_cast<std::uint16_t>(nz))
+                                        .type() == icon)
+                                {
+                                    door.push_back({nx, ny, nz});
+                                }
                             }
                         }
+                        for (const auto& [cx, cy, cz] : door)
+                        {
+                            OpenDoorAt(worldRuntime, cx, cy, cz, sound);
+                        }
+                        if (keyType == 49) keys1_ = 0;
+                        else if (keyType == 50) keys2_ = 0;
+                        else if (keyType == 51) keys3_ = 0;
+                        // Real door-unlock key-consumption flourish (plan.md
+                        // `158`, Decor.cpp:5620-5624) -- purely cosmetic, the
+                        // key bit is already cleared above, before the voyage
+                        // even starts (no reward at completion). Reversed
+                        // direction from every pickup above: start = a fixed
+                        // HUD position (see startX), end = the
+                        // door's own world position (needs projecting, unlike
+                        // every pickup's fixed end). Real icon is dynamic per
+                        // door: `214 + (doorIcon-334)*7` = 214/221/228 for
+                        // door1/2/3.
+                        // It starts at x 520 for every door (Decor.cpp:5620-5621), where the first
+                        // key's own icon arrived, also for the second and third keys (530, 540; BD-0043).
+                        const float startX = 520.0f;
+                        const int doorIconId = 214 + (static_cast<int>(icon) - 334) * 7;
+                        const float doorWorldX = static_cast<float>(gx) - static_cast<float>(WorldRuntime::kWorldCenterX);
+                        const float doorWorldY = static_cast<float>(probeGY);
+                        const float doorWorldZ = static_cast<float>(gz) - static_cast<float>(WorldRuntime::kWorldCenterZ);
+                        RequestVoyage(VoyageKind::DoorUnlock, doorIconId, false, doorWorldX, doorWorldY, doorWorldZ,
+                                      startX, 418.0f, false);
                     }
-                    for (const auto& [cx, cy, cz] : door)
+                }
+            }
+
+            // Treasure-gated doors (plan.md E3D-MIG-162, real
+            // Decor::OpenDoorsTresor ~11642): a door needing N treasures uses
+            // icon 420+N -- scans the whole grid and opens every one whose
+            // requirement is now met, all at once. Real reward timing (plan.md
+            // `158`) means this now happens inside ApplyVoyageReward() itself
+            // (called from TickVoyage() above, or from BeginVoyage()'s own
+            // force-complete path), the instant a treasure voyage completes --
+            // not unconditionally here every frame. Shared with
+            // CheatAllTreasure() below, which still scans immediately (the
+            // cheat is a separate, real immediate-credit mechanic).
+
+            // Bridge construction trigger (ObjectType52, plan.md PICKUP-064, real
+            // Decor::IsBridge ~7334, called every tick from Decor.cpp ~5608-5612
+            // while Blupi has focus -- not action-button gated, unlike switches/
+            // dynamite). Real source probes 2 candidate foot-height offsets;
+            // this engine uses a single stance height (round(blupiY)-1, same
+            // convention as TryActivateSwitch's own standing-cell check) --
+            // a documented simplification, not a transcribed real detail.
+            // Spawns exactly one ObjectType52 at the Bridge cell, guarded so a
+            // second never stacks on top of an already-in-progress one.
+            {
+                int bridgeGX, bridgeGY, bridgeGZ;
+                ToGridCell(world, blupiX, blupiY - 1.0f, blupiZ, bridgeGX, bridgeGY, bridgeGZ);
+                if (blupiFocused && // m_blupiFocus (Decor.cpp:5608; BD-0066)
+                    world.getBlock(static_cast<std::uint16_t>(bridgeGX), static_cast<std::uint16_t>(bridgeGY),
+                                   static_cast<std::uint16_t>(bridgeGZ))
+                            .type() == GalaxyEggbert::BlockTypes::Bridge)
+                {
+                    bool alreadyBuilding = false;
+                    for (const auto& obj : objects)
                     {
-                        OpenDoorAt(worldRuntime, cx, cy, cz, sound);
+                        if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52 &&
+                            std::lround(obj.currentX) == std::lround(blupiX) &&
+                            std::lround(obj.currentZ) == std::lround(blupiZ))
+                        {
+                            alreadyBuilding = true;
+                            break;
+                        }
                     }
-                    if (keyType == 49) keys1_ = 0;
-                    else if (keyType == 50) keys2_ = 0;
-                    else if (keyType == 51) keys3_ = 0;
-                    // Real door-unlock key-consumption flourish (plan.md
-                    // `158`, Decor.cpp:5620-5624) -- purely cosmetic, the
-                    // key bit is already cleared above, before the voyage
-                    // even starts (no reward at completion). Reversed
-                    // direction from every pickup above: start = a fixed
-                    // HUD position (see startX), end = the
-                    // door's own world position (needs projecting, unlike
-                    // every pickup's fixed end). Real icon is dynamic per
-                    // door: `214 + (doorIcon-334)*7` = 214/221/228 for
-                    // door1/2/3.
-                    // It starts at x 520 for every door (Decor.cpp:5620-5621), where the first
-                    // key's own icon arrived, also for the second and third keys (530, 540; BD-0043).
-                    const float startX = 520.0f;
-                    const int doorIconId = 214 + (static_cast<int>(icon) - 334) * 7;
-                    const float doorWorldX = static_cast<float>(gx) - static_cast<float>(WorldRuntime::kWorldCenterX);
-                    const float doorWorldY = static_cast<float>(probeGY);
-                    const float doorWorldZ = static_cast<float>(gz) - static_cast<float>(WorldRuntime::kWorldCenterZ);
-                    RequestVoyage(VoyageKind::DoorUnlock, doorIconId, false, doorWorldX, doorWorldY, doorWorldZ,
-                                  startX, 418.0f, false);
-                }
-            }
-        }
-
-        // Treasure-gated doors (plan.md E3D-MIG-162, real
-        // Decor::OpenDoorsTresor ~11642): a door needing N treasures uses
-        // icon 420+N -- scans the whole grid and opens every one whose
-        // requirement is now met, all at once. Real reward timing (plan.md
-        // `158`) means this now happens inside ApplyVoyageReward() itself
-        // (called from TickVoyage() above, or from BeginVoyage()'s own
-        // force-complete path), the instant a treasure voyage completes --
-        // not unconditionally here every frame. Shared with
-        // CheatAllTreasure() below, which still scans immediately (the
-        // cheat is a separate, real immediate-credit mechanic).
-
-        // Bridge construction trigger (ObjectType52, plan.md PICKUP-064, real
-        // Decor::IsBridge ~7334, called every tick from Decor.cpp ~5608-5612
-        // while Blupi has focus -- not action-button gated, unlike switches/
-        // dynamite). Real source probes 2 candidate foot-height offsets;
-        // this engine uses a single stance height (round(blupiY)-1, same
-        // convention as TryActivateSwitch's own standing-cell check) --
-        // a documented simplification, not a transcribed real detail.
-        // Spawns exactly one ObjectType52 at the Bridge cell, guarded so a
-        // second never stacks on top of an already-in-progress one.
-        {
-            int bridgeGX, bridgeGY, bridgeGZ;
-            ToGridCell(world, blupiX, blupiY - 1.0f, blupiZ, bridgeGX, bridgeGY, bridgeGZ);
-            if (blupiFocused && // m_blupiFocus (Decor.cpp:5608; BD-0066)
-                world.getBlock(static_cast<std::uint16_t>(bridgeGX), static_cast<std::uint16_t>(bridgeGY),
-                               static_cast<std::uint16_t>(bridgeGZ))
-                        .type() == GalaxyEggbert::BlockTypes::Bridge)
-            {
-                bool alreadyBuilding = false;
-                for (const auto& obj : objects)
-                {
-                    if (obj.active && obj.type == GalaxyEggbert::Def::ObjectType::ObjectType52 &&
-                        std::lround(obj.currentX) == std::lround(blupiX) &&
-                        std::lround(obj.currentZ) == std::lround(blupiZ))
+                    if (!alreadyBuilding)
                     {
-                        alreadyBuilding = true;
-                        break;
+                        // currentY stays in world-space "standing height" (grid
+                        // Y + 1), the same convention every other MobileObjSpec
+                        // uses -- the per-tick terrain write below converts back
+                        // to a grid index the same way TryActivateSwitch's own
+                        // standing-cell check does.
+                        MobileObjSpec bridge{};
+                        bridge.type = GalaxyEggbert::Def::ObjectType::ObjectType52;
+                        bridge.posStartX = bridge.posEndX = bridge.currentX = static_cast<float>(std::lround(blupiX));
+                        // In the bridge's own cell (its falling pieces are drawn there, OR-0031).
+                        bridge.posStartY = bridge.posEndY = bridge.currentY = static_cast<float>(bridgeGY);
+                        bridge.posStartZ = bridge.posEndZ = bridge.currentZ = static_cast<float>(std::lround(blupiZ));
+                        bridge.phase = 0.0f;
+                        bridge.active = true;
+                        pendingSpawns.push_back(bridge);
+                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel72);
                     }
                 }
-                if (!alreadyBuilding)
-                {
-                    // currentY stays in world-space "standing height" (grid
-                    // Y + 1), the same convention every other MobileObjSpec
-                    // uses -- the per-tick terrain write below converts back
-                    // to a grid index the same way TryActivateSwitch's own
-                    // standing-cell check does.
-                    MobileObjSpec bridge{};
-                    bridge.type = GalaxyEggbert::Def::ObjectType::ObjectType52;
-                    bridge.posStartX = bridge.posEndX = bridge.currentX = static_cast<float>(std::lround(blupiX));
-                    // In the bridge's own cell (its falling pieces are drawn there, OR-0031).
-                    bridge.posStartY = bridge.posEndY = bridge.currentY = static_cast<float>(bridgeGY);
-                    bridge.posStartZ = bridge.posEndZ = bridge.currentZ = static_cast<float>(std::lround(blupiZ));
-                    bridge.phase = 0.0f;
-                    bridge.active = true;
-                    pendingSpawns.push_back(bridge);
-                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel72);
-                }
             }
-        }
 
-        // Player-fired Tank bullet (2026-07-13, plan.md BULLET-001, real
-        // Decor.cpp:4308-4344) -- see Update()'s own class comment for the
-        // full real-behavior citation. Cooldown ticks down every frame
-        // regardless of input; only reset on an actual shot.
-        fireCooldownTimer_ = std::max(0.0f, fireCooldownTimer_ - dt);
-        if (glueDropTimer_ > 0.0f)
-        {
-            // The helicopter's glue ball leaves (Decor.cpp:3060-3075): straight down from under
-            // him, one bullet, the cooldown, and the kick up (the caller's).
-            glueDropTimer_ -= dt;
-            if (glueDropTimer_ <= 0.0f && bulletCount_ > 0)
+            // Player-fired Tank bullet (2026-07-13, plan.md BULLET-001, real
+            // Decor.cpp:4308-4344) -- see Update()'s own class comment for the
+            // full real-behavior citation. Cooldown ticks down every frame
+            // regardless of input; only reset on an actual shot.
+            fireCooldownTimer_ = std::max(0.0f, fireCooldownTimer_ - dt);
+            if (glueDropTimer_ > 0.0f)
             {
-                int gx, gy, gz;
-                ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
-                const int dist = SearchAirDistance(world, gx, gy, gz, 0, -1, 0);
-                --bulletCount_;
-                fireCooldownTimer_ = kFireCooldownSeconds;
-                events_.push_back(Event{EventKind::GlueDropped});
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
-                if (dist > 0)
+                // The helicopter's glue ball leaves (Decor.cpp:3060-3075): straight down from under
+                // him, one bullet, the cooldown, and the kick up (the caller's).
+                glueDropTimer_ -= dt;
+                if (glueDropTimer_ <= 0.0f && bulletCount_ > 0)
                 {
-                    MobileObjSpec blupiPos{};
-                    blupiPos.currentX = blupiX;
-                    blupiPos.currentY = blupiY;
-                    blupiPos.currentZ = blupiZ;
-                    MobileObjSpec ball = MakeBullet(blupiPos, 0.0f, -1.0f, 0.0f, dist);
-                    ball.firedByBlupi = true;
-                    pendingSpawns.push_back(ball);
+                    int gx, gy, gz;
+                    ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
+                    const int dist = SearchAirDistance(world, gx, gy, gz, 0, -1, 0);
+                    --bulletCount_;
+                    fireCooldownTimer_ = kFireCooldownSeconds;
+                    events_.push_back(Event{EventKind::GlueDropped});
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
+                    if (dist > 0)
+                    {
+                        MobileObjSpec blupiPos{};
+                        blupiPos.currentX = blupiX;
+                        blupiPos.currentY = blupiY;
+                        blupiPos.currentZ = blupiZ;
+                        MobileObjSpec ball = MakeBullet(blupiPos, 0.0f, -1.0f, 0.0f, dist);
+                        ball.firedByBlupi = true;
+                        pendingSpawns.push_back(ball);
+                    }
                 }
             }
-        }
-        else if (blupiFirePressed && blupiCanFire && fireCooldownTimer_ <= 0.0f)
-        {
-            if (bulletCount_ > 0 && blupiDropsGlue)
+            else if (blupiFirePressed && blupiCanFire && fireCooldownTimer_ <= 0.0f)
             {
-                glueDropTimer_ = kGlueDropDelaySeconds;
-                events_.push_back(Event{EventKind::GlueDropStarted});
-            }
-            else if (bulletCount_ > 0)
-            {
-                int gx, gy, gz;
-                ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
-                const int dist = SearchAirDistance(world, gx, gy, gz, blupiFacingDX, 0, blupiFacingDZ);
-                --bulletCount_;
-                fireCooldownTimer_ = kFireCooldownSeconds;
-                events_.push_back(Event{EventKind::TankFired});
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
-                if (dist > 0)
+                if (bulletCount_ > 0 && blupiDropsGlue)
                 {
-                    MobileObjSpec blupiPos{};
-                    blupiPos.currentX = blupiX;
-                    blupiPos.currentY = blupiY;
-                    blupiPos.currentZ = blupiZ;
-                    MobileObjSpec shot = MakeBullet(blupiPos, static_cast<float>(blupiFacingDX), 0.0f,
-                                                    static_cast<float>(blupiFacingDZ), dist);
-                    shot.firedByBlupi = true;
-                    pendingSpawns.push_back(shot);
+                    glueDropTimer_ = kGlueDropDelaySeconds;
+                    events_.push_back(Event{EventKind::GlueDropStarted});
+                }
+                else if (bulletCount_ > 0)
+                {
+                    int gx, gy, gz;
+                    ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
+                    const int dist = SearchAirDistance(world, gx, gy, gz, blupiFacingDX, 0, blupiFacingDZ);
+                    --bulletCount_;
+                    fireCooldownTimer_ = kFireCooldownSeconds;
+                    events_.push_back(Event{EventKind::TankFired});
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
+                    if (dist > 0)
+                    {
+                        MobileObjSpec blupiPos{};
+                        blupiPos.currentX = blupiX;
+                        blupiPos.currentY = blupiY;
+                        blupiPos.currentZ = blupiZ;
+                        MobileObjSpec shot = MakeBullet(blupiPos, static_cast<float>(blupiFacingDX), 0.0f,
+                                                        static_cast<float>(blupiFacingDZ), dist);
+                        shot.firedByBlupi = true;
+                        pendingSpawns.push_back(shot);
+                    }
+                }
+                else
+                {
+                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel53);
                 }
             }
-            else
-            {
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel53);
-            }
+
         }
 
         // Flush this frame's blupih/blupit shots into the live object list

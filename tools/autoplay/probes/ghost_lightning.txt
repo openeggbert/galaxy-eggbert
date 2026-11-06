@@ -1,0 +1,31 @@
+# Shipped world025: lightning icons 305 at (26,25..28,50), emitter at (26,29,50).
+# Run with --spawn 24,25,50,90. Type through the normal keyboard cheat recognizer.
+type ghost
+expect ghost = 1
+expect anim = 0
+until blitz = 0 max 700
+trace 25
+shots 1
+hold 6 up
+expect anim = 1
+shots 1
+hold 6 up
+expect x >= 25.9
+expect x <= 26.1
+expect dead = 0
+expect blitz = 4
+shots 1
+wait 1
+expect anim = 0
+expect ghost = 1
+# Stay inside the lightning through an entire cycle, including every active pulse.
+wait 310
+expect dead = 0
+expect lives = 3
+expect ghost = 1
+shots 1
+hold 12 up
+expect anim = 1
+expect x >= 27.9
+log Survived flying through active lightning and standing inside it for a full cycle.
+end

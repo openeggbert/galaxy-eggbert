@@ -51,6 +51,12 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Ghost cheat matches MODERN Mobile Eggbert (BD-0081 / OR-0075, 2026-11-06): skips tile reactions
+  and object contacts, uses March/Stop even in mid-air, and draws at 0.75 opacity (model and sprite
+  fallback). Existing active followers still home, and existing dynamite blasts remain lethal,
+  as in the reference. Verified by 112/112 CTest, unchanged golden frames/trace, and typed-cheat
+  lightning/pose probes in `build-probe/ghost/`.
+
 - Lit dynamite follows the original 100-tick `table_dynamitef` at 20 Hz (icons 252-255).
   Its three painted spark shapes are camera-facing decals anchored to the 3D fuse tip;
   icon 252 draws no spark (`tools/rd4_to_gltf/dynamite_sparks.py`). Verified by the icon/model

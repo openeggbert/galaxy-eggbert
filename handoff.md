@@ -27,7 +27,7 @@ ledgers, commit format, no AI attribution, never push): **`plans/codex/README.md
 
 | # | Task | Brief | Owner's report / decision |
 |---|---|---|---|
-| 1 | Ghost cheat as Mobile Eggbert: nothing acts on him (the lightning killed him), March/Stop animation instead of falling, drawn at 0.75 opacity | `plans/codex/ghost.md` | 2026-11-06: "the lightning killed ghost Blupi"; "no falling animation, see-through like a ghost" |
+| 1 | **DONE — BD-0081, this commit (`fix(cheats): BD-0081 match reference ghost behavior`)**. Ghost cheat as Mobile Eggbert: nothing acts on him (the lightning killed him), March/Stop animation instead of falling, drawn at 0.75 opacity | `plans/codex/ghost.md` | 2026-11-06: "the lightning killed ghost Blupi"; "no falling animation, see-through like a ghost" |
 | 2 | Editor aims at the mouse cursor / touch point instead of the screen centre | `plans/codex/editor_cursor.md` | "after the click nothing appears"; chose "aim with the cursor" |
 | 3 | Gallery 998 / showcase 999: saws in the rows of the exhibit saw switches | `plans/codex/exhibit_saws.md` | "the saw machine has no effect" (seen in the gallery); chose saws in the exhibit rows |
 | 4 | Lifts drawn with any tile's look (MoveObjectRecord.visualIcon) | `plans/codex/lift_tiles.md` | chose only "draw the lift as the tile" |
@@ -46,6 +46,17 @@ and `plans/audit/`), and treat every new owner report first (owner reports go to
   the levels' walls limit a pulled-back camera. Recommendation (a): a farther, higher chase camera
   x2/x4/x8 behind the cheat word, reset on leaving the level. Evidence `plans/evidence/zoom-cheat-*.jpg`.
 - Release: not yet (the owner's "Zatím ne"). Android stays at "builds and starts" (Q-009).
+
+### Latest completed task — ghost (2026-11-06)
+
+BD-0081 / OR-0075: world/contact gates, March/Stop and 0.75 opacity for model and sprite;
+112/112 CTest, unchanged golden frames/trace, typed-cheat active-lightning probe (635 ticks),
+clear walking/standing captures and five normal mission passes (012/014/025/051/094) under
+`build-probe/ghost/`. Source-guard mapping and the original's
+exceptions (awake followers still home; existing dynamite blasts can kill) are in
+`plans/audit/behavior_differences.md`, BD-0081. The work is the single commit titled
+`fix(cheats): BD-0081 match reference ghost behavior`; no push. Next queued task is editor cursor
+only when that task is requested.
 
 ### Done in the last session (2026-11-06, newest first)
 

@@ -266,7 +266,11 @@ namespace GalaxyEggbert::Game
                     bool blupiFocused = true,
                     // Cheering at the exit, waving goodbye, dying or gone after it: a shot (23) does
                     // not meet him then (Decor.cpp:5914-5917; BD-0062).
-                    bool blupiOutOfPlay = false);
+                    bool blupiOutOfPlay = false,
+                    // Ghost: Decor.cpp:2737, 9613, 9649, 9692, 9806, 9838. World simulation
+                    // continues; contacts, electro, waking followers and Perso detection do not.
+                    // Active homing (8026) and dynamite blasts (9167) are reference exceptions.
+                    bool blupiCanInteract = true);
 
         // The crate (ObjectType12) right in front of Blupi along his facing axis and at his
         // height, close enough to hold and pull (the original's CaisseInFront()), or nullptr.

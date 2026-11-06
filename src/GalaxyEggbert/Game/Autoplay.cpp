@@ -129,7 +129,7 @@ namespace GalaxyEggbert::Game
                     {"x", Field::X},         {"y", Field::Y},         {"z", Field::Z},
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mtick", Field::MissionTick}, {"mission", Field::Mission},
                     {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite}, {"vehicle", Field::Vehicle},
-                    {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp}, {"crush", Field::Crush},
+                    {"ghost", Field::Ghost}, {"anim", Field::Anim}, {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp}, {"crush", Field::Crush},
                     {"phase", Field::Phase}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
                                                                   {"<=", Op::Le}, {">", Op::Gt},  {">=", Op::Ge}};
@@ -227,6 +227,16 @@ namespace GalaxyEggbert::Game
                         return fail("unknown key '" + key + "'");
                     }
                 }
+            }
+            else if (verb == "type")
+            {
+                command.kind = Kind::Type;
+                std::string extra;
+                if (!(words >> command.typedWord) || (words >> extra) ||
+                    !std::all_of(command.typedWord.begin(), command.typedWord.end(),
+                                 [](char c) { return c >= 'a' && c <= 'z'; }))
+                    return fail("needs one lowercase word");
+                command.ticks = static_cast<int>(command.typedWord.size()) * 2;
             }
             else if (verb == "face")
             {
@@ -358,6 +368,8 @@ namespace GalaxyEggbert::Game
         case Field::Dynamite: value = static_cast<float>(state.dynamite); break;
         case Field::Vehicle: value = static_cast<float>(state.vehicle); break;
         case Field::Ground: value = state.onGround ? 1.0f : 0.0f; break;
+        case Field::Ghost: value = state.ghost ? 1.0f : 0.0f; break;
+        case Field::Anim: value = static_cast<float>(state.anim); break;
         case Field::Dead: value = state.dead ? 1.0f : 0.0f; break;
         case Field::Exit: value = state.exitReached ? 1.0f : 0.0f; break;
         case Field::Blitz: value = static_cast<float>(state.blitz); break;
@@ -533,6 +545,10 @@ namespace GalaxyEggbert::Game
                 {
                     keys = command.keys;
                 }
+                break;
+            case Kind::Type:
+                done = elapsed >= command.ticks;
+                if (!done && elapsed % 2 == 0) keys.letter = command.typedWord[elapsed / 2];
                 break;
             case Kind::Face:
             {

@@ -2939,6 +2939,40 @@ int main(int argc, char** argv)
         check(std::fabs(floater.GetY() - yBeforeFloat) < 0.01f,
               "Ghost mode has no gravity -- Y stays put with no vertical input, even far above any ground");
 
+        check(floater.GetAnimState() == BlupiController::AnimState::Stop,
+              "ghost idle uses Stop even airborne");
+        check(!floater.CanInteractWithWorld() && !floater.IsInvincible(),
+              "ghost skips world reactions independently of Shield/Hide/SuperBlupi");
+        check(floater.GetDrawOpacity(0) == 0.75f && floater.GetDrawOpacity(99) == 0.75f,
+              "ghost opacity is always 0.75");
+        for (const auto hazard : {BlockTypes::Blitz, BlockTypes::Lava})
+        {
+            ghostWorld.setBlock(50, 19, 50, Worlds::Block::make(hazard));
+            ghostWorld.setBlock(50, 20, 50, Worlds::Block::make(hazard));
+            floater.Step(ghostWorld, 0.0f, 0.0f, false, false, false, dt);
+            check(floater.GetBlockTypeAt(ghostWorld) == hazard && !floater.CanInteractWithWorld() &&
+                      !floater.IsDeathLocked() && floater.GetY() == 20.0f,
+                  "ghost in/over lightning or lava skips the host terrain-reaction gate and survives");
+        }
+        floater.Step(ghostWorld, 0.0f, 1.0f, false, false, false, dt);
+        check(floater.GetAnimState() == BlupiController::AnimState::March,
+              "ghost horizontal flight uses March, not Air");
+        floater.Step(ghostWorld, 0.0f, 0.0f, true, false, false, dt);
+        check(floater.GetAnimState() == BlupiController::AnimState::March,
+              "ghost vertical-only ascent uses March, not Jump");
+        const float facing = floater.GetYaw();
+        floater.Step(ghostWorld, 0.0f, 0.0f, false, true, false, dt);
+        check(floater.GetAnimState() == BlupiController::AnimState::March && floater.GetYaw() == facing,
+              "ghost descent marches and preserves facing");
+        floater.Step(ghostWorld, 1.0f, 0.0f, false, false, false, dt);
+        check(floater.GetAnimState() == BlupiController::AnimState::Stop,
+              "turning without translation leaves ghost in Stop");
+        BlupiController hiddenGhost;
+        hiddenGhost.TriggerHide();
+        check(hiddenGhost.GetDrawOpacity(0) == 0.3f, "Hide keeps its 0.3 opacity");
+        hiddenGhost.ToggleGhost(ghostWorld);
+        check(hiddenGhost.GetDrawOpacity(0) == 0.75f, "ghost opacity takes priority over Hide");
+
         // Free vertical flight via jumpPressed(up)/crouchHeld(down) --
         // this engine's adaptation of the real screen-vertical axis (see
         // kGhostSpeed's own comment).
@@ -2987,13 +3021,17 @@ int main(int argc, char** argv)
               "Ghost mode's per-frame horizontal movement is markedly faster than normal walking "
               "(real exact 4x multiplier)");
 
+        ghostWorld.setBlock(50, 19, 50, Worlds::Block::make(BlockTypes::Air));
+        ghostWorld.setBlock(50, 20, 50, Worlds::Block::make(BlockTypes::Air));
+
         // Toggle-off gate: succeeds in open air, rejected inside solid
         // geometry (real `!DecorDetect(...)`, Decor.cpp:2065).
         BlupiController offInAir;
         offInAir.SetPosition(0.0f, 20.0f, 0.0f);
         offInAir.ToggleGhost(ghostWorld);
         check(!offInAir.ToggleGhost(ghostWorld), "ToggleGhost() off succeeds while standing in open air");
-        check(!offInAir.IsGhost(), "IsGhost() reflects the toggle-off");
+        check(!offInAir.IsGhost() && offInAir.CanInteractWithWorld() && offInAir.GetDrawOpacity(0) == 1.0f,
+              "turning ghost off restores world interactions and full opacity");
 
         BlupiController offInsideWall;
         offInsideWall.SetPosition(static_cast<float>(kGhostGroundX) - 50.0f, 0.3f,

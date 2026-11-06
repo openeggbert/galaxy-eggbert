@@ -1136,6 +1136,8 @@ namespace GalaxyEggbert::Game
         if (!m_ghost)
         {
             m_ghost = true;
+            m_nage = m_surf = false; // Decor.cpp:2054-2055
+            m_inWind = false;
             m_vehicleMode = VehicleMode::None;
             m_vehicleSpeed = 0.0f;
             m_suspended = false;
@@ -1520,7 +1522,8 @@ namespace GalaxyEggbert::Game
             m_velocityY = 0.0f;
             m_onGround = false;
 
-            const bool moving = moveInput != 0.0f;
+            // Decor.cpp:2659-2689: either translation axis marches; vertical flight keeps facing.
+            const bool moving = moveInput != 0.0f || jumpPressed != crouchHeld;
             UpdateAnim(moving, false, false, dt);
             return;
         }
@@ -2833,7 +2836,8 @@ namespace GalaxyEggbert::Game
         // idle. Airborne itself splits Jump (ascending) vs Air (falling/
         // apex) by velocity sign -- see the AnimState enum's own comment
         // for the 3D velocity-sign adaptation.
-        AnimState newState = (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
+        AnimState newState = m_ghost ? (moving ? AnimState::March : AnimState::Stop)
+                                  : (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
                                   : m_bye ? AnimState::Bye
                                   : m_oneShotAnimActive ? m_oneShotAnimState
                                   : m_pickupFrozen ? AnimState::PickupBusy
@@ -2861,7 +2865,7 @@ namespace GalaxyEggbert::Game
                                                   : AnimState::Stop;
         // In the wind he struggles (Decor.cpp:2128-2138): standing, he teeters; walking, he
         // leans into it.
-        if (m_inWind && m_vehicleMode != VehicleMode::Helicopter && m_vehicleMode != VehicleMode::Overcraft)
+        if (!m_ghost && m_inWind && m_vehicleMode != VehicleMode::Helicopter && m_vehicleMode != VehicleMode::Overcraft)
         {
             newState = newState == AnimState::Stop    ? AnimState::Vertigo
                        : newState == AnimState::March ? AnimState::Push

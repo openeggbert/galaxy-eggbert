@@ -149,7 +149,7 @@ namespace GalaxyEggbert::Game
                   bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                   bool voyageIsBlupiChannel,
                   float voyageX, float voyageY,
-                  GalaxyEggbert::Def::GameSpeed gameSpeed);
+                  GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity = 1.0f);
 
         // Projects a 3D world position into this class's own 640x480
         // reference screen space (plan.md `158`) -- the real Voyage
@@ -197,6 +197,7 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> jaugeEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> buttonEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> blupiRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> animRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> elementRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> textRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> padRenderer_;

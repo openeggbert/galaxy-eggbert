@@ -5761,6 +5761,90 @@ int main(int argc, char** argv)
               "jumping over a crusher (in the walking row): Mockeryi");
     }
 
+    // Ghost MODERN guards (Decor.cpp:2737, 9613, 9649, 9692, 9806, 9838).
+    {
+        using T = GalaxyEggbert::Def::ObjectType;
+        WorldRuntime rt;
+        rt.LoadFromVwrFile(worldPath);
+        auto& objects = rt.GetMobileObjectsMutable();
+        const auto object = [](T type, float x = 0.0f, float y = 60.0f)
+        {
+            MobileObjSpec o;
+            o.type = type;
+            o.active = true;
+            o.currentX = o.posStartX = o.posEndX = x;
+            o.currentY = o.posStartY = o.posEndY = y;
+            o.currentZ = o.posStartZ = o.posEndZ = 0.0f;
+            return o;
+        };
+        const auto tick = [&](InteractionSystem& sys, bool interacts = false, bool cloud = false)
+        {
+            sys.Update(1.0f / 20.0f, rt, 0.0f, 60.0f, 0.0f, 0.0f, sound,
+                       false, false, 1, 0, false, // crouch, balloon, facing, invincible
+                       true, true, true, true, false, false, cloud, true, true,
+                       true, 0.0f, false, false, false, false, true, false, interacts);
+        };
+        for (const auto type : {T::ObjectType2, T::ObjectType3, T::ObjectType4, T::ObjectType5,
+                               T::ObjectType6, T::ObjectType7, T::ObjectType16, T::ObjectType17,
+                               T::ObjectType20, T::ObjectType23, T::ObjectType26, T::ObjectType30,
+                               T::ObjectType31, T::ObjectType44, T::ObjectType54, T::ObjectType200,
+                               T::ObjectType201})
+        {
+            objects = {object(type)};
+            InteractionSystem sys;
+            tick(sys);
+            check(objects.front().active && sys.EventsThisFrame().empty() && !sys.ExitReached(),
+                  "ghost contact leaves mine/enemy/projectile/pickup/charge/exit/Perso untouched");
+        }
+        objects = {object(T::ObjectType16)};
+        InteractionSystem normal;
+        tick(normal, true);
+        check(hasEvent(normal, InteractionSystem::EventKind::Died), "same mine hurts an ordinary Blupi");
+
+        objects = {object(T::ObjectType4), object(T::ObjectType200)};
+        InteractionSystem decoy;
+        tick(decoy, false, true);
+        check(objects[0].active && objects[1].active && decoy.EventsThisFrame().empty(),
+              "ghost suppresses both cloud electro and enemy/Perso detection globally");
+        tick(decoy, true, false);
+        check(std::none_of(objects.begin(), objects.end(), [](const auto& o) {
+                  return o.active && (o.type == T::ObjectType4 || o.type == T::ObjectType200);
+              }), "enemy/Perso detection resumes when ghost is off (slots may hold explosion effects)");
+
+        objects = {object(T::ObjectType96, 1.0f), object(T::ObjectType97, -2.0f)};
+        InteractionSystem followers;
+        tick(followers);
+        check(objects[0].type == T::ObjectType96, "ghost does not wake a dormant follower");
+        check(objects[1].currentX > -2.0f && objects[1].currentX < 0.0f,
+              "reference exception: awake follower still homes toward the real ghost position (8026)");
+
+        objects = {object(T::ObjectType47, 0.0f, 59.0f)};
+        objects[0].posEndX = 4.0f;
+        objects[0].patrolStep = 2;
+        objects[0].stepAdvanceTicks = 40.0f;
+        InteractionSystem lift;
+        tick(lift);
+        check(!lift.IsRidingLift() && objects[0].currentX > 0.0f,
+              "conveyor lift patrol continues but neither carries nor nudges ghost");
+
+        objects.clear();
+        rt.GetWorldMutable().setBlock(50, 59, 50, Worlds::Block::make(BlockTypes::Bridge));
+        rt.GetWorldMutable().setBlock(51, 60, 50, Worlds::Block::make(BlockTypes::fromMobileIconId(334)));
+        InteractionSystem tiles;
+        tiles.CheatAllKeys();
+        tick(tiles);
+        check(objects.empty() && tiles.Key1Count() > 0 &&
+                  rt.GetWorld().getBlock(51, 60, 50).type() == BlockTypes::fromMobileIconId(334),
+              "ghost does not trigger bridge construction or spend a key opening a door");
+
+        objects = {object(T::ObjectType56)};
+        objects[0].phase = 50.0f;
+        InteractionSystem blast;
+        tick(blast);
+        check(hasEvent(blast, InteractionSystem::EventKind::Died),
+              "reference exception: an existing dynamite blast still kills ghost (9167-9173)");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

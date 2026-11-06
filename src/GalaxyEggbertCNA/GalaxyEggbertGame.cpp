@@ -2082,6 +2082,8 @@ namespace GalaxyEggbert::CNA
         state.yawDegrees = blupi_.GetYaw() * kDegreesPerRadian;
         state.onGround = blupi_.IsOnGround();
         state.dead = blupi_.IsDeathLocked();
+        state.ghost = blupi_.IsGhost();
+        state.anim = static_cast<int>(blupi_.GetAnimState());
         state.exitReached = interaction_.ExitReached();
         state.blitz = ((worldRuntime_.GetAnimPhase() % 100) + 100) % 100;
         state.temp = (((worldRuntime_.GetAnimPhase() / 4) % 20) + 20) % 20;
@@ -2124,6 +2126,8 @@ namespace GalaxyEggbert::CNA
         if (keys.action) down.insert(Keys::Space);
         if (keys.crouch) down.insert(Keys::LeftShift);
         if (keys.lookUp) down.insert(Keys::RightShift);
+        if (keys.letter >= 'a' && keys.letter <= 'z')
+            down.insert(static_cast<Keys>(static_cast<int>(Keys::A) + keys.letter - 'a'));
         autoplayKeys_ = Microsoft::Xna::Framework::Input::KeyboardState(down);
         const std::string lines = autoplay_->TakeLog();
         std::fputs(lines.c_str(), autoplayTrace_);
@@ -4339,8 +4343,9 @@ namespace GalaxyEggbert::CNA
             const bool crouchHeld = keys.IsKeyDown(Keys::LeftShift) || padPlayInput.crouchHeld;
             // Holding a crate (crouching, one right in front) is the one time he backs up: Down
             // pulls it (the original's Pop) instead of turning him round.
+            const bool interactsWithWorld = blupi_.CanInteractWithWorld();
             const bool pullingStance =
-                crouchHeld && (holdingCrate_ || InteractionSystem::CrateInFront(
+                interactsWithWorld && crouchHeld && (holdingCrate_ || InteractionSystem::CrateInFront(
                                                     worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
                                                     std::sin(blupi_.GetYaw()), -std::cos(blupi_.GetYaw())) != nullptr);
             // Down turns Blupi around instead of backing him up (user decision
@@ -4420,13 +4425,13 @@ namespace GalaxyEggbert::CNA
             // flew through water, the skateboard rode over it, against 013's "it dislikes
             // water!"): the vehicle is gone, an explosion, a small shake, channel 10. (The
             // helicopter's spinning ByeBye debris is not drawn.)
-            if (blupi_.IsInVehicle() && !blupi_.IsOneShotAnimPlaying() && !blupi_.IsTeleporting() &&
+            if (interactsWithWorld && blupi_.IsInVehicle() && !blupi_.IsOneShotAnimPlaying() && !blupi_.IsTeleporting() &&
                 !blupi_.IsDeathLocked() &&
                 GalaxyEggbert::BlockTypes::isWater(blupi_.GetBlockTypeAt(worldRuntime_.GetWorld())))
             {
                 WreckVehicle();
             }
-            const bool canEnterWater = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased();
+            const bool canEnterWater = interactsWithWorld && !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased();
             const auto waterBlockAt = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
             const auto waterBlockAbove = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
             const bool atWaterTile = canEnterWater && GalaxyEggbert::BlockTypes::isWater(waterBlockAt);
@@ -4456,7 +4461,7 @@ namespace GalaxyEggbert::CNA
                     }
                 }
                 blupi_.SetCrateCells(std::move(crateCells));
-                const bool canHold = crouchHeld && blupi_.IsOnGround() && !blupi_.IsInVehicle() &&
+                const bool canHold = interactsWithWorld && crouchHeld && blupi_.IsOnGround() && !blupi_.IsInVehicle() &&
                                      !blupi_.IsBallooned() && !blupi_.IsEcrased();
                 const auto* crate = canHold ? InteractionSystem::CrateInFront(
                                                   worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
@@ -4490,7 +4495,7 @@ namespace GalaxyEggbert::CNA
             blupi_.Step(worldRuntime_.GetWorld(), steering, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
-            TickPendingSkate(simDt);
+            if (interactsWithWorld) TickPendingSkate(simDt);
             // Automatic zoom on action (Decor::MoveHotSpot, Decor.cpp:538-600; the Setup's
             // SetupZoom, on by default; OR-0010): while he walks with his focus, not flying the
             // helicopter nor under Power, the view eases in to 1.3x (1/30 a tick); it stays 30
@@ -4517,7 +4522,7 @@ namespace GalaxyEggbert::CNA
             }
             // The helicopter flown into a ceiling is wrecked (Decor.cpp:5264-5283, OR-0019), unless
             // the shield, the drink's Hide or SuperBlupi protect it.
-            if (blupi_.HelicopterHitsCeiling(worldRuntime_.GetWorld(), tempPassable) && !blupi_.IsDeathLocked() &&
+            if (interactsWithWorld && blupi_.HelicopterHitsCeiling(worldRuntime_.GetWorld(), tempPassable) && !blupi_.IsDeathLocked() &&
                 !blupi_.IsTeleporting() && !blupi_.IsOneShotAnimPlaying() /* m_blupiFocus */ && blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Shield &&
                 blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Hide && !blupi_.GetCheatSuperBlupi())
             {
@@ -4733,812 +4738,818 @@ namespace GalaxyEggbert::CNA
                 return;
             }
 
-            // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
-            // subset; deferred-timing follow-up 2026-07-14) -- takes the
-            // real death sound channel for the specific cause (channel 8:
-            // fall-off-world/lava, the real shared "you died" sound per
-            // 07-sounds.md; channel 51: spikes/drip's real Glu-death sound,
-            // distinct from channel 8's) and starts the real death-lock
-            // (`BlupiController::TriggerDeathLock()`, see its own
-            // comment) instead of applying life loss/respawn instantly --
-            // both now happen once the lock elapses, via
-            // ConsumeDeathLockResolved() below. `cause` drives the real
-            // per-type lock duration; `shouldRespawn` is the real
-            // `m_blupiRestart` flag for this specific site (see each call
-            // site's own comment for its citation).
-            const auto triggerDeath = [this](GalaxyEggbert::Def::SoundChannel channel,
-                                              GalaxyEggbert::Game::BlupiController::DeathCause cause,
-                                              bool shouldRespawn, bool playChannel = true)
+            const bool actionPressedEdge = actionPressed && !actionKeyWasDown_;
+            bool actionUsed = false;
+            // Decor::BlupiStep, Decor.cpp:2737-2741: ghost returns before hazards, springs,
+            // water, world signs, teleporters, fans, safe positions, switches and hand actions.
+            if (interactsWithWorld)
             {
-                if (playChannel)
+                // Shared death consequence (2026-07-11, plan.md E3D-MIG-067
+                // subset; deferred-timing follow-up 2026-07-14) -- takes the
+                // real death sound channel for the specific cause (channel 8:
+                // fall-off-world/lava, the real shared "you died" sound per
+                // 07-sounds.md; channel 51: spikes/drip's real Glu-death sound,
+                // distinct from channel 8's) and starts the real death-lock
+                // (`BlupiController::TriggerDeathLock()`, see its own
+                // comment) instead of applying life loss/respawn instantly --
+                // both now happen once the lock elapses, via
+                // ConsumeDeathLockResolved() below. `cause` drives the real
+                // per-type lock duration; `shouldRespawn` is the real
+                // `m_blupiRestart` flag for this specific site (see each call
+                // site's own comment for its citation).
+                const auto triggerDeath = [this](GalaxyEggbert::Def::SoundChannel channel,
+                                                  GalaxyEggbert::Game::BlupiController::DeathCause cause,
+                                                  bool shouldRespawn, bool playChannel = true)
                 {
-                    sound_.Play(channel);
-                }
-                blupi_.TriggerDeathLock(cause, shouldRespawn);
-            };
-
-            // Real Clear2/Clear3 "soul ascends" death VFX (plan.md `158`
-            // death-VFX follow-up, `Decor::BlupiDead`'s own Clear2/Clear3
-            // branches, Decor.cpp:6589-6606) -- called directly here (not
-            // via the pending-request round-trip pickups use) since these
-            // 2 real trigger sites (fall-off-world, Lava) already have
-            // `camera_`/viewport in scope, unlike the generic-hazard-
-            // contact coinflip site inside InteractionSystem::Update()
-            // (see RequestClear2Ascend()'s own comment). kind must be
-            // Clear2Ascend (icon 230, offsetY 300) or Clear3Ascend (icon
-            // 40, offsetY 2000).
-            // Takes an EXPLICIT death position (not read live from blupi_)
-            // -- harmless now that triggerDeath() no longer moves Blupi
-            // synchronously (2026-07-14, deferred-timing follow-up), but
-            // callers still capture blupi_.GetX/Y/Z() BEFORE calling
-            // triggerDeath() for clarity/consistency with every call site.
-            const auto triggerDeathAscend = [this](GalaxyEggbert::Game::InteractionSystem::VoyageKind kind,
-                                                    float offsetY, int icon, float deathX, float deathY, float deathZ)
-            {
-                auto viewport = getGraphicsDeviceProperty().getViewportProperty();
-                viewport.setWidthProperty(tickInput_.viewportWidth);
-                viewport.setHeightProperty(tickInput_.viewportHeight);
-                float hudX = 0.0f, hudY = 0.0f;
-                if (Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(deathX, deathY, deathZ),
-                                                   camera_.View(), camera_.Projection(),
-                                                   viewport.getWidthProperty(), viewport.getHeightProperty(), hudX,
-                                                   hudY))
-                {
-                    interaction_.BeginVoyage(worldRuntime_, kind, icon, false, hudX, hudY, hudX, hudY - offsetY,
-                                              sound_, deathX, deathY, deathZ);
-                }
-            };
-
-            // Fall-off-world death -- mobile-eggbert-reference/
-            // 10-blupi-mechanics.md §8: "Walking off the world's bottom
-            // row ... -> Clear2", checked before the rest of the frame
-            // runs. kFallDeathY is a simplification of the real grid-row
-            // check (`(end.Y+30)/64 >= 99`, Decor.cpp:2754) -- this world's
-            // real floors/hazards all sit at Y>=0 (the sample world's
-            // water/pit hazard is only 1 block deep), so any Y clearly
-            // below that means Blupi fell through a hole with nothing
-            // under it, not a legitimate low point in the level.
-            //
-            // **-60.0f, not -5.0f (user-reported, 2026-07-11): the real
-            // fall is NOT near-instant.** Directly inspected
-            // `../mobile-eggbert/worlds/world001.txt`: its real terrain
-            // (`Decor:` grid) occupies only rows 0-21, leaving rows 22-98
-            // (77 rows, ~4928 real px) of completely empty grid before the
-            // real row-99 death check ever fires -- a deliberate, generous
-            // "pit of doom" margin, not a tight threshold. Verified real
-            // gravity directly against Decor.cpp:2966-2968 (`end.Y +=
-            // (int)(m_blupiVitesseY * 2.0); if (m_blupiVitesseY < 20.0)
-            // m_blupiVitesseY += 2.0;`, starting at 1.0): terminal velocity
-            // is actually 21, not literally 20 (the uncapped +2 increment
-            // overshoots the `<20` gate by one step) -- 840 real px/sec
-            // (13.125 tiles/sec) at the real 20Hz reference rate. Falling
-            // that observed ~4928px margin at these real constants takes
-            // ~6.1s (the real ramp-up to terminal covers the first ~200px
-            // in 0.5s, the remaining ~4728px at 840px/s takes ~5.6s) --
-            // several seconds, matching the user's recollection of a real,
-            // noticeable fall, not the sub-1-second death the old -5.0f
-            // threshold gave with this engine's own gravity. -60.0f
-            // reproduced a comparable ~6.2s fall (verified live at 6.72s)
-            // using this engine's own already-tuned kGravity=25/
-            // kFallLimit=-10 (not the real tick-domain values, which
-            // aren't cross-checked against this engine's own constants
-            // per plan.md `065`) -- an equivalent NUMBER OF SECONDS, not
-            // the same literal unit distance, since this world's own
-            // terrain (Y 0-13) is far shorter than a real level's, so
-            // matching real "feel" (a real fall you notice) makes more
-            // sense here than matching the real absolute margin.
-            //
-            // **-27.0f, not -60.0f (user feedback, 2026-07-13): even the
-            // "feel"-matched ~6.2-6.7s read as too long in practice.** User
-            // asked for roughly half. Using this engine's own kGravity=25/
-            // kFallLimit=-10: reaching terminal velocity takes a fixed
-            // 0.4s (10/25) covering 2.0 units regardless of the threshold;
-            // the rest is covered at the 10 units/s terminal rate. This is
-            // a game-feel adjustment, not a faithfulness correction (the
-            // real absolute margin was never matched here anyway, see
-            // above) -- verified live at 3.417s (down from the previously
-            // live-verified 6.72s), i.e. almost exactly half.
-            constexpr float kFallDeathY = -27.0f;
-            if (blupi_.GetY() < kFallDeathY)
-            {
-                const float deathX = blupi_.GetX();
-                const float deathY = blupi_.GetY();
-                const float deathZ = blupi_.GetZ();
-                // Real m_blupiRestart=true at this site (Decor.cpp:2757).
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
-                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear2, true);
-                // Real Clear2 ascend (plan.md `158` death-VFX follow-up,
-                // Decor.cpp:2754-2761) -- deterministic, no coinflip.
-                triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
-                                    deathX, deathY, deathZ);
-            }
-
-            // Lava hazard (plan.md E3D-MIG-140) -- deterministic death, no
-            // vehicle immunity (mobile-eggbert-reference/
-            // 12-hazards-and-interactables.md: "Lava(icon 68): deterministic
-            // Clear3, no vehicle immunity, no focus requirement" -- Shield/
-            // Hide immunity IS modeled now, plan.md E3D-MIG-170, confirmed
-            // directly against Decor.cpp:5497) -- the
-            // simplest of the 5 real isHazard() tile types to implement
-            // faithfully for exactly that reason; Crusher/Saw/Blitz each
-            // have real gating/timing conditions BlockTypes::isHazard() does
-            // NOT encode, so each gets its own dedicated
-            // task (E3D-MIG-142..144) instead of one generic "hazard" check.
-            // GetGroundBlockType() already gates on IsOnGround() -- Lava
-            // tiles are solid/walkable-on in this engine (Blupi stands on
-            // lava rather than falling through it, matching the real 2D
-            // game -- see BlockTypes.hpp's isMobileTransparent() comment on
-            // why Lava is deliberately kept solid despite being
-            // quart-passable in the real source).
-            if (!blupi_.IsInvincible() &&
-                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
-            {
-                const float deathX = blupi_.GetX();
-                const float deathY = blupi_.GetY();
-                const float deathZ = blupi_.GetZ();
-                // Real m_blupiRestart=true at this site (Decor.cpp:5500).
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
-                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear3, true);
-                // Real Clear3 ascend (plan.md `158` death-VFX follow-up,
-                // Decor.cpp:5497-5499) -- deterministic, no coinflip.
-                triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear3Ascend, 2000.0f, 40,
-                                    deathX, deathY, deathZ);
-            }
-
-            // Spikes hazard (plan.md E3D-MIG-141) -- real channel 51 (the
-            // Glu-death sound, distinct from lava/fall's channel 8, per
-            // 07-sounds.md). Real behavior (12-hazards-and-interactables.md)
-            // gates this on vehicle immunity (Over/Jeep/Tank protect,
-            // unlike lava) and requires m_blupiFocus (BlupiFocused(), BD-0060),
-            // and vehicle immunity exists (`HasVehicleHazard
-            // Immunity()`, fixed 2026-07-16 -- this comment previously said
-            // "neither vehicles nor a focus concept exist... yet", stale
-            // since vehicles were implemented `171`). The real check also
-            // restricts to a narrow central x-band within the tile
-            // (`pos.X%64` roughly 15-49, touching the tile's edges doesn't
-            // count) -- not modeled, since BlupiController's single-point
-            // 3D collision has no sub-tile position within a cell to test
-            // against; the whole tile is lethal here.
-            // m_blupiFocus too (Decor.cpp:5504-5505): busy, he is not caught.
-            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
-                blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
-            {
-                // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510);
-                // the trap's tentacle rises where he stands (ObjectType53; BD-0054).
-                interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType53, blupi_.GetX(), blupi_.GetY(),
-                                         blupi_.GetZ());
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
-                             GalaxyEggbert::Game::BlupiController::DeathCause::Glu, true);
-            }
-
-            // Water drip hazard (plan.md TILE-032, real Decor::IsGoutte,
-            // confirmed 2026-07-14 via direct Decor.cpp read -- despite the
-            // "drip"/glue-sounding name, real behavior is a deterministic
-            // kill, mechanically identical to Spike above: same
-            // GalaxyEggbert::Def::BlupiAction::Glu death, same gate shape, same real channel 51
-            // sound (Decor.cpp:5513-5519), same real Over/Jeep/Tank vehicle
-            // immunity (fixed 2026-07-16, same as Spike above).
-            // His own cell, as IsGoutte(m_blupiPos) (no +60 as IsPiege has; BD-0033): the drip
-            // hangs under a ceiling, he dies going into it.
-            // m_blupiFocus too (Decor.cpp:5513-5514; BD-0066): busy, he is not caught.
-            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
-                blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
-            {
-                // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
-                             GalaxyEggbert::Game::BlupiController::DeathCause::Glu, true);
-            }
-
-            // Blitz hazard (plan.md E3D-MIG-144) -- real channel 8, same
-            // lethality profile as lava per mobile-eggbert-reference/
-            // 12-hazards-and-interactables.md ("No vehicle immunity --
-            // same lethality profile as lava; only Shield/Hide/SuperBlupi
-            // protect, and there is no focus requirement") -- unlike
-            // spikes/drip/saw, Blitz needed no immunity simplification to
-            // implement faithfully. Real `BlitzActif()`: a 100-tick cycle
-            // at the same 20-ticks/sec reference rate worldRuntime_'s
-            // GetAnimPhase() already advances at (Config::ScaleTime(1),
-            // matching the real per-tile animation-divisor rate), lethal
-            // only on even ticks within the first half (`num%2==0 &&
-            // num<50` -- a rapid flicker for ~2.5s, 25% duty cycle over the
-            // full ~5s period, then fully inactive for the second half).
-            // The real cosmetic emitter tile (icon 304, sits one cell
-            // above 305, times a zap sound cue only) is NOT implemented --
-            // audio-only polish, not the hazard itself.
-            // Lightning and saws catch Blupi in his own cell (Decor::IsBlitz/IsScie(m_blupiPos)),
-            // as well as under his feet where worlds lay them as floor.
-            const auto blockHere = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
-            const auto blockUnder = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
-            if (!blupi_.IsInvincible() &&
-                (blockUnder == GalaxyEggbert::BlockTypes::Blitz || blockHere == GalaxyEggbert::BlockTypes::Blitz) &&
-                WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
-            {
-                // Real GalaxyEggbert::Def::BlupiAction::Clear1, m_blupiRestart=true (Decor.cpp:5541-5547).
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
-                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear1, true);
-            }
-
-            // Crusher hazard (plan.md E3D-MIG-143) -- unlike every hazard
-            // above, this is NOT lethal: it squashes Blupi (reduced move
-            // speed, no jump, ~10s auto-recovery) rather than costing a
-            // life. Real `IsEcraseur()`'s 3-out-of-10 danger window
-            // (`m_time / 3 % 10 <= 2`) is `IsCrusherActiveAtPhase()`. `TriggerCrush()` itself is idempotent (a
-            // no-op while already squashed, matching the real
-            // `!m_blupiEcrase` re-trigger guard) -- only play the real
-            // entry sound (channel 70) when it actually starts a NEW squash.
-            // Blupi's own cell, as IsEcraseur(m_blupiPos) (BD-0032): the crusher hangs in the cell
-            // he walks through, not in the floor.
-            // m_blupiFocus too (Decor.cpp:5551-5552; BD-0066).
-            if (!blupi_.IsInvincible() && BlupiFocused() &&
-                blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
-                WorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
-                blupi_.TriggerCrush())
-            {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel70);
-                // Four sparks, a flash and the big shake (Decor.cpp:5582-5591; BD-0054).
-                interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), true);
-                interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType90, blupi_.GetX(), blupi_.GetY(),
-                                         blupi_.GetZ());
-                cameraShake_.Trigger(CameraShakeType::Big);
-            }
-
-            // Saw hazard (plan.md E3D-MIG-142) -- real channel 75 (the
-            // "cut apart" death cue, distinct from every other hazard's
-            // sound so far), deterministic, real Over/Jeep/Tank vehicle
-            // immunity (`HasVehicleHazardImmunity()`, fixed 2026-07-16,
-            // identical to Spike/Drip above -- this comment previously said
-            // "no immunity simplification beyond what every hazard here
-            // already lacks (vehicles... don't exist yet)", stale since
-            // vehicles were implemented `171`). Only the active icon
-            // (`Saw`, 378) is lethal -- the stopped variant (`SawStopped`,
-            // 379) is a separate BlockTypes value, so GetGroundBlockType()'s
-            // exact match already excludes it with no extra check needed. A
-            // saw starts active or stopped per however the world was
-            // authored; TryActivateSwitch() below is what flips it between
-            // the two.
-            // m_blupiFocus too (Decor.cpp:5521-5522; BD-0066).
-            if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
-                (blockUnder == GalaxyEggbert::BlockTypes::Saw || blockHere == GalaxyEggbert::BlockTypes::Saw))
-            {
-                const float deathX = blupi_.GetX();
-                const float deathY = blupi_.GetY();
-                const float deathZ = blupi_.GetZ();
-                // Real source has NO separate contact-site sound for Saw
-                // (unlike Lava/fall's own extra channel 8) -- channel 75
-                // comes entirely from BlupiDead's own Clear4 branch, which
-                // SpawnSawDeathBurst() plays itself (plan.md `158`
-                // death-VFX follow-up, Decor.cpp:5521-5524/6608-6613), so
-                // triggerDeath() must NOT also play it here. Real
-                // m_blupiRestart=true at this site (Decor.cpp:5526).
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel75,
-                             GalaxyEggbert::Game::BlupiController::DeathCause::Clear4, true, false);
-                interaction_.SpawnSawDeathBurst(worldRuntime_, deathX, deathY, deathZ, sound_);
-            }
-
-            // Spring / bounce tile (plan.md E3D-MIG-145, icon 211,
-            // verified directly against Decor.cpp:2835-2911/7312-7320) --
-            // NOT a hazard, launches Blupi upward instead of costing a
-            // life. TriggerSpringBounce() is idempotent (a no-op while
-            // already airborne, matching the real `!m_blupiAir` guard), so
-            // only play the real bounce sound (channel 41) on an actual new
-            // trigger. Real vehicle-dismount-first gate fixed 2026-07-16
-            // (Decor.cpp:2837-2893): touching a spring while riding ANY
-            // vehicle (Shield/Hide protect against this, matching every
-            // other real forced-dismount-style gate) forcibly ejects
-            // Blupi first (small shake + channel 10, depositing the
-            // vehicle pickup back into the world via the same
-            // `DismountAndDepositVehicle()` helper the voluntary
-            // action-button dismount uses) -- the bounce itself still
-            // applies on the same contact, real source does not treat
-            // these as mutually exclusive.
-            // The vehicle is wrecked there (an explosion, ObjectType9), not put down: BD-0015.
-            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
-                blupi_.IsInVehicle() && blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Shield &&
-                blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Hide && !blupi_.GetCheatSuperBlupi())
-            {
-                WreckVehicle();
-            }
-            if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
-                blupi_.TriggerSpringBounce(jumpPressed && BlupiFocused())) // held counts with focus (2900)
-            {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
-            }
-
-            // Taunts (plan.md BLUPI-067; Decor.cpp:5627-5635, MockeryDetect 9518-9601; BD-0044):
-            // every tick he is in control, on foot or swimming, an enemy beside him at his height
-            // (below him too while he jumps), or lava or a crusher under his jump, arms a taunt as
-            // an Ouf; BlupiController plays it if he stands idle within 20 ticks. Nothing is armed
-            // during the cooldown.
-            if (blupi_.IsMockeryCooldownElapsed() && !blupi_.IsInVehicle() && !blupi_.IsSuspended() &&
-                !blupi_.IsBallooned() && !blupi_.IsEcrased() && !blupi_.IsDeathLocked() && !blupi_.IsTeleporting() &&
-                !blupi_.IsBye() && !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying())
-            {
-                using A = GalaxyEggbert::Def::BlupiAction;
-                const bool airborne = !blupi_.IsOnGround() && !blupi_.IsSurf() && !blupi_.IsNage();
-                const A taunt = InteractionSystem::MockeryDetect(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
-                                                                 blupi_.GetZ(), blupi_.GetYaw(), airborne);
-                if (taunt != A::None)
-                {
-                    blupi_.ArmOuf(taunt == A::Mockery    ? BlupiController::AnimState::Mockery
-                                  : taunt == A::Mockeryi ? BlupiController::AnimState::Mockeryi
-                                                         : BlupiController::AnimState::Mockeryp);
-                }
-            }
-
-            // Hub/mission-progression: world-select portal contact (plan.md
-            // hub/mission system, found/implemented 2026-07-17, real
-            // `Decor::IsWorld()`/the `Bye`-action mission-change handler).
-            // Contact-triggered, no debounce needed. The real ~1.5s "turn and
-            // wave" `Bye` freeze is now modeled (plan.md BLUPI-049, found/
-            // wired 2026-07-17): `TriggerBye()` freezes Blupi and remembers
-            // the target mission; `SetYaw()` turns him to face the camera
-            // (real `m_blupiFront=true`), matching the real trigger scope
-            // exactly (`Decor.cpp:5476-5488`) -- world-select ONLY, not the
-            // exit-goal/PauseBack/PauseRestart paths below/elsewhere, which
-            // stay instant in real source too. `LoadMission()` itself now
-            // happens later, off the `wasBye`/`IsBye()` completion check
-            // right after `Step()` above, once the freeze naturally elapses.
-            //
-            // Uses `GetBlockTypeAt()` (Blupi's own occupied cell), NOT
-            // `GetGroundBlockType()` (found/fixed 2026-07-21, live bug
-            // report): real `Decor::IsWorld(m_blupiPos)` is a plain direct
-            // position lookup, independent of solidity/grounding entirely
-            // -- matching that exactly needs the query that already exists
-            // for the same reason as water detection, not the one gated on
-            // IsOnGround(). These markers' real per-icon quarter-cell mask
-            // is genuinely all-zero/thin (same category as Lava/Crusher/
-            // Saw), so INFRA-005's sub-tile-precision wall collision
-            // correctly stopped treating them as solid enough to
-            // (accidentally) step up onto -- `GetGroundBlockType()` alone
-            // then never saw them again, since nothing elevates Blupi onto
-            // them any more. The real game was never checking "am I
-            // standing ON the marker" in the first place, only "is the
-            // marker AT my own position" -- mere contact, exactly as the
-            // real 2D game and this engine's own pre-INFRA-005 (buggier)
-            // collision both allowed by different, unrelated routes.
-            // Only while not already saying goodbye (Decor.cpp:5476 `m_blupiAction != Bye`): he still
-            // stands on the marker during the farewell, and returning here every frame skipped the
-            // rest of the update, the Bye clip's playback with it (OR-0002: the farewell froze).
-            if (!blupi_.IsBye())
-            {
-                const auto groundBlock = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
-                if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
-                {
-                    const int target = WorldRuntime::ComputeWorldSelectTarget(
-                        worldRuntime_.GetMissionNumber(), GalaxyEggbert::BlockTypes::worldSelectIndex(groundBlock));
-                    if (blupi_.TriggerBye())
+                    if (playChannel)
                     {
-                        byePendingTarget_ = target;
-                        const float dx = camera_.Position().X - blupi_.GetX();
-                        const float dz = camera_.Position().Z - blupi_.GetZ();
-                        blupi_.SetYaw(std::atan2(dx, -dz));
-                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel32);
+                        sound_.Play(channel);
                     }
-                    return;
-                }
-            }
+                    blupi_.TriggerDeathLock(cause, shouldRespawn);
+                };
 
-            // Teleporter (plan.md E3D-MIG-147, icons 330-333, verified
-            // directly against Decor.cpp:7378-7394/5593-5606) -- checked
-            // one cell ABOVE Blupi (GetBlockTypeAbove()), matching the real
-            // detection geometry exactly. Teleporter icons are always
-            // non-solid for collision (GroundHeightAt's own
-            // registry-backed teleporter collision skip), so Blupi can genuinely walk into
-            // the open space beneath a floating pillar to trigger this,
-            // the same way real mobile-eggbert's per-tile-independent 2D
-            // collision lets him walk under one (see GetBlockTypeAbove()'s
-            // own comment). The real narrow 7px-wide left-edge sub-tile
-            // band is NOT modeled -- no sub-tile position exists in this
-            // engine's single-point collision, same simplification already
-            // applied to spikes' own real sub-tile band. Real gate
-            // (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate &&
-            // !m_blupiAir && m_blupiFocus`) is checked inside
-            // TriggerTeleport() itself (grounded, not ballooned/squashed,
-            // and -- fixed 2026-07-16 -- not in any vehicle mode either);
-            // focus by BlupiFocused() (2026-11-04). Idempotent, same shape as
-            // every other Trigger*() here, so channel 71 only plays on an
-            // actual new trigger.
-            // Not while m_blupiPosHelico is set (Decor.cpp:5594): just off a vehicle, out of a
-            // popped balloon, or where a teleporter put him, until he is 30 px from that spot
-            // (BD-0017); and not before he has left the cell a teleporter put him in, since here
-            // the whole cell under a pillar triggers, not the original's 7 px band (BD-0021).
-            const auto aboveIcon = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
-            if (teleportArrivalGuard_ && (static_cast<int>(std::lround(blupi_.GetX())) != teleportArrivalCellX_ ||
-                                          static_cast<int>(std::lround(blupi_.GetZ())) != teleportArrivalCellZ_))
-            {
-                teleportArrivalGuard_ = false; // he has left the cell he arrived in
-            }
-            if (GalaxyEggbert::BlockTypes::isTeleporter(aboveIcon) && !interaction_.ContactGraceActive() &&
-                !teleportArrivalGuard_ && BlupiFocused() /* m_blupiFocus, Decor.cpp:5594 */ &&
-                blupi_.TriggerTeleport(aboveIcon))
-            {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
-                // Real teleporter arc (plan.md VISUAL-010, ObjectType92,
-                // Decor.cpp:5606) -- despite Def/ObjectType.hpp's own "charged
-                // attack" doc comment, this is the real, only spawn site.
-                interaction_.SpawnTeleportArc(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-            }
-
-            // Fan hazard (Decor.cpp:5459-5474, IsVentillo; WorldRuntime::TryConsumeFan): touching a
-            // fan at its mouth destroys it with its wind. Every touch explodes (ObjectType11), shakes
-            // the screen hard and plays channel 10; only the death is gated on Shield, Hide and
-            // SuperBlupi, so a shielded Blupi survives the explosion he caused (BD-0042: until
-            // 2026-11-03 the explosion, the shake and the sound came only with the death). The death
-            // is BlupiDead(Clear1, Clear2), the 50/50 coinflip, without m_blupiRestart.
-            if (const auto fanIcon = worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()))
-            {
-                // The fan's own piece flies away (ModifDecor's ByeByeAdd, BD-0049).
-                const auto fanCell = worldRuntime_.LastConsumedFan();
-                interaction_.ByeByeFan(*fanIcon, fanCell[0], fanCell[1], fanCell[2]);
-                // Captured BEFORE triggerDeath() respawns Blupi: the flash and the ascent start
-                // where he died.
-                const float deathX = blupi_.GetX();
-                const float deathY = blupi_.GetY();
-                const float deathZ = blupi_.GetZ();
-                cameraShake_.Trigger(CameraShakeType::Big);
-                interaction_.SpawnFanHitFlash(worldRuntime_, deathX, deathY, deathZ);
-                if (blupi_.IsInvincible())
+                // Real Clear2/Clear3 "soul ascends" death VFX (plan.md `158`
+                // death-VFX follow-up, `Decor::BlupiDead`'s own Clear2/Clear3
+                // branches, Decor.cpp:6589-6606) -- called directly here (not
+                // via the pending-request round-trip pickups use) since these
+                // 2 real trigger sites (fall-off-world, Lava) already have
+                // `camera_`/viewport in scope, unlike the generic-hazard-
+                // contact coinflip site inside InteractionSystem::Update()
+                // (see RequestClear2Ascend()'s own comment). kind must be
+                // Clear2Ascend (icon 230, offsetY 300) or Clear3Ascend (icon
+                // 40, offsetY 2000).
+                // Takes an EXPLICIT death position (not read live from blupi_)
+                // -- harmless now that triggerDeath() no longer moves Blupi
+                // synchronously (2026-07-14, deferred-timing follow-up), but
+                // callers still capture blupi_.GetX/Y/Z() BEFORE calling
+                // triggerDeath() for clarity/consistency with every call site.
+                const auto triggerDeathAscend = [this](GalaxyEggbert::Game::InteractionSystem::VoyageKind kind,
+                                                        float offsetY, int icon, float deathX, float deathY, float deathZ)
                 {
-                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
-                }
-                else
-                {
-                    const bool isClear2 = interaction_.RollClear2Coinflip();
-                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel10,
-                                 isClear2 ? GalaxyEggbert::Game::BlupiController::DeathCause::Clear2
-                                          : GalaxyEggbert::Game::BlupiController::DeathCause::Clear1,
-                                 false);
-                    if (isClear2)
+                    auto viewport = getGraphicsDeviceProperty().getViewportProperty();
+                    viewport.setWidthProperty(tickInput_.viewportWidth);
+                    viewport.setHeightProperty(tickInput_.viewportHeight);
+                    float hudX = 0.0f, hudY = 0.0f;
+                    if (Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(deathX, deathY, deathZ),
+                                                       camera_.View(), camera_.Projection(),
+                                                       viewport.getWidthProperty(), viewport.getHeightProperty(), hudX,
+                                                       hudY))
                     {
-                        triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f,
-                                            230, deathX, deathY, deathZ);
+                        interaction_.BeginVoyage(worldRuntime_, kind, icon, false, hudX, hudY, hudX, hudY - offsetY,
+                                                  sound_, deathX, deathY, deathZ);
+                    }
+                };
+
+                // Fall-off-world death -- mobile-eggbert-reference/
+                // 10-blupi-mechanics.md §8: "Walking off the world's bottom
+                // row ... -> Clear2", checked before the rest of the frame
+                // runs. kFallDeathY is a simplification of the real grid-row
+                // check (`(end.Y+30)/64 >= 99`, Decor.cpp:2754) -- this world's
+                // real floors/hazards all sit at Y>=0 (the sample world's
+                // water/pit hazard is only 1 block deep), so any Y clearly
+                // below that means Blupi fell through a hole with nothing
+                // under it, not a legitimate low point in the level.
+                //
+                // **-60.0f, not -5.0f (user-reported, 2026-07-11): the real
+                // fall is NOT near-instant.** Directly inspected
+                // `../mobile-eggbert/worlds/world001.txt`: its real terrain
+                // (`Decor:` grid) occupies only rows 0-21, leaving rows 22-98
+                // (77 rows, ~4928 real px) of completely empty grid before the
+                // real row-99 death check ever fires -- a deliberate, generous
+                // "pit of doom" margin, not a tight threshold. Verified real
+                // gravity directly against Decor.cpp:2966-2968 (`end.Y +=
+                // (int)(m_blupiVitesseY * 2.0); if (m_blupiVitesseY < 20.0)
+                // m_blupiVitesseY += 2.0;`, starting at 1.0): terminal velocity
+                // is actually 21, not literally 20 (the uncapped +2 increment
+                // overshoots the `<20` gate by one step) -- 840 real px/sec
+                // (13.125 tiles/sec) at the real 20Hz reference rate. Falling
+                // that observed ~4928px margin at these real constants takes
+                // ~6.1s (the real ramp-up to terminal covers the first ~200px
+                // in 0.5s, the remaining ~4728px at 840px/s takes ~5.6s) --
+                // several seconds, matching the user's recollection of a real,
+                // noticeable fall, not the sub-1-second death the old -5.0f
+                // threshold gave with this engine's own gravity. -60.0f
+                // reproduced a comparable ~6.2s fall (verified live at 6.72s)
+                // using this engine's own already-tuned kGravity=25/
+                // kFallLimit=-10 (not the real tick-domain values, which
+                // aren't cross-checked against this engine's own constants
+                // per plan.md `065`) -- an equivalent NUMBER OF SECONDS, not
+                // the same literal unit distance, since this world's own
+                // terrain (Y 0-13) is far shorter than a real level's, so
+                // matching real "feel" (a real fall you notice) makes more
+                // sense here than matching the real absolute margin.
+                //
+                // **-27.0f, not -60.0f (user feedback, 2026-07-13): even the
+                // "feel"-matched ~6.2-6.7s read as too long in practice.** User
+                // asked for roughly half. Using this engine's own kGravity=25/
+                // kFallLimit=-10: reaching terminal velocity takes a fixed
+                // 0.4s (10/25) covering 2.0 units regardless of the threshold;
+                // the rest is covered at the 10 units/s terminal rate. This is
+                // a game-feel adjustment, not a faithfulness correction (the
+                // real absolute margin was never matched here anyway, see
+                // above) -- verified live at 3.417s (down from the previously
+                // live-verified 6.72s), i.e. almost exactly half.
+                constexpr float kFallDeathY = -27.0f;
+                if (blupi_.GetY() < kFallDeathY)
+                {
+                    const float deathX = blupi_.GetX();
+                    const float deathY = blupi_.GetY();
+                    const float deathZ = blupi_.GetZ();
+                    // Real m_blupiRestart=true at this site (Decor.cpp:2757).
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
+                                 GalaxyEggbert::Game::BlupiController::DeathCause::Clear2, true);
+                    // Real Clear2 ascend (plan.md `158` death-VFX follow-up,
+                    // Decor.cpp:2754-2761) -- deterministic, no coinflip.
+                    triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f, 230,
+                                        deathX, deathY, deathZ);
+                }
+
+                // Lava hazard (plan.md E3D-MIG-140) -- deterministic death, no
+                // vehicle immunity (mobile-eggbert-reference/
+                // 12-hazards-and-interactables.md: "Lava(icon 68): deterministic
+                // Clear3, no vehicle immunity, no focus requirement" -- Shield/
+                // Hide immunity IS modeled now, plan.md E3D-MIG-170, confirmed
+                // directly against Decor.cpp:5497) -- the
+                // simplest of the 5 real isHazard() tile types to implement
+                // faithfully for exactly that reason; Crusher/Saw/Blitz each
+                // have real gating/timing conditions BlockTypes::isHazard() does
+                // NOT encode, so each gets its own dedicated
+                // task (E3D-MIG-142..144) instead of one generic "hazard" check.
+                // GetGroundBlockType() already gates on IsOnGround() -- Lava
+                // tiles are solid/walkable-on in this engine (Blupi stands on
+                // lava rather than falling through it, matching the real 2D
+                // game -- see BlockTypes.hpp's isMobileTransparent() comment on
+                // why Lava is deliberately kept solid despite being
+                // quart-passable in the real source).
+                if (!blupi_.IsInvincible() &&
+                    blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
+                {
+                    const float deathX = blupi_.GetX();
+                    const float deathY = blupi_.GetY();
+                    const float deathZ = blupi_.GetZ();
+                    // Real m_blupiRestart=true at this site (Decor.cpp:5500).
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
+                                 GalaxyEggbert::Game::BlupiController::DeathCause::Clear3, true);
+                    // Real Clear3 ascend (plan.md `158` death-VFX follow-up,
+                    // Decor.cpp:5497-5499) -- deterministic, no coinflip.
+                    triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear3Ascend, 2000.0f, 40,
+                                        deathX, deathY, deathZ);
+                }
+
+                // Spikes hazard (plan.md E3D-MIG-141) -- real channel 51 (the
+                // Glu-death sound, distinct from lava/fall's channel 8, per
+                // 07-sounds.md). Real behavior (12-hazards-and-interactables.md)
+                // gates this on vehicle immunity (Over/Jeep/Tank protect,
+                // unlike lava) and requires m_blupiFocus (BlupiFocused(), BD-0060),
+                // and vehicle immunity exists (`HasVehicleHazard
+                // Immunity()`, fixed 2026-07-16 -- this comment previously said
+                // "neither vehicles nor a focus concept exist... yet", stale
+                // since vehicles were implemented `171`). The real check also
+                // restricts to a narrow central x-band within the tile
+                // (`pos.X%64` roughly 15-49, touching the tile's edges doesn't
+                // count) -- not modeled, since BlupiController's single-point
+                // 3D collision has no sub-tile position within a cell to test
+                // against; the whole tile is lethal here.
+                // m_blupiFocus too (Decor.cpp:5504-5505): busy, he is not caught.
+                if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
+                    blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spike)
+                {
+                    // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5504-5510);
+                    // the trap's tentacle rises where he stands (ObjectType53; BD-0054).
+                    interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType53, blupi_.GetX(), blupi_.GetY(),
+                                             blupi_.GetZ());
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
+                                 GalaxyEggbert::Game::BlupiController::DeathCause::Glu, true);
+                }
+
+                // Water drip hazard (plan.md TILE-032, real Decor::IsGoutte,
+                // confirmed 2026-07-14 via direct Decor.cpp read -- despite the
+                // "drip"/glue-sounding name, real behavior is a deterministic
+                // kill, mechanically identical to Spike above: same
+                // GalaxyEggbert::Def::BlupiAction::Glu death, same gate shape, same real channel 51
+                // sound (Decor.cpp:5513-5519), same real Over/Jeep/Tank vehicle
+                // immunity (fixed 2026-07-16, same as Spike above).
+                // His own cell, as IsGoutte(m_blupiPos) (no +60 as IsPiege has; BD-0033): the drip
+                // hangs under a ceiling, he dies going into it.
+                // m_blupiFocus too (Decor.cpp:5513-5514; BD-0066): busy, he is not caught.
+                if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
+                    blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip)
+                {
+                    // Real GalaxyEggbert::Def::BlupiAction::Glu, m_blupiRestart=true (Decor.cpp:5513-5519).
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel51,
+                                 GalaxyEggbert::Game::BlupiController::DeathCause::Glu, true);
+                }
+
+                // Blitz hazard (plan.md E3D-MIG-144) -- real channel 8, same
+                // lethality profile as lava per mobile-eggbert-reference/
+                // 12-hazards-and-interactables.md ("No vehicle immunity --
+                // same lethality profile as lava; only Shield/Hide/SuperBlupi
+                // protect, and there is no focus requirement") -- unlike
+                // spikes/drip/saw, Blitz needed no immunity simplification to
+                // implement faithfully. Real `BlitzActif()`: a 100-tick cycle
+                // at the same 20-ticks/sec reference rate worldRuntime_'s
+                // GetAnimPhase() already advances at (Config::ScaleTime(1),
+                // matching the real per-tile animation-divisor rate), lethal
+                // only on even ticks within the first half (`num%2==0 &&
+                // num<50` -- a rapid flicker for ~2.5s, 25% duty cycle over the
+                // full ~5s period, then fully inactive for the second half).
+                // The real cosmetic emitter tile (icon 304, sits one cell
+                // above 305, times a zap sound cue only) is NOT implemented --
+                // audio-only polish, not the hazard itself.
+                // Lightning and saws catch Blupi in his own cell (Decor::IsBlitz/IsScie(m_blupiPos)),
+                // as well as under his feet where worlds lay them as floor.
+                const auto blockHere = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
+                const auto blockUnder = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
+                if (!blupi_.IsInvincible() &&
+                    (blockUnder == GalaxyEggbert::BlockTypes::Blitz || blockHere == GalaxyEggbert::BlockTypes::Blitz) &&
+                    WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()))
+                {
+                    // Real GalaxyEggbert::Def::BlupiAction::Clear1, m_blupiRestart=true (Decor.cpp:5541-5547).
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel8,
+                                 GalaxyEggbert::Game::BlupiController::DeathCause::Clear1, true);
+                }
+
+                // Crusher hazard (plan.md E3D-MIG-143) -- unlike every hazard
+                // above, this is NOT lethal: it squashes Blupi (reduced move
+                // speed, no jump, ~10s auto-recovery) rather than costing a
+                // life. Real `IsEcraseur()`'s 3-out-of-10 danger window
+                // (`m_time / 3 % 10 <= 2`) is `IsCrusherActiveAtPhase()`. `TriggerCrush()` itself is idempotent (a
+                // no-op while already squashed, matching the real
+                // `!m_blupiEcrase` re-trigger guard) -- only play the real
+                // entry sound (channel 70) when it actually starts a NEW squash.
+                // Blupi's own cell, as IsEcraseur(m_blupiPos) (BD-0032): the crusher hangs in the cell
+                // he walks through, not in the floor.
+                // m_blupiFocus too (Decor.cpp:5551-5552; BD-0066).
+                if (!blupi_.IsInvincible() && BlupiFocused() &&
+                    blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Crusher &&
+                    WorldRuntime::IsCrusherActiveAtPhase(worldRuntime_.GetAnimPhase()) &&
+                    blupi_.TriggerCrush())
+                {
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel70);
+                    // Four sparks, a flash and the big shake (Decor.cpp:5582-5591; BD-0054).
+                    interaction_.SpawnInvertBurst(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), true);
+                    interaction_.SpawnEffect(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType90, blupi_.GetX(), blupi_.GetY(),
+                                             blupi_.GetZ());
+                    cameraShake_.Trigger(CameraShakeType::Big);
+                }
+
+                // Saw hazard (plan.md E3D-MIG-142) -- real channel 75 (the
+                // "cut apart" death cue, distinct from every other hazard's
+                // sound so far), deterministic, real Over/Jeep/Tank vehicle
+                // immunity (`HasVehicleHazardImmunity()`, fixed 2026-07-16,
+                // identical to Spike/Drip above -- this comment previously said
+                // "no immunity simplification beyond what every hazard here
+                // already lacks (vehicles... don't exist yet)", stale since
+                // vehicles were implemented `171`). Only the active icon
+                // (`Saw`, 378) is lethal -- the stopped variant (`SawStopped`,
+                // 379) is a separate BlockTypes value, so GetGroundBlockType()'s
+                // exact match already excludes it with no extra check needed. A
+                // saw starts active or stopped per however the world was
+                // authored; TryActivateSwitch() below is what flips it between
+                // the two.
+                // m_blupiFocus too (Decor.cpp:5521-5522; BD-0066).
+                if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
+                    (blockUnder == GalaxyEggbert::BlockTypes::Saw || blockHere == GalaxyEggbert::BlockTypes::Saw))
+                {
+                    const float deathX = blupi_.GetX();
+                    const float deathY = blupi_.GetY();
+                    const float deathZ = blupi_.GetZ();
+                    // Real source has NO separate contact-site sound for Saw
+                    // (unlike Lava/fall's own extra channel 8) -- channel 75
+                    // comes entirely from BlupiDead's own Clear4 branch, which
+                    // SpawnSawDeathBurst() plays itself (plan.md `158`
+                    // death-VFX follow-up, Decor.cpp:5521-5524/6608-6613), so
+                    // triggerDeath() must NOT also play it here. Real
+                    // m_blupiRestart=true at this site (Decor.cpp:5526).
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel75,
+                                 GalaxyEggbert::Game::BlupiController::DeathCause::Clear4, true, false);
+                    interaction_.SpawnSawDeathBurst(worldRuntime_, deathX, deathY, deathZ, sound_);
+                }
+
+                // Spring / bounce tile (plan.md E3D-MIG-145, icon 211,
+                // verified directly against Decor.cpp:2835-2911/7312-7320) --
+                // NOT a hazard, launches Blupi upward instead of costing a
+                // life. TriggerSpringBounce() is idempotent (a no-op while
+                // already airborne, matching the real `!m_blupiAir` guard), so
+                // only play the real bounce sound (channel 41) on an actual new
+                // trigger. Real vehicle-dismount-first gate fixed 2026-07-16
+                // (Decor.cpp:2837-2893): touching a spring while riding ANY
+                // vehicle (Shield/Hide protect against this, matching every
+                // other real forced-dismount-style gate) forcibly ejects
+                // Blupi first (small shake + channel 10, depositing the
+                // vehicle pickup back into the world via the same
+                // `DismountAndDepositVehicle()` helper the voluntary
+                // action-button dismount uses) -- the bounce itself still
+                // applies on the same contact, real source does not treat
+                // these as mutually exclusive.
+                // The vehicle is wrecked there (an explosion, ObjectType9), not put down: BD-0015.
+                if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
+                    blupi_.IsInVehicle() && blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Shield &&
+                    blupi_.GetSecretPower() != GalaxyEggbert::Def::SecretPower::Hide && !blupi_.GetCheatSuperBlupi())
+                {
+                    WreckVehicle();
+                }
+                if (blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Spring &&
+                    blupi_.TriggerSpringBounce(jumpPressed && BlupiFocused())) // held counts with focus (2900)
+                {
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel41);
+                }
+
+                // Taunts (plan.md BLUPI-067; Decor.cpp:5627-5635, MockeryDetect 9518-9601; BD-0044):
+                // every tick he is in control, on foot or swimming, an enemy beside him at his height
+                // (below him too while he jumps), or lava or a crusher under his jump, arms a taunt as
+                // an Ouf; BlupiController plays it if he stands idle within 20 ticks. Nothing is armed
+                // during the cooldown.
+                if (blupi_.IsMockeryCooldownElapsed() && !blupi_.IsInVehicle() && !blupi_.IsSuspended() &&
+                    !blupi_.IsBallooned() && !blupi_.IsEcrased() && !blupi_.IsDeathLocked() && !blupi_.IsTeleporting() &&
+                    !blupi_.IsBye() && !blupi_.IsPickupFrozen() && !blupi_.IsOneShotAnimPlaying())
+                {
+                    using A = GalaxyEggbert::Def::BlupiAction;
+                    const bool airborne = !blupi_.IsOnGround() && !blupi_.IsSurf() && !blupi_.IsNage();
+                    const A taunt = InteractionSystem::MockeryDetect(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
+                                                                     blupi_.GetZ(), blupi_.GetYaw(), airborne);
+                    if (taunt != A::None)
+                    {
+                        blupi_.ArmOuf(taunt == A::Mockery    ? BlupiController::AnimState::Mockery
+                                      : taunt == A::Mockeryi ? BlupiController::AnimState::Mockeryi
+                                                             : BlupiController::AnimState::Mockeryp);
                     }
                 }
-            }
 
-            // Water Surf/Nage (plan.md E3D-MIG-148) -- transition sounds via
-            // before/after comparison (wasSurf/wasNage captured before
-            // Step() above), same idiom as every other status this session.
-            // Real channel 25 (start-surfing) plays specifically on
-            // Nage->Surf (resurfacing). Real vehicle exclusion fixed
-            // 2026-07-16 -- this comment previously mis-described it as
-            // "forced dismount on water entry"; verified directly against
-            // Decor.cpp:5284-5285: it's not a dismount at all, water tiles
-            // simply never register as Surf/Nage while riding/ballooned/
-            // squashed (`canEnterWater` above, computed before Step()) -- a
-            // vehicle just drives straight over/through water instead.
-            //
-            // **Corrected 2026-07-17** (water-splash research): channel 22
-            // was wired backwards -- verified directly against every real
-            // `PlaySound(SoundChannel22, ...)` call site (`Decor.cpp:5356/
-            // 5378/5392/5405`): ALL four are in the water-EXIT paths, none
-            // in entry. Real water ENTRY instead plays channel 23 ("Plouf",
-            // `Decor::MoveObjectPlouf`, `ObjectType14`) via the two dry->
-            // Surf/dry->Nage branches (`Decor.cpp:5298/5318`) -- previously
-            // entirely unwired (no code/sound at all on entry). Also added:
-            // the jump out of the water (BD-0041): at the jump itself, as the original
-            // (Decor.cpp:5336-5357), channel 22 and the "Tiplouf" splash (channel 64,
-            // `ObjectType35`, at most one at a time); leaving the water any other way, channel 22
-            // alone (Decor.cpp:5359-5408). Rising out on the jump is not a second exit.
-            const bool wasDry = !wasSurf && !wasNage;
-            const bool nowDry = !blupi_.IsSurf() && !blupi_.IsNage();
-            if (wasDry && !nowDry && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14))
-            {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel23);
-                interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14, blupi_.GetX(),
-                                               blupi_.GetY(), blupi_.GetZ());
-            }
-            if (blupi_.JumpedOutOfWater())
-            {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel22);
-                if (!interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35))
+                // Hub/mission-progression: world-select portal contact (plan.md
+                // hub/mission system, found/implemented 2026-07-17, real
+                // `Decor::IsWorld()`/the `Bye`-action mission-change handler).
+                // Contact-triggered, no debounce needed. The real ~1.5s "turn and
+                // wave" `Bye` freeze is now modeled (plan.md BLUPI-049, found/
+                // wired 2026-07-17): `TriggerBye()` freezes Blupi and remembers
+                // the target mission; `SetYaw()` turns him to face the camera
+                // (real `m_blupiFront=true`), matching the real trigger scope
+                // exactly (`Decor.cpp:5476-5488`) -- world-select ONLY, not the
+                // exit-goal/PauseBack/PauseRestart paths below/elsewhere, which
+                // stay instant in real source too. `LoadMission()` itself now
+                // happens later, off the `wasBye`/`IsBye()` completion check
+                // right after `Step()` above, once the freeze naturally elapses.
+                //
+                // Uses `GetBlockTypeAt()` (Blupi's own occupied cell), NOT
+                // `GetGroundBlockType()` (found/fixed 2026-07-21, live bug
+                // report): real `Decor::IsWorld(m_blupiPos)` is a plain direct
+                // position lookup, independent of solidity/grounding entirely
+                // -- matching that exactly needs the query that already exists
+                // for the same reason as water detection, not the one gated on
+                // IsOnGround(). These markers' real per-icon quarter-cell mask
+                // is genuinely all-zero/thin (same category as Lava/Crusher/
+                // Saw), so INFRA-005's sub-tile-precision wall collision
+                // correctly stopped treating them as solid enough to
+                // (accidentally) step up onto -- `GetGroundBlockType()` alone
+                // then never saw them again, since nothing elevates Blupi onto
+                // them any more. The real game was never checking "am I
+                // standing ON the marker" in the first place, only "is the
+                // marker AT my own position" -- mere contact, exactly as the
+                // real 2D game and this engine's own pre-INFRA-005 (buggier)
+                // collision both allowed by different, unrelated routes.
+                // Only while not already saying goodbye (Decor.cpp:5476 `m_blupiAction != Bye`): he still
+                // stands on the marker during the farewell, and returning here every frame skipped the
+                // rest of the update, the Bye clip's playback with it (OR-0002: the farewell froze).
+                if (!blupi_.IsBye())
                 {
-                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel64);
-                    interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35, blupi_.GetX(),
+                    const auto groundBlock = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
+                    if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
+                    {
+                        const int target = WorldRuntime::ComputeWorldSelectTarget(
+                            worldRuntime_.GetMissionNumber(), GalaxyEggbert::BlockTypes::worldSelectIndex(groundBlock));
+                        if (blupi_.TriggerBye())
+                        {
+                            byePendingTarget_ = target;
+                            const float dx = camera_.Position().X - blupi_.GetX();
+                            const float dz = camera_.Position().Z - blupi_.GetZ();
+                            blupi_.SetYaw(std::atan2(dx, -dz));
+                            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel32);
+                        }
+                        return;
+                    }
+                }
+
+                // Teleporter (plan.md E3D-MIG-147, icons 330-333, verified
+                // directly against Decor.cpp:7378-7394/5593-5606) -- checked
+                // one cell ABOVE Blupi (GetBlockTypeAbove()), matching the real
+                // detection geometry exactly. Teleporter icons are always
+                // non-solid for collision (GroundHeightAt's own
+                // registry-backed teleporter collision skip), so Blupi can genuinely walk into
+                // the open space beneath a floating pillar to trigger this,
+                // the same way real mobile-eggbert's per-tile-independent 2D
+                // collision lets him walk under one (see GetBlockTypeAbove()'s
+                // own comment). The real narrow 7px-wide left-edge sub-tile
+                // band is NOT modeled -- no sub-tile position exists in this
+                // engine's single-point collision, same simplification already
+                // applied to spikes' own real sub-tile band. Real gate
+                // (`!m_blupiHelico/Over/Balloon/Ecrase/Jeep/Tank/Skate &&
+                // !m_blupiAir && m_blupiFocus`) is checked inside
+                // TriggerTeleport() itself (grounded, not ballooned/squashed,
+                // and -- fixed 2026-07-16 -- not in any vehicle mode either);
+                // focus by BlupiFocused() (2026-11-04). Idempotent, same shape as
+                // every other Trigger*() here, so channel 71 only plays on an
+                // actual new trigger.
+                // Not while m_blupiPosHelico is set (Decor.cpp:5594): just off a vehicle, out of a
+                // popped balloon, or where a teleporter put him, until he is 30 px from that spot
+                // (BD-0017); and not before he has left the cell a teleporter put him in, since here
+                // the whole cell under a pillar triggers, not the original's 7 px band (BD-0021).
+                const auto aboveIcon = blupi_.GetBlockTypeAbove(worldRuntime_.GetWorld());
+                if (teleportArrivalGuard_ && (static_cast<int>(std::lround(blupi_.GetX())) != teleportArrivalCellX_ ||
+                                              static_cast<int>(std::lround(blupi_.GetZ())) != teleportArrivalCellZ_))
+                {
+                    teleportArrivalGuard_ = false; // he has left the cell he arrived in
+                }
+                if (GalaxyEggbert::BlockTypes::isTeleporter(aboveIcon) && !interaction_.ContactGraceActive() &&
+                    !teleportArrivalGuard_ && BlupiFocused() /* m_blupiFocus, Decor.cpp:5594 */ &&
+                    blupi_.TriggerTeleport(aboveIcon))
+                {
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel71);
+                    // Real teleporter arc (plan.md VISUAL-010, ObjectType92,
+                    // Decor.cpp:5606) -- despite Def/ObjectType.hpp's own "charged
+                    // attack" doc comment, this is the real, only spawn site.
+                    interaction_.SpawnTeleportArc(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                }
+
+                // Fan hazard (Decor.cpp:5459-5474, IsVentillo; WorldRuntime::TryConsumeFan): touching a
+                // fan at its mouth destroys it with its wind. Every touch explodes (ObjectType11), shakes
+                // the screen hard and plays channel 10; only the death is gated on Shield, Hide and
+                // SuperBlupi, so a shielded Blupi survives the explosion he caused (BD-0042: until
+                // 2026-11-03 the explosion, the shake and the sound came only with the death). The death
+                // is BlupiDead(Clear1, Clear2), the 50/50 coinflip, without m_blupiRestart.
+                if (const auto fanIcon = worldRuntime_.TryConsumeFan(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()))
+                {
+                    // The fan's own piece flies away (ModifDecor's ByeByeAdd, BD-0049).
+                    const auto fanCell = worldRuntime_.LastConsumedFan();
+                    interaction_.ByeByeFan(*fanIcon, fanCell[0], fanCell[1], fanCell[2]);
+                    // Captured BEFORE triggerDeath() respawns Blupi: the flash and the ascent start
+                    // where he died.
+                    const float deathX = blupi_.GetX();
+                    const float deathY = blupi_.GetY();
+                    const float deathZ = blupi_.GetZ();
+                    cameraShake_.Trigger(CameraShakeType::Big);
+                    interaction_.SpawnFanHitFlash(worldRuntime_, deathX, deathY, deathZ);
+                    if (blupi_.IsInvincible())
+                    {
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                    }
+                    else
+                    {
+                        const bool isClear2 = interaction_.RollClear2Coinflip();
+                        triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel10,
+                                     isClear2 ? GalaxyEggbert::Game::BlupiController::DeathCause::Clear2
+                                              : GalaxyEggbert::Game::BlupiController::DeathCause::Clear1,
+                                     false);
+                        if (isClear2)
+                        {
+                            triggerDeathAscend(GalaxyEggbert::Game::InteractionSystem::VoyageKind::Clear2Ascend, 300.0f,
+                                                230, deathX, deathY, deathZ);
+                        }
+                    }
+                }
+
+                // Water Surf/Nage (plan.md E3D-MIG-148) -- transition sounds via
+                // before/after comparison (wasSurf/wasNage captured before
+                // Step() above), same idiom as every other status this session.
+                // Real channel 25 (start-surfing) plays specifically on
+                // Nage->Surf (resurfacing). Real vehicle exclusion fixed
+                // 2026-07-16 -- this comment previously mis-described it as
+                // "forced dismount on water entry"; verified directly against
+                // Decor.cpp:5284-5285: it's not a dismount at all, water tiles
+                // simply never register as Surf/Nage while riding/ballooned/
+                // squashed (`canEnterWater` above, computed before Step()) -- a
+                // vehicle just drives straight over/through water instead.
+                //
+                // **Corrected 2026-07-17** (water-splash research): channel 22
+                // was wired backwards -- verified directly against every real
+                // `PlaySound(SoundChannel22, ...)` call site (`Decor.cpp:5356/
+                // 5378/5392/5405`): ALL four are in the water-EXIT paths, none
+                // in entry. Real water ENTRY instead plays channel 23 ("Plouf",
+                // `Decor::MoveObjectPlouf`, `ObjectType14`) via the two dry->
+                // Surf/dry->Nage branches (`Decor.cpp:5298/5318`) -- previously
+                // entirely unwired (no code/sound at all on entry). Also added:
+                // the jump out of the water (BD-0041): at the jump itself, as the original
+                // (Decor.cpp:5336-5357), channel 22 and the "Tiplouf" splash (channel 64,
+                // `ObjectType35`, at most one at a time); leaving the water any other way, channel 22
+                // alone (Decor.cpp:5359-5408). Rising out on the jump is not a second exit.
+                const bool wasDry = !wasSurf && !wasNage;
+                const bool nowDry = !blupi_.IsSurf() && !blupi_.IsNage();
+                if (wasDry && !nowDry && !interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14))
+                {
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel23);
+                    interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType14, blupi_.GetX(),
                                                    blupi_.GetY(), blupi_.GetZ());
                 }
-            }
-            else if (!wasDry && nowDry && !blupi_.IsWaterExitJump())
-            {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel22);
-            }
-            if (wasNage && blupi_.IsSurf())
-            {
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel25);
-            }
-            // Ambient rising bubbles while fully submerged (plan.md
-            // PICKUP-079, ObjectType15/channel 24) -- real trigger
-            // `m_time % ScaleTime(70) == 0 || == ScaleTime(28)` (twice per
-            // ~3.5s cycle, `Decor.cpp:4611-4613`), reusing this engine's own
-            // 1:1-tick `GetAnimPhase()` the same way every other real
-            // `m_time %`-gated periodic effect already does.
-            if (blupi_.IsNage())
-            {
-                const int animTick = worldRuntime_.GetAnimPhase();
-                if (animTick % 70 == 0 || animTick % 70 == 28)
+                if (blupi_.JumpedOutOfWater())
                 {
-                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel24);
-                    interaction_.SpawnWaterBubble(worldRuntime_, worldRuntime_.GetWorld(), blupi_.GetX(), blupi_.GetY(),
-                                                   blupi_.GetZ());
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel22);
+                    if (!interaction_.HasActiveObjectOfType(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35))
+                    {
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel64);
+                        interaction_.SpawnWaterSplash(worldRuntime_, GalaxyEggbert::Def::ObjectType::ObjectType35, blupi_.GetX(),
+                                                       blupi_.GetY(), blupi_.GetZ());
+                    }
                 }
-            }
-            // Drowning (real GalaxyEggbert::Def::BlupiAction::Drown, channel 26 -- a dedicated
-            // death sound distinct from every other cause's channel 8/51/75,
-            // per 07-sounds.md's own note). Real Shield/Hide/SuperBlupi
-            // immunity gates the death itself (plan.md E3D-MIG-170); the
-            // gauge still depletes regardless (matches every other hazard's
-            // "still triggers, only the death is gated" pattern); superBlupi
-            // is the cheat's, in IsInvincible().
-            if (blupi_.JustDrowned() && !blupi_.IsInvincible())
-            {
-                // Real GalaxyEggbert::Def::BlupiAction::Drown, m_blupiRestart=true (Decor.cpp:4640-4652).
-                triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel26,
-                             GalaxyEggbert::Game::BlupiController::DeathCause::Drown, true);
-            }
-
-            // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
-            // see BlupiController::UpdateSafePosition()'s own comment) --
-            // "safe" here additionally means not standing on any of the 6
-            // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp/
-            // Drip), not currently under a teleporter trigger (`aboveIcon`, already
-            // computed above), and not currently Nage (plan.md E3D-MIG-148 --
-            // respawning mid-drown with an already-depleted gauge would be a
-            // bad experience, same reasoning as excluding active hazards) --
-            // and the rest of the original's gate below (BD-0048).
-            {
-                const auto safetyGroundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
-                const bool onHazardTile =
-                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Lava ||
-                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Spike ||
-                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Saw ||
-                    safetyGroundBlock == GalaxyEggbert::BlockTypes::Temp ||
-                    blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip || // IsGoutte(.., true)
-                    (safetyGroundBlock == GalaxyEggbert::BlockTypes::Blitz &&
-                     WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()));
-                const bool underTeleporter =
-                    aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
-                    aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4;
-                // The rest of the original's gate (Decor.cpp:6467-6471; BD-0048): not with the shield
-                // or Hide, not teetering at a ledge, not on a lift, not on (or in) a clay bridge, not
-                // in a cell an object has been in or a shot has crossed (IsMoveTraj, IsBalleTraj).
-                const auto animState = blupi_.GetAnimState();
-                const bool atLedge = animState == BlupiController::AnimState::Vertigo ||
-                                     animState == BlupiController::AnimState::Recede ||
-                                     animState == BlupiController::AnimState::Advance;
-                const bool onBridge = safetyGroundBlock == GalaxyEggbert::BlockTypes::Bridge ||
-                                      blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Bridge;
-                const bool onTrajectory =
-                    interaction_.IsTrajectoryCell(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-                blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter && !blupi_.IsNage() && !blupi_.IsShielded() &&
-                                          !blupi_.IsHidden() && !atLedge && !interaction_.IsRidingLift() && !onBridge &&
-                                          !onTrajectory);
-            }
-
-            // Switches (plan.md E3D-MIG-142, see WorldRuntime::
-            // TryActivateSwitch()'s own comment for the real 41-cell
-            // switch-to-saw linking) -- Space ("Action"), edge-detected the
-            // same way jumpPressed is above so holding it doesn't retoggle
-            // every frame. `wasEcrased`/`wasOnGround`-style capture isn't
-            // needed here: TryActivateSwitch() itself is the single
-            // authoritative check (grounded + standing on a switch tile),
-            // no separate before/after state to compare.
-            // Captured into a local (not just the `if` condition below)
-            // since Sucette/Drink's own real action-button gate (plan.md
-            // `173`) needs this SAME edge-detected value passed into
-            // interaction_.Update() further down, by which point
-            // actionKeyWasDown_ has already been overwritten with this
-            // frame's raw actionPressed (see its own assignment below).
-            const bool actionPressedEdge = actionPressed && !actionKeyWasDown_;
-            // Whether a switch, dynamite, the decoy or a vehicle used this press: if none did (nor a
-            // dynamite stick taken in interaction_.Update()), he shakes his head (Non, below).
-            bool actionUsed = false;
-            if (actionPressedEdge)
-            {
-                // Real switch-activation gate (found 2026-07-16, Decor.cpp:5529-5531) also
-                // excludes Overcraft/Jeep/Tank/Skateboard and Balloon -- NOT Helicopter, which
-                // real source allows (a hovering Helicopter can still reach down and press a
-                // switch, unlike the other 4 ground-committed/no-hands vehicle states). Same
-                // "predates vehicle modeling" gap already found/fixed this session elsewhere
-                // (pickups/TriggerTeleport/ground-jump/hazard immunity) -- TryActivateSwitch()
-                // itself has no BlupiController access, so this is gated here in the caller
-                // instead, matching that established decoupling. Scoped to JUST this call, NOT
-                // the whole actionPressedEdge block below -- Dynamite/Perso/vehicle mount-dismount
-                // share the same action-button press but have their own independent real gates
-                // (in particular, dismounting a vehicle must still work while riding one).
-                const bool canActivateSwitch =
-                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Overcraft &&
-                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Jeep &&
-                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Tank &&
-                    blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Skateboard &&
-                    !blupi_.IsBallooned() &&
-                    // Nor with the shield, Hide or SuperBlupi (`!m_blupiShield && !m_blupiHide &&
-                    // !m_bSuperBlupi`, the same gate; BD-0045).
-                    !blupi_.IsInvincible();
-                if (canActivateSwitch)
+                else if (!wasDry && nowDry && !blupi_.IsWaterExitJump())
                 {
-                    if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
-                            blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel22);
+                }
+                if (wasNage && blupi_.IsSurf())
+                {
+                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel25);
+                }
+                // Ambient rising bubbles while fully submerged (plan.md
+                // PICKUP-079, ObjectType15/channel 24) -- real trigger
+                // `m_time % ScaleTime(70) == 0 || == ScaleTime(28)` (twice per
+                // ~3.5s cycle, `Decor.cpp:4611-4613`), reusing this engine's own
+                // 1:1-tick `GetAnimPhase()` the same way every other real
+                // `m_time %`-gated periodic effect already does.
+                if (blupi_.IsNage())
+                {
+                    const int animTick = worldRuntime_.GetAnimPhase();
+                    if (animTick % 70 == 0 || animTick % 70 == 28)
+                    {
+                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel24);
+                        interaction_.SpawnWaterBubble(worldRuntime_, worldRuntime_.GetWorld(), blupi_.GetX(), blupi_.GetY(),
+                                                       blupi_.GetZ());
+                    }
+                }
+                // Drowning (real GalaxyEggbert::Def::BlupiAction::Drown, channel 26 -- a dedicated
+                // death sound distinct from every other cause's channel 8/51/75,
+                // per 07-sounds.md's own note). Real Shield/Hide/SuperBlupi
+                // immunity gates the death itself (plan.md E3D-MIG-170); the
+                // gauge still depletes regardless (matches every other hazard's
+                // "still triggers, only the death is gated" pattern); superBlupi
+                // is the cheat's, in IsInvincible().
+                if (blupi_.JustDrowned() && !blupi_.IsInvincible())
+                {
+                    // Real GalaxyEggbert::Def::BlupiAction::Drown, m_blupiRestart=true (Decor.cpp:4640-4652).
+                    triggerDeath(GalaxyEggbert::Def::SoundChannel::SoundChannel26,
+                                 GalaxyEggbert::Game::BlupiController::DeathCause::Drown, true);
+                }
+
+                // Real 10-slot safe-position FIFO respawn (plan.md E3D-MIG-067,
+                // see BlupiController::UpdateSafePosition()'s own comment) --
+                // "safe" here additionally means not standing on any of the 6
+                // real terrain hazard tiles (Lava/Spike/Saw/active-Blitz/Temp/
+                // Drip), not currently under a teleporter trigger (`aboveIcon`, already
+                // computed above), and not currently Nage (plan.md E3D-MIG-148 --
+                // respawning mid-drown with an already-depleted gauge would be a
+                // bad experience, same reasoning as excluding active hazards) --
+                // and the rest of the original's gate below (BD-0048).
+                {
+                    const auto safetyGroundBlock = blupi_.GetGroundBlockType(worldRuntime_.GetWorld());
+                    const bool onHazardTile =
+                        safetyGroundBlock == GalaxyEggbert::BlockTypes::Lava ||
+                        safetyGroundBlock == GalaxyEggbert::BlockTypes::Spike ||
+                        safetyGroundBlock == GalaxyEggbert::BlockTypes::Saw ||
+                        safetyGroundBlock == GalaxyEggbert::BlockTypes::Temp ||
+                        blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Drip || // IsGoutte(.., true)
+                        (safetyGroundBlock == GalaxyEggbert::BlockTypes::Blitz &&
+                         WorldRuntime::IsBlitzActiveAtPhase(worldRuntime_.GetAnimPhase()));
+                    const bool underTeleporter =
+                        aboveIcon == GalaxyEggbert::BlockTypes::Teleport1 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport2 ||
+                        aboveIcon == GalaxyEggbert::BlockTypes::Teleport3 || aboveIcon == GalaxyEggbert::BlockTypes::Teleport4;
+                    // The rest of the original's gate (Decor.cpp:6467-6471; BD-0048): not with the shield
+                    // or Hide, not teetering at a ledge, not on a lift, not on (or in) a clay bridge, not
+                    // in a cell an object has been in or a shot has crossed (IsMoveTraj, IsBalleTraj).
+                    const auto animState = blupi_.GetAnimState();
+                    const bool atLedge = animState == BlupiController::AnimState::Vertigo ||
+                                         animState == BlupiController::AnimState::Recede ||
+                                         animState == BlupiController::AnimState::Advance;
+                    const bool onBridge = safetyGroundBlock == GalaxyEggbert::BlockTypes::Bridge ||
+                                          blupi_.GetBlockTypeAt(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Bridge;
+                    const bool onTrajectory =
+                        interaction_.IsTrajectoryCell(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                    blupi_.UpdateSafePosition(!onHazardTile && !underTeleporter && !blupi_.IsNage() && !blupi_.IsShielded() &&
+                                              !blupi_.IsHidden() && !atLedge && !interaction_.IsRidingLift() && !onBridge &&
+                                              !onTrajectory);
+                }
+
+                // Switches (plan.md E3D-MIG-142, see WorldRuntime::
+                // TryActivateSwitch()'s own comment for the real 41-cell
+                // switch-to-saw linking) -- Space ("Action"), edge-detected the
+                // same way jumpPressed is above so holding it doesn't retoggle
+                // every frame. `wasEcrased`/`wasOnGround`-style capture isn't
+                // needed here: TryActivateSwitch() itself is the single
+                // authoritative check (grounded + standing on a switch tile),
+                // no separate before/after state to compare.
+                // Captured into a local (not just the `if` condition below)
+                // since Sucette/Drink's own real action-button gate (plan.md
+                // `173`) needs this SAME edge-detected value passed into
+                // interaction_.Update() further down, by which point
+                // actionKeyWasDown_ has already been overwritten with this
+                // frame's raw actionPressed (see its own assignment below).
+                // Whether a switch, dynamite, the decoy or a vehicle used this press: if none did (nor a
+                // dynamite stick taken in interaction_.Update()), he shakes his head (Non, below).
+                if (actionPressedEdge)
+                {
+                    // Real switch-activation gate (found 2026-07-16, Decor.cpp:5529-5531) also
+                    // excludes Overcraft/Jeep/Tank/Skateboard and Balloon -- NOT Helicopter, which
+                    // real source allows (a hovering Helicopter can still reach down and press a
+                    // switch, unlike the other 4 ground-committed/no-hands vehicle states). Same
+                    // "predates vehicle modeling" gap already found/fixed this session elsewhere
+                    // (pickups/TriggerTeleport/ground-jump/hazard immunity) -- TryActivateSwitch()
+                    // itself has no BlupiController access, so this is gated here in the caller
+                    // instead, matching that established decoupling. Scoped to JUST this call, NOT
+                    // the whole actionPressedEdge block below -- Dynamite/Perso/vehicle mount-dismount
+                    // share the same action-button press but have their own independent real gates
+                    // (in particular, dismounting a vehicle must still work while riding one).
+                    const bool canActivateSwitch =
+                        blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Overcraft &&
+                        blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Jeep &&
+                        blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Tank &&
+                        blupi_.GetVehicleMode() != GalaxyEggbert::Game::BlupiController::VehicleMode::Skateboard &&
+                        !blupi_.IsBallooned() &&
+                        // Nor with the shield, Hide or SuperBlupi (`!m_blupiShield && !m_blupiHide &&
+                        // !m_bSuperBlupi`, the same gate; BD-0045).
+                        !blupi_.IsInvincible();
+                    if (canActivateSwitch)
+                    {
+                        if (const auto turnedOn = worldRuntime_.TryActivateSwitch(
+                                blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
+                        {
+                            actionUsed = true;
+                            sound_.Play(*turnedOn ? GalaxyEggbert::Def::SoundChannel::SoundChannel77
+                                                  : GalaxyEggbert::Def::SoundChannel::SoundChannel76);
+                            // Real Switch animation (plan.md BLUPI-073, found
+                            // 2026-07-18) -- purely cosmetic on top of the
+                            // switch already having activated above; a no-op if
+                            // some other freeze is already active, matching
+                            // every other TriggerX() call in this file.
+                            blupi_.TriggerOneShotAnim(BlupiController::AnimState::Switch,
+                                                       BlupiController::kSwitchDuration);
+                        }
+                    }
+
+                    // Dynamite/Perso PLACEMENT vehicle gate (found 2026-07-16, Decor.cpp:4792-4794):
+                    // real source excludes EVERY vehicle mode (unlike switches, Helicopter is NOT
+                    // exempt here) plus Balloon/Ecrase. Deliberately does NOT gate Perso PICKUP
+                    // (TryPerso()'s own internal pickup branch, real Decor.cpp:6088-6101 has no
+                    // vehicle clause at all) -- see PlaceDynamite()/TryPerso()'s own header comments.
+                    // Nor on a lift: the same block asks m_blupiTransport == -1 (Decor.cpp:4794, BD-0027).
+                    const bool blupiCanUseHands = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased() &&
+                                                  !interaction_.IsRidingLift();
+
+                    // Dynamite placement (plan.md E3D-MIG-155) -- same action
+                    // button, independent gate (carrying one + grounded) from
+                    // the switch check above, so both can coexist on one press
+                    // without stepping on each other (real channel 61, shared
+                    // with skin-swap per 07-sounds.md, unrelated here).
+                    // Both feet on the ground to put one down (BlupiController::BothFeetOnGround, BD-0051).
+                    const bool feetDown = blupi_.BothFeetOnGround(worldRuntime_.GetWorld(), tempPassable);
+                    if (interaction_.PlaceDynamite(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                                    feetDown, blupiCanUseHands))
                     {
                         actionUsed = true;
-                        sound_.Play(*turnedOn ? GalaxyEggbert::Def::SoundChannel::SoundChannel77
-                                              : GalaxyEggbert::Def::SoundChannel::SoundChannel76);
-                        // Real Switch animation (plan.md BLUPI-073, found
-                        // 2026-07-18) -- purely cosmetic on top of the
-                        // switch already having activated above; a no-op if
-                        // some other freeze is already active, matching
-                        // every other TriggerX() call in this file.
-                        blupi_.TriggerOneShotAnim(BlupiController::AnimState::Switch,
-                                                   BlupiController::kSwitchDuration);
-                    }
-                }
-
-                // Dynamite/Perso PLACEMENT vehicle gate (found 2026-07-16, Decor.cpp:4792-4794):
-                // real source excludes EVERY vehicle mode (unlike switches, Helicopter is NOT
-                // exempt here) plus Balloon/Ecrase. Deliberately does NOT gate Perso PICKUP
-                // (TryPerso()'s own internal pickup branch, real Decor.cpp:6088-6101 has no
-                // vehicle clause at all) -- see PlaceDynamite()/TryPerso()'s own header comments.
-                // Nor on a lift: the same block asks m_blupiTransport == -1 (Decor.cpp:4794, BD-0027).
-                const bool blupiCanUseHands = !blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased() &&
-                                              !interaction_.IsRidingLift();
-
-                // Dynamite placement (plan.md E3D-MIG-155) -- same action
-                // button, independent gate (carrying one + grounded) from
-                // the switch check above, so both can coexist on one press
-                // without stepping on each other (real channel 61, shared
-                // with skin-swap per 07-sounds.md, unrelated here).
-                // Both feet on the ground to put one down (BlupiController::BothFeetOnGround, BD-0051).
-                const bool feetDown = blupi_.BothFeetOnGround(worldRuntime_.GetWorld(), tempPassable);
-                if (interaction_.PlaceDynamite(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                                feetDown, blupiCanUseHands))
-                {
-                    actionUsed = true;
-                    sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
-                    // Real PutDynamite animation (plan.md BLUPI-076, found
-                    // 2026-07-18) -- same "cosmetic on top of an action
-                    // that already happened" shape as Switch above.
-                    blupi_.TriggerOneShotAnim(BlupiController::AnimState::PutDynamite,
-                                               BlupiController::kPutDynamiteDuration);
-                }
-                else
-                {
-                    // Perso decoy placement/pickup (plan.md HUD-017) --
-                    // real `else if (m_blupiPerso > 0)`, mutually exclusive
-                    // with dynamite above. Channel 61 is the real placement
-                    // sound (per 07-sounds.md), unaffected by Voyage timing.
-                    // The pickup case's own real touch-time sound (ch60)
-                    // and deferred completion sound (ch3, plan.md `158`)
-                    // are handled by ResolvePendingVoyage() below instead
-                    // -- PersoCount() no longer increments immediately, so
-                    // it can't be used to distinguish pickup from placement
-                    // anymore; a placement always DECREASES the count
-                    // immediately (unaffected by Voyage), so that's the
-                    // real distinguishing signal now.
-                    const int persoBefore = interaction_.PersoCount();
-                    const bool persoUsed = interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
-                                                                 blupi_.GetZ(), feetDown, blupiCanUseHands);
-                    actionUsed = actionUsed || persoUsed || (persoBefore > 0 && blupiCanUseHands);
-                    if (persoUsed && interaction_.PersoCount() < persoBefore)
-                    {
-                        // Putting the decoy down: Ouf2, held (Decor.cpp:4833-4840).
                         sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
-                        blupi_.TriggerOneShotAnim(BlupiController::AnimState::Ouf2,
-                                                   BlupiController::kOuf2Duration);
+                        // Real PutDynamite animation (plan.md BLUPI-076, found
+                        // 2026-07-18) -- same "cosmetic on top of an action
+                        // that already happened" shape as Switch above.
+                        blupi_.TriggerOneShotAnim(BlupiController::AnimState::PutDynamite,
+                                                   BlupiController::kPutDynamiteDuration);
                     }
-                    else if (!persoUsed && persoBefore > 0 && blupiCanUseHands && interaction_.DynamiteCount() == 0)
+                    else
                     {
-                        // It cannot go down here: his shrug, Ouf3 (Decor.cpp:4843-4848).
-                        sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel27);
-                        blupi_.TriggerReaction(BlupiController::AnimState::Ouf3,
-                                               BlupiController::kOuf3Duration);
+                        // Perso decoy placement/pickup (plan.md HUD-017) --
+                        // real `else if (m_blupiPerso > 0)`, mutually exclusive
+                        // with dynamite above. Channel 61 is the real placement
+                        // sound (per 07-sounds.md), unaffected by Voyage timing.
+                        // The pickup case's own real touch-time sound (ch60)
+                        // and deferred completion sound (ch3, plan.md `158`)
+                        // are handled by ResolvePendingVoyage() below instead
+                        // -- PersoCount() no longer increments immediately, so
+                        // it can't be used to distinguish pickup from placement
+                        // anymore; a placement always DECREASES the count
+                        // immediately (unaffected by Voyage), so that's the
+                        // real distinguishing signal now.
+                        const int persoBefore = interaction_.PersoCount();
+                        const bool persoUsed = interaction_.TryPerso(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
+                                                                     blupi_.GetZ(), feetDown, blupiCanUseHands);
+                        actionUsed = actionUsed || persoUsed || (persoBefore > 0 && blupiCanUseHands);
+                        if (persoUsed && interaction_.PersoCount() < persoBefore)
+                        {
+                            // Putting the decoy down: Ouf2, held (Decor.cpp:4833-4840).
+                            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel61);
+                            blupi_.TriggerOneShotAnim(BlupiController::AnimState::Ouf2,
+                                                       BlupiController::kOuf2Duration);
+                        }
+                        else if (!persoUsed && persoBefore > 0 && blupiCanUseHands && interaction_.DynamiteCount() == 0)
+                        {
+                            // It cannot go down here: his shrug, Ouf3 (Decor.cpp:4843-4848).
+                            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel27);
+                            blupi_.TriggerReaction(BlupiController::AnimState::Ouf3,
+                                                   BlupiController::kOuf3Duration);
+                        }
+                        ResolvePendingVoyage();
                     }
-                    ResolvePendingVoyage();
+
+                    // Vehicle mount/dismount (plan.md E3D-MIG-171) -- same
+                    // action button. While already riding, dismounts (real:
+                    // voluntary dismount, no fixed duration otherwise) and
+                    // deposits the vehicle pickup back into the world at
+                    // Blupi's position, matching the real "deposits vehicle
+                    // pickup back into the world" behavior. While not riding,
+                    // scans for a nearby active vehicle pickup (real confirmed
+                    // mapping: ObjectType13->Helicopter, 19->Jeep, 28->Tank,
+                    // 24->Skateboard, 46->Overcraft) and mounts it -- done
+                    // directly here (not inside InteractionSystem::Update(),
+                    // which has no access to BlupiController::VehicleMode)
+                    // matching the same architecture as TryActivateSwitch/
+                    // PlaceDynamite above. Real "requires the action button
+                    // held/pressed at contact" gate is modeled via the same
+                    // proximity radius every other pickup here uses; the
+                    // helicopter floating over a gap is boarded without it
+                    // (`Decor::IsFloatingObject`, BD-0024, further below).
+                    if (blupi_.IsInVehicle())
+                    {
+                        // Only on the ground, off any lift, the helicopter and the overcraft on both feet,
+                        // the skateboard slow (OR-0020: Space in the air left the helicopter hanging).
+                        actionUsed = true; // riding, he is never in Stop: no head shake
+                        if (blupi_.CanLeaveVehicle(worldRuntime_.GetWorld(), interaction_.IsRidingLift(), tempPassable))
+                        {
+                            DismountAndDepositVehicle();
+                        }
+                    }
+                    else if (!pendingSkate_.active)
+                    {
+                        // Touching it, as the original's boxes have it (the `bNear` contact the mount
+                        // sits in, Decor.cpp:5646-5760; it was a 1.1-cell sphere, BD-0024).
+                        for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
+                        {
+                            if (!obj.active) continue;
+                            BlupiController::VehicleMode mode;
+                            if (!ObjectTypeToVehicleMode(obj.type, mode))
+                            {
+                                continue;
+                            }
+                            const float mdx = obj.currentX - blupi_.GetX();
+                            const float mdy = obj.currentY - blupi_.GetY();
+                            const float mdz = obj.currentZ - blupi_.GetZ();
+                            if (InteractionSystem::BlupiTouches(obj.type, mdx, mdy, mdz) &&
+                                blupi_.TriggerMount(mode, blupi_.IsNage(), blupi_.IsSurf()))
+                            {
+                                actionUsed = true;
+                                // Real TakeSkate anim (plan.md BLUPI-091 gap,
+                                // table_blupi ID 42, wired 2026-07-19) -- same
+                                // "only Skateboard has this" reasoning as
+                                // DeposeSkate in DismountAndDepositVehicle().
+                                if (mode == BlupiController::VehicleMode::Skateboard)
+                                {
+                                    blupi_.TriggerOneShotAnim(BlupiController::AnimState::TakeSkate,
+                                                               BlupiController::kTakeSkateDuration);
+                                    // The board leaves the ground at TakeSkate's tick 8, when his hands
+                                    // reach it (Decor.cpp:4510-4518; OR-0003).
+                                    pendingSkate_ = {};
+                                    pendingSkate_.active = true;
+                                    pendingSkate_.take = true;
+                                    pendingSkate_.seconds = 8.0f / 20.0f;
+                                    pendingSkate_.objectIndex = static_cast<std::size_t>(
+                                        &obj - worldRuntime_.GetMobileObjectsMutable().data());
+                                    break;
+                                }
+                                obj.active = false;
+                                break;
+                            }
+                        }
+                    }
                 }
 
-                // Vehicle mount/dismount (plan.md E3D-MIG-171) -- same
-                // action button. While already riding, dismounts (real:
-                // voluntary dismount, no fixed duration otherwise) and
-                // deposits the vehicle pickup back into the world at
-                // Blupi's position, matching the real "deposits vehicle
-                // pickup back into the world" behavior. While not riding,
-                // scans for a nearby active vehicle pickup (real confirmed
-                // mapping: ObjectType13->Helicopter, 19->Jeep, 28->Tank,
-                // 24->Skateboard, 46->Overcraft) and mounts it -- done
-                // directly here (not inside InteractionSystem::Update(),
-                // which has no access to BlupiController::VehicleMode)
-                // matching the same architecture as TryActivateSwitch/
-                // PlaceDynamite above. Real "requires the action button
-                // held/pressed at contact" gate is modeled via the same
-                // proximity radius every other pickup here uses; the
-                // helicopter floating over a gap is boarded without it
-                // (`Decor::IsFloatingObject`, BD-0024, further below).
-                if (blupi_.IsInVehicle())
+                // A helicopter floating over nothing (the cell under it passable, Decor::IsFloatingObject)
+                // is boarded by touching it, without the button (Decor.cpp:5646-5650; BD-0024): he
+                // jumps or drops into it.
+                if (!blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased() && !blupi_.IsNage() &&
+                    !blupi_.IsSurf() && !blupi_.IsSuspended() && !pendingSkate_.active)
                 {
-                    // Only on the ground, off any lift, the helicopter and the overcraft on both feet,
-                    // the skateboard slow (OR-0020: Space in the air left the helicopter hanging).
-                    actionUsed = true; // riding, he is never in Stop: no head shake
-                    if (blupi_.CanLeaveVehicle(worldRuntime_.GetWorld(), interaction_.IsRidingLift(), tempPassable))
-                    {
-                        DismountAndDepositVehicle();
-                    }
-                }
-                else if (!pendingSkate_.active)
-                {
-                    // Touching it, as the original's boxes have it (the `bNear` contact the mount
-                    // sits in, Decor.cpp:5646-5760; it was a 1.1-cell sphere, BD-0024).
+                    const auto& world = worldRuntime_.GetWorld();
                     for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
                     {
-                        if (!obj.active) continue;
-                        BlupiController::VehicleMode mode;
-                        if (!ObjectTypeToVehicleMode(obj.type, mode))
+                        if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType13)
                         {
                             continue;
                         }
-                        const float mdx = obj.currentX - blupi_.GetX();
-                        const float mdy = obj.currentY - blupi_.GetY();
-                        const float mdz = obj.currentZ - blupi_.GetZ();
-                        if (InteractionSystem::BlupiTouches(obj.type, mdx, mdy, mdz) &&
-                            blupi_.TriggerMount(mode, blupi_.IsNage(), blupi_.IsSurf()))
+                        const int gx = static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX;
+                        const int gz = static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ;
+                        const int gy = static_cast<int>(std::floor(obj.currentY + 0.001f)) - 1;
+                        const int n = static_cast<int>(world.blocksPerAxis());
+                        const bool floating =
+                            gx >= 0 && gx < n && gz >= 0 && gz < n && gy >= 0 && gy < n &&
+                            GalaxyEggbert::GetBlockDefinition(
+                                world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                               static_cast<std::uint16_t>(gz)).type())
+                                    .collisionMask == 0;
+                        if (floating &&
+                            InteractionSystem::BlupiTouches(obj.type, obj.currentX - blupi_.GetX(), obj.currentY - blupi_.GetY(),
+                                                            obj.currentZ - blupi_.GetZ()) &&
+                            blupi_.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false))
                         {
-                            actionUsed = true;
-                            // Real TakeSkate anim (plan.md BLUPI-091 gap,
-                            // table_blupi ID 42, wired 2026-07-19) -- same
-                            // "only Skateboard has this" reasoning as
-                            // DeposeSkate in DismountAndDepositVehicle().
-                            if (mode == BlupiController::VehicleMode::Skateboard)
-                            {
-                                blupi_.TriggerOneShotAnim(BlupiController::AnimState::TakeSkate,
-                                                           BlupiController::kTakeSkateDuration);
-                                // The board leaves the ground at TakeSkate's tick 8, when his hands
-                                // reach it (Decor.cpp:4510-4518; OR-0003).
-                                pendingSkate_ = {};
-                                pendingSkate_.active = true;
-                                pendingSkate_.take = true;
-                                pendingSkate_.seconds = 8.0f / 20.0f;
-                                pendingSkate_.objectIndex = static_cast<std::size_t>(
-                                    &obj - worldRuntime_.GetMobileObjectsMutable().data());
-                                break;
-                            }
                             obj.active = false;
                             break;
                         }
                     }
                 }
+
             }
             actionKeyWasDown_ = actionPressed;
-
-            // A helicopter floating over nothing (the cell under it passable, Decor::IsFloatingObject)
-            // is boarded by touching it, without the button (Decor.cpp:5646-5650; BD-0024): he
-            // jumps or drops into it.
-            if (!blupi_.IsInVehicle() && !blupi_.IsBallooned() && !blupi_.IsEcrased() && !blupi_.IsNage() &&
-                !blupi_.IsSurf() && !blupi_.IsSuspended() && !pendingSkate_.active)
-            {
-                const auto& world = worldRuntime_.GetWorld();
-                for (auto& obj : worldRuntime_.GetMobileObjectsMutable())
-                {
-                    if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType13)
-                    {
-                        continue;
-                    }
-                    const int gx = static_cast<int>(std::lround(obj.currentX)) + WorldRuntime::kWorldCenterX;
-                    const int gz = static_cast<int>(std::lround(obj.currentZ)) + WorldRuntime::kWorldCenterZ;
-                    const int gy = static_cast<int>(std::floor(obj.currentY + 0.001f)) - 1;
-                    const int n = static_cast<int>(world.blocksPerAxis());
-                    const bool floating =
-                        gx >= 0 && gx < n && gz >= 0 && gz < n && gy >= 0 && gy < n &&
-                        GalaxyEggbert::GetBlockDefinition(
-                            world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                           static_cast<std::uint16_t>(gz)).type())
-                                .collisionMask == 0;
-                    if (floating &&
-                        InteractionSystem::BlupiTouches(obj.type, obj.currentX - blupi_.GetX(), obj.currentY - blupi_.GetY(),
-                                                        obj.currentZ - blupi_.GetZ()) &&
-                        blupi_.TriggerMount(BlupiController::VehicleMode::Helicopter, false, false))
-                    {
-                        obj.active = false;
-                        break;
-                    }
-                }
-            }
 
             // Interactive objects (2026-07-10, see InteractionSystem.hpp)
             // -- platform lift patrol + riding (plan.md E3D-MIG-152, 2026-
@@ -5606,23 +5617,12 @@ namespace GalaxyEggbert::CNA
             // GalaxyEggbert::Def::SecretPower::Cloud, matching the real Power-Charge pickup).
             const bool cloudActive = secretPower == GalaxyEggbert::Def::SecretPower::Cloud;
 
-            // Ghost mode (plan.md BLUPI-111) real "no interactions"
-            // behavior: real `MoveObjectDetect()` (the shared query nearly
-            // every pickup/hazard/enemy-contact/lift-riding check in this
-            // function is ultimately built on) unconditionally returns "no
-            // object found" while ghosting -- every check in this
-            // function is a proximity test against Blupi's own position
-            // (see this class's own repeated "same simplification as
-            // every other proximity test in this file" comments), so
-            // substituting a position far outside the 100x100 world makes
-            // every one of them correctly fail shut, with zero changes
-            // needed inside InteractionSystem itself. Patrol/animation
-            // logic (which never references Blupi's position at all)
-            // continues normally, matching real behavior exactly.
-            constexpr float kGhostSentinelPos = 100000.0f;
-            const float interactionBlupiX = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetX();
-            const float interactionBlupiY = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetY();
-            const float interactionBlupiZ = blupi_.IsGhost() ? kGhostSentinelPos : blupi_.GetZ();
+            // Keep the real position: already-awake followers still home in Ghost mode
+            // (Decor.cpp:8026), and dynamite's blast is outside BlupiStep (9167-9173).
+            // Contact/detection guards are explicit inside InteractionSystem.
+            const float interactionBlupiX = blupi_.GetX();
+            const float interactionBlupiY = blupi_.GetY();
+            const float interactionBlupiZ = blupi_.GetZ();
             // Crate-push gate (found 2026-07-16, Decor.cpp:6130-6132): real source also excludes
             // every vehicle mode + Ecrase (Balloon is covered separately by the existing
             // blupi_.IsBallooned() argument just below).
@@ -5655,7 +5655,7 @@ namespace GalaxyEggbert::CNA
                 crateInput.blupiClearAt = [&crateWorld, tempPassable](float x, float y, float z)
                 { return BlupiController::IsClearAt(crateWorld, x, y, z, tempPassable); };
                 const auto crateOut = interaction_.UpdateCratePush(simDt, worldRuntime_, crateInput);
-                if (crateOut.holdBlupi && !blupi_.IsDeathLocked())
+                if (interactsWithWorld && crateOut.holdBlupi && !blupi_.IsDeathLocked())
                 {
                     // Faster than any crate (Power's 10 px a tick = 3.1 cells/s): he keeps up exactly.
                     constexpr float kFollowCellsPerSecond = 4.0f;
@@ -5689,12 +5689,12 @@ namespace GalaxyEggbert::CNA
                                  inHelicopter, blupi_.IsHidden(),
                                  // m_blupiFocus or in the air (Decor.cpp:5788-5790): not while he
                                  // takes a pickup, teleports, waves goodbye or cheers on the ground.
-                                 BlupiFocused(), BlupiOutOfPlay());
+                                 BlupiFocused(), BlupiOutOfPlay(), interactsWithWorld);
             RefreshTerrainMeshIfChanged();
 
             // The action button with nothing to do, standing still: he shakes his head (Non, 18
             // ticks, channel 27; Decor.cpp:6366-6372, 3188). Moving cuts it short.
-            if (actionPressedEdge && !actionUsed && !interaction_.ActionPressSpent() &&
+            if (interactsWithWorld && actionPressedEdge && !actionUsed && !interaction_.ActionPressSpent() &&
                 blupi_.GetAnimState() == BlupiController::AnimState::Stop)
             {
                 blupi_.TriggerReaction(BlupiController::AnimState::Non, BlupiController::kNonDuration);
@@ -5711,12 +5711,13 @@ namespace GalaxyEggbert::CNA
             // Sucette/Drink/Charge real 2-stage pickup delay -- see its own comment.
             ResolvePickupFreeze();
 
-            // Pollution puff (plan.md VISUAL-013) -- called unconditionally
-            // every frame, matching the real function's own internal gate
+            // Pollution puff (plan.md VISUAL-013) -- called every non-ghost
+            // frame, matching the real function's own internal gate
             // (see TickPollutionPuff()'s own comment). isMoving reuses the
             // same blupiXBeforeStep delta already computed above for the
             // interaction system's crate-push direction inference, instead
             // of adding a new horizontal-speed accessor to BlupiController.
+            if (interactsWithWorld) // Decor.cpp:3888/4009/4293/4436, inside BlupiStep
             {
                 const auto vehicleMode = blupi_.GetVehicleMode();
                 interaction_.TickPollutionPuff(
@@ -5729,11 +5730,11 @@ namespace GalaxyEggbert::CNA
             }
 
             // Shield/Power magic trail (plan.md VISUAL-011-adjacent) --
-            // called unconditionally every frame; TickMagicTrail() itself
-            // is the gate (a no-op unless Shield or Power is active).
-            interaction_.TickMagicTrail(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
-                                        secretPower == GalaxyEggbert::Def::SecretPower::Shield,
-                                        secretPower == GalaxyEggbert::Def::SecretPower::Power);
+            // skipped by Ghost; TickMagicTrail() further requires Shield or Power.
+            if (interactsWithWorld) // Decor.cpp:5204-5254, after the ghost return
+                interaction_.TickMagicTrail(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(),
+                                            secretPower == GalaxyEggbert::Def::SecretPower::Shield,
+                                            secretPower == GalaxyEggbert::Def::SecretPower::Power);
 
             // Real camera shake (plan.md CAM-008/009) -- generic-hazard
             // contact-kill (most types SmallShake, fish/bird BigShake) and
@@ -6345,7 +6346,8 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        if (phase_ == GalaxyEggbert::Def::GamePhase::Play) RecordHideGhost();
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Play && blupi_.CanInteractWithWorld())
+            RecordHideGhost(); // Decor.cpp:5238-5254: no new Hide trail while ghosting
 
         if (goldenCaptureMode_ && goldenCaptureNextIndex_ < kGoldenCaptureCount &&
             goldenCaptureTick_ >= kGoldenCaptureTicks[goldenCaptureNextIndex_])
@@ -6748,142 +6750,142 @@ namespace GalaxyEggbert::CNA
             // menu) has none yet: skip the model until it has one. Starting
             // in third person made this reachable (2026-10-25, the game
             // aborted with "Unknown animation clip").
-            if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
-                blupiModel_->Clips.count(blupiActiveClipName_) != 0 &&
-                !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) &&
-                !BlupiDrawnAsDeathSprite())
+            const bool translucentBlupi = blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()) < 1.0f;
+            const auto drawBlupi = [&]()
             {
-                constexpr float kCharredShade = 0.07f; // the sprites' soot black
-                // Charred (Clear1, Clear3: CharredBlupi.hpp), shrunk toward his feet as the frame
-                // crumbles and spread out as the heap of ash.
-                auto charred = BlupiCharredShape();
-                // Glued (BlupiGlueModel()): his model flattened and spread under the glue model, the
-                // dark green puddle of the sprites (168-171: about a sixteenth of his height, half as
-                // wide again).
-                const bool gluePuddle = BlupiGlueModel() != nullptr;
-                if (gluePuddle)
+                if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
+                    blupiModel_->Clips.count(blupiActiveClipName_) != 0 &&
+                    !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) &&
+                    !BlupiDrawnAsDeathSprite())
                 {
-                    charred = GalaxyEggbert::Game::CharredShape{true, 0.06f, 1.5f, false};
-                }
-                const auto world = BlupiModelWorld(charred);
-                std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
-                blupiModel_->ComputeBoneTransformsEXT(
-                    blupiActiveClipName_,
-                    System::TimeSpan::FromSeconds(blupiClipTimeSeconds_),
-                    /*loop=*/true,
-                    boneTransforms);
-                blupiEffect_->setWorldProperty(world);
-                blupiEffect_->setViewProperty(camera_.View());
-                blupiEffect_->setProjectionProperty(camera_.Projection());
-                blupiEffect_->SetBoneTransforms(boneTransforms);
-                // XNA's default culling, set explicitly so no earlier draw's state
-                // applies: the real model's triangles are clockwise like XNA
-                // content (tools/rd4_to_gltf/export_cna_avatar.py). Converted
-                // straight from glTF they were counter-clockwise, this state
-                // culled his front faces, and he drew inside out
-                // (upstream_bugs.md UB-003).
-                device.setRasterizerStateProperty(
-                    Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
-
-                auto* face = BlupiFaceTexture();
-
-                const auto drawParts = [&](const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT& model,
-                                           Microsoft::Xna::Framework::Graphics::Texture2D* faceTexture)
-                {
-                    for (const auto& part : model.Parts)
+                    constexpr float kCharredShade = 0.07f; // the sprites' soot black
+                    // Charred (Clear1, Clear3: CharredBlupi.hpp), shrunk toward his feet as the frame
+                    // crumbles and spread out as the heap of ash.
+                    auto charred = BlupiCharredShape();
+                    // Glued (BlupiGlueModel()): his model flattened and spread under the glue model, the
+                    // dark green puddle of the sprites (168-171: about a sixteenth of his height, half as
+                    // wide again).
+                    const bool gluePuddle = BlupiGlueModel() != nullptr;
+                    if (gluePuddle)
                     {
-                        blupiEffect_->setTextureProperty(faceTexture != nullptr && part.Name == blupiFacePart_
-                                                             ? faceTexture
-                                                             : part.Texture);
-                        blupiEffect_->Apply();
-                        device.SetVertexBuffer(part.Part->getVertexBufferProperty());
-                        device.SetIndexBuffer(part.Part->getIndexBufferProperty());
-                        device.DrawIndexedPrimitives(
-                            Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
-                            part.Part->getVertexOffsetProperty(),
-                            0,
-                            part.Part->getNumVerticesProperty(),
-                            part.Part->getStartIndexProperty(),
-                            part.Part->getPrimitiveCountProperty());
+                        charred = GalaxyEggbert::Game::CharredShape{true, 0.06f, 1.5f, false};
                     }
-                };
-                // The drink's Hide (Decor.cpp:828-838, OR-0016): his own clips, drawn at 30 %
-                // opacity, flashing to full every other pair of ticks once the gauge is down to 25.
-                // Not depth-written, so what lies behind him still shows through.
-                float blupiAlpha = 1.0f;
-                if (blupi_.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Hide)
-                {
-                    const bool flash = blupi_.GetSecretPowerLevel() <= 25 && worldRuntime_.GetAnimPhase() % 4 >= 2;
-                    blupiAlpha = flash ? 1.0f : 0.3f;
-                }
-                if (blupiAlpha < 1.0f)
-                {
-                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
-                }
-                blupiEffect_->setAlphaProperty(blupiAlpha);
-                if (charred.charred)
-                {
-                    // Burnt black: soot, no sheen; glued, the puddle's dark green.
-                    blupiEffect_->setDiffuseColorProperty(
-                        gluePuddle ? Microsoft::Xna::Framework::Vector3(0.20f, 0.32f, 0.03f)
-                                   : Microsoft::Xna::Framework::Vector3(kCharredShade, kCharredShade, kCharredShade));
-                    blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
-                }
-                drawParts(*blupiModel_, face);
-                if (charred.charred)
-                {
-                    blupiEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3::One);
-                    blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::One);
-                }
-
-                // The vehicle he rides in this clip (helicopter, jeep, tank,
-                // overcraft, skateboard): its own model, built from the same
-                // Ray Dream frames in the same space (clips.txt "vehicle"
-                // lines), so it takes his world transform and clip time.
-                for (const auto& [vehicleName, vehicle] : blupiVehicles_)
-                {
-                    if (vehicle->Clips.find(blupiActiveClipName_) == vehicle->Clips.end())
-                    {
-                        continue;
-                    }
-                    vehicle->ComputeBoneTransformsEXT(
+                    const auto world = BlupiModelWorld(charred);
+                    std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
+                    blupiModel_->ComputeBoneTransformsEXT(
                         blupiActiveClipName_,
                         System::TimeSpan::FromSeconds(blupiClipTimeSeconds_),
                         /*loop=*/true,
                         boneTransforms);
+                    blupiEffect_->setWorldProperty(world);
+                    blupiEffect_->setViewProperty(camera_.View());
+                    blupiEffect_->setProjectionProperty(camera_.Projection());
                     blupiEffect_->SetBoneTransforms(boneTransforms);
-                    drawParts(*vehicle, nullptr);
-                }
-                blupiEffect_->setAlphaProperty(1.0f);
-                if (blupiAlpha < 1.0f)
-                {
-                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
-                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
-                }
+                    // XNA's default culling, set explicitly so no earlier draw's state
+                    // applies: the real model's triangles are clockwise like XNA
+                    // content (tools/rd4_to_gltf/export_cna_avatar.py). Converted
+                    // straight from glTF they were counter-clockwise, this state
+                    // culled his front faces, and he drew inside out
+                    // (upstream_bugs.md UB-003).
+                    device.setRasterizerStateProperty(
+                        Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
 
-                if (!hideGhosts_.empty())
-                {
-                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
-                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
-                    for (const auto& ghost : hideGhosts_)
+                    auto* face = BlupiFaceTexture();
+
+                    const auto drawParts = [&](const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT& model,
+                                               Microsoft::Xna::Framework::Graphics::Texture2D* faceTexture)
                     {
-                        if (blupiModel_->Clips.count(ghost.clip) == 0)
+                        for (const auto& part : model.Parts)
+                        {
+                            blupiEffect_->setTextureProperty(faceTexture != nullptr && part.Name == blupiFacePart_
+                                                                 ? faceTexture
+                                                                 : part.Texture);
+                            blupiEffect_->Apply();
+                            device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                            device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                            device.DrawIndexedPrimitives(
+                                Microsoft::Xna::Framework::Graphics::PrimitiveType::TriangleList,
+                                part.Part->getVertexOffsetProperty(),
+                                0,
+                                part.Part->getNumVerticesProperty(),
+                                part.Part->getStartIndexProperty(),
+                                part.Part->getPrimitiveCountProperty());
+                        }
+                    };
+                    // The drink's Hide (Decor.cpp:828-838, OR-0016): his own clips, drawn at 30 %
+                    // opacity, flashing to full every other pair of ticks once the gauge is down to 25.
+                    // Not depth-written, so what lies behind him still shows through.
+                    const float blupiAlpha = blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase());
+                    if (blupiAlpha < 1.0f)
+                    {
+                        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                        device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
+                    }
+                    blupiEffect_->setAlphaProperty(blupiAlpha);
+                    if (charred.charred)
+                    {
+                        // Burnt black: soot, no sheen; glued, the puddle's dark green.
+                        blupiEffect_->setDiffuseColorProperty(
+                            gluePuddle ? Microsoft::Xna::Framework::Vector3(0.20f, 0.32f, 0.03f)
+                                       : Microsoft::Xna::Framework::Vector3(kCharredShade, kCharredShade, kCharredShade));
+                        blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::Zero);
+                    }
+                    drawParts(*blupiModel_, face);
+                    if (charred.charred)
+                    {
+                        blupiEffect_->setDiffuseColorProperty(Microsoft::Xna::Framework::Vector3::One);
+                        blupiEffect_->setSpecularColorProperty(Microsoft::Xna::Framework::Vector3::One);
+                    }
+
+                    // The vehicle he rides in this clip (helicopter, jeep, tank,
+                    // overcraft, skateboard): its own model, built from the same
+                    // Ray Dream frames in the same space (clips.txt "vehicle"
+                    // lines), so it takes his world transform and clip time.
+                    for (const auto& [vehicleName, vehicle] : blupiVehicles_)
+                    {
+                        if (vehicle->Clips.find(blupiActiveClipName_) == vehicle->Clips.end())
                         {
                             continue;
                         }
-                        blupiModel_->ComputeBoneTransformsEXT(ghost.clip, System::TimeSpan::FromSeconds(ghost.clipSeconds),
-                                                              /*loop=*/true, boneTransforms);
-                        blupiEffect_->setWorldProperty(ghost.world);
+                        vehicle->ComputeBoneTransformsEXT(
+                            blupiActiveClipName_,
+                            System::TimeSpan::FromSeconds(blupiClipTimeSeconds_),
+                            /*loop=*/true,
+                            boneTransforms);
                         blupiEffect_->SetBoneTransforms(boneTransforms);
-                        blupiEffect_->setAlphaProperty(std::max(0.0f, (20.0f - ghost.ageTicks) * 0.3f / 20.0f));
-                        drawParts(*blupiModel_, ghost.face);
+                        drawParts(*vehicle, nullptr);
                     }
                     blupiEffect_->setAlphaProperty(1.0f);
-                    device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
-                    device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
+                    if (blupiAlpha < 1.0f)
+                    {
+                        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+                        device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
+                    }
+
+                    if (!hideGhosts_.empty())
+                    {
+                        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+                        device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::DepthRead);
+                        for (const auto& ghost : hideGhosts_)
+                        {
+                            if (blupiModel_->Clips.count(ghost.clip) == 0)
+                            {
+                                continue;
+                            }
+                            blupiModel_->ComputeBoneTransformsEXT(ghost.clip, System::TimeSpan::FromSeconds(ghost.clipSeconds),
+                                                                  /*loop=*/true, boneTransforms);
+                            blupiEffect_->setWorldProperty(ghost.world);
+                            blupiEffect_->SetBoneTransforms(boneTransforms);
+                            blupiEffect_->setAlphaProperty(std::max(0.0f, (20.0f - ghost.ageTicks) * 0.3f / 20.0f));
+                            drawParts(*blupiModel_, ghost.face);
+                        }
+                        blupiEffect_->setAlphaProperty(1.0f);
+                        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+                        device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
+                    }
                 }
-            }
+            };
+            if (!translucentBlupi) drawBlupi();
 
             // Parked vehicles: a helicopter, jeep, skateboard, tank or
             // overcraft pickup is drawn as its real vehicle model in the
@@ -7504,6 +7506,10 @@ namespace GalaxyEggbert::CNA
                     Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
                 device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
             }
+
+            // Blend a ghost/Hide over the completed opaque scene. DepthRead tests walls in
+            // front without preventing objects behind him from showing through his 0.75 alpha.
+            if (translucentBlupi) drawBlupi();
 
             // The terrain's semi-transparent pass after Blupi and every model, so water covers
             // what lies in it (OR-0052: a chest under water looked dry from above).
@@ -8149,7 +8155,7 @@ namespace GalaxyEggbert::CNA
                           interaction_.VoyageIconId(),
                           interaction_.VoyageIsButtonChannel(), interaction_.VoyageIsBlupiChannel(),
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
-                          gameSpeed_);
+                          gameSpeed_, blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()));
             }
 
             // On-screen touch controls (2026-07-13, plan.md

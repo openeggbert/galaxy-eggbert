@@ -249,7 +249,7 @@ namespace GalaxyEggbert::Game
                      bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                      bool voyageIsBlupiChannel,
                      float voyageX, float voyageY,
-                     GalaxyEggbert::Def::GameSpeed gameSpeed)
+                     GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity)
     {
         if (!loaded_)
         {
@@ -315,6 +315,7 @@ namespace GalaxyEggbert::Game
         const float buttonSheetW = static_cast<float>(buttonTexture_.getWidthProperty());
         const float buttonSheetH = static_cast<float>(buttonTexture_.getHeightProperty());
 
+        std::vector<Quad> animQuads;
         std::vector<Quad> blupiQuads;
         std::vector<Quad> elementQuads;
         std::vector<Quad> textQuads;
@@ -387,12 +388,12 @@ namespace GalaxyEggbert::Game
             if (animIconUsesElementSheet)
             {
                 IconUv(animIcon, elementSheetW, elementSheetH, q.u0, q.v0, q.u1, q.v1);
-                elementQuads.push_back(q);
+                (animOpacity < 1.0f ? animQuads : elementQuads).push_back(q);
             }
             else
             {
                 IconUv(animIcon, blupiSheetW, blupiSheetH, q.u0, q.v0, q.u1, q.v1);
-                blupiQuads.push_back(q);
+                (animOpacity < 1.0f ? animQuads : blupiQuads).push_back(q);
             }
         }
 
@@ -692,6 +693,14 @@ namespace GalaxyEggbert::Game
         FlushQuads(device, *elementEffect_, elementRenderer_, elementQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *jaugeEffect_, jaugeRenderer_, jaugeQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *buttonEffect_, buttonRenderer_, buttonQuads, viewportW, viewportH, 1.0f);
+        // BasicEffect premultiplies its opacity: AlphaBlend applies the fade once, with
+        // the HUD's depth already disabled. Keep the life/pickup icons in their opaque batches.
+        if (!animQuads.empty())
+        {
+            device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
+            FlushQuads(device, animIconUsesElementSheet ? *elementEffect_ : *blupiEffect_, animRenderer_,
+                       animQuads, viewportW, viewportH, animOpacity);
+        }
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 }

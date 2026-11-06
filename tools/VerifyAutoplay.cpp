@@ -99,6 +99,26 @@ int main()
     }
 
     {
+        Autoplay typing;
+        std::string error;
+        check(typing.Parse("type ghost\nend\n", error), "typed cheat parses");
+        AutoplayState state;
+        const std::string word = "ghost";
+        for (int tick = 0; tick < 10; ++tick)
+        {
+            state.tick = tick;
+            const auto keys = typing.Step(state);
+            check(keys.letter == (tick % 2 == 0 ? word[tick / 2] : 0),
+                  "typed cheat emits a letter press then release");
+        }
+        state.tick = 10;
+        typing.Step(state);
+        check(typing.Finished() && typing.Passed(), "typing completes after the last release");
+        Autoplay bad;
+        check(!bad.Parse("type ghost extra", error), "typed cheat rejects extra words");
+    }
+
+    {
         // shots N: the host saves the frame of each of the N steps from the one that read it.
         Autoplay autoplay;
         std::string error;
