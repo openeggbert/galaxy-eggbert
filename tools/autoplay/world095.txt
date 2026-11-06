@@ -69,12 +69,14 @@ go 16.5 83
 go 23 88.5
 go 23 90 tol 0.1
 until ground = 1
-face 0
+# Face the escape lane before putting the stick down: no turn during its fuse.
+face 13
 hold 2 action
 wait 80
-go 23 88.6 jump 3 tol 0.15 max 200
-go 23 85.5 max 300
+# Jump out and keep moving east of the plant at (22, 10, 86), clear of the blast.
+go 24 85.5 jump 5 tol 0.15 max 300
 wait 200
+go 24 88.5
 go 23 89.4 tol 0.1
 face 180
 go 23 91.2 jump 2.0 tol 0.15
@@ -91,6 +93,9 @@ face 0
 go 23 88.4 jump 2.0 tol 0.15 max 200
 until ground = 1
 expect y >= 9.9
+# Pass the same plant on its east side on the way back north.
+go 24 88
+go 24 84
 go 23 76
 go 23 69
 expect keys = 0

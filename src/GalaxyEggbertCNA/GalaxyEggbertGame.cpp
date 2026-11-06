@@ -2252,6 +2252,10 @@ namespace GalaxyEggbert::CNA
         missionSeed_ = replayingResume_ ? resumeLog_.start.seed : std::random_device{}();
         interaction_.SeedRandom(missionSeed_);
         blupi_ = BlupiController();
+        // A fresh Blupi knows no BigDecor: give him the solid ones again (M3D-0006). They were set
+        // only by RebuildWorldPresentation(), before this reset, so in play every house, tree and
+        // statue let him through (BD-0080, the owner's report of 2026-11-06).
+        blupi_.SetSolidBoxes(worldRuntime_.SolidBigDecorBoxes());
         wasInHelicopter_ = false;
         hideGhosts_.clear();
         hideGhostTracking_ = false;
@@ -2334,6 +2338,10 @@ namespace GalaxyEggbert::CNA
         // there's no real progression state to carry between play-test runs.
         interaction_ = InteractionSystem();
         blupi_ = BlupiController();
+        // A fresh Blupi knows no BigDecor: give him the solid ones again (M3D-0006). They were set
+        // only by RebuildWorldPresentation(), before this reset, so in play every house, tree and
+        // statue let him through (BD-0080, the owner's report of 2026-11-06).
+        blupi_.SetSolidBoxes(worldRuntime_.SolidBigDecorBoxes());
         wasInHelicopter_ = false;
         hideGhosts_.clear();
         hideGhostTracking_ = false;
@@ -2371,6 +2379,10 @@ namespace GalaxyEggbert::CNA
         }
         RebuildWorldPresentation();
         blupi_ = BlupiController();
+        // A fresh Blupi knows no BigDecor: give him the solid ones again (M3D-0006). They were set
+        // only by RebuildWorldPresentation(), before this reset, so in play every house, tree and
+        // statue let him through (BD-0080, the owner's report of 2026-11-06).
+        blupi_.SetSolidBoxes(worldRuntime_.SolidBigDecorBoxes());
         if (worldRuntime_.HasExplicitSpawnPoint())
         {
             blupi_.SetPosition(worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),

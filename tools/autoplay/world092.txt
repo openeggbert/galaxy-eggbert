@@ -9,9 +9,15 @@ expect mission = 92
 # steps (walk 26, 28, 30) to the canyon (walk 32).
 go 10 90 until eggs = 1 max 600
 until mtick >= 262 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
+# Round the plant at (17, 20, 90) along the south lane.
+go 14 91.5
+go 20 91.5
 go 31 90 until eggs = 2 max 900
 until mtick >= 855 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
-go 30.5 74
+# Stay east of the tree (30, 78) and plant (29, 73), then approach the lollipop.
+go 32 88
+go 32 71
+go 30 71
 go 30 70.15 tol 0.1
 face 0
 hold 6 action
@@ -45,13 +51,17 @@ go 42.3 50.5 tol 0.15
 go 51 50.5 max 300
 expect y >= 31.9
 # C, the birds' crater (walk 32; the birds fly a cell or more above him): the egg in its
-# north-west corner (61, 30); east along z 30 to the low mound (x 82-86, z 32-36, walk 33) and
+# north-west corner (61, 30); east along z 29.5 to the low mound (x 82-86, z 32-36, walk 33) and
 # its egg (84, 34); the high mound (x 74-79, z 44-48, walk 34) and its egg (76, 46), each jumped
 # onto when no bird is near.
-go 59.5 48
+# Stay west of the plant at (60, 32, 40) before heading to the corner egg.
+go 58.5 48
+go 58.5 38
 go 61 30 until eggs = 5 max 600
 until mtick >= 3509 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
-go 80 30
+# Pass north of the plant at (71, 32, 31).
+go 61 29.5
+go 80 29.5
 go 81.4 34 tol 0.1
 face 90
 clear 82 34 34 3 max 600

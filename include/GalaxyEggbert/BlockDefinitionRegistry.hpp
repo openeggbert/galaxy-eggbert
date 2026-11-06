@@ -105,8 +105,8 @@ namespace GalaxyEggbert
 
     // The BigDecor (explo.png pictures standing in the rooms as their models) that stand in his way
     // in 3D (Q-014, owner 2026-11-05, MR-0007/MR-0008): the palms 16-19, the trees 20-22, the plants
-    // 23-25, the houses 26-27, the machines 28-31, the toys 36-47, the palace's columns and fountain
-    // 87-89 -- as their models' shapes (WorldRuntime::SolidBigDecorBoxes); without a measured shape
+    // 23-25, the houses 26-27, the machines 28-31, the toys 36-47, the palace pieces 87-88 and the Blupi
+    // statue 89 -- as their models' shapes (WorldRuntime::SolidBigDecorBoxes); without a measured shape
     // a column of kSolidBigDecorHeight cells over the anchor (the 128 px picture: 2 blocks). The
     // slime 66-69 and 203 stay passable.
     inline constexpr std::array<std::uint16_t, 31> kSolidBigDecorIcons{

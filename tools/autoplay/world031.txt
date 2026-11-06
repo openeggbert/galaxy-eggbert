@@ -60,7 +60,10 @@ go 48 31 tol 0.1
 until treasures = 3 max 200
 go 50 30 tol 0.1
 until eggs = 3 max 200
-go 51 34
+# Round the plant at (49, 13, 34) on its west and south sides.
+go 47 32
+go 47 36
+go 51 36
 # E: the arcade heading +X. Up onto the first house (its egg), then the three mine gaps on
 # their sliding lifts: 60 ticks / 20 stop, 30 / 10, and 18 / 3 (stepped off from its front).
 go 54.6 36

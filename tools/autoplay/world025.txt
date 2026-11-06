@@ -66,6 +66,9 @@ go 10 50 until treasures = 1
 until treasures = 1 max 120
 # Off the platform's south end down onto the lava terrace (walk 11): well past its edge (z 58.5),
 # or his box rests on it (BD-0059's ease-in stopped him at its very edge).
+# Pass the plant at (9, 25, 52) on its east side before the drop.
+go 11 50
+go 11 54
 go 10 59.5 tol 0.1
 until ground = 1
 expect y <= 11.05

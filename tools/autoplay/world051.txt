@@ -135,6 +135,9 @@ until ground = 1
 expect y >= 28.9
 # The exit block's egg, the red arrow (open with both treasures), the hub.
 go 36 46 until eggs = 4
+# Pass west of the plant at (37, 29, 42).
+go 35 45
+go 35 40
 go 36 39 until exit = 1
 expect treasures = 2
 until mission = 50 max 900

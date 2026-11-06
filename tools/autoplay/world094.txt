@@ -52,6 +52,9 @@ go 72 59 until eggs = 3 max 600
 until mtick >= 2745 max 1500  # where an egg was taken before BD-0073 (beyond 10 lives it stays)
 go 68.8 59.5
 go 68.8 64
+# Round the plant at (69, 10, 66) on its east side.
+go 71 64
+go 71 68
 go 68.6 68 tol 0.1
 face 270
 go 65 68 jump 3.2 tol 0.15 max 200

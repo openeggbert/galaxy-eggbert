@@ -1319,3 +1319,26 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyGetObjIcon` (phases 0, 1, 5, 50, 99, 100 -> 253, 252, 255, 253, 255, 253), 112/112,
   golden frames and trace, mission 014's playthrough; screenshots of the three sparks.
 
+
+## BD-0080 — in play every house, tree, plant, toy and the Blupi statue let him through (collision) — FIXED_AND_VERIFIED
+
+- Decision (M3D-0006, the owner's Q-014, MR-0007, MR-0008): the BigDecor standing in the rooms as
+  their models are solid (`kSolidBigDecorIcons`: palms, trees, plants, houses, machines, toys, the
+  palace pieces 87-88 and the Blupi statue 89), as large as their models.
+- Galaxy since 34ddadb3 (2026-11-06 06:25): the boxes were given to Blupi in
+  `RebuildWorldPresentation()` (`blupi_.SetSolidBoxes`), and `LoadMission`,
+  `LoadCustomWorldForPlayTest` and the third load path then made a fresh `BlupiController`, which
+  knows none. In play nothing was solid: the owner, 2026-11-06: "houses, trees and the others are
+  still passable", "even the Blupi statue, which was solid, is passable now" (before 34ddadb3 the
+  large ones were solid by the older `solidBigDecorCells_`). Play pass 28's 78/78 passed for that
+  reason: no route met a box.
+- Fix: the boxes given again after each of the three resets.
+- Validation: a probe walking west from 025's spawn (50, 11, 56) into the column 87 at (44, 11, 56):
+  the old binary walks into it (x 42.78 after 400 ticks), the fixed one stops at x 44.67. ctest
+  112/112. The play pass then failed the routes that had walked through a plant, a toy or a machine
+  (025, 031, 034, 051, 053, 054, 058, 071, 092, 094, 095 and their hubs' chains): rerouted round them
+  (Codex CLI to a brief); all eleven and the chains 020, 030, 050, 070, 090 pass, no world changed.
+- Left (level playability, queued for Codex in `handoff.md`): in 053 the machine (BigDecor 29 at
+  (57, 30, 19)) stands in the approach to the door "14", leaving a lane 0.13 cells wide that the
+  script threads with `tol 0.02` -- no lane for a human player; 058's pillar perimeter is tight
+  too (`tol 0.05`). The BigDecor should move in the generators, not the routes squeeze past.

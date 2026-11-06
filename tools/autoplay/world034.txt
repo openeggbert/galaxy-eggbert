@@ -173,7 +173,10 @@ go 33.4 3
 until ground = 1 max 400
 expect y <= 36.05
 go 33 17
-go 33 23.6
+# Turn west before the plant at (32, 36, 24).
+go 33 22
+go 30 22
+go 30 23.6
 go 24 23.6
 go 24 22 tol 0.1 until z >= 40
 until ground = 1 max 600

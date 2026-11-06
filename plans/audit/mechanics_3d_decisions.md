@@ -125,4 +125,6 @@ the key opening a door's whole block of cells D58, ...) and §11.
 - Routes changed: 025 (past the palm by the keep's west door in lane z 51), 053 (round the machine in
   the vault's east gallery in lane x 56); with the models' full shapes no other.
 - Evidence: `VerifyBigDecorParsingCna` (world 041: columns without shapes; the house two blocks
-  square with its shape); play pass 28 78/78.
+  square with its shape); play pass 28 78/78 -- but that pass proved nothing for the boxes: a fresh
+  Blupi made at each load dropped them, so in play none was solid until BD-0080 (2026-11-06), which
+  rerouted the playthroughs that had walked through a plant, a toy or a machine.

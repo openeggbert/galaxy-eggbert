@@ -165,7 +165,9 @@ go 68 23 until eggs = 3 max 300
 until eggs = 3 max 200
 # Off the mound and down the shaft (x 70-72, z 36-38) between its mines into the lower hall.
 go 70 27
-go 75 30
+# Pass west of the toy at (75, 38, 30), turning east below it.
+go 73 32
+go 75 32
 go 75 37
 go 71 37 max 600
 until ground = 1 max 600

@@ -115,7 +115,9 @@ wait 40
 clear 93 67 65 1.5 max 300
 go 93.3 67.7
 until ground = 1 max 300
-go 90.2 69.5
+# Stay east of the plant at (90, 63, 69), then turn west below it.
+go 92 71
+go 90.2 71
 go 90.2 71.7
 until ground = 1 max 300
 go 90.2 75.7
