@@ -854,8 +854,9 @@ remaining hypothesis. Leave it unless the owner's D11 list names the fish.
   looks washed out in play (before/after sheets were sent). Revert = `git revert ad46640 a25e8cb`.
 - levelcheck reports traps in 052 and 054 that the wasp's balloon actually leaves (not modelled).
 - 066's blupit can be walked round (room B1 wider than its line of fire): design weakness, left.
-- Questions still waiting for the owner from earlier: the charge (31) and shield as billboards;
-  BigDecor at the original's size (2-2.25 blocks) vs the old 1 block.
+- The charge (31) and the shield stay the original's sprites (no 3D source outside the `.max`;
+  the shield/power scenes in the archive are other things, checked 2026-11-06); BigDecor are as
+  large as their models (M3D-0006). MR-0002 settled.
 
 ## 4. Workflows
 

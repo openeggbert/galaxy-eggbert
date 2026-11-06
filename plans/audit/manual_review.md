@@ -27,11 +27,14 @@
 - Until then: no model built from a `.max` is claimed; the shields stay billboards (decision of
   2026-10-24) and Blupi comes from the Ray Dream scenes.
 
-## MR-0002 — earlier questions still open (from `handoff.md`)
+## MR-0002 — earlier questions (from `handoff.md`) — settled by 2026-11-06
 
-- D11: the list of models that look wrong.
-- The charge (31) and the shield as billboards.
-- BigDecor at the original's size (2-2.25 blocks) or one block.
+- D11: the list of models that look wrong -- closed by the owner (MR-0009).
+- The charge (31) and the shield as billboards -- they stay the original's sprites: no 3D source
+  outside the `.max` files (MR-0001); `Blupi/shield1.rd4`, `shield2.rd4` and `Element/power.rds`
+  rendered beside the sprites are other things (`asset_sources.notes.csv` AS-0121/0122/0625).
+  Modelling them anew would leave the original sources; the owner can still ask for it.
+- BigDecor at the original's size -- built: as large as their models (M3D-0006, Q-014).
 
 ## MR-0003 — how the original's "click again to cycle the variant" maps onto 3D placement — DECIDED 2026-11-01: the proposed default
 
