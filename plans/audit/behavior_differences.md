@@ -1412,3 +1412,27 @@ at 2942), `tools/VerifyInteractionSystem.cpp` (ghost fixtures at 5764), `tools/V
 (typed-cheat test at 101); the two `tools/autoplay/probes/ghost_*.txt` scripts; `CURRENT.md`,
 `handoff.md`, this ledger and `owner_reports.md`. Most of the host/interaction textual diff is
 indentation under the new gates (`git show -w` isolates the functional change).
+
+
+## BD-0082 — a lift wearing a tile other than 29 was drawn as the lift tile's bar and stem (drawing only) — FIXED_AND_VERIFIED
+
+Owner 2026-11-06: why can a moving platform, as in Mobile Eggbert, not be any tile? Chosen: only
+"drawing the lift as the tile" (rendering; collision and riding unchanged).
+
+Reference: a lift (ObjectType1) carries its own icon, any decor tile of object-m (the original's
+levels use 29 most, then 361, 387, 340, 153, 215 ...), drawn as that tile moving.
+
+| Galaxy before | Galaxy now |
+|---|---|
+| `MoveObjectRecord::visualIcon` (serialized) -> `ResolveObjectVisual` already gave the lift the tile's icon; a tile with a Ray Dream model was drawn as it (`ConveyorLiftModel`, 29 = `Decor/techno29.rd4`), every other one was cut into tile 29's bar and stem UV rows (wrong rows of an unrelated tile) | `LiftVisual.hpp ChooseLiftDrawPath`: Model, BarAndStem only for tile 29 without its model, **TileCube** for any other tile: a unit cube moving with the lift, wearing the tile's faces from the atlas -- a DirectionalCube tile with the faces `ConfigureDirectionalCubeFaces` gives it in the terrain (a cut-out tile stays an opaque cube; the terrain's reliefs are not applied) |
+
+- Verified: `VerifyTileUvBounds` (the three paths); ctest 112/112; golden frames and trace unchanged;
+  probe world `build-probe/lift-tiles/` (made by `make.py`; lifts wearing 29, 361, 153, 387, 340, 215
+  at x 44-54): `lifts-moving.png` -- 29 its model, the others their tile's cube, moving.
+- No campaign world sets a lift's look other than 29, so the player sees no change until worlds or
+  the editor use it.
+- The editor today: the Moving-mechanisms entries (the four lifts, 47) have no negative visual id in
+  `PaletteCategories.cpp`, so a placed lift always gets the default look (29): an author cannot set
+  a lift's look yet. The palette's mechanism (`selectedObjectVisualIcon_ = selectedBlockType_` for a
+  negative id, used by one entry of "Keys and progression") could serve the lifts; left to decide
+  (it would make a lift wear the last block picked, whatever that is).

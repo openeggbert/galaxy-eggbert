@@ -74,6 +74,16 @@ int main()
                    part.v0 < part.v1 && part.v1 <= 36.0f / 64.0f + kEpsilon;
         }
         check(uvOk, "The lift's parts sample only the opaque rows of its tile");
+        using GalaxyEggbert::Game::ChooseLiftDrawPath;
+        using GalaxyEggbert::Game::LiftDrawPath;
+        check(ChooseLiftDrawPath(29, true) == LiftDrawPath::Model &&
+                  ChooseLiftDrawPath(361, true) == LiftDrawPath::Model,
+              "A lift whose tile has a model is drawn as that model (29: techno29)");
+        check(ChooseLiftDrawPath(29, false) == LiftDrawPath::BarAndStem,
+              "The lift tile 29 without its model keeps the bar and stem");
+        check(ChooseLiftDrawPath(361, false) == LiftDrawPath::TileCube &&
+                  ChooseLiftDrawPath(153, false) == LiftDrawPath::TileCube,
+              "A lift wearing any other tile (361, 153, ...) is that tile's cube, not a bar and stem of it");
         check(std::abs((stem.u1 - stem.u0) - stem.width) < kEpsilon && std::abs((bar.v1 - bar.v0) - bar.height) < kEpsilon &&
                   std::abs((stem.v1 - stem.v0) - stem.height) < kEpsilon,
               "The lift's parts keep the tile's own proportions");

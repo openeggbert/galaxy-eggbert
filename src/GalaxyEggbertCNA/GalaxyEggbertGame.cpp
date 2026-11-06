@@ -6591,9 +6591,10 @@ namespace GalaxyEggbert::CNA
                     const Microsoft::Xna::Framework::Vector3 center(
                         obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
                     const auto tileUv = tileAtlas_.GetTileUv(visual.icon);
-                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1)
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1 &&
+                        ChooseLiftDrawPath(visual.icon, false) == LiftDrawPath::BarAndStem)
                     {
-                        // The lift's bar and stem, not a cube of its mostly transparent tile.
+                        // The lift tile 29's bar and stem, not a cube of its mostly transparent tile.
                         const float du = tileUv.u1 - tileUv.u0;
                         const float dv = tileUv.v1 - tileUv.v0;
                         for (const auto& part : LiftVisualParts())
@@ -6603,6 +6604,17 @@ namespace GalaxyEggbert::CNA
                                            CnaEngine::Graphics::UvRect{tileUv.u0 + part.u0 * du, tileUv.v0 + part.v0 * dv,
                                                                        tileUv.u0 + part.u1 * du, tileUv.v0 + part.v1 * dv});
                         }
+                        continue;
+                    }
+                    // A lift wearing any other tile (and any other cube object) is that tile's cube moving: a
+                    // directional tile with the faces the terrain gives it.
+                    const auto& definition = GalaxyEggbert::GetBlockDefinition(static_cast<std::uint16_t>(visual.icon));
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1 &&
+                        definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube)
+                    {
+                        CnaEngine::Graphics::BoxFaces faces;
+                        ConfigureDirectionalCubeFaces(visual.icon, tileUv, tileAtlas_.GetTileUv(107), faces);
+                        AddCenteredBox(cubeMesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
                         continue;
                     }
                     AddCenteredBox(cubeMesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), tileUv);

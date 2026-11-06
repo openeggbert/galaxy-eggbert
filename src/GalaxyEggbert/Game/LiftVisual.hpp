@@ -35,4 +35,28 @@ namespace GalaxyEggbert::Game
              kLiftStemFirstCol / kLiftTileRows, bar, (kLiftStemFirstCol + kLiftStemCols) / kLiftTileRows, bar + stem},
         }};
     }
+
+    // A lift carries its own icon, any decor tile of object-m (the original's levels use 29 most, then
+    // 361, 387, 340, 153, 215 ...), and is drawn as that tile moving (owner 2026-11-06: "draw the lift
+    // as the tile"). How its look is drawn:
+    //  - Model:      the tile has a Ray Dream model (the terrain draws it as one; 29 is techno29.rd4)
+    //  - BarAndStem: tile 29 without its model: the bar over the funnel stem (LiftVisualParts)
+    //  - TileCube:   any other tile: a cube wearing the tile's faces, as the terrain's cube would
+    enum class LiftDrawPath
+    {
+        Model,
+        BarAndStem,
+        TileCube,
+    };
+
+    inline constexpr int kLiftTileIcon = 29;
+
+    [[nodiscard]] constexpr LiftDrawPath ChooseLiftDrawPath(int icon, bool tileHasModel) noexcept
+    {
+        if (tileHasModel)
+        {
+            return LiftDrawPath::Model;
+        }
+        return icon == kLiftTileIcon ? LiftDrawPath::BarAndStem : LiftDrawPath::TileCube;
+    }
 }
