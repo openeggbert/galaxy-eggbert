@@ -143,7 +143,7 @@ must be deep and complete, not limited to this list. Status values as in
   still explodes it. `VerifyInteractionSystem` (beside / against / on the fan); world 115's gap
   81 now blows him onto the east mine (the brief and LV-0071 updated).
 
-## OR-0067 — at the saw's switch machine Space does nothing; it works only from above (owner 2026-11-04) — FIXED
+## OR-0067 — at the saw's switch machine Space does nothing; it works only from above (owner 2026-11-04) — FIXED (reopened by OR-0078: standing in the machine did nothing)
 
 - Report: when Blupi comes to the machine that switches the saw on and off, pressing Space does
   nothing; it works only when he is above it.
