@@ -78,6 +78,7 @@ namespace GalaxyEggbert::Game
         // currently-playing sound.
         void Stop(GalaxyEggbert::Def::SoundChannel channel);
         void StopAll();
+        void SetReplayMuted(bool muted) { replayMuted_ = muted; if (muted) StopAll(); }
 
         void SetEnabled(bool enabled) { enabled_ = enabled; if (!enabled) StopAll(); }
         [[nodiscard]] bool IsEnabled() const noexcept { return enabled_; }
@@ -139,6 +140,7 @@ namespace GalaxyEggbert::Game
         float listenerX_ = 0.0f;
         float listenerY_ = 0.0f;
         float listenerZ_ = 0.0f;
+        bool replayMuted_ = false;
         void PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound);
     };
 }

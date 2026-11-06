@@ -1,7 +1,8 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-04 (native build, 112/112 CTest, all 78 playthroughs with the terrain reliefs
-(play pass 11); the Web/Emscripten build 2026-11-04 in headless Chrome; the whole-campaign run
+_Last verified: 2026-11-06 (native build, 112/112 CTest, golden frames and trace, all 78
+playthroughs with the resume self-test (play pass 33: 77 replays equal); the Web/Emscripten build
+2026-11-06 in headless Chrome; the whole-campaign run
 remains the 2026-10-27 verification). Update this file
 whenever a change alters the current state, a known limitation, a supported build, or the actionable
 backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`), where work stands in
@@ -50,6 +51,12 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- BD-0077 / Q-015 (2026-11-06): interrupted missions resume from their recorded moment via
+  `ResumeLog` (mission start plus deterministic input replay), saved on Play deactivation and
+  deleted on clean exit. The existing checkpoint remains the fallback. Native verification:
+  112/112 CTest, equality self-tests and passing playthroughs for 012/025/045/051/199, plus desktop
+  focus-loss/restart/Continue/clean-close checks. Details and platform limits:
+  `plans/audit/behavior_differences.md` BD-0077.
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
 - The canonical game implementation lives in `src/GalaxyEggbert/Game/` under

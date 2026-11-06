@@ -674,7 +674,15 @@ ledgers before repeating any discovery. Where it stands:
   025 recorded, 58 zaps before, 20 only within reach after; `3f72267f`); **BD-0077** (open) Resume
   restarts the mission where the original continues the moment it was left -- asked as Q-015.
   The rest of that list is drawing, I/O and getters, or present under other names.
-- Next: Q-015 (the owner's word on BD-0077). Outside the code's reach: the `.max` sources (MR-0001),
+- 2026-11-06, Q-015 built (the owner: "udelej q 015", and from now on use the Codex CLI where
+  possible): **BD-0077 Resume continues the mission in progress** -- the mission's start and every
+  tick's inputs recorded (`ResumeLog`), written to `resume.txt` when the window loses focus in play,
+  deleted on a clean exit or the mission's end, replayed fast on Continue (implemented by Codex to a
+  design brief, reviewed here). Play pass 33 with `GALAXY_RESUME_SELFTEST=1500`: 78/78, 77 replays
+  equal. Golden frames and trace re-baselined (fixed 1/60 s from the first Update; see BD-0077).
+  A follow-up brief (the world file's hash and an executable-based build id in the log) is queued.
+- Next: the BD-0077 follow-up; CNA's UB-006 fix to verify on the APK (the cna session asked).
+  Outside the code's reach: the `.max` sources (MR-0001),
   playing Android on a device (Q-009), UB-006 in CNA, the release decision. A new owner report
   starts an OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):

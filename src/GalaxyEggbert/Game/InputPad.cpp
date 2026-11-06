@@ -608,6 +608,17 @@ namespace GalaxyEggbert::Game
         loaded_ = true;
     }
 
+    void InputPad::ResetMissionInput() noexcept
+    {
+        ResetTouchState();
+        dpadTouchId_ = actionTouchId_ = pauseTouchId_ = backUpTouchId_ = crouchTouchId_ = -1;
+        cheatActiveControl_ = -1;
+        cheatMouseWasDown_ = false;
+        cheatGestureIndex_ = 0;
+        typedCheatBuffer_.clear();
+        for (auto& down : letterKeyWasDown_) down = false;
+    }
+
     void InputPad::ResetTouchState() noexcept
     {
         activeControl_ = -1;

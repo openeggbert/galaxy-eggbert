@@ -140,6 +140,8 @@ namespace GalaxyEggbert::Game
     class InteractionSystem
     {
     public:
+        void SeedRandom(std::uint32_t seed) { rng_.seed(seed); }
+
         // Advances patrol movement + crate push, and detects/collects
         // pickups Blupi is standing on. Call once per frame, after
         // blupi.Step() (so blupiX/Y/Z are this frame's final position) --
@@ -1088,12 +1090,9 @@ namespace GalaxyEggbert::Game
         // this flat member block; ReplaceEvent() (declared below) preserves the exact "only one
         // pending request survives per frame" behavior this flat representation used to give for
         // free via plain assignment.
-        // First randomness needed anywhere in this engine's gameplay code
-        // (real `Decor::BlupiDead`'s own `m_random`, Decor.cpp:6551) --
-        // seeded from real entropy since the real coinflip this ports is
-        // genuinely non-deterministic (cosmetic-only: it never affects
-        // `lives_`/reward state, only whether the ascend VFX/sound plays).
-        std::mt19937 rng_{std::random_device{}()};
+        // Gameplay and cosmetic draws share this generator (Decor.cpp:6551).
+        // The mission host seeds it from ResumeLog before the first simulation tick.
+        std::mt19937 rng_{0};
 
         void TickVoyage(float dt, WorldRuntime& worldRuntime, Sound& sound);
         void ApplyVoyageReward(WorldRuntime& worldRuntime, Sound& sound);

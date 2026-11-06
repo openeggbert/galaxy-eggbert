@@ -14,6 +14,11 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
+        Read(in);
+    }
+
+    void SaveData::Read(std::istream& in)
+    {
         std::string line;
         while (std::getline(in, line))
         {
@@ -112,6 +117,11 @@ namespace GalaxyEggbert::Game
             std::printf("SaveData: could not write %s\n", kSavePath);
             return;
         }
+        Write(out);
+    }
+
+    void SaveData::Write(std::ostream& out) const
+    {
         out << "soundEnabled=" << (soundEnabled_ ? "1" : "0") << "\n";
         out << "jumpRight=" << (jumpRight_ ? "1" : "0") << "\n";
         out << "autoZoom=" << (autoZoom_ ? "1" : "0") << "\n";

@@ -59,9 +59,9 @@ FIXED_AND_VERIFIED; whether it sounds right is the owner's ear.
 
 | Ledger | Rows | Not settled |
 |---|---|---|
-| `gameplay_use_cases.csv` | 538 | 3 (GP-0521..0523, the mission in progress: BD-0077); 207 match, 99 fixed and verified, 48 3D adaptations, 181 not applicable |
+| `gameplay_use_cases.csv` | 538 | 0 (207 match, 102 fixed and verified, 48 3D adaptations, 181 not applicable) |
 | `world_lessons.csv` | 80 | 0 (55 match, 22 fixed, 1 adaptation, 2 not applicable) |
-| `behavior_differences.md` | 77 | 1 open: BD-0077 (Resume restarts the mission; Q-015); BD-0075/0076 fixed after this audit's run (sounds only: no playthrough changes) |
+| `behavior_differences.md` | 77 | 0 open (BD-0075/0076 the sounds, BD-0077 Resume: play passes 32 and 33, 78/78 each) |
 | `editor_parity.md` | 13 (ED-0001..0013) | 0 |
 | `mechanics_3d_decisions.md` | M3D-0001..0006 | decided |
 | `asset_sources.csv` | 703 | 0 (288 used and verified, 10 adaptations, 405 not applicable: among them the 56 `.max`, MR-0001) |

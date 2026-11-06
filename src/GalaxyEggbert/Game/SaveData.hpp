@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <string>
+#include <iosfwd>
 
 namespace GalaxyEggbert::Game
 {
@@ -40,17 +41,9 @@ namespace GalaxyEggbert::Game
     // (`InteractionSystem` reacts to door BLOCKS directly in the world,
     // not a bespoke persisted array), a documented gap.
     //
-    // `hasProgress` adapts the real trigger for entering Resume
-    // (`Game1::OnActivated()`, a real WP7 app-reactivation OS lifecycle
-    // event with no desktop equivalent, gated on a real serialized
-    // mid-level `Decor::Current*()` snapshot existing -- a SEPARATE,
-    // heavier save mechanism than `GameData` itself, and far beyond this
-    // engine's own single-`.vwr`-world scope to replicate faithfully).
-    // The honest, minimal adaptation used here: Resume is offered at
-    // startup whenever a previous run reached Win/Lost at least once
-    // (`hasProgress_==true`), not on any real OS-level reactivation
-    // signal -- a documented simplification of the trigger, not the
-    // screen/buttons themselves (see `InputPad::UpdateResume()`).
+    // ResumeLog separately records an interrupted mission (Game1.cpp:186-208,
+    // Decor.cpp:10974-11300). hasProgress remains the checkpoint fallback when that log
+    // is missing or incompatible. Read/Write also preserve the settings at a replay's start.
     //
     // Plain `key=value` text, not JSON/binary: no JSON library is linked
     // in this project, and for a handful of scalars a hand-rolled parser
@@ -101,6 +94,8 @@ namespace GalaxyEggbert::Game
         // gamer slot lives=3/missionNumber=0/hasProgress=false) if the
         // file is missing or unparsable.
         void Load();
+        void Read(std::istream& in);
+        void Write(std::ostream& out) const;
 
         // Writes the current state to kSavePath, overwriting it.
         void Save() const;

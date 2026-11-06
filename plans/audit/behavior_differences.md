@@ -1200,7 +1200,7 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   47.3 s; this one 20 times, from 11.7 s to 27.6 s, none outside that stretch. 15 worlds hold columns
   (032's nearest 42 cells from the start, 102's 72): they zapped throughout before. 112/112.
 
-## BD-0077 — Resume starts the mission again; the original continues the moment it was left (save, UI) — REPRODUCED_DEFECT (open)
+## BD-0077 — Resume starts the mission again; the original continues the moment it was left (save, UI) — FIXED_AND_VERIFIED (Q-015, 2026-11-06)
 
 - Original (Game1.cpp:186-208, 255-270; Decor.cpp:10974-11300): when the game is deactivated during
   play (`OnDeactivated`: a call, the home button, the window losing focus) `Decor::CurrentWrite`
@@ -1208,7 +1208,7 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   powers with their counts, the decor's cells, every moving object with its phase, the counters;
   a clean exit (`OnExiting`) deletes it. When the game starts again with one written, the Wait
   phase reads it (`CurrentRead`) and shows Resume; Continue goes on from that very moment.
-- Galaxy: Resume is shown when a gamer has progress (checkpointed at each win or loss) and
+- Galaxy before: Resume was shown when a gamer has progress (checkpointed at each win or loss) and
   Continue starts the checkpointed mission from its beginning with the lives. Its comment said no
   mid-level state existed in the original; that was wrong (corrected 2026-11-06). The ledger rows
   (GP-0521..0523, `CurrentDelete`, `CurrentWrite`, `CurrentRead`) had it as Galaxy's own save
@@ -1216,10 +1216,55 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Effect: on the desktop the snapshot matters only if the process ends while deactivated (a crash,
   the session closed); on the web a closed or discarded tab, on Android a background kill -- there
   a mission in progress is lost and starts again.
-- To fix (a session of its own): a snapshot of `WorldRuntime` (the world's cells and metadata as
-  changed: `World::saveToFile` covers them), `InteractionSystem` (objects with phases, counters,
-  pending voyages) and `BlupiController` (place, motion, action and phase, vehicle, powers and
-  their counts), written when the window loses focus during play (CNA's `Game::OnDeactivated`)
-  and deleted on a clean exit, read in Wait to offer Resume; then every playthrough and a test that
-  a snapshot taken mid-run and read back continues the run identically (autoplay trace equality).
+- Fix (Q-015, the owner's replay design): engine-independent `ResumeLog` stores the mission's
+  start (build, mission, lives, speed, RNG seed, spawn/yaw, cheats, camera mode and initial
+  SaveData settings/doors), then run-length encoded raw keyboard/gamepad-merged keys, mouse,
+  touch and consumed accelerometer readings. Viewport size and sensor initialization are
+  recorded because input interpretation and HUD voyages depend on them. Versioned text has a
+  checksum and complete footer; truncated, damaged, excessive and foreign-build files are refused.
+- The host uses a fixed 1/60 s `UpdateTick`, with one input acquisition point. Mission starts
+  reset transient input/camera state; `InteractionSystem::SeedRandom` seeds both gameplay and
+  cosmetic draws. Play, Pause and PlaySetup ticks are recorded. `OnDeactivated` writes
+  `resume.txt` atomically during Play (`/save/resume.txt` on Emscripten); other phases, clean
+  exit, mission completion and another mission delete it. Wait prefers a valid log. Continue
+  reloads and replays 600 ticks per outer Update, without drawing, audio or autoplay advancement,
+  then appends live input. The checkpoint fallback and editor play-tests remain separate.
+- Determinism audit: `InteractionSystem::rng_` was the gameplay random source; it is now seeded.
+  Live elapsed time and hardware input are replaced by fixed ticks and recorded readings.
+  Hide trails were emitted in Draw; they now emit in UpdateTick using the same pose transform.
+  Wall-clock calls remain only in render diagnostics/terrain scheduling; unordered gameplay
+  containers are lookup sets/maps, not iteration-driven simulation.
+- Verification: existing `build-cna-opengl3`, shared compiler cache; **112/112 CTest pass**.
+  `VerifyAutoplay` tests exact float/input/start round trip, RLE, every truncated prefix,
+  foreign build, corruption, trailing garbage, zero/excessive runs, invalid keys and zero ticks.
+  `GALAXY_RESUME_SELFTEST=1500` serializes/parses/reloads/replays and compares Blupi's position,
+  movement accumulators, action, vehicle and powers, counters, all active object positions and
+  phases, voxel hash, clocks, camera and Hide trails. All five playthroughs still pass:
 
+  | Mission | Self-test output | Playthrough output |
+  |---|---|---|
+  | 012 | `RESUME SELFTEST equal` | `GalaxyEggbertCNA: autoplay passed after 3296 ticks (autoplay_trace.txt).` |
+  | 025 | `RESUME SELFTEST equal` | `GalaxyEggbertCNA: autoplay passed after 13680 ticks (autoplay_trace.txt).` |
+  | 045 | `RESUME SELFTEST equal` | `GalaxyEggbertCNA: autoplay passed after 16815 ticks (autoplay_trace.txt).` |
+  | 051 | `RESUME SELFTEST equal` | `GalaxyEggbertCNA: autoplay passed after 8308 ticks (autoplay_trace.txt).` |
+  | 199 | `RESUME SELFTEST equal` | `GalaxyEggbertCNA: autoplay passed after 16608 ticks (autoplay_trace.txt).` |
+
+- Desktop lifecycle verified under silent Xvfb: focus loss in Play writes, in Pause deletes;
+  a killed process preserves the log; a fresh process shows Resume and Continue reconstructs
+  the mission, including Pause/Continue mouse history, and appends ticks; WM close deletes it.
+  Logs/screenshots: `build-probe/resume-world*.log`, `resume-ctest.log`, `resume-lifecycle.log`,
+  `resume-live-run/`. The live-input equality check also accepts `GALAXY_RESUME_SELFTEST` without
+  autoplay; tick 350 with live keyboard and Pause/Continue mouse input also reported
+  `RESUME SELFTEST equal`. Results are printed to stdout and to the autoplay trace when open.
+- The whole campaign (play pass 33, 2026-11-06, `GALAXY_RESUME_SELFTEST=1500`): 78/78 playthroughs
+  pass; 77 report `RESUME SELFTEST equal`, none different (world 001's script ends at tick 500).
+  Implemented with the Codex CLI to the reviewer's design brief; reviewed, built and tested here.
+- The golden frames and trace were re-baselined with it: the per-tick step is now the fixed 1/60 s
+  from the first Update on (the autoplay's), where the very first Update of the process used to
+  carry an elapsed time of 0, so the scenario's first walking tick no longer stood still; on it a
+  fresh Blupi is not yet grounded and moves at the airborne 8 px (as on every mission start in
+  play and autoplay already). The jump still starts at trace tick 40.
+- Limits: replay requires the same build and unchanged mission assets. Reconstruction cost grows
+  with mission history; files over 128 MiB or ten million ticks are refused. Desktop keyboard/mouse
+  and synthetic touch/accelerometer serialization are verified; native touch/sensor hardware,
+  Android lifecycle and Emscripten persistence still need platform testing.

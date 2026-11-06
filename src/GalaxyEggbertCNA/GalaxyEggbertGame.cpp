@@ -12,6 +12,8 @@
 #include <GalaxyEggbert/Game/GlueStrands.hpp>
 
 #include <fstream>
+#include <iomanip>
+#include <limits>
 #include <sstream>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
@@ -59,6 +61,8 @@ namespace GalaxyEggbert::CNA
 
     namespace
     {
+        constexpr const char* kResumeBuild = __DATE__ " " __TIME__;
+
         constexpr int kGoldenCaptureTicks[] = {60, 120, 180};
         constexpr int kGoldenCaptureCount =
             static_cast<int>(sizeof(kGoldenCaptureTicks) / sizeof(kGoldenCaptureTicks[0]));
@@ -1390,6 +1394,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::RefreshTerrainMeshIfChanged()
     {
+        if (replayingResume_) return;
         // Blocks changed in play (a door opened, a hub door slid away), or the flight barrier's
         // visibility (ShowSecret, the editor): the terrain mesh is built from the blocks, so
         // build it again.
@@ -1554,9 +1559,418 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    Microsoft::Xna::Framework::Matrix GalaxyEggbertGame::BlupiModelWorld(const CharredShape& charred) const
+    {
+        constexpr float kPlaceholderModelScale = 0.009095f;
+        constexpr float kPlaceholderModelYOffset = -0.5f;
+        constexpr float kPlaceholderModelDepthOffset = 0.6f;
+        // The real model (kRealModelScale) has its feet at local y = 0
+        // like the fox's, so it shares kPlaceholderModelYOffset; it is
+        // centred on Blupi, so no depth offset.
+        const float modelScale = blupiModelIsReal_ ? kRealModelScale : kPlaceholderModelScale;
+        const float modelDepthOffset = blupiModelIsReal_ ? 0.0f : kPlaceholderModelDepthOffset;
+        // The real model faces +Z, while GetYaw() moves Blupi along
+        // (sin yaw, 0, -cos yaw). CreateRotationY(a) turns +Z to
+        // (sin a, 0, cos a), so a = pi - yaw makes him face the way he
+        // walks; plain yaw agreed only at +-90 degrees and otherwise
+        // walked him sideways or backwards, the symmetric egg body
+        // showing the wrong turn as his face sliding around it.
+        constexpr float kPi = 3.14159265358979f;
+        // Hanging, along the bar's row with his right hand on his pipe (BarRows.hpp).
+        const bool hanging = blupi_.IsSuspended() && blupiModelIsReal_;
+        const float facingYaw = hanging ? blupi_.GetHangFacingYaw() : blupi_.GetYaw();
+        const float modelYaw = blupiModelIsReal_ ? kPi - facingYaw : facingYaw;
+        const float hangShift = hanging ? GalaxyEggbert::Game::HangingModelShift(blupi_.GetAnimIcon()) : 0.0f;
+        // No render-only Balloon offset here: Blupi's own physics
+        // now genuinely lift him while ballooned (BlupiController's
+        // kBalloonRiseSpeed, a direct port of the real
+        // Decor.cpp:4039-4058 rising block), so GetY() itself already
+        // carries the whole effect. An earlier cosmetic sine "bob"
+        // added here on 2026-07-18 -- while the physics were still
+        // wrongly modelled as a fixed-height freeze -- was an invented
+        // stand-in with no real-source basis, and is removed now that
+        // the real behaviour is in place (CLAUDE.md's faithful-remake
+        // rule: nothing that isn't in mobile-eggbert).
+        // Hanging, he is drawn 6 px lower than standing in the bar's cell: the original sets
+        // his position 12 px under the bar cell's top (BLUPISUSPEND, Decor.cpp:5442), where
+        // standing in a cell puts it 6 px under (BLUPIOFFY); so his hands hold the pipe
+        // (owner 2026-11-02: they were above it). Render only, as the original's sprite.
+        constexpr float kSuspendModelDrop = 6.0f / 64.0f;
+        const float suspendDrop = blupi_.IsSuspended() ? kSuspendModelDrop : 0.0f;
+        return
+            Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
+            Microsoft::Xna::Framework::Matrix::CreateScale(charred.spread, charred.height, charred.spread) *
+            Microsoft::Xna::Framework::Matrix::CreateTranslation(hangShift, 0.0f, modelDepthOffset) *
+            // The jeep tipping over an edge, nose down (+Z is the model's front; BD-0071).
+            Microsoft::Xna::Framework::Matrix::CreateRotationX(blupi_.GetVehicleTilt()) *
+            Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
+            Microsoft::Xna::Framework::Matrix::CreateTranslation(
+                blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop,
+                blupi_.GetZ());
+    }
+
+    Microsoft::Xna::Framework::Graphics::Texture2D* GalaxyEggbertGame::BlupiFaceTexture()
+    {
+        // The real model's face for this frame of the active clip.
+        Microsoft::Xna::Framework::Graphics::Texture2D* face = nullptr;
+        if (const auto faces = blupiClipFaces_.find(blupiActiveClipName_);
+            blupiModelIsReal_ && faces != blupiClipFaces_.end() && !faces->second.empty())
+        {
+            const auto frame = static_cast<std::size_t>(blupiClipTimeSeconds_ * blupiFaceRate_)
+                % faces->second.size();
+            const int index = faces->second[frame];
+            if (index >= 0 && index < static_cast<int>(blupiFaces_.size()))
+            {
+                face = &blupiFaces_[static_cast<std::size_t>(index)];
+            }
+        }
+
+        return face;
+    }
+
+    void GalaxyEggbertGame::RecordHideGhost()
+    {
+        if (cameraMode_ != CameraMode::ThirdPersonModel || !blupiModelLoaded_ ||
+            blupi_.IsDeathHidden() || blupi_.IsAnimIconInvisible() || BlupiDrawnAsDeathSprite()) return;
+        // Hide's trail (BD-0056): a copy of his pose every 10 px he moves while hidden (the
+        // original's Manhattan distance, over X, Y and Z here), each fading from 30 % to
+        // nothing over its 20 ticks (UpdateTick ages them; Decor.cpp:5236-5250).
+        const bool hidden = blupi_.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Hide;
+        if (hidden && !hideGhostTracking_)
+        {
+            hideGhostTracking_ = true;
+            hideGhostX_ = blupi_.GetX();
+            hideGhostY_ = blupi_.GetY();
+            hideGhostZ_ = blupi_.GetZ();
+        }
+        hideGhostTracking_ = hidden;
+        if (hidden && std::fabs(blupi_.GetX() - hideGhostX_) + std::fabs(blupi_.GetY() - hideGhostY_) +
+                              std::fabs(blupi_.GetZ() - hideGhostZ_) >=
+                          10.0f / 64.0f)
+        {
+            hideGhosts_.push_back({BlupiModelWorld(BlupiCharredShape()), blupiActiveClipName_,
+                              blupiClipTimeSeconds_, BlupiFaceTexture(), 0.0f});
+            hideGhostX_ = blupi_.GetX();
+            hideGhostY_ = blupi_.GetY();
+            hideGhostZ_ = blupi_.GetZ();
+        }
+    }
+
+    void GalaxyEggbertGame::CaptureInput()
+    {
+        using namespace Microsoft::Xna::Framework::Input;
+        tickInput_ = {};
+        const auto keys = autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput());
+        for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
+        std::sort(tickInput_.keys.begin(), tickInput_.keys.end());
+        const auto mouse = ReadMouseState(SuppressLiveInput());
+        tickInput_.mouseX = mouse.getXProperty();
+        tickInput_.mouseY = mouse.getYProperty();
+        tickInput_.wheel = mouse.getScrollWheelValueProperty();
+        const ButtonState buttons[] = {mouse.getLeftButtonProperty(), mouse.getMiddleButtonProperty(),
+            mouse.getRightButtonProperty(), mouse.getXButton1Property(), mouse.getXButton2Property()};
+        for (unsigned i = 0; i < 5; ++i)
+            if (buttons[i] == ButtonState::Pressed) tickInput_.buttons |= 1u << i;
+        const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+        tickInput_.viewportWidth = viewport.getWidthProperty();
+        tickInput_.viewportHeight = viewport.getHeightProperty();
+        if (!SuppressLiveInput())
+        {
+            for (const auto& touch : Touch::TouchPanel::GetState())
+                tickInput_.touches.push_back({touch.getIdProperty(), touch.getPositionProperty().X,
+                    touch.getPositionProperty().Y, static_cast<int>(touch.getStateProperty())});
+        }
+    }
+
+    Microsoft::Xna::Framework::Input::MouseState GalaxyEggbertGame::CurrentMouseState() const
+    {
+        using namespace Microsoft::Xna::Framework::Input;
+        const auto button = [this](unsigned bit) {
+            return (tickInput_.buttons & (1u << bit)) ? ButtonState::Pressed : ButtonState::Released;
+        };
+        return MouseState(tickInput_.mouseX, tickInput_.mouseY, tickInput_.wheel,
+                          button(0), button(1), button(2), button(3), button(4));
+    }
+
+    void GalaxyEggbertGame::DeleteResumeFile() const noexcept
+    {
+        std::error_code ignored;
+        std::filesystem::remove(ResumeLog::kPath, ignored);
+    }
+
+    void GalaxyEggbertGame::OnDeactivated(System::Object* sender, const System::EventArgs& args)
+    {
+        // Game1.cpp:186-198: only deactivation during Play writes CurrentWrite.
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Play && missionStartPending_ &&
+            fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
+        {
+            StartResumeLog();
+        }
+        if ((replayingResume_ || phase_ == GalaxyEggbert::Def::GamePhase::Play) &&
+            recordingResume_ && !missionStartPending_)
+        {
+            // Keep the complete source log if deactivated while reconstruction is in progress.
+            const std::string temporary = std::string(ResumeLog::kPath) + ".tmp";
+            std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+            out << resumeLog_.Serialize();
+            out.close();
+            std::error_code error;
+            if (out) std::filesystem::rename(temporary, ResumeLog::kPath, error);
+            if (!out || error)
+            {
+                std::cout << "GalaxyEggbertCNA: could not write resume log" << std::endl;
+                std::filesystem::remove(temporary, error);
+                DeleteResumeFile();
+            }
+        }
+        else
+        {
+            DeleteResumeFile();
+        }
+        Game::OnDeactivated(sender, args);
+    }
+
+    void GalaxyEggbertGame::OnExiting(System::Object* sender, const System::EventArgs& args)
+    {
+        // Game1.cpp:205-208: a clean exit deletes CurrentWrite.
+        DeleteResumeFile();
+        Game::OnExiting(sender, args);
+    }
+
+    void GalaxyEggbertGame::ReadResumeLog()
+    {
+        std::error_code error;
+        const auto size = std::filesystem::file_size(ResumeLog::kPath, error);
+        if (error) return;
+        pendingResume_.reset();
+        if (size <= 128 * 1024 * 1024)
+        {
+            std::ifstream in(ResumeLog::kPath, std::ios::binary);
+            const std::string text((std::istreambuf_iterator<char>(in)), {});
+            ResumeLog log;
+            if (in && ResumeLog::Parse(text, kResumeBuild, log))
+            {
+                pendingResume_ = std::move(log);
+                return;
+            }
+        }
+        DeleteResumeFile();
+    }
+
+    void GalaxyEggbertGame::ResetMissionInput()
+    {
+        inputPad_.ResetMissionInput();
+        inputPad_.SetJumpRight(saveData_.GetJumpRight());
+        jumpKeyWasDown_ = actionKeyWasDown_ = pauseKeyWasDown_ = phaseReturnKeyWasDown_ = false;
+        f5KeyWasDown_ = f6KeyWasDown_ = f7KeyWasDown_ = f8KeyWasDown_ = f12KeyWasDown_ = tabKeyWasDown_ = false;
+        cameraModeKeyWasDown_ = fullscreenKeyWasDown_ = false;
+        turnAroundDownWasHeld_ = false;
+        turnAroundRemaining_ = turnAroundStartYaw_ = 0.0f;
+        turnAroundDuration_ = 0.3f;
+        touchQuietFrames_ = 0;
+        mouseLookActive_ = false;
+        lastMouseX_ = lastMouseY_ = 0;
+        lookYawOffset_ = lookPitchOffset_ = 0.0f;
+        cheatMenuShown_ = false;
+        holdingCrate_ = graceWasInVehicle_ = false;
+        wasPushingCrate_ = helicopterDeposited_ = false;
+        activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
+        mockeryVariant_ = BlupiController::AnimState::Stop;
+        mockeryElapsed_ = 0.0f;
+        mockerySounded_ = false;
+        pendingPickupX_ = pendingPickupY_ = pendingPickupZ_ = 0.0f;
+        pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType0;
+        cameraShake_ = CameraShake{};
+        chaseZoom_ = 1.0f;
+        chaseZoomLingerSeconds_ = 0.0f;
+        accelLastState_ = false;
+        accelWaitZero_ = true;
+        blupiActiveClipName_.clear();
+        blupiClipTimeSeconds_ = 0.0;
+        phaseTimeSeconds_ = 0.0f;
+        chaseCamera_.Reset(blupi_.GetYaw());
+        cameraSmoothedInitialized_ = false;
+        cameraTarget_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY() + 1.0f, blupi_.GetZ());
+        camera_.SetLookAt(cameraTarget_ + Microsoft::Xna::Framework::Vector3(0.0f, 1.0f, -5.0f), cameraTarget_);
+        sound_.StopAll();
+    }
+
+    void GalaxyEggbertGame::StartResumeLog()
+    {
+        ResetMissionInput();
+        resumeLog_ = {};
+        auto& start = resumeLog_.start;
+        start.build = kResumeBuild;
+        start.mission = worldRuntime_.GetMissionNumber();
+        start.lives = interaction_.Lives();
+        start.speed = static_cast<int>(gameSpeed_);
+        start.seed = missionSeed_;
+        start.x = blupi_.GetX(); start.y = blupi_.GetY(); start.z = blupi_.GetZ(); start.yaw = blupi_.GetYaw();
+        start.quickCheat = quickCheatEnabled_;
+        start.openDoors = cheatDoors_;
+        start.showSecret = cheatShowSecret_;
+        start.cameraMode = static_cast<int>(cameraMode_);
+        std::ostringstream settings;
+        saveData_.Write(settings);
+        start.saveData = settings.str();
+        resumeTicks_ = 0;
+        recordingResume_ = !editorPlayTestActive_;
+        missionStartPending_ = false;
+    }
+
+    bool GalaxyEggbertGame::BeginResume(ResumeLog log)
+    {
+        char path[64];
+        std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", log.start.mission);
+        // Validate before replacing the current mission or settings.
+        WorldRuntime probe;
+        if (!probe.LoadFromVwrFile(path))
+        {
+            DeleteResumeFile();
+            return false;
+        }
+        resumeLog_ = std::move(log);
+        const auto& start = resumeLog_.start;
+        replayingResume_ = true;
+        recordingResume_ = true;
+        sound_.SetReplayMuted(true);
+        UpdateMusic();
+        saveData_ = SaveData{};
+        std::istringstream settings(start.saveData);
+        saveData_.Read(settings);
+        sound_.SetEnabled(saveData_.GetSoundEnabled());
+        sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
+        quickCheatEnabled_ = start.quickCheat;
+        cheatDoors_ = start.openDoors;
+        cheatShowSecret_ = start.showSecret;
+        cameraMode_ = static_cast<CameraMode>(start.cameraMode);
+        gameSpeed_ = GalaxyEggbert::Def::ToGameSpeed(start.speed);
+        editorPlayTestActive_ = false;
+        LoadMission(start.mission);
+        interaction_.SetLives(start.lives);
+        blupi_.SetPosition(start.x, start.y, start.z);
+        blupi_.SetYaw(start.yaw);
+        SetPhase(GalaxyEggbert::Def::GamePhase::Play, true);
+        ResetMissionInput();
+        replayRun_ = 0;
+        replayRepeat_ = 0;
+        resumeTicks_ = 0;
+        return true;
+    }
+
+    void GalaxyEggbertGame::ReplayBatch()
+    {
+        for (int i = 0; i < 600 && replayRun_ < resumeLog_.runs.size(); ++i)
+        {
+            const auto& run = resumeLog_.runs[replayRun_];
+            tickInput_ = run.input;
+            UpdateTick();
+            ++resumeTicks_;
+            if (++replayRepeat_ == run.count)
+            {
+                replayRepeat_ = 0;
+                ++replayRun_;
+            }
+        }
+        if (replayRun_ != resumeLog_.runs.size()) return;
+        replayingResume_ = false;
+        sound_.SetReplayMuted(false);
+        resumeAccelWarmStart_ = true;
+        activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
+        wasPushingCrate_ = false;
+        RefreshTerrainMeshIfChanged();
+        if (!resumeSelftestSignature_.empty())
+        {
+            const auto actual = ResumeSignature();
+            std::string different;
+            for (const auto& [name, value] : resumeSelftestSignature_)
+            {
+                if (actual.at(name) != value)
+                {
+                    if (!different.empty()) different += ", ";
+                    different += name;
+                }
+            }
+            const std::string line = different.empty() ? "RESUME SELFTEST equal\n"
+                                                       : "RESUME SELFTEST different: " + different + "\n";
+            std::cout << line << std::flush;
+            if (autoplayTrace_) { std::fputs(line.c_str(), autoplayTrace_); std::fflush(autoplayTrace_); }
+            resumeSelftestSignature_.clear();
+            if (!different.empty()) { autoplayExitCode_ = 1; Exit(); }
+        }
+    }
+
+    std::map<std::string, std::string> GalaxyEggbertGame::ResumeSignature() const
+    {
+        std::map<std::string, std::string> result;
+        std::ostringstream out;
+        out << std::setprecision(std::numeric_limits<float>::max_digits10);
+        out << blupi_.GetX() << ' ' << blupi_.GetY() << ' ' << blupi_.GetZ() << ' ' << blupi_.GetYaw()
+            << ' ' << blupi_.GetVelocityY() << ' ' << blupi_.GetVehicleSpeed() << ' '
+            << static_cast<int>(blupi_.GetAnimState()) << ' ' << blupi_.GetRawAnimIcon() << ' '
+            << static_cast<int>(blupi_.GetVehicleMode()) << ' ' << static_cast<int>(blupi_.GetSecretPower())
+            << ' ' << blupi_.GetTimeShield() << ' ' << blupi_.IsGhost() << ' ' << blupi_.IsInverted()
+            << ' ' << blupi_.IsDeathLocked() << ' ' << blupi_.IsOnGround() << ' ' << blupi_.GetWaterGaugeLevel();
+        for (float speed : blupi_.GetMovementSignature()) out << ' ' << speed;
+        out << ' ' << blupi_.IsBallooned() << ' ' << blupi_.IsEcrased() << ' ' << blupi_.IsSuspended();
+        result["Blupi"] = out.str(); out.str("");
+        out << interaction_.TreasuresCollected() << ' ' << interaction_.LifeEggCount() << ' ' << interaction_.Lives()
+            << ' ' << interaction_.Key1Count() << ' ' << interaction_.Key2Count() << ' ' << interaction_.Key3Count()
+            << ' ' << interaction_.DynamiteCount() << ' ' << interaction_.ExitReached();
+        result["counters"] = out.str(); out.str("");
+        std::size_t index = 0;
+        for (const auto& object : worldRuntime_.GetMobileObjects())
+        {
+            if (object.active)
+                out << index << ':' << static_cast<int>(object.type) << ' ' << object.currentX << ' '
+                    << object.currentY << ' ' << object.currentZ << ' ' << object.phase << ' '
+                    << object.patrolStep << ' ' << object.patrolTime << '\n';
+            ++index;
+        }
+        result["objects"] = out.str(); out.str("");
+        const auto& world = worldRuntime_.GetWorld();
+        std::uint64_t hash = 14695981039346656037ull;
+        for (int z = 0; z < world.blocksPerAxis(); ++z)
+            for (int y = 0; y < world.blocksPerAxis(); ++y)
+                for (int x = 0; x < world.blocksPerAxis(); ++x)
+                    hash = (hash ^ world.getBlock(x, y, z).rawValue()) * 1099511628211ull;
+        result["blocks"] = std::to_string(hash);
+        out << static_cast<int>(phase_) << ' ' << static_cast<int>(fadeOutPhase_) << ' ' << phaseTimeSeconds_
+            << ' ' << worldRuntime_.GetAnimPhase() << ' ' << static_cast<int>(gameSpeed_);
+        result["clocks"] = out.str(); out.str("");
+        const auto eye = camera_.Position();
+        out << eye.X << ' ' << eye.Y << ' ' << eye.Z << ' ' << cameraTarget_.X << ' ' << cameraTarget_.Y
+            << ' ' << cameraTarget_.Z << ' ' << lookYawOffset_ << ' ' << lookPitchOffset_ << ' ' << chaseZoom_;
+        result["camera"] = out.str(); out.str("");
+        for (const auto& ghost : hideGhosts_)
+            out << ghost.clip << ' ' << ghost.clipSeconds << ' ' << ghost.ageTicks << '\n';
+        result["Hide trail"] = out.str();
+        return result;
+    }
+
+    void GalaxyEggbertGame::CheckResumeSelftest()
+    {
+        const char* at = std::getenv("GALAXY_RESUME_SELFTEST");
+        if (resumeSelftestDone_ || !at || resumeTicks_ != std::strtoull(at, nullptr, 10)) return;
+        resumeSelftestDone_ = true;
+        resumeSelftestSignature_ = ResumeSignature();
+        ResumeLog parsed;
+        if (!ResumeLog::Parse(resumeLog_.Serialize(), kResumeBuild, parsed) || !BeginResume(std::move(parsed)))
+        {
+            const char* line = "RESUME SELFTEST different: log could not be restored\n";
+            std::cout << line << std::flush;
+            if (autoplayTrace_) { std::fputs(line, autoplayTrace_); std::fflush(autoplayTrace_); }
+            autoplayExitCode_ = 1;
+            Exit();
+        }
+    }
+
     Microsoft::Xna::Framework::Input::KeyboardState GalaxyEggbertGame::CurrentKeyboardState() const
     {
-        return autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput());
+        using namespace Microsoft::Xna::Framework::Input;
+        std::unordered_set<Keys> keys;
+        for (int key : tickInput_.keys) keys.insert(static_cast<Keys>(key));
+        return KeyboardState(keys);
     }
 
     void GalaxyEggbertGame::StepAutoplay()
@@ -1662,7 +2076,14 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::LoadMission(int missionNumber)
     {
+        if (!replayingResume_)
+        {
+            DeleteResumeFile();
+            pendingResume_.reset();
+            recordingResume_ = false;
+        }
         titleSceneActive_ = false;
+        titleSceneRequested_ = false;
         winCheerActive_ = false;
         pendingSkate_ = {};
         teleportArrivalGuard_ = false;
@@ -1707,6 +2128,8 @@ namespace GalaxyEggbert::CNA
         const int preservedLives = interaction_.Lives();
         interaction_ = InteractionSystem();
         interaction_.SetLives(preservedLives);
+        missionSeed_ = replayingResume_ ? resumeLog_.start.seed : std::random_device{}();
+        interaction_.SeedRandom(missionSeed_);
         blupi_ = BlupiController();
         wasInHelicopter_ = false;
         hideGhosts_.clear();
@@ -1732,8 +2155,9 @@ namespace GalaxyEggbert::CNA
         chaseCamera_.Reset(blupi_.GetYaw()); // a new world starts with the camera behind him
         cameraSmoothedInitialized_ = false;  // ... there at once, not easing over from the last world
 
+        missionStartPending_ = !replayingResume_;
         saveData_.SetMissionNumber(missionNumber);
-        saveData_.Save();
+        if (!replayingResume_) saveData_.Save();
 
         std::cout << "GalaxyEggbertCNA: LoadMission(" << missionNumber << "): loaded " << path << "."
                    << std::endl;
@@ -1844,7 +2268,8 @@ namespace GalaxyEggbert::CNA
         worldRuntime_.Update(dt);
         if (terrainRenderer_)
         {
-            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
+            if (!replayingResume_)
+                terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
         }
         // Blupi idles (Stop's real fidget cycle) where he stands.
         blupi_.Step(worldRuntime_.GetWorld(), 0.0f, 0.0f, false, false, false, dt);
@@ -1884,6 +2309,14 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
     {
+        using GalaxyEggbert::Def::GamePhase;
+        if (next == GamePhase::Init || next == GamePhase::Win || next == GamePhase::Lost || next == GamePhase::Editor)
+        {
+            if (!replayingResume_) DeleteResumeFile();
+            recordingResume_ = false;
+            missionStartPending_ = false;
+            pendingResume_.reset();
+        }
         // Real Game1::SetPhase() (2026-07-13, plan.md MENU-088/089, see
         // this method's own declaration comment for the full real
         // deferred-transition mechanic): only defers when the CURRENT
@@ -1950,7 +2383,9 @@ namespace GalaxyEggbert::CNA
         {
             return;
         }
-        const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+        auto viewport = getGraphicsDeviceProperty().getViewportProperty();
+        viewport.setWidthProperty(tickInput_.viewportWidth);
+        viewport.setHeightProperty(tickInput_.viewportHeight);
         const int viewportW = viewport.getWidthProperty();
         const int viewportH = viewport.getHeightProperty();
 
@@ -2052,37 +2487,48 @@ namespace GalaxyEggbert::CNA
 
     float GalaxyEggbertGame::AccelTurnInput()
     {
-        using Microsoft::Devices::Sensors::Accelerometer;
-        const bool wanted = saveData_.GetAccelActive() && !autoplay_ && Accelerometer::getIsSupportedProperty();
-        if (wanted && !accel_)
+        if (!replayingResume_)
         {
-            try
+            using Microsoft::Devices::Sensors::Accelerometer;
+            const bool wanted = saveData_.GetAccelActive() && !autoplay_ && Accelerometer::getIsSupportedProperty();
+            if (wanted && !accel_)
             {
-                accel_ = std::make_unique<Accelerometer>();
-                accel_->Start();
+                try
+                {
+                    accel_ = std::make_unique<Accelerometer>();
+                    accel_->Start();
+                }
+                catch (...)
+                {
+                    accel_.reset(); // no permission or no sensor after all (the original's StartAccel)
+                    return 0.0f;
+                }
+                tickInput_.accelReset = !resumeAccelWarmStart_;
+                resumeAccelWarmStart_ = false;
             }
-            catch (...)
+            else if (!wanted && accel_)
             {
-                accel_.reset(); // no permission or no sensor after all (the original's StartAccel)
-                return 0.0f;
+                accel_->Stop();
+                accel_.reset();
+                resumeAccelWarmStart_ = false;
             }
+            if (accel_ && accel_->getIsDataValidProperty())
+            {
+                tickInput_.accelValid = true;
+                tickInput_.accelY = accel_->getCurrentValueProperty().getAccelerationProperty().Y;
+            }
+        }
+        if (tickInput_.accelReset)
+        {
             accelLastState_ = false;
             accelWaitZero_ = true;
         }
-        else if (!wanted && accel_)
-        {
-            accel_->Stop();
-            accel_.reset();
-        }
-        if (!accel_ || !accel_->getIsDataValidProperty())
-        {
-            return 0.0f;
-        }
+        if (!tickInput_.accelValid) return 0.0f;
         // HandleAccelSensorCurrentValueChanged: a dead zone from the sensitivity (GameData data[7],
         // 50 by default; the Setup's slider), narrower while already tilted, a speed from a quarter
         // up; nothing until the device has once been level (accelWaitZero).
         const float kSensitivity = static_cast<float>(saveData_.GetAccelSensitivity()) / 100.0f;
-        const float y = accel_->getCurrentValueProperty().getAccelerationProperty().Y;
+        const float y = tickInput_.accelY;
         const float threshold = (1.0f - kSensitivity) * 0.06f + 0.04f;
         const float adjusted = accelLastState_ ? threshold * 0.6f : threshold;
         float speed = 0.0f;
@@ -2211,7 +2657,7 @@ namespace GalaxyEggbert::CNA
                              phase_ == GamePhase::PlaySetup ||
                              (phase_ == GamePhase::Editor && !worldEditor_.IsBrowsing());
         const std::uint32_t wanted =
-            inWorld && sound_.IsEnabled() && !autoplay_ ? worldRuntime_.GetWorld().musicTrack() : 0u;
+            inWorld && sound_.IsEnabled() && !autoplay_ && !replayingResume_ ? worldRuntime_.GetWorld().musicTrack() : 0u;
         if (wanted == musicPlaying_)
         {
             return;
@@ -2400,7 +2846,9 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
-        const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+        auto viewport = getGraphicsDeviceProperty().getViewportProperty();
+        viewport.setWidthProperty(tickInput_.viewportWidth);
+        viewport.setHeightProperty(tickInput_.viewportHeight);
         float endX = 0.0f, endY = 0.0f;
         const bool projected = Hud::ProjectWorldToHudSpace(
             Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()), camera_.View(),
@@ -2781,7 +3229,7 @@ namespace GalaxyEggbert::CNA
                 break;
             case 5: // Reset gamer progress
                 saveData_.Reset();
-                saveData_.Save();
+                if (!replayingResume_) saveData_.Save();
                 inputPad_.SetJumpRight(saveData_.GetJumpRight());
                 break;
             case 6: // Trial mode simulate-toggle -- no observable effect here, Trial phase is unreachable
@@ -2883,11 +3331,13 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
+        if (replayingResume_)
+        {
+            ReplayBatch();
+            SuppressDraw();
+            return;
+        }
         UpdateMusic();
-        // While he is hidden his own sounds are not played (Decor::PlaySound, BD-0075); in play only.
-        sound_.SetBlupiHidden(phase_ == GalaxyEggbert::Def::GamePhase::Play && blupi_.IsHidden());
-        // The world's sounds are heard from Blupi, as the original's from its view (BD-0076).
-        sound_.SetListener(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
 
         if (goldenCaptureMode_ && goldenCaptureAwaitingDraw_)
         {
@@ -2948,9 +3398,11 @@ namespace GalaxyEggbert::CNA
             }
         }
 
-        // Real `phaseTime` (see phaseTimeSeconds_'s own member comment) --
-        // incremented unconditionally every Update() tick, regardless of
-        // phase, matching the real source's own `phaseTime++` placement.
+        if (missionStartPending_ && phase_ == GalaxyEggbert::Def::GamePhase::Play &&
+            fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
+        {
+            StartResumeLog();
+        }
         if (autoplay_ && !autoplay_->Finished())
         {
             StepAutoplay();
@@ -2966,8 +3418,24 @@ namespace GalaxyEggbert::CNA
                 SuppressDraw();
             }
         }
-        const float dt = autoplay_ ? 1.0f / 60.0f
-                                   : static_cast<float>(gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty());
+        CaptureInput();
+        UpdateTick();
+        if (recordingResume_ && !missionStartPending_ && !replayingResume_)
+        {
+            resumeLog_.Append(tickInput_);
+            ++resumeTicks_;
+            CheckResumeSelftest();
+        }
+    }
+
+    void GalaxyEggbertGame::UpdateTick()
+    {
+        // While he is hidden his own sounds are not played (Decor::PlaySound, BD-0075); in play only.
+        sound_.SetBlupiHidden(phase_ == GalaxyEggbert::Def::GamePhase::Play && blupi_.IsHidden());
+        // The world's sounds are heard from Blupi, as the original's from its view (BD-0076).
+        sound_.SetListener(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+
+        constexpr float dt = 1.0f / 60.0f;
         phaseTimeSeconds_ += dt;
 
         // Real fade-out phase-transition commit (plan.md MENU-088/089) --
@@ -3011,7 +3479,9 @@ namespace GalaxyEggbert::CNA
             using Microsoft::Xna::Framework::Input::ButtonState;
             using Microsoft::Xna::Framework::Input::Keys;
             const auto phaseKeys = CurrentKeyboardState();
-            const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+            auto viewport = getGraphicsDeviceProperty().getViewportProperty();
+            viewport.setWidthProperty(tickInput_.viewportWidth);
+            viewport.setHeightProperty(tickInput_.viewportHeight);
 
             bool mousePausePressed = false;
             bool mouseContinuePressed = false;
@@ -3025,28 +3495,17 @@ namespace GalaxyEggbert::CNA
                 // the screen, and a few frames after, the mouse is left out: the platform also
                 // turns a touch into mouse events, which would press Action twice.
                 std::vector<GalaxyEggbert::Game::InputPad::TouchPoint> touches;
-                if (!SuppressLiveInput())
+                using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+                for (const auto& t : tickInput_.touches)
                 {
-                    using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
-                    for (const auto& t : Microsoft::Xna::Framework::Input::Touch::TouchPanel::GetState())
-                    {
-                        const auto state = t.getStateProperty();
-                        if (state == TouchLocationState::Invalid)
-                        {
-                            continue;
-                        }
-                        GalaxyEggbert::Game::InputPad::TouchPoint p;
-                        p.id = t.getIdProperty();
-                        p.x = t.getPositionProperty().X;
-                        p.y = t.getPositionProperty().Y;
-                        p.pressed = state == TouchLocationState::Pressed;
-                        p.released = state == TouchLocationState::Released;
-                        touches.push_back(p);
-                    }
+                    const auto state = static_cast<TouchLocationState>(t.state);
+                    if (state == TouchLocationState::Invalid) continue;
+                    touches.push_back({t.id, t.x, t.y, state == TouchLocationState::Pressed,
+                                       state == TouchLocationState::Released});
                 }
                 touchQuietFrames_ = touches.empty() ? std::max(0, touchQuietFrames_ - 1) : 15;
                 const auto mouse = touchQuietFrames_ > 0 ? Microsoft::Xna::Framework::Input::MouseState{}
-                                                         : ReadMouseState(SuppressLiveInput());
+                                                         : CurrentMouseState();
                 inputPadClaimedMouse = inputPad_.UpdatePlay(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
                 {
@@ -3201,7 +3660,7 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                const auto mouse = CurrentMouseState();
                 // Real conditional visibility: Back/Restart hidden on
                 // mission 1 (can't go "back" from/replay the very first
                 // level); Restart additionally hidden on decade-boundary
@@ -3228,7 +3687,7 @@ namespace GalaxyEggbert::CNA
                 // SetupReset" difference (see InputPad::UpdateSetup()'s
                 // own class comment) is the only distinction made here.
                 const bool isMainSetup = phase_ == GalaxyEggbert::Def::GamePhase::MainSetup;
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                const auto mouse = CurrentMouseState();
                 const auto setupInput = inputPad_.UpdateSetup(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), isMainSetup,
                     saveData_.GetAccelActive());
@@ -3244,7 +3703,7 @@ namespace GalaxyEggbert::CNA
                     // or continuous autosave.
                     sound_.SetEnabled(!sound_.IsEnabled());
                     saveData_.SetSoundEnabled(sound_.IsEnabled());
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                 }
                 // The volume sliders (a Galaxy addition, the owner's request of 2026-11-02): live
                 // while dragged, saved when let go.
@@ -3264,7 +3723,7 @@ namespace GalaxyEggbert::CNA
                 }
                 if (setupInput.volumeReleased)
                 {
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                     // A sample of the effects at the new volume (the Sounds toggle's own click).
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel0);
                 }
@@ -3273,24 +3732,24 @@ namespace GalaxyEggbert::CNA
                 {
                     saveData_.SetJumpRight(!saveData_.GetJumpRight());
                     inputPad_.SetJumpRight(saveData_.GetJumpRight());
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                 }
                 if (setupInput.zoomToggled)
                 {
                     saveData_.SetAutoZoom(!saveData_.GetAutoZoom());
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                 }
                 if (setupInput.accelToggled)
                 {
                     saveData_.SetAccelActive(!saveData_.GetAccelActive());
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                 }
                 if (setupInput.terrainToggled)
                 {
                     // 3D terrain on or off (SaveData::GetTerrainRelief): the terrain is built again
                     // with the reliefs or without them, their memory freed when off.
                     saveData_.SetTerrainRelief(!saveData_.GetTerrainRelief());
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                     ApplyTerrainReliefSetting();
                 }
                 if (setupInput.resetPressed)
@@ -3300,7 +3759,7 @@ namespace GalaxyEggbert::CNA
                     // 2026-07-13 via Game1.cpp), only reachable from
                     // MainSetup (isMainSetup gates its rect/visibility).
                     saveData_.Reset();
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                     inputPad_.SetJumpRight(saveData_.GetJumpRight());
                     sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
                     ApplyMusicVolume();
@@ -3326,11 +3785,9 @@ namespace GalaxyEggbert::CNA
                 // non-linear waitTable gauge-fill curve this timer drives.
                 if (phaseTimeSeconds_ >= kWaitDurationSeconds)
                 {
-                    // Real Wait->Resume-or-Init branch -- ADAPTED trigger
-                    // (see GalaxyEggbert::Def::GamePhase's own comment for the full
-                    // real-vs-adapted reasoning, same one already
-                    // established for Resume itself).
-                    SetPhase(saveData_.GetHasProgress() ? GalaxyEggbert::Def::GamePhase::Resume
+                    // Game1.cpp:255-270: a saved mission takes precedence over the checkpoint.
+                    ReadResumeLog();
+                    SetPhase((pendingResume_ || saveData_.GetHasProgress()) ? GalaxyEggbert::Def::GamePhase::Resume
                                                          : GalaxyEggbert::Def::GamePhase::Init);
                 }
             }
@@ -3339,13 +3796,13 @@ namespace GalaxyEggbert::CNA
                 // Real Init / gamer-select menu (2026-07-13, plan.md
                 // MENU-006..020) -- see InputPad::UpdateInit()/
                 // DrawInit()'s own class comment for full detail.
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                const auto mouse = CurrentMouseState();
                 auto initInput = inputPad_.UpdateInit(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 // Enter (a gamepad's A, GamepadInput.hpp) plays as the Play button does: the menu
                 // without a pointer (owner 2026-11-02: gamepads).
                 {
-                    const bool enterDown = ReadKeyboardState(SuppressLiveInput()).IsKeyDown(
+                    const bool enterDown = CurrentKeyboardState().IsKeyDown(
                         Microsoft::Xna::Framework::Input::Keys::Enter);
                     if (enterDown && !initEnterWasDown_)
                     {
@@ -3359,7 +3816,7 @@ namespace GalaxyEggbert::CNA
                     // selects AND persists that slot, independent of
                     // entering Play (confirmed via research).
                     saveData_.SetSelectedGamer(initInput.gamerSelected);
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                 }
                 if (initInput.playPressed)
                 {
@@ -3410,26 +3867,20 @@ namespace GalaxyEggbert::CNA
             {
                 // Real Resume (2026-07-13, plan.md MENU-040..045) -- see
                 // InputPad::UpdateResume()'s class comment for the
-                // adapted-trigger reasoning; this is just the two real
+                // menu layout; this is just the two real
                 // buttons' behavior once already in the phase.
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                const auto mouse = CurrentMouseState();
                 const auto resumeInput = inputPad_.UpdateResume(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 if (resumeInput.continuePressed)
                 {
-                    // Real ResumeContinue -> ContinueMission() ->
-                    // SetPhase(Play,-2): restores the checkpointed
-                    // mission (2026-07-17, now that SaveData's own
-                    // already-persisted missionNumber -- written at every
-                    // Win/Lost checkpoint -- is finally read back) and
-                    // lives -- the mission starts again: the original restores
-                    // the very moment it was left (Decor::CurrentWrite on
-                    // deactivation during play, CurrentRead here; Blupi,
-                    // objects, tiles, timers), which Galaxy does not keep
-                    // (BD-0077, open). The real `-2` mission
-                    // sentinel BYPASSES the fade-defer mechanism entirely
-                    // (plan.md MENU-088/089, confirmed via research) --
-                    // Resume->Play is genuinely instant in the real game.
+                    // Game1.cpp:255-270, Decor.cpp:11146-11300: continue the saved moment.
+                    if (pendingResume_)
+                    {
+                        auto log = std::move(*pendingResume_);
+                        pendingResume_.reset();
+                        if (BeginResume(std::move(log))) return;
+                    }
                     LoadMission(saveData_.GetMissionNumber());
                     interaction_.SetLives(saveData_.GetLives());
                     SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
@@ -3453,7 +3904,7 @@ namespace GalaxyEggbert::CNA
                 // see WorldEditor's own class comment. IsBrowsing()
                 // distinguishes the per-gamer-slot world browser (no World
                 // loaded yet) from actively editing one.
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                const auto mouse = CurrentMouseState();
                 if (worldEditor_.IsBrowsing())
                 {
                     const auto request = worldEditor_.UpdateBrowsing(
@@ -3489,7 +3940,8 @@ namespace GalaxyEggbert::CNA
                     worldRuntime_.Update(dt);
                     if (terrainRenderer_)
                     {
-                        terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
+                        if (!replayingResume_)
+                terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
                     }
                     if (worldEditor_.ConsumeNeedsPresentationRebuild())
                     {
@@ -3603,7 +4055,7 @@ namespace GalaxyEggbert::CNA
                 // engine's own Space-key pick -- edge-triggered already
                 // (see UpdateWinLost()), so no separate debounce needed
                 // for the mouse path.
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                const auto mouse = CurrentMouseState();
                 const bool mouseReturnPressed = inputPad_.UpdateWinLost(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
                 const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || mouseReturnPressed;
@@ -3694,6 +4146,7 @@ namespace GalaxyEggbert::CNA
             UpdateTitleScene(dt);
         }
 
+        if (missionStartPending_) return;
         if (phase_ != GalaxyEggbert::Def::GamePhase::Play)
         {
             return;
@@ -3711,7 +4164,8 @@ namespace GalaxyEggbert::CNA
 
         if (terrainRenderer_)
         {
-            terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
+            if (!replayingResume_)
+                terrainRenderer_->Update(getGraphicsDeviceProperty(), worldRuntime_.GetAnimPhase(), BlupiFocusRaw());
 
             // Tank controls (2026-07-05, matching mobile-eggbert's control
             // feel): Left/Right turn, Up/Down
@@ -4188,7 +4642,9 @@ namespace GalaxyEggbert::CNA
             const auto triggerDeathAscend = [this](GalaxyEggbert::Game::InteractionSystem::VoyageKind kind,
                                                     float offsetY, int icon, float deathX, float deathY, float deathZ)
             {
-                const auto& viewport = getGraphicsDeviceProperty().getViewportProperty();
+                auto viewport = getGraphicsDeviceProperty().getViewportProperty();
+                viewport.setWidthProperty(tickInput_.viewportWidth);
+                viewport.setHeightProperty(tickInput_.viewportHeight);
                 float hudX = 0.0f, hudY = 0.0f;
                 if (Hud::ProjectWorldToHudSpace(Microsoft::Xna::Framework::Vector3(deathX, deathY, deathZ),
                                                    camera_.View(), camera_.Projection(),
@@ -5231,18 +5687,20 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetLives(interaction_.Lives());
                     saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
                     saveData_.SetHasProgress(true);
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                 }
                 SetPhase(GalaxyEggbert::Def::GamePhase::Lost);
             }
             else if (interaction_.ExitReached() && !winCheerActive_)
             {
+                recordingResume_ = false;
+                if (!replayingResume_) DeleteResumeFile();
                 if (!editorPlayTestActive_)
                 {
                     saveData_.SetLives(interaction_.Lives());
                     saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
                     saveData_.SetHasProgress(true);
-                    saveData_.Save();
+                    if (!replayingResume_) saveData_.Save();
                 }
                 // The original's exit (Decor.cpp:6160-6180, 6411; Game1::Update): Blupi leaves
                 // his helicopter, cheers facing the viewer for 40 ticks and the next world loads
@@ -5404,7 +5862,7 @@ namespace GalaxyEggbert::CNA
             // F11 fullscreen toggle (2026-07-10, user request), edge-
             // detected like F3 above.
             const bool fullscreenKeyDown = keys.IsKeyDown(Keys::F11);
-            if (fullscreenKeyDown && !fullscreenKeyWasDown_ && graphics_)
+            if (fullscreenKeyDown && !fullscreenKeyWasDown_ && graphics_ && !replayingResume_)
             {
                 graphics_->ToggleFullScreen();
             }
@@ -5427,7 +5885,7 @@ namespace GalaxyEggbert::CNA
             // since both features read the same left-mouse-button state.
             {
                 using Microsoft::Xna::Framework::Input::ButtonState;
-                const auto mouse = ReadMouseState(SuppressLiveInput());
+                const auto mouse = CurrentMouseState();
                 const int mouseX = mouse.getXProperty();
                 const int mouseY = mouse.getYProperty();
                 const bool lookHeld =
@@ -5754,6 +6212,8 @@ namespace GalaxyEggbert::CNA
             }
         }
 
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Play) RecordHideGhost();
+
         if (goldenCaptureMode_ && goldenCaptureNextIndex_ < kGoldenCaptureCount &&
             goldenCaptureTick_ >= kGoldenCaptureTicks[goldenCaptureNextIndex_])
         {
@@ -5764,6 +6224,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::Draw(const Microsoft::Xna::Framework::GameTime& gameTime)
     {
         (void)gameTime;
+        if (replayingResume_) return;
         const auto perfStart = std::chrono::steady_clock::now();
         DrawFrame();
         if (perfEnabled_)
@@ -6159,43 +6620,7 @@ namespace GalaxyEggbert::CNA
                 !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) &&
                 !BlupiDrawnAsDeathSprite())
             {
-                constexpr float kPlaceholderModelScale = 0.009095f;
                 constexpr float kCharredShade = 0.07f; // the sprites' soot black
-                constexpr float kPlaceholderModelYOffset = -0.5f;
-                constexpr float kPlaceholderModelDepthOffset = 0.6f;
-                // The real model (kRealModelScale) has its feet at local y = 0
-                // like the fox's, so it shares kPlaceholderModelYOffset; it is
-                // centred on Blupi, so no depth offset.
-                const float modelScale = blupiModelIsReal_ ? kRealModelScale : kPlaceholderModelScale;
-                const float modelDepthOffset = blupiModelIsReal_ ? 0.0f : kPlaceholderModelDepthOffset;
-                // The real model faces +Z, while GetYaw() moves Blupi along
-                // (sin yaw, 0, -cos yaw). CreateRotationY(a) turns +Z to
-                // (sin a, 0, cos a), so a = pi - yaw makes him face the way he
-                // walks; plain yaw agreed only at +-90 degrees and otherwise
-                // walked him sideways or backwards, the symmetric egg body
-                // showing the wrong turn as his face sliding around it.
-                constexpr float kPi = 3.14159265358979f;
-                // Hanging, along the bar's row with his right hand on his pipe (BarRows.hpp).
-                const bool hanging = blupi_.IsSuspended() && blupiModelIsReal_;
-                const float facingYaw = hanging ? blupi_.GetHangFacingYaw() : blupi_.GetYaw();
-                const float modelYaw = blupiModelIsReal_ ? kPi - facingYaw : facingYaw;
-                const float hangShift = hanging ? GalaxyEggbert::Game::HangingModelShift(blupi_.GetAnimIcon()) : 0.0f;
-                // No render-only Balloon offset here: Blupi's own physics
-                // now genuinely lift him while ballooned (BlupiController's
-                // kBalloonRiseSpeed, a direct port of the real
-                // Decor.cpp:4039-4058 rising block), so GetY() itself already
-                // carries the whole effect. An earlier cosmetic sine "bob"
-                // added here on 2026-07-18 -- while the physics were still
-                // wrongly modelled as a fixed-height freeze -- was an invented
-                // stand-in with no real-source basis, and is removed now that
-                // the real behaviour is in place (CLAUDE.md's faithful-remake
-                // rule: nothing that isn't in mobile-eggbert).
-                // Hanging, he is drawn 6 px lower than standing in the bar's cell: the original sets
-                // his position 12 px under the bar cell's top (BLUPISUSPEND, Decor.cpp:5442), where
-                // standing in a cell puts it 6 px under (BLUPIOFFY); so his hands hold the pipe
-                // (owner 2026-11-02: they were above it). Render only, as the original's sprite.
-                constexpr float kSuspendModelDrop = 6.0f / 64.0f;
-                const float suspendDrop = blupi_.IsSuspended() ? kSuspendModelDrop : 0.0f;
                 // Charred (Clear1, Clear3: CharredBlupi.hpp), shrunk toward his feet as the frame
                 // crumbles and spread out as the heap of ash.
                 auto charred = BlupiCharredShape();
@@ -6207,16 +6632,7 @@ namespace GalaxyEggbert::CNA
                 {
                     charred = GalaxyEggbert::Game::CharredShape{true, 0.06f, 1.5f, false};
                 }
-                const auto world =
-                    Microsoft::Xna::Framework::Matrix::CreateScale(modelScale) *
-                    Microsoft::Xna::Framework::Matrix::CreateScale(charred.spread, charred.height, charred.spread) *
-                    Microsoft::Xna::Framework::Matrix::CreateTranslation(hangShift, 0.0f, modelDepthOffset) *
-                    // The jeep tipping over an edge, nose down (+Z is the model's front; BD-0071).
-                    Microsoft::Xna::Framework::Matrix::CreateRotationX(blupi_.GetVehicleTilt()) *
-                    Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
-                    Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                        blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop,
-                        blupi_.GetZ());
+                const auto world = BlupiModelWorld(charred);
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiModel_->ComputeBoneTransformsEXT(
                     blupiActiveClipName_,
@@ -6236,19 +6652,7 @@ namespace GalaxyEggbert::CNA
                 device.setRasterizerStateProperty(
                     Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
 
-                // The real model's face for this frame of the active clip.
-                Microsoft::Xna::Framework::Graphics::Texture2D* face = nullptr;
-                if (const auto faces = blupiClipFaces_.find(blupiActiveClipName_);
-                    blupiModelIsReal_ && faces != blupiClipFaces_.end() && !faces->second.empty())
-                {
-                    const auto frame = static_cast<std::size_t>(blupiClipTimeSeconds_ * blupiFaceRate_)
-                        % faces->second.size();
-                    const int index = faces->second[frame];
-                    if (index >= 0 && index < static_cast<int>(blupiFaces_.size()))
-                    {
-                        face = &blupiFaces_[static_cast<std::size_t>(index)];
-                    }
-                }
+                auto* face = BlupiFaceTexture();
 
                 const auto drawParts = [&](const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT& model,
                                            Microsoft::Xna::Framework::Graphics::Texture2D* faceTexture)
@@ -6325,27 +6729,6 @@ namespace GalaxyEggbert::CNA
                     device.setDepthStencilStateProperty(Microsoft::Xna::Framework::Graphics::DepthStencilState::Default);
                 }
 
-                // Hide's trail (BD-0056): a copy of his pose every 10 px he moves while hidden (the
-                // original's Manhattan distance, over X, Y and Z here), each fading from 30 % to
-                // nothing over its 20 ticks (TickHideGhosts ages them).
-                const bool hidden = blupi_.GetSecretPower() == GalaxyEggbert::Def::SecretPower::Hide;
-                if (hidden && !hideGhostTracking_)
-                {
-                    hideGhostTracking_ = true;
-                    hideGhostX_ = blupi_.GetX();
-                    hideGhostY_ = blupi_.GetY();
-                    hideGhostZ_ = blupi_.GetZ();
-                }
-                hideGhostTracking_ = hidden;
-                if (hidden && std::fabs(blupi_.GetX() - hideGhostX_) + std::fabs(blupi_.GetY() - hideGhostY_) +
-                                      std::fabs(blupi_.GetZ() - hideGhostZ_) >=
-                                  10.0f / 64.0f)
-                {
-                    hideGhosts_.push_back({world, blupiActiveClipName_, blupiClipTimeSeconds_, face, 0.0f});
-                    hideGhostX_ = blupi_.GetX();
-                    hideGhostY_ = blupi_.GetY();
-                    hideGhostZ_ = blupi_.GetZ();
-                }
                 if (!hideGhosts_.empty())
                 {
                     device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);

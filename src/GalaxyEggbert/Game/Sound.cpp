@@ -95,6 +95,7 @@ namespace GalaxyEggbert::Game
 
     void Sound::PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound)
     {
+        if (replayMuted_) return;
         if (decorSound && blupiHidden_ && MutedWhileHidden(channel))
         {
             return;

@@ -80,6 +80,7 @@ namespace GalaxyEggbert::Game
         // different logical buttons, so a stale value could otherwise
         // misfire the wrong one.
         void ResetTouchState() noexcept;
+        void ResetMissionInput() noexcept;
 
         // Additional input derived from the on-screen Play controls, meant
         // to be OR'd/combined with keyboard input by the caller (mouse and
@@ -377,22 +378,9 @@ namespace GalaxyEggbert::Game
         // site (not this class's concern -- `UpdateResume()` only reports
         // which button fired).
         //
-        // Real trigger for entering this phase (`Game1::OnActivated()`, a
-        // WP7 app-reactivation OS lifecycle event gated on a real
-        // serialized mid-level `Decor::Current*()` snapshot -- a
-        // SEPARATE, heavier save mechanism than `GameData`/`SaveData`)
-        // has no desktop equivalent and is far beyond this engine's
-        // single-`.vwr`-world scope to replicate faithfully. Adapted
-        // trigger (the caller's responsibility, not this method's):
-        // offered at startup whenever `SaveData::GetHasProgress()` is
-        // true -- a documented simplification of WHEN Resume appears, not
-        // of the screen/buttons themselves.
-        //
-        // ResumeContinue is the caller's responsibility to wire (restore
-        // saved lives, reset Blupi to spawn, return to Play) -- NOT a true
-        // real mid-level resume (no serialized position/treasure/key
-        // state exists to restore), a documented simplification matching
-        // the one already established for PauseRestart/WinLostReturn.
+        // The host offers this screen for ResumeLog or the SaveData checkpoint fallback.
+        // Continue reconstructs the interrupted mission (Game1.cpp:255-270); without a valid
+        // replay it loads the checkpoint. This class only reports the selected button.
         struct ResumeInput
         {
             bool menuPressed = false;

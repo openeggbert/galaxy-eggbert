@@ -1,4 +1,5 @@
 #include <GalaxyEggbert/Game/Autoplay.hpp>
+#include <GalaxyEggbert/Game/ResumeLog.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -389,6 +390,46 @@ int main()
             busy.Step(inLane);
         }
         check(busy.Finished() && !busy.Passed(), "an enemy 5 along the lane keeps it waiting");
+    }
+
+    {
+        using namespace GalaxyEggbert::Game;
+        ResumeLog log;
+        log.start.build = "test build";
+        log.start.seed = 4294967295u;
+        log.start.x = 0.123456791f;
+        log.start.saveData = "selectedGamer=2\nquoted=\"value\"\n";
+        ResumeInput input;
+        input.keys = {32, 37, 162};
+        input.mouseX = -40; input.mouseY = 570; input.wheel = 120; input.buttons = 21;
+        input.viewportWidth = 1280; input.viewportHeight = 720;
+        input.touches = {{7, 123.45678f, 300.0f, 1}, {8, 700.0f, 250.0f, 3}};
+        input.accelValid = true; input.accelY = -0.123456791f;
+        log.Append(input); log.Append(input);
+        input.keys.clear(); log.Append(input);
+        check(log.runs.size() == 2 && log.runs[0].count == 2 && log.TickCount() == 3,
+              "resume RLE merges only consecutive identical ticks");
+        ResumeLog parsed;
+        const auto text = log.Serialize();
+        check(ResumeLog::Parse(text, "test build", parsed) && parsed.start == log.start && parsed.runs == log.runs,
+              "resume round trip retains start, all raw inputs and exact float values");
+        bool rejected = true;
+        for (std::size_t length = 0; length < text.size(); ++length)
+            rejected = rejected && !ResumeLog::Parse(text.substr(0, length), "test build", parsed);
+        check(rejected && parsed.runs == log.runs, "every truncated resume is refused without changing destination");
+        check(!ResumeLog::Parse(text, "another build", parsed), "foreign build resume is refused");
+        auto corrupt = text; corrupt[corrupt.find("1280")] = '9';
+        check(!ResumeLog::Parse(corrupt, "test build", parsed), "resume checksum detects damaged input");
+        check(!ResumeLog::Parse(text + "trailing", "test build", parsed), "resume trailing garbage is refused");
+        log.runs[0].count = 0;
+        check(!ResumeLog::Parse(log.Serialize(), "test build", parsed), "zero-length run is refused");
+        log.runs[0].count = 10000001;
+        check(!ResumeLog::Parse(log.Serialize(), "test build", parsed), "unbounded replay is refused");
+        log.runs[0].count = 2; log.runs[0].input.keys = {999};
+        check(!ResumeLog::Parse(log.Serialize(), "test build", parsed), "out-of-range input is refused");
+        ResumeLog empty; empty.start.build = "test build";
+        check(ResumeLog::Parse(empty.Serialize(), "test build", parsed) && parsed.TickCount() == 0,
+              "a mission saved before its first tick can resume");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

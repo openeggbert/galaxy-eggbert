@@ -1,5 +1,8 @@
 #pragma once
 
+#include <GalaxyEggbert/Game/ResumeLog.hpp>
+#include <map>
+
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 #include <GalaxyEggbert/HubDoors.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
@@ -65,6 +68,8 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbertGame();
 
         void LoadContent() override;
+        void OnDeactivated(System::Object* sender, const System::EventArgs& args) override;
+        void OnExiting(System::Object* sender, const System::EventArgs& args) override;
         void Update(Microsoft::Xna::Framework::GameTime& gameTime) override;
         void Draw(const Microsoft::Xna::Framework::GameTime& gameTime) override;
 
@@ -346,11 +351,9 @@ namespace GalaxyEggbert::CNA
         // shows the real wait.png/jauge.png progress gauge for a FIXED
         // 5.0s cosmetic timer (confirmed via research: real `waitProgress`
         // is wall-clock-based, decoupled from actual loading), then
-        // transitions to `Resume` if `SaveData::GetHasProgress()` is
-        // true, else `Init` (an adaptation of the real `Wait`->`Resume`
-        // branch, which for real is gated on a WP7-only OS-reactivation
-        // snapshot this engine has no equivalent for -- same adapted
-        // trigger already established for Resume itself). `Init` renders
+        // transitions to Resume when resume.txt is valid, or when SaveData has checkpoint
+        // progress (the fallback). ResumeLog replays the interrupted mission's input history
+        // for Game1.cpp:255-270's CurrentRead behavior. Init renders
         // the real init.png/speedyblupi.png/blupiyoupie.png gamer-select
         // menu (3 independent slots via `SaveData`'s own 3-gamer-slot
         // extension) -- see `InputPad::UpdateInit()`/`DrawInit()`'s own
@@ -366,12 +369,8 @@ namespace GalaxyEggbert::CNA
         // MENU-058..069, reachable via Pause's real Setup button) -- see
         // that method's own class comment for what is/isn't modeled on
         // that screen, including the one real difference between the two
-        // (`SetupReset`, MainSetup-only). `Resume` is reachable (2026-07-13,
-        // plan.md MENU-040..045) via an ADAPTED trigger (the `Wait`->
-        // `Resume`-or-`Init` branch above), not the real `Game1::
-        // OnActivated()` OS-reactivation event, which has no desktop
-        // equivalent -- see `InputPad::UpdateResume()`'s own class
-        // comment for full reasoning.
+        // (`SetupReset`, MainSetup-only). Resume restores the deactivated Play session
+        // (Game1.cpp:186-208); without a valid log it loads the saved checkpoint.
         //
         // Real Pause trigger is gamepad-Back / a touch PlayPause button --
         // the real source has NO keyboard binding at all (an XNA/WP7 port);
@@ -705,6 +704,33 @@ namespace GalaxyEggbert::CNA
         }
         [[nodiscard]] Microsoft::Xna::Framework::Input::KeyboardState CurrentKeyboardState() const;
         void StepAutoplay();
+        void UpdateTick();
+        void CaptureInput();
+        [[nodiscard]] Microsoft::Xna::Framework::Matrix BlupiModelWorld(const GalaxyEggbert::Game::CharredShape& charred) const;
+        Microsoft::Xna::Framework::Graphics::Texture2D* BlupiFaceTexture();
+        void RecordHideGhost();
+        [[nodiscard]] Microsoft::Xna::Framework::Input::MouseState CurrentMouseState() const;
+        void ResetMissionInput();
+        void StartResumeLog();
+        void ReadResumeLog();
+        void DeleteResumeFile() const noexcept;
+        bool BeginResume(GalaxyEggbert::Game::ResumeLog log);
+        void ReplayBatch();
+        void CheckResumeSelftest();
+        [[nodiscard]] std::map<std::string, std::string> ResumeSignature() const;
+        GalaxyEggbert::Game::ResumeLog resumeLog_;
+        std::optional<GalaxyEggbert::Game::ResumeLog> pendingResume_;
+        GalaxyEggbert::Game::ResumeInput tickInput_;
+        bool missionStartPending_ = false;
+        bool recordingResume_ = false;
+        bool replayingResume_ = false;
+        std::uint32_t missionSeed_ = 0;
+        std::size_t replayRun_ = 0;
+        std::uint32_t replayRepeat_ = 0;
+        std::uint64_t resumeTicks_ = 0;
+        bool resumeSelftestDone_ = false;
+        bool resumeAccelWarmStart_ = false;
+        std::map<std::string, std::string> resumeSelftestSignature_;
         int goldenTraceTick_ = 0;
         std::string goldenTraceLines_;
 

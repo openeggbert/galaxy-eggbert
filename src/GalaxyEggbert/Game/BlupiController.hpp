@@ -734,6 +734,12 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] float GetY() const noexcept { return m_y; }
         [[nodiscard]] float GetZ() const noexcept { return m_z; }
         [[nodiscard]] float GetVelocityY() const noexcept { return m_velocityY; }
+        // Movement accumulators for the replay verifier; no state is restored from this signature.
+        [[nodiscard]] std::array<float, 7> GetMovementSignature() const noexcept
+        {
+            return {m_velocityY, m_vehicleSpeed, m_balloonHorizontalSpeed, m_waterVitesse,
+                    m_ecraseVitesse, m_marchTicks, m_waterStrokeTicks};
+        }
         [[nodiscard]] bool IsOnGround() const noexcept { return m_onGround; }
 
         // Block type directly beneath Blupi's feet, or Air (0) if not

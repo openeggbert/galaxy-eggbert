@@ -14,10 +14,10 @@ treasure doors' number plates and the mission signs' digits sat in front of thei
 `83d7e4bc`), OR-0028/0029/0033/0034/0035/0038/0040/0044/0048/0053 (fine), OR-0042 (analysed: the
 original's timing, smoother in 3D). Still the owner's:
 
-- Q-015 (2026-11-06): continuing a mission where it was left (BD-0077). D11 closed by the owner
+- Nothing waits on the owner. Q-015 answered "udelej" and built 2026-11-06 (BD-0077). D11 closed by the owner
   2026-11-06 ("Ne, D11 uzavřít", MR-0009); OR-0041 answered and fixed 2026-11-05 (BD-0074).
 
-### Q-015 — Resume: continue the mission where it was left, as the original? (2026-11-06)
+### Q-015 — Resume: continue the mission where it was left, as the original? (2026-11-06) — DONE (a) 2026-11-06
 
 The original writes the whole mission in progress when the game loses focus during play and, if the
 game is started again with it written, Resume continues from that moment (a clean exit deletes it).

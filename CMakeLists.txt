@@ -158,6 +158,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/InputPad.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/Autoplay.cpp
+        src/GalaxyEggbert/Game/ResumeLog.cpp
         src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
@@ -668,6 +669,7 @@ target_include_directories(VerifyTerrainAnimDivisor PRIVATE
 add_executable(VerifyAutoplay
         tools/VerifyAutoplay.cpp
         src/GalaxyEggbert/Game/Autoplay.cpp
+        src/GalaxyEggbert/Game/ResumeLog.cpp
 )
 
 target_include_directories(VerifyAutoplay PRIVATE
