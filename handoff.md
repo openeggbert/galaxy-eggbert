@@ -6,7 +6,80 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-06 (the editor's copy and paste, backups, export, thumbnails; Wave F refreshed)._
+_Last updated: 2026-11-06 evening (Claude Code's last session; the Codex CLI continues: see the next section)._
+
+## Codex continues from here (2026-11-06) — read this first
+
+From the evening of 2026-11-06 the work continues with the **Codex CLI** (the owner's decision:
+"Codex will continue"). Claude Code wrote this handoff at the end of its session. Everything below
+is committed on `develop` and verified; nothing is pushed since `70bf7434` (see "Push" below).
+
+### Model and effort
+
+Use **GPT-6-Astra** (`gpt-6-astra`, the machine's configured default), reasoning effort **high**, for
+every queued task: they need close reading of Mobile Eggbert's C++, fidelity judgement and unattended
+verification. Use effort **xhigh** for the world 199 rebuild. **GPT-6.1-Sol** (`gpt-6.1-sol`, effort
+high) is enough for mechanical follow-ups (rerouting a playthrough after a world change, regenerating
+a world, ledger bookkeeping). How to run a brief, and the rules every task keeps (build, tests,
+ledgers, commit format, no AI attribution, never push): **`plans/codex/README.md`**.
+
+### Codex queue (in this order; each brief is self-contained)
+
+| # | Task | Brief | Owner's report / decision |
+|---|---|---|---|
+| 1 | Ghost cheat as Mobile Eggbert: nothing acts on him (the lightning killed him), March/Stop animation instead of falling, drawn at 0.75 opacity | `plans/codex/ghost.md` | 2026-11-06: "the lightning killed ghost Blupi"; "no falling animation, see-through like a ghost" |
+| 2 | Editor aims at the mouse cursor / touch point instead of the screen centre | `plans/codex/editor_cursor.md` | "after the click nothing appears"; chose "aim with the cursor" |
+| 3 | Gallery 998 / showcase 999: saws in the rows of the exhibit saw switches | `plans/codex/exhibit_saws.md` | "the saw machine has no effect" (seen in the gallery); chose saws in the exhibit rows |
+| 4 | Lifts drawn with any tile's look (MoveObjectRecord.visualIcon) | `plans/codex/lift_tiles.md` | chose only "draw the lift as the tile" |
+| 5 | No solid BigDecor in a way a player must take (053's machine leaves a 0.13-cell lane to its door; 058's plant) -- move them in the generators, undo the squeezed routes | `plans/codex/bigdecor_clearance.md` | follows BD-0080 (houses, trees, statue passable) |
+| 6 | **World 199 rebuilt** as a true 3D journey closely inspired by Mobile Eggbert's finale | `plans/codex/world199_rebuild.md` (+ `plans/audit/world199_comparison.md`) | "the final world is a mockery and sloppy"; "take strong inspiration from Mobile Eggbert's final world and do it in 3D" |
+
+After each: tick it here (done, commit id), update the ledger the brief names, and continue with the
+next. When the queue is empty, continue the fidelity audit (§0 below: `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`
+and `plans/audit/`), and treat every new owner report first (owner reports go to
+`plans/audit/owner_reports.md` as OR-NNNN; open questions to `plans/audit/owner_questions.md`).
+
+### Waiting for the owner (do not start without an answer)
+
+- **Q-016, the zoom cheat** (`plans/audit/owner_questions.md`): Mobile Eggbert's MODERN-only cheat
+  "zoom" (100/50/25/12 %). Measured: the graphics take it (the terrain is one mesh drawn whole);
+  the levels' walls limit a pulled-back camera. Recommendation (a): a farther, higher chase camera
+  x2/x4/x8 behind the cheat word, reset on leaving the level. Evidence `plans/evidence/zoom-cheat-*.jpg`.
+- Release: not yet (the owner's "Zatím ne"). Android stays at "builds and starts" (Q-009).
+
+### Done in the last session (2026-11-06, newest first)
+
+- `b19db064` **BD-0080** — the BigDecor (houses, trees, plants, toys, machines, the Blupi statue) were
+  passable in play since `34ddadb3`: a fresh `BlupiController` at each load dropped the solid boxes.
+  Given again after the three resets; probe: the old binary walks into world025's column, the fixed
+  one stops. Eleven playthroughs that had walked through a plant, toy or machine rerouted
+  (025, 031, 034, 051, 053, 054, 058, 071, 092, 094, 095) and the hub chains 020-090 pass;
+  053 and 058 squeeze past (queue task 5).
+- `815f727e` world 199 comparison with Mobile Eggbert's finale (`plans/audit/world199_comparison.md`):
+  196 -> 95 objects, no BigDecor, a plaza instead of a journey; the 12-section rebuild plan.
+- `f00e0aea` Q-016 zoom feasibility.
+- `3d73bad3` **OR-0074** the clay bridge no longer rebuilds the whole terrain each frame of its
+  crumble (World's change journal, `TerrainModelCells.hpp`); all bridge frames are models.
+  Left: a saw switch still rebuilds the terrain once per toggle (~180 ms under xvfb).
+- `2331015e` **OR-0073** the mission signs' digits clean (`sign_decals.py` keys the red paint).
+- `ba7a7d18` BD-0079 the lit dynamite flickers and sparks. Earlier the same day: the editor's copy
+  and paste, backups, export/import, thumbnails (ED-0010..0013), sound fidelity (BD-0031, 0075,
+  0076), Resume (BD-0077), the grounded start (BD-0078), CI pinned to verified sibling revisions
+  (`tools/ci_pin_siblings.py`), UB-006/UB-007 confirmed fixed in CNA.
+
+### Verified state at the end of the session
+
+- `ctest --test-dir build-cna-opengl3 -j4`: 112/112. Golden frames and trace: pass.
+- Full play pass on the final tree (`b19db064` + the bridge): **78/78**
+  (`build-probe/play-pass-final-1106/results.txt`). A regression run:
+  `PLAY_PASS_JOBS=4 tools/play_pass.sh build-cna-opengl3 build-probe/play-pass-NN`.
+- Build jobs: at most 6 (the owner, 2026-11-01); 4 is the habit. The CLAUDE.md "-j2" is outdated.
+
+### Push
+
+`develop` is ahead of `origin/develop` by the commits from `ba7a7d18` on. Push only when the owner
+asks (`git push origin develop`); CI (`.github/workflows/cna-ci.yml`) pins the sibling revisions:
+if a task needs newer siblings, bump them with `python3 tools/ci_pin_siblings.py` (and `--check`).
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -905,8 +978,8 @@ remaining hypothesis. Leave it unless the owner's D11 list names the fish.
 
 ```bash
 export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv      # the one shared ccache; never another
-cmake --build build-cna-opengl3 --parallel 2
-ctest --test-dir build-cna-opengl3 -j2                  # 110 tests, all pass
+cmake --build build-cna-opengl3 --parallel 4
+ctest --test-dir build-cna-opengl3 -j4                  # 112 tests, all pass
 ```
 
 ### Web build

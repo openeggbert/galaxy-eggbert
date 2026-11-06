@@ -74,12 +74,13 @@ guidance.
 
 ## Build and verification
 
-Use at most two parallel compile jobs on this machine:
+Use at most six parallel compile jobs on this machine (the owner, 2026-11-01; four is the habit),
+in the existing build tree `build-cna-opengl3/` (reconfigure only when it is broken):
 
 ```bash
-cmake -S . -B build-cna -DGALAXY_EGGBERT_BUILD_CNA=ON
-cmake --build build-cna --target GalaxyEggbertCNA -j2
-ctest --test-dir build-cna --output-on-failure
+export CCACHE_DIR=/rv/cnaccache CCACHE_BASEDIR=/rv
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA --parallel 4
+ctest --test-dir build-cna-opengl3 -j4 --output-on-failure
 ```
 
 Every test is expected to pass; `easy-gl-resource-smoke-tests` was quarantined until 2026-10-23
@@ -87,7 +88,7 @@ Every test is expected to pass; `easy-gl-resource-smoke-tests` was quarantined u
 Run the game from its build directory because runtime asset paths are relative:
 
 ```bash
-cd build-cna
+cd build-cna-opengl3
 ./GalaxyEggbert          # the target GalaxyEggbertCNA builds the file GalaxyEggbert
 ```
 
@@ -99,7 +100,7 @@ a proportional live/screenshot check. Do not claim visual parity from compilatio
 - Preserve unrelated user changes in a dirty worktree.
 - Keep changes scoped and update `CURRENT.md`, `handoff.md`, or `plan.md` only where their documented
   ownership requires it; update `handoff.md` after every committed task.
-- Use `-j2` maximum for every build, including packaging and cross-builds.
+- Use at most six jobs (`--parallel 6`) for every build, including packaging and cross-builds.
 - Avoid redundant fresh build trees and compiler caches; SSD write volume matters on this
   workstation.
 - Commit discrete completed tasks. Push only when the user explicitly requests it.
