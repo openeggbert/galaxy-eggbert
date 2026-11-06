@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SolidBox.hpp"
+
 #include <GalaxyEggbert/Def/SecretPower.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
@@ -1318,6 +1320,9 @@ namespace GalaxyEggbert::Game
         // next Step()s -- he can't walk through a crate and stands on one, as the original's
         // DecorDetect() counts crates. The caller sets them every frame before Step().
         void SetCrateCells(std::vector<std::array<float, 3>> cells) { m_crateCells = std::move(cells); }
+        // Boxes solid like blocks (raw grid, SolidBox.hpp): the BigDecor fitted to their models
+        // (Q-014). The caller sets them when the world changes.
+        void SetSolidBoxes(std::vector<SolidBox> boxes) { m_solidBoxes = std::move(boxes); }
 
         // A crate he pushes or holds carries him (InteractionSystem::UpdateCratePush()): his own
         // walk does not move him, FollowCrate() does.
@@ -1440,6 +1445,7 @@ namespace GalaxyEggbert::Game
         // whole-block sub-tile lookup on top of this, not through it.
         [[nodiscard]] static bool IsSolidAt(const Worlds::World& world, int gx, int gy, int gz);
         std::vector<std::array<float, 3>> m_crateCells;
+        std::vector<SolidBox> m_solidBoxes;
         bool m_crateDriven = false;
         bool m_turning = false;
         float m_vertigoTimer = 0.0f;   // teetering at a ledge (AnimState::Vertigo)

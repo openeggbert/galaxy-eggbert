@@ -588,6 +588,114 @@ namespace GalaxyEggbert::CNA
             return reach > 0.0f ? reach : 4.0f;
         }
 
+        // A BigDecor model's shape (SolidBox.hpp BigDecorShapes): its vertex files' positions as the
+        // game draws the model for `pose` (its own yaw, flip and sprite offset; standing on the
+        // cell's floor, `halfBlocks` its picture's half height), one box per half block of height
+        // over the vertices in it; a slice without vertices (along a trunk) takes the narrower of its
+        // neighbours'. In blocks from the anchor cell's centre and floor.
+        std::vector<GalaxyEggbert::Game::SolidBox> ModelFileShape(const std::string& directory,
+                                                                  const GalaxyEggbert::Game::ObjectModelPose& pose,
+                                                                  float halfBlocks)
+        {
+            constexpr std::size_t kStride = 52;
+            constexpr float kSlice = 0.5f;
+            constexpr float kDegrees = 3.14159265358979f / 180.0f;
+            const float c = std::cos(pose.yawDegrees * kDegrees), s = std::sin(pose.yawDegrees * kDegrees);
+            std::vector<std::array<float, 3>> points;
+            std::error_code error;
+            for (const auto& entry : std::filesystem::directory_iterator(directory, error))
+            {
+                const auto path = entry.path().string();
+                if (path.size() < 10 || path.compare(path.size() - 10, 10, ".verts.bin") != 0)
+                {
+                    continue;
+                }
+                std::ifstream in(path, std::ios::binary);
+                std::vector<char> bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+                for (std::size_t at = 0; at + 12 <= bytes.size(); at += kStride)
+                {
+                    float p[3];
+                    std::memcpy(p, bytes.data() + at, sizeof(p));
+                    // CreateRotationY (row vectors): x' = x c + z s, z' = -x s + z c; then the flip
+                    // and the sprite offset, then up onto the floor.
+                    float x = p[0] * c + p[2] * s;
+                    float y = p[1];
+                    const float z = -p[0] * s + p[2] * c;
+                    if (pose.mirror == 1)
+                    {
+                        x = -x - GalaxyEggbert::Game::kFlipShift;
+                    }
+                    else if (pose.mirror == 2)
+                    {
+                        y = -y + GalaxyEggbert::Game::kFlipShift;
+                    }
+                    x += static_cast<float>(pose.offsetX) / 64.0f;
+                    y += -static_cast<float>(pose.offsetY) / 64.0f + halfBlocks;
+                    points.push_back({x, y, z});
+                }
+            }
+            std::vector<GalaxyEggbert::Game::SolidBox> shape;
+            if (points.empty())
+            {
+                return shape;
+            }
+            float top = 0.0f;
+            for (const auto& p : points)
+            {
+                top = std::max(top, p[1]);
+            }
+            const int slices = std::max(1, static_cast<int>(std::ceil(top / kSlice)));
+            std::vector<GalaxyEggbert::Game::SolidBox> slice(static_cast<std::size_t>(slices));
+            std::vector<bool> filled(static_cast<std::size_t>(slices), false);
+            for (const auto& p : points)
+            {
+                const int k = std::clamp(static_cast<int>(std::floor(p[1] / kSlice)), 0, slices - 1);
+                auto& box = slice[static_cast<std::size_t>(k)];
+                if (!filled[static_cast<std::size_t>(k)])
+                {
+                    box = {p[0], p[0], 0.0f, 0.0f, p[2], p[2]};
+                    filled[static_cast<std::size_t>(k)] = true;
+                }
+                box.minX = std::min(box.minX, p[0]);
+                box.maxX = std::max(box.maxX, p[0]);
+                box.minZ = std::min(box.minZ, p[2]);
+                box.maxZ = std::max(box.maxZ, p[2]);
+            }
+            const auto area = [](const GalaxyEggbert::Game::SolidBox& b) { return (b.maxX - b.minX) * (b.maxZ - b.minZ); };
+            for (int k = 0; k < slices; ++k)
+            {
+                if (filled[static_cast<std::size_t>(k)])
+                {
+                    continue;
+                }
+                const GalaxyEggbert::Game::SolidBox* best = nullptr;
+                for (int d = 1; d < slices && best == nullptr; ++d)
+                {
+                    const GalaxyEggbert::Game::SolidBox* below = k - d >= 0 && filled[static_cast<std::size_t>(k - d)]
+                                                                     ? &slice[static_cast<std::size_t>(k - d)] : nullptr;
+                    const GalaxyEggbert::Game::SolidBox* above = k + d < slices && filled[static_cast<std::size_t>(k + d)]
+                                                                     ? &slice[static_cast<std::size_t>(k + d)] : nullptr;
+                    best = below && above ? (area(*below) <= area(*above) ? below : above) : (below ? below : above);
+                }
+                if (best != nullptr)
+                {
+                    slice[static_cast<std::size_t>(k)] = *best;
+                }
+            }
+            for (int k = 0; k < slices; ++k)
+            {
+                auto box = slice[static_cast<std::size_t>(k)];
+                if (box.maxX - box.minX < 0.05f || box.maxZ - box.minZ < 0.05f)
+                {
+                    continue; // a flat leaf or nothing: no box
+                }
+                box.minY = kSlice * static_cast<float>(k);
+                box.maxY = kSlice * static_cast<float>(k + 1);
+                shape.push_back(box);
+            }
+            return shape;
+        }
+
         float GameSpeedFactor(GalaxyEggbert::Def::GameSpeed speed) noexcept
         {
             return (speed == GalaxyEggbert::Def::GameSpeed::Slow) ? 0.5f
@@ -1023,6 +1131,17 @@ namespace GalaxyEggbert::CNA
                             content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                                 "objects/" + name + "/avatar"));
                         objectModelRadii_.push_back(ModelFileReach("avatars3d/objects/" + name));
+                        // The solid BigDecor's shapes (Q-014), as this model draws their icons.
+                        for (const auto icon : GalaxyEggbert::kSolidBigDecorIcons)
+                        {
+                            const ObjectModelPose* pose = objectModelTable_.Find(ObjectTextureSource::Explo, icon);
+                            if (pose != nullptr && pose->model == static_cast<int>(objectModels_.size()) - 1)
+                            {
+                                const float halfBlocks =
+                                    static_cast<float>(pose->iconPixels > 0 ? pose->iconPixels : 128) / 128.0f;
+                                bigDecorShapes_[icon] = ModelFileShape("avatars3d/objects/" + name, *pose, halfBlocks);
+                            }
+                        }
                         // The electrode's sparks (Q-005; tools/rd4_to_gltf/electro_sparks.py).
                         for (int icon = 238; icon <= 242; ++icon)
                         {
@@ -1147,7 +1266,8 @@ namespace GalaxyEggbert::CNA
             bigDecorCells_.push_back({
                 cell.worldX, cell.worldY, cell.worldZ, cell.icon});
         }
-        solidBigDecorCells_ = worldRuntime_.SolidBigDecorCells();
+        worldRuntime_.SetBigDecorShapes(bigDecorShapes_);
+        blupi_.SetSolidBoxes(worldRuntime_.SolidBigDecorBoxes());
 
         auto& device = getGraphicsDeviceProperty();
 
@@ -3693,8 +3813,6 @@ namespace GalaxyEggbert::CNA
                                               obj.currentZ + WorldRuntime::kWorldCenterZ});
                     }
                 }
-                // The large BigDecor stand in his way the same way (Q-014 (b)).
-                crateCells.insert(crateCells.end(), solidBigDecorCells_.begin(), solidBigDecorCells_.end());
                 blupi_.SetCrateCells(std::move(crateCells));
                 const bool canHold = crouchHeld && blupi_.IsOnGround() && !blupi_.IsInVehicle() &&
                                      !blupi_.IsBallooned() && !blupi_.IsEcrased();

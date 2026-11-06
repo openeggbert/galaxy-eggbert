@@ -105,19 +105,24 @@ the key opening a door's whole block of cells D58, ...) and §11.
   (a turned fan's mouth along -Z, safe beside it); the gallery (world998) holds a turned fan and
   wind at (47, 1, 56-60).
 
-## M3D-0006 — the large BigDecor stand in his way (2026-11-05, the owner's decision, Q-014 (b))
+## M3D-0006 — the BigDecor stand in his way, as large as their models (2026-11-05, the owner's decisions Q-014, MR-0007, MR-0008)
 
 - Original: the BigDecor are background pictures (explo.png, 128 px: two blocks); Blupi walks in
   front of them.
-- 3D: they stand in the rooms as their Ray Dream models, so the large ones are solid: the palms
-  16-19, the trees 20-22, the houses 26-27, the machines 28-31, the palace's columns and fountain
-  87-89 fill a column of two cells over the anchor (`kSolidBigDecorIcons`, `kSolidBigDecorHeight`).
-  The plants 23-25, the toys 36-47, the slime 66-69 and 203 stay passable, as grass. 147 of the
-  campaign's 316 BigDecor are solid.
-- Where: `WorldRuntime::SolidBigDecorCells`, fed to `BlupiController::SetCrateCells` with the crates
-  (solid like a block for walking, standing, jumping and the helicopter); a crate stops at them
-  (`CrateGroupCanMove`); `tools/levelcheck.py` counts them as solid.
+- 3D: they stand in the rooms as their Ray Dream models, so they are solid: the palms 16-19, the
+  trees 20-22, the plants 23-25, the houses 26-27, the machines 28-31, the toys 36-47, the palace's
+  columns and fountain 87-89 (`kSolidBigDecorIcons`; first only the large ones as a column of two
+  cells, then, the owner: "the pink house is walked through, only a small obstacle inside" and
+  "the plants and toys too"). The slime 66-69 and 203 stay passable.
+- Shape: the game measures each model as it draws it (its pose's yaw, flip and offset; standing on
+  its cell's floor), one box per half block of height over its vertices (a slice without any, along
+  a trunk, takes the narrower neighbour's): a palm's thin trunk and wide crown, the house about two
+  blocks square (`ModelFileShape`, `SolidBox.hpp`), turned by its cell's quarter turns.
+- Where: `WorldRuntime::SolidBigDecorBoxes` (shapes from the game, else a column of two cells),
+  `BlupiController::SetSolidBoxes` (solid like a block for walking, standing, jumping, the
+  helicopter); a crate stops at them (`CrateGroupCanMove`); `tools/levelcheck.py` counts a cell
+  solid where a box reaches within a quarter block of its middle.
 - Routes changed: 025 (past the palm by the keep's west door in lane z 51), 053 (round the machine in
-  the vault's east gallery in lane x 56).
-- Evidence: `VerifyBigDecorParsingCna` (world 041: the house a column of two, the plants none);
-  play pass 27.
+  the vault's east gallery in lane x 56); with the models' full shapes no other.
+- Evidence: `VerifyBigDecorParsingCna` (world 041: columns without shapes; the house two blocks
+  square with its shape); play pass 28 78/78.

@@ -21,10 +21,20 @@ namespace GalaxyEggbert::Game
         // below; null outside Step(). Each is its centre, raw grid: a unit cube from x - 0.5 to
         // x + 0.5, y to y + 1, z - 0.5 to z + 0.5 (between two cells while it is pushed).
         thread_local const std::vector<std::array<float, 3>>* g_crateCells = nullptr;
+        // The solid boxes of the same Step() (SetSolidBoxes(): the BigDecor), null outside it.
+        thread_local const std::vector<SolidBox>* g_solidBoxes = nullptr;
 
-        // A crate in cell (gx, gy, gz) (the cell its centre is nearest).
+        // A crate in cell (gx, gy, gz) (the cell its centre is nearest), or a solid box holding the
+        // cell's middle.
         bool IsCrateCell(int gx, int gy, int gz)
         {
+            if (g_solidBoxes != nullptr &&
+                std::any_of(g_solidBoxes->begin(), g_solidBoxes->end(), [&](const SolidBox& box)
+                            { return box.Contains(static_cast<float>(gx), static_cast<float>(gy) + 0.5f,
+                                                  static_cast<float>(gz)); }))
+            {
+                return true;
+            }
             return g_crateCells != nullptr &&
                    std::any_of(g_crateCells->begin(), g_crateCells->end(), [&](const std::array<float, 3>& c)
                    {
@@ -32,9 +42,15 @@ namespace GalaxyEggbert::Game
                    });
         }
 
-        // A crate's cube holds the point (raw grid X/Z, Y).
+        // A crate's cube or a solid box holds the point (raw grid X/Z, Y).
         bool IsCrateAt(float gxf, float y, float gzf)
         {
+            if (g_solidBoxes != nullptr &&
+                std::any_of(g_solidBoxes->begin(), g_solidBoxes->end(),
+                            [&](const SolidBox& box) { return box.Contains(gxf, y, gzf); }))
+            {
+                return true;
+            }
             return g_crateCells != nullptr &&
                    std::any_of(g_crateCells->begin(), g_crateCells->end(), [&](const std::array<float, 3>& c)
                    {
@@ -45,8 +61,16 @@ namespace GalaxyEggbert::Game
 
         struct CrateCellsScope
         {
-            explicit CrateCellsScope(const std::vector<std::array<float, 3>>& cells) { g_crateCells = &cells; }
-            ~CrateCellsScope() { g_crateCells = nullptr; }
+            CrateCellsScope(const std::vector<std::array<float, 3>>& cells, const std::vector<SolidBox>& boxes)
+            {
+                g_crateCells = &cells;
+                g_solidBoxes = &boxes;
+            }
+            ~CrateCellsScope()
+            {
+                g_crateCells = nullptr;
+                g_solidBoxes = nullptr;
+            }
         };
 
         // Set for one Step() while Blupi flies the helicopter or the overcraft, which pass the
@@ -407,7 +431,7 @@ namespace GalaxyEggbert::Game
             dx *= maxStep / distance;
             dz *= maxStep / distance;
         }
-        const CrateCellsScope crateCells(m_crateCells);
+        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes);
         const MoveResult moved = ResolveMove(world, m_x, m_y, m_z, dx, 0.0f, dz, tempPassable);
         m_x = moved.x;
         m_z = moved.z;
@@ -1182,7 +1206,7 @@ namespace GalaxyEggbert::Game
     bool BlupiController::BothFeetOnGround(const Worlds::World& world, bool tempPassable) const
     {
         // The crates count as ground, as the original's DecorDetect does (it tests them too).
-        const CrateCellsScope crateCells(m_crateCells);
+        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes);
         constexpr float kFootOffset = 11.0f / 64.0f;
         const float fx = std::sin(m_yaw) * kFootOffset;
         const float fz = -std::cos(m_yaw) * kFootOffset;
@@ -1427,7 +1451,7 @@ namespace GalaxyEggbert::Game
                                   bool tempPassable, bool inSurfWater, bool inDeepWater, bool pushingCrate,
                                   bool holdingCrate)
     {
-        const CrateCellsScope crateCells(m_crateCells);
+        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes);
         const FlightBarrierScope flightBarrier(m_vehicleMode == VehicleMode::Helicopter ||
                                                m_vehicleMode == VehicleMode::Overcraft);
         m_moveInput = moveInput;

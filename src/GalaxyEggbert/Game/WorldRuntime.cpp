@@ -761,21 +761,50 @@ namespace GalaxyEggbert::Game
         }
     }
 
-    std::vector<std::array<float, 3>> WorldRuntime::SolidBigDecorCells() const
+    std::vector<SolidBox> WorldRuntime::SolidBigDecorBoxes() const
     {
-        std::vector<std::array<float, 3>> cells;
+        std::vector<SolidBox> boxes;
+        if (world_ == nullptr)
+        {
+            return boxes;
+        }
         for (const auto& decor : bigDecorCells_)
         {
             if (!IsSolidBigDecorIcon(decor.icon))
             {
                 continue;
             }
-            for (int h = 0; h < kSolidBigDecorHeight; ++h)
+            const float cx = decor.worldX + static_cast<float>(kWorldCenterX);
+            const float cy = decor.worldY;
+            const float cz = decor.worldZ + static_cast<float>(kWorldCenterZ);
+            const int turns = ObjectQuarterTurns(*world_, static_cast<std::uint16_t>(std::lround(cx)),
+                                                 static_cast<std::uint16_t>(std::lround(cy)),
+                                                 static_cast<std::uint16_t>(std::lround(cz)));
+            std::vector<SolidBox> shape;
+            const auto found = bigDecorShapes_.find(decor.icon);
+            if (found != bigDecorShapes_.end() && !found->second.empty())
             {
-                cells.push_back({decor.worldX + static_cast<float>(kWorldCenterX), decor.worldY + static_cast<float>(h),
-                                 decor.worldZ + static_cast<float>(kWorldCenterZ)});
+                shape = found->second;
+            }
+            else
+            {
+                shape.push_back({-0.5f, 0.5f, 0.0f, static_cast<float>(kSolidBigDecorHeight), -0.5f, 0.5f});
+            }
+            for (const auto& box : shape)
+            {
+                // A quarter turn about +Y as the model's (XNA CreateRotationY: x' = z, z' = -x).
+                float minX = box.minX, maxX = box.maxX, minZ = box.minZ, maxZ = box.maxZ;
+                for (int k = 0; k < turns; ++k)
+                {
+                    const float nMinX = minZ, nMaxX = maxZ, nMinZ = -maxX, nMaxZ = -minX;
+                    minX = nMinX;
+                    maxX = nMaxX;
+                    minZ = nMinZ;
+                    maxZ = nMaxZ;
+                }
+                boxes.push_back({cx + minX, cx + maxX, cy + box.minY, cy + box.maxY, cz + minZ, cz + maxZ});
             }
         }
-        return cells;
+        return boxes;
     }
 }

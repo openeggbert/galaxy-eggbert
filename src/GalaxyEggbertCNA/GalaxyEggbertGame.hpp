@@ -906,9 +906,8 @@ namespace GalaxyEggbert::CNA
             std::uint16_t icon;
         };
         std::vector<BigDecorCell> bigDecorCells_;
-        // The cells the large BigDecor fill (WorldRuntime::SolidBigDecorCells, Q-014 (b)), raw grid,
-        // refreshed with bigDecorCells_; solid for Blupi with the crates (SetCrateCells).
-        std::vector<std::array<float, 3>> solidBigDecorCells_;
+        // The BigDecor models' shapes (WorldRuntime::SetBigDecorShapes), measured when they load.
+        GalaxyEggbert::Game::BigDecorShapes bigDecorShapes_;
         bool graceWasInVehicle_ = false; // for the contact grace after leaving a vehicle
         // Tells the terrain which cells are drawn as models (the fan, BlockModels.hpp).
         void ApplyBlockModels();

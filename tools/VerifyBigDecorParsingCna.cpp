@@ -137,39 +137,45 @@ int main()
         }
     }
 
-    // Q-014 (b), owner 2026-11-05: the large BigDecor stand in Blupi's way, a column of two cells
-    // over the anchor; the plants and toys do not. World 041 has the house (26) at (40, 10, 70)
-    // among plants (23-25).
+    // Q-014, owner 2026-11-05: the BigDecor (but the slime and 203) stand in Blupi's way as boxes
+    // fitted to their models; without a measured shape a column of two cells over the anchor. World
+    // 041 has the house (26) at (40, 10, 70) among plants (23-25), all solid now.
     {
         GalaxyEggbert::Game::WorldRuntime runtime;
         const bool loaded = runtime.LoadFromVwrFile("worlds3d/world041.vwr");
-        int large = 0;
-        int small = 0;
+        int solid = 0;
         for (const auto& decor : runtime.GetBigDecorCells())
         {
-            (GalaxyEggbert::IsSolidBigDecorIcon(decor.icon) ? large : small) += 1;
+            solid += GalaxyEggbert::IsSolidBigDecorIcon(decor.icon) ? 1 : 0;
         }
-        const auto cells = runtime.SolidBigDecorCells();
-        const auto has = [&](float x, float y, float z)
+        const auto columns = runtime.SolidBigDecorBoxes();
+        const auto holds = [](const std::vector<GalaxyEggbert::Game::SolidBox>& boxes, float x, float y, float z)
         {
-            for (const auto& c : cells)
+            for (const auto& box : boxes)
             {
-                if (c[0] == x && c[1] == y && c[2] == z)
+                if (box.Contains(x, y, z))
                 {
                     return true;
                 }
             }
             return false;
         };
-        const bool ok = loaded && large > 0 && small > 0 &&
-                        cells.size() == static_cast<std::size_t>(large * GalaxyEggbert::kSolidBigDecorHeight) &&
-                        has(40.0f, 10.0f, 70.0f) && has(40.0f, 11.0f, 70.0f) && !has(40.0f, 12.0f, 70.0f);
-        std::cout << (ok ? "PASS" : "FAIL") << ": the large BigDecor fill a column of two cells, the small none ("
-                  << large << " large, " << small << " small, " << cells.size() << " cells)" << std::endl;
-        if (!ok)
-        {
-            allOk = false;
-        }
+        const bool columnOk = loaded && solid > 0 && columns.size() == static_cast<std::size_t>(solid) &&
+                              holds(columns, 40.0f, 10.5f, 70.0f) && holds(columns, 40.0f, 11.5f, 70.0f) &&
+                              !holds(columns, 40.0f, 12.5f, 70.0f) && !holds(columns, 41.0f, 10.5f, 70.0f);
+        std::cout << (columnOk ? "PASS" : "FAIL") << ": without a shape each solid BigDecor is a column of two cells ("
+                  << solid << " in world 041)" << std::endl;
+        allOk = allOk && columnOk;
+        // The house measured two blocks square (its model): solid across both neighbours' halves.
+        GalaxyEggbert::Game::BigDecorShapes shapes;
+        shapes[26] = {{-1.0f, 1.0f, 0.0f, 1.7f, -1.0f, 1.0f}};
+        runtime.SetBigDecorShapes(shapes);
+        const auto fitted = runtime.SolidBigDecorBoxes();
+        const bool fittedOk = holds(fitted, 40.8f, 10.5f, 70.0f) && holds(fitted, 40.0f, 11.6f, 70.8f) &&
+                              !holds(fitted, 41.2f, 10.5f, 70.0f) && !holds(fitted, 40.0f, 11.8f, 70.0f);
+        std::cout << (fittedOk ? "PASS" : "FAIL")
+                  << ": with its model's shape the house is solid over its whole footprint, no higher" << std::endl;
+        allOk = allOk && fittedOk;
     }
 
     // Malformed-cell regression (found via a fresh code audit, 2026-07-23):

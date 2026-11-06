@@ -361,11 +361,12 @@ namespace GalaxyEggbert::Game
                 {
                     return false;
                 }
-                // The large BigDecor's columns stop a crate as blocks do (Q-014 (b)).
-                for (const auto& cell : worldRuntime.SolidBigDecorCells())
+                // The solid BigDecor stop a crate as blocks do (Q-014): its cube against their boxes.
+                for (const auto& box : worldRuntime.SolidBigDecorBoxes())
                 {
-                    if (static_cast<int>(std::lround(cell[1])) == y && std::fabs(cell[0] - rx) < 1.0f - kCrateEps &&
-                        std::fabs(cell[2] - rz) < 1.0f - kCrateEps)
+                    if (rx + 0.5f - kCrateEps > box.minX && rx - 0.5f + kCrateEps < box.maxX &&
+                        rz + 0.5f - kCrateEps > box.minZ && rz - 0.5f + kCrateEps < box.maxZ &&
+                        static_cast<float>(y) + 1.0f > box.minY && static_cast<float>(y) < box.maxY)
                     {
                         return false;
                     }

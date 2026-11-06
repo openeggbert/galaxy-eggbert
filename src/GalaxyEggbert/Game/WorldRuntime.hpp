@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SolidBox.hpp"
+
 #include <GalaxyEggbert/Worlds/World.hpp>
 #include <GalaxyEggbert/Def/ObjectType.hpp>
 #include <GalaxyEggbert/HintZoneRecord.hpp>
@@ -321,10 +323,13 @@ namespace GalaxyEggbert::Game
             return bigDecorCells_;
         }
 
-        // The cells the large BigDecor fill (IsSolidBigDecorIcon, Q-014 (b)): raw grid centres, a
-        // column of kSolidBigDecorHeight over each one's anchor; solid for Blupi as crates are
-        // (BlupiController::SetCrateCells). Only the 3D worlds' records (they stand on their cell).
-        [[nodiscard]] std::vector<std::array<float, 3>> SolidBigDecorCells() const;
+        // The solid BigDecor (IsSolidBigDecorIcon, Q-014) as boxes in raw grid coordinates: each
+        // one's shape (SetBigDecorShapes; without one a column of kSolidBigDecorHeight cells over
+        // its anchor) turned by its cell's quarter turns and placed on its cell. Solid for Blupi
+        // (BlupiController::SetSolidBoxes) and for crates.
+        [[nodiscard]] std::vector<SolidBox> SolidBigDecorBoxes() const;
+        // The models' shapes by BigDecor icon (the game measures them when it loads the models).
+        void SetBigDecorShapes(BigDecorShapes shapes) { bigDecorShapes_ = std::move(shapes); }
 
         // The world's training-hint zones (HintZoneRecord.hpp), raw grid
         // cells, in record order; empty for worlds that have none.
@@ -348,6 +353,7 @@ namespace GalaxyEggbert::Game
 
     private:
         std::unique_ptr<Worlds::World> world_;
+        BigDecorShapes bigDecorShapes_;
         std::vector<std::uint16_t> bigDecor_;
         std::vector<BigDecorSpec> bigDecorCells_;
         std::vector<HintZoneRecord> hintZones_;

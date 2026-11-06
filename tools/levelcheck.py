@@ -36,6 +36,7 @@ come back to.
 from __future__ import annotations
 
 import argparse
+import math
 import collections
 import csv
 import sys
@@ -49,8 +50,60 @@ SIZE = 100
 CRUSHER_HAZARD = 3  # BlockHazardKind::Crusher (tools/data/blocks.csv)
 DRIP_HAZARD = 6     # BlockHazardKind::Drip: hangs in an open cell (BD-0033), nothing stands on it
 LIFTS = {1, 47, 48}
-SOLID_BIGDECOR = {16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30, 31, 87, 88, 89}
+SOLID_BIGDECOR = set(range(16, 32)) | set(range(36, 48)) | {87, 88, 89}
 SOLID_BIGDECOR_HEIGHT = 2
+OBJECTS = Path(__file__).resolve().parents[1] / "avatars3d" / "objects"
+VERTEX = None  # numpy dtype, made on first use (the models' 52-byte vertices)
+
+
+def bigdecor_shapes() -> dict:
+    """icon -> [(minX, maxX, minY, maxY, minZ, maxZ)], the boxes the game measures from the BigDecor
+    models (GalaxyEggbertGame.cpp ModelFileShape: half-block slices of the model as drawn)."""
+    import math
+    import numpy as np
+    global VERTEX
+    if VERTEX is None:
+        VERTEX = np.dtype([("pos", "<f4", 3), ("rest", "V40")])
+    shapes = {}
+    if not OBJECTS.exists():
+        return shapes
+    for d in sorted(OBJECTS.glob("bd_*")):
+        lines = [l.split() for l in (d / "icons.txt").read_text().splitlines() if l.startswith("icon explo")]
+        pts = np.concatenate([np.fromfile(f, dtype=VERTEX)["pos"] for f in d.glob("*.verts.bin")]).astype(float)
+        for f in lines:
+            icon, mirror, yaw, px, dx, dy = int(f[2]), int(f[4]), float(f[5]), int(f[7]), int(f[8]), int(f[9])
+            if icon not in SOLID_BIGDECOR:
+                continue
+            c, s = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
+            x = pts[:, 0] * c + pts[:, 2] * s
+            y = pts[:, 1].copy()
+            z = -pts[:, 0] * s + pts[:, 2] * c
+            if mirror == 1:
+                x = -x - 1 / 64
+            elif mirror == 2:
+                y = -y + 1 / 64
+            x = x + dx / 64
+            y = y - dy / 64 + (px or 128) / 128
+            top = max(0.0, float(y.max()))
+            n = max(1, math.ceil(top / 0.5))
+            k = np.clip(np.floor(y / 0.5).astype(int), 0, n - 1)
+            boxes = [None] * n
+            for i in range(n):
+                sel = k == i
+                if sel.any():
+                    boxes[i] = (x[sel].min(), x[sel].max(), z[sel].min(), z[sel].max())
+            area = lambda b: (b[1] - b[0]) * (b[3] - b[2])
+            for i in range(n):
+                if boxes[i] is None:
+                    near = [boxes[j] for d_ in range(1, n) for j in (i - d_, i + d_) if 0 <= j < n and boxes[j] is not None]
+                    if near:
+                        boxes[i] = min(near[:2], key=area)
+            shapes[icon] = [(b[0], b[1], 0.5 * i, 0.5 * (i + 1), b[2], b[3]) for i, b in enumerate(boxes)
+                            if b is not None and b[1] - b[0] >= 0.05 and b[3] - b[2] >= 0.05]
+    return shapes
+
+
+_SHAPES = None
 HELICOPTER = 13
 WIND_FIRST, WIND_LAST = 110, 125   # BlockTypes::isWind
 DANGEROUS = {2, 3, 4, 16, 17, 20, 32, 33, 44, 54, 96, 97}   # mines and enemies
@@ -72,12 +125,27 @@ class Grid:
         for o in self.objects:
             if o.get("type") == 12:
                 self.solid_objects.add(tuple(int(c // 1) for c in o["start"]))
-        # The large BigDecor, a column over the anchor (BlockDefinitionRegistry's
-        # kSolidBigDecorIcons / kSolidBigDecorHeight, Q-014 (b)).
+        # The solid BigDecor (BlockDefinitionRegistry's kSolidBigDecorIcons, Q-014) as the game's
+        # boxes: a cell counts as solid where a box reaches within a quarter block of its middle
+        # (Blupi is half a block wide), over the heights it covers; the cell's quarter turns as the game.
+        global _SHAPES
+        if _SHAPES is None:
+            _SHAPES = bigdecor_shapes()
+        turns_at = world.get("object_turns", {})
         for (x, y, z), icon in world.get("bigdecor", ()):
-            if icon in SOLID_BIGDECOR:
-                for h in range(SOLID_BIGDECOR_HEIGHT):
-                    self.solid_objects.add((x, y + h, z))
+            if icon not in SOLID_BIGDECOR:
+                continue
+            shape = _SHAPES.get(icon) or [(-0.5, 0.5, 0.0, float(SOLID_BIGDECOR_HEIGHT), -0.5, 0.5)]
+            for x0, x1, y0, y1, z0, z1 in shape:
+                for _ in range(turns_at.get((x, y, z), 0)):
+                    x0, x1, z0, z1 = z0, z1, -x1, -x0
+                for cy in range(int(y + y0 // 1), int(math.ceil(y + y1))):
+                    if not (cy + 1 > y + y0 and cy < y + y1):
+                        continue
+                    for cx in range(math.floor(x + x0 - 0.25), math.ceil(x + x1 + 0.25) + 1):
+                        for cz in range(math.floor(z + z0 - 0.25), math.ceil(z + z1 + 0.25) + 1):
+                            if x + x0 < cx + 0.25 and x + x1 > cx - 0.25 and z + z0 < cz + 0.25 and z + z1 > cz - 0.25:
+                                self.solid_objects.add((cx, cy, cz))
         self.danger = set()
         for o in self.objects:
             if o.get("type") in DANGEROUS:

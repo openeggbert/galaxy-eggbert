@@ -103,13 +103,15 @@ namespace GalaxyEggbert
     inline constexpr std::array<std::uint16_t, 12> kSolidIn3DDecor{
         49, 50, 51, 76, 77, 199, 200, 201, 235, 236, 300, 398};
 
-    // The large BigDecor (explo.png pictures standing in the rooms as their models) that stand in
-    // his way in 3D (Q-014 (b), owner 2026-11-05, MR-0007): the palms 16-19, the trees 20-22, the
-    // houses 26-27, the machines 28-31, the palace's columns and fountain 87-89. A column of
-    // kSolidBigDecorHeight cells over the anchor cell, as high as the 128 px picture (2 blocks).
-    // The plants 23-25, the toys 36-47, the slime 66-69 and 203 stay passable, as grass.
-    inline constexpr std::array<std::uint16_t, 16> kSolidBigDecorIcons{
-        16, 17, 18, 19, 20, 21, 22, 26, 27, 28, 29, 30, 31, 87, 88, 89};
+    // The BigDecor (explo.png pictures standing in the rooms as their models) that stand in his way
+    // in 3D (Q-014, owner 2026-11-05, MR-0007/MR-0008): the palms 16-19, the trees 20-22, the plants
+    // 23-25, the houses 26-27, the machines 28-31, the toys 36-47, the palace's columns and fountain
+    // 87-89 -- as their models' shapes (WorldRuntime::SolidBigDecorBoxes); without a measured shape
+    // a column of kSolidBigDecorHeight cells over the anchor (the 128 px picture: 2 blocks). The
+    // slime 66-69 and 203 stay passable.
+    inline constexpr std::array<std::uint16_t, 31> kSolidBigDecorIcons{
+        16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+        36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 87, 88, 89};
     inline constexpr int kSolidBigDecorHeight = 2;
     [[nodiscard]] inline constexpr bool IsSolidBigDecorIcon(std::uint16_t icon) noexcept
     {
