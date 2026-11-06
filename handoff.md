@@ -102,7 +102,14 @@ only when that task is requested.
   0076), Resume (BD-0077), the grounded start (BD-0078), CI pinned to verified sibling revisions
   (`tools/ci_pin_siblings.py`), UB-006/UB-007 confirmed fixed in CNA.
 
-### Verified state at the end of the session
+### Verified state, 2026-11-07 (after queue tasks 1-6, Claude)
+
+- ctest 112/112, golden frames and trace pass. **Full play pass on the final tree (`5d371662`): 78/78**
+  (`build-probe/play-pass-final-1107/results.txt`, sheets beside it); hub chains included. The queue
+  (tasks 1-6) is done; open: the owner's review of world 199's journey (its weak spots are in the
+  "World 199 rebuild" section), Q-016 (zoom cheat), the editor's lift look (BD-0082's note), release.
+
+### Verified state at the end of the previous session
 
 - `ctest --test-dir build-cna-opengl3 -j4`: 112/112. Golden frames and trace: pass.
 - Full play pass on the final tree (`b19db064` + the bridge): **78/78**
