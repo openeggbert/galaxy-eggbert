@@ -129,7 +129,7 @@ namespace GalaxyEggbert::Game
                     {"x", Field::X},         {"y", Field::Y},         {"z", Field::Z},
                     {"yaw", Field::Yaw},     {"tick", Field::Tick},   {"mtick", Field::MissionTick}, {"mission", Field::Mission},
                     {"treasures", Field::Treasures}, {"eggs", Field::Eggs}, {"lives", Field::Lives}, {"keys", Field::Keys}, {"dynamite", Field::Dynamite}, {"vehicle", Field::Vehicle},
-                    {"ghost", Field::Ghost}, {"anim", Field::Anim}, {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp}, {"crush", Field::Crush},
+                    {"ghost", Field::Ghost}, {"anim", Field::Anim}, {"ground", Field::Ground}, {"dead", Field::Dead}, {"exit", Field::Exit}, {"blitz", Field::Blitz}, {"temp", Field::Temp}, {"crush", Field::Crush}, {"switches", Field::Switches}, {"saws", Field::Saws},
                     {"phase", Field::Phase}};
                 static const std::pair<const char*, Op> kOps[] = {{"=", Op::Eq},  {"!=", Op::Ne}, {"<", Op::Lt},
                                                                   {"<=", Op::Le}, {">", Op::Gt},  {">=", Op::Ge}};
@@ -375,6 +375,8 @@ namespace GalaxyEggbert::Game
         case Field::Blitz: value = static_cast<float>(state.blitz); break;
         case Field::Temp: value = static_cast<float>(state.temp); break;
         case Field::Crush: value = static_cast<float>(state.crush); break;
+        case Field::Switches: value = static_cast<float>(state.switchPresses); break;
+        case Field::Saws: value = static_cast<float>(state.sawsTurning); break;
         case Field::Phase: value = static_cast<float>(Def::ToRaw(state.phase)); break;
         }
         switch (condition.op)
@@ -428,6 +430,13 @@ namespace GalaxyEggbert::Game
         {
             std::snprintf(line, sizeof(line), "treasures %d eggs %d lives %d keys %d dynamite %d", state.treasures,
                           state.eggs, state.lives, state.keys, state.dynamite);
+            Write(state, line);
+        }
+        if (havePrevious_ && (state.switchPresses != previous_.switchPresses ||
+                              state.sawsTurning != previous_.sawsTurning))
+        {
+            std::snprintf(line, sizeof(line), "switch presses %d saws turning %d", state.switchPresses,
+                          state.sawsTurning);
             Write(state, line);
         }
         // Crates: how many at the start and whenever some are blown up; each one that moves.

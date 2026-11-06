@@ -91,43 +91,53 @@ namespace
     // row: some 378 become 379 or the other way round. Returns the first switch that changed none.
     std::string SwitchThatTurnsNothing(const std::filesystem::path& path)
     {
-        GalaxyEggbert::Game::WorldRuntime runtime;
-        if (!runtime.LoadFromVwrFile(path.string()))
-            return "WorldRuntime::LoadFromVwrFile() refused it";
-        const World& world = runtime.GetWorld();
-        const int n = world.blocksPerAxis();
-        std::vector<std::array<int, 3>> switches;
-        for (int z = 0; z < n; ++z)
-            for (int y = 0; y < n; ++y)
-                for (int x = 0; x < n; ++x)
+        // Walked up to it (his body against the block) and walked into it (the switch is passable, he
+        // stands in its cell: the case that did nothing, OR-0078). A fresh runtime for each press: the
+        // exhibit switches stand in opposite states, so pressing both in one world could undo itself.
+        for (const float offsetZ : {0.5f + GalaxyEggbert::Game::BlupiController::kBodyHalfWidth, 0.0f})
+        {
+            std::vector<std::array<int, 3>> switches;
+            {
+                GalaxyEggbert::Game::WorldRuntime runtime;
+                if (!runtime.LoadFromVwrFile(path.string()))
+                    return "WorldRuntime::LoadFromVwrFile() refused it";
+                const World& world = runtime.GetWorld();
+                const int n = world.blocksPerAxis();
+                for (int z = 0; z < n; ++z)
+                    for (int y = 1; y < n; ++y) // y 0: floor switches (stood on) are the south hall's
+                        for (int x = 0; x < n; ++x)
+                        {
+                            const auto type = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                                             static_cast<std::uint16_t>(z)).type();
+                            if (type == 384 || type == 385)
+                                switches.push_back({x, y, z});
+                        }
+            }
+            for (const auto& [x, y, z] : switches)
+            {
+                GalaxyEggbert::Game::WorldRuntime runtime;
+                if (!runtime.LoadFromVwrFile(path.string()))
+                    return "WorldRuntime::LoadFromVwrFile() refused it";
+                const World& world = runtime.GetWorld();
+                const int n = world.blocksPerAxis();
+                const auto turning = [&]
                 {
-                    const auto type = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
-                                                     static_cast<std::uint16_t>(z)).type();
-                    if (type == 384 || type == 385)
-                        switches.push_back({x, y, z});
-                }
-        const auto sawSignature = [&](int y, int z)
-        {
-            int turning = 0;
-            for (int x = 0; x < n; ++x)
-                turning += world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
-                                          static_cast<std::uint16_t>(z)).type() == 378;
-            return turning;
-        };
-        for (const auto& [x, y, z] : switches)
-        {
-            if (y == 0)
-                continue; // floor switches (a Blupi on top of them) are the south hall's, not exhibits
-            const int before = sawSignature(y, z);
-            const auto turned = runtime.TryActivateSwitch(
-                static_cast<float>(x - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX),
-                static_cast<float>(y),
-                static_cast<float>(z - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ) + 0.5f +
-                    GalaxyEggbert::Game::BlupiController::kBodyHalfWidth,
-                true);
-            if (!turned || sawSignature(y, z) == before)
-                return "pressing the switch at (" + std::to_string(x) + ", " + std::to_string(y) + ", " +
-                       std::to_string(z) + ") turns no saw";
+                    int count = 0;
+                    for (int sx = 0; sx < n; ++sx)
+                        count += world.getBlock(static_cast<std::uint16_t>(sx), static_cast<std::uint16_t>(y),
+                                                static_cast<std::uint16_t>(z)).type() == 378;
+                    return count;
+                };
+                const int before = turning();
+                const auto turned = runtime.TryActivateSwitch(
+                    static_cast<float>(x - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX),
+                    static_cast<float>(y),
+                    static_cast<float>(z - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ) + offsetZ, true);
+                if (!turned || turning() == before)
+                    return "pressing the switch at (" + std::to_string(x) + ", " + std::to_string(y) + ", " +
+                           std::to_string(z) + ") " + (offsetZ == 0.0f ? "standing in it" : "against it") +
+                           " turns no saw";
+            }
         }
         return {};
     }

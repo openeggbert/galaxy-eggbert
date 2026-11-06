@@ -462,8 +462,9 @@ namespace GalaxyEggbert::Game
         // The original's switch is a tile in Blupi's own cell, in front of which he stands
         // (Decor::IsSwitch: his middle within it, 4 px from its sides). In 3D it is a block: the one
         // he stands on (a switch in the floor), or one beside him at his own height that his body
-        // touches (a switch machine standing on the floor or in a wall; owner 2026-11-04, OR-0067:
-        // only the block under him counted, so walking up to the machine did nothing).
+        // touches or stands in (a switch machine standing on the floor or in a wall; owner 2026-11-04,
+        // OR-0067: only the block under him counted, so walking up to the machine did nothing; and
+        // 2026-11-06, OR-0078: the machine is passable, he walks into it and his own cell was skipped).
         const int blocksPerAxis = static_cast<int>(world_->blocksPerAxis());
         const float wx = blupiX + static_cast<float>(kWorldCenterX);
         const float wz = blupiZ + static_cast<float>(kWorldCenterZ);
@@ -493,7 +494,9 @@ namespace GalaxyEggbert::Game
             {
                 for (int dx = -1; dx <= 1; ++dx)
                 {
-                    if ((dx == 0 && dz == 0) || !isSwitchAt(cx + dx, level, cz + dz))
+                    // Its own cell too: a switch at his height is walked into (the original's switch is a
+                    // tile in Blupi's own cell, Decor::IsSwitch), and then he stands inside its block.
+                    if (!isSwitchAt(cx + dx, level, cz + dz))
                     {
                         continue;
                     }

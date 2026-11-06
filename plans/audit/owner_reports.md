@@ -397,3 +397,22 @@ rewritten).
   row and that `TryActivateSwitch` (Blupi against it) turns saws (it fails on the previous worlds);
   ctest 112/112, golden frames and trace unchanged; autoplay probes
   `tools/autoplay/probes/exhibit_saws_998.txt` / `_999.txt` (shots in `build-probe/exhibit-saws/`).
+
+
+## OR-0078 — the saw on/off machine still did nothing: walked into, not pressed (owner 2026-11-06, second report) — FIXED_AND_VERIFIED
+
+- Report: "find out why the machine that turns the saw on/off does nothing; it should turn the saw
+  on/off". The same symptom as OR-0077, which I had closed from the data alone (saws in the row, and a
+  unit press at a hand-picked spot): the premise was wrong.
+- Cause, found by pressing it in the running game (an autoplay probe that walks up and presses Action,
+  with the new `switches` / `saws` conditions that count presses and turning saws): the switch block
+  is passable (the original's switch is a tile in Blupi's own cell), so walking up to the machine
+  takes him INTO its cell (z 41.95 for the switch at z 42), and `WorldRuntime::TryActivateSwitch` looked
+  at the block under him and at the eight neighbours at his height, skipping `(dx, dz) = (0, 0)`: his
+  own cell. Standing in the machine found no switch. (OR-0067's fix had only added the neighbours.)
+- Fixed: the own cell counts (distance 0). Every switch machine at his height now works whether he
+  stands against it or in it.
+- Verified: `VerifyShippedWorlds` presses every exhibit switch of 998 and 999 against it and standing
+  in it, each on a fresh runtime (it fails on the old code for "standing in it"); live probes
+  `tools/autoplay/probes/exhibit_saws_998.txt` / `_999.txt` (traces: 998 saws turning 6 -> 4 -> 7, 999
+  4 -> 1); autoplay gained the conditions `switches` and `saws` and a trace line on their change.

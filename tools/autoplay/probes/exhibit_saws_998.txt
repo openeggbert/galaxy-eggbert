@@ -1,21 +1,20 @@
-# The gallery's exhibit switch 384 at (14, 1, 42): Action toggles the saws (7, 9, 11) of its row. Run: tools/autoplay.sh build-cna-opengl3 <this> 998
+# The gallery's exhibit switch 384 at (14, 1, 42) (OR-0077, OR-0078): from the aisle he walks up and
+# into the machine (it is passable) and Action turns the saws 378 of its row (7, 9, and the stopped one at 11) off, then on.
+# Run: tools/autoplay.sh build-cna-opengl3 <this> 998
 go 50 43 tol 0.3 max 900
 go 14 43 tol 0.1 max 1200
 face 0
-# his body against the switch's block (from the aisle he stands 0.5 away, out of reach)
 hold 30 up
+wait 10
+expect saws = 6
+expect switches = 0
+hold 2 action
+wait 10
+expect switches = 1
+expect saws = 4
 wait 40
-shots 1
-wait 3
-log before-press
 hold 2 action
-wait 30
-shots 1
-wait 3
-log after-first-press
-hold 2 action
-wait 30
-shots 1
-wait 3
-log after-second-press
+wait 10
+expect switches = 2
+expect saws = 7 # the stopped 379 at (11, 1, 42) turns too
 end

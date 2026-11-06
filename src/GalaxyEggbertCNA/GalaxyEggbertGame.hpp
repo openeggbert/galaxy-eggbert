@@ -694,6 +694,11 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Input::KeyboardState autoplayKeys_;
         std::FILE* autoplayTrace_ = nullptr;
         int autoplayTick_ = 0;
+        // The autoplay's `switches` / `saws` conditions: the switches pressed in this mission and the
+        // saws 378 turning now (-1: not counted yet; counted again after each press).
+        int autoplaySwitchPresses_ = 0;
+        int autoplaySawsTurning_ = -1;
+        int autoplaySwitchMission_ = -1;
         int autoplayExitCode_ = 0;
         // AUTOPLAY_SHOTS=N (EnableAutoplay()): a frame saved every N ticks of the run, for looking at
         // a whole playthrough as the player sees it; pending until the next drawn frame.

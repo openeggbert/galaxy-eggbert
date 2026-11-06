@@ -46,7 +46,8 @@
 // COND is FIELD OP VALUE, FIELD one of x y z yaw tick mtick mission treasures eggs lives keys dynamite
 // ground dead ghost anim (BlupiController::AnimState: Stop=0, March=1) exit (1 once the mission's exit is reached) blitz (the lightning's place in its 100-tick cycle:
 // it strikes on the even ticks of 0-49) temp (the vanishing saucers' place in their 20-step cycle:
-// gone at 18-19) crush (the crushers' place in their 10-step cycle: they squash at 0-2) phase, OP one of = != < <= > >=; tick counts from the script's start, mtick from
+// gone at 18-19) switches (the switches he has pressed this mission) saws (the saws 378 turning now: a press of a
+// switch turns those of its row off or on) crush (the crushers' place in their 10-step cycle: they squash at 0-2) phase, OP one of = != < <= > >=; tick counts from the script's start, mtick from
 // the current mission's (a mission's own timing holds when it is played in a chain); phase takes a name
 // (Play, Win, Lost, Pause, Init, ...). A
 // command that runs out of ticks, or Blupi dying, ends the run as a failure.
@@ -70,6 +71,8 @@ namespace GalaxyEggbert::Game
         bool dead = false;
         bool ghost = false;
         int anim = 0; // BlupiController::AnimState: Stop=0, March=1
+        int switchPresses = 0; // the switches he has pressed (384/385 toggled) since the mission began
+        int sawsTurning = 0;   // the saws 378 now turning in the world
 
         bool exitReached = false;
         int blitz = 0;
@@ -120,7 +123,7 @@ namespace GalaxyEggbert::Game
 
     private:
         enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, End };
-        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Ghost, Anim, Exit, Blitz, Temp, Crush, Phase };
+        enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Ghost, Anim, Exit, Blitz, Temp, Crush, Switches, Saws, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
         {

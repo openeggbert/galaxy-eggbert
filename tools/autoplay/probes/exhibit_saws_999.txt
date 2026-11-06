@@ -1,18 +1,14 @@
-# The showcase's exhibit switch 385 at (3, 1, 19): Action at it turns the saws 378/379 now standing
-# in its row (4, 6, 8). Run: tools/autoplay.sh build-cna-opengl3 <this> 999 --spawn 3,1,20,0
-wait 60
-face 0
-# his body against the switch's block (from the aisle he stands 0.5 away, out of reach)
+# The showcase's exhibit switch 385 at (3, 1, 19) (OR-0077, OR-0078): into the machine from the aisle,
+# Action turns the saws of its row (4, 6 turning, 8 stopped) on, the second press off.
+# Run: tools/autoplay.sh build-cna-opengl3 <this> 999 --spawn 3,1,20,0
 hold 30 up
-wait 20
-shots 1
-wait 3
+wait 10
+expect switches = 0
 hold 2 action
-wait 30
-shots 1
-wait 3
+wait 10
+expect switches = 1
+wait 40
 hold 2 action
-wait 30
-shots 1
-wait 3
+wait 10
+expect switches = 2
 end

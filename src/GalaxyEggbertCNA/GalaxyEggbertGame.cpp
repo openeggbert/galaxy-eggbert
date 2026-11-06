@@ -2088,6 +2088,26 @@ namespace GalaxyEggbert::CNA
         state.blitz = ((worldRuntime_.GetAnimPhase() % 100) + 100) % 100;
         state.temp = (((worldRuntime_.GetAnimPhase() / 4) % 20) + 20) % 20;
         state.crush = (((worldRuntime_.GetAnimPhase() / 3) % 10) + 10) % 10;
+        if (autoplaySwitchMission_ != worldRuntime_.GetMissionNumber())
+        {
+            autoplaySwitchMission_ = worldRuntime_.GetMissionNumber();
+            autoplaySwitchPresses_ = 0;
+            autoplaySawsTurning_ = -1;
+        }
+        if (autoplaySawsTurning_ < 0)
+        {
+            const auto& world = worldRuntime_.GetWorld();
+            const int n = world.blocksPerAxis();
+            autoplaySawsTurning_ = 0;
+            for (int z = 0; z < n; ++z)
+                for (int y = 0; y < n; ++y)
+                    for (int x = 0; x < n; ++x)
+                        autoplaySawsTurning_ += world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                                               static_cast<std::uint16_t>(z)).type() ==
+                                                GalaxyEggbert::BlockTypes::Saw;
+        }
+        state.switchPresses = autoplaySwitchPresses_;
+        state.sawsTurning = autoplaySawsTurning_;
         state.phase = phase_;
         state.mission = worldRuntime_.GetMissionNumber();
         state.treasures = interaction_.TreasuresCollected();
@@ -5369,6 +5389,8 @@ namespace GalaxyEggbert::CNA
                                 blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), blupi_.IsOnGround()))
                         {
                             actionUsed = true;
+                            ++autoplaySwitchPresses_;
+                            autoplaySawsTurning_ = -1; // counted again for the autoplay's next state
                             sound_.Play(*turnedOn ? GalaxyEggbert::Def::SoundChannel::SoundChannel77
                                                   : GalaxyEggbert::Def::SoundChannel::SoundChannel76);
                             // Real Switch animation (plan.md BLUPI-073, found
