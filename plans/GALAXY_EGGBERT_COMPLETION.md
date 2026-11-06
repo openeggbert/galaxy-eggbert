@@ -109,7 +109,7 @@ check of the state.
 | D8 | Game aborted after Play ("Unknown animation clip") | regression of D5: model drawn before a clip was chosen | **done** `8260eaf` |
 | D9 | Gaps between letters in menu text | fixed 17 px advance instead of `Text::table_width` | **done** `21cccb3` |
 | D10 | Bye freezes on its first frame at a world portal, leaves too early | no Bye icon table/clip, so Stop's first frame showed | **done**: icons `4572099`, clip `78757b1` |
-| D11 | Many exhibition models in world999 look wrong compared with Mobile Eggbert | partly D2; the rest needs per-object comparison | open (§7.3) |
+| D11 | Many exhibition models in world999 look wrong compared with Mobile Eggbert | partly D2; the rest needs per-object comparison | closed 2026-11-06 by the owner with the items named (sign plates and digits, hub 070's signs, ball cubes, the house's footprint; MR-0009) |
 | D12 | "Player A: Erase progress" runs off the Setup screen | one line where the original has two | **done** `9d88278` |
 | D13 | Blupi on the skateboard loses a life on a mine; in Mobile Eggbert the skateboard destroys the mine ("just an example" of vehicle/enemy interactions to audit) | `Decor.cpp:5782-5824`: hazards 2/3/4/16/17/20/96/97 always destroyed, Blupi dies unless in jeep, tank or on the skateboard | **done** `149ec32` |
 

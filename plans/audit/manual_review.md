@@ -115,3 +115,13 @@ The owner asked to be asked ("ptej se me nyni na co potrebujes"); answers:
   too; analyse it."
 - D11: the world signs (the yellow columns) should stand closer to the column beside them; now
   there is empty space between the sign and the yellow column.
+
+## MR-0009 — the owner's answers of 2026-11-06
+
+- The AI policy (FNA, development by hand with AI as an advisor): "Zatím ne" -- not now; nothing
+  drafted.
+- D11: "Ne, D11 uzavřít" -- no further list; D11 is closed with the items the owner named
+  (the sign plates and digits, hub 070's signs, the ball cubes' tops, the house's footprint).
+- The editor (asked for proposals, then which to build): copy and paste (ED-0010) and backups with
+  export (ED-0011 backups, ED-0012 export and import, ED-0013 slot thumbnails), built the same day;
+  the other proposals (a level check, cut-away view, eyedropper, play-test from here) not chosen.

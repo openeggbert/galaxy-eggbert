@@ -14,8 +14,8 @@ treasure doors' number plates and the mission signs' digits sat in front of thei
 `83d7e4bc`), OR-0028/0029/0033/0034/0035/0038/0040/0044/0048/0053 (fine), OR-0042 (analysed: the
 original's timing, smoother in 3D). Still the owner's:
 
-- D11: any further model that looks wrong (the owner named the sign plates; nothing else so far).
-  (OR-0041 answered and fixed 2026-11-05: BD-0074.)
+- Nothing waits on the owner now. D11 closed by the owner 2026-11-06 ("Ne, D11 uzavřít", MR-0009);
+  OR-0041 answered and fixed 2026-11-05 (BD-0074).
 
 ### Q-001 — Grass (107-109, 157) in 3D: how? — DONE (b) 2026-11-04
 
