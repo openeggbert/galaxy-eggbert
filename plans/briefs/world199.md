@@ -1,67 +1,94 @@
-# World 199 — the bonus world (the grand tour)
+# World 199 — the bonus world, rebuilt as a journey (2026-11-06)
 
-Built by `tools/worlds/world199.py` → `worlds3d/world199.vwr` (mission 199, region 31 as the
-original). Staged variant for `levelcheck.py`: `--stage 1 out.vwr` (the doors open; no mines,
-creatures, crushers or saws; the lifts' and the lollipop's climbs as stairs).
+Built by `tools/worlds/world199.py` → `worlds3d/world199.vwr` (mission 199, region 31, music 1, no
+treasure, the red arrow ends the game: the win screen). Direction (owner, 2026-11-06): "just take
+strong inspiration from Mobile Eggbert's final world and do it in 3D somehow". The audit is
+`plans/audit/world199_comparison.md` (read §2 for the original's twelve regions, §7 for this plan's
+source, §8 for its gates); this brief is the design that was built, with its coordinates.
+The first version of this world (a plaza, a ring gallery and eight 13 x 13 enclaves) was replaced:
+it kept 95 of the original's 196 objects and none of its 47 BigDecor and read as a hub exercise.
 
-**Reference** (`worlds/world199.txt`, video 6:24:04-6:53:43, the win screen 6:53:44): the finale,
-reached through the main hub's twelve gold bars. A jungle of slime (341-363) holding a piece of
-every world before it: blue machine panel and grey plates, white palace stone with saws, brick with
-bookcases, a village street on cobble, cheese, toy balls and star blocks, brown rock. No treasure,
-thirty-eight eggs; red, green and blue doors (334-336) and their keys (49-51), duplicates of each in
-other parts; twenty-two helicopters, twenty-six lifts, thirty-six moving mines (16), fourteen follow
-stars (96), nine birds (20), bulldozers (4), big creatures (54), enemy Blupis (33), the lollipop (26),
-inverts (40); the red arrow at the end in a frame of star blocks.
+## The shape: one descent, one climb, twelve places
 
-**3D design**: a plaza cut in slime (x 34–66, z 34–66, floor walk 20), a ring gallery round it at
-walk 30 where Blupi starts (65, 30, 35), a stair of slime from the ring down to the floor, two lifts
-(60 ticks, dwelling 40) back up and two teleporter pairs between the floor and the ring (330 west:
-floor 37, 54 / ring 34, 54; 331 south: floor 42, 62 / ring 41, 66), as the original's two pairs link
-rooms one above another; two spike traps (373) alone in the slime floor (35, 45 and 47, 66) and
-two drips (404) hung over the village's passage (x 33, walk 22), as the original's; the wasp's well
-(x 59-63, z 49-53, seven deep, a dead end) with the wasp sweeping its foot and a moving mine across it
-halfway up, as the original's (38-41, 26-31): its sting's balloon is the way out; a climb to the ring's
-south arm (z 63, x 59-62) of slime steps and vanishing saucers (324) by turns, as the original's
-saucers up a shaft (85-92, 6-11); a pool (no fish: the original's has none), helicopters, two bulldozers, three birds, four
-bobbing mines, four sleeping follow stars, eight eggs. Off it eight enclaves, each of one world's
-material, reached by a passage three wide through the plaza's walls:
-- at the floor: **east, the machine** (open): its passage under a curtain of lightning (304 over
-  305, x 68, as world 113's), a pit of lava crossed on a lift, two mines bobbing over it, a row of
-  bars (202) two over the floor across the pit's north side (z 38, x 73-79, the original's bars
-  over lava), a fan (126) in its east wall blowing west across the far bank toward the pit (u 9,
-  z 46, the original's fans in walls blowing west), the red key, two helicopters; **north, the brick library** (red door): a stair of
-  bookcases, the green key on its top row, a crate; **west, the village street** (green door): a row
-  of houses (windows on their street side, slate on top), an enemy Blupi walking the street, two
-  mines, the blue key; **south, the cheese** (green door): a trench of lava across it (three wide, more
-  than a jump) crossed on a clay bridge (364) that crumbles behind Blupi and grows back, as the
-  original's bridges over lava; two bobbing mines, a blue key and a second green key;
-- at the ring: **east, the toys** (red door): sleeping follow stars along the way in, a tower of balls
-  and star blocks four high that only the lollipop's jump reaches, a second red key on it; **north,
-  the palace** (blue door): two rows of saws in its white floor, each stopped by the switch at its
-  west end, two birds, a third green key; **west, the rock** (green door): three big creatures, two
-  pools of lava, the invert, a third blue key; **south, the finale** (blue door): a hall of star
-  blocks, an inner blue door across it, the red arrow beyond in a frame of star blocks.
-- Two red, three green and four blue doors; the keys a flag each, so the duplicates are spare
-  routes. The red arrow ends the game: the win screen, as the original.
+The player starts at the top of the north-west corner and travels down through eleven places to the
+bottom of the world, then climbs a monument at the north-west corner again, directly under where he
+started. Each place is a hand-authored volume cut in a single mass of slime (341-363) or built of
+its own world's material inside it; heights are *walking levels* (a floor block at y gives walk
+y + 1), X and Z are raw cells.
 
-**Checks**: `levelcheck.py`: stage 1 reaches the thirty eggs, every key and the exit; the real world
-stops at the first doors. `VerifyShippedWorlds`. Live (`--mission 199`, direct view F3 at a spawn in
-every part): the ring and the plaza, each enclave in its material (the machine's lift and key, the
-library's bookcases, the village's houses and mines, the cheese's trench and bridge, the toys' tower and a
-follow star, the palace's saws and birds, the rock's lava, the finale's star blocks and inner door).
-Played live: walking into the red arrow from inside the finale's frame shows the win screen.
-Played through in one run by `tools/autoplay/world199.txt` (each key spent on one door): the
-machine's red key, the library (red door) for a green key, the cheese (green door) for a blue
-and a second green key, the finale's outer blue door, the village (green door) for a second
-blue key, the inner blue door and the red arrow; the win screen. It climbs from the cheese to the ring by the
-saucers, goes down from the ring by teleporter 331 and back up by 330, and in and out of the wasp's well (the balloon up its side,
-clear of the mine's sweep). The village creature's shots fly along z 58 out through its passage (a
-door is no block to them, the original's `IsBlocIcon`) and on across the plaza: the playthrough
-crosses that line once none is on its way. The other enclaves (toys,
-palace, rock) are played by `tools/autoplay/spare/world199.txt` (2026-11-03): the toys with the
-machine's red key (past a sleeping follow star, the lollipop's jump onto the tower for a second red
-key), the library with that, the rock with the library's green key (the blue key while the big
-creature walks off its turn), the palace with the rock's blue key (its saw rows jumped for a green
-key), then the main route from the cheese to the win (24942 ticks).
+| | Place (the original's region) | X x Z | Walk | Material | Enters from | Leaves to |
+|---|---|---|---|---|---|---|
+| A | Gunfire shaft (the start shaft and gun ledges) | 8-20 x 8-20 | 92 down to 72 | slime | spawn pad (9, 92, 9) | tunnel east at z 13-15 |
+| B | Basin and fan switchyard (upper-right basin, star passages, fan tower) | 30-52 x 6-26 | 72 up to 86 | slime, star blocks, grey plate | A's tunnel (west wall) | the blue gate (B1) in the south wall, into C |
+| C | Lift comb and brick library (central lift shafts, brick library) | 30-52 x 32-50 | 70 down to 52 | brick, bookcases | B's blue gate (top) | the green gate (G1) west, into D |
+| D | Palace and west galleries (white palace, teleporters) | 8-24 x 54-76 | 62 down to 50 | white stone | C's green gate | teleporters 330/331 to E, or the stair down |
+| E | Lava terraces, lightning edge, wasp well (west lava terraces, machine edge) | 8-26 x 54-78 | 46 down to 34 | slime, blue panel | D (teleporter or stair) | tunnel east to F at z 48 |
+| F | Village roofs (the village street) | 32-62 x 30-48 | 34 | cobble, facades, slate | E's tunnel | tunnel east at z 42 |
+| G | Riveted station (the grey-metal station) | 64-92 x 32-56 | 34 down to 26 | grey plate, grilles, girders | F's tunnel | the blue gate (B2) south, into H |
+| H | Cheese passages (cheese tunnels) | 66-92 x 60-84 | 26 down to 18 | cheese | G's blue gate | tunnel west to I at z 70 |
+| I | Helicopter jungle (helicopter/slime cavern network) | 30-62 x 52-88 | 38 down to 10 | slime, star ledges | H's tunnel (east wall) | tunnel east to J at z 55 |
+| J | Rock gauntlet (brown-rock circuit) | 66-96 x 36-58 | 14 down to 6 | brown rock | I's tunnel; the blue gate (B3) | passage north-west to K |
+| K | Toy chamber | 30-52 x 8-26 | 6 up to 22 | ball blocks, star accent | J's passage (east wall) | its top ledge, west wall |
+| L | Basin, column ascent, monument (lower water basin, columns, ending) | 8-26 x 8-34 | 8 up to 38 | water, slime, columns, stars | K's ledge (a dive into the basin) | the red arrow |
 
-The cheese's row of crushers was removed (the original's 199 has none, lesson_inventory).
+(Heights, sizes and doors are as built in `tools/worlds/world199.py`; the section constants at the
+top of each `section_X` function are the authority, this table is its summary.)
+
+## The key-state route (two red, three green, three blue; one flag each, consumed by a door)
+
+1. **B** holds R1 and B1 on different branches. B1 opens B's blue gate to C (B1 consumed).
+2. **C**: R1 opens the library's red door (consumed); inside lie R2 and G1. G1 opens D's green gate
+   (consumed). R2 opens D's optional palace-gallery loop (a second way to B2) and may simply stay held.
+3. **D** holds G2 and B2. G2 opens the village's optional roof route (F); the street stays an
+   alternative. B2 opens G's blue gate south into H (consumed).
+4. **G** holds B3, reachable only after B2 is spent. B3 opens J's blue gate (the rock route).
+5. **L** holds G3. A player still carrying optional G2 opens the final green gate with it; G3 is then
+   not needed. The final green gate shows the compact star frame and the red arrow: the win screen.
+
+No door can be flown over or entered from behind; every key lies on a way that a held key of its
+colour does not block (a second key of a held colour cannot be taken, so each is placed after the
+door of its colour). 2 + 3 + 3 keys, 2 + 3 + 3 door groups.
+
+## Object budget (196 records; 20 types) — where each goes
+
+| | Eggs | Lifts | Conv. 47 | Heli | M2 | M3 | M16 | Bull. | Bird | Blupi 33 | Big 54 | Star 96 | other |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| A | 2 | 2 | | | | | 3 | | | 4 | | | |
+| B | 4 | 3 | 2 | | 1 | 1 | 3 | | | | | 4 | lollipop, invert, R1, B1 |
+| C | 5 | 9 | | | | | 5 | 3 | | | | | 2 crates, R2, G1 |
+| D | 4 | 4 | | | 5 | 4 | 6 | | 2 | | 2 | | invert, G2, B2 |
+| E | 2 | 3 | | | 1 | 1 | 5 | | | | | | wasp |
+| F | 6 | 1 | | | | | | | 7 | | | | |
+| G | | 2 | | | | | 4 | | | | | 10 | B3 |
+| H | 3 | | | 2 | | 3 | 4 | 3 | | | | | |
+| I | 6 | | | 18 | | | 1 | | | | 4 | | |
+| J | 2 | | | | 2 | | 5 | | | | | | |
+| K | 2 | | | | | | | | | | | | |
+| L | 2 | 2 | | 2 | | | | | | | | | G3, red-arrow exit |
+| **Σ** | **38** | **26** | **2** | **22** | **9** | **9** | **36** | **6** | **9** | **4** | **6** | **14** | 2 crates, 1 lollipop, 2 inverts, 1 wasp, 8 keys, 1 exit |
+
+Of the 36 type-16 records 27 travel and 9 stand still (D 2, E 3, H 4 stationary). The 26 lift
+records are independent journeys except the paired decks the original also had.
+
+## Tile hazards and decor
+
+Fans 21 (10 left, 2 right, 9 up): B 10 / G 7 / J 4, each with its wind lane; saucers 324 x 5 in B;
+teleporters 330/331 two pairs, D to E; flight barriers 214 x 22 (12 round A's start pad, 10 as the
+toy chamber's filters); crumbling bridge 364 x 9 (E 5, J 4); saws 378 x 15 with three switch rows
+(C, D, D); lightning 304 x 4 and 305 x 3 at E's approach; spikes 373 x 2 and drips 404 x 2
+separated in I; lava 68 in E, G, J; water 91/92 in B, E's wasp well (none), L; bars 202 over E's
+lava and J's trench.
+
+BigDecor, 47: palm 18 x 1 (L's island), leafy plants 23/24 x 2 + 2 (B and L pools, landing
+shelves), ball machines 29 x 2 (B, G), stone columns 66/67/68 x 6 + 7 + 11 (D's courtyard, C's
+library, the ascent in L), vases 69 x 5 (D, L), monument column 87 x 1, fountains 88 x 3 (one in D,
+two in L), Blupi statues 89 x 2 (D's recess, the ending), water weed 203 x 5 (in B's and L's water).
+Solid ones leave lanes of at least 0.6 cell and never stand in a route's only lane.
+
+## The ending
+
+L: a basin (swum, weeds, a palm on its island) -> columns and star blocks to climb, two short star
+lifts -> a terrace in the north-west corner under A, looking back through an opening at the shaft's
+column of light -> the Blupi statue on its monument column between two fountains -> the green gate
+-> a compact frame of star blocks (the only star-block place beside the toy chamber's accent) with
+the red arrow in it -> the win screen. The terrace's walls are slime and stone, not star wallpaper.
