@@ -410,7 +410,7 @@ GP-0408,FIXED_AND_VERIFIED,Sound::Play Sound::MutedWhileHidden,every channel's c
 GP-0409,CONFIRMED_MATCH,Sound::Stop,"the stops of the motors, the crate push, the mockery (BD-0035)",,
 GP-0410,CONFIRMED_MATCH,Sound::Play loop,the looping motor sounds (AdaptMotorVehicleSound),,
 GP-0411,CONFIRMED_MATCH,GalaxyEggbertGame::UpdateMotorLoop,ported line for line (2026-11-03 sound pass),,
-GP-0412,INTENTIONAL_3D_ADAPTATION,Sound (no panning),2D stereo panning by screen position; Galaxy plays effects unpanned,,
+GP-0412,INTENTIONAL_3D_ADAPTATION,Sound (no panning) Sound::PlayAt,2D stereo panning by screen position; Galaxy plays effects unpanned; the reach by screen position is carried (BD-0076: 15 cells across and 11.25 up or down from Blupi),VerifyInteractionSystem,
 GP-0413,NOT_APPLICABLE,,an accessor (the region: World header sky word),,
 GP-0414,NOT_APPLICABLE,,an accessor,,
 GP-0415,NOT_APPLICABLE,,"an accessor (the music: World::musicTrack, OR-0014)",,

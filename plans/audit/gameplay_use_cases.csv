@@ -410,7 +410,7 @@ GP-0408,function:PlaySound,function,Decor::PlaySound,,Decor.cpp:1518,127,,,,src/
 GP-0409,function:StopSound,function,Decor::StopSound,,Decor.cpp:1574,86,,,,,CONFIRMED_MATCH,Sound::Stop,"the stops of the motors, the crate push, the mockery (BD-0035)",,
 GP-0410,function:StartSound,function,Decor::StartSound,,Decor.cpp:1580,0,,,,,CONFIRMED_MATCH,Sound::Play loop,the looping motor sounds (AdaptMotorVehicleSound),,check callers outside Decor.cpp
 GP-0411,function:AdaptMotorVehicleSound,function,Decor::AdaptMotorVehicleSound,,Decor.cpp:1599,2,,,,src/GalaxyEggbert/Game/BlupiController.hpp src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp,CONFIRMED_MATCH,GalaxyEggbertGame::UpdateMotorLoop,ported line for line (2026-11-03 sound pass),,
-GP-0412,function:PosSound,function,Decor::PosSound,,Decor.cpp:1641,1,,,,,INTENTIONAL_3D_ADAPTATION,Sound (no panning),2D stereo panning by screen position; Galaxy plays effects unpanned,,
+GP-0412,function:PosSound,function,Decor::PosSound,,Decor.cpp:1641,1,,,,,INTENTIONAL_3D_ADAPTATION,Sound (no panning) Sound::PlayAt,2D stereo panning by screen position; Galaxy plays effects unpanned; the reach by screen position is carried (BD-0076: 15 cells across and 11.25 up or down from Blupi),VerifyInteractionSystem,
 GP-0413,function:GetRegion,function,Decor::GetRegion,,Decor.cpp:1651,0,,,,,NOT_APPLICABLE,,an accessor (the region: World header sky word),,check callers outside Decor.cpp
 GP-0414,function:SetRegion,function,Decor::SetRegion,,Decor.cpp:1656,0,,,,,NOT_APPLICABLE,,an accessor,,check callers outside Decor.cpp
 GP-0415,function:GetMusic,function,Decor::GetMusic,,Decor.cpp:1661,0,,,,,NOT_APPLICABLE,,"an accessor (the music: World::musicTrack, OR-0014)",,check callers outside Decor.cpp

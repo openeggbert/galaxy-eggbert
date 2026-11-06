@@ -1177,3 +1177,26 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   silent 320 px beyond its sides or 160 px above or below, `Sound::GetVolume`) and its stereo
   balance (GP-0412, an adaptation): see BD-0076.
 
+## BD-0076 — the world's sounds were heard from anywhere; the original's only within three screens of its view (gameplay audio) — FIXED_AND_VERIFIED
+
+- Original (Sound.cpp `PlayImage` -> `GetVolume`, Decor.cpp `PlaySound` passing the source's place
+  less `m_posDecor`): the volume is `1 + (X / 640) * 2` left of the screen, `1 - ((X - 640) / 640) * 2`
+  right of it, the same with 480 and 3 above and below, clamped to 0..1 -- in whole numbers (`pos.X`
+  is an int), so a sound is heard fully on the screen and up to one screen beyond each side and not at
+  all farther: three screens by three round the view. The sources: the shooters' shots (52, Decor.cpp
+  8884-8967), objects meeting and blasts (10), the doors sliding open (33, 11565/11687), the clay
+  bridge (73), the follower's wake (92), the creatures' glue (51), and the lightning's zap (69), which
+  `BlitzActif` plays from the drawing of the screen's bolts (1079): only a visible column zaps.
+- Galaxy: every sound at full volume wherever it was made; the zap whenever the world held any
+  column, its own note calling that equivalent "since Sound has no positional audio".
+- Fix: `Sound::PlayAt` with `Sound::SetListener` (Blupi, every frame; the original's view follows
+  him): heard within 15 cells of him along X and along Z (half a screen and a screen, 960 px) and
+  11.25 up or down (720 px), not farther (`Sound::Audible`). The 13 world-object sites in
+  `InteractionSystem` play from the object's place; the zap from each column's (`blitzColumns_`).
+  Blupi's own sounds stay as they were (always on his screen). Panning stays out (GP-0412).
+- Validation: `VerifyInteractionSystem` (the reach's bounds). Recorded (SDL's disk driver, real time)
+  the first 47 s of 025's playthrough, whose one column (26, 28, 50) is 24 cells from the start and
+  within reach only from tick 720 to 1740: the build before this change zapped 58 times from 0.0 s to
+  47.3 s; this one 20 times, from 11.7 s to 27.6 s, none outside that stretch. 15 worlds hold columns
+  (032's nearest 42 cells from the start, 102's 72): they zapped throughout before. 112/112.
+

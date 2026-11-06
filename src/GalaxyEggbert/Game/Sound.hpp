@@ -49,6 +49,29 @@ namespace GalaxyEggbert::Game
         void SetBlupiHidden(bool hidden) noexcept { blupiHidden_ = hidden; }
         // The channels Decor::PlaySound leaves out while m_blupiHide.
         [[nodiscard]] static bool MutedWhileHidden(GalaxyEggbert::Def::SoundChannel channel) noexcept;
+
+        // A sound of the world, made at (x, y, z) (render cells, as Blupi's position), played only
+        // within the original's reach of the view (BD-0076). The original's Sound::GetVolume
+        // divides the sound's place on screen by the screen's size in whole numbers, so a sound is
+        // heard fully on the screen and up to one screen beyond each side (640 px across, 480 up
+        // and down) and not at all farther: three screens by three round the view. The view follows
+        // Blupi, so here: within 15 cells of him along X and along Z (half a screen and a screen,
+        // 960 px) and 11.25 up or down (720 px). Its stereo balance is not carried (GP-0412).
+        void PlayAt(GalaxyEggbert::Def::SoundChannel channel, float x, float y, float z, bool loop = false);
+        // Where the sounds are heard from: Blupi, set every frame of play.
+        void SetListener(float x, float y, float z) noexcept
+        {
+            listenerX_ = x;
+            listenerY_ = y;
+            listenerZ_ = z;
+        }
+        static constexpr float kAudibleAcross = 15.0f;
+        static constexpr float kAudibleUpDown = 11.25f;
+        [[nodiscard]] static bool Audible(float dx, float dy, float dz) noexcept
+        {
+            return (dx < 0.0f ? -dx : dx) < kAudibleAcross && (dz < 0.0f ? -dz : dz) < kAudibleAcross &&
+                   (dy < 0.0f ? -dy : dy) < kAudibleUpDown;
+        }
         // Stops just one channel's instance (a no-op if it isn't currently playing/doesn't
         // exist) -- needed for sounds with a distinct stop trigger (e.g. the crate push's
         // ch38, cut when the push ends) where StopAll() would incorrectly also kill every other
@@ -113,6 +136,9 @@ namespace GalaxyEggbert::Game
         bool enabled_ = true;
         float effectsVolume_ = 1.0f;
         bool blupiHidden_ = false;
+        float listenerX_ = 0.0f;
+        float listenerY_ = 0.0f;
+        float listenerZ_ = 0.0f;
         void PlayChannel(GalaxyEggbert::Def::SoundChannel channel, bool loop, bool decorSound);
     };
 }

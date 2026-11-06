@@ -2886,6 +2886,8 @@ namespace GalaxyEggbert::CNA
         UpdateMusic();
         // While he is hidden his own sounds are not played (Decor::PlaySound, BD-0075); in play only.
         sound_.SetBlupiHidden(phase_ == GalaxyEggbert::Def::GamePhase::Play && blupi_.IsHidden());
+        // The world's sounds are heard from Blupi, as the original's from its view (BD-0076).
+        sound_.SetListener(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
 
         if (goldenCaptureMode_ && goldenCaptureAwaitingDraw_)
         {

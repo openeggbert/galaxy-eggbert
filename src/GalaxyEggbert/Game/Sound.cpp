@@ -79,6 +79,15 @@ namespace GalaxyEggbert::Game
         PlayChannel(channel, loop, true);
     }
 
+    void Sound::PlayAt(GalaxyEggbert::Def::SoundChannel channel, float x, float y, float z, bool loop)
+    {
+        if (!Audible(x - listenerX_, y - listenerY_, z - listenerZ_))
+        {
+            return;
+        }
+        PlayChannel(channel, loop, true);
+    }
+
     void Sound::PlayDirect(GalaxyEggbert::Def::SoundChannel channel, bool loop)
     {
         PlayChannel(channel, loop, false);

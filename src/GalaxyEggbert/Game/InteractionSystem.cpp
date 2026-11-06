@@ -441,7 +441,7 @@ namespace GalaxyEggbert::Game
             {
                 objects.push_back(slide);
             }
-            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel33);
+            sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel33, slide.currentX, slide.currentY, slide.currentZ);
         }
 
         // Real Decor::OpenDoorsTresor (~11642): scans the whole grid,
@@ -853,7 +853,7 @@ namespace GalaxyEggbert::Game
             int gx, gy, gz;
             ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, gx, gy, gz);
             const int dist = SearchAirDistance(world, gx, gy, gz, 0, -1, 0);
-            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
+            sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel52, obj.currentX, obj.currentY, obj.currentZ);
             if (dist > 0)
             {
                 pendingSpawns.push_back(MakeBullet(obj, 0.0f, -1.0f, 0.0f, dist));
@@ -877,7 +877,7 @@ namespace GalaxyEggbert::Game
             ToGridCell(world, obj.currentX, obj.currentY, obj.currentZ, gx, gy, gz);
             const int sign = (dirSign > 0.0f) ? 1 : -1;
             const int dist = SearchAirDistance(world, gx, gy, gz, alongZ ? 0 : sign, 0, alongZ ? sign : 0);
-            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
+            sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel52, obj.currentX, obj.currentY, obj.currentZ);
             if (dist > 0)
             {
                 pendingSpawns.push_back(MakeBullet(obj, alongZ ? 0.0f : dirSign, 0.0f, alongZ ? dirSign : 0.0f, dist));
@@ -1202,9 +1202,10 @@ namespace GalaxyEggbert::Game
         {
             blitzEmitterPresent_ = 0;
             const auto axis = world.blocksPerAxis();
-            for (std::uint16_t gx = 0; gx < axis && blitzEmitterPresent_ == 0; ++gx)
+            blitzColumns_.clear();
+            for (std::uint16_t gx = 0; gx < axis; ++gx)
             {
-                for (std::uint16_t gz = 0; gz < axis && blitzEmitterPresent_ == 0; ++gz)
+                for (std::uint16_t gz = 0; gz < axis; ++gz)
                 {
                     for (std::uint16_t gy = 0; gy + 1 < axis; ++gy)
                     {
@@ -1213,7 +1214,9 @@ namespace GalaxyEggbert::Game
                                 GalaxyEggbert::BlockTypes::BlitzEmitter)
                         {
                             blitzEmitterPresent_ = 1;
-                            break;
+                            blitzColumns_.push_back({static_cast<float>(gx) - static_cast<float>(WorldRuntime::kWorldCenterX),
+                                                     static_cast<float>(gy),
+                                                     static_cast<float>(gz) - static_cast<float>(WorldRuntime::kWorldCenterZ)});
                         }
                     }
                 }
@@ -1228,7 +1231,12 @@ namespace GalaxyEggbert::Game
             if (animTick == 0 || animTick == 7 || animTick == 18 || animTick == 25 || animTick == 33 ||
                 animTick == 44)
             {
-                sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel69);
+                // From each column's place: heard from one within reach (one at a time, the channel
+                // does not restart itself).
+                for (const auto& column : blitzColumns_)
+                {
+                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel69, column[0], column[1], column[2]);
+                }
             }
         }
 
@@ -1320,7 +1328,7 @@ namespace GalaxyEggbert::Game
                     {
                         AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType8, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
-                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                        sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, obj.currentX, obj.currentY, obj.currentZ);
                         events_.push_back(Event{EventKind::SmallShakeTriggered});
                         AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType37, obj.currentX, obj.currentY, obj.currentZ,
                                               pendingSpawns);
@@ -1470,7 +1478,7 @@ namespace GalaxyEggbert::Game
 
                         if (blast.dx == 0.0f && blast.dy == 0.0f)
                         {
-                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                            sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, centerX, centerY, centerZ);
                             // Real camera shake (plan.md CAM-008,
                             // Decor::DynamiteStart(), Decor.cpp:9068-9070,
                             // confirmed via direct source read): SmallShake
@@ -1663,7 +1671,7 @@ namespace GalaxyEggbert::Game
                 const float prevPhase = obj.phase - dt * 20.0f;
                 if (prevPhase < kProgressSoundTick && obj.phase >= kProgressSoundTick)
                 {
-                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel73);
+                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel73, obj.currentX, obj.currentY, obj.currentZ);
                 }
 
                 const int tick = std::clamp(static_cast<int>(obj.phase), 0, 156);
@@ -1704,7 +1712,7 @@ namespace GalaxyEggbert::Game
                     fwdy < kFollowerWakeOver && fwdy > -kFollowerWakeUnder)
                 {
                     obj.type = GalaxyEggbert::Def::ObjectType::ObjectType97;
-                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel92);
+                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel92, obj.currentX, obj.currentY, obj.currentZ);
                 }
             }
 
@@ -1764,7 +1772,7 @@ namespace GalaxyEggbert::Game
                 if (IsSolidAt(worldRuntime, fgx, fgy, fgz))
                 {
                     Retire(obj);
-                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, endX, endY, endZ);
                     AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType9, obj.currentX, obj.currentY, obj.currentZ,
                                           pendingSpawns);
                     events_.push_back(Event{EventKind::SmallShakeTriggered});
@@ -1866,7 +1874,7 @@ namespace GalaxyEggbert::Game
                     }
                     // StartSploutchGlu's sound (Decor.cpp:7763-7792): channel 51, as the other glue
                     // death; 74 is the soul's ascent (BD-0036).
-                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel51);
+                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel51, obj.currentX, obj.currentY, obj.currentZ);
                 }
                 continue;
             }
@@ -1947,14 +1955,14 @@ namespace GalaxyEggbert::Game
                         // creature is (ObjectType10, channel 10, a small shake); else channel 51 (BD-0061).
                         if (!blupiCanPushCrate)
                         {
-                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                            sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, obj.currentX, obj.currentY, obj.currentZ);
                             AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType10, obj.currentX, obj.currentY,
                                                  obj.currentZ, pendingSpawns);
                             events_.push_back(Event{EventKind::SmallShakeTriggered});
                         }
                         else
                         {
-                            sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel51);
+                            sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel51, obj.currentX, obj.currentY, obj.currentZ);
                         }
                         // Its tentacle rises where he stands (ObjectType53, Decor.cpp:5871-5873; BD-0054).
                         AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType53, blupiX, blupiY, blupiZ,
@@ -2016,7 +2024,7 @@ namespace GalaxyEggbert::Game
                     {
                         Retire(obj);
                         // The hazard's explosion, whether he dies or rides over it (Decor.cpp:5822).
-                        sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                        sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, obj.currentX, obj.currentY, obj.currentZ);
                         if (blupiArmoredVehicle || !blupiFocused)
                         {
                             // Run over in the jeep, the tank or on the skateboard, or met while he
@@ -2099,7 +2107,7 @@ namespace GalaxyEggbert::Game
                         RequestClear2Ascend(obj.currentX, obj.currentY, obj.currentZ);
                     }
                     events_.push_back(Event{EventKind::SmallShakeTriggered});
-                    sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel10);
+                    sound.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel10, obj.currentX, obj.currentY, obj.currentZ);
                     AppendExplosionFlash(GalaxyEggbert::Def::ObjectType::ObjectType10, obj.currentX, obj.currentY, obj.currentZ,
                                           pendingSpawns);
                 }

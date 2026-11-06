@@ -4588,6 +4588,18 @@ int main(int argc, char** argv)
         check(exact, "hidden, Blupi's own 42 channels are left out, as Decor::PlaySound's list; the world's play");
     }
 
+    // BD-0076: a sound of the world is heard within three screens by three round the view: one
+    // screen beyond each side of it (Sound::GetVolume's whole-number division), 15 cells across from
+    // Blupi along X and Z, 11.25 up or down; not farther.
+    {
+        check(Sound::Audible(0.0f, 0.0f, 0.0f) && Sound::Audible(14.9f, 0.0f, 0.0f) &&
+                  Sound::Audible(0.0f, 0.0f, -14.9f) && Sound::Audible(14.9f, 11.2f, -14.9f),
+              "a sound up to 15 cells across and 11.25 up or down from Blupi is heard");
+        check(!Sound::Audible(15.0f, 0.0f, 0.0f) && !Sound::Audible(0.0f, 0.0f, 20.0f) &&
+                  !Sound::Audible(0.0f, 11.25f, 0.0f) && !Sound::Audible(0.0f, -30.0f, 0.0f),
+              "a sound farther away is not, as the original's off its three screens");
+    }
+
     // 18. Sound::FootstepChannelFor() (plan.md E3D-MIG-084) -- the real
     // Decor::SoundEnviron() terrain-specific footstep/landing remap, one
     // representative icon per range plus a generic fallback. A pure

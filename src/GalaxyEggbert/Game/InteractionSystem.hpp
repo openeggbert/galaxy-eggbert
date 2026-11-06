@@ -1049,14 +1049,13 @@ namespace GalaxyEggbert::Game
         // Real `Decor::BlitzActif()` (plan.md SOUND-079/VISUAL-024, found
         // 2026-07-17) plays the zap sound (ch69) per visible Blitz(305) tile
         // that has a BlitzEmitter(304) tile directly above it, on a fixed set
-        // of ticks within a 100-tick cycle. This engine's `Sound::Play()`
-        // has no positional audio at all (just a channel), so which specific
-        // tile triggered it is unobservable either way -- a one-time lazy
-        // scan for "does ANY qualifying pair exist in the whole world" (same
-        // idiom as `totalTreasures_` above) is exactly behaviorally
-        // equivalent to a real per-frame per-visible-tile scan, at a tiny
-        // fraction of the cost.
+        // of ticks within a 100-tick cycle. Only a visible column is heard
+        // (BitzActif runs from the drawing of the screen's cells), so the
+        // zap is played from each column's place through Sound::PlayAt, heard
+        // within the original's reach of Blupi (BD-0076); the columns are
+        // found once (the world's emitters do not move).
         int blitzEmitterPresent_ = -1;
+        std::vector<std::array<float, 3>> blitzColumns_; // render cells of each bolt under an emitter
         bool exitReached_ = false;
         bool exitWasGoldenKey_ = false;
         // The original's m_goalPhase (Decor.cpp:6158-6189): ticks until an exit he stands on is checked
