@@ -1,8 +1,0 @@
-wait 5
-face 270
-go 52.2 25 tol 0.1
-until temp = 0 max 300
-trace 100
-go 51 25 jump 1.6 tol 0.3
-until ground = 1
-expect y >= 75.95

@@ -41,12 +41,27 @@ ledgers, commit format, no AI attribution, never push): **`plans/codex/README.md
 | 3 | **DONE — OR-0077, this commit.** Gallery 998 / showcase 999: saws in the rows of the exhibit saw switches | `plans/codex/exhibit_saws.md` | "the saw machine has no effect" (seen in the gallery); chose saws in the exhibit rows |
 | 4 | **DONE — BD-0082, this commit.** Lifts drawn with any tile's look (MoveObjectRecord.visualIcon) | `plans/codex/lift_tiles.md` | chose only "draw the lift as the tile" |
 | 5 | **DONE — BD-0083, this commit.** No solid BigDecor in a way a player must take (053's machine leaves a 0.13-cell lane to its door; 058's plant) -- move them in the generators, undo the squeezed routes | `plans/codex/bigdecor_clearance.md` | follows BD-0080 (houses, trees, statue passable) |
-| 6 | **World 199 rebuilt** as a true 3D journey closely inspired by Mobile Eggbert's finale | `plans/codex/world199_rebuild.md` (+ `plans/audit/world199_comparison.md`) | "the final world is a mockery and sloppy"; "take strong inspiration from Mobile Eggbert's final world and do it in 3D" |
+| 6 | **World 199 rebuilt** (IN PROGRESS, 2026-11-06 night: the world, generator and playthrough are in; evidence, ledger and the visual polish pass are left, see "World 199 rebuild" below) as a true 3D journey closely inspired by Mobile Eggbert's finale | `plans/codex/world199_rebuild.md` (+ `plans/audit/world199_comparison.md`) | "the final world is a mockery and sloppy"; "take strong inspiration from Mobile Eggbert's final world and do it in 3D" |
 
 After each: tick it here (done, commit id), update the ledger the brief names, and continue with the
 next. When the queue is empty, continue the fidelity audit (§0 below: `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`
 and `plans/audit/`), and treat every new owner report first (owner reports go to
 `plans/audit/owner_reports.md` as OR-NNNN; open questions to `plans/audit/owner_questions.md`).
+
+### World 199 rebuild (queue task 6): where it stands
+
+Done and committed: `plans/briefs/world199.md` (the design), `tools/worlds/world199.py` (twelve places
+A-L cut in one slime mass: gun shaft, basin, lift comb + library, palace, lava terraces, village roofs,
+station, cheese, helicopter jungle, rock gauntlet, toy chamber, basin/monument), `worlds3d/world199.vwr`
+(196 objects / 20 types and 47 BigDecor exactly as the original; every tile budget of the audit §7 met),
+`tools/autoplay/world199.txt` (the whole journey to the win screen, 28434 ticks). Checks green: ctest
+112/112, golden frames and trace, `levelcheck.py --stage 1` OK (the three helicopter eggs of I's perches
+need `--rides`), the playthrough. Left: the visual finish pass at player height (play pass sheets, fix
+bare places), evidence images in `plans/evidence/world199-rebuild-*.jpg`, the "Rebuild done" section of
+`plans/audit/world199_comparison.md`, the ledger row LV-0078 (`plans/audit/world_lessons.notes.csv`) and
+`tools/audit/lesson_inventory.py` output, an alternate-route script (R2/G2 branch), the brief's final
+coordinates. Probe helpers live in `build-probe/world199-rebuild/` (snap.sh, run.sh, chain.sh, seg/*.txt, slice.py,
+audit.py), not versioned.
 
 ### Waiting for the owner (do not start without an answer)
 
