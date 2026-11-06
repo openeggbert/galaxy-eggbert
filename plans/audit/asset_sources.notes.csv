@@ -119,8 +119,8 @@ AS-0117,FIXED_AND_VERIFIED,Blupi's clip library,"2026-11-03: frames of Blupi's c
 AS-0118,FIXED_AND_VERIFIED,Blupi's clip library,"2026-11-03: frames of Blupi's clips (silhouette IoU 0.94-0.99, plans/inventory/model_parity.md)",
 AS-0119,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0120,FIXED_AND_VERIFIED,Blupi's clip library,"2026-11-03: frames of Blupi's clips (silhouette IoU 0.94-0.99, plans/inventory/model_parity.md)",
-AS-0121,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
-AS-0122,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0121,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it 2026-11-06, rendered by its game camera beside the shield's orb (element 144-151): five blue balls in a ring, not the pearly orb with sparks; not the shield.",
+AS-0122,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it 2026-11-06, rendered beside element 266-273: a pale sphere growing over 8 frames, not the orb with sparks; not the shield.",
 AS-0123,INTENTIONAL_3D_ADAPTATION,,2026-11-03: drawn another way (model_sources.py OTHERWISE): element:129 element:130 element:131 element:132 element:133 element:134 the parked skateboard: its model from Blupi's clip library (vehicles/skate),
 AS-0124,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
 AS-0125,FIXED_AND_VERIFIED,Blupi's clip library,"2026-11-03: frames of Blupi's clips (silhouette IoU 0.94-0.99, plans/inventory/model_parity.md)",
@@ -611,7 +611,7 @@ AS-0621,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as 
 AS-0622,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:tentacle,D11: the owner's list
 AS-0623,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:tentacle,D11: the owner's list
 AS-0624,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:tentacle,D11: the owner's list
-AS-0625,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it",
+AS-0625,NOT_APPLICABLE,,"2026-11-03: no game sprite matches it at IoU 0.80 (tools/rd4_to_gltf/survey.py): a backdrop, menu or editor art, a revision or a test; nothing in the game is drawn from it 2026-11-06, rendered beside the power's stars (element 152-156): a white icosahedron; not the power's effect.",
 AS-0632,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:bd_cabane,D11: the owner's list
 AS-0633,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:bd_enfant01,D11: the owner's list
 AS-0634,FIXED_AND_VERIFIED,render-back IoU (model library),2026-11-03: drawn as its model: object:bd_enfant02,D11: the owner's list
