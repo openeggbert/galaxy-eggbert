@@ -451,6 +451,53 @@ int main()
               "the next visit's first save keeps the last one");
     }
 
+    // ED-0012: a slot exported into the shared folder, listed first beside the older worlds, copied
+    // into a free slot by a click; Import (not the web) says where to put files.
+    {
+        std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
+        const auto path = SlotWorldPath(kStorageSlot, 2);
+        std::filesystem::create_directories(path.parent_path(), error);
+        World w;
+        w.setBlock(2, 2, 2, Block::make(33));
+        w.saveToFile(path);
+        check(ExportName(0, 3) == "A-world-3.vwr" && ExportName(kStorageSlot, 2) == "player77-world-2.vwr",
+              "an export is named by the player and the slot");
+        const auto shared = SharedWorldsDir() / ExportName(kStorageSlot, 2);
+        std::filesystem::remove(shared, error);
+        check(ExportWorld(kStorageSlot, 5).empty(), "an empty slot exports nothing");
+
+        EditorBrowserScreen browser;
+        browser.Refresh(kStorageSlot);
+        const auto centre = [](const GalaxyEggbert::Game::QuadBatch::Rect& r, float dy = -1.0f)
+        {
+            return std::pair<int, int>{static_cast<int>((r.x0 + r.x1) / 2),
+                                       static_cast<int>(dy < 0.0f ? (r.y0 + r.y1) / 2 : r.y0 + dy)};
+        };
+        auto [ex, ey] = centre(EditorBrowserScreen::ExportModeRect());
+        (void)clickBrowser(browser, ex, ey);
+        check(browser.CurrentMode() == EditorBrowserScreen::Mode::Export, "the Export button turns exporting on");
+        auto [sx, sy] = centre(EditorBrowserScreen::SlotRect(1), 20.0f);
+        const auto exported = clickBrowser(browser, sx, sy);
+        check(exported.action == EditorBrowserScreen::Action::None && std::filesystem::exists(shared) &&
+                  World::loadFromFile(shared).getBlock(2, 2, 2).type() == 33 &&
+                  browser.Message().find("exported") != std::string::npos,
+              "in Export a click on a slot copies its world into the shared folder and opens nothing");
+        const auto& others = browser.OtherWorlds();
+        check(!others.empty() && others.front() == shared, "the export is listed first among the other worlds");
+        (void)clickBrowser(browser, ex, ey);
+        check(browser.CurrentMode() == EditorBrowserScreen::Mode::Open, "Export again: clicks open worlds");
+        auto [ox, oy] = centre(EditorBrowserScreen::OlderRect(0));
+        const auto copied = clickBrowser(browser, ox, oy);
+        check(copied.action == EditorBrowserScreen::Action::Open && copied.path == SlotWorldPath(kStorageSlot, 1) &&
+                  World::loadFromFile(copied.path).getBlock(2, 2, 2).type() == 33 && std::filesystem::exists(shared),
+              "a click on a shared world copies it into the first free slot, the shared file staying");
+        auto [ix, iy] = centre(EditorBrowserScreen::ImportRect());
+        (void)clickBrowser(browser, ix, iy);
+        check(browser.Message().find("shared") != std::string::npos, "Import (not the web) says where to put files");
+        std::filesystem::remove(shared, error);
+        std::filesystem::remove(SharedWorldsDir(), error); // only when nothing else is in it
+    }
+
     std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
     std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

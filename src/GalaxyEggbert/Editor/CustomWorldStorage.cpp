@@ -188,6 +188,57 @@ namespace GalaxyEggbert::Editor
         return thumbnail;
     }
 
+    std::filesystem::path SharedWorldsDir()
+    {
+        return std::filesystem::path(kCustomWorldsRoot) / "shared";
+    }
+
+    std::vector<std::filesystem::path> ListSharedWorlds()
+    {
+        std::vector<std::pair<std::filesystem::file_time_type, std::filesystem::path>> found;
+        std::error_code ec;
+        for (const auto& entry : std::filesystem::directory_iterator(SharedWorldsDir(), ec))
+        {
+            if (entry.is_regular_file(ec) && entry.path().extension() == ".vwr")
+            {
+                found.emplace_back(entry.last_write_time(ec), entry.path());
+            }
+        }
+        std::sort(found.begin(), found.end(), [](const auto& a, const auto& b) {
+            return a.first != b.first ? a.first > b.first : a.second < b.second;
+        });
+        std::vector<std::filesystem::path> worlds;
+        for (auto& [time, path] : found)
+        {
+            worlds.push_back(std::move(path));
+        }
+        return worlds;
+    }
+
+    std::string ExportName(int gamerSlot, int slot)
+    {
+        const std::string player = gamerSlot >= 0 && gamerSlot <= 2 ? std::string(1, static_cast<char>('A' + gamerSlot))
+                                                                    : "player" + std::to_string(gamerSlot);
+        return player + "-world-" + std::to_string(slot) + ".vwr";
+    }
+
+    std::filesystem::path ExportWorld(int gamerSlot, int slot)
+    {
+        const std::filesystem::path source = SlotWorldPath(gamerSlot, slot);
+        std::error_code ec;
+        if (!std::filesystem::exists(source, ec))
+        {
+            return {};
+        }
+        std::filesystem::create_directories(SharedWorldsDir(), ec);
+        const std::filesystem::path target = SharedWorldsDir() / ExportName(gamerSlot, slot);
+        if (!std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing, ec))
+        {
+            return {};
+        }
+        return target;
+    }
+
     bool SeedShowcaseSlot(int gamerSlot, const std::filesystem::path& showcase)
     {
         const std::filesystem::path dir = CustomWorldsDir(gamerSlot);

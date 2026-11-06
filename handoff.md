@@ -639,6 +639,13 @@ ledgers before repeating any discovery. Where it stands:
   was (three generations, `customworlds/gamerN/backups/`), a deleted slot too; the slots' Backups
   button restores (again: an older one, round to the start) (`VerifyGEEditorStorage`; live
   `tools/qa_steps/editor_backups.txt`, `plans/evidence/editor-backups.jpg`).
+  **ED-0012 export and import**: Export copies a slot's world into `customworlds/shared/`
+  (`A-world-3.vwr`; on the web it is downloaded too), Import opens the browser's file picker on the
+  web, the shared worlds are listed first in "Other worlds" and a click copies one into a slot
+  (`Editor/PlatformFiles.cpp` EM_JS; `VerifyGEEditorStorage`; checked in the web build in headless
+  Chrome: `--ozone-platform=x11` is needed now, and the canvas there is 1000x553, so a game point
+  (x, y) is page (1.25 x, 1.152 y); `Browser.setDownloadBehavior` and
+  `Page.setInterceptFileChooserDialog` + `DOM.setFileInputFiles` drive the download and the picker).
 - Next: any further D11 model; D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.

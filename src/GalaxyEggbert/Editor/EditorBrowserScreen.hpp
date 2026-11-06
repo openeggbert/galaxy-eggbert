@@ -26,12 +26,17 @@ namespace GalaxyEggbert::Editor
     // Backups (ED-0011): the Backups button turns the slots into restore buttons -- a click
     // brings back the slot's newest backup, again an older one, round to where it began
     // (CustomWorldStorage RestoreBackup); a deleted slot's world is its newest backup.
+    //
+    // Export and import (ED-0012): the Export button turns a click on a slot into an export into
+    // the shared folder (on the web a download too); Import opens the browser's file picker on the
+    // web and rescans elsewhere. The shared worlds are listed with the older ones ("Other worlds"),
+    // the newest first: a click copies one into a free slot.
     class EditorBrowserScreen
     {
     public:
         enum class Action { None, Open, New, Back };
         // What a click on a slot does.
-        enum class Mode { Open, Restore };
+        enum class Mode { Open, Restore, Export };
 
         struct UpdateResult
         {
@@ -64,6 +69,10 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect OlderRect(int index) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect RestoreModeRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ExportModeRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRect() noexcept;
+        // The worlds beside the slots (OlderRect rows): the shared ones, then the gamer's older ones.
+        [[nodiscard]] const std::vector<std::filesystem::path>& OtherWorlds() const noexcept { return older_; }
 
         [[nodiscard]] Mode CurrentMode() const noexcept { return mode_; }
         // Back to opening worlds, no message (entering the browser).
@@ -79,6 +88,7 @@ namespace GalaxyEggbert::Editor
     private:
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         void Restore(int slotIndex);
+        void Export(int slotIndex);
 
         int gamerSlot_ = 0;
         std::vector<bool> slotUsed_;                 // per slot 1-10 (index 0-9)

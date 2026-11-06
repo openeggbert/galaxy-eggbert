@@ -1,6 +1,7 @@
 #include "EditorBrowserScreen.hpp"
 
 #include "CustomWorldStorage.hpp"
+#include "PlatformFiles.hpp"
 
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 
@@ -109,7 +110,11 @@ namespace GalaxyEggbert::Editor
             slotUsed_[static_cast<std::size_t>(slot - 1)] = std::filesystem::exists(SlotWorldPath(gamerSlot, slot), ec);
             backupCount_[static_cast<std::size_t>(slot - 1)] = BackupCount(SlotWorldPath(gamerSlot, slot));
         }
-        older_ = ListOlderCustomWorlds(gamerSlot);
+        older_ = ListSharedWorlds();
+        for (auto& path : ListOlderCustomWorlds(gamerSlot))
+        {
+            older_.push_back(std::move(path));
+        }
         armedDeleteIndex_ = -1;
     }
 
@@ -144,6 +149,35 @@ namespace GalaxyEggbert::Editor
     {
         // Right of the title, on the slots' panel.
         return {470.0f, 184.0f, 580.0f, 216.0f};
+    }
+
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::ExportModeRect() noexcept
+    {
+        return {355.0f, 184.0f, 460.0f, 216.0f};
+    }
+
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::ImportRect() noexcept
+    {
+        return {250.0f, 184.0f, 345.0f, 216.0f};
+    }
+
+    void EditorBrowserScreen::Export(int slotIndex)
+    {
+        const std::string name = "World " + std::to_string(slotIndex + 1);
+        const std::filesystem::path exported = ExportWorld(gamerSlot_, slotIndex + 1);
+        if (exported.empty())
+        {
+            message_ = slotUsed_[static_cast<std::size_t>(slotIndex)] ? name + " could not be exported."
+                                                                       : "Slot " + std::to_string(slotIndex + 1) +
+                                                                             " has no world.";
+            return;
+        }
+        const std::string file = ExportName(gamerSlot_, slotIndex + 1);
+        message_ = OfferDownload(exported, file) ? name + " exported: downloaded as " + file + "."
+                                                 : name + " exported to " + exported.generic_string() + ".";
+        const std::string kept = message_;
+        Refresh(gamerSlot_);
+        message_ = kept;
     }
 
     void EditorBrowserScreen::Restore(int slotIndex)
@@ -185,6 +219,11 @@ namespace GalaxyEggbert::Editor
         mouseY_ = my;
 
         UpdateResult result;
+        if (ConsumeUploadDone())
+        {
+            Refresh(gamerSlot_);
+            message_ = "Imported: on the right; a click copies it into a slot.";
+        }
         const bool backTriggered = backPressed && !backWasDown_;
         backWasDown_ = backPressed;
         if (backTriggered)
@@ -201,12 +240,25 @@ namespace GalaxyEggbert::Editor
             {
                 result.action = Action::Back;
             }
-            else if (InRect(mx, my, RestoreModeRect()))
+            else if (InRect(mx, my, RestoreModeRect()) || InRect(mx, my, ExportModeRect()))
             {
-                mode_ = mode_ == Mode::Restore ? Mode::Open : Mode::Restore;
-                message_ = mode_ == Mode::Restore ? "Click a world to bring back its backup." : "";
+                const Mode clicked = InRect(mx, my, RestoreModeRect()) ? Mode::Restore : Mode::Export;
+                mode_ = mode_ == clicked ? Mode::Open : clicked;
+                message_ = mode_ == Mode::Restore  ? "Click a world to bring back its backup."
+                           : mode_ == Mode::Export ? "Click a world to export it."
+                                                   : "";
                 restoreSlot_ = -1;
                 armedDeleteIndex_ = -1;
+                mouseWasDown_ = mouseDown;
+                return result;
+            }
+            else if (InRect(mx, my, ImportRect()))
+            {
+                Refresh(gamerSlot_);
+                message_ = RequestUpload(SharedWorldsDir())
+                               ? "Choose a .vwr file: it is listed on the right."
+                               : "Put .vwr files in " + SharedWorldsDir().generic_string() +
+                                     "/: they are listed on the right.";
                 mouseWasDown_ = mouseDown;
                 return result;
             }
@@ -233,6 +285,11 @@ namespace GalaxyEggbert::Editor
                     if (mode_ == Mode::Restore)
                     {
                         Restore(i);
+                        break;
+                    }
+                    if (mode_ == Mode::Export)
+                    {
+                        Export(i);
                         break;
                     }
                     result.action = slotUsed_[static_cast<std::size_t>(i)] ? Action::Open : Action::New;
@@ -338,6 +395,9 @@ namespace GalaxyEggbert::Editor
         }
         addButton(BackButtonRect(), kIconReturn);
         addIcon(mode_ == Mode::Restore ? buttons : panels, RestoreModeRect(), mode_ == Mode::Restore ? kIconBlank : kIconPanel);
+        addIcon(mode_ == Mode::Export ? buttons : panels, ExportModeRect(), mode_ == Mode::Export ? kIconBlank : kIconPanel);
+        addIcon(mouseWasDown_ && InRect(mouseX_, mouseY_, ImportRect()) ? buttons : panels, ImportRect(),
+                mouseWasDown_ && InRect(mouseX_, mouseY_, ImportRect()) ? kIconBlank : kIconPanel);
         for (int i = 0; i < kCustomWorldSlotCount; ++i)
         {
             const Rect cell = SlotRect(i);
@@ -390,14 +450,19 @@ namespace GalaxyEggbert::Editor
                 caption = has ? "Restore" : "No backup";
                 captionBucket = has ? &labels : &faintLabels;
             }
+            else if (mode_ == Mode::Export && used)
+            {
+                caption = "Export";
+            }
             label(*captionBucket, caption, centreX - Width(caption) * kCaptionScale * 0.5f,
                   cell.y0 + kSlotButtonSize + 4.0f, kCaptionScale);
         }
+        for (const auto& [rect, text] : {std::pair<Rect, std::string>{RestoreModeRect(), "Backups"},
+                                         std::pair<Rect, std::string>{ExportModeRect(), "Export"},
+                                         std::pair<Rect, std::string>{ImportRect(), "Import"}})
         {
-            const Rect mode = RestoreModeRect();
-            const std::string text = "Backups";
-            label(labels, text, (mode.x0 + mode.x1 - Width(text) * kCaptionScale) * 0.5f,
-                  middle(mode.y0, mode.y1, kCaptionScale), kCaptionScale);
+            label(labels, text, (rect.x0 + rect.x1 - Width(text) * kCaptionScale) * 0.5f,
+                  middle(rect.y0, rect.y1, kCaptionScale), kCaptionScale);
         }
         if (!message_.empty())
         {
@@ -405,7 +470,7 @@ namespace GalaxyEggbert::Editor
         }
         if (!older_.empty())
         {
-            label(labels, "Older worlds", kOlderX0, 14.0f, kCaptionScale);
+            label(labels, "Other worlds", kOlderX0, 14.0f, kCaptionScale);
             label(labels, slotsFull_ ? "(no free slot)" : "(click: copy to a slot)", kOlderX0, 36.0f, kSmallScale);
         }
         for (int i = 0; i < olderShown; ++i)

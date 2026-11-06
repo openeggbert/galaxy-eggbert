@@ -3,6 +3,7 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <filesystem>
+#include <string>
 #include <vector>
 
 namespace GalaxyEggbert::Editor
@@ -75,6 +76,22 @@ namespace GalaxyEggbert::Editor
 
     // The world's thumbnail beside it (custom_003.png): the editor's view when it was last saved.
     [[nodiscard]] std::filesystem::path ThumbnailPath(const std::filesystem::path& world);
+
+    // Worlds shared between the players and with other computers (ED-0012): customworlds/shared/
+    // (on the web /save/customworlds/shared). An export lands there (on the web it is downloaded
+    // too, PlatformFiles.hpp); every .vwr there is listed beside the gamer's older worlds, and a
+    // click copies it into a free slot, the file staying.
+    [[nodiscard]] std::filesystem::path SharedWorldsDir();
+
+    // Its .vwr files, the newest first.
+    [[nodiscard]] std::vector<std::filesystem::path> ListSharedWorlds();
+
+    // The name a slot's export takes: "A-world-3.vwr" (players A-C), "player7-world-3.vwr" otherwise.
+    [[nodiscard]] std::string ExportName(int gamerSlot, int slot);
+
+    // Copies slot @p slot's world into SharedWorldsDir() as ExportName() (an earlier export of it
+    // replaced); its path, or empty when the slot has no world or the copy failed.
+    [[nodiscard]] std::filesystem::path ExportWorld(int gamerSlot, int slot);
 
     // Seeds slot 1 with @p showcase (worlds3d/world999.vwr) the first time a
     // gamer opens the editor, and only if slot 1 is empty: a marker file
