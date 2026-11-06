@@ -619,7 +619,17 @@ ledgers before repeating any discovery. Where it stands:
   three drawings, 0.1 s each, a lick every 0.4 s; Galaxy the same, blended); D11's item fixed
   (`83d7e4bc`: decals at the front behind their own region). Open: OR-0041 (unanswered), any
   further D11 model.
-- Next: OR-0041's answer; any further D11 model; D11's model list (the candidates regenerated from a fresh
+- 2026-11-05/06, more owner answers (MR-0008): hub 070's signs faced sideways (OR-0071's turns on
+  the plate bit; front models' turns now metadata type 5: `c297af46`); the ball cubes' tops wear
+  their picture again (`80afbc28`); the BigDecor solid as large as their models, plants and toys too
+  (`34ddadb3`, M3D-0006); a step stands the crouched Blupi up as in the original, the mines at his
+  height over a way raised over his head in 044/045/104/107 (`bebe73bd`, BD-0074, OR-0041); every
+  Blupi animation of Mobile Eggbert has its 3D clip (`plans/audit/blupi_animations.md`). **Play pass
+  30: 78/78.** Autoplay `with crouch` now matters only standing still (a step stands him up).
+  The web build could not be reconfigured on 2026-11-06: CNA's own configure audit fails on the
+  cna session's work in progress (`Sdl3GraphicsServicesTests.cpp` SDL references 7 -> 8); rebuild
+  it once CNA configures again.
+- Next: any further D11 model; the web build after CNA; D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
