@@ -1200,3 +1200,26 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   47.3 s; this one 20 times, from 11.7 s to 27.6 s, none outside that stretch. 15 worlds hold columns
   (032's nearest 42 cells from the start, 102's 72): they zapped throughout before. 112/112.
 
+## BD-0077 — Resume starts the mission again; the original continues the moment it was left (save, UI) — REPRODUCED_DEFECT (open)
+
+- Original (Game1.cpp:186-208, 255-270; Decor.cpp:10974-11300): when the game is deactivated during
+  play (`OnDeactivated`: a call, the home button, the window losing focus) `Decor::CurrentWrite`
+  writes the whole mission as it stands -- the view, Blupi's place, action, speeds, vehicle and
+  powers with their counts, the decor's cells, every moving object with its phase, the counters;
+  a clean exit (`OnExiting`) deletes it. When the game starts again with one written, the Wait
+  phase reads it (`CurrentRead`) and shows Resume; Continue goes on from that very moment.
+- Galaxy: Resume is shown when a gamer has progress (checkpointed at each win or loss) and
+  Continue starts the checkpointed mission from its beginning with the lives. Its comment said no
+  mid-level state existed in the original; that was wrong (corrected 2026-11-06). The ledger rows
+  (GP-0521..0523, `CurrentDelete`, `CurrentWrite`, `CurrentRead`) had it as Galaxy's own save
+  format, an adaptation; they now say this.
+- Effect: on the desktop the snapshot matters only if the process ends while deactivated (a crash,
+  the session closed); on the web a closed or discarded tab, on Android a background kill -- there
+  a mission in progress is lost and starts again.
+- To fix (a session of its own): a snapshot of `WorldRuntime` (the world's cells and metadata as
+  changed: `World::saveToFile` covers them), `InteractionSystem` (objects with phases, counters,
+  pending voyages) and `BlupiController` (place, motion, action and phase, vehicle, powers and
+  their counts), written when the window loses focus during play (CNA's `Game::OnDeactivated`)
+  and deleted on a clean exit, read in Wait to offer Resume; then every playthrough and a test that
+  a snapshot taken mid-run and read back continues the run identically (autoplay trace equality).
+

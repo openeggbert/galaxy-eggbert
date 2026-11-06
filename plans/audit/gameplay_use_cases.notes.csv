@@ -519,9 +519,9 @@ GP-0517,NOT_APPLICABLE,,the 2D editor's auto-tiling (cheese blocks) (2026-11-03)
 GP-0518,NOT_APPLICABLE,,the 2D editor's auto-tiling (cave blocks) (2026-11-03),,
 GP-0519,NOT_APPLICABLE,,the 2D editor's auto-tiling of a cell's border (2026-11-03),,
 GP-0520,NOT_APPLICABLE,,the 2D editor's auto-tiling of the map (2026-11-03),,
-GP-0521,INTENTIONAL_3D_ADAPTATION,GameSave / CustomWorldStorage,the original's save files; Galaxy saves its own format,,
-GP-0522,INTENTIONAL_3D_ADAPTATION,GameSave,the original's save files; Galaxy saves its own format,,
-GP-0523,INTENTIONAL_3D_ADAPTATION,GameSave,the original's save files; Galaxy saves its own format,,
+GP-0521,REPRODUCED_DEFECT,GameSave / CustomWorldStorage,the original keeps the mission in progress on deactivation and continues it on Resume; Galaxy's Resume starts the checkpointed mission again (BD-0077),,a snapshot of WorldRuntime/InteractionSystem/BlupiController (BD-0077)
+GP-0522,REPRODUCED_DEFECT,GameSave,the original keeps the mission in progress on deactivation and continues it on Resume; Galaxy's Resume starts the checkpointed mission again (BD-0077),,a snapshot of WorldRuntime/InteractionSystem/BlupiController (BD-0077)
+GP-0523,REPRODUCED_DEFECT,GameSave,the original keeps the mission in progress on deactivation and continues it on Resume; Galaxy's Resume starts the checkpointed mission again (BD-0077),,a snapshot of WorldRuntime/InteractionSystem/BlupiController (BD-0077)
 GP-0524,INTENTIONAL_3D_ADAPTATION,World::load (.vwr),the 2D map reader; Galaxy reads .vwr worlds,,
 GP-0525,INTENTIONAL_3D_ADAPTATION,CustomWorldStorage,the original's user world files; Galaxy's editor slots,,
 GP-0526,NOT_APPLICABLE,,a file helper,,

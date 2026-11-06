@@ -14,8 +14,19 @@ treasure doors' number plates and the mission signs' digits sat in front of thei
 `83d7e4bc`), OR-0028/0029/0033/0034/0035/0038/0040/0044/0048/0053 (fine), OR-0042 (analysed: the
 original's timing, smoother in 3D). Still the owner's:
 
-- Nothing waits on the owner now. D11 closed by the owner 2026-11-06 ("Ne, D11 uzavřít", MR-0009);
-  OR-0041 answered and fixed 2026-11-05 (BD-0074).
+- Q-015 (2026-11-06): continuing a mission where it was left (BD-0077). D11 closed by the owner
+  2026-11-06 ("Ne, D11 uzavřít", MR-0009); OR-0041 answered and fixed 2026-11-05 (BD-0074).
+
+### Q-015 — Resume: continue the mission where it was left, as the original? (2026-11-06)
+
+The original writes the whole mission in progress when the game loses focus during play and, if the
+game is started again with it written, Resume continues from that moment (a clean exit deletes it).
+Galaxy's Resume starts the checkpointed mission from its beginning (BD-0077). It matters when the
+game ends while in the background: on the web a closed tab, on Android a background kill, on the
+desktop a crash. Options: (a) build the snapshot as the original (WorldRuntime, objects, Blupi;
+a session of work, every playthrough and a mid-run snapshot test); (b) leave it (desktop first;
+Android stays at "builds and starts", Q-009). Recommendation: (a) when the web build is to be
+released (a tab is closed easily), else (b). Meanwhile: as it is, recorded as open.
 
 ### Q-001 — Grass (107-109, 157) in 3D: how? — DONE (b) 2026-11-04
 

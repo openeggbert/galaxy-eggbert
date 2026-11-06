@@ -3422,9 +3422,11 @@ namespace GalaxyEggbert::CNA
                     // mission (2026-07-17, now that SaveData's own
                     // already-persisted missionNumber -- written at every
                     // Win/Lost checkpoint -- is finally read back) and
-                    // lives (no real mid-level position/treasure/key state
-                    // exists to restore beyond that, same simplification
-                    // as PauseRestart/WinLostReturn). The real `-2` mission
+                    // lives -- the mission starts again: the original restores
+                    // the very moment it was left (Decor::CurrentWrite on
+                    // deactivation during play, CurrentRead here; Blupi,
+                    // objects, tiles, timers), which Galaxy does not keep
+                    // (BD-0077, open). The real `-2` mission
                     // sentinel BYPASSES the fade-defer mechanism entirely
                     // (plan.md MENU-088/089, confirmed via research) --
                     // Resume->Play is genuinely instant in the real game.
