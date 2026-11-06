@@ -1,0 +1,28 @@
+# OR-0076: the editor aims through the cursor, not the screen centre. Slot 1, the moving-mechanisms
+# group, its first lift; the red preview follows the cursor, a click lays the lift there, a second
+# click elsewhere sets its end; the preview stays on the last aimed cell while the cursor is on PLACE.
+sleep 14
+focus
+click 710 200
+sleep 3
+click 72 258
+sleep 4
+click 30 285
+sleep 1.5
+click 75 285
+sleep 1.5
+move 220 330
+sleep 1
+shot preview-left
+move 600 330
+sleep 1
+shot preview-right
+click 220 330
+sleep 1.5
+shot lift-placed-left
+click 600 330
+sleep 1.5
+shot lift-end-right
+move 500 450
+sleep 1
+shot over-place-keeps-cell

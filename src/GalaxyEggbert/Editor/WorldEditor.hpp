@@ -205,8 +205,14 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool UpdatePlacementOffset(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             EditorPalette::Action paletteAction);
-        void UpdatePlacementPreview(
-            const Worlds::World& world, const Microsoft::Xna::Framework::Vector3& forward);
+        // The ray through the cursor (the mouse, or the touch point: SDL turns a touch into mouse
+        // events). While the right button turns the view the cursor is captured, so the centre aims.
+        [[nodiscard]] Microsoft::Xna::Framework::Vector3 AimDirection(
+            const Microsoft::Xna::Framework::Vector3& forward,
+            const Microsoft::Xna::Framework::Input::MouseState& mouse,
+            int viewportWidth, int viewportHeight, const CnaEngine::Graphics::Camera& camera) const;
+        void AimAt(const Worlds::World& world, const Microsoft::Xna::Framework::Vector3& direction);
+        void UpdatePlacementPreview(const Worlds::World& world);
         [[nodiscard]] FrameInput ReadFrameInput(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
@@ -278,6 +284,16 @@ namespace GalaxyEggbert::Editor
         // while this flag preserves whether middle-click may remove a real
         // hit voxel.
         bool hasRaycastHit_ = false;
+        // What the aim ray last found, kept so a cursor resting on the editor's UI (PLACE, the
+        // offset buttons) still places at the last cell aimed in the view.
+        enum class AimKind { None, Voxel, Ground };
+        AimKind aimKind_ = AimKind::None;
+        int aimCellX_ = 0;
+        int aimCellY_ = 0;
+        int aimCellZ_ = 0;
+        int aimNormalX_ = 0;
+        int aimNormalY_ = 0;
+        int aimNormalZ_ = 0;
         float highlightX_ = 0.0f;
         float highlightY_ = 0.0f;
         float highlightZ_ = 0.0f;

@@ -53,7 +53,7 @@ int main()
     };
 
     const MouseState restMouse(
-        0, 0, 0, ButtonState::Released, ButtonState::Released,
+        400, 240, 0, ButtonState::Released, ButtonState::Released,
         ButtonState::Released, ButtonState::Released, ButtonState::Released);
 
     {
@@ -99,7 +99,7 @@ int main()
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
         const float defaultFov = camera.FieldOfView();
         const MouseState wheelUp(
-            0, 0, 120, ButtonState::Released, ButtonState::Released,
+            400, 240, 120, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, wheelUp, 0.0f, 800, 480, camera, world);
         check(camera.FieldOfView() < defaultFov,
@@ -166,7 +166,7 @@ int main()
         CnaEngine::Graphics::Camera camera;
 
         const MouseState left(
-            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            400, 240, 0, ButtonState::Pressed, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, left, 0.0f, 800, 480, camera, world);
         check(isRockVariant(world.getBlock(placeX, placeY, placeZ).type()),
@@ -178,7 +178,7 @@ int main()
               "holding the placement button remains edge-triggered");
 
         const MouseState middle(
-            400, 200, 0, ButtonState::Released, ButtonState::Pressed,
+            400, 240, 0, ButtonState::Released, ButtonState::Pressed,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, middle, 0.0f, 800, 480, camera, world);
         check(world.getBlock(placeX, placeY, placeZ).isAir(),
@@ -196,7 +196,7 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         CnaEngine::Graphics::Camera camera;
         const MouseState rest(
-            400, 200, 0, ButtonState::Released, ButtonState::Released,
+            400, 240, 0, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::V}, rest, 0.0f, 800, 480, camera, world);
@@ -221,7 +221,7 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         CnaEngine::Graphics::Camera camera;
         const MouseState rest(
-            400, 200, 0, ButtonState::Released, ButtonState::Released,
+            400, 240, 0, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(330)); // a teleporter
         int turns = -1;
@@ -281,10 +281,10 @@ int main()
         CnaEngine::Graphics::Camera camera;
         editor.Palette().SelectObject(GalaxyEggbert::Def::ObjectType::ObjectType1);
         const MouseState press(
-            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            400, 240, 0, ButtonState::Pressed, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         const MouseState rest(
-            400, 200, 0, ButtonState::Released, ButtonState::Released,
+            400, 240, 0, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{}, press, 0.0f, 800, 480, camera, world);
@@ -333,7 +333,7 @@ int main()
         CnaEngine::Graphics::Camera camera;
         editor.Palette().SelectBlock(126);
         const MouseState press(
-            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            400, 240, 0, ButtonState::Pressed, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         const auto click = [&](KeyboardState keys)
         {
@@ -373,7 +373,7 @@ int main()
         CnaEngine::Graphics::Camera camera;
         editor.Palette().SelectBigDecor(20);
         const MouseState press(
-            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            400, 240, 0, ButtonState::Pressed, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         const auto treeAt = [&]() -> int
         {
@@ -431,7 +431,7 @@ int main()
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         CnaEngine::Graphics::Camera camera;
         const MouseState left(
-            400, 200, 0, ButtonState::Pressed, ButtonState::Released,
+            400, 240, 0, ButtonState::Pressed, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, left, 0.0f, 800, 480, camera, world);
 
@@ -696,7 +696,7 @@ int main()
         press(Keys::Q);
         press(Keys::Q);
         press(Keys::Q);
-        const MouseState left(400, 200, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+        const MouseState left(400, 240, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
                               ButtonState::Released, ButtonState::Released);
         editor.Update(KeyboardState{}, left, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
@@ -972,6 +972,93 @@ int main()
                   fast->rest == 3.0f && mixed && mixed->advance == 5.0f && mixed->recede == 22.0f &&
                   !LiftPreset(ObjectType::ObjectType4, 21),
               "the lifts' speeds per cell and rests are the PC editor's (slow 20, fast 6/3, fast-slow 5/22/2)");
+    }
+
+    // OR-0076: the editor aims through the cursor (or the touch point: SDL turns a touch into mouse
+    // events), not the screen centre; over the UI the last aimed cell stays; the right button turns
+    // the view and aims at the centre.
+    {
+        World floor;
+        for (std::uint16_t x = 20; x < 80; ++x)
+        {
+            for (std::uint16_t z = 0; z < 100; ++z)
+            {
+                floor.setBlock(x, 0, z, Block::make(1));
+            }
+        }
+        struct Cell
+        {
+            int x, y, z;
+            bool found;
+        };
+        const auto countSolid = [](const World& w)
+        {
+            int count = 0;
+            for (std::uint16_t x = 0; x < 100; ++x)
+                for (std::uint16_t y = 0; y < 3; ++y)
+                    for (std::uint16_t z = 0; z < 100; ++z)
+                        if (!w.getBlock(x, y, z).isAir()) ++count;
+            return count;
+        };
+        // Taps (cx, cy) on a fresh editor and returns the one cell it laid at height 1.
+        const auto tap = [&](int cx, int cy, ButtonState right = ButtonState::Released)
+        {
+            World world = floor;
+            WorldEditor editor;
+            editor.EnterEditing(0.0f, 10.0f, 0.0f);
+            CnaEngine::Graphics::Camera camera;
+            const MouseState aim(
+                cx, cy, 0, ButtonState::Released, ButtonState::Released, right,
+                ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, aim, 0.0f, 800, 480, camera, world);
+            const MouseState press(
+                cx, cy, 0, ButtonState::Pressed, ButtonState::Released, right,
+                ButtonState::Released, ButtonState::Released);
+            editor.Update(KeyboardState{}, press, 0.0f, 800, 480, camera, world);
+            Cell cell{0, 0, 0, false};
+            for (std::uint16_t x = 0; x < 100; ++x)
+                for (std::uint16_t z = 0; z < 100; ++z)
+                    if (!world.getBlock(x, 1, z).isAir()) cell = {x, 1, z, true};
+            return cell;
+        };
+        const Cell centre = tap(400, 240);
+        const Cell rightOf = tap(640, 240);
+        const Cell leftOf = tap(160, 240);
+        const Cell farther = tap(400, 190);
+        const Cell nearer = tap(400, 340);
+        check(centre.found && rightOf.found && leftOf.found && farther.found && nearer.found,
+              "a click through the cursor lays a block wherever the cursor points at the floor");
+        check(rightOf.x > centre.x && leftOf.x < centre.x,
+              "a cursor right/left of the centre aims right/left of the centre's cell");
+        check(farther.z < centre.z && nearer.z > centre.z,
+              "a cursor above/below the centre aims farther/nearer than the centre's cell");
+        const Cell lookingRight = tap(0, 0, ButtonState::Pressed); // relative mode: x, y are deltas
+        check(lookingRight.found && lookingRight.x == centre.x && lookingRight.z == centre.z,
+              "while the right button turns the view the centre aims");
+
+        // Over the UI the aim keeps its last cell: aim right of the centre, then PLACE (500, 450).
+        {
+            World world = floor;
+            WorldEditor editor;
+            editor.EnterEditing(0.0f, 10.0f, 0.0f);
+            CnaEngine::Graphics::Camera camera;
+            const auto state = [](int x, int y, bool down)
+            {
+                return MouseState(
+                    x, y, 0, down ? ButtonState::Pressed : ButtonState::Released, ButtonState::Released,
+                    ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            };
+            editor.Update(KeyboardState{}, state(640, 240, false), 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, state(500, 450, true), 0.0f, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, state(500, 450, false), 0.0f, 800, 480, camera, world);
+            Cell placed{0, 0, 0, false};
+            for (std::uint16_t x = 0; x < 100; ++x)
+                for (std::uint16_t z = 0; z < 100; ++z)
+                    if (!world.getBlock(x, 1, z).isAir()) placed = {x, 1, z, true};
+            check(countSolid(world) == countSolid(floor) + 1 && placed.found && placed.x == rightOf.x &&
+                      placed.z == rightOf.z,
+                  "PLACE under the cursor places at the last cell aimed in the view, not under the button");
+        }
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

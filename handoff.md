@@ -28,7 +28,7 @@ ledgers, commit format, no AI attribution, never push): **`plans/codex/README.md
 | # | Task | Brief | Owner's report / decision |
 |---|---|---|---|
 | 1 | **DONE — BD-0081, this commit (`fix(cheats): BD-0081 match reference ghost behavior`)**. Ghost cheat as Mobile Eggbert: nothing acts on him (the lightning killed him), March/Stop animation instead of falling, drawn at 0.75 opacity | `plans/codex/ghost.md` | 2026-11-06: "the lightning killed ghost Blupi"; "no falling animation, see-through like a ghost" |
-| 2 | Editor aims at the mouse cursor / touch point instead of the screen centre | `plans/codex/editor_cursor.md` | "after the click nothing appears"; chose "aim with the cursor" |
+| 2 | **DONE — OR-0076, this commit.** Editor aims at the mouse cursor / touch point instead of the screen centre | `plans/codex/editor_cursor.md` | "after the click nothing appears"; chose "aim with the cursor" |
 | 3 | Gallery 998 / showcase 999: saws in the rows of the exhibit saw switches | `plans/codex/exhibit_saws.md` | "the saw machine has no effect" (seen in the gallery); chose saws in the exhibit rows |
 | 4 | Lifts drawn with any tile's look (MoveObjectRecord.visualIcon) | `plans/codex/lift_tiles.md` | chose only "draw the lift as the tile" |
 | 5 | No solid BigDecor in a way a player must take (053's machine leaves a 0.13-cell lane to its door; 058's plant) -- move them in the generators, undo the squeezed routes | `plans/codex/bigdecor_clearance.md` | follows BD-0080 (houses, trees, statue passable) |

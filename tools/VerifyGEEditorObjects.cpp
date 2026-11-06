@@ -116,7 +116,7 @@ int main()
     editor.EnterEditing(0.0f, 10.0f, 0.0f);
     CnaEngine::Graphics::Camera camera;
     const MouseState restMouse(
-        0, 0, 0, ButtonState::Released, ButtonState::Released,
+        400, 240, 0, ButtonState::Released, ButtonState::Released,
         ButtonState::Released, ButtonState::Released, ButtonState::Released);
 
     const auto click = [&](int x, int y)
@@ -141,7 +141,7 @@ int main()
     check(CollectMoveObjects(world).empty(),
           "object palette clicks are consumed without placing into the world");
 
-    click(400, 200);
+    click(400, 240);
     auto objects = CollectMoveObjects(world);
     check(objects.size() == 1 &&
               objects[0].type == GalaxyEggbert::Def::ObjectType::ObjectType5,

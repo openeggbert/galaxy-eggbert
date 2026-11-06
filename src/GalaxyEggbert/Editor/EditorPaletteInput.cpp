@@ -54,6 +54,16 @@ namespace GalaxyEggbert::Editor
         return {};
     }
 
+    bool EditorPaletteInput::IsOverControl(
+        const Microsoft::Xna::Framework::Input::MouseState& mouse,
+        const EditorPaletteLayout& layout, const State& state,
+        int viewportWidth, int viewportHeight) const noexcept
+    {
+        return HitTest(
+                   static_cast<float>(mouse.getXProperty()), static_cast<float>(mouse.getYProperty()),
+                   layout, state, viewportWidth, viewportHeight).hit != HitKind::None;
+    }
+
     EditorPaletteInput::Result EditorPaletteInput::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         const EditorPaletteLayout& layout, const State& state,

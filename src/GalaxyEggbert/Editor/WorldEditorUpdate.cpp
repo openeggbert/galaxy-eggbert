@@ -180,67 +180,101 @@ namespace GalaxyEggbert::Editor
         return held;
     }
 
-    void WorldEditor::UpdatePlacementPreview(
-        const Worlds::World& world, const Microsoft::Xna::Framework::Vector3& forward)
+    Microsoft::Xna::Framework::Vector3 WorldEditor::AimDirection(
+        const Microsoft::Xna::Framework::Vector3& forward,
+        const Microsoft::Xna::Framework::Input::MouseState& mouse,
+        int viewportWidth, int viewportHeight, const CnaEngine::Graphics::Camera& camera) const
     {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+        if (mouse.getRightButtonProperty() == ButtonState::Pressed || viewportWidth <= 0 ||
+            viewportHeight <= 0)
+        {
+            return forward;
+        }
+        const float ndcX = 2.0f * static_cast<float>(mouse.getXProperty()) / static_cast<float>(viewportWidth) - 1.0f;
+        const float ndcY = 1.0f - 2.0f * static_cast<float>(mouse.getYProperty()) / static_cast<float>(viewportHeight);
+        const float tanHalf = std::tan(camera.FieldOfView() * 0.5f);
+        const Microsoft::Xna::Framework::Vector3 right(std::cos(yaw_), 0.0f, std::sin(yaw_));
+        const Microsoft::Xna::Framework::Vector3 up(
+            right.Y * forward.Z - right.Z * forward.Y,
+            right.Z * forward.X - right.X * forward.Z,
+            right.X * forward.Y - right.Y * forward.X);
+        const float sx = ndcX * tanHalf * camera.AspectRatio();
+        const float sy = ndcY * tanHalf;
+        Microsoft::Xna::Framework::Vector3 direction(
+            forward.X + right.X * sx + up.X * sy,
+            forward.Y + right.Y * sx + up.Y * sy,
+            forward.Z + right.Z * sx + up.Z * sy);
+        const float length = std::sqrt(
+            direction.X * direction.X + direction.Y * direction.Y + direction.Z * direction.Z);
+        if (length > 0.0f)
+        {
+            direction = {direction.X / length, direction.Y / length, direction.Z / length};
+        }
+        return direction;
+    }
+
+    void WorldEditor::AimAt(
+        const Worlds::World& world, const Microsoft::Xna::Framework::Vector3& direction)
+    {
+        aimKind_ = AimKind::None;
         const RaycastHit hit = Raycast(
             world,
             camX_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterX), camY_,
             camZ_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ),
-            forward.X, forward.Y, forward.Z, kMaxRaycastDistance);
-        hasRaycastHit_ = hit.hit;
-        hasHighlight_ = hit.hit;
-        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            direction.X, direction.Y, direction.Z, kMaxRaycastDistance);
         if (hit.hit)
         {
-            hitCellX_ = hit.x;
-            hitCellY_ = hit.y;
-            hitCellZ_ = hit.z;
-            const int previewX = static_cast<int>(hit.x) + hit.normalX + placementOffsetX_;
-            const int previewY = static_cast<int>(hit.y) + hit.normalY + placementOffsetY_;
-            const int previewZ = static_cast<int>(hit.z) + hit.normalZ + placementOffsetZ_;
-            if (previewX >= 0 && previewX < blocksPerAxis &&
-                previewY >= 0 && previewY < blocksPerAxis &&
-                previewZ >= 0 && previewZ < blocksPerAxis)
-            {
-                highlightX_ = static_cast<float>(previewX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
-                highlightY_ = static_cast<float>(previewY);
-                highlightZ_ = static_cast<float>(previewZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
-                placementCellX_ = static_cast<std::uint16_t>(previewX);
-                placementCellY_ = static_cast<std::uint16_t>(previewY);
-                placementCellZ_ = static_cast<std::uint16_t>(previewZ);
-            }
-            else
-            {
-                hasHighlight_ = false;
-            }
+            aimKind_ = AimKind::Voxel;
+            aimCellX_ = hit.x;
+            aimCellY_ = hit.y;
+            aimCellZ_ = hit.z;
+            aimNormalX_ = hit.normalX;
+            aimNormalY_ = hit.normalY;
+            aimNormalZ_ = hit.normalZ;
             return;
         }
-
-        if (forward.Y >= -0.0001f)
+        if (direction.Y >= -0.0001f)
         {
             return;
         }
-        const float distance = -camY_ / forward.Y;
+        const float distance = -camY_ / direction.Y;
         const int targetX = static_cast<int>(std::floor(
             camX_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterX) +
-            forward.X * distance + 0.5f));
+            direction.X * distance + 0.5f));
         const int targetZ = static_cast<int>(std::floor(
             camZ_ + static_cast<float>(GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ) +
-            forward.Z * distance + 0.5f));
+            direction.Z * distance + 0.5f));
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         if (distance < 0.0f || distance > kMaxRaycastDistance ||
             targetX < 0 || targetX >= blocksPerAxis ||
             targetZ < 0 || targetZ >= blocksPerAxis)
         {
             return;
         }
+        aimKind_ = AimKind::Ground;
+        aimCellX_ = targetX;
+        aimCellY_ = 0;
+        aimCellZ_ = targetZ;
+        aimNormalX_ = aimNormalY_ = aimNormalZ_ = 0;
+    }
 
-        hitCellX_ = static_cast<std::uint16_t>(targetX);
-        hitCellY_ = 0;
-        hitCellZ_ = static_cast<std::uint16_t>(targetZ);
-        const int previewX = targetX + placementOffsetX_;
-        const int previewY = placementOffsetY_;
-        const int previewZ = targetZ + placementOffsetZ_;
+    void WorldEditor::UpdatePlacementPreview(const Worlds::World& world)
+    {
+        hasRaycastHit_ = aimKind_ == AimKind::Voxel;
+        hasHighlight_ = aimKind_ != AimKind::None;
+        if (aimKind_ == AimKind::None)
+        {
+            return;
+        }
+        const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+        hitCellX_ = static_cast<std::uint16_t>(aimCellX_);
+        hitCellY_ = static_cast<std::uint16_t>(aimCellY_);
+        hitCellZ_ = static_cast<std::uint16_t>(aimCellZ_);
+        // A voxel hit places on its outward face; a hit on the empty ground places on y = 0.
+        const int previewX = aimCellX_ + aimNormalX_ + placementOffsetX_;
+        const int previewY = aimCellY_ + aimNormalY_ + placementOffsetY_;
+        const int previewZ = aimCellZ_ + aimNormalZ_ + placementOffsetZ_;
         hasHighlight_ =
             previewX >= 0 && previewX < blocksPerAxis &&
             previewY >= 0 && previewY < blocksPerAxis &&

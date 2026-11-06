@@ -59,6 +59,11 @@ namespace GalaxyEggbert::Editor
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
             int viewportWidth, int viewportHeight, float elapsedSeconds = 0.0f);
 
+        // True while the pointer is over a palette control (button, category, item).
+        [[nodiscard]] bool IsPointerOverControl(
+            const Microsoft::Xna::Framework::Input::MouseState& mouse,
+            int viewportWidth, int viewportHeight) const;
+
         [[nodiscard]] bool IsNotYetImplementedNoticeVisible() const noexcept
         {
             return notYetImplementedSeconds_ > 0.0f;

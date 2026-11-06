@@ -85,6 +85,7 @@ namespace GalaxyEggbert::Editor
         hasLastScrollWheelValue_ = false;
         hasHighlight_ = false;
         hasRaycastHit_ = false;
+        aimKind_ = AimKind::None;
         placementOffsetX_ = placementOffsetY_ = placementOffsetZ_ = 0;
         placementOffsetKeyHeldLastFrame_ = false;
         highlightRenderer_.Hide();
@@ -113,7 +114,19 @@ namespace GalaxyEggbert::Editor
             palette_.Update(mouse, viewportWidth, viewportHeight, dt);
         const bool placementOffsetKeyHeld =
             UpdatePlacementOffset(keyboard, paletteResult.action);
-        UpdatePlacementPreview(world, forward);
+        // Aim through the cursor; over the palette or the PLACE/offset buttons keep the last aim
+        // (the centre aims when there is none yet, e.g. a touch that began on a button).
+        const bool looking =
+            mouse.getRightButtonProperty() == Microsoft::Xna::Framework::Input::ButtonState::Pressed;
+        if (looking || !palette_.IsPointerOverControl(mouse, viewportWidth, viewportHeight))
+        {
+            AimAt(world, AimDirection(forward, mouse, viewportWidth, viewportHeight, camera));
+        }
+        else if (aimKind_ == AimKind::None)
+        {
+            AimAt(world, forward);
+        }
+        UpdatePlacementPreview(world);
 
         const FrameInput input = ReadFrameInput(keyboard, mouse, paletteResult);
         UpdateBoxPreview(world);

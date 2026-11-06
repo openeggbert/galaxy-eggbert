@@ -123,7 +123,7 @@ int main()
     constexpr int kViewportWidth = 800;
     constexpr int kViewportHeight = 480;
     const MouseState restMouse(
-        0, 0, 0, ButtonState::Released, ButtonState::Released,
+        400, 240, 0, ButtonState::Released, ButtonState::Released,
         ButtonState::Released, ButtonState::Released, ButtonState::Released);
 
     {

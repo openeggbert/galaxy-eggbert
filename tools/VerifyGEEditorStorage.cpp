@@ -220,7 +220,7 @@ int main()
               "the browser's visible Main Menu row reports a back action");
 
         const MouseState idle(
-            0, 0, 0, ButtonState::Released, ButtonState::Released,
+            400, 240, 0, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         check(browser.Update(idle, 800, 480, true).action ==
                   EditorBrowserScreen::Action::Back,
@@ -271,7 +271,7 @@ int main()
               "the editor forwards the browser's create request with the slot's path");
 
         const MouseState idle(
-            0, 0, 0, ButtonState::Released, ButtonState::Released,
+            400, 240, 0, ButtonState::Released, ButtonState::Released,
             ButtonState::Released, ButtonState::Released, ButtonState::Released);
         check(editor.UpdateBrowsing(idle, 800, 480, true).shouldReturnToMenu,
               "the editor forwards Escape from the browser to the main menu");
@@ -364,7 +364,7 @@ int main()
         clickEditor(72, 72);
         check(solidCount() == before,
               "visible palette clicks never edit the 3D world behind them");
-        clickEditor(466, 26);
+        clickEditor(466, 300);
         check(solidCount() == before &&
                   GalaxyEggbert::CollectBigDecor(world).size() ==
                       bigDecorBefore + 1,
@@ -440,7 +440,7 @@ int main()
             World w;
             w.setBlock(1, 1, 1, Block::make(icon));
             CnaEngine::Graphics::Camera camera;
-            const MouseState idle(0, 0, 0, ButtonState::Released, ButtonState::Released, ButtonState::Released,
+            const MouseState idle(400, 240, 0, ButtonState::Released, ButtonState::Released, ButtonState::Released,
                                   ButtonState::Released, ButtonState::Released);
             for (int i = 0; i < saves; ++i)
             {

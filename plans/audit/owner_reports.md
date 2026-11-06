@@ -355,3 +355,25 @@ rewritten).
 - Verified: 112/112 CTest, unchanged golden frames/trace, typed `ghost` probe through world025's
   active lightning and standing in it for a full cycle with three lives. Clear pose screenshots
   in `build-probe/ghost/poses-run/autoplay_shots/`.
+
+
+## OR-0076 — in the 3D editor "after the click nothing appears" (owner 2026-11-06) — FIXED_AND_VERIFIED
+
+- Report: placing the moving objects seemed not to work; after the click nothing appeared. Cause:
+  the editor aimed with the camera's centre ray, so the red preview and every placement landed where
+  the screen centre pointed, not under the mouse. Decision: "Ano, mířit kurzorem" (aim with the cursor).
+- Fixed (editor UX, no gameplay): `WorldEditor::AimDirection` unprojects the cursor pixel (pinhole
+  math from the camera's field of view and aspect, the viewport size) into the aim ray; `AimAt` casts
+  it (voxel hit, else the y = 0 ground) and keeps the result, `UpdatePlacementPreview` derives the
+  red preview from that kept aim plus the X/Y/Z offsets. So preview, click placement, removal, box
+  fill, copy/paste, the moving objects' start/end clicks and BigDecor all use the one ray.
+- Decisions: while the right button turns the view the mouse is captured (its x, y are deltas), so the
+  centre aims; with the cursor over a palette control (including PLACE and the offset buttons) the
+  last aimed cell stays, so PLACE and Enter place there, not under the button (if nothing was aimed
+  yet, the centre aims); a touch is an SDL mouse event, so the touch point aims the same way
+  (`EditorPalette::IsPointerOverControl` tells the UI hover).
+- Verified: `VerifyGEWorldEditor` (cursor right/left/above/below the centre aim there; the right button
+  aims at the centre; PLACE under the cursor places at the last aimed cell), the four editor verifiers
+  moved to the cursor at the window centre, ctest 112/112; live `tools/qa_steps/editor_cursor_aim.txt`
+  (fresh `QA_LIVE_RUN`): the preview follows the cursor (X:46 -> X:53), a click lays the object at
+  the cursor, over PLACE the preview stays; shots `build-probe/editor-cursor/`.

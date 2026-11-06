@@ -79,6 +79,18 @@ namespace GalaxyEggbert::Editor
         return category ? category->bigDecorIconIds : EmptyIds();
     }
 
+    bool EditorPalette::IsPointerOverControl(
+        const Microsoft::Xna::Framework::Input::MouseState& mouse,
+        int viewportWidth, int viewportHeight) const
+    {
+        const EditorPaletteInput::State inputState{
+            static_cast<int>(categories_.size()),
+            static_cast<int>(ContentButtonIconIds().size()),
+            openCategory_,
+        };
+        return input_.IsOverControl(mouse, layout_, inputState, viewportWidth, viewportHeight);
+    }
+
     EditorPalette::UpdateResult EditorPalette::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         int viewportWidth, int viewportHeight, float elapsedSeconds)

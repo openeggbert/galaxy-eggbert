@@ -39,6 +39,12 @@ namespace GalaxyEggbert::Editor
             const EditorPaletteLayout& layout, const State& state,
             int viewportWidth, int viewportHeight);
 
+        // True when the pointer rests on any control (the placement aim then keeps its last cell).
+        [[nodiscard]] bool IsOverControl(
+            const Microsoft::Xna::Framework::Input::MouseState& mouse,
+            const EditorPaletteLayout& layout, const State& state,
+            int viewportWidth, int viewportHeight) const noexcept;
+
     private:
         [[nodiscard]] Result HitTest(
             float x, float y, const EditorPaletteLayout& layout, const State& state,
