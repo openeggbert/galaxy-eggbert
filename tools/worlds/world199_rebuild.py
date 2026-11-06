@@ -249,7 +249,7 @@ def section_c():
     for k, (x, z) in enumerate(COMB):
         top = 82 - 3 * k
         lift_(x, top if k % 2 == 0 else top - 3, top - 3 if k % 2 == 0 else top, z, ticks=45, stop=40)
-    air(25, 58, 44, 30, 61, 46)                              # the tunnel west to D
+    air(26, 58, 44, 30, 61, 46)                              # the tunnel west to D
     if not calm:
         w.fill(31, 58, 44, 31, 59, 46, GREEN_DOOR)
         w.fill(45, 58, 41, 45, 59, 43, RED_DOOR)
@@ -283,7 +283,172 @@ def section_c():
     mover(O.MOVING_MINE, (42, 58, 47), (44, 58, 47), 10)
 
 
-SECTIONS = [section_a, section_b, section_c]
+# ==== D. the white palace ========================================================================
+T330_D = (11, 70, 45)          # the booth over the keep's cell (walk 70), partner in E
+T331_D = (20, 58, 64)          # the court's return booth, partner in E's west wing
+STONEFACE = (386, 387, 388, 390, 397)
+
+
+def section_d():
+    """X 11-25, Z 41-65, walk 58 up to 70, white stone. C's tunnel enters the courtyard (walk 58) at
+    its east wall (z 44-46). A spiral of balconies, each reached by a lift one cell off the end of the
+    last: LD1 (x 15, z 45) to the west balcony (walk 62, x 11-13), LD2 (15, z 63) to the south balcony
+    (walk 66, x 16-25, z 62-64; saw row 1 at z 63, x 19-23, its switch at x 17), LD3 (25, z 60) to the
+    east balcony (walk 70, x 23-25), then the bridge over the north end (z 43-45, x 11-25; saw row 2 at
+    z 44, x 14-18, its switch at x 21) to the keep (x 11-13): B2, the statue, and teleporter 330 down
+    to E. Behind the red door in the west wall (z 50, walk 62) a gallery with saw row 3 (z 50, x 4-8,
+    switch x 9) and G2. A fourth lift (x 21, z 55) to a shelf (walk 66) with an egg."""
+    hall("palace", 11, 58, 41, 25, 79, 65)
+    air(26, 58, 44, 26, 61, 46)
+    # facades: window panels on the south wall's inside, trim along the balconies' edges
+    for x in range(11, 26):
+        for y in (61, 62, 66):
+            if w.get(x, y, 66) and rng.random() < 0.7 and y > 60:
+                w.set(x, y, 66, 391)
+    floor(11, 43, 13, 63, 62, block=396)                       # the west balcony
+    lift_(15, 58, 62, 45, ticks=45, stop=40)                   # LD1
+    lift_(15, 62, 66, 63, ticks=45, stop=40)                   # LD2
+    floor(16, 62, 25, 64, 66, block=396)                       # the south balcony
+    for x in range(19, 24):
+        w.set(x, 65, 63, 396 if calm else SAW)
+        for z in (62, 64):
+            for y in (66, 67):
+                w.set(x, y, z, 396)
+    w.set(17, 65, 63, SWITCH)
+    lift_(25, 66, 70, 60, ticks=45, stop=40)                   # LD3
+    floor(23, 43, 25, 59, 70, block=396)                       # the east balcony
+    floor(11, 43, 25, 45, 70, block=396)                       # the bridge and the keep
+    for x in range(14, 19):
+        w.set(x, 69, 44, 396 if calm else SAW)
+        for z in (43, 45):
+            for y in (70, 71):
+                w.set(x, y, z, 396)
+    w.set(21, 69, 44, SWITCH)
+    key(O.KEY3, 12, 70, 44)                                    # B2
+    w.set(T330_D[0], T330_D[1] + 1, T330_D[2], 330)
+    w.set(T331_D[0], T331_D[1] + 1, T331_D[2], 331)
+    # the gallery behind the red door
+    air(3, 62, 49, 9, 66, 51)
+    w.fill(3, 61, 49, 9, 61, 51, 396)
+    if not calm:
+        w.fill(10, 62, 50, 10, 63, 50, RED_DOOR)
+    else:
+        air(10, 62, 50, 10, 63, 50)
+    w.set(9, 61, 50, SWITCH)
+    for x in range(4, 9):
+        w.set(x, 61, 50, 396 if calm else SAW)
+        for z in (49, 51):
+            for y in (62, 63):
+                w.set(x, y, z, 396)
+    key(O.KEY2, 3, 62, 50)                                     # G2
+    # the shelf with the fourth lift, the statue's recess in the north wall, the court's furniture
+    floor(20, 53, 22, 55, 66, block=396)
+    lift_(21, 58, 66, 57, ticks=60, stop=40)
+    put(O.EGG, 21, 66, 54)
+    put(O.EGG, 24, 70, 51)
+    put(O.EGG, 12, 62, 60)
+    put(O.EGG, 22, 58, 63)
+    put(O.INVERT, 23, 70, 56)
+    w.bigdecor(89, 17, 58, 42)                                 # the statue, in the north wall's niche
+    w.bigdecor(88, 20, 58, 50)                                 # the fountain
+    for k, (x, z) in enumerate(((14, 52), (14, 58), (22, 61), (19, 47))):
+        w.bigdecor((66, 67, 68, 66)[k], x, 58, z)
+    for x, z in ((16, 60), (22, 48), (17, 55)):
+        w.bigdecor(69, x, 58, z)
+    # the guards: two big creatures walking the court's south, two birds under the balconies
+    mover(O.BIG_CREATURE, (13, 58, 60), (21, 58, 60))
+    mover(O.BIG_CREATURE, (21, 58, 52), (14, 58, 52))
+    mover(O.BIRD, (13, 63, 56), (22, 63, 56))
+    mover(O.BIRD, (23, 68, 62), (13, 68, 62))
+    # mines: five ground mines on the balconies' wide parts, four hanging over low stretches, four
+    # moving and two standing moving-mine records
+    for x, y, z in ((11, 62, 56), (12, 62, 48), (25, 66, 64), (23, 70, 52), (24, 58, 58)):
+        hazard(x, y, z)
+    for x, y, z in ((18, 67, 63), (16, 71, 44), (24, 71, 48), (11, 63, 52)):
+        hazard(x, y, z, hanging=True)
+    mover(O.MOVING_MINE, (16, 58, 49), (22, 58, 49), 10)
+    mover(O.MOVING_MINE, (12, 58, 47), (12, 58, 57), 10)
+    mover(O.MOVING_MINE, (22, 58, 57), (22, 58, 63), 10)
+    mover(O.MOVING_MINE, (18, 60, 54), (18, 64, 54), 10)
+    for x, y, z in ((14, 64, 52), (20, 62, 58)):
+        mover(O.MOVING_MINE, (x, y, z), (x, y, z), 10)
+
+
+# ==== E. the lava terraces =======================================================================
+T330_E = (12, 46, 60)
+T331_E = (11, 46, 44)
+
+
+def section_e():
+    """X 10-26, Z 43-63, walk 46 down to 34, blue machine panel. Arrival by teleporter 330 at the
+    south-west terrace TA (x 10-15, z 57-63). East of it lava pit P1 (x 16-20), crossed on a clay
+    bridge (z 62, five cells, crumbles behind him) or on a ferry lift (z 58), to the south-east
+    terrace TB (x 21-26). North of TB lava pit P2 (z 52-56) crossed hanging from a row of seven bars
+    (x 24, two over the floor, z 51-57) to the north-east terrace TC (z 43-51), where a lift (x 26,
+    z 45) goes down a shaft to the exit passage (walk 34, z 45) under a column of lightning. A ferry
+    lift (z 45) over lava pit P3 (x 16-19) from TC to the west wing TD (x 10-15, z 43-47: two eggs,
+    teleporter 331 back to the palace court). North of TA a well (x 11-14, z 53-56, seven deep, a dead
+    end): the wasp sweeping its foot, a moving mine across it halfway."""
+    hall("machine", 10, 46, 43, 26, 55, 63)
+    w.fill(10, 46, 48, 15, 55, 56, MACHINE_FLOOR)            # the wall between TA and TD, with the well
+    w.fill(16, 46, 52, 20, 55, 56, MACHINE_FLOOR)            # the pillar west of P2
+    air(11, 39, 53, 14, 45, 56)                              # the well
+    for x0, z0, x1, z1 in ((16, 57, 20, 63), (21, 52, 26, 56), (16, 43, 19, 47)):
+        air(x0, 41, z0, x1, 45, z1)
+        w.fill(x0, 40, z0, x1, 40, z1, MACHINE_FLOOR)
+        w.fill(x0, 41, z0, x1, 42, z1, LAVA)
+    # P1: the clay bridge and the ferry
+    for x in range(16, 21):
+        w.set(x, 45, 62, MACHINE_FLOOR if calm else BRIDGE)
+    if calm:
+        w.fill(16, 45, 58, 20, 45, 58, MACHINE_FLOOR)
+    else:
+        lift(w, (16, 45, 58), (20, 45, 58), ticks=60, stop=40)
+    # P2: the bars from TC's south edge to TB's north edge
+    if calm:
+        w.fill(21, 45, 52, 26, 45, 56, MACHINE_FLOOR)
+    else:
+        w.fill(24, 48, 51, 24, 48, 57, BAR)
+    # P3: the ferry to the west wing
+    if calm:
+        w.fill(16, 45, 45, 19, 45, 45, MACHINE_FLOOR)
+    else:
+        lift(w, (16, 45, 45), (19, 45, 45), ticks=40, stop=40)
+    # the lift down at TC's east edge, the shaft and the passage with its lightning
+    air(25, 34, 44, 27, 45, 46)
+    air(27, 34, 45, 31, 37, 45)
+    w.fill(25, 33, 44, 31, 33, 46, MACHINE_FLOOR)
+    lift_(26, 46, 34, 45, ticks=120, stop=40)
+    for x in (27, 29, 31):
+        w.set(x, 37, 45, EMITTER)
+    w.set(29, 37, 46, EMITTER)
+    if not calm:
+        w.fill(29, 34, 45, 29, 36, 45, BLITZ)
+    # teleporters: 330's arrival, 331's departure from the west wing
+    w.set(T330_E[0], T330_E[1] + 1, T330_E[2], 330)
+    w.set(T331_E[0], T331_E[1] + 1, T331_E[2], 331)
+    # the wasp's well
+    if not calm:
+        w.place(O.WASP, 11, 39, 55, end=(14, 39, 55))
+        mover(O.MOVING_MINE, (11, 43, 54), (14, 43, 54), 10)
+    else:
+        for k in range(3):
+            slime(w, 11 + k, 39, 56, 11 + k, 40 + 2 * k, 56)
+    hazard(26, 46, 59)                                       # M2 at TB's corner
+    hazard(23, 48, 47, hanging=True)                         # M3 over TC
+    for x, y, z in ((18, 47, 60), (22, 45, 54), (26, 45, 54)):
+        mover(O.MOVING_MINE, (x, y, z), (x, y, z), 10)
+    mover(O.MOVING_MINE, (16, 47, 44), (19, 47, 44), 10)
+    mover(O.MOVING_MINE, (21, 46, 48), (25, 46, 48), 10)
+    put(O.EGG, 12, 46, 45)
+    put(O.EGG, 14, 46, 62)
+    # the west wing's wall: rows of tall blue panel with the machine's props
+    for z in (44, 46):
+        w.set(10, 47, z, 55)
+        w.set(10, 48, z, 56)
+
+
+SECTIONS = [section_a, section_b, section_c, section_d, section_e]
 
 
 def main(argv) -> int:

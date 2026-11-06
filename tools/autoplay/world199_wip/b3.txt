@@ -1,0 +1,10 @@
+lift 48 72 12 max 2000
+log at48
+lift 45 72 12 max 2000
+log at45
+lift 48 72 12 max 2000
+log at48
+lift 45 72 12 max 2000
+log at45
+lift 48 72 12 max 2000
+log at48
