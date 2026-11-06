@@ -47,6 +47,35 @@ namespace GalaxyEggbert::Editor
     // empty when every slot is taken or the copy failed.
     [[nodiscard]] std::filesystem::path CopyIntoFreeSlot(int gamerSlot, const std::filesystem::path& source);
 
+    // Backups (ED-0011; the owner's choice of 2026-11-06 among the editor proposals): the first save
+    // of a world after it was opened from the browser keeps the file as it was, three generations
+    // deep, in CustomWorldsDir()/backups/ (custom_003.1.vwr the newest, .3 the oldest); a slot
+    // deleted in the browser keeps its world the same way, so a deletion can be taken back.
+    constexpr int kBackupGenerations = 3;
+
+    // Generation @p generation's (1-3) backup of @p world, which may not exist.
+    [[nodiscard]] std::filesystem::path BackupPath(const std::filesystem::path& world, int generation);
+
+    // How many backups @p world has (0-3).
+    [[nodiscard]] int BackupCount(const std::filesystem::path& world);
+
+    // Keeps @p world as it is now as the newest backup, the older ones one generation further, the
+    // oldest dropped. False when there is no file to keep.
+    bool BackUpWorld(const std::filesystem::path& world);
+
+    // Restores the newest backup of @p world: it takes the world's place, the older ones move up a
+    // generation and the world as it was becomes the oldest -- so restoring again steps further
+    // back and comes round to where it began; nothing is lost. A deleted slot (no world) takes its
+    // newest backup. The world's thumbnail goes (it showed the other one). False when there is no
+    // backup.
+    bool RestoreBackup(const std::filesystem::path& world);
+
+    // Deletes a slot's world into its backups (and its thumbnail).
+    bool DeleteSlotWorld(const std::filesystem::path& world);
+
+    // The world's thumbnail beside it (custom_003.png): the editor's view when it was last saved.
+    [[nodiscard]] std::filesystem::path ThumbnailPath(const std::filesystem::path& world);
+
     // Seeds slot 1 with @p showcase (worlds3d/world999.vwr) the first time a
     // gamer opens the editor, and only if slot 1 is empty: a marker file
     // (".demo-seeded") records that it happened, so a deleted or edited slot 1

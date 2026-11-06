@@ -3,6 +3,7 @@
 #include "AutoTile.hpp"
 
 #include "BoxRegion.hpp"
+#include "CustomWorldStorage.hpp"
 #include "VoxelRaycast.hpp"
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
@@ -573,13 +574,23 @@ namespace GalaxyEggbert::Editor
         return true;
     }
 
+    void WorldEditor::SaveWorld(const Worlds::World& world)
+    {
+        if (backedUpPath_ != worldPath_)
+        {
+            (void)BackUpWorld(worldPath_);
+            backedUpPath_ = worldPath_;
+        }
+        world.saveToFile(worldPath_);
+        dirty_ = false;
+        stopConfirmArmed_ = false;
+    }
+
     bool WorldEditor::HandleSessionAndHistory(const FrameInput& input, Worlds::World& world)
     {
         if (input.enterHeld && !enterHeldLastFrame_ && !worldPath_.empty())
         {
-            world.saveToFile(worldPath_);
-            dirty_ = false;
-            stopConfirmArmed_ = false;
+            SaveWorld(world);
             return true;
         }
         if (input.escapeHeld && !escapeKeyHeldLastFrame_ && pendingEnd_ && !boxFirstCornerPlaced_)
@@ -622,9 +633,7 @@ namespace GalaxyEggbert::Editor
         }
         if (input.palette.action == EditorPalette::Action::PlayTest && !worldPath_.empty())
         {
-            world.saveToFile(worldPath_);
-            dirty_ = false;
-            stopConfirmArmed_ = false;
+            SaveWorld(world);
             playTestRequested_ = true;
             return true;
         }

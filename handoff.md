@@ -635,6 +635,10 @@ ledgers before repeating any discovery. Where it stands:
   (`Editor/Clipboard.*`, `EditCommand::Kind::Group`; `VerifyGEWorldEditor`; live
   `tools/qa_steps/editor_copy_paste.txt`, `plans/evidence/editor-copy-paste.jpg`). The palette now
   says when an item to place was picked (`UpdateResult::picked`; the pasting stops).
+  **ED-0011 backups**: a world's first save after it was opened from the slots keeps the file as it
+  was (three generations, `customworlds/gamerN/backups/`), a deleted slot too; the slots' Backups
+  button restores (again: an older one, round to the start) (`VerifyGEEditorStorage`; live
+  `tools/qa_steps/editor_backups.txt`, `plans/evidence/editor-backups.jpg`).
 - Next: any further D11 model; D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.

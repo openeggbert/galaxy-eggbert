@@ -9,6 +9,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace GalaxyEggbert::Editor
@@ -21,10 +22,16 @@ namespace GalaxyEggbert::Editor
     // worlds (files outside the ten slots), which are never deleted or hidden:
     // clicking one copies it into the first free slot and opens the copy. No
     // free-text renaming (no text-input widget exists in this codebase yet).
+    //
+    // Backups (ED-0011): the Backups button turns the slots into restore buttons -- a click
+    // brings back the slot's newest backup, again an older one, round to where it began
+    // (CustomWorldStorage RestoreBackup); a deleted slot's world is its newest backup.
     class EditorBrowserScreen
     {
     public:
         enum class Action { None, Open, New, Back };
+        // What a click on a slot does.
+        enum class Mode { Open, Restore };
 
         struct UpdateResult
         {
@@ -56,12 +63,31 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect DeleteButtonRect(int slotIndex) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect OlderRect(int index) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect RestoreModeRect() noexcept;
+
+        [[nodiscard]] Mode CurrentMode() const noexcept { return mode_; }
+        // Back to opening worlds, no message (entering the browser).
+        void ResetMode() noexcept
+        {
+            mode_ = Mode::Open;
+            message_.clear();
+            restoreSlot_ = -1;
+        }
+        // The line under the slots: what the last click did.
+        [[nodiscard]] const std::string& Message() const noexcept { return message_; }
 
     private:
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        void Restore(int slotIndex);
 
         int gamerSlot_ = 0;
         std::vector<bool> slotUsed_;                 // per slot 1-10 (index 0-9)
+        std::vector<int> backupCount_;               // per slot
+        Mode mode_ = Mode::Open;
+        std::string message_;
+        int restoreSlot_ = -1;          // the slot the last restores stepped through
+        int restoreSteps_ = 0;
+        int restoreCycle_ = 0;          // its backups and the world it had: restores round to it
         std::vector<std::filesystem::path> older_;
         int armedDeleteIndex_ = -1; // the slot index whose delete is armed, -1 none
         bool slotsFull_ = false;    // an older world was clicked with no slot free

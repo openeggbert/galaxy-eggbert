@@ -102,10 +102,12 @@ namespace GalaxyEggbert::Editor
     {
         gamerSlot_ = gamerSlot;
         slotUsed_.assign(kCustomWorldSlotCount, false);
+        backupCount_.assign(kCustomWorldSlotCount, 0);
         std::error_code ec;
         for (int slot = 1; slot <= kCustomWorldSlotCount; ++slot)
         {
             slotUsed_[static_cast<std::size_t>(slot - 1)] = std::filesystem::exists(SlotWorldPath(gamerSlot, slot), ec);
+            backupCount_[static_cast<std::size_t>(slot - 1)] = BackupCount(SlotWorldPath(gamerSlot, slot));
         }
         older_ = ListOlderCustomWorlds(gamerSlot);
         armedDeleteIndex_ = -1;
@@ -138,6 +140,38 @@ namespace GalaxyEggbert::Editor
         return {680.0f, 360.0f, 780.0f, 460.0f};
     }
 
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::RestoreModeRect() noexcept
+    {
+        // Right of the title, on the slots' panel.
+        return {470.0f, 184.0f, 580.0f, 216.0f};
+    }
+
+    void EditorBrowserScreen::Restore(int slotIndex)
+    {
+        const auto path = SlotWorldPath(gamerSlot_, slotIndex + 1);
+        const std::string name = "World " + std::to_string(slotIndex + 1);
+        std::error_code ec;
+        if (restoreSlot_ != slotIndex)
+        {
+            restoreSlot_ = slotIndex;
+            restoreSteps_ = 0;
+            restoreCycle_ = std::filesystem::exists(path, ec) ? BackupCount(path) + 1 : 0;
+        }
+        if (!RestoreBackup(path))
+        {
+            message_ = name + " has no backup.";
+            return;
+        }
+        ++restoreSteps_;
+        message_ = restoreCycle_ > 0 && restoreSteps_ % restoreCycle_ == 0
+                       ? name + " is back as it was."
+                       : name + ": backup restored. Again: an older one.";
+        const int steps = restoreSteps_;
+        Refresh(gamerSlot_);
+        restoreSlot_ = slotIndex;
+        restoreSteps_ = steps;
+    }
+
     EditorBrowserScreen::UpdateResult EditorBrowserScreen::Update(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         int /*viewportWidth*/, int /*viewportHeight*/, bool backPressed)
@@ -167,6 +201,15 @@ namespace GalaxyEggbert::Editor
             {
                 result.action = Action::Back;
             }
+            else if (InRect(mx, my, RestoreModeRect()))
+            {
+                mode_ = mode_ == Mode::Restore ? Mode::Open : Mode::Restore;
+                message_ = mode_ == Mode::Restore ? "Click a world to bring back its backup." : "";
+                restoreSlot_ = -1;
+                armedDeleteIndex_ = -1;
+                mouseWasDown_ = mouseDown;
+                return result;
+            }
             for (int i = 0; i < kCustomWorldSlotCount && result.action == Action::None; ++i)
             {
                 const auto path = SlotWorldPath(gamerSlot_, i + 1);
@@ -174,9 +217,10 @@ namespace GalaxyEggbert::Editor
                 {
                     if (armedDeleteIndex_ == i)
                     {
-                        std::error_code ec;
-                        std::filesystem::remove(path, ec);
+                        // Into its backups: Backups brings it back.
+                        (void)DeleteSlotWorld(path);
                         Refresh(gamerSlot_);
+                        message_ = "World " + std::to_string(i + 1) + " deleted (Backups brings it back).";
                     }
                     else
                     {
@@ -186,6 +230,11 @@ namespace GalaxyEggbert::Editor
                 }
                 if (InRect(mx, my, SlotRect(i)))
                 {
+                    if (mode_ == Mode::Restore)
+                    {
+                        Restore(i);
+                        break;
+                    }
                     result.action = slotUsed_[static_cast<std::size_t>(i)] ? Action::Open : Action::New;
                     result.path = path;
                 }
@@ -288,6 +337,7 @@ namespace GalaxyEggbert::Editor
             }
         }
         addButton(BackButtonRect(), kIconReturn);
+        addIcon(mode_ == Mode::Restore ? buttons : panels, RestoreModeRect(), mode_ == Mode::Restore ? kIconBlank : kIconPanel);
         for (int i = 0; i < kCustomWorldSlotCount; ++i)
         {
             const Rect cell = SlotRect(i);
@@ -330,11 +380,28 @@ namespace GalaxyEggbert::Editor
             const std::string number = std::to_string(i + 1);
             label(bucket, number, centreX - Width(number) * kNumberScale * 0.5f,
                   middle(cell.y0, cell.y0 + kSlotButtonSize, kNumberScale), kNumberScale);
-            const std::string caption = !used                   ? "New world"
-                                        : armedDeleteIndex_ == i ? "Delete?"
-                                                                 : "World " + number;
-            label(bucket, caption, centreX - Width(caption) * kCaptionScale * 0.5f, cell.y0 + kSlotButtonSize + 4.0f,
-                  kCaptionScale);
+            std::string caption = !used                   ? "New world"
+                                  : armedDeleteIndex_ == i ? "Delete?"
+                                                           : "World " + number;
+            auto* captionBucket = &bucket;
+            if (mode_ == Mode::Restore)
+            {
+                const bool has = backupCount_[static_cast<std::size_t>(i)] > 0;
+                caption = has ? "Restore" : "No backup";
+                captionBucket = has ? &labels : &faintLabels;
+            }
+            label(*captionBucket, caption, centreX - Width(caption) * kCaptionScale * 0.5f,
+                  cell.y0 + kSlotButtonSize + 4.0f, kCaptionScale);
+        }
+        {
+            const Rect mode = RestoreModeRect();
+            const std::string text = "Backups";
+            label(labels, text, (mode.x0 + mode.x1 - Width(text) * kCaptionScale) * 0.5f,
+                  middle(mode.y0, mode.y1, kCaptionScale), kCaptionScale);
+        }
+        if (!message_.empty())
+        {
+            label(labels, message_, 22.0f, 444.0f, kSmallScale);
         }
         if (!older_.empty())
         {

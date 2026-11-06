@@ -1,0 +1,24 @@
+# ED-0011: the editor (a fresh save: QA_LIVE_RUN=<empty dir>), slot 1 opened and saved with Enter (its
+# first save backs it up), the Stop sign back to the slots, Backups, slot 1 restored.
+sleep 14
+focus
+click 710 200
+sleep 3
+shot slots
+click 72 258
+sleep 4
+click 500 450
+sleep 1
+keydown Return
+sleep 0.15
+keyup Return
+sleep 1
+click 770 450
+sleep 3
+shot back
+click 525 200
+sleep 1
+shot backups-mode
+click 72 258
+sleep 1.5
+shot restored

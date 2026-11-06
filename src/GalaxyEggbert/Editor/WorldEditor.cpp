@@ -37,7 +37,9 @@ namespace GalaxyEggbert::Editor
         (void)SeedShowcaseSlot(gamerSlot, "worlds3d/world999.vwr");
         // The gallery of everything drawn (OR-0044) in the next free slot, kept current.
         (void)SeedGallerySlot(gamerSlot, "worlds3d/world998.vwr");
+        browserScreen_.ResetMode();
         browserScreen_.Refresh(gamerSlot);
+        backedUpPath_.clear(); // the next save of a world opened from here backs it up first
     }
 
     WorldEditor::BrowserRequest WorldEditor::UpdateBrowsing(

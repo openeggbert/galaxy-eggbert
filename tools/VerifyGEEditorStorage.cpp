@@ -366,6 +366,91 @@ int main()
               "the former invisible toolbar area reaches the 3D world and places the selected non-colliding scenery");
     }
 
+    // ED-0011: backups, three generations; restoring steps back round to the start; a deleted slot
+    // is its newest backup; the editor backs a world up at its first save after opening it.
+    {
+        using Microsoft::Xna::Framework::Input::Keys;
+        std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
+        const auto path = SlotWorldPath(kStorageSlot, 4);
+        std::filesystem::create_directories(path.parent_path(), error);
+        const auto saveWith = [&](std::uint16_t icon)
+        {
+            World w;
+            w.setBlock(1, 1, 1, Block::make(icon));
+            w.saveToFile(path);
+        };
+        const auto iconIn = [](const std::filesystem::path& file)
+        {
+            return World::loadFromFile(file).getBlock(1, 1, 1).type();
+        };
+        saveWith(11);
+        check(!BackUpWorld(SlotWorldPath(kStorageSlot, 5)) && BackupCount(path) == 0,
+              "a slot without a world has nothing to back up");
+        for (const std::uint16_t icon : {12, 13, 14, 15})
+        {
+            (void)BackUpWorld(path);
+            saveWith(icon);
+        }
+        check(BackupCount(path) == 3 && iconIn(BackupPath(path, 1)) == 14 && iconIn(BackupPath(path, 3)) == 12 &&
+                  BackupPath(path, 1).parent_path().filename() == "backups",
+              "three generations in backups/, the newest first, the oldest dropped");
+        bool cycle = RestoreBackup(path) && iconIn(path) == 14;
+        cycle = cycle && RestoreBackup(path) && iconIn(path) == 13;
+        cycle = cycle && RestoreBackup(path) && iconIn(path) == 12;
+        cycle = cycle && RestoreBackup(path) && iconIn(path) == 15 && BackupCount(path) == 3;
+        check(cycle, "restoring steps back through the backups and comes round to the world it began with");
+        if (std::FILE* file = std::fopen(ThumbnailPath(path).string().c_str(), "w"))
+        {
+            std::fclose(file);
+        }
+        check(DeleteSlotWorld(path) && !std::filesystem::exists(path) &&
+                  !std::filesystem::exists(ThumbnailPath(path)) && BackupCount(path) == 3 &&
+                  iconIn(BackupPath(path, 1)) == 15,
+              "deleting a slot keeps its world as the newest backup; its thumbnail goes");
+        check(RestoreBackup(path) && iconIn(path) == 15 && BackupCount(path) == 2,
+              "a deleted world comes back from its backups");
+
+        EditorBrowserScreen browser;
+        browser.Refresh(kStorageSlot);
+        const auto mode = EditorBrowserScreen::RestoreModeRect();
+        const auto slot = EditorBrowserScreen::SlotRect(3);
+        (void)clickBrowser(browser, static_cast<int>((mode.x0 + mode.x1) / 2), static_cast<int>((mode.y0 + mode.y1) / 2));
+        check(browser.CurrentMode() == EditorBrowserScreen::Mode::Restore, "the Backups button turns restoring on");
+        const auto restored =
+            clickBrowser(browser, static_cast<int>((slot.x0 + slot.x1) / 2), static_cast<int>(slot.y0 + 20.0f));
+        check(restored.action == EditorBrowserScreen::Action::None && iconIn(path) == 14 &&
+                  browser.Message().find("restored") != std::string::npos,
+              "in Backups a click on a slot restores its backup and opens nothing");
+        (void)clickBrowser(browser, static_cast<int>((mode.x0 + mode.x1) / 2), static_cast<int>((mode.y0 + mode.y1) / 2));
+        check(browser.CurrentMode() == EditorBrowserScreen::Mode::Open, "the Backups button again: clicks open worlds");
+
+        // The editor: the first save after the world was opened from the browser backs it up.
+        const auto openAndSave = [&](std::uint16_t icon, int saves)
+        {
+            WorldEditor editor;
+            editor.EnterBrowser(kStorageSlot);
+            editor.ExitBrowser();
+            editor.EnterEditing(0.0f, 10.0f, 0.0f);
+            editor.SetWorldPath(path);
+            World w;
+            w.setBlock(1, 1, 1, Block::make(icon));
+            CnaEngine::Graphics::Camera camera;
+            const MouseState idle(0, 0, 0, ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released, ButtonState::Released);
+            for (int i = 0; i < saves; ++i)
+            {
+                editor.Update(KeyboardState{Keys::Enter}, idle, 0.0f, 800, 480, camera, w);
+                editor.Update(KeyboardState{}, idle, 0.0f, 800, 480, camera, w);
+            }
+        };
+        openAndSave(20, 2);
+        check(iconIn(path) == 20 && iconIn(BackupPath(path, 1)) == 14 && iconIn(BackupPath(path, 2)) == 13,
+              "the first save after opening keeps the world as it was, a second save of that visit adds none");
+        openAndSave(21, 1);
+        check(iconIn(path) == 21 && iconIn(BackupPath(path, 1)) == 20 && BackupCount(path) == 3,
+              "the next visit's first save keeps the last one");
+    }
+
     std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
     std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

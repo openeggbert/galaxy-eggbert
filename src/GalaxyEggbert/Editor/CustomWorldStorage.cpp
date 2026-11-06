@@ -105,6 +105,89 @@ namespace GalaxyEggbert::Editor
         return target;
     }
 
+    std::filesystem::path BackupPath(const std::filesystem::path& world, int generation)
+    {
+        return world.parent_path() / "backups" /
+               (world.stem().string() + "." + std::to_string(generation) + world.extension().string());
+    }
+
+    int BackupCount(const std::filesystem::path& world)
+    {
+        std::error_code ec;
+        int count = 0;
+        while (count < kBackupGenerations && std::filesystem::exists(BackupPath(world, count + 1), ec))
+        {
+            ++count;
+        }
+        return count;
+    }
+
+    bool BackUpWorld(const std::filesystem::path& world)
+    {
+        std::error_code ec;
+        if (!std::filesystem::exists(world, ec))
+        {
+            return false;
+        }
+        std::filesystem::create_directories(BackupPath(world, 1).parent_path(), ec);
+        std::filesystem::remove(BackupPath(world, kBackupGenerations), ec);
+        for (int generation = kBackupGenerations - 1; generation >= 1; --generation)
+        {
+            if (std::filesystem::exists(BackupPath(world, generation), ec))
+            {
+                std::filesystem::rename(BackupPath(world, generation), BackupPath(world, generation + 1), ec);
+            }
+        }
+        return std::filesystem::copy_file(world, BackupPath(world, 1), std::filesystem::copy_options::overwrite_existing,
+                                          ec);
+    }
+
+    bool RestoreBackup(const std::filesystem::path& world)
+    {
+        const int count = BackupCount(world);
+        if (count == 0)
+        {
+            return false;
+        }
+        std::error_code ec;
+        const bool present = std::filesystem::exists(world, ec);
+        const std::filesystem::path swap = world.parent_path() / "backups" / (world.stem().string() + ".swap.vwr");
+        if (present)
+        {
+            std::filesystem::rename(world, swap, ec);
+            if (ec)
+            {
+                return false;
+            }
+        }
+        std::filesystem::rename(BackupPath(world, 1), world, ec);
+        for (int generation = 2; generation <= count; ++generation)
+        {
+            std::filesystem::rename(BackupPath(world, generation), BackupPath(world, generation - 1), ec);
+        }
+        if (present)
+        {
+            std::filesystem::rename(swap, BackupPath(world, count), ec);
+        }
+        std::filesystem::remove(ThumbnailPath(world), ec);
+        return true;
+    }
+
+    bool DeleteSlotWorld(const std::filesystem::path& world)
+    {
+        std::error_code ec;
+        (void)BackUpWorld(world);
+        std::filesystem::remove(ThumbnailPath(world), ec);
+        return std::filesystem::remove(world, ec);
+    }
+
+    std::filesystem::path ThumbnailPath(const std::filesystem::path& world)
+    {
+        std::filesystem::path thumbnail = world;
+        thumbnail.replace_extension(".png");
+        return thumbnail;
+    }
+
     bool SeedShowcaseSlot(int gamerSlot, const std::filesystem::path& showcase)
     {
         const std::filesystem::path dir = CustomWorldsDir(gamerSlot);

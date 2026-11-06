@@ -401,6 +401,11 @@ namespace GalaxyEggbert::Editor
         bool deleteObjectKeyHeldLastFrame_ = false;
 
         std::filesystem::path worldPath_;
+        // The world backed up since it was opened from the browser (ED-0011): its first save keeps
+        // the file as it was (CustomWorldStorage BackUpWorld), the next ones of that visit do not.
+        std::filesystem::path backedUpPath_;
+        // Saves @p world to worldPath_, backed up first when this visit has not yet.
+        void SaveWorld(const Worlds::World& world);
 
         bool browsing_ = true;
         int gamerSlot_ = 0;
