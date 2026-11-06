@@ -129,10 +129,19 @@ void World::setBlock(std::uint16_t x,
     const auto localZ = static_cast<std::uint8_t>(z % VoxelConfig::ChunkSize);
 
     auto& target = chunk(chunkX, chunkY, chunkZ);
-    if (target.getBlock(localX, localY, localZ).rawValue() != blockValue.rawValue()) {
+    const auto oldRaw = target.getBlock(localX, localY, localZ).rawValue();
+    target.setBlock(localX, localY, localZ, blockValue);
+    if (oldRaw != blockValue.rawValue()) {
+        if (blockChanges_.size() == BlockChangeCapacity) blockChanges_.pop_front();
+        blockChanges_.push_back({x, y, z, oldRaw, blockValue.rawValue()});
         ++blockRevision_;
     }
-    target.setBlock(localX, localY, localZ, blockValue);
+}
+
+World::BlockChanges World::blockChangesSince(std::uint32_t revision) const {
+    const auto count = static_cast<std::uint32_t>(blockRevision_ - revision);
+    if (count > blockChanges_.size()) return {};
+    return {true, {blockChanges_.end() - count, blockChanges_.end()}};
 }
 
 void World::setBlockExtraMetadata(std::uint16_t x,
@@ -152,6 +161,7 @@ void World::setBlockExtraMetadata(std::uint16_t x,
 
     const auto localBlockIndex = static_cast<std::uint32_t>(Chunk::linearIndex(localX, localY, localZ));
     chunk(chunkX, chunkY, chunkZ).setExtraMetadata(localBlockIndex, metadataType, std::move(payload));
+    blockChanges_.clear(); // metadata cannot be represented by a raw-block change
     ++blockRevision_; // a turned tile draws and acts otherwise (M3D-0005)
 }
 
@@ -191,6 +201,7 @@ bool World::removeBlockExtraMetadata(std::uint16_t x,
     const auto localBlockIndex = static_cast<std::uint32_t>(Chunk::linearIndex(localX, localY, localZ));
     const bool removed = chunk(chunkX, chunkY, chunkZ).removeExtraMetadata(localBlockIndex, metadataType);
     if (removed) {
+        blockChanges_.clear();
         ++blockRevision_;
     }
     return removed;

@@ -365,86 +365,12 @@ namespace GalaxyEggbert::Game
         constexpr float kGrassPlateWidth = 1.0f;
         constexpr float kGrassPlateDepth = 1.0f;
 
-        // True if @p icon uses one of the "new geometry" render modes
-        // (AppendSpecialGeometry above) -- these are smaller than a full
-        // block or leave faces intentionally open, so they must never be
-        // treated as occluders by IsOccluderBlock below.
-        bool IsSpecialGeometryIcon(int icon)
-        {
-            const auto mode =
-                GalaxyEggbert::GetBlockDefinition(static_cast<std::uint16_t>(icon)).renderMode;
-            return mode != GalaxyEggbert::BlockRenderMode::Air &&
-                   mode != GalaxyEggbert::BlockRenderMode::UniformCube;
-        }
-
-        // IsClosedDirectionalCube for a block's definition, worked out once per icon.
-        bool IsClosedDirectionalCubeCached(const GalaxyEggbert::BlockDefinition& definition)
-        {
-            if (definition.renderMode != GalaxyEggbert::BlockRenderMode::DirectionalCube)
-            {
-                return false;
-            }
-            static std::array<std::int8_t, GalaxyEggbert::BlockDefinitionRegistry::DefinitionCount> cache{};
-            auto& known = cache[definition.type];
-            if (known == 0)
-            {
-                known = IsClosedDirectionalCube(static_cast<int>(definition.type)) ? 1 : -1;
-            }
-            return known > 0;
-        }
-
-        // Face-culling occlusion test (NEXT.md §8 -- "add face-culling/
-        // occlusion to TerrainRenderer"): true only for a block that is
-        // guaranteed to be a plain, fully opaque 1x1x1 cube on every side --
-        // non-air, in bounds, not water, not animated (some animated icons
-        // use special/holed geometry -- see AppendSpecialGeometry -- and
-        // conservatively excluding ALL of them, not just the holed ones,
-        // keeps this check simple and never over-culls), not alpha-blended,
-        // and not itself a special-geometry icon. Deliberately conservative:
-        // a face is only culled when its neighbor is DEFINITELY solid on
-        // that side, never a guess -- worth revisiting later for e.g.
-        // DirectionalCube neighbors (their own per-face pattern is already
-        // known via ConfigureDirectionalCubeFaces, so they COULD occlude on
-        // their opaque faces), but that's extra complexity for a case this
-        // task doesn't need yet (§8's own note: "not needed at the current
-        // ~2700-block scale"). A tile with clear texels (TileCoverage) hides
-        // nothing behind it either.
         bool IsOccluderBlock(const Worlds::World& world, int blocksPerAxis, int x, int y, int z,
                              const std::vector<TileCoverage>& tileCoverage)
         {
             if (x < 0 || y < 0 || z < 0 || x >= blocksPerAxis || y >= blocksPerAxis || z >= blocksPerAxis)
-            {
                 return false;
-            }
-
-            const auto block = world.getBlock(static_cast<std::uint16_t>(x),
-                                               static_cast<std::uint16_t>(y),
-                                               static_cast<std::uint16_t>(z));
-            if (block.isAir())
-            {
-                return false;
-            }
-
-            // The flight barrier is drawn only by the ShowSecret cheat (and in the editor), so it
-            // never hides its neighbours' faces.
-            if (block.type() == GalaxyEggbert::BlockTypes::FlightBarrier)
-            {
-                return false;
-            }
-            const auto& definition = GalaxyEggbert::GetBlockDefinition(block.type());
-            const std::uint16_t animBase = definition.animation.baseIcon;
-            if (IsWater(animBase) || IsAnimated(animBase))
-            {
-                return false;
-            }
-
-            const int icon = static_cast<int>(block.type());
-            if (definition.alphaBlend || (IsSpecialGeometryIcon(icon) && !IsClosedDirectionalCubeCached(definition)))
-            {
-                return false;
-            }
-
-            return CoverageOf(tileCoverage, icon) == TileCoverage::Opaque;
+            return IsTerrainOccluder(world.getBlock(x, y, z), tileCoverage);
         }
 
         // A face of a DirectionalCube hidden by its neighbour (IsOccluderBlock), as a plain cube's
@@ -487,6 +413,25 @@ namespace GalaxyEggbert::Game
             }
             return count;
         }
+    }
+
+    bool TerrainRenderer::PatchModelCells(const Worlds::World& world, const Worlds::World::BlockChanges& changes,
+                                         const std::vector<std::uint16_t>& icons, bool drawSecret,
+                                         const std::vector<TileCoverage>& coverage)
+    {
+        // A model load/unload changes which cells belong to GPU meshes, even without a grid edit.
+        if (icons != m_stillModelIcons || !PatchTerrainModelCells(world, changes, icons, drawSecret, coverage,
+                [&](std::uint16_t icon) { return m_reliefs && m_reliefs->Find(icon); }, m_staticModelCells))
+            return false;
+        for (const auto& c : changes.cells)
+        {
+            if (Worlds::Block(c.oldRaw).isAir()) ++m_blockCount;
+            if (Worlds::Block(c.newRaw).isAir()) --m_blockCount;
+        }
+        m_centroidX = m_blockCount ? static_cast<float>(m_nonModelSumX / m_blockCount) : 0.0f;
+        m_centroidY = m_blockCount ? static_cast<float>(m_nonModelSumY / m_blockCount) : 0.0f;
+        m_centroidZ = m_blockCount ? static_cast<float>(m_nonModelSumZ / m_blockCount) : 0.0f;
+        return true;
     }
 
     TerrainRenderer::TerrainRenderer(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -574,6 +519,7 @@ namespace GalaxyEggbert::Game
             }
             return mask;
         };
+        m_stillModelIcons = modelDrawnIcons;
         double sumX = 0.0;
         double sumY = 0.0;
         double sumZ = 0.0;
@@ -604,51 +550,7 @@ namespace GalaxyEggbert::Game
                     ++m_blockCount;
                     if (std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), block.type()) != modelDrawnIcons.end())
                     {
-                        const auto same = [&](int dx, int dz)
-                        {
-                            const int nx = x + dx, nz = z + dz;
-                            return nx >= 0 && nz >= 0 && nx < blocksPerAxis && nz < blocksPerAxis &&
-                                   ModelRowFamily(world.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(y),
-                                                                 static_cast<std::uint16_t>(nz))
-                                                      .type()) == ModelRowFamily(block.type());
-                        };
-                        const auto sides = static_cast<std::uint8_t>((same(1, 0) ? 1 : 0) | (same(-1, 0) ? 2 : 0) |
-                                                                     (same(0, 1) ? 4 : 0) | (same(0, -1) ? 8 : 0));
-                        // A bar shows its ceiling mounts only under a tile they hold to (ShownBarIcon),
-                        // when that icon's model is loaded too.
-                        std::uint16_t shown = block.type();
-                        if (IsBarIcon(shown))
-                        {
-                            const std::uint16_t above =
-                                y + 1 < blocksPerAxis
-                                    ? world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y + 1),
-                                                     static_cast<std::uint16_t>(z))
-                                          .type()
-                                    : std::uint16_t{0};
-                            const std::uint16_t bar = ShownBarIcon(above);
-                            if (std::find(modelDrawnIcons.begin(), modelDrawnIcons.end(), bar) != modelDrawnIcons.end())
-                            {
-                                shown = bar;
-                            }
-                        }
-                        // The side facing the most room to stand in (BlockModels.hpp
-                        // FrontModelOpenSide). A hub door's bar counts as open: the hub lifts it as
-                        // the missions are won, and the sign in its niche faces the doorway.
-                        const auto open = [&](int cx, int cy, int cz)
-                        {
-                            if (cx < 0 || cy < 0 || cz < 0 || cx >= blocksPerAxis || cy >= blocksPerAxis ||
-                                cz >= blocksPerAxis)
-                            {
-                                return false;
-                            }
-                            const auto type = world.getBlock(static_cast<std::uint16_t>(cx), static_cast<std::uint16_t>(cy),
-                                                             static_cast<std::uint16_t>(cz))
-                                                  .type();
-                            return type == 0 || type == GalaxyEggbert::BlockTypes::HubDoor ||
-                                   GalaxyEggbert::GetBlockDefinition(type).collisionMask == 0;
-                        };
-                        const std::uint8_t openSide = FrontModelOpenSide(x, y, z, sides, open);
-                        m_staticModelCells.push_back({worldX, worldY, worldZ, shown, sides, openSide}); // drawn as a model
+                        m_staticModelCells.push_back(*ComputeTerrainModelCell(world, x, y, z, modelDrawnIcons, drawSecret));
                         continue;
                     }
                     sumX += worldX;
@@ -1061,6 +963,9 @@ namespace GalaxyEggbert::Game
             }
         }
 
+        m_nonModelSumX = sumX;
+        m_nonModelSumY = sumY;
+        m_nonModelSumZ = sumZ;
         if (m_blockCount > 0)
         {
             m_centroidX = static_cast<float>(sumX / m_blockCount);

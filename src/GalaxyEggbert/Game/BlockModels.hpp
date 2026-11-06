@@ -73,8 +73,8 @@ namespace GalaxyEggbert::Game
     // The coloured doors 334-336 (Decor/porte-r/v/b.rd4, IoU 0.983; owner 2026-11-02: the red, green
     // and blue posts in 3D), until a key opens them. The spring 211 (Decor/ressort.rd4, IoU 0.98;
     // owner 2026-11-02: a cube with a sprite), its frame per tick (SpringFrameIcon below).
-    // The clay bridge 364 and its shaking 365-366 (Decor/grotte-fragile1.rd4; its crumbling pieces
-    // 367-372 are the ObjectType52's, drawn in the same cell).
+    // Every clay bridge frame 364-372 (Decor/grotte-fragile1.rd4), including the crumbling
+    // grid cells written by ObjectType52 and the gallery's static exhibits.
     // The lightning's emitter 304 (Decor/eclair.rd4, IoU 0.94), its front toward the open side.
     // The saws' switch 384/385 (Decor/interrupteur.rd4, IoU 1.0, front toward the open side) and the
     // conveyor 311-316 (Decor/chenille.rds, 0.95-0.96) (OR-0050's sweep). Not the column 375:
@@ -84,9 +84,9 @@ namespace GalaxyEggbert::Game
     // edge, its front toward the open side: the drop it rails.
     // The electrode 238-242 (Decor/electro.rd4, IoU 0.79-0.81: its painted sparks drawn as a decal facing
     // the camera, owner 2026-11-04, Q-005; IsElectrodeIcon).
-    inline constexpr std::array<std::uint16_t, 36> kStillModelIcons{76, 77, 377, 399, 398, 201, 138, 202,
+    inline constexpr std::array<std::uint16_t, 42> kStillModelIcons{76, 77, 377, 399, 398, 201, 138, 202,
                                                                      330, 331, 332, 333, 199, 182, 183,
-                                                                     334, 335, 336, 211, 364, 365, 366, 304,
+                                                                     334, 335, 336, 211, 364, 365, 366, 367, 368, 369, 370, 371, 372, 304,
                                                                      384, 385, 311, 312, 313, 314, 315, 316,
                                                                      238, 239, 240, 241, 242};
     [[nodiscard]] constexpr bool IsElectrodeIcon(int icon) noexcept
@@ -237,12 +237,14 @@ namespace GalaxyEggbert::Game
     // set in a ceiling row, a switch in the floor), a row of the same model along X faces +Z and
     // one along Z faces +X, across the row as the sprites show it; anything else faces +X.
     // `sameSides` as TerrainRenderer::ModelCell (1 +X, 2 -X, 4 +Z, 8 -Z).
+    inline constexpr int kFrontModelOpenRun = 8;
+    inline constexpr int kFrontModelFloorDepth = 4;
     template <typename Open>
     [[nodiscard]] constexpr std::uint8_t FrontModelOpenSide(int x, int y, int z, std::uint8_t sameSides,
                                                             Open&& open)
     {
-        constexpr int kOpenRun = 8;
-        constexpr int kFloorDepth = 4;
+        constexpr int kOpenRun = kFrontModelOpenRun;
+        constexpr int kFloorDepth = kFrontModelFloorDepth;
         constexpr int kSideDx[4] = {1, -1, 0, 0};
         constexpr int kSideDz[4] = {0, 0, 1, -1};
         int bestRun = 0;

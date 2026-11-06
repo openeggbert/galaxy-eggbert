@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <deque>
 #include <iosfwd>
 #include <vector>
 
@@ -143,6 +144,19 @@ public:
      */
     [[nodiscard]] std::uint32_t blockRevision() const noexcept { return blockRevision_; }
 
+    struct BlockChange {
+        std::uint16_t x, y, z;
+        std::uint16_t oldRaw, newRaw;
+    };
+    struct BlockChanges {
+        bool known = false; // false after overflow or an extra-metadata edit
+        std::vector<BlockChange> cells;
+    };
+    static constexpr std::size_t BlockChangeCapacity = 256;
+    // Non-destructive: each consumer supplies its own revision. No journal is serialized.
+    [[nodiscard]] BlockChanges blockChangesSince(std::uint32_t revision) const;
+
+
     /**
      * @brief Provides read-only access to one chunk by chunk-grid coordinates.
      *
@@ -277,6 +291,7 @@ private:
     std::uint16_t spawnY_ = 0;
     std::uint16_t spawnZ_ = 0;
     std::uint32_t blockRevision_ = 0;
+    std::deque<BlockChange> blockChanges_;
 
     /**
      * @brief Converts chunk-grid coordinates to a linear vector index.

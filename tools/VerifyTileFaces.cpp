@@ -8,6 +8,7 @@
 #include <GalaxyEggbert/Game/LavaSurface.hpp>
 #include <GalaxyEggbert/Game/MeshParts.hpp>
 #include <GalaxyEggbert/Game/TerrainRelief.hpp>
+#include <GalaxyEggbert/Game/TerrainModelCells.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
 
@@ -552,6 +553,151 @@ int main()
         }
         check(std::fabs(lowX - 9.0f) < 1e-5f && std::fabs(highX - 10.5f) < 1e-5f,
               "the backing reaches half a block into the solid -x side and stops at the air +x edge");
+    }
+
+    // Clay bridges: compare the incrementally maintained list with a complete scan after
+    // every step. No GraphicsDevice is constructed by this verifier.
+    {
+        using namespace GalaxyEggbert;
+        using namespace GalaxyEggbert::Game;
+        using Worlds::Block;
+        using Worlds::World;
+        const std::vector<std::uint16_t> icons(kStillModelIcons.begin(), kStillModelIcons.end());
+        const std::vector<TileCoverage> opaque(500, TileCoverage::Opaque);
+        const auto noRelief = [](std::uint16_t) { return false; };
+        const auto full = [&](const World& w) {
+            std::vector<TerrainModelCell> result;
+            for (int y = 0; y < w.blocksPerAxis(); ++y)
+                for (int z = 0; z < w.blocksPerAxis(); ++z)
+                    for (int x = 0; x < w.blocksPerAxis(); ++x)
+                        if (auto cell = ComputeTerrainModelCell(w, x, y, z, icons, false)) result.push_back(*cell);
+            return result;
+        };
+        const auto equal = [](const auto& a, const auto& b) {
+            return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](const auto& l, const auto& r) {
+                return std::tie(l.x, l.y, l.z, l.base, l.sameSides, l.openSide) ==
+                       std::tie(r.x, r.y, r.z, r.base, r.sameSides, r.openSide);
+            });
+        };
+        World w(2);
+        w.setBlock(10, 5, 10, Block::make(364));
+        w.setBlock(11, 5, 10, Block::make(364)); // sameSides changes with each shaking frame
+        w.setBlock(10, 4, 10, Block::make(138)); // mounts change when the bridge disappears
+        w.setBlock(9, 4, 10, Block::make(202)); // the two bar icons share a row family
+        w.setBlock(10, 5, 11, Block::make(2)); // plain cube beside the bridge
+        w.setBlock(9, 5, 9, Block::make(107)); // grass/relief diagonal
+        w.setBlock(2, 9, 10, Block::make(384)); // furthest front-model floor dependency: 8 away, 4 up
+        w.setBlock(18, 5, 10, Block::make(330)); // front-model room dependency 8 away
+        w.setBlock(10, 5, 13, Block::make(BlockTypes::Saw));
+        w.setBlock(10, 5, 9, Block::make(BlockTypes::Water1));
+        w.setBlock(10, 3, 10, Block::make(BlockTypes::Lava));
+        auto cells = full(w);
+        auto revision = w.blockRevision();
+        const int sequence[] = {364, 365, 366, 367, 368, 369, 370, 371, 372, 0,
+                                372, 371, 370, 369, 368, 367, 364};
+        bool sequenceOk = true, sawMountChange = false;
+        const auto original = cells;
+        for (int icon : sequence)
+        {
+            w.setBlock(10, 5, 10, Block::make(icon));
+            const auto changes = w.blockChangesSince(revision);
+            sequenceOk &= PatchTerrainModelCells(w, changes, icons, false, opaque, noRelief, cells);
+            sequenceOk &= equal(cells, full(w));
+            for (const auto& cell : cells)
+            {
+                if (cell.y == 4 && cell.x == 10 - WorldRuntime::kWorldCenterX && cell.base == 202) sawMountChange = true;
+            }
+            revision = w.blockRevision();
+        }
+        check(sequenceOk, "bridge sequence including air: patched model list equals full recomputation at every step");
+        check(sawMountChange, "bridge removal updates the bar mounts below it");
+        World distant(2);
+        distant.setBlock(18, 9, 10, Block::make(384));
+        distant.setBlock(10, 5, 10, Block::make(364));
+        auto distantCells = full(distant);
+        const auto distantRevision = distant.blockRevision();
+        const auto beforeTurn = distantCells.back().openSide;
+        distant.setBlock(10, 5, 10, Block::air());
+        check(PatchTerrainModelCells(distant, distant.blockChangesSince(distantRevision), icons, false,
+                                     opaque, noRelief, distantCells) && equal(distantCells, full(distant)) &&
+                  beforeTurn != distantCells.back().openSide,
+              "bridge removal turns a model eight cells away and four cells above");
+        check(equal(original, cells), "bridge recovery restores the exact original ordered model list");
+        // Several writes to one cell and simultaneous adjacent edits must use final world state.
+        w.setBlock(10, 5, 10, Block::make(367, 3));
+        w.setBlock(10, 5, 10, Block::air());
+        w.setBlock(11, 5, 10, Block::make(372));
+        check(PatchTerrainModelCells(w, w.blockChangesSince(revision), icons, false, opaque, noRelief, cells) &&
+                  equal(cells, full(w)), "batched repeated/adjacent model changes including raw metadata match full scan");
+        revision = w.blockRevision();
+        auto unchanged = cells;
+        w.setBlock(10, 5, 10, Block::make(364));
+        w.setBlock(10, 5, 11, Block::air());
+        check(!PatchTerrainModelCells(w, w.blockChangesSince(revision), icons, false, opaque, noRelief, cells) &&
+                  equal(cells, unchanged), "a batch touching a plain cube is refused atomically");
+        revision = w.blockRevision();
+        w.setBlock(10, 5, 10, Block::make(365));
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), {}, opaque, noRelief),
+              "missing bridge model forces full rebuild");
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque,
+                                    [](std::uint16_t) { return true; }), "relief-bearing endpoints force full rebuild");
+        w.setBlock(10, 6, 10, Block::make(BlockTypes::Lava));
+        revision = w.blockRevision();
+        w.setBlock(10, 5, 10, Block::air());
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
+              "non-air change under lava refuses its stale baked bottom mask");
+        w.setBlock(10, 6, 10, Block::air());
+        w.setBlock(10, 5, 10, Block::make(76)); // non-occluding pillar, but a saw-floor candidate
+        revision = w.blockRevision();
+        w.setBlock(10, 5, 10, Block::air());
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
+              "a model used by a nearby saw's floor selection forces rebuild");
+        w.setBlock(10, 5, 10, Block::make(201)); // a model whose opaque tile can occlude
+        revision = w.blockRevision();
+        w.setBlock(10, 5, 10, Block::air());
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
+              "an occluding model endpoint forces rebuild");
+        revision = w.blockRevision();
+        w.setBlock(10, 5, 10, Block::make(BlockTypes::FlightBarrier));
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
+              "flight barrier visibility never takes the model fast path");
+        revision = w.blockRevision();
+        w.setBlockExtraMetadata(10, 5, 10, 5, {1});
+        check(!w.blockChangesSince(revision).known, "extra metadata invalidates the raw-cell journal");
+        revision = w.blockRevision();
+        w.removeBlockExtraMetadata(10, 5, 10, 5);
+        check(!w.blockChangesSince(revision).known, "metadata removal invalidates the journal too");
+        revision = w.blockRevision();
+        for (std::size_t i = 0; i < World::BlockChangeCapacity; ++i)
+            w.setBlock(0, 0, 0, Block::make(i % 2 ? 364 : 365));
+        check(w.blockChangesSince(revision).known &&
+                  w.blockChangesSince(revision).cells.size() == World::BlockChangeCapacity,
+              "bounded journal retains exactly its capacity");
+        w.setBlock(0, 0, 0, Block::air());
+        check(!w.blockChangesSince(revision).known, "journal overflow forces a full rebuild");
+        revision = w.blockRevision();
+        w.setBlock(0, 0, 0, Block::air());
+        check(w.blockRevision() == revision && w.blockChangesSince(revision).cells.empty(),
+              "identical writes do not grow the revision or journal");
+        w.setBlock(0, 0, 0, Block::make(367));
+        const auto recent = w.blockChangesSince(revision);
+        check(recent.known && recent.cells.size() == 1 && recent.cells[0].oldRaw == 0 &&
+                  recent.cells[0].newRaw == Block::make(367).rawValue() &&
+                  w.blockChangesSince(revision).cells.size() == 1,
+              "after overflow a current consumer recovers; reading does not consume other readers' history");
+        auto edge = full(w);
+        revision = w.blockRevision();
+        w.setBlock(0, 0, 0, Block::air());
+        check(PatchTerrainModelCells(w, w.blockChangesSince(revision), icons, false, opaque, noRelief, edge) &&
+                  equal(edge, full(w)), "world boundary model removal matches full scan");
+        bool gallery = true;
+        for (int icon = 367; icon <= 372; ++icon)
+        {
+            w.setBlock(icon - 367, 0, 1, Block::make(icon));
+            const auto model = ComputeTerrainModelCell(w, icon - 367, 0, 1, icons, false);
+            gallery &= model && model->base == icon && !IsTerrainOccluder(Block::make(icon), opaque);
+        }
+        check(gallery, "all six static gallery crumble icons are non-occluding models");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -72,6 +72,13 @@ content-authoring UX, but not new gameplay mechanics.
   `plans/audit/behavior_differences.md` BD-0077.
 - Playable 3D worlds: terrain, animated tiles, objects, enemies, hazards, pickups, vehicles,
   doors, switches, bridges, teleporters, HUD, sound, menus, save/progress, and hub progression.
+- Clay bridge changes now patch the terrain's model-cell list instead of rebuilding the world
+  mesh (2026-11-06). All frames 364-372 use models, including gallery exhibits; the crumble no
+  longer draws a flat plate underneath. The bounded revision journal falls back to a full rebuild
+  for unknown history or edits affecting baked terrain. `VerifyTileFaces` checks incremental/full
+  equality; 112/112 CTest and both golden gates pass (image references updated only for the six
+  world999 exhibits). Measured rebuilds: world065 211 -> 6 (saw switches), world094 259 -> 0
+  (OR-0074). Evidence and frozen comparison scripts: `build-probe/bridge-stutter/`.
 - The canonical game implementation lives in `src/GalaxyEggbert/Game/` under
   `GalaxyEggbert::Game`, without legacy `GE` prefixes on game-owned components; the CNA-specific
   source tree now contains only the `GalaxyEggbertGame` application host/platform wiring.

@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "TerrainRelief.hpp"
+#include "TerrainModelCells.hpp"
 #include "TileAtlas.hpp"
 #include "TileCoverage.hpp"
 
@@ -141,16 +142,10 @@ namespace GalaxyEggbert::Game
             m_modelOverFloorBases = std::move(bases);
             m_lastAnimPhase = -1;
         }
-        struct ModelCell
-        {
-            float x, y, z; // the cell's centre (world space)
-            std::uint16_t base;
-            // Still cells: which side neighbours are the same icon (1 +X, 2 -X, 4 +Z, 8 -Z).
-            std::uint8_t sameSides = 0;
-            // Still cells: the side (0 +X, 1 -X, 2 +Z, 3 -Z) facing the most room to stand in, the way
-            // into the room (BlockModels.hpp).
-            std::uint8_t openSide = 2;
-        };
+        using ModelCell = TerrainModelCell;
+        bool PatchModelCells(const Worlds::World& world, const Worlds::World::BlockChanges& changes,
+                             const std::vector<std::uint16_t>& icons, bool drawSecret,
+                             const std::vector<TileCoverage>& coverage);
         // The cells of the bases set above, and of the still icons given to the constructor.
         [[nodiscard]] std::vector<ModelCell> ModelCells() const
         {
@@ -300,5 +295,7 @@ namespace GalaxyEggbert::Game
         std::vector<std::uint16_t> m_modelBases;
         std::vector<std::uint16_t> m_modelOverFloorBases;
         std::vector<ModelCell> m_staticModelCells;
+        std::vector<std::uint16_t> m_stillModelIcons;
+        double m_nonModelSumX = 0, m_nonModelSumY = 0, m_nonModelSumZ = 0;
     };
 }

@@ -1453,12 +1453,35 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::RefreshTerrainMeshIfChanged()
     {
         if (replayingResume_) return;
-        // Blocks changed in play (a door opened, a hub door slid away), or the flight barrier's
-        // visibility (ShowSecret, the editor): the terrain mesh is built from the blocks, so
-        // build it again.
+        // Patch changes confined to non-occluding models. All other edits, missing journal
+        // history, model availability changes, and ShowSecret still rebuild the terrain.
         if (terrainRenderer_ && (worldRuntime_.GetWorld().blockRevision() != terrainRevision_ ||
                                  TerrainDrawSecret() != terrainDrawSecret_))
         {
+            const auto rebuildStart = std::chrono::steady_clock::now();
+            const auto& world = worldRuntime_.GetWorld();
+            const auto changes = world.blockChangesSince(terrainRevision_);
+            if (TerrainDrawSecret() == terrainDrawSecret_ &&
+                terrainRenderer_->PatchModelCells(world, changes, StillModelIcons(), terrainDrawSecret_, tileCoverage_))
+            {
+                terrainRevision_ = world.blockRevision();
+                if (perfEnabled_)
+                {
+                    std::cout << "GalaxyEggbertCNA perf: terrain models patched " << changes.cells.size() << " changes in "
+                              << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - rebuildStart).count()
+                              << " ms" << std::endl;
+                }
+                return;
+            }
+            if (perfEnabled_)
+            {
+                std::cout << "GalaxyEggbertCNA perf: terrain full rebuild causes: known=" << changes.known
+                          << " secretChanged=" << (TerrainDrawSecret() != terrainDrawSecret_) << std::endl;
+                for (const auto& c : changes.cells)
+                    std::cout << "  terrain change (" << c.x << ',' << c.y << ',' << c.z << ") "
+                              << Worlds::Block(c.oldRaw).type() << "->" << Worlds::Block(c.newRaw).type()
+                              << " raw " << c.oldRaw << "->" << c.newRaw << std::endl;
+            }
             terrainDrawSecret_ = TerrainDrawSecret();
             auto rebuilt =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), terrainTileAtlas_,
@@ -1469,6 +1492,12 @@ namespace GalaxyEggbert::CNA
             terrainRenderer_ = std::move(rebuilt);
             ApplyBlockModels();
             terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
+            if (perfEnabled_)
+            {
+                std::cout << "GalaxyEggbertCNA perf: terrain rebuilt in "
+                          << std::chrono::duration<double>(std::chrono::steady_clock::now() - rebuildStart).count() * 1000.0
+                          << " ms" << std::endl;
+            }
         }
     }
 
@@ -7033,8 +7062,11 @@ namespace GalaxyEggbert::CNA
                     if (pose != nullptr && sheet == ObjectTextureSource::ObjectM &&
                         GalaxyEggbert::Game::IsClayBridgeIcon(icon))
                     {
-                        drawBridgeRows(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
-                                       obj.currentZ);
+                        // ObjectType52 writes every visible frame to the grid, including 367-372.
+                        // Its terrain model now owns the drawing (also for the static gallery).
+                        if (!terrainRenderer_)
+                            drawBridgeRows(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
+                                           obj.currentZ);
                     }
                     else if (const ObjectModelPose* conveyor = ConveyorLiftModel(obj))
                     {

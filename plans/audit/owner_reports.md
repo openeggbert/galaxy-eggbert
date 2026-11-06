@@ -320,3 +320,24 @@ rewritten).
   output.
 - Validation: mask IoU against the sprites 0.93-1.00, areas 0.99-1.01; in-game before/after in hub 010
   (`plans/evidence/sign-digits-before-after.jpg`; the full set in `build-probe/sign-digits/`).
+
+## OR-0074 — the game stuttered when Blupi stepped on the crumbling clay bridge (owner 2026-11-06) — FIXED_AND_VERIFIED
+
+- Report: "the game stutters when Blupi steps onto the clay bridge that disappears".
+- Cause (measured with GALAXY_PERF, which now also times terrain rebuilds): the bridge
+  (ObjectType52, Decor.cpp ~8540-8562) writes its `table_bridge` frame into its cell every tick, and
+  every changed value made `RefreshTerrainMeshIfChanged()` build a new `TerrainRenderer` of the whole
+  world on the main thread: a median of 123 ms (world065) to 189 ms (world094) each, ~30 times per
+  crossing. The crumbling frames 367-372 were also drawn as flat sprite plates in the terrain under
+  the object's model.
+- Fix (Codex CLI to a brief, reviewed): all bridge frames 364-372 are model-drawn (no flat plate);
+  `World` keeps a bounded journal of changed cells (256; metadata edits and overflow clear it), and a
+  change between air and non-occluding models that touches no baked terrain data (faces, reliefs,
+  lava bottoms, saw floors, grass) patches the model-cell list (`TerrainModelCells.hpp`, one per-cell
+  rule shared with the constructor); anything else rebuilds as before.
+- Validation: `VerifyTileFaces` (the patched list equals a full recomputation through a whole bridge
+  sequence beside other model cells; a plain cube refused); full rebuilds in the playthroughs
+  world065 211 -> 6 (the saw switches' batches), world094 259 -> 0, a patch 0.02-0.04 ms; ctest
+  112/112; golden frames re-baselined only for world999's bridge exhibits (models instead of plates,
+  ~650 pixels each), trace unchanged; screenshots `build-probe/bridge-stutter/`.
+- Left: a saw switch still rebuilds the whole terrain (~180 ms under xvfb) when it turns its saws.
