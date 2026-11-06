@@ -16,7 +16,7 @@ Primary evidence:
 - Original gameplay samples: [page 1](../../build-probe/world199-compare/original_video_p1.jpg), [page 2](../../build-probe/world199-compare/original_video_p2.jpg), [page 3](../../build-probe/world199-compare/original_video_p3.jpg). Extracted from the existing local all-levels recording named in the completion plan, at one-minute intervals from 6:24:10 through 6:53:10, plus 6:53:28, :36, :41 and :45. These establish observed order and appearance, not a frame-by-frame proof of every transition.
 - Copies of the supplied Galaxy play-pass sheets: [page 1](../../build-probe/world199-compare/galaxy_playpass_p1.jpg), [page 2](../../build-probe/world199-compare/galaxy_playpass_p2.jpg), [page 3](../../build-probe/world199-compare/galaxy_playpass_p3.jpg). These are existing captures, not new captures of today's dirty source tree.
 - [Galaxy floor slices](../../build-probe/world199-compare/galaxy_floorplans.png), [ending comparison](../../build-probe/world199-compare/ending_comparison.jpg).
-- [Galaxy generator](../../tools/worlds/world199.py), [brief](../briefs/world199.md), [main playthrough](../../tools/autoplay/world199.txt), [spare route](../../tools/autoplay/spare/world199.txt), and supplied trace `build-probe/play-pass-run-1/world199/autoplay_trace.txt`.
+- [Galaxy generator](../../tools/worlds/world199.py), [brief](../briefs/world199.md), [main playthrough](../../tools/autoplay/world199.txt), [the old spare route](../../tools/autoplay/spare/world199.txt) (replaced 2026-11-06 by the alternate route of the rebuild), and supplied trace `build-probe/play-pass-run-1/world199/autoplay_trace.txt`.
 - Original data: `../mobile-eggbert/worlds/world199.txt`, parsed using [parse_reference](../../tools/world_inventory.py). Galaxy data: read with `PYTHONDONTWRITEBYTECODE=1 python3 tools/vwr_inspect.py worlds3d/world199.vwr` and its reader. Object identities checked against [object notes](../../mobile-eggbert-reference/03-objects.md), current definitions and the stored channels/icons.
 
 ### Map-rendering method and corrections to old notes
@@ -367,3 +367,69 @@ The following appendix is generated from the two input files with their existing
 ```
 
 Evidence images in `build-probe/` are ignored local artifacts; retain that directory with the report when handing the audit to another machine. All image links above are relative to this report.
+
+## 10. Rebuild done (2026-11-06)
+
+World 199 was rebuilt following §7 and checked against §8. Design and coordinates:
+[the brief](../briefs/world199.md); generator `tools/worlds/world199.py`; main playthrough
+`tools/autoplay/world199.txt` (28 434 ticks to the win screen), alternate route
+`tools/autoplay/spare/world199.txt` (41 986 ticks, also to the win screen). Evidence (`plans/evidence/`): `world199-rebuild-places-1..4.jpg` (entrance, hardest moment and exit of
+every place, labelled), `world199-rebuild-pass-1..4.jpg` (the play pass of the main script, a frame every
+360 ticks with its tick and position), `world199-rebuild-ending.jpg` (the basin and island, the monument
+terrace, the star frame with the red arrow).
+
+### What matches
+
+- **The journey.** Twelve places in the original's order (§2): a gun shaft with four shooting Blupis, an
+  upper basin with conveyor stones, saucers and fans, a lift comb (eight single-cell lifts) and brick
+  library, a white palace with three saw rows and its teleporters, lava terraces with the lightning,
+  bars, bridge and wasp well, a village street and roofs, a riveted station with ten follow stars and
+  a lava trench, cheese caves with bulldozers and hanging mines, a helicopter jungle (eighteen
+  helicopters, four big creatures, spikes, drips), a rock gauntlet, a toy chamber of ball-block
+  columns, and a basin with a column ascent to the monument and the red arrow. The player descends
+  from the north-west top and climbs the monument under his start.
+- **Counts (`python3 tools/vwr_inspect.py worlds3d/world199.vwr`).** 196 MoveObjects of the same 20
+  types, every type exactly as §3 (26 lifts, 9 + 9 + 36 mines of which 27 travel and 9 stand, 6
+  bulldozers, 38 eggs, 22 helicopters, 9 birds, 4 enemy Blupis, 6 big creatures, 14 follow stars, 2
+  crates, 2 conveyor platforms, 2 inverts, 1 lollipop, 1 wasp, 8 keys, the exit); zero treasure; 47
+  BigDecor by family exactly as §4. Tiles: 10/2/9 left/right/up fans, 22 flight barriers, 9 bridge
+  cells, 2 spikes, 15 saws with 3 switches, 2 drips, 5 saucers, 2 + 2 teleporters, 4 lightning emitters
+  with 3 strike cells, 14 bars; doors and keys 2 red, 3 green, 3 blue.
+- **Key route.** R1/B1 in B, library behind R1 holding R2/G1, G1 into D, B2 into G, B3 into J, G3 at the
+  last gate; optional R2 (the palace gallery) and G2 (F's roofs); each door consumes its colour; a
+  carried G2 also opens the last gate. Both scripts take the consumptions in order.
+- **The ending.** Basin (swum), island with the palm and G3, six columns and two star lifts, the monument
+  terrace with the Blupi statue, its column, two fountains and vases, the green gate, the compact star
+  frame with the red arrow, the win screen.
+
+### What differs, and why
+
+- Original coordinates are not reproduced anywhere (no import, extrusion or 2.5D): the places are
+  authored volumes. Areas are smaller than the §7 envelopes where nothing needed more room; the route
+  between A and B and the long connectors are tunnels with a gate, a drop or a view in them.
+- §7 put B2 at "G's station route" and B3 at J: built as B2 at G's entrance, B3 at I's tunnel into J,
+  G's exit free. The toy chamber's ten flight barriers fence its exit ledge (they filter nothing a
+  walker needs); the other twelve fence A's east ledge.
+- The follow stars of G (ten) are sleeping set pieces beside the way, not a pursuit: waking one chases
+  Blupi and it blows itself on a wall; no script wakes one on purpose.
+- Fans: left fans cross the ways of B's east ledge, G's hall 2 and J's north bank (their winds push
+  across the path); up fans stand in floors beside or across the way (jumped at one-wide pinches in J).
+  The three eggs on I's perches and the egg on B's pillar need the helicopter or the lollipop's power
+  jump (neither is in `levelcheck.py`'s model); `flightcheck.py` reaches the perches' eggs.
+- G's trench is crossed on two ferries one way (hall 2 is four lower: a drop); the route is forward.
+
+### Checks (2026-11-06)
+
+| Gate (§8) | Result |
+|---|---|
+| 1 Inventory | 196 / 20 types, 47 BigDecor, all tile budgets: `python3 tools/vwr_inspect.py` (the table above) |
+| 2 Reachability | `python3 tools/levelcheck.py --stage 1 out.vwr`: OK, exit and every key reachable; `--rides`: OK; `flightcheck.py`: OK, three perch eggs with a helicopter, the pillar egg needs the lollipop; the real world stops at the first doors, as every keyed world |
+| 3 Key states, recoverability | Every pit and fall has a way on: pools swum out; E's lava crossings are single ways with the bridge regrowing (156 ticks); the wasp's well leaves by the balloon (alternate script); a lost helicopter in I leaves the floor's walking way (stair, creatures); T331 returns from E's west wing (alternate script, D climbed again with its saws off); held R2/G2 never block a gate |
+| 4 Playthrough | main script PASS 28 434 ticks; alternate PASS 41 986 ticks (lollipop, invert, saw row 3, wasp, T331, F's roofs); both conveyor stones, three switch contexts (rows 1, 2 main; 3 alternate), swimming exits, hanging mines (crouched), wind (B, G, J) |
+| 5 Visual | play-pass sheets (every 360 ticks, `PLAY_PASS_JOBS=1`, PASS 28 434 ticks) and entrance / hardest / exit frames of every place: `plans/evidence/world199-rebuild-places-*.jpg`, `-pass-*.jpg` |
+| 6 Finale | basin, island, columns, star lifts, statue and fountains, gate, star frame, arrow: `world199-rebuild-ending.jpg` and the last pass sheet |
+| 7 Owner review | open: the owner's look at the journey |
+
+Left for the owner's review: the white palace reads as pale stone with sparse trim; the long tunnels
+J to K, I to J are plain rock/slime by design; the monument column (87) is drawn as a plain white
+block by its model.

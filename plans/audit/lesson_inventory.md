@@ -9,4 +9,3 @@ Clusters are the original map's cells (x, y; 64 px tiles), `xN` the cells in the
 | 046 | bar: (47,19)x1 | crate 8 -> 1 | - |
 | 112 | water: (22,26)x11 (19,17)x2 | - | - |
 | 124 | - | mine 18 -> 2; moving mine 4 -> 1 | - |
-| 199 | - | creature 4 -> 1; helicopter 22 -> 6; mine 18 -> 2; moving mine 36 -> 9 | - |
