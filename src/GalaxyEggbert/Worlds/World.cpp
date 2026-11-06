@@ -327,7 +327,10 @@ World World::loadFromFile(const std::filesystem::path& path) {
     if (!in) {
         throw std::runtime_error("Cannot open world file for reading");
     }
+    return loadFromStream(in);
+}
 
+World World::loadFromStream(std::istream& in) {
     char magic[4]{};
     Binary::readMagic(in, magic);
     if (std::memcmp(magic, WorldMagic, 4) != 0) {

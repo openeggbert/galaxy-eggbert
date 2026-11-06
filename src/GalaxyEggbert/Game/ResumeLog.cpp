@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <iomanip>
 #include <limits>
 #include <locale>
@@ -11,13 +12,32 @@ namespace GalaxyEggbert::Game
 {
     namespace
     {
-        std::uint64_t Checksum(const std::string& text)
-        {
-            std::uint64_t hash = 14695981039346656037ull;
-            for (unsigned char c : text) hash = (hash ^ c) * 1099511628211ull;
-            return hash;
-        }
         constexpr std::uint64_t kMaxTicks = 10000000;
+    }
+
+    std::uint64_t ResumeLog::HashBytes(std::string_view bytes)
+    {
+        std::uint64_t hash = 14695981039346656037ull;
+        for (unsigned char c : bytes) hash = (hash ^ c) * 1099511628211ull;
+        return hash;
+    }
+
+    std::optional<std::uint64_t> ResumeLog::HashFile(const std::filesystem::path& path)
+    {
+        std::ifstream in(path, std::ios::binary);
+        if (!in) return std::nullopt;
+        std::uint64_t hash = 14695981039346656037ull;
+        char buffer[65536];
+        while (in.read(buffer, sizeof(buffer)) || in.gcount() != 0)
+            for (std::streamsize i = 0; i < in.gcount(); ++i)
+                hash = (hash ^ static_cast<unsigned char>(buffer[i])) * 1099511628211ull;
+        if (in.bad() || !in.eof()) return std::nullopt;
+        return hash;
+    }
+
+    bool ResumeLog::MatchesWorld(const std::string& path, std::uint64_t hash) const
+    {
+        return !path.empty() && start.worldPath == path && start.worldHash == hash;
     }
 
     void ResumeLog::Append(const ResumeInput& input)
@@ -40,7 +60,8 @@ namespace GalaxyEggbert::Game
         std::ostringstream out;
         out.imbue(std::locale::classic());
         out << std::setprecision(std::numeric_limits<float>::max_digits10);
-        out << "GALAXY_RESUME 1\n" << std::quoted(start.build) << '\n';
+        out << "GALAXY_RESUME 2\n" << std::quoted(start.build) << '\n';
+        out << std::quoted(start.worldPath) << ' ' << start.worldHash << '\n';
         out << start.mission << ' ' << start.lives << ' ' << start.speed << ' ' << start.seed << ' '
             << start.x << ' ' << start.y << ' ' << start.z << ' ' << start.yaw << ' '
             << start.quickCheat << ' ' << start.openDoors << ' ' << start.showSecret << ' '
@@ -58,7 +79,7 @@ namespace GalaxyEggbert::Game
             out << ' ' << f.accelValid << ' ' << f.accelReset << ' ' << f.accelY << '\n';
         }
         const auto body = out.str();
-        out << "END " << Checksum(body) << '\n';
+        out << "END " << HashBytes(body) << '\n';
         return out.str();
     }
 
@@ -71,7 +92,7 @@ namespace GalaxyEggbert::Game
         std::istringstream end(text.substr(footer + 5));
         end.imbue(std::locale::classic());
         std::uint64_t checksum;
-        if (!(end >> checksum) || checksum != Checksum(body)) return false;
+        if (!(end >> checksum) || checksum != HashBytes(body)) return false;
         end >> std::ws;
         if (!end.eof()) return false;
         std::istringstream in(body);
@@ -81,7 +102,9 @@ namespace GalaxyEggbert::Game
         std::string magic;
         int version;
         if (!(in >> magic >> version >> std::quoted(s.build)) || magic != "GALAXY_RESUME" ||
-            version != 1 || s.build != build) return false;
+            version != 2 || s.build != build) return false;
+        if (!(in >> std::quoted(s.worldPath) >> s.worldHash) || s.worldPath.empty() ||
+            s.worldPath.size() > 4096 || s.worldPath.find('\0') != std::string::npos) return false;
         if (!(in >> s.mission >> s.lives >> s.speed >> s.seed >> s.x >> s.y >> s.z >> s.yaw
                  >> s.quickCheat >> s.openDoors >> s.showSecret >> s.cameraMode >> std::quoted(s.saveData)))
             return false;

@@ -265,9 +265,15 @@ namespace GalaxyEggbert::Game
 
     bool WorldRuntime::LoadFromVwrFile(const std::string& path)
     {
+        std::ifstream in(path, std::ios::binary);
+        return in && LoadFromVwrStream(in);
+    }
+
+    bool WorldRuntime::LoadFromVwrStream(std::istream& in)
+    {
         try
         {
-            world_ = std::make_unique<Worlds::World>(Worlds::World::loadFromFile(path));
+            world_ = std::make_unique<Worlds::World>(Worlds::World::loadFromStream(in));
         }
         catch (const std::exception&)
         {

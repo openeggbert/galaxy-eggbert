@@ -396,6 +396,8 @@ int main()
         using namespace GalaxyEggbert::Game;
         ResumeLog log;
         log.start.build = "test build";
+        log.start.worldPath = "worlds3d/a quoted \"world\".vwr";
+        log.start.worldHash = 0xfedcba9876543210ull;
         log.start.seed = 4294967295u;
         log.start.x = 0.123456791f;
         log.start.saveData = "selectedGamer=2\nquoted=\"value\"\n";
@@ -412,7 +414,27 @@ int main()
         ResumeLog parsed;
         const auto text = log.Serialize();
         check(ResumeLog::Parse(text, "test build", parsed) && parsed.start == log.start && parsed.runs == log.runs,
-              "resume round trip retains start, all raw inputs and exact float values");
+              "resume v2 round trip retains world path/hash, start, all raw inputs and exact float values");
+        check(text.starts_with("GALAXY_RESUME 2\n"), "resume writes format version 2");
+        check(parsed.MatchesWorld(log.start.worldPath, log.start.worldHash), "same world is accepted");
+        check(!parsed.MatchesWorld(log.start.worldPath, log.start.worldHash ^ 1), "changed world hash is refused");
+        check(!parsed.MatchesWorld("worlds3d/world045.vwr", log.start.worldHash), "different world path is refused");
+        // A complete v1 file with a correct checksum: refusal must be because of its version.
+        const std::string v1 = "GALAXY_RESUME 1\n\"test build\"\n1 3 1 0 0 0 0 0 0 0 0 1\n\"\"\n0 0\n";
+        check(!ResumeLog::Parse(v1 + "END " + std::to_string(ResumeLog::HashBytes(v1)) + "\n", "test build", parsed)
+                  && parsed.start == log.start, "version 1 is refused transactionally even with a valid checksum");
+        check(ResumeLog::HashBytes("") == 0xcbf29ce484222325ull &&
+              ResumeLog::HashBytes("foobar") == 0x85944171f73967e8ull &&
+              ResumeLog::HashBytes(std::string_view("\0", 1)) == 0xaf63bd4c8601b7dfull,
+              "FNV-1a matches known vectors including binary NUL");
+        const auto hashPath = std::filesystem::path("verify-autoplay-resume-hash.bin");
+        std::string binary(65537, '\0');
+        binary[0] = '\xff'; binary[65535] = '\x80'; binary.back() = 'x';
+        { std::ofstream out(hashPath, std::ios::binary); out.write(binary.data(), binary.size()); }
+        check(ResumeLog::HashFile(hashPath) == ResumeLog::HashBytes(binary),
+              "streamed file hash includes binary bytes across buffer boundaries");
+        std::filesystem::remove(hashPath);
+        check(!ResumeLog::HashFile(hashPath), "unreadable file has no hash");
         bool rejected = true;
         for (std::size_t length = 0; length < text.size(); ++length)
             rejected = rejected && !ResumeLog::Parse(text.substr(0, length), "test build", parsed);
@@ -428,6 +450,7 @@ int main()
         log.runs[0].count = 2; log.runs[0].input.keys = {999};
         check(!ResumeLog::Parse(log.Serialize(), "test build", parsed), "out-of-range input is refused");
         ResumeLog empty; empty.start.build = "test build";
+        empty.start.worldPath = "worlds3d/world001.vwr";
         check(ResumeLog::Parse(empty.Serialize(), "test build", parsed) && parsed.TickCount() == 0,
               "a mission saved before its first tick can resume");
     }

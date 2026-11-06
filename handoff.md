@@ -680,8 +680,12 @@ ledgers before repeating any discovery. Where it stands:
   deleted on a clean exit or the mission's end, replayed fast on Continue (implemented by Codex to a
   design brief, reviewed here). Play pass 33 with `GALAXY_RESUME_SELFTEST=1500`: 78/78, 77 replays
   equal. Golden frames and trace re-baselined (fixed 1/60 s from the first Update; see BD-0077).
-  A follow-up brief (the world file's hash and an executable-based build id in the log) is queued.
-- Next: the BD-0077 follow-up; CNA's UB-006 fix to verify on the APK (the cna session asked).
+  The follow-up (Codex, reviewed here): resume v2 stores the loaded world path/byte hash, rejects v1 and changed worlds before replay,
+  and caches the executable hash in the build id. Native build and 112/112 CTest pass; 012/045
+  self-tests report equal and both playthroughs pass. Scratch-world fallback verified without
+  editing shipped worlds; a changed executable with the same compile-time timestamp also refuses
+  the log and loads the checkpoint. Evidence is in `build-probe/bd0077-*.log`.
+- Next: CNA's UB-006 fix to verify on the APK (the cna session asked).
   Outside the code's reach: the `.max` sources (MR-0001),
   playing Android on a device (Q-009), UB-006 in CNA, the release decision. A new owner report
   starts an OR row.

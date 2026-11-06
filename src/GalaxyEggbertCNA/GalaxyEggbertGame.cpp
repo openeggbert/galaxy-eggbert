@@ -55,13 +55,64 @@
 #include <set>
 #include <vector>
 
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#endif
+
 namespace GalaxyEggbert::CNA
 {
     using namespace GalaxyEggbert::Game;
 
     namespace
     {
-        constexpr const char* kResumeBuild = __DATE__ " " __TIME__;
+        const std::string& ResumeBuild()
+        {
+            // Function-local static: even a failed read is attempted only once per process.
+            static const std::string build = []
+            {
+                std::string result = __DATE__ " " __TIME__;
+                std::filesystem::path executable;
+#if defined(__linux__) && !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
+                executable = "/proc/self/exe";
+#elif defined(_WIN32)
+                std::vector<wchar_t> path(32768);
+                const auto size = GetModuleFileNameW(nullptr, path.data(), static_cast<DWORD>(path.size()));
+                if (size > 0 && size < path.size()) executable = std::wstring(path.data(), size);
+#elif defined(__APPLE__)
+                std::uint32_t size = 0;
+                _NSGetExecutablePath(nullptr, &size);
+                std::vector<char> path(size);
+                if (_NSGetExecutablePath(path.data(), &size) == 0) executable = path.data();
+#endif
+                if (!executable.empty())
+                    if (const auto hash = ResumeLog::HashFile(executable))
+                        result += " fnv1a64=" + std::to_string(*hash);
+                return result;
+            }();
+            return build;
+        }
+
+        std::string MissionWorldPath(int mission)
+        {
+            char path[64];
+            std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", mission);
+            return path;
+        }
+
+        std::optional<std::string> ReadWorldBytes(const std::string& path)
+        {
+            std::ifstream in(path, std::ios::binary);
+            if (!in) return std::nullopt;
+            std::ostringstream bytes;
+            bytes << in.rdbuf();
+            if (in.bad() || !bytes) return std::nullopt;
+            return bytes.str();
+        }
 
         constexpr int kGoldenCaptureTicks[] = {60, 120, 180};
         constexpr int kGoldenCaptureCount =
@@ -1748,7 +1799,7 @@ namespace GalaxyEggbert::CNA
             std::ifstream in(ResumeLog::kPath, std::ios::binary);
             const std::string text((std::istreambuf_iterator<char>(in)), {});
             ResumeLog log;
-            if (in && ResumeLog::Parse(text, kResumeBuild, log))
+            if (in && ResumeLog::Parse(text, ResumeBuild(), log))
             {
                 pendingResume_ = std::move(log);
                 return;
@@ -1800,7 +1851,9 @@ namespace GalaxyEggbert::CNA
         ResetMissionInput();
         resumeLog_ = {};
         auto& start = resumeLog_.start;
-        start.build = kResumeBuild;
+        start.build = ResumeBuild();
+        start.worldPath = loadedMissionPath_;
+        start.worldHash = loadedMissionHash_;
         start.mission = worldRuntime_.GetMissionNumber();
         start.lives = interaction_.Lives();
         start.speed = static_cast<int>(gameSpeed_);
@@ -1814,17 +1867,25 @@ namespace GalaxyEggbert::CNA
         saveData_.Write(settings);
         start.saveData = settings.str();
         resumeTicks_ = 0;
-        recordingResume_ = !editorPlayTestActive_;
+        recordingResume_ = !editorPlayTestActive_ && !loadedMissionPath_.empty();
         missionStartPending_ = false;
     }
 
     bool GalaxyEggbertGame::BeginResume(ResumeLog log)
     {
-        char path[64];
-        std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", log.start.mission);
+        const auto path = MissionWorldPath(log.start.mission);
+        const auto bytes = ReadWorldBytes(path);
         // Validate before replacing the current mission or settings.
+        if (!bytes || !log.MatchesWorld(path, ResumeLog::HashBytes(*bytes)))
+        {
+            std::cout << "GalaxyEggbertCNA: resume world differs or is unreadable; falling back to checkpoint."
+                      << std::endl;
+            DeleteResumeFile();
+            return false;
+        }
         WorldRuntime probe;
-        if (!probe.LoadFromVwrFile(path))
+        std::istringstream world(*bytes, std::ios::in | std::ios::binary);
+        if (!probe.LoadFromVwrStream(world))
         {
             DeleteResumeFile();
             return false;
@@ -1846,7 +1907,7 @@ namespace GalaxyEggbert::CNA
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
         gameSpeed_ = GalaxyEggbert::Def::ToGameSpeed(start.speed);
         editorPlayTestActive_ = false;
-        LoadMission(start.mission);
+        LoadMission(start.mission, &*bytes);
         interaction_.SetLives(start.lives);
         blupi_.SetPosition(start.x, start.y, start.z);
         blupi_.SetYaw(start.yaw);
@@ -1955,7 +2016,7 @@ namespace GalaxyEggbert::CNA
         resumeSelftestDone_ = true;
         resumeSelftestSignature_ = ResumeSignature();
         ResumeLog parsed;
-        if (!ResumeLog::Parse(resumeLog_.Serialize(), kResumeBuild, parsed) || !BeginResume(std::move(parsed)))
+        if (!ResumeLog::Parse(resumeLog_.Serialize(), ResumeBuild(), parsed) || !BeginResume(std::move(parsed)))
         {
             const char* line = "RESUME SELFTEST different: log could not be restored\n";
             std::cout << line << std::flush;
@@ -2074,7 +2135,7 @@ namespace GalaxyEggbert::CNA
         return arrival;
     }
 
-    void GalaxyEggbertGame::LoadMission(int missionNumber)
+    void GalaxyEggbertGame::LoadMission(int missionNumber, const std::string* validatedBytes)
     {
         if (!replayingResume_)
         {
@@ -2088,14 +2149,20 @@ namespace GalaxyEggbert::CNA
         pendingSkate_ = {};
         teleportArrivalGuard_ = false;
         accelWaitZero_ = true; // StartMission(): the first tilt waits for a level device
-        char path[64];
-        std::snprintf(path, sizeof(path), "worlds3d/world%03d.vwr", missionNumber);
-        if (!worldRuntime_.LoadFromVwrFile(path))
+        const auto path = MissionWorldPath(missionNumber);
+        // Hash and decode one snapshot. During resume this is the already validated snapshot,
+        // so an editor save/file replacement between validation and load cannot change it.
+        const auto fileBytes = validatedBytes ? std::optional<std::string>{} : ReadWorldBytes(path);
+        const auto* bytes = validatedBytes ? validatedBytes : (fileBytes ? &*fileBytes : nullptr);
+        std::istringstream world(bytes ? *bytes : std::string{}, std::ios::in | std::ios::binary);
+        if (!bytes || !worldRuntime_.LoadFromVwrStream(world))
         {
             std::cout << "GalaxyEggbertCNA: LoadMission(" << missionNumber << "): " << path
                        << " not found or failed to load — staying on the current mission." << std::endl;
             return;
         }
+        loadedMissionPath_ = path;
+        loadedMissionHash_ = ResumeLog::HashBytes(*bytes);
 
         RebuildWorldPresentation();
 

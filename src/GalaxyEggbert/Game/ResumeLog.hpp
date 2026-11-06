@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
+#include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -31,6 +34,8 @@ namespace GalaxyEggbert::Game
     struct ResumeStart
     {
         std::string build;
+        std::string worldPath;
+        std::uint64_t worldHash = 0;
         int mission = 1, lives = 3, speed = 1;
         std::uint32_t seed = 0;
         float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
@@ -59,6 +64,10 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] std::string Serialize() const;
         // Transactional: on failure the destination is unchanged. Requires a complete checksum footer.
         static bool Parse(const std::string& text, const std::string& build, ResumeLog& result);
+        [[nodiscard]] bool MatchesWorld(const std::string& path, std::uint64_t hash) const;
+        // FNV-1a over raw bytes, including NULs. File failures never produce a valid hash.
+        static std::uint64_t HashBytes(std::string_view bytes);
+        static std::optional<std::uint64_t> HashFile(const std::filesystem::path& path);
 #if defined(__EMSCRIPTEN__)
         static constexpr const char* kPath = "/save/resume.txt";
 #else

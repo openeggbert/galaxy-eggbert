@@ -53,7 +53,10 @@ content-authoring UX, but not new gameplay mechanics.
 
 - BD-0077 / Q-015 (2026-11-06): interrupted missions resume from their recorded moment via
   `ResumeLog` (mission start plus deterministic input replay), saved on Play deactivation and
-  deleted on clean exit. The existing checkpoint remains the fallback. Native verification:
+  deleted on clean exit. Format v2 records the mission path and FNV-1a hash of the exact world
+  bytes loaded; v1 and changed worlds are refused. Desktop build identity includes a lazily
+  cached executable hash (Linux verified; Windows/macOS paths implemented); unreadable executables,
+  Android and Emscripten retain the compile-time identifier. The existing checkpoint remains the fallback. Native verification:
   112/112 CTest, equality self-tests and passing playthroughs for 012/025/045/051/199, plus desktop
   focus-loss/restart/Continue/clean-close checks. Details and platform limits:
   `plans/audit/behavior_differences.md` BD-0077.

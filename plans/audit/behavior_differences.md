@@ -1259,12 +1259,32 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - The whole campaign (play pass 33, 2026-11-06, `GALAXY_RESUME_SELFTEST=1500`): 78/78 playthroughs
   pass; 77 report `RESUME SELFTEST equal`, none different (world 001's script ends at tick 500).
   Implemented with the Codex CLI to the reviewer's design brief; reviewed, built and tested here.
+  The follow-up (format v2: the world file's hash; an executable-based build id) again: play pass 34,
+  78/78, 77 replays equal.
 - The golden frames and trace were re-baselined with it: the per-tick step is now the fixed 1/60 s
   from the first Update on (the autoplay's), where the very first Update of the process used to
   carry an elapsed time of 0, so the scenario's first walking tick no longer stood still; on it a
   fresh Blupi is not yet grounded and moves at the airborne 8 px (as on every mission start in
   play and autoplay already). The jump still starts at trace tick 40.
-- Limits: replay requires the same build and unchanged mission assets. Reconstruction cost grows
+- Follow-up (2026-11-06): format v2 adds the mission path and 64-bit FNV-1a world hash. The host
+  captures file bytes once, hashes and decodes that snapshot, and retains the identity through
+  mission start. Continue validates the current bytes before changing settings/state and loads
+  that same validated snapshot; a missing, changed or differently pathed world deletes the log
+  and falls back to the checkpoint. Version 1 is refused, including checksum-valid files.
+  The build id combines the old compile-time string with a lazy, process-cached executable hash:
+  `/proc/self/exe` on Linux, executable paths on Windows/macOS; unreadable executables and
+  Android/Emscripten retain the compile-time fallback. No executable hashing occurs per frame.
+  `VerifyAutoplay` covers v2 path/hash round trip, v1 rejection, world mismatches and binary FNV
+  vectors/file streaming. Build and **112/112 CTest pass**; 012 and 045 again report
+  `RESUME SELFTEST equal` and pass after 3296 and 16815 ticks. The silent scratch-world probe
+  changes its copy after load but before deactivation: the log retains the original hash,
+  Continue refuses it, deletes it and loads checkpoint mission 12, then exits with code 0.
+  A copied executable with an inert appended trailer (same compile-time timestamp) produces a
+  different build hash, refuses the old log and also loads the checkpoint and exits cleanly.
+  Shipped worlds are untouched. Evidence: `build-probe/bd0077-world-refusal.py`,
+  `build-probe/bd0077-*.log`, `build-probe/bd0077-refusal-run/`.
+- Limits: replay requires the same build and unchanged mission assets (only the world file and
+  executable are hashed, not other assets or shared libraries). Reconstruction cost grows
   with mission history; files over 128 MiB or ten million ticks are refused. Desktop keyboard/mouse
   and synthetic touch/accelerometer serialization are verified; native touch/sensor hardware,
   Android lifecycle and Emscripten persistence still need platform testing.

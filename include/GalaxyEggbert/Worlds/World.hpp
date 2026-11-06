@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <iosfwd>
 #include <vector>
 
 /**
@@ -262,6 +263,8 @@ public:
      *         or contains unsupported format parameters.
      */
     static World loadFromFile(const std::filesystem::path& path);
+    // Same validation as loadFromFile; a seekable stream starting at byte zero.
+    static World loadFromStream(std::istream& in);
 
 private:
     std::uint8_t chunksPerAxis_;

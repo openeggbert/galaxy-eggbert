@@ -553,7 +553,7 @@ namespace GalaxyEggbert::CNA
         // A no-op (logs and returns) if the target `.vwr` file doesn't
         // exist -- same graceful-failure shape as the initial `LoadContent()`
         // load.
-        void LoadMission(int missionNumber);
+        void LoadMission(int missionNumber, const std::string* validatedBytes = nullptr);
 
         // Loads a player-authored custom world (plan.md EDITOR-107) for
         // editing -- NOT a mission (no hub/door-gating scan, no
@@ -719,6 +719,8 @@ namespace GalaxyEggbert::CNA
         void CheckResumeSelftest();
         [[nodiscard]] std::map<std::string, std::string> ResumeSignature() const;
         GalaxyEggbert::Game::ResumeLog resumeLog_;
+        std::string loadedMissionPath_;
+        std::uint64_t loadedMissionHash_ = 0;
         std::optional<GalaxyEggbert::Game::ResumeLog> pendingResume_;
         GalaxyEggbert::Game::ResumeInput tickInput_;
         bool missionStartPending_ = false;

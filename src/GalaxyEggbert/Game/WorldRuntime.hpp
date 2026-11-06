@@ -106,6 +106,8 @@ namespace GalaxyEggbert::Game
         // equivalent and resets to 0. Returns true on success; on failure
         // the world is left empty (all air).
         bool LoadFromVwrFile(const std::string& path);
+        // Allows mission loading and resume validation to share the exact same byte snapshot.
+        bool LoadFromVwrStream(std::istream& in);
 
         // Re-derives skyRegion_/missionNumber_/mobileObjects_ from
         // whatever is CURRENTLY in the loaded World -- no disk I/O, unlike
