@@ -8,7 +8,16 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-06 evening (Claude Code's last session; the Codex CLI continues: see the next section)._
 
-## Codex continues from here (2026-11-06) — read this first
+## Who continues (2026-11-06, updated late evening) — read this first
+
+**Update:** the owner later the same evening told Claude Code to let the running Codex job finish and
+then do everything itself until further notice (no new `codex exec` jobs). Queue tasks 1-5 below are
+done and committed (`82916f23`, `2efe28bf`, `95561969`, `04a282a2`, `c915f991`), plus two owner
+reports found on the way: OR-0077/0078 (the saw machine: saws in the exhibit rows, and the machine
+walked into was not found by `TryActivateSwitch`, `5a9e1768`). Open: task 6 (world 199). The text
+below was written when Codex was to continue; its queue and briefs stay valid for whoever does the work.
+
+## Codex continues from here (2026-11-06) — the original text
 
 From the evening of 2026-11-06 the work continues with the **Codex CLI** (the owner's decision:
 "Codex will continue"). Claude Code wrote this handoff at the end of its session. Everything below
