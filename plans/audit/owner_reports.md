@@ -304,3 +304,19 @@ rewritten).
 | OR-0025 | The teleporter's 3D model has been wrong since before this session; compare with Mobile Eggbert: it takes one cube only, the tip 2/3 of its height, the device the top 1/3. | Confirmed: its tile 330-333 is one cell, the device on top, the tip under it; Galaxy drew a cube with the panel on four sides and the tip as a pyramid in the cell below. Now each letter is its original scene's model (Decor/teleporteur1-4.rd4, IoU 0.997) in its cell, its front toward the room; the converter's flat end caps fixed on the way (the letter panel showed a magnified corner of its letter; the same fix gives the house and the cabin their front textures). | FIXED_AND_VERIFIED |
 | OR-0026 | Make the bar 3D, not just a billboard; the 3D game probably needs two bars side by side, one per hand: find out and decide. | Decided two pipes (M3D-0003): the original's hanging poses hold the hands 0.35 cell apart across him. A first reading (one pipe, Blupi turned across it) was wrong: the sprites show him in profile. Both bars are the original model (Decor/barre.rd4; 202 its pipe alone). | FIXED_AND_VERIFIED |
 | OR-0027 | The bar with its mounts shows even where no block is above it: probably a bug. | Confirmed: the original's editor gives a bar its mounts (138) only under a tile they hold to, else the plain pipe (202) (Decor::AdaptMidBorder, table_adapt_decor, Decor::IsRightBorder: under nothing, another bar and 84 listed tiles none; 301 of the 303 bars of its levels so). Galaxy's worlds place either anywhere; the cell now shows the variant its tile above calls for (ShownBarIcon; a first cut asked for a solid block and was 296 of 303). | FIXED_AND_VERIFIED |
+
+## OR-0073 — the mission signs' digits looked ugly and damaged (owner 2026-11-06) — FIXED_AND_VERIFIED
+
+- Report: "the numbers on the teleports to the other worlds -- the number sticker looks ugly and
+  damaged; compare with Mobile Eggbert".
+- Mobile Eggbert: the mission signs 174-181 carry a clean red digit painted on the blue sign.
+- Galaxy: the digit is a decal on the sign's Ray Dream model (`avatars3d/objects/sign174_world1`).
+  `tools/rd4_to_gltf/sign_decals.py` kept the pixels that differ from the median of the eight icons;
+  for eight different digits that median is itself a blend, so the decals (20 x 23) were a mosaic:
+  parts of the digit missing, blue sign and other digits' traces in it (seen live in hub 010).
+- Fix (Codex CLI to a brief, reviewed): the digits are keyed on their red paint, the edge coverage
+  unmixed from the blue face, the contour supersampled 8x (160 x 184, premultiplied alpha for the
+  decal pass's blend); region and depth unchanged; the picture and plate modes give byte-identical
+  output.
+- Validation: mask IoU against the sprites 0.93-1.00, areas 0.99-1.01; in-game before/after in hub 010
+  (`plans/evidence/sign-digits-before-after.jpg`; the full set in `build-probe/sign-digits/`).

@@ -4,9 +4,9 @@ model with the digit on it).
 
 The sign scenes (Decor/world1.rd4, world2a.rd4, world2b.rd4) hold the sign but not what was
 painted on the renders: the mission's digit (174-181), the world's picture (158-165, 309, 411-415
-and their completed twins). Within a group of icons drawn from one scene, the pixels where the
-icons differ are the painting; the per-pixel median over the group is the bare sign. Each icon's
-decal is its sprite in that region, opaque where it differs from the bare sign.
+and their completed twins). Mission digits 174-181 are red paint: recover its coverage from the
+colour blend with the blue face, then supersample its contour at 8x the sprite resolution. The
+picture signs keep the original group-median difference extraction.
 
 With ``--plate`` the painting is a light grey plate carrying a number (the treasure doors 421-439
 on the golden post 183's scene, Decor/porte2.rd4): each decal is the plate's rectangle, opaque.
@@ -35,6 +35,51 @@ import survey  # noqa: E402
 from build_object_library import parse_icons  # noqa: E402
 
 THRESHOLD = 0.12  # colour distance (0..sqrt 3) from the bare sign counted as painted
+DIGIT_REGION = (22, 12, 42, 35)  # existing face placement, in the 64-pixel sprite
+DIGIT_SCALE = 8
+
+
+def digit_coverage(rgb: np.ndarray) -> np.ndarray:
+    """Unmix the red paint in Mobile Eggbert's object-m.png icons 174-181.
+
+    The solid ink is (255, 0, 0). The blue face's G-R is nearly constant across each row
+    (about 108/255); sample it just outside the painted rectangle and interpolate across.
+    For C = alpha * red + (1-alpha) * blue, R-G = alpha - (1-alpha) * (blue.G-blue.R).
+    This also recovers faint red edge pixels that are still predominantly blue. Discard only
+    the <=2/255 colour-distance residual from the face's shading/8-bit rounding, not those
+    edge pixels. No other digit participates in the mask.
+    """
+    x0, y0, x1, y1 = DIGIT_REGION
+    chroma = rgb[..., 1] - rgb[..., 0]
+    t = np.arange(1, x1 - x0 + 1, dtype=np.float64) / (x1 - x0 + 1)
+    blue = chroma[y0:y1, x0 - 1, None] * (1 - t) + chroma[y0:y1, x1, None] * t
+    excess = blue - chroma[y0:y1, x0:x1]
+    return np.where(excess > 2 / 255.0, np.clip(excess / (1 + blue), 0, 1), 0)
+
+
+def digit_image(coverage: np.ndarray) -> Image.Image:
+    """Reconstruct the half-coverage contour, with sub-texel antialiasing at the new size.
+
+    Bicubic interpolation uses the sprite's fractional edge coverage to locate the contour,
+    rather than enlarging square pixels. Rasterize at four samples per output axis and area
+    average: a crisp edge with partial alpha, without an eight-texel-wide blur or ringing halo.
+    Padding makes the outside transparent even for a stroke reaching the crop boundary.
+    Store source red premultiplied by coverage: the game's decal pass uses XNA AlphaBlend
+    (One, InverseSourceAlpha). Transparent RGB must therefore be zero, or the entire rectangle
+    adds red to the sign. Filtering premultiplied colour/alpha together avoids edge halos.
+    Geometry/UV placement is unchanged.
+    """
+    samples = 4
+    scale = DIGIT_SCALE * samples
+    field = Image.fromarray(np.pad(coverage, 2).astype(np.float32))
+    field = field.resize((field.width * scale, field.height * scale), Image.Resampling.BICUBIC)
+    inside = np.asarray(field)[2 * scale:-2 * scale, 2 * scale:-2 * scale] >= 0.5
+    height, width = coverage.shape
+    alpha = inside.reshape(height * DIGIT_SCALE, samples, width * DIGIT_SCALE, samples).mean(axis=(1, 3))
+    rgba = np.zeros((*alpha.shape, 4), dtype=np.uint8)
+    rgba[..., 3] = (alpha * 255).round().astype(np.uint8)
+    rgba[..., 0] = rgba[..., 3]
+    return Image.fromarray(rgba)
 
 
 def front_depth(glb: Path, region: tuple[int, int, int, int]) -> float:
@@ -99,7 +144,10 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     icons = parse_icons(args.icons)
     rgb, mask = survey.load_sheet(args.sheet, survey.GRIDS["object-m"])
-    if args.plate:
+    digits = not args.plate and bool(icons) and all(174 <= i <= 181 for i in icons)
+    if digits:
+        painted = [digit_coverage(rgb[i]) for i in icons]
+    elif args.plate:
         # The plate: light grey pixels (channels within 0.08, value over 0.55), the same rectangle
         # on every icon; the number painted on it differs.
         # The rows and columns where most icons are grey hold the plate, not a highlight on a ball.
@@ -116,13 +164,20 @@ def main(argv=None) -> int:
         bare = np.median(stack, axis=0)
         painted = [np.linalg.norm(rgb[i] - bare, axis=2) > THRESHOLD for i in icons]
         union = np.any(painted, axis=0) & np.all([mask[i] for i in icons], axis=0)
-    ys, xs = np.where(union)
-    x0, x1, y0, y1 = int(xs.min()), int(xs.max()) + 1, int(ys.min()), int(ys.max()) + 1
+    if digits:
+        x0, y0, x1, y1 = DIGIT_REGION
+    else:
+        ys, xs = np.where(union)
+        x0, x1, y0, y1 = int(xs.min()), int(xs.max()) + 1, int(ys.min()), int(ys.max()) + 1
     depth = front_depth(args.glb, (x0, y0, x1, y1)) if args.glb else float(args.depth)
     out = args.model / "decals"
     out.mkdir(parents=True, exist_ok=True)
     lines = [f"# {args.model.name}: the painted faces of icons {args.icons} (tools/rd4_to_gltf/sign_decals.py)"]
     for icon, mine in zip(icons, painted):
+        if digits:
+            digit_image(mine).save(out / f"{icon}.png")
+            lines.append(f"decal {icon} decals/{icon}.png {x0} {y0} {x1} {y1} {depth:.4f}")
+            continue
         crop = rgb[icon][y0:y1, x0:x1]
         alpha = mine[y0:y1, x0:x1]
         if not alpha.any():
