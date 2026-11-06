@@ -1,0 +1,24 @@
+# ---- C: the library (red door), G1, the green gate ----
+go 44.4 43.2 tol 0.2
+go 44.2 42 tol 0.15
+go 46.2 42 tol 0.15
+expect keys = 0
+clear 46.2 58 40 3 lane x max 900
+go 46.2 38.6 tol 0.2
+clear 46.2 58 36 3 lane x max 900
+go 46 34.3 tol 0.1 until keys = 1
+until keys = 1 max 200
+clear 46.2 58 36 3 lane x max 900
+go 46.2 38.6 tol 0.2
+clear 46.2 58 40 3 lane x max 900
+go 46.2 42.4 tol 0.2
+clear 46.2 58 44 3 lane x max 900
+go 46.2 46.4 tol 0.2
+go 46 47.8 tol 0.1 until keys = 2
+until keys = 2 max 200
+clear 46.2 58 44 3 lane x max 900
+go 46.2 42.4 tol 0.2
+go 43 43.5 tol 0.3
+go 33 45 tol 0.3
+go 29 45 tol 0.3
+expect keys = 1
