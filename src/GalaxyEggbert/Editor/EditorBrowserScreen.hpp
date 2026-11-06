@@ -31,6 +31,9 @@ namespace GalaxyEggbert::Editor
     // the shared folder (on the web a download too); Import opens the browser's file picker on the
     // web and rescans elsewhere. The shared worlds are listed with the older ones ("Other worlds"),
     // the newest first: a click copies one into a free slot.
+    //
+    // Thumbnails (ED-0013): a slot whose world was saved shows the editor's view at that save on its
+    // button (custom_003.png beside the world) in place of its big number.
     class EditorBrowserScreen
     {
     public:
@@ -89,6 +92,7 @@ namespace GalaxyEggbert::Editor
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         void Restore(int slotIndex);
         void Export(int slotIndex);
+        void LoadThumbnails(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
 
         int gamerSlot_ = 0;
         std::vector<bool> slotUsed_;                 // per slot 1-10 (index 0-9)
@@ -113,5 +117,9 @@ namespace GalaxyEggbert::Editor
         Microsoft::Xna::Framework::Graphics::Texture2D padTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> padEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> padRenderer_;
+        std::vector<std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> thumbnails_; // per slot
+        bool thumbnailsStale_ = true; // Refresh(): read them again at the next Draw()
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> thumbnailEffect_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> thumbnailRenderer_;
     };
 }

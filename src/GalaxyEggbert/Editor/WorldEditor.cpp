@@ -202,6 +202,10 @@ namespace GalaxyEggbert::Editor
 
     bool WorldEditor::ConsumePlayTestRequested() noexcept
     {
+        if (!thumbnailRequest_.empty())
+        {
+            return false; // the save's thumbnail first
+        }
         const bool result = playTestRequested_;
         playTestRequested_ = false;
         return result;

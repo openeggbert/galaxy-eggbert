@@ -646,6 +646,10 @@ ledgers before repeating any discovery. Where it stands:
   Chrome: `--ozone-platform=x11` is needed now, and the canvas there is 1000x553, so a game point
   (x, y) is page (1.25 x, 1.152 y); `Browser.setDownloadBehavior` and
   `Page.setInterceptFileChooserDialog` + `DOM.setFileInputFiles` drive the download and the picker).
+  **ED-0013 slot thumbnails**: every save writes the editor's view (64 x 64, the middle of the
+  frame) beside the world as `custom_00K.png`; the slots show it on the button; the dice's play-test
+  waits the one frame it takes (`GalaxyEggbertGame` `SaveEditorThumbnail`; `VerifyGEEditorStorage`;
+  live `tools/qa_steps/editor_thumbnails.txt`, `plans/evidence/editor-thumbnails.jpg`).
 - Next: any further D11 model; D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.

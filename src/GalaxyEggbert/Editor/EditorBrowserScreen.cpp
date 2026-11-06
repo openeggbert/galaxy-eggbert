@@ -116,6 +116,32 @@ namespace GalaxyEggbert::Editor
             older_.push_back(std::move(path));
         }
         armedDeleteIndex_ = -1;
+        thumbnailsStale_ = true;
+    }
+
+    void EditorBrowserScreen::LoadThumbnails(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        thumbnailsStale_ = false;
+        thumbnails_.clear();
+        thumbnails_.resize(kCustomWorldSlotCount);
+        std::error_code ec;
+        for (int i = 0; i < kCustomWorldSlotCount; ++i)
+        {
+            const auto path = ThumbnailPath(SlotWorldPath(gamerSlot_, i + 1));
+            if (!slotUsed_.empty() && slotUsed_[static_cast<std::size_t>(i)] && std::filesystem::exists(path, ec))
+            {
+                try
+                {
+                    thumbnails_[static_cast<std::size_t>(i)] =
+                        std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(
+                            std::filesystem::absolute(path, ec).string(), device);
+                }
+                catch (const std::exception&)
+                {
+                    // An unreadable thumbnail: the slot shows its number.
+                }
+            }
+        }
     }
 
     GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::SlotRect(int slotIndex) noexcept
@@ -344,6 +370,9 @@ namespace GalaxyEggbert::Editor
         padEffect_->VertexColorEnabled = false;
         padEffect_->setTextureEnabledProperty(true);
         padEffect_->setTextureProperty(&padTexture_);
+        thumbnailEffect_ = std::make_unique<BasicEffect>(device);
+        thumbnailEffect_->VertexColorEnabled = false;
+        thumbnailEffect_->setTextureEnabledProperty(true);
 
         loaded_ = true;
     }
@@ -355,6 +384,10 @@ namespace GalaxyEggbert::Editor
         if (!loaded_)
         {
             return;
+        }
+        if (thumbnailsStale_)
+        {
+            LoadThumbnails(device);
         }
 
         using Microsoft::Xna::Framework::Graphics::BlendState;
@@ -417,6 +450,28 @@ namespace GalaxyEggbert::Editor
                                                    viewportHeight, 1.0f);
         GalaxyEggbert::Game::QuadBatch::FlushQuads(device, *padEffect_, padRenderer_, pressedButtons, viewportWidth,
                                                    viewportHeight, kPressedOpacity);
+        const auto thumbnailAt = [&](int i) -> Microsoft::Xna::Framework::Graphics::Texture2D* {
+            return static_cast<std::size_t>(i) < thumbnails_.size() ? thumbnails_[static_cast<std::size_t>(i)].get()
+                                                                    : nullptr;
+        };
+        for (int i = 0; i < kCustomWorldSlotCount; ++i)
+        {
+            auto* thumbnail = thumbnailAt(i);
+            if (thumbnail == nullptr)
+            {
+                continue;
+            }
+            const Rect cell = SlotRect(i);
+            const float x0 = cell.x0 + (kCellWidth - kSlotButtonSize) * 0.5f + 5.0f;
+            const float y0 = cell.y0 + 5.0f;
+            const std::vector<Quad> image{
+                Quad{x0, y0, x0 + kSlotButtonSize - 10.0f, y0 + kSlotButtonSize - 10.0f, 0.0f, 0.0f, 1.0f, 1.0f}};
+            thumbnailEffect_->setTextureProperty(thumbnail);
+            GalaxyEggbert::Game::QuadBatch::FlushQuads(device, *thumbnailEffect_, thumbnailRenderer_, image,
+                                                       viewportWidth, viewportHeight,
+                                                       mouseWasDown_ && InRect(mouseX_, mouseY_, cell) ? kPressedOpacity
+                                                                                                      : 1.0f);
+        }
 
         const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
         const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
@@ -438,8 +493,11 @@ namespace GalaxyEggbert::Editor
             const bool used = slotUsed_[static_cast<std::size_t>(i)];
             auto& bucket = used ? labels : faintLabels;
             const std::string number = std::to_string(i + 1);
-            label(bucket, number, centreX - Width(number) * kNumberScale * 0.5f,
-                  middle(cell.y0, cell.y0 + kSlotButtonSize, kNumberScale), kNumberScale);
+            if (thumbnailAt(i) == nullptr) // a thumbnail stands for the number (the caption names it)
+            {
+                label(bucket, number, centreX - Width(number) * kNumberScale * 0.5f,
+                      middle(cell.y0, cell.y0 + kSlotButtonSize, kNumberScale), kNumberScale);
+            }
             std::string caption = !used                   ? "New world"
                                   : armedDeleteIndex_ == i ? "Delete?"
                                                            : "World " + number;

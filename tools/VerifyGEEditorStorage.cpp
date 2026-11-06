@@ -306,6 +306,11 @@ int main()
 
         check(editor.GetWorldPath() == std::filesystem::path(kPlayTestPath),
               "the editor retains the configured world path");
+        check(!editor.ConsumePlayTestRequested(), "the play-test waits for the save's thumbnail (ED-0013)");
+        check(editor.ConsumeThumbnailRequest() ==
+                  std::filesystem::path("verify_ge_editor_storage_playtest_scratch.png") &&
+                  editor.ConsumeThumbnailRequest().empty(),
+              "a save asks once for its thumbnail beside the world");
         check(editor.ConsumePlayTestRequested(),
               "the dice button requests play-testing");
         check(!editor.ConsumePlayTestRequested(),

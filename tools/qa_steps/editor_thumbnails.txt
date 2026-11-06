@@ -1,0 +1,29 @@
+# ED-0013: the editor (a fresh save: QA_LIVE_RUN=<empty dir>), slot 1 saved with Enter, the Stop sign back
+# to the slots (its thumbnail); slot 2 played with the dice (saved, its thumbnail taken first), paused,
+# back to the editor, Stop: both slots show their thumbnails.
+sleep 14
+focus
+click 710 200
+sleep 3
+shot before
+click 72 258
+sleep 4
+keydown Return
+sleep 0.15
+keyup Return
+sleep 1
+click 770 450
+sleep 3
+shot one
+click 186 258
+sleep 6
+click 722 450
+sleep 5
+shot playtest
+click 757 45
+sleep 2
+click 260 380
+sleep 5
+click 770 450
+sleep 3
+shot two

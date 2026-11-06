@@ -724,6 +724,55 @@ namespace GalaxyEggbert::CNA
             w = static_cast<int>(pp.getBackBufferWidthProperty());
             h = static_cast<int>(pp.getBackBufferHeightProperty());
         }
+
+        // A saved world's thumbnail (ED-0013): the editor's view as drawn, the middle of the frame
+        // -- a square clear of the palette (left), the status lines (top) and the bar (bottom) --
+        // averaged down to 64 x 64, written beside the world (CustomWorldStorage ThumbnailPath).
+        void SaveEditorThumbnail(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                 const std::filesystem::path& path)
+        {
+            using Microsoft::Xna::Framework::Color;
+            int w = 0, h = 0;
+            GetBackBufferSize(device, w, h);
+            if (w <= 0 || h <= 0)
+            {
+                return;
+            }
+            std::vector<Color> frame(static_cast<std::size_t>(w) * static_cast<std::size_t>(h), Color(0, 0, 0, 0));
+            device.GetBackBufferData(frame.data(), 0, static_cast<int>(frame.size()));
+            constexpr int kSize = 64;
+            const int side = std::min(w, h * 3 / 4);
+            const int x0 = (w - side) / 2;
+            const int y0 = std::min(h * 3 / 20, h - side);
+            std::vector<Color> small(static_cast<std::size_t>(kSize * kSize), Color(0, 0, 0, 255));
+            for (int ty = 0; ty < kSize; ++ty)
+            {
+                for (int tx = 0; tx < kSize; ++tx)
+                {
+                    unsigned r = 0, g = 0, b = 0, n = 0;
+                    for (int y = y0 + ty * side / kSize; y < y0 + (ty + 1) * side / kSize; ++y)
+                    {
+                        for (int x = x0 + tx * side / kSize; x < x0 + (tx + 1) * side / kSize; ++x)
+                        {
+                            const Color& c = frame[static_cast<std::size_t>(y) * static_cast<std::size_t>(w) +
+                                                   static_cast<std::size_t>(x)];
+                            r += c.getRProperty();
+                            g += c.getGProperty();
+                            b += c.getBProperty();
+                            ++n;
+                        }
+                    }
+                    if (n != 0)
+                    {
+                        small[static_cast<std::size_t>(ty * kSize + tx)] =
+                            Color(static_cast<int>(r / n), static_cast<int>(g / n), static_cast<int>(b / n), 255);
+                    }
+                }
+            }
+            Microsoft::Xna::Framework::Graphics::Texture2D thumbnail(device, kSize, kSize);
+            thumbnail.SetData(small.data(), static_cast<int>(small.size()));
+            thumbnail.SaveAsPng(path.string());
+        }
     }
 
     GalaxyEggbertGame::GalaxyEggbertGame()
@@ -7674,6 +7723,15 @@ namespace GalaxyEggbert::CNA
             hudScreenshot.SaveAsPng("screenshot_hud.png");
             std::cout << "GalaxyEggbertCNA: wrote screenshot_hud.png (" << w << "x" << h << ")."
                       << std::endl;
+        }
+
+        // A save's thumbnail (ED-0013), from the frame just drawn; the dice's play-test waits for it.
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Editor && !worldEditor_.IsBrowsing())
+        {
+            if (const auto thumbnail = worldEditor_.ConsumeThumbnailRequest(); !thumbnail.empty())
+            {
+                SaveEditorThumbnail(device, thumbnail);
+            }
         }
 
         // AUTOPLAY_SHOTS (EnableAutoplay()): this frame, HUD and all, as the player would see it.

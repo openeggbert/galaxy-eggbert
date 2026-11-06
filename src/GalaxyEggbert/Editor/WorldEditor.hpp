@@ -121,8 +121,16 @@ namespace GalaxyEggbert::Editor
         // know which file to load for the play-test session.
         [[nodiscard]] const std::filesystem::path& GetWorldPath() const noexcept { return worldPath_; }
 
-        // Consumes the request raised by the dice button after it saves.
+        // Consumes the request raised by the dice button after it saves -- once the save's thumbnail
+        // was taken (a frame later), so that it shows the world, not the play-test.
         [[nodiscard]] bool ConsumePlayTestRequested() noexcept;
+
+        // The thumbnail a save asks for (ED-0013): the file the caller writes the editor's view to
+        // after drawing this frame (CustomWorldStorage ThumbnailPath), once; empty when none.
+        [[nodiscard]] std::filesystem::path ConsumeThumbnailRequest() noexcept
+        {
+            return std::exchange(thumbnailRequest_, {});
+        }
 
         // Updates one editor frame. RMB looks, WASD/Space/Ctrl fly and the
         // wheel zooms. Left click or PLACE creates the selected block or
@@ -404,6 +412,7 @@ namespace GalaxyEggbert::Editor
         // The world backed up since it was opened from the browser (ED-0011): its first save keeps
         // the file as it was (CustomWorldStorage BackUpWorld), the next ones of that visit do not.
         std::filesystem::path backedUpPath_;
+        std::filesystem::path thumbnailRequest_;
         // Saves @p world to worldPath_, backed up first when this visit has not yet.
         void SaveWorld(const Worlds::World& world);
 

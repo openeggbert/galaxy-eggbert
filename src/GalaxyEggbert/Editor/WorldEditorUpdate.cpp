@@ -582,6 +582,7 @@ namespace GalaxyEggbert::Editor
             backedUpPath_ = worldPath_;
         }
         world.saveToFile(worldPath_);
+        thumbnailRequest_ = ThumbnailPath(worldPath_);
         dirty_ = false;
         stopConfirmArmed_ = false;
     }
