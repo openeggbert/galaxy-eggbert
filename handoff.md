@@ -661,12 +661,14 @@ ledgers before repeating any discovery. Where it stands:
   the commands): 14 channels in 012 and 045, each at its table pitch (0.0, 0.1, 0.2, 1.0), none
   elsewhere; BD-0031 FIXED_AND_VERIFIED.
   Old play passes 1-29 deleted (their results are in this file); 25 (target_reach.md) and 30 kept.
-- 2026-11-06: UB-007 (Android without 3D models) is fixed in CNA (`22739f89b`, 2026-11-03 night);
-  UB-006 (each missed content name walks the APK through JNI) reported to the cna Claude session at
-  the owner's request (`upstream_bugs.md`).
-- Next: nothing waits on the owner. Outside the code's reach: the `.max` sources (MR-0001), a run
-  of the APK that shows UB-007's fix (Android stays at "builds and starts", Q-009), the release
-  decision. A new owner report starts an OR row.
+- 2026-11-06: UB-007 (Android without 3D models) is fixed in CNA (`22739f89b`, 2026-11-03 night) and
+  seen working: the x86_64 APK in the API 35 emulator draws Blupi and the objects in 3D
+  (`plans/evidence/android-emulator-models-ub007.jpg`; the emulator needs `-accel off` now, ~35 min
+  to the title). UB-006 (each missed content name walks the APK through JNI) reported to the cna
+  Claude session at the owner's request (`upstream_bugs.md`).
+- Next: nothing waits on the owner. Outside the code's reach: the `.max` sources (MR-0001), playing
+  Android on a device (Q-009), UB-006 in CNA, the release decision. A new owner report starts an
+  OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not

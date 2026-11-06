@@ -197,7 +197,11 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   Android shows no 3D models until CNA changes. OR-0011, Q-009.
 - **Status: fixed** in libcna/cna `next` `22739f89b` (2026-11-03 23:14, CNA-ISLAND-002: the stock
   skinned programs keep their bones as `vec4 uBones[216]`, three rows a bone, and refuse an
-  unlinked program); seen in the source 2026-11-06. Not yet confirmed on Galaxy's APK.
+  unlinked program). **Confirmed on Galaxy's APK** 2026-11-06: the x86_64 debug APK built at cna
+  `be933add6` in the API 35 emulator (SwiftShader, `GL_MAX_VERTEX_UNIFORM_VECTORS` 256) loads the
+  121 object models and Blupi, logs no link failure, and draws Blupi, the plants and the objects
+  in 3D on the title scene (`plans/evidence/android-emulator-models-ub007.jpg`: 2026-11-03 without
+  models, left; 2026-11-06, right).
 
 ## Recorded elsewhere
 

@@ -23,7 +23,7 @@ evidence named in each row; nothing here is claimed from compilation alone. The 
 |---|---|---|---|
 | Linux desktop (OpenGL 3.3, Release) | `build-cna-opengl3/` | builds; `GalaxyEggbert` | rebuilt 2026-11-06 at the pins |
 | Web (WebGL 2, Emscripten) | `build-cna-webgl2/` | builds; loads in headless Chrome (121 object models, 93/93 sounds, the menu); the editor's export downloads a world and its import takes one from the file picker | rebuilt 2026-11-06; `plans/evidence/editor-export-import-web.jpg` |
-| Android (arm64-v8a debug APK) | `android/` | last built 2026-11-04 with that day's game (`./gradlew assembleDebug -Pandroid.injected.build.abi=arm64-v8a`), not rebuilt at these pins; ran to the hub in the x86_64 emulator on 2026-11-03 without 3D models (UB-007), which CNA fixed that night (`22739f89b`): not yet seen on an APK | `handoff.md` 2026-11-04; OR-0011; `upstream_bugs.md` |
+| Android (x86_64 debug APK) | `android/` | builds at the pins (`./gradlew assembleDebug -Pandroid.injected.build.abi=x86_64`, 1.5 min with ccache); in the API 35 emulator (software, `-accel off`) it loads the 121 object models and Blupi and **draws them in 3D** on the title scene: CNA's UB-007 fix (`22739f89b`) seen working; not played (Q-009) | `plans/evidence/android-emulator-models-ub007.jpg`; OR-0011; `upstream_bugs.md` |
 
 ## 3. Tests and regression
 
@@ -79,11 +79,12 @@ can settle:
 - MR-0001: the 56 `.max` sources need a licensed 3D Studio MAX (the offered copy is not used);
   the shields stay billboards and Blupi comes from the Ray Dream scenes.
 - Q-009 / OR-0011: Android stays at "builds and starts" by the owner's choice; no device or KVM
-  here to play it. UB-007 (no 3D models) is fixed in CNA (`22739f89b`), not yet seen on an APK;
-  UB-006 (slow content lookups, worked around in the game) reported to the cna session 2026-11-06.
+  here to play it. UB-007 (no 3D models) is fixed in CNA (`22739f89b`) and seen working on the APK
+  2026-11-06; UB-006 (slow content lookups, worked around in the game) reported to the cna session
+  2026-11-06.
 - A person's ear and eye: the sounds were measured, not listened to; looks were judged on
   screenshots.
 
 Verdict: the desktop and web builds pass every automated check at the revisions above, and every
 ledger is settled. A release of the desktop and web builds waits only on the owner's word; Android
-waits on a run that shows CNA's UB-007 fix and on a device to play it.
+draws its 3D models now and waits on a device (or KVM) to be played.
