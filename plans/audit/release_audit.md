@@ -1,85 +1,89 @@
-# Wave F — release audit at pinned revisions (2026-11-03)
+# Wave F — release audit at pinned revisions (2026-11-06)
 
 _The fidelity audit's last wave (`../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §3): what was built and
 checked, at which revisions, and what still stands between this tree and a release. Written from the
-evidence named in each row; nothing here is claimed from compilation alone._
+evidence named in each row; nothing here is claimed from compilation alone. The first audit
+(2026-11-03, at galaxy-eggbert `69376154`) is in this file's git history._
 
 ## 1. Pinned revisions
 
 | Repository | Revision | State |
 |---|---|---|
-| galaxy-eggbert (`develop`) | the commit that adds this file (parent `69376154`) | the Android port in `c5dcdc5`, `c48ee08`, `37ca3b3` |
-| `../../libcna/cna` | `5a754159d` | live tree of another session, read only; since the last full regression (`090c998a1`) only its C API packaging changed (`modules/c-api/cmake`, `tools/build`): nothing the game compiles (the desktop rebuild after it recompiled only Galaxy's `main.cpp`) |
-| `../../libcna/cna-engine` | `2a93b7e43` | clean |
+| galaxy-eggbert (`develop`) | the commit that adds this version (parent `a0523ecd`) | clean before it |
+| `../../libcna/cna` | `be933add6` (2026-11-06) | live tree of another session, read only, 69 files changed in its working tree: the builds compile what was there when they ran (memory `project_cna_live_working_tree`) |
+| `../../libcna/cna-engine` | `6737a1cf0` | clean |
 | `../../libcna/easy-gl` | `b582bd85f` | clean (v0.1.1 pin) |
 | `../../libcna/meta-gl` | `795bcdcfe` | clean |
-| `../../libcna/sharp-runtime` | `638c7e3c9` | clean |
-| References (read only) | mobile-eggbert `f96f02f`, free-eggbert `74457dd`, blupi_recon `61c96b3`, speedyblupi-data `7f5cbff` | unchanged by this campaign |
+| `../../libcna/sharp-runtime` | `c793ef3e8` | clean |
+| References (read only) | mobile-eggbert `f96f02f25`, free-eggbert `74457dd94`, blupi_recon `61c96b37e`, speedyblupi-data `7f5cbffb9` | unchanged by this campaign (the untracked files in blupi_recon and speedyblupi-data date from May 2026, before it) |
 
 ## 2. Builds
 
 | Target | Directory | Result | Evidence |
 |---|---|---|---|
-| Linux desktop (OpenGL 3.3, Release) | `build-cna-opengl3/` | builds; `GalaxyEggbert` | 2026-11-03 rebuild after the Android entry point |
-| Web (WebGL 2, Emscripten) | `build-cna-webgl2/` | builds; `GalaxyEggbert.{html,js,wasm,data}`; loads in headless Chrome (menu drawn, 120 models, 93/93 sounds) | `handoff.md` 2026-11-03, built before the Android commits, which change nothing Emscripten compiles but `main.cpp`'s include of CNA's `Entrypoint.hpp` (empty there); the music is served beside the page and fetched per track since `789ceee` (OR-0014) |
-| Android (x86_64 debug APK) | `android/app/build/`, `android/app/.cxx/` | builds and runs to the hub; no 3D models (UB-007), see §4 | OR-0011 |
+| Linux desktop (OpenGL 3.3, Release) | `build-cna-opengl3/` | builds; `GalaxyEggbert` | rebuilt 2026-11-06 at the pins |
+| Web (WebGL 2, Emscripten) | `build-cna-webgl2/` | builds; loads in headless Chrome (121 object models, 93/93 sounds, the menu); the editor's export downloads a world and its import takes one from the file picker | rebuilt 2026-11-06; `plans/evidence/editor-export-import-web.jpg` |
+| Android (arm64-v8a debug APK) | `android/` | last built 2026-11-04 with that day's game (`./gradlew assembleDebug -Pandroid.injected.build.abi=arm64-v8a`), not rebuilt at these pins; ran to the hub in the x86_64 emulator on 2026-11-03 without 3D models (UB-007), which CNA fixed that night (`22739f89b`): not yet seen on an APK | `handoff.md` 2026-11-04; OR-0011; `upstream_bugs.md` |
 
 ## 3. Tests and regression
 
 | Check | Result | Where |
 |---|---|---|
-| CTest (112 tests: verifiers of movement, interaction, editor, palette, models, worlds) | 112/112 | `ctest --test-dir build-cna-opengl3`, rerun at the pins above after the Android commits |
-| Campaign playthroughs (every mission played to its exit by script) | 78/78 | rerun at the pins above: `build-probe/wave-e/lanes_log.sh 4 build-probe/wave-e/release-f.txt` (1,603 s, four lanes) |
-| World 199's spare enclaves | win | `tools/autoplay/spare/world199.txt` |
-| Campaign structure (`tools/campaigncheck.py`), water exits (`tools/watercheck.py`) | the main hub, 12 hubs, 64 missions and 199 complete; every body of water in the 80 worlds has a way out | rerun at the pins above |
-| Creature timing (`tools/audit/patrol_envelope.py`) | 0 outside the original's envelope | rerun at the pins above |
+| CTest (112 tests: movement, interaction, editor, storage, palette, models, worlds) | 112/112 | `ctest --test-dir build-cna-opengl3` |
+| Golden frames | match the approved references | `xvfb-run -a tools/verify_golden_frames.sh build-cna-opengl3` |
+| Campaign playthroughs (every mission played to its exit by script, each world as one chain) | **78/78** | play pass 31: `PLAY_PASS_JOBS=4 tools/play_pass.sh build-probe/pass-bin build-probe/play-pass-31` |
+| Every egg, key, treasure and exit has evidence it can be reached | 921 targets, 0 unknown (levelcheck 223, taken in a playthrough 575, from the run's cells 94, behind an earned door 4, timed 12, staged 13) | `tools/audit/target_reach.py build-probe/play-pass-31`; `target_reach.md` |
+| Campaign structure, water exits | the main hub, 12 hubs, 64 missions and 199 complete; every body of water in the 80 worlds has a way out | `tools/campaigncheck.py`, `tools/watercheck.py` |
+| Creature and lift timing against the original's | 0 creatures off their type's timing; 0 lifts faster than the original's fastest (424 lifts in 52 worlds) | `tools/audit/patrol_envelope.py`, `tools/audit/lift_envelope.py` |
+| The sounds' pitch per channel (BD-0031), measured | see §4 | `tools/audit/sound_pitch.py` |
 
-## 4. Android (OR-0011)
+## 4. The sounds' pitch, measured (BD-0031)
 
-| Step | Result | Evidence |
+The original plays each channel at its own pitch (`tableVolumePitch`, most effects 0.1-0.5 octave
+up, the crate efforts 38/39 and channels 1-2 a whole octave). Measured without playing anything
+aloud: a playthrough run in real time with SDL's disk audio driver
+(`AUTOPLAY_REALTIME=1 QA_SOUND=1 SDL_AUDIODRIVER=disk SDL_AUDIO_DRIVER=disk
+SDL_AUDIO_DISK_OUTPUT_FILE=<file> tools/autoplay.sh ...`), the recording searched for every sound
+file resampled to each pitch from 0 to 1 octave (normalised cross-correlation).
+
+| Recording | Channels heard at their table pitch (ncc 0.96-1.00) | Heard at another pitch |
 |---|---|---|
-| Build (`./gradlew assembleDebug -Pandroid.injected.build.abi=x86_64`, NDK r29, API 24) | 102 MB APK: `libmain.so` (exports `SDL_main`), `libSDL3.so`, `libSDL3_mixer.so`, 2,562 assets and `assets.txt` | `c5dcdc5` |
-| Install in the API 35 x86_64 emulator (`-read-only`, no KVM: software emulation) | installs (`install -t`: a single-ABI build is test-only) | |
-| First start | copies the 2,562 assets into internal storage, draws the title scene | `plans/evidence/android-emulator-loading.png` |
-| Loading | stalled in CNA's APK walk per missing `.xnb` (UB-006); with the absolute content root it completes: 120 object models, 93/93 sounds, terrain, background | `c48ee08`; logcat (tag `GalaxyEggbert`) |
-| Main menu | drawn (players, setup, editor, play) | `plans/evidence/android-emulator-menu.png` |
-| Play (a held touch) | the main hub with the on-screen pad and lives | `plans/evidence/android-emulator-hub.png` |
-| 3D models | **not drawn**: CNA's skinned shader exceeds 256 vertex uniform vectors (UB-007) | logcat `skinned (vertex-lit) link failed` |
-| Play, touch feel, tilt | not judged: without KVM a frame takes seconds (Q-009) | |
+| 012 (55 s, crates) | 1, 38, 39 at 1.0; 3, 4, 14, 80 at 0.2 | none |
+| 045 (285 s, lifts, helicopter, bulldozer, crushers) | 1 at 1.0; 3, 11, 14, 37, 65, 88 at 0.2; 12 at 0.1; 16, 18 at 0.0 | none |
 
-Verdict for Android: the port builds and runs end to end; it is not releasable until CNA fixes
-UB-007 (or the target devices report more than 256 vertex uniform vectors) and a person has
-played it on a device.
+14 distinct channels, every pitch value the table uses for them. Channel 2's file resembles channel
+1's an octave apart and is found only where 1 plays: not a sound of its own. BD-0031 is
+FIXED_AND_VERIFIED; whether it sounds right is the owner's ear.
 
 ## 5. Ledgers
 
 | Ledger | Rows | Not settled |
 |---|---|---|
-| `gameplay_use_cases.csv` | 538 | 0 (BD-0053, the follower star's wake, fixed after the audit: the original's box, 052/053 re-laid, 78/78) |
-| `world_lessons.csv` | 80 | 0 (55 match, 21 fixed, 2 adaptations, 2 not applicable); no human play pass (MR-0004) |
-| `behavior_differences.md` | 57 | none open; BD-0031 fixed, its live listening waits for a run with sound |
-| `editor_parity.md` | all ED rows | 0 unreviewed |
-| `asset_sources.csv` | 703 | 185 BLOCKED: the 56 `.max` (MR-0001, no licensed 3D Studio MAX) and the files waiting on them or on Q-004 |
-| `render_representation.csv` | 564 | 10 UNREVIEWED (D11's candidates: the owner's own list), 283 BLOCKED on Q-004 (terrain tiles as models) and Q-001/Q-002 (grass, lightning) |
+| `gameplay_use_cases.csv` | 538 | 0 (208 match, 98 fixed and verified, 51 3D adaptations, 181 not applicable) |
+| `world_lessons.csv` | 80 | 0 (55 match, 22 fixed, 1 adaptation, 2 not applicable) |
+| `behavior_differences.md` | 74 | 0 open (BD-0001..0074; BD-0031 verified by measurement, §4) |
+| `editor_parity.md` | 13 (ED-0001..0013) | 0 |
+| `mechanics_3d_decisions.md` | M3D-0001..0006 | decided |
+| `asset_sources.csv` | 703 | 0 (288 used and verified, 10 adaptations, 405 not applicable: among them the 56 `.max`, MR-0001) |
+| `render_representation.csv` | 565 | 0 (388 fixed and verified, 146 adaptations, 31 not applicable) |
+| `owner_reports.md` | OR-0001..0072 | answered or fixed; OR-0046 (the 3ds Max offer) answered, the copy not used |
+| `owner_questions.md` | Q-000..Q-014 | all answered; nothing waits on the owner (MR-0009) |
 
 ## 6. What stands between this tree and a release
 
-Owner decisions (`owner_questions.md`, `manual_review.md`), none of which the code can settle:
+Settled by the owner since the first audit: Q-001..Q-008, Q-010..Q-014 built as decided; D11
+closed with the models named (MR-0009); the playability audit by the automated playthroughs and
+the target reach audit, without a human play pass (MR-0007). Still open, none of which the code
+can settle:
 
-- Q-001 grass and Q-002 the lightning bolt in 3D (task #10); Q-003 the clay bridge's surface;
-  Q-004 the terrain tiles as Ray Dream models; Q-005 the electrode's sparks; Q-006 the glue
-  death's strands; Q-008 world 105's lava floor;
-  Q-009 KVM or a phone for the Android test.
-- D11: the owner's list of models that look wrong (`plans/inventory/d11_candidates.md`).
-- MR-0001: the `.max` sources need a licensed 3D Studio MAX.
-- MR-0004: a human play pass (feel of crates, lifts, editor, looks); every machine check passes.
+- MR-0001: the 56 `.max` sources need a licensed 3D Studio MAX (the offered copy is not used);
+  the shields stay billboards and Blupi comes from the Ray Dream scenes.
+- Q-009 / OR-0011: Android stays at "builds and starts" by the owner's choice; no device or KVM
+  here to play it. UB-007 (no 3D models) is fixed in CNA (`22739f89b`), not yet seen on an APK;
+  UB-006 (slow content lookups, worked around in the game) reported to the cna session 2026-11-06.
+- A person's ear and eye: the sounds were measured, not listened to; looks were judged on
+  screenshots.
 
-Open engineering items:
-
-- OR-0017: done after this audit (2026-11-03, `a45e785`): Blupi's collision is the original's
-  36 px box, all 78 playthroughs re-planned for it.
-- OR-0011: Android draws no 3D models until CNA fixes UB-007; UB-006 is worked around; no
-  device or KVM here to play it (Q-009).
-
-Verdict: the tree builds and passes every automated check at the revisions above; it is not a
-release until the owner's decisions above are taken and a human has played it.
+Verdict: the desktop and web builds pass every automated check at the revisions above, and every
+ledger is settled. A release of the desktop and web builds waits only on the owner's word; Android
+waits on a run that shows CNA's UB-007 fix and on a device to play it.

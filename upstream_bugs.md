@@ -167,6 +167,9 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   relative; load textures that exist only as `.png`.
 - **Possible fix (CNA's call):** list each asset directory once and cache it, or try the raw image
   extensions with SDL's exact path before the case-insensitive APK walk.
+- **Reported** to the cna Claude session on 2026-11-06 at the owner's request (still present at cna
+  `be933add6`: `TryLoadFileIgnoringCase` still calls `ResolveAndroidAssetPathIgnoringCase` per
+  miss, uncached).
 - **Galaxy Eggbert's workaround:** on Android the game works in internal storage, where it copies
   its assets (`src/GalaxyEggbertCNA/AndroidAssets.cpp`), and points `avatars3d`'s `ContentManager`
   at it by an absolute path, which CNA reads without the APK walk
@@ -192,6 +195,9 @@ it and add the fixing commit; remove the workaround only after re-verifying.
   or the array sized from the context's limit.
 - **Galaxy Eggbert's workaround:** none possible in the game (the shader is CNA's); on such devices
   Android shows no 3D models until CNA changes. OR-0011, Q-009.
+- **Status: fixed** in libcna/cna `next` `22739f89b` (2026-11-03 23:14, CNA-ISLAND-002: the stock
+  skinned programs keep their bones as `vec4 uBones[216]`, three rows a bone, and refuse an
+  unlinked program); seen in the source 2026-11-06. Not yet confirmed on Galaxy's APK.
 
 ## Recorded elsewhere
 

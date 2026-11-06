@@ -43,11 +43,11 @@ REPRODUCED_DEFECT | FIXED_AND_VERIFIED | BLOCKED | NOT_APPLICABLE`. A generated 
 | Wave | Scope | State |
 |---|---|---|
 | A | baseline; ledgers; crate push (§4); moving platforms (§5) | done except a human play pass: crate push/pull D60 (`1c59eae`), every lift within the original's speeds (BD-0006, `7e0d1cf`, `46a663b`), crate support (BD-0003) |
-| B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | ED-0001/0006 done; lava (`90acade`), fan (`6daa06b`), pillars 76/77/377/399, the girder 201, the bar 138/202 as two pipes (M3D-0003), the teleporters 330-333, the trestle 199, the posts 182/183, from the original scenes with live checks (2026-11-02); the converter's flat caps and texture repeats fixed (houses); open: pillars 375/376, wind tiles, world signs 174-181 (no digits in the scene), the switch 384/385, the cave rocks 285-303 (need instancing), ED-0007 auto-tiling (MR-0005), the owner's look |
-| C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | every one of the 29 object types the original's worlds use reviewed against `Decor.cpp`: fixed BD-0003/0004, BD-0010..0028 (contact boxes, keys, vehicles, invert, exits' goal phase, dynamite on lifts, the decoy's boxes, sounds, the head shake, Advance, ...), the rest recorded as matching; 2026-11-03: **the whole GP ledger reviewed** (every function, action, sound channel and object type; 0 UNREVIEWED), fixed BD-0029..0056 (sounds, frame tables, water, fans, taunts, dynamite, lift vertigo, the respawn gate, the decoy, the pieces flying away, the effects; the follower's wake box BD-0053 with 052/053 re-laid); open: the fish and bird beyond their speeds, the shooters' and big creature's drawn height, `m_blupiFocus` (unmodelled gate), the conveyor lift's swapped vertigo (BD-0047) |
-| D | original assets: `.a3d` reader, `.max` request, per-source stages | inventory done; `.a3d` reader done, all 105 read (`5fe7bc9`); `.max` BLOCKED (MR-0001: the MAX 3.1 ISO offered looks unlicensed; not installed); 2026-11-03: the asset ledger classified from the survey's evidence (60 left: a3d without a Ray Dream twin, root test files); the render ledger reviewed by render-back IoU (13 left: D11's candidates) |
-| E | every world's lesson, bypasses, platform fairness | ledger generated; `lesson_inventory.md` (2026-11-02, `tools/audit/lesson_inventory.py`): 19 worlds leave out or thin a mechanic of their original -- first 102 (switch and saw, fan shaft, blitz columns, crumbling bridge), 114 (blitz, fans, lava), 115/107/199 (fans, temp), 105 (teleport pair, lava floor), 061/066 (bridges), 084 (crushers); 2026-11-03: 199's lessons all in (lightning, clay bridge, teleporters, spikes, drips, the wasp's well, bars, saucers, a fan) and its spare enclaves played to the win (`tools/autoplay/spare/world199.txt`); 113's windy stretch (BD-0057: a bar over wind is hung from), 105's teleporter pair (its lava floor Q-008), 125's tube of mines under bars and its lava; every world's lesson row reviewed (78: 74 match/fixed, 2 adaptations, 2 N/A); regression 78/78 |
-| F | release audit at pinned revisions | 2026-11-03: `plans/audit/release_audit.md` -- desktop, web and Android builds; 112/112 CTest and 78/78 playthroughs rerun at cna `5a754159d`; the Android port runs to the hub but draws no 3D model (UB-007, CNA's); not a release until the owner's decisions (Q-001..Q-009, D11, MR-0001) and a human play pass |
+| B | editor variant cycling (ED-0001); fan / lava / pillar representation (VIS rows); live gallery | done: ED-0001/0006/0007 (auto-tiling fully, MR-0005); every VIS row settled (`render_representation.csv`: 388 fixed and verified, 146 adaptations, 31 not applicable, 0 open; 2026-11-06), the world signs with their digits, the posts, switches, teleporters, the clay bridge, the vanishing saucer, the terrain reliefs (Q-001..Q-004, Q-012); wind tiles kept as 2D effects (no scene: `Decor/vent-norm/` holds rendered frames only) |
+| C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | done: the whole GP ledger reviewed (538 rows, 0 open); BD-0001..0074 fixed and verified, among them the contact boxes (BD-0021), `m_blupiFocus` (BD-0010 and after), the lifts' edges (BD-0047), eggs as lives (BD-0073), the step that stands him up (BD-0074); the sounds' pitch measured in a recording (BD-0031, `tools/audit/sound_pitch.py`) |
+| D | original assets: `.a3d` reader, `.max` request, per-source stages | done but for the `.max`: all 105 `.a3d` read; the asset ledger settled (703 rows, 0 open); the `.max` stay BLOCKED by licence (MR-0001; the offered copy is not used) |
+| E | every world's lesson, bypasses, platform fairness | done: every world's lesson row reviewed (80: 55 match, 22 fixed, 1 adaptation, 2 not applicable); every target's reach evidenced (`target_reach.md`: 921, 0 unknown); the owner: the automated playthroughs suffice (MR-0007) |
+| F | release audit at pinned revisions | `plans/audit/release_audit.md`, refreshed 2026-11-06: 112/112 CTest, golden frames, play pass 31 78/78, every ledger settled; open only MR-0001 (`.max`), Android's UB-007 (CNA), and the owner's word |
 
 ## 4. Crate push and pull (BD-0001, M3D-0001) — Wave A
 
@@ -80,36 +80,11 @@ whose shuttles move in step, also dwells 30 ticks at each end. Measured with the
 (`autoplay_search.py`): the ladder's jump window went from ~5 frames per cycle to ~0.9 s. The
 playthroughs of the five worlds and their chains pass; the D52-D57 tests pass (110/110).
 
-## 6. Next steps (in order)
+## 6. Next steps
 
-Owner's queue of 2026-11-02 (asked during the session; in this order after the current work):
-- **Every 2D billboard/sprite that has an original 3D source becomes that 3D model** (owner,
-  2026-11-02: "všechno co je v galaxy eggbert stále jako billboard ve 2D a jsou pro to rd4 nebo jiné
-  3D modely, předělat do 3D a použít ten rd4 model"): go through `render_representation.csv`
-  (rows drawn as plate / crossed planes / 2d-effect / element sprite) against `asset_sources.csv`
-  and `model_parity.md` (scenes matched by outline), convert each with `tools/rd4_to_gltf`
-  (objects.txt, tone, live look), and the 2D death sprites too: first the glue death (Glu, owner
-  report: the element.png billboard in place of a 3D Blupi; `Blupi/glu.rd4`).
-- The red, green and blue posts (the coloured doors/bars) and the numbered posts (world signs
-  174-181) from billboards to 3D models (owner, 2026-11-02): from the RD4 scenes where they exist
-  (signs: `Decor/world1.rd4` with the digit decal, MR-0006; the coloured doors 334-336 most likely
-  `Decor/porte-r.rd4`, `porte-v.rd4`, `porte-b.rd4` -- rouge, vert, bleu), otherwise found in the
-  other sources or modelled in the original's style.
-- The crumbling clay bridge (364; owner, 2026-11-02): right until Blupi crosses it, then while it
-  is gone an elongated lump of clay shows above its place (the crumble/return frames 365-372 drawn
-  wrong), afterwards right again; and its top is plain brown, it should show the clay texture.
-  Candidate source: `Decor/grotte-fragile1.rd4` (and `terre.tif`); 364-366 are drawn as directional
-  cubes, the crumble frames 367-372 as upright plates in the cell (the lump).
-- The vanishing saucer (Temp 324-329, owner 2026-11-02: "the special piece of cube that stretches,
-  shrinks, vanishes and comes back is drawn as a billboard, from above totally wrong"): its own
-  animated scene `Decor/temporaire.rd4` (8 frames) as a 3D model, the frames following the cycle.
-- The fan's spin speed against Mobile Eggbert's (owner: "větrák by se měl asi točit rychleji"):
-  done 2026-11-02, divisor 2 as Decor.cpp:1104-1122 (it was 3).
-- The Setup's volume sliders and the sounds' pitch (BD-0031): in progress 2026-11-02.
-
-1. The owner's answers: MR-0005 (auto-tiling in 3D), the world signs' digits (VIS-0175..0182),
-   OR-0006, the human play pass (MR-0004).
-2. OR-0017 (Blupi's body in walls): done 2026-11-03 (`a45e785`), all 78 playthroughs with the box.
-3. The cave rocks 285-303 as models need hardware instancing (~5,500 vertices a rock, ~6,000
-   cells; CNA's SkinnedEffect has none, CNA read-only: upstream request) or a decimated model.
-4. Wave E: every world's lesson and bypasses (ledger generated), then Wave F.
+The 2026-11-02 queue below this heading's former list (billboards to models, the coloured and
+numbered posts, the clay bridge, the vanishing saucer, the fan's speed, the Setup's sliders, the
+owner's answers, OR-0017, the cave rocks, Wave E) is done; see the waves above and `handoff.md`.
+What is left is outside the code's reach: the `.max` sources (MR-0001), Android's 3D models (CNA
+UB-007), and a release the owner decides on (`plans/audit/release_audit.md` §6). Anything the owner
+reports next starts a new OR row in `plans/audit/owner_reports.md`.

@@ -508,7 +508,7 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   wind tunnel's jump now rose above the wind: the wind fills the tunnel's height) re-planned, and
   their chains 100/120: all 78 pass (2026-11-02).
 
-## BD-0031 — every sound effect played at its file's pitch; the original pitches each channel (gameplay audio) — FIXED
+## BD-0031 — every sound effect played at its file's pitch; the original pitches each channel (gameplay audio) — FIXED_AND_VERIFIED
 
 - Original (mobile-eggbert Sound.cpp:96-110, `tableVolumePitch`): each channel's volume multiplier
   and pitch (XNA SoundEffectInstance.Pitch, octaves -1..1, clamped below 0) are applied at play:
@@ -519,7 +519,13 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
   the crate efforts a full octave (owner OR-0028: a moan); and ch38 was played looped.
 - Fix: `Sound::Play` sets the table's pitch; ch38 plays once. Also new: the Setup's effects volume
   multiplies the table's (OR-0029).
-- Validation: ctest; the owner to listen (runs here are silent).
+- Validation: ctest. Measured 2026-11-06 without playing anything aloud: the playthroughs of 012 and
+  045 recorded in real time through SDL's disk audio driver and searched for every sound file at
+  every pitch from 0 to 1 octave (`tools/audit/sound_pitch.py`): 14 channels heard, each at its
+  table pitch (normalised cross-correlation 0.96-1.00): 16 and 18 at 0.0; 12 at 0.1; 3, 4, 11, 14,
+  37, 65, 80 and 88 at 0.2; 1, 38 and 39 (the crate efforts) a whole octave up. None was heard at
+  another pitch (channel 2's file resembles channel 1's an octave apart: it is found where 1 plays,
+  at 0.4, not on its own). The ear's verdict on the result is the owner's.
 
 ## Reviewed, not changed (yet)
 

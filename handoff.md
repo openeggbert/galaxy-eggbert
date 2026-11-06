@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-06 (the editor's copy and paste, ED-0010)._
+_Last updated: 2026-11-06 (the editor's copy and paste, backups, export, thumbnails; Wave F refreshed)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -652,9 +652,21 @@ ledgers before repeating any discovery. Where it stands:
   live `tools/qa_steps/editor_thumbnails.txt`, `plans/evidence/editor-thumbnails.jpg`).
 - 2026-11-06, the owner: D11 closed, no AI policy for now (MR-0009); copy and paste, backups,
   export and thumbnails built in the editor (above).
-- Next (superseded in part: D11 is closed): any further D11 model; D11's model list (the candidates regenerated from a fresh
-  library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
-  screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
+- 2026-11-06, **Wave F refreshed** (`plans/audit/release_audit.md`): at today's pins 112/112 CTest,
+  golden frames, **play pass 31: 78/78** (`build-probe/play-pass-31`), target reach 921 / 0 unknown,
+  campaigncheck, watercheck, patrol and lift envelopes 0; the stale ledgers regenerated (references
+  and counts only, every status as before); the audit plan's wave table brought up to date.
+  **BD-0031 measured**: a playthrough recorded with SDL's disk audio driver in real time (nothing
+  aloud) and searched for every sound at every pitch (`tools/audit/sound_pitch.py`, its docstring has
+  the commands): 14 channels in 012 and 045, each at its table pitch (0.0, 0.1, 0.2, 1.0), none
+  elsewhere; BD-0031 FIXED_AND_VERIFIED.
+  Old play passes 1-29 deleted (their results are in this file); 25 (target_reach.md) and 30 kept.
+- 2026-11-06: UB-007 (Android without 3D models) is fixed in CNA (`22739f89b`, 2026-11-03 night);
+  UB-006 (each missed content name walks the APK through JNI) reported to the cna Claude session at
+  the owner's request (`upstream_bugs.md`).
+- Next: nothing waits on the owner. Outside the code's reach: the `.max` sources (MR-0001), a run
+  of the APK that shows UB-007's fix (Android stays at "builds and starts", Q-009), the release
+  decision. A new owner report starts an OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not
