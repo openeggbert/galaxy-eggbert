@@ -1,0 +1,64 @@
+# ---- L: the basin, the ascent, the monument ----
+go 27 14 tol 0.3
+go 25 14 tol 0.3
+until ground = 1 max 300
+expect y <= 10.05
+go 21 15 tol 0.3
+go 21 21.4 tol 0.3
+go 18 22.4 tol 0.2
+face 180
+hold 8 up jump
+hold 30 up
+until ground = 1
+expect y >= 9.95
+go 18 25 tol 0.1
+wait 100
+go 15.9 24.5 tol 0.15
+face 270
+go 13.6 24.6 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 11.95
+go 13.6 23.8 tol 0.1
+face 0
+go 13.6 21.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 13.95
+go 13.6 20.8 tol 0.1
+go 13.6 18.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 15.95
+go 13.6 17.8 tol 0.1
+go 13.6 15.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 17.95
+go 13.4 14.8 tol 0.1
+go 12.8 12.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 19.95
+go 12.6 11.8 tol 0.1
+go 11.8 9.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 21.95
+go 12.3 9.8 tol 0.1
+face 90
+lift 14 28 9 max 1500
+lift 14 22 9 max 1500
+go 14 9 jump 1.7 tol 0.25
+until ground = 1
+expect y >= 21.95
+go 14 9 tol 0.1
+until y >= 27.95 max 600
+go 16 10 tol 0.3
+expect y >= 27.95
+lift 17 34 11 max 1500
+lift 17 28 11 max 1500
+go 17 11 tol 0.1
+until y >= 33.95 max 600
+go 19 11.5 tol 0.3
+go 21 11 tol 0.3
+go 21 9.2 tol 0.15
+wait 30
+go 21 5 until exit = 1 max 600
+until phase = Win max 600
+wait 120
+expect phase = Win

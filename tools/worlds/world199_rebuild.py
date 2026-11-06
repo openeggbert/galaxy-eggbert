@@ -22,12 +22,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from cheese import cheese, hole  # noqa: E402,F401
+from cheese import cave, cheese, hole, low_mine, tube  # noqa: E402,F401
 from kit import MACHINE_FACES, MACHINE_FLOOR, O, World, lift, mine, wall  # noqa: E402,F401
 from palace import stone as white_stone  # noqa: E402,F401
 from slime import SLIME, SLIME_TRAP, skin, slime  # noqa: E402
-from station import brick, water  # noqa: E402,F401
-from village import ROCK, ROCK_FACES, STONE, STONE_FACES  # noqa: E402,F401
+from station import brick, girder_mast, metal, water  # noqa: E402,F401
+from village import ROCK, ROCK_FACES, STONE, STONE_FACES, house  # noqa: E402,F401
 
 RED_DOOR, GREEN_DOOR, BLUE_DOOR = 334, 335, 336
 LAVA = 68
@@ -97,6 +97,8 @@ def box_of(kind, x0, y0, z0, x1, y1, z1):
             for y in range(y0, y1 + 1):
                 for z in range(z0, z1 + 1):
                     w.set(x, y, z, ROCK_FACES[0] if rng.random() < 0.2 else ROCK)
+    elif kind == "metal":
+        metal(w, x0, y0, z0, x1, y1, z1, rng)
     elif kind == "machine":
         wall(w, x0, y0, z0, x1, y1, z1, rng, faces=MACHINE_FACES, face_chance=0.1, block=MACHINE_FLOOR)
     else:
@@ -448,7 +450,346 @@ def section_e():
         w.set(10, 48, z, 56)
 
 
-SECTIONS = [section_a, section_b, section_c, section_d, section_e]
+# ==== F. the village roofs =======================================================================
+HOUSES = ((33, 37, 6), (38, 42, 8), (46, 50, 8), (51, 55, 10), (56, 61, 8))   # x0, x1, height
+
+
+def section_f():
+    """X 33-61, Z 31-45, walk 34, stone and cobble. E's passage (z 45) opens on the west end of a
+    street (z 41-45) with five houses along its north side, their windows on their south faces, roofs
+    at walk 40, 42, 42, 44, 42; an alley (x 43-45) between the second and third, closed by a green
+    door (z 38, G2) on a lift (x 43) up to the roofs, where three birds cross the way and four eggs
+    lie; a stone wall with plants along the south side. Four birds cross the street at x 39, 44, 50,
+    56. The east end (x 61) leaves by a tunnel (z 43) to G."""
+    box_of_stone(32, 33, 30, 62, 48, 49)
+    air(33, 34, 31, 61, 47, 45)
+    air(27, 34, 45, 32, 37, 45)                              # E's passage joins the street's west end
+    w.fill(33, 33, 31, 61, 33, 45, STONE)                    # cobble
+    for x0, x1, h in HOUSES:
+        house(w, x0, 31, x1, 40, 34, h, rng, door=(x0 + x1) // 2)
+    # the alley between the second and third house: its walls are the houses' sides; door and lift
+    air(43, 34, 31, 45, 47, 40)
+    w.fill(43, 33, 31, 45, 33, 40, STONE)
+    if not calm:
+        w.fill(43, 34, 38, 45, 35, 38, GREEN_DOOR)
+    lift_(43, 34, 42, 34, ticks=80, stop=40)
+    # the south wall with its plants
+    for x in range(33, 62):
+        for y in (34, 35, 36):
+            w.set(x, y, 46, rng.choice(STONE_FACES) if rng.random() < 0.3 else STONE)
+    for k, x in enumerate(range(35, 61, 5)):
+        w.bigdecor((23, 24, 25)[k % 3], x, 34, 47)
+    air(62, 34, 42, 66, 37, 44)                              # the tunnel east to G
+    # the birds: four across the street, three across the roofs
+    for x in (39, 44, 50, 56):
+        mover(O.BIRD, (x, 34, 41), (x, 34, 45))
+    for x, y in ((40, 42), (48, 42), (53, 44)):
+        mover(O.BIRD, (x, y, 32), (x, y, 38))
+    for x, y, z in ((35, 40, 36), (40, 42, 35), (48, 42, 35), (53, 44, 35), (60, 34, 43), (34, 34, 41)):
+        put(O.EGG, x, y, z)
+
+
+def box_of_stone(x0, y0, z0, x1, y1, z1):
+    wall(w, x0, y0, z0, x1, y1, z1, rng, faces=STONE_FACES, face_chance=0.3, block=STONE)
+
+
+# ==== G. the riveted station =====================================================================
+def section_g():
+    """X 67-91, Z 34-54, grey riveted plate. F's tunnel meets a blue gate (B2) in the west wall (z 42-44);
+    hall 1 (x 67-77, walk 34) with sleeping follow stars and up fans at its sides; a lava service
+    trench (x 78-80) crossed on two ferry lifts side by side (z 43 east, z 45 west); hall 2 (x 81-91,
+    walk 30, four lower) with four left fans in its east wall (z 40, 43, 46, 49: their winds cross the
+    way along x 90), B3 in its north-east corner, and the exit tunnel south (x 88-90, z 55)."""
+    hall("metal", 67, 34, 34, 77, 42, 54)
+    hall("metal", 81, 30, 34, 91, 42, 54)
+    air(78, 34, 34, 80, 42, 54)
+    air(78, 28, 34, 80, 33, 54)
+    w.fill(78, 27, 34, 80, 27, 54, MACHINE_FLOOR)
+    w.fill(78, 28, 34, 80, 29, 54, LAVA)
+    air(62, 34, 42, 66, 37, 44)                              # F's tunnel arrives; the door closes its end
+    if not calm:
+        w.fill(66, 34, 42, 66, 35, 44, BLUE_DOOR)
+    # the ferries over the trench (cubes at y 33, top walk 34)
+    for z, a, b in ((43, 78, 80), (45, 80, 78)):
+        if calm:
+            w.fill(78, 33, z, 80, 33, z, MACHINE_FLOOR)
+        else:
+            lift(w, (a, 33, z), (b, 33, z), ticks=30, stop=40)
+    # the exit tunnel south
+    air(88, 30, 55, 90, 33, 59)
+    # girder masts and grilles for the hall's look
+    for x, z in ((67, 34), (77, 34), (67, 54), (77, 54), (81, 34), (91, 54)):
+        girder_mast(w, x, z, 34 if x < 80 else 30, 41)
+    for x in range(69, 76, 2):
+        for z in (36, 40, 48, 52):
+            w.set(x, 33, z, 84)
+    for x, z in ((70, 38), (74, 50), (72, 53)):               # up fans in hall 1's floor, away from the way
+        w.set(x, 33, z, FAN_UP)
+        if not calm:
+            w.fill(x, 34, z, x, 38, z, WIND_UP)
+    for z in (40, 43, 46, 49):                               # left fans in hall 2's east wall
+        w.set(92, 30, z, FAN_LEFT)
+        if not calm:
+            w.fill(87, 30, z, 91, 30, z, WIND_LEFT)
+    key(O.KEY3, 90, 30, 35)                                  # B3
+    w.bigdecor(29, 75, 34, 36)                               # a ball machine, one of the station's landmarks
+    # ten sleeping follow stars: hall 1's sides, hall 2's corners
+    for x, y, z in ((69, 34, 36), (69, 34, 52), (73, 34, 36), (73, 34, 52), (76, 34, 38), (83, 30, 36),
+                    (83, 30, 52), (84, 30, 53), (84, 30, 33), (82, 30, 47)):
+        if not calm:
+            put(O.FOLLOW_STAR, x, y, z)
+    mover(O.MOVING_MINE, (72, 34, 38), (72, 34, 50), 10)
+    mover(O.MOVING_MINE, (75, 34, 50), (75, 34, 38), 10)
+    mover(O.MOVING_MINE, (85, 30, 38), (85, 30, 50), 10)
+    mover(O.MOVING_MINE, (82, 30, 49), (82, 30, 52), 10)
+
+
+# ==== H. the cheese passages =====================================================================
+def section_h():
+    """X 62-92, Z 60-84, walk 26 down to 18, cheese. G's tunnel ends high on the north wall of the
+    first cave (walk 26, centre 89, 66); a tube down to the second (walk 22, centre 79, 75) and a
+    tube to the third (walk 18, centre 72, 74), whose west tube leaves (z 74) for I. Bulldozers
+    patrol across the caves' floors (the way crosses their lanes), three low mines hang over the
+    tubes, four standing mines hover in the caves, two helicopters wait, three eggs lie in nooks."""
+    cheese(w, 62, 14, 60, 92, 34, 84, rng)
+    cave(w, 89, 26, 66, 6, 7, 3, rng, rz=6)
+    cave(w, 79, 22, 75, 6, 7, 3, rng, rz=5)
+    cave(w, 72, 18, 74, 5, 7, 3, rng, rz=5)
+    tube(w, (86, 26, 69), (81, 22, 72), r=2.6, floor=22)
+    tube(w, (75, 22, 75), (73, 18, 74), r=2.6, floor=18)
+    tube(w, (70, 18, 74), (60, 18, 74), r=2.6, floor=18)
+    air(88, 30, 56, 90, 33, 61)                              # G's tunnel reaches the cave's wall
+    # bulldozers across the first and second caves' floors, the third's
+    mover(O.BULLDOZER, (84, 26, 64), (90, 26, 64), 30)
+    mover(O.BULLDOZER, (77, 22, 74), (83, 22, 74), 30)
+    mover(O.BULLDOZER, (69, 18, 72), (69, 18, 77), 30)
+    for x, y, z in ((84, 26, 70), (78, 22, 77), (65, 18, 74)):
+        low_mine(w, x, y, z, rng)
+    for x, y, z in ((89, 29, 64), (80, 25, 74), (72, 21, 76), (73, 21, 71)):
+        mover(O.MOVING_MINE, (x, y, z), (x, y, z), 10)
+    put(O.HELICOPTER, 76, 22, 78)
+    put(O.HELICOPTER, 70, 18, 77)
+    for x, y, z in ((93 - 5, 26, 70), (75, 22, 78), (68, 18, 71)):
+        put(O.EGG, x, y, z)
+
+
+# ==== I. the helicopter jungle ===================================================================
+def tower(x0, z0, x1, z1, top, block=SLIME, cap=STAR, floor_y=10):
+    """A slime column from the cavern floor to walking level `top`, capped with `cap`."""
+    w.fill(x0, floor_y - 1, z0, x1, top - 2, z1, block)
+    w.fill(x0, top - 1, z0, x1, top - 1, z1, cap)
+
+
+def section_i():
+    """X 31-61, Z 53-87, walk 10 up to 30, slime with star-block perches. H's tube arrives at the east
+    shelf (x 54-60, z 66-80, walk 18) where eight helicopters stand in a row; the west shelf (x 31-35,
+    z 54-62, walk 12) leaves by a tunnel west to J. Between them a cavern floor at walk 10 with four
+    big creatures, two spike traps and two drips, and three perches (towers capped with stars, walk 26,
+    22, 30) with a helicopter pair each: the way is a flight from the east shelf over the perches and
+    down to the west shelf; on foot a stair from the east shelf down to the floor and the floor's way
+    west. One moving mine sweeps the middle."""
+    air(31, 10, 53, 61, 37, 87)
+    w.fill(54, 9, 66, 61, 17, 80, SLIME)                     # the east shelf, walk 18
+    w.fill(31, 9, 54, 35, 11, 62, SLIME)                     # the west shelf, walk 12
+    air(60, 18, 73, 62, 21, 75)                              # H's tube reaches the shelf
+    air(27, 12, 56, 30, 15, 58)                              # the tunnel west to J
+    # the stair down from the east shelf (z 82): steps at walk 16, 14, 12, 10 along x 53 to 50
+    for k, x in enumerate((53, 52, 51, 50)):
+        w.fill(x, 9, 78, x, 15 - 2 * k, 82, SLIME)
+    # perches: towers capped with stars
+    tower(44, 58, 48, 62, 26)
+    tower(38, 76, 42, 80, 22)
+    tower(52, 56, 56, 60, 30)
+    # the overhangs and hanging slabs that break the cavern's roof into passages
+    for x0, z0, x1, z1, y in ((40, 56, 50, 64, 33), (34, 70, 46, 84, 31), (50, 70, 53, 86, 29)):
+        w.fill(x0, y, z0, x1, y + 4, z1, SLIME)
+    # drips under small slabs on the floor's way
+    for x, z in ((46, 70), (40, 66)):
+        w.fill(x, 13, z, x, 13, z, SLIME)
+        w.set(x, 12, z, DRIP)
+    for x, z in ((44, 72), (37, 63)):                        # the two spike traps in the floor
+        w.set(x, 9, z, SLIME_TRAP)
+    # four big creatures walking the floor
+    mover(O.BIG_CREATURE, (36, 10, 68), (46, 10, 68))
+    mover(O.BIG_CREATURE, (50, 10, 76), (40, 10, 74))
+    mover(O.BIG_CREATURE, (36, 10, 82), (36, 10, 72))
+    mover(O.BIG_CREATURE, (48, 10, 56), (48, 10, 66))
+    mover(O.MOVING_MINE, (47, 20, 72), (47, 28, 72), 10)
+    # the helicopters: eight on the east shelf, two on each perch, two on the floor, two on the west shelf
+    for k in range(8):
+        put(O.HELICOPTER, 55 + (k % 4), 18, 68 + 3 * (k // 4) + 2 * (k // 4))
+    for x, y, z in ((45, 26, 59), (47, 26, 61), (39, 22, 77), (41, 22, 79), (53, 30, 57), (55, 30, 59),
+                    (33, 10, 66), (33, 10, 78), (33, 12, 55), (34, 12, 61)):
+        put(O.HELICOPTER, x, y, z)
+    for x, y, z in ((46, 26, 60), (40, 22, 78), (54, 30, 58), (34, 10, 70), (42, 10, 60), (33, 12, 58)):
+        put(O.EGG, x, y, z)
+    w.bigdecor(23, 56, 18, 78)                               # plants on the shelves
+    w.bigdecor(24, 33, 12, 61)
+
+
+# ==== J. the rock gauntlet =======================================================================
+def section_j():
+    """X 6-27, Z 36-59, walk 12 down to 6, brown rock. I's tunnel ends at a blue gate (B3, x 29). The
+    entrance ledge (x 25-27, walk 12), three steps down west (walk 10, 8, 6; x 21-24, 17-20, 8-16),
+    the trench (lava x 8-16, z 48-51) across the way north: a clay bridge (x 14, four cells) or seven
+    bars (x 10, z 46-52, two over the floor); the north bank (x 8-15, z 36-47, walk 6) with two left
+    fans in its east wall, two ground mines and three moving mines across the way; then the gallery
+    east (z 36-38, x 16-28) with two up fans at one-wide pinches and a mine bobbing between them,
+    and the passage north-east to K."""
+    box_of("rock", 5, 3, 35, 28, 21, 60)
+    air(7, 6, 53, 16, 13, 59)                                # the south bank and the step down's hall
+    air(17, 8, 55, 20, 14, 59)
+    air(21, 10, 55, 24, 15, 59)
+    air(25, 12, 55, 27, 17, 59)
+    air(27, 12, 56, 30, 15, 58)                              # (I's tunnel's end)
+    if not calm:
+        w.fill(29, 12, 56, 29, 13, 58, BLUE_DOOR)
+    # the floors at walk 12, 10, 8, 6 come from the rock mass below; fill what the carve took
+    w.fill(25, 3, 55, 27, 11, 59, ROCK)
+    w.fill(21, 3, 55, 24, 9, 59, ROCK)
+    w.fill(17, 3, 55, 20, 7, 59, ROCK)
+    w.fill(7, 3, 53, 16, 5, 59, ROCK)
+    air(8, 6, 36, 15, 13, 52)                                # the trench's hall and the north bank
+    air(8, 3, 48, 16, 5, 51)
+    w.fill(8, 2, 48, 16, 2, 51, ROCK)
+    w.fill(8, 3, 48, 16, 4, 51, LAVA)
+    w.fill(8, 3, 52, 16, 5, 52, ROCK)                        # south bank's edge
+    w.fill(8, 3, 36, 15, 5, 47, ROCK)
+    for z in (48, 49, 50, 51):                               # the bridge
+        w.set(14, 5, z, ROCK if calm else BRIDGE)
+    if calm:
+        w.fill(10, 5, 48, 10, 5, 51, ROCK)
+    else:
+        w.fill(10, 8, 46, 10, 8, 52, BAR)                    # the bars
+    # the fans and mines on the north bank
+    for z in (42, 46):
+        w.set(16, 6, z, FAN_LEFT)
+        if not calm:
+            w.fill(8, 6, z, 15, 6, z, WIND_LEFT)
+    hazard(9, 6, 43)
+    hazard(15, 6, 39)
+    mover(O.MOVING_MINE, (8, 6, 44), (15, 6, 44), 10)
+    mover(O.MOVING_MINE, (15, 6, 40), (8, 6, 40), 10)
+    mover(O.MOVING_MINE, (12, 6, 37), (15, 6, 37), 10)
+    # the gallery east and the passage north-east
+    air(16, 6, 36, 28, 13, 38)
+    w.fill(16, 5, 36, 28, 5, 38, ROCK)
+    for x in (19, 25):                                       # pinches one wide, an up fan in each
+        w.fill(x, 6, 36, x, 13, 36, ROCK)
+        w.fill(x, 6, 38, x, 13, 38, ROCK)
+        w.set(x, 5, 37, FAN_UP)
+        if not calm:
+            w.fill(x, 6, 37, x, 11, 37, WIND_UP)
+    mover(O.MOVING_MINE, (22, 10, 37), (22, 12, 37), 10)
+    air(28, 6, 28, 30, 9, 38)                                # the passage north to K's south end
+    put(O.EGG, 9, 6, 47 - 2)
+    put(O.EGG, 27, 12, 57)
+    for x in (9, 12, 15):                                    # rock outcrops for the walls' look
+        w.set(x, 7, 36, 301)
+
+
+# ==== K. the toy chamber =========================================================================
+PADS = ((34, 24, 8), (37, 23, 10), (40, 24, 12), (43, 22, 14), (45, 19, 16), (44, 16, 18), (41, 14, 20), (38, 13, 22))
+
+
+def section_k():
+    """X 32-50, Z 11-26, walk 6 up to 22, ball blocks. J's passage enters at the south wall's west end
+    (x 32-34, z 27); eight two-by-two ball-block columns (walk 8, 10, ... 22) spiral up round the
+    chamber, a cell or two between them; the last reaches the exit ledge (x 32-36, z 12-16, walk 22)
+    whose south and east edges are fenced by ten flight-barrier cells (the entrance, x 37, z 13-15, is open); the tunnel west to L leaves it. Two eggs on the
+    columns, a few star blocks among the balls."""
+    hall("slime", 32, 6, 11, 50, 28, 26)
+    w.fill(31, 5, 10, 51, 5, 27, SLIME)
+    for x in range(32, 51):                                  # the ball-block floor and walls' skin
+        for z in range(11, 27):
+            w.set(x, 5, z, rng.choice(BALLS))
+    for x0, z0, top in PADS:
+        for x in (x0, x0 + 1):
+            for z in (z0, z0 + 1):
+                for y in range(6, top):
+                    w.set(x, y, z, STAR if (y == top - 1 and (x + z) % 2 == 0) else rng.choice(BALLS))
+    floor(32, 12, 36, 16, 22, block=216, thick=3)
+    for y in (22, 23):                                       # the ten barrier cells fence the ledge's open sides
+        for x in (34, 35, 36):
+            w.set(x, y, 17, BARRIER)
+        for z in (12, 16):
+            w.set(37, y, z, BARRIER)
+    air(28, 22, 13, 33, 26, 15)                              # the tunnel west to L
+    air(28, 6, 27, 34, 9, 30)                                # J's passage reaches the chamber's south end
+    put(O.EGG, 43, 14 + 0, 22)
+    put(O.EGG, 41, 20, 14)
+    for x, z in ((32, 11), (50, 11), (50, 26)):
+        w.set(x, 6, z, STAR)
+
+
+# ==== L. the basin, the column ascent and the monument ===========================================
+L_PADS = ((13, 24, 12), (13, 21, 14), (13, 18, 16), (13, 15, 18), (12, 12, 20), (11, 9, 22))   # x, z, top walk
+
+
+def star_lift(x, walk0, walk1, z, ticks=60, stop=40):
+    """A short lift drawn as a star block (MoveObjectRecord's visual icon, BD-0082)."""
+    if calm:
+        w.set(x, walk0 - 1, z, STAR)
+    else:
+        w.place(O.LIFT, x, walk0 - 1, z, end=(x, walk1 - 1, z), advance=ticks, recede=ticks, stop_start=stop,
+                stop_end=stop, icon=STAR)
+
+
+def section_l():
+    """X 9-26, Z 9-34, walk 10 up to 34, water, slime, columns and (only here and in K) star blocks.
+    K's tunnel (z 13-15, walk 22) opens high on the east wall over the east bank (x 19-25, z 10-17,
+    walk 10); south of it the basin (x 10-25, z 16-33, five deep) with an island (x 16-20, z 23-27:
+    a palm and G3), six two-by-two columns standing in the water along x 13 and 10 (tops walk 12, 14,
+    ... 22) climbing north, then two star lifts (x 14, z 9: 22 to 28; x 17, z 11: 28 to 34) up to the
+    monument terrace (x 18-25, z 10-17, walk 34): the Blupi statue with its column, two fountains and vases,
+    and in the north wall the green gate (z 9) to the frame of star blocks (x 19-23, z 4-8) with the
+    red arrow. Two helicopters wait on the banks."""
+    air(9, 4, 9, 26, 47, 34)
+    w.fill(9, 3, 9, 26, 3, 34, SLIME)
+    air(26, 22, 13, 28, 26, 15)                              # K's tunnel opens on the cave
+    # the banks: the east bank, the north strip, the island
+    w.fill(19, 4, 10, 25, 9, 17, SLIME)
+    w.fill(9, 4, 9, 18, 9, 15, SLIME)
+    w.fill(16, 4, 23, 20, 9, 27, SLIME)
+    # the water
+    for x0, z0, x1, z1 in ((10, 16, 25, 22), (10, 23, 15, 33), (21, 23, 25, 33), (16, 28, 20, 33)):
+        water(w, x0, 4, z0, x1, 9, z1)
+    # the columns standing in the water or on the strip, capped with stars
+    for x0, z0, top in L_PADS:
+        w.fill(x0, 4, z0, x0 + 1, top - 2, z0 + 1, SLIME)
+        w.fill(x0, top - 1, z0, x0 + 1, top - 1, z0 + 1, STAR)
+    star_lift(14, 22, 28, 9)
+    floor(15, 9, 16, 11, 28, block=STAR, thick=2)            # the landing between the lifts
+    star_lift(17, 28, 34, 11)
+    # the monument terrace
+    floor(18, 10, 25, 17, 34, block=396, thick=2)
+    w.bigdecor(87, 21, 34, 15)                               # the monument column
+    w.bigdecor(89, 21, 34, 13)                               # the statue
+    w.bigdecor(88, 19, 34, 14)                               # the two fountains
+    w.bigdecor(88, 23, 34, 14)
+    w.bigdecor(69, 18, 34, 16)
+    w.bigdecor(69, 24, 34, 16)
+    # the green gate and the frame of star blocks
+    box_of("slime", 17, 33, 2, 25, 40, 9)
+    w.fill(18, 33, 3, 24, 39, 9, STAR)
+    air(19, 34, 4, 23, 37, 8)
+    air(20, 34, 9, 22, 37, 9)
+    if not calm:
+        w.fill(20, 34, 9, 22, 35, 9, GREEN_DOOR)
+    put(O.EXIT, 21, 34, 5)
+    key(O.KEY2, 18, 10, 25)                                  # G3 on the island
+    w.bigdecor(18, 19, 10, 26)                               # the palm
+    w.bigdecor(23, 23, 10, 12)
+    w.bigdecor(24, 11, 10, 11)
+    w.bigdecor(203, 13, 4, 28)
+    w.bigdecor(203, 23, 4, 28)
+    put(O.EGG, 19, 10, 25)
+    put(O.EGG, 11, 22, 10)
+    put(O.HELICOPTER, 12, 10, 11)
+    put(O.HELICOPTER, 24, 10, 11)
+
+
+SECTIONS = [section_a, section_b, section_c, section_d, section_e, section_f, section_g, section_h, section_i, section_j, section_k, section_l]
 
 
 def main(argv) -> int:

@@ -1,0 +1,30 @@
+# ---- J: the rock gauntlet ----
+go 26 57 tol 0.3
+go 22.5 57 tol 0.3
+go 18.5 57 tol 0.3
+go 12 56 tol 0.3
+go 14 54 tol 0.2
+go 14 51.8 tol 0.15
+go 14 46.4 tol 0.3
+expect y >= 5.95
+go 14 45.2 tol 0.2
+clear 13 6 44 3.5 lane x max 900
+go 13 43 tol 0.3
+go 12.4 41.2 tol 0.3
+clear 12.4 6 40 3.5 lane x max 900
+go 12.4 38.6 tol 0.3
+go 15 38 tol 0.3
+go 17.6 37 tol 0.1
+face 90
+go 21 37 jump 3.0 tol 0.3
+until ground = 1
+expect x >= 19.9
+go 22.6 37 tol 0.2
+go 23.4 37 tol 0.1
+face 90
+go 27 37 jump 3.0 tol 0.3
+until ground = 1
+expect x >= 25.9
+go 29 37.4 tol 0.3
+go 29 33 tol 0.3
+go 29 29 tol 0.3
