@@ -626,10 +626,9 @@ ledgers before repeating any discovery. Where it stands:
   height over a way raised over his head in 044/045/104/107 (`bebe73bd`, BD-0074, OR-0041); every
   Blupi animation of Mobile Eggbert has its 3D clip (`plans/audit/blupi_animations.md`). **Play pass
   30: 78/78.** Autoplay `with crouch` now matters only standing still (a step stands him up).
-  The web build could not be reconfigured on 2026-11-06: CNA's own configure audit fails on the
-  cna session's work in progress (`Sdl3GraphicsServicesTests.cpp` SDL references 7 -> 8); rebuild
-  it once CNA configures again.
-- Next: any further D11 model; the web build after CNA; D11's model list (the candidates regenerated from a fresh
+  The web build, once CNA configured again (its audit had failed on the cna session's work in
+  progress), rebuilt with all of it and loads in headless Chrome (121 object models, 93/93 sounds).
+- Next: any further D11 model; D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
