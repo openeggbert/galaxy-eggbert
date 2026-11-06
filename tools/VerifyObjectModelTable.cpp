@@ -97,6 +97,14 @@ int main(int argc, char** argv)
                   name + "/icons.txt lists icons and parses" + (error.empty() ? "" : " (bad line: " + error + ")"));
             ++models;
         }
+        const auto* unlit = table.Find(ObjectTextureSource::Element, 252);
+        for (int icon : {253, 254, 255})
+        {
+            const auto* lit = table.Find(ObjectTextureSource::Element, icon);
+            check(unlit && lit && unlit->model == lit->model && unlit->seconds == lit->seconds &&
+                      unlit->mirror == lit->mirror && unlit->yawDegrees == lit->yawDegrees,
+                  "dynamite " + std::to_string(icon) + ": same model pose as 252 (spark is a decal)");
+        }
         check(models > 0, "index.txt lists models");
         std::cout << models << " models, " << table.Size() << " icons" << std::endl;
     }

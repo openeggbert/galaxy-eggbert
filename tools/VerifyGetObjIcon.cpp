@@ -25,6 +25,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <utility>
 
 using GalaxyEggbert::Def::ObjectType;
 using namespace GalaxyEggbert::Game;
@@ -107,7 +108,6 @@ int main()
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType23, 176, "ObjectType23 (secret-level marker) static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType28, 167, "ObjectType28 static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType29, 177, "ObjectType29 static icon");
-    checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType56, 253, "ObjectType56 static icon (100 real frames would overflow the sheet)");
     check(GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 0) == -1 &&
               GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 16) == 367 &&
               GalaxyEggbert::Game::GetObjIcon(GalaxyEggbert::Def::ObjectType::ObjectType52, 27) == 372 &&
@@ -121,6 +121,15 @@ int main()
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType19, 89, "ObjectType19 (jeep) static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType46, 208, "ObjectType46 (Overcraft) static icon");
     checkStatic(GalaxyEggbert::Def::ObjectType::ObjectType55, 252, "ObjectType55 (dynamite) static icon");
+
+    // Independently checked against mobile-eggbert Tables.cpp:1578-1590;
+    // ScaleDiv(1) is 1 at the original 20 Hz (Decor.cpp:8254).
+    for (const auto [phase, icon] : std::vector<std::pair<int, int>>{
+             {0, 253}, {1, 252}, {2, 254}, {5, 255}, {50, 253}, {99, 255}, {100, 253}})
+    {
+        check(GetObjIcon(ObjectType::ObjectType56, phase) == icon,
+              "ObjectType56 fuse: phase=" + std::to_string(phase) + " icon=" + std::to_string(icon));
+    }
 
     // -- Plain ascending-range types (divisor + base + period only, no table) --
     // ObjectType2/3: 9 frames each, matches mobile-eggbert-reference/08-animations.md §3.1

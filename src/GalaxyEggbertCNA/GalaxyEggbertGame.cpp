@@ -1251,6 +1251,19 @@ namespace GalaxyEggbert::CNA
                                     std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(spark, device);
                             }
                         }
+                        if (name == "dynamite_dynamite")
+                        {
+                            for (int icon = 253; icon <= 255; ++icon)
+                            {
+                                const std::string spark =
+                                    "avatars3d/objects/" + name + "/sparks/" + std::to_string(icon) + ".png";
+                                if (std::filesystem::exists(spark))
+                                {
+                                    dynamiteSparks_[icon] =
+                                        std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(spark, device);
+                                }
+                            }
+                        }
                         // A sign's painted face (sign_decals.py): decal <icon> <png> <x0> <y0> <x1> <y1> <z>.
                         std::ifstream decals("avatars3d/objects/" + name + "/decals.txt");
                         for (std::string line; std::getline(decals, line);)
@@ -6934,6 +6947,7 @@ namespace GalaxyEggbert::CNA
                 auto& decalCells = signDecalCells_;
                 decalCells.clear();
                 electrodeCells_.clear();
+                dynamiteSparkCells_.clear();
                 // Models out of view are not drawn (objectModelRadii_): each one's sphere, its reach
                 // widened by its depth scale and sprite offset, a block's margin for its animation.
                 const Microsoft::Xna::Framework::BoundingFrustum viewFrustum(camera_.View() * camera_.Projection());
@@ -7058,6 +7072,19 @@ namespace GalaxyEggbert::CNA
                         }
                         drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
                                   turn);
+                        if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56 &&
+                            dynamiteSparks_.count(icon) != 0)
+                        {
+                            // Centre of the terminal ring in the shipped dynamite_rd_6e6e00
+                            // mesh at Frames=0 (model space). Anchor the star to the fuse,
+                            // so orbiting the camera or turning the object cannot detach it.
+                            const auto tip = Microsoft::Xna::Framework::Vector3::Transform(
+                                Microsoft::Xna::Framework::Vector3(0.22986f, -0.38538f, 0.51735f),
+                                Microsoft::Xna::Framework::Matrix::CreateRotationY(turn));
+                            dynamiteSparkCells_.push_back({static_cast<std::uint16_t>(icon), obj.currentX + tip.X,
+                                ResolveObjectVisualCenterY(obj.type, obj.currentY) + tip.Y,
+                                obj.currentZ + tip.Z, 0.0f});
+                        }
                     }
                 }
                 // The pieces flying away with a model (BD-0049): enemies, the invert potion, a fan,
@@ -7388,8 +7415,8 @@ namespace GalaxyEggbert::CNA
                 }
             }
 
-            // The electrode's sparks facing the camera over its model (Q-005), as its sprite shows them.
-            if (!electrodeCells_.empty())
+            // Painted sparks facing the camera over their models (Q-005).
+            if (!electrodeCells_.empty() || !dynamiteSparkCells_.empty())
             {
                 if (!decalEffect_)
                 {
@@ -7405,18 +7432,30 @@ namespace GalaxyEggbert::CNA
                 decalEffect_->World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();
                 device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::AlphaBlend);
                 device.setRasterizerStateProperty(Microsoft::Xna::Framework::Graphics::RasterizerState::CullNone);
-                for (const auto& cell : electrodeCells_)
+                const auto drawSparks = [&](const auto& cells, const auto& textures,
+                                            const Microsoft::Xna::Framework::Vector2& size,
+                                            const CnaEngine::Graphics::UvRect& uv)
                 {
-                    auto mesh = MakeTexturedMeshBuilder();
-                    mesh.AddBillboard(Microsoft::Xna::Framework::Vector3(cell.x, cell.y, cell.z),
-                                      Microsoft::Xna::Framework::Vector2(1.0f, 1.0f), right, up,
-                                      CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
-                    if (auto renderer = UploadTexturedMesh(device, mesh.Mesh()))
+                    for (const auto& cell : cells)
                     {
-                        decalEffect_->setTextureProperty(electrodeSparks_.at(cell.icon).get());
-                        renderer->Draw(device, *decalEffect_);
+                        auto mesh = MakeTexturedMeshBuilder();
+                        mesh.AddBillboard(Microsoft::Xna::Framework::Vector3(cell.x, cell.y, cell.z),
+                                          size, right, up, uv);
+                        if (auto renderer = UploadTexturedMesh(device, mesh.Mesh()))
+                        {
+                            decalEffect_->setTextureProperty(textures.at(cell.icon).get());
+                            renderer->Draw(device, *decalEffect_);
+                        }
                     }
-                }
+                };
+                drawSparks(electrodeCells_, electrodeSparks_, Microsoft::Xna::Framework::Vector2(1.0f, 1.0f),
+                           CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+                // The three stars occupy [38,55) x [44,60) in their 60-pixel cells.
+                // Crop the clear margin so only the star rotates about the 3D fuse tip;
+                // preserve the sprite's scale (64 original pixels per world block).
+                drawSparks(dynamiteSparkCells_, dynamiteSparks_,
+                           Microsoft::Xna::Framework::Vector2(17.0f / 64.0f, 16.0f / 64.0f),
+                           CnaEngine::Graphics::UvRect{38.0f / 60.0f, 44.0f / 60.0f, 55.0f / 60.0f, 1.0f});
                 device.setRasterizerStateProperty(
                     Microsoft::Xna::Framework::Graphics::RasterizerState::CullCounterClockwise);
                 device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);

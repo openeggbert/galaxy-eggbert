@@ -44,6 +44,21 @@ namespace GalaxyEggbert::Game
             12,-1,13,14,-1,15,13,-1,14,15,
             12,-1,13,15,14,14,-1,14,15,13
         };
+        // mobile-eggbert Tables.cpp:1578-1590, table_dynamitef (standing approval
+        // for small animation tables). Decor.cpp:8252-8256 uses phase / ScaleDiv(1):
+        // one entry per original 20 Hz tick, like the neighbouring animations.
+        static const int kDynamiteFuse[100] = {
+            253,252,254,252,252,255,252,254,253,252,
+            253,254,255,252,255,253,252,254,252,255,
+            253,254,252,253,255,254,255,252,253,254,
+            255,252,253,254,255,254,254,253,254,255,
+            253,252,255,254,255,253,252,254,253,255,
+            253,254,252,253,255,254,252,255,253,254,
+            255,253,252,254,255,254,252,253,254,255,
+            253,254,255,254,255,253,252,254,253,255,
+            253,254,255,253,255,254,255,252,253,254,
+            255,253,253,254,255,254,252,253,254,255
+        };
         // Real table_explo1 (Tables.cpp:1368-1374, dynamite-blast flash
         // fix, 2026-07-14) -- the real 39-frame primary blast sequence
         // repeatedly bounces back and forth between adjacent values
@@ -209,13 +224,8 @@ namespace GalaxyEggbert::Game
             // documented frame count stays within element.png's 290-icon
             // grid (29 rows x 10 cols), a consecutive-icon cycle is used,
             // matching this function's existing convention for simple
-            // animations (e.g. ObjectType2/6/7 above). Where it doesn't
-            // (56), the real per-frame layout isn't known without reading
-            // Tables.cpp, so only the documented first-frame icon is
-            // returned (no animation) rather than guessing a cycle that
-            // would run off the sheet. (57 was in this category too until
-            // 2026-07-14, when Tables.cpp confirmed its real table fits
-            // the sheet after all -- see its own case below.)
+            // animations (e.g. ObjectType2/6/7 above). Non-consecutive sequences
+            // use the cited reference tables above.
             case GalaxyEggbert::Def::ObjectType::ObjectType23: return 176;
             // Fixed 2026-07-14 (plan.md VISUAL-011-adjacent, Shield/Power
             // magic trail): wrong divisor (6 instead of the real
@@ -258,7 +268,7 @@ namespace GalaxyEggbert::Game
             // real table's exact reverse order (186 down to 179).
             case GalaxyEggbert::Def::ObjectType::ObjectType41: return 179 + (p / 2) % 8;
             case GalaxyEggbert::Def::ObjectType::ObjectType42: return 186 - (p / 2) % 8;
-            case GalaxyEggbert::Def::ObjectType::ObjectType56: return 253; // 100 frames would exceed the sheet (253+99=352 > 289) -- first-frame only
+            case GalaxyEggbert::Def::ObjectType::ObjectType56: return kDynamiteFuse[p % 100];
             // Fixed 2026-07-14 (plan.md VISUAL-011-adjacent, Shield/Power
             // magic trail): the real table only reaches 288 (see
             // kShieldTrack above), not the previously-assumed 293 -- it

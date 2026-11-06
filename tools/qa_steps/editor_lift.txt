@@ -1,0 +1,33 @@
+# The editor's moving mechanisms (ED-0008): slot 1, the moving-mechanisms group, its first lift,
+# PLACE, the preview moved three cells along X, PLACE again (its end), then the dice (play-test).
+sleep 14
+focus
+click 710 200
+sleep 3
+click 72 258
+sleep 4
+shot editor
+click 30 285
+sleep 1.5
+shot group
+click 75 285
+sleep 1.5
+shot picked
+click 500 450
+sleep 1
+shot placed
+click 277 450
+sleep 0.5
+click 277 450
+sleep 0.5
+click 277 450
+sleep 0.5
+shot moved
+click 500 450
+sleep 1
+shot ended
+click 722 450
+sleep 6
+shot playtest1
+sleep 3
+shot playtest2

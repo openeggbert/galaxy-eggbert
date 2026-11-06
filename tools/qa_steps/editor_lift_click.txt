@@ -1,0 +1,19 @@
+# The editor's moving mechanisms placed with a mouse click in the view (not PLACE): slot 1, the
+# moving-mechanisms group, its first lift, a click in the view, then a click elsewhere (its end).
+sleep 14
+focus
+click 710 200
+sleep 3
+click 72 258
+sleep 4
+click 30 285
+sleep 1.5
+click 75 285
+sleep 1.5
+shot picked
+click 400 250
+sleep 1.5
+shot clicked
+click 300 300
+sleep 1.5
+shot ended

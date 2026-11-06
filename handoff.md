@@ -702,8 +702,14 @@ ledgers before repeating any discovery. Where it stands:
   pushed local HEADs the game is verified against; `python3 tools/ci_pin_siblings.py` bumps them
   after a verified local build (`--check` reports drift). The owner: keep `SkinnedModelEXT`, no
   release yet.
-- Next: the dynamite's fuse (`table_dynamitef`, never ported: a lit stick looks unlit; brief ready).
-  A new owner report starts an OR row.
+- 2026-11-06, dynamite fuse (uncommitted at the owner's request): the original 100-entry
+  `table_dynamitef` selects 252-255 at 20 Hz; the existing model handles all four icons, and
+  `tools/rd4_to_gltf/dynamite_sparks.py` extracts the three painted stars from element.png.
+  Camera-facing decals attach to the shipped model's terminal fuse ring, including object turns;
+  252 has no spark. No Ray Dream source was read. Build in `build-cna-opengl3`, 112/112 CTest,
+  `VerifyGetObjIcon` (phases 0/1/2/5/50/99/100), mission 014 and golden frames/trace pass.
+  Live showcase evidence: `build-probe/dynamite-spark/fuse-{253,254,255}.png` (an isolated QA
+  world, before the blast); the off frame was also inspected. A new owner report starts an OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not

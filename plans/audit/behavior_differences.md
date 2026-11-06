@@ -1304,3 +1304,18 @@ Status values as in `../GALAXY_EGGBERT_FIDELITY_AUDIT.md` §2.
 - Validation: `VerifyBlupiMovement` (the first walking tick 2 px, a respawn restarts the march, a
   mid-air placement falls); the golden trace changes only X on ticks 0-9; 112/112; play pass 35 (with the resume self-test): 78/78, 77 equal.
 
+## BD-0079 — a lit stick of dynamite showed no spark and did not flicker (visual) — FIXED_AND_VERIFIED
+
+- Original (Decor.cpp:8252-8256; Tables.cpp `table_dynamitef`): a lit stick (ObjectType56) shows
+  `table_dynamitef[phase % 100]`, 100 entries flickering between element 252 (no spark) and 253-255
+  (the fuse's spark in three shapes).
+- Galaxy: icon 253 always (its comment took the table for icons 253..352), and the 3D model has no
+  spark (painted on the sprites), so a lit stick looked unlit. Found 2026-11-06 by comparing every
+  Tables.cpp table with Galaxy's arrays by value (105 tables: 93 found as they are, 11 ported in
+  another form, this one missing).
+- Fix: the table transcribed (standing approval for small animation tables); the spark cut from
+  element 253-255 (`tools/rd4_to_gltf/dynamite_sparks.py`) drawn facing the camera at the fuse's tip,
+  as the electrode's sparks (Q-005); none for 252. Implemented with the Codex CLI to a brief.
+- Validation: `VerifyGetObjIcon` (phases 0, 1, 5, 50, 99, 100 -> 253, 252, 255, 253, 255, 253), 112/112,
+  golden frames and trace, mission 014's playthrough; screenshots of the three sparks.
+

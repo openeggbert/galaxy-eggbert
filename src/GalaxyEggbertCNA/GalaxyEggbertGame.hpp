@@ -1058,6 +1058,9 @@ namespace GalaxyEggbert::CNA
         // over its model (avatars3d/objects/electro238_electro/sparks/<icon>.png), and this frame's cells.
         std::unordered_map<int, std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> electrodeSparks_;
         std::vector<SignDecalCell> electrodeCells_;
+        // Element 253-255: the lit fuse's painted star; 252 has no decal.
+        std::unordered_map<int, std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>> dynamiteSparks_;
+        std::vector<SignDecalCell> dynamiteSparkCells_;
         // The glue model was drawn this frame: its strands follow (Q-006).
         bool glueStrandsPending_ = false;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> decalEffect_;

@@ -51,6 +51,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Lit dynamite follows the original 100-tick `table_dynamitef` at 20 Hz (icons 252-255).
+  Its three painted spark shapes are camera-facing decals anchored to the 3D fuse tip;
+  icon 252 draws no spark (`tools/rd4_to_gltf/dynamite_sparks.py`). Verified by the icon/model
+  verifiers, 112/112 CTest, a mission 014 playthrough, live showcase captures in
+  `build-probe/dynamite-spark/`, and unchanged golden frames/trace (2026-11-06).
 - Mission starts and respawns establish ground support before the first input tick
   (`BlupiController::SettleOnGround`, 2026-11-06): walking starts at the original's 2 px per
   20 Hz tick, while a mid-air spawn still falls. Mission replay uses the same placement.

@@ -36,7 +36,7 @@ key1        element 209-215 Blupi/cle1.rd4 tone=0.70,26
 key2        element 216-222 Blupi/cle2.rd4 tone=0.70,26
 key3        element 223-229 Blupi/cle3.rd4 tone=0.78,16
 secretexit  element 122-128 Blupi/cle.rd4 tone=0.74,16
-dynamite    element 252-253 Decor/dynamite.rd4
+dynamite    element 252-255 Decor/dynamite.rd4
 invert      element 187-194 Blupi/panneau-invert.rd4 tone=0.82,-13
 lollipop    element 136-143 Blupi/sucette.rd4 tone=0.90,-22
 # Type 16's icons 69-77: the moving mine.

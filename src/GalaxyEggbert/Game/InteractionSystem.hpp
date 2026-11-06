@@ -723,10 +723,10 @@ namespace GalaxyEggbert::Game
         // `grounded` (this engine's stand-in for the real "solid ground
         // under both feet" check) -- spawns a real ObjectType56 fuse object
         // at the given position and decrements the count. The fuse's own
-        // 100-tick animation (`table_dynamitef`) is NOT ported (needs a
-        // fresh data transcription this session didn't get explicit
-        // approval for) -- it renders via whatever ObjectIcons::GetObjIcon()
-        // already returns for type 56, a documented simplification. The 9
+        // 100-tick animation (`table_dynamitef`, Tables.cpp:1578-1590) is
+        // selected by ObjectIcons::GetObjIcon(), transcribed under the standing
+        // approval for small animation tables. The host draws its painted spark
+        // over the 3D stick for icons 253-255, none for 252. The 9
         // real blast ticks/offsets (Decor.cpp ~8258-8290, NOT just the
         // reference doc's rounded summary) and the real destructible-type
         // list (~9102-9132) are handled inside Update() itself, not exposed
