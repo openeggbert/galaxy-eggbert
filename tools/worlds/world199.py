@@ -8,12 +8,13 @@ volumes, A to L, cut in one mass of slime: the player starts at the top of the n
 descends through eleven places to the bottom of the world and climbs the monument under his start.
 
 Heights are walking levels (a floor block at y gives walk y + 1); X and Z are raw cells. Every
-section is a function `section_X()`; the table at the top of its body is the authority for its
+section is a function `section_X()`; its docstring is the authority for its
 coordinates, the brief only summarises them.
 
     python3 tools/worlds/world199.py [out.vwr]        # default: worlds3d/world199.vwr
-    python3 tools/worlds/world199.py --stage K out    # for levelcheck: K >= 1 the doors open,
-                                                              # no hazards, lifts and saucers as stairs
+    python3 tools/worlds/world199.py --stage K out    # for levelcheck: K >= 1 the doors open, no mines,
+                                                      # creatures, saws, fans' winds or lightning; the
+                                                      # saucers, ferries over lava and bars as floor
 """
 
 import random
@@ -162,7 +163,7 @@ def section_b():
     for x0, x1 in ((34, 40), (45, 48)):                      # the two pools
         air(x0, 66, 6, x1, 71, 20)
         water(w, x0, 66, 6, x1, 71, 20)
-    for x, y, z, icon in ((31, 72, 21, 66), (43, 72, 19, 67), (43, 72, 7, 68), (32, 72, 9, 29)):
+    for x, y, z, icon in ((31, 72, 21, 66), (43, 72, 19, 67), (43, 72, 7, 68), (32, 72, 18, 29)):
         w.bigdecor(icon, x, y, z)
     w.bigdecor(203, 36, 66, 10)
     w.bigdecor(203, 38, 66, 17)
@@ -207,11 +208,11 @@ def section_b():
         if not calm:
             w.fill(31, 82, z, 35, 82, z, WIND_RIGHT)
     # the lift shelf in the north (walk 86) with the lollipop, the invert and four follow stars
-    floor(41, 6, 45, 8, 86, thick=2)
+    floor(39, 6, 47, 8, 86, thick=2)
     lift_(43, 72, 86, 10, ticks=100, stop=40)
-    put(O.LOLLIPOP, 42, 86, 7)
-    put(O.INVERT, 44, 86, 7)
-    for x, z in ((41, 6), (45, 6), (41, 8), (45, 8)):
+    put(O.LOLLIPOP, 43, 72, 14)                              # by the pillar on the middle bank
+    put(O.INVERT, 43, 86, 8)
+    for x, z in ((39, 6), (47, 6), (39, 8), (47, 8)):
         if not calm:
             put(O.FOLLOW_STAR, x, 86, z)
     lift_(33, 72, 82, 21, ticks=80, stop=40)                # lifts back up to the gallery
@@ -219,7 +220,8 @@ def section_b():
     # keys, eggs, mines
     key(O.KEY3, 51, 72, 7)                                   # B1, the blue key, at the east ledge's end
     key(O.KEY1, 32, 82, 24)                                  # R1, the red key, at the gallery's west end
-    for x, y, z in ((42, 72, 8), (31, 72, 8), (50, 72, 19), (45, 82, 24)):
+    slime(w, 42, 72, 12, 42, 75, 12)                        # a pillar four high: the lollipop's power jump reaches its egg
+    for x, y, z in ((42, 76, 12), (31, 72, 8), (50, 72, 19), (45, 82, 24)):
         put(O.EGG, x, y, z)
     hazard(49, 72, 8)                                        # M2 beside B1
     for x in (36,):                                          # M3 hanging over the gallery's low stretch
@@ -262,6 +264,13 @@ def section_c():
             for z in range(z0, z1 + 1):
                 for y in (58, 59, 60):
                     w.set(x, y, z, rng.choice(BOOKCASES))
+    for x in range(34, 45):                                  # bookcase stacks along the hall's north wall
+        for y in (58, 59, 60):
+            w.set(x, y, 34, rng.choice(BOOKCASES))
+    for z in list(range(34, 44)) + [47, 48]:                # and its west wall
+        for y in (58, 59, 60, 61):
+            if w.get(32, y, z) == 0 and not (z in (38, 40)):
+                w.set(32, y, z, rng.choice(BOOKCASES))
     for z in (36, 40, 44):
         mover(O.BULLDOZER, (46, 58, z), (51, 58, z))
     key(O.KEY1, 46, 58, 34)                                  # R2
@@ -284,9 +293,16 @@ def section_c():
     mover(O.MOVING_MINE, (42, 58, 47), (44, 58, 47), 10)
 
 
+def trimmed_floor(x0, z0, x1, z1, walk):
+    """A white stone floor with its trim tiles mixed in (the court's mosaic)."""
+    for x in range(x0, x1 + 1):
+        for z in range(z0, z1 + 1):
+            w.set(x, walk - 1, z, rng.choice(STONEFACE) if (x + z) % 3 == 0 else 396)
+
+
 # ==== D. the white palace ========================================================================
 T330_D = (11, 70, 45)          # the booth over the keep's cell (walk 70), partner in E
-T331_D = (20, 58, 64)          # the court's return booth, partner in E's west wing
+T331_D = (17, 58, 47)          # the court's return booth, partner in E's west wing
 STONEFACE = (386, 387, 388, 390, 397)
 
 
@@ -299,17 +315,22 @@ def section_d():
     z 44, x 14-18, its switch at x 21) to the keep (x 11-13): B2, the statue, and teleporter 330 down
     to E. Behind the red door in the west wall (z 50, walk 62) a gallery with saw row 3 (z 50, x 4-8,
     switch x 9) and G2. A fourth lift (x 21, z 55) to a shelf (walk 66) with an egg."""
-    hall("palace", 11, 58, 41, 25, 79, 65)
+    white_stone(w, 10, 57, 40, 26, 80, 66, rng, chance=0.4)
+    air(11, 58, 41, 25, 79, 65)
+    trimmed_floor(11, 41, 25, 65, 58)
     air(26, 58, 44, 26, 61, 46)
-    # facades: window panels on the south wall's inside, trim along the balconies' edges
+    # facades: window panels on the north wall's inside (they show on +Z faces), two rows, trim round
     for x in range(11, 26):
-        for y in (61, 62, 66):
-            if w.get(x, y, 66) and rng.random() < 0.7 and y > 60:
-                w.set(x, y, 66, 391)
-    floor(11, 43, 13, 63, 62, block=396)                       # the west balcony
+        for y in (60, 61, 64, 65, 68, 69, 72, 73):
+            if x % 2 == 1 and not (y in (68, 69) and x in (16, 17, 18)):
+                w.set(x, y, 40, 391)
+    for x in range(11, 26):                                   # a cornice along the top of the walls
+        w.set(x, 77, 40, 394)
+        w.set(x, 77, 66, 395)
+    trimmed_floor(11, 43, 13, 63, 62)                         # the west balcony
     lift_(15, 58, 62, 45, ticks=45, stop=40)                   # LD1
     lift_(15, 62, 66, 63, ticks=45, stop=40)                   # LD2
-    floor(16, 62, 25, 64, 66, block=396)                       # the south balcony
+    trimmed_floor(16, 62, 25, 64, 66)                         # the south balcony
     for x in range(19, 24):
         w.set(x, 65, 63, 396 if calm else SAW)
         for z in (62, 64):
@@ -317,8 +338,8 @@ def section_d():
                 w.set(x, y, z, 396)
     w.set(17, 65, 63, SWITCH)
     lift_(25, 66, 70, 60, ticks=45, stop=40)                   # LD3
-    floor(23, 43, 25, 59, 70, block=396)                       # the east balcony
-    floor(11, 43, 25, 45, 70, block=396)                       # the bridge and the keep
+    trimmed_floor(23, 43, 25, 59, 70)                         # the east balcony
+    trimmed_floor(11, 43, 25, 45, 70)                         # the bridge and the keep
     for x in range(14, 19):
         w.set(x, 69, 44, 396 if calm else SAW)
         for z in (43, 45):
@@ -394,7 +415,7 @@ def section_e():
     hall("machine", 10, 46, 43, 26, 55, 63)
     w.fill(10, 46, 48, 15, 55, 56, MACHINE_FLOOR)            # the wall between TA and TD, with the well
     w.fill(16, 46, 52, 20, 55, 56, MACHINE_FLOOR)            # the pillar west of P2
-    air(11, 39, 53, 14, 45, 56)                              # the well
+    air(11, 39, 53, 14, 55, 56)                              # the well
     for x0, z0, x1, z1 in ((16, 57, 20, 63), (21, 52, 26, 56), (16, 43, 19, 47)):
         air(x0, 41, z0, x1, 45, z1)
         w.fill(x0, 40, z0, x1, 40, z1, MACHINE_FLOOR)
@@ -486,7 +507,7 @@ def section_f():
         mover(O.BIRD, (x, 34, 41), (x, 34, 45))
     for x, y in ((40, 42), (48, 42), (53, 44)):
         mover(O.BIRD, (x, y, 32), (x, y, 38))
-    for x, y, z in ((35, 40, 36), (40, 42, 35), (48, 42, 35), (53, 44, 35), (60, 34, 43), (34, 34, 41)):
+    for x, y, z in ((35, 40, 36), (41, 42, 34), (49, 42, 34), (54, 44, 34), (60, 34, 43), (34, 34, 41)):
         put(O.EGG, x, y, z)
 
 
@@ -769,9 +790,13 @@ def section_l():
     w.bigdecor(69, 24, 34, 16)
     # the green gate and the frame of star blocks
     box_of("slime", 17, 33, 2, 25, 40, 9)
-    w.fill(18, 33, 3, 24, 39, 9, STAR)
     air(19, 34, 4, 23, 37, 8)
     air(20, 34, 9, 22, 37, 9)
+    w.fill(19, 33, 4, 23, 33, 8, STAR)                       # the compact frame of star blocks: the floor under the arrow,
+    w.fill(20, 34, 3, 22, 36, 3, STAR)                       # the wall behind it,
+    w.fill(19, 33, 9, 19, 37, 9, STAR)                       # and the gateway's posts and lintel
+    w.fill(23, 33, 9, 23, 37, 9, STAR)
+    w.fill(20, 36, 9, 22, 37, 9, STAR)
     if not calm:
         w.fill(20, 34, 9, 22, 35, 9, GREEN_DOOR)
     put(O.EXIT, 21, 34, 5)

@@ -1,0 +1,610 @@
+# World 199 by its alternate route (plans/briefs/world199.md): what world199.txt leaves out, played through
+# to the win screen all the same. B's lift shelf (the invert past four sleeping follow stars; the
+# lollipop's power jump to the egg on the pillar); D's red door (R2) and the third saw row (switch,
+# G2); the wasp's well in E and the balloon out of it; E's west wing by the ferry, teleporter 331 back to
+# D's court and D climbed again with its saws still off; F's roofs behind the green door (G2, so the
+# last gate takes L's G3), three birds across them; then the main route. Not one of the campaign's
+# playthroughs (tools/autoplay/world*.txt): run it alone,
+#   tools/autoplay.sh build-cna-opengl3 tools/autoplay/spare/world199.txt 199
+wait 30
+expect mission = 199
+# ---- A: the gunfire shaft ----
+wait 30
+expect mission = 199
+go 12 10.6
+go 18.2 10.8
+go 18.2 13
+until ground = 1
+expect y <= 84.05
+go 17.4 17.5
+go 14 18.4
+until ground = 1
+expect y <= 80.05
+go 9.4 18.2
+go 9.4 15
+until ground = 1
+expect y <= 76.05
+go 10.4 13
+go 14 13.5
+until ground = 1
+expect y <= 72.05
+go 28 14
+# ---- B: the basin ----
+wait 30
+go 40.2 14 tol 0.2
+face 90
+hold 8 up jump
+hold 30 up
+until ground = 1
+expect y >= 71.9
+# ---- B (alternate): the invert on the lift shelf, the lollipop, the pillar's egg ----
+go 43 12 tol 0.3
+lift 43 86 10 max 1500
+lift 43 72 10 max 1500
+go 43 10 tol 0.1
+until y >= 85.95 max 800
+face 0
+go 43 8.2 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 85.95
+go 43 8 tol 0.1
+wait 100
+go 44.4 8.4 tol 0.2
+go 44.4 10.6 tol 0.3
+until ground = 1 max 600
+expect y <= 72.05
+wait 450
+go 43 14 tol 0.1
+hold 6 action
+wait 60
+face 270
+go 42 12 jump 3.5 tol 0.25
+until ground = 1
+expect y >= 75.95
+go 43.6 13.4 tol 0.3
+until ground = 1
+go 43.4 12 tol 0.1
+face 90
+go 46 12 jump 2.0 tol 0.2
+until ground = 1
+go 47.2 12 tol 0.3
+go 49.5 12 jump 1.9 tol 0.2
+until ground = 1
+expect x >= 48.9
+go 50.4 12.5 tol 0.2
+go 50.4 9.5 tol 0.2
+go 50.8 7 until keys = 1
+until keys = 1 max 120
+go 50.4 9.5 tol 0.2
+go 50.4 12.5 tol 0.2
+go 50.4 15.5 tol 0.2
+go 50.4 20
+go 52 23.6 tol 0.2
+face 180
+go 52 25.4 jump 1.9 tol 0.2
+until ground = 1
+expect y >= 73.9
+face 270
+go 52.2 25 tol 0.1
+until temp = 0 max 300
+face 270
+go 51 25 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 75.95
+go 50 25 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 77.95
+go 50.3 25 tol 0.1
+until temp = 0 max 300
+face 270
+go 49 25 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 79.95
+go 48 25 jump 1.6 tol 0.3
+until ground = 1
+expect y >= 81.95
+go 47 24 tol 0.3
+go 42.5 24 tol 0.2
+until temp = 0 max 300
+go 38 24 tol 0.3
+expect y >= 81.95
+go 37.6 24 tol 0.2 with crouch
+go 34.4 24 tol 0.2 with crouch
+go 33 24
+go 31.6 24 until keys = 2
+until keys = 2 max 120
+go 32.2 24 tol 0.2
+go 32.2 26.8 tol 0.2
+go 33 28.6 tol 0.2
+expect keys = 1
+go 33 31 tol 0.3
+go 33 33 tol 0.3
+go 33 38 tol 0.2
+# ---- C: the lift comb ----
+go 33 38 tol 0.2
+face 90
+lift 35 79 36 max 1500
+lift 35 82 36 max 1500
+go 35 36 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 81.95
+go 35 36 tol 0.1
+until y <= 79.05 max 700
+face 90
+go 37 36 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 78.95
+go 37 36 tol 0.1
+until y <= 76.05 max 700
+face 90
+go 39 36 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 75.95
+go 39 36 tol 0.1
+until y <= 73.05 max 700
+face 90
+go 41 36 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 72.95
+go 41 36 tol 0.1
+until y <= 70.05 max 700
+face 180
+go 41 38 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 69.95
+go 41 38 tol 0.1
+until y <= 67.05 max 700
+face 180
+go 41 40 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 66.95
+go 41 40 tol 0.1
+until y <= 64.05 max 700
+face 180
+go 41 42 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 63.95
+go 41 42 tol 0.1
+until y <= 61.05 max 700
+face 180
+go 41 44 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 60.95
+go 41 44 tol 0.1
+until y <= 58.05 max 700
+go 43 43 tol 0.3
+expect y >= 57.95
+# ---- C: the library (red door), G1, the green gate ----
+go 44.4 43.2 tol 0.2
+go 44.2 42 tol 0.15
+go 46.2 42 tol 0.15
+expect keys = 0
+clear 46.2 58 40 3 lane x max 900
+go 46.2 38.6 tol 0.2
+clear 46.2 58 36 3 lane x max 900
+go 46 34.3 tol 0.1 until keys = 1
+until keys = 1 max 200
+clear 46.2 58 36 3 lane x max 900
+go 46.2 38.6 tol 0.2
+clear 46.2 58 40 3 lane x max 900
+go 46.2 42.4 tol 0.2
+clear 46.2 58 44 3 lane x max 900
+go 46.2 46.4 tol 0.2
+go 46 47.8 tol 0.1 until keys = 2
+until keys = 2 max 200
+clear 46.2 58 44 3 lane x max 900
+go 46.2 42.4 tol 0.2
+go 43 43.5 tol 0.3
+go 33 45 tol 0.3
+go 29 45 tol 0.3
+expect keys = 1
+# ---- D: the palace ----
+go 24 45.5 tol 0.3
+go 17 46.5 tol 0.3
+lift 15 62 45 max 900
+lift 15 58 45 max 900
+go 15 45 tol 0.1
+until y >= 61.95 max 400
+face 270
+go 13 45 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 61.95
+go 12.8 47 tol 0.2
+# ---- D (alternate): the red door, saw row 3, G2 ----
+go 12.8 50 tol 0.2
+go 10.4 50 tol 0.15
+go 9 50 tol 0.05
+hold 6 action
+wait 30
+expect saws = 10
+go 4 50 tol 0.2
+go 3 50 tol 0.15
+wait 100
+expect keys = 1
+go 9 50 tol 0.2
+go 12.8 50 tol 0.2
+go 12.8 55 tol 0.2
+go 12.8 61 tol 0.2
+lift 15 66 63 max 900
+lift 15 62 63 max 900
+face 90
+go 15 63 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 61.95
+go 15 63 tol 0.1
+until y >= 65.95 max 400
+go 16.4 63 tol 0.1
+go 17 63 tol 0.05
+hold 6 action
+wait 30
+expect saws = 5
+go 18.6 63 tol 0.1 with crouch
+go 24 63 tol 0.2
+go 25 63 tol 0.2
+go 25 62.2 tol 0.15
+face 0
+lift 25 70 60 max 900
+lift 25 66 60 max 900
+go 25 60 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 65.95
+go 25 60 tol 0.1
+until y >= 69.95 max 400
+go 25 57 tol 0.3
+go 25 46 tol 0.3
+go 24 44.2 tol 0.3
+go 21.2 44.2 tol 0.05
+hold 6 action
+wait 30
+expect saws = 0
+go 18.6 44 tol 0.1 with crouch
+go 13.4 44 tol 0.2 with crouch
+go 12 44 tol 0.1
+wait 100
+expect keys > 0
+go 11 45 tol 0.05 until y <= 47 max 900
+expect y <= 46.05
+# ---- E (alternate): the wasp's well and the balloon out of it ----
+go 12.5 58.2 tol 0.2
+go 12.5 56.4 tol 0.1 until y <= 40
+go 12.5 55 tol 0.15
+until y >= 39.3 max 600
+go 12.5 56.2 tol 0 with lookup until y >= 47 max 600
+go 12.5 58.4 tol 0.2 with crouch max 300
+until ground = 1 max 600
+expect y >= 45.95
+# ---- E: the lava terraces ----
+wait 20
+go 14.5 62 tol 0.2
+face 90
+go 23 62 tol 0.4
+expect y >= 45.95
+go 24 59 tol 0.3
+go 24 57.4 tol 0.1
+face 0
+hold 4 jump
+wait 20
+expect y >= 47.9
+go 24 51.2 tol 0.08
+hold 18 crouch
+until ground = 1
+expect y >= 45.95
+go 24 49.6 tol 0.2
+clear 24 46 48 2 lane x max 600
+go 24.6 46.4 tol 0.3
+# ---- E (alternate): the ferry to the west wing, its egg, teleporter 331 up to the court ----
+go 21 45 tol 0.3
+lift 16 46 45 max 1500
+lift 19 46 45 max 1500
+go 19 45 tol 0.15
+until x <= 16.3 max 600
+go 14 45 tol 0.3
+go 12 45 tol 0.15
+wait 60
+go 11 44 tol 0.05 until y >= 57 max 900
+expect y >= 57.95
+# ---- D: the palace ----
+go 16.4 46.4 tol 0.2
+lift 15 62 45 max 900
+lift 15 58 45 max 900
+go 15 45 tol 0.1
+until y >= 61.95 max 400
+face 270
+go 13 45 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 61.95
+go 12.8 47 tol 0.2
+go 12.8 55 tol 0.2
+go 12.8 61 tol 0.2
+lift 15 66 63 max 900
+lift 15 62 63 max 900
+face 90
+go 15 63 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 61.95
+go 15 63 tol 0.1
+until y >= 65.95 max 400
+go 16.4 63 tol 0.1
+go 17 63 tol 0.05
+wait 30
+go 18.6 63 tol 0.1 with crouch
+go 24 63 tol 0.2
+go 25 63 tol 0.2
+go 25 62.2 tol 0.15
+face 0
+lift 25 70 60 max 900
+lift 25 66 60 max 900
+go 25 60 jump 1.9 tol 0.25
+until ground = 1
+expect y >= 65.95
+go 25 60 tol 0.1
+until y >= 69.95 max 400
+go 25 57 tol 0.3
+go 25 46 tol 0.3
+go 24 44.2 tol 0.3
+go 21.2 44.2 tol 0.05
+wait 30
+go 18.6 44 tol 0.1 with crouch
+go 13.4 44 tol 0.2 with crouch
+go 12 44 tol 0.1
+wait 40
+go 11 45 tol 0.05 until y <= 47 max 900
+expect y <= 46.05
+# ---- E: the lava terraces ----
+wait 20
+go 14.5 62 tol 0.2
+face 90
+go 23 62 tol 0.4
+expect y >= 45.95
+go 24 59 tol 0.3
+go 24 57.4 tol 0.1
+face 0
+hold 4 jump
+wait 20
+expect y >= 47.9
+go 24 51.2 tol 0.08
+hold 18 crouch
+until ground = 1
+expect y >= 45.95
+go 24 49.6 tol 0.2
+clear 24 46 48 2 lane x max 600
+go 24.6 46.4 tol 0.3
+lift 26 34 45 max 1200
+lift 26 46 45 max 1200
+go 26 45 tol 0.1
+until y <= 34.05 max 600
+go 27.4 45 tol 0.1
+until blitz = 52 max 400
+go 31 45 tol 0.2
+# ---- F: the village ----
+go 33 44.6 tol 0.3
+go 38 44.6 tol 0.2
+clear 39 34 44.6 3 lane z max 900
+go 40.6 44.6 tol 0.3
+go 43 44.6 tol 0.2
+go 43.6 41.5 tol 0.3
+go 43.6 38.6 tol 0.2
+# ---- F (alternate): behind the green door: the lift to the roofs, the birds across them ----
+go 43 36 tol 0.2
+lift 43 42 34 max 1500
+lift 43 34 34 max 1500
+go 43 34 tol 0.1
+until y >= 41.95 max 800
+face 90
+go 45.4 34 jump 2.4 tol 0.3
+until ground = 1
+expect y >= 41.95
+go 46.4 34.2 tol 0.2
+clear 48 42 34 3 lane z max 1500
+go 49 34 tol 0.15
+wait 90
+face 90
+go 51.6 34 jump 2.4 tol 0.3
+until ground = 1
+expect y >= 43.95
+go 52.2 34 tol 0.2
+clear 53 44 34 3 lane z max 1500
+go 54 34 tol 0.15
+wait 90
+go 56 34 jump 2.4 tol 0.3
+until ground = 1
+go 60 36 tol 0.3
+go 60.4 40 tol 0.3
+go 60.4 43 tol 0.3
+until ground = 1 max 600
+expect y <= 34.05
+go 64 43 tol 0.3
+# ---- G: the station ----
+go 71.5 43.2 tol 0.2
+clear 72 34 43.2 3 lane z max 900
+go 73.5 43.2 tol 0.3
+go 74.4 43.2 tol 0.2
+clear 75 34 43.2 3 lane z max 900
+go 76.6 43.2 tol 0.2
+lift 80 34 43 max 1500
+lift 78 34 43 max 1500
+go 78 43 tol 0.15
+until x >= 79.8 max 400
+go 81.2 43 tol 0.2
+until ground = 1
+expect y <= 30.05
+go 83.5 43 tol 0.2
+clear 85 30 43 3 lane z max 900
+go 86.6 42 tol 0.3
+go 88 37 tol 0.3
+go 90 35.1 tol 0.08
+wait 100
+expect keys > 0
+go 88.8 38 tol 0.3
+go 88.8 41.5 tol 0.25
+go 88.8 44.5 tol 0.25
+go 88.8 47.5 tol 0.25
+go 88.8 51 tol 0.25
+go 89 56 tol 0.3
+go 89 60 tol 0.3
+# ---- H: the cheese ----
+go 89.5 59.5 tol 0.3
+go 89.5 63 tol 0.3
+until y <= 26.05 max 300
+expect y <= 26.05
+clear 89.5 26 64 3 lane x max 1500
+go 89.5 67.5 tol 0.3
+go 86 69 tol 0.3
+go 83 71 tol 0.3
+go 81 71.4 tol 0.3
+clear 78 22 74 2.5 lane x max 1500
+go 78 75.6 tol 0.3
+go 75 75.6 tol 0.3
+go 73 74 tol 0.3
+clear 69 18 74 2.5 lane z max 1500
+go 66 74 tol 0.3
+go 61 74 tol 0.3
+expect y <= 18.05
+# ---- I: the helicopter jungle ----
+go 59 74 tol 0.3
+go 58 73.2 tol 0.15
+hold 6 action
+wait 30
+fly 58 24 72 tol 0.4 max 900
+fly 57 29 69 tol 0.4 max 900
+fly 38 29 68 tol 0.5 max 1800
+fly 35 14 60 tol 0.5 max 1800
+go 34.5 59.5 tol 0 with crouch until ground = 1 max 900
+until ground = 1 max 300
+expect y <= 12.05
+hold 6 action
+wait 30
+go 31 57 tol 0.3
+go 27 57 tol 0.3
+# ---- J: the rock gauntlet ----
+go 26 57 tol 0.3
+go 22.5 57 tol 0.3
+go 18.5 57 tol 0.3
+go 12 56 tol 0.3
+go 14 54 tol 0.2
+go 14 51.8 tol 0.15
+go 14 46.4 tol 0.3
+expect y >= 5.95
+go 14 45.2 tol 0.2
+clear 13 6 44 3.5 lane x max 900
+go 13 43 tol 0.3
+go 12.4 41.2 tol 0.3
+clear 12.4 6 40 3.5 lane x max 900
+go 12.4 38.6 tol 0.3
+go 15 38 tol 0.3
+go 17.6 37 tol 0.1
+face 90
+go 21 37 jump 3.0 tol 0.3
+until ground = 1
+expect x >= 19.9
+go 22.6 37 tol 0.2
+go 23.4 37 tol 0.1
+face 90
+go 27 37 jump 3.0 tol 0.3
+until ground = 1
+expect x >= 25.9
+go 29 37.4 tol 0.3
+go 29 33 tol 0.3
+go 29 29 tol 0.3
+# ---- K: the toy chamber ----
+go 33 27.4 tol 0.3
+go 32.9 24.7 tol 0.15
+face 90
+go 34.6 24.6 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 7.95
+go 35.3 24.4 tol 0.1
+go 37.6 23.8 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 9.95
+go 38.3 23.8 tol 0.1
+go 40.6 24.2 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 11.95
+go 41.3 24.2 tol 0.1
+go 43.6 23.8 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 13.95
+go 44.4 22.8 tol 0.1
+go 44.6 20.6 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 15.95
+go 44.6 19.8 tol 0.1
+go 44.6 17.6 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 17.95
+go 43.8 17.6 tol 0.1
+go 41.6 17.6 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 19.95
+go 40.8 17.6 tol 0.1
+go 38.6 17.6 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 21.95
+go 37.8 17.6 tol 0.1
+go 35.6 17 jump 2.3 tol 0.3
+until ground = 1
+expect y >= 21.95
+go 31 16 tol 0.3
+go 27 15 tol 0.3
+# ---- L: the basin, the ascent, the monument ----
+go 27 15 tol 0.3
+go 25 15 tol 0.3
+until ground = 1 max 300
+expect y <= 10.05
+go 21 15 tol 0.3
+go 21 21.4 tol 0.3
+go 18 22.4 tol 0.2
+face 180
+hold 8 up jump
+hold 30 up
+until ground = 1
+expect y >= 9.95
+go 18 25 tol 0.1
+wait 100
+go 15.9 24.5 tol 0.15
+face 270
+go 13.6 24.6 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 11.95
+go 13.6 23.8 tol 0.1
+face 0
+go 13.6 21.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 13.95
+go 13.6 20.8 tol 0.1
+go 13.6 18.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 15.95
+go 13.6 17.8 tol 0.1
+go 13.6 15.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 17.95
+go 13.4 14.8 tol 0.1
+go 12.8 12.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 19.95
+go 12.6 11.8 tol 0.1
+go 11.8 9.8 jump 1.7 tol 0.3
+until ground = 1
+expect y >= 21.95
+go 12.3 9.8 tol 0.1
+face 90
+lift 13 28 9 max 1500
+lift 13 22 9 max 1500
+go 13 9.4 tol 0.1
+until y >= 27.95 max 600
+go 15 10 tol 0.3
+expect y >= 27.95
+lift 17 34 11 max 1500
+lift 17 28 11 max 1500
+go 17 11 tol 0.1
+until y >= 33.95 max 600
+go 19 11.5 tol 0.3
+go 21 11 tol 0.3
+go 21 9.2 tol 0.15
+wait 30
+go 21 5 until exit = 1 max 600
+until phase = Win max 600
+wait 120
+expect phase = Win
