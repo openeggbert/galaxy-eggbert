@@ -217,11 +217,8 @@ expect y >= 29.95
 go 55.5 31.6
 go 56.3 30.6 tol 0.15
 go 57 28
-# Round the machine at (57, 19) (solid since Q-014) in lane x 55.5: the stars (54, 29) and (54, 9) are
-# well beyond their wake range along Z there.
+# The machine at (53, 19) (solid since Q-014) stands by the west edge: the east lane is free.
 go 57 21
-go 55.5 20.5 tol 0.1
-go 55.5 17.5 tol 0.1
 go 57 17
 go 57 13 until eggs = 8
 go 57 8.5
@@ -262,10 +259,7 @@ go 54 2.2
 go 54 5.5
 # Along the gallery to the door "14" in its east wall (x 58, z 18-20), open with fourteen.
 go 57 7.5
-# The machine also blocks the door approach: its north edge leaves a narrow lane
-# between z 17.78 (the passage wall) and 17.91 (the machine, including Blupi's width).
-go 57 17.84 tol 0.02
-go 60 17.84 tol 0.02
+go 57 19
 go 60 19
 # H, the door "14" (x 58) onto the crusher passage (z 18-20, walk 30): through the one-cell gap
 # over the crusher (x 64, z 19); squashed, he cannot jump for ten seconds: he waits it out.

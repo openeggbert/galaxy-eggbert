@@ -31,7 +31,7 @@ ledgers, commit format, no AI attribution, never push): **`plans/codex/README.md
 | 2 | **DONE — OR-0076, this commit.** Editor aims at the mouse cursor / touch point instead of the screen centre | `plans/codex/editor_cursor.md` | "after the click nothing appears"; chose "aim with the cursor" |
 | 3 | **DONE — OR-0077, this commit.** Gallery 998 / showcase 999: saws in the rows of the exhibit saw switches | `plans/codex/exhibit_saws.md` | "the saw machine has no effect" (seen in the gallery); chose saws in the exhibit rows |
 | 4 | **DONE — BD-0082, this commit.** Lifts drawn with any tile's look (MoveObjectRecord.visualIcon) | `plans/codex/lift_tiles.md` | chose only "draw the lift as the tile" |
-| 5 | No solid BigDecor in a way a player must take (053's machine leaves a 0.13-cell lane to its door; 058's plant) -- move them in the generators, undo the squeezed routes | `plans/codex/bigdecor_clearance.md` | follows BD-0080 (houses, trees, statue passable) |
+| 5 | **DONE — BD-0083, this commit.** No solid BigDecor in a way a player must take (053's machine leaves a 0.13-cell lane to its door; 058's plant) -- move them in the generators, undo the squeezed routes | `plans/codex/bigdecor_clearance.md` | follows BD-0080 (houses, trees, statue passable) |
 | 6 | **World 199 rebuilt** as a true 3D journey closely inspired by Mobile Eggbert's finale | `plans/codex/world199_rebuild.md` (+ `plans/audit/world199_comparison.md`) | "the final world is a mockery and sloppy"; "take strong inspiration from Mobile Eggbert's final world and do it in 3D" |
 
 After each: tick it here (done, commit id), update the ledger the brief names, and continue with the

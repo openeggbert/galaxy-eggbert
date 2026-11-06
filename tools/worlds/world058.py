@@ -138,7 +138,8 @@ def main(argv) -> int:
     goo(50, 13, 73, 54, 15, 77)
     goo(51, 12, 74, 53, 12, 76)
     enemy(O.CREATURE, (50, 16, 75), (54, 16, 75), 30, 23)
-    w.bigdecor(PLANTS[0], 54, 16, 73)
+    # In the island's north-west corner: solid since BD-0080, it stood where Blupi jumps off east.
+    w.bigdecor(PLANTS[0], 50, 16, 73)
     # GK, the golden key's island (x 56-64, z 66-74, walk 14), an arch of slime in its middle and
     #    the key under it; a tank across its north side; an enemy helicopter over it.
     goo(56, 11, 66, 64, 13, 74)
@@ -255,7 +256,9 @@ def main(argv) -> int:
     if stage < 1:
         w.place(O.MOVING_MINE, 60, 30, 86, end=(62, 30, 84), advance=60, recede=60, stop_start=0, stop_end=0)
     enemy(O.ROBOT, (59, 34, 85), (63, 34, 85), 24, 25)
-    w.bigdecor(PLANTS[2], 61, 30, 85)
+    # On the cave floor beside the pillar: solid since BD-0080, in the middle of the 3 x 3 top it left
+    #    lanes of 0.5 cells round it (Blupi is 0.56 wide), and the way round was threaded at tol 0.05.
+    w.bigdecor(PLANTS[2], 66, 8, 85)
     if stage >= 5:                     # levelcheck cannot fly: stand-in lifts
         w.place(O.LIFT, 81, DECK - 1, 70, end=(61, 29, 87))
         w.place(O.LIFT, 61, 29, 83, end=(60, 13, 73))

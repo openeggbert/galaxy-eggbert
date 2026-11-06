@@ -214,7 +214,9 @@ def main(argv) -> int:
         w.place(O.EGG, 57, 30, z)
     star(54, 30, 9)
     star(54, 30, 29)
-    w.bigdecor(BALL_MACHINES[1], 57, 30, 19)
+    # By the gallery's west edge (x 52): solid since BD-0080, it was in front of the door "14" at x 57,
+    # which left a lane 0.13 cells wide to it.
+    w.bigdecor(BALL_MACHINES[1], 53, 30, 19)
 
     # ---- G, the door "13", the drink and the corridor of stars (x 15-57, z 1-3, walk 30) --------
     carve(53, 30, 4, 55, 31, 4)

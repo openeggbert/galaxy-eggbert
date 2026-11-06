@@ -1436,3 +1436,23 @@ levels use 29 most, then 361, 387, 340, 153, 215 ...), drawn as that tile moving
   a lift's look yet. The palette's mechanism (`selectedObjectVisualIcon_ = selectedBlockType_` for a
   negative id, used by one entry of "Keys and progression") could serve the lifts; left to decide
   (it would make a lift wear the last block picked, whatever that is).
+
+
+## BD-0083 — solid BigDecor that left no lane a human could take (053's door, 058) — FIXED_AND_VERIFIED
+
+Follows BD-0080 (houses, trees, plants, machines and the statue solid in play): two reroutes squeezed
+past a BigDecor on lanes no player could take. Closed by moving the BigDecor in the generators, the
+routes straight again (the way the playthroughs ran before BD-0080).
+
+| World | Before | Now |
+|---|---|---|
+| 053 | ball machine 29 (box 1.7 x 1.6 cells) at (57, 30, 19) in front of the door "14" (east wall x 58, z 18-20): a lane 0.13 cells wide, `tol 0.02` | at (53, 30, 19) by the gallery's west edge: the east lane x 53.9-57.5 and the door approach are free; `go 57 19` straight |
+| 058 | plant 25 (box x +-0.99, z +-0.7) in the middle of the pillar's 3 x 3 top (61, 30, 85): lanes of 0.5 cells, the circuit at `tol 0.05` | at (66, 8, 85) on the cave floor beside the pillar; the mine's diagonal and both treasures free |
+| 058 | plant 23 at (54, 16, 73) in the island's north-east corner, where Blupi jumps off east (waypoints at z 74.3, `tol 0.05`) | at (50, 16, 73), the north-west corner; the jump-off at z 73.6 again |
+
+- Found by: `build-probe/bigdecor-clearance/scan.py` (free gap beside every solid BigDecor of the
+  campaign: the 0.5-0.9 gaps are wall-hugging dressing, no route) and `tight.py` (every `go ... tol <= 0.1`
+  waypoint within 0.75 of a solid footprint: only 073's two lift-wait waypoints, which have free room).
+- Verified: playthroughs 053, 058 (and the hub chain 050) pass; 023, 025, 063, 064, 065, 092, 102, 199
+  also pass (switch change, OR-0078); ctest 112/112.
+- BD-0080's "Left" lines are closed.

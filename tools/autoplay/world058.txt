@@ -94,13 +94,12 @@ go 52 76.6 jump 2.6 tol 0.25
 until ground = 1
 expect y <= 16.05
 go 53.6 76.4 tol 0.15
-# Jump from south of the plant at (54, 16, 73), clear of the tank line z 75.
-go 53.8 74.3 tol 0.05
+go 53.8 73.6 tol 0.15
 face 90
-go 56.6 74.3 jump 2.6 tol 0.15
+go 56.6 73.6 jump 2.6 tol 0.25
 until ground = 1
 expect y <= 14.05
-go 54.5 74.3
+go 54.5 73.6
 until ground = 1 max 300
 expect y <= 8.05
 # T, the tank tunnel (x 29-41, z 61): its two tanks fire along it and their shots fly on out of
@@ -191,31 +190,28 @@ go 88.15 64 tol 0.1
 face 270
 hold 2 action
 wait 20
-fly 60.3 31.03 83.8 tol 0.95 max 1200
+fly 60.3 31.03 84.3 tol 0.95 max 1200
 wait 60
-fly 60.3 31.03 83.8 tol 0.15
+fly 60.3 31.03 84.3 tol 0.15
 wait 30
-go 60.3 83.8 tol 0 with crouch until ground = 1 max 400
+go 60.3 84.3 tol 0 with crouch until ground = 1 max 400
 expect y <= 30.1
 hold 2 action
 wait 30
 face 80
 near 60 30 86 0.15 max 600
-# The mine moves at 2 cells/s (BD-0016); leave after it starts toward the far corner.
+# Its mine is at the original's 2 cells/s now (BD-0016): 80-96 pass (autoplay_search).
 wait 88
-# Around the plant (61, 30, 85), outside its north and east edges.
-go 61.7 83.7 tol 0.05
-go 62.4 84.1 tol 0.05
-go 62.4 86.2 tol 0.05
+go 61.7 84.05 tol 0.15
+go 62.15 85 tol 0.15
+go 62 86 tol 0.15
 face 260
 near 62 30 84 0.15 max 600
-# Back after the mine leaves its far corner.
+# And back past it: 64-88 pass (autoplay_search, BD-0016).
 wait 76
-# Return outside the plant's south and west edges to the helicopter.
-go 60.3 86.3 tol 0.05
-go 59.6 85.9 tol 0.05
-go 59.6 83.8 tol 0.05
-go 60.2 83.8 tol 0.05
+go 60.3 85.95 tol 0.15
+go 59.85 85 tol 0.15
+go 60.2 84.3 tol 0.15
 wait 10
 hold 2 action
 wait 30
