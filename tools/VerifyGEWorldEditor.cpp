@@ -1,5 +1,6 @@
 #include <GalaxyEggbert/Editor/AutoTile.hpp>
 #include <GalaxyEggbert/Editor/BoxRegion.hpp>
+#include <GalaxyEggbert/Editor/Clipboard.hpp>
 #include <GalaxyEggbert/Editor/PaletteCategories.hpp>
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/BigDecorRecord.hpp>
@@ -13,8 +14,10 @@
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <optional>
+#include <random>
 #include <cstdio>
 #include <iostream>
 
@@ -549,6 +552,160 @@ int main()
         check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 1 &&
                   world.getBlock(second.x, second.y, second.z).type() == 1,
               "one undo restores both ends of a box fill");
+    }
+
+    // ED-0010: copy a box, turn it, mirror it, stamp it; one undo takes the stamp back.
+    {
+        using GalaxyEggbert::CollectBigDecor;
+        using GalaxyEggbert::CollectMoveObjects;
+        using GalaxyEggbert::MoveObjectRecord;
+        using GalaxyEggbert::PlaceBigDecor;
+        using GalaxyEggbert::PlaceMoveObject;
+        using GalaxyEggbert::Def::ObjectType;
+        World world;
+        world.setBlock(10, 5, 20, Block::make(1));
+        world.setBlock(11, 5, 20, Block::make(129)); // a fan blowing +X
+        world.setBlock(10, 5, 21, Block::make(174)); // a sign, turned a quarter
+        SetObjectQuarterTurns(world, 10, 5, 21, 1);
+        world.setBlock(11, 5, 21, Block::make(114)); // its wind, +X
+        world.setBlock(12, 5, 21, Block::make(1));
+        MoveObjectRecord lift;
+        lift.type = ObjectType::ObjectType1;
+        lift.posStartX = 12.0f;
+        lift.posStartY = 5.0f;
+        lift.posStartZ = 20.0f;
+        lift.posEndX = 12.0f;
+        lift.posEndY = 5.0f;
+        lift.posEndZ = 23.0f;
+        PlaceMoveObject(world, lift);
+        PlaceBigDecor(world, GalaxyEggbert::BigDecorRecord{20, 11, 6, 21});
+        MoveObjectRecord outside = lift;
+        outside.posStartX = outside.posEndX = 30.0f;
+        PlaceMoveObject(world, outside);
+
+        const Clipboard copied = CopyBox(world, NormalizeAndClamp(12, 6, 21, 10, 5, 20, 100));
+        check(copied.sizeX == 3 && copied.sizeY == 2 && copied.sizeZ == 2 && copied.objects.size() == 1 &&
+                  copied.bigDecor.size() == 1 && copied.cells[copied.Index(1, 0, 0)].block.type() == 129 &&
+                  copied.cells[copied.Index(0, 0, 1)].objectTurns == 1 && copied.objects[0].posStartX == 2.0f &&
+                  copied.objects[0].posEndZ == 3.0f,
+              "C copies a box: its blocks, turns, the object and BigDecor anchored in it, not one outside");
+
+        const Clipboard turned = TurnedQuarter(copied);
+        const auto& fan = turned.cells[turned.Index(0, 0, 1)];
+        const auto& wind = turned.cells[turned.Index(1, 0, 1)];
+        const auto& sign = turned.cells[turned.Index(1, 0, 2)];
+        check(turned.sizeX == 2 && turned.sizeZ == 3 && fan.block.type() == 126 && fan.plateTurns == 1 &&
+                  wind.block.type() == 110 && wind.plateTurns == 1,
+              "a quarter turn takes a fan blowing +X and its wind to -Z: the -X twin turned onto Z");
+        check(sign.block.type() == 174 && sign.objectTurns == 1,
+              "a sign keeps its turns (it faces its cell's open side by itself, which turns with the copy)");
+        check(turned.objects[0].posStartX == 0.0f && turned.objects[0].posStartZ == 0.0f &&
+                  turned.objects[0].posEndX == 3.0f && turned.objects[0].posEndZ == 0.0f &&
+                  turned.cells[turned.Index(0, 0, 0)].objectTurns == 1 && turned.bigDecor[0].x == 1 &&
+                  turned.bigDecor[0].z == 1 && turned.cells[turned.Index(1, 1, 1)].objectTurns == 1,
+              "a quarter turn turns a lift's path and turns the lift and the BigDecor a quarter");
+        Clipboard round = copied;
+        for (int i = 0; i < 4; ++i)
+        {
+            round = TurnedQuarter(round);
+        }
+        bool same = round.sizeX == copied.sizeX && round.sizeZ == copied.sizeZ && !round.Transformed();
+        for (std::size_t i = 0; same && i < copied.cells.size(); ++i)
+        {
+            same = round.cells[i].block == copied.cells[i].block &&
+                   std::max(round.cells[i].plateTurns, 0) % 2 == std::max(copied.cells[i].plateTurns, 0) % 2;
+        }
+        check(same && round.objects[0].posEndZ == 3.0f, "four quarter turns give the copy back");
+
+        const Clipboard mirrored = MirroredX(copied);
+        check(mirrored.cells[mirrored.Index(1, 0, 0)].block.type() == 126 &&
+                  mirrored.cells[mirrored.Index(1, 0, 1)].block.type() == 110 &&
+                  mirrored.cells[mirrored.Index(2, 0, 1)].objectTurns == 3 && mirrored.objects[0].posStartX == 0.0f &&
+                  mirrored.objects[0].posEndZ == 3.0f && mirrored.mirrored,
+              "a mirror swaps the fan and wind to -X, reverses the sign's turn, moves the lift to the other side");
+
+        World target;
+        target.setBlock(42, 5, 40, Block::make(1)); // under the copy's empty cell
+        MoveObjectRecord old = lift;
+        old.type = ObjectType::ObjectType4;
+        old.posStartX = old.posEndX = 40.0f;
+        old.posStartY = old.posEndY = 6.0f;
+        old.posStartZ = old.posEndZ = 41.0f;
+        PlaceMoveObject(target, old);
+        PlaceBigDecor(target, GalaxyEggbert::BigDecorRecord{21, 41, 5, 40});
+        World merged = target;
+        std::minstd_rand dice(7u);
+        const auto next = [&dice]() { return static_cast<int>(dice() & 0x7fffffff); };
+        EditCommandStack stack;
+        stack.Push(PasteBox(target, copied, 40, 5, 40, false, next));
+        const auto objects = CollectMoveObjects(target);
+        const auto decor = CollectBigDecor(target);
+        check(target.getBlock(41, 5, 40).type() == 129 && target.getBlock(42, 5, 40).isAir() &&
+                  target.getBlock(40, 5, 41).type() == 174 && ObjectQuarterTurns(target, 40, 5, 41) == 1 &&
+                  objects.size() == 1 && objects[0].posStartX == 42.0f && objects[0].posEndZ == 43.0f &&
+                  decor.size() == 1 && decor[0].x == 41 && decor[0].y == 6 && decor[0].z == 41,
+              "a stamp replaces its box: the copy's blocks and turns, its lift and BigDecor, the old ones gone");
+        const bool undone = stack.Undo(target) && target.getBlock(42, 5, 40).type() == 1 &&
+                            target.getBlock(41, 5, 40).isAir() && target.getBlock(40, 5, 41).isAir() &&
+                            ObjectQuarterTurns(target, 40, 5, 41) == 0 && CollectMoveObjects(target).size() == 1 &&
+                            CollectMoveObjects(target)[0].type == ObjectType::ObjectType4 &&
+                            CollectBigDecor(target).size() == 1 && CollectBigDecor(target)[0].icon == 21;
+        check(undone, "one undo takes the whole stamp back: blocks, turns, objects, BigDecor");
+        check(stack.Redo(target) && target.getBlock(41, 5, 40).type() == 129 && CollectMoveObjects(target).size() == 1 &&
+                  CollectMoveObjects(target)[0].posStartX == 42.0f,
+              "redo stamps it again");
+        (void)PasteBox(merged, copied, 40, 5, 40, true, next);
+        check(merged.getBlock(42, 5, 40).type() == 1 && merged.getBlock(41, 5, 40).type() == 129 &&
+                  CollectMoveObjects(merged).size() == 2 && CollectBigDecor(merged).size() == 2,
+              "CTRL+click stamps over: what is under the copy's empty cells stays");
+    }
+
+    // The keys: C on two corners copies, P pastes on and off, Q turns, a click stamps, U takes it back.
+    {
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        CnaEngine::Graphics::Camera camera;
+        const auto press = [&](Keys key, float dt = 0.0f) {
+            editor.Update(KeyboardState{key}, restMouse, dt, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        };
+        const auto blocks = [&]() {
+            int count = 0;
+            for (std::uint16_t y = 0; y < 12; ++y)
+            {
+                for (std::uint16_t z = 0; z < 100; ++z)
+                {
+                    count += world.getBlock(50, y, z).isAir() ? 0 : 1;
+                }
+            }
+            return count;
+        };
+        const int before = blocks();
+        press(Keys::C);
+        editor.Update(KeyboardState{Keys::Space}, restMouse, 0.3f, 800, 480, camera, world);
+        press(Keys::C);
+        const Clipboard* clip = editor.CurrentClipboard();
+        check(clip != nullptr && clip->sizeX == 1 && clip->sizeY == 1 && clip->sizeZ > 1 && !editor.IsPasting(),
+              "C on two corners copies the box between them (a row of the slab's top)");
+        const int row = clip != nullptr ? clip->sizeZ : 0;
+        press(Keys::P);
+        check(editor.IsPasting(), "P starts pasting the copy");
+        press(Keys::Q);
+        check(editor.CurrentClipboard()->sizeX == row && editor.CurrentClipboard()->sizeZ == 1, "Q turns it a quarter");
+        press(Keys::Q);
+        press(Keys::Q);
+        press(Keys::Q);
+        const MouseState left(400, 200, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+                              ButtonState::Released, ButtonState::Released);
+        editor.Update(KeyboardState{}, left, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        check(blocks() == before + row, "a click stamps the copy at the red preview");
+        check(editor.IsPasting(), "the pasting stays on for the next stamp");
+        press(Keys::U);
+        check(blocks() == before, "U takes the whole stamp back");
+        press(Keys::P);
+        check(!editor.IsPasting(), "P again stops pasting");
     }
 
     {

@@ -6,7 +6,7 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-04 late night (BD-0058..0072; OR-0060..0064: enemy Blupis as his model, steering at F6-F8; Q-013)._
+_Last updated: 2026-11-06 (the editor's copy and paste, ED-0010)._
 
 ## 0. Start here (fidelity audit, since 2026-11-01)
 
@@ -628,6 +628,13 @@ ledgers before repeating any discovery. Where it stands:
   30: 78/78.** Autoplay `with crouch` now matters only standing still (a step stands him up).
   The web build, once CNA configured again (its audit had failed on the cna session's work in
   progress), rebuilt with all of it and loads in headless Chrome (121 object models, 93/93 sounds).
+- 2026-11-06, the editor (the owner chose two of the proposed improvements: copy and paste, and
+  backups with export): **ED-0010 copy and paste** -- C on two corners copies a box (blocks, turns,
+  objects, BigDecor), P pastes on and off with a yellow box where a click stamps it, Q turns the copy
+  a quarter, X mirrors it, CTRL+click keeps what is under its empty cells, one U takes a stamp back
+  (`Editor/Clipboard.*`, `EditCommand::Kind::Group`; `VerifyGEWorldEditor`; live
+  `tools/qa_steps/editor_copy_paste.txt`, `plans/evidence/editor-copy-paste.jpg`). The palette now
+  says when an item to place was picked (`UpdateResult::picked`; the pasting stops).
 - Next: any further D11 model; D11's model list (the candidates regenerated from a fresh
   library); a human play pass of every world; Q-013 (the lattice cube, needs the owner's
   screenshot). Android stays as it is (Q-009). Wave F's release audit: `plans/audit/release_audit.md`.

@@ -165,6 +165,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
         src/GalaxyEggbert/Editor/EditCommandStack.cpp
         src/GalaxyEggbert/Editor/BoxRegion.cpp
+        src/GalaxyEggbert/Editor/Clipboard.cpp
         src/GalaxyEggbert/Editor/PaletteCategories.cpp
         src/GalaxyEggbert/Editor/EditorPalette.cpp
         src/GalaxyEggbert/Editor/EditorPaletteLayout.cpp
@@ -448,6 +449,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
         src/GalaxyEggbert/Editor/EditCommandStack.cpp
         src/GalaxyEggbert/Editor/BoxRegion.cpp
+        src/GalaxyEggbert/Editor/Clipboard.cpp
         src/GalaxyEggbert/Editor/PaletteCategories.cpp
         src/GalaxyEggbert/Editor/EditorPalette.cpp
         src/GalaxyEggbert/Editor/EditorPaletteLayout.cpp

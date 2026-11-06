@@ -1,0 +1,41 @@
+# ED-0010: the editor (a fresh save: QA_LIVE_RUN=<empty dir>), slot 1, C on the aimed block, the camera
+# up a little, C again (a box copied), P (the yellow box where it would go), Q (turned), PLACE (stamped),
+# U (taken back).
+sleep 14
+focus
+click 710 200
+sleep 3
+click 72 258
+sleep 4
+shot start
+keydown c
+sleep 0.15
+keyup c
+keydown space
+sleep 0.3
+keyup space
+sleep 0.3
+shot corner
+keydown c
+sleep 0.15
+keyup c
+sleep 0.5
+shot copied
+keydown p
+sleep 0.15
+keyup p
+sleep 0.5
+shot pasting
+keydown q
+sleep 0.15
+keyup q
+sleep 0.5
+shot turned
+click 500 450
+sleep 1.5
+shot stamped
+keydown u
+sleep 0.15
+keyup u
+sleep 1.5
+shot undone

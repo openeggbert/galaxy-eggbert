@@ -62,6 +62,58 @@ namespace GalaxyEggbert::Editor
         }
     }
 
+    namespace
+    {
+        // Applies @p command's before (forward false) or after (forward true) state.
+        void Apply(Worlds::World& world, const EditCommand& command, bool forward)
+        {
+            switch (command.kind)
+            {
+            case EditCommand::Kind::BlockEdit:
+                for (const auto& change : command.blockChanges)
+                {
+                    world.setBlock(change.x, change.y, change.z, forward ? change.after : change.before);
+                }
+                break;
+            case EditCommand::Kind::MoveObjectEdit:
+                ApplyMoveObjectState(world, command, forward ? command.objectAfter : command.objectBefore);
+                break;
+            case EditCommand::Kind::SkyRegionEdit:
+                world.setSkyRegion(forward ? command.skyRegionAfter : command.skyRegionBefore);
+                break;
+            case EditCommand::Kind::MusicEdit:
+                world.setMusicTrack(forward ? command.musicAfter : command.musicBefore);
+                break;
+            case EditCommand::Kind::SpawnPointEdit:
+                ApplySpawnPointState(world, forward ? command.spawnAfter : command.spawnBefore);
+                break;
+            case EditCommand::Kind::BigDecorEdit:
+                ApplyBigDecorState(world, command, forward ? command.bigDecorAfter : command.bigDecorBefore);
+                break;
+            case EditCommand::Kind::TurnEdit:
+                (command.turnObject ? Game::SetObjectQuarterTurns : Game::SetQuarterTurns)(
+                    world, command.turnX, command.turnY, command.turnZ, forward ? command.turnAfter : command.turnBefore);
+                break;
+            case EditCommand::Kind::Group:
+                if (forward)
+                {
+                    for (const auto& child : command.children)
+                    {
+                        Apply(world, child, true);
+                    }
+                }
+                else
+                {
+                    for (auto child = command.children.rbegin(); child != command.children.rend(); ++child)
+                    {
+                        Apply(world, *child, false);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     bool EditCommandStack::Undo(Worlds::World& world)
     {
         if (undoStack_.empty())
@@ -70,40 +122,7 @@ namespace GalaxyEggbert::Editor
         }
         EditCommand command = std::move(undoStack_.back());
         undoStack_.pop_back();
-
-        if (command.kind == EditCommand::Kind::BlockEdit)
-        {
-            for (const auto& change : command.blockChanges)
-            {
-                world.setBlock(change.x, change.y, change.z, change.before);
-            }
-        }
-        else if (command.kind == EditCommand::Kind::MoveObjectEdit)
-        {
-            ApplyMoveObjectState(world, command, command.objectBefore);
-        }
-        else if (command.kind == EditCommand::Kind::SkyRegionEdit)
-        {
-            world.setSkyRegion(command.skyRegionBefore);
-        }
-        else if (command.kind == EditCommand::Kind::MusicEdit)
-        {
-            world.setMusicTrack(command.musicBefore);
-        }
-        else if (command.kind == EditCommand::Kind::SpawnPointEdit)
-        {
-            ApplySpawnPointState(world, command.spawnBefore);
-        }
-        else if (command.kind == EditCommand::Kind::BigDecorEdit)
-        {
-            ApplyBigDecorState(world, command, command.bigDecorBefore);
-        }
-        else if (command.kind == EditCommand::Kind::TurnEdit)
-        {
-            (command.turnObject ? Game::SetObjectQuarterTurns : Game::SetQuarterTurns)(world, command.turnX, command.turnY, command.turnZ,
-                                                                                    command.turnBefore);
-        }
-
+        Apply(world, command, false);
         redoStack_.push_back(std::move(command));
         return true;
     }
@@ -116,40 +135,7 @@ namespace GalaxyEggbert::Editor
         }
         EditCommand command = std::move(redoStack_.back());
         redoStack_.pop_back();
-
-        if (command.kind == EditCommand::Kind::BlockEdit)
-        {
-            for (const auto& change : command.blockChanges)
-            {
-                world.setBlock(change.x, change.y, change.z, change.after);
-            }
-        }
-        else if (command.kind == EditCommand::Kind::MoveObjectEdit)
-        {
-            ApplyMoveObjectState(world, command, command.objectAfter);
-        }
-        else if (command.kind == EditCommand::Kind::SkyRegionEdit)
-        {
-            world.setSkyRegion(command.skyRegionAfter);
-        }
-        else if (command.kind == EditCommand::Kind::MusicEdit)
-        {
-            world.setMusicTrack(command.musicAfter);
-        }
-        else if (command.kind == EditCommand::Kind::SpawnPointEdit)
-        {
-            ApplySpawnPointState(world, command.spawnAfter);
-        }
-        else if (command.kind == EditCommand::Kind::BigDecorEdit)
-        {
-            ApplyBigDecorState(world, command, command.bigDecorAfter);
-        }
-        else if (command.kind == EditCommand::Kind::TurnEdit)
-        {
-            (command.turnObject ? Game::SetObjectQuarterTurns : Game::SetQuarterTurns)(world, command.turnX, command.turnY, command.turnZ,
-                                                                                    command.turnAfter);
-        }
-
+        Apply(world, command, true);
         undoStack_.push_back(std::move(command));
         return true;
     }

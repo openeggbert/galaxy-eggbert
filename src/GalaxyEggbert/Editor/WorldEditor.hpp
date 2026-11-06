@@ -3,6 +3,7 @@
 #include <string>
 #include <array>
 
+#include "Clipboard.hpp"
 #include "EditCommandStack.hpp"
 #include "EditorBrowserScreen.hpp"
 #include "EditorHighlightRenderer.hpp"
@@ -70,6 +71,13 @@ namespace GalaxyEggbert::Editor
         void EnterBrowser(int gamerSlot);
 
         [[nodiscard]] bool IsBrowsing() const noexcept { return browsing_; }
+
+        // The copy C made (ED-0010), nullptr before one; whether P's pasting is on.
+        [[nodiscard]] const Clipboard* CurrentClipboard() const noexcept
+        {
+            return clipboard_ ? &*clipboard_ : nullptr;
+        }
+        [[nodiscard]] bool IsPasting() const noexcept { return pasting_; }
 
         // One request the browser screen made this frame -- the caller
         // (GalaxyEggbertGame) still owns actually loading/creating the
@@ -176,6 +184,10 @@ namespace GalaxyEggbert::Editor
             bool turnHeld = false;      // O: turn the aimed tile 90 degrees (M3D-0005)
             bool variantHeld = false;   // V: the aimed block's next variant (OR-0070)
             bool helpHeld = false;      // H: the editor's keys on screen (OR-0070-0072)
+            bool copyHeld = false;      // C: a box's corners, copied (ED-0010)
+            bool pasteHeld = false;     // P: pasting the copy on and off
+            bool clipTurnHeld = false;  // Q: the copy turned a quarter
+            bool clipMirrorHeld = false; // X: the copy mirrored
         };
 
         [[nodiscard]] Microsoft::Xna::Framework::Vector3 UpdateCamera(
@@ -196,6 +208,9 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool HandleRemoval(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSessionAndHistory(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleBoxFill(const FrameInput& input, Worlds::World& world);
+        // Pasting (ED-0010): while on, a click stamps the copy with its corner at the red preview
+        // (CTRL+click keeps what is under its empty cells), Q turns it, X mirrors it, P or ESC stops.
+        [[nodiscard]] bool HandleClipboard(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSkyRegion(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleMusic(const FrameInput& input, Worlds::World& world);
         // O turns the aimed tile 90 degrees about the vertical (the plate-rotation metadata): a side
@@ -309,8 +324,15 @@ namespace GalaxyEggbert::Editor
         // The auto-tiler's dice (AutoTile.hpp: the original's random twins of a variant).
         std::minstd_rand autoTileRandom_{20261102u};
 
-        // Box-fill tool (plan.md EDITOR-105).
+        // Box-fill tool (plan.md EDITOR-105); the same box copies when C started it (ED-0010).
         bool boxFirstCornerPlaced_ = false;
+        bool boxForCopy_ = false;
+        std::optional<Clipboard> clipboard_; // kept across the worlds opened in one session
+        bool pasting_ = false;
+        bool copyKeyHeldLastFrame_ = false;
+        bool pasteKeyHeldLastFrame_ = false;
+        bool clipTurnKeyHeldLastFrame_ = false;
+        bool clipMirrorKeyHeldLastFrame_ = false;
         std::uint16_t boxCorner0X_ = 0;
         std::uint16_t boxCorner0Y_ = 0;
         std::uint16_t boxCorner0Z_ = 0;

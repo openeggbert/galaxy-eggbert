@@ -159,6 +159,7 @@ namespace GalaxyEggbert::Editor
                     selectedSkyRegion_ = result.skyRegion;
                     break;
                 }
+                result.picked = true; // a block, an object, a BigDecor or the spawn point to place
                 const int blockType = index >= 0 && index < static_cast<int>(blockIds.size()) ?
                     blockIds[static_cast<std::size_t>(index)] : 0;
                 const int objectType = index >= 0 && index < static_cast<int>(objectIds.size()) ?

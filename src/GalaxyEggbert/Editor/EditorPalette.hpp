@@ -50,6 +50,7 @@ namespace GalaxyEggbert::Editor
             bool clickConsumed = false;
             int skyRegion = -1;
             int musicTrack = -1;
+            bool picked = false; // an item to place was picked (pasting stops, ED-0010)
         };
 
         EditorPalette();

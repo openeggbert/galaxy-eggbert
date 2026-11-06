@@ -284,11 +284,31 @@ namespace GalaxyEggbert::Editor
             keyboard.IsKeyDown(Keys::O),
             keyboard.IsKeyDown(Keys::V),
             keyboard.IsKeyDown(Keys::H),
+            keyboard.IsKeyDown(Keys::C),
+            keyboard.IsKeyDown(Keys::P),
+            keyboard.IsKeyDown(Keys::Q),
+            keyboard.IsKeyDown(Keys::X),
         };
     }
 
     void WorldEditor::UpdateBoxPreview(const Worlds::World& world)
     {
+        if (pasting_ && clipboard_ && hasHighlight_ && !boxFirstCornerPlaced_)
+        {
+            // Where a click stamps the copy: its min corner at the red preview.
+            const BoxRegion region = NormalizeAndClamp(
+                placementCellX_, placementCellY_, placementCellZ_,
+                placementCellX_ + clipboard_->sizeX - 1, placementCellY_ + clipboard_->sizeY - 1,
+                placementCellZ_ + clipboard_->sizeZ - 1, static_cast<int>(world.blocksPerAxis()));
+            showingBox_ = true;
+            boxMinRenderX_ = static_cast<float>(region.minX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
+            boxMinRenderY_ = static_cast<float>(region.minY);
+            boxMinRenderZ_ = static_cast<float>(region.minZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
+            boxMaxRenderX_ = static_cast<float>(region.maxX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
+            boxMaxRenderY_ = static_cast<float>(region.maxY);
+            boxMaxRenderZ_ = static_cast<float>(region.maxZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
+            return;
+        }
         showingBox_ = boxFirstCornerPlaced_ && hasHighlight_;
         if (!showingBox_)
         {
@@ -611,9 +631,66 @@ namespace GalaxyEggbert::Editor
         return false;
     }
 
+    bool WorldEditor::HandleClipboard(const FrameInput& input, Worlds::World& world)
+    {
+        if (input.pasteHeld && !pasteKeyHeldLastFrame_ && !boxFirstCornerPlaced_)
+        {
+            pasting_ = !pasting_ && clipboard_.has_value();
+            pendingEnd_.reset();
+            return true;
+        }
+        if (!pasting_ || !clipboard_)
+        {
+            return false;
+        }
+        if (input.escapeHeld && !escapeKeyHeldLastFrame_)
+        {
+            pasting_ = false;
+            return true;
+        }
+        if (input.clipTurnHeld && !clipTurnKeyHeldLastFrame_)
+        {
+            clipboard_ = TurnedQuarter(*clipboard_);
+            return true;
+        }
+        if (input.clipMirrorHeld && !clipMirrorKeyHeldLastFrame_)
+        {
+            clipboard_ = MirroredX(*clipboard_);
+            return true;
+        }
+        // A pick in the palette (a block, an object) is for placing it: the pasting stops.
+        if (input.palette.picked)
+        {
+            pasting_ = false;
+            return false;
+        }
+        const bool requested =
+            (input.leftHeld && !leftHeldLastFrame_ && !input.palette.clickConsumed) ||
+            input.palette.action == EditorPalette::Action::PlaceSelection;
+        if (!requested)
+        {
+            return false;
+        }
+        if (!hasHighlight_)
+        {
+            return true;
+        }
+        EditCommand command = PasteBox(world, *clipboard_, placementCellX_, placementCellY_, placementCellZ_,
+                                       input.ctrlHeld,
+                                       [this]() { return static_cast<int>(autoTileRandom_() & 0x7fffffff); });
+        if (!command.children.empty())
+        {
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+        }
+        return true;
+    }
+
     bool WorldEditor::HandleBoxFill(const FrameInput& input, Worlds::World& world)
     {
-        if (input.boxHeld && !boxKeyHeldLastFrame_ && hasHighlight_)
+        const bool fillPressed = input.boxHeld && !boxKeyHeldLastFrame_;
+        const bool copyPressed = input.copyHeld && !copyKeyHeldLastFrame_;
+        if ((fillPressed || copyPressed) && hasHighlight_)
         {
             if (!boxFirstCornerPlaced_)
             {
@@ -621,12 +698,26 @@ namespace GalaxyEggbert::Editor
                 boxCorner0Y_ = hitCellY_;
                 boxCorner0Z_ = hitCellZ_;
                 boxFirstCornerPlaced_ = true;
+                boxForCopy_ = copyPressed && !fillPressed;
+                pasting_ = false;
+                pendingEnd_.reset();
                 return true;
+            }
+            if (boxForCopy_ ? !copyPressed : !fillPressed)
+            {
+                return true; // the box ends with the key that began it
             }
 
             const BoxRegion region = NormalizeAndClamp(
                 boxCorner0X_, boxCorner0Y_, boxCorner0Z_,
                 hitCellX_, hitCellY_, hitCellZ_, static_cast<int>(world.blocksPerAxis()));
+            if (boxForCopy_)
+            {
+                clipboard_ = CopyBox(world, region);
+                boxFirstCornerPlaced_ = false;
+                showingBox_ = false;
+                return true;
+            }
             EditCommand command;
             command.kind = EditCommand::Kind::BlockEdit;
             const Worlds::Block fill = Worlds::Block::make(palette_.SelectedBlockType());
@@ -814,6 +905,33 @@ namespace GalaxyEggbert::Editor
         {
             lines.emplace_back("Click where it goes (its end). ESC or a click on it: it stays.");
         }
+        if (boxFirstCornerPlaced_)
+        {
+            lines.emplace_back(boxForCopy_ ? "C again on the other corner: copied. ESC: cancel"
+                                           : "F again on the other corner: filled. ESC: cancel");
+        }
+        if (clipboard_)
+        {
+            std::string size = std::to_string(clipboard_->sizeX) + "x" + std::to_string(clipboard_->sizeY) + "x" +
+                               std::to_string(clipboard_->sizeZ);
+            if (clipboard_->quarterTurns != 0)
+            {
+                size += ", turned " + std::to_string(90 * clipboard_->quarterTurns);
+            }
+            if (clipboard_->mirrored)
+            {
+                size += ", mirrored";
+            }
+            if (pasting_)
+            {
+                lines.emplace_back("PASTING " + size + ": a click stamps it at the red preview");
+                lines.emplace_back("CTRL+click: keeps what is under its air  Q: turn  X: mirror  P/ESC: stop");
+            }
+            else
+            {
+                lines.emplace_back("Copied " + size + ". P: paste it");
+            }
+        }
         if (helpVisible_)
         {
             lines.emplace_back("LEFT CLICK/PLACE: place   MIDDLE CLICK: remove");
@@ -823,6 +941,7 @@ namespace GalaxyEggbert::Editor
             lines.emplace_back("Lift or creature: place it, then click where it goes");
             lines.emplace_back("G: pick object  T: its end  TAB +/-: its values  DEL: remove");
             lines.emplace_back("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save");
+            lines.emplace_back("C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror");
             lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD SPACE CTRL: fly");
             lines.emplace_back("NUMPAD: move the red preview   H: hide the keys");
         }
@@ -1065,6 +1184,10 @@ namespace GalaxyEggbert::Editor
         musicKeyHeldLastFrame_ = input.musicNextHeld;
         turnKeyHeldLastFrame_ = input.turnHeld;
         variantKeyHeldLastFrame_ = input.variantHeld;
+        copyKeyHeldLastFrame_ = input.copyHeld;
+        pasteKeyHeldLastFrame_ = input.pasteHeld;
+        clipTurnKeyHeldLastFrame_ = input.clipTurnHeld;
+        clipMirrorKeyHeldLastFrame_ = input.clipMirrorHeld;
         if (input.helpHeld && !helpKeyHeldLastFrame_)
         {
             helpVisible_ = !helpVisible_;

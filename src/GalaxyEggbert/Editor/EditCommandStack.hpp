@@ -62,6 +62,7 @@ namespace GalaxyEggbert::Editor
             MusicEdit, // the world's background music (OR-0014)
             BigDecorEdit,
             TurnEdit, // a tile turned (M3D-0005, OR-0071): its quarter turns changed
+            Group,    // several commands as one action (a paste, ED-0010): children in order
         };
 
         Kind kind = Kind::BlockEdit;
@@ -92,6 +93,9 @@ namespace GalaxyEggbert::Editor
         int turnBefore = 0; // quarter turns before and after (PlateRotationMetadata.hpp QuarterTurns)
         int turnAfter = 0;
         bool turnObject = false; // an object's or BigDecor's turns (kObjectTurnMetadataType)
+
+        // A Group's commands: redone in order, undone in reverse.
+        std::vector<EditCommand> children;
     };
 
     // Undo/redo stack of EditCommand actions against a Worlds::World.

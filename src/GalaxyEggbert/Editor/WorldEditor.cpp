@@ -88,6 +88,8 @@ namespace GalaxyEggbert::Editor
         highlightRenderer_.Hide();
         commandStack_ = EditCommandStack();
         boxFirstCornerPlaced_ = false;
+        boxForCopy_ = false;
+        pasting_ = false;
         showingBox_ = false;
         playTestRequested_ = false;
         hasSelectedObject_ = false;
@@ -113,7 +115,8 @@ namespace GalaxyEggbert::Editor
 
         const FrameInput input = ReadFrameInput(keyboard, mouse, paletteResult);
         UpdateBoxPreview(world);
-        if (!HandlePlacement(input, world) &&
+        if (!HandleClipboard(input, world) &&
+            !HandlePlacement(input, world) &&
             !HandleRemoval(input, world) &&
             !HandleSessionAndHistory(input, world) &&
             !HandleBoxFill(input, world) &&
