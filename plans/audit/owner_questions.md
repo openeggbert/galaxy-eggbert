@@ -289,3 +289,26 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - **Decided (b), built 2026-11-05** (`mechanics_3d_decisions.md` M3D-0006): the palms, trees,
   houses, machines, columns and fountain fill a column of two cells; 025 and 053's routes went round
   a palm and a machine standing in their way.
+
+## Q-016 — the "zoom" cheat of Mobile Eggbert in Galaxy: feasible, and can the graphics take it? (owner 2026-11-06) — OPEN
+
+- Mobile Eggbert (`InputPad.cpp:742-811`, `Decor.cpp:589, 668-677, 11630`): the cheat word `zoom`
+  cycles the view 100 -> 50 -> 25 -> 12 % -> 100 % (`SetCheatZoom`, the hot-spot zoom times the
+  factor, the tile loop widened to fill the larger view), reset when the level is left. It is under
+  `#ifdef MODERN`: an addition of the modern port, not the 1998 game.
+- Measured 2026-11-06 with a temporary probe (the chase camera's distance x1, x2, x4, x8; GALAXY_PERF,
+  xvfb's software renderer, so the times are high in absolute terms):
+  hub 070 x1 13.5 ms a frame, 3 models (7k triangles) -> x8 23.2 ms, 15 models (37k);
+  world 094 x1..x8 37-41 ms, 3-4 models (22-42k triangles); world 025 x8 fewer models than x1 (a
+  wall in the view). The terrain is one mesh of the whole world, drawn whole already, so a far
+  camera costs it nothing; the far plane (1000) reaches. The graphics take it.
+- The limit is the levels, not the graphics: they are rooms, and the chase camera stops at walls
+  (`RaymarchWallDistance`). In 094's cave x4 and x8 look the same as each other (the wall stops it);
+  in 025 at x8 it ended looking at a blank surface. Screenshots: `plans/evidence/zoom-cheat-094.jpg`
+  (x1, x2, x4, x8) and `plans/evidence/zoom-cheat-open.jpg` (070 x1, x8; 025 x1, x8).
+- Options: (a) the cheat as a farther and higher chase camera (x2, x4, x8; the elevation rising
+  with it toward a bird's-eye view), still stopped by walls: open hubs and outdoor worlds show much
+  more, caves little; a few hours. (b) as (a) plus a cut-away (the blocks between the camera and
+  Blupi, or above his floor, left out or see-through), so that a cave shows too: needs the terrain
+  drawn per chunk or a clip in the shader; days. (c) not at all (it is not the 1998 game's).
+  Recommendation: (a), behind the cheat word as in Mobile Eggbert, reset on leaving the level.
