@@ -697,8 +697,13 @@ ledgers before repeating any discovery. Where it stands:
 - 2026-11-06, the owner (MR-0010): develop pushed (352 commits, `e0e8eda7..164e4c29`); the sounds
   "je to ok" (no listening samples needed); MR-0001 closed, the shields and the charge stay the
   original's sprites; Android stays at "builds and starts" (Q-009).
-- Next: nothing open within the code's reach. Outside it: the release decision. A new owner
-  report starts an OR row.
+- 2026-11-06, the CI fixed (the owner: "oprav padajici github ci joby"; MR-0011): its sibling pins
+  were weeks old (cna-engine before its UB-005 fix: `VerifyTileFaces` failed). They now pin the
+  pushed local HEADs the game is verified against; `python3 tools/ci_pin_siblings.py` bumps them
+  after a verified local build (`--check` reports drift). The owner: keep `SkinnedModelEXT`, no
+  release yet.
+- Next: the dynamite's fuse (`table_dynamitef`, never ported: a lit stick looks unlit; brief ready).
+  A new owner report starts an OR row.
 - Owner's decisions 2026-11-02 (asked interactively, `plans/audit/manual_review.md` MR-0005/0006):
   the editor's auto-tiling (ED-0007) **fully**, right/left read from both X and Z; the world signs
   174-181 as the `world1.rd4` model **with the digit** as a decal from the sign sprite; OR-0006 not

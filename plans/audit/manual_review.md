@@ -137,3 +137,11 @@ The owner asked to be asked ("ptej se me nyni na co potrebujes"); answers:
 - MR-0001 (the `.max` sources): closed; the shields and the charge stay the original's sprites.
 - Android (Q-009): stays at "builds and starts".
 
+## MR-0011 — the owner's answers of 2026-11-06 (later)
+
+- The CI (failing on sibling pins weeks old: cna-engine before its UB-005 fix): pin the exact
+  revisions the game is verified against locally, with a script that updates them.
+- Models: keep `SkinnedModelEXT` (CNA's direct `.glb` loading not adopted; the `.glb` stays the
+  converter's source).
+- Release: not yet.
+

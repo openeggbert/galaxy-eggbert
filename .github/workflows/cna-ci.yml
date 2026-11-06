@@ -1,14 +1,14 @@
-# BUILD-009 (plan.md, NEXT.md "Sibling-repo commit pins"): CI for GalaxyEggbertCNA, the sole
+# BUILD-009 (plan.md): CI for GalaxyEggbertCNA, the sole
 # game target. Linux only (Web CI is BUILD-003,
 # not done yet); no golden-frame/golden-trace steps (those need a real/virtual GPU display and
 # stay a manual, explicit local step -- see NEXT.md section 7).
 #
 # Sibling repos (cna, cna-engine, easy-gl, sharp-runtime, meta-gl) are plain sibling checkouts
 # referenced via add_subdirectory(../x) in CMakeLists.txt, not git submodules of this repo -- same
-# pattern ../cna's own devices-tests.yml/input-ci.yml already use for the same reason. Pinned to
-# the exact commits NEXT.md's "Sibling-repo commit pins" table records as last verified to
-# build/pass against (meta-gl is a transitive dependency of ../easy-gl, not in that table -- see
-# the Checkout meta-gl step below) -- update both places together when bumping a sibling.
+# pattern ../cna's own devices-tests.yml/input-ci.yml already use for the same reason. Pin the
+# exact pushed local HEADs verified by the game's build/tests with:
+#   python3 tools/ci_pin_siblings.py       (or --check to report drift without writing)
+# NEXT.md is frozen history; the script is the way to bump these pins.
 # mobile-eggbert is a separate, sparse (worlds/ only) checkout -- test DATA, not a build
 # dependency (never add_subdirectory()'d); see the Checkout mobile-eggbert step below.
 
@@ -40,8 +40,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: libcna/cna
-          # cna-engine's compatibility baseline (its docs/adr/ADR-002); move both together.
-          ref: 900d0db3b52d76d3115ebda0a0e04a25fefad1a5
+          # Updated with cna-engine and the other locally verified siblings by the pin script.
+          ref: b3e855caedcde898f4b76c165cac4ea99cb1f347 # v0.2.0-556-gb3e855cae
           path: cna
           submodules: true # non-recursive on purpose -- avoids SDL_mixer's own nested
                             # optional-codec submodules this project's CMake args disable
@@ -50,31 +50,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: libcna/cna-engine
-          ref: d86c62da9c6078435a1596e7a44d9b286d3b35ac
+          ref: 6737a1cf0895df3e4de73776ad1052e06e49541f
           path: cna-engine
 
       - name: Checkout easy-gl
         uses: actions/checkout@v4
         with:
           repository: libcna/easy-gl
-          ref: f4d6afaf16cdc7e7e73130950bc45e6d865b41bd # v0.1.1, the version this CNA requires
+          ref: b582bd85f646678d1de38473160defed4729f323 # v0.1.1-2-gb582bd8
           path: easy-gl
 
       - name: Checkout sharp-runtime
         uses: actions/checkout@v4
         with:
           repository: libcna/sharp-runtime
-          ref: f2aecfefeac171b331787e5cdc4849507363ef0e
+          ref: c793ef3e886043b565749b071c6514cedc805b75 # v0.2.0-4-gc793ef3e
           path: sharp-runtime
 
-      # Not in NEXT.md's "Sibling-repo commit pins" table (a real gap fixed alongside this
-      # workflow) -- ../easy-gl/CMakeLists.txt unconditionally add_subdirectory(../meta-gl), so
-      # this is a genuine transitive build dependency, not optional.
+      # ../easy-gl/CMakeLists.txt adds ../meta-gl: a transitive build dependency.
       - name: Checkout meta-gl
         uses: actions/checkout@v4
         with:
           repository: libcna/meta-gl
-          ref: dd3b30055d55fdc42240de7af248259338256992 # v0.4.1, the version this CNA requires
+          ref: 795bcdcfe9e2c418ced189717d3699cbb0847cc0 # v0.4.1-2-g795bcdc
           path: meta-gl
 
       # VerifyMoveObjectTypesCna/VerifyBigDecorParsingCna (CMakeLists.txt WORKING_DIRECTORY =
@@ -86,15 +84,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: openeggbert/mobile-eggbert
-          ref: 07e0a67365535154e614d1baed192e489cb28393
+          ref: f96f02f2515a9c0a79e986da3b87ab17c8095b49
           path: mobile-eggbert
           sparse-checkout: worlds
           sparse-checkout-cone-mode: true
 
-      # Same package list as ../cna's own devices-tests.yml (proven to build this dependency
-      # tree on ubuntu-latest already) plus ccache, which that workflow doesn't use, and libcurl
-      # and nlohmann-json, which CNA's networking and GamerServices modules require since the
-      # move to cna-engine's CNA baseline (both are on by default in CNA).
+      # CNA's devices-tests.yml build dependencies, plus wayland-protocols as in its
+      # general-tests-ci.yml: the installed Wayland headers select CNA's -wayland SDL cache,
+      # which must actually build that driver. libcurl and nlohmann-json are required by
+      # CNA's default networking/GamerServices modules; CNA's own GPU tests are disabled here.
       - name: Install system dependencies
         run: |
           sudo apt-get update -y
@@ -105,7 +103,7 @@ jobs:
             libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev \
             libdrm-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev \
             libegl1-mesa-dev libdbus-1-dev libibus-1.0-dev libudev-dev \
-            libthai-dev libwayland-dev libdecor-0-dev \
+            libthai-dev libwayland-dev wayland-protocols libdecor-0-dev \
             libavcodec-dev libavformat-dev libavutil-dev libswresample-dev \
             libcurl4-openssl-dev nlohmann-json3-dev
 
