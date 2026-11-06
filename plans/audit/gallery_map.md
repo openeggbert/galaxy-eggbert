@@ -447,6 +447,9 @@ Icon i stands at X = 6 + 2 (i mod 20), Z = 4 + 2 (i div 20), Y 1; the ones that 
 | 437 | 40 | 1 | 46 |
 | 438 | 42 | 1 | 46 |
 | 439 | 44 | 1 | 46 |
+| 378 (extra, in the row of the switches 384 / 385) | 7 | 1 | 42 |
+| 378 (extra, in the row of the switches 384 / 385) | 9 | 1 | 42 |
+| 379 (extra, in the row of the switches 384 / 385) | 11 | 1 | 42 |
 
 ## Blocks as the worlds use them (south-west)
 

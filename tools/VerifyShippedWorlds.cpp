@@ -7,9 +7,11 @@
 //   VerifyShippedWorlds <worlds3d dir or .vwr> [...]
 
 #include "GalaxyEggbert/Worlds/World.hpp"
+#include "GalaxyEggbert/Game/BlupiController.hpp"
 #include "GalaxyEggbert/Game/WorldRuntime.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cstdio>
 #include <exception>
 #include <filesystem>
@@ -54,6 +56,80 @@ namespace
             if (!SameMetadata(a, b, type))
                 return false;
         return true;
+    }
+
+    // The exhibition worlds (998 gallery, 999 showcase): a switch 384/385 turns the saws of its own
+    // row within 20 cells along X (Decor.cpp:7138-7147), so each one needs a saw 378/379 there, or
+    // pressing it looks like nothing happens (owner 2026-11-06). Returns the first switch without.
+    std::string SwitchWithoutSaw(const World& world)
+    {
+        const int n = world.blocksPerAxis();
+        for (int z = 0; z < n; ++z)
+            for (int y = 0; y < n; ++y)
+                for (int x = 0; x < n; ++x)
+                {
+                    const auto type = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                                     static_cast<std::uint16_t>(z)).type();
+                    if (type != 384 && type != 385)
+                        continue;
+                    bool sawInRow = false;
+                    for (int sx = std::max(0, x - 20); sx <= std::min(n - 1, x + 20) && !sawInRow; ++sx)
+                    {
+                        const auto other = world.getBlock(static_cast<std::uint16_t>(sx),
+                                                          static_cast<std::uint16_t>(y),
+                                                          static_cast<std::uint16_t>(z)).type();
+                        sawInRow = other == 378 || other == 379;
+                    }
+                    if (!sawInRow)
+                        return "the switch " + std::to_string(type) + " at (" + std::to_string(x) + ", " +
+                               std::to_string(y) + ", " + std::to_string(z) + ") has no saw in its row";
+                }
+        return {};
+    }
+
+    // Pressing each exhibit switch (Blupi walked up to it from the south, his body against it, at its height) must turn the saws of its
+    // row: some 378 become 379 or the other way round. Returns the first switch that changed none.
+    std::string SwitchThatTurnsNothing(const std::filesystem::path& path)
+    {
+        GalaxyEggbert::Game::WorldRuntime runtime;
+        if (!runtime.LoadFromVwrFile(path.string()))
+            return "WorldRuntime::LoadFromVwrFile() refused it";
+        const World& world = runtime.GetWorld();
+        const int n = world.blocksPerAxis();
+        std::vector<std::array<int, 3>> switches;
+        for (int z = 0; z < n; ++z)
+            for (int y = 0; y < n; ++y)
+                for (int x = 0; x < n; ++x)
+                {
+                    const auto type = world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                                     static_cast<std::uint16_t>(z)).type();
+                    if (type == 384 || type == 385)
+                        switches.push_back({x, y, z});
+                }
+        const auto sawSignature = [&](int y, int z)
+        {
+            int turning = 0;
+            for (int x = 0; x < n; ++x)
+                turning += world.getBlock(static_cast<std::uint16_t>(x), static_cast<std::uint16_t>(y),
+                                          static_cast<std::uint16_t>(z)).type() == 378;
+            return turning;
+        };
+        for (const auto& [x, y, z] : switches)
+        {
+            if (y == 0)
+                continue; // floor switches (a Blupi on top of them) are the south hall's, not exhibits
+            const int before = sawSignature(y, z);
+            const auto turned = runtime.TryActivateSwitch(
+                static_cast<float>(x - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX),
+                static_cast<float>(y),
+                static_cast<float>(z - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ) + 0.5f +
+                    GalaxyEggbert::Game::BlupiController::kBodyHalfWidth,
+                true);
+            if (!turned || sawSignature(y, z) == before)
+                return "pressing the switch at (" + std::to_string(x) + ", " + std::to_string(y) + ", " +
+                       std::to_string(z) + ") turns no saw";
+        }
+        return {};
     }
 
     // worldNNN.vwr -> NNN, or -1 for any other name (the title scene, the editor's starter).
@@ -106,6 +182,12 @@ int main(int argc, char** argv)
             {
                 problem = "header mission " + std::to_string(world.missionNumber()) + ", file name says " +
                           std::to_string(expected);
+            }
+            if (problem.empty() && (expected == 998 || expected == 999))
+            {
+                problem = SwitchWithoutSaw(world);
+                if (problem.empty())
+                    problem = SwitchThatTurnsNothing(path);
             }
             GalaxyEggbert::Game::WorldRuntime runtime;
             if (problem.empty() && !runtime.LoadFromVwrFile(path.string()))

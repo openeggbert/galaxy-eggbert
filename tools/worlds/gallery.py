@@ -63,6 +63,13 @@ def main() -> int:
             y = 4
         w.set(x, y, z, icon)
         lines.append(f"| {icon} | {x} | {y} | {z} |")
+    # The exhibit switches 384 (14, 1, 42) and 385 (16, 1, 42) turn the saws in their own row within
+    # 20 cells along X (Decor.cpp:7138-7147), so a few saws stand in the gaps between the exhibits of
+    # that row, where a visitor presses Action and sees them stop / turn (owner 2026-11-06: "the saw
+    # machine has no effect"). The gaps lie at odd X; the visitor's other ways between the exhibits stay free.
+    for x, icon in ((7, 378), (9, 378), (11, 379)):
+        w.set(x, WALK, 42, icon)
+        lines.append(f"| {icon} (extra, in the row of the switches 384 / 385) | {x} | {WALK} | 42 |")
 
     # ---- South-west: the blocks in their places -----------------------------------------------
     lines += ["", "## Blocks as the worlds use them (south-west)", "", "| What | Where (X, Y, Z) |", "|---|---|"]

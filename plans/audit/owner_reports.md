@@ -377,3 +377,23 @@ rewritten).
   moved to the cursor at the window centre, ctest 112/112; live `tools/qa_steps/editor_cursor_aim.txt`
   (fresh `QA_LIVE_RUN`): the preview follows the cursor (X:46 -> X:53), a click lays the object at
   the cursor, over PLACE the preview stays; shots `build-probe/editor-cursor/`.
+
+
+## OR-0077 — "the saw on/off machine has no effect" in the gallery / showcase (owner 2026-11-06) — FIXED_AND_VERIFIED
+
+- Report: walking up to the machine in the gallery and pressing Space, nothing happens. Cause: a switch
+  (384/385) turns the saws 378/379 of its own row within 20 cells along X (Decor.cpp:7138-7147,
+  `WorldRuntime::TryActivateSwitch`), and the exhibit switches stood alone on their pedestals:
+  world998 (14, 1, 42) and (16, 1, 42), world999 (3, 1, 19) (world999's 384 at (97, 1, 17) and the
+  gallery's z 56 / world999's z 67 floor rows already had saws in their rows).
+- Fixed (the owner's choice: saws in the exhibit rows): world998 saws 378 at (7, 1, 42), (9, 1, 42)
+  and a stopped 379 at (11, 1, 42), in the gaps of the exhibit row (`tools/worlds/gallery.py`,
+  listed in `gallery_map.md`); world999 saws 378 at (4, 1, 19), (6, 1, 19), stopped 379 at (8, 1, 19)
+  (`tools/GenerateSampleWorld3D.cpp`). Both regenerated with their generators.
+- Found while proving it: from the exhibits' one-wide aisle Blupi's middle stays 0.5 from the
+  switch block, out of the switch's reach (0.28 body + 0.125); he reaches it by walking against the
+  block (the autoplay probes hold Up for that).
+- Verified: `VerifyShippedWorlds` now checks for 998 and 999 that every exhibit switch has a saw in its
+  row and that `TryActivateSwitch` (Blupi against it) turns saws (it fails on the previous worlds);
+  ctest 112/112, golden frames and trace unchanged; autoplay probes
+  `tools/autoplay/probes/exhibit_saws_998.txt` / `_999.txt` (shots in `build-probe/exhibit-saws/`).

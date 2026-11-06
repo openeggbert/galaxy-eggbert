@@ -845,6 +845,15 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
                        static_cast<std::uint16_t>(3 + row * 2),
                        Block::make(static_cast<std::uint16_t>(icon)));
     }
+    // The exhibit switch 385 at (3, 1, 19) turns the saws of its own row within 20 cells along X
+    // (Decor.cpp:7138-7147), so saws stand in the gaps (even X) between that row's exhibits: pressing
+    // Action on it shows them stop / turn (owner 2026-11-06: "the saw machine has no effect"). The
+    // switch 384 at (97, 1, 17) already has the exhibited saws 378/379 in its row.
+    for (const auto& [x, icon] : {std::pair{4, BlockTypes::Saw}, std::pair{6, BlockTypes::Saw},
+                                  std::pair{8, BlockTypes::SawStopped}})
+    {
+        world.setBlock(static_cast<std::uint16_t>(x), 1, 19, Block::make(static_cast<std::uint16_t>(icon)));
+    }
 
     // Object exhibition -- every GalaxyEggbert::Def::ObjectType the renderer has an icon for
     // (enumerated via ObjectIcons::GetObjIcon, the renderer's own
