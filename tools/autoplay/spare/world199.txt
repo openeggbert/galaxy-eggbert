@@ -1,10 +1,8 @@
-# World 199 by its alternate route (plans/briefs/world199.md): what world199.txt leaves out, played through
-# to the win screen all the same. B's lift shelf (the invert past four sleeping follow stars; the
-# lollipop's power jump to the egg on the pillar); D's red door (R2) and the third saw row (switch,
-# G2); the wasp's well in E and the balloon out of it; E's west wing by the ferry, teleporter 331 back to
-# D's court and D climbed again with its saws still off; F's roofs behind the green door (G2, so the
-# last gate takes L's G3), three birds across them; then the main route. Not one of the campaign's
-# playthroughs (tools/autoplay/world*.txt): run it alone,
+# World 199 by its alternate route (plans/briefs/world199.md): the main route and, on the way, what the
+# main one does not need: B's lift shelf (the invert past four sleeping follow stars); the wasp's well
+# in E and the balloon out of it; teleporter 331 from E's west wing back to D's court and D climbed
+# again with its saws still off. Not one of the campaign's playthroughs (tools/autoplay/world*.txt):
+# run it alone,
 #   tools/autoplay.sh build-cna-opengl3 tools/autoplay/spare/world199.txt 199
 wait 30
 expect mission = 199
@@ -37,7 +35,19 @@ hold 8 up jump
 hold 30 up
 until ground = 1
 expect y >= 71.9
-# ---- B (alternate): the invert on the lift shelf, the lollipop, the pillar's egg ----
+# the lollipop by the pillar, the power jump up it for R1
+go 43 14 tol 0.1
+hold 6 action
+wait 60
+face 270
+go 42 12 jump 3.5 tol 0.25
+until ground = 1
+expect y >= 75.95
+wait 80
+expect keys = 1
+go 43.6 13.4 tol 0.3
+until ground = 1
+# ---- B (alternate): the invert on the lift shelf, past four sleeping follow stars ----
 go 43 12 tol 0.3
 lift 43 86 10 max 1500
 lift 43 72 10 max 1500
@@ -54,15 +64,7 @@ go 44.4 10.6 tol 0.3
 until ground = 1 max 600
 expect y <= 72.05
 wait 450
-go 43 14 tol 0.1
-hold 6 action
-wait 60
-face 270
-go 42 12 jump 3.5 tol 0.25
-until ground = 1
-expect y >= 75.95
-go 43.6 13.4 tol 0.3
-until ground = 1
+go 43.4 13.4 tol 0.3
 go 43.4 12 tol 0.1
 face 90
 go 46 12 jump 2.0 tol 0.2
@@ -73,8 +75,8 @@ until ground = 1
 expect x >= 48.9
 go 50.4 12.5 tol 0.2
 go 50.4 9.5 tol 0.2
-go 50.8 7 until keys = 1
-until keys = 1 max 120
+go 50.8 7 until keys = 2
+until keys = 2 max 120
 go 50.4 9.5 tol 0.2
 go 50.4 12.5 tol 0.2
 go 50.4 15.5 tol 0.2
@@ -111,8 +113,6 @@ expect y >= 81.95
 go 37.6 24 tol 0.2 with crouch
 go 34.4 24 tol 0.2 with crouch
 go 33 24
-go 31.6 24 until keys = 2
-until keys = 2 max 120
 go 32.2 24 tol 0.2
 go 32.2 26.8 tol 0.2
 go 33 28.6 tol 0.2
@@ -195,7 +195,9 @@ until keys = 2 max 200
 clear 46.2 58 44 3 lane x max 900
 go 46.2 42.4 tol 0.2
 go 43 43.5 tol 0.3
-go 33 45 tol 0.3
+go 38 46 tol 0.2
+go 34 46 tol 0.2
+go 32.5 45 tol 0.3
 go 29 45 tol 0.3
 expect keys = 1
 # ---- D: the palace ----
@@ -210,7 +212,7 @@ go 13 45 jump 1.9 tol 0.25
 until ground = 1
 expect y >= 61.95
 go 12.8 47 tol 0.2
-# ---- D (alternate): the red door, saw row 3, G2 ----
+# the red door (R2), saw row 3, G2
 go 12.8 50 tol 0.2
 go 10.4 50 tol 0.15
 go 9 50 tol 0.05
@@ -290,17 +292,19 @@ hold 18 crouch
 until ground = 1
 expect y >= 45.95
 go 24 49.6 tol 0.2
-clear 24 46 48 2 lane x max 600
+clear 24 46 48 2.6 lane x max 900
 go 24.6 46.4 tol 0.3
-# ---- E (alternate): the ferry to the west wing, its egg, teleporter 331 up to the court ----
+# the ferry to the west wing, its egg, the lift down in it
 go 21 45 tol 0.3
 lift 16 46 45 max 1500
 lift 19 46 45 max 1500
 go 19 45 tol 0.15
 until x <= 16.3 max 600
-go 14 45 tol 0.3
+go 14.6 46.6 tol 0.3
+go 12 45.8 tol 0.2
 go 12 45 tol 0.15
 wait 60
+# teleporter 331 up to the court, D climbed again with its saws off, teleporter 330 down again
 go 11 44 tol 0.05 until y >= 57 max 900
 expect y >= 57.95
 # ---- D: the palace ----
@@ -367,21 +371,37 @@ hold 18 crouch
 until ground = 1
 expect y >= 45.95
 go 24 49.6 tol 0.2
-clear 24 46 48 2 lane x max 600
+clear 24 46 48 2.6 lane x max 900
 go 24.6 46.4 tol 0.3
-lift 26 34 45 max 1200
-lift 26 46 45 max 1200
-go 26 45 tol 0.1
-until y <= 34.05 max 600
+# the ferry to the west wing, its egg, the lift down in it
+go 21 45 tol 0.3
+lift 16 46 45 max 1500
+lift 19 46 45 max 1500
+go 19 45 tol 0.15
+until x <= 16.3 max 600
+go 14.6 46.6 tol 0.3
+go 12 45.8 tol 0.2
+go 12 45 tol 0.15
+wait 60
+go 13.4 46.6 tol 0.3
+go 15 45 tol 0.15
+lift 14 34 45 max 1500
+lift 14 46 45 max 1500
+go 14 45 tol 0.1
+until y <= 34.05 max 700
+go 18 45 tol 0.2
 go 27.4 45 tol 0.1
 until blitz = 52 max 400
 go 31 45 tol 0.2
 # ---- F: the village ----
 go 33 44.6 tol 0.3
-go 38 44.6 tol 0.2
-clear 39 34 44.6 3 lane z max 900
-go 40.6 44.6 tol 0.3
-go 43 44.6 tol 0.2
+go 34.2 44.6 tol 0.2
+clear 35 34 44.6 3 lane z max 1500
+go 36.5 44.6 tol 0.3
+clear 38 34 44.6 3 lane z max 1500
+go 39.5 44.6 tol 0.3
+clear 41 34 44.6 3 lane z max 1500
+go 42.4 44.6 tol 0.3
 go 43.6 41.5 tol 0.3
 go 43.6 38.6 tol 0.2
 # ---- F (alternate): behind the green door: the lift to the roofs, the birds across them ----
@@ -408,6 +428,9 @@ go 54 34 tol 0.15
 wait 90
 go 56 34 jump 2.4 tol 0.3
 until ground = 1
+go 56.8 34 tol 0.2
+clear 58 42 34 3 lane z max 1500
+go 60 34.5 tol 0.3
 go 60 36 tol 0.3
 go 60.4 40 tol 0.3
 go 60.4 43 tol 0.3

@@ -433,3 +433,16 @@ terrace, the star frame with the red arrow).
 Left for the owner's review: the white palace reads as pale stone with sparse trim; the long tunnels
 J to K, I to J are plain rock/slime by design; the monument column (87) is drawn as a plain white
 block by its model.
+
+### 10.1 Follow-up after the owner's review (2026-11-07)
+
+The owner accepted gate 7 and asked for five changes; done so far, in order:
+
+- **Required branches (item 5, first part).** What the alternate route used to cover is now on the way:
+  R1 lies on a four-high pillar in B that only the lollipop's power jump reaches (the lollipop lies at its
+  foot); the red door (R2) in D and saw row 3 are required, G2 with them; F's street is shut by a gatehouse
+  and the way on is G2's door, the lift and the roofs; E's lift down moved to the west wing, so the ferry and
+  the passage east (now 17 cells longer, under the terraces, with the lightning in it) are required. Main
+  playthrough 28 434 -> 34 594 ticks (9.6 min). The alternate route (B's invert shelf, the wasp's well,
+  teleporter 331 and D climbed again) is 46 298 ticks. F's street birds are now 3 (35, 38, 41) and the roofs
+  have 4 (the fourth over the last house): still 7.

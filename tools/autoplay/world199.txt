@@ -1,7 +1,5 @@
 # World 199, the finale, played through (plans/briefs/world199.md): the journey A to L from the start
-# shaft to the red arrow. Keys on the way: B1 (blue) opens B's gate into C; R1 (red) opens the
-# library, whose R2 and G1 (green) are taken, G1 opening D's gate; D's B2 (blue) opens G's gate;
-# G's B3 (blue) opens J's gate; L's G3 (green) opens the last gate. R2 and the optional G2 are not used.
+# shaft to the red arrow.
 wait 30
 expect mission = 199
 # ---- A: the gunfire shaft ----
@@ -33,6 +31,18 @@ hold 8 up jump
 hold 30 up
 until ground = 1
 expect y >= 71.9
+# the lollipop by the pillar, the power jump up it for R1
+go 43 14 tol 0.1
+hold 6 action
+wait 60
+face 270
+go 42 12 jump 3.5 tol 0.25
+until ground = 1
+expect y >= 75.95
+wait 80
+expect keys = 1
+go 43.6 13.4 tol 0.3
+until ground = 1
 go 43.4 12 tol 0.1
 face 90
 go 46 12 jump 2.0 tol 0.2
@@ -43,8 +53,8 @@ until ground = 1
 expect x >= 48.9
 go 50.4 12.5 tol 0.2
 go 50.4 9.5 tol 0.2
-go 50.8 7 until keys = 1
-until keys = 1 max 120
+go 50.8 7 until keys = 2
+until keys = 2 max 120
 go 50.4 9.5 tol 0.2
 go 50.4 12.5 tol 0.2
 go 50.4 15.5 tol 0.2
@@ -81,8 +91,6 @@ expect y >= 81.95
 go 37.6 24 tol 0.2 with crouch
 go 34.4 24 tol 0.2 with crouch
 go 33 24
-go 31.6 24 until keys = 2
-until keys = 2 max 120
 go 32.2 24 tol 0.2
 go 32.2 26.8 tol 0.2
 go 33 28.6 tol 0.2
@@ -165,7 +173,9 @@ until keys = 2 max 200
 clear 46.2 58 44 3 lane x max 900
 go 46.2 42.4 tol 0.2
 go 43 43.5 tol 0.3
-go 33 45 tol 0.3
+go 38 46 tol 0.2
+go 34 46 tol 0.2
+go 32.5 45 tol 0.3
 go 29 45 tol 0.3
 expect keys = 1
 # ---- D: the palace ----
@@ -180,6 +190,19 @@ go 13 45 jump 1.9 tol 0.25
 until ground = 1
 expect y >= 61.95
 go 12.8 47 tol 0.2
+# the red door (R2), saw row 3, G2
+go 12.8 50 tol 0.2
+go 10.4 50 tol 0.15
+go 9 50 tol 0.05
+hold 6 action
+wait 30
+expect saws = 10
+go 4 50 tol 0.2
+go 3 50 tol 0.15
+wait 100
+expect keys = 1
+go 9 50 tol 0.2
+go 12.8 50 tol 0.2
 go 12.8 55 tol 0.2
 go 12.8 61 tol 0.2
 lift 15 66 63 max 900
@@ -194,7 +217,7 @@ go 16.4 63 tol 0.1
 go 17 63 tol 0.05
 hold 6 action
 wait 30
-expect saws = 10
+expect saws = 5
 go 18.6 63 tol 0.1 with crouch
 go 24 63 tol 0.2
 go 25 63 tol 0.2
@@ -213,7 +236,7 @@ go 24 44.2 tol 0.3
 go 21.2 44.2 tol 0.05
 hold 6 action
 wait 30
-expect saws = 5
+expect saws = 0
 go 18.6 44 tol 0.1 with crouch
 go 13.4 44 tol 0.2 with crouch
 go 12 44 tol 0.1
@@ -238,30 +261,71 @@ hold 18 crouch
 until ground = 1
 expect y >= 45.95
 go 24 49.6 tol 0.2
-clear 24 46 48 2 lane x max 600
+clear 24 46 48 2.6 lane x max 900
 go 24.6 46.4 tol 0.3
-lift 26 34 45 max 1200
-lift 26 46 45 max 1200
-go 26 45 tol 0.1
-until y <= 34.05 max 600
+# the ferry to the west wing, its egg, the lift down in it
+go 21 45 tol 0.3
+lift 16 46 45 max 1500
+lift 19 46 45 max 1500
+go 19 45 tol 0.15
+until x <= 16.3 max 600
+go 14.6 46.6 tol 0.3
+go 12 45.8 tol 0.2
+go 12 45 tol 0.15
+wait 60
+go 13.4 46.6 tol 0.3
+go 15 45 tol 0.15
+lift 14 34 45 max 1500
+lift 14 46 45 max 1500
+go 14 45 tol 0.1
+until y <= 34.05 max 700
+go 18 45 tol 0.2
 go 27.4 45 tol 0.1
 until blitz = 52 max 400
 go 31 45 tol 0.2
 # ---- F: the village ----
 go 33 44.6 tol 0.3
-go 38 44.6 tol 0.2
-clear 39 34 44.6 3 lane z max 900
-go 40.6 44.6 tol 0.3
-go 43 44.6 tol 0.2
-clear 44 34 44.6 3 lane z max 900
-go 45.6 44.6 tol 0.3
-go 49 44.6 tol 0.2
-clear 50 34 44.6 3 lane z max 900
-go 51.6 44.6 tol 0.3
-go 55 44.6 tol 0.2
-clear 56 34 44.6 3 lane z max 900
-go 57.6 44.6 tol 0.3
-go 61 43.6 tol 0.3
+go 34.2 44.6 tol 0.2
+clear 35 34 44.6 3 lane z max 1500
+go 36.5 44.6 tol 0.3
+clear 38 34 44.6 3 lane z max 1500
+go 39.5 44.6 tol 0.3
+clear 41 34 44.6 3 lane z max 1500
+go 42.4 44.6 tol 0.3
+go 43.6 41.5 tol 0.3
+go 43.6 38.6 tol 0.2
+# ---- F (alternate): behind the green door: the lift to the roofs, the birds across them ----
+go 43 36 tol 0.2
+lift 43 42 34 max 1500
+lift 43 34 34 max 1500
+go 43 34 tol 0.1
+until y >= 41.95 max 800
+face 90
+go 45.4 34 jump 2.4 tol 0.3
+until ground = 1
+expect y >= 41.95
+go 46.4 34.2 tol 0.2
+clear 48 42 34 3 lane z max 1500
+go 49 34 tol 0.15
+wait 90
+face 90
+go 51.6 34 jump 2.4 tol 0.3
+until ground = 1
+expect y >= 43.95
+go 52.2 34 tol 0.2
+clear 53 44 34 3 lane z max 1500
+go 54 34 tol 0.15
+wait 90
+go 56 34 jump 2.4 tol 0.3
+until ground = 1
+go 56.8 34 tol 0.2
+clear 58 42 34 3 lane z max 1500
+go 60 34.5 tol 0.3
+go 60 36 tol 0.3
+go 60.4 40 tol 0.3
+go 60.4 43 tol 0.3
+until ground = 1 max 600
+expect y <= 34.05
 go 64 43 tol 0.3
 # ---- G: the station ----
 go 71.5 43.2 tol 0.2

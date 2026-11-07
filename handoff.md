@@ -63,6 +63,15 @@ audit's "Rebuild done" (pale palace, plain long tunnels). To change the world: e
 needs the `clear`/`lift` waits re-tuned; probe helpers are in the session's `build-probe/world199-rebuild/`
 and not versioned: a segment-per-place chain of the script plus `snap.sh` for a view at a spawn).
 
+### World 199 follow-up after the owner's review (2026-11-07), in progress
+
+Owner: gate 7 accepted; asked for (1) G's follow stars awake and chasing, (2) a helicopter in K with the
+barriers filtering walkers, (3) a richer palace (balustrades 398, columns 399, windows), (4) decorated
+connectors I->J, J->K (not shortened), (5) a main route of 15-20 minutes (54000-72000 ticks) by real
+content. Plan and progress are in `plans/audit/world199_comparison.md` §10.1 (updated per commit);
+probe helpers: `build-probe/world199-rebuild/` (seg/*.txt, assemble.py main, assemble_alt.py, run.sh, snap.sh).
+Done: required branches (main 34594 ticks, alternate 46298).
+
 ### Waiting for the owner (do not start without an answer)
 
 - **Q-016, the zoom cheat** (`plans/audit/owner_questions.md`): Mobile Eggbert's MODERN-only cheat

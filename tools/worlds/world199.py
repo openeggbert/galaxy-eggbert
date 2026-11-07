@@ -219,9 +219,9 @@ def section_b():
     lift_(44, 72, 82, 21, ticks=80, stop=40)
     # keys, eggs, mines
     key(O.KEY3, 51, 72, 7)                                   # B1, the blue key, at the east ledge's end
-    key(O.KEY1, 32, 82, 24)                                  # R1, the red key, at the gallery's west end
-    slime(w, 42, 72, 12, 42, 75, 12)                        # a pillar four high: the lollipop's power jump reaches its egg
-    for x, y, z in ((42, 76, 12), (31, 72, 8), (50, 72, 19), (45, 82, 24)):
+    slime(w, 42, 72, 12, 42, 75, 12)                        # a pillar four high: only the lollipop's power jump reaches R1 on it
+    key(O.KEY1, 42, 76, 12)                                  # R1, the red key, on the pillar
+    for x, y, z in ((32, 82, 24), (31, 72, 8), (50, 72, 19), (45, 82, 24)):
         put(O.EGG, x, y, z)
     hazard(49, 72, 8)                                        # M2 beside B1
     for x in (36,):                                          # M3 hanging over the gallery's low stretch
@@ -437,11 +437,12 @@ def section_e():
         w.fill(16, 45, 45, 19, 45, 45, MACHINE_FLOOR)
     else:
         lift(w, (16, 45, 45), (19, 45, 45), ticks=40, stop=40)
-    # the lift down at TC's east edge, the shaft and the passage with its lightning
-    air(25, 34, 44, 27, 45, 46)
-    air(27, 34, 45, 31, 37, 45)
-    w.fill(25, 33, 44, 31, 33, 46, MACHINE_FLOOR)
-    lift_(26, 46, 34, 45, ticks=120, stop=40)
+    # the lift down in the west wing (x 14, z 45), its shaft and the passage east under the terraces to
+    # F with the column of lightning in it
+    air(14, 34, 45, 14, 45, 45)
+    air(15, 34, 45, 31, 37, 45)
+    w.fill(14, 33, 45, 31, 33, 45, MACHINE_FLOOR)
+    lift_(14, 46, 34, 45, ticks=120, stop=40)
     for x in (27, 29, 31):
         w.set(x, 37, 45, EMITTER)
     w.set(29, 37, 46, EMITTER)
@@ -458,7 +459,7 @@ def section_e():
         for k in range(3):
             slime(w, 11 + k, 39, 56, 11 + k, 40 + 2 * k, 56)
     hazard(26, 46, 59)                                       # M2 at TB's corner
-    hazard(23, 48, 47, hanging=True)                         # M3 over TC
+    hazard(25, 48, 43, hanging=True)                         # M3 over TC
     for x, y, z in ((18, 47, 60), (22, 45, 54), (26, 45, 54)):
         mover(O.MOVING_MINE, (x, y, z), (x, y, z), 10)
     mover(O.MOVING_MINE, (16, 47, 44), (19, 47, 44), 10)
@@ -503,9 +504,10 @@ def section_f():
         w.bigdecor(icon, x, 34, 46)
     air(62, 34, 42, 66, 37, 44)                              # the tunnel east to G
     # the birds: four across the street, three across the roofs
-    for x in (39, 44, 50, 56):
+    for x in (35, 38, 41):
         mover(O.BIRD, (x, 34, 41), (x, 34, 45))
-    for x, y in ((40, 42), (48, 42), (53, 44)):
+    w.fill(47, 34, 41, 48, 41, 45, STONE)                    # a gatehouse across the street: the way on is over the roofs
+    for x, y in ((40, 42), (48, 42), (53, 44), (58, 42)):
         mover(O.BIRD, (x, y, 32), (x, y, 38))
     for x, y, z in ((35, 40, 36), (41, 42, 34), (49, 42, 34), (54, 44, 34), (60, 34, 43), (34, 34, 41)):
         put(O.EGG, x, y, z)
