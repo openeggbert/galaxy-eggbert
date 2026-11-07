@@ -61,8 +61,11 @@ chase camera like any wall since OR-0069 (`plans/evidence/camera-girder-vs-wall.
 - Playthroughs: every campaign world has an autoplay script (`tools/autoplay/world*.txt`); the full pass
   of all 78 worlds on the final tree (`d44f6397`, after the saw patch, Hide and the lightning) passed,
   78/78 (`build-probe/play-pass-final-1107c/results.txt`, recorded in `handoff.md`). See [04-testing.md](04-testing.md) for how to rerun it.
-- Probe and evidence leftovers: `build-probe/` holds scratch worlds and screenshots (several GB). The
-  frames the ledgers cite are copied to `plans/evidence/`; the rest can be deleted.
+- Probe leftovers: `build-probe/` was cleared on 2026-11-07 at the owner's request (about 4 GB). The
+  `build-probe/...` paths that the ledgers and `handoff.md` cite (play-pass results, probe runs) are gone;
+  their results are written down where they are cited, and the frames the ledgers rely on are in
+  `plans/evidence/`. Only `build-probe/p052-run/` (12 MB) stayed: an orphaned `Xvfb :106` from a run on
+  2026-11-04 has it as its working directory (no client, parent gone). Stop that process, then delete it.
 
 ## 4. Where the details are
 
