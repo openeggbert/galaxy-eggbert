@@ -111,6 +111,13 @@ only when that task is requested.
   0076), Resume (BD-0077), the grounded start (BD-0078), CI pinned to verified sibling revisions
   (`tools/ci_pin_siblings.py`), UB-006/UB-007 confirmed fixed in CNA.
 
+### Verified state, 2026-11-07 evening (end of the agent work, tree `e852a902`)
+
+- ctest 112/112; golden frames and trace refreshed for the Jump-to-Air change and passing. **Full play pass
+  78/78** (`build-probe/play-pass-final-1107b/results.txt`), after OR-0079..0084 (zoom 6 %, lift look in the
+  editor, body tilt, switch facing reverted, skateboard upright, TakeDynamite, switch reach). World 199's
+  journey was accepted by the owner. Open items for human authors: `docs/handbook/08-backlog.md`.
+
 ### Verified state, 2026-11-07 (after queue tasks 1-6, Claude)
 
 - ctest 112/112, golden frames and trace pass. **Full play pass on the final tree (`5d371662`): 78/78**

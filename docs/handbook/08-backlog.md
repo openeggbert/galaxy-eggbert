@@ -54,8 +54,7 @@ Other known gaps:
 - Golden frames and trace: refreshed on 2026-11-07 for the Jump-to-Air change (positions identical,
   only the animation state differs; frames 0060 and 0120 differ by 36 pixels of Blupi's pose).
 - Playthroughs: every campaign world has an autoplay script (`tools/autoplay/world*.txt`); the full pass
-  of 78 worlds on the final tree is recorded in `handoff.md` (the result of the last full run is added
-  there). See [04-testing.md](04-testing.md) for how to rerun it.
+  of all 78 worlds on the final tree (`e852a902`) passed, 78/78 (recorded in `handoff.md`). See [04-testing.md](04-testing.md) for how to rerun it.
 - Probe and evidence leftovers: `build-probe/` holds scratch worlds and screenshots (several GB). The
   frames the ledgers cite are copied to `plans/evidence/`; the rest can be deleted.
 
