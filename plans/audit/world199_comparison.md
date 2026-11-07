@@ -463,3 +463,11 @@ The owner accepted gate 7 and asked for five changes; done so far, in order:
 - **Connectors (item 4).** I to J (x 28-30, now five wide) and J to K (x 27-31): ribs and niches in the
   walls, ceiling ribs, a chimney each up to a skylight, a floor mosaic of rock and slime, and I's two columns
   moved into the first connector. Not shortened. Budgets: 196 objects / 47 BigDecor as before.
+- **Longer ways (item 5, second part).** The straight tunnels A to B, B to C, F to G and J to K are shut and
+  replaced by detours through the mass (47, 55, 65 and 44 cells, three wide, with niches and ceiling ribs):
+  A to B round the south, B to C round the west under A, F to G round the north to G's north wall, J to K
+  under F to K's east wall, so the journey crosses K's floor to the first column. The gates moved with
+  them (B's at the start of its detour, G's at G's north wall). Main playthrough 34 594 -> 40 138 ticks
+  (11.2 min); alternate route 53 074. **A bug found on the way:** the earlier connector decoration had
+  carved away the blue gate (B3) into J, so the main route had been opening no door there; every gate is now
+  placed after all carving (`connectors()`), `audit.py` shows 2 / 3 / 3 door groups (8 / 16 / 18 cells).

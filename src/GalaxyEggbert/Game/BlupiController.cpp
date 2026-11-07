@@ -2806,7 +2806,12 @@ namespace GalaxyEggbert::Game
         // below it before RideLift() puts him back, and played Air while he rode (OR-0018). Only
         // the clip: the riding itself stays as it is (D52-D57).
         const bool standsForClip = m_onGround || (m_ridingLift && m_velocityY <= 0.0f);
-        const auto vehicleAnimState = [this, moving, standsForClip]() -> AnimState
+        // The original plays Jump for its first 3 ticks, then Air (Decor.cpp:2922-2928); the rising
+        // lasts longer here, which looped the 3-frame clip. OR-0083.
+        if (standsForClip) m_riseClipSeconds = 0.0f;
+        else if (m_velocityY > 0.0f) m_riseClipSeconds += dt;
+        const bool jumpClip = m_velocityY > 0.0f && m_riseClipSeconds <= 3.0f / 20.0f;
+        const auto vehicleAnimState = [this, moving, standsForClip, jumpClip]() -> AnimState
         {
             switch (m_vehicleMode)
             {
@@ -2816,7 +2821,7 @@ namespace GalaxyEggbert::Game
                 case VehicleMode::Skateboard:
                     if (!standsForClip)
                     {
-                        return m_velocityY > 0.0f ? AnimState::JumpSkate : AnimState::AirSkate;
+                        return jumpClip ? AnimState::JumpSkate : AnimState::AirSkate;
                     }
                     if (moving && m_moveInput == 0.0f && std::fabs(m_vehicleSpeed) > kMoveSpeed * (5.0f / 8.0f))
                     {
@@ -2858,7 +2863,7 @@ namespace GalaxyEggbert::Game
                                   : m_vertigoTimer > 0.0f ? AnimState::Vertigo
                                   : m_mockeryActive ? m_mockeryVariant
                                   : m_reactionTimer > 0.0f ? m_reaction
-                                  : !standsForClip ? (m_velocityY > 0.0f ? AnimState::Jump : AnimState::Air)
+                                  : !standsForClip ? (jumpClip ? AnimState::Jump : AnimState::Air)
                                   : crouchHeld    ? AnimState::Down
                                   : lookUpHeld    ? AnimState::Up
                                   : moving        ? AnimState::March

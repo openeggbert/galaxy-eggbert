@@ -22,7 +22,11 @@ go 10.4 13
 go 14 13.5
 until ground = 1
 expect y <= 72.05
-go 28 14
+go 23 14 tol 0.4
+go 23 34 tol 0.4
+go 27 34 tol 0.4
+go 27 14 tol 0.4
+go 31 14 tol 0.3
 # ---- B: the basin ----
 wait 30
 go 40.2 14 tol 0.2
@@ -95,8 +99,11 @@ go 32.2 24 tol 0.2
 go 32.2 26.8 tol 0.2
 go 33 28.6 tol 0.2
 expect keys = 1
-go 33 31 tol 0.3
-go 33 33 tol 0.3
+go 32 29.5 tol 0.3
+go 32 30 tol 0.4
+go 10 30 tol 0.4
+go 10 38 tol 0.4
+go 31 38 tol 0.3
 go 33 38 tol 0.2
 # ---- C: the lift comb ----
 go 33 38 tol 0.2
@@ -326,9 +333,13 @@ go 60.4 40 tol 0.3
 go 60.4 43 tol 0.3
 until ground = 1 max 600
 expect y <= 34.05
-go 64 43 tol 0.3
+go 64 43 tol 0.4
+go 64 12 tol 0.4
+go 67 12 tol 0.4
+go 67 33.4 tol 0.3
 # ---- G: the station ----
-go 68.6 43.2 tol 0.3
+go 67 36 tol 0.3
+go 68.2 43.2 tol 0.3
 clear 70 34 43.2 3 lane z max 1500
 go 71.2 43.2 tol 0.2
 clear 72 34 43.2 3 lane z max 1500
@@ -415,11 +426,13 @@ face 90
 go 27 37 jump 3.0 tol 0.3
 until ground = 1
 expect x >= 25.9
-go 29 37.4 tol 0.3
-go 29 33 tol 0.3
-go 29 29 tol 0.3
+go 55 37 tol 0.4
+go 55 24 tol 0.4
+go 51 24 tol 0.3
 # ---- K: the toy chamber ----
-go 33 27.4 tol 0.3
+go 49 25.2 tol 0.3
+go 38 26.2 tol 0.3
+go 33 25.8 tol 0.2
 go 32.9 24.7 tol 0.15
 face 90
 go 34.6 24.6 jump 1.7 tol 0.3

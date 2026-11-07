@@ -1707,6 +1707,7 @@ namespace GalaxyEggbert::Game
         float m_ecraseVitesse = 0.0f;
         // The jeep tipped over an edge (radians, + nose down; the original's m_blupiRealRotation).
         float m_vehicleTilt = 0.0f;
+        float m_riseClipSeconds = 0.0f; // time rising in the air: Jump plays 3 ticks, then Air (OR-0083)
         float m_waterStrokeTicks = 0.0f;
 
         GalaxyEggbert::Def::SecretPower m_secretPower = GalaxyEggbert::Def::SecretPower::None;

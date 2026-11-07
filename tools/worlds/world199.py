@@ -113,6 +113,31 @@ def key(otype, x, y, z):
     put(otype, x, y, z)
 
 
+def tunnel(points, y0, height=4, rock=SLIME):
+    """A tunnel three wide and `height` high, floor at walking level y0, along the legs between the
+    (x, z) `points` (axis-aligned): niches one deep every fourth cell on alternating sides and a
+    ceiling rib of `rock` across it between them."""
+    n = 0
+    for (xa, za), (xb, zb) in zip(points, points[1:]):
+        x0, x1, z0, z1 = min(xa, xb), max(xa, xb), min(za, zb), max(za, zb)
+        air(x0 - 1, y0, z0 - 1, x1 + 1, y0 + height - 1, z1 + 1)
+        along_x = za == zb
+        for t in range(x0 if along_x else z0, (x1 if along_x else z1) + 1):
+            n += 1
+            if n % 4 == 0:
+                side = 2 if (n // 4) % 2 else -2
+                if along_x:
+                    air(t, y0, za + side, t, y0 + 2, za + side)
+                else:
+                    air(xa + side, y0, t, xa + side, y0 + 2, t)
+            elif n % 4 == 2:                                  # a rib across the ceiling
+                top = y0 + height - 1
+                if along_x:
+                    w.fill(t, top, za - 1, t, top, za + 1, rock)
+                else:
+                    w.fill(xa - 1, top, t, xa + 1, top, t, rock)
+
+
 # ==== A. the gunfire shaft ======================================================================
 def section_a():
     """X 8-20, Z 8-20, walk 92 down to 72. The start pad (9, 92, 9) in the north-west corner, four
@@ -127,7 +152,6 @@ def section_a():
     floor(17, 12, 20, 20, 84)                                # east ledge
     floor(8, 17, 16, 20, 80)                                 # south ledge
     floor(8, 9, 11, 16, 76)                                  # west ledge
-    air(21, 72, 13, 29, 75, 15)                              # the tunnel to B
     # the gunfire: a Blupi on each ledge along its wall row
     mover(O.CREATURE, (12, 88, 8), (19, 88, 8))
     mover(O.CREATURE, (20, 84, 13), (20, 84, 19))
@@ -157,9 +181,6 @@ def section_b():
     its west end; the blue gate in the south wall (x 31-33, z 28). A lift shelf (walk 86) in the
     north with the lollipop and the invert, guarded by four sleeping follow stars."""
     air(30, 72, 6, 53, 89, 26)
-    air(31, 82, 27, 33, 85, 31)                              # B's exit tunnel to C (blue door at z 28)
-    if not calm:
-        w.fill(31, 82, 28, 33, 83, 28, BLUE_DOOR)
     for x0, x1 in ((34, 40), (45, 48)):                      # the two pools
         air(x0, 66, 6, x1, 71, 20)
         water(w, x0, 66, 6, x1, 71, 20)
@@ -248,7 +269,6 @@ def section_c():
     green gate to D in the hall's west wall."""
     hall("brick", 32, 58, 34, 44, 88, 48)
     hall("brick", 46, 58, 34, 51, 66, 48)
-    air(31, 82, 32, 33, 85, 33)                              # B's tunnel comes in at the balcony
     floor(32, 34, 33, 40, 82, block=261)
     for k, (x, z) in enumerate(COMB):
         top = 82 - 3 * k
@@ -524,7 +544,6 @@ def section_f():
     for x, icon in ((35, 23), (39, 66), (44, 24), (49, 67), (54, 68)):      # niches in the wall: plants and columns
         air(x, 34, 46, x + 1, 36, 47)
         w.bigdecor(icon, x, 34, 46)
-    air(62, 34, 42, 66, 37, 44)                              # the tunnel east to G
     # the birds: four across the street, three across the roofs
     for x in (35, 38, 41):
         mover(O.BIRD, (x, 34, 41), (x, 34, 45))
@@ -552,9 +571,6 @@ def section_g():
     air(78, 28, 34, 80, 33, 54)
     w.fill(78, 27, 34, 80, 27, 54, MACHINE_FLOOR)
     w.fill(78, 28, 34, 80, 29, 54, LAVA)
-    air(62, 34, 42, 66, 37, 44)                              # F's tunnel arrives; the door closes its end
-    if not calm:
-        w.fill(66, 34, 42, 66, 35, 44, BLUE_DOOR)
     # the ferries over the trench (cubes at y 33, top walk 34)
     for z, a, b in ((43, 78, 80), (45, 80, 78)):
         if calm:
@@ -689,8 +705,6 @@ def section_j():
     air(21, 10, 55, 24, 15, 59)
     air(25, 12, 55, 27, 17, 59)
     air(27, 12, 56, 30, 15, 58)                              # (I's tunnel's end)
-    if not calm:
-        w.fill(29, 12, 56, 29, 13, 58, BLUE_DOOR)
     # the floors at walk 12, 10, 8, 6 come from the rock mass below; fill what the carve took
     w.fill(25, 3, 55, 27, 11, 59, ROCK)
     w.fill(21, 3, 55, 24, 9, 59, ROCK)
@@ -728,7 +742,6 @@ def section_j():
         if not calm:
             w.fill(x, 6, 37, x, 11, 37, WIND_UP)
     mover(O.MOVING_MINE, (22, 10, 37), (22, 12, 37), 10)
-    air(28, 6, 28, 30, 9, 38)                                # the passage north to K's south end
     # the connector from I (x 28-30, z 55-59): five wide with rock ribs and two columns at the sides, a
     # chimney of slime up to a skylight, the floor a mosaic of rock and slime
     air(28, 12, 55, 30, 15, 59)
@@ -742,19 +755,6 @@ def section_j():
     air(29, 16, 57, 29, 24, 57)
     w.bigdecor(66, 29, 12, 55)
     w.bigdecor(68, 29, 12, 59)
-    # the passage to K (x 27-31, z 29-35): scalloped walls of ribs and niches, ceiling ribs, a chimney
-    air(27, 6, 29, 31, 9, 35)
-    for z in (30, 32, 34):
-        for x in (27, 31):
-            w.fill(x, 6, z, x, 9, z, ROCK_FACES[0] if z == 32 else ROCK)
-    for z in (31, 33):
-        for x in (28, 30):
-            w.set(x, 9, z, ROCK)
-    w.fill(28, 5, 29, 30, 5, 35, ROCK)
-    for x, z in ((28, 30), (30, 32), (28, 34), (29, 31), (29, 33)):
-        w.set(x, 5, z, 342)
-    air(29, 10, 32, 29, 17, 32)
-    w.set(29, 18, 32, 342)
     put(O.EGG, 9, 6, 47 - 2)
     put(O.EGG, 27, 12, 57)
     for x in (9, 12, 15):                                    # rock outcrops for the walls' look
@@ -791,7 +791,6 @@ def section_k():
             w.set(x, y, 13, BARRIER)
     put(O.HELICOPTER, 34, 6, 20)
     air(28, 22, 14, 33, 26, 16)                              # the tunnel west to L
-    air(28, 6, 27, 34, 9, 30)                                # J's passage reaches the chamber's south end
     put(O.EGG, 43, 14, 23)
     put(O.EGG, 34, 22, 11)                                   # in the alcove, by helicopter only
     for x, z in ((32, 11), (50, 11), (50, 26)):
@@ -868,7 +867,20 @@ def section_l():
     put(O.HELICOPTER, 24, 10, 11)
 
 
-SECTIONS = [section_a, section_b, section_c, section_d, section_e, section_f, section_g, section_h, section_i, section_j, section_k, section_l]
+def connectors():
+    """The long ways between places, each a detour through the mass (the straight ways are shut): A to
+    B round the south, B to C round the west, F to G round the north, J to K under F to K's east wall."""
+    tunnel(((21, 14), (23, 14), (23, 34), (27, 34), (27, 14), (29, 14)), 72)
+    tunnel(((32, 28), (32, 30), (10, 30), (10, 38), (31, 38)), 82)
+    tunnel(((62, 43), (64, 43), (64, 12), (67, 12), (67, 34)), 34)
+    tunnel(((28, 37), (55, 37), (55, 24), (51, 24)), 6, rock=ROCK)
+    if not calm:                                             # the gates: B1's into C, B2's into G, B3's into J
+        w.fill(31, 82, 28, 33, 83, 28, BLUE_DOOR)
+        w.fill(66, 34, 33, 68, 35, 33, BLUE_DOOR)
+        w.fill(29, 12, 56, 29, 13, 58, BLUE_DOOR)
+
+
+SECTIONS = [section_a, section_b, section_c, section_d, section_e, section_f, section_g, section_h, section_i, section_j, section_k, section_l, connectors]
 
 
 def main(argv) -> int:

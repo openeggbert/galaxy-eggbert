@@ -249,6 +249,18 @@ int main(int argc, char** argv)
               "freshly-launched jump (ascending, velocityY > 0) is the Jump anim state");
         check(anim.GetAnimIcon() == 17, "Jump anim icon starts at the real first jump frame (icon 17)");
 
+        {
+            // Jump plays 3 ticks (0.15 s), then Air while he still rises (Decor.cpp:2922-2928, OR-0083).
+            BlupiController rising;
+            rising.SetPosition(0.0f, 1.0f, 0.0f);
+            rising.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            rising.Step(world, 0.0f, 0.0f, true, false, false, dt);
+            for (int i = 0; i < 6; ++i) rising.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            const bool jumpFirst = rising.GetAnimState() == BlupiController::AnimState::Jump;
+            for (int i = 0; i < 6; ++i) rising.Step(world, 0.0f, 0.0f, false, false, false, dt);
+            check(jumpFirst && rising.GetVelocityY() > 0.0f && rising.GetAnimState() == BlupiController::AnimState::Air,
+                  "the Jump clip plays its 3 ticks, then Air while he still rises (not looping)");
+        }
         int stepsToApex = 0;
         while (anim.GetAnimState() == BlupiController::AnimState::Jump && stepsToApex < 200)
         {
