@@ -1,0 +1,339 @@
+# Output of: bash docs/provenance/inventory.sh   (run 2026-11-07, HEAD e017fb5e; file counts read the working tree, which held other sessions' uncommitted edits to tracked files, so a few byte counts can differ from the committed state)
+
+== files, lines of text, bytes per area (git ls-files) ==
+area                                                             files     lines        bytes
+src/GalaxyEggbert (shared game, editor, worlds)                    116     35498      1769876
+src/GalaxyEggbertCNA (application host)                              5      9819       564042
+include/                                                            29      2933       109002
+tests/ (unit tests, golden frames)                                  13      1433      2685843
+tools/*.cpp (Verify* test executables, generators)                  26     18256      1018206
+tools/worlds/ (world generator scripts)                             90     16422       805003
+tools/autoplay/ (scripted playthroughs)                             85     13396       393658
+tools/qa_steps/                                                      9       248         4531
+tools/rd4_to_gltf/ (Ray Dream converter)                            30      7076       355251
+tools/audit/ (ledger generators)                                    10      1403        67228
+tools/a3d tools/terrain_relief tools/music tools/glue tools/bolt tools/data      11      1803        76685
+tools/*.py *.sh (other scripts)                                     22      2688       116808
+worlds3d/ (generated .vwr worlds)                                   81         0      7359073
+worlds/ (original-format .txt levels)                                6      1223       167840
+Content/ (sprites, sounds, music, backgrounds)                     157      1152     50151707
+avatars3d/ (converted 3D models)                                  2491     10169     65483976
+textures3d/                                                          1         0         4320
+mobile-eggbert-reference/ (notes, cropped images)                  692     11298      8885045
+plans/ (plans, briefs, audit ledgers, evidence)                    241     13571     50012864
+web/ (project website)                                              53      5948       280506
+android/                                                            28       426       283554
+cmake/ packaging/ .github/                                           9       872        35324
+root documents (*.md in the root, LICENSE, Doxyfile)                24     19339      1390892
+
+tracked files in total: 4234
+
+== tracked files by extension (top 15) ==
+   1457 bin
+   1322 png
+    232 txt
+    156 md
+    151 py
+    145 gtr
+    129 gif
+    128 json
+     96 hpp
+     93 wav
+     89 cpp
+     81 vwr
+     51 html
+     32 jpg
+     12 csv
+
+== counts the provenance documents quote ==
+world generator scripts (tools/worlds/world*.py): 78
+shipped .vwr worlds: 81
+.vwr worlds without a generator of the same name: world998 world999 
+autoplay scripts (tools/autoplay/*.txt, excluding spare/): 84
+converted model directories (avatars3d/objects/*/avatar.skinnedmodel.json): 121
+terrain reliefs (avatars3d/terrain/*.gtr): 145
+sound effects (Content/sounds/*.wav): 93
+music tracks (Content/music/*.ogg): 10
+sprite sheets and UI images (Content/icons/*.png): 9
+backgrounds (Content/backgrounds/*.png): 38
+
+== git history ==
+commits: 1725
+first commit: 2026-05-12   last: 2026-11-07
+authors:
+   1725   Robert Vokac <robertvokac@robertvokac.com>
+committers:
+   1725   Robert Vokac <robertvokac@robertvokac.com>
+commits per month:
+        7 2026-05
+      137 2026-06
+      630 2026-07
+        3 2026-08
+        2 2026-09
+      458 2026-10
+      488 2026-11
+commit subjects by conventional prefix:
+      657 docs
+      520 feat
+      303 fix
+      129 test
+       50 (no prefix)
+       17 tools
+       15 refactor
+       10 build
+        7 perf
+        4 ci
+        4 chore
+        3 wip
+commits with a Co-Authored-By trailer: 0
+commits whose message contains 'Generated with': 0
+commits whose subject or body names Claude or Codex:
+  dc009d6a 2026-11-06 docs(handoff): tasks 1-5 of the queue done; Claude continues with world 199
+  a5546306 2026-11-06 docs(handoff): the Codex CLI continues: queue, briefs, model and effort
+  b19db064 2026-11-06 fix(collision): the BigDecor are solid in play again, the statue too (BD-0080)
+  815f727e 2026-11-06 docs(audit): world 199 against Mobile Eggbert's finale: an honest gap report and a rebuild plan
+  3d73bad3 2026-11-06 perf(terrain): a crumbling clay bridge patches the model cells instead of rebuilding the world (OR-0074)
+  5674b87b 2026-10-25 docs: completion plan for the restored baseline; inventories
+  e92cf124 2026-10-25 docs: CLAUDE.md, AGENTS.md: no AI attribution in commit messages
+  057bf295 2026-10-23 ci: run easy-gl-resource-smoke-tests again; the easy-gl bug is fixed
+  1780a350 2026-10-20 Remove easy-3d
+  a5d20159 2026-07-20 Merge remote-tracking branch 'origin/claude/galaxy-eggbert-3d-remake-n0ga3y' into develop
+merges:
+  3ead7c05 2026-09-30 Add 'web/' from commit 'f1f518ff1f67a2fe0341eadade72f68dc8e701d6'
+  a5d20159 2026-07-20 Merge remote-tracking branch 'origin/claude/galaxy-eggbert-3d-remake-n0ga3y' into develop
+branches: develop master preserve/2.5d-side-view-2026-10-25 true-3d-correction origin/develop origin/master 
+when the instruction files first appeared:
+  CLAUDE.md  2026-06-11 5cbb27b5
+  AGENTS.md  2026-10-17 44d27bf7
+  plan.md    2026-06-13 dd7070b4
+  handoff.md 2026-10-24 c1f56db9
+
+== text files in src/ include/ tests/ tools/ by the period in which git first added them ==
+(first-add date is not authorship; it only shows how much of the tree already existed when
+ CLAUDE.md first appeared, 2026-06-11, and when the completion campaign started, 2026-10-25)
+  period                            files     lines
+  before 2026-06-11                    19      3412
+  2026-06-11 .. 2026-07-31            117     56254
+  2026-10-01 .. 2026-10-24             27      6734
+  2026-10-25 and later                280     44581
+
+== the repository's own records of AI use ==
+tracked files (outside avatars3d/) that mention Claude or Codex:
+  AGENTS.md
+  CLAUDE.md
+  CMakeLists.txt
+  NEXT.md
+  android/app/build.gradle
+  docs/handbook/01-overview.md
+  docs/handbook/03-build-and-run.md
+  docs/handbook/README.md
+  docs/provenance/inventory.sh
+  easy3d.md
+  handoff.md
+  mobile-eggbert-reference/00-overview.md
+  mobile-eggbert-reference/01-world-file-format.md
+  mobile-eggbert-reference/06-doors.md
+  mobile-eggbert-reference/09-open-questions.md
+  mobile-eggbert-reference/10-blupi-mechanics.md
+  mobile-eggbert-reference/13-object-pickups.md
+  mobile-eggbert-reference/14-crates-lifts-bridges-effects.md
+  mobile-eggbert-reference/tools/extract-blupi-action.py
+  plan.md
+  plans/SESSION_SUMMARY_2026-10.md
+  plans/audit/behavior_differences.md
+  plans/audit/owner_reports.md
+  plans/audit/world199_comparison.md
+  plans/briefs/README.md
+  plans/codex/README.md
+  plans/codex/bigdecor_clearance.md
+  plans/codex/editor_cursor.md
+  plans/codex/exhibit_saws.md
+  plans/codex/ghost.md
+  plans/codex/lift_tiles.md
+  plans/codex/world199_rebuild.md
+  renderers.md
+  src/GalaxyEggbert/Editor/CustomWorldStorage.cpp
+  src/GalaxyEggbert/Game/BlupiController.hpp
+  src/GalaxyEggbert/Game/Hud.hpp
+  src/GalaxyEggbert/Game/SaveData.hpp
+  src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
+  texture-distance-washout-bug.md
+  tools/world_inventory.py
+  upstream_bugs.md
+  web/architecture.html
+  web/development/coding-style.html
+  web/gameplay.html
+  web/internals/object-lifecycle.html
+  web/overview.html
+  web/project-structure.html
+  web/save-system.html
+
+briefs written for the Codex CLI (plans/codex/):
+  plans/codex/README.md
+  plans/codex/bigdecor_clearance.md
+  plans/codex/editor_cursor.md
+  plans/codex/exhibit_saws.md
+  plans/codex/ghost.md
+  plans/codex/lift_tiles.md
+  plans/codex/world199_rebuild.md
+
+ledger lines saying 'Codex' (file: count):
+  handoff.md:19
+  plans/audit/behavior_differences.md:5
+  plans/audit/owner_reports.md:2
+  plans/codex/README.md:5
+  plans/codex/bigdecor_clearance.md:2
+  plans/codex/editor_cursor.md:1
+  plans/codex/exhibit_saws.md:1
+  plans/codex/ghost.md:1
+  plans/codex/lift_tiles.md:1
+  plans/codex/world199_rebuild.md:2
+
+the session summary that calls itself AI-assisted:
+  plans/SESSION_SUMMARY_2026-10.md:3:A status report of one long AI-assisted working session (several context windows, plus background
+
+== declared dependencies ==
+-- CMakeLists.txt: add_subdirectory / find_package / FetchContent / URL --
+  89:    # add_subdirectory(CNA_HOME); the unforced cache assignment preserves an
+  110:        add_subdirectory("${CNA_HOME}" CNA_dep)
+  126:        add_subdirectory("${CNA_ENGINE_HOME}" cna_engine_dep EXCLUDE_FROM_ALL)
+  187:        # imported target CNA's ThirdPartySDL.cmake made (SDL3_DIR is cached by it); find_package
+  192:            find_package(SDL3 CONFIG REQUIRED)
+  930:find_package(Doxygen)
+  952:            FetchContent_Declare(
+  954:                    URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+-- .gitmodules --
+  (none)
+-- CI: checked-out repositories and pinned refs --
+  .github/workflows/cna-ci.yml:42:          repository: libcna/cna
+  .github/workflows/cna-ci.yml:44:          ref: b3e855caedcde898f4b76c165cac4ea99cb1f347 # v0.2.0-556-gb3e855cae
+  .github/workflows/cna-ci.yml:52:          repository: libcna/cna-engine
+  .github/workflows/cna-ci.yml:53:          ref: 6737a1cf0895df3e4de73776ad1052e06e49541f
+  .github/workflows/cna-ci.yml:59:          repository: libcna/easy-gl
+  .github/workflows/cna-ci.yml:60:          ref: b582bd85f646678d1de38473160defed4729f323 # v0.1.1-2-gb582bd8
+  .github/workflows/cna-ci.yml:66:          repository: libcna/sharp-runtime
+  .github/workflows/cna-ci.yml:67:          ref: c793ef3e886043b565749b071c6514cedc805b75 # v0.2.0-4-gc793ef3e
+  .github/workflows/cna-ci.yml:74:          repository: libcna/meta-gl
+  .github/workflows/cna-ci.yml:75:          ref: 795bcdcfe9e2c418ced189717d3699cbb0847cc0 # v0.4.1-2-g795bcdc
+  .github/workflows/cna-ci.yml:86:          repository: openeggbert/mobile-eggbert
+  .github/workflows/cna-ci.yml:87:          ref: f96f02f2515a9c0a79e986da3b87ab17c8095b49
+-- CI: actions used --
+  uses: actions/cache@v4
+  uses: actions/checkout@v4
+  uses: actions/configure-pages@v5
+  uses: actions/deploy-pages@v5
+  uses: actions/upload-pages-artifact@v3
+-- CI: system packages --
+build-essential ccache libasound2-dev libaudio-dev libavcodec-dev libavformat-dev libavutil-dev libcurl4-openssl-dev libdbus-1-dev libdecor-0-dev libdrm-dev libegl1-mesa-dev libfribidi-dev libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libibus-1.0-dev libjack-dev libpulse-dev libsndio-dev libswresample-dev libthai-dev libudev-dev libwayland-dev libx11-dev libxcursor-dev libxext-dev libxfixes-dev libxi-dev libxkbcommon-dev libxrandr-dev libxss-dev libxtst-dev ninja-build nlohmann-json3-dev pkg-config wayland-protocols 
+-- Android: Gradle plugins, repositories, wrapper --
+  android/build.gradle:3:    repositories {
+  android/build.gradle:4:        mavenCentral()
+  android/build.gradle:5:        google()
+  android/build.gradle:8:        classpath 'com.android.tools.build:gradle:8.7.3'
+  android/build.gradle:13:    repositories {
+  android/build.gradle:14:        mavenCentral()
+  android/build.gradle:15:        google()
+  android/app/build.gradle:2:    id 'com.android.application'
+  android/gradle/wrapper/gradle-wrapper.properties:3:distributionUrl=https\://services.gradle.org/distributions/gradle-8.12-bin.zip
+-- Python modules imported by tools/ and mobile-eggbert-reference/tools (non-stdlib candidates) --
+        1 bpy
+       32 numpy
+       19 PIL
+-- external programs called by scripts --
+        7 blender
+        5 ccache
+        1 emcc
+        1 emcmake
+        4 ffmpeg
+        1 ffprobe
+        3 fluidsynth
+        1 gradlew
+        2 ninja
+       26 xdotool
+        7 xvfb-run
+-- Python requirements files, package manifests --
+  (end of list)
+-- symlinks tracked in git (not real copies) --
+  android/app/src/main/assets/Content
+  android/app/src/main/assets/avatars3d
+  android/app/src/main/assets/textures3d
+  android/app/src/main/assets/worlds3d
+
+== where the repository's own text names the original game ==
+-- sources that cite a file:line of the original C++ (count of lines mentioning Tables.cpp/Decor.cpp/...) --
+  38 files, 662 lines
+-- largest files that transcribe or cite original tables --
+    8406 src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
+    4065 src/GalaxyEggbert/Game/InteractionSystem.cpp
+    3214 src/GalaxyEggbert/Game/BlupiController.cpp
+    1793 src/GalaxyEggbert/Game/BlupiController.hpp
+    1170 src/GalaxyEggbert/Game/InteractionSystem.hpp
+    1142 src/GalaxyEggbertCNA/GalaxyEggbertGame.hpp
+     830 src/GalaxyEggbert/Game/ObjectIcons.cpp
+     819 src/GalaxyEggbert/Game/WorldRuntime.cpp
+     466 src/GalaxyEggbert/Game/DecorQuartTable.hpp
+     370 src/GalaxyEggbert/Game/BlockModels.hpp
+     365 src/GalaxyEggbert/BlockDefinitionRegistry.cpp
+     357 src/GalaxyEggbert/Editor/AutoTile.hpp
+-- places that say 'transcribed' --
+  include/GalaxyEggbert/MoveObjectRecord.hpp:53:    // .vwr worlds that don't set them explicitly, not a transcribed real
+  src/GalaxyEggbert/Editor/AutoTile.hpp:11:// nine families of sixteen, transcribed under the standing approval for small data tables), a few
+  src/GalaxyEggbert/Game/BlupiController.cpp:137:        // transcription of exactly these 4 mobile-eggbert
+  src/GalaxyEggbert/Game/BlupiController.cpp:171:        // real data-table transcriptions -- validated by cross-checking the
+  src/GalaxyEggbert/Game/BlupiController.cpp:224:        // and kTeleportingFrames), same user data-transcription approval.
+  src/GalaxyEggbert/Game/BlupiController.cpp:332:        // Real table_blupi Bye record (id 30, Tables.cpp; transcribed
+  src/GalaxyEggbert/Game/BlupiController.cpp:2986:                // own comment for the transcription method/approval).
+  src/GalaxyEggbert/Game/BlupiController.cpp:3015:                // transcription as DeathLocked above).
+  src/GalaxyEggbert/Game/BlupiController.cpp:3158:        // Real table_mirror (Tables.cpp:413-447), transcribed verbatim.
+  src/GalaxyEggbert/Game/BlupiController.hpp:239:        // transcribed), so these preserve the REAL PROPORTION between the
+  src/GalaxyEggbert/Game/BlupiController.hpp:252:        // direct transcription, not an approximation).
+  src/GalaxyEggbert/Game/BlupiController.hpp:258:        // rate = 1.5s exactly, a direct transcription). Real trigger is
+  src/GalaxyEggbert/Game/BlupiController.hpp:306:        // reference rate = 0.25s/level, a direct transcription (same
+  src/GalaxyEggbert/Game/BlupiController.hpp:351:        // 0.2s/level (20s each) -- all 4 are direct transcriptions, not
+  src/GalaxyEggbert/Game/BlupiController.hpp:373:        // transcription, "tying with Power for the shared-timer buffs'
+  src/GalaxyEggbert/Game/BlupiController.hpp:401:        // paths) is a direct ScaleTime(5)-at-20Hz transcription, same
+  src/GalaxyEggbert/Game/BlupiController.hpp:514:        // transcribe their real `table_blupi` icon-frame data (plan.md
+  src/GalaxyEggbert/Game/BlupiController.hpp:517:        // BlupiController.cpp) are a fresh, narrowly-scoped transcription
+  src/GalaxyEggbert/Game/BlupiController.hpp:546:            // Clear4/Glu/Drown) IS transcribed (added 2026-07-16, see
+  src/GalaxyEggbert/Game/BlupiController.hpp:1465:        // simplifications, not a transcription gap), and by IsPointSolid()
+  src/GalaxyEggbert/Game/BlupiController.hpp:1645:        // trigger scan, not a transcription gap.
+  src/GalaxyEggbert/Game/BlupiController.hpp:1763:        // frame array (added 2026-07-16, same table_blupi transcription as kClear1Frames etc.).
+  src/GalaxyEggbert/Game/CameraShake.cpp:7:        // Verbatim transcription of the real `Tables::table_decor_action[519]`
+  src/GalaxyEggbert/Game/CameraShake.cpp:8:        // (mobile-eggbert `Tables.cpp:2027-2081`, data-table transcription
+  src/GalaxyEggbert/Game/CameraShake.cpp:16:        // risk a transcription error re-grouping the 192-entry Electric
+  src/GalaxyEggbert/Game/CameraShake.hpp:8:    // `Tables.cpp:2027-2081`; data-table transcription approved by the
+  src/GalaxyEggbert/Game/DecorQuartTable.hpp:13:// Transcribed verbatim (explicit user approval, 2026-07-21, INFRA-005/plan.md
+  src/GalaxyEggbert/Game/DecorQuartTable.hpp:14:// section 7 -- a real data-table transcription beyond the standing blanket
+  src/GalaxyEggbert/Game/Hud.hpp:33:    // ' ' at index 32, row 3 with '0' at 48), NOT transcribed from
+  src/GalaxyEggbert/Game/InputPad.cpp:339:        // source, not a transcription mistake here.
+-- places that quote the original authors' licence --
+  docs/provenance/inventory.sh:191:  git grep -nE 'GPLv3, ' -- . ':!avatars3d' | cut -c1-200 | sed 's/^/  /'
+  docs/provenance/inventory.sh:192:  git grep -nE 'GPLv3, ' -- avatars3d | cut -c1-200 | sed 's/^/  /'
+  plans/inventory/assets.md:4:per converted model: its Ray Dream source in `../speedyblupi-data/originals` (GPLv3, © Daniel Roux
+  tools/asset_inventory.py:91:        "per converted model: its Ray Dream source in `../speedyblupi-data/originals` (GPLv3, © Daniel Roux",
+  tools/rd4_to_gltf/README.md:17:The originals are in the `speedyblupi-data` repository (`originals/`, GPLv3, © Daniel Roux &
+  avatars3d/blupi/README.md:11:  to. GPLv3, © Daniel Roux & EPSITEC SA (the `speedyblupi-data` repository's README).
+-- the asset ledgers --
+  plans/audit/asset_sources.csv                    704 lines
+  plans/audit/render_representation.csv            566 lines
+  plans/inventory/assets.md                        117 lines
+  plans/audit/model_sources.md                     372 lines
+  asset_sources.csv statuses:
+    288 FIXED_AND_VERIFIED
+    10 INTENTIONAL_3D_ADAPTATION
+    405 NOT_APPLICABLE
+
+== licence files and headers in this repository ==
+  LICENSE                       GNU GENERAL PUBLIC LICENSE  | 674 lines
+  web/LICENSE                  MIT License Copyright (c) 2026 Robert Vokac  | 21 lines
+source files carrying a licence/copyright header (src include tests tools cmake):
+  0 files
+licence-looking lines in the root README: 1
+the first three lines of the licence texts at the sibling repositories' roots (read only):
+  cna                    Microsoft Public License (Ms-PL) This license governs use of the accompanying software. If you use the software, 
+  cna-engine             MIT License Copyright (c) 2026 Robert Vokac and the cna-engine contributors 
+  easy-gl                MIT License Copyright (c) 2026 Robert Vokac 
+  sharp-runtime          The MIT License (MIT) Copyright (c) Robert Vokac and contributors 
+  meta-gl                MIT License Copyright (c) 2026 Robert Vokac 
+  mobile-eggbert         MIT License Copyright (c) 2013 Daniel Roux 
+
