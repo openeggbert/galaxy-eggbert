@@ -47,7 +47,7 @@ REPRODUCED_DEFECT | FIXED_AND_VERIFIED | BLOCKED | NOT_APPLICABLE`. A generated 
 | C | every action/object/interaction against `Decor.cpp` (the GP ledger, row by row) | done: the whole GP ledger reviewed (538 rows, 0 open); BD-0001..0074 fixed and verified, among them the contact boxes (BD-0021), `m_blupiFocus` (BD-0010 and after), the lifts' edges (BD-0047), eggs as lives (BD-0073), the step that stands him up (BD-0074); the sounds' pitch measured in a recording (BD-0031, `tools/audit/sound_pitch.py`) |
 | D | original assets: `.a3d` reader, `.max` request, per-source stages | done but for the `.max`: all 105 `.a3d` read; the asset ledger settled (703 rows, 0 open); the `.max` stay BLOCKED by licence (MR-0001; the offered copy is not used) |
 | E | every world's lesson, bypasses, platform fairness | done: every world's lesson row reviewed (80: 55 match, 22 fixed, 1 adaptation, 2 not applicable); every target's reach evidenced (`target_reach.md`: 921, 0 unknown); the owner: the automated playthroughs suffice (MR-0007) |
-| F | release audit at pinned revisions | `plans/audit/release_audit.md`, refreshed 2026-11-06: 112/112 CTest, golden frames, play pass 31 78/78, every ledger settled; open only MR-0001 (`.max`), Android's UB-007 (CNA), and the owner's word |
+| F | release audit at pinned revisions | `plans/audit/release_audit.md`, refreshed 2026-11-06: 112/112 CTest, golden frames, play pass 31 78/78, every ledger settled; open only MR-0001 (`.max`) and the owner's word (Android's UB-007 is fixed in CNA `22739f89b` and seen working on the APK, 2026-11-06) |
 
 ## 4. Crate push and pull (BD-0001, M3D-0001) — Wave A
 
@@ -85,6 +85,6 @@ playthroughs of the five worlds and their chains pass; the D52-D57 tests pass (1
 The 2026-11-02 queue below this heading's former list (billboards to models, the coloured and
 numbered posts, the clay bridge, the vanishing saucer, the fan's speed, the Setup's sliders, the
 owner's answers, OR-0017, the cave rocks, Wave E) is done; see the waves above and `handoff.md`.
-What is left is outside the code's reach: the `.max` sources (MR-0001), Android's 3D models (CNA
-UB-007), and a release the owner decides on (`plans/audit/release_audit.md` §6). Anything the owner
+What is left is outside the code's reach: the `.max` sources (MR-0001), playing Android on a device (Q-009; the 3D models
+draw since CNA's UB-007 fix), and a release the owner decides on (`plans/audit/release_audit.md` §6). Anything the owner
 reports next starts a new OR row in `plans/audit/owner_reports.md`.
