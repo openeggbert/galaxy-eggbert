@@ -7024,6 +7024,7 @@ namespace GalaxyEggbert::CNA
             if (blupiEffect_ && blupiModelIsReal_ && !blupiVehicles_.empty())
             {
                 constexpr float kHalfPi = 1.57079632679f;
+                constexpr float kSkateLift = 0.45f; // the upright board hangs this far above the floor, tuned by eye
                 std::vector<Microsoft::Xna::Framework::Matrix> boneTransforms;
                 blupiEffect_->setViewProperty(camera_.View());
                 blupiEffect_->setProjectionProperty(camera_.Projection());
@@ -7039,24 +7040,28 @@ namespace GalaxyEggbert::CNA
                     }
                     parked.model->ComputeBoneTransformsEXT(
                         parked.clip, System::TimeSpan::FromSeconds(0.0), /*loop=*/false, boneTransforms);
-                    // The parked skateboard flips about its long axis (table_skate, 34 ticks, icons 129-135:
-                    // edge-on, flat, edge-on, and back; 30 degrees an icon; Decor.cpp:8339; OR-0083).
-                    float skateRoll = 0.0f;
+                    // The parked skateboard of the original (table_skate, 34 ticks, element icons 129-135) hangs
+                    // upright, its long axis up, a little above the floor, and turns about that axis: edge-on,
+                    // flat to the viewer, edge-on, back, 30 degrees an icon (Decor.cpp:8339; OR-0083).
+                    float skateSpin = 0.0f;
+                    float skateLift = 0.0f;
+                    float skateStand = 0.0f;
                     if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType24)
                     {
                         const int skateIcon = GalaxyEggbert::Game::GetObjIcon(obj.type, static_cast<int>(obj.phase));
-                        skateRoll = static_cast<float>(skateIcon - 132) * (30.0f * 3.14159265f / 180.0f);
+                        skateSpin = static_cast<float>(skateIcon - 132) * (30.0f * 3.14159265f / 180.0f);
+                        skateStand = kHalfPi;
+                        skateLift = kSkateLift;
                     }
                     // Facing +X, turned in the editor a quarter at a time (OR-0071).
                     blupiEffect_->setWorldProperty(
                         Microsoft::Xna::Framework::Matrix::CreateScale(kRealModelScale) *
-                        Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, -0.17f, 0.0f) *
-                        Microsoft::Xna::Framework::Matrix::CreateRotationZ(skateRoll) *
-                        Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.17f, 0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationX(skateStand) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationY(skateSpin) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(
                             kHalfPi * static_cast<float>(1 + CellObjectQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ))) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                            obj.currentX, obj.currentY - 0.5f, obj.currentZ));
+                            obj.currentX, obj.currentY - 0.5f + skateLift, obj.currentZ));
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     for (const auto& part : parked.model->Parts)
                     {
@@ -7439,32 +7444,7 @@ namespace GalaxyEggbert::CNA
                                     // 5): the plate-rotation bit the hub generators set on signs facing
                                     // X (an older plate convention) must not turn the model too (the
                                     // signs of hub 070 stood sideways, owner 2026-11-05).
-                                    // The saws' switch turns its panel to Blupi, to the side he is on where that
-                                    // side is open (OR-0081: with a free cell on all four sides it stood edge-on
-                                    // to him and the lever and lamps could not be read).
-                                    int frontSide = cell.openSide;
-                                    if (cell.base == GalaxyEggbert::BlockTypes::Switch ||
-                                        cell.base == GalaxyEggbert::BlockTypes::SwitchOff)
-                                    {
-                                        const float toX = blupi_.GetX() - cell.x;
-                                        const float toZ = blupi_.GetZ() - cell.z;
-                                        const bool alongX = std::fabs(toX) > std::fabs(toZ);
-                                        const int sideToBlupi = alongX ? (toX > 0.0f ? 0 : 1) : (toZ > 0.0f ? 2 : 3);
-                                        const auto& world = worldRuntime_.GetWorld();
-                                        const int rawX = static_cast<int>(std::lround(cell.x)) + WorldRuntime::kWorldCenterX +
-                                                         (sideToBlupi == 0 ? 1 : sideToBlupi == 1 ? -1 : 0);
-                                        const int rawY = static_cast<int>(std::lround(cell.y));
-                                        const int rawZ = static_cast<int>(std::lround(cell.z)) + WorldRuntime::kWorldCenterZ +
-                                                         (sideToBlupi == 2 ? 1 : sideToBlupi == 3 ? -1 : 0);
-                                        const int axis = static_cast<int>(world.blocksPerAxis());
-                                        if (rawX >= 0 && rawX < axis && rawY >= 0 && rawY < axis && rawZ >= 0 && rawZ < axis &&
-                                            world.getBlock(static_cast<std::uint16_t>(rawX), static_cast<std::uint16_t>(rawY),
-                                                           static_cast<std::uint16_t>(rawZ)).isAir())
-                                        {
-                                            frontSide = sideToBlupi;
-                                        }
-                                    }
-                                    const float frontYaw = GalaxyEggbert::Game::FrontModelYaw(frontSide) +
+                                    const float frontYaw = GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
                                                            1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.x, cell.y, cell.z));
                                     drawModel(*still, cell.x, cell.y, cell.z, frontYaw);
                                     if (GalaxyEggbert::Game::IsTeleporterIcon(cell.base))
