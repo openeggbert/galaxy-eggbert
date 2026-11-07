@@ -435,3 +435,21 @@ rewritten).
 - Verified: `VerifyGEInputPad` (the word fires its cheat), `tools/autoplay/probes/zoom_cheat.txt` in
   hub 070: `plans/evidence/zoom-cheat-implemented.png` (1x, 50 %, 25 %, 12 %, back to 1x); ctest, golden
   frames and trace unchanged (step 0 is the old camera).
+
+
+## OR-0080 — the vehicles and the swimmer do not lean as in the original (owner 2026-11-07) — FIXED_AND_VERIFIED
+
+- Report: the car should tilt when driven and does not. Found: the jeep's tilt exists (BD-0071: only
+  over an edge, the original's `m_blupiRealRotation` 5 degrees a tick to 45; at 20 px a tick the
+  window is short, as in the original). What Galaxy lacked were the original's other rotations
+  (`Decor::BlupiSearchIcon`, Decor.cpp:2161, 2276-2330, drawn rotated at 774): the helicopter leans
+  into its horizontal speed (vx x 2 degrees, max 24), a swimmer turns to his direction (the angle
+  from up / sideways / down, + 15, approached 10 degrees a tick, minus 90) bobbing 20 degrees, a
+  surfer bobs 10 degrees. The owner chose these (option E of the question).
+- Built: `GalaxyEggbertGame::UpdateBodyTilt` (after each Step) turns the body's model about his middle
+  (`bodyPitchRadians_`, in `BlupiModelWorld`); render only. In 3D the angle is a pitch (nose down),
+  held to a quarter turn either way (the original's 105 degrees head down would tumble a body).
+- Verified: a temporary print of the angles in probe world 993 (a pool, a helicopter): the helicopter
+  9-19 degrees at its speeds, a swimmer -80 swimming up and 14 level, surf +-10;
+  `plans/evidence/body-tilt-helicopter.png` and `body-tilt-swim.png` (from behind, the lean is
+  visible on the turns); ctest and golden frames unchanged.

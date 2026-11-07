@@ -493,7 +493,12 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         endif()
         target_link_libraries(${target} PRIVATE CnaEngine::Graphics)
         if(BUILD_TESTING)
-            add_test(NAME ${target} COMMAND ${target})
+            # Run in a scratch directory of the build tree: the editor tests write customworlds/
+            # relative to their working directory, and in the build directory itself that is the
+            # player's own folder (a world he exported once made VerifyGEEditorStorage fail).
+            file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/verify-run)
+            add_test(NAME ${target} COMMAND ${target}
+                     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/verify-run)
         endif()
     endfunction()
 

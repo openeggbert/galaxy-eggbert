@@ -717,6 +717,15 @@ namespace GalaxyEggbert::CNA
         void UpdateTick();
         void CaptureInput();
         [[nodiscard]] Microsoft::Xna::Framework::Matrix BlupiModelWorld(const GalaxyEggbert::Game::CharredShape& charred) const;
+        // The body's lean, render only (Decor::BlupiSearchIcon, m_blupiRealRotation; OR-0080): the
+        // helicopter leans into its horizontal speed, a swimmer turns to his direction and bobs, a
+        // surfer bobs. Called after each Step.
+        void UpdateBodyTilt(float dt);
+        float bodyPitchRadians_ = 0.0f;     // nose down, about the model's middle
+        float bodySwimLogicDegrees_ = 15.0f; // the original's m_blupiLogicRotation
+        float bodyTiltTicks_ = 0.0f;        // the original's m_time, 20 a second
+        float bodyLastX_ = 0.0f, bodyLastY_ = 0.0f, bodyLastZ_ = 0.0f;
+        bool bodyHasLast_ = false;
         Microsoft::Xna::Framework::Graphics::Texture2D* BlupiFaceTexture();
         void RecordHideGhost();
         [[nodiscard]] Microsoft::Xna::Framework::Input::MouseState CurrentMouseState() const;

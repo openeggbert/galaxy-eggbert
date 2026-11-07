@@ -1646,6 +1646,66 @@ namespace GalaxyEggbert::CNA
         return true;
     }
 
+    void GalaxyEggbertGame::UpdateBodyTilt(float dt)
+    {
+        constexpr float kDegToRad = 3.14159265358979f / 180.0f;
+        constexpr float kTicksPerSecond = 20.0f;
+        bodyTiltTicks_ += dt * kTicksPerSecond;
+        const float x = blupi_.GetX(), y = blupi_.GetY(), z = blupi_.GetZ();
+        const float dx = bodyHasLast_ ? x - bodyLastX_ : 0.0f;
+        const float dy = bodyHasLast_ ? y - bodyLastY_ : 0.0f;
+        const float dz = bodyHasLast_ ? z - bodyLastZ_ : 0.0f;
+        bodyLastX_ = x;
+        bodyLastY_ = y;
+        bodyLastZ_ = z;
+        bodyHasLast_ = true;
+        const float approachStep = 10.0f * dt * kTicksPerSecond; // the original's 10 degrees a tick
+        const auto approach = [approachStep](float value, float target)
+        {
+            return value < target ? std::min(value + approachStep, target) : std::max(value - approachStep, target);
+        };
+        float pitchDegrees = 0.0f;
+        if (blupi_.IsNage())
+        {
+            // Decor.cpp:2276-2312: the direction he moved since the last tick picks the angle the
+            // sprite turns to (up 0, up and sideways 45, sideways 90, down and sideways 135, down
+            // 180, plus 15), approached 10 degrees a tick; real = that - 90, bobbing 20 degrees.
+            constexpr float kMoved = 0.0004f; // cells in a frame
+            const bool sideways = std::hypot(dx, dz) > kMoved;
+            const int down = dy < -kMoved ? 1 : (dy > kMoved ? -1 : 0); // the original's Y points down
+            float target = 0.0f;
+            if (down >= 0 || sideways)
+            {
+                target = (down < 0 && sideways)    ? 45.0f
+                         : (down == 0 && sideways) ? 90.0f
+                         : (down > 0 && sideways)  ? 135.0f
+                         : (down > 0)              ? 180.0f
+                                                   : 0.0f;
+            }
+            target += 15.0f;
+            bodySwimLogicDegrees_ = approach(bodySwimLogicDegrees_, target);
+            pitchDegrees = bodySwimLogicDegrees_ - 90.0f + std::sin(bodyTiltTicks_ / 6.0f) * 20.0f;
+        }
+        else if (blupi_.IsSurf())
+        {
+            // Decor.cpp:2325-2330: the angle settles to 0, bobbing 10 degrees.
+            bodySwimLogicDegrees_ = approach(bodySwimLogicDegrees_, 0.0f);
+            pitchDegrees = bodySwimLogicDegrees_ + std::sin(bodyTiltTicks_ / 10.0f) * 10.0f;
+        }
+        else if (blupi_.GetVehicleMode() == BlupiController::VehicleMode::Helicopter)
+        {
+            // Decor.cpp:2161: rotation = horizontal speed (px a tick) x 2 degrees, leaning into the
+            // way it goes (nose down forward); the speed here is cells a second, 20/64 per px a tick.
+            pitchDegrees = blupi_.GetVehicleSpeed() * (64.0f / 20.0f) * 2.0f;
+        }
+        else
+        {
+            bodySwimLogicDegrees_ = approach(bodySwimLogicDegrees_, 15.0f);
+        }
+        // A 3D body turned past upright would tumble: held to a quarter turn either way.
+        bodyPitchRadians_ = std::clamp(pitchDegrees, -90.0f, 90.0f) * kDegToRad;
+    }
+
     Microsoft::Xna::Framework::Matrix GalaxyEggbertGame::BlupiModelWorld(const CharredShape& charred) const
     {
         constexpr float kPlaceholderModelScale = 0.009095f;
@@ -1690,6 +1750,10 @@ namespace GalaxyEggbert::CNA
             Microsoft::Xna::Framework::Matrix::CreateTranslation(hangShift, 0.0f, modelDepthOffset) *
             // The jeep tipping over an edge, nose down (+Z is the model's front; BD-0071).
             Microsoft::Xna::Framework::Matrix::CreateRotationX(blupi_.GetVehicleTilt()) *
+            // The helicopter's lean and the swimmer's and surfer's turn, about his middle (OR-0080).
+            Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, -0.4f, 0.0f) *
+            Microsoft::Xna::Framework::Matrix::CreateRotationX(bodyPitchRadians_) *
+            Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.4f, 0.0f) *
             Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
             Microsoft::Xna::Framework::Matrix::CreateTranslation(
                 blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop,
@@ -1871,6 +1935,8 @@ namespace GalaxyEggbert::CNA
         chaseZoom_ = 1.0f;
         chaseZoomLingerSeconds_ = 0.0f;
         cheatZoomStep_ = 0;
+        bodyPitchRadians_ = 0.0f;
+        bodyHasLast_ = false;
         activeCheats_.erase(std::remove_if(activeCheats_.begin(), activeCheats_.end(),
                                            [](const std::string& name) { return name.rfind("zoom", 0) == 0; }),
                             activeCheats_.end());
@@ -4533,6 +4599,7 @@ namespace GalaxyEggbert::CNA
             blupi_.Step(worldRuntime_.GetWorld(), steering, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
+            UpdateBodyTilt(simDt);
             if (interactsWithWorld) TickPendingSkate(simDt);
             // Automatic zoom on action (Decor::MoveHotSpot, Decor.cpp:538-600; the Setup's
             // SetupZoom, on by default; OR-0010): while he walks with his focus, not flying the
