@@ -21,6 +21,7 @@ working logs; use them for history and evidence, and use this handbook to find y
 | [05-worlds.md](05-worlds.md) | the `.vwr` format, generating and checking worlds, the authoring rules, the in-game editor |
 | [06-assets-and-tools.md](06-assets-and-tools.md) | where models, textures, sounds and music come from and the scripts that produce them |
 | [07-contributing.md](07-contributing.md) | coding conventions, commit messages, the ledgers in `plans/audit/`, upstream bugs, release status |
+| [08-backlog.md](08-backlog.md) | everything still open at the end of the agent work, who has to act, where the evidence is |
 
 ## First hour
 
