@@ -104,7 +104,8 @@ only when that task is requested.
 - `f00e0aea` Q-016 zoom feasibility.
 - `3d73bad3` **OR-0074** the clay bridge no longer rebuilds the whole terrain each frame of its
   crumble (World's change journal, `TerrainModelCells.hpp`); all bridge frames are models.
-  Left: a saw switch still rebuilds the terrain once per toggle (~180 ms under xvfb).
+  A saw switch rebuilt the terrain once per toggle; since 2026-11-07 (`404ca503`) it patches the saws'
+  anim blocks too.
 - `2331015e` **OR-0073** the mission signs' digits clean (`sign_decals.py` keys the red paint).
 - `ba7a7d18` BD-0079 the lit dynamite flickers and sparks. Earlier the same day: the editor's copy
   and paste, backups, export/import, thumbnails (ED-0010..0013), sound fidelity (BD-0031, 0075,
@@ -505,16 +506,16 @@ ledgers before repeating any discovery. Where it stands:
   went to a point half a block over his feet. Fixed by a line to his real feet: 092 shows him whole
   (play pass 9: 78/78; `plans/evidence/camera-stair-092.png`, `camera-feet-pass8-vs-pass9.jpg`).
   The same fix shows him in 094's pocket too: the camera looks into it from above (t14760, t15120,
-  t16200 in pass 9, `plans/evidence/camera-pocket-094.png`). Left of the camera list: none -- the
-  girder 201 does not stop the camera, but it is a see-through lattice and he shows through it.
+  t16200 in pass 9, `plans/evidence/camera-pocket-094.png`). Left of the camera list: none (the girder
+  201 noted here stops the camera since OR-0069, checked 2026-11-07: `camera-girder-vs-wall.png`).
   `90da71f`: **the terrain mipmapped** from its own padded copy of object-m.png (TileAtlas
   Layout::Padded: 16 px borders, 96 px pitch, box-filtered levels): 125's ring moire gone. The web
   build was rebuilt with it at 01:25 (2026-11-04, after a first try failed while the cna session had
   CNA mid-edit) and loaded in headless Chrome: 120 models, 93/93 sounds, the title scene drawn.
   `0dc7592`: the drip's smallest drops 408-410 as its smallest scene's drop scaled (the render
   ledger has no unreviewed row left); the ledgers regenerated and current (`725505e`, `80a840f`).
-  Also open: decor without collision (the girder 201) does not stop the camera; its lattice is
-  see-through, so he shows through it (056, 058). 084's black quads are gone (see below).
+  (The girder 201 noted here as open stops the camera since OR-0069, the same night; checked
+  2026-11-07.) 084's black quads are gone (see below).
   2026-11-04 early morning: **Q-008 done** -- `2d6c909` keeps each lava frame's mesh (all lava
   cells show the same frame) and gives a pool's inner cells a 4 x 3 wave grid; `f2eeded` puts
   105's lava lake back as the original's (a fall burns him, Clear3): 105 plays in 18.7 s against

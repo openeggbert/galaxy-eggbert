@@ -22,31 +22,34 @@ where the evidence is. Checked against the tree at the commit that added this fi
 From `plans/audit/animation_coverage.md` (ranked fix list; items 1-3 are done: Jump now ends in Air
 after 3 ticks, the skateboard spins, TakeDynamite plays and holds Blupi 18 ticks):
 
-- Item 4: trace the original's `BlupiStep` during the Hide window to decide whether the `Hide` clip
-  (9 frames) should play in `IsDeathHidden`. A research step first.
+- Item 4: done 2026-11-07 (BD-0084): the life-loss window plays the `Hide` clip, as the original draws
+  table_blupi's Hide there.
 - Item 5: ObjectType 31 (charge pickup) shows the electrode model and has no pose for icon 243; it is
   never placed in a shipped level.
 - Item 6: turn clips for vehicles, swimming and the air from the `Turn*` icon tables. Large, and by
   design today (the model yaws over the original's own turn time).
-- Item 7: cosmetic: lightning frames in turn instead of random, spring phase per column, fish head.
+- Item 7: the lightning's frames are shuffled now (2026-11-07). Kept on purpose: the spring's phase
+  `(x+z)*7` (the 3D form of the original's column offset) and the fish head (BB3D-032, every hypothesis
+  tested; reopen only if the owner names it). One difference stays: every bolt cell shows the same frame
+  at a time, the original draws each cell's own random frame.
 
 Other known gaps:
 
-- A saw switch still rebuilds the terrain once per toggle (about 180 ms under xvfb; OR-0074 removed
-  the rebuild for the clay bridge only). `handoff.md`.
 - The zoom cheat (OR-0079, steps 100 / 50 / 25 / 12 / 6 %) is limited by walls: the chase camera stops
   at them, so caves keep a short view. A transparent cut-away of walls between the camera and Blupi
   (option (b) of Q-016) is not built and means work in the terrain renderer's chunking.
 - The saws' switch machine (384/385) keeps the open side as its front. With free cells on all four sides
   it can stand edge-on to the player. A version that turned it toward Blupi (OR-0081) was reverted
   because it swung as he walked past. A stable choice (for example toward the default camera) is open.
-- Decor without collision (the girder 201) does not stop the camera and its lattice is see-through, so
-  Blupi shows through it (worlds 056, 058). Noted in `handoff.md` on 2026-11-04; not re-checked since.
 - The house's window recess is dark in the sprite (a cast shadow in the scene) and lit in the game, which
   has no cast shadows on models (cosmetic, `handoff.md`).
 - Switch reach: `WorldRuntime::TryActivateSwitch` accepts a machine up to half a cell from Blupi's middle
   (OR-0084). The original needs him in its tile. If a switch fires when it should not, tighten
   `kReach` there.
+
+Closed on 2026-11-07, for the record: a switch's saws no longer rebuild the terrain (they patch their
+anim blocks, 0.03 ms instead of about 20 ms in the gallery, frames identical); the girder 201 stops the
+chase camera like any wall since OR-0069 (`plans/evidence/camera-girder-vs-wall.png`).
 
 ## 3. Verified state at the end of the agent work
 
