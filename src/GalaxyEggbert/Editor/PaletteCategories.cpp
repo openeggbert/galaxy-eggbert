@@ -68,7 +68,8 @@ namespace GalaxyEggbert::Editor
             // in no original world).
             FreeMixedMenuCategory("Moving mechanisms", {},
                                   {1, 1, 1, 1, 47, 4, 17, 20, 44, 54, 16, 32, 33},
-                                  {21, 20, 19, 28, 121, 16, 55, 60, 113, 140, 54, 95, 99}),
+                                  {21, 20, 19, 28, 121, 16, 55, 60, 113, 140, 54, 95, 99},
+                                  {-2, -2, -2, -2}), // the lifts wear the block picked last
             FreeMixedMenuCategory("Treasures", {},
                                   {5, 6, 26, 25, 30, 29, 31, 200, 55},
                                   {7, 10, 75, 74, 89, 88, 93, 92, 87}),

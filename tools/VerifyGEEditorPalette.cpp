@@ -521,6 +521,30 @@ int main()
               "the implemented Secret wooden case does not raise the temporary notice");
     }
 
+    // BD-0082: a lift wears the block picked last (before any pick: the default look, the lift tile).
+    {
+        EditorPalette fresh;
+        (void)click(fresh, 30.0f, 282.0f);
+        (void)click(fresh, 72.0f, 282.0f);
+        check(fresh.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType1 &&
+                  fresh.SelectedObjectVisualIcon() == 0,
+              "a lift picked before any block keeps the default look");
+        EditorPalette picked;
+        picked.SelectBlock(361);
+        (void)click(picked, 30.0f, 282.0f);
+        (void)click(picked, 72.0f + 3.0f * 42.0f, 282.0f);
+        check(picked.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType1 &&
+                  picked.SelectedObjectVisualIcon() == 361,
+              "a lift picked after a block (the fourth speed) wears that block's tile (361)");
+        EditorPalette conveyor;
+        conveyor.SelectBlock(361);
+        (void)click(conveyor, 30.0f, 282.0f);
+        (void)click(conveyor, 72.0f + 4.0f * 42.0f, 282.0f);
+        check(conveyor.SelectedObjectType() == GalaxyEggbert::Def::ObjectType::ObjectType47 &&
+                  conveyor.SelectedObjectVisualIcon() == 0,
+              "the conveyor lift keeps its own look");
+    }
+
     {
         EditorPalette palette;
         (void)click(palette, 30.0f, 450.0f);

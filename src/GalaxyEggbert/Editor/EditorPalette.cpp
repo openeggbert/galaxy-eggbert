@@ -206,8 +206,11 @@ namespace GalaxyEggbert::Editor
                     const int visualIcon =
                         index >= 0 && index < static_cast<int>(objectVisualIconIds.size()) ?
                             objectVisualIconIds[static_cast<std::size_t>(index)] : 0;
+                    // A negative id takes the look of the selected block: -1 always; -2 (the lifts)
+                    // once a block was picked, else the default look (0), the lift tile (BD-0082).
                     selectedObjectVisualIcon_ =
-                        visualIcon < 0 ? selectedBlockType_ : visualIcon;
+                        visualIcon == -2 ? (blockPicked_ ? selectedBlockType_ : 0)
+                                         : (visualIcon < 0 ? selectedBlockType_ : visualIcon);
                     placementKind_ = PlacementKind::Object;
                     openCategory_ = -1;
                 }
@@ -216,6 +219,7 @@ namespace GalaxyEggbert::Editor
                              static_cast<std::uint16_t>(blockType)))
                 {
                     selectedBlockType_ = blockType;
+                    blockPicked_ = true;
                     placementKind_ = PlacementKind::Block;
                     openCategory_ = -1;
                 }

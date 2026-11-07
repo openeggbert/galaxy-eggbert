@@ -120,6 +120,7 @@ namespace GalaxyEggbert::Editor
         void SelectBlock(std::uint16_t blockType) noexcept
         {
             selectedBlockType_ = blockType;
+            blockPicked_ = true;
             placementKind_ = PlacementKind::Block;
         }
 
@@ -169,6 +170,8 @@ namespace GalaxyEggbert::Editor
         std::vector<PaletteCategory> categories_;
         int openCategory_ = -1;
         int selectedBlockType_;
+        // A block was picked from the palette (a lift then wears it, BD-0082; before, the default look).
+        bool blockPicked_ = false;
         int selectedObjectType_;
         int selectedObjectVisualIcon_ = 0;
         int selectedButtonIcon_ = 0;

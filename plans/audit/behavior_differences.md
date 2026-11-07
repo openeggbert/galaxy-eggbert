@@ -1431,11 +1431,10 @@ levels use 29 most, then 361, 387, 340, 153, 215 ...), drawn as that tile moving
   at x 44-54): `lifts-moving.png` -- 29 its model, the others their tile's cube, moving.
 - No campaign world sets a lift's look other than 29, so the player sees no change until worlds or
   the editor use it.
-- The editor today: the Moving-mechanisms entries (the four lifts, 47) have no negative visual id in
-  `PaletteCategories.cpp`, so a placed lift always gets the default look (29): an author cannot set
-  a lift's look yet. The palette's mechanism (`selectedObjectVisualIcon_ = selectedBlockType_` for a
-  negative id, used by one entry of "Keys and progression") could serve the lifts; left to decide
-  (it would make a lift wear the last block picked, whatever that is).
+- The editor (owner 2026-11-07, option A): the four lifts in "Moving mechanisms" take the look of the
+  block picked last (`objectVisualIconIds` -2: the selected block once one was picked, else the default
+  look, the lift tile 29; the conveyor lift 47 keeps its own). `VerifyGEEditorPalette` covers the three
+  cases. Before it a placed lift always got the default look.
 
 
 ## BD-0083 — solid BigDecor that left no lane a human could take (053's door, 058) — FIXED_AND_VERIFIED
