@@ -1,0 +1,22 @@
+# The typed cheat "zoom" (OR-0079): the chase camera 1x, 2x, 4x, 8x as far, then back to 1x.
+# Run: tools/autoplay.sh build-cna-opengl3 <this> 70
+wait 120
+shots 1
+wait 2
+type zoom
+wait 90
+shots 1
+wait 2
+type zoom
+wait 90
+shots 1
+wait 2
+type zoom
+wait 90
+shots 1
+wait 2
+type zoom
+wait 90
+shots 1
+wait 2
+end

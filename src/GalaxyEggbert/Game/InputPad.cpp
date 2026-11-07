@@ -1900,6 +1900,7 @@ namespace GalaxyEggbert::Game
             {"weelkeys", TypedCheat::WeelKeys},
             {"quick", TypedCheat::Quick},
             {"ghost", TypedCheat::Ghost},
+            {"zoom", TypedCheat::Zoom},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;

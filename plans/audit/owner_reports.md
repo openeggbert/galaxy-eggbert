@@ -416,3 +416,21 @@ rewritten).
   in it, each on a fresh runtime (it fails on the old code for "standing in it"); live probes
   `tools/autoplay/probes/exhibit_saws_998.txt` / `_999.txt` (traces: 998 saws turning 6 -> 4 -> 7, 999
   4 -> 1); autoplay gained the conditions `switches` and `saws` and a trace line on their change.
+
+
+## OR-0079 — "the zoom cheat does not work, it does nothing" (owner 2026-11-07) — FIXED_AND_VERIFIED
+
+- Report: typing the cheat word `zoom` does nothing. Cause: Galaxy's typed cheats were the original's
+  21 words plus `ghost` and `quick`; Mobile Eggbert's MODERN-only `zoom` (view 100 -> 50 -> 25 -> 12 %,
+  `SetCheatZoom`, reset on leaving the level; InputPad.cpp:742-811, Decor.cpp:589, 668-677, 11630)
+  had been measured (Q-016) but not built, awaiting the owner. The report is taken as the answer:
+  option (a).
+- Built: `zoom` is a typed cheat (`InputPad::TypedCheat::Zoom`); each typing steps
+  `cheatZoomStep_` 0 -> 1 -> 2 -> 3 -> 0, the chase camera 1x, 2x, 4x, 8x as far
+  (`kChaseDistance * 2^step`) and 0.25 rad higher a step toward a bird's-eye view, still stopped by
+  walls (`RaymarchWallDistance`). The step shows top-left as "zoom 50%" / "25%" / "12%" like the other
+  active cheats and is reset when a level loads. The cut-away of walls (option b) is not built: in
+  caves the view stays near the walls.
+- Verified: `VerifyGEInputPad` (the word fires its cheat), `tools/autoplay/probes/zoom_cheat.txt` in
+  hub 070: `plans/evidence/zoom-cheat-implemented.png` (1x, 50 %, 25 %, 12 %, back to 1x); ctest, golden
+  frames and trace unchanged (step 0 is the old camera).

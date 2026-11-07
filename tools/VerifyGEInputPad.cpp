@@ -715,7 +715,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 23;
+        bool all = count == 24;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -723,7 +723,7 @@ int main()
             const bool quickInside = words[i].cheat == TC::QuickLollipop; // "quick" fires on the way
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
         }
-        check(all, "Typed cheats: each of the original's 21 words and ghost/quick fires its own cheat");
+        check(all, "Typed cheats: each of the original's 21 words and ghost/quick/zoom fires its own cheat");
         InputPad pad;
         check(type(pad, "givecopter").first == TC::GiveCopter && type(pad, "copter").first == TC::None,
               "Typed cheats: givecopter fires; the buffer is cleared after a word (\"copter\" alone is nothing)");

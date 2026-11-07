@@ -455,8 +455,9 @@ namespace GalaxyEggbert::Game
         // each does are the original's `cheatEntries[]` (the desktop words of the C++ port,
         // OR-0007: "givecopter" and the rest did nothing in Galaxy, which knew only "ghost" and
         // "quick"). `buildofficialmissions` (a world-building switch) is not a player cheat here;
-        // `debug`, `zoom` and `cheats` (the port's MODERN extras for its 2D view) have no
-        // counterpart. "killegg" is in the original's list but `Decor::CheatAction` has no case
+        // `debug` and `cheats` (the port's MODERN extras for its 2D view) have no counterpart;
+        // `zoom` (MODERN: the view 100 -> 50 -> 25 -> 12 %, `SetCheatZoom`, reset on leaving the
+        // level) is a farther and higher chase camera here (OR-0079, Q-016 (a)). "killegg" is in the original's list but `Decor::CheatAction` has no case
         // for it: it does nothing there either.
         enum class TypedCheat : std::uint8_t
         {
@@ -484,6 +485,7 @@ namespace GalaxyEggbert::Game
             WeelKeys,     // "weelkeys" (sic): every key
             Ghost,        // "ghost" (MODERN): walk through walls
             Quick,        // "quick" (MODERN): F7/F8 unlocked
+            Zoom,         // "zoom" (MODERN): the view out 1x -> 2x -> 4x -> 8x -> 1x
         };
         struct TypedCheatResult
         {

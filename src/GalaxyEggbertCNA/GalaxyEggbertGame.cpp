@@ -1870,6 +1870,10 @@ namespace GalaxyEggbert::CNA
         cameraShake_ = CameraShake{};
         chaseZoom_ = 1.0f;
         chaseZoomLingerSeconds_ = 0.0f;
+        cheatZoomStep_ = 0;
+        activeCheats_.erase(std::remove_if(activeCheats_.begin(), activeCheats_.end(),
+                                           [](const std::string& name) { return name.rfind("zoom", 0) == 0; }),
+                            activeCheats_.end());
         accelLastState_ = false;
         accelWaitZero_ = true;
         blupiActiveClipName_.clear();
@@ -3478,6 +3482,9 @@ namespace GalaxyEggbert::CNA
                 sound_.Play(SoundChannel::SoundChannel60);
                 break;
             case TC::WeelKeys: interaction_.CheatAllKeys(); break;
+            case TC::Zoom:
+                cheatZoomStep_ = (cheatZoomStep_ + 1) % 4; // 1x, 2x, 4x, 8x, back to 1x
+                break;
             case TC::Ghost:
             case TC::Quick:
             case TC::None:
@@ -3733,6 +3740,17 @@ namespace GalaxyEggbert::CNA
                         case TC::OpenDoors: toggle("opendoors"); break;
                         case TC::MegaBlupi: toggle("megablupi"); break;
                         case TC::ShowSecret: toggle("showsecret"); break;
+                        case TC::Zoom:
+                        {
+                            // Listed with its step (the view's size as Mobile Eggbert's 100/50/25/12 %).
+                            activeCheats_.erase(
+                                std::remove_if(activeCheats_.begin(), activeCheats_.end(),
+                                               [](const std::string& name) { return name.rfind("zoom", 0) == 0; }),
+                                activeCheats_.end());
+                            static const char* const kZoomLabels[4] = {"", "zoom 50%", "zoom 25%", "zoom 12%"};
+                            if (cheatZoomStep_ > 0) activeCheats_.emplace_back(kZoomLabels[cheatZoomStep_]);
+                            break;
+                        }
                         default: break;
                     }
                     if (typedCheat.quickTyped) toggle("quick");
@@ -6110,7 +6128,8 @@ namespace GalaxyEggbert::CNA
                 // spring-arm/collision-aware orbit camera -- sufficient to
                 // show the placeholder model, not a final camera design.
                 // The Setup's automatic zoom brings it in while he walks (chaseZoom_, OR-0010).
-                const float kChaseDistance = 4.0f / chaseZoom_;
+                // The cheat `zoom` takes the view out 2x, 4x, 8x (OR-0079).
+                const float kChaseDistance = 4.0f * static_cast<float>(1 << cheatZoomStep_) / chaseZoom_;
                 constexpr float kChaseLookHeight = 1.0f;
                 // Base elevation reproduces the previous fixed offset
                 // (height 1.2 over distance 4); mouse-look pitch orbits the
@@ -6118,7 +6137,9 @@ namespace GalaxyEggbert::CNA
                 // camera rises, view tilts down -- same direction sense as
                 // the first-person branch).
                 constexpr float kBaseElevation = 0.29f;
-                const float elevation = std::clamp(kBaseElevation + lookPitchOffset_, -1.2f, 1.45f);
+                // and raises it toward a bird's-eye view as it goes out (0.25 rad a step).
+                const float elevation = std::clamp(
+                    kBaseElevation + lookPitchOffset_ + 0.25f * static_cast<float>(cheatZoomStep_), -1.2f, 1.45f);
                 rawTarget = Microsoft::Xna::Framework::Vector3(
                     blupi_.GetX(), blupi_.GetY() + kChaseLookHeight, blupi_.GetZ());
                 // Jumping under a low ceiling (a three-high tunnel) lifts the look point into the

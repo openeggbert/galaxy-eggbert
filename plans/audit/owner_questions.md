@@ -290,7 +290,7 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
   houses, machines, columns and fountain fill a column of two cells; 025 and 053's routes went round
   a palm and a machine standing in their way.
 
-## Q-016 — the "zoom" cheat of Mobile Eggbert in Galaxy: feasible, and can the graphics take it? (owner 2026-11-06) — OPEN
+## Q-016 — the "zoom" cheat of Mobile Eggbert in Galaxy: feasible, and can the graphics take it? (owner 2026-11-06) — ANSWERED 2026-11-07: option (a) built (OR-0079)
 
 - Mobile Eggbert (`InputPad.cpp:742-811`, `Decor.cpp:589, 668-677, 11630`): the cheat word `zoom`
   cycles the view 100 -> 50 -> 25 -> 12 % -> 100 % (`SetCheatZoom`, the hot-spot zoom times the
