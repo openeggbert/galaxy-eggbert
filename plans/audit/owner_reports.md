@@ -470,3 +470,19 @@ rewritten).
 - Verified: probe world 992 (a 384 and a 385 on a floor; `plans/evidence/switch-faces-blupi.png`: both
   panels read from the front); ctest and golden frames unchanged. A smooth lever movement between the
   two states would be Galaxy's own addition (not asked).
+
+
+## OR-0082 — the grass on the main screen has a nonsensical texture from above (owner 2026-11-07) — FIXED_AND_VERIFIED
+
+- Report: the grass on the title scene (and wherever a grass top shows) has a meaningless texture seen
+  from above. Cause: `textures3d/grass_top.png`, the texture the grass tops use (`grassEffect_`), was a
+  synthetic bright-green noise made by a script that was never committed (commit `1d0d62a4`,
+  2026-07-08); nothing in the original looks like it. Owner's choice: option A, that texture.
+- Fixed: the texture is now made from the original's own grass (`tools/textures/grass_top.py`, run
+  `python3 tools/textures/grass_top.py`): feathered patches of the leaf band of tile 107 in
+  `Content/icons/object-m.png` (leaves only: no outline, no earth), laid at random on a wrapping
+  64 x 64 canvas so it tiles; deterministic. It is a darker green with the leaves' blade highlights, as
+  the leaves on the grass tiles' sprites.
+- Verified: the title scene before and after (`plans/evidence/title-grass-leaves.png`); ctest and golden
+  frames unchanged (the golden scenes show no grass top). The script also makes the asset reproducible
+  (the provenance audit listed it as not).
