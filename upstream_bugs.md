@@ -230,3 +230,14 @@ here only so this file can serve as the index:
   UP-014 in libcna/cna-engine's `upstream-issues.md`; see `editor-wireframe-gles-bug.md`. Not an
   upstream bug after all: the defect was Galaxy Eggbert's own `EditorHighlightRenderer`. **Fixed**
   here on 2026-10-23 (`NEXT.md` §3); UP-014 in cna-engine was marked resolved.
+
+## UB-008 — CNA audio: `WetBus.cpp` uses `std::fill` without `#include <algorithm>`
+
+Found 2026-11-07 building the web target (`build-cna-webgl2`, Emscripten, libc++):
+`libcna/cna/modules/audio/src/Internal/WetBus.cpp:123: error: no member named 'fill' in namespace
+'std'`. Introduced by CNA `f6c9ece36` (GAP-04, 2026-11-06). The native build (libstdc++) compiles
+it only because `<algorithm>` arrives transitively, so CNA's own native tests do not see it.
+Fix upstream: add `#include <algorithm>` to `WetBus.cpp`. Galaxy Eggbert has no workaround: the
+web build stays on its previous output (2026-11-06) until CNA is fixed.
+
+UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web build linked again on 2026-11-07.
