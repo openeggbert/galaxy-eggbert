@@ -280,6 +280,23 @@ int main()
             drawn += icon >= 0 ? 1 : 0;
         }
         Check(drawnWhenDeadly && drawn == 75, "the lightning (305) is drawn only while it is deadly");
+        // The original picks the frame at random (Decor.cpp:1079-1082); a fixed shuffle stands in:
+        // each bag of three strikes holds 305, 306 and 307 once, and the order is not 305, 306, 307 over.
+        bool bagsFull = true;
+        bool notInTurn = false;
+        for (int bag = 0; bag < 8; ++bag)
+        {
+            int seen = 0;
+            for (int k = 0; k < 3; ++k)
+            {
+                const int strike = bag * 3 + k;
+                const int icon = ResolveBlockAnimationIcon(BlockTypes::Blitz, strike * 2);
+                seen |= 1 << (icon - 305);
+                notInTurn = notInTurn || icon != 305 + strike % 3;
+            }
+            bagsFull = bagsFull && seen == 7;
+        }
+        Check(bagsFull && notInTurn, "the lightning's frames come in shuffled bags of 305-307, not in turn");
     }
     Check(GetBlockDefinition(BlockTypes::FanLeft).fanDirection ==
               BlockFanDirection::NegativeX,

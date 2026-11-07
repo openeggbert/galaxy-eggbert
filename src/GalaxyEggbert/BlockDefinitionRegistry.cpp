@@ -169,12 +169,29 @@ namespace GalaxyEggbert
         };
         constexpr int marineFrames[11] = {203, 204, 205, 206, 207, 208, 207, 206, 205, 204, 203};
         // The lightning (Decor::BlitzActif, Decor.cpp:620-634, 1079): drawn, and deadly, only on
-        // the even ticks of the first half of its 100-tick cycle, a frame of 305-307 each time
-        // (the original picks one at random; here they take turns). -1: not drawn (D51).
+        // the even ticks of the first half of its 100-tick cycle, a frame of 305-307 each time. The
+        // original picks one at random (m_random->Next(305, 308)); here a fixed shuffle stands in for
+        // it, so that runs stay reproducible: the 25 strikes in bags of three, each bag the three
+        // frames in an order a hash of the bag picks (they took turns 305, 306, 307 before,
+        // 2026-11-07). -1: not drawn (D51).
+        constexpr int blitzOrders[6][3] = {
+            {305, 306, 307}, {305, 307, 306}, {306, 305, 307}, {306, 307, 305}, {307, 305, 306}, {307, 306, 305}};
+        const auto bagHash = [](std::uint32_t bag) {
+            std::uint32_t x = bag + 0x9e3779b9u;
+            x ^= x >> 16;
+            x *= 0x7feb352du;
+            x ^= x >> 15;
+            x *= 0x846ca68bu;
+            x ^= x >> 16;
+            return x;
+        };
         int blitzFrames[100];
         for (int tick = 0; tick < 100; ++tick)
         {
-            blitzFrames[tick] = (tick % 2 == 0 && tick < 50) ? 305 + (tick / 2) % 3 : -1;
+            const int strike = tick / 2;
+            blitzFrames[tick] = (tick % 2 == 0 && tick < 50)
+                                    ? blitzOrders[bagHash(static_cast<std::uint32_t>(strike / 3)) % 6][strike % 3]
+                                    : -1;
         }
 
         SetAnimation(definitions_[Lava], Lava, lavaFrames, 2);

@@ -310,7 +310,7 @@ Verdict: MATCH.
 | 4 | DONE 2026-11-07 (BD-0084): the original draws Hide (276-284) through the life-loss window; Galaxy plays the `Hide` clip there now | small | was the only unknown about a built clip |
 | 5 | Look at ObjectType31's frames 238-243 (electrode model, no pose for 243) | small | never placed in a shipped level |
 | 6 | Turn clips for vehicles/swim/air from the `Turn*` icon tables | large | by design today; only if the owner wants the original's swing |
-| 7 | Cosmetic: random lightning frame order, spring phase by column, fish head (BB3D-032) | small | negligible |
+| 7 | 2026-11-07: the lightning's frames come in shuffled bags of 305-307 (a reproducible stand-in for the original's `m_random->Next(305, 308)`; every bolt cell still shows the same frame at a time, the original draws each cell's own). Kept: the spring's phase (x+z)*7, the 3D form of the original's column i*7 (with x alone, springs in a row along Z would bounce together); the fish head (BB3D-032: every hypothesis tested, reopen only if the owner names it; D11 was closed without it) | small | negligible |
 
 ## 6. What could not be verified
 
