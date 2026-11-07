@@ -7422,7 +7422,32 @@ namespace GalaxyEggbert::CNA
                                     // 5): the plate-rotation bit the hub generators set on signs facing
                                     // X (an older plate convention) must not turn the model too (the
                                     // signs of hub 070 stood sideways, owner 2026-11-05).
-                                    const float frontYaw = GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
+                                    // The saws' switch turns its panel to Blupi, to the side he is on where that
+                                    // side is open (OR-0081: with a free cell on all four sides it stood edge-on
+                                    // to him and the lever and lamps could not be read).
+                                    int frontSide = cell.openSide;
+                                    if (cell.base == GalaxyEggbert::BlockTypes::Switch ||
+                                        cell.base == GalaxyEggbert::BlockTypes::SwitchOff)
+                                    {
+                                        const float toX = blupi_.GetX() - cell.x;
+                                        const float toZ = blupi_.GetZ() - cell.z;
+                                        const bool alongX = std::fabs(toX) > std::fabs(toZ);
+                                        const int sideToBlupi = alongX ? (toX > 0.0f ? 0 : 1) : (toZ > 0.0f ? 2 : 3);
+                                        const auto& world = worldRuntime_.GetWorld();
+                                        const int rawX = static_cast<int>(std::lround(cell.x)) + WorldRuntime::kWorldCenterX +
+                                                         (sideToBlupi == 0 ? 1 : sideToBlupi == 1 ? -1 : 0);
+                                        const int rawY = static_cast<int>(std::lround(cell.y));
+                                        const int rawZ = static_cast<int>(std::lround(cell.z)) + WorldRuntime::kWorldCenterZ +
+                                                         (sideToBlupi == 2 ? 1 : sideToBlupi == 3 ? -1 : 0);
+                                        const int axis = static_cast<int>(world.blocksPerAxis());
+                                        if (rawX >= 0 && rawX < axis && rawY >= 0 && rawY < axis && rawZ >= 0 && rawZ < axis &&
+                                            world.getBlock(static_cast<std::uint16_t>(rawX), static_cast<std::uint16_t>(rawY),
+                                                           static_cast<std::uint16_t>(rawZ)).isAir())
+                                        {
+                                            frontSide = sideToBlupi;
+                                        }
+                                    }
+                                    const float frontYaw = GalaxyEggbert::Game::FrontModelYaw(frontSide) +
                                                            1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.x, cell.y, cell.z));
                                     drawModel(*still, cell.x, cell.y, cell.z, frontYaw);
                                     if (GalaxyEggbert::Game::IsTeleporterIcon(cell.base))

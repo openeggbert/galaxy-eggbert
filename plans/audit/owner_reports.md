@@ -453,3 +453,20 @@ rewritten).
   9-19 degrees at its speeds, a swimmer -80 swimming up and 14 level, surf +-10;
   `plans/evidence/body-tilt-helicopter.png` and `body-tilt-swim.png` (from behind, the lean is
   visible on the turns); ctest and golden frames unchanged.
+
+
+## OR-0081 — the saw switch's animation, and its panel seen edge-on (owner 2026-11-07) — FIXED_AND_VERIFIED
+
+- Report: the original probably animates switching the saw machine on and off; Galaxy toggles it but
+  shows no animation. Checked against `Decor.cpp`: `ActiveSwitch` (7134-7147) only swaps the tile 384 <->
+  385 (the sprite sheet has just those two: lever up and green lamp for ON, lever down and red lamp for
+  OFF) and Blupi plays his `Switch` action; no in-between frames. Galaxy does the same (the model's
+  two poses, `switch384`, and Blupi's Switch clip).
+- What did hide it: the machine's panel was turned to the open side with the most room, and with a
+  free cell on all four sides (a pedestal in a hall, the exhibits) it stood edge-on to the player:
+  the lever and lamps were a sliver. Fixed (owner's option A): the switch turns its panel to Blupi, to
+  the side he is on where that side is open (else the old side); drawn per frame in the model pass
+  (`GalaxyEggbertGame.cpp`, the front-model branch).
+- Verified: probe world 992 (a 384 and a 385 on a floor; `plans/evidence/switch-faces-blupi.png`: both
+  panels read from the front); ctest and golden frames unchanged. A smooth lever movement between the
+  two states would be Galaxy's own addition (not asked).
