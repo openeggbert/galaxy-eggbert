@@ -70,7 +70,7 @@ barriers filtering walkers, (3) a richer palace (balustrades 398, columns 399, w
 connectors I->J, J->K (not shortened), (5) a main route of 15-20 minutes (54000-72000 ticks) by real
 content. Plan and progress are in `plans/audit/world199_comparison.md` §10.1 (updated per commit);
 probe helpers: `build-probe/world199-rebuild/` (seg/*.txt, assemble.py main, assemble_alt.py, run.sh, snap.sh).
-Done: required branches (main 34594 ticks, alternate 46298).
+Done: required branches; G stars awake; K helicopter + alcove; D balustrades/columns; connectors decorated (main 34594 ticks, alternate 48146). Left: item 5, the route is still far under 54000 ticks.
 
 ### Waiting for the owner (do not start without an answer)
 

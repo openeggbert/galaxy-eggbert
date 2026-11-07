@@ -446,3 +446,20 @@ The owner accepted gate 7 and asked for five changes; done so far, in order:
   playthrough 28 434 -> 34 594 ticks (9.6 min). The alternate route (B's invert shelf, the wasp's well,
   teleporter 331 and D climbed again) is 46 298 ticks. F's street birds are now 3 (35, 38, 41) and the roofs
   have 4 (the fourth over the last house): still 7.
+- **G's follow stars awake (item 1).** The ten stars now sit where the wake box (about 2.2 cells either way
+  on X and Z, level with him; `InteractionSystem`, BD-0053) triggers on the way: one by the ferry and one
+  across from it in hall 1, two at the landing and three round B3 in hall 2, three by the way south. Awake
+  they home on him at a fifth of his speed and burst on any wall; a probe standing still at the landing
+  dies to them in four seconds. The route waits for the ferry outside every wake box (x 73.6), boards at once
+  and takes B3 without lingering. The mine across hall 1's second lane moved to x 70.
+- **K's helicopter and barriers (item 2).** A helicopter stands on K's floor; in the hall's north-west corner,
+  at the exit ledge's height, an alcove (x 32-36, z 11-12) holds an egg behind the ten flight-barrier cells
+  (z 13, two high): a walker sees it and cannot enter, the helicopter flies through (the alternate route
+  does, and back to the floor). The twelve barriers of A are as before: 22 in all. Helicopters stay 22: I's
+  east shelf has seven instead of eight, K one (so the main route boards the seventh at x 57).
+- **D's palace (item 3).** Balustrades (398) along the south balcony's, the east balcony's and the bridge's
+  void edges (walked through), fluted columns (399) down the north wall and the east wall, window panels on
+  the bridge stones' south faces, cobwebs in the upper corners. Routes untouched.
+- **Connectors (item 4).** I to J (x 28-30, now five wide) and J to K (x 27-31): ribs and niches in the
+  walls, ceiling ribs, a chimney each up to a skylight, a floor mosaic of rock and slime, and I's two columns
+  moved into the first connector. Not shortened. Budgets: 196 objects / 47 BigDecor as before.

@@ -221,6 +221,8 @@ def section_b():
     key(O.KEY3, 51, 72, 7)                                   # B1, the blue key, at the east ledge's end
     slime(w, 42, 72, 12, 42, 75, 12)                        # a pillar four high: only the lollipop's power jump reaches R1 on it
     key(O.KEY1, 42, 76, 12)                                  # R1, the red key, on the pillar
+    if calm:                                                 # levelcheck has no power jump: a stand-in step
+        slime(w, 43, 72, 12, 43, 73, 12)
     for x, y, z in ((32, 82, 24), (31, 72, 8), (50, 72, 19), (45, 82, 24)):
         put(O.EGG, x, y, z)
     hazard(49, 72, 8)                                        # M2 beside B1
@@ -346,6 +348,26 @@ def section_d():
             for y in (70, 71):
                 w.set(x, y, z, 396)
     w.set(21, 69, 44, SWITCH)
+    # balustrades (398) along the balconies' void edges and fluted columns (399) down the court's walls:
+    # decor he walks through; window panels on the bridge's stones' south faces; cobwebs in the corners
+    for x in (16, 17, 18):
+        w.set(x, 66, 62, 398)
+    for z in range(47, 59):
+        if z not in (52, 56):
+            w.set(23, 70, z, 398)
+    for x in range(19, 23):
+        w.set(x, 70, 45, 398)
+    for x in (12, 15, 20, 22, 24):
+        for y in (58, 59, 60):
+            w.set(x, y, 41, 399)
+    for z in (54, 57, 60, 63):
+        for y in (58, 59, 60):
+            w.set(25, y, z, 399)
+    for x in range(14, 19):
+        for y in (70, 71):
+            w.set(x, y, 43, 391)
+    for x, z, k in ((11, 41, 401), (25, 41, 402), (11, 65, 403), (25, 65, 401)):
+        w.set(x, 78, z, k)
     key(O.KEY3, 12, 70, 44)                                    # B2
     w.set(T330_D[0], T330_D[1] + 1, T330_D[2], 330)
     w.set(T331_D[0], T331_D[1] + 1, T331_D[2], 331)
@@ -520,7 +542,7 @@ def box_of_stone(x0, y0, z0, x1, y1, z1):
 # ==== G. the riveted station =====================================================================
 def section_g():
     """X 67-91, Z 34-54, grey riveted plate. F's tunnel meets a blue gate (B2) in the west wall (z 42-44);
-    hall 1 (x 67-77, walk 34) with sleeping follow stars and up fans at its sides; a lava service
+    hall 1 (x 67-77, walk 34) with two follow stars and up fans at its sides; a lava service
     trench (x 78-80) crossed on two ferry lifts side by side (z 43 east, z 45 west); hall 2 (x 81-91,
     walk 30, four lower) with four left fans in its east wall (z 40, 43, 46, 49: their winds cross the
     way along x 90), B3 in its north-east corner, and the exit tunnel south (x 88-90, z 55)."""
@@ -557,13 +579,16 @@ def section_g():
             w.fill(87, 30, z, 91, 30, z, WIND_LEFT)
     key(O.KEY3, 90, 30, 35)                                  # B3
     w.bigdecor(29, 75, 34, 36)                               # a ball machine, one of the station's landmarks
-    # ten sleeping follow stars: hall 1's sides, hall 2's corners
-    for x, y, z in ((69, 34, 36), (69, 34, 52), (73, 34, 36), (73, 34, 52), (76, 34, 38), (83, 30, 36),
-                    (83, 30, 52), (84, 30, 53), (84, 30, 33), (82, 30, 47)):
+    # ten follow stars (96), each asleep until Blupi comes within its wake box (about 2.2 cells either
+    # way on X and Z, level with him), then homing on him at a fifth of his walking speed and bursting
+    # on any wall in the way: two by the ferry in hall 1, two at the landing in hall 2, three round B3,
+    # three by the way south
+    for x, y, z in ((76, 34, 41), (77, 34, 45), (82, 30, 41), (82, 30, 45), (86, 30, 36), (88, 30, 33),
+                    (91, 30, 33), (86, 30, 48), (84, 30, 52), (90, 30, 52)):
         if not calm:
             put(O.FOLLOW_STAR, x, y, z)
     mover(O.MOVING_MINE, (72, 34, 38), (72, 34, 50), 10)
-    mover(O.MOVING_MINE, (75, 34, 50), (75, 34, 38), 10)
+    mover(O.MOVING_MINE, (70, 34, 50), (70, 34, 38), 10)
     mover(O.MOVING_MINE, (85, 30, 38), (85, 30, 50), 10)
     mover(O.MOVING_MINE, (82, 30, 49), (82, 30, 52), 10)
 
@@ -606,7 +631,7 @@ def tower(x0, z0, x1, z1, top, block=SLIME, cap=STAR, floor_y=10):
 
 def section_i():
     """X 31-61, Z 53-87, walk 10 up to 30, slime with star-block perches. H's tube arrives at the east
-    shelf (x 54-60, z 66-80, walk 18) where eight helicopters stand in a row; the west shelf (x 31-35,
+    shelf (x 54-60, z 66-80, walk 18) where seven helicopters stand in a row; the west shelf (x 31-35,
     z 54-62, walk 12) leaves by a tunnel west to J. Between them a cavern floor at walk 10 with four
     big creatures, two spike traps and two drips, and three perches (towers capped with stars, walk 26,
     22, 30) with a helicopter pair each: the way is a flight from the east shelf over the perches and
@@ -640,15 +665,13 @@ def section_i():
     mover(O.BIG_CREATURE, (48, 10, 56), (48, 10, 66))
     mover(O.MOVING_MINE, (47, 20, 72), (47, 28, 72), 10)
     # the helicopters: eight on the east shelf, two on each perch, two on the floor, two on the west shelf
-    for k in range(8):
+    for k in range(7):
         put(O.HELICOPTER, 55 + (k % 4), 18, 68 + 3 * (k // 4) + 2 * (k // 4))
     for x, y, z in ((45, 26, 59), (47, 26, 61), (39, 22, 77), (41, 22, 79), (53, 30, 57), (55, 30, 59),
                     (33, 10, 66), (33, 10, 78), (33, 12, 55), (34, 12, 61)):
         put(O.HELICOPTER, x, y, z)
     for x, y, z in ((46, 26, 60), (40, 22, 78), (54, 30, 58), (34, 10, 70), (42, 10, 60), (33, 12, 58)):
         put(O.EGG, x, y, z)
-    w.bigdecor(66, 59, 18, 67)                               # columns on the east shelf
-    w.bigdecor(68, 59, 18, 79)
 
 
 # ==== J. the rock gauntlet =======================================================================
@@ -706,6 +729,32 @@ def section_j():
             w.fill(x, 6, 37, x, 11, 37, WIND_UP)
     mover(O.MOVING_MINE, (22, 10, 37), (22, 12, 37), 10)
     air(28, 6, 28, 30, 9, 38)                                # the passage north to K's south end
+    # the connector from I (x 28-30, z 55-59): five wide with rock ribs and two columns at the sides, a
+    # chimney of slime up to a skylight, the floor a mosaic of rock and slime
+    air(28, 12, 55, 30, 15, 59)
+    for z in (55, 59):
+        for x in (28, 30):
+            if (x + z) % 2 == 0:
+                w.fill(x, 12, z, x, 15, z, ROCK)
+    w.fill(28, 11, 55, 30, 11, 59, ROCK)
+    for x, z in ((28, 56), (30, 58), (29, 55), (29, 59)):
+        w.set(x, 11, z, 342)
+    air(29, 16, 57, 29, 24, 57)
+    w.bigdecor(66, 29, 12, 55)
+    w.bigdecor(68, 29, 12, 59)
+    # the passage to K (x 27-31, z 29-35): scalloped walls of ribs and niches, ceiling ribs, a chimney
+    air(27, 6, 29, 31, 9, 35)
+    for z in (30, 32, 34):
+        for x in (27, 31):
+            w.fill(x, 6, z, x, 9, z, ROCK_FACES[0] if z == 32 else ROCK)
+    for z in (31, 33):
+        for x in (28, 30):
+            w.set(x, 9, z, ROCK)
+    w.fill(28, 5, 29, 30, 5, 35, ROCK)
+    for x, z in ((28, 30), (30, 32), (28, 34), (29, 31), (29, 33)):
+        w.set(x, 5, z, 342)
+    air(29, 10, 32, 29, 17, 32)
+    w.set(29, 18, 32, 342)
     put(O.EGG, 9, 6, 47 - 2)
     put(O.EGG, 27, 12, 57)
     for x in (9, 12, 15):                                    # rock outcrops for the walls' look
@@ -720,7 +769,7 @@ def section_k():
     """X 32-50, Z 11-26, walk 6 up to 22, ball blocks. J's passage enters at the south wall's west end
     (x 32-34, z 27); eight two-by-two ball-block columns (walk 8, 10, ... 22) spiral up round the
     chamber, a cell or two between them; the last reaches the exit ledge (x 32-36, z 14-18, walk 22)
-    whose south and east edges are fenced by ten flight-barrier cells (the entrance, x 37, z 15-17, is open); the tunnel west to L leaves it. Two eggs on the
+    next to an alcove (x 32-36, z 11-12) fenced from it by ten flight-barrier cells: its egg is for the helicopter parked on the floor; the tunnel west to L leaves it. Two eggs on the
     columns, a few star blocks among the balls."""
     hall("slime", 32, 6, 11, 50, 28, 26)
     w.fill(31, 5, 10, 51, 5, 27, SLIME)
@@ -733,15 +782,18 @@ def section_k():
                 for y in range(6, top):
                     w.set(x, y, z, STAR if (y == top - 1 and (x + z) % 2 == 0) else rng.choice(BALLS))
     floor(32, 14, 36, 18, 22, block=216, thick=3)
-    for y in (22, 23):                                       # the ten barrier cells fence the ledge's open sides
-        for x in (34, 35, 36):
-            w.set(x, y, 19, BARRIER)
-        for z in (14, 18):
-            w.set(37, y, z, BARRIER)
+    # an alcove in the hall's north-west corner at the ledge's height (walk 22, x 32-36, z 11-12) with
+    # an egg, shut from the ledge by a fence of ten flight-barrier cells (x 32-36, z 13, two high): a
+    # walker sees it and cannot enter, the helicopter parked on the floor flies through
+    floor(32, 11, 36, 12, 22, block=216, thick=4)
+    for y in (22, 23):
+        for x in range(32, 37):
+            w.set(x, y, 13, BARRIER)
+    put(O.HELICOPTER, 34, 6, 20)
     air(28, 22, 14, 33, 26, 16)                              # the tunnel west to L
     air(28, 6, 27, 34, 9, 30)                                # J's passage reaches the chamber's south end
     put(O.EGG, 43, 14, 23)
-    put(O.EGG, 41, 20, 17)
+    put(O.EGG, 34, 22, 11)                                   # in the alcove, by helicopter only
     for x, z in ((32, 11), (50, 11), (50, 26)):
         w.set(x, 6, z, STAR)
 

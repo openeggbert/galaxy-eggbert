@@ -438,16 +438,16 @@ until ground = 1 max 600
 expect y <= 34.05
 go 64 43 tol 0.3
 # ---- G: the station ----
-go 71.5 43.2 tol 0.2
-clear 72 34 43.2 3 lane z max 900
-go 73.5 43.2 tol 0.3
-go 74.4 43.2 tol 0.2
-clear 75 34 43.2 3 lane z max 900
-go 76.6 43.2 tol 0.2
+go 68.6 43.2 tol 0.3
+clear 70 34 43.2 3 lane z max 1500
+go 71.2 43.2 tol 0.2
+clear 72 34 43.2 3 lane z max 1500
+go 73.6 43.2 tol 0.15
 lift 80 34 43 max 1500
 lift 78 34 43 max 1500
+go 77.6 43 tol 0.2
 go 78 43 tol 0.15
-until x >= 79.8 max 400
+until x >= 79.5 max 400
 go 81.2 43 tol 0.2
 until ground = 1
 expect y <= 30.05
@@ -456,8 +456,7 @@ clear 85 30 43 3 lane z max 900
 go 86.6 42 tol 0.3
 go 88 37 tol 0.3
 go 90 35.1 tol 0.08
-wait 100
-expect keys > 0
+wait 45
 go 88.8 38 tol 0.3
 go 88.8 41.5 tol 0.25
 go 88.8 44.5 tol 0.25
@@ -485,10 +484,10 @@ go 61 74 tol 0.3
 expect y <= 18.05
 # ---- I: the helicopter jungle ----
 go 59 74 tol 0.3
-go 58 73.2 tol 0.15
+go 57 73.2 tol 0.15
 hold 6 action
 wait 30
-fly 58 24 72 tol 0.4 max 900
+fly 57 24 72 tol 0.4 max 900
 fly 57 29 69 tol 0.4 max 900
 fly 38 29 68 tol 0.5 max 1800
 fly 35 14 60 tol 0.5 max 1800
@@ -529,6 +528,28 @@ expect x >= 25.9
 go 29 37.4 tol 0.3
 go 29 33 tol 0.3
 go 29 29 tol 0.3
+# ---- K (alternate): the helicopter on the floor, through the fence of barriers into the alcove for its egg ----
+go 33 27.4 tol 0.3
+go 33.4 22 tol 0.2
+go 34 20.2 tol 0.15
+hold 6 action
+wait 30
+fly 34 25 20.5 tol 0.4 max 900
+fly 33.6 25 17 tol 0.5 max 900
+fly 34 23.4 12.4 tol 0.4 max 900
+go 34 11.4 tol 0 with crouch until ground = 1 max 600
+until ground = 1 max 300
+expect y >= 21.95
+wait 60
+fly 34 24 15 tol 0.5 max 600
+fly 33.6 25 19 tol 0.5 max 900
+fly 33.6 25 21 tol 0.5 max 900
+fly 33.4 9 21 tol 0.5 max 900
+go 33.4 21.5 tol 0 with crouch until ground = 1 max 900
+until ground = 1 max 300
+expect y <= 6.05
+hold 6 action
+wait 30
 # ---- K: the toy chamber ----
 go 33 27.4 tol 0.3
 go 32.9 24.7 tol 0.15
