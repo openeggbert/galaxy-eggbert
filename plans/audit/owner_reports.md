@@ -426,10 +426,11 @@ rewritten).
   had been measured (Q-016) but not built, awaiting the owner. The report is taken as the answer:
   option (a).
 - Built: `zoom` is a typed cheat (`InputPad::TypedCheat::Zoom`); each typing steps
-  `cheatZoomStep_` 0 -> 1 -> 2 -> 3 -> 0, the chase camera 1x, 2x, 4x, 8x as far
+  `cheatZoomStep_` 0 -> 1 -> 2 -> 3 -> 4 -> 0, the chase camera 1x, 2x, 4x, 8x, 16x as far (the 6 % step
+  added at the owner's request, 2026-11-07; Mobile Eggbert's cycle stops at 12 %)
   (`kChaseDistance * 2^step`) and 0.25 rad higher a step toward a bird's-eye view, still stopped by
   walls (`RaymarchWallDistance`). The step shows top-left as "zoom 50%" / "25%" / "12%" like the other
-  active cheats and is reset when a level loads. The cut-away of walls (option b) is not built: in
+  active cheats ("zoom 6%" at the last step) and is reset when a level loads. The cut-away of walls (option b) is not built: in
   caves the view stays near the walls.
 - Verified: `VerifyGEInputPad` (the word fires its cheat), `tools/autoplay/probes/zoom_cheat.txt` in
   hub 070: `plans/evidence/zoom-cheat-implemented.png` (1x, 50 %, 25 %, 12 %, back to 1x); ctest, golden

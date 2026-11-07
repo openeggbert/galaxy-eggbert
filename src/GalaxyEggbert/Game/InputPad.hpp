@@ -485,7 +485,7 @@ namespace GalaxyEggbert::Game
             WeelKeys,     // "weelkeys" (sic): every key
             Ghost,        // "ghost" (MODERN): walk through walls
             Quick,        // "quick" (MODERN): F7/F8 unlocked
-            Zoom,         // "zoom" (MODERN): the view out 1x -> 2x -> 4x -> 8x -> 1x
+            Zoom,         // "zoom" (MODERN): the view out 1x -> 2x -> 4x -> 8x -> 16x (6 %) -> 1x
         };
         struct TypedCheatResult
         {

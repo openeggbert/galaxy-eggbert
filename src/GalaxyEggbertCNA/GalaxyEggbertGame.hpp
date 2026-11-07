@@ -694,8 +694,8 @@ namespace GalaxyEggbert::CNA
         Microsoft::Xna::Framework::Input::KeyboardState autoplayKeys_;
         std::FILE* autoplayTrace_ = nullptr;
         int autoplayTick_ = 0;
-        // The typed cheat `zoom` (OR-0079): the chase camera's step out, 0 (normal) to 3; the view is
-        // 1x, 2x, 4x, 8x as far (Mobile Eggbert's 100, 50, 25, 12 %). Reset when a level is loaded.
+        // The typed cheat `zoom` (OR-0079): the chase camera's step out, 0 (normal) to 4; the view is
+        // 1x, 2x, 4x, 8x, 16x as far (Mobile Eggbert's 100, 50, 25, 12 %, and 6 % added at the owner's request). Reset when a level is loaded.
         int cheatZoomStep_ = 0;
         // The autoplay's `switches` / `saws` conditions: the switches pressed in this mission and the
         // saws 378 turning now (-1: not counted yet; counted again after each press).

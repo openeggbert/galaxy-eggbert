@@ -3483,7 +3483,7 @@ namespace GalaxyEggbert::CNA
                 break;
             case TC::WeelKeys: interaction_.CheatAllKeys(); break;
             case TC::Zoom:
-                cheatZoomStep_ = (cheatZoomStep_ + 1) % 4; // 1x, 2x, 4x, 8x, back to 1x
+                cheatZoomStep_ = (cheatZoomStep_ + 1) % 5; // 1x, 2x, 4x, 8x, 16x (6 %), back to 1x
                 break;
             case TC::Ghost:
             case TC::Quick:
@@ -3747,7 +3747,7 @@ namespace GalaxyEggbert::CNA
                                 std::remove_if(activeCheats_.begin(), activeCheats_.end(),
                                                [](const std::string& name) { return name.rfind("zoom", 0) == 0; }),
                                 activeCheats_.end());
-                            static const char* const kZoomLabels[4] = {"", "zoom 50%", "zoom 25%", "zoom 12%"};
+                            static const char* const kZoomLabels[5] = {"", "zoom 50%", "zoom 25%", "zoom 12%", "zoom 6%"};
                             if (cheatZoomStep_ > 0) activeCheats_.emplace_back(kZoomLabels[cheatZoomStep_]);
                             break;
                         }
@@ -6128,7 +6128,7 @@ namespace GalaxyEggbert::CNA
                 // spring-arm/collision-aware orbit camera -- sufficient to
                 // show the placeholder model, not a final camera design.
                 // The Setup's automatic zoom brings it in while he walks (chaseZoom_, OR-0010).
-                // The cheat `zoom` takes the view out 2x, 4x, 8x (OR-0079).
+                // The cheat `zoom` takes the view out 2x, 4x, 8x, 16x (OR-0079).
                 const float kChaseDistance = 4.0f * static_cast<float>(1 << cheatZoomStep_) / chaseZoom_;
                 constexpr float kChaseLookHeight = 1.0f;
                 // Base elevation reproduces the previous fixed offset
