@@ -700,6 +700,98 @@ int main()
         check(gallery, "all six static gallery crumble icons are non-occluding models");
     }
 
+    // A switch turning its saws (378 <-> 379): the model list and the saws' anim-block bases, patched,
+    // equal a full recomputation, so the toggle does not rebuild the terrain (2026-11-07).
+    {
+        using namespace GalaxyEggbert;
+        using namespace GalaxyEggbert::Game;
+        using Worlds::Block;
+        using Worlds::World;
+        const std::vector<std::uint16_t> icons(kStillModelIcons.begin(), kStillModelIcons.end());
+        const std::vector<TileCoverage> opaque(500, TileCoverage::Opaque);
+        const auto noRelief = [](std::uint16_t) { return false; };
+        struct SawBlock
+        {
+            float x, y, z;
+            std::uint16_t base;
+        };
+        // The constructor's rule for these cells: every saw is an anim block on its cycle's base.
+        const auto scanSaws = [](const World& w) {
+            std::vector<SawBlock> blocks;
+            for (int y = 0; y < w.blocksPerAxis(); ++y)
+                for (int z = 0; z < w.blocksPerAxis(); ++z)
+                    for (int x = 0; x < w.blocksPerAxis(); ++x)
+                    {
+                        const auto b = w.getBlock(x, y, z);
+                        if (IsSawIcon(b))
+                            blocks.push_back({static_cast<float>(x - WorldRuntime::kWorldCenterX), static_cast<float>(y),
+                                              static_cast<float>(z - WorldRuntime::kWorldCenterZ),
+                                              GetBlockDefinition(b.type()).animation.baseIcon});
+                    }
+            return blocks;
+        };
+        const auto full = [&](const World& w) {
+            std::vector<TerrainModelCell> result;
+            for (int y = 0; y < w.blocksPerAxis(); ++y)
+                for (int z = 0; z < w.blocksPerAxis(); ++z)
+                    for (int x = 0; x < w.blocksPerAxis(); ++x)
+                        if (auto cell = ComputeTerrainModelCell(w, x, y, z, icons, false)) result.push_back(*cell);
+            return result;
+        };
+        const auto sameCells = [](const auto& a, const auto& b) {
+            return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](const auto& l, const auto& r) {
+                return std::tie(l.x, l.y, l.z, l.base, l.sameSides, l.openSide) ==
+                       std::tie(r.x, r.y, r.z, r.base, r.sameSides, r.openSide);
+            });
+        };
+        const auto sameSaws = [](const std::vector<SawBlock>& a, const std::vector<SawBlock>& b) {
+            return a.size() == b.size() && std::equal(a.begin(), a.end(), b.begin(), [](const auto& l, const auto& r) {
+                return std::tie(l.x, l.y, l.z, l.base) == std::tie(r.x, r.y, r.z, r.base);
+            });
+        };
+        World w(2);
+        for (int x = 4; x <= 18; ++x) w.setBlock(x, 4, 13, Block::make(2)); // the floor under the row
+        w.setBlock(6, 5, 13, Block::make(BlockTypes::Saw));
+        w.setBlock(8, 5, 13, Block::make(BlockTypes::Saw));
+        w.setBlock(10, 5, 13, Block::make(BlockTypes::SawStopped));
+        w.setBlock(14, 5, 13, Block::make(BlockTypes::Switch));
+        w.setBlock(15, 5, 14, Block::make(364)); // a bridge beside the switch, a model it faces
+        auto cells = full(w);
+        auto saws = scanSaws(w);
+        auto revision = w.blockRevision();
+        bool toggles = true;
+        std::vector<std::pair<std::size_t, std::uint16_t>> swaps;
+        for (int press = 0; press < 4; ++press)
+        {
+            // WorldRuntime::TryActivateSwitch's writes: the switch, then every saw of its row.
+            const bool on = press % 2 == 1;
+            w.setBlock(14, 5, 13, Block::make(on ? BlockTypes::Switch : BlockTypes::SwitchOff));
+            for (int x : {6, 8, 10})
+                if (IsSawIcon(w.getBlock(x, 5, 13)))
+                    w.setBlock(x, 5, 13, Block::make(on ? BlockTypes::Saw : BlockTypes::SawStopped));
+            const auto changes = w.blockChangesSince(revision);
+            toggles &= FindSawAnimSwaps(changes, saws, swaps) &&
+                       PatchTerrainModelCells(w, changes, icons, false, opaque, noRelief, cells);
+            for (const auto& [index, base] : swaps) saws[index].base = base;
+            toggles &= sameCells(cells, full(w)) && sameSaws(saws, scanSaws(w));
+            revision = w.blockRevision();
+        }
+        check(toggles, "a switch turning its saws off and on patches the models and the saws' anim bases like a full scan");
+        check(saws.size() == 3 && saws[0].base == BlockTypes::Saw && saws[2].base == BlockTypes::Saw,
+              "after the last press every saw of the row turns (the stopped one too)");
+        w.setBlock(6, 5, 13, Block::air());
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
+              "a saw removed (not swapped) still rebuilds the terrain");
+        revision = w.blockRevision();
+        w.setBlock(8, 5, 13, Block::make(BlockTypes::SawStopped));
+        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque,
+                                     [](std::uint16_t) { return true; }),
+              "a saw swap on a relief-bearing icon rebuilds");
+        std::vector<SawBlock> none;
+        check(!FindSawAnimSwaps(w.blockChangesSince(revision), none, swaps),
+              "a swapped saw without an anim block refuses the patch");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

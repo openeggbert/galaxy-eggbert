@@ -11,6 +11,7 @@
 #include <optional>
 #include <set>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace GalaxyEggbert::Game
@@ -89,6 +90,44 @@ inline std::optional<TerrainModelCell> ComputeTerrainModelCell(const Worlds::Wor
     return TerrainModelCell{worldX, worldY, worldZ, shown, sides, openSide};
 }
 
+// A switch turning a saw on or off (378 <-> 379, WorldRuntime::TryActivateSwitch). Both are animated
+// cells (TerrainRenderer's anim blocks): never occluders, never a floor candidate of a saw around them,
+// and their own floor is chosen by the same rule, so the swap changes only the cell's anim-block base
+// (OR-0074's patch, extended to the saws 2026-11-07: a toggle rebuilt the whole terrain).
+inline bool IsSawIcon(Worlds::Block block)
+{
+    return !block.isAir() && (block.type() == BlockTypes::Saw || block.type() == BlockTypes::SawStopped);
+}
+
+inline bool IsSawSwap(const Worlds::World::BlockChange &c)
+{
+    return IsSawIcon(Worlds::Block(c.oldRaw)) && IsSawIcon(Worlds::Block(c.newRaw));
+}
+
+// The anim blocks (any struct with x, y, z in render space and base) the batch's saw swaps change, in
+// the journal's order, as (index, new base). Nothing is changed; false when a swapped saw has no block.
+template <typename AnimBlocks>
+bool FindSawAnimSwaps(const Worlds::World::BlockChanges &changes, const AnimBlocks &blocks,
+                      std::vector<std::pair<std::size_t, std::uint16_t>> &swaps)
+{
+    swaps.clear();
+    for (const auto &c : changes.cells)
+    {
+        if (!IsSawSwap(c))
+            continue;
+        const float x = static_cast<float>(c.x - WorldRuntime::kWorldCenterX);
+        const float y = static_cast<float>(c.y);
+        const float z = static_cast<float>(c.z - WorldRuntime::kWorldCenterZ);
+        const auto found = std::find_if(blocks.begin(), blocks.end(),
+                                        [&](const auto &b) { return b.x == x && b.y == y && b.z == z; });
+        if (found == blocks.end())
+            return false;
+        swaps.emplace_back(static_cast<std::size_t>(found - blocks.begin()),
+                           GetBlockDefinition(Worlds::Block(c.newRaw).type()).animation.baseIcon);
+    }
+    return true;
+}
+
 // Only model/air transitions which leave all baked terrain data unchanged are eligible.
 // Non-occlusion preserves cube/grass faces and directional room runs. No relief at either
 // endpoint preserves isReliefCell, and model-drawn cells have reliefSolid=false, just like air.
@@ -117,6 +156,12 @@ bool CanPatchTerrainModels(const Worlds::World &world, const Worlds::World::Bloc
     for (const auto &c : changes.cells)
     {
         const Worlds::Block old(c.oldRaw), next(c.newRaw);
+        if (IsSawSwap(c))
+        {
+            if (hasRelief(old.type()) || hasRelief(next.type()))
+                return false;
+            continue; // only its anim block's base changes (FindSawAnimSwaps)
+        }
         if (!safe(old) || !safe(next))
             return false;
         // Water has no baked neighbour data. Lava records whether its bottom touches ANY non-air.

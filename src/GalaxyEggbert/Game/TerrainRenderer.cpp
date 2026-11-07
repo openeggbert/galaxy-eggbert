@@ -420,9 +420,21 @@ namespace GalaxyEggbert::Game
                                          const std::vector<TileCoverage>& coverage)
     {
         // A model load/unload changes which cells belong to GPU meshes, even without a grid edit.
-        if (icons != m_stillModelIcons || !PatchTerrainModelCells(world, changes, icons, drawSecret, coverage,
+        // A switch's saws (378 <-> 379) change only their anim blocks' bases, looked up before anything
+        // changes so that a refused batch leaves the renderer as it was.
+        std::vector<std::pair<std::size_t, std::uint16_t>> sawSwaps;
+        if (icons != m_stillModelIcons || !FindSawAnimSwaps(changes, m_animBlocks, sawSwaps) ||
+            !PatchTerrainModelCells(world, changes, icons, drawSecret, coverage,
                 [&](std::uint16_t icon) { return m_reliefs && m_reliefs->Find(icon); }, m_staticModelCells))
             return false;
+        for (const auto& [index, base] : sawSwaps)
+        {
+            m_animBlocks[index].base = base;
+        }
+        if (!sawSwaps.empty())
+        {
+            m_lastAnimPhase = -1; // the anim mesh shows the new frames at the next Update
+        }
         for (const auto& c : changes.cells)
         {
             if (Worlds::Block(c.oldRaw).isAir()) ++m_blockCount;
