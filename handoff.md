@@ -112,6 +112,13 @@ only when that task is requested.
   0076), Resume (BD-0077), the grounded start (BD-0078), CI pinned to verified sibling revisions
   (`tools/ci_pin_siblings.py`), UB-006/UB-007 confirmed fixed in CNA.
 
+### Verified state, 2026-11-07 midday (tree `d44f6397`)
+
+- After the saw patch (`404ca503`), the Hide action in the life-loss window (BD-0084, `387dd111`) and the
+  shuffled lightning frames (`bf9bf3bd`): ctest 112/112, golden frames and trace pass (re-based for the
+  grass top and the lightning), **full play pass 78/78** (`build-probe/play-pass-final-1107c/results.txt`).
+  The girder 201 needed no change (OR-0069). Open items: `docs/handbook/08-backlog.md`.
+
 ### Verified state, 2026-11-07 evening (end of the agent work, tree `e852a902`)
 
 - ctest 112/112; golden frames and trace refreshed for the Jump-to-Air change and passing. **Full play pass

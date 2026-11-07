@@ -59,7 +59,8 @@ chase camera like any wall since OR-0069 (`plans/evidence/camera-girder-vs-wall.
   (OR-0082: 36 pixels of a distant grass tile in world 999; checked by swapping the old texture back,
   which matches the old references exactly).
 - Playthroughs: every campaign world has an autoplay script (`tools/autoplay/world*.txt`); the full pass
-  of all 78 worlds on the final tree (`e852a902`) passed, 78/78 (recorded in `handoff.md`). See [04-testing.md](04-testing.md) for how to rerun it.
+  of all 78 worlds on the final tree (`d44f6397`, after the saw patch, Hide and the lightning) passed,
+  78/78 (`build-probe/play-pass-final-1107c/results.txt`, recorded in `handoff.md`). See [04-testing.md](04-testing.md) for how to rerun it.
 - Probe and evidence leftovers: `build-probe/` holds scratch worlds and screenshots (several GB). The
   frames the ledgers cite are copied to `plans/evidence/`; the rest can be deleted.
 
