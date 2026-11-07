@@ -2235,6 +2235,7 @@ namespace GalaxyEggbert::Game
                         actionUnspent = false;
                         actionSpent_ = true;
                         TryCollectBasicPickup(obj, pendingSpawns);
+                        events_.push_back(Event{EventKind::DynamiteTaken});
                     }
                     break;
                 case GalaxyEggbert::Def::ObjectType::ObjectType6: // extra-life egg

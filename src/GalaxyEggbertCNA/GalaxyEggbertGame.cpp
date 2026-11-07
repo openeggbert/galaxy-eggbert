@@ -3117,6 +3117,12 @@ namespace GalaxyEggbert::CNA
         const auto* powerEvent = FindInteractionEvent(InteractionSystem::EventKind::PowerGranted);
         const auto* hideEvent = FindInteractionEvent(InteractionSystem::EventKind::HideGranted);
         const auto* cloudEvent = FindInteractionEvent(InteractionSystem::EventKind::CloudGranted);
+        // Taking a dynamite stick: his TakeDynamite action, 18 ticks with his focus gone
+        // (Decor.cpp:6116-6128, 6329; OR-0083).
+        if (FindInteractionEvent(InteractionSystem::EventKind::DynamiteTaken))
+        {
+            blupi_.TriggerOneShotAnim(BlupiController::AnimState::TakeDynamite, BlupiController::kTakeDynamiteDuration);
+        }
 
         // Starts a new freeze for whichever of the 3 real 2-stage pickups was touched this frame
         // (real immediate "grab" sound: Sucette ch50, Drink ch57, Charge ch58, Decor.cpp:
@@ -7033,9 +7039,20 @@ namespace GalaxyEggbert::CNA
                     }
                     parked.model->ComputeBoneTransformsEXT(
                         parked.clip, System::TimeSpan::FromSeconds(0.0), /*loop=*/false, boneTransforms);
+                    // The parked skateboard flips about its long axis (table_skate, 34 ticks, icons 129-135:
+                    // edge-on, flat, edge-on, and back; 30 degrees an icon; Decor.cpp:8339; OR-0083).
+                    float skateRoll = 0.0f;
+                    if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType24)
+                    {
+                        const int skateIcon = GalaxyEggbert::Game::GetObjIcon(obj.type, static_cast<int>(obj.phase));
+                        skateRoll = static_cast<float>(skateIcon - 132) * (30.0f * 3.14159265f / 180.0f);
+                    }
                     // Facing +X, turned in the editor a quarter at a time (OR-0071).
                     blupiEffect_->setWorldProperty(
                         Microsoft::Xna::Framework::Matrix::CreateScale(kRealModelScale) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, -0.17f, 0.0f) *
+                        Microsoft::Xna::Framework::Matrix::CreateRotationZ(skateRoll) *
+                        Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.17f, 0.0f) *
                         Microsoft::Xna::Framework::Matrix::CreateRotationY(
                             kHalfPi * static_cast<float>(1 + CellObjectQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ))) *
                         Microsoft::Xna::Framework::Matrix::CreateTranslation(

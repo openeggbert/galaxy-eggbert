@@ -394,6 +394,9 @@ namespace GalaxyEggbert::Game
             // Shield above; the caller calls BlupiController::TriggerInvert() and plays channel
             // 66 only if that returns true.
             InvertGranted,
+            // A dynamite stick was taken with the action button (Decor.cpp:6116-6128): Blupi plays
+            // TakeDynamite, 18 ticks, and loses his focus for them (OR-0083).
+            DynamiteTaken,
             // A pickup/death-VFX site recorded a pending Voyage this frame -- see VoyageKind's own
             // comment (further down) and RequestVoyage()/RequestClear2Ascend() for the full real
             // behavior. Unlike every Kind above, at most ONE VoyageRequested event can exist in
