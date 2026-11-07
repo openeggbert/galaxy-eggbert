@@ -40,6 +40,8 @@
 //   trace N                    write the position every tick for the next N ticks (else every 60)
 //   shots N                    have the game save the frame of each of the next N ticks (the host's
 //                              autoplay_shots/, tick-numbered): a moment caught without AUTOPLAY_SHOTS
+//   mortal                     from here on a death is written to the trace, not a failure (to look at
+//                              the deaths themselves: the lock, the life-loss window, the respawn)
 //   end                        stop here
 //   include FILE               FILE's commands here (its path relative to this script's directory)
 //
@@ -50,7 +52,7 @@
 // switch turns those of its row off or on) crush (the crushers' place in their 10-step cycle: they squash at 0-2) phase, OP one of = != < <= > >=; tick counts from the script's start, mtick from
 // the current mission's (a mission's own timing holds when it is played in a chain); phase takes a name
 // (Play, Win, Lost, Pause, Init, ...). A
-// command that runs out of ticks, or Blupi dying, ends the run as a failure.
+// command that runs out of ticks, or Blupi dying (before `mortal`), ends the run as a failure.
 
 #include <GalaxyEggbert/Def/GamePhase.hpp>
 
@@ -122,7 +124,7 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool WantsShot() const noexcept { return shotTicksLeft_ > 0; }
 
     private:
-        enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, End };
+        enum class Kind { Wait, Hold, Type, Face, Go, Until, Lift, Crate, Clear, Near, Expect, Log, Trace, Shots, Mortal, End };
         enum class Field { X, Y, Z, Yaw, Tick, MissionTick, Mission, Treasures, Eggs, Lives, Keys, Dynamite, Vehicle, Ground, Dead, Ghost, Anim, Exit, Blitz, Temp, Crush, Switches, Saws, Phase };
         enum class Op { Eq, Ne, Lt, Le, Gt, Ge };
         struct Condition
@@ -182,6 +184,7 @@ namespace GalaxyEggbert::Game
         bool finished_ = false;
         int failures_ = 0;
         bool havePrevious_ = false;
+        bool mortal_ = false; // `mortal`: deaths are logged, not failures
         std::vector<std::array<float, 3>> crateRest_; // where each crate last came to rest
         AutoplayState previous_;
         std::string log_;

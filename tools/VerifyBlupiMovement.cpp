@@ -1483,8 +1483,9 @@ int main(int argc, char** argv)
                   "the lock ends and the life-loss-Voyage window (Hide) begins on the same transition");
             check(!deathLocked.ConsumeDeathLockResolved(resolvedShouldRespawn),
                   "ConsumeDeathLockResolved() does not fire again until the NEXT lock resolves");
-            check(deathLocked.GetAnimState() == BlupiController::AnimState::DeathLocked,
-                  "the life-loss-Voyage window is still the DeathLocked anim state");
+            check(deathLocked.GetAnimState() == BlupiController::AnimState::Hide &&
+                      deathLocked.GetAnimIcon() >= 276 && deathLocked.GetAnimIcon() <= 284,
+                  "the life-loss-Voyage window plays the original's Hide action (table_blupi 276-284, Decor.cpp:6381)");
 
             // Real fixed 40-tick(2.0s) life-loss Voyage auto-completes,
             // returning full control (no longer locked or hidden).

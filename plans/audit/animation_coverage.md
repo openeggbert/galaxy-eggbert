@@ -307,7 +307,7 @@ Verdict: MATCH.
 | 1 | Jump / JumpSkate: end the state into Air after 3 ticks (or hold the clip's last frame like Air/Down, `GetAnimHoldFrame`), BlupiController.cpp:2861, 2949 | small | every jump, every player |
 | 2 | Spin the parked skateboard by `kSkate` (a roll about its long axis from the sprite's width), GalaxyEggbertGame.cpp:7028-7040 | small | campaign_count 63; the only pickup whose original animation is lost |
 | 3 | Trigger `TakeDynamite` (and its 18-tick freeze) on the ObjectType55 pickup, InteractionSystem.cpp:2229 and the host's pickup event; refresh golden traces | small | campaign_count 39; a finished clip sits unused |
-| 4 | Trace Decor.cpp BlupiStep during the Hide window to decide whether the Hide clip (9 f) should play in `IsDeathHidden` | small, after a research step | only unknown about a built clip |
+| 4 | DONE 2026-11-07 (BD-0084): the original draws Hide (276-284) through the life-loss window; Galaxy plays the `Hide` clip there now | small | was the only unknown about a built clip |
 | 5 | Look at ObjectType31's frames 238-243 (electrode model, no pose for 243) | small | never placed in a shipped level |
 | 6 | Turn clips for vehicles/swim/air from the `Turn*` icon tables | large | by design today; only if the owner wants the original's swing |
 | 7 | Cosmetic: random lightning frame order, spring phase by column, fish head (BB3D-032) | small | negligible |

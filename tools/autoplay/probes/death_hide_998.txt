@@ -1,0 +1,29 @@
+# The life-loss window after a death (the original's Hide action): Blupi walks into a saw of the gallery, and
+# once the lock is over (dead = 0) the frames show him turning on the spot (table_blupi 276-284), not
+# hidden. Run: tools/autoplay.sh build-cna-opengl3 <this> 998
+mortal
+go 50 43 tol 0.3 max 900
+go 9 43 tol 0.15 max 1500
+go 9 42 tol 0.1 max 200 until dead = 1
+until dead = 1 max 300
+until dead = 0 max 900
+log lock-over
+shots 1
+wait 5
+shots 1
+wait 5
+shots 1
+wait 5
+shots 1
+wait 5
+shots 1
+wait 5
+shots 1
+wait 5
+shots 1
+wait 5
+shots 1
+wait 5
+shots 1
+wait 5
+log end

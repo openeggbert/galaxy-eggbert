@@ -1109,7 +1109,8 @@ namespace GalaxyEggbert::Game
         //      session).
         //   2. Once (1) elapses, automatically transitions into the life-loss-Voyage window
         //      (`IsDeathHidden()`), a fixed real `ScaleTime(40)`=40 ticks=2.0s -- Blupi stays frozen
-        //      and invisible through this too. `ConsumeDeathLockResolved()` fires exactly once,
+        //      through this too, playing the original's Hide action (turning on the spot, AnimState::Hide;
+        //      2026-11-07: he was invisible here). `ConsumeDeathLockResolved()` fires exactly once,
         //      the frame (1) elapses and (2) begins, telling the caller to apply the real
         //      `m_blupiRestart`-gated respawn NOW, call `InteractionSystem::LoseLife()`, and
         //      start the cosmetic icon-48 life-loss Voyage itself (this class has no dependency on

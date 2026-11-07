@@ -6883,8 +6883,7 @@ namespace GalaxyEggbert::CNA
             {
                 if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
                     blupiModel_->Clips.count(blupiActiveClipName_) != 0 &&
-                    !blupi_.IsDeathHidden() && !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) &&
-                    !BlupiDrawnAsDeathSprite())
+                    !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) && !BlupiDrawnAsDeathSprite())
                 {
                     constexpr float kCharredShade = 0.07f; // the sprites' soot black
                     // Charred (Clear1, Clear3: CharredBlupi.hpp), shrunk toward his feet as the frame

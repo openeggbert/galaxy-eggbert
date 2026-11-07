@@ -312,6 +312,10 @@ namespace GalaxyEggbert::Game
             {
                 command.kind = Kind::Log;
             }
+            else if (verb == "mortal")
+            {
+                command.kind = Kind::Mortal;
+            }
             else if (verb == "end")
             {
                 command.kind = Kind::End;
@@ -340,7 +344,7 @@ namespace GalaxyEggbert::Game
             {
                 return fail("unknown command '" + verb + "'");
             }
-            if ((command.kind == Kind::Face || command.kind == Kind::End) && (words >> verb))
+            if ((command.kind == Kind::Face || command.kind == Kind::Mortal || command.kind == Kind::End) && (words >> verb))
             {
                 return fail("unexpected '" + verb + "'");
             }
@@ -520,8 +524,12 @@ namespace GalaxyEggbert::Game
             }
             char line[96];
             std::snprintf(line, sizeof(line), "died at %.2f %.2f %.2f", state.x, state.y, state.z);
-            Fail(state, line);
-            return keys;
+            if (!mortal_)
+            {
+                Fail(state, line);
+                return keys;
+            }
+            Write(state, line);
         }
 
         while (current_ < commands_.size())
@@ -690,6 +698,10 @@ namespace GalaxyEggbert::Game
                 break;
             case Kind::Shots:
                 shotTicksLeft_ = command.ticks;
+                done = true;
+                break;
+            case Kind::Mortal:
+                mortal_ = true;
                 done = true;
                 break;
             case Kind::End:

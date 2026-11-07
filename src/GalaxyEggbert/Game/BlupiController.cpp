@@ -2842,7 +2842,12 @@ namespace GalaxyEggbert::Game
         // apex) by velocity sign -- see the AnimState enum's own comment
         // for the 3D velocity-sign adaptation.
         AnimState newState = m_ghost ? (moving ? AnimState::March : AnimState::Stop)
-                                  : (m_deathLocked || m_deathLossVoyageActive) ? AnimState::DeathLocked
+                                  // The life-loss window is the original's Hide action: BlupiStep runs every tick and
+                                  // BlupiSearchIcon draws table_blupi's Hide (276-284, Blupi turning on the spot) until
+                                  // the life's icon reaches him (Decor.cpp:6381, 5070, 794-842, 10255; item 4 of
+                                  // plans/audit/animation_coverage.md, 2026-11-07).
+                                  : m_deathLossVoyageActive ? AnimState::Hide
+                                  : m_deathLocked ? AnimState::DeathLocked
                                   : m_bye ? AnimState::Bye
                                   : m_oneShotAnimActive ? m_oneShotAnimState
                                   : m_pickupFrozen ? AnimState::PickupBusy

@@ -1455,3 +1455,21 @@ routes straight again (the way the playthroughs ran before BD-0080).
 - Verified: playthroughs 053, 058 (and the hub chain 050) pass; 023, 025, 063, 064, 065, 092, 102, 199
   also pass (switch change, OR-0078); ctest 112/112.
 - BD-0080's "Left" lines are closed.
+
+## BD-0084 — Blupi was invisible through the life-loss window; the original turns him on the spot (Hide) — FIXED_AND_VERIFIED
+
+- Original: when a death's own animation ends with lives left, `m_blupiAction = BlupiAction::Hide` and
+  `m_blupiIcon = -1` (Decor.cpp:6381-6382), `m_blupiFront = false`, and the icon-48 life voyage starts. BlupiStep
+  runs every tick (MoveStep, Decor.cpp:513; no early return for Hide), and its `BlupiSearchIcon()` (5070) maps
+  Hide to table_blupi's action 35: nine frames 276-284, looped, Blupi turning on the spot. The draw pass
+  (794-842) draws `m_blupiIcon` whenever `!m_blupiFront`. Hide ends when the voyage arrives (VoyageStep,
+  10255: Stop, focus back). So only the first tick is blank; the rest of the window shows him turning.
+- Galaxy: the window (`IsDeathHidden()`, 2 s) kept the DeathLocked state and the host skipped the model.
+  The Hide clip (9 frames, from the Ray Dream scenes) was built and never selected
+  (plans/audit/animation_coverage.md item 4).
+- Now: BlupiController selects `AnimState::Hide` in the window (sprite icons 276-284, the model's `Hide`
+  clip, looped); the host draws the model through it. Lock, freeze, respawn and timing unchanged.
+- Verified: `tools/autoplay/probes/death_hide_998.txt` (uses the new autoplay command `mortal`, which logs a
+  death instead of failing): frames through the window show him turning
+  (`plans/evidence/death-hide-turning.png`); `VerifyBlupiMovement` checks the state and icons; ctest
+  112/112; golden frames and trace unchanged.
