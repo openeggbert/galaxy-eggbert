@@ -46,6 +46,7 @@ working logs; use them for history and evidence, and use this handbook to find y
 | `World Format.md` | the `.vwr` binary format | accurate for what ships; has a hypothetical "future header" section |
 | `mobile-eggbert-reference/` | researched notes on Mobile Eggbert's behaviour | background; check against the reference code |
 | `upstream_bugs.md` | defects found in sibling repositories (`UB-NNN`) | live list |
+| `CLAUDE.md`, `AGENTS.md` (the same text under two names) and the shared `../CLAUDE.md` one level up | the maintainer's working rules: fidelity, boundaries, build hygiene; condensed in chapters 1 and 3 | authoritative for those rules |
 | `ANDROID.md`, `WINDOWS.md`, `packaging/README-linux-bundle.md` | platform notes | see [03-build-and-run.md](03-build-and-run.md) |
 
 ## Conventions in this handbook

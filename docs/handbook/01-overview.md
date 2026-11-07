@@ -96,7 +96,7 @@ Directories that are generated or machine-local are marked.
 | `Content/` | runtime 2D assets: `backgrounds/`, `icons/` (sprite sheets), `sounds/`, `music/` (rendered by `tools/music/render_music.py`), `Content.mgcb` |
 | `avatars3d/` | runtime 3D models in CNA's `SkinnedModelEXT` format: `blupi/`, `objects/`, `terrain/`, `blupi_placeholder/` (fallback) |
 | `textures3d/` | Galaxy's own 3D-specific textures (`grass_top.png`) |
-| `plans/` | plans, per-world briefs (`briefs/`), the fidelity-audit ledgers (`audit/`), evidence images (`evidence/`), generated inventories (`inventory/`), task briefs (`codex/`, work-queue notes) |
+| `plans/` | plans, per-world briefs (`briefs/`), the fidelity-audit ledgers (`audit/`), evidence images (`evidence/`), generated inventories (`inventory/`), old task briefs (`codex/`) |
 | `mobile-eggbert-reference/` | researched notes on the original's behaviour (tiles, objects, sounds, animations, mechanics) |
 | `android/` | Gradle project for the APK (`app/`, `gradlew`, `local.properties.template`) |
 | `cmake/` | `CopyDirectoryIfDifferent.cmake`, `toolchains/mingw-w64.cmake`, `web/` (Emscripten HTML shells) |

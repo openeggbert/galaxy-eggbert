@@ -151,7 +151,7 @@ The build directory also receives `savedata.txt` (settings, per-gamer progress),
 interrupted mission) and `customworlds/` (the editor's worlds): this is the player's own data when
 you play from there. Scripted runs (`tools/autoplay.sh`, `tools/qa_live.sh`) deliberately use their
 own run directories under `build-probe/` with symlinks to the repository's asset directories, so they
-never touch it. Tests do not write there either (`VerifyGESaveData` uses
+never touch it. `ctest` leaves it alone too (`VerifyGESaveData` uses its own
 `build-cna-opengl3/verify-savedata/`).
 
 Basic controls (from `GalaxyEggbertGame.cpp`): Left/Right turn, Up/Down walk (Right Ctrl walks
