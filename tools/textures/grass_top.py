@@ -6,7 +6,7 @@ the earth (side view); the 3D terrain needs the same bush seen from above. This 
 of tile 107 (the leaves, no earth, no outline), lays feathered patches of it at random places on a
 64 x 64 canvas that wraps round (so it tiles seamlessly) and writes textures3d/grass_top.png.
 Deterministic (seeded); replaces the first version, a procedural noise that looked like nothing
-in the original (owner 2026-11-07: "the grass has a nonsensical texture from above").
+in the original (owner 2026-11-07, again after the black dot per tile: "the grass has a nonsensical texture from above").
 
     python3 tools/textures/grass_top.py            # writes textures3d/grass_top.png
 """
@@ -45,25 +45,32 @@ def main() -> int:
     ramp = np.minimum(np.arange(PATCH) + 1, PATCH - np.arange(PATCH)).astype(np.float32)
     feather = np.minimum.outer(ramp, ramp)
     feather /= feather.max()
+    # The band holds a few texels that are not leaf (the outline, a bud's dark dot): paint each over with
+    # the mean of the leaf texels within 3, so no patch carries a dot that would repeat on every tile.
+    leaf = (rgb[..., 1] > rgb[..., 0] + 8) & (rgb[..., 1] > rgb[..., 2]) & (rgb[..., 1] > 60)
+    rgb = rgb.copy()
+    for y, x in zip(*np.where(~leaf)):
+        win = (slice(max(0, y - 3), y + 4), slice(max(0, x - 3), x + 4))
+        if leaf[win].any():
+            rgb[y, x] = rgb[win][leaf[win]].mean(axis=0)
+    valid = [(py, px) for py in range(band.shape[0] - PATCH + 1) for px in range(band.shape[1] - PATCH + 1)]
+    cover = np.zeros((size, size), np.int32)
     placed = 0
-    while placed < 70:
-        py = rng.randrange(0, band.shape[0] - PATCH + 1)
-        px = rng.randrange(0, band.shape[1] - PATCH + 1)
-        if alpha[py:py + PATCH, px:px + PATCH].mean() < 0.97:
-            continue                                # no outline, no hole
+    # Until every texel is under at least 4 patches (a texel no patch reached came out black: a dot per tile).
+    while placed < 90 or cover.min() < 4:
+        py, px = rng.choice(valid)
         patch = rgb[py:py + PATCH, px:px + PATCH]
-        # Leaves only: every texel green over red and blue, none of the dark outline or the earth.
-        if not ((patch[..., 1] > patch[..., 0] + 8) & (patch[..., 1] > patch[..., 2]) & (patch[..., 1] > 60)).all():
-            continue
         if rng.random() < 0.5:
             patch = patch[:, ::-1]
         if rng.random() < 0.5:
             patch = patch[::-1]
+        patch = np.rot90(patch, rng.randrange(4))   # leaves point every way, no horizontal streaks
         ox, oy = rng.randrange(size), rng.randrange(size)
         ys = (np.arange(PATCH) + oy) % size
         xs = (np.arange(PATCH) + ox) % size
         canvas[np.ix_(ys, xs)] += patch * feather[..., None]
         weight[np.ix_(ys, xs)] += feather
+        cover[np.ix_(ys, xs)] += 1
         placed += 1
     weight = np.maximum(weight, 1e-3)
     out = (canvas / weight[..., None]).clip(0, 255).astype(np.uint8)
