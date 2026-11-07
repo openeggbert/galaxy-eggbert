@@ -1,0 +1,13 @@
+# The gallery's exhibit switch 384 at (14, 1, 42) pressed from the next cell in front of it (his middle half
+# a cell from the machine, not inside it): Action still turns the row's saws.
+# Run: tools/autoplay.sh build-cna-opengl3 <this> 998
+go 50 43 tol 0.3 max 900
+go 14 43 tol 0.1 max 1200
+face 0
+wait 10
+expect saws = 6
+hold 2 action
+wait 10
+expect switches = 1
+expect saws = 4
+end

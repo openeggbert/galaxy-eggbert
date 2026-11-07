@@ -482,7 +482,9 @@ namespace GalaxyEggbert::Game
                                   .type();
             return type == GalaxyEggbert::BlockTypes::Switch || type == GalaxyEggbert::BlockTypes::SwitchOff;
         };
-        constexpr float kReach = BlupiController::kBodyHalfWidth + 8.0f / 64.0f;
+        // Reaching a machine from the next cell too (2026-11-07): he stops in front of it, his middle half a
+        // cell from its footprint, and presses Action; the original's player stood in the tile itself.
+        constexpr float kReach = 0.55f;
         int gx = cx;
         int gy = level - 1;
         int gz = cz;
