@@ -51,8 +51,10 @@ Other known gaps:
 ## 3. Verified state at the end of the agent work
 
 - `ctest --test-dir build-cna-opengl3`: 112/112.
-- Golden frames and trace: refreshed on 2026-11-07 for the Jump-to-Air change (positions identical,
-  only the animation state differs; frames 0060 and 0120 differ by 36 pixels of Blupi's pose).
+- Golden frames and trace: refreshed on 2026-11-07. The trace for the Jump-to-Air change (positions
+  identical, only the animation state differs); frames 0060 and 0120 for the new grass top texture
+  (OR-0082: 36 pixels of a distant grass tile in world 999; checked by swapping the old texture back,
+  which matches the old references exactly).
 - Playthroughs: every campaign world has an autoplay script (`tools/autoplay/world*.txt`); the full pass
   of all 78 worlds on the final tree (`e852a902`) passed, 78/78 (recorded in `handoff.md`). See [04-testing.md](04-testing.md) for how to rerun it.
 - Probe and evidence leftovers: `build-probe/` holds scratch worlds and screenshots (several GB). The
