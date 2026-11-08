@@ -134,6 +134,14 @@ namespace GalaxyEggbert::Editor
         if (keyboard.IsKeyDown(Keys::A)) move(right, -1.0f);
         if (keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl)) move(up, 1.0f);
         if (keyboard.IsKeyDown(Keys::Z)) move(up, -1.0f);
+        const bool shift = keyboard.IsKeyDown(Keys::LeftShift) || keyboard.IsKeyDown(Keys::RightShift);
+        const bool selectionKey = keyboard.IsKeyDown(Keys::NumPad4) || keyboard.IsKeyDown(Keys::NumPad6) ||
+            keyboard.IsKeyDown(Keys::NumPad7) || keyboard.IsKeyDown(Keys::NumPad9) ||
+            keyboard.IsKeyDown(Keys::NumPad8) || keyboard.IsKeyDown(Keys::NumPad2) ||
+            keyboard.IsKeyDown(Keys::Left) || keyboard.IsKeyDown(Keys::Right) ||
+            keyboard.IsKeyDown(Keys::Up) || keyboard.IsKeyDown(Keys::Down) ||
+            keyboard.IsKeyDown(Keys::Home) || keyboard.IsKeyDown(Keys::PageUp);
+        if (shift && !selectionKey && !extendedSelection_ && !navigation.selecting) move(up,-1.0f);
         move(forward, navigation.forward);
         move(right, navigation.strafe);
         move(up, navigation.vertical);
@@ -635,66 +643,31 @@ namespace GalaxyEggbert::Editor
 
     bool WorldEditor::HandleRemoval(const FrameInput& input, Worlds::World& world)
     {
-        const bool toolbarRequested =
-            input.palette.action == EditorPalette::Action::DeleteAtTarget;
-        const bool middleRequested =
-            input.middleHeld && !middleHeldLastFrame_ && !input.palette.clickConsumed;
-        if ((!toolbarRequested && !middleRequested) || boxFirstCornerPlaced_)
+        const bool toolbar = input.palette.action == EditorPalette::Action::DeleteAtTarget;
+        const bool middle = input.middleHeld && !middleHeldLastFrame_ && !input.palette.clickConsumed;
+        const bool key = input.deleteObjectHeld && !deleteObjectKeyHeldLastFrame_;
+        if ((!toolbar && !middle && !key) || boxFirstCornerPlaced_) return false;
+        const auto target = CurrentEditTarget(world);
+        if (!target) return true;
+        const auto [kind,x,y,z] = *target;
+        if (kind == EditTarget::Kind::Object)
+            RemoveObjectWithHistory(world,*FindMoveObjectAt(world,x,y,z),x,y,z);
+        else if (kind == EditTarget::Kind::BigDecor)
+            RemoveBigDecorWithHistory(world,*FindBigDecorAt(world,x,y,z));
+        else
         {
-            return false;
+            const auto before = world.getBlock(x,y,z);
+            const auto after = Worlds::Block::air();
+            world.setBlock(x,y,z,after);
+            EditCommand command;
+            command.kind = EditCommand::Kind::BlockEdit;
+            command.blockChanges.push_back({x,y,z,before,after});
+            AutoTile::AdaptBorder(world,x,y,z,[this]() {return static_cast<int>(autoTileRandom_() & 0x7fffffff);},
+                command.blockChanges);
+            commandStack_.Push(std::move(command));
+            variants_.Forget();
+            MarkMutated();
         }
-
-        if (toolbarRequested && hasSelectedObject_)
-        {
-            RemoveObjectWithHistory(
-                world, selectedObject_,
-                selectedAnchorX_, selectedAnchorY_, selectedAnchorZ_);
-            return true;
-        }
-
-        if (toolbarRequested && palette_.IsObjectMode() && hasHighlight_)
-        {
-            const std::optional<MoveObjectRecord> object = FindMoveObjectAt(
-                world, placementCellX_, placementCellY_, placementCellZ_);
-            if (object)
-            {
-                RemoveObjectWithHistory(
-                    world, *object,
-                    placementCellX_, placementCellY_, placementCellZ_);
-                return true;
-            }
-        }
-
-        if (toolbarRequested && palette_.IsBigDecorMode() && hasHighlight_)
-        {
-            const auto bigDecor = FindBigDecorAt(
-                world, placementCellX_, placementCellY_, placementCellZ_);
-            if (bigDecor)
-            {
-                RemoveBigDecorWithHistory(world, *bigDecor);
-                return true;
-            }
-        }
-
-        if (!hasRaycastHit_)
-        {
-            return toolbarRequested;
-        }
-        const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
-        if (before.isAir())
-        {
-            return toolbarRequested;
-        }
-        const Worlds::Block after = Worlds::Block::air();
-        world.setBlock(hitCellX_, hitCellY_, hitCellZ_, after);
-        EditCommand command;
-        command.kind = EditCommand::Kind::BlockEdit;
-        command.blockChanges.push_back({hitCellX_, hitCellY_, hitCellZ_, before, after});
-        // The PC editor's DeleteCel re-tiles round the emptied cell (ED-0007).
-        AutoTile::AdaptBorder(world, hitCellX_, hitCellY_, hitCellZ_,
-                              [this]() { return static_cast<int>(autoTileRandom_() & 0x7fffffff); }, command.blockChanges);
-        commandStack_.Push(std::move(command));
-        MarkMutated();
         return true;
     }
 
@@ -1012,21 +985,24 @@ namespace GalaxyEggbert::Editor
 
     bool WorldEditor::HandleVariant(const FrameInput& input, Worlds::World& world)
     {
-        if (!input.variantHeld || variantKeyHeldLastFrame_ || !hasRaycastHit_)
+        if (!input.variantHeld || variantKeyHeldLastFrame_)
         {
             return false;
         }
-        const Worlds::Block before = world.getBlock(hitCellX_, hitCellY_, hitCellZ_);
+        const auto target = CurrentEditTarget(world);
+        if (!target || target->kind != EditTarget::Kind::Block) return true;
+        const auto [kind,x,y,z] = *target;
+        const Worlds::Block before = world.getBlock(x,y,z);
         const auto next = before.isAir() ? std::nullopt : NextVariant(before.type());
         if (!next)
         {
             return true;
         }
         const Worlds::Block after = Worlds::Block::make(*next);
-        world.setBlock(hitCellX_, hitCellY_, hitCellZ_, after);
+        world.setBlock(x,y,z, after);
         EditCommand command;
         command.kind = EditCommand::Kind::BlockEdit;
-        command.blockChanges.push_back({hitCellX_, hitCellY_, hitCellZ_, before, after});
+        command.blockChanges.push_back({x,y,z, before, after});
         commandStack_.Push(std::move(command));
         variants_.Forget();
         MarkMutated();
@@ -1076,7 +1052,7 @@ namespace GalaxyEggbert::Editor
         }
         if (helpVisible_)
         {
-            lines.emplace_back("LEFT CLICK/PLACE: place   MIDDLE CLICK: remove");
+            lines.emplace_back("LEFT CLICK/PLACE: cyan preview   DEL/MIDDLE: remove red selection");
             lines.emplace_back("Click the block just placed again: its next variant");
             lines.emplace_back("V: next variant of the aimed block   CTRL+click: no cycling");
             lines.emplace_back("O: turn the aimed tile, model, object or decor");
@@ -1084,7 +1060,7 @@ namespace GalaxyEggbert::Editor
             lines.emplace_back("G: pick object  T: its end  TAB +/-: its values  DEL: remove");
             lines.emplace_back("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save");
             lines.emplace_back("C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror");
-            lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  Z: down");
+            lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  SHIFT/Z: down");
             lines.emplace_back("SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection");
             lines.emplace_back("NUMPAD: move the red preview   H: hide the keys");
         }
@@ -1095,7 +1071,7 @@ namespace GalaxyEggbert::Editor
         return lines;
     }
 
-    std::optional<WorldEditor::EditTarget> WorldEditor::CurrentTurnTarget(const Worlds::World& world) const
+    std::optional<WorldEditor::EditTarget> WorldEditor::CurrentEditTarget(const Worlds::World& world) const
     {
         const bool offset = placementOffsetX_ != 0 || placementOffsetY_ != 0 || placementOffsetZ_ != 0;
         const auto at = [&](std::uint16_t x, std::uint16_t y, std::uint16_t z) -> std::optional<EditTarget> {
@@ -1117,7 +1093,7 @@ namespace GalaxyEggbert::Editor
     bool WorldEditor::HandleTurn(const FrameInput& input, Worlds::World& world)
     {
         if (!input.turnHeld || turnKeyHeldLastFrame_) return false;
-        const auto target = CurrentTurnTarget(world);
+        const auto target = CurrentEditTarget(world);
         if (!target) return true;
         const auto [kind,x,y,z] = *target;
         const auto icon = world.getBlock(x,y,z).type();

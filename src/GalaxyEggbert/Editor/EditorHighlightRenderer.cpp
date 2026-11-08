@@ -21,12 +21,10 @@ namespace GalaxyEggbert::Editor
                                              float centerX, float centerY, float centerZ)
     {
         const float half = 0.5f + kCellHighlightPadding * 0.5f;
-        // The 3D equivalent of Eggbert 2's red target square: a translucent
-        // red cube whose opaque wireframe edges make its exact boundaries
-        // readable against any terrain texture.
+        // Cyan marks the cell Place writes to; red belongs to the edit selection.
         Rebuild(device, centerX - half, centerY - half, centerZ - half,
                 centerX + half, centerY + half, centerZ + half,
-                1.0f, 0.08f, 0.08f);
+                0.05f, 0.85f, 1.0f);
         hasWireframeEdges_ = true;
     }
 
@@ -52,7 +50,7 @@ namespace GalaxyEggbert::Editor
         Rebuild(device, centerX - half, centerY - half, centerZ - half,
                 centerX + half, centerY + half, centerZ + half,
                 1.0f, 0.05f, 0.05f);
-        hasWireframeEdges_ = false;
+        hasWireframeEdges_ = true;
     }
 
     void EditorHighlightRenderer::Rebuild(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,

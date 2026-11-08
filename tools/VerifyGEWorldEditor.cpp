@@ -373,7 +373,7 @@ int main()
         WorldEditor::Navigation keep;
         keep.keepAim = true;
         editor.Update(KeyboardState{Keys::NumPad6},restMouse,0,800,480,camera,world,keep);
-        const auto target = editor.CurrentTurnTarget(world);
+        const auto target = editor.CurrentEditTarget(world);
         check(target && target->kind == WorldEditor::EditTarget::Kind::Block &&
               target->x == x && target->y == placeY && target->z == placeZ,
               "the red selection and Turn share the explicit NumPad coordinate");
@@ -396,7 +396,7 @@ int main()
         world.setBlock(x,placeY,placeZ,Block::air());
         editor.Update(KeyboardState{},restMouse,0,800,480,camera,world,keep);
         editor.Update(KeyboardState{Keys::O},restMouse,0,800,480,camera,world,keep);
-        check(!editor.CurrentTurnTarget(world) && QuarterTurns(world,slabHit.x,slabHit.y,slabHit.z)==0,
+        check(!editor.CurrentEditTarget(world) && QuarterTurns(world,slabHit.x,slabHit.y,slabHit.z)==0,
               "an empty NumPad coordinate does not turn a different object behind it");
         EditorCommandKeys presses;
         presses.Record(Keys::V); presses.Record(Keys::O); presses.Record(Keys::V);
@@ -406,6 +406,66 @@ int main()
                 if (key==Keys::V || key==Keys::O) commands.push_back(key);
         check(commands==std::vector<Keys>{Keys::V,Keys::O,Keys::V},
               "rapid V/O commands retain their arrival order and a held O is not duplicated");
+    }
+
+    {
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0,10,0);
+        CnaEngine::Graphics::Camera camera;
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        const auto x=static_cast<std::uint16_t>(placeX+1);
+        world.setBlock(x,placeY,placeZ,Block::make(190));
+        WorldEditor::Navigation keep;
+        keep.keepAim=true;
+        editor.Update(KeyboardState{Keys::NumPad6},restMouse,0,800,480,camera,world,keep);
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world,keep);
+        editor.Update(KeyboardState{Keys::V},restMouse,0,800,480,camera,world,keep);
+        check(world.getBlock(x,placeY,placeZ).type()==191,
+              "V changes the red-selected NumPad coordinate, matching O");
+        const auto ground=world.getBlock(slabHit.x,slabHit.y,slabHit.z);
+        const auto removeAndUndo = [&]() {
+            editor.Update(KeyboardState{},restMouse,0,800,480,camera,world,keep);
+            editor.Update(KeyboardState{Keys::Delete},restMouse,0,800,480,camera,world,keep);
+            const bool removed=!editor.CurrentEditTarget(world);
+            editor.Update(KeyboardState{},restMouse,0,800,480,camera,world,keep);
+            editor.Update(KeyboardState{Keys::U},restMouse,0,800,480,camera,world,keep);
+            return removed && editor.CurrentEditTarget(world).has_value();
+        };
+        check(removeAndUndo() && world.getBlock(x,placeY,placeZ).type()==191 &&
+              world.getBlock(slabHit.x,slabHit.y,slabHit.z)==ground,
+              "Delete removes the selected coordinate and Undo restores it, leaving the ray's ground alone");
+        world.setBlock(x,placeY,placeZ,Block::air());
+        GalaxyEggbert::MoveObjectRecord object;
+        object.type=GalaxyEggbert::Def::ObjectType::ObjectType5;
+        object.posStartX=object.posEndX=x;
+        object.posStartY=object.posEndY=placeY;
+        object.posStartZ=object.posEndZ=placeZ;
+        GalaxyEggbert::PlaceMoveObject(world,object);
+        check(removeAndUndo() && GalaxyEggbert::CollectMoveObjects(world).size()==1,
+              "Delete and Undo handle an object without requiring object palette mode or G first");
+        GalaxyEggbert::RemoveMoveObject(world,x,placeY,placeZ);
+        GalaxyEggbert::PlaceBigDecor(world,{20,x,placeY,placeZ});
+        check(removeAndUndo() && GalaxyEggbert::CollectBigDecor(world).size()==1,
+              "Delete and Undo handle a selected tree in terrain palette mode too");
+    }
+    {
+        World world;
+        WorldEditor editor;
+        editor.EnterEditing(0,10,0);
+        CnaEngine::Graphics::Camera camera;
+        editor.Update(KeyboardState{Keys::LeftShift},restMouse,.1f,800,480,camera,world);
+        check(camera.Position().Y<10,"Shift alone lowers the editor camera");
+        editor.EnterEditing(0,10,0);
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::RightShift,Keys::NumPad6},restMouse,.1f,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::RightShift},restMouse,.1f,800,480,camera,world);
+        check(camera.Position().Y==10,"Shift+NumPad selection and the held Shift between steps never lower the camera");
+        editor.EnterEditing(0,10,0);
+        WorldEditor::Navigation nav;
+        nav.selecting=true;
+        editor.Update(KeyboardState{Keys::LeftShift},restMouse,.1f,800,480,camera,world,nav);
+        check(camera.Position().Y==10,"touch/gamepad selection mode does not become camera descent");
     }
 
     // OR-0072: a lift placed, the next click elsewhere is its end (the original's m_liftEnd).

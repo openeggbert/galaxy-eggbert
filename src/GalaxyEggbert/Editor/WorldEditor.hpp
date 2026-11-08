@@ -33,6 +33,7 @@ namespace GalaxyEggbert::Editor
         float forward = 0, strafe = 0, vertical = 0;
         float yaw = 0, pitch = 0;
         bool centeredAim = false, keepAim = false;
+        bool selecting = false; // touch/gamepad Select 3D is not camera descent
     };
     // A lift's speed per cell and rests by its menu entry (20 Hz ticks; the PC editor's PlaceDecor4,
     // blupi_recon decdesign.cpp: slow 20/20/20, normal 10/10/10, fast 6/6/3, fast/slow 5 up, 22
@@ -85,7 +86,7 @@ namespace GalaxyEggbert::Editor
             std::uint16_t x, y, z;
         };
         // The same target is used by O/Tools Turn and the red selection tint.
-        [[nodiscard]] std::optional<EditTarget> CurrentTurnTarget(const Worlds::World& world) const;
+        [[nodiscard]] std::optional<EditTarget> CurrentEditTarget(const Worlds::World& world) const;
 
         // The copy C made (ED-0010), nullptr before one; whether P's pasting is on.
         [[nodiscard]] const Clipboard* CurrentClipboard() const noexcept

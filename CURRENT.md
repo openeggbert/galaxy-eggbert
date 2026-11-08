@@ -52,6 +52,12 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Editor selection follow-up: red outline/tint marks the edit target, cyan the Place cell.
+  Selection coordinates appear in the status. Delete/Backspace, middle button and Tools Remove
+  share the same target as O and V, including NumPad coordinates and objects outside object
+  palette mode. Undo restores blocks/objects/decor. Shift alone lowers the camera (Z remains);
+  Shift+NumPad and device Select 3D do not lower it. Native Delete/Undo/Shift captures and
+  all113 tests pass (build-probe/editor-turn/selection-*).
 - Editor O/Tools Turn uses the explicit NumPad coordinate when offset, the G-selected object,
   otherwise the preview's object/decor or aimed terrain. A house window (one textured side)
   now honors all four saved turns in both flat and relief rendering. The same target is tinted

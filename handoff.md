@@ -10,6 +10,14 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Owner's14-43-15 screenshot showed the old ray-hit selection and the adjacent Place preview
+  both red. These are now distinct: selected cell red wire/tint, Place cyan wire. Status shows
+  the selected XYZ. V, O and all removal routes now use CurrentEditTarget; Delete works on
+  the NumPad coordinate, object or BigDecor regardless of palette mode. Back/Delete retain
+  short native presses too. Undo cases cover all three kinds. Shift-alone descends (Z stays),
+  Shift+NumPad/held selection and device selecting mode never descend. Build,113/113 CTest
+  and native Delete/Undo/Shift capture pass in build-probe/editor-turn/selection-*.
+  Saw work is in progress separately; do not treat that uncommitted work as verified yet.
 - New owner-requested debug cheat:29-word catalogue, active-name toggle and read-only diagnostics
   derived from current world/controller/input data. Mobile MODERN field set adapted to raw XYZ,
   measured simulation-step velocity and the real20Hz clock. Desktop panel upper-right, touch

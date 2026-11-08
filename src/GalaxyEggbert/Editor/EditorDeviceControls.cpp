@@ -406,6 +406,7 @@ EditorDeviceControls::Result EditorDeviceControls::Update(
     backWasDown_ = pad.back;
     if (selecting_)
         keys.insert(Keys::LeftShift);
+    nav.selecting = selecting_;
     if (keep_)
         keys.insert(Keys::RightAlt);
     if (touchUiFrame)

@@ -230,7 +230,7 @@ mapped before gamepad keys are merged. Helicopter Ctrl, gamepad A and touch Jump
 
 ### 3D editor controls
 
-Ctrl raises the camera, Z lowers it; Space invokes Place. Shift + NumPad 4/6, 7/9, 8/2 extends an
+Ctrl raises the camera, Shift or Z lowers it; Space invokes Place. Shift + NumPad 4/6, 7/9, 8/2 extends an
 inclusive 3D selection in X/Y/Z from the initial aimed cell. Place fills it with the selected block,
 Remove clears it, Escape cancels it; the whole edit is one Undo. Dimensions appear while selecting.
 
@@ -240,6 +240,10 @@ O (or Tools > Turn) turns the red-selected target. A NumPad-offset coordinate ta
 otherwise it uses the object selected by G, an object/decor in the preview, or the aimed block.
 Windows and other cubes with a single textured face turn through all four horizontal sides.
 The selected model has a translucent red tint; G selection stays selected when looking elsewhere.
+The red outline marks the selected cell, with its coordinates in the status; the cyan outline
+marks where Place will add a block. Delete/Backspace, middle click and Tools Remove delete
+the red selection; V changes its terrain variant. Each removal is undoable. Shift does not
+lower the camera while extending a selection or using touch/gamepad Select 3D.
 
 Touch: the Move pad flies horizontally; Up/Down changes height; drag the world with another finger
 to look. Choose palette entries and Place with their existing buttons. **Tools > Select 3D** replaces

@@ -1640,6 +1640,17 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0104 — Selection/Place ambiguity, deletion and Shift descent — FIXED_AND_VERIFIED
+
+Owner screenshot14-43-15 showed red edit tint and a different red Place cube. Selection now
+has a red outline with status XYZ, Place a cyan outline. O, V, Delete/Backspace, middle button
+and Tools removal share CurrentEditTarget, including explicit NumPad offsets and objects/decor
+outside their palette modes. Previously removal ignored offsets and Delete required G selection.
+All three kinds have removal/Undo tests; native Delete removes the intended window, Undo
+restores it, with no change to the tree or ground. Shift-alone descent restored, keeping Z;
+selection modifiers (including device Select 3D) suppress that descent. Unit and native checks
+pass,113/113 CTest. Evidence: build-probe/editor-turn/selection-*.
+
 ## BD-0103 — O target, window orientation and visible selection — FIXED_AND_VERIFIED
 
 Owner: O ignored a NumPad coordinate, and a house-window cube stayed facing the same way.

@@ -252,17 +252,20 @@ namespace GalaxyEggbert::Editor
             highlightRenderer_.Hide();
         }
 
-        if (const auto target = CurrentTurnTarget(world))
+        auto status = StatusLines();
+        if (const auto target = CurrentEditTarget(world))
         {
             selectionHighlightRenderer_.ShowSelectedObject(device,
                 float(target->x)-Game::WorldRuntime::kWorldCenterX, float(target->y),
                 float(target->z)-Game::WorldRuntime::kWorldCenterZ);
             selectionHighlightRenderer_.Draw(device,camera);
+            status.insert(status.begin(), "Red selection X:"+std::to_string(target->x)+" Y:"+
+                std::to_string(target->y)+" Z:"+std::to_string(target->z));
         }
         else selectionHighlightRenderer_.Hide();
 
         palette_.Draw(
             device, viewportWidth, viewportHeight, stopConfirmArmed_, hasHighlight_,
-            placementCellX_, placementCellY_, placementCellZ_, StatusLines());
+            placementCellX_, placementCellY_, placementCellZ_, status);
     }
 }

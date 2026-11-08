@@ -15,7 +15,7 @@ namespace GalaxyEggbert::Editor
         void Record(Microsoft::Xna::Framework::Input::Keys key)
         {
             using Microsoft::Xna::Framework::Input::Keys;
-            if ((key == Keys::V || key == Keys::O) && pending_.size() < 256) pending_.push_back(key);
+            if ((key == Keys::V || key == Keys::O || key == Keys::Delete || key == Keys::Back) && pending_.size() < 256) pending_.push_back(key);
         }
         void Reset() noexcept { pending_.clear(); releaseNext_ = true; }
 
@@ -27,6 +27,8 @@ namespace GalaxyEggbert::Editor
             std::unordered_set<Keys> keys(pressed.begin(), pressed.end());
             keys.erase(Keys::V);
             keys.erase(Keys::O);
+            keys.erase(Keys::Delete);
+            keys.erase(Keys::Back);
             if (releaseNext_) releaseNext_ = false;
             else if (!pending_.empty())
             {

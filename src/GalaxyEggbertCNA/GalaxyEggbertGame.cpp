@@ -6684,7 +6684,7 @@ namespace GalaxyEggbert::CNA
         auto& device = getGraphicsDeviceProperty();
         using TargetKind = GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind;
         const auto editorTarget = phase_ == GalaxyEggbert::Def::GamePhase::Editor && !worldEditor_.IsBrowsing()
-            ? worldEditor_.CurrentTurnTarget(worldRuntime_.GetWorld()) : std::nullopt;
+            ? worldEditor_.CurrentEditTarget(worldRuntime_.GetWorld()) : std::nullopt;
         const auto editorSelected = [&](TargetKind kind, float rawX, float rawY, float rawZ) {
             return editorTarget && editorTarget->kind == kind &&
                 std::lround(rawX) == editorTarget->x && std::lround(rawY) == editorTarget->y &&
