@@ -1,5 +1,6 @@
 #include <GalaxyEggbert/Game/GamepadInput.hpp>
 #include <GalaxyEggbert/Game/ControlInput.hpp>
+#include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
@@ -48,6 +49,11 @@ int main()
         const auto keys = [](std::initializer_list<Keys> held) {
             return KeyboardState(std::unordered_set<Keys>(held));
         };
+        const auto onFoot=VehicleFireKeyboard(keys({Keys::LeftControl}),false);
+        const auto armed=VehicleFireKeyboard(keys({Keys::LeftControl,Keys::Up}),true);
+        check(onFoot.IsKeyDown(Keys::LeftControl) && !onFoot.IsKeyDown(Keys::F) &&
+              armed.IsKeyDown(Keys::F) && !armed.IsKeyDown(Keys::LeftControl) && armed.IsKeyDown(Keys::Up),
+              "physical Left Ctrl jumps on foot, fires in tank/helicopter, and preserves other controls");
         const auto wasd = ReadPlayDirections(keys({Keys::W, Keys::A}));
         const auto arrows = ReadPlayDirections(keys({Keys::Up, Keys::Left}));
         check(wasd.move == arrows.move && wasd.turn == arrows.turn && wasd.move == 1 && wasd.turn == -1,
@@ -86,6 +92,20 @@ int main()
         (void)pad.UpdateInit(mouse(1170, 100, true), 1280, 960);
         check(pad.UpdateInit(mouse(1170, 100, false), 1280, 960).exitPressed,
               "Exit hit area scales with the viewport");
+    }
+
+    {
+        InputPad pad;
+        const auto press=pad.UpdateInit(mouse(75,109,true),800,480);
+        const auto release=pad.UpdateInit(mouse(75,109,false),800,480);
+        check(!press.helpPressed && release.helpPressed && !release.fullscreenPressed && !release.playPressed,
+              "main-menu Help opens independently on release");
+        ControlsHelp help;help.shown=true;
+        const bool over=ControlsHelp::OverClose(695,35,800,480);
+        check(over && help.Update({},true,over) && !help.shown,
+              "the visible Close control dismisses help without a keyboard");
+        check(help.Update({},true,false) && help.Update({},false,false) && !help.Update({}),
+              "Close consumes the pointer through release so the underlying Exit/Play cannot fire");
     }
 
     // --- Play: D-pad discrete drag ---
@@ -462,6 +482,40 @@ int main()
         check(release.menuPressed && !release.continuePressed, "Resume: Menu fires on release, distinct from Continue");
     }
 
+    {
+        InputPad pad;
+        const auto press = pad.UpdateInit(mouse(105, 42, true), 800, 480);
+        const auto release = pad.UpdateInit(mouse(105, 42, false), 800, 480);
+        check(!press.fullscreenPressed && release.fullscreenPressed && !release.exitPressed,
+              "main menu Fullscreen/Window button toggles on release independently of Exit");
+        (void)pad.UpdateInit(mouse(105, 42, true), 800, 480);
+        check(!pad.UpdateInit(mouse(300, 100, false), 800, 480).fullscreenPressed,
+              "dragging away from display-mode button cancels the click");
+    }
+
+    {
+        using TP=InputPad::TouchPoint;
+        InputPad pad;
+        InputPad::PlayInput in;
+        (void)pad.UpdatePlay(mouse(618,278,true),800,480,in);
+        check(!in.fireHeld,"the vehicle Fire button has no hidden hit area on foot");
+        (void)pad.UpdatePlay(mouse(618,278,false),800,480,in);
+        pad.SetVehicleFireEnabled(true);
+        (void)pad.UpdatePlay(mouse(618,278,true),800,480,in);
+        check(in.fireHeld && !in.actionPressed,"holding vehicle Fire does not also enter/leave a vehicle");
+        (void)pad.UpdatePlay(mouse(618,278,false),800,480,in);
+        check(!in.fireHeld && !in.actionPressed,"Fire release does not issue Action");
+        (void)pad.UpdatePlayTouches({TP{7,618,278,false,false}},800,480,in);
+        check(in.fireHeld,"a first Moved touch snapshot still holds vehicle Fire");
+        (void)pad.UpdatePlayTouches({},800,480,in);
+        check(!in.fireHeld,"missing Fire contact releases the trigger");
+        (void)pad.UpdatePlayTouches({TP{8,733,278,false,false}},800,480,in);
+        (void)pad.UpdatePlayTouches({},800,480,in);
+        check(in.actionPressed,"touch Action retains release edges even when the platform skips Pressed/Released snapshots");
+        GamepadFrame f; f.connected=true;f.rightTrigger=.8f;
+        check((GamepadKeys(f)&kPadFire) && !(GamepadKeys(f)&kPadAction),"gamepad RT fires independently from B/X enter/leave");
+    }
+
     // --- Init / gamer-select menu (plan.md MENU-006..020): real rects,
     // verified against InputPad.cpp's own bsf2=140-at-this-reference-
     // height formula (same "no adaptation needed" situation as Setup/
@@ -564,6 +618,8 @@ int main()
               "Init: buttons are placed from the screen's edges (800x480: GamerA x 20-90, Play x 640-780)");
     }
 
+    if (kCheatsEnabled)
+    {
     // --- Cheat gesture: real 10-tap sequence (12,22,32,12,11,21,22,21,
     // 31,32) over 6 invisible zones in a 3-col x 2-row grid spanning the
     // top-left 2/3 width x 57% height of the 640x480 reference space.
@@ -763,7 +819,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 26;
+        bool all = count == 27;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -772,13 +828,69 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 26 words including help/cheats fire and have an explanation");
+        check(all, "Typed cheats: all 27 words including compass/help/cheats fire and have an explanation");
         InputPad pad;
         check(type(pad, "givecopter").first == TC::GiveCopter && type(pad, "copter").first == TC::None,
               "Typed cheats: givecopter fires; the buffer is cleared after a word (\"copter\" alone is nothing)");
         check(type(pad, "xxjeepdrive").first == TC::JeepDrive, "Typed cheats: a word after other letters still fires");
     }
 
+    {
+        using namespace Microsoft::Xna::Framework::Input;
+        InputPad pad;
+        for (char c : std::string("weelkeys"))
+        {
+            const auto key = static_cast<Keys>(int(Keys::A) + c - 'a');
+            const auto result = pad.UpdateTypedGhostCheat(KeyboardState{key}, true);
+            if (c == 's')
+            {
+                check(result.cheat == InputPad::TypedCheat::WeelKeys &&
+                          !pad.FilterGameplayKeyboard(KeyboardState{Keys::S}).IsKeyDown(Keys::S),
+                      "typing weelkeys consumes its final S rather than turning Blupi around");
+                (void)pad.UpdateTypedGhostCheat(KeyboardState{Keys::S}, true);
+                check(!pad.FilterGameplayKeyboard(KeyboardState{Keys::S}).IsKeyDown(Keys::S),
+                      "the cheat's final S stays suppressed until released");
+            }
+            (void)pad.UpdateTypedGhostCheat(KeyboardState{}, true);
+        }
+        (void)pad.UpdateTypedGhostCheat(KeyboardState{Keys::S}, true);
+        check(pad.FilterGameplayKeyboard(KeyboardState{Keys::S}).IsKeyDown(Keys::S),
+              "a fresh S press after the cheat still turns normally");
+        InputPad slow;
+        auto slowCheat=InputPad::TypedCheat::None;
+        for (char c : std::string("weelkeys"))
+        {
+            const auto key=static_cast<Keys>(int(Keys::A)+c-'a');
+            slowCheat=slow.UpdateTypedGhostCheat(KeyboardState{key},true).cheat;
+            for (int tick=0;tick<120;++tick) (void)slow.UpdateTypedGhostCheat(KeyboardState{},true);
+        }
+        check(slowCheat==InputPad::TypedCheat::WeelKeys, "cheat recognition retains the original buffer even with two-second typing pauses");
+        InputPad walking;
+        for (int i=0; i<120; ++i) (void)walking.UpdateTypedGhostCheat(KeyboardState{Keys::W}, true);
+        check(walking.FilterGameplayKeyboard(KeyboardState{Keys::W}).IsKeyDown(Keys::W),
+              "ordinary held movement does not become cheat typing");
+    }
+    }
+    else
+    {
+        using namespace Microsoft::Xna::Framework::Input;
+        InputPad pad;
+        int count=1;
+        (void)InputPad::TypedCheatWords(count);
+        bool none=count==0;
+        for(char c:std::string("ghostcompasshelpweelkeys"))
+        {
+            const auto key=static_cast<Keys>(int(Keys::A)+c-'a');
+            none &= pad.UpdateTypedGhostCheat(KeyboardState{key},true).cheat==InputPad::TypedCheat::None;
+            (void)pad.UpdateTypedGhostCheat(KeyboardState{},true);
+        }
+        check(none, "cheats-OFF build exposes and recognizes no typed cheats");
+        check(!pad.UpdateCheatGesture(mouse(70,200,true),640,480) &&
+                  pad.UpdateCheatMenu(mouse(50,240,false),640,480)==0,
+              "cheats-OFF build cannot unlock or activate the hidden cheat menu");
+        check(pad.FilterGameplayKeyboard(KeyboardState{Keys::S}).IsKeyDown(Keys::S),
+              "cheats-OFF build leaves normal movement keys alone");
+    }
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

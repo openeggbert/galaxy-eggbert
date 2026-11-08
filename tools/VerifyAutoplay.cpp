@@ -420,6 +420,7 @@ int main()
         log.start.worldHash = 0xfedcba9876543210ull;
         log.start.seed = 4294967295u;
         log.start.x = 0.123456791f;
+        log.start.compass = true;
         log.start.saveData = "selectedGamer=2\nquoted=\"value\"\n";
         ResumeInput input;
         input.keys = {32, 37, 162};
@@ -435,15 +436,15 @@ int main()
         ResumeLog parsed;
         const auto text = log.Serialize();
         check(ResumeLog::Parse(text, "test build", parsed) && parsed.start == log.start && parsed.runs == log.runs,
-              "resume v3 round trip retains world identity, touch capability and all raw inputs");
-        check(text.starts_with("GALAXY_RESUME 3\n"), "resume writes format version 3");
+              "resume v4 round trip retains world identity, compass, touch capability and all raw inputs");
+        check(text.starts_with("GALAXY_RESUME 4\n"), "resume writes format version 4");
         check(parsed.runs[0].input.touchControlsEnabled && !parsed.runs[1].input.touchControlsEnabled,
               "resume replays the captured touch capability without querying the current device");
         auto oldBody = text.substr(0, text.rfind("\nEND ") + 1);
-        oldBody.replace(0, std::string("GALAXY_RESUME 3").size(), "GALAXY_RESUME 2");
+        oldBody.replace(0, std::string("GALAXY_RESUME 4").size(), "GALAXY_RESUME 3");
         check(!ResumeLog::Parse(oldBody + "END " + std::to_string(ResumeLog::HashBytes(oldBody)) + "\n",
                                "test build", parsed) && parsed.start == log.start,
-              "version 2 without a captured touch capability is refused transactionally");
+              "version 3 without the initial compass state is refused transactionally");
         check(parsed.MatchesWorld(log.start.worldPath, log.start.worldHash), "same world is accepted");
         check(!parsed.MatchesWorld(log.start.worldPath, log.start.worldHash ^ 1), "changed world hash is refused");
         check(!parsed.MatchesWorld("worlds3d/world045.vwr", log.start.worldHash), "different world path is refused");

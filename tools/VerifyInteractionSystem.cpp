@@ -1,8 +1,10 @@
+#include <GalaxyEggbert/Game/FanGeometry.hpp>
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/CratePush.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/InteractionSystem.hpp>
+#include <GalaxyEggbert/Game/ReusablePickup.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
 #include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
@@ -199,6 +201,46 @@ int main(int argc, char** argv)
     else
     {
         check(false, "found the patrolling lift for the riding test");
+    }
+
+    // Editor lift preview shares Play's entire patrol cycle in all three axes.
+    {
+        using T = GalaxyEggbert::Def::ObjectType;
+        for (auto type : {T::ObjectType1,T::ObjectType47,T::ObjectType48})
+        {
+            WorldRuntime previewWorld, playWorld;
+            MobileObjSpec lift;
+            lift.type=type;
+            lift.posStartX=lift.currentX=1; lift.posStartY=lift.currentY=5; lift.posStartZ=lift.currentZ=2;
+            lift.posEndX=4; lift.posEndY=7; lift.posEndZ=6;
+            lift.stepAdvanceTicks=20; lift.stepRecedeTicks=30;
+            lift.timeStopStartTicks=5; lift.timeStopEndTicks=7;
+            previewWorld.GetMobileObjectsMutable().push_back(lift);
+            playWorld.GetMobileObjectsMutable().push_back(lift);
+            MobileObjSpec bottle=lift;
+            bottle.type=T::ObjectType30;
+            previewWorld.GetMobileObjectsMutable().push_back(bottle);
+            InteractionSystem play;
+            bool same=true, moved=false;
+            for (int i=0;i<480;++i)
+            {
+                InteractionSystem::AdvanceEditorPlatforms(previewWorld,dt);
+                play.Update(dt,playWorld,1000,1000,1000,0,sound);
+                const auto& a=previewWorld.GetMobileObjects()[0];
+                const auto& b=playWorld.GetMobileObjects()[0];
+                same &= std::fabs(a.currentX-b.currentX)<.00001f && std::fabs(a.currentY-b.currentY)<.00001f &&
+                        std::fabs(a.currentZ-b.currentZ)<.00001f && a.patrolStep==b.patrolStep;
+                moved |= a.currentX>1.1f && a.currentY>5.1f && a.currentZ>2.1f;
+            }
+            check(same && moved,"editor previews ordinary/conveyor lifts with Play's XYZ motion, dwell and return timing");
+            const auto& stationary=previewWorld.GetMobileObjects()[1];
+            check(stationary.currentX==1 && stationary.currentY==5 && stationary.currentZ==2 && stationary.active,
+                  "editor platform preview does not move or collect other objects");
+            const auto& authored=previewWorld.GetMobileObjects()[0];
+            check(authored.posStartX==1 && authored.posStartY==5 && authored.posStartZ==2 &&
+                  authored.posEndX==4 && authored.posEndY==7 && authored.posEndZ==6,
+                  "preview motion preserves authored start/end coordinates");
+        }
     }
 
     // 1.55. Followers and the drink (D44): while Blupi is hidden a dormant follower (96) does not
@@ -722,6 +764,9 @@ int main(int argc, char** argv)
         const auto distance = InteractionSystem::NearestTreasureDistance(distanceWorld, 10, 2, -5);
         check(distance && std::fabs(*distance - 5.0f) < 0.0001f,
               "nearest-chest distance uses all three axes and ignores collected chests and other pickups");
+        const auto bearing = InteractionSystem::NearestObjective(distanceWorld,10,2,-5);
+        check(bearing && bearing->distance==5 && bearing->dx==3 && bearing->dy==4 && bearing->dz==0,
+              "compass axes and distance belong to the same nearest chest");
         const auto atChest = InteractionSystem::NearestTreasureDistance(distanceWorld, 13, 6, -5);
         check(atChest && *atChest == 0, "standing at an active chest displays zero blocks");
         objects.back().active = false;
@@ -730,6 +775,28 @@ int main(int argc, char** argv)
         objects.front().active = false;
         check(!InteractionSystem::NearestTreasureDistance(distanceWorld, 10, 2, -5),
               "collecting the last chest hides the distance even before its reward finishes flying");
+        MobileObjSpec exit = nearChest;
+        exit.type = GalaxyEggbert::Def::ObjectType::ObjectType7;
+        exit.currentX = 11; exit.currentY = 2; exit.currentZ = -5;
+        objects.push_back(exit);
+        check(InteractionSystem::NearestObjectiveDistance(distanceWorld, 10, 2, -5) == 1,
+              "without remaining chests the readout switches to the red exit arrow");
+        objects.back().type = GalaxyEggbert::Def::ObjectType::ObjectType21;
+        check(InteractionSystem::NearestObjectiveDistance(distanceWorld, 10, 2, -5) == 1,
+              "the golden-key exit is also a distance target");
+        objects.front().active = true;
+        check(InteractionSystem::NearestObjectiveDistance(distanceWorld, 10, 2, -5) == 12,
+              "a remaining chest takes priority over a closer exit");
+        objects.clear(); objects.push_back(exit);
+        check(InteractionSystem::NearestObjectiveDistance(distanceWorld, 10, 2, -5) == 1,
+              "a world authored without any chests points to the exit immediately");
+        objects.front().currentX=8; objects.front().currentY=1; objects.front().currentZ=-7;
+        const auto negative = InteractionSystem::NearestObjective(distanceWorld,10,2,-5);
+        check(negative && negative->distance==3 && negative->dx==-2 && negative->dy==-1 && negative->dz==-2,
+              "compass preserves negative bearings in every world axis");
+        objects.clear();
+        check(!InteractionSystem::NearestObjective(distanceWorld,0,0,0), "without any objective the compass has nothing to draw");
+
     }
 
     if (const auto* chest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))
@@ -3078,6 +3145,24 @@ int main(int argc, char** argv)
               "a teleport's arrival starts two sparkle clusters sliding to the nearest wall each way, 20 ticks a cell");
     }
 
+    {
+        using namespace GalaxyEggbert::Game;
+        check(FanBodySolid(BlockTypes::FanUp,false,0,-.2f,0) &&
+              !FanBodySolid(BlockTypes::FanUp,false,.3f,0,0) &&
+              !FanBodySolid(BlockTypes::FanUp,false,.3f,.3f,0),
+              "fan collision separates the solid motor from shaft gaps and moving blades");
+        check(FanRotorTouchesBody(BlockTypes::FanLeft,false,-.6f,-.5f,0,.25f,.9f) &&
+              FanRotorTouchesBody(BlockTypes::FanRight,false,.6f,-.5f,0,.25f,.9f) &&
+              FanRotorTouchesBody(BlockTypes::FanUp,false,.3f,.35f,0,.25f,.9f) &&
+              FanRotorTouchesBody(BlockTypes::FanDown,false,.3f,-1.25f,0,.25f,.9f) &&
+              FanRotorTouchesBody(BlockTypes::FanLeft,true,0,-.5f,-.6f,.25f,.9f) &&
+              FanRotorTouchesBody(BlockTypes::FanRight,true,0,-.5f,.6f,.25f,.9f),
+              "all six fan directions detect contact with the recovered rotor");
+        check(!FanRotorTouchesBody(BlockTypes::FanRight,false,-.1f,-.5f,0,.25f,.9f) &&
+              !FanRotorTouchesBody(BlockTypes::FanRight,false,-.35f,.52f,0,.25f,.9f),
+              "the space behind the rotor and top of the motor housing are safe");
+    }
+
     // 17. WorldRuntime::TryConsumeFan() -- Decor::IsVentillo() in 3D: contact at the fan's mouth
     // (the cell in front of it, the way it blows), the fan and its wind column cleared. Synthetic
     // fans at an unused height, clear of the sample world's own.
@@ -3102,35 +3187,35 @@ int main(int argc, char** argv)
         // OR-0066: a cell in front of the mouth is not touching it; his body against its face is.
         check(!world.TryConsumeFan(rx(39), 20.0f, rz(40)).has_value(),
               "beside a fan, a cell in front of its mouth, Blupi is safe (owner 2026-11-04)");
-        check(!world.TryConsumeFan(rx(39) + 0.25f, 20.0f, rz(40) + 0.6f).has_value(),
+        check(!world.TryConsumeFan(rx(39) + 0.4f, 20.0f, rz(40) + 0.9f).has_value(),
               "against the mouth's plane but beside the fan's cell, Blupi is safe");
-        const auto consumed = world.TryConsumeFan(rx(39) + 0.25f, 20.0f, rz(40));
+        const auto consumed = world.TryConsumeFan(rx(39) + 0.4f, 20.0f, rz(40));
         check(consumed.has_value() && *consumed == BlockTypes::FanLeft,
               "his body against its mouth, Blupi touches the fan");
         check(at(40, 20, 40) == BlockTypes::Air && at(39, 20, 40) == BlockTypes::Air && at(38, 20, 40) == BlockTypes::Air,
               "the fan and its column of wind are cleared (ModifDecor(pos, -1) along the blast)");
-        check(!world.TryConsumeFan(rx(39) + 0.25f, 20.0f, rz(40)).has_value(), "the second time there is no fan any more");
+        check(!world.TryConsumeFan(rx(39) + 0.4f, 20.0f, rz(40)).has_value(), "the second time there is no fan any more");
         check(!world.TryConsumeFan(rx(44), 20.4f, rz(44)).has_value(), "over an upward fan in the air Blupi is safe");
         check(!world.TryConsumeFan(rx(45), 20.0f, rz(44)).has_value(), "on the floor beside an upward fan Blupi is safe");
-        check(world.TryConsumeFan(rx(44), 20.0f, rz(44)).has_value(), "standing on an upward fan touches its mouth");
-        // OR-0068: landed on a side fan (a whole block, its top open air): it goes off too.
-        put(46, 19, 46, BlockTypes::FanRight);
-        put(47, 19, 46, 114);
-        check(!world.TryConsumeFan(rx(46) + 0.7f, 20.0f, rz(46)).has_value(),
-              "beside a side fan's top, not over it, Blupi is safe");
-        const auto onSide = world.TryConsumeFan(rx(46), 20.0f, rz(46));
-        check(onSide.has_value() && *onSide == BlockTypes::FanRight && at(46, 19, 46) == BlockTypes::Air &&
-                  at(47, 19, 46) == BlockTypes::Air,
-              "landed on a side fan, Blupi sets it off; it and its wind go");
+        check(!world.TryConsumeFan(rx(44), 20.0f, rz(44)), "standing above the hub does not touch the lower blades");
+        check(world.TryConsumeFan(rx(44)+.3f, 19.85f, rz(44)).has_value(), "descending onto the upward rotor blades consumes the fan");
+        // The housing and motor are safe; only the actual blade volume consumes the fan.
+        put(46,19,46,BlockTypes::FanRight);
+        put(47,19,46,114);
+        check(!world.TryConsumeFan(rx(46),20.03f,rz(46)), "landing on a side fan above its rotor is harmless");
+        check(!world.TryConsumeFan(rx(46)-.1f,19.5f,rz(46)), "the gap behind the rotor and beside its motor is harmless");
+        const auto onSide=world.TryConsumeFan(rx(46)+.6f,19.5f,rz(46));
+        check(onSide && *onSide==BlockTypes::FanRight && at(46,19,46)==BlockTypes::Air && at(47,19,46)==BlockTypes::Air,
+              "contact with side rotor blades consumes the fan and its wind");
 
         // M3D-0005: a turned side fan blows along Z (-X becomes -Z): its mouth and wind there.
         put(50, 20, 50, BlockTypes::FanLeft);
         Game::SetPlateRotated(mutableWorld, 50, 20, 50, true);
         put(50, 20, 49, 110);
         Game::SetPlateRotated(mutableWorld, 50, 20, 49, true);
-        check(!world.TryConsumeFan(rx(49) + 0.25f, 20.0f, rz(50)).has_value(),
+        check(!world.TryConsumeFan(rx(49), 20.0f, rz(50)).has_value(),
               "beside a turned fan, where it would blow unturned, Blupi is safe");
-        const auto turned = world.TryConsumeFan(rx(50), 20.0f, rz(49) + 0.25f);
+        const auto turned = world.TryConsumeFan(rx(50), 20.0f, rz(49) + 0.4f);
         check(turned.has_value() && at(50, 20, 50) == BlockTypes::Air && at(50, 20, 49) == BlockTypes::Air,
               "in front of a turned fan's mouth (-Z) Blupi touches it; it and its wind go (M3D-0005)");
     }
@@ -4296,6 +4381,60 @@ int main(int argc, char** argv)
                   std::fabs(hideGrantedEvent->pickupY - 1.0f) < 0.01f &&
                   std::fabs(hideGrantedEvent->pickupZ - 41.0f) < 0.01f,
               "HideGranted event's pickupX/Y/Z capture the real pickup's own contact position");
+
+        {
+            WorldRuntime glueWorld;
+            InteractionSystem glueInteraction;
+            glueWorld.GetMobileObjectsMutable().push_back(drink);
+            glueInteraction.Update(dt,glueWorld,20,1,41,0,sound,false,false,0,0,false,true,
+                                   true,true,true,false,false,false,true,true);
+            // Drinking interrupted by glue must return its bottle exactly once, even
+            // though the death lock cancels the action's deferred completion event.
+            BlupiController drinking;
+            check(drinking.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Drink), "drink action started");
+            ReusablePickup bottle{20,1,41,GalaxyEggbert::Def::ObjectType::ObjectType30};
+            const auto bottlesAtSource = [&] {
+                int count=0;
+                for (const auto& obj : glueWorld.GetMobileObjects())
+                    if (obj.active && obj.type==GalaxyEggbert::Def::ObjectType::ObjectType30 &&
+                        std::fabs(obj.currentX-20)<.001f && std::fabs(obj.currentY-1)<.001f &&
+                        std::fabs(obj.currentZ-41)<.001f) ++count;
+                return count;
+            };
+            bottle.RestoreIfReady(glueWorld,glueInteraction,drinking.IsPickupFrozen());
+            check(bottlesAtSource()==0, "bottle stays hidden while its drinking action is active");
+            MobileObjSpec glue=drink;
+            glue.type=GalaxyEggbert::Def::ObjectType::ObjectType23;
+            glueWorld.GetMobileObjectsMutable().push_back(glue);
+            glueInteraction.Update(dt,glueWorld,20,1,41,0,sound,false,false,0,0,false,
+                                     true,true,true,true,false,false,false,true,false,true,0,false,false,false,false,
+                                     /*blupiFocused=*/false);
+            const auto* hit=findEvent(glueInteraction,InteractionSystem::EventKind::DeathLockRequested);
+            check(hit && hit->deathLockKind==InteractionSystem::PendingDeathKind::Glu,
+                  "a real enemy glue projectile hits while drinking without focus");
+            check(drinking.TriggerDeathLock(BlupiController::DeathCause::Glu,true), "glue interrupts drinking");
+            BlupiController::PickupFreezeKind interruptedKind{};
+            check(!drinking.ConsumePickupFreezeResolved(interruptedKind) && !drinking.IsHidden(),
+                  "interrupted drink grants no Hide power or completion event");
+            bottle.RestoreIfReady(glueWorld,glueInteraction,drinking.IsPickupFrozen());
+            bottle.RestoreIfReady(glueWorld,glueInteraction,drinking.IsPickupFrozen());
+            check(bottlesAtSource()==1, "interrupted drinking restores exactly one bottle at its original position");
+            glueInteraction.Update(dt, glueWorld,20,1,41,0,sound,false,false,0,0,false,true,
+                                     true,true,true,false,false,false,true,true);
+            check(hasEvent(glueInteraction,InteractionSystem::EventKind::HideGranted),
+                  "the restored bottle can be drunk again after respawn");
+            BlupiController secondDrink;
+            secondDrink.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Drink);
+            bottle={20,1,41,GalaxyEggbert::Def::ObjectType::ObjectType30};
+            for (int i=0;i<120 && secondDrink.IsPickupFrozen();++i)
+                secondDrink.Step(glueWorld.GetWorld(),0,0,false,false,false,dt);
+            check(secondDrink.ConsumePickupFreezeResolved(interruptedKind) &&
+                  interruptedKind==BlupiController::PickupFreezeKind::Drink,
+                  "a subsequent uninterrupted drink completes normally");
+            bottle.RestoreIfReady(glueWorld,glueInteraction,secondDrink.IsPickupFrozen());
+            check(bottlesAtSource()==1,"normal completion returns the same reusable bottle exactly once too");
+
+        }
 
         MobileObjSpec charge;
         charge.type = GalaxyEggbert::Def::ObjectType::ObjectType31;

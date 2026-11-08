@@ -26,12 +26,26 @@ int main()
     {
         SaveData data;
         data.Load();
+        check(!data.GetFullscreen(), "first run defaults to a window");
         check(data.GetSoundEnabled(), "Load(): defaults soundEnabled to true when no save file exists");
         check(data.GetLives() == 3, "Load(): defaults lives to 3 when no save file exists");
         check(data.GetMissionNumber() == 0, "Load(): defaults missionNumber to 0 when no save file exists");
         check(!data.GetHasProgress(), "Load(): defaults hasProgress to false when no save file exists");
         // The Setup's "3D terrain" is off until turned on (owner 2026-11-04, OR-0061).
         check(!data.GetTerrainRelief(), "Load(): defaults terrainRelief (3D terrain) to off when no save file exists");
+    }
+    {
+        SaveData data;
+        data.SetFullscreen(true);
+        data.Save();
+        SaveData reloaded;
+        reloaded.Load();
+        check(reloaded.GetFullscreen(), "fullscreen preference survives restart");
+        reloaded.SetFullscreen(false);
+        reloaded.Save();
+        SaveData window;
+        window.Load();
+        check(!window.GetFullscreen(), "window preference survives restart");
     }
     {
         SaveData data;

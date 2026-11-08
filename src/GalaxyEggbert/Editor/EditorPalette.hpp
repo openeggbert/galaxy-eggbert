@@ -68,6 +68,7 @@ namespace GalaxyEggbert::Editor
         {
             return notYetImplementedSeconds_ > 0.0f;
         }
+        [[nodiscard]] bool IsPopupOpen() const noexcept { return openCategory_ >= 0; }
 
         [[nodiscard]] std::uint16_t SelectedBlockType() const noexcept
         {

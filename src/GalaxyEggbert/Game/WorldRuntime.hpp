@@ -161,12 +161,8 @@ namespace GalaxyEggbert::Game
         std::optional<bool> TryActivateSwitch(float blupiX, float blupiY, float blupiZ,
                                                bool blupiOnGround);
 
-        // Fan contact (Decor::IsVentillo(), in 3D, 2026-10-25): Blupi touches a fan at its mouth,
-        // the side it blows from -- FanLeft toward -X, FanRight +X, FanUp +Y, FanDown -Y (the
-        // original's four directions) -- i.e. he stands in the cell in front of it. The fan and the
-        // column of wind tiles in front of it (110-113, 114-117, 118-121, 122-125) become air, and
-        // the fan's icon is returned; the caller kills Blupi unless he is invincible. No grounded
-        // gate, as in the original.
+        // Touching the recovered rotor blades consumes the fan and its wind column. The
+        // housing/motor are safe. The caller retains the original death/immunity/effect rules.
         [[nodiscard]] std::optional<std::uint16_t> TryConsumeFan(float blupiX, float blupiY, float blupiZ);
         // The cell of the fan TryConsumeFan() last took (world coordinates, as Blupi's): its piece
         // flies away from there (ModifDecor's ByeByeAdd, BD-0049).

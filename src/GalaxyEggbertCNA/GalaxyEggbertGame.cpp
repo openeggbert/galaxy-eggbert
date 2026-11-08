@@ -1,6 +1,7 @@
 #include "GalaxyEggbertGame.hpp"
 
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
+#include <GalaxyEggbert/Game/CheatConfig.hpp>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -142,6 +143,11 @@ namespace GalaxyEggbert::CNA
             const auto& stick = pad.getThumbSticksProperty().getLeftProperty();
             f.leftX = stick.X;
             f.leftY = stick.Y;
+            const auto& rightStick = pad.getThumbSticksProperty().getRightProperty();
+            f.rightX = rightStick.X;
+            f.rightY = rightStick.Y;
+            f.leftTrigger = pad.getTriggersProperty().getLeftProperty();
+            f.rightTrigger = pad.getTriggersProperty().getRightProperty();
             const auto& dpad = pad.getDPadProperty();
             f.dpadUp = down(dpad.getUpProperty());
             f.dpadDown = down(dpad.getDownProperty());
@@ -159,14 +165,15 @@ namespace GalaxyEggbert::CNA
             return f;
         }
 
-        Microsoft::Xna::Framework::Input::KeyboardState ReadKeyboardState(bool suppressLiveInput)
+        Microsoft::Xna::Framework::Input::KeyboardState ReadKeyboardState(bool suppressLiveInput, bool mergeGamepad = true, bool ctrlFires = false)
         {
             using namespace Microsoft::Xna::Framework::Input;
             if (suppressLiveInput)
             {
                 return KeyboardState{};
             }
-            const KeyboardState keyboard = Keyboard::GetState();
+            const KeyboardState keyboard = GalaxyEggbert::Game::VehicleFireKeyboard(Keyboard::GetState(),ctrlFires);
+            if (!mergeGamepad) return keyboard;
             const unsigned pad = GalaxyEggbert::Game::GamepadKeys(ReadGamepadFrame());
             if (pad == 0u)
             {
@@ -179,7 +186,7 @@ namespace GalaxyEggbert::CNA
                 {kPadUp, Keys::Up}, {kPadDown, Keys::Down}, {kPadLeft, Keys::Left}, {kPadRight, Keys::Right},
                 {kPadJump, Keys::LeftControl}, {kPadAction, Keys::Space}, {kPadBackUp, Keys::RightControl},
                 {kPadCrouch, Keys::LeftShift}, {kPadLookUp, Keys::RightShift}, {kPadPause, Keys::Escape},
-                {kPadConfirm, Keys::Enter}};
+                {kPadConfirm, Keys::Enter}, {kPadFire, Keys::F}};
             for (const auto& [bit, key] : map)
             {
                 if (pad & bit)
@@ -858,6 +865,8 @@ namespace GalaxyEggbert::CNA
         graphics_ = std::make_unique<Microsoft::Xna::Framework::GraphicsDeviceManager>(this);
         graphics_->setGraphicsProfileProperty(
             Microsoft::Xna::Framework::Graphics::GraphicsProfile::HiDef);
+        saveData_.Load();
+        graphics_->setIsFullScreenProperty(saveData_.GetFullscreen());
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
     }
 
@@ -1349,7 +1358,6 @@ namespace GalaxyEggbert::CNA
         // Minimal settings persistence (2026-07-13, plan.md MENU-067, see
         // SaveData.hpp) -- restores the one real, already-wired setting
         // (sound on/off) from the previous run, if any.
-        saveData_.Load();
         sound_.SetEnabled(saveData_.GetSoundEnabled());
         sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
         inputPad_.SetJumpRight(saveData_.GetJumpRight());
@@ -1819,7 +1827,11 @@ namespace GalaxyEggbert::CNA
     {
         using namespace Microsoft::Xna::Framework::Input;
         tickInput_ = {};
-        const auto keys = autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput());
+        const auto keys = autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput(),
+            phase_ != GalaxyEggbert::Def::GamePhase::Editor && phase_ != GalaxyEggbert::Def::GamePhase::Init,
+            phase_ == GalaxyEggbert::Def::GamePhase::Play &&
+                (blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank ||
+                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Helicopter));
         for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
         std::sort(tickInput_.keys.begin(), tickInput_.keys.end());
         const auto mouse = ReadMouseState(SuppressLiveInput());
@@ -1840,6 +1852,7 @@ namespace GalaxyEggbert::CNA
                 tickInput_.touches.push_back({touch.getIdProperty(), touch.getPositionProperty().X,
                     touch.getPositionProperty().Y, static_cast<int>(touch.getStateProperty())});
         }
+
     }
 
     Microsoft::Xna::Framework::Input::MouseState GalaxyEggbertGame::CurrentMouseState() const
@@ -1940,8 +1953,7 @@ namespace GalaxyEggbert::CNA
         mockeryVariant_ = BlupiController::AnimState::Stop;
         mockeryElapsed_ = 0.0f;
         mockerySounded_ = false;
-        pendingPickupX_ = pendingPickupY_ = pendingPickupZ_ = 0.0f;
-        pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType0;
+        reusablePickup_ = {};
         cameraShake_ = CameraShake{};
         chaseZoom_ = 1.0f;
         chaseZoomLingerSeconds_ = 0.0f;
@@ -1979,6 +1991,7 @@ namespace GalaxyEggbert::CNA
         start.quickCheat = quickCheatEnabled_;
         start.openDoors = cheatDoors_;
         start.showSecret = cheatShowSecret_;
+        start.compass = cheatCompass_;
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
         saveData_.Write(settings);
@@ -2021,6 +2034,7 @@ namespace GalaxyEggbert::CNA
         quickCheatEnabled_ = start.quickCheat;
         cheatDoors_ = start.openDoors;
         cheatShowSecret_ = start.showSecret;
+        cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
         gameSpeed_ = GalaxyEggbert::Def::ToGameSpeed(start.speed);
         editorPlayTestActive_ = false;
@@ -2030,6 +2044,8 @@ namespace GalaxyEggbert::CNA
         blupi_.SetYaw(start.yaw);
         SetPhase(GalaxyEggbert::Def::GamePhase::Play, true);
         ResetMissionInput();
+        activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "compass"), activeCheats_.end());
+        if (cheatCompass_) activeCheats_.push_back("compass");
         replayRun_ = 0;
         replayRepeat_ = 0;
         resumeTicks_ = 0;
@@ -2582,6 +2598,7 @@ namespace GalaxyEggbert::CNA
         // (Game1.cpp:979-1058) -- this engine's own equivalent is just the
         // 2 key-debounce trackers below.
         phase_ = next;
+        editorDevices_.Reset();
         if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)
         {
             titleSceneRequested_ = true;
@@ -3124,87 +3141,60 @@ namespace GalaxyEggbert::CNA
     {
         using GalaxyEggbert::Game::BlupiController;
         using GalaxyEggbert::Game::InteractionSystem;
+        using GalaxyEggbert::Def::ObjectType;
+        using GalaxyEggbert::Def::SoundChannel;
 
-        const auto* powerEvent = FindInteractionEvent(InteractionSystem::EventKind::PowerGranted);
-        const auto* hideEvent = FindInteractionEvent(InteractionSystem::EventKind::HideGranted);
-        const auto* cloudEvent = FindInteractionEvent(InteractionSystem::EventKind::CloudGranted);
-        // Taking a dynamite stick: his TakeDynamite action, 18 ticks with his focus gone
-        // (Decor.cpp:6116-6128, 6329; OR-0083).
-        if (FindInteractionEvent(InteractionSystem::EventKind::DynamiteTaken))
-        {
-            blupi_.TriggerOneShotAnim(BlupiController::AnimState::TakeDynamite, BlupiController::kTakeDynamiteDuration);
-        }
-
-        // Starts a new freeze for whichever of the 3 real 2-stage pickups was touched this frame
-        // (real immediate "grab" sound: Sucette ch50, Drink ch57, Charge ch58, Decor.cpp:
-        // 6025-6087) -- the world object was already destroyed by interaction_.Update() itself.
-        if (powerEvent && blupi_.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Sucette))
-        {
-            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel50);
-            pendingPickupX_ = powerEvent->pickupX;
-            pendingPickupY_ = powerEvent->pickupY;
-            pendingPickupZ_ = powerEvent->pickupZ;
-            pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType26;
-        }
-        else if (hideEvent && blupi_.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Drink))
-        {
-            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel57);
-            pendingPickupX_ = hideEvent->pickupX;
-            pendingPickupY_ = hideEvent->pickupY;
-            pendingPickupZ_ = hideEvent->pickupZ;
-            pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType30;
-        }
-        else if (cloudEvent && blupi_.TriggerPickupFreeze(BlupiController::PickupFreezeKind::Charge))
-        {
-            sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel58);
-            // Real m_blupiCloud grants at CONTACT, not completion (confirmed via direct source
-            // read, unlike Sucette/Drink) -- this engine's existing instant TriggerCloud() call
-            // below (already correct) stays; only the freeze/grab-sound/completion-sound were
-            // missing. Real source also redundantly re-arms the gauge again at the 64-tick
-            // completion (same values) -- NOT re-applied here, a documented, minor simplification
-            // (the gauge decays for those ~3.2s during the freeze instead of being refreshed).
-            blupi_.TriggerCloud();
-            pendingPickupX_ = cloudEvent->pickupX;
-            pendingPickupY_ = cloudEvent->pickupY;
-            pendingPickupZ_ = cloudEvent->pickupZ;
-            pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType31;
-        }
-
-        // Resolves an ALREADY-active freeze (possibly started a prior frame) that just elapsed --
-        // grants the real deferred buff (Sucette/Drink only -- Cloud already granted above),
-        // plays the real "complete" sound (ch44/ch62/ch55), and re-spawns the item.
+        // Finish the previous action before accepting another pickup. Death cancels
+        // the controller's completion event, but must still put its reusable item back.
         BlupiController::PickupFreezeKind kind{};
-        if (!blupi_.ConsumePickupFreezeResolved(kind))
+        if (blupi_.ConsumePickupFreezeResolved(kind))
         {
-            return;
+            switch (kind)
+            {
+                case BlupiController::PickupFreezeKind::Sucette:
+                    blupi_.TriggerPower();
+                    sound_.Play(SoundChannel::SoundChannel44);
+                    interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+                    break;
+                case BlupiController::PickupFreezeKind::Drink:
+                    blupi_.TriggerHide();
+                    sound_.Play(SoundChannel::SoundChannel62);
+                    break;
+                case BlupiController::PickupFreezeKind::Charge:
+                    blupi_.TriggerCloud();
+                    sound_.Play(SoundChannel::SoundChannel55);
+                    break;
+            }
         }
-        switch (kind)
+        reusablePickup_.RestoreIfReady(worldRuntime_, interaction_, blupi_.IsPickupFrozen());
+
+        // Taking dynamite: TakeDynamite for 18 ticks without focus (Decor.cpp:6116-6128).
+        if (FindInteractionEvent(InteractionSystem::EventKind::DynamiteTaken))
+            blupi_.TriggerOneShotAnim(BlupiController::AnimState::TakeDynamite, BlupiController::kTakeDynamiteDuration);
+
+        const auto start = [&](InteractionSystem::EventKind eventKind, BlupiController::PickupFreezeKind pickupKind,
+                               ObjectType type, SoundChannel sound)
         {
-            case BlupiController::PickupFreezeKind::Sucette:
-                blupi_.TriggerPower();
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel44);
-                // Real m_blupiPosMagic reset (plan.md VISUAL-011-adjacent) -- moved here from the
-                // old instant-grant site since the Power buff (and thus the magic trail) only
-                // actually starts now, at completion, not at contact.
-                interaction_.ResetMagicTrail(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
-                break;
-            case BlupiController::PickupFreezeKind::Drink:
-                blupi_.TriggerHide();
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel62);
-                break;
-            case BlupiController::PickupFreezeKind::Charge:
-                // The clip's end gives the Cloud (Decor.cpp:3048-3057): already on after a
-                // pickup's contact, the cheat's only source (powercharge).
-                blupi_.TriggerCloud();
-                sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel55);
-                break;
-        }
-        // A cheat's clip had no pickup to put back (ObjectType0).
-        if (pendingPickupType_ != GalaxyEggbert::Def::ObjectType::ObjectType0)
-        {
-            interaction_.RespawnPickupItem(worldRuntime_, pendingPickupX_, pendingPickupY_, pendingPickupZ_,
-                                            pendingPickupType_);
-        }
+            const auto* event = FindInteractionEvent(eventKind);
+            if (!event) return false;
+            reusablePickup_ = {event->pickupX, event->pickupY, event->pickupZ, type};
+            if (blupi_.TriggerPickupFreeze(pickupKind))
+            {
+                sound_.Play(sound);
+                // Charge grants Cloud at contact too (Decor.cpp:6069-6087).
+                if (pickupKind == BlupiController::PickupFreezeKind::Charge) blupi_.TriggerCloud();
+            }
+            // Also covers a hit in the very frame the item was taken: the action
+            // cannot start while death-locked, yet the interaction already hid the item.
+            reusablePickup_.RestoreIfReady(worldRuntime_, interaction_, blupi_.IsPickupFrozen());
+            return true;
+        };
+        if (!start(InteractionSystem::EventKind::PowerGranted, BlupiController::PickupFreezeKind::Sucette,
+                   ObjectType::ObjectType26, SoundChannel::SoundChannel50) &&
+            !start(InteractionSystem::EventKind::HideGranted, BlupiController::PickupFreezeKind::Drink,
+                   ObjectType::ObjectType30, SoundChannel::SoundChannel57))
+            start(InteractionSystem::EventKind::CloudGranted, BlupiController::PickupFreezeKind::Charge,
+                  ObjectType::ObjectType31, SoundChannel::SoundChannel58);
     }
 
     GalaxyEggbertGame::ParkedVehicleDraw GalaxyEggbertGame::ParkedVehicleModel(
@@ -3450,8 +3440,17 @@ namespace GalaxyEggbert::CNA
         return objectModelTable_.Find(ObjectTextureSource::ObjectM, visual.icon);
     }
 
+    void GalaxyEggbertGame::ToggleFullscreen()
+    {
+        if (!graphics_ || replayingResume_) return;
+        graphics_->ToggleFullScreen();
+        saveData_.SetFullscreen(graphics_->getIsFullScreenProperty());
+        saveData_.Save();
+    }
+
     void GalaxyEggbertGame::ApplyCheat(int cheatNumber)
     {
+        if (!GalaxyEggbert::Game::kCheatsEnabled) return;
         switch (cheatNumber)
         {
             case 1: // OpenDoors: Decor::CheatAction flips m_bCheatDoors and calls AdaptDoors(): in a
@@ -3505,6 +3504,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::ApplyTypedCheat(GalaxyEggbert::Game::InputPad::TypedCheat cheat)
     {
+        if (!GalaxyEggbert::Game::kCheatsEnabled) return;
         using TC = GalaxyEggbert::Game::InputPad::TypedCheat;
         using VM = BlupiController::VehicleMode;
         using GalaxyEggbert::Def::SoundChannel;
@@ -3520,7 +3520,7 @@ namespace GalaxyEggbert::CNA
             if (blupi_.TriggerPickupFreeze(kind))
             {
                 sound_.Play(sound);
-                pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType0;
+                reusablePickup_ = {};
             }
         };
         switch (cheat)
@@ -3571,6 +3571,9 @@ namespace GalaxyEggbert::CNA
             case TC::Help:
                 controlsHelp_.shown = true;
                 controlsHelp_.cheats = true;
+                break;
+            case TC::Compass:
+                cheatCompass_ = !cheatCompass_;
                 break;
             case TC::Ghost:
             case TC::Quick:
@@ -3688,7 +3691,19 @@ namespace GalaxyEggbert::CNA
 
         constexpr float dt = 1.0f / 60.0f;
         const auto helpKeys = CurrentKeyboardState();
-        if (controlsHelp_.Update(helpKeys))
+        auto helpMouse=CurrentMouseState();
+        bool helpPointerDown=helpMouse.getLeftButtonProperty()==Microsoft::Xna::Framework::Input::ButtonState::Pressed;
+        float helpX=helpMouse.getXProperty(),helpY=helpMouse.getYProperty();
+        for (const auto& touch : tickInput_.touches)
+        {
+            using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+            if (touch.state==int(TouchLocationState::Pressed) || touch.state==int(TouchLocationState::Moved))
+            {
+                helpPointerDown=true;helpX=touch.x;helpY=touch.y;break;
+            }
+        }
+        if (controlsHelp_.Update(helpKeys,helpPointerDown,
+            GalaxyEggbert::Game::ControlsHelp::OverClose(helpX,helpY,tickInput_.viewportWidth,tickInput_.viewportHeight)))
         {
             inputPad_.ResetTouchState();
             mouseLookActive_ = false;
@@ -3738,13 +3753,46 @@ namespace GalaxyEggbert::CNA
         {
             using Microsoft::Xna::Framework::Input::ButtonState;
             using Microsoft::Xna::Framework::Input::Keys;
-            const auto phaseKeys = CurrentKeyboardState();
+            auto phaseKeys = CurrentKeyboardState();
+            const bool fullscreenDown = phaseKeys.IsKeyDown(Keys::F11);
+            if (fullscreenDown && !fullscreenKeyWasDown_) ToggleFullscreen();
+            fullscreenKeyWasDown_ = fullscreenDown;
             const bool confirmDown = phaseKeys.IsKeyDown(Keys::Enter);
             const bool menuConfirmPressed = confirmDown && !menuConfirmWasDown_;
             menuConfirmWasDown_ = confirmDown;
             auto viewport = getGraphicsDeviceProperty().getViewportProperty();
             viewport.setWidthProperty(tickInput_.viewportWidth);
             viewport.setHeightProperty(tickInput_.viewportHeight);
+
+            auto phaseMouse = CurrentMouseState();
+            GalaxyEggbert::Editor::WorldEditor::Navigation editorNavigation;
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Editor || phase_ == GalaxyEggbert::Def::GamePhase::Init)
+            {
+                const bool editing = phase_ == GalaxyEggbert::Def::GamePhase::Editor && !worldEditor_.IsBrowsing();
+                std::vector<InputPad::TouchPoint> touches;
+                using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+                for (const auto& t : tickInput_.touches)
+                {
+                    const auto state = static_cast<TouchLocationState>(t.state);
+                    if (state != TouchLocationState::Invalid)
+                        touches.push_back({t.id,t.x,t.y,state == TouchLocationState::Pressed,state == TouchLocationState::Released});
+                }
+                auto device = editorDevices_.Update(phaseKeys, phaseMouse,
+                    SuppressLiveInput() || replayingResume_ ? GalaxyEggbert::Game::GamepadFrame{} : ReadGamepadFrame(),
+                    touches, tickInput_.touchControlsEnabled, editing,
+                    editing && worldEditor_.Palette().IsPopupOpen(),
+                    viewport.getWidthProperty(), viewport.getHeightProperty(), dt,
+                    [&](int x,int y) {
+                        using namespace Microsoft::Xna::Framework::Input;
+                        return editing && worldEditor_.Palette().IsPointerOverControl(
+                            MouseState(x,y,0,ButtonState::Released,ButtonState::Released,ButtonState::Released,
+                                ButtonState::Released,ButtonState::Released),
+                            viewport.getWidthProperty(),viewport.getHeightProperty());
+                    });
+                phaseKeys = device.keyboard;
+                phaseMouse = device.mouse;
+                editorNavigation = device.navigation;
+            }
 
             bool mousePausePressed = false;
             bool mouseContinuePressed = false;
@@ -3754,6 +3802,8 @@ namespace GalaxyEggbert::CNA
             bool mouseBackPressed = false;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
+                inputPad_.SetVehicleFireEnabled(blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank ||
+                    blupi_.GetVehicleMode()==BlupiController::VehicleMode::Helicopter);
                 // Several fingers at once (owner 2026-11-02: touch devices). While fingers are on
                 // the screen, and a few frames after, the mouse is left out: the platform also
                 // turns a touch into mouse events, which would press Action twice.
@@ -3789,6 +3839,7 @@ namespace GalaxyEggbert::CNA
                     padPlayInput.turnInput = std::clamp(padPlayInput.turnInput + touchInput.turnInput, -1.0f, 1.0f);
                     padPlayInput.moveInput = std::clamp(padPlayInput.moveInput + touchInput.moveInput, -1.0f, 1.0f);
                     padPlayInput.jumpHeld = padPlayInput.jumpHeld || touchInput.jumpHeld;
+                    padPlayInput.fireHeld = padPlayInput.fireHeld || touchInput.fireHeld;
                     padPlayInput.actionPressed = padPlayInput.actionPressed || touchInput.actionPressed;
                     padPlayInput.pausePressed = padPlayInput.pausePressed || touchInput.pausePressed;
                     padPlayInput.backUpHeld = padPlayInput.backUpHeld || touchInput.backUpHeld;
@@ -3854,6 +3905,7 @@ namespace GalaxyEggbert::CNA
                         case TC::OpenDoors: toggle("opendoors"); break;
                         case TC::MegaBlupi: toggle("megablupi"); break;
                         case TC::ShowSecret: toggle("showsecret"); break;
+                        case TC::Compass: toggle("compass"); break;
                         case TC::Zoom:
                         {
                             // Listed with its step (the view's size as Mobile Eggbert's 100/50/25/12 %).
@@ -3941,7 +3993,7 @@ namespace GalaxyEggbert::CNA
                 // 10-tap gesture above (layered, not exclusive -- same
                 // idiom as the typed-cheat methods).
                 const bool f12Down = phaseKeys.IsKeyDown(Keys::F12);
-                if (f12Down && !f12KeyWasDown_)
+                if (GalaxyEggbert::Game::kCheatsEnabled && f12Down && !f12KeyWasDown_)
                 {
                     cheatMenuShown_ = !cheatMenuShown_;
                 }
@@ -4085,13 +4137,20 @@ namespace GalaxyEggbert::CNA
                 // Real Init / gamer-select menu (2026-07-13, plan.md
                 // MENU-006..020) -- see InputPad::UpdateInit()/
                 // DrawInit()'s own class comment for full detail.
-                const auto mouse = CurrentMouseState();
+                const auto mouse = phaseMouse;
                 auto initInput = inputPad_.UpdateInit(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+                if (initInput.fullscreenPressed) ToggleFullscreen();
+                if (initInput.helpPressed)
+                {
+                    controlsHelp_.shown=true;
+                    controlsHelp_.cheats=false;
+                    return;
+                }
                 // Enter (a gamepad's A, GamepadInput.hpp) plays as the Play button does: the menu
                 // without a pointer (owner 2026-11-02: gamepads).
                 {
-                    const bool enterDown = CurrentKeyboardState().IsKeyDown(
+                    const bool enterDown = phaseKeys.IsKeyDown(
                         Microsoft::Xna::Framework::Input::Keys::Enter);
                     if (enterDown && !initEnterWasDown_)
                     {
@@ -4198,7 +4257,7 @@ namespace GalaxyEggbert::CNA
                 // see WorldEditor's own class comment. IsBrowsing()
                 // distinguishes the per-gamer-slot world browser (no World
                 // loaded yet) from actively editing one.
-                const auto mouse = CurrentMouseState();
+                const auto mouse = phaseMouse;
                 if (worldEditor_.IsBrowsing())
                 {
                     const auto request = worldEditor_.UpdateBrowsing(
@@ -4225,12 +4284,10 @@ namespace GalaxyEggbert::CNA
                 {
                     worldEditor_.Update(phaseKeys, mouse, dt,
                                          viewport.getWidthProperty(), viewport.getHeightProperty(), camera_,
-                                         worldRuntime_.GetWorldMutable());
+                                         worldRuntime_.GetWorldMutable(), editorNavigation);
                     cameraTarget_ = worldEditor_.CameraTarget();
-                    // Everything animates while editing, as in blupi_recon's editor (OR-0013): the
-                    // tiles' and the objects' animation clocks run. WorldRuntime::Update() moves
-                    // nothing (patrols are InteractionSystem's, in play only), so what is placed
-                    // stays where it was put.
+                    // blupi_recon decblock.cpp MoveStep calls MoveObjectStep even in BUILD.
+                    // Preview lift patrols too; authored endpoints and numbered markers stay fixed.
                     worldRuntime_.Update(dt);
                     if (terrainRenderer_)
                     {
@@ -4241,6 +4298,7 @@ namespace GalaxyEggbert::CNA
                     {
                         RebuildWorldPresentation();
                     }
+                    InteractionSystem::AdvanceEditorPlatforms(worldRuntime_, dt);
                     if (worldEditor_.ConsumePlayTestRequested())
                     {
                         // Update()'s own PlayTest handling already saved
@@ -4471,7 +4529,7 @@ namespace GalaxyEggbert::CNA
             // interactive-object system in GalaxyEggbertCNA yet. LShift
             // crouches and RShift looks up; RCtrl backs up (2026-11-02).
             using Microsoft::Xna::Framework::Input::Keys;
-            const auto keys = CurrentKeyboardState();
+            const auto keys = inputPad_.FilterGameplayKeyboard(CurrentKeyboardState());
             const auto directions = GalaxyEggbert::Game::ReadPlayDirections(keys);
             float turnInput = directions.turn;
             float moveInput = directions.move;
@@ -4646,6 +4704,8 @@ namespace GalaxyEggbert::CNA
             // is scaled back. Down's turn-around stays the original's Turn action, in game ticks.
             const float steering = turnInput / GameSpeedFactor(gameSpeed_);
             sound_.SetBlupiHidden(blupi_.IsHidden());
+            const float stepStartFeetY = blupi_.GetY();
+            blupi_.SetTerrainAnimationPhase(worldRuntime_.GetAnimPhase());
             blupi_.Step(worldRuntime_.GetWorld(), steering, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
@@ -5030,14 +5090,9 @@ namespace GalaxyEggbert::CNA
                 // have real gating/timing conditions BlockTypes::isHazard() does
                 // NOT encode, so each gets its own dedicated
                 // task (E3D-MIG-142..144) instead of one generic "hazard" check.
-                // GetGroundBlockType() already gates on IsOnGround() -- Lava
-                // tiles are solid/walkable-on in this engine (Blupi stands on
-                // lava rather than falling through it, matching the real 2D
-                // game -- see BlockTypes.hpp's isMobileTransparent() comment on
-                // why Lava is deliberately kept solid despite being
-                // quart-passable in the real source).
-                if (!blupi_.IsInvincible() &&
-                    blupi_.GetGroundBlockType(worldRuntime_.GetWorld()) == GalaxyEggbert::BlockTypes::Lava)
+                // The lava pool's actual wave surface, not the invisible top of its voxel:
+                // the collision and contact query share the height field with the renderer.
+                if (!blupi_.IsInvincible() && blupi_.IsTouchingLava(worldRuntime_.GetWorld()))
                 {
                     const float deathX = blupi_.GetX();
                     const float deathY = blupi_.GetY();
@@ -5157,14 +5212,13 @@ namespace GalaxyEggbert::CNA
                 // already lacks (vehicles... don't exist yet)", stale since
                 // vehicles were implemented `171`). Only the active icon
                 // (`Saw`, 378) is lethal -- the stopped variant (`SawStopped`,
-                // 379) is a separate BlockTypes value, so GetGroundBlockType()'s
-                // exact match already excludes it with no extra check needed. A
+                // 379) is excluded by the registry's hazard classification. A
                 // saw starts active or stopped per however the world was
                 // authored; TryActivateSwitch() below is what flips it between
                 // the two.
                 // m_blupiFocus too (Decor.cpp:5521-5522; BD-0066).
                 if (!blupi_.IsInvincible() && !blupi_.HasVehicleHazardImmunity() && BlupiFocused() &&
-                    (blockUnder == GalaxyEggbert::BlockTypes::Saw || blockHere == GalaxyEggbert::BlockTypes::Saw))
+                    blupi_.IsTouchingSawBlade(worldRuntime_.GetWorld(), stepStartFeetY))
                 {
                     const float deathX = blupi_.GetX();
                     const float deathY = blupi_.GetY();
@@ -5752,16 +5806,11 @@ namespace GalaxyEggbert::CNA
             // Invert/Mirror (plan.md PICKUP-011) -- BlupiController::TriggerInvert()'s gate: not
             // while Hide; taken again while inverted (Decor.cpp:6040, BD-0025).
             const bool canGrantInvert = secretPower != GalaxyEggbert::Def::SecretPower::Hide;
-            // Real Tank "Fire" (2026-07-13, plan.md BULLET-001) -- a
-            // dedicated key (real `GalaxyEggbert::Def::KeyPressFlags::Fire`), NOT the Action
-            // button used for dynamite/Perso/switches/vehicle mount above.
-            // "F" is this engine's own keyboard pick (no real keyboard
-            // binding exists to match -- WP7 touch-only). Level state, not
-            // edge-triggered (see InteractionSystem::Update()'s own
-            // comment for why). The tank fires ahead; the helicopter drops
-            // glue, only in the air (2026-10-26, Decor.cpp:3694-3708: flag2,
-            // no ground under him and no lift).
-            const bool firePressed = keys.IsKeyDown(Keys::F);
+            // Fire is separate from enter/leave: keyboard F, gamepad RT or the held touch Fire.
+            // Original reference: blupi_recon/src/event.cpp VK_SPACE/VK_SHIFT -> KEY_FIRE,
+            // decblupi.cpp:901 helicopter and :1387 tank; Mobile Decor.cpp:3694/4317.
+            // Tank shoots ahead; the helicopter drops downward only while airborne, off a lift.
+            const bool firePressed = keys.IsKeyDown(Keys::F) || padPlayInput.fireHeld;
             const bool inHelicopter = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Helicopter;
             const bool canFire = blupi_.GetVehicleMode() == BlupiController::VehicleMode::Tank ||
                                  (inHelicopter && !blupi_.IsOnGround() && !interaction_.IsRidingLift());
@@ -5998,30 +6047,25 @@ namespace GalaxyEggbert::CNA
                 // (the hub, or the main hub after a golden key) -- no win screen, as the video
                 // shows. Only the true ending (199's exit) has the Win screen; play-tests and the
                 // showcase keep it to get back to the editor or the menu.
-                const int mission = worldRuntime_.GetMissionNumber();
-                if (!editorPlayTestActive_ && mission != 199 && mission != 999)
+                if (blupi_.IsInVehicle()) blupi_.TriggerDismount();
+                // All exits finish the same forty reference ticks, including the ending,
+                // showcase and editor play-tests. Those used to bypass the cheer entirely.
+                if (blupi_.TriggerOneShotAnim(BlupiController::AnimState::Win, BlupiController::kWinDuration))
                 {
-                    if (blupi_.IsInVehicle())
-                    {
-                        blupi_.TriggerDismount();
-                    }
                     winCheerActive_ = true;
-                    if (blupi_.TriggerOneShotAnim(BlupiController::AnimState::Win, BlupiController::kWinDuration))
-                    {
-                        const float dx = camera_.Position().X - blupi_.GetX();
-                        const float dz = camera_.Position().Z - blupi_.GetZ();
-                        blupi_.SetYaw(std::atan2(dx, -dz));
-                    }
-                }
-                else
-                {
-                    SetPhase(GalaxyEggbert::Def::GamePhase::Win);
+                    const float dx = camera_.Position().X - blupi_.GetX();
+                    const float dz = camera_.Position().Z - blupi_.GetZ();
+                    blupi_.SetYaw(std::atan2(dx, -dz));
                 }
             }
             if (winCheerActive_ && !blupi_.IsOneShotAnimPlaying())
             {
                 winCheerActive_ = false;
-                AdvanceAfterWin();
+                const int mission = worldRuntime_.GetMissionNumber();
+                if (editorPlayTestActive_ || mission == 199 || mission == 999)
+                    SetPhase(GalaxyEggbert::Def::GamePhase::Win);
+                else
+                    AdvanceAfterWin();
                 return;
             }
 
@@ -6149,15 +6193,6 @@ namespace GalaxyEggbert::CNA
                                   : CameraMode::FirstPerson;
             }
             cameraModeKeyWasDown_ = cameraModeKeyDown;
-
-            // F11 fullscreen toggle (2026-07-10, user request), edge-
-            // detected like F3 above.
-            const bool fullscreenKeyDown = keys.IsKeyDown(Keys::F11);
-            if (fullscreenKeyDown && !fullscreenKeyWasDown_ && graphics_ && !replayingResume_)
-            {
-                graphics_->ToggleFullScreen();
-            }
-            fullscreenKeyWasDown_ = fullscreenKeyDown;
 
             // Mouse drag-look (2026-07-10, user request): holding the left
             // button and dragging rotates the camera around Blupi without
@@ -6496,7 +6531,7 @@ namespace GalaxyEggbert::CNA
                     blupiActiveClipName_ = clipName;
                     blupiClipTimeSeconds_ = 0.0;
                 }
-                blupiClipTimeSeconds_ = charred ? 0.0 : blupiClipTimeSeconds_ + static_cast<double>(dt);
+                blupiClipTimeSeconds_ = charred ? 0.0 : blupiClipTimeSeconds_ + static_cast<double>(simDt);
                 // Air and Down stop at their last icon (BlupiController::GetAnimHoldFrame()): the
                 // clip's key k sits at k / rate seconds.
                 if (const int hold = blupi_.GetAnimHoldFrame(); blupiModelIsReal_ && hold >= 0 && blupiFaceRate_ > 0.0)
@@ -8352,9 +8387,10 @@ namespace GalaxyEggbert::CNA
                           interaction_.VoyageIsButtonChannel(), interaction_.VoyageIsBlupiChannel(),
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
                           gameSpeed_, blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()),
-                          InteractionSystem::NearestTreasureDistance(
-                              worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()),
-                          tickInput_.touchControlsEnabled && !saveData_.GetJumpRight());
+                          cheatCompass_ && GalaxyEggbert::Game::kCheatsEnabled
+                              ? InteractionSystem::NearestObjective(
+                                  worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) : std::nullopt,
+                          tickInput_.touchControlsEnabled);
             }
 
             // On-screen touch controls (2026-07-13, plan.md
@@ -8417,7 +8453,7 @@ namespace GalaxyEggbert::CNA
                 }
                 inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                    phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,
-                                   /*overTitleScene=*/titleSceneActive_);
+                                   /*overTitleScene=*/titleSceneActive_, graphics_ && graphics_->getIsFullScreenProperty());
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
@@ -8435,9 +8471,12 @@ namespace GalaxyEggbert::CNA
                 else
                 {
                     worldEditor_.Draw(device, camera_,
-                                      viewport.getWidthProperty(), viewport.getHeightProperty());
+                                      viewport.getWidthProperty(), viewport.getHeightProperty(),worldRuntime_.GetWorld());
                 }
             }
+
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Editor || phase_ == GalaxyEggbert::Def::GamePhase::Init)
+                editorDevices_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty());
 
             // Hidden cheat menu overlay (2026-07-13, plan.md
             // CHEAT-001..009) -- real source renders it as a transparent

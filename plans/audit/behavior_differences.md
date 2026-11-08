@@ -1431,7 +1431,7 @@ levels use 29 most, then 361, 387, 340, 153, 215 ...), drawn as that tile moving
   at x 44-54): `lifts-moving.png` -- 29 its model, the others their tile's cube, moving.
 - Follow-up 2026-11-08 (owner): all 52 authored campaign worlds with general lifts now use their
   original mission's confirmed tile palette (`tools/worldkit.py ORIGINAL_LIFT_ICONS`); 829 records
-  gain explicit looks, 43 different tile ids. Paths/timing/counts and every non-icon object field
+  gain explicit looks, 45 different tile ids. Paths/timing/counts and every non-icon object field
   compare equal. Palace021 uses 387. Playthroughs 021/055 pass.
 - The editor (owner 2026-11-07, option A): the four lifts in "Moving mechanisms" take the look of the
   block picked last (`objectVisualIconIds` -2: the selected block once one was picked, else the default
@@ -1475,3 +1475,68 @@ routes straight again (the way the playthroughs ran before BD-0080).
   death instead of failing): frames through the window show him turning
   (`plans/evidence/death-hide-turning.png`); `VerifyBlupiMovement` checks the state and icons; ctest
   112/112; golden frames and trace unchanged.
+
+
+## BD-0085 — invisible voxel volumes killed Blupi before visible hazard contact — FIXED_AND_VERIFIED
+
+Owner 2026-11-08: lava must touch Blupi, a saw's support cube must not kill, and a fan's motor/top
+is safe while its blades are lethal. The existing 3D geometry is the contact reference: Amapi lava
+height fields, Decor/scie.rd4's exposed disk and Decor/ventillo-h.rd4's motor/shaft/hub versus moving
+blade bones. No new assets or mechanics. `LavaHeight`, `IsTouchingSawBlade`, `FanGeometry` and
+`TryConsumeFan` replace full-voxel hazard approximations. Existing sound/death/immunity/vehicle/
+focus and wind-removal rules remain. Pure tests cover height, landing, stopped/rotated saws and
+all six fan directions; live probes777/778 prove safe above lava/on a fan motor and lethal actual
+contact. Twelve relevant mission scripts and 113/113 CTest pass. This supersedes OR-0068's former
+"any fan top kills" approximation.
+
+Follow-up: requiring downward motion for saw contact missed walking onto the blade. The owner's
+report is covered by a mortal walking regression: level-height and rising actual blade contact
+are lethal too, without making the support cube lethal again.
+The following report exposed passable support cubes: the original saw's empty 2D quarter mask
+was still used horizontally. Registry collision masks378-383 now represent the rendered solid
+support, including stopped blades. Their original mobile-transparent flag is unchanged. Mortal
+X/Z walking tests prove support collision without blade contact; the blade remains above that cell.
+
+## BD-0086 — special exits skipped Blupi's Win cheer — FIXED_AND_VERIFIED
+
+The ordinary campaign used Decor.cpp:6411's 40ticks at20Hz, but 199/999/editor play-tests immediately
+showed Win. All exits now finish that same duration before choosing their destination. Clip time
+uses the simulation clock as action timers do. Showcase QA is still Play after90cheer ticks and
+then reaches Win; the complete199 ending passes. No arbitrary duration extension.
+
+## BD-0087 — model overlap recovery could push a vehicle through the floor — GUARDED_AND_TESTED
+
+Owner's rare Jeep/palm impact (2026-11-08) could not be reproduced. Inspection found that the
+down-first penetration recovery could lower the feet into solid ground when a BigDecor caught
+the head. Only model overlaps now try clear boundaries along both horizontal axes at the same
+height; a partly buried pose can recover onto its full solid floor. Ordinary tile and ceiling
+recovery stays unchanged. Synthetic head-overlap tests cover Blupi, Jeep, tank and helicopter,
+plus an already half-buried Jeep. All 113 tests and complete missions021/199 pass after the change.
+
+## BD-0088 — editor lift endpoints and rear marker faces — FIXED_AND_VERIFIED
+
+The reference editor draws icon30 (1) at a lift's start and icon31 (2) at its end
+(`blupi_recon/src/decblock.cpp`, BUILD). Galaxy now draws these existing atlas tiles on numbered
+open cubes in the 3D editor. The shared geometry draws each painted wall from both sides;
+alpha-test depth writes preserve visible rear faces through the holes, including terrain tiles30/31.
+Marker and winding tests pass; live editor captures show endpoints and interior/rear walls.
+
+## BD-0089 — interrupted drinking permanently removed a reusable bottle — FIXED_AND_VERIFIED
+
+Mobile Decor.cpp:6053-6068 hides the bottle at contact and3224-3235 restores it at the36-tick
+completion. Galaxy only restored on that completion event, which glue/death cancels. The owner
+requested that the bottle remain reusable after interruption too. `ReusablePickup` now returns
+the item when the action finishes or is interrupted, independently of the deferred power grant;
+unfinished drinking grants no Hide. Clearing the pending return prevents duplicates. The same
+handling covers Sucette/Charge and a death on the initial contact frame. Tests use a real enemy
+glue projectile while focus is off, restore the original bottle once, take it again and complete
+the second drink normally.
+
+## BD-0090 — lift positions were frozen in the 3D editor — FIXED_AND_VERIFIED
+
+`blupi_recon/src/decblock.cpp` MoveStep calls MoveObjectStep before checking PLAY/BUILD (line1114);
+BUILD therefore previews moving platforms too. Galaxy previously advanced only visual animation
+clocks. The editor now advances active lift families1/47/48 through the same AdvancePatrolStep
+routine as Play, including XYZ interpolation, dwell and return. It changes only runtime positions,
+leaving authored endpoints, numbered markers and world save data intact. Tests compare complete
+cycles against Play and verify that unrelated objects are neither moved nor collected.

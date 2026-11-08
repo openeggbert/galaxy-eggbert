@@ -1,4 +1,5 @@
 #pragma once
+#include "ObjectiveHint.hpp"
 
 #include "Sound.hpp"
 #include "WorldRuntime.hpp"
@@ -219,6 +220,10 @@ namespace GalaxyEggbert::Game
         // aura around Blupi -- an offensive aura Blupi carries, unrelated
         // to the `Blitz` lightning HAZARD despite the similarly-named
         // real function. Real sound channel 59 on each kill.
+        // Editor preview uses the same lift patrol/timing as Play, without contacts,
+        // rewards or writes to the authored world (blupi_recon MoveStep in BUILD).
+        static void AdvanceEditorPlatforms(WorldRuntime& worldRuntime, float dt);
+
         void Update(float dt, WorldRuntime& worldRuntime,
                     float blupiX, float blupiY, float blupiZ, float blupiMoveDX,
                     Sound& sound, bool blupiCrouching = false, bool blupiBallooned = false,
@@ -666,6 +671,10 @@ namespace GalaxyEggbert::Game
         // Galaxy HUD addition (owner 2026-11-08): straight-line distance in world blocks,
         // excluding collected chests even while their reward is still flying to the HUD.
         [[nodiscard]] static std::optional<float> NearestTreasureDistance(
+            const WorldRuntime& world, float x, float y, float z) noexcept;
+        [[nodiscard]] static std::optional<ObjectiveHint> NearestObjective(
+            const WorldRuntime& world, float x, float y, float z) noexcept;
+        [[nodiscard]] static std::optional<float> NearestObjectiveDistance(
             const WorldRuntime& world, float x, float y, float z) noexcept;
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }

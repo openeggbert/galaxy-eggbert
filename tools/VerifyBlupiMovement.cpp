@@ -466,9 +466,18 @@ int main(int argc, char** argv)
         BlupiController onLava;
         onLava.SetPosition(static_cast<float>(kLavaX) - 50.0f, 1.0f, static_cast<float>(kLavaZ) - 50.0f);
         onLava.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
-        check(onLava.IsOnGround(), "Blupi stands on a lava block rather than falling through it");
+        check(!onLava.IsOnGround() && !onLava.IsTouchingLava(synthetic),
+              "above the lava pool's lowered visible surface is air, not lethal support");
+        for (int tick=0; tick<120 && !onLava.IsTouchingLava(synthetic); ++tick)
+            onLava.Step(synthetic, 0, 0, false, false, false, dt);
+        check(onLava.IsTouchingLava(synthetic) && onLava.GetY() < .5f && onLava.GetY() > .25f,
+              "falling reaches the visible wave before lava contact is reported");
         check(onLava.GetGroundBlockType(synthetic) == BlockTypes::Lava,
-              "GetGroundBlockType() identifies lava correctly (E3D-MIG-140 hazard detection)");
+              "lava ground lookup supports fractional-height pools");
+        onLava.SetPosition(static_cast<float>(kLavaX)-50, 1.1f, static_cast<float>(kLavaZ)-50);
+        check(!onLava.IsTouchingLava(synthetic), "jumping directly over lava has no contact");
+        onLava.SetPosition(static_cast<float>(kLavaX)-50, .2f, static_cast<float>(kLavaZ)-50);
+        check(onLava.IsTouchingLava(synthetic), "being inside the lava pool counts as contact even airborne");
 
         BlupiController airborne;
         airborne.SetPosition(static_cast<float>(kLavaX) - 50.0f, 20.0f, static_cast<float>(kLavaZ) - 50.0f);
@@ -2079,8 +2088,8 @@ int main(int argc, char** argv)
             check(faller.IsOnGround() && std::fabs(faller.GetY() - 1.0f) < 0.05f,
                   "a wind tile is no floor: he falls through it to the floor below");
 
-            // M3D-0004: a fan is a whole block -- walking at it from the side (along Z) he stops at
-            // its face; he does not pass through the three open quarter-columns of its 2D mask.
+            // The recovered fan base still blocks a side approach; open shaft/rotor gaps
+            // have their own geometry rather than the old whole-voxel approximation.
             {
                 for (std::uint16_t z = 60; z <= 64; ++z)
                 {
@@ -2091,7 +2100,7 @@ int main(int argc, char** argv)
                 walker.SetPosition(77.0f - 50.0f, 1.0f, 60.0f - 50.0f);
                 walker.SetYaw(3.14159265f); // facing +Z
                 for (int i = 0; i < 120; ++i) walker.Step(synthetic, 0.0f, 1.0f, false, false, false, dt);
-                check(walker.GetZ() + 50.0f < 62.6f, "a fan stops him at its side: it is a whole block (M3D-0004)");
+                check(walker.GetZ() + 50.0f < 62.6f, "the solid fan housing stops him at its side");
             }
 
             // M3D-0005: a turned east wind (114) pushes him along +Z, not +X.
@@ -3756,6 +3765,86 @@ int main(int argc, char** argv)
         stung.TriggerBalloon();
         check(stung.IsBallooned() && stung.GetSecretPower() == GalaxyEggbert::Def::SecretPower::None,
               "stung by the wasp, Blupi loses Power (the sting ends Shield, Power, Cloud and Hide)");
+    }
+
+    {
+        Worlds::World sawWorld;
+        for (std::uint16_t x=48;x<=52;++x) for (std::uint16_t z=48;z<=53;++z)
+            sawWorld.setBlock(x,0,z,Worlds::Block::make(BlockTypes::Ground));
+        sawWorld.setBlock(50,0,50,Worlds::Block::make(BlockTypes::Saw));
+        BlupiController b;
+        b.SetPosition(0,1,1);
+        b.SetYaw(0);
+        b.SettleOnGround(sawWorld);
+        bool walkedIntoBlade=false;
+        for (int i=0;i<100 && !walkedIntoBlade;++i)
+        {
+            const float previousY=b.GetY();
+            b.Step(sawWorld,0,1,false,false,false,dt);
+            walkedIntoBlade=b.IsTouchingSawBlade(sawWorld,previousY);
+        }
+        check(walkedIntoBlade && !b.IsInvincible() && std::fabs(b.GetY()-1)<.01f,
+              "ordinary mortal walking into a saw hits its blade while staying at floor height");
+        b.SetPosition(0,1,0);
+        check(b.IsTouchingSawBlade(sawWorld,1), "walking onto the exposed saw kills without any downward motion");
+        b.SetPosition(0,1,.45f);
+        check(!b.IsTouchingSawBlade(sawWorld,1), "walking on the support beside the thin blade stays safe");
+        b.SetPosition(.6f,.5f,0);
+        check(!b.IsTouchingSawBlade(sawWorld,.7f), "touching the cube's side below the blade is harmless");
+        b.SetPosition(0,1.4f,0);
+        check(b.IsTouchingSawBlade(sawWorld,1.6f), "descending feet hit the exposed blade above its cube");
+        check(b.IsTouchingSawBlade(sawWorld,1.2f), "rising into the exposed blade is also actual contact");
+        b.SetPosition(0,1.8f,0);
+        check(!b.IsTouchingSawBlade(sawWorld,2), "above the blade is still clear");
+        b.SetPosition(0,1.3f,.45f);
+        check(!b.IsTouchingSawBlade(sawWorld,1.6f), "missing the thin disk sideways is harmless");
+        SetPlateRotated(sawWorld,50,0,50,true);
+        check(b.IsTouchingSawBlade(sawWorld,1.6f), "turning the blade also turns its lethal footprint");
+        sawWorld.setBlock(50,0,50,Worlds::Block::make(BlockTypes::SawStopped));
+        check(!b.IsTouchingSawBlade(sawWorld,1.6f), "a stopped blade remains harmless");
+
+        for (const auto icon : {BlockTypes::Saw,BlockTypes::SawStopped,std::uint16_t(380),std::uint16_t(383)})
+        {
+            Worlds::World supportWorld;
+            for (std::uint16_t x=48;x<=53;++x) for (std::uint16_t z=48;z<=53;++z)
+                supportWorld.setBlock(x,0,z,Worlds::Block::make(BlockTypes::Ground));
+            supportWorld.setBlock(50,1,50,Worlds::Block::make(icon));
+            for (bool alongX : {false,true})
+            {
+                BlupiController walker;
+                walker.SetPosition(alongX ? 1.5f : 0,1,alongX ? 0 : 1.5f);
+                walker.SetYaw(alongX ? -1.57079633f : 0);
+                walker.SettleOnGround(supportWorld);
+                for (int i=0;i<150;++i) walker.Step(supportWorld,0,1,false,false,false,dt);
+                check((alongX ? walker.GetX() : walker.GetZ())>.5f &&
+                      std::fabs(walker.GetY()-1)<.01f && !walker.IsTouchingSawBlade(supportWorld,1),
+                      "active/stopped saw support cubes block X/Z walking below the blade without killing");
+            }
+        }
+    }
+
+    {
+        Worlds::World floor;
+        for (std::uint16_t x=47;x<=53;++x) for(std::uint16_t z=47;z<=53;++z)
+            floor.setBlock(x,0,z,Worlds::Block::make(BlockTypes::Ground));
+        for (auto vehicle : {BlupiController::VehicleMode::None,BlupiController::VehicleMode::Jeep,
+                             BlupiController::VehicleMode::Tank,BlupiController::VehicleMode::Helicopter})
+        {
+            BlupiController trapped;
+            trapped.SetPosition(0,1,0);
+            trapped.SetSolidBoxes({{49.4f,50.6f,1.5f,3,49.9f,50.1f}});
+            if(vehicle!=BlupiController::VehicleMode::None) trapped.TriggerMount(vehicle,false,false);
+            trapped.Step(floor,0,0,false,false,false,dt);
+            check(trapped.GetY()>=.99f && std::fabs(trapped.GetZ())>.1f,
+                  "head caught in a palm escapes along Z without being pushed through the floor, including vehicles");
+        }
+        BlupiController buried;
+        buried.SetPosition(0,.5f,0);
+        buried.SetSolidBoxes({{49.4f,50.6f,1,3,49.9f,50.1f}});
+        buried.TriggerMount(BlupiController::VehicleMode::Jeep,false,false);
+        buried.Step(floor,0,0,false,false,false,dt);
+        check(buried.GetY()>=.99f && std::fabs(buried.GetZ())>.1f,
+              "a half-buried Jeep/model overlap recovers onto the floor and out of the palm");
     }
 
     // Turning round (table_blupi 3) and the exit's Win cheer (13, 40 ticks).

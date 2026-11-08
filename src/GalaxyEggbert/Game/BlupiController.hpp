@@ -1343,6 +1343,9 @@ namespace GalaxyEggbert::Game
         // at rest, between two cells while pushed): solid cubes for Blupi like blocks for the
         // next Step()s -- he can't walk through a crate and stands on one, as the original's
         // DecorDetect() counts crates. The caller sets them every frame before Step().
+        void SetTerrainAnimationPhase(int phase) noexcept { m_terrainAnimationPhase = phase; }
+        [[nodiscard]] bool IsTouchingSawBlade(const Worlds::World& world, float previousFeetY) const noexcept;
+        [[nodiscard]] bool IsTouchingLava(const Worlds::World& world) const noexcept;
         void SetCrateCells(std::vector<std::array<float, 3>> cells) { m_crateCells = std::move(cells); }
         // Boxes solid like blocks (raw grid, SolidBox.hpp): the BigDecor fitted to their models
         // (Q-014). The caller sets them when the world changes.
@@ -1489,6 +1492,7 @@ namespace GalaxyEggbert::Game
         bool m_wasPushingCrate = false;
         float m_marchSeconds = 0.0f; // walking on foot without a break (StopMarch)
         float m_moveInput = 0.0f;    // this Step()'s movement input (SlowdownSkate)
+        int m_terrainAnimationPhase = 0;
         bool m_ridingLift = false;   // SetRidingLift()
         float m_liftUnderX = 0.0f;   // SetLiftUnder()
         float m_liftUnderZ = 0.0f;

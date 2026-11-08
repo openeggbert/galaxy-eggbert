@@ -60,11 +60,11 @@ namespace GalaxyEggbert::Game
         std::ostringstream out;
         out.imbue(std::locale::classic());
         out << std::setprecision(std::numeric_limits<float>::max_digits10);
-        out << "GALAXY_RESUME 3\n" << std::quoted(start.build) << '\n';
+        out << "GALAXY_RESUME 4\n" << std::quoted(start.build) << '\n';
         out << std::quoted(start.worldPath) << ' ' << start.worldHash << '\n';
         out << start.mission << ' ' << start.lives << ' ' << start.speed << ' ' << start.seed << ' '
             << start.x << ' ' << start.y << ' ' << start.z << ' ' << start.yaw << ' '
-            << start.quickCheat << ' ' << start.openDoors << ' ' << start.showSecret << ' '
+            << start.quickCheat << ' ' << start.openDoors << ' ' << start.showSecret << ' ' << start.compass << ' '
             << start.cameraMode << '\n' << std::quoted(start.saveData) << '\n';
         out << runs.size() << ' ' << TickCount() << '\n';
         for (const auto& run : runs)
@@ -102,11 +102,11 @@ namespace GalaxyEggbert::Game
         std::string magic;
         int version;
         if (!(in >> magic >> version >> std::quoted(s.build)) || magic != "GALAXY_RESUME" ||
-            version != 3 || s.build != build) return false;
+            version != 4 || s.build != build) return false;
         if (!(in >> std::quoted(s.worldPath) >> s.worldHash) || s.worldPath.empty() ||
             s.worldPath.size() > 4096 || s.worldPath.find('\0') != std::string::npos) return false;
         if (!(in >> s.mission >> s.lives >> s.speed >> s.seed >> s.x >> s.y >> s.z >> s.yaw
-                 >> s.quickCheat >> s.openDoors >> s.showSecret >> s.cameraMode >> std::quoted(s.saveData)))
+                 >> s.quickCheat >> s.openDoors >> s.showSecret >> s.compass >> s.cameraMode >> std::quoted(s.saveData)))
             return false;
         if (s.mission < 1 || s.mission > 999 || s.lives < 0 || s.lives > 1000000 ||
             (s.speed != 0 && s.speed != 1 && s.speed != 2 && s.speed != 4 && s.speed != 8) ||

@@ -66,6 +66,26 @@ namespace GalaxyEggbert::Game
         AddCenteredBox(mesh, center, size, faces);
     }
 
+    // An open cube's inner faces must survive back-face culling. Each face has its own
+    // reverse-wound copy with upright UVs; this leaves the global rasterizer unchanged.
+    inline void AddDoubleSidedCenteredBox(CnaEngine::Graphics::MeshBuilder& mesh,
+        const Microsoft::Xna::Framework::Vector3& center, const CnaEngine::Graphics::BoxFaces& faces)
+    {
+        using V=Microsoft::Xna::Framework::Vector3;
+        using UV=Microsoft::Xna::Framework::Vector2;
+        const V normals[]={{0,0,1},{0,0,-1},{1,0,0},{-1,0,0},{0,1,0},{0,-1,0}};
+        const V right[]={{1,0,0},{-1,0,0},{0,0,-1},{0,0,1},{1,0,0},{1,0,0}};
+        const V up[]={{0,1,0},{0,1,0},{0,1,0},{0,1,0},{0,0,-1},{0,0,1}};
+        for (int face=0;face<6;++face)
+        {
+            if (!faces[face].visible) continue;
+            const auto c=center+normals[face]*.5f,r=right[face]*.5f,u=up[face]*.5f;
+            const auto& uv=faces[face].uv;
+            mesh.AddDoubleSidedQuad({c-r-u,c+r-u,c+r+u,c-r+u},
+                {UV(uv.u0,uv.v1),UV(uv.u1,uv.v1),UV(uv.u1,uv.v0),UV(uv.u0,uv.v0)});
+        }
+    }
+
     // Uploads a mesh with at least one triangle (GpuMesh::Upload rejects an
     // empty one; callers check Mesh().Empty() first).
     [[nodiscard]] inline std::unique_ptr<CnaEngine::Graphics::GpuMesh> UploadTexturedMesh(

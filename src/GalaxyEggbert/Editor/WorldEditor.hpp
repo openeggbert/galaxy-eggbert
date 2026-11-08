@@ -8,6 +8,7 @@
 #include "EditorBrowserScreen.hpp"
 #include "EditorHighlightRenderer.hpp"
 #include "EditorPalette.hpp"
+#include "LiftEndpointRenderer.hpp"
 #include "EditorVariants.hpp"
 
 #include <CnaEngine/Graphics/Camera.hpp>
@@ -27,6 +28,12 @@
 
 namespace GalaxyEggbert::Editor
 {
+    struct EditorNavigation
+    {
+        float forward = 0, strafe = 0, vertical = 0;
+        float yaw = 0, pitch = 0;
+        bool centeredAim = false, keepAim = false;
+    };
     // A lift's speed per cell and rests by its menu entry (20 Hz ticks; the PC editor's PlaceDecor4,
     // blupi_recon decdesign.cpp: slow 20/20/20, normal 10/10/10, fast 6/6/3, fast/slow 5 up, 22
     // back, 2). Keyed by the entry's button.png glyph (PaletteCategories: 21, 20, 19, 28; the
@@ -132,7 +139,9 @@ namespace GalaxyEggbert::Editor
             return std::exchange(thumbnailRequest_, {});
         }
 
-        // Updates one editor frame. RMB looks, WASD/Space/Ctrl fly and the
+        using Navigation = EditorNavigation;
+
+        // Updates one editor frame. RMB looks, WASD/Ctrl/Z fly and the
         // wheel zooms. Left click or PLACE creates the selected block or
         // object at the red preview; middle click removes a block. NumPad
         // 4/6, 7/9 and 8/2 move the preview on X/Y/Z; NumPad 5 resets it.
@@ -145,7 +154,7 @@ namespace GalaxyEggbert::Editor
                     const Microsoft::Xna::Framework::Input::MouseState& mouse,
                     float dt, int viewportWidth, int viewportHeight,
                     CnaEngine::Graphics::Camera& camera,
-                    Worlds::World& world);
+                    Worlds::World& world, const Navigation& navigation = {});
 
         // True exactly once, right after an Update() call that placed or
         // removed a block -- the caller (GalaxyEggbertGame) should
@@ -166,7 +175,7 @@ namespace GalaxyEggbert::Editor
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   const CnaEngine::Graphics::Camera& camera,
-                  int viewportWidth, int viewportHeight);
+                  int viewportWidth, int viewportHeight, const Worlds::World& world);
 
     private:
         struct FrameInput
@@ -196,12 +205,14 @@ namespace GalaxyEggbert::Editor
             bool pasteHeld = false;     // P: pasting the copy on and off
             bool clipTurnHeld = false;  // Q: the copy turned a quarter
             bool clipMirrorHeld = false; // X: the copy mirrored
+            bool placeHeld = false;      // Space: the visible PLACE action
+            bool stopHeld = false;
         };
 
         [[nodiscard]] Microsoft::Xna::Framework::Vector3 UpdateCamera(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             const Microsoft::Xna::Framework::Input::MouseState& mouse,
-            float dt, CnaEngine::Graphics::Camera& camera);
+            float dt, CnaEngine::Graphics::Camera& camera, const Navigation& navigation);
         [[nodiscard]] bool UpdatePlacementOffset(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
             EditorPalette::Action paletteAction);
@@ -219,6 +230,7 @@ namespace GalaxyEggbert::Editor
             EditorPalette::UpdateResult paletteResult) const;
         void UpdateBoxPreview(const Worlds::World& world);
         [[nodiscard]] bool HandlePlacement(const FrameInput& input, Worlds::World& world);
+        [[nodiscard]] bool HandleExtendedSelection(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleRemoval(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleSessionAndHistory(const FrameInput& input, Worlds::World& world);
         [[nodiscard]] bool HandleBoxFill(const FrameInput& input, Worlds::World& world);
@@ -242,6 +254,10 @@ namespace GalaxyEggbert::Editor
         // H shows the editor's keys (helpVisible_).
         bool helpKeyHeldLastFrame_ = false;
         bool helpVisible_ = false;
+        bool placeKeyHeldLastFrame_ = false;
+        bool stopKeyHeldLastFrame_ = false;
+        bool extendedSelection_ = false;
+        int selectionAnchorX_ = 0, selectionAnchorY_ = 0, selectionAnchorZ_ = 0;
         // A moving object (a lift, a creature on a patrol) just placed waits for its end: the next
         // click elsewhere sets it, a click on it again leaves it still (the original editor's
         // m_liftEnd, decdesign.cpp:479-506; OR-0072, owner 2026-11-04: placing a moving platform
@@ -343,6 +359,7 @@ namespace GalaxyEggbert::Editor
 
         EditCommandStack commandStack_;
         EditorPalette palette_;
+        LiftEndpointRenderer liftEndpoints_;
         VariantCycler variants_; // the original's variant families (ED-0001)
         VariantCycler bigDecorVariants_{BigDecorVariantFamilies()}; // ED-0006
         // The auto-tiler's dice (AutoTile.hpp: the original's random twins of a variant).

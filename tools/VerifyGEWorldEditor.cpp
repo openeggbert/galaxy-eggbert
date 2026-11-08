@@ -86,9 +86,9 @@ int main()
                   std::fabs(camera.Position().Z - 50.0f) < 0.001f,
               "D strafes right without forward drift");
 
-        editor.Update(KeyboardState{Keys::Space}, restMouse, 1.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::LeftControl}, restMouse, 1.0f, 800, 480, camera, world);
         check(camera.Position().Y > 25.0f,
-              "Space moves the editor camera upward");
+              "Ctrl moves the editor camera upward");
     }
 
     {
@@ -158,6 +158,41 @@ int main()
         static_cast<std::uint16_t>(static_cast<int>(slabHit.z) + slabHit.normalZ);
     check(slabHit.hit && slab.getBlock(placeX, placeY, placeZ).isAir(),
           "the reference editor ray has an empty adjacent placement cell");
+
+    {
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0, 10, 0);
+        CnaEngine::Graphics::Camera camera;
+        editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
+        const auto extend = [&](Keys key) {
+            editor.Update(KeyboardState{Keys::LeftShift, key}, restMouse, 0, 800, 480, camera, world);
+            editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
+        };
+        extend(Keys::NumPad6); extend(Keys::NumPad6);
+        extend(Keys::NumPad9);
+        for (int i = 0; i < 7; ++i) extend(Keys::NumPad2);
+        int before = 0;
+        for (int x = placeX; x < placeX + 3; ++x)
+            for (int y = placeY; y < placeY + 2; ++y)
+                for (int z = placeZ; z < placeZ + 8; ++z) before += !world.getBlock(x,y,z).isAir();
+        check(before == 0, "Shift+NumPad previews a 3x2x8 selection without modifying the world");
+        const auto eye = camera.Position();
+        editor.Update(KeyboardState{Keys::Space}, restMouse, 0, 800, 480, camera, world);
+        int filled = 0;
+        for (int x = placeX; x < placeX + 3; ++x)
+            for (int y = placeY; y < placeY + 2; ++y)
+                for (int z = placeZ; z < placeZ + 8; ++z) filled += !world.getBlock(x,y,z).isAir();
+        check(filled == 48 && camera.Position().Y == eye.Y,
+              "Space fills the complete 3x2x8 selection and does not raise the camera");
+        editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::U}, restMouse, 0, 800, 480, camera, world);
+        int remaining = 0;
+        for (int x = placeX; x < placeX + 3; ++x)
+            for (int y = placeY; y < placeY + 2; ++y)
+                for (int z = placeZ; z < placeZ + 8; ++z) remaining += !world.getBlock(x,y,z).isAir();
+        check(remaining == 0, "one undo restores the entire extended selection");
+    }
 
     {
         World world = slab;
@@ -516,7 +551,7 @@ int main()
             KeyboardState{Keys::F}, restMouse, 0.0f, 800, 480,
             camera, world);
         editor.Update(
-            KeyboardState{Keys::Space}, restMouse, 0.3f, 800, 480,
+            KeyboardState{Keys::LeftControl}, restMouse, 0.3f, 800, 480,
             camera, world);
         const RaycastHit second =
             Raycast(world, 50.0f, 14.5f, 50.0f,
@@ -569,7 +604,7 @@ int main()
         SetObjectQuarterTurns(world, 10, 5, 21, 1);
         world.setBlock(11, 5, 21, Block::make(114)); // its wind, +X
         world.setBlock(12, 5, 21, Block::make(1));
-        MoveObjectRecord lift;
+        GalaxyEggbert::MoveObjectRecord lift;
         lift.type = ObjectType::ObjectType1;
         lift.posStartX = 12.0f;
         lift.posStartY = 5.0f;
@@ -683,7 +718,7 @@ int main()
         };
         const int before = blocks();
         press(Keys::C);
-        editor.Update(KeyboardState{Keys::Space}, restMouse, 0.3f, 800, 480, camera, world);
+        editor.Update(KeyboardState{Keys::LeftControl}, restMouse, 0.3f, 800, 480, camera, world);
         press(Keys::C);
         const Clipboard* clip = editor.CurrentClipboard();
         check(clip != nullptr && clip->sizeX == 1 && clip->sizeY == 1 && clip->sizeZ > 1 && !editor.IsPasting(),
@@ -873,7 +908,7 @@ int main()
         World world;
         world.setMusicTrack(1);
         world.setSpawnPoint(10, 1, 10);
-        MoveObjectRecord lift;
+        GalaxyEggbert::MoveObjectRecord lift;
         lift.type = GalaxyEggbert::Def::ObjectType::ObjectType1;
         lift.posStartX = lift.posEndX = 20.0f;
         lift.posStartY = lift.posEndY = 1.0f;
@@ -1059,6 +1094,20 @@ int main()
                       placed.z == rightOf.z,
                   "PLACE under the cursor places at the last cell aimed in the view, not under the button");
         }
+    }
+
+    {
+        GalaxyEggbert::MoveObjectRecord lift;
+        lift.type=GalaxyEggbert::Def::ObjectType::ObjectType1;
+        lift.posStartX=2;lift.posStartY=3;lift.posStartZ=4;
+        lift.posEndX=8;lift.posEndY=9;lift.posEndZ=10;
+        auto still=lift;still.type=GalaxyEggbert::Def::ObjectType::ObjectType47;
+        still.posEndX=2;still.posEndY=3;still.posEndZ=4;
+        auto chest=lift;chest.type=GalaxyEggbert::Def::ObjectType::ObjectType5;
+        const auto markers=GalaxyEggbert::Editor::BuildLiftEndpointMarkers({lift,still,chest});
+        check(markers.size()==3 && markers[0].icon==30 && markers[0].x==2 &&
+              markers[1].icon==31 && markers[1].y==9 && markers[1].z==10 && markers[2].icon==30,
+              "moving lifts show marker1 at start and marker2 at end; still lifts avoid overlapping labels and chests get none");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -15,6 +15,8 @@ namespace GalaxyEggbert::Game
     {
         bool connected = false;
         float leftX = 0.0f, leftY = 0.0f; // the left stick, -1..1, Y up positive (XNA's convention)
+        float rightX = 0.0f, rightY = 0.0f;
+        float leftTrigger = 0.0f, rightTrigger = 0.0f;
         bool dpadUp = false, dpadDown = false, dpadLeft = false, dpadRight = false;
         bool a = false, b = false, x = false, y = false;
         bool leftShoulder = false, rightShoulder = false;
@@ -36,6 +38,7 @@ namespace GalaxyEggbert::Game
         kPadCrouch = 1u << 7,   // Left Shift
         kPadLookUp = 1u << 8,   // Right Shift
         kPadPause = 1u << 9,    // Escape
+        kPadFire = 1u << 11,    // F, right trigger
         kPadConfirm = 1u << 10, // Enter (A in the menus too)
     };
     [[nodiscard]] inline unsigned GamepadKeys(const GamepadFrame& now) noexcept
@@ -52,6 +55,7 @@ namespace GalaxyEggbert::Game
         if (now.dpadRight || now.leftX > t) keys |= kPadRight;
         if (now.a) keys |= kPadJump | kPadConfirm;
         if (now.b || now.x) keys |= kPadAction;
+        if (now.rightTrigger > kGamepadAxisThreshold) keys |= kPadFire;
         if (now.rightShoulder) keys |= kPadBackUp;
         if (now.leftShoulder) keys |= kPadCrouch;
         if (now.y) keys |= kPadLookUp;

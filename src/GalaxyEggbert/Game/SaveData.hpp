@@ -100,6 +100,8 @@ namespace GalaxyEggbert::Game
         // Writes the current state to kSavePath, overwriting it.
         void Save() const;
 
+        [[nodiscard]] bool GetFullscreen() const noexcept { return fullscreen_; }
+        void SetFullscreen(bool fullscreen) noexcept { fullscreen_ = fullscreen; }
         [[nodiscard]] bool GetSoundEnabled() const noexcept { return soundEnabled_; }
         void SetSoundEnabled(bool enabled) noexcept { soundEnabled_ = enabled; }
         // The Setup's other toggles (GameData data[4..6]; GameData::Initialize: jump right and
@@ -213,6 +215,7 @@ namespace GalaxyEggbert::Game
 #else
         static constexpr const char* kSavePath = "savedata.txt";
 #endif
+        bool fullscreen_ = false; // desktop preference, shared by all gamer slots
         bool soundEnabled_ = true;
         bool jumpRight_ = true;
         bool autoZoom_ = true;

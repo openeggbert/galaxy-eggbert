@@ -48,6 +48,13 @@ set(GE_SHARED_SOURCES
 # =============================================================================
 
 option(GALAXY_EGGBERT_BUILD_CNA "Build the direct CNA + cna-engine Galaxy Eggbert target (actively developed -- see CLAUDE.md)" ON)
+option(GALAXY_EGGBERT_ENABLE_CHEATS "Enable typed cheats and the hidden cheat menu" ON)
+set_source_files_properties(
+    src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
+    src/GalaxyEggbert/Game/InputPad.cpp
+    tools/VerifyGEInputPad.cpp
+    PROPERTIES COMPILE_DEFINITIONS
+    "GALAXY_EGGBERT_ENABLE_CHEATS=$<BOOL:${GALAXY_EGGBERT_ENABLE_CHEATS}>")
 
 if(GALAXY_EGGBERT_BUILD_CNA)
 
@@ -162,6 +169,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
+        src/GalaxyEggbert/Editor/EditorDeviceControls.cpp
+        src/GalaxyEggbert/Editor/LiftEndpointRenderer.cpp
         src/GalaxyEggbert/Editor/VoxelRaycast.cpp
         src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
         src/GalaxyEggbert/Editor/EditCommandStack.cpp
@@ -447,6 +456,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     add_library(GEEditorVerifySupport OBJECT
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
+        src/GalaxyEggbert/Editor/EditorDeviceControls.cpp
+        src/GalaxyEggbert/Editor/LiftEndpointRenderer.cpp
         src/GalaxyEggbert/Editor/VoxelRaycast.cpp
         src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
         src/GalaxyEggbert/Editor/EditCommandStack.cpp
@@ -503,6 +514,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     endfunction()
 
     ge_add_editor_verify(VerifyGEWorldEditor tools/VerifyGEWorldEditor.cpp)
+    ge_add_editor_verify(VerifyGEEditorDevices tools/VerifyGEEditorDevices.cpp)
     ge_add_editor_verify(VerifyGEEditorPalette tools/VerifyGEEditorPalette.cpp)
     ge_add_editor_verify(VerifyGEEditorStorage tools/VerifyGEEditorStorage.cpp)
     ge_add_editor_verify(VerifyGEEditorObjects tools/VerifyGEEditorObjects.cpp)

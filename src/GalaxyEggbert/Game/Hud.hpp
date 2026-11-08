@@ -1,4 +1,5 @@
 #pragma once
+#include "ObjectiveHint.hpp"
 
 #include <GalaxyEggbert/Def/GameSpeed.hpp>
 
@@ -156,8 +157,8 @@ namespace GalaxyEggbert::Game
                   bool voyageIsBlupiChannel,
                   float voyageX, float voyageY,
                   GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity = 1.0f,
-                  std::optional<float> nearestTreasureDistance = std::nullopt,
-                  bool rightTouchStick = false);
+                  std::optional<ObjectiveHint> objective = std::nullopt,
+                  bool rightTouchControls = false);
 
         // Projects a 3D world position into this class's own 640x480
         // reference screen space (plan.md `158`) -- the real Voyage

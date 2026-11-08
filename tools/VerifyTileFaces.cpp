@@ -843,6 +843,19 @@ int main()
               "a swapped saw without an anim block refuses the patch");
     }
 
+    {
+        auto mesh=GalaxyEggbert::Game::MakeTexturedMeshBuilder();
+        CnaEngine::Graphics::BoxFaces faces;
+        faces.fill({true,CnaEngine::Graphics::UvRect::Full()});
+        GalaxyEggbert::Game::AddDoubleSidedCenteredBox(mesh,{0,0,0},faces);
+        check(mesh.Mesh().positions.size()==48 && mesh.Mesh().indices.size()==72,
+              "open marker cubes contain both windings of all six faces");
+        check(GalaxyEggbert::GetBlockDefinition(30).doubleSidedCutout &&
+              GalaxyEggbert::GetBlockDefinition(31).doubleSidedCutout &&
+              !GalaxyEggbert::GetBlockDefinition(29).doubleSidedCutout,
+              "only the open endpoint cubes request inner cutout faces");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

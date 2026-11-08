@@ -29,7 +29,11 @@ namespace GalaxyEggbert::Game
             }
             const std::string key = line.substr(0, eq);
             const std::string value = line.substr(eq + 1);
-            if (key == "soundEnabled")
+            if (key == "fullscreen")
+            {
+                fullscreen_ = (value == "1");
+            }
+            else if (key == "soundEnabled")
             {
                 soundEnabled_ = (value == "1");
             }
@@ -129,6 +133,7 @@ namespace GalaxyEggbert::Game
         out << "effectsVolume=" << effectsVolume_ << "\n";
         out << "musicVolume=" << musicVolume_ << "\n";
         out << "accelSensitivity=" << accelSensitivity_ << "\n";
+        out << "fullscreen=" << (fullscreen_ ? "1" : "0") << "\n";
         out << "terrainRelief=" << (terrainRelief_ ? "1" : "0") << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         for (int gamer = 0; gamer < kGamerCount; ++gamer)

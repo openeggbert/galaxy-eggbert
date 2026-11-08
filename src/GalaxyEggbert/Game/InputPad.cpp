@@ -1,5 +1,6 @@
 #include "InputPad.hpp"
 #include "TextMetrics.hpp"
+#include "CheatConfig.hpp"
 
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
@@ -12,6 +13,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <string>
+#include <unordered_set>
 
 namespace GalaxyEggbert::Game
 {
@@ -134,6 +136,12 @@ namespace GalaxyEggbert::Game
         {
             const Rect right{m.w - m.f1 * 2.4f, m.h - m.f1 * 1.2f, m.w - m.f1 * 1.4f, m.h - m.f1 * 0.2f};
             return jumpRight ? right : MirrorX(right, m);
+        }
+
+        Rect PlayFireRect(const ScreenMetrics& m, bool jumpRight) noexcept
+        {
+            const Rect right{m.w-m.f1*2.4f,m.h-m.f1*2.6f,m.w-m.f1*1.4f,m.h-m.f1*1.6f};
+            return jumpRight ? right : MirrorX(right,m);
         }
 
         Rect PlayPauseRect(const ScreenMetrics& m) noexcept
@@ -273,6 +281,7 @@ namespace GalaxyEggbert::Game
         constexpr int kPlayControlPause = 3;
         constexpr int kPlayControlBackUp = 4;
         constexpr int kPlayControlCrouch = 5;
+        constexpr int kPlayControlFire = 6;
 
         constexpr int kPauseControlMenu = 0;
         constexpr int kPauseControlBack = 1;
@@ -398,7 +407,7 @@ namespace GalaxyEggbert::Game
         struct InitLayout
         {
             Rect gamer[3];
-            Rect setup, play, editor, exit;
+            Rect setup, play, editor, exit, fullscreen, help;
             Rect leftPanel, rightPanel;
             float scale;
         };
@@ -423,6 +432,8 @@ namespace GalaxyEggbert::Game
             l.play = Rect{w - 20.0f * s - f2, h - 40.0f * s - f2, w - 20.0f * s, h - 40.0f * s};
             l.editor = Rect{w - 20.0f * s - f2 * 0.75f, h - 20.0f * s - f2 * 2.1f,
                             w - 20.0f * s - f2 * 0.25f, h - 20.0f * s - f2 * 1.6f};
+            l.help = Rect{20.f*s,82.f*s,130.f*s,136.f*s};
+            l.fullscreen = Rect{20.0f * s, 15.0f * s, 190.0f * s, 69.0f * s};
             l.exit = Rect{w - 130.0f * s, 15.0f * s, w - 20.0f * s, 69.0f * s};
             l.leftPanel = Rect{10.0f * s, h - 325.0f * s, 260.0f * s, h - 10.0f * s};
             l.rightPanel = Rect{w - 170.0f * s, h - 325.0f * s, w - 10.0f * s, h - 10.0f * s};
@@ -477,6 +488,8 @@ namespace GalaxyEggbert::Game
         constexpr int kInitControlPlay = 4;
         constexpr int kInitControlEditor = 5;
         constexpr int kInitControlExit = 6;
+        constexpr int kInitControlFullscreen = 7;
+        constexpr int kInitControlHelp = 8;
 
         // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
         // dedicated research pass into the real `fadeOutPhase` mechanic):
@@ -621,12 +634,18 @@ namespace GalaxyEggbert::Game
         cheatMouseWasDown_ = false;
         cheatGestureIndex_ = 0;
         typedCheatBuffer_.clear();
+        suppressedGameplayLetters_ = 0;
+        typedIdleSeconds_ = 0;
+        typingCheat_ = false;
         for (auto& down : letterKeyWasDown_) down = false;
     }
 
     void InputPad::ResetTouchState() noexcept
     {
         activeControl_ = -1;
+        previousPlayTouches_.clear();
+        fireTouchHeld_=false;
+        dpadTouchId_=actionTouchId_=pauseTouchId_=backUpTouchId_=crouchTouchId_=-1;
         mouseWasDown_ = false;
         dpadDragOffsetX_ = 0.0f;
         dpadDragOffsetY_ = 0.0f;
@@ -770,9 +789,9 @@ namespace GalaxyEggbert::Game
             for (int i = 0; i < count; ++i)
             {
                 const float x = i < perColumn ? 28.0f : 335.0f;
-                const float y = 78.0f + float(i % perColumn) * 27.0f;
-                line(words[i].word, x, y, 0.48f);
-                line(words[i].description, x, y + 14.0f, 0.4f);
+                const float y = 78.0f + float(i % perColumn) * std::min(27.0f, 350.0f / perColumn);
+                line(words[i].word, x, y, perColumn > 13 ? 0.44f : 0.48f);
+                line(words[i].description, x, y + 13.0f, perColumn > 13 ? 0.37f : 0.4f);
             }
         }
         else
@@ -783,12 +802,13 @@ namespace GalaxyEggbert::Game
                 "W / Up: walk forward",
                 "A D / Left Right: turn",
                 "S / Down: turn around, then walk",
-                "Left Ctrl: jump / helicopter up",
-                "Space: action / use / fire",
+                "Left Ctrl: jump (on foot)",
+                "Space: action / enter / leave",
+                "F / Left Ctrl: vehicle glue",
                 "X / Right Ctrl: back up",
                 "Left Shift: crouch / dive",
                 "Crouch + S / Down: pull crate",
-                "Right Shift: look up",
+                "Right Shift: look / helicopter up",
                 "Esc: pause / continue",
                 "Enter: Play / Continue",
                 "F1: show / hide this help",
@@ -799,14 +819,19 @@ namespace GalaxyEggbert::Game
                 "F12: cheat menu",
                 "F7 / F8: faster (quick cheat)"};
             float y = 90;
-            for (const char* label : keyboard) { line(label, 28, y); y += 17; }
+            for (const char* label : keyboard)
+            {
+                if (!kCheatsEnabled && (std::string_view(label).starts_with("F12") || std::string_view(label).starts_with("F7"))) continue;
+                line(label, 28, y); y += 17;
+            }
             line("GAMEPAD", 335, 62, 0.65f);
             const char* gamepad[] = {
                 "Left stick / D-pad: walk, turn",
                 "Down: turn around, then walk",
                 "A: jump / helicopter up",
                 "A: Play / Continue in menus",
-                "B / X: action / use / fire",
+                "B / X: action / enter / leave",
+                "RT: vehicle glue shot / drop",
                 "RB: back up",
                 "LB: crouch / dive",
                 "LB + Down: pull crate",
@@ -818,9 +843,11 @@ namespace GalaxyEggbert::Game
             line("Left click: menu buttons", 335, 313);
             line("Hold left + drag: look around", 335, 330);
             line("Walking returns the camera", 335, 347);
+            line("Touch Fire: tank / helicopter glue",335,366);
             line("Touch controls: touch screens only", 335, 383);
-            line("Type help: cheats explained", 335, 405);
+            line(kCheatsEnabled ? "Type help: cheats explained" : "Cheats disabled", 335, 405);
         }
+        line("[Close]",550,25,.55f);
         line("Game paused - F1 or Esc to close", 28, 439, 0.6f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *helpPanelEffect_, helpPanelRenderer_, panel, viewportW, viewportH, 0.87f);
@@ -990,10 +1017,12 @@ namespace GalaxyEggbert::Game
         const bool overPause = InRect(mouseX, mouseY, PlayPauseRect(m));
         const bool overBackUp = InRect(mouseX, mouseY, PlayBackUpRect(m, jumpRight_));
         const bool overCrouch = InRect(mouseX, mouseY, PlayCrouchRect(m, jumpRight_));
+        const bool overFire = vehicleFireEnabled_ && InRect(mouseX,mouseY,PlayFireRect(m,jumpRight_));
 
         if (mouseDown && !mouseWasDown_)
         {
-            if (overBackUp) activeControl_ = kPlayControlBackUp;
+            if (overFire) activeControl_ = kPlayControlFire;
+            else if (overBackUp) activeControl_ = kPlayControlBackUp;
             else if (overCrouch) activeControl_ = kPlayControlCrouch;
             else if (overDPad) activeControl_ = kPlayControlDPad;
             else if (overJump) activeControl_ = kPlayControlJump;
@@ -1006,6 +1035,7 @@ namespace GalaxyEggbert::Game
         // currently inside its rect while the mouse is down, independent
         // of where the press started (see InputPad.hpp's class comment).
         outInput.jumpHeld = mouseDown && overJump;
+        outInput.fireHeld = mouseDown && overFire;
         outInput.backUpHeld = mouseDown && activeControl_ == kPlayControlBackUp;
         outInput.crouchHeld = mouseDown && activeControl_ == kPlayControlCrouch;
 
@@ -1046,9 +1076,18 @@ namespace GalaxyEggbert::Game
         return activeControl_ != -1;
     }
 
-    bool InputPad::UpdatePlayTouches(const std::vector<TouchPoint>& touches, int viewportW, int viewportH,
+    bool InputPad::UpdatePlayTouches(const std::vector<TouchPoint>& contacts, int viewportW, int viewportH,
                                        PlayInput& outInput) noexcept
     {
+        auto touches=contacts;
+        for (auto& t : touches)
+            if (!t.released && std::none_of(previousPlayTouches_.begin(),previousPlayTouches_.end(),
+                [&](const auto& previous) { return previous.id==t.id; })) t.pressed=true;
+        for (auto t : previousPlayTouches_)
+            if (std::none_of(contacts.begin(),contacts.end(),[&](const auto& now) { return now.id==t.id; }))
+            { t.pressed=false;t.released=true;touches.push_back(t); }
+        previousPlayTouches_.clear();
+        for (const auto& t : contacts) if (!t.released) previousPlayTouches_.push_back(t);
         outInput = PlayInput{};
         const ScreenMetrics m = Metrics(viewportW, viewportH);
         const auto padCenter = DPadCenter(m, jumpRight_);
@@ -1077,6 +1116,8 @@ namespace GalaxyEggbert::Game
                 outInput.jumpHeld = true;
                 onControl = true;
             }
+            if (vehicleFireEnabled_ && down && InRect(t.x,t.y,PlayFireRect(m,jumpRight_)))
+            { outInput.fireHeld=true;onControl=true; }
             if (t.id == dpadTouchId_)
             {
                 dpadSeen = true;
@@ -1141,6 +1182,7 @@ namespace GalaxyEggbert::Game
         if (crouchTouchId_ >= 0 && !present(crouchTouchId_)) crouchTouchId_ = -1;
         if (actionTouchId_ >= 0 && !present(actionTouchId_)) actionTouchId_ = -1;
         if (pauseTouchId_ >= 0 && !present(pauseTouchId_)) pauseTouchId_ = -1;
+        fireTouchHeld_=outInput.fireHeld;
         return onControl;
     }
 
@@ -1198,6 +1240,9 @@ namespace GalaxyEggbert::Game
         appendRect(activeControl_ == kPlayControlCrouch || crouchTouchId_ >= 0 ? pressedQuads : normalQuads,
                    PlayCrouchRect(m, jumpRight_), kIconPlayDown);
 
+        if (vehicleFireEnabled_)
+            appendRect(activeControl_==kPlayControlFire || fireTouchHeld_ ? pressedQuads : normalQuads,
+                       PlayFireRect(m,jumpRight_),kIconPlayAction);
         // NonPremultiplied, not AlphaBlend: Texture2D(path) loads PNGs with
         // straight alpha, while AlphaBlend expects the premultiplied colours
         // CNA's (and XNA's) content pipeline produces, which Mobile Eggbert
@@ -1207,6 +1252,15 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, normalQuads, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressedQuads, viewportW, viewportH, kPlayPressedAlpha);
+        if (vehicleFireEnabled_)
+        {
+            const auto r=PlayFireRect(m,jumpRight_);
+            std::vector<Quad> labels;
+            const float font=.55f;
+            AppendGamerLabel(labels,"Fire",(r.x0+r.x1)*.5f-TextMetrics::Width("Fire")*font*m.s*.5f,
+                             (r.y0+r.y1)*.5f-12*font*m.s,font,m.s);
+            FlushQuads(device,*textEffect_,textRenderer_,labels,viewportW,viewportH,1);
+        }
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
@@ -1888,6 +1942,7 @@ namespace GalaxyEggbert::Game
     bool InputPad::UpdateCheatGesture(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                         int viewportW, int viewportH) noexcept
     {
+        if (!kCheatsEnabled) return false;
         using Microsoft::Xna::Framework::Input::ButtonState;
 
         const float scale = static_cast<float>(viewportH) / kRefH;
@@ -1932,6 +1987,7 @@ namespace GalaxyEggbert::Game
     int InputPad::UpdateCheatMenu(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                     int viewportW, int viewportH) noexcept
     {
+        if (!kCheatsEnabled) return 0;
         using Microsoft::Xna::Framework::Input::ButtonState;
 
         const float scale = static_cast<float>(viewportH) / kRefH;
@@ -1965,6 +2021,7 @@ namespace GalaxyEggbert::Game
 
     const InputPad::TypedCheatWord* InputPad::TypedCheatWords(int& count) noexcept
     {
+        if (!kCheatsEnabled) { count = 0; return nullptr; }
         static constexpr TypedCheatWord kWords[] = {
             {"opendoors", TypedCheat::OpenDoors, "Toggle hub doors; give every key"},
             {"cleanall", TypedCheat::CleanAll, "Clear enemies and hazards"},
@@ -1992,6 +2049,7 @@ namespace GalaxyEggbert::Game
             {"zoom", TypedCheat::Zoom, "Cycle chase-camera distance"},
             {"help", TypedCheat::Help, "List cheats and explanations"},
             {"cheats", TypedCheat::Help, "Same as help (Mobile Eggbert)"},
+            {"compass", TypedCheat::Compass, "Toggle distance + X/Y/Z arrows"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;
@@ -2003,7 +2061,7 @@ namespace GalaxyEggbert::Game
         using Microsoft::Xna::Framework::Input::Keys;
 
         TypedCheatResult result;
-        if (!isPlayPhase)
+        if (!isPlayPhase || !kCheatsEnabled)
         {
             return result;
         }
@@ -2014,12 +2072,19 @@ namespace GalaxyEggbert::Game
             Keys::Q, Keys::R, Keys::S, Keys::T, Keys::U, Keys::V, Keys::W, Keys::X,
             Keys::Y, Keys::Z};
 
+        typedIdleSeconds_ += 1.0f / 60.0f;
+        // Preserve the reference's rolling cheat buffer even when the player types slowly.
+        if (typedIdleSeconds_ > 1.2f) typingCheat_ = false;
+        bool completed = false;
+
         for (int li = 0; li < 26; ++li)
         {
             const bool down = keyboard.IsKeyDown(kLetterKeys[li]);
+            if (!down) suppressedGameplayLetters_ &= ~(1u << li);
             if (down && !letterKeyWasDown_[li])
             {
                 typedCheatBuffer_ += static_cast<char>('a' + li);
+                typedIdleSeconds_ = 0;
                 if (typedCheatBuffer_.size() > 32)
                 {
                     typedCheatBuffer_ = typedCheatBuffer_.substr(typedCheatBuffer_.size() - 32);
@@ -2034,6 +2099,7 @@ namespace GalaxyEggbert::Game
                         typedCheatBuffer_.compare(typedCheatBuffer_.size() - name.size(), name.size(), name) == 0)
                     {
                         result.cheat = words[ci].cheat;
+                        completed = true;
                         result.ghostTyped = result.cheat == TypedCheat::Ghost;
                         result.quickTyped = result.cheat == TypedCheat::Quick;
                         // The original clears the buffer after every word; after "quick" that made
@@ -2046,16 +2112,40 @@ namespace GalaxyEggbert::Game
                         break;
                     }
                 }
+                typingCheat_ = false;
+                for (int ci = 0; ci < count; ++ci)
+                {
+                    const std::string_view word(words[ci].word);
+                    const auto max = std::min(word.size() - 1, typedCheatBuffer_.size());
+                    for (std::size_t length = 2; length <= max; ++length)
+                        if (typedCheatBuffer_.compare(typedCheatBuffer_.size() - length, length, word.data(), length) == 0)
+                            typingCheat_ = true;
+                }
             }
             letterKeyWasDown_[li] = down;
         }
+        if (typingCheat_ || completed)
+            for (int i = 0; i < 26; ++i)
+                if (keyboard.IsKeyDown(kLetterKeys[i])) suppressedGameplayLetters_ |= 1u << i;
         return result;
+    }
+
+    Microsoft::Xna::Framework::Input::KeyboardState InputPad::FilterGameplayKeyboard(
+        const Microsoft::Xna::Framework::Input::KeyboardState& keyboard) const
+    {
+        using namespace Microsoft::Xna::Framework::Input;
+        if (!kCheatsEnabled || suppressedGameplayLetters_ == 0) return keyboard;
+        const auto pressed = keyboard.GetPressedKeys();
+        std::unordered_set<Keys> keys(pressed.begin(), pressed.end());
+        for (int i = 0; i < 26; ++i)
+            if (suppressedGameplayLetters_ & (1u << i)) keys.erase(static_cast<Keys>(int(Keys::A) + i));
+        return KeyboardState(keys);
     }
 
     void InputPad::DrawCheatMenu(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                   int viewportW, int viewportH)
     {
-        if (!loaded_)
+        if (!loaded_ || !kCheatsEnabled)
         {
             return;
         }
@@ -2267,6 +2357,8 @@ namespace GalaxyEggbert::Game
         const bool overPlay = InRect(mouseX, mouseY, layout.play);
         const bool overEditor = InRect(mouseX, mouseY, layout.editor);
         const bool overExit = InRect(mouseX, mouseY, layout.exit);
+        const bool overFullscreen = InRect(mouseX, mouseY, layout.fullscreen);
+        const bool overHelp = InRect(mouseX, mouseY, layout.help);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -2277,6 +2369,8 @@ namespace GalaxyEggbert::Game
             else if (overPlay) activeControl_ = kInitControlPlay;
             else if (overEditor) activeControl_ = kInitControlEditor;
             else if (overExit) activeControl_ = kInitControlExit;
+            else if (overFullscreen) activeControl_ = kInitControlFullscreen;
+            else if (overHelp) activeControl_ = kInitControlHelp;
             else activeControl_ = -1;
         }
 
@@ -2293,6 +2387,8 @@ namespace GalaxyEggbert::Game
                 case kInitControlPlay: result.playPressed = true; break;
                 case kInitControlEditor: result.editorPressed = true; break;
                 case kInitControlExit: result.exitPressed = true; break;
+                case kInitControlFullscreen: result.fullscreenPressed = overFullscreen; break;
+                case kInitControlHelp: result.helpPressed = overHelp; break;
                 default: break;
             }
             activeControl_ = -1;
@@ -2305,7 +2401,7 @@ namespace GalaxyEggbert::Game
     void InputPad::DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                              int viewportH, float phaseTimeSeconds, int selectedGamer,
                              const std::array<InitGamerInfo, 3>& gamers, GalaxyEggbert::Def::GamePhase fadeOutPhase,
-                             bool overTitleScene)
+                             bool overTitleScene, bool fullscreen)
     {
         if (!loaded_)
         {
@@ -2464,6 +2560,13 @@ namespace GalaxyEggbert::Game
                           kIconInitPlay);
             appendIconQuad(activeControl_ == kInitControlEditor ? pressedQuads : normalQuads, layout.editor,
                           kIconInitEditorFace);
+            appendIconQuad(activeControl_ == kInitControlHelp ? pressedQuads : normalQuads,layout.help,21);
+            AppendCenteredLabel(labelQuads,"Help",(layout.help.x0+layout.help.x1)*.5f,
+                                (layout.help.y0+layout.help.y1)*.5f-12*s,s);
+            appendIconQuad(activeControl_ == kInitControlFullscreen ? pressedQuads : normalQuads, layout.fullscreen, 21);
+            AppendCenteredLabel(labelQuads, fullscreen ? "Window" : "Fullscreen",
+                                (layout.fullscreen.x0 + layout.fullscreen.x1) * 0.5f,
+                                (layout.fullscreen.y0 + layout.fullscreen.y1) * 0.5f - 12.0f * s, s);
             appendIconQuad(activeControl_ == kInitControlExit ? pressedQuads : normalQuads, layout.exit, 21);
             AppendCenteredLabel(labelQuads, "Exit", (layout.exit.x0 + layout.exit.x1) * 0.5f,
                                 (layout.exit.y0 + layout.exit.y1) * 0.5f - 12.0f * s, s);

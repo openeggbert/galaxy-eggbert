@@ -99,15 +99,18 @@ namespace GalaxyEggbert::Editor
         selectionHighlightRenderer_.Hide();
         dirty_ = false;
         stopConfirmArmed_ = false;
+        placeKeyHeldLastFrame_ = false;
+        stopKeyHeldLastFrame_ = false;
+        extendedSelection_ = false;
     }
 
     void WorldEditor::Update(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         float dt, int viewportWidth, int viewportHeight,
-        CnaEngine::Graphics::Camera& camera, Worlds::World& world)
+        CnaEngine::Graphics::Camera& camera, Worlds::World& world, const Navigation& navigation)
     {
-        const Microsoft::Xna::Framework::Vector3 forward = UpdateCamera(keyboard, mouse, dt, camera);
+        const Microsoft::Xna::Framework::Vector3 forward = UpdateCamera(keyboard, mouse, dt, camera, navigation);
         palette_.SetSelectedSkyRegion(world.skyRegion());
         palette_.SetSelectedMusicTrack(world.musicTrack());
         const EditorPalette::UpdateResult paletteResult =
@@ -118,9 +121,9 @@ namespace GalaxyEggbert::Editor
         // (the centre aims when there is none yet, e.g. a touch that began on a button).
         const bool looking =
             mouse.getRightButtonProperty() == Microsoft::Xna::Framework::Input::ButtonState::Pressed;
-        if (looking || !palette_.IsPointerOverControl(mouse, viewportWidth, viewportHeight))
+        if (!navigation.keepAim && (looking || !palette_.IsPointerOverControl(mouse, viewportWidth, viewportHeight)))
         {
-            AimAt(world, AimDirection(forward, mouse, viewportWidth, viewportHeight, camera));
+            AimAt(world, navigation.centeredAim ? forward : AimDirection(forward, mouse, viewportWidth, viewportHeight, camera));
         }
         else if (aimKind_ == AimKind::None)
         {
@@ -130,7 +133,8 @@ namespace GalaxyEggbert::Editor
 
         const FrameInput input = ReadFrameInput(keyboard, mouse, paletteResult);
         UpdateBoxPreview(world);
-        if (!HandleClipboard(input, world) &&
+        if (!HandleExtendedSelection(input, world) &&
+            !HandleClipboard(input, world) &&
             !HandlePlacement(input, world) &&
             !HandleRemoval(input, world) &&
             !HandleSessionAndHistory(input, world) &&
@@ -227,8 +231,9 @@ namespace GalaxyEggbert::Editor
     void WorldEditor::Draw(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         const CnaEngine::Graphics::Camera& camera,
-        int viewportWidth, int viewportHeight)
+        int viewportWidth, int viewportHeight, const Worlds::World& world)
     {
+        liftEndpoints_.Draw(device,camera,world);
         if (showingBox_)
         {
             highlightRenderer_.ShowBox(

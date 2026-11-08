@@ -128,7 +128,7 @@ ctest --test-dir build-cna-opengl3 -j4 --output-on-failure
 
 `ctest` needs the whole tree built because the `Verify*` executables and
 `GalaxyEggbertWorldsTests` are separate targets from `GalaxyEggbertCNA`. Expected result today:
-`100% tests passed, 0 tests failed out of 112` (verified 2026-11-07). The last five are the
+`100% tests passed, 0 tests failed out of 113` (verified 2026-11-08). The last five are the
 `easy-gl-*` tests contributed by the dependency; a failure there is a real signal.
 
 Other useful targets: `VerifyShippedWorlds`, `DumpBlockDefinitions`, `GenerateSampleWorld3D`
@@ -157,17 +157,24 @@ never touch it. `ctest` leaves it alone too (`VerifyGESaveData` uses its own
 Press **F1** for controls help (black text on a translucent white panel). It freezes the current
 screen; F1 or Esc closes it. **WASD or the arrows** move Blupi: W/Up walks forward, A/D or
 Left/Right turns, S/Down turns around and then walks in the new direction. **X or Right Ctrl**
-backs up while keeping his facing. Left Ctrl jumps (also climbs in a helicopter), Space acts/uses/
-fires, Left Shift crouches or dives, Right Shift looks up. Crouch + S/Down pulls a crate.
+backs up while keeping his facing. Left Ctrl jumps on foot; **F or Left Ctrl fires glue in a tank or helicopter**. Right Shift climbs
+the helicopter. Space acts/uses/enters/leaves, Left Shift crouches or dives, Right Shift looks up. Crouch + S/Down pulls a crate.
 Esc pauses/continues, F3 switches first/third person (third is the default), F11 toggles full screen,
 F5/F6 selects normal/fast speed, Tab toggles slow motion, F12 opens the cheat menu. Left-click menu
 buttons; hold the left mouse button and drag to look around. Walking returns the camera behind him.
-The main menu's **Exit** button closes the game.
+The main menu's **Exit** button closes the game. **Help** opens the same panel as F1; [Close]
+dismisses it by mouse/touch without activating the menu underneath. Its upper-left **Fullscreen / Window** button
+switches display mode and always names the other mode. The first run is windowed; button and F11
+changes persist globally as `fullscreen=0/1` in `savedata.txt`, restored at the next startup.
 
-The lower-right readout above the HUD/buttons shows just a number: the nearest remaining chest's straight-line **3D distance in
-blocks**, to one decimal place. This is a distance through space, not a route length. The readout
-disappears as soon as all chests have been collected, including while the last chest's reward is
-still flying to the counter.
+Type **compass** to toggle the lower-right objective aid (off by default). It shows the nearest
+active chest's straight-line **3D distance in blocks**, rounded to the nearest integer. After all
+chests are collected, or if the level has none, it points to the nearest red exit arrow or golden
+key. Below the number, X/Y/Z arrows give the signs of target-minus-player in world coordinates;
+Y up/down is height, X and Z are the horizontal axes, and a dash means aligned within 0.1 block.
+It is a direction/distance through space, not a route finder. Touch layouts keep the whole panel
+clear of the controls. Recognized cheat prefixes consume their following letter keys until
+release, so the S ending `weelkeys` cannot turn Blupi around; a fresh S still works.
 Type **help** or **cheats** during play, without Enter, for every supported cheat word and its
 explanation. This overlay pauses the game and closes with F1 or Esc. `cheats` is the Mobile Eggbert
 MODERN name (`InputPad.cpp:1318`); `help` is Galaxy's requested alias. `killegg` is listed with its
@@ -184,7 +191,8 @@ The first connected gamepad in XNA slots 1-4 controls play (`GamepadInput.hpp`):
 |---|---|
 | Left stick / D-pad | Walk and turn; Down turns around and then walks |
 | A | Jump / helicopter up; Play or Continue in menus, return from Win/Lost |
-| B or X | Action / use / fire |
+| B or X | Action / use / enter / leave |
+| Right trigger (RT) | Tank glue shot / helicopter glue drop |
 | RB | Back up |
 | LB | Crouch / dive; LB + Down pulls a crate |
 | Y | Look up |
@@ -193,8 +201,50 @@ The first connected gamepad in XNA slots 1-4 controls play (`GamepadInput.hpp`):
 Play's on-screen controls appear only when CNA detects touch-screen capability, including on
 devices with both a keyboard and a touch screen. Desktop mouse clicks in their former areas go
 to camera look. The desktop and an SDL virtual gamepad were checked live on 2026-11-08; physical
-gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v3 to
-record touch capability; an older/incompatible log falls back to the saved checkpoint.
+gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v4 to
+record touch capability and the compass toggle; an older/incompatible log falls back to the saved checkpoint.
+
+Tank shots fly forwards; helicopter glue drops vertically, only in flight and off a lift.
+Both need ammunition (the green ammo pack; `birdlime` supplies ten when cheats are enabled).
+Holding Fire repeats at the original cooldown. Touch devices show a separate **Fire** button
+while driving either armed vehicle; entering/leaving remains Action. The physical Ctrl alias is
+mapped before gamepad keys are merged, so gamepad A and touch Jump still climb the helicopter.
+
+### 3D editor controls
+
+Ctrl raises the camera, Z lowers it; Space invokes Place. Shift + NumPad 4/6, 7/9, 8/2 extends an
+inclusive 3D selection in X/Y/Z from the initial aimed cell. Place fills it with the selected block,
+Remove clears it, Escape cancels it; the whole edit is one Undo. Dimensions appear while selecting.
+
+Touch: the Move pad flies horizontally; Up/Down changes height; drag the world with another finger
+to look. Choose palette entries and Place with their existing buttons. **Tools > Select 3D** replaces
+holding Shift; the six X-/X+/Y-/Y+/Z-/Z+ buttons extend the selection, including 3×2×8 cuboids.
+Lifts have yellow numbered open cubes: 1 is the path start, 2 its end. Both faces of each wall
+remain visible through transparent parts, including the same marker tiles placed in terrain.
+Platforms move along their authored paths in the editor, including their waits and return journey;
+the numbered endpoints stay fixed and preview movement is not saved into the world.
+Tools also exposes Save, Undo/Redo, Cancel, variant/turn, object/end-point/field editing, copy/paste,
+box fill, background-related palette access, music, help and Stop. Unsaved-change protection remains.
+
+Gamepad editing: left stick flies, right stick looks, RT rises, LT descends. A places, X removes,
+B cancels; D-pad offsets X/Z and LB/RB offsets Y. Y switches between flying and a visible UI cursor;
+in cursor mode the sticks/D-pad move it and A clicks palette/Tools controls. Start saves and Back
+stops (with the existing unsaved-change guard). Menus/browser use the cursor automatically, so an
+entire editing session can start and finish without a keyboard. Virtual SDL gamepad and direct-touch
+events were checked live, including a touch-only 3×2×8 selection/fill; real hardware is still untested.
+
+### Building with cheats disabled
+
+Cheats default to enabled. To compile them out of the player's input paths in the existing tree:
+
+```bash
+cmake -S . -B build-cna-opengl3 -DGALAXY_EGGBERT_ENABLE_CHEATS=OFF
+cmake --build build-cna-opengl3 --target GalaxyEggbertCNA --parallel 4
+```
+
+The macro has the same name, with numeric value 0/1. OFF disables typed words (including help and
+compass), F12, the hidden gesture/menu and cheat application. Set the option back to **ON** and
+rebuild to restore them. Both configurations were tested; the delivered local build is **ON**.
 
 Headless runs: the game needs a GL context. Under `xvfb-run` set `SDL_AUDIODRIVER=dummy` to keep it
 silent; the QA scripts already do.

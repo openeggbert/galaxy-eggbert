@@ -262,6 +262,9 @@ namespace GalaxyEggbert::Game
                     directionalFaces[static_cast<int>(BoxFace::NegativeX)].uv = panelUv;
                 }
 
+                if (definition.doubleSidedCutout)
+                    AddDoubleSidedCenteredBox(mesh,center,directionalFaces);
+                else
                 AddCenteredBox(mesh, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), directionalFaces);
 
                 if (IsTeleporterTipIcon(lookupIcon))
@@ -804,6 +807,7 @@ namespace GalaxyEggbert::Game
                     case TileCoverage::Opaque:
                         break;
                     }
+                    if (definition.doubleSidedCutout) mesh=&cutoutMesh;
                     // The faces its neighbours hide; a relief neighbour does not hide the faces of a cell
                     // drawn otherwise (reliefNeighbourFaces), but which side is the room's is the same.
                     const std::uint8_t occludedFaces =

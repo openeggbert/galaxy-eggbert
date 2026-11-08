@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GalaxyEggbert/Game/ResumeLog.hpp>
+#include <GalaxyEggbert/Game/ReusablePickup.hpp>
 #include <map>
 
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
@@ -18,6 +19,7 @@
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
+#include <GalaxyEggbert/Editor/EditorDeviceControls.hpp>
 #include <GalaxyEggbert/Game/ControlInput.hpp>
 #include <GalaxyEggbert/Game/SaveData.hpp>
 #include <GalaxyEggbert/Game/Autoplay.hpp>
@@ -265,8 +267,7 @@ namespace GalaxyEggbert::CNA
         // freeze can be active at a time (BlupiController::
         // TriggerPickupFreeze() is a no-op while already frozen), so a
         // single pending slot is sufficient.
-        float pendingPickupX_ = 0.0f, pendingPickupY_ = 0.0f, pendingPickupZ_ = 0.0f;
-        GalaxyEggbert::Def::ObjectType pendingPickupType_ = GalaxyEggbert::Def::ObjectType::ObjectType0;
+        GalaxyEggbert::Game::ReusablePickup reusablePickup_;
 
         // Real screen-shake/forced-pan camera effect (plan.md CAM-008..013,
         // see CameraShake.hpp's own comment for the full real-behavior
@@ -614,18 +615,18 @@ namespace GalaxyEggbert::CNA
         FindInteractionEvent(GalaxyEggbert::Game::InteractionSystem::EventKind kind) const noexcept;
 
         // Sucette/Drink/Charge real 2-stage pickup delay (plan.md `173`) --
-        // a no-op unless FindInteractionEvent() finds a PowerGranted/
+        // Starts when FindInteractionEvent() finds a PowerGranted/
         // CloudGranted/HideGranted event this frame (plays the real
         // immediate "grab" sound, starts `blupi_.TriggerPickupFreeze()`,
         // and stashes the event's own pickup position into
-        // `pendingPickup*_` below since the freeze outlives this frame) OR
+        // `reusablePickup_` since the freeze outlives this frame) OR
         // `blupi_.ConsumePickupFreezeResolved()` fires (plays the real
         // "complete" sound, grants Power/Hide via `blupi_.TriggerPower()`/
         // `TriggerHide()` -- Cloud's own buff already granted at contact,
         // matching real source -- and re-spawns the item at the stashed
         // position via `interaction_.RespawnPickupItem()`). Called right
         // after `interaction_.Update()` returns, alongside
-        // `ResolveDeathLock()` above.
+        // `ResolveDeathLock()` above. Interruption returns the reusable item without granting a power.
         void ResolvePickupFreeze();
 
         // Dispatches cheat 1-9 (plan.md CHEAT-001..009) -- verified
@@ -637,6 +638,7 @@ namespace GalaxyEggbert::CNA
         // barrier (214) is drawn (Decor.cpp:930). The original also stamps icon 214 over crates
         // (ObjectType12) whose icon is not 32-34 (Decor.cpp:896); Galaxy's crates are 3D models
         // without that icon field, so that half is not reproduced.
+        void ToggleFullscreen();
         void ApplyCheat(int cheatNumber);
         // The original's typed cheats (InputPad::TypedCheat; `Decor::CheatAction` for each word,
         // OR-0007); the menu's nine go through ApplyCheat().
@@ -700,6 +702,7 @@ namespace GalaxyEggbert::CNA
         // The typed cheat `zoom` (OR-0079): the chase camera's step out, 0 (normal) to 4; the view is
         // 1x, 2x, 4x, 8x, 16x as far (Mobile Eggbert's 100, 50, 25, 12 %, and 6 % added at the owner's request). Reset when a level is loaded.
         int cheatZoomStep_ = 0;
+        bool cheatCompass_ = false;
         // The autoplay's `switches` / `saws` conditions: the switches pressed in this mission and the
         // saws 378 turning now (-1: not counted yet; counted again after each press).
         int autoplaySwitchPresses_ = 0;
@@ -801,6 +804,7 @@ namespace GalaxyEggbert::CNA
         // camera code (below) can skip its own handling and avoid the two
         // features fighting over the same left-mouse-button input.
         GalaxyEggbert::Game::InputPad inputPad_;
+        GalaxyEggbert::Editor::EditorDeviceControls editorDevices_;
 
         // Minimal settings persistence (2026-07-13, plan.md MENU-067, see
         // SaveData.hpp for why this is NOT byte-compatible with the

@@ -6,7 +6,115 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-08 (controls, help, HUD and underwater visibility)._
+_Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Latest input/editor/UI work (2026-11-08)
+
+- Keyboard-free editor: `EditorDeviceControls` fronts the existing palette/commands without world
+  mutations of its own. Touch Move+look works together, Up/Down change height, Tools exposes commands;
+  gamepad LS/RS fly/look, RT/LT up/down, A Place, X Remove, B Cancel, D-pad X/Z and shoulders Y offsets,
+  Y pointer/fly, Start Save, Back Stop. Init/browser use the pad pointer. Releasing/disconnecting clears
+  controls. First Moved/missing Released touch snapshots recover their edges by contact id, in Play
+  as well as the editor (needed on the live CNA path). Physical hardware remains untested; SDL
+  virtual gamepad/direct-touch events exercised menus/editor/play, including a touch-only 3×2×8 fill.
+- Editor Ctrl up, Z down, Space Place. Shift+NumPad extends an inclusive 3D block selection; the
+  dimensions display, Place fills, Remove clears, Escape cancels, one Undo restores all cells.
+  Tools Select3D supplies Shift for touch/pad; six visible offset buttons or D-pad/shoulders extend it.
+- `compass` is off by default. It displays rounded 3D distance to the nearest active chest, switching
+  to red arrow/golden key if no chest remains or existed, with X/Y/Z arrows underneath. No target,
+  no panel. Touch layouts offset it clear of both stick orientations, Crouch, Jump and Fire.
+- Cheat catalog27 entries includes compass/help/cheats. Recognized prefixes consume following
+  letter keys until release, including the final S of weelkeys; the original rolling buffer survives
+  slow typing. A fresh movement key still works. CMake/macro GALAXY_EGGBERT_ENABLE_CHEATS defaults ON;
+  OFF gates typed words, hidden gesture/menu, F12 and cheat application. OFF build+113tests/live
+  checked, then restored ON; current binary/cache are ON and all words tested. Resume format4 stores
+  compass (v3 logs checkpoint-fallback); mission051 reconstruction reports RESUME SELFTEST equal.
+- Main menu Help matches F1. Its visible [Close] consumes its pointer through release, preventing
+  click-through into Exit/Play. Fullscreen/Window is upper left, names the other mode, and persists
+  global fullscreen=0/1 in savedata.txt (default window). F11 is global and persists too. Native
+  Xvfb with a minimal QA window manager verified both buttons, F11, fullscreen restart and window
+  restart; raw Xvfb has no WM to acknowledge fullscreen, so its mode-switch timeout is a fixture limit.
+- Glue fire was keyboard-F-only. Confirmed blupi_recon/src/event.cpp VK_SPACE/VK_SHIFT -> KEY_FIRE,
+  decblupi.cpp:901/1387 and Mobile Decor.cpp:3694/4317: tank forwards, helicopter drops down, ammo
+  required. Added physical LeftCtrl alias in those vehicles BEFORE merging pad A's synthetic Ctrl,
+  preserving A/touch Jump climb. RT maps F, a separate held Fire touch button appears while armed.
+  Space/B/X remain enter/leave. Keyboard Ctrl/F, RT and touch Fire showed real green balls; helicopter
+  dropping too. F1 now documents F/Ctrl, RT and touch Fire (RightShift can climb the helicopter).
+- Lift markers: `LiftEndpointMarkers` uses ObjectDefinitionRegistry's Lift semantic kind. Raw start
+  receives icon30 (1), different end icon31 (2), as blupi_recon/src/decblock.cpp BUILD draws them.
+  `LiftEndpointRenderer` caches one mesh and existing atlas, updates after edits/undo, draws only
+  in the editor. Registry doubleSidedCutout on30/31 and shared double-sided box geometry also fix
+  rear faces of the terrain exhibits: alpha-test holes show the back while paint writes depth.
+  Live editor probe confirms endpoints and side/inside faces; pure tests cover markers and windings.
+  Follow-up: `blupi_recon/src/decblock.cpp:1114` calls MoveObjectStep before its phase check, even
+  in BUILD. Editor now calls `InteractionSystem::AdvanceEditorPlatforms` after any presentation
+  resync, reusing Play's exact AdvancePatrolStep for active lift families1/47/48. Only runtime
+  positions move; raw endpoints/markers/save data stay fixed. Tests compare full XYZ cycles,
+  dwell/return timing against Play and ensure other objects stay untouched.
+- Interrupted drink: the original Mobile contact hides the item and its36-tick completion restores
+  it. Glue cancels the action and its completion event, stranding the hidden bottle. The requested
+  fix separates item return (`ReusablePickup`) from the power grant. Completion or interruption
+  returns it once; an unfinished action grants no power. A hit on the same contact frame is also
+  handled. Tests use an actual enemy projectile, return the source bottle and drink it again.
+- Rare Jeep/palm: RecoverFromPenetration's old down-first phase could put the feet inside the floor
+  when a BigDecor caught the head. Model overlap now picks a clear horizontal boundary along X/Z,
+  preserving Y, with a floor snap for an already buried pose. Ordinary tile/ceiling recovery is
+  unchanged. Tests cover foot and three vehicles plus half-buried Jeep; exact owner impact remains
+  unreproduced. Latest evidence under build-probe/final-1108; source screenshot paths are in the
+  task log build-probe/session-1108-tasks.txt.
+
+The cancelled music previews were removed in commit `213e4cf8`; see the cancellation entry below.
+No sibling repository or player save was edited. Full controls/build switch: docs/handbook/03-build-and-run.md.
+
+## Visible hazard contacts and full exit cheers (2026-11-08)
+
+Lava: the pure `LavaHeight.hpp` sampler is shared with `LavaSurface`; controller support uses that
+surface in its actual per-cell animation frame, and `IsTouchingLava` tests the feet/body footprint.
+The old invisible full-voxel floor is gone. Fractional lava support is recognized by ground lookup.
+Live probe 777 survives above the cell and dies at the wave (tick18), not at the voxel top.
+
+Saw: `IsTouchingSawBlade` checks the exposed upper disk, including turned blades and swept falls.
+The owner's walking regression revealed that requiring downward motion missed walking into the
+blade. Contact at constant height and rising into the exposed blade now count too. The supporting
+voxel's sides/underside and stopped blades remain safe. Shield/Hide/vehicle/focus gates and Clear4
+effects are unchanged. A movement regression test walks a mortal Blupi into the blade at floor height.
+The next owner report found passable saw support cubes: their original empty 2D quarter mask
+was still used horizontally. Registry masks for378-383 now make the rendered support solid on all
+axes, keeping the lethal blade above it separate. Tests walk into active/stopped supports along
+X and Z and verify blocking without death. Original mobile-transparent classification is retained.
+
+Fan: `FanGeometry.hpp` uses bounds of the existing recovered `fan_ventillo-h` model: base/motor/
+shaft/hub bones1-4 solid, the swept blades5-8 the lethal annulus. All four base directions and both
+turned side directions share inverse model transforms. `TryConsumeFan` checks this volume instead
+of any voxel top or mouth cell; consuming wind, immunity, coinflip death/effects are unchanged.
+Live probe778: safe landing on the motor (180ticks) and death on the blades (tick17). This supersedes
+the older whole-block/top-contact approximation of OR-0068.
+
+Win: every exit now arms the reference 40tick/20Hz cheer, including 199/999/editor play-tests;
+only after it completes does the host choose AdvanceAfterWin or the Win screen. Clip time follows
+simDt as its action timer does. Showcase exit: still Play after 90cheer ticks, Win at tick276;
+bonus199's complete script passes. Normal Win/Bye durations were already correct and were retained.
+
+Verified: native build, 113/113 tests; scripts 021/034/051/055/066/084/102/113/114/115/124/199 all pass,
+051 `RESUME SELFTEST equal`; golden trace unchanged. Dry golden images intentionally remove the
+default-on number (compass is now opt-in). A preserved pre-task binary was rendered with the same
+current dependencies: zero differing pixels outside that HUD rectangle versus the new binary.
+Old committed references also had a small independent renderer drift reproduced with that old
+binary; references were reviewed/refreshed and the repeated capture matches byte-for-byte.
+Evidence: `build-probe/gameplay-1108/`, `build-probe/final-1108/`.
+
+Final follow-up checks: all 113 tests pass after the endpoint-rendering and model-recovery changes.
+Golden images still match exactly; complete mission021 and ending199 scripts pass again after the
+recovery change. The compass touch inset also leaves room for Crouch in the mirrored button layout.
+
+Final acceptance after the owner's subsequent saw/drink/editor reports: native build and all113
+tests pass (`accepted-ctest.log`). Live probes779/780 show mortal walking into the blade dying,
+and walking against its support being blocked without death. Probe781 catches an enemy glue ball
+during drinking, shows the restored bottle, then drinks it again successfully (Hide and bottle
+visible at tick780). Mission051 passes again with `GALAXY_RESUME_SELFTEST=5000` during drinking:
+`RESUME SELFTEST equal`; full saw/switch mission065 passes too. Editor before/after captures show
+the platform moving while markers1/2 stay fixed. Final golden images and trace match exactly.
+All evidence is under `build-probe/final-1108/`; current build/cache leave cheats **ON**.
 
 ## Campaign lift looks and treasure gates (2026-11-08)
 
@@ -14,7 +122,7 @@ Completed: `tools/worldkit.py ORIGINAL_LIFT_ICONS` is the small approved fidelit
 unique type-1 lift icons in each original worldNNN.txt. Authoring cycles that mission's palette;
 where its 2D mission has no lift it uses the confirmed palette of the same themed world. All 52
 campaign generators with ordinary lifts were rerun. The 829 changed MoveObject records differ
-only in `icon`; paths, count, speed, dwell, spawn, sky and music are unchanged. There are 43 looks,
+only in `icon`; paths, count, speed, dwell, spawn, sky and music are unchanged. There are 45 looks,
 including the palace's 387, metal 340, station tiles, toys and bricks. Existing editor block-look
 selection and `LiftVisual` already support these. No reference maps/assets were copied.
 
@@ -27,25 +135,14 @@ succeeds with six. Lift-only metadata comparison: `build-probe/lift-style-verifi
 The 091 generator writes correctly but its pre-existing D41 authoring audit returns nonzero;
 all regenerated static cells except the specified gates match the committed baseline exactly.
 
-Ongoing in this session: keyboard-free editor and 3D selection; compass opt-in, whole-number
-chest/exit distance and X/Y/Z arrows; build-time cheats switch and typing/movement isolation;
-full cheer at all exits; visible lava contact; safe saw support cube and blade landing only;
-fullscreen menu button/persistence; safe fan body/motor versus rotor-only contacts.
+The input/editor/hazard follow-ups are completed in the latest entries above.
 
-## Music previews ready for the owner (2026-11-08)
+## Extra music cancelled (2026-11-08)
 
-`music-previews/retro-010-019/` contains ten original GM compositions, each with its own hook,
-harmony, instrument combination and introduction/A/A'/B/B'/reprise/coda form. There are ten OGGs,
-ten editable MIDI sources, `playlist.m3u`, Czech descriptions in `README.txt`, and machine-readable
-track/verification metadata. Audio is 44.1 kHz stereo, approximately 85-125 seconds per piece;
-FFmpeg checked all files, loudness and true peaks (no clipping; `verification.json`). The source is
-`tools/music/compose_previews.py`, rendered through the existing `render_music.py` and system GM
-soundfont. No reference score/melody was copied; these are new previews, not archival Daniel Roux
-music. None is in Content or assigned to a world. The owner has the folder/playlist link to listen.
-
-Active follow-ups in this session: editor Ctrl up / Space Place; complete touch/gamepad editor
-controls; Shift+NumPad 3D selection (also via device UI); whole-number chest distance; full exit/key
-cheer before transitions; lava must kill on actual contact, not merely from being over its tile.
+The owner rejected the ten new previews as outside the original's style and cancelled them.
+Removed `music-previews/retro-010-019/` and its dedicated `tools/music/compose_previews.py`.
+No world ever used those files. The original ten Content tracks and existing render_music.py
+remain unchanged. Earlier listening links in the conversation no longer refer to present files.
 
 ## Latest follow-up — underwater colour and distance position (2026-11-08)
 
@@ -62,9 +159,6 @@ Verification: native build, 112/112 CTest, mission 051 and `RESUME SELFTEST equa
 movement trace, first-/third-person underwater and above-water/help captures. The three dry
 golden frames changed only inside the old/new number rectangles (zero differing pixels elsewhere)
 and were refreshed for that intentional move. Evidence: `build-probe/underwater-tint/`.
-
-Next owner requests remain separate: Ctrl rises / Space places in the editor, and ten new original
-retro music previews in a separate listening directory, with no world assignments.
 
 ## Latest completed task — controls, help, HUD and water (2026-11-08)
 
@@ -1277,7 +1371,7 @@ is a full library built 2026-10-27 with the current settings).
 
 ## 7. Gotchas
 
-- `tests/golden/` is current as of 2026-11-08 (desktop controls hidden, bottom chest-distance number,
+- `tests/golden/` is current as of 2026-11-08 (desktop controls hidden, compass hidden by default,
   water exterior faces; the movement trace is unchanged).
 - The chase camera orbits to Blupi's side after 3 s idle; `--spawn` yaw 0 faces -Z, 90 +X.
 - Types 32 and 33: the code's names ("blupih"/"blupit") do not match their icons; check against

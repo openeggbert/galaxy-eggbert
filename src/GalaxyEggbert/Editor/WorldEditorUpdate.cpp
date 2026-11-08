@@ -64,11 +64,13 @@ namespace GalaxyEggbert::Editor
     Microsoft::Xna::Framework::Vector3 WorldEditor::UpdateCamera(
         const Microsoft::Xna::Framework::Input::KeyboardState& keyboard,
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
-        float dt, CnaEngine::Graphics::Camera& camera)
+        float dt, CnaEngine::Graphics::Camera& camera, const Navigation& navigation)
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         using Microsoft::Xna::Framework::Input::Keys;
         using Microsoft::Xna::Framework::Input::Mouse;
+        yaw_ += navigation.yaw;
+        pitch_ = std::clamp(pitch_ + navigation.pitch, -kPitchLimit, kPitchLimit);
 
         const bool rightHeld = mouse.getRightButtonProperty() == ButtonState::Pressed;
         if (rightHeld && !mouseLookHeldLastFrame_)
@@ -129,8 +131,11 @@ namespace GalaxyEggbert::Editor
         if (keyboard.IsKeyDown(Keys::S)) move(forward, -1.0f);
         if (keyboard.IsKeyDown(Keys::D)) move(right, 1.0f);
         if (keyboard.IsKeyDown(Keys::A)) move(right, -1.0f);
-        if (keyboard.IsKeyDown(Keys::Space)) move(up, 1.0f);
-        if (keyboard.IsKeyDown(Keys::LeftControl)) move(up, -1.0f);
+        if (keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl)) move(up, 1.0f);
+        if (keyboard.IsKeyDown(Keys::Z)) move(up, -1.0f);
+        move(forward, navigation.forward);
+        move(right, navigation.strafe);
+        move(up, navigation.vertical);
 
         camX_ += moveX * flySpeed_ * dt;
         camY_ += moveY * flySpeed_ * dt;
@@ -145,6 +150,30 @@ namespace GalaxyEggbert::Editor
         EditorPalette::Action paletteAction)
     {
         using Microsoft::Xna::Framework::Input::Keys;
+        const bool extend = keyboard.IsKeyDown(Keys::LeftShift) || keyboard.IsKeyDown(Keys::RightShift);
+        const bool offsetAction = paletteAction >= EditorPalette::Action::PlacementXMinus &&
+                                  paletteAction <= EditorPalette::Action::PlacementZPlus;
+        const bool offsetKey = keyboard.IsKeyDown(Keys::NumPad4) || keyboard.IsKeyDown(Keys::NumPad6) ||
+                               keyboard.IsKeyDown(Keys::NumPad7) || keyboard.IsKeyDown(Keys::NumPad9) ||
+                               keyboard.IsKeyDown(Keys::NumPad8) || keyboard.IsKeyDown(Keys::NumPad2) ||
+                               (extend && (keyboard.IsKeyDown(Keys::Left) || keyboard.IsKeyDown(Keys::Right) ||
+                                keyboard.IsKeyDown(Keys::Up) || keyboard.IsKeyDown(Keys::Down) ||
+                                keyboard.IsKeyDown(Keys::Home) || keyboard.IsKeyDown(Keys::PageUp)));
+        if (offsetAction || (offsetKey && !placementOffsetKeyHeldLastFrame_))
+        {
+            if (extend)
+            {
+                if (!extendedSelection_ && hasHighlight_)
+                {
+                    selectionAnchorX_ = placementCellX_;
+                    selectionAnchorY_ = placementCellY_;
+                    selectionAnchorZ_ = placementCellZ_;
+                    extendedSelection_ = true;
+                    boxFirstCornerPlaced_ = pasting_ = false;
+                }
+            }
+            else extendedSelection_ = false;
+        }
         switch (paletteAction)
         {
             case EditorPalette::Action::PlacementXMinus: --placementOffsetX_; break;
@@ -156,12 +185,12 @@ namespace GalaxyEggbert::Editor
             default: break;
         }
 
-        const bool xMinus = keyboard.IsKeyDown(Keys::NumPad4);
-        const bool xPlus = keyboard.IsKeyDown(Keys::NumPad6);
-        const bool zMinus = keyboard.IsKeyDown(Keys::NumPad8);
-        const bool zPlus = keyboard.IsKeyDown(Keys::NumPad2);
-        const bool yMinus = keyboard.IsKeyDown(Keys::NumPad7);
-        const bool yPlus = keyboard.IsKeyDown(Keys::NumPad9);
+        const bool xMinus = keyboard.IsKeyDown(Keys::NumPad4) || (extend && keyboard.IsKeyDown(Keys::Left));
+        const bool xPlus = keyboard.IsKeyDown(Keys::NumPad6) || (extend && keyboard.IsKeyDown(Keys::Right));
+        const bool zMinus = keyboard.IsKeyDown(Keys::NumPad8) || (extend && keyboard.IsKeyDown(Keys::Up));
+        const bool zPlus = keyboard.IsKeyDown(Keys::NumPad2) || (extend && keyboard.IsKeyDown(Keys::Down));
+        const bool yMinus = keyboard.IsKeyDown(Keys::NumPad7) || (extend && keyboard.IsKeyDown(Keys::Home));
+        const bool yPlus = keyboard.IsKeyDown(Keys::NumPad9) || (extend && keyboard.IsKeyDown(Keys::PageUp));
         const bool reset = keyboard.IsKeyDown(Keys::NumPad5);
         const bool held = xMinus || xPlus || zMinus || zPlus || yMinus || yPlus || reset;
         if (held && !placementOffsetKeyHeldLastFrame_)
@@ -169,6 +198,7 @@ namespace GalaxyEggbert::Editor
             if (reset)
             {
                 placementOffsetX_ = placementOffsetY_ = placementOffsetZ_ = 0;
+                extendedSelection_ = false;
             }
             else
             {
@@ -297,10 +327,12 @@ namespace GalaxyEggbert::Editor
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         using Microsoft::Xna::Framework::Input::Keys;
+        const bool extend = keyboard.IsKeyDown(Keys::LeftShift) || keyboard.IsKeyDown(Keys::RightShift);
+        if (keyboard.IsKeyDown(Keys::F10) && !stopKeyHeldLastFrame_) paletteResult.action = EditorPalette::Action::Stop;
         return {
             paletteResult,
             mouse.getLeftButtonProperty() == ButtonState::Pressed,
-            mouse.getMiddleButtonProperty() == ButtonState::Pressed,
+            mouse.getMiddleButtonProperty() == ButtonState::Pressed || keyboard.IsKeyDown(Keys::Back),
             keyboard.IsKeyDown(Keys::Enter),
             keyboard.IsKeyDown(Keys::U),
             keyboard.IsKeyDown(Keys::R),
@@ -312,9 +344,9 @@ namespace GalaxyEggbert::Editor
             keyboard.IsKeyDown(Keys::OemPlus),
             keyboard.IsKeyDown(Keys::OemMinus),
             keyboard.IsKeyDown(Keys::Delete),
-            keyboard.IsKeyDown(Keys::Left),
-            keyboard.IsKeyDown(Keys::Right),
-            keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl),
+            !extend && keyboard.IsKeyDown(Keys::Left),
+            !extend && keyboard.IsKeyDown(Keys::Right),
+            keyboard.IsKeyDown(Keys::LeftControl) || keyboard.IsKeyDown(Keys::RightControl) || keyboard.IsKeyDown(Keys::RightAlt),
             keyboard.IsKeyDown(Keys::M),
             keyboard.IsKeyDown(Keys::O),
             keyboard.IsKeyDown(Keys::V),
@@ -323,11 +355,26 @@ namespace GalaxyEggbert::Editor
             keyboard.IsKeyDown(Keys::P),
             keyboard.IsKeyDown(Keys::Q),
             keyboard.IsKeyDown(Keys::X),
+            keyboard.IsKeyDown(Keys::Space),
+            keyboard.IsKeyDown(Keys::F10),
         };
     }
 
     void WorldEditor::UpdateBoxPreview(const Worlds::World& world)
     {
+        if (extendedSelection_ && hasHighlight_)
+        {
+            const auto region = NormalizeAndClamp(selectionAnchorX_, selectionAnchorY_, selectionAnchorZ_,
+                placementCellX_, placementCellY_, placementCellZ_, static_cast<int>(world.blocksPerAxis()));
+            showingBox_ = true;
+            boxMinRenderX_ = float(region.minX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
+            boxMinRenderY_ = float(region.minY);
+            boxMinRenderZ_ = float(region.minZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
+            boxMaxRenderX_ = float(region.maxX - GalaxyEggbert::Game::WorldRuntime::kWorldCenterX);
+            boxMaxRenderY_ = float(region.maxY);
+            boxMaxRenderZ_ = float(region.maxZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
+            return;
+        }
         if (pasting_ && clipboard_ && hasHighlight_ && !boxFirstCornerPlaced_)
         {
             // Where a click stamps the copy: its min corner at the red preview.
@@ -360,9 +407,51 @@ namespace GalaxyEggbert::Editor
         boxMaxRenderZ_ = static_cast<float>(region.maxZ - GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ);
     }
 
+    bool WorldEditor::HandleExtendedSelection(const FrameInput& input, Worlds::World& world)
+    {
+        if (!extendedSelection_) return false;
+        if (input.escapeHeld && !escapeKeyHeldLastFrame_)
+        {
+            extendedSelection_ = showingBox_ = false;
+            return true;
+        }
+        const bool place = (input.placeHeld && !placeKeyHeldLastFrame_) ||
+            (input.leftHeld && !leftHeldLastFrame_ && !input.palette.clickConsumed) ||
+            input.palette.action == EditorPalette::Action::PlaceSelection;
+        const bool remove = (input.middleHeld && !middleHeldLastFrame_) ||
+            input.palette.action == EditorPalette::Action::DeleteAtTarget;
+        if ((!place && !remove) || !hasHighlight_) return false;
+        if (place && (palette_.IsObjectMode() || palette_.IsBigDecorMode() || palette_.IsSpawnPointMode())) return true;
+        const auto region = NormalizeAndClamp(selectionAnchorX_, selectionAnchorY_, selectionAnchorZ_,
+            placementCellX_, placementCellY_, placementCellZ_, static_cast<int>(world.blocksPerAxis()));
+        EditCommand command;
+        command.kind = EditCommand::Kind::BlockEdit;
+        const auto fill = Worlds::Block::make(remove ? 0 : palette_.SelectedBlockType());
+        for (int x = region.minX; x <= region.maxX; ++x)
+            for (int y = region.minY; y <= region.maxY; ++y)
+                for (int z = region.minZ; z <= region.maxZ; ++z)
+                {
+                    const auto before = world.getBlock(x, y, z);
+                    if (before == fill) continue;
+                    world.setBlock(x, y, z, fill);
+                    command.blockChanges.push_back({std::uint16_t(x), std::uint16_t(y), std::uint16_t(z), before, fill});
+                }
+        const auto filled = command.blockChanges;
+        for (const auto& cell : filled)
+            AutoTile::AdaptBorder(world, cell.x, cell.y, cell.z,
+                [this]() { return static_cast<int>(autoTileRandom_() & 0x7fffffff); }, command.blockChanges);
+        if (!command.blockChanges.empty())
+        {
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+        }
+        return true;
+    }
+
     bool WorldEditor::HandlePlacement(const FrameInput& input, Worlds::World& world)
     {
         const bool requested =
+            (input.placeHeld && !placeKeyHeldLastFrame_) ||
             (input.leftHeld && !leftHeldLastFrame_ && !input.palette.clickConsumed) ||
             input.palette.action == EditorPalette::Action::PlaceSelection;
         if (!requested || !hasHighlight_ || boxFirstCornerPlaced_)
@@ -709,6 +798,7 @@ namespace GalaxyEggbert::Editor
             return false;
         }
         const bool requested =
+            (input.placeHeld && !placeKeyHeldLastFrame_) ||
             (input.leftHeld && !leftHeldLastFrame_ && !input.palette.clickConsumed) ||
             input.palette.action == EditorPalette::Action::PlaceSelection;
         if (!requested)
@@ -945,6 +1035,13 @@ namespace GalaxyEggbert::Editor
     std::vector<std::string> WorldEditor::StatusLines() const
     {
         std::vector<std::string> lines;
+        if (extendedSelection_)
+        {
+            lines.emplace_back("Selection " + std::to_string(std::abs(int(placementCellX_) - selectionAnchorX_) + 1) +
+                " x " + std::to_string(std::abs(int(placementCellY_) - selectionAnchorY_) + 1) +
+                " x " + std::to_string(std::abs(int(placementCellZ_) - selectionAnchorZ_) + 1) +
+                ": PLACE fills, remove clears, Cancel clears selection");
+        }
         if (pendingEnd_)
         {
             lines.emplace_back("Click where it goes (its end). ESC or a click on it: it stays.");
@@ -986,7 +1083,8 @@ namespace GalaxyEggbert::Editor
             lines.emplace_back("G: pick object  T: its end  TAB +/-: its values  DEL: remove");
             lines.emplace_back("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save");
             lines.emplace_back("C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror");
-            lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD SPACE CTRL: fly");
+            lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  Z: down");
+            lines.emplace_back("SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection");
             lines.emplace_back("NUMPAD: move the red preview   H: hide the keys");
         }
         else if (!pendingEnd_)
@@ -1211,6 +1309,8 @@ namespace GalaxyEggbert::Editor
         const FrameInput& input, bool placementOffsetKeyHeld) noexcept
     {
         leftHeldLastFrame_ = input.leftHeld;
+        placeKeyHeldLastFrame_ = input.placeHeld;
+        stopKeyHeldLastFrame_ = input.stopHeld;
         middleHeldLastFrame_ = input.middleHeld;
         enterHeldLastFrame_ = input.enterHeld;
         undoKeyHeldLastFrame_ = input.undoHeld;

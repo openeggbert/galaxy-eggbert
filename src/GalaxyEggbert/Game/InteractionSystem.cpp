@@ -1122,9 +1122,44 @@ namespace GalaxyEggbert::Game
         return std::sqrt(*nearestSquared);
     }
 
+    std::optional<ObjectiveHint> InteractionSystem::NearestObjective(
+        const WorldRuntime& world, float x, float y, float z) noexcept
+    {
+        std::optional<ObjectiveHint> nearest;
+        bool foundChest = false;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (!obj.active) continue;
+            const bool chest = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType5;
+            if (!chest && (!GetObjectDefinition(obj.type).levelExit || foundChest)) continue;
+            const float dx=obj.currentX-x, dy=obj.currentY-y, dz=obj.currentZ-z;
+            const float squared=dx*dx+dy*dy+dz*dz;
+            if ((chest && !foundChest) || !nearest || squared < nearest->distance)
+                nearest = ObjectiveHint{squared,dx,dy,dz};
+            foundChest |= chest;
+        }
+        if (nearest) nearest->distance = std::sqrt(nearest->distance);
+        return nearest;
+    }
+
+    std::optional<float> InteractionSystem::NearestObjectiveDistance(
+        const WorldRuntime& world, float x, float y, float z) noexcept
+    {
+        if (auto hint = NearestObjective(world,x,y,z)) return hint->distance;
+        return std::nullopt;
+    }
+
     void InteractionSystem::OpenDoor(WorldRuntime& worldRuntime, int gx, int gy, int gz, Sound& sound)
     {
         OpenDoorAt(worldRuntime, gx, gy, gz, sound);
+    }
+
+    void InteractionSystem::AdvanceEditorPlatforms(WorldRuntime& worldRuntime, float dt)
+    {
+        if (dt <= 0 || !std::isfinite(dt)) return;
+        for (auto& obj : worldRuntime.GetMobileObjectsMutable())
+            if (obj.active && GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::Lift)
+                AdvancePatrolStep(obj, dt);
     }
 
     void InteractionSystem::Update(float dt, WorldRuntime& worldRuntime,

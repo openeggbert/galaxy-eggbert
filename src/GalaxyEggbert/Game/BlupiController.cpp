@@ -1,6 +1,8 @@
 #include "BlupiController.hpp"
 #include "PlateRotationMetadata.hpp"
 #include "BarRows.hpp"
+#include "LavaHeight.hpp"
+#include "FanGeometry.hpp"
 #include "WorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
@@ -9,6 +11,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace GalaxyEggbert::Game
 {
@@ -59,15 +62,19 @@ namespace GalaxyEggbert::Game
                    });
         }
 
+        thread_local int g_terrainAnimationPhase = 0;
+
         struct CrateCellsScope
         {
-            CrateCellsScope(const std::vector<std::array<float, 3>>& cells, const std::vector<SolidBox>& boxes)
+            CrateCellsScope(const std::vector<std::array<float, 3>>& cells, const std::vector<SolidBox>& boxes, int phase)
             {
+                g_terrainAnimationPhase = phase;
                 g_crateCells = &cells;
                 g_solidBoxes = &boxes;
             }
             ~CrateCellsScope()
             {
+                g_terrainAnimationPhase = 0;
                 g_crateCells = nullptr;
                 g_solidBoxes = nullptr;
             }
@@ -384,7 +391,7 @@ namespace GalaxyEggbert::Game
 
     void BlupiController::SettleOnGround(const Worlds::World& world, bool tempPassable)
     {
-        const CrateCellsScope crates(m_crateCells, m_solidBoxes);
+        const CrateCellsScope crates(m_crateCells, m_solidBoxes, m_terrainAnimationPhase);
         const FlightBarrierScope flight(m_vehicleMode == VehicleMode::Helicopter ||
                                        m_vehicleMode == VehicleMode::Overcraft);
         m_onGround = ResolveMove(world, m_x, m_y, m_z, 0.0f, 0.0f, 0.0f, tempPassable,
@@ -445,7 +452,7 @@ namespace GalaxyEggbert::Game
             dx *= maxStep / distance;
             dz *= maxStep / distance;
         }
-        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes);
+        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes, m_terrainAnimationPhase);
         const MoveResult moved = ResolveMove(world, m_x, m_y, m_z, dx, 0.0f, dz, tempPassable);
         m_x = moved.x;
         m_z = moved.z;
@@ -562,6 +569,12 @@ namespace GalaxyEggbert::Game
         const auto blockType = world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
                                                static_cast<std::uint16_t>(gz))
                                    .type();
+        if (GalaxyEggbert::GetBlockDefinition(blockType).animation.baseIcon == GalaxyEggbert::BlockTypes::Lava)
+        {
+            const int frame = GalaxyEggbert::ResolveBlockAnimationIconAt(blockType, g_terrainAnimationPhase,
+                gx, gy, gz) - GalaxyEggbert::BlockTypes::Lava;
+            return y >= gy && y <= gy + LavaSurfaceHeight(frame, gxf - gx + .5f, gzf - gz + .5f);
+        }
         // Same 4 special-case exclusions GroundHeightAt()/CeilingHeightAt()
         // used to hard-code (plan.md E3D-MIG-146/147/148/149) -- preserved
         // exactly, sub-tile fidelity below is additive precision on top of
@@ -576,9 +589,8 @@ namespace GalaxyEggbert::Game
         }
         if (GalaxyEggbert::BlockTypes::isFan(blockType))
         {
-            // A whole block (M3D-0004, owner 2026-11-02): it was never solid here, so he walked
-            // through fans; at its mouth he dies (WorldRuntime::TryConsumeFan, Decor::IsVentillo).
-            return true;
+            const auto base=GalaxyEggbert::GetBlockDefinition(blockType).animation.baseIcon;
+            return FanBodySolid(base,IsPlateRotated(world,gx,gy,gz),gxf-gx,y-.5f-gy,gzf-gz);
         }
         if (blockType == GalaxyEggbert::BlockTypes::Drip)
         {
@@ -819,6 +831,41 @@ namespace GalaxyEggbert::Game
         if (!boxSolid())
         {
             return;
+        }
+        // A 3D model can catch the head while his feet remain on a floor. The 2D
+        // adjustment's downward phase then drove him through that floor (rare Jeep/palm
+        // trap, owner 2026-11-08). Escape model overlap sideways in either horizontal
+        // axis, preserving feet height. This leaves ordinary tile/ceiling recovery alone.
+        const float gridX=x+kWorldCenterX,gridZ=z+kWorldCenterZ;
+        if (g_solidBoxes && std::any_of(g_solidBoxes->begin(),g_solidBoxes->end(),[&](const SolidBox& b) {
+            return b.Contains(gridX,y+kBoxBottom,gridZ) || b.Contains(gridX,y+kBoxTop,gridZ); }))
+        {
+            float bestDistance=std::numeric_limits<float>::infinity(),bestX=x,bestY=y,bestZ=z;
+            const auto tryPosition=[&](float nx,float ny,float nz) {
+                if (IsPointSolid(world,nx,ny+kBoxBottom,nz,tempPassable) ||
+                    IsPointSolid(world,nx,ny+kBoxTop,nz,tempPassable)) return;
+                const float d=(nx-x)*(nx-x)+(ny-y)*(ny-y)+(nz-z)*(nz-z);
+                if (d<bestDistance) { bestDistance=d;bestX=nx;bestY=ny;bestZ=nz; }
+            };
+            float floorY=y;
+            const int gx=int(std::floor(gridX+.5f)),gy=int(std::floor(y+kBoxBottom)),gz=int(std::floor(gridZ+.5f));
+            if (gx>=0 && gy>=0 && gz>=0 && gx<world.blocksPerAxis() && gy<world.blocksPerAxis() && gz<world.blocksPerAxis() &&
+                GalaxyEggbert::GetBlockDefinition(world.getBlock(gx,gy,gz).type()).collisionMask==0xffff)
+                floorY=gy+1.f; // also rescue an already buried pose, up onto its solid floor
+            constexpr float gap=1.f/1024.f;
+            for (const auto& b : *g_solidBoxes)
+            {
+                if (!b.Contains(gridX,y+kBoxBottom,gridZ) && !b.Contains(gridX,y+kBoxTop,gridZ)) continue;
+                for (float ny : {y,floorY})
+                {
+                    tryPosition(b.minX-kWorldCenterX-gap,ny,z);
+                    tryPosition(b.maxX-kWorldCenterX+gap,ny,z);
+                    tryPosition(x,ny,b.minZ-kWorldCenterZ-gap);
+                    tryPosition(x,ny,b.maxZ-kWorldCenterZ+gap);
+                }
+            }
+            x=bestX;y=bestY;z=bestZ;
+            return; // an enclosed model never justifies tunnelling down through a floor
         }
         // Only the box's bottom in a floor whose top is within the step tolerance above it (riding a
         // lift up beside a ledge he presses against, its interpolated height a hair under the
@@ -1222,7 +1269,7 @@ namespace GalaxyEggbert::Game
     bool BlupiController::BothFeetOnGround(const Worlds::World& world, bool tempPassable) const
     {
         // The crates count as ground, as the original's DecorDetect does (it tests them too).
-        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes);
+        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes, m_terrainAnimationPhase);
         constexpr float kFootOffset = 11.0f / 64.0f;
         const float fx = std::sin(m_yaw) * kFootOffset;
         const float fz = -std::cos(m_yaw) * kFootOffset;
@@ -1398,6 +1445,61 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    bool BlupiController::IsTouchingSawBlade(const Worlds::World& world, float previousFeetY) const noexcept
+    {
+        // Decor/scie.rd4's recovered saw378_scie: a vertical disk, radius about .46,
+        // depth +/-.20, top .508 over the floor. Walking onto the exposed blade is
+        // lethal too: vertical motion is not required. The support cube stays safe.
+        constexpr float footRadius=11.f/64.f, radius=.46f, thickness=.20f;
+        const float x=m_x+kWorldCenterX,z=m_z+kWorldCenterZ;
+        const int n=world.blocksPerAxis();
+        for (int gx=std::max(0,int(std::floor(x-.7f))); gx<=std::min(n-1,int(std::ceil(x+.7f))); ++gx)
+            for (int gz=std::max(0,int(std::floor(z-.7f))); gz<=std::min(n-1,int(std::ceil(z+.7f))); ++gz)
+                for (int gy=std::max(0,int(std::floor(m_y))-2);
+                     gy<=std::min(n-1,int(std::floor(std::max(previousFeetY,m_y)))); ++gy)
+                {
+                    if (GalaxyEggbert::GetBlockDefinition(world.getBlock(gx,gy,gz).type()).hazard !=
+                        GalaxyEggbert::BlockHazardKind::Saw) continue;
+                    const bool turned = IsPlateRotated(world,gx,gy,gz) !=
+                        (gy+1<n && (ObjectQuarterTurns(world,gx,gy+1,gz)%2 != 0));
+                    const float along=std::max(0.f,std::fabs(turned ? z-gz : x-gx)-footRadius);
+                    const float across=std::fabs(turned ? x-gx : z-gz);
+                    if (along>radius || across>thickness+footRadius) continue;
+                    const float floor=gy+1.f;
+                    const float bladeTop=floor+.04f+std::sqrt(radius*radius-along*along);
+                    const bool touching = m_y>=floor-.0051f && m_y<=bladeTop;
+                    const bool fallingThrough = previousFeetY>m_y && previousFeetY>=floor && m_y<=bladeTop;
+                    if (touching || fallingThrough)
+                        return true;
+                }
+        return false;
+    }
+
+    bool BlupiController::IsTouchingLava(const Worlds::World& world) const noexcept
+    {
+        // The body footprint, including its edge when stepping off a bank. A high jump or
+        // helicopter above the same X/Z cell has no contact. Five millimetres is the movement
+        // solver's maximum last-clear gap; it does not extend the hazard to the voxel's top.
+        constexpr float radius = 11.0f / 64.0f;
+        for (const auto& foot : {std::array<float,2>{0,0}, {radius,0}, {-radius,0}, {0,radius}, {0,-radius}})
+        {
+            const float x = m_x + kWorldCenterX + foot[0], z = m_z + kWorldCenterZ + foot[1];
+            const int gx = static_cast<int>(std::floor(x + .5f)), gz = static_cast<int>(std::floor(z + .5f));
+            if (gx < 0 || gz < 0 || gx >= world.blocksPerAxis() || gz >= world.blocksPerAxis()) continue;
+            for (int gy = std::max(0, static_cast<int>(std::floor(m_y)) - 1);
+                 gy <= static_cast<int>(std::floor(m_y + kHeadHeight)) && gy < world.blocksPerAxis(); ++gy)
+            {
+                const auto type = world.getBlock(gx, gy, gz).type();
+                if (GalaxyEggbert::GetBlockDefinition(type).animation.baseIcon != GalaxyEggbert::BlockTypes::Lava) continue;
+                const int frame = GalaxyEggbert::ResolveBlockAnimationIconAt(type, m_terrainAnimationPhase,
+                    gx, gy, gz) - GalaxyEggbert::BlockTypes::Lava;
+                if (m_y + kHeadHeight >= gy && m_y <= gy + LavaSurfaceHeight(frame, x-gx+.5f, z-gz+.5f) + .0051f)
+                    return true;
+            }
+        }
+        return false;
+    }
+
     std::uint16_t BlupiController::GetGroundBlockType(const Worlds::World& world) const noexcept
     {
         if (!m_onGround)
@@ -1407,6 +1509,13 @@ namespace GalaxyEggbert::Game
         const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
         const int gx = ClampGrid(static_cast<int>(std::lround(m_x + kWorldCenterX)), blocksPerAxis);
         const int gz = ClampGrid(static_cast<int>(std::lround(m_z + kWorldCenterZ)), blocksPerAxis);
+        const int footY = static_cast<int>(std::floor(m_y - .05f));
+        if (footY >= 0 && footY < blocksPerAxis)
+        {
+            const auto type = world.getBlock(gx, footY, gz).type();
+            if (GalaxyEggbert::GetBlockDefinition(type).animation.baseIcon == GalaxyEggbert::BlockTypes::Lava)
+                return type;
+        }
         const int gy = static_cast<int>(std::lround(m_y)) - 1;
         if (gy < 0 || gy >= blocksPerAxis)
         {
@@ -1467,7 +1576,7 @@ namespace GalaxyEggbert::Game
                                   bool tempPassable, bool inSurfWater, bool inDeepWater, bool pushingCrate,
                                   bool holdingCrate)
     {
-        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes);
+        const CrateCellsScope crateCells(m_crateCells, m_solidBoxes, m_terrainAnimationPhase);
         const FlightBarrierScope flightBarrier(m_vehicleMode == VehicleMode::Helicopter ||
                                                m_vehicleMode == VehicleMode::Overcraft);
         m_moveInput = moveInput;

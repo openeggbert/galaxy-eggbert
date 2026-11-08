@@ -1,7 +1,7 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-08 (native build, 112/112 CTest, golden frames and trace, controls/HUD/water
-checks and missions 012/051 with the resume self-test). The all-78-playthrough baseline remains
+_Last verified: 2026-11-08 (native build, 113/113 CTest, golden frames and trace, controls/HUD/water
+checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
 2026-11-06 (play pass 33: 77 replays equal). The Web/Emscripten build was verified
 2026-11-06 in headless Chrome; the whole-campaign run
 remains the 2026-10-27 verification. Update this file
@@ -52,10 +52,55 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Editor/input update (2026-11-08): Ctrl raises the 3D camera, Z lowers it, Space places. Shift
+  with NumPad extends a 3D region; Place fills it and Undo restores it in one command. Touch Move,
+  Up/Down, world drag and Tools cover editing without a keyboard, including a live 3×2×8 fill.
+  Gamepad left/right sticks fly/look, RT/LT change height, A places, X removes, B cancels, D-pad and
+  shoulders offset cells, Y switches to a menu cursor, Start saves and Back stops with protection.
+  Lifts show original numbered start/end cubes (icons30/31), whose painted faces render from both
+  sides with alpha-test depth writes. These same cubes in terrain now show their rear faces.
+  Editor lifts also preview their XYZ patrol, dwell and return using Play's same movement routine;
+  the authored endpoints and marker positions remain unchanged.
+- Main menu: **Help** opens F1's panel and [Close] dismisses it by mouse/touch without a click
+  reaching buttons underneath. **Fullscreen / Window** always offers the other mode, remembers
+  `fullscreen=0/1` in savedata.txt, and starts windowed when no preference exists; F11 also persists.
+- `compass` toggles the optional lower-right aid (default off): nearest active chest, then nearest
+  red exit arrow/golden key; integer-rounded straight-line distance and X/Y/Z direction arrows.
+  Touch layouts leave it clear of controls. `help`/`cheats` explain it. Recognized cheat prefixes
+  consume letter controls through release (`weelkeys` no longer turns Blupi with its final S);
+  slow typing still works. CMake/macro `GALAXY_EGGBERT_ENABLE_CHEATS=OFF` disables typed and hidden
+  cheats. Both builds were tested; the current local build is **ON**. Resume format4 stores compass.
+- Vehicle glue fire: **F or physical Left Ctrl**, gamepad **RT**, or held touch **Fire**. Tank shots
+  go forwards; helicopter glue falls downward while airborne/off a lift. Ammo and original timings
+  are unchanged. Space/B/X keep enter/leave separate; A/touch Jump and Right Shift still climb the
+  helicopter. Live keyboard, virtual gamepad and direct-touch captures show green projectiles.
+- Rare Jeep/palm floor trap: 3D model penetration recovery now tries horizontal escape along both
+  X and Z at the same height; it cannot push Blupi down through a solid floor. An already partly
+  buried model overlap can recover onto that floor. Controller tests cover foot/Jeep/Tank/helicopter
+  head overlap and a half-buried Jeep. The owner's exact rare impact was not reproduced.
+- Reusable drink interruption: an enemy glue hit during drinking returns the bottle at its original
+  position, without granting unfinished Hide. Normal completion also returns it exactly once;
+  the same return handling covers the other reusable action pickups.
+
+- Visible hazard contact (2026-11-08): lava collision/support and lethal contact share the
+  Amapi pool's animated height field; being over its voxel is safe. A saw's supporting cube is
+  harmless; walking into or jumping onto its exposed disk kills, including level-height contact.
+  Its rendered support cube is solid horizontally as well as vertically, including stopped blades;
+  the original empty 2D collision mask no longer allows walking through that cube.
+  Fan collision follows the recovered
+  motor/base/shaft/hub, and only the swept blade annulus is lethal (all six directions, including
+  rotated side fans). Existing invincibility/vehicle gates, death effects and wind-column removal
+  remain. Verified by pure contact/shape tests, live safe motor landing and lethal blade landing,
+  a lava fall with no premature death, and playthroughs 021/034/051/055/066/084/102/113/114/115/124/199.
+- Every exit now finishes the original forty-tick Win cheer before either loading the next world
+  or showing Win. The ending, showcase and editor play-tests previously bypassed it. Model clips
+  advance on the same simulation clock as action timers. Verified by the 999 exit staying in Play
+  through ninety ticks of cheering and then reaching Win, and the full 199 ending playthrough.
+
 - Moving-platform looks (2026-11-08): the 52 authored campaign worlds with ordinary lifts now
   choose their tile looks from the same-numbered original mission's confirmed lift palette (or
   its world's palette when that 2D mission had no lifts). `tools/worldkit.py ORIGINAL_LIFT_ICONS`
-  cites the small source data table; 829 lift records have explicit looks, covering 43 tile ids.
+  cites the small source data table; 829 lift records have explicit looks, covering 45 tile ids.
   Paths, timing, objects and other world data are unchanged. World021's gate 6 retains a solid
   lintel instead of a jumpable hole; world055's three-cell-high treasure gates now seal their
   whole corridor. The remaining campaign treasure gates were audited; open display exhibits in
@@ -63,21 +108,19 @@ content-authoring UX, but not new gameplay mechanics.
   and a live attempt to jump gate 6 before collecting chests, then pass it after six chests.
 
 
-- Ten original retro General MIDI music previews (2026-11-08) are in
-  `music-previews/retro-010-019/`: OGG, editable MIDI, a listening playlist and track descriptions.
-  They are outside `Content/` and have no world assignments. Reproduce with
-  `python3 tools/music/compose_previews.py --render`; audio verification is in that directory.
+- The ten additional retro music previews were cancelled by the owner (2026-11-08): their
+  OGG/MIDI files, playlist and dedicated generator were removed. They never had world assignments;
+  the original ten runtime tracks are unchanged.
 
 - Controls/menu update (2026-11-08): Play's touch buttons and their mouse hit areas are enabled
   only when CNA reports a touch screen. F1 toggles black controls help on a translucent white panel
   and freezes the current screen; F1/Escape closes it. WASD aliases the arrows (S turns around),
   X/Right Ctrl backs up. The first connected gamepad in XNA slots 1-4 drives play; A also confirms
   Resume, Pause and Win/Lost. The main menu has Exit, and Setup uses the new Galaxy Eggbert logo.
-  Resume format v3 records touch capability so reconstruction does not depend on the current device;
+  Resume format v4 records touch capability and compass state so reconstruction does not depend on the current device;
   older logs fall back to the checkpoint. Native build and 112/112 CTest pass; live Xvfb screenshots,
   an SDL virtual gamepad and mission 012 with the resume equality self-test verified the changes.
-  The HUD also shows just a number at the bottom: direct 3D distance to the nearest uncollected
-  chest in blocks (one decimal), hiding the readout immediately when no active chest remains.
+  The opt-in compass HUD aid is described above.
   Typing `help` or `cheats` opens a
   paused overlay listing all supported cheat words and their explanations, including the original's
   deliberately ineffective `killegg`.
@@ -107,8 +150,8 @@ content-authoring UX, but not new gameplay mechanics.
   walking, respawn, falling, footprint/crate support and temporary platforms.
 - BD-0077 / Q-015 (2026-11-06): interrupted missions resume from their recorded moment via
   `ResumeLog` (mission start plus deterministic input replay), saved on Play deactivation and
-  deleted on clean exit. Format v3 retains v2's mission path and FNV-1a hash of the exact world
-  bytes loaded and adds touch capability (2026-11-08); old versions and changed worlds are refused.
+  deleted on clean exit. Format v4 retains the mission path and FNV-1a hash of the exact world
+  bytes loaded, touch capability and compass state (2026-11-08); old versions and changed worlds are refused.
   Desktop build identity includes a lazily
   cached executable hash (Linux verified; Windows/macOS paths implemented); unreadable executables,
   Android and Emscripten retain the compile-time identifier. The existing checkpoint remains the fallback. Native verification:
@@ -169,8 +212,8 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   `Decor::TestPath`. Menus fill the bars beside their 640×480 images and text uses the
   original proportional glyph widths.
 - Controls added 2026-11-02 and extended 2026-11-08 (owner's requests): X or Right Ctrl backs Blupi up (on foot or in a
-  vehicle; Down still turns him round); Left Ctrl (Jump) climbs the helicopter as Up does
-  (Decor.cpp); a gamepad (`GamepadInput.hpp`): left stick/D-pad walk and turn, A jump (and Enter:
+  vehicle; Down still turns him round); Left Ctrl fires in armed vehicles; Right Shift climbs the helicopter
+  (gamepad A and touch Jump also climb); a gamepad (`GamepadInput.hpp`): left stick/D-pad walk and turn, A jump (and Enter:
   Play in the main menu), B/X action, RB back up, LB crouch, Y look up, Start pause; touch
   screens: the on-screen pad takes several fingers at once (`InputPad::UpdatePlayTouches`: stick
   and Jump together) and has a back-up button over the stick. Not tried on real hardware yet

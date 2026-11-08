@@ -211,18 +211,19 @@ int main()
                 expectedMask |= static_cast<std::uint16_t>(1u << cell);
             }
         }
-        if (std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(), icon) !=
+        const bool sawSupport = icon >= BlockTypes::Saw && icon <= 383;
+        if (sawSupport || std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(), icon) !=
             GalaxyEggbert::kSolidIn3DDecor.end())
         {
             expectedMask = 0xFFFF; // OR-0069: solid in 3D, a whole block
         }
         Check(definition.collisionMask == expectedMask,
-              "registry collision mask matches table_decor_quart (OR-0069's solid decor whole)");
+              "registry collision mask matches the source with explicit solid 3D decor/saw supports");
         // The original's own decision (its empty mask), kept for OR-0069's solid decor too.
         const bool solidIn3D = std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(),
                                          icon) != GalaxyEggbert::kSolidIn3DDecor.end();
         Check(definition.mobileTransparent ==
-                  ((expectedMask == 0 || solidIn3D) && icon != BlockTypes::Lava &&
+                  ((expectedMask == 0 || solidIn3D || sawSupport) && icon != BlockTypes::Lava &&
                    icon != BlockTypes::Crusher),
               "mobile transparent/pass decision preserves its collision exceptions");
         Check(BlockTypes::isMobileTransparent(icon) == definition.mobileTransparent,

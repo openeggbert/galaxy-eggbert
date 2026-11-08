@@ -83,6 +83,13 @@ namespace GalaxyEggbert
         {
             definitions_[static_cast<std::size_t>(icon)].collisionMask = 0xFFFF;
         }
+        // The saw stands above a rendered floor cube in Galaxy. Its original 2D
+        // empty mask must not make that support passable from the side (owner 2026-11-08).
+        // The blade's separate contact test applies only above this solid cell.
+        for (int icon = Saw; icon <= 383; ++icon)
+        {
+            definitions_[static_cast<std::size_t>(icon)].collisionMask = 0xFFFF;
+        }
 
         // Central render-mode classification. Per-face mesh construction
         // remains in the focused renderer helpers, but no renderer chooses a
@@ -111,10 +118,13 @@ namespace GalaxyEggbert
         SetRenderMode(definitions_, BlockRenderMode::GroundAnchoredPlate,
                       {BlockTypes::Saw, BlockTypes::SawStopped});
 
-        for (const int icon : {30, 31, 202, 330, 331, 332, 333})
+        for (const int icon : {202, 330, 331, 332, 333})
         {
             definitions_[static_cast<std::size_t>(icon)].alphaBlend = true;
         }
+        // The editor's start/end cubes are open. Paint writes depth, holes do not, and
+        // rear faces remain visible through those holes (owner 2026-11-08).
+        definitions_[30].doubleSidedCutout = definitions_[31].doubleSidedCutout = true;
         // The hub signs (158-181, 184, 309/310, 410-420) are signboards on a post with
         // transparency round them: flat plates (turnable with a plate rotation record), drawn
         // alpha-blended, not cubes with black where the sprite is clear (2026-10-25).

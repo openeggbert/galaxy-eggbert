@@ -1,6 +1,6 @@
 #pragma once
 
-#include "LavaSurfaceData.hpp"
+#include "LavaHeight.hpp"
 
 #include <CnaEngine/Graphics/MeshBuilder.hpp>
 #include <CnaEngine/Graphics/TextureAtlas.hpp>
@@ -45,26 +45,6 @@ namespace GalaxyEggbert::Game
                                                        tile.v0 + (1.0f - sampled) * (tile.v1 - tile.v0));
         }
 
-        [[nodiscard]] inline float Height(int frame, float u, float w) noexcept
-        {
-            // Bilinear over the frame's grid; u across X, w across Z, both 0..1.
-            const float gx = std::clamp(u, 0.0f, 1.0f) * static_cast<float>(kLavaGridX - 1);
-            const float gz = std::clamp(w, 0.0f, 1.0f) * static_cast<float>(kLavaGridZ - 1);
-            const int x0 = std::min(static_cast<int>(gx), kLavaGridX - 2);
-            const int z0 = std::min(static_cast<int>(gz), kLavaGridZ - 2);
-            const float fx = gx - static_cast<float>(x0);
-            const float fz = gz - static_cast<float>(z0);
-            const auto& h = kLavaHeights[frame];
-            return (h[z0][x0] * (1.0f - fx) + h[z0][x0 + 1] * fx) * (1.0f - fz) +
-                   (h[z0 + 1][x0] * (1.0f - fx) + h[z0 + 1][x0 + 1] * fx) * fz;
-        }
-    }
-
-    // The surface's height (fraction of the cell above its bottom) at (u, w) in 0..1 of the cell,
-    // for animation frame 0..4 (tiles 68..72).
-    [[nodiscard]] inline float LavaSurfaceHeight(int frame, float u, float w) noexcept
-    {
-        return LavaSurfaceDetail::Height(std::clamp(frame, 0, kLavaFrames - 1), u, w);
     }
 
     // Appends one lava cell centred at `center` (a unit cell: y from center.y - 0.5): its wave top

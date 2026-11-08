@@ -90,6 +90,7 @@ namespace GalaxyEggbert::Game
         {
             float turnInput = 0.0f;   // -1/0/+1, D-pad X axis
             float moveInput = 0.0f;   // -1/0/+1, D-pad Y axis
+            bool fireHeld = false; // vehicle fire is held, independent of release-triggered Action
             bool jumpHeld = false;    // PlayJump, level-triggered
             bool actionPressed = false; // PlayAction, edge-triggered (single-fire)
             bool pausePressed = false;  // PlayPause, edge-triggered (single-fire)
@@ -99,6 +100,7 @@ namespace GalaxyEggbert::Game
             // is gone; Galaxy's stick moves forward and back, so crouching needs it always.
             bool crouchHeld = false;
         };
+        void SetVehicleFireEnabled(bool enabled) noexcept { vehicleFireEnabled_=enabled; }
         // One finger on a touch screen (CNA's TouchLocation, in screen pixels).
         struct TouchPoint
         {
@@ -491,6 +493,7 @@ namespace GalaxyEggbert::Game
             Quick,        // "quick" (MODERN): F7/F8 unlocked
             Zoom,         // "zoom" (MODERN): the view out 1x -> 2x -> 4x -> 8x -> 16x (6 %) -> 1x
             Help,         // "help" / "cheats": display every supported cheat and its effect
+            Compass,      // "compass": distance to nearest chest, then the exit/key
         };
         struct TypedCheatResult
         {
@@ -511,6 +514,8 @@ namespace GalaxyEggbert::Game
         // outside Play.
         [[nodiscard]] TypedCheatResult UpdateTypedGhostCheat(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept;
+        [[nodiscard]] Microsoft::Xna::Framework::Input::KeyboardState FilterGameplayKeyboard(
+            const Microsoft::Xna::Framework::Input::KeyboardState& keyboard) const;
 
         // Wait phase (plan.md MENU-001..005), verified directly against
         // `Game1.cpp`'s real `Phase::First -> Wait` transition (a
@@ -601,6 +606,8 @@ namespace GalaxyEggbert::Game
             // the faithful-remake rule (see plan.md section 6).
             bool editorPressed = false;
             bool exitPressed = false;
+            bool fullscreenPressed = false;
+            bool helpPressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;
@@ -615,7 +622,7 @@ namespace GalaxyEggbert::Game
                      int viewportW, int viewportH, float phaseTimeSeconds,
                      int selectedGamer, const std::array<InitGamerInfo, 3>& gamers,
                      GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
-                     bool overTitleScene = false);
+                     bool overTitleScene = false, bool fullscreen = false);
 
     private:
         // Alias, not a redeclaration (plan.md EDITOR-106): the real
@@ -768,6 +775,11 @@ namespace GalaxyEggbert::Game
         // lowercase-letter buffer plus per-key down-edge tracking.
         std::string typedCheatBuffer_;
         bool letterKeyWasDown_[26] = {};
+        std::uint32_t suppressedGameplayLetters_ = 0;
+        float typedIdleSeconds_ = 0;
+        bool typingCheat_ = false;
+        bool vehicleFireEnabled_=false, fireTouchHeld_=false;
+        std::vector<TouchPoint> previousPlayTouches_;
         bool jumpRight_ = true; // SetJumpRight()
     };
 }

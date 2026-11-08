@@ -72,6 +72,7 @@ namespace GalaxyEggbert
         std::uint16_t collisionMask = 0;
 
         bool alphaBlend = false;
+        bool doubleSidedCutout = false; // open marker cubes: visible inner faces, opaque painted texels
         bool mobileTransparent = true;
         bool water = false;
         bool spring = false;
