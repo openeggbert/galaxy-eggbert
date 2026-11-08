@@ -1640,6 +1640,17 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0109 — One exit when placing arrows or final keys — FIXED_AND_VERIFIED
+
+Owner requested a single red arrow. blupi_recon games/sb2/src/decdesign.cpp PlaceDecor10
+indices 0/7 replace both TYPE_GOAL and TYPE_CLE. Editor-only placement now enforces that
+rule through the registry levelExit capability; paste does too, including old exits outside
+the stamp. One grouped Undo restores the old exit and overwritten object. Multiple exits
+in a clipboard resolve to the last incoming exit. Generic world loading/data APIs and shipped
+worlds are untouched. Regression tests cover placement, overwrite, Undo/Redo and paste; native
+relocation/Undo/Redo and saved-file inspection retain exactly one arrow. All 114 CTest pass.
+Evidence: build-probe/editor-fixes/.
+
 ## BD-0108 — Only the saw's upper semicircle at the cell bottom — FIXED_AND_VERIFIED
 
 Owner explicitly rejects the full disk: remove/hide its lower half and rest the remaining

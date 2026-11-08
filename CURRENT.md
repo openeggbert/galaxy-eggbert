@@ -1,6 +1,6 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-08 (native build, 113/113 CTest, golden frames and trace, controls/HUD/water
+_Last verified: 2026-11-08 (native build, 114/114 CTest, golden frames and trace, controls/HUD/water
 checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
 2026-11-06 (play pass 33: 77 replays equal). The Web/Emscripten build was verified
 2026-11-06 in headless Chrome; the whole-campaign run
@@ -52,6 +52,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Editor placement keeps a single exit: placing a red arrow or final golden key replaces
+  the previous exit, as blupi_recon PlaceDecor10 does. Clipboard stamps obey the same rule,
+  including removal outside the pasted box. One Undo restores removed/overwritten objects;
+  Redo reapplies the relocation. Pure tests and native arrow/Undo/Redo/save checks pass,
+  with all 114 CTest tests (build-probe/editor-fixes/).
 - Saw correction: only the upper semicircle is drawn, with its flat cut on the cell bottom.
   All three original animation poses are clipped/capped before export; the lower half cannot
   rotate back into view. The lethal volume is the same upper half. Diameter/texture/IDs stay

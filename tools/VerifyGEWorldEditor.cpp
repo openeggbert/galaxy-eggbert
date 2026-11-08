@@ -1329,6 +1329,54 @@ int main()
               "one Undo restores the deleted region");
     }
 
+    {
+        // Both direct placement and clipboard stamps replace the unique level exit.
+        World world=slab;
+        GalaxyEggbert::MoveObjectRecord old;
+        old.type=GalaxyEggbert::Def::ObjectType::ObjectType7;
+        old.posStartX=old.posEndX=10;old.posStartY=old.posEndY=1;old.posStartZ=old.posEndZ=10;
+        GalaxyEggbert::PlaceMoveObject(world,old);
+        auto treasure=old;treasure.type=GalaxyEggbert::Def::ObjectType::ObjectType5;
+        treasure.posStartX=treasure.posEndX=placeX;treasure.posStartY=treasure.posEndY=placeY;
+        treasure.posStartZ=treasure.posEndZ=placeZ;
+        GalaxyEggbert::PlaceMoveObject(world,treasure);
+        WorldEditor editor;
+        editor.EnterEditing(0,10,0);
+        CnaEngine::Graphics::Camera camera;
+        editor.Palette().SelectObject(GalaxyEggbert::Def::ObjectType::ObjectType7);
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::Space},restMouse,0,800,480,camera,world);
+        const auto exits=[&](const World& w) {
+            int n=0;for(const auto& r:GalaxyEggbert::CollectMoveObjects(w)) n+=GetObjectDefinition(r.type).levelExit;
+            return n;
+        };
+        auto records=GalaxyEggbert::CollectMoveObjects(world);
+        check(exits(world)==1 && records.size()==1 && records[0].posStartX==placeX,
+              "placing a new red arrow relocates the only exit and replaces its target object");
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::U},restMouse,0,800,480,camera,world);
+        check(exits(world)==1 && GalaxyEggbert::CollectMoveObjects(world).size()==2,
+              "one Undo restores the old arrow and overwritten treasure");
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::R},restMouse,0,800,480,camera,world);
+        check(exits(world)==1 && GalaxyEggbert::CollectMoveObjects(world).size()==1,"Redo keeps exactly one exit");
+        const auto clip=CopyBox(world,{placeX,placeY,placeZ,placeX,placeY,placeZ});
+        EditCommandStack stack;
+        stack.Push(PasteBox(world,clip,30,2,30,false,[]{return 0;}));
+        records=GalaxyEggbert::CollectMoveObjects(world);
+        check(exits(world)==1 && records[0].posStartX==30 && stack.Undo(world) && exits(world)==1 &&
+              GalaxyEggbert::CollectMoveObjects(world)[0].posStartX==placeX && stack.Redo(world) && exits(world)==1,
+              "copy/paste relocates the exit outside the stamp too, with exact Undo/Redo");
+        World source;
+        auto arrow=old;arrow.posStartX=arrow.posEndX=0;arrow.posStartY=arrow.posEndY=0;arrow.posStartZ=arrow.posEndZ=0;
+        GalaxyEggbert::PlaceMoveObject(source,arrow);
+        auto key=arrow;key.type=GalaxyEggbert::Def::ObjectType::ObjectType21;key.posStartX=key.posEndX=1;
+        GalaxyEggbert::PlaceMoveObject(source,key);
+        stack.Push(PasteBox(world,CopyBox(source,{0,0,0,1,0,0}),40,2,40,false,[]{return 0;}));
+        records=GalaxyEggbert::CollectMoveObjects(world);
+        check(exits(world)==1 && records.size()==1 && records[0].type==GalaxyEggbert::Def::ObjectType::ObjectType21,
+              "a clipboard containing several goals still leaves only the last exit/key");
+    }
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

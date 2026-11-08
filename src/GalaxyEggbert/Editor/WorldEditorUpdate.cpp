@@ -5,6 +5,7 @@
 #include "BoxRegion.hpp"
 #include "CustomWorldStorage.hpp"
 #include "VoxelRaycast.hpp"
+#include "ObjectPlacement.hpp"
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
@@ -555,13 +556,8 @@ namespace GalaxyEggbert::Editor
                 record.stepRecedeTicks = preset->recede;
                 record.timeStopStartTicks = record.timeStopEndTicks = preset->rest;
             }
-            command.kind = EditCommand::Kind::MoveObjectEdit;
-            command.objectAnchorX = x;
-            command.objectAnchorY = y;
-            command.objectAnchorZ = z;
-            command.objectBefore = FindMoveObjectAt(world, x, y, z);
-            command.objectAfter = record;
-            PlaceMoveObject(world, record);
+            command = PlaceObjectForEditor(world,record);
+            RefreshSelectedObjectAfterHistoryChange(world);
             // A lift or a creature on a patrol: the next click sets where it goes (OR-0072).
             if (IsLiftType(record.type) || Game::GetObjectDefinition(record.type).patrolTicksPerCell > 0)
             {
@@ -792,6 +788,7 @@ namespace GalaxyEggbert::Editor
         if (!command.children.empty())
         {
             commandStack_.Push(std::move(command));
+            RefreshSelectedObjectAfterHistoryChange(world);
             MarkMutated();
         }
         return true;

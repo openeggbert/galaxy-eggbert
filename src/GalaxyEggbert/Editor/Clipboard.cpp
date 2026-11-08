@@ -1,6 +1,7 @@
 #include "Clipboard.hpp"
 
 #include "AutoTile.hpp"
+#include "ObjectPlacement.hpp"
 
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
@@ -379,6 +380,8 @@ namespace GalaxyEggbert::Editor
             {
                 continue;
             }
+            for (const auto& old : RemoveEditorExitConflicts(world,record))
+                objectKeys.insert(AnchorOf(old));
             PlaceMoveObject(world, record);
             objectKeys.insert(anchor);
         }
