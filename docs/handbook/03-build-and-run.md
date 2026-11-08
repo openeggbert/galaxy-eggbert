@@ -186,7 +186,12 @@ explanation. This overlay pauses the game and closes with F1 or Esc. `cheats` is
 MODERN name (`InputPad.cpp:1318`); `help` is Galaxy's requested alias. `killegg` is listed with its
 actual behavior: no effect, as in the reference.
 
-Type **fairplay** to turn off megablupi, ghost, opendoors, showsecret, compass, quick and zoom,
+Type **debug** to toggle runtime diagnostics during play: simulation time, mission/region,
+lives, XYZ position and cells, XYZ velocity (blocks/second), heading, animation, movement modes,
+speed and input devices. The panel is upper-right on desktop and upper-centre with touch controls.
+Type it again to hide it. It also works in an editor play-test; fairplay clears/blocks it.
+
+Type **fairplay** to turn off megablupi, ghost, opendoors, showsecret, compass, debug, quick and zoom,
 then block every other cheat word, F12 and the hidden cheat menu. Type **fairplay** again to
 permit cheats; their old effects do not switch back on automatically. Lives, bombs, ammunition,
 keys, vehicles, powers and earlier world changes are retained. F1 help always works. If Ghost
@@ -214,8 +219,8 @@ The first connected gamepad in XNA slots 1-4 controls play (`GamepadInput.hpp`):
 Play's on-screen controls appear only when CNA detects touch-screen capability, including on
 devices with both a keyboard and a touch screen. Desktop mouse clicks in their former areas go
 to camera look. The desktop and an SDL virtual gamepad were checked live on 2026-11-08; physical
-gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v6 to
-record touch capability, compass, fairplay and ordered cheat letters; an older/incompatible log falls back to the saved checkpoint.
+gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v7 to
+record touch capability, compass, debug, fairplay and ordered cheat letters; an older/incompatible log falls back to the saved checkpoint.
 
 Tank shots follow its exact heading at any angle; helicopter glue drops vertically, only in flight and off a lift.
 Both need ammunition (the green ammo pack; `birdlime` supplies ten when cheats are enabled).

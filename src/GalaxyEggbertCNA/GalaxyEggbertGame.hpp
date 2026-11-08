@@ -706,6 +706,8 @@ namespace GalaxyEggbert::CNA
         // 1x, 2x, 4x, 8x, 16x as far (Mobile Eggbert's 100, 50, 25, 12 %, and 6 % added at the owner's request). Reset when a level is loaded.
         int cheatZoomStep_ = 0;
         bool cheatCompass_ = false;
+        bool cheatDebug_ = false;
+        std::array<float, 3> debugVelocity_{};
         // The autoplay's `switches` / `saws` conditions: the switches pressed in this mission and the
         // saws 378 turning now (-1: not counted yet; counted again after each press).
         int autoplaySwitchPresses_ = 0;

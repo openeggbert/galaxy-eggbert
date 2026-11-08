@@ -1639,3 +1639,15 @@ A VWR metadata/shape regression covers all4 at actual shape height. Live probe78
 before (z37.91) and stops at the model after (z46.91); the screenshot matches the owner's model.
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
+
+## BD-0101 — Mobile MODERN debug diagnostics cheat — FIXED_AND_VERIFIED
+
+Owner requested debug. The29th typed word toggles a read-only panel matching Mobile InputPad.cpp's
+MODERN diagnostics fields, adapted to raw XYZ and world20Hz ticks. Velocity is measured across the
+controller simulation step (blocks/s); heading/cells, animation, modes, input and speed are shown.
+Desktop upper-right; touch upper-centre avoids Pause/Action. Active name/help catalogue included;
+fairplay clears/blocks and compile-OFF suppresses it. Resume7 retains the initial debug flag; a
+moving-state replay matches flag/velocity. Formatter tests cover clock rate,3D centre-based cells,
+wrapped yaw and slow speed; all29 words/lock/round-trip tests pass. An isolated OFF verifier passes
+while primary cache stays ON. Live toggle, heli, fairplay, help and touch checked;113/113 CTest pass.
+Evidence: build-probe/debug-cheat/. No gameplay mutation or sibling change.

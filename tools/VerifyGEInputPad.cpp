@@ -2,6 +2,7 @@
 #include <GalaxyEggbert/Game/ControlInput.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
+#include <GalaxyEggbert/Game/DebugOverlay.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
 
@@ -819,7 +820,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 28;
+        bool all = count == 29;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -828,7 +829,7 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 28 words including fairplay/compass/help/cheats fire and have an explanation");
+        check(all, "Typed cheats: all 29 words including debug/fairplay/compass/help/cheats fire and have an explanation");
         InputPad pad;
         check(type(pad, "givecopter").first == TC::GiveCopter && type(pad, "copter").first == TC::None,
               "Typed cheats: givecopter fires; the buffer is cleared after a word (\"copter\" alone is nothing)");
@@ -844,7 +845,8 @@ int main()
         locked.ResetMissionInput();
         check(locked.IsCheatEntryLocked(),"fairplay lock survives mission input reset");
         locked.SetCheatEntryLocked(false);
-        check(type(locked,"megablupi").first==TC::MegaBlupi && type(locked,"compass").first==TC::Compass,
+        check(type(locked,"megablupi").first==TC::MegaBlupi && type(locked,"compass").first==TC::Compass &&
+                  type(locked,"debug").first==TC::Debug,
               "unlocking fairplay permits other cheats again");
     }
 
@@ -917,14 +919,14 @@ int main()
         int count=1;
         (void)InputPad::TypedCheatWords(count);
         bool none=count==0;
-        for(char c:std::string("ghostcompasshelpweelkeysfairplay"))
+        for(char c:std::string("ghostcompasshelpweelkeysfairplaydebug"))
         {
             const auto key=static_cast<Keys>(int(Keys::A)+c-'a');
             none &= pad.UpdateTypedGhostCheat(KeyboardState{key},true).cheat==InputPad::TypedCheat::None;
             (void)pad.UpdateTypedGhostCheat(KeyboardState{},true);
         }
         check(none, "cheats-OFF build exposes and recognizes no typed cheats");
-        for(char c:std::string("givecopterfairplay"))
+        for(char c:std::string("givecopterfairplaydebug"))
             none &= pad.UpdateTypedGhostCheat(KeyboardState{},true,c).cheat==InputPad::TypedCheat::None;
         check(none,"cheats-OFF build also ignores ordered text events");
         check(!pad.UpdateCheatGesture(mouse(70,200,true),640,480) &&
@@ -932,6 +934,22 @@ int main()
               "cheats-OFF build cannot unlock or activate the hidden cheat menu");
         check(pad.FilterGameplayKeyboard(KeyboardState{Keys::S}).IsKeyDown(Keys::S),
               "cheats-OFF build leaves normal movement keys alone");
+    }
+    {
+        DebugOverlayInfo info;
+        info.ticks=1250; info.mission=20; info.region=3; info.lives=7;
+        info.position={49.49f,1.5f,-.51f}; info.velocity={-2.5f,0,1.25f};
+        info.yawDegrees=-90; info.speed=.5f; info.mode="air heli";
+        info.keys=2; info.touches=3; info.gamepad=true;
+        const auto lines=DebugOverlayLines(info);
+        const auto has=[&](const char* value) { return std::find(lines.begin(),lines.end(),value)!=lines.end(); };
+        check(has("time: 01:02 (1250 ticks)"),"debug time uses the world's 20Hz clock");
+        check(has("pos: 49.49 1.50 -0.51") && has("cell: 49 2 -1"),
+              "debug exposes all three raw coordinates and centre-based cell boundaries");
+        check(has("vel: -2.50 0.00 1.25 blocks/s") && has("yaw: 270.0 deg") && has("speed: 0.5x"),
+              "debug preserves three velocity components, wraps yaw and labels slow speed accurately");
+        check(has("mode: air heli") && has("keys: 2  touches: 3") && has("gamepad: on  accel: off"),
+              "debug reports current modes and input devices");
     }
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;

@@ -766,6 +766,32 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    void InputPad::DrawDebug(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                             int viewportH, const std::vector<std::string>& lines, bool touchControls)
+    {
+        if (!loaded_ || !kCheatsEnabled || lines.empty() || viewportW <= 0 || viewportH <= 0) return;
+        const float s = std::min(float(viewportW) / kRefW, float(viewportH) / kRefH);
+        constexpr float font = .5f, lineHeight = 16.f, padding = 5.f;
+        float width = 0;
+        for (const auto& line : lines) width = std::max(width, TextMetrics::Width(line) * font);
+        // Centre the touch panel between the side controls, clear of Action as well as Pause.
+        const float right = touchControls ? viewportW * .5f + width * s * .5f : viewportW - padding * s;
+        const float left = right - width * s;
+        const float top = touchControls ? 78.f * float(viewportH) / kRefH : 5.f * s;
+        const std::vector<Quad> panel{{left - padding * s, top - 3 * s, right + 3 * s,
+            top + (lines.size() * lineHeight + 3) * s, 0, 0, 1, 1}};
+        std::vector<Quad> text;
+        for (std::size_t i = 0; i < lines.size(); ++i)
+            AppendGamerLabel(text, lines[i], left, top + i * lineHeight * s, font, s);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *helpPanelEffect_, helpPanelRenderer_, panel, viewportW, viewportH, .72f);
+        const auto diffuse = textEffect_->getDiffuseColorProperty();
+        textEffect_->setDiffuseColorProperty({0.f, 0.f, 0.f});
+        FlushQuads(device, *textEffect_, textRenderer_, text, viewportW, viewportH, 1.f);
+        textEffect_->setDiffuseColorProperty(diffuse);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     void InputPad::DrawControlsHelp(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                     int viewportW, int viewportH, bool cheats)
     {
@@ -2051,6 +2077,7 @@ namespace GalaxyEggbert::Game
             {"cheats", TypedCheat::Help, "Same as help (Mobile Eggbert)"},
             {"compass", TypedCheat::Compass, "Toggle distance + turn/height arrows"},
             {"fairplay", TypedCheat::FairPlay, "Toggle cheat lock; clear active toggles"},
+            {"debug", TypedCheat::Debug, "Toggle runtime diagnostics panel"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;

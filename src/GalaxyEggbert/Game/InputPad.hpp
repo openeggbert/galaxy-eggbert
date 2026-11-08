@@ -131,6 +131,9 @@ namespace GalaxyEggbert::Game
         // name DrawTextLeft at scale 0.55, a line every 18 px from (5, 5)); nothing when empty.
         void DrawActiveCheats(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                               int viewportH, const std::vector<std::string>& names);
+        // MODERN debug diagnostics, top-right; touch layouts leave Pause accessible above it.
+        void DrawDebug(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                       int viewportH, const std::vector<std::string>& lines, bool touchControls);
         // The panel's rectangle for those names (screen pixels), for the test.
         struct CheatListRect
         {
@@ -461,7 +464,7 @@ namespace GalaxyEggbert::Game
         // each does are the original's `cheatEntries[]` (the desktop words of the C++ port,
         // OR-0007: "givecopter" and the rest did nothing in Galaxy, which knew only "ghost" and
         // "quick"). `buildofficialmissions` (a world-building switch) is not a player cheat here;
-        // `debug` and `cheats` (the port's MODERN extras for its 2D view) have no counterpart;
+        // `debug` shows the MODERN diagnostics in 3D; `cheats`/`help` list the available words;
         // `zoom` (MODERN: the view 100 -> 50 -> 25 -> 12 %, `SetCheatZoom`, reset on leaving the
         // level) is a farther and higher chase camera here (OR-0079, Q-016 (a)). "killegg" is in the original's list but `Decor::CheatAction` has no case
         // for it: it does nothing there either.
@@ -495,6 +498,7 @@ namespace GalaxyEggbert::Game
             Help,         // "help" / "cheats": display every supported cheat and its effect
             Compass,      // "compass": distance to nearest chest, then the exit/key
             FairPlay,     // "fairplay": clear persistent cheats and lock/unlock other cheat input
+            Debug,        // "debug" (MODERN): toggle the runtime diagnostics panel
         };
         struct TypedCheatResult
         {

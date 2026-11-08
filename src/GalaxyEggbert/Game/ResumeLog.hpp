@@ -43,6 +43,7 @@ namespace GalaxyEggbert::Game
         float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
         bool quickCheat = false, openDoors = false, showSecret = false;
         bool compass = false;
+        bool debug = false;
         bool cheatsLocked = false;
         int cameraMode = 1;
         // Settings and campaign doors as they were at the start, before any pause/setup edits.

@@ -52,6 +52,13 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- `debug` toggles the MODERN runtime diagnostics: simulation time/world/region/lives, raw XYZ
+  position/cells, actual step velocity in blocks/s, heading, animation/icon, movement modes,
+  speed and input devices. Desktop panel is upper-right; touch panel is upper-centre to clear
+  Pause/Action. It appears only in Play, is listed by help/cheats and among active cheats, is
+  cleared/blocked by fairplay and compiled out by the cheat option. Resume format7 retains it;
+  a moving-state reconstruction matches. Parser29 words, OFF verifier,113/113 CTest and live
+  toggle/heli/fairplay/help/touch checks pass. Evidence: build-probe/debug-cheat/.
 - The large green column/vase models (BigDecor66-69, owner screenshot13-22-15) are solid,
   using the existing collision shapes fitted to their 3D geometry. Registry-driven extraction
   applies in campaign and custom/editor play worlds. The level checker now reads the same registry.
@@ -84,9 +91,9 @@ content-authoring UX, but not new gameplay mechanics.
   slow typing still works. Typed cheats now use CNA Keyboard::KeyDownEXT's ordered non-repeat
   physical presses on every device, including keyboards used with touch screens. No IME/text-input
   mode is needed; autoplay keeps its snapshot path. Fast givecopter is verified while standing in
-  the palace hub with180ms frames and no text events. Resume format6 records those letter events.
+  the palace hub with180ms frames and no text events. Resume format7 records those letter events.
   CMake/macro `GALAXY_EGGBERT_ENABLE_CHEATS=OFF` disables typed and hidden
-  cheats. Both builds were tested; the current local build is **ON**. Resume format6 stores compass and the fairplay lock.
+  cheats. Both builds were tested; the current local build is **ON**. Resume format7 stores compass and the fairplay lock.
 - Vehicle glue fire: **F**, gamepad **RT**, or held touch **Fire**. The tank also accepts Left Ctrl. Tank shots
   follow the tank's continuous heading, including angles between the former eight directions;
   helicopter glue falls downward while airborne/off a lift. Ammo and original timings
@@ -97,10 +104,10 @@ content-authoring UX, but not new gameplay mechanics.
   Continuing Play starts the current vehicle's loop again; main menu and a new on-foot world
   retain no old engine sound. Verified against actual audio-instance states with the dummy driver.
 - `fairplay` toggles the runtime cheat-input lock. Enabling clears megablupi, ghost, opendoors,
-  showsecret, compass, quick and zoom; only fairplay can then be typed to unlock again. F12 and
+  showsecret, compass, debug, quick and zoom; only fairplay can then be typed to unlock again. F12 and
   the hidden menu/gesture are blocked too. Previously acquired lives, bombs, ammo, keys, vehicles,
   powers and completed world changes remain. Unlocking permits new cheats without restoring old
-  toggles. Normal F1 help remains available. Resume format6 retains the lock.
+  toggles. Normal F1 help remains available. Resume format7 retains the lock.
 - Vehicle cheats now replace Ghost instead of leaving GhostStep active under a helicopter's
   camera. A blocked ghost pose returns to the last valid position when leaving that mode. The
   owner later reported givecopter working again; the separate ghost→givecopter failure was
@@ -148,7 +155,7 @@ content-authoring UX, but not new gameplay mechanics.
   and freezes the current screen; F1/Escape closes it. WASD aliases the arrows (S turns around),
   X/Right Ctrl backs up. The first connected gamepad in XNA slots 1-4 drives play; A also confirms
   Resume, Pause and Win/Lost. The main menu has Exit, and Setup uses the new Galaxy Eggbert logo.
-  Resume format v6 records ordered cheat letters, touch capability, compass and the cheat-input lock so reconstruction does not depend on the current device;
+  Resume format v7 records ordered cheat letters, touch capability, compass and the cheat-input lock so reconstruction does not depend on the current device;
   older logs fall back to the checkpoint. Native build and 112/112 CTest pass; live Xvfb screenshots,
   an SDL virtual gamepad and mission 012 with the resume equality self-test verified the changes.
   The opt-in compass HUD aid is described above.
@@ -181,7 +188,7 @@ content-authoring UX, but not new gameplay mechanics.
   walking, respawn, falling, footprint/crate support and temporary platforms.
 - BD-0077 / Q-015 (2026-11-06): interrupted missions resume from their recorded moment via
   `ResumeLog` (mission start plus deterministic input replay), saved on Play deactivation and
-  deleted on clean exit. Format v6 retains the mission path and FNV-1a hash of the exact world
+  deleted on clean exit. Format v7 retains the mission path and FNV-1a hash of the exact world
   bytes loaded, touch capability, compass and cheat-input lock (2026-11-08); old versions and changed worlds are refused.
   Desktop build identity includes a lazily
   cached executable hash (Linux verified; Windows/macOS paths implemented); unreadable executables,

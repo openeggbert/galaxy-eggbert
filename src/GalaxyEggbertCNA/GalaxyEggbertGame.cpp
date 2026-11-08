@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
+#include <GalaxyEggbert/Game/DebugOverlay.hpp>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -1958,6 +1959,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::ResetMissionInput()
     {
         pendingCheatLetters_.clear();
+        debugVelocity_ = {};
         inputPad_.ResetMissionInput();
         inputPad_.SetJumpRight(saveData_.GetJumpRight());
         controlsHelp_ = {};
@@ -2018,6 +2020,7 @@ namespace GalaxyEggbert::CNA
         start.openDoors = cheatDoors_;
         start.showSecret = cheatShowSecret_;
         start.compass = cheatCompass_;
+        start.debug = cheatDebug_;
         start.cheatsLocked = inputPad_.IsCheatEntryLocked();
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
@@ -2062,6 +2065,7 @@ namespace GalaxyEggbert::CNA
         cheatDoors_ = start.openDoors;
         cheatShowSecret_ = start.showSecret;
         cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
         inputPad_.SetCheatEntryLocked(start.cheatsLocked && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
         gameSpeed_ = GalaxyEggbert::Def::ToGameSpeed(start.speed);
@@ -2074,6 +2078,8 @@ namespace GalaxyEggbert::CNA
         ResetMissionInput();
         activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "compass"), activeCheats_.end());
         if (cheatCompass_) activeCheats_.push_back("compass");
+        activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "debug"), activeCheats_.end());
+        if (cheatDebug_) activeCheats_.push_back("debug");
         activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "fairplay"), activeCheats_.end());
         if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
         replayRun_ = 0;
@@ -2130,6 +2136,9 @@ namespace GalaxyEggbert::CNA
         result["cheat input"] = inputPad_.IsCheatEntryLocked() ? "locked" : "allowed";
         std::ostringstream out;
         out << std::setprecision(std::numeric_limits<float>::max_digits10);
+        out << cheatDebug_;
+        for (const float speed : debugVelocity_) out << ' ' << speed;
+        result["debug overlay"] = out.str(); out.str("");
         out << blupi_.GetX() << ' ' << blupi_.GetY() << ' ' << blupi_.GetZ() << ' ' << blupi_.GetYaw()
             << ' ' << blupi_.GetVelocityY() << ' ' << blupi_.GetVehicleSpeed() << ' '
             << static_cast<int>(blupi_.GetAnimState()) << ' ' << blupi_.GetRawAnimIcon() << ' '
@@ -3631,6 +3640,9 @@ namespace GalaxyEggbert::CNA
             case TC::Compass:
                 cheatCompass_ = !cheatCompass_;
                 break;
+            case TC::Debug:
+                cheatDebug_ = !cheatDebug_;
+                break;
             case TC::FairPlay:
             {
                 const bool locked = !inputPad_.IsCheatEntryLocked();
@@ -3639,7 +3651,7 @@ namespace GalaxyEggbert::CNA
                 if (locked)
                 {
                     blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
-                    cheatDoors_ = cheatShowSecret_ = cheatCompass_ = quickCheatEnabled_ = false;
+                    cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = quickCheatEnabled_ = false;
                     cheatZoomStep_ = 0;
                     if (gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
                         gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
@@ -3985,6 +3997,7 @@ namespace GalaxyEggbert::CNA
                         case TC::MegaBlupi: toggle("megablupi"); break;
                         case TC::ShowSecret: toggle("showsecret"); break;
                         case TC::Compass: toggle("compass"); break;
+                        case TC::Debug: toggle("debug"); break;
                         case TC::Zoom:
                         {
                             // Listed with its step (the view's size as Mobile Eggbert's 100/50/25/12 %).
@@ -4784,10 +4797,14 @@ namespace GalaxyEggbert::CNA
             const float steering = turnInput / GameSpeedFactor(gameSpeed_);
             sound_.SetBlupiHidden(blupi_.IsHidden());
             const float stepStartFeetY = blupi_.GetY();
+            const float stepStartX = blupi_.GetX(), stepStartZ = blupi_.GetZ();
             blupi_.SetTerrainAnimationPhase(worldRuntime_.GetAnimPhase());
             blupi_.Step(worldRuntime_.GetWorld(), steering, moveInput, jumpPressed,
                         crouchHeld, lookUpHeld, simDt, tempPassable, inSurfWater, inDeepWater,
                         wasPushingCrate_, holdingCrate_);
+            debugVelocity_ = {(blupi_.GetX() - stepStartX) / simDt,
+                              (blupi_.GetY() - stepStartFeetY) / simDt,
+                              (blupi_.GetZ() - stepStartZ) / simDt};
             UpdateBodyTilt(simDt);
             if (interactsWithWorld) TickPendingSkate(simDt);
             // Automatic zoom on action (Decor::MoveHotSpot, Decor.cpp:538-600; the Setup's
@@ -8541,6 +8558,50 @@ namespace GalaxyEggbert::CNA
                     inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                            activeCheats_);
+                if (cheatDebug_ && GalaxyEggbert::Game::kCheatsEnabled)
+                {
+                    GalaxyEggbert::Game::DebugOverlayInfo info;
+                    info.ticks = worldRuntime_.GetAnimPhase();
+                    info.mission = worldRuntime_.GetMissionNumber();
+                    info.region = worldRuntime_.GetSkyRegion();
+                    info.lives = interaction_.Lives();
+                    info.position = {blupi_.GetX() + WorldRuntime::kWorldCenterX, blupi_.GetY(),
+                                     blupi_.GetZ() + WorldRuntime::kWorldCenterZ};
+                    info.velocity = debugVelocity_;
+                    info.yawDegrees = blupi_.GetYaw() * 180.f / 3.14159265f;
+                    info.animation = static_cast<int>(blupi_.GetAnimState());
+                    info.icon = blupi_.GetRawAnimIcon();
+                    info.speed = GameSpeedFactor(gameSpeed_);
+                    info.keys = static_cast<int>(tickInput_.keys.size());
+                    info.touches = static_cast<int>(std::count_if(tickInput_.touches.begin(), tickInput_.touches.end(),
+                        [](const auto& t) {
+                            using Microsoft::Xna::Framework::Input::Touch::TouchLocationState;
+                            return t.state == int(TouchLocationState::Pressed) || t.state == int(TouchLocationState::Moved);
+                        }));
+                    info.gamepad = !SuppressLiveInput() && ReadGamepadFrame().connected;
+                    info.accelerometer = tickInput_.accelValid;
+                    info.mode = blupi_.IsOnGround() ? "ground" : "air";
+                    using VM = BlupiController::VehicleMode;
+                    switch (blupi_.GetVehicleMode())
+                    {
+                        case VM::Helicopter: info.mode += " heli"; break;
+                        case VM::Jeep: info.mode += " jeep"; break;
+                        case VM::Tank: info.mode += " tank"; break;
+                        case VM::Overcraft: info.mode += " overcraft"; break;
+                        case VM::Skateboard: info.mode += " skate"; break;
+                        case VM::None: break;
+                    }
+                    if (blupi_.IsNage()) info.mode += " swim";
+                    if (blupi_.IsSurf()) info.mode += " surf";
+                    if (blupi_.IsGhost()) info.mode += " ghost";
+                    if (blupi_.IsBallooned()) info.mode += " balloon";
+                    if (blupi_.IsEcrased()) info.mode += " squashed";
+                    if (blupi_.IsSuspended()) info.mode += " hanging";
+                    if (blupi_.IsInverted()) info.mode += " inverted";
+                    if (blupi_.IsDeathLocked()) info.mode += " dead";
+                    inputPad_.DrawDebug(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                       GalaxyEggbert::Game::DebugOverlayLines(info), tickInput_.touchControlsEnabled);
+                }
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {

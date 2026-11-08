@@ -10,6 +10,18 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- New owner-requested debug cheat:29-word catalogue, active-name toggle and read-only diagnostics
+  derived from current world/controller/input data. Mobile MODERN field set adapted to raw XYZ,
+  measured simulation-step velocity and the real20Hz clock. Desktop panel upper-right, touch
+  upper-centre (the first right-side trial overlapped Action; fixed and captured). fairplay
+  clears/blocks it; compile-OFF suppresses parser/render/action. Resume format7 stores its initial
+  flag and signature includes flag/velocity. Pure formatter/29-word/lock/round-trip tests pass;
+  live walking/heli/toggle/fairplay/help checks and moving resume SELFTEST equal pass. A separate
+  OFF verifier reuses existing libraries without changing the main ON cache. Native build and
+  all113 CTest pass. Evidence: build-probe/debug-cheat/. No sibling changes for this task.
+  Next authorized task: investigate V variant cycling in the3D editor (owner reports most blocks;
+  examples requested). Existing HandleVariant changes only the aimed voxel; input/families,
+  BigDecor/MoveObject targeting and rendering require checking before assuming a cause.
 - Publication follow-up (owner: commit/push everything): both CNA changes were pushed to
   origin/next at594eb28dc before publishing Galaxy. The standard ci_pin_siblings.py script
   advances only CNA to that published revision; all other verified sibling pins are unchanged.
