@@ -98,6 +98,7 @@ namespace GalaxyEggbert::Editor
         showingBox_ = false;
         playTestRequested_ = false;
         hasSelectedObject_ = false;
+        selectedPlayerStart_.reset();
         selectionHighlightRenderer_.Hide();
         dirty_ = false;
         stopConfirmArmed_ = false;
@@ -117,6 +118,7 @@ namespace GalaxyEggbert::Editor
         palette_.SetSelectedMusicTrack(world.musicTrack());
         const EditorPalette::UpdateResult paletteResult =
             palette_.Update(mouse, viewportWidth, viewportHeight, dt);
+        if (paletteResult.picked) selectedPlayerStart_.reset();
         const bool placementOffsetKeyHeld =
             UpdatePlacementOffset(keyboard, paletteResult.action);
         // Aim through the cursor; over the palette or the PLACE/offset buttons keep the last aim
@@ -197,6 +199,7 @@ namespace GalaxyEggbert::Editor
 
     void WorldEditor::RefreshSelectedObjectAfterHistoryChange(const Worlds::World& world)
     {
+        if (selectedPlayerStart_ && !FindPlayerStart(world,*selectedPlayerStart_)) selectedPlayerStart_.reset();
         if (!hasSelectedObject_)
         {
             return;
@@ -269,6 +272,8 @@ namespace GalaxyEggbert::Editor
             selectionHighlightRenderer_.Draw(device,camera);
             status.insert(status.begin(), "Red selection X:"+std::to_string(target->x)+" Y:"+
                 std::to_string(target->y)+" Z:"+std::to_string(target->z));
+            if (target->kind==EditTarget::Kind::PlayerStart)
+                status.insert(status.begin(),std::string(PlayerStartNames[static_cast<int>(target->color)])+" Blupi: O turns, DEL removes");
         }
         else selectionHighlightRenderer_.Hide();
 

@@ -1405,6 +1405,56 @@ int main()
         }
     }
 
+    {
+        World world=slab;
+        for (int c=0;c<4;++c)
+            GalaxyEggbert::SetPlayerStart(world,{static_cast<GalaxyEggbert::PlayerStartColor>(c),
+                std::uint16_t(placeX+1),placeY,placeZ});
+        GalaxyEggbert::MoveObjectRecord treasure;
+        treasure.type=GalaxyEggbert::Def::ObjectType::ObjectType5;
+        treasure.posStartX=treasure.posEndX=placeX+1;
+        treasure.posStartY=treasure.posEndY=placeY;
+        treasure.posStartZ=treasure.posEndZ=placeZ;
+        GalaxyEggbert::PlaceMoveObject(world,treasure);
+        WorldEditor editor;
+        editor.EnterEditing(0,10,0);
+        CnaEngine::Graphics::Camera camera;
+        const auto key=[&](Keys k) {
+            editor.Update(KeyboardState{k},restMouse,0,800,480,camera,world);
+            editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        };
+        const auto tap=[&](int x,int y) {
+            editor.Update(KeyboardState{},MouseState(x,y,0,ButtonState::Pressed,ButtonState::Released,
+                ButtonState::Released,ButtonState::Released,ButtonState::Released),0,800,480,camera,world);
+            editor.Update(KeyboardState{},MouseState(x,y,0,ButtonState::Released,ButtonState::Released,
+                ButtonState::Released,ButtonState::Released,ButtonState::Released),0,800,480,camera,world);
+        };
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        key(Keys::NumPad6);
+        for (int c=0;c<4;++c)
+        {
+            tap(30,450);tap(114+42*c,450);
+            key(Keys::G);
+            const auto target=editor.CurrentEditTarget(world);
+            check(target && target->kind==WorldEditor::EditTarget::Kind::PlayerStart && static_cast<int>(target->color)==c,
+                  "G and a selected colour disambiguate co-located Blupi starts at a NumPad coordinate");
+            key(Keys::O);
+            for (int other=0;other<4;++other)
+                check(GalaxyEggbert::FindPlayerStart(world,static_cast<GalaxyEggbert::PlayerStartColor>(other))->quarterTurns==
+                      (other<=c ? 1 : 0),"turning one shared-cell colour preserves all other headings");
+            key(Keys::O);key(Keys::O);key(Keys::O);
+            check(GalaxyEggbert::FindPlayerStart(world,static_cast<GalaxyEggbert::PlayerStartColor>(c))->quarterTurns==0,
+                  "four turns return a start to its original heading");
+            // Restore one turn for the next iteration's independence checks.
+            key(Keys::O);
+        }
+        editor.Palette().SelectObject(GalaxyEggbert::Def::ObjectType::ObjectType5);
+        key(Keys::G);
+        const auto object=editor.CurrentEditTarget(world);
+        check(object && object->kind==WorldEditor::EditTarget::Kind::Object,
+              "an object overlapping the starts remains selectable from object mode");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

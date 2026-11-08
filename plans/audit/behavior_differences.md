@@ -1640,6 +1640,24 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0113 — Start Blupis could not be selected/turned and were transparent — FIXED_AND_VERIFIED
+
+Owner: all four coloured starts cannot be selected or rotated and should be opaque. The initial
+renderer was a separate translucent marker pass, outside CurrentEditTarget and G's MoveObject
+picker, with fixed model yaw. Starts now share the target, G/Tools Pick, O/Tools Turn and removal
+routes, retaining colour identity and persistent selection after camera movement. Cursor/NumPad
+coordinates work; palette colour disambiguates co-located starts, while object mode retains
+access to an overlapping MoveObject. The selected posed model receives the same red overlay
+and cell outline. Base alpha1/Opaque/DepthDefault removes the unwanted transparency.
+Independent quarter turns use additive per-cell metadata8 (two bits per colour); old data
+reads zero. Spawn history and moves/removal preserve each colour's heading, including shared
+cells. Yellow heading applies at level entry, confirmed behaviour in Mobile Decor.cpp:388 and
+SB2 decblock.cpp PlayPrepare; four horizontal directions are the 3D editor adaptation.
+All114 CTest pass, including four shared starts plus a treasure, four-turn wrap, history,
+reload and persistent G selection. Native shots show opaque bases, all four red selections and
+independent poses; saved headings yellow1/orange2/blue3/green0 are inspected directly and
+retained on reload. Evidence: build-probe/player-start-selection/.
+
 ## BD-0112 — All coloured starts aliased yellow and rendered yellow — FIXED_AND_VERIFIED
 
 Owner rejected BD-0110: choosing orange moved yellow and still displayed yellow. The earlier

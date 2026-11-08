@@ -1360,6 +1360,7 @@ namespace GalaxyEggbert::CNA
             PlaceBlupi(
                 worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
                 worldRuntime_.GetSpawnRenderZ());
+            blupi_.SetYaw(worldRuntime_.GetSpawnYaw());
         }
         else
         {
@@ -2435,6 +2436,7 @@ namespace GalaxyEggbert::CNA
             PlaceBlupi(
                 worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
                 worldRuntime_.GetSpawnRenderZ());
+            blupi_.SetYaw(worldRuntime_.GetSpawnYaw());
         }
         else
         {
@@ -2521,6 +2523,7 @@ namespace GalaxyEggbert::CNA
             PlaceBlupi(
                 worldRuntime_.GetSpawnRenderX(), worldRuntime_.GetSpawnRenderY(),
                 worldRuntime_.GetSpawnRenderZ());
+            blupi_.SetYaw(worldRuntime_.GetSpawnYaw());
         }
         else
         {
@@ -3411,8 +3414,11 @@ namespace GalaxyEggbert::CNA
             blupiModel_->Clips.count("Stop")==0) return;
         using namespace Microsoft::Xna::Framework;
         using namespace Microsoft::Xna::Framework::Graphics;
-        const auto starts=CollectPlayerStarts(worldRuntime_.GetWorld());
+        auto starts=CollectPlayerStarts(worldRuntime_.GetWorld());
         if (starts.empty()) return;
+        const auto target=worldEditor_.CurrentEditTarget(worldRuntime_.GetWorld());
+        if (target && target->kind==GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind::PlayerStart)
+            std::stable_partition(starts.begin(),starts.end(),[&](const auto& start) { return start.color!=target->color; });
         std::vector<Matrix> bones;
         blupiModel_->ComputeBoneTransformsEXT("Stop",System::TimeSpan::FromSeconds(0),false,bones);
         blupiEffect_->SetBoneTransforms(bones);
@@ -3420,9 +3426,9 @@ namespace GalaxyEggbert::CNA
         blupiEffect_->setProjectionProperty(camera_.Projection());
         const auto diffuse=blupiEffect_->getDiffuseColorProperty();
         blupiEffect_->setDiffuseColorProperty(Vector3::One);
-        blupiEffect_->setAlphaProperty(.85f);
-        device.setBlendStateProperty(BlendState::NonPremultiplied);
-        device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        blupiEffect_->setAlphaProperty(1.f);
+        device.setBlendStateProperty(BlendState::Opaque);
+        device.setDepthStencilStateProperty(DepthStencilState::Default);
         device.setRasterizerStateProperty(RasterizerState::CullCounterClockwise);
         Texture2D* face=nullptr;
         if (const auto faces=blupiClipFaces_.find("Stop"); faces!=blupiClipFaces_.end() && !faces->second.empty())
@@ -3430,9 +3436,16 @@ namespace GalaxyEggbert::CNA
             const int index=faces->second.front();
             if (index>=0 && index<static_cast<int>(blupiFaces_.size())) face=&blupiFaces_[index];
         }
+        const auto drawPart = [&](const auto& part) {
+            blupiEffect_->Apply();
+            device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+            device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+            device.DrawIndexedPrimitives(PrimitiveType::TriangleList,part.Part->getVertexOffsetProperty(),0,
+                part.Part->getNumVerticesProperty(),part.Part->getStartIndexProperty(),part.Part->getPrimitiveCountProperty());
+        };
         for (const auto& start : starts)
         {
-            blupiEffect_->setWorldProperty(Matrix::CreateScale(kRealModelScale)*Matrix::CreateRotationY(3.14159265f)*
+            blupiEffect_->setWorldProperty(Matrix::CreateScale(kRealModelScale)*Matrix::CreateRotationY(3.14159265f-PlayerStartYaw(start))*
                 Matrix::CreateTranslation(float(start.x)-WorldRuntime::kWorldCenterX,float(start.y)-.5f,
                                           float(start.z)-WorldRuntime::kWorldCenterZ));
             const auto coloredTexture = [&](Texture2D* source) -> Texture2D* {
@@ -3457,11 +3470,31 @@ namespace GalaxyEggbert::CNA
             for (const auto& part : blupiModel_->Parts)
             {
                 blupiEffect_->setTextureProperty(coloredTexture(face && part.Name==blupiFacePart_ ? face : part.Texture));
-                blupiEffect_->Apply();
-                device.SetVertexBuffer(part.Part->getVertexBufferProperty());
-                device.SetIndexBuffer(part.Part->getIndexBufferProperty());
-                device.DrawIndexedPrimitives(PrimitiveType::TriangleList,part.Part->getVertexOffsetProperty(),0,
-                    part.Part->getNumVerticesProperty(),part.Part->getStartIndexProperty(),part.Part->getPrimitiveCountProperty());
+                drawPart(part);
+            }
+            if (target && target->kind==GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind::PlayerStart &&
+                target->color==start.color)
+            {
+                // The model itself stays opaque; selection is the same red overlay as other objects.
+                if (!editorTintTexture_)
+                {
+                    editorTintTexture_=std::make_unique<Texture2D>(device,1,1);
+                    const auto white=Color::White;
+                    editorTintTexture_->SetData(&white,1);
+                }
+                const auto emission=blupiEffect_->getEmissiveColorProperty();
+                blupiEffect_->setEmissiveColorProperty({1.f,0.f,0.f});
+                blupiEffect_->setDiffuseColorProperty(Vector3::Zero);
+                blupiEffect_->setAlphaProperty(.35f);
+                blupiEffect_->setTextureProperty(editorTintTexture_.get());
+                device.setBlendStateProperty(BlendState::NonPremultiplied);
+                device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+                for (const auto& part : blupiModel_->Parts) drawPart(part);
+                blupiEffect_->setEmissiveColorProperty(emission);
+                blupiEffect_->setDiffuseColorProperty(Vector3::One);
+                blupiEffect_->setAlphaProperty(1.f);
+                device.setBlendStateProperty(BlendState::Opaque);
+                device.setDepthStencilStateProperty(DepthStencilState::Default);
             }
         }
         blupiEffect_->setAlphaProperty(1);

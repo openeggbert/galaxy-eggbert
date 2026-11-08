@@ -30,7 +30,7 @@ namespace GalaxyEggbert::Editor
         {
             if (state.present)
             {
-                SetPlayerStart(world,{color,state.x,state.y,state.z});
+                SetPlayerStart(world,{color,state.x,state.y,state.z,state.quarterTurns});
             }
             else
             {

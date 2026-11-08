@@ -5,6 +5,7 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 #include <GalaxyEggbert/Def/ObjectType.hpp>
 #include <GalaxyEggbert/HintZoneRecord.hpp>
+#include <GalaxyEggbert/PlayerStart.hpp>
 
 #include <array>
 #include <cstdint>
@@ -201,6 +202,12 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] int GetSpawnTileY() const { return spawnTileY_; }
         [[nodiscard]] int GetSpawnTileZ() const { return spawnTileZ_; }
         [[nodiscard]] bool HasExplicitSpawnPoint() const { return hasExplicitSpawnPoint_; }
+        [[nodiscard]] float GetSpawnYaw() const
+        {
+            if (!world_) return 0.f;
+            const auto start=FindPlayerStart(*world_,PlayerStartColor::Yellow);
+            return start ? PlayerStartYaw(*start) : 0.f;
+        }
         [[nodiscard]] float GetSpawnRenderX() const
         {
             return static_cast<float>(spawnTileX_ - kWorldCenterX);

@@ -10,6 +10,21 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Start selection/rotation/opacity complete (BD-0113): start markers were outside the
+  shared edit-target/G picker, fixed to yaw0 and drawn at .85 alpha. They now have a PlayerStart
+  target carrying colour, persistent G selection, NumPad/cursor targeting and the usual red
+  wire/model overlay. O/Tools Turn stores independent quarterTurns through spawn history;
+  positioning preserves turns, removing clears only that colour's heading. Shared-cell choices
+  use the selected colour; object mode still selects an overlapping MoveObject. Metadata8
+  packs four two-bit headings, absent =0, without changing headers or position metadata7.
+  The host reads yellow yaw on level entry (Mobile Decor.cpp m_blupiStartDir; SB2 PlayPrepare).
+  Base models are alpha1/Opaque/DepthDefault; only selection uses the red overlay. Selected
+  colour draws last if starts overlap. All114 CTest pass, including four shared starts plus
+  a treasure, wrap/Undo/Redo/reload and G selection after flying away. Native captures select
+  and turn all four, undo orange, reload their independent headings; no player files edited.
+  Native Play also faces the yellow start's authored west direction (the debug capture after
+  typing debug shows274.5deg). Evidence: build-probe/player-start-selection/. Previous
+  translucency notes are superseded.
 - Coloured starts corrected after owner clarification (BD-0112). The earlier rank0 alias
   followed original custom-world behaviour but was rejected: owner explicitly chose four
   independent coloured starts, with yellow used in normal play. PlayerStart.hpp keeps yellow

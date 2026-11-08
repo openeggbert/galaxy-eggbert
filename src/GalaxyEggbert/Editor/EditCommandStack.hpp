@@ -30,6 +30,7 @@ namespace GalaxyEggbert::Editor
         std::uint16_t x = 0;
         std::uint16_t y = 0;
         std::uint16_t z = 0;
+        std::uint8_t quarterTurns = 0;
     };
 
     // One undoable editor action (plan.md section 6, EDITOR-104). A single

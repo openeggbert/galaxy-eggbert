@@ -743,6 +743,29 @@ int main()
         if (colour>1)
             check(world.spawnX()==10 && world.spawnY()==1 && world.spawnZ()==10,
                   "moving/deleting a non-yellow start preserves the single-player spawn");
+        pressKey(Keys::G);
+        const auto selected=editor.CurrentEditTarget(world);
+        check(selected && selected->kind==WorldEditor::EditTarget::Kind::PlayerStart && selected->color==color,
+              "G selects every coloured Blupi at the explicit coordinate");
+        pressKey(Keys::O);
+        check(GalaxyEggbert::FindPlayerStart(world,color)==GalaxyEggbert::PlayerStart{color,51,0,23,1},
+              "O turns only the selected coloured start");
+        pressKey(Keys::U);
+        check(GalaxyEggbert::FindPlayerStart(world,color)->quarterTurns==0,"Undo restores the start heading");
+        pressKey(Keys::R);
+        pressKey(Keys::Enter);
+        const auto turned=World::loadFromFile(kSpawnSavePath);
+        check(GalaxyEggbert::FindPlayerStart(turned,color)->quarterTurns==1,"start heading survives save and reload");
+        const auto yellow=GalaxyEggbert::FindPlayerStart(turned,GalaxyEggbert::PlayerStartColor::Yellow);
+        check(yellow && std::fabs(GalaxyEggbert::PlayerStartYaw(*yellow)-(colour==1 ? -1.57079632679f : 0.f))<.0001f,
+              "normal play reads the yellow heading and ignores other colours' headings");
+        pressKey(Keys::NumPad5);
+        pressKey(Keys::G);
+        editor.Update(KeyboardState{Keys::D},restMouse,.5f,800,480,camera,world);
+        editor.Update(KeyboardState{},restMouse,0.f,800,480,camera,world);
+        pressKey(Keys::O);
+        check(GalaxyEggbert::FindPlayerStart(world,color)->quarterTurns==2,
+              "G selection persists after camera movement and remains rotatable");
         std::remove(kSpawnSavePath);
     }
 
@@ -750,11 +773,12 @@ int main()
         using namespace GalaxyEggbert;
         World world;
         for (int c=0;c<4;++c) SetPlayerStart(world,{static_cast<PlayerStartColor>(c),12,3,14});
+        for (int c=0;c<4;++c) SetPlayerStart(world,{static_cast<PlayerStartColor>(c),12,3,14,static_cast<std::uint8_t>(c)});
         check(CollectPlayerStarts(world).size()==4,"all four colours may share a cell without replacing one another");
-        SetPlayerStart(world,{PlayerStartColor::Orange,20,4,21});
+        SetPlayerStart(world,{PlayerStartColor::Orange,20,4,21,1});
         check(FindPlayerStart(world,PlayerStartColor::Yellow)==PlayerStart{PlayerStartColor::Yellow,12,3,14} &&
-              FindPlayerStart(world,PlayerStartColor::Blue)==PlayerStart{PlayerStartColor::Blue,12,3,14} &&
-              FindPlayerStart(world,PlayerStartColor::Green)==PlayerStart{PlayerStartColor::Green,12,3,14},
+              FindPlayerStart(world,PlayerStartColor::Blue)==PlayerStart{PlayerStartColor::Blue,12,3,14,2} &&
+              FindPlayerStart(world,PlayerStartColor::Green)==PlayerStart{PlayerStartColor::Green,12,3,14,3},
               "moving orange out of a shared cell preserves yellow, blue and green");
         world.saveToFile("verify_player_starts.vwr");
         const auto loaded=World::loadFromFile("verify_player_starts.vwr");
@@ -766,7 +790,7 @@ int main()
         bool rejected=false;
         try { SetPlayerStart(world,{PlayerStartColor::Orange,500,1,1}); }
         catch (const std::out_of_range&) { rejected=true; }
-        check(rejected && FindPlayerStart(world,PlayerStartColor::Orange)==PlayerStart{PlayerStartColor::Orange,20,4,21},
+        check(rejected && FindPlayerStart(world,PlayerStartColor::Orange)==PlayerStart{PlayerStartColor::Orange,20,4,21,1},
               "an invalid destination never destroys the previous coloured start");
         constexpr std::array<std::array<int,3>,4> expected{{{255,255,0},{255,165,23},{23,199,255},{23,255,31}}};
         for (int c=0;c<4;++c)

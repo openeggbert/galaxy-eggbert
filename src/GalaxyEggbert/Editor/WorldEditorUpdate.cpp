@@ -485,9 +485,11 @@ namespace GalaxyEggbert::Editor
             command.kind = EditCommand::Kind::SpawnPointEdit;
             command.spawnColor = palette_.SelectedPlayerStartColor();
             if (const auto old=FindPlayerStart(world,command.spawnColor))
-                command.spawnBefore = {true,old->x,old->y,old->z};
-            command.spawnAfter = {true, x, y, z};
-            SetPlayerStart(world,{command.spawnColor,x,y,z});
+                command.spawnBefore = {true,old->x,old->y,old->z,old->quarterTurns};
+            command.spawnAfter = {true, x, y, z, command.spawnBefore.quarterTurns};
+            SetPlayerStart(world,{command.spawnColor,x,y,z,command.spawnAfter.quarterTurns});
+            selectedPlayerStart_=command.spawnColor;
+            hasSelectedObject_=false;
         }
         else if (palette_.IsBigDecorMode())
         {
@@ -647,25 +649,22 @@ namespace GalaxyEggbert::Editor
         const bool middle = input.middleHeld && !middleHeldLastFrame_ && !input.palette.clickConsumed;
         const bool key = input.deleteObjectHeld && !deleteObjectKeyHeldLastFrame_;
         if ((!toolbar && !middle && !key) || boxFirstCornerPlaced_) return false;
-        if (palette_.IsSpawnPointMode() && hasHighlight_)
-        {
-            const auto color=palette_.SelectedPlayerStartColor();
-            const auto start=FindPlayerStart(world,color);
-            if (start && start->x==placementCellX_ && start->y==placementCellY_ && start->z==placementCellZ_)
-            {
-                EditCommand command;
-                command.kind=EditCommand::Kind::SpawnPointEdit;
-                command.spawnColor=color;
-                command.spawnBefore={true,start->x,start->y,start->z};
-                ClearPlayerStart(world,color);
-                commandStack_.Push(std::move(command));
-                MarkMutated();
-                return true;
-            }
-        }
         const auto target = CurrentEditTarget(world);
         if (!target) return true;
-        const auto [kind,x,y,z] = *target;
+        const auto [kind,x,y,z,color] = *target;
+        if (kind==EditTarget::Kind::PlayerStart)
+        {
+            const auto start=FindPlayerStart(world,color);
+            EditCommand command;
+            command.kind=EditCommand::Kind::SpawnPointEdit;
+            command.spawnColor=color;
+            command.spawnBefore={true,x,y,z,start->quarterTurns};
+            ClearPlayerStart(world,color);
+            commandStack_.Push(std::move(command));
+            RefreshSelectedObjectAfterHistoryChange(world);
+            MarkMutated();
+            return true;
+        }
         if (kind == EditTarget::Kind::Object)
             RemoveObjectWithHistory(world,*FindMoveObjectAt(world,x,y,z),x,y,z);
         else if (kind == EditTarget::Kind::BigDecor)
@@ -1008,7 +1007,7 @@ namespace GalaxyEggbert::Editor
         }
         const auto target = CurrentEditTarget(world);
         if (!target || target->kind != EditTarget::Kind::Block) return true;
-        const auto [kind,x,y,z] = *target;
+        const auto [kind,x,y,z,color] = *target;
         const Worlds::Block before = world.getBlock(x,y,z);
         const auto next = before.isAir() ? std::nullopt : NextVariant(before.type());
         if (!next)
@@ -1074,7 +1073,7 @@ namespace GalaxyEggbert::Editor
             lines.emplace_back("V: next variant of the aimed block   CTRL+click: no cycling");
             lines.emplace_back("O: turn the aimed tile, model, object or decor");
             lines.emplace_back("Lift or creature: place it, then click where it goes");
-            lines.emplace_back("G: pick object  T: its end  TAB +/-: its values  DEL: remove");
+            lines.emplace_back("G: pick object/Blupi start  T: object end  TAB +/-: values  DEL: remove");
             lines.emplace_back("F: box fill  ESC: cancel  U/R: undo/redo  ENTER: save");
             lines.emplace_back("C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror");
             lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  SHIFT/Z: down");
@@ -1091,19 +1090,32 @@ namespace GalaxyEggbert::Editor
     std::optional<WorldEditor::EditTarget> WorldEditor::CurrentEditTarget(const Worlds::World& world) const
     {
         const bool offset = placementOffsetX_ != 0 || placementOffsetY_ != 0 || placementOffsetZ_ != 0;
+        const auto starts=CollectPlayerStarts(world);
         const auto at = [&](std::uint16_t x, std::uint16_t y, std::uint16_t z) -> std::optional<EditTarget> {
+            const PlayerStart* found=nullptr;
+            for (const auto& start : starts)
+                if (start.x==x && start.y==y && start.z==z)
+                {
+                    if (!found || (palette_.IsSpawnPointMode() && start.color==palette_.SelectedPlayerStartColor()))
+                        found=&start;
+                }
+            if (found && palette_.IsSpawnPointMode()) return EditTarget{EditTarget::Kind::PlayerStart,x,y,z,found->color};
             if (FindMoveObjectAt(world,x,y,z)) return EditTarget{EditTarget::Kind::Object,x,y,z};
             if (FindBigDecorAt(world,x,y,z)) return EditTarget{EditTarget::Kind::BigDecor,x,y,z};
+            if (found) return EditTarget{EditTarget::Kind::PlayerStart,x,y,z,found->color};
             if (!world.getBlock(x,y,z).isAir()) return EditTarget{EditTarget::Kind::Block,x,y,z};
             return std::nullopt;
         };
         // A deliberately offset preview is an explicit coordinate, even if empty.
         if (offset) return hasHighlight_ ? at(placementCellX_,placementCellY_,placementCellZ_) : std::nullopt;
+        if (selectedPlayerStart_)
+            if (const auto start=FindPlayerStart(world,*selectedPlayerStart_))
+                return EditTarget{EditTarget::Kind::PlayerStart,start->x,start->y,start->z,start->color};
         if (hasSelectedObject_ && FindMoveObjectAt(world,selectedAnchorX_,selectedAnchorY_,selectedAnchorZ_))
             return EditTarget{EditTarget::Kind::Object,selectedAnchorX_,selectedAnchorY_,selectedAnchorZ_};
-        if (hasHighlight_ && (FindMoveObjectAt(world,placementCellX_,placementCellY_,placementCellZ_) ||
-                             FindBigDecorAt(world,placementCellX_,placementCellY_,placementCellZ_)))
-            return at(placementCellX_,placementCellY_,placementCellZ_);
+        if (hasHighlight_)
+            if (const auto target=at(placementCellX_,placementCellY_,placementCellZ_); target && target->kind!=EditTarget::Kind::Block)
+                return target;
         return hasRaycastHit_ ? at(hitCellX_,hitCellY_,hitCellZ_) : std::nullopt;
     }
 
@@ -1112,7 +1124,22 @@ namespace GalaxyEggbert::Editor
         if (!input.turnHeld || turnKeyHeldLastFrame_) return false;
         const auto target = CurrentEditTarget(world);
         if (!target) return true;
-        const auto [kind,x,y,z] = *target;
+        const auto [kind,x,y,z,color] = *target;
+        if (kind==EditTarget::Kind::PlayerStart)
+        {
+            const auto start=*FindPlayerStart(world,color);
+            auto after=start;
+            after.quarterTurns=(start.quarterTurns+1)%4;
+            EditCommand command;
+            command.kind=EditCommand::Kind::SpawnPointEdit;
+            command.spawnColor=color;
+            command.spawnBefore={true,x,y,z,start.quarterTurns};
+            command.spawnAfter={true,x,y,z,after.quarterTurns};
+            SetPlayerStart(world,after);
+            commandStack_.Push(std::move(command));
+            MarkMutated();
+            return true;
+        }
         const auto icon = world.getBlock(x,y,z).type();
         constexpr int noRoom[4] = {0,0,0,0};
         const bool objectTurns = kind != EditTarget::Kind::Block ||
@@ -1192,6 +1219,13 @@ namespace GalaxyEggbert::Editor
         if (input.selectHeld && !selectKeyHeldLastFrame_)
         {
             hasSelectedObject_ = false;
+            selectedPlayerStart_.reset();
+            // Cursor/NumPad targeting chooses the same start as O/Remove, even off screen.
+            if (const auto target=CurrentEditTarget(world); target && target->kind==EditTarget::Kind::PlayerStart)
+            {
+                selectedPlayerStart_=target->color;
+                return true;
+            }
             float bestDistance = kObjectPickRadius * kObjectPickRadius;
             for (const auto& record : CollectMoveObjects(world))
             {
@@ -1221,6 +1255,22 @@ namespace GalaxyEggbert::Editor
                     selectedRenderX_ = renderPosition.X;
                     selectedRenderY_ = renderPosition.Y;
                     selectedRenderZ_ = renderPosition.Z;
+                }
+            }
+            for (const auto& start : CollectPlayerStarts(world))
+            {
+                float x=0,y=0;
+                if (!Game::Hud::ProjectWorldToHudSpace(
+                    {float(start.x)-Game::WorldRuntime::kWorldCenterX,float(start.y),
+                     float(start.z)-Game::WorldRuntime::kWorldCenterZ},camera.View(),camera.Projection(),
+                     viewportWidth,viewportHeight,x,y)) continue;
+                const float dx=x-kHudCenterX,dy=y-kHudCenterY,distance=dx*dx+dy*dy;
+                const bool preferred=palette_.IsSpawnPointMode() && start.color==palette_.SelectedPlayerStartColor();
+                if (distance<bestDistance || (preferred && distance==bestDistance))
+                {
+                    bestDistance=distance;
+                    hasSelectedObject_=false;
+                    selectedPlayerStart_=start.color;
                 }
             }
             return true;

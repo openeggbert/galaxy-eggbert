@@ -480,6 +480,19 @@ serialization preserves these records without changing header size or version. O
 no extra coloured starts. They are editor data, never MoveObjects or hazards. Clipboard stamps
 continue to omit player starts of every colour, as they already omitted the header spawn.
 
+### Player start headings (2026-11-08)
+
+`PlayerStart::quarterTurns` stores each colour's horizontal facing independently, including
+when several colours share a cell. Sparse `metadataType = 8` at the start cell has one byte:
+bits0-1 yellow, bits2-3 orange, bits4-5 blue, bits6-7 green. Each two-bit value is 0/1/2/3
+quarter turns, facing -Z/-X/+Z/+X respectively. Missing data means zero; an all-zero heading
+record is omitted. Moving a start carries its heading and clears only its old bits; deleting
+it clears its bits without changing another colour. Header spawn coordinates and metadata7
+presence bits remain unchanged. O/Tools Turn and Undo/Redo use this same state. Editor models
+rotate consistently with the controller yaw (`-quarterTurns * pi/2`); ordinary gameplay uses
+the yellow heading on level entry. This adapts the original `m_blupiStartDir` behaviour to four
+horizontal directions. Existing files and shipped worlds retain their previous facing.
+
 ## Recommended Future World Header
 
 **Note (2026-07-09):** this section is still a hypothetical, unbuilt future

@@ -82,8 +82,9 @@ namespace GalaxyEggbert::Editor
 
         struct EditTarget
         {
-            enum class Kind { Block, Object, BigDecor } kind;
+            enum class Kind { Block, Object, BigDecor, PlayerStart } kind;
             std::uint16_t x, y, z;
+            PlayerStartColor color = PlayerStartColor::Yellow;
         };
         // The same target is used by O/Tools Turn and the red selection tint.
         [[nodiscard]] std::optional<EditTarget> CurrentEditTarget(const Worlds::World& world) const;
@@ -402,6 +403,7 @@ namespace GalaxyEggbert::Editor
         // floor(selectedObject_.posStart*) -- this milestone never moves
         // posStart, so the anchor cell never changes once selected.
         bool hasSelectedObject_ = false;
+        std::optional<PlayerStartColor> selectedPlayerStart_;
         MoveObjectRecord selectedObject_;
         std::uint16_t selectedAnchorX_ = 0;
         std::uint16_t selectedAnchorY_ = 0;

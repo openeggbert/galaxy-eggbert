@@ -52,6 +52,14 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- All four editor Blupi starts participate in G/Tools Pick and the shared cursor/NumPad
+  edit target, with red selection outline/model tint. O/Tools Turn rotates each independently
+  by 90 degrees; moves, deletion, Undo/Redo and reload preserve its heading. Shared-cell starts
+  are disambiguated by the chosen colour; overlapping objects remain selectable in object mode.
+  Models are fully opaque with normal depth writes. Heading metadata8 is additive; old worlds
+  default to the unchanged direction. Level entry uses the yellow start heading, matching the
+  original start-direction rule. All114 tests and native selection/turn/opacity/reload checks pass
+  (build-probe/player-start-selection/).
 - Editor route cubes1/2 now cover fish, moving mines, birds, wasps, creatures, enemy Blupis
   and every lift type, using registry motion capabilities. Optional patrols show a route when
   endpoints differ; ordinary stationary mines, treasure and chasing hazards do not. Coincident
