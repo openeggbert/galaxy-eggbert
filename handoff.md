@@ -25,8 +25,18 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   Native before/after: three fast presses in one event batch changed no cells before, and the
   aimed saved voxel from1 to13 after (1→11→12→13). Build and all113 CTest pass.
   Evidence: build-probe/editor-v/. No sibling changes; reuses the published CNA input event.
-  Remaining owner requests: independent saw without an imposed support cube; O rotation of
-  many placed objects does not work. Specific V examples were requested but not yet supplied.
+  Specific V examples were requested but not supplied; the native input-loss repro is fixed.
+- O/Tools Turn now shares an explicit target with red selection: offset NumPad coordinate first
+  (empty means no fallback to the old ray hit), then G selection, preview object/decor, aimed
+  terrain. Short V/O native commands are ordered, with release edges. Single-faced cubes such
+  as house window190 now store four object turns; TerrainRenderer applies them to the chosen
+  texturedSide before both flat and relief geometry. Previously the saved plate bit did nothing.
+  Selected models get an exact posed-mesh35% red overlay with depth testing; target cells have
+  a matching translucent red box, replacing the old magenta G box. Native tree/window and
+  NumPad→O→save verified, plus113/113 CTest. First tint trial tried LightingEnabled=false,
+  which SkinnedEffect rejects; corrected to an emissive overlay and repeated live successfully.
+  Evidence: build-probe/editor-turn/. Remaining authorized request: saw independent of any
+  imposed support cube, with arbitrary block/air below it. No O example remains unaddressed.
 - Publication follow-up (owner: commit/push everything): both CNA changes were pushed to
   origin/next at594eb28dc before publishing Galaxy. The standard ci_pin_siblings.py script
   advances only CNA to that published revision; all other verified sibling pins are unchanged.

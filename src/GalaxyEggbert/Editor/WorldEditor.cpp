@@ -1,6 +1,7 @@
 #include "WorldEditor.hpp"
 
 #include "CustomWorldStorage.hpp"
+#include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -251,16 +252,14 @@ namespace GalaxyEggbert::Editor
             highlightRenderer_.Hide();
         }
 
-        if (hasSelectedObject_)
+        if (const auto target = CurrentTurnTarget(world))
         {
-            selectionHighlightRenderer_.ShowSelectedObject(
-                device, selectedRenderX_, selectedRenderY_, selectedRenderZ_);
-            selectionHighlightRenderer_.Draw(device, camera);
+            selectionHighlightRenderer_.ShowSelectedObject(device,
+                float(target->x)-Game::WorldRuntime::kWorldCenterX, float(target->y),
+                float(target->z)-Game::WorldRuntime::kWorldCenterZ);
+            selectionHighlightRenderer_.Draw(device,camera);
         }
-        else
-        {
-            selectionHighlightRenderer_.Hide();
-        }
+        else selectionHighlightRenderer_.Hide();
 
         palette_.Draw(
             device, viewportWidth, viewportHeight, stopConfirmArmed_, hasHighlight_,

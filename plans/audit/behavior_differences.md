@@ -1640,6 +1640,19 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0103 — O target, window orientation and visible selection — FIXED_AND_VERIFIED
+
+Owner: O ignored a NumPad coordinate, and a house-window cube stayed facing the same way.
+The first was an unconditional old voxel-ray target; the second stored a plate bit that the
+single-face cube renderer never consumed. Turn and selection now share one target; explicit
+offsets override the ray (including an empty coordinate), G selection persists, and house
+windows use four object turns applied before flat/relief mesh construction. Rapid V/O commands
+use ordered native events. The selected posed model is overlaid35% red with depth testing,
+with a red cell marker for terrain and selection coordinates. Native NumPad51,1,28→O→save
+visibly moves the window from its front to its side and leaves the old ground alone; a tree
+shows its red model tint. Target/quarter-turn/empty-cell/Undo/command-order tests and113/113
+CTest pass. Evidence: build-probe/editor-turn/. No sibling changes.
+
 ## BD-0102 — Short editor V presses lost between updates — FIXED_AND_VERIFIED
 
 Owner reports most blocks no longer responding to V. Native snapshot polling lost complete

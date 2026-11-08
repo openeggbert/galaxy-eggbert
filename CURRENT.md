@@ -52,6 +52,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Editor O/Tools Turn uses the explicit NumPad coordinate when offset, the G-selected object,
+  otherwise the preview's object/decor or aimed terrain. A house window (one textured side)
+  now honors all four saved turns in both flat and relief rendering. The same target is tinted
+  translucent red; converted models use their actual posed mesh with depth testing. Native
+  tree/window/NumPad/save captures and113/113 CTest pass (build-probe/editor-turn/).
 - Editor V retains short native presses between updates, including several in one event batch.
   Each changes the aimed voxel once and can be undone separately. All multi-variant families
   are covered; a real saved-world before/after check and all113 tests pass (build-probe/editor-v/).

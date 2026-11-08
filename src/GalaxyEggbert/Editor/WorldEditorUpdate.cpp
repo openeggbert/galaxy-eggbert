@@ -6,6 +6,7 @@
 #include "CustomWorldStorage.hpp"
 #include "VoxelRaycast.hpp"
 #include <GalaxyEggbert/Game/BlockModels.hpp>
+#include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
@@ -1094,63 +1095,45 @@ namespace GalaxyEggbert::Editor
         return lines;
     }
 
+    std::optional<WorldEditor::EditTarget> WorldEditor::CurrentTurnTarget(const Worlds::World& world) const
+    {
+        const bool offset = placementOffsetX_ != 0 || placementOffsetY_ != 0 || placementOffsetZ_ != 0;
+        const auto at = [&](std::uint16_t x, std::uint16_t y, std::uint16_t z) -> std::optional<EditTarget> {
+            if (FindMoveObjectAt(world,x,y,z)) return EditTarget{EditTarget::Kind::Object,x,y,z};
+            if (FindBigDecorAt(world,x,y,z)) return EditTarget{EditTarget::Kind::BigDecor,x,y,z};
+            if (!world.getBlock(x,y,z).isAir()) return EditTarget{EditTarget::Kind::Block,x,y,z};
+            return std::nullopt;
+        };
+        // A deliberately offset preview is an explicit coordinate, even if empty.
+        if (offset) return hasHighlight_ ? at(placementCellX_,placementCellY_,placementCellZ_) : std::nullopt;
+        if (hasSelectedObject_ && FindMoveObjectAt(world,selectedAnchorX_,selectedAnchorY_,selectedAnchorZ_))
+            return EditTarget{EditTarget::Kind::Object,selectedAnchorX_,selectedAnchorY_,selectedAnchorZ_};
+        if (hasHighlight_ && (FindMoveObjectAt(world,placementCellX_,placementCellY_,placementCellZ_) ||
+                             FindBigDecorAt(world,placementCellX_,placementCellY_,placementCellZ_)))
+            return at(placementCellX_,placementCellY_,placementCellZ_);
+        return hasRaycastHit_ ? at(hitCellX_,hitCellY_,hitCellZ_) : std::nullopt;
+    }
+
     bool WorldEditor::HandleTurn(const FrameInput& input, Worlds::World& world)
     {
-        if (!input.turnHeld || turnKeyHeldLastFrame_ || !hasRaycastHit_)
-        {
-            return false;
-        }
-        // An object or a BigDecor in the cell the preview shows (where a click would put one)
-        // turns a quarter at a time (OR-0071): its cell's quarter turns.
-        if (hasHighlight_ && (FindMoveObjectAt(world, placementCellX_, placementCellY_, placementCellZ_) ||
-                              FindBigDecorAt(world, placementCellX_, placementCellY_, placementCellZ_)))
-        {
-            const int before = Game::ObjectQuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_);
-            const int after = (before + 1) % 4;
-            Game::SetObjectQuarterTurns(world, placementCellX_, placementCellY_, placementCellZ_, after);
-            EditCommand command;
-            command.kind = EditCommand::Kind::TurnEdit;
-            command.turnX = placementCellX_;
-            command.turnY = placementCellY_;
-            command.turnZ = placementCellZ_;
-            command.turnBefore = before;
-            command.turnAfter = after;
-            command.turnObject = true;
-            commandStack_.Push(std::move(command));
-            MarkMutated();
-            return true;
-        }
-        if (world.getBlock(hitCellX_, hitCellY_, hitCellZ_).isAir())
-        {
-            return true;
-        }
-        // A model with a front turns a quarter at a time (OR-0071); a plate, fan or wind tile
-        // between its two axes (M3D-0005).
-        const std::uint16_t icon = world.getBlock(hitCellX_, hitCellY_, hitCellZ_).type();
-        const bool front = std::find(Game::kFrontModelIcons.begin(), Game::kFrontModelIcons.end(), icon) !=
-                               Game::kFrontModelIcons.end() ||
-                           Game::IsSignModelIcon(icon);
-        // A front model's turns are kept as an object's (type 5): the plate bit (type 2) of signs
-        // facing X, which the hub generators set, is no turn of the model.
-        const int before = front ? Game::ObjectQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_)
-                                 : Game::QuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_);
-        const int after = front ? (before + 1) % 4 : (before & 1) ^ 1;
-        if (front)
-        {
-            Game::SetObjectQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_, after);
-        }
-        else
-        {
-            Game::SetQuarterTurns(world, hitCellX_, hitCellY_, hitCellZ_, after);
-        }
+        if (!input.turnHeld || turnKeyHeldLastFrame_) return false;
+        const auto target = CurrentTurnTarget(world);
+        if (!target) return true;
+        const auto [kind,x,y,z] = *target;
+        const auto icon = world.getBlock(x,y,z).type();
+        constexpr int noRoom[4] = {0,0,0,0};
+        const bool objectTurns = kind != EditTarget::Kind::Block ||
+            std::find(Game::kFrontModelIcons.begin(),Game::kFrontModelIcons.end(),icon) != Game::kFrontModelIcons.end() ||
+            Game::IsSignModelIcon(icon) || Game::SingleTexturedSide(icon,0,noRoom) >= 0;
+        const int before = objectTurns ? Game::ObjectQuarterTurns(world,x,y,z) : Game::QuarterTurns(world,x,y,z);
+        const int after = objectTurns ? (before+1)%4 : (before&1)^1;
+        if (objectTurns) Game::SetObjectQuarterTurns(world,x,y,z,after);
+        else Game::SetQuarterTurns(world,x,y,z,after);
         EditCommand command;
         command.kind = EditCommand::Kind::TurnEdit;
-        command.turnX = hitCellX_;
-        command.turnY = hitCellY_;
-        command.turnZ = hitCellZ_;
-        command.turnBefore = before;
-        command.turnAfter = after;
-        command.turnObject = front;
+        command.turnX=x; command.turnY=y; command.turnZ=z;
+        command.turnBefore=before; command.turnAfter=after;
+        command.turnObject=objectTurns;
         commandStack_.Push(std::move(command));
         MarkMutated();
         return true;

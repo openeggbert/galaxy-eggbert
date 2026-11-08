@@ -20,7 +20,7 @@
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
 #include <GalaxyEggbert/Editor/EditorDeviceControls.hpp>
-#include <GalaxyEggbert/Editor/VariantKeyPresses.hpp>
+#include <GalaxyEggbert/Editor/EditorCommandKeys.hpp>
 #include <GalaxyEggbert/Game/ControlInput.hpp>
 #include <GalaxyEggbert/Game/SaveData.hpp>
 #include <GalaxyEggbert/Game/Autoplay.hpp>
@@ -756,7 +756,7 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Game::ResumeInput tickInput_;
         std::deque<char> pendingCheatLetters_;
         std::uint64_t keyInputToken_ = 0;
-        GalaxyEggbert::Editor::VariantKeyPresses editorVariantKeys_;
+        GalaxyEggbert::Editor::EditorCommandKeys editorCommandKeys_;
         bool missionStartPending_ = false;
         bool recordingResume_ = false;
         bool replayingResume_ = false;
@@ -1009,6 +1009,7 @@ namespace GalaxyEggbert::CNA
         // in first-person mode rather than crashing.
         std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT> blupiModel_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SkinnedEffect> blupiEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> editorTintTexture_;
         bool blupiModelLoaded_ = false;
         bool blupiModelIsReal_ = false;
 

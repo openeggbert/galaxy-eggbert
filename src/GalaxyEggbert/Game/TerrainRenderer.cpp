@@ -836,6 +836,7 @@ namespace GalaxyEggbert::Game
                                 }
                             }
                             texturedSide = SingleTexturedSide(icon, occludedFaces, room);
+                            texturedSide = TurnTexturedSide(texturedSide,ObjectQuarterTurns(world,x,y,z));
                         }
                     }
                     if (m_reliefs != nullptr && (mesh == &staticMesh || mesh == &cutoutMesh) &&

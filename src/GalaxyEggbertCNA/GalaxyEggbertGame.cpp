@@ -875,7 +875,7 @@ namespace GalaxyEggbert::CNA
                 fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None) return;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {
-                if (key == Keys::V && !worldEditor_.IsBrowsing()) editorVariantKeys_.Record();
+                if (!worldEditor_.IsBrowsing()) editorCommandKeys_.Record(key);
                 return;
             }
             if (!GalaxyEggbert::Game::kCheatsEnabled || phase_ != GalaxyEggbert::Def::GamePhase::Play) return;
@@ -1851,7 +1851,7 @@ namespace GalaxyEggbert::CNA
             phase_ == GalaxyEggbert::Def::GamePhase::Play &&
                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank);
         if (!SuppressLiveInput() && phase_ == GalaxyEggbert::Def::GamePhase::Editor)
-            keys = editorVariantKeys_.Next(keys);
+            keys = editorCommandKeys_.Next(keys);
         for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
         std::sort(tickInput_.keys.begin(), tickInput_.keys.end());
         const auto mouse = ReadMouseState(SuppressLiveInput());
@@ -1906,7 +1906,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::OnDeactivated(System::Object* sender, const System::EventArgs& args)
     {
         pendingCheatLetters_.clear();
-        editorVariantKeys_.Reset();
+        editorCommandKeys_.Reset();
         // Game1.cpp:186-198: only deactivation during Play writes CurrentWrite.
         if (phase_ == GalaxyEggbert::Def::GamePhase::Play && missionStartPending_ &&
             fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
@@ -2656,7 +2656,7 @@ namespace GalaxyEggbert::CNA
         }
         phase_ = next;
         editorDevices_.Reset();
-        editorVariantKeys_.Reset();
+        editorCommandKeys_.Reset();
         if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)
         {
             titleSceneRequested_ = true;
@@ -6682,6 +6682,49 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::DrawFrame()
     {
         auto& device = getGraphicsDeviceProperty();
+        using TargetKind = GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind;
+        const auto editorTarget = phase_ == GalaxyEggbert::Def::GamePhase::Editor && !worldEditor_.IsBrowsing()
+            ? worldEditor_.CurrentTurnTarget(worldRuntime_.GetWorld()) : std::nullopt;
+        const auto editorSelected = [&](TargetKind kind, float rawX, float rawY, float rawZ) {
+            return editorTarget && editorTarget->kind == kind &&
+                std::lround(rawX) == editorTarget->x && std::lround(rawY) == editorTarget->y &&
+                std::lround(rawZ) == editorTarget->z;
+        };
+        // The exact posed mesh overlaid in depth-tested translucent red.
+        const auto drawEditorTint = [&](const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT& model,
+                                        bool selected, bool boothFrontOnly = false) {
+            if (!selected || !blupiEffect_) return;
+            using namespace Microsoft::Xna::Framework::Graphics;
+            if (!editorTintTexture_)
+            {
+                editorTintTexture_ = std::make_unique<Texture2D>(device,1,1);
+                const auto white = Microsoft::Xna::Framework::Color::White;
+                editorTintTexture_->SetData(&white,1);
+            }
+            const auto diffuse = blupiEffect_->getDiffuseColorProperty();
+            const auto alpha = blupiEffect_->getAlphaProperty();
+            const auto emission = blupiEffect_->getEmissiveColorProperty();
+            blupiEffect_->setEmissiveColorProperty({1.0f,0.0f,0.0f});
+            blupiEffect_->setDiffuseColorProperty({0.0f,0.0f,0.0f});
+            blupiEffect_->setAlphaProperty(0.35f);
+            blupiEffect_->setTextureProperty(editorTintTexture_.get());
+            device.setBlendStateProperty(BlendState::NonPremultiplied);
+            device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+            for (const auto& part : model.Parts)
+            {
+                if (boothFrontOnly && GalaxyEggbert::Game::IsBoothBodyPart(part.Name)) continue;
+                blupiEffect_->Apply();
+                device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                device.DrawIndexedPrimitives(PrimitiveType::TriangleList,part.Part->getVertexOffsetProperty(),0,
+                    part.Part->getNumVerticesProperty(),part.Part->getStartIndexProperty(),part.Part->getPrimitiveCountProperty());
+            }
+            blupiEffect_->setDiffuseColorProperty(diffuse);
+            blupiEffect_->setAlphaProperty(alpha);
+            blupiEffect_->setEmissiveColorProperty(emission);
+            device.setBlendStateProperty(BlendState::Opaque);
+            device.setDepthStencilStateProperty(DepthStencilState::Default);
+        };
         // The Clear2 death's soul drawn as its 3D model this frame: the HUD leaves out its sprite.
         bool soulDrawnIn3D = false;
 
@@ -7261,6 +7304,8 @@ namespace GalaxyEggbert::CNA
                             part.Part->getStartIndexProperty(),
                             part.Part->getPrimitiveCountProperty());
                     }
+                    drawEditorTint(*parked.model,editorSelected(TargetKind::Object,
+                        obj.posStartX+WorldRuntime::kWorldCenterX,obj.posStartY,obj.posStartZ+WorldRuntime::kWorldCenterZ));
                 }
                 DrawEnemyBlupis(device);
                 // The lost helicopter flying away (ByeByeHelico, BD-0049): its parked model, turned
@@ -7322,6 +7367,7 @@ namespace GalaxyEggbert::CNA
                 // Models out of view are not drawn (objectModelRadii_): each one's sphere, its reach
                 // widened by its depth scale and sprite offset, a block's margin for its animation.
                 const Microsoft::Xna::Framework::BoundingFrustum viewFrustum(camera_.View() * camera_.Projection());
+                bool tintModelCell = false;
                 const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
                                            float rollRadians = 0.0f, float depthScale = 1.0f,
                                            bool boothFrontOnly = false, float topScale = 1.0f)
@@ -7384,6 +7430,7 @@ namespace GalaxyEggbert::CNA
                             part.Part->getPrimitiveCountProperty());
                         perfModelTriangles_ += part.Part->getPrimitiveCountProperty();
                     }
+                    drawEditorTint(model,tintModelCell,boothFrontOnly);
                     ++perfModelDraws_;
                 };
                 // The clay bridge: its row of lumps across the whole cell (BlockModels.hpp).
@@ -7397,6 +7444,8 @@ namespace GalaxyEggbert::CNA
                 };
                 for (const auto& obj : worldRuntime_.GetMobileObjects())
                 {
+                    tintModelCell = editorSelected(TargetKind::Object,obj.posStartX+WorldRuntime::kWorldCenterX,
+                        obj.posStartY,obj.posStartZ+WorldRuntime::kWorldCenterZ);
                     ObjectTextureSource sheet{};
                     int icon = 0;
                     const ObjectModelPose* pose =
@@ -7463,6 +7512,7 @@ namespace GalaxyEggbert::CNA
                 }
                 // The pieces flying away with a model (BD-0049): enemies, the invert potion, a fan,
                 // spinning about the view axis as the original's picture does.
+                tintModelCell = false;
                 for (const auto& piece : interaction_.ByeByePieces())
                 {
                     const float spin = -piece.rotationDegrees * kDegrees;
@@ -7531,6 +7581,8 @@ namespace GalaxyEggbert::CNA
                 {
                     for (const auto& cell : terrainRenderer_->ModelCells())
                     {
+                        tintModelCell = editorSelected(TargetKind::Block,cell.x+WorldRuntime::kWorldCenterX,
+                            cell.y,cell.z+WorldRuntime::kWorldCenterZ);
                         const bool overFloor =
                             std::find(GalaxyEggbert::Game::kModelOverFloorBases.begin(),
                                       GalaxyEggbert::Game::kModelOverFloorBases.end(),
@@ -7686,6 +7738,8 @@ namespace GalaxyEggbert::CNA
                 }
                 for (const auto& cell : bigDecorCells_)
                 {
+                    tintModelCell = editorSelected(TargetKind::BigDecor,cell.worldX+WorldRuntime::kWorldCenterX,
+                        cell.worldY,cell.worldZ+WorldRuntime::kWorldCenterZ);
                     const ObjectModelPose* pose = objectModelTable_.Find(ObjectTextureSource::Explo, cell.icon);
                     if (pose != nullptr)
                     {

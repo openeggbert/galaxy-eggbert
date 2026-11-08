@@ -74,6 +74,15 @@ namespace GalaxyEggbert::Game
     // neighbour (TerrainRenderer's HiddenFaceMask).
     [[nodiscard]] int SingleTexturedSide(int icon, std::uint8_t hiddenFaces, const int (&room)[4]);
 
+    // Positive Y quarter-turns, matching the model transform (+Z becomes +X).
+    [[nodiscard]] constexpr int TurnTexturedSide(int side, int turns) noexcept
+    {
+        constexpr int next[4] = {2,3,1,0};
+        if (side < 0 || side > 3) return side;
+        for (int n = ((turns % 4) + 4) % 4; n > 0; --n) side = next[side];
+        return side;
+    }
+
     // True for a DirectionalCube icon whose six faces are all drawn (its texture or a colour
     // swatch on each, no open side such as icon 200's top and bottom): with opaque texels it hides
     // what lies behind any of its sides, so the terrain can cull faces against it.

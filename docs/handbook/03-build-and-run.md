@@ -236,6 +236,10 @@ Remove clears it, Escape cancels it; the whole edit is one Undo. Dimensions appe
 
 V cycles the variant of the terrain block you aim at. Short presses are retained even between
 updates; each press is one separately undoable change. A tile with no alternative stays as it is.
+O (or Tools > Turn) turns the red-selected target. A NumPad-offset coordinate takes precedence;
+otherwise it uses the object selected by G, an object/decor in the preview, or the aimed block.
+Windows and other cubes with a single textured face turn through all four horizontal sides.
+The selected model has a translucent red tint; G selection stays selected when looking elsewhere.
 
 Touch: the Move pad flies horizontally; Up/Down changes height; drag the world with another finger
 to look. Choose palette entries and Place with their existing buttons. **Tools > Select 3D** replaces

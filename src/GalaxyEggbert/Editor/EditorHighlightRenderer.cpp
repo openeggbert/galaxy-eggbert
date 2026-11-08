@@ -48,11 +48,10 @@ namespace GalaxyEggbert::Editor
                                                        float centerX, float centerY, float centerZ)
     {
         const float half = 0.5f + kCellHighlightPadding * 0.5f;
-        // Translucent magenta -- distinct from both the cyan crosshair and
-        // the yellow box-fill overlay.
+        // Red selection, matching the tint on the actual selected model.
         Rebuild(device, centerX - half, centerY - half, centerZ - half,
                 centerX + half, centerY + half, centerZ + half,
-                1.0f, 0.25f, 0.85f);
+                1.0f, 0.05f, 0.05f);
         hasWireframeEdges_ = false;
     }
 

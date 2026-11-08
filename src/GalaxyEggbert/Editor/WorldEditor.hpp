@@ -79,6 +79,14 @@ namespace GalaxyEggbert::Editor
 
         [[nodiscard]] bool IsBrowsing() const noexcept { return browsing_; }
 
+        struct EditTarget
+        {
+            enum class Kind { Block, Object, BigDecor } kind;
+            std::uint16_t x, y, z;
+        };
+        // The same target is used by O/Tools Turn and the red selection tint.
+        [[nodiscard]] std::optional<EditTarget> CurrentTurnTarget(const Worlds::World& world) const;
+
         // The copy C made (ED-0010), nullptr before one; whether P's pasting is on.
         [[nodiscard]] const Clipboard* CurrentClipboard() const noexcept
         {

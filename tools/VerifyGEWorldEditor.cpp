@@ -8,7 +8,8 @@
 #include <GalaxyEggbert/Editor/EditCommandStack.hpp>
 #include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
-#include <GalaxyEggbert/Editor/VariantKeyPresses.hpp>
+#include <GalaxyEggbert/Editor/EditorCommandKeys.hpp>
+#include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -258,8 +259,8 @@ int main()
         editor.EnterEditing(0, 10, 0);
         CnaEngine::Graphics::Camera camera;
         editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
-        VariantKeyPresses presses;
-        presses.Record(); presses.Record(); presses.Record();
+        EditorCommandKeys presses;
+        presses.Record(Keys::V); presses.Record(Keys::V); presses.Record(Keys::V);
         for (int tick = 0; tick < 6; ++tick)
             editor.Update(presses.Next(KeyboardState{}), restMouse, 0, 800, 480, camera, world);
         check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 135,
@@ -271,8 +272,8 @@ int main()
         }
         check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 126,
               "each queued V press is a separate undoable change");
-        VariantKeyPresses held;
-        held.Record();
+        EditorCommandKeys held;
+        held.Record(Keys::V);
         int edges = 0;
         for (int tick = 0; tick < 6; ++tick)
         {
@@ -281,7 +282,7 @@ int main()
             check(keys.IsKeyDown(Keys::LeftControl), "V capture preserves other editor keys");
         }
         check(edges == 1, "a held physical V does not duplicate its recorded press");
-        held.Record(); held.Reset();
+        held.Record(Keys::V); held.Reset();
         check(!held.Next(KeyboardState{}).IsKeyDown(Keys::V) &&
               !held.Next(KeyboardState{}).IsKeyDown(Keys::V), "focus/phase reset discards pending variants");
     }
@@ -301,8 +302,8 @@ int main()
             editor.EnterEditing(0, 10, 0);
             CnaEngine::Graphics::Camera camera;
             editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
-            VariantKeyPresses presses;
-            presses.Record();
+            EditorCommandKeys presses;
+            presses.Record(Keys::V);
             editor.Update(presses.Next(KeyboardState{}), restMouse, 0, 800, 480, camera, world);
             const bool changed = world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() != icon;
             editor.Update(presses.Next(KeyboardState{}), restMouse, 0, 800, 480, camera, world);
@@ -358,6 +359,53 @@ int main()
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::U}, rest, 0.0f, 800, 480, camera, world);
         check(ObjectQuarterTurns(world, placeX, placeY, placeZ) == 0, "undone, the object faces as before");
+    }
+
+    // The NumPad coordinate is explicit: Turn must not silently edit the ray's old voxel.
+    {
+        World world = slab;
+        WorldEditor editor;
+        editor.EnterEditing(0,10,0);
+        CnaEngine::Graphics::Camera camera;
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        const auto x = static_cast<std::uint16_t>(placeX+1);
+        world.setBlock(x,placeY,placeZ,Block::make(190)); // one window, five plain walls
+        WorldEditor::Navigation keep;
+        keep.keepAim = true;
+        editor.Update(KeyboardState{Keys::NumPad6},restMouse,0,800,480,camera,world,keep);
+        const auto target = editor.CurrentTurnTarget(world);
+        check(target && target->kind == WorldEditor::EditTarget::Kind::Block &&
+              target->x == x && target->y == placeY && target->z == placeZ,
+              "the red selection and Turn share the explicit NumPad coordinate");
+        bool rotated = true;
+        constexpr int room[4] = {8,8,8,8};
+        const int originalSide = SingleTexturedSide(190,0,room);
+        for (int quarter : {1,2,3,0})
+        {
+            editor.Update(KeyboardState{},restMouse,0,800,480,camera,world,keep);
+            editor.Update(KeyboardState{Keys::O},restMouse,0,800,480,camera,world,keep);
+            const auto turns = ObjectQuarterTurns(world,x,placeY,placeZ);
+            rotated &= turns == quarter && TurnTexturedSide(originalSide,turns) ==
+                (quarter == 0 ? originalSide : quarter == 1 ? 2 : quarter == 2 ? 1 : 3);
+        }
+        check(rotated && QuarterTurns(world,slabHit.x,slabHit.y,slabHit.z)==0,
+              "O turns a house window through all four sides, leaving the ray's ground unchanged");
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world,keep);
+        editor.Update(KeyboardState{Keys::U},restMouse,0,800,480,camera,world,keep);
+        check(ObjectQuarterTurns(world,x,placeY,placeZ)==3,"window turn Undo restores its previous side");
+        world.setBlock(x,placeY,placeZ,Block::air());
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world,keep);
+        editor.Update(KeyboardState{Keys::O},restMouse,0,800,480,camera,world,keep);
+        check(!editor.CurrentTurnTarget(world) && QuarterTurns(world,slabHit.x,slabHit.y,slabHit.z)==0,
+              "an empty NumPad coordinate does not turn a different object behind it");
+        EditorCommandKeys presses;
+        presses.Record(Keys::V); presses.Record(Keys::O); presses.Record(Keys::V);
+        std::vector<Keys> commands;
+        for (int tick=0; tick<6; ++tick)
+            for (auto key : presses.Next(KeyboardState{Keys::O}).GetPressedKeys())
+                if (key==Keys::V || key==Keys::O) commands.push_back(key);
+        check(commands==std::vector<Keys>{Keys::V,Keys::O,Keys::V},
+              "rapid V/O commands retain their arrival order and a held O is not duplicated");
     }
 
     // OR-0072: a lift placed, the next click elsewhere is its end (the original's m_liftEnd).
