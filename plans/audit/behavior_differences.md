@@ -1589,3 +1589,13 @@ extracted from the verified editor raycast finds the first solid/temporary block
 retaining cardinal half-cell stand-off,5ticks/block speed, ammo and firing cadence. Heli/enemy
 shots are unchanged. Eight yaw tests include17°/73°, and cardinal/oblique wall tests plus the
 editor verifier and all113 CTest pass. Live shots: build-probe/latest-controls/tank-run/.
+
+## BD-0097 — helicopter motor survived leaving its world — FIXED_AND_VERIFIED
+
+Original Game1.cpp:1023 calls Decor::StopSound on phase changes. Galaxy only updated motor loops
+inside Play, so menus retained the last loop; custom play-test loads also missed the normal input
+reset. StopVehicleMotorSound stops channels15-18/28-31 and clears activeMotorLoop_ when leaving
+Play or replacing a custom play-test world. Continue restarts the current vehicle. Music/UI sounds
+are unaffected. A sound-enabled live run reached Pause, Init and mission1 after a helicopter flight;
+native channel15/16/18 states were Stopped (2), with no later motor starts. Temporary state logging
+was removed. Evidence: build-probe/latest-controls/motor-menu-shots/. All113 CTest pass.

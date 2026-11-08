@@ -80,6 +80,9 @@ content-authoring UX, but not new gameplay mechanics.
   are unchanged. Space/B/X keep enter/leave separate; A/touch Jump and Right Shift still climb the
   helicopter; physical Left Ctrl now also climbs it (owner follow-up), Left Shift descends.
   Live keyboard, virtual gamepad and direct-touch captures show green projectiles.
+- Vehicle motor channels stop on leaving Play and when replacing an editor play-test world.
+  Continuing Play starts the current vehicle's loop again; main menu and a new on-foot world
+  retain no old engine sound. Verified against actual audio-instance states with the dummy driver.
 - `fairplay` toggles the runtime cheat-input lock. Enabling clears megablupi, ghost, opendoors,
   showsecret, compass, quick and zoom; only fairplay can then be typed to unlock again. F12 and
   the hidden menu/gesture are blocked too. Previously acquired lives, bombs, ammo, keys, vehicles,

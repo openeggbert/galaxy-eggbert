@@ -10,6 +10,12 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Vehicle motor lifecycle: SetPhase now stops all8 vehicle start/run/stop channels on leaving
+  Play and clears activeMotorLoop_; custom play-test replacement also stops them. Continue
+  restarts the correct loop. Original Game1.cpp:1023 stops world sounds on transitions. A live
+  sound-enabled dummy-driver run mounted/climbed, paused, returned to Init and started mission1:
+  native channel15/16/18 states were Stopped (2), with no later motor Play. Temporary audio
+  instrumentation was removed. Captures/log: build-probe/latest-controls/motor-menu-shots/.
 - Tank glue follows continuous yaw instead of the integer tile-facing vector's eight directions.
   A shared engine-independent DDA was extracted from the editor raycast for wall range; its
   existing blocker policy and half-cell stand-off are retained. Eight heading/projectile tests,

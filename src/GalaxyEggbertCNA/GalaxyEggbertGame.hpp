@@ -604,6 +604,7 @@ namespace GalaxyEggbert::CNA
         // old loop, and starts the new one. A no-op when the desired loop already matches the
         // active one (matches the real early-out exactly). Called once per frame.
         void UpdateVehicleMotorSound();
+        void StopVehicleMotorSound();
 
         // INFRA-007 (plan.md §7, step 2/3): InteractionSystem's 11 simple/position-payload
         // *ThisFrame() signals are now one typed EventsThisFrame() queue instead of 11 parallel

@@ -2457,6 +2457,7 @@ namespace GalaxyEggbert::CNA
             return;
         }
 
+        StopVehicleMotorSound();
         RebuildWorldPresentation();
 
         // Fresh defaults, no "preserve lives" concept (unlike LoadMission()) --
@@ -2601,6 +2602,10 @@ namespace GalaxyEggbert::CNA
         // 2026-07-13) and clears input debounce state on every transition
         // (Game1.cpp:979-1058) -- this engine's own equivalent is just the
         // 2 key-debounce trackers below.
+        // Game1.cpp:1023 stops world sound on a phase change. Motor loops belong
+        // to the live vehicle, not the menu or the next world.
+        // Resume will start the appropriate loop again on its first Play update.
+        if (next != GamePhase::Play) StopVehicleMotorSound();
         phase_ = next;
         editorDevices_.Reset();
         if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)
@@ -3010,6 +3015,17 @@ namespace GalaxyEggbert::CNA
         {
             PlaceMobileObject(worldRuntime_, pendingSkate_.deposit);
         }
+    }
+
+    void GalaxyEggbertGame::StopVehicleMotorSound()
+    {
+        using GalaxyEggbert::Def::SoundChannel;
+        for (const auto channel : {SoundChannel::SoundChannel15, SoundChannel::SoundChannel16,
+                                   SoundChannel::SoundChannel17, SoundChannel::SoundChannel18,
+                                   SoundChannel::SoundChannel28, SoundChannel::SoundChannel29,
+                                   SoundChannel::SoundChannel30, SoundChannel::SoundChannel31})
+            sound_.Stop(channel);
+        activeMotorLoop_ = SoundChannel::SoundChannel0;
     }
 
     void GalaxyEggbertGame::UpdateVehicleMotorSound()
