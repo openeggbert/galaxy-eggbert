@@ -871,9 +871,14 @@ namespace GalaxyEggbert::CNA
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
         keyInputToken_ = Microsoft::Xna::Framework::Input::Keyboard::KeyDownEXT.Add([this](auto key) {
             using Microsoft::Xna::Framework::Input::Keys;
-            if (!GalaxyEggbert::Game::kCheatsEnabled || SuppressLiveInput() ||
-                phase_ != GalaxyEggbert::Def::GamePhase::Play || controlsHelp_.shown || replayingResume_ ||
+            if (SuppressLiveInput() || controlsHelp_.shown || replayingResume_ ||
                 fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None) return;
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
+            {
+                if (key == Keys::V && !worldEditor_.IsBrowsing()) editorVariantKeys_.Record();
+                return;
+            }
+            if (!GalaxyEggbert::Game::kCheatsEnabled || phase_ != GalaxyEggbert::Def::GamePhase::Play) return;
             if (key >= Keys::A && key <= Keys::Z && pendingCheatLetters_.size() < 256)
                 pendingCheatLetters_.push_back(static_cast<char>('a' + int(key) - int(Keys::A)));
         });
@@ -1841,10 +1846,12 @@ namespace GalaxyEggbert::CNA
     {
         using namespace Microsoft::Xna::Framework::Input;
         tickInput_ = {};
-        const auto keys = autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput(),
+        auto keys = autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput(),
             phase_ != GalaxyEggbert::Def::GamePhase::Editor && phase_ != GalaxyEggbert::Def::GamePhase::Init,
             phase_ == GalaxyEggbert::Def::GamePhase::Play &&
                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank);
+        if (!SuppressLiveInput() && phase_ == GalaxyEggbert::Def::GamePhase::Editor)
+            keys = editorVariantKeys_.Next(keys);
         for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
         std::sort(tickInput_.keys.begin(), tickInput_.keys.end());
         const auto mouse = ReadMouseState(SuppressLiveInput());
@@ -1899,6 +1906,7 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::OnDeactivated(System::Object* sender, const System::EventArgs& args)
     {
         pendingCheatLetters_.clear();
+        editorVariantKeys_.Reset();
         // Game1.cpp:186-198: only deactivation during Play writes CurrentWrite.
         if (phase_ == GalaxyEggbert::Def::GamePhase::Play && missionStartPending_ &&
             fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
@@ -2648,6 +2656,7 @@ namespace GalaxyEggbert::CNA
         }
         phase_ = next;
         editorDevices_.Reset();
+        editorVariantKeys_.Reset();
         if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)
         {
             titleSceneRequested_ = true;

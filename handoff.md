@@ -19,9 +19,14 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   live walking/heli/toggle/fairplay/help checks and moving resume SELFTEST equal pass. A separate
   OFF verifier reuses existing libraries without changing the main ON cache. Native build and
   all113 CTest pass. Evidence: build-probe/debug-cheat/. No sibling changes for this task.
-  Next authorized task: investigate V variant cycling in the3D editor (owner reports most blocks;
-  examples requested). Existing HandleVariant changes only the aimed voxel; input/families,
-  BigDecor/MoveObject targeting and rendering require checking before assuming a cause.
+- Editor V now consumes native non-repeat presses rather than losing complete down/up pairs
+  between updates. Each queued press has its own release edge and Undo command; holding V
+  does not duplicate it. All multi-variant terrain families and auto-tile materials are covered.
+  Native before/after: three fast presses in one event batch changed no cells before, and the
+  aimed saved voxel from1 to13 after (1→11→12→13). Build and all113 CTest pass.
+  Evidence: build-probe/editor-v/. No sibling changes; reuses the published CNA input event.
+  Remaining owner requests: independent saw without an imposed support cube; O rotation of
+  many placed objects does not work. Specific V examples were requested but not yet supplied.
 - Publication follow-up (owner: commit/push everything): both CNA changes were pushed to
   origin/next at594eb28dc before publishing Galaxy. The standard ci_pin_siblings.py script
   advances only CNA to that published revision; all other verified sibling pins are unchanged.

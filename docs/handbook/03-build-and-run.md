@@ -234,6 +234,9 @@ Ctrl raises the camera, Z lowers it; Space invokes Place. Shift + NumPad 4/6, 7/
 inclusive 3D selection in X/Y/Z from the initial aimed cell. Place fills it with the selected block,
 Remove clears it, Escape cancels it; the whole edit is one Undo. Dimensions appear while selecting.
 
+V cycles the variant of the terrain block you aim at. Short presses are retained even between
+updates; each press is one separately undoable change. A tile with no alternative stays as it is.
+
 Touch: the Move pad flies horizontally; Up/Down changes height; drag the world with another finger
 to look. Choose palette entries and Place with their existing buttons. **Tools > Select 3D** replaces
 holding Shift; the six X-/X+/Y-/Y+/Z-/Z+ buttons extend the selection, including 3×2×8 cuboids.

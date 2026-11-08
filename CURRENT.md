@@ -52,6 +52,9 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Editor V retains short native presses between updates, including several in one event batch.
+  Each changes the aimed voxel once and can be undone separately. All multi-variant families
+  are covered; a real saved-world before/after check and all113 tests pass (build-probe/editor-v/).
 - `debug` toggles the MODERN runtime diagnostics: simulation time/world/region/lives, raw XYZ
   position/cells, actual step velocity in blocks/s, heading, animation/icon, movement modes,
   speed and input devices. Desktop panel is upper-right; touch panel is upper-centre to clear

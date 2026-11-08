@@ -8,6 +8,7 @@
 #include <GalaxyEggbert/Editor/EditCommandStack.hpp>
 #include <GalaxyEggbert/Editor/VoxelRaycast.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
+#include <GalaxyEggbert/Editor/VariantKeyPresses.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -247,6 +248,70 @@ int main()
         editor.Update(KeyboardState{}, rest, 0.0f, 800, 480, camera, world);
         editor.Update(KeyboardState{Keys::U}, rest, 0.0f, 800, 480, camera, world);
         check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 126, "undone, the fan again");
+    }
+
+    // Three short native V presses, all released before Update, must remain three undoable edits.
+    {
+        World world = slab;
+        world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(126));
+        WorldEditor editor;
+        editor.EnterEditing(0, 10, 0);
+        CnaEngine::Graphics::Camera camera;
+        editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
+        VariantKeyPresses presses;
+        presses.Record(); presses.Record(); presses.Record();
+        for (int tick = 0; tick < 6; ++tick)
+            editor.Update(presses.Next(KeyboardState{}), restMouse, 0, 800, 480, camera, world);
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 135,
+              "three between-frame V presses advance a fan through three variants");
+        for (int i = 0; i < 3; ++i)
+        {
+            editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
+            editor.Update(KeyboardState{Keys::U}, restMouse, 0, 800, 480, camera, world);
+        }
+        check(world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == 126,
+              "each queued V press is a separate undoable change");
+        VariantKeyPresses held;
+        held.Record();
+        int edges = 0;
+        for (int tick = 0; tick < 6; ++tick)
+        {
+            const auto keys = held.Next(KeyboardState{Keys::V, Keys::LeftControl});
+            edges += keys.IsKeyDown(Keys::V) ? 1 : 0;
+            check(keys.IsKeyDown(Keys::LeftControl), "V capture preserves other editor keys");
+        }
+        check(edges == 1, "a held physical V does not duplicate its recorded press");
+        held.Record(); held.Reset();
+        check(!held.Next(KeyboardState{}).IsKeyDown(Keys::V) &&
+              !held.Next(KeyboardState{}).IsKeyDown(Keys::V), "focus/phase reset discards pending variants");
+    }
+
+    // Exercise the public editor workflow for every multi-variant terrain family, plus
+    // auto-tiled materials. This checks input/target/history together, not NextVariant itself.
+    {
+        std::vector<std::uint16_t> icons{147,108,261,341,386,250};
+        for (const auto& family : VariantFamilies())
+            if (family.icons.size() > 1) icons.push_back(family.icons.front());
+        bool responds = true;
+        for (const auto icon : icons)
+        {
+            World world = slab;
+            world.setBlock(slabHit.x, slabHit.y, slabHit.z, Block::make(icon));
+            WorldEditor editor;
+            editor.EnterEditing(0, 10, 0);
+            CnaEngine::Graphics::Camera camera;
+            editor.Update(KeyboardState{}, restMouse, 0, 800, 480, camera, world);
+            VariantKeyPresses presses;
+            presses.Record();
+            editor.Update(presses.Next(KeyboardState{}), restMouse, 0, 800, 480, camera, world);
+            const bool changed = world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() != icon;
+            editor.Update(presses.Next(KeyboardState{}), restMouse, 0, 800, 480, camera, world);
+            editor.Update(KeyboardState{Keys::U}, restMouse, 0, 800, 480, camera, world);
+            const bool restored = world.getBlock(slabHit.x, slabHit.y, slabHit.z).type() == icon;
+            if (!changed || !restored) std::cout << "variant workflow failed for icon " << icon << std::endl;
+            responds &= changed && restored;
+        }
+        check(responds,"every multi-variant terrain family accepts a short V press and Undo");
     }
 
     // OR-0071: O turns a model with a front a quarter at a time; a fan only between its two axes.

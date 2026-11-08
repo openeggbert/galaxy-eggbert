@@ -1640,6 +1640,18 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0102 — Short editor V presses lost between updates — FIXED_AND_VERIFIED
+
+Owner reports most blocks no longer responding to V. Native snapshot polling lost complete
+down/up pairs: a fixture delivered three non-repeat V presses in one event batch, leaving the
+saved target unchanged. The editor now queues CNA KeyDownEXT presses and separates their
+edges; the same run saves1→13, exactly three original-family steps. Physical hold does not
+duplicate an event; focus/phase changes discard the queue. Autoplay keeps its snapshots.
+All multi-variant terrain families and auto-tile materials accept the pulse and Undo; existing
+variant tables are unchanged. Native build and113/113 CTest pass. Evidence: build-probe/editor-v/.
+Specific owner block examples have not been supplied; no new variants were invented for tiles
+that have none. No sibling changes.
+
 ## BD-0101 — Mobile MODERN debug diagnostics cheat — FIXED_AND_VERIFIED
 
 Owner requested debug. The29th typed word toggles a read-only panel matching Mobile InputPad.cpp's

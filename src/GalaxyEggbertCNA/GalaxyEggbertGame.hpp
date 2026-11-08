@@ -20,6 +20,7 @@
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
 #include <GalaxyEggbert/Editor/EditorDeviceControls.hpp>
+#include <GalaxyEggbert/Editor/VariantKeyPresses.hpp>
 #include <GalaxyEggbert/Game/ControlInput.hpp>
 #include <GalaxyEggbert/Game/SaveData.hpp>
 #include <GalaxyEggbert/Game/Autoplay.hpp>
@@ -755,6 +756,7 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Game::ResumeInput tickInput_;
         std::deque<char> pendingCheatLetters_;
         std::uint64_t keyInputToken_ = 0;
+        GalaxyEggbert::Editor::VariantKeyPresses editorVariantKeys_;
         bool missionStartPending_ = false;
         bool recordingResume_ = false;
         bool replayingResume_ = false;
