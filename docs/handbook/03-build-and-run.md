@@ -171,8 +171,8 @@ Type **compass** to toggle the lower-right objective aid (off by default). It sh
 active chest's straight-line **3D distance in blocks**, rounded to the nearest integer. After all
 chests are collected, or if the level has none, it points to the nearest red exit arrow or golden
 key. The second row is `<` or `>` for the shortest turn left/right relative to Blupi's facing.
-The third is `^` or `v` when the target is above/below him. There are no X/Y/Z labels; aligned
-directions are blank (within3 degrees horizontally or0.1 block vertically). A target exactly behind
+The third is `^` or `v` when the target is above/below him. There are no X/Y/Z labels; correct
+facing shows `|` (within3 degrees), and the same height shows `-` (within0.1 block). A target exactly behind
 chooses right, since either half-turn is valid.
 It is a direction/distance through space, not a route finder. Touch layouts keep the whole panel
 clear of the controls. Recognized cheat prefixes consume their following letter keys until

@@ -1573,3 +1573,10 @@ now enables that switch for the marker draw and disables it again for subsequent
 A scene enclosing both endpoints in solid terrain matches its no-marker baseline exactly; an
 exposed-marker capture retains both numbers and the double-sided interior walls. No global culling
 or terrain-rendering change. Evidence: build-probe/marker-occlusion/.
+
+## BD-0095 — explicit aligned compass indicators — FIXED_AND_VERIFIED
+
+Owner 2026-11-08: the second row shows `|` when Blupi faces the objective and the third `-`
+when on its height. Existing shortest-turn and vertical arrows,3-degree/0.1-block tolerances,
+rounding and objective selection remain. Unit checks cover wrapped heading and vertical-only
+objectives; the live probe785 shows6 / | / -. All113 CTest pass.

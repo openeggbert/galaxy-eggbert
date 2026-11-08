@@ -13,12 +13,12 @@ struct ObjectiveHint
 
 struct CompassArrows
 {
-    char turn = 0;
-    char height = 0;
+    char turn = '|';
+    char height = '-';
 };
 
 // Blupi faces (sin(yaw), -cos(yaw)); increasing yaw turns him to his right.
-// A small dead zone leaves an aligned direction blank instead of flickering.
+// A small dead zone shows stable alignment bars instead of flickering arrows.
 [[nodiscard]] inline CompassArrows ObjectiveCompassArrows(const ObjectiveHint& target, float yaw) noexcept
 {
     CompassArrows arrows;

@@ -806,9 +806,9 @@ int main(int argc, char** argv)
             const ObjectiveHint ahead{10,10*std::sin(yaw),0,-10*std::cos(yaw)};
             const ObjectiveHint right{10,10*std::cos(yaw),0,10*std::sin(yaw)};
             const ObjectiveHint left{10,-right.dx,0,-right.dz};
-            check(ObjectiveCompassArrows(ahead,yaw).turn==0 &&
+            check(ObjectiveCompassArrows(ahead,yaw).turn=='|' &&
                   ObjectiveCompassArrows(right,yaw).turn=='>' && ObjectiveCompassArrows(left,yaw).turn=='<',
-                  "compass left/right follows Blupi's facing, including wrapped yaw, with ahead blank");
+                  "compass left/right follows Blupi's facing, including wrapped yaw, with an aligned bar");
             const ObjectiveHint behind{10,-ahead.dx,0,-ahead.dz};
             check(ObjectiveCompassArrows(behind,yaw).turn=='>',
                   "a target exactly behind consistently chooses one valid half-turn");
@@ -819,9 +819,9 @@ int main(int argc, char** argv)
         const auto above=ObjectiveCompassArrows({3,0,3,0},1);
         const auto below=ObjectiveCompassArrows({3,0,-3,0},1);
         const auto aligned=ObjectiveCompassArrows({0,0,.05f,0},1);
-        check(above.turn==0 && above.height=='^' && below.turn==0 && below.height=='v' &&
-              aligned.turn==0 && aligned.height==0,
-              "height arrows are independent of heading; aligned height and vertical-only turning stay blank");
+        check(above.turn=='|' && above.height=='^' && below.turn=='|' && below.height=='v' &&
+              aligned.turn=='|' && aligned.height=='-',
+              "height arrows are independent of heading; aligned heading/height show vertical/horizontal bars");
     }
 
     if (const auto* chest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))

@@ -10,6 +10,9 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Compass alignment follow-up: the facing row shows `|` when aligned and the height row `-`
+  on the same layer. Turning and height arrows and their tolerances remain unchanged. Unit
+  coverage and a live aligned capture (distance6, |, -) pass in build-probe/latest-controls/.
 - F9 report analyzed only, as requested: native CNA Game.cpp maps F9 to immediate GL context
   loss/recreate. EasyGLTextureRenderer::recreate_gl_resource uploads level0, then allocates higher
   mip levels with null data instead of restoring their contents. Galaxy's custom terrain mip atlas
@@ -50,7 +53,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   to red arrow/golden key if no chest remains or existed. The owner replaced world-axis labels with
   three rows: distance, relative turn (< or >), height (^ or v). ObjectiveCompassArrows uses Blupi's
   yaw and the shortest horizontal turn; a target directly behind consistently chooses right.
-  Directions aligned within3 degrees or0.1 block vertically are blank. No target,
+  Directions aligned within3 degrees show |; height within0.1 block shows -. No target,
   no panel. Touch layouts offset it clear of both stick orientations, Crouch, Jump and Fire.
   Relative-heading math and typed input tests pass; live probes783/784 show right/left as Blupi
   turns and up/down for targets at different heights. Evidence: build-probe/compass-relative/.
