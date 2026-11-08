@@ -6,10 +6,21 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-08 (ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Ghost/lava depth fixed (BD-0114): lava's recovered height-field mesh samples the tile's solid
+  body, but still drew in DrawTransparent after ghost/Hide Blupi, which does not write depth.
+  Move its cached frames into DrawOpaque; geometry, timing, collision and ghost alpha unchanged.
+  `python3 tools/verify_lava_depth.py build-cna-opengl3` renders two isolated fixture worlds
+  under Xvfb: background lava leaves the ghost's upper body visible, foreground lava covers it.
+  The old binary fails (0 yellow body pixels), the fix passes (2236 behind,0 in front).
+  Build and114/114 CTest pass; normal-render captures inspected. The three ordinary golden
+  frames are pixel-identical old/new, although both disagree with stored references in this
+  environment; do not refresh them for this fix. Evidence: build-probe/ghost-lava/ (before,
+  after,foreground,verified,old-verified and golden/before-build). User saves untouched;
+  no sibling edits or push.
 - Start selection/rotation/opacity complete (BD-0113): start markers were outside the
   shared edit-target/G picker, fixed to yaw0 and drawn at .85 alpha. They now have a PlayerStart
   target carrying colour, persistent G selection, NumPad/cursor targeting and the usual red

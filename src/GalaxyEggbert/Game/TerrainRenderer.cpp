@@ -1402,6 +1402,14 @@ namespace GalaxyEggbert::Game
     void TerrainRenderer::DrawOpaque(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                        Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
     {
+        // The recovered lava pool samples only the tile's solid body (AppendLavaCell).
+        // Write its depth before models, including translucent ghost/Hide Blupi: drawing
+        // lava in the final blended pass painted pools behind him over his silhouette.
+        const auto lava = m_lavaFrames.find(m_lavaIcon);
+        if (lava != m_lavaFrames.end() && lava->second)
+        {
+            lava->second->Draw(device, effect);
+        }
         if (m_staticRenderer)
         {
             m_staticRenderer->Draw(device, effect);
@@ -1453,13 +1461,11 @@ namespace GalaxyEggbert::Game
     void TerrainRenderer::DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                             Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
     {
-        const auto lava = m_lavaFrames.find(m_lavaIcon);
-        const GpuMeshParts* lavaRenderer = lava != m_lavaFrames.end() ? lava->second.get() : nullptr;
         const auto blitz = m_blitzFrames.find(m_blitzIcon);
         const GpuMeshParts* blitzRenderer = blitz != m_blitzFrames.end() ? blitz->second.get() : nullptr;
         const GpuMeshParts* windRenderer =
             m_windFrame >= 0 ? m_windFrames[static_cast<std::size_t>(m_windFrame)].get() : nullptr;
-        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || lavaRenderer || blitzRenderer ||
+        if (m_animRenderer || m_waterRenderer || m_transparentStaticRenderer || blitzRenderer ||
             windRenderer)
         {
             // Semi-transparent pass (2026-07-08 design decision, see
@@ -1469,7 +1475,7 @@ namespace GalaxyEggbert::Game
             // composites correctly over opaque terrain already in the depth
             // buffer without blocking whatever's drawn after it. object-m.png
             // has real per-pixel alpha (confirmed 2026-07-08); NonPremultiplied
-            // matches its un-premultiplied RGB. m_animRenderer (lava/crusher/
+            // matches its un-premultiplied RGB. m_animRenderer (crusher/
             // saw/spike/fan/marine/temp) moved into this pass 2026-07-09 --
             // it used to draw opaque like m_staticRenderer, which was wrong:
             // direct pixel sampling of object-m.png shows these tiles'
@@ -1478,6 +1484,8 @@ namespace GalaxyEggbert::Game
             // drawing them opaque rendered most of each tile's transparent
             // background as solid black -- reported live as "instead of
             // transparency there's black, you can see inside the cube."
+            // The recovered lava pool now belongs to DrawOpaque, since its geometry
+            // samples only solid texels instead of the sprite's clear background.
             // Covers water (animated), the static-but-transparent icons
             // 30/31, AND the animated non-water set -- same blend/depth
             // state for all three, so one state change covers all draws.
@@ -1494,10 +1502,6 @@ namespace GalaxyEggbert::Game
             if (m_animRenderer)
             {
                 m_animRenderer->Draw(device, effect);
-            }
-            if (lavaRenderer)
-            {
-                lavaRenderer->Draw(device, effect);
             }
             if (blitzRenderer)
             {

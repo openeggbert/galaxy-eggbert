@@ -30,7 +30,7 @@ namespace GalaxyEggbert::Game
     // (icons 30/31 -- see Draw()'s comment), a third for the icon-107
     // grass-top overlay (its own texture, drawn via DrawGrass() with a
     // separate effect), plus a fourth GpuMesh for the animated,
-    // alpha-blended subset (lava/crusher/saw/spike/fan/marine/temp -- drawn
+    // alpha-blended subset (crusher/saw/spike/fan/marine/temp -- drawn
     // opaque before 2026-07-09, fixed once object-m.png pixel sampling
     // showed these tiles are 44-81% transparent, not near-opaque like icons
     // 30/31) and a fifth for the water subset (Water1/Water2 -- animated AND
@@ -39,7 +39,8 @@ namespace GalaxyEggbert::Game
     // block, textured via TileAtlas. Since 2026-10-26 the static blocks whose tile is a
     // hard-edged sprite (TileCoverage::Cutout: doors, pillars, girders, flat-plate decor) are a
     // sixth mesh drawn with an alpha test, and the faint ones (TileCoverage::Translucent:
-    // cobwebs) join the alpha-blended static mesh.
+    // cobwebs) join the alpha-blended static mesh. The recovered 3D lava pools have their own
+    // cached frame meshes, drawn opaque with depth writes: only their tile's solid body is sampled.
     class TerrainRenderer
     {
     public:
@@ -90,7 +91,7 @@ namespace GalaxyEggbert::Game
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
         // Draw() in two halves, for a caller that draws models in between: the opaque terrain
-        // (writing depth), then the semi-transparent pass (water, animated tiles, the
+        // (including lava, writing depth), then the semi-transparent pass (water, other animated tiles, the
         // transparent icons; depth-read), which must come after everything opaque, or water
         // does not cover what lies in it (owner 2026-11-02, OR-0052: a chest under water
         // looked dry).

@@ -1640,6 +1640,20 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0114 — Lava behind ghost Blupi painted over him — FIXED_AND_VERIFIED
+
+Owner: lava looked as if it was in front of Blupi with the ghost cheat. The recovered pool
+mesh samples the tile's solid body, but retained the old sprite cube's final blended pass.
+Ghost/Hide Blupi does not write depth, so that later draw replaced his silhouette even when
+the pool was farther from the camera. Cached lava frames now draw in DrawOpaque with normal
+depth writes before models. Geometry, animation, collision and Blupi's opacity are unchanged.
+`tools/verify_lava_depth.py` renders background/foreground pools with the actual game under
+Xvfb, using isolated saves/worlds. It fails on the pre-fix binary and passes on the fix (2236
+yellow body pixels visible over background lava;0 through foreground lava). Native build,
+114/114 CTest and visual checks pass. The three ordinary golden captures are identical
+before/after; both binaries differ from stored references in this environment, left unchanged.
+Evidence: `build-probe/ghost-lava/`.
+
 ## BD-0113 — Start Blupis could not be selected/turned and were transparent — FIXED_AND_VERIFIED
 
 Owner: all four coloured starts cannot be selected or rotated and should be opaque. The initial

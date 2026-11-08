@@ -238,6 +238,13 @@ content-authoring UX, but not new gameplay mechanics.
   fallback). Existing active followers still home, and existing dynamite blasts remain lethal,
   as in the reference. Verified by 112/112 CTest, unchanged golden frames/trace, and typed-cheat
   lightning/pose probes in `build-probe/ghost/`.
+  Ghost/lava depth corrected (BD-0114, 2026-11-08): the recovered opaque lava pools now draw
+  with depth writes before models, so a pool behind translucent Blupi no longer covers him;
+  foreground lava still hides him. The real-render regression `tools/verify_lava_depth.py`
+  fails on the old binary and passes on the fix; 114/114 CTest pass. Three ordinary golden
+  captures are identical before/after this fix, but both binaries differ from the stored
+  references in this environment; those references were not refreshed. Evidence:
+  `build-probe/ghost-lava/`.
 
 - Lit dynamite follows the original 100-tick `table_dynamitef` at 20 Hz (icons 252-255).
   Its three painted spark shapes are camera-facing decals anchored to the 3D fuse tip;
