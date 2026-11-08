@@ -1830,8 +1830,7 @@ namespace GalaxyEggbert::CNA
         const auto keys = autoplay_ ? autoplayKeys_ : ReadKeyboardState(SuppressLiveInput(),
             phase_ != GalaxyEggbert::Def::GamePhase::Editor && phase_ != GalaxyEggbert::Def::GamePhase::Init,
             phase_ == GalaxyEggbert::Def::GamePhase::Play &&
-                (blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank ||
-                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Helicopter));
+                blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank);
         for (auto key : keys.GetPressedKeys()) tickInput_.keys.push_back(static_cast<int>(key));
         std::sort(tickInput_.keys.begin(), tickInput_.keys.end());
         const auto mouse = ReadMouseState(SuppressLiveInput());
@@ -1992,6 +1991,7 @@ namespace GalaxyEggbert::CNA
         start.openDoors = cheatDoors_;
         start.showSecret = cheatShowSecret_;
         start.compass = cheatCompass_;
+        start.cheatsLocked = inputPad_.IsCheatEntryLocked();
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
         saveData_.Write(settings);
@@ -2035,6 +2035,7 @@ namespace GalaxyEggbert::CNA
         cheatDoors_ = start.openDoors;
         cheatShowSecret_ = start.showSecret;
         cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
+        inputPad_.SetCheatEntryLocked(start.cheatsLocked && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
         gameSpeed_ = GalaxyEggbert::Def::ToGameSpeed(start.speed);
         editorPlayTestActive_ = false;
@@ -2046,6 +2047,8 @@ namespace GalaxyEggbert::CNA
         ResetMissionInput();
         activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "compass"), activeCheats_.end());
         if (cheatCompass_) activeCheats_.push_back("compass");
+        activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "fairplay"), activeCheats_.end());
+        if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
         replayRun_ = 0;
         replayRepeat_ = 0;
         resumeTicks_ = 0;
@@ -2097,6 +2100,7 @@ namespace GalaxyEggbert::CNA
     std::map<std::string, std::string> GalaxyEggbertGame::ResumeSignature() const
     {
         std::map<std::string, std::string> result;
+        result["cheat input"] = inputPad_.IsCheatEntryLocked() ? "locked" : "allowed";
         std::ostringstream out;
         out << std::setprecision(std::numeric_limits<float>::max_digits10);
         out << blupi_.GetX() << ' ' << blupi_.GetY() << ' ' << blupi_.GetZ() << ' ' << blupi_.GetYaw()
@@ -3450,7 +3454,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::ApplyCheat(int cheatNumber)
     {
-        if (!GalaxyEggbert::Game::kCheatsEnabled) return;
+        if (!GalaxyEggbert::Game::kCheatsEnabled || inputPad_.IsCheatEntryLocked()) return;
         switch (cheatNumber)
         {
             case 1: // OpenDoors: Decor::CheatAction flips m_bCheatDoors and calls AdaptDoors(): in a
@@ -3506,11 +3510,13 @@ namespace GalaxyEggbert::CNA
     {
         if (!GalaxyEggbert::Game::kCheatsEnabled) return;
         using TC = GalaxyEggbert::Game::InputPad::TypedCheat;
+        if (inputPad_.IsCheatEntryLocked() && cheat != TC::FairPlay) return;
         using VM = BlupiController::VehicleMode;
         using GalaxyEggbert::Def::SoundChannel;
         const auto vehicle = [this](VM mode)
         {
-            blupi_.CheatVehicle(mode);
+            blupi_.CheatVehicle(mode, &worldRuntime_.GetWorld());
+            activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "ghost"), activeCheats_.end());
         };
         // Sucette/Charge/Drink without a pickup: the clip, then the power (ResolvePickupFreeze(),
         // no item to put back).
@@ -3575,6 +3581,28 @@ namespace GalaxyEggbert::CNA
             case TC::Compass:
                 cheatCompass_ = !cheatCompass_;
                 break;
+            case TC::FairPlay:
+            {
+                const bool locked = !inputPad_.IsCheatEntryLocked();
+                inputPad_.SetCheatEntryLocked(locked);
+                cheatMenuShown_ = false;
+                if (locked)
+                {
+                    blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
+                    cheatDoors_ = cheatShowSecret_ = cheatCompass_ = quickCheatEnabled_ = false;
+                    cheatZoomStep_ = 0;
+                    if (gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
+                        gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
+                    activeCheats_.clear();
+                    activeCheats_.push_back("fairplay");
+                    AdaptHubDoors(worldRuntime_.GetMissionNumber());
+                    RefreshTerrainMeshIfChanged();
+                }
+                else
+                    activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "fairplay"),
+                                        activeCheats_.end());
+                break;
+            }
             case TC::Ghost:
             case TC::Quick:
             case TC::None:
@@ -3993,7 +4021,7 @@ namespace GalaxyEggbert::CNA
                 // 10-tap gesture above (layered, not exclusive -- same
                 // idiom as the typed-cheat methods).
                 const bool f12Down = phaseKeys.IsKeyDown(Keys::F12);
-                if (GalaxyEggbert::Game::kCheatsEnabled && f12Down && !f12KeyWasDown_)
+                if (GalaxyEggbert::Game::kCheatsEnabled && !inputPad_.IsCheatEntryLocked() && f12Down && !f12KeyWasDown_)
                 {
                     cheatMenuShown_ = !cheatMenuShown_;
                 }
@@ -5806,7 +5834,8 @@ namespace GalaxyEggbert::CNA
             // Invert/Mirror (plan.md PICKUP-011) -- BlupiController::TriggerInvert()'s gate: not
             // while Hide; taken again while inverted (Decor.cpp:6040, BD-0025).
             const bool canGrantInvert = secretPower != GalaxyEggbert::Def::SecretPower::Hide;
-            // Fire is separate from enter/leave: keyboard F, gamepad RT or the held touch Fire.
+            // Fire: F, tank-only physical Ctrl alias, gamepad RT or touch Fire.
+            // Helicopter Ctrl is reserved for climbing (owner's latest control request).
             // Original reference: blupi_recon/src/event.cpp VK_SPACE/VK_SHIFT -> KEY_FIRE,
             // decblupi.cpp:901 helicopter and :1387 tank; Mobile Decor.cpp:3694/4317.
             // Tank shoots ahead; the helicopter drops downward only while airborne, off a lift.

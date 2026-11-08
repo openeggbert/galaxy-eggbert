@@ -3756,6 +3756,35 @@ int main(int argc, char** argv)
               "CanStandAt: clear with ground under him; not inside the floor; not off the edge");
     }
 
+    // Fairplay clears persistent abilities, preserving ordinary pickups and safe positioning.
+    {
+        Worlds::World floor;
+        for (std::uint16_t x=48;x<=53;++x) for (std::uint16_t z=48;z<=52;++z)
+            floor.setBlock(x,0,z,Worlds::Block::make(BlockTypes::Ground));
+        floor.setBlock(52,1,50,Worlds::Block::make(BlockTypes::Ground));
+        BlupiController cheated;
+        cheated.SetPosition(0,1,0);
+        cheated.SettleOnGround(floor);
+        cheated.UpdateSafePosition(true);
+        cheated.SetCheatSuperBlupi(true);
+        cheated.ToggleGhost(floor);
+        cheated.SetPosition(2,1,0);
+        cheated.DisablePersistentCheats(floor);
+        check(!cheated.IsGhost() && !cheated.GetCheatSuperBlupi() && cheated.GetX()==0 && cheated.GetY()>=1,
+              "fairplay ends god/ghost modes and returns from inside a wall to the last valid position");
+        cheated.TriggerShield();
+        cheated.DisablePersistentCheats(floor);
+        check(cheated.IsShielded(),"fairplay leaves a previously granted pickup reward intact");
+        cheated.ToggleGhost(floor);
+        cheated.SetCheatSuperBlupi(true);
+        cheated.CheatVehicle(BlupiController::VehicleMode::Helicopter,&floor);
+        const float beforeFlight=cheated.GetY();
+        for (int i=0;i<120;++i) cheated.Step(floor,0,0,true,false,true,dt);
+        check(!cheated.IsGhost() && cheated.GetCheatSuperBlupi() &&
+              cheated.GetVehicleMode()==BlupiController::VehicleMode::Helicopter && cheated.GetY()>beforeFlight+.5f,
+              "givecopter replaces Ghost with a working helicopter while retaining independent megablupi");
+    }
+
     // The wasp's sting ends any secret power (Decor.cpp:5845-5847).
     {
         BlupiController stung;

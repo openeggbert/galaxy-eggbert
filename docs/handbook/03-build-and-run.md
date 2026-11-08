@@ -157,8 +157,8 @@ never touch it. `ctest` leaves it alone too (`VerifyGESaveData` uses its own
 Press **F1** for controls help (black text on a translucent white panel). It freezes the current
 screen; F1 or Esc closes it. **WASD or the arrows** move Blupi: W/Up walks forward, A/D or
 Left/Right turns, S/Down turns around and then walks in the new direction. **X or Right Ctrl**
-backs up while keeping his facing. Left Ctrl jumps on foot; **F or Left Ctrl fires glue in a tank or helicopter**. Right Shift climbs
-the helicopter. Space acts/uses/enters/leaves, Left Shift crouches or dives, Right Shift looks up. Crouch + S/Down pulls a crate.
+backs up while keeping his facing. Left Ctrl jumps on foot and raises the helicopter; Left Shift lowers it.
+**F fires glue in a tank or helicopter; Left Ctrl also fires in the tank.** Right Shift can also raise the helicopter. Space acts/uses/enters/leaves, Left Shift crouches or dives, Right Shift looks up. Crouch + S/Down pulls a crate.
 Esc pauses/continues, F3 switches first/third person (third is the default), F11 toggles full screen,
 F5/F6 selects normal/fast speed, Tab toggles slow motion, F12 opens the cheat menu. Left-click menu
 buttons; hold the left mouse button and drag to look around. Walking returns the camera behind him.
@@ -182,6 +182,13 @@ explanation. This overlay pauses the game and closes with F1 or Esc. `cheats` is
 MODERN name (`InputPad.cpp:1318`); `help` is Galaxy's requested alias. `killegg` is listed with its
 actual behavior: no effect, as in the reference.
 
+Type **fairplay** to turn off megablupi, ghost, opendoors, showsecret, compass, quick and zoom,
+then block every other cheat word, F12 and the hidden cheat menu. Type **fairplay** again to
+permit cheats; their old effects do not switch back on automatically. Lives, bombs, ammunition,
+keys, vehicles, powers and earlier world changes are retained. F1 help always works. If Ghost
+ends inside a wall, Blupi returns to his last valid position. This lock is retained by mission
+resume; a build compiled with cheats OFF cannot enable cheats through fairplay.
+
 Water renders the exterior of connected water cells rather than six overlapping faces per cell.
 This keeps the animated surface while making underwater swimming readable in both camera views.
 A submerged camera also gets a blue haze and reduced warm colours, fading at the waterline;
@@ -203,14 +210,14 @@ The first connected gamepad in XNA slots 1-4 controls play (`GamepadInput.hpp`):
 Play's on-screen controls appear only when CNA detects touch-screen capability, including on
 devices with both a keyboard and a touch screen. Desktop mouse clicks in their former areas go
 to camera look. The desktop and an SDL virtual gamepad were checked live on 2026-11-08; physical
-gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v4 to
-record touch capability and the compass toggle; an older/incompatible log falls back to the saved checkpoint.
+gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v5 to
+record touch capability, the compass toggle and the fairplay lock; an older/incompatible log falls back to the saved checkpoint.
 
 Tank shots fly forwards; helicopter glue drops vertically, only in flight and off a lift.
 Both need ammunition (the green ammo pack; `birdlime` supplies ten when cheats are enabled).
 Holding Fire repeats at the original cooldown. Touch devices show a separate **Fire** button
-while driving either armed vehicle; entering/leaving remains Action. The physical Ctrl alias is
-mapped before gamepad keys are merged, so gamepad A and touch Jump still climb the helicopter.
+while driving either armed vehicle; entering/leaving remains Action. The tank-only physical Ctrl alias is
+mapped before gamepad keys are merged. Helicopter Ctrl, gamepad A and touch Jump all climb.
 
 ### 3D editor controls
 

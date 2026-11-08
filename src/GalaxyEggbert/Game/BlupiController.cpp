@@ -1146,8 +1146,12 @@ namespace GalaxyEggbert::Game
         m_vehicleSpeed = 0.0f;
     }
 
-    void BlupiController::CheatVehicle(VehicleMode mode) noexcept
+    void BlupiController::CheatVehicle(VehicleMode mode, const Worlds::World* world) noexcept
     {
+        // A vehicle replaces Ghost; otherwise GhostStep wins over the new vehicle
+        // and only the chase camera reacts while helicopter controls do nothing.
+        if (world) DisableGhost(*world);
+        else m_ghost = false;
         m_vehicleMode = mode;
         m_vehicleSpeed = 0.0f;
         m_nage = false;
@@ -1204,6 +1208,24 @@ namespace GalaxyEggbert::Game
             m_ghost = false;
         }
         return m_ghost;
+    }
+
+    void BlupiController::DisableGhost(const Worlds::World& world) noexcept
+    {
+        if (!m_ghost) return;
+        // Fairplay must end Ghost even inside a wall. Return to the last valid
+        // position in that case, rather than leaving a collidable body in masonry.
+        if (!IsClearAt(world,m_x,m_y,m_z,false))
+            SetPosition(GetValidX(),GetValidY(),GetValidZ());
+        m_ghost = false;
+        m_velocityY = 0;
+        SettleOnGround(world);
+    }
+
+    void BlupiController::DisablePersistentCheats(const Worlds::World& world) noexcept
+    {
+        m_cheatSuperBlupi = false;
+        DisableGhost(world);
     }
 
     bool BlupiController::TriggerSpringBounce(bool jumpHeld) noexcept

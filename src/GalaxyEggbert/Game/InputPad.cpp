@@ -802,9 +802,9 @@ namespace GalaxyEggbert::Game
                 "W / Up: walk forward",
                 "A D / Left Right: turn",
                 "S / Down: turn around, then walk",
-                "Left Ctrl: jump (on foot)",
+                "Left Ctrl: jump / helicopter up",
                 "Space: action / enter / leave",
-                "F / Left Ctrl: vehicle glue",
+                "F: vehicle glue; Ctrl: tank glue",
                 "X / Right Ctrl: back up",
                 "Left Shift: crouch / dive",
                 "Crouch + S / Down: pull crate",
@@ -1942,7 +1942,7 @@ namespace GalaxyEggbert::Game
     bool InputPad::UpdateCheatGesture(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                         int viewportW, int viewportH) noexcept
     {
-        if (!kCheatsEnabled) return false;
+        if (!kCheatsEnabled || cheatEntryLocked_) return false;
         using Microsoft::Xna::Framework::Input::ButtonState;
 
         const float scale = static_cast<float>(viewportH) / kRefH;
@@ -1987,7 +1987,7 @@ namespace GalaxyEggbert::Game
     int InputPad::UpdateCheatMenu(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                     int viewportW, int viewportH) noexcept
     {
-        if (!kCheatsEnabled) return 0;
+        if (!kCheatsEnabled || cheatEntryLocked_) return 0;
         using Microsoft::Xna::Framework::Input::ButtonState;
 
         const float scale = static_cast<float>(viewportH) / kRefH;
@@ -2050,9 +2050,18 @@ namespace GalaxyEggbert::Game
             {"help", TypedCheat::Help, "List cheats and explanations"},
             {"cheats", TypedCheat::Help, "Same as help (Mobile Eggbert)"},
             {"compass", TypedCheat::Compass, "Toggle distance + turn/height arrows"},
+            {"fairplay", TypedCheat::FairPlay, "Toggle cheat lock; clear active toggles"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;
+    }
+
+    void InputPad::SetCheatEntryLocked(bool locked) noexcept
+    {
+        cheatEntryLocked_ = locked;
+        cheatGestureIndex_ = 0;
+        cheatActiveControl_ = -1;
+        cheatMouseWasDown_ = false;
     }
 
     InputPad::TypedCheatResult InputPad::UpdateTypedGhostCheat(
@@ -2094,6 +2103,7 @@ namespace GalaxyEggbert::Game
                 const TypedCheatWord* words = TypedCheatWords(count);
                 for (int ci = 0; ci < count; ++ci)
                 {
+                    if (cheatEntryLocked_ && words[ci].cheat != TypedCheat::FairPlay) continue;
                     const std::string name = words[ci].word;
                     if (typedCheatBuffer_.size() >= name.size() &&
                         typedCheatBuffer_.compare(typedCheatBuffer_.size() - name.size(), name.size(), name) == 0)

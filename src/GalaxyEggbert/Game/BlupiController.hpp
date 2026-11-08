@@ -924,6 +924,8 @@ namespace GalaxyEggbert::Game
         // every other Trigger*() here, even though this one isn't gated
         // on anything when turning on).
         bool ToggleGhost(const Worlds::World& world) noexcept;
+        void DisableGhost(const Worlds::World& world) noexcept;
+        void DisablePersistentCheats(const Worlds::World& world) noexcept;
 
         // The typed cheats' direct effects on him (Decor::CheatAction, Decor.cpp:1774-2095;
         // OR-0007). CheatVehicle: funskate, givecopter, jeepdrive, drivetank, iovercraft -- he is
@@ -931,7 +933,7 @@ namespace GalaxyEggbert::Game
         // and the tank also end the Cloud and Hide). CheatShield: roundshield -- the shield, any
         // other power gone. CheatClearForAction: quicklollypop, powercharge, hidedrink -- no
         // vehicle, no power, before the Sucette/Charge/Drink clip (TriggerPickupFreeze) gives one.
-        void CheatVehicle(VehicleMode mode) noexcept;
+        void CheatVehicle(VehicleMode mode, const Worlds::World* world = nullptr) noexcept;
         void CheatShield() noexcept;
         void CheatClearForAction() noexcept;
         [[nodiscard]] bool IsGhost() const noexcept { return m_ghost; }

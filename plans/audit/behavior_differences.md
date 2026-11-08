@@ -1540,3 +1540,27 @@ clocks. The editor now advances active lift families1/47/48 through the same Adv
 routine as Play, including XYZ interpolation, dwell and return. It changes only runtime positions,
 leaving authored endpoints, numbered markers and world save data intact. Tests compare complete
 cycles against Play and verify that unrelated objects are neither moved nor collected.
+
+## BD-0091 — owner-requested fairplay cheat-entry lock — FIXED_AND_VERIFIED
+
+`fairplay` clears persistent cheat toggles and blocks other cheat words, F12 and the hidden menu,
+while remaining available to unlock. It retains earlier rewards/world changes and does not
+automatically reactivate toggles on unlock. InputPad owns the lock; host dispatch is guarded too.
+Resume format5 records its initial value. All28-word parser/lock tests pass; CMake OFF input tests
+confirm this word cannot bypass a compiled-out cheat system. Live toggle test retains resources
+and reconstructs exactly with RESUME SELFTEST equal while locked.
+
+## BD-0092 — givecopter could leave GhostStep overriding the helicopter — FIXED_AND_VERIFIED
+
+The owner reported camera movement without a usable helicopter, then reported it working again.
+Standalone givecopter passed; ghost→givecopter reproduced a helicopter flag with GhostStep still
+controlling motion and pose. Vehicle cheats now replace Ghost (a Galaxy cheat-state correction
+requested by the owner), without clearing independent megablupi. Normal Ghost toggling retains
+its original blocked-position refusal; forced replacement can return to the last valid position.
+Controller regression and live reproduction verify that the resulting helicopter really climbs.
+
+## BD-0093 — physical Left Ctrl was remapped away from helicopter climb — FIXED_AND_VERIFIED
+
+The earlier request added Ctrl fire to both armed vehicles. The owner clarified that helicopter
+Left Ctrl must climb. The physical Ctrl→F remap now applies only in the tank. Helicopter F still
+drops glue, Ctrl/RightShift rise, LeftShift descends; gamepad A/LB and separate RT fire are unchanged.

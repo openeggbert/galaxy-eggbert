@@ -494,6 +494,7 @@ namespace GalaxyEggbert::Game
             Zoom,         // "zoom" (MODERN): the view out 1x -> 2x -> 4x -> 8x -> 16x (6 %) -> 1x
             Help,         // "help" / "cheats": display every supported cheat and its effect
             Compass,      // "compass": distance to nearest chest, then the exit/key
+            FairPlay,     // "fairplay": clear persistent cheats and lock/unlock other cheat input
         };
         struct TypedCheatResult
         {
@@ -510,6 +511,8 @@ namespace GalaxyEggbert::Game
             const char* description;
         };
         [[nodiscard]] static const TypedCheatWord* TypedCheatWords(int& count) noexcept;
+        void SetCheatEntryLocked(bool locked) noexcept;
+        [[nodiscard]] bool IsCheatEntryLocked() const noexcept { return cheatEntryLocked_; }
         // Each result is set for exactly the one call where its word was completed; always empty
         // outside Play.
         [[nodiscard]] TypedCheatResult UpdateTypedGhostCheat(
@@ -774,6 +777,7 @@ namespace GalaxyEggbert::Game
         // UpdateTypedGhostCheat()'s own comment) -- real rolling
         // lowercase-letter buffer plus per-key down-edge tracking.
         std::string typedCheatBuffer_;
+        bool cheatEntryLocked_ = false;
         bool letterKeyWasDown_[26] = {};
         std::uint32_t suppressedGameplayLetters_ = 0;
         float typedIdleSeconds_ = 0;

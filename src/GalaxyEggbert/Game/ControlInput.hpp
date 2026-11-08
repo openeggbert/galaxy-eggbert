@@ -27,13 +27,13 @@ namespace GalaxyEggbert::Game
             keys.IsKeyDown(Keys::X) || keys.IsKeyDown(Keys::RightControl)};
     }
 
-    // Remap the physical keyboard before adding the gamepad's synthetic Jump key. Thus
-    // Left Ctrl fires in an armed vehicle while a gamepad A still jumps/climbs normally.
+    // Remap physical Ctrl only in the tank, before the gamepad's synthetic Jump key.
+    // In the helicopter Ctrl and gamepad A both climb; F is its keyboard glue drop.
     [[nodiscard]] inline Microsoft::Xna::Framework::Input::KeyboardState VehicleFireKeyboard(
-        const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool armedVehicle)
+        const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool inTank)
     {
         using namespace Microsoft::Xna::Framework::Input;
-        if (!armedVehicle || !keyboard.IsKeyDown(Keys::LeftControl)) return keyboard;
+        if (!inTank || !keyboard.IsKeyDown(Keys::LeftControl)) return keyboard;
         const auto pressed=keyboard.GetPressedKeys();
         std::unordered_set<Keys> keys(pressed.begin(),pressed.end());
         keys.erase(Keys::LeftControl);

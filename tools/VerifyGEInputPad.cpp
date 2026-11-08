@@ -53,7 +53,7 @@ int main()
         const auto armed=VehicleFireKeyboard(keys({Keys::LeftControl,Keys::Up}),true);
         check(onFoot.IsKeyDown(Keys::LeftControl) && !onFoot.IsKeyDown(Keys::F) &&
               armed.IsKeyDown(Keys::F) && !armed.IsKeyDown(Keys::LeftControl) && armed.IsKeyDown(Keys::Up),
-              "physical Left Ctrl jumps on foot, fires in tank/helicopter, and preserves other controls");
+              "physical Left Ctrl jumps on foot or climbs a helicopter; only the tank remaps it to glue fire");
         const auto wasd = ReadPlayDirections(keys({Keys::W, Keys::A}));
         const auto arrows = ReadPlayDirections(keys({Keys::Up, Keys::Left}));
         check(wasd.move == arrows.move && wasd.turn == arrows.turn && wasd.move == 1 && wasd.turn == -1,
@@ -819,7 +819,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 27;
+        bool all = count == 28;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -828,11 +828,24 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 27 words including compass/help/cheats fire and have an explanation");
+        check(all, "Typed cheats: all 28 words including fairplay/compass/help/cheats fire and have an explanation");
         InputPad pad;
         check(type(pad, "givecopter").first == TC::GiveCopter && type(pad, "copter").first == TC::None,
               "Typed cheats: givecopter fires; the buffer is cleared after a word (\"copter\" alone is nothing)");
         check(type(pad, "xxjeepdrive").first == TC::JeepDrive, "Typed cheats: a word after other letters still fires");
+        InputPad locked;
+        locked.SetCheatEntryLocked(true);
+        bool blocked=true;
+        for (int i=0;i<count;++i)
+            if (words[i].cheat!=TC::FairPlay)
+                blocked &= type(locked,words[i].word).second==0;
+        check(blocked && type(locked,"fairplay").first==TC::FairPlay,
+              "fairplay blocks every other typed cheat including ghost/quick flags, but can always unlock itself");
+        locked.ResetMissionInput();
+        check(locked.IsCheatEntryLocked(),"fairplay lock survives mission input reset");
+        locked.SetCheatEntryLocked(false);
+        check(type(locked,"megablupi").first==TC::MegaBlupi && type(locked,"compass").first==TC::Compass,
+              "unlocking fairplay permits other cheats again");
     }
 
     {
@@ -878,7 +891,7 @@ int main()
         int count=1;
         (void)InputPad::TypedCheatWords(count);
         bool none=count==0;
-        for(char c:std::string("ghostcompasshelpweelkeys"))
+        for(char c:std::string("ghostcompasshelpweelkeysfairplay"))
         {
             const auto key=static_cast<Keys>(int(Keys::A)+c-'a');
             none &= pad.UpdateTypedGhostCheat(KeyboardState{key},true).cheat==InputPad::TypedCheat::None;

@@ -10,6 +10,26 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Follow-up `fairplay`: toggles InputPad's runtime cheat-entry lock, clearing persistent
+  megablupi/ghost/doors/secrets/compass/quick/zoom flags on locking, and closes/blocks F12 and hidden
+  menu/gesture. Only fairplay remains recognized while locked. Consumable rewards and earlier
+  effects (lives, bombs, ammo, keys, vehicles, powers, world changes) are retained. Unlocking does
+  not reactivate old toggles. The lock survives input resets and resume format5 (older versions
+  checkpoint-fallback). Parser tests cover all28 words, locked matching and unlock; CMake OFF
+  VerifyGEInputPad passed and cache restored ON. Live toggle test preserves9 lives,10 bombs,
+  ammo/keys/dynamite and reports RESUME SELFTEST equal while locked. Evidence: build-probe/fairplay/.
+- The owner's givecopter symptom later stopped reproducing for them. A separate confirmed
+  ghost→givecopter conflict left GhostStep winning over the helicopter while the camera changed;
+  vehicle cheats now end Ghost and remove its label, preserving independent megablupi. The live
+  test reproduces the old failure and verifies an actual climb after the fix. Forced Ghost exit
+  inside terrain uses the last valid position; ordinary ToggleGhost's original refusal is unchanged.
+- Latest helicopter binding: physical Left Ctrl climbs again, Left Shift descends; Right Shift
+  remains an alternate climb. F drops helicopter glue; tank F/LeftCtrl, pad RT and touch Fire
+  retain firing. The physical-key remap now applies only in the tank, with F1/manual updated.
+  Verified with real X11 LeftCtrl/LeftShift events (climb then land), a full vertical-control
+  autoplay, and all113 tests. The descent retains the original inertia; the test waits through
+  deceleration. The delivered binary and CMake cache are cheats ON.
+
 - Keyboard-free editor: `EditorDeviceControls` fronts the existing palette/commands without world
   mutations of its own. Touch Move+look works together, Up/Down change height, Tools exposes commands;
   gamepad LS/RS fly/look, RT/LT up/down, A Place, X Remove, B Cancel, D-pad X/Z and shoulders Y offsets,
@@ -28,12 +48,12 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   no panel. Touch layouts offset it clear of both stick orientations, Crouch, Jump and Fire.
   Relative-heading math and typed input tests pass; live probes783/784 show right/left as Blupi
   turns and up/down for targets at different heights. Evidence: build-probe/compass-relative/.
-- Cheat catalog27 entries includes compass/help/cheats. Recognized prefixes consume following
+- Cheat catalog28 entries includes fairplay/compass/help/cheats. Recognized prefixes consume following
   letter keys until release, including the final S of weelkeys; the original rolling buffer survives
   slow typing. A fresh movement key still works. CMake/macro GALAXY_EGGBERT_ENABLE_CHEATS defaults ON;
   OFF gates typed words, hidden gesture/menu, F12 and cheat application. OFF build+113tests/live
-  checked, then restored ON; current binary/cache are ON and all words tested. Resume format4 stores
-  compass (v3 logs checkpoint-fallback); mission051 reconstruction reports RESUME SELFTEST equal.
+  checked, then restored ON; current binary/cache are ON and all words tested. Resume format5 stores
+  compass and the fairplay lock (older logs checkpoint-fallback); mission051 reconstruction reports RESUME SELFTEST equal.
 - Main menu Help matches F1. Its visible [Close] consumes its pointer through release, preventing
   click-through into Exit/Play. Fullscreen/Window is upper left, names the other mode, and persists
   global fullscreen=0/1 in savedata.txt (default window). F11 is global and persists too. Native
