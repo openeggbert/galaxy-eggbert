@@ -170,8 +170,10 @@ changes persist globally as `fullscreen=0/1` in `savedata.txt`, restored at the 
 Type **compass** to toggle the lower-right objective aid (off by default). It shows the nearest
 active chest's straight-line **3D distance in blocks**, rounded to the nearest integer. After all
 chests are collected, or if the level has none, it points to the nearest red exit arrow or golden
-key. Below the number, X/Y/Z arrows give the signs of target-minus-player in world coordinates;
-Y up/down is height, X and Z are the horizontal axes, and a dash means aligned within 0.1 block.
+key. The second row is `<` or `>` for the shortest turn left/right relative to Blupi's facing.
+The third is `^` or `v` when the target is above/below him. There are no X/Y/Z labels; aligned
+directions are blank (within3 degrees horizontally or0.1 block vertically). A target exactly behind
+chooses right, since either half-turn is valid.
 It is a direction/distance through space, not a route finder. Touch layouts keep the whole panel
 clear of the controls. Recognized cheat prefixes consume their following letter keys until
 release, so the S ending `weelkeys` cannot turn Blupi around; a fresh S still works.

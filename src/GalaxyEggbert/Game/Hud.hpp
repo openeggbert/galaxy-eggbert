@@ -158,7 +158,7 @@ namespace GalaxyEggbert::Game
                   float voyageX, float voyageY,
                   GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity = 1.0f,
                   std::optional<ObjectiveHint> objective = std::nullopt,
-                  bool rightTouchControls = false);
+                  bool rightTouchControls = false, float blupiYaw = 0);
 
         // Projects a 3D world position into this class's own 640x480
         // reference screen space (plan.md `158`) -- the real Voyage

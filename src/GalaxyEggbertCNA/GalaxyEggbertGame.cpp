@@ -8390,7 +8390,7 @@ namespace GalaxyEggbert::CNA
                           cheatCompass_ && GalaxyEggbert::Game::kCheatsEnabled
                               ? InteractionSystem::NearestObjective(
                                   worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()) : std::nullopt,
-                          tickInput_.touchControlsEnabled);
+                          tickInput_.touchControlsEnabled, blupi_.GetYaw());
             }
 
             // On-screen touch controls (2026-07-13, plan.md

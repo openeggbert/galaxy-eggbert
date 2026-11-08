@@ -799,6 +799,31 @@ int main(int argc, char** argv)
 
     }
 
+    {
+        constexpr float pi=std::numbers::pi_v<float>;
+        for (float yaw : {0.f,pi/2,pi,-pi/2,2*pi+.3f})
+        {
+            const ObjectiveHint ahead{10,10*std::sin(yaw),0,-10*std::cos(yaw)};
+            const ObjectiveHint right{10,10*std::cos(yaw),0,10*std::sin(yaw)};
+            const ObjectiveHint left{10,-right.dx,0,-right.dz};
+            check(ObjectiveCompassArrows(ahead,yaw).turn==0 &&
+                  ObjectiveCompassArrows(right,yaw).turn=='>' && ObjectiveCompassArrows(left,yaw).turn=='<',
+                  "compass left/right follows Blupi's facing, including wrapped yaw, with ahead blank");
+            const ObjectiveHint behind{10,-ahead.dx,0,-ahead.dz};
+            check(ObjectiveCompassArrows(behind,yaw).turn=='>',
+                  "a target exactly behind consistently chooses one valid half-turn");
+        }
+        check(ObjectiveCompassArrows({10,std::sin(-pi+.1f),0,-std::cos(-pi+.1f)},pi-.1f).turn=='>' &&
+              ObjectiveCompassArrows({10,std::sin(pi-.1f),0,-std::cos(pi-.1f)},-pi+.1f).turn=='<',
+              "compass chooses the short turn across the minus/plus-pi boundary");
+        const auto above=ObjectiveCompassArrows({3,0,3,0},1);
+        const auto below=ObjectiveCompassArrows({3,0,-3,0},1);
+        const auto aligned=ObjectiveCompassArrows({0,0,.05f,0},1);
+        check(above.turn==0 && above.height=='^' && below.turn==0 && below.height=='v' &&
+              aligned.turn==0 && aligned.height==0,
+              "height arrows are independent of heading; aligned height and vertical-only turning stay blank");
+    }
+
     if (const auto* chest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))
     {
         const float cx = chest->currentX, cy = chest->currentY, cz = chest->currentZ;

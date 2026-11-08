@@ -291,7 +291,7 @@ namespace GalaxyEggbert::Game
                      bool voyageIsBlupiChannel,
                      float voyageX, float voyageY,
                      GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity,
-                     std::optional<ObjectiveHint> objective, bool rightTouchControls)
+                     std::optional<ObjectiveHint> objective, bool rightTouchControls, float blupiYaw)
     {
         if (!loaded_)
         {
@@ -727,12 +727,10 @@ namespace GalaxyEggbert::Game
         {
             char number[32];
             std::snprintf(number, sizeof(number), "%ld", std::lround(objective->distance));
-            const auto arrow = [](float delta, bool vertical) {
-                if (std::fabs(delta) < .1f) return '-';
-                return vertical ? (delta > 0 ? '^' : 'v') : (delta > 0 ? '>' : '<');
-            };
-            const std::array<std::string,4> lines{number, std::string("X ")+arrow(objective->dx,false),
-                std::string("Y ")+arrow(objective->dy,true), std::string("Z ")+arrow(objective->dz,false)};
+            const auto arrows = ObjectiveCompassArrows(*objective, blupiYaw);
+            const std::array<std::string,3> lines{number,
+                arrows.turn ? std::string(1,arrows.turn) : std::string{},
+                arrows.height ? std::string(1,arrows.height) : std::string{}};
             constexpr float textScale=.6f, top=338, rowHeight=19;
             float width=0;
             for (const auto& text : lines) width=std::max(width,TextMetrics::Width(text)*textScale);
@@ -742,11 +740,11 @@ namespace GalaxyEggbert::Game
             const float padW=float(padTexture_.getWidthProperty()),padH=float(padTexture_.getHeightProperty());
             const int col=kPanelIcon%kPadCols,row=kPanelIcon/kPadCols;
             padQuads.push_back({refToScreenX(left-6),refToScreenY(top-3),refToScreenX(right+6),
-                refToScreenY(top+rowHeight*3+23),col*kPadCellPx/padW,row*kPadCellPx/padH,
+                refToScreenY(top+rowHeight*2+23),col*kPadCellPx/padW,row*kPadCellPx/padH,
                 (col+1)*kPadCellPx/padW,(row+1)*kPadCellPx/padH});
             for (std::size_t i=0;i<lines.size();++i)
             {
-                float penX=right-TextMetrics::Width(lines[i])*textScale;
+                float penX=left+(width-TextMetrics::Width(lines[i])*textScale)*.5f;
                 const float y=top+rowHeight*float(i);
                 for (const char c : lines[i])
                 {

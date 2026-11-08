@@ -65,7 +65,8 @@ content-authoring UX, but not new gameplay mechanics.
   reaching buttons underneath. **Fullscreen / Window** always offers the other mode, remembers
   `fullscreen=0/1` in savedata.txt, and starts windowed when no preference exists; F11 also persists.
 - `compass` toggles the optional lower-right aid (default off): nearest active chest, then nearest
-  red exit arrow/golden key; integer-rounded straight-line distance and X/Y/Z direction arrows.
+  red exit arrow/golden key. Three unlabelled rows show integer-rounded straight-line distance,
+  a left/right turn relative to Blupi's facing, and up/down height. Aligned directions are blank.
   Touch layouts leave it clear of controls. `help`/`cheats` explain it. Recognized cheat prefixes
   consume letter controls through release (`weelkeys` no longer turns Blupi with its final S);
   slow typing still works. CMake/macro `GALAXY_EGGBERT_ENABLE_CHEATS=OFF` disables typed and hidden

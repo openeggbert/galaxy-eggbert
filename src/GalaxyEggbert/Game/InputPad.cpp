@@ -2049,7 +2049,7 @@ namespace GalaxyEggbert::Game
             {"zoom", TypedCheat::Zoom, "Cycle chase-camera distance"},
             {"help", TypedCheat::Help, "List cheats and explanations"},
             {"cheats", TypedCheat::Help, "Same as help (Mobile Eggbert)"},
-            {"compass", TypedCheat::Compass, "Toggle distance + X/Y/Z arrows"},
+            {"compass", TypedCheat::Compass, "Toggle distance + turn/height arrows"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;

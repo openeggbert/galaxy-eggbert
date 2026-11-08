@@ -21,8 +21,13 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   dimensions display, Place fills, Remove clears, Escape cancels, one Undo restores all cells.
   Tools Select3D supplies Shift for touch/pad; six visible offset buttons or D-pad/shoulders extend it.
 - `compass` is off by default. It displays rounded 3D distance to the nearest active chest, switching
-  to red arrow/golden key if no chest remains or existed, with X/Y/Z arrows underneath. No target,
+  to red arrow/golden key if no chest remains or existed. The owner replaced world-axis labels with
+  three rows: distance, relative turn (< or >), height (^ or v). ObjectiveCompassArrows uses Blupi's
+  yaw and the shortest horizontal turn; a target directly behind consistently chooses right.
+  Directions aligned within3 degrees or0.1 block vertically are blank. No target,
   no panel. Touch layouts offset it clear of both stick orientations, Crouch, Jump and Fire.
+  Relative-heading math and typed input tests pass; live probes783/784 show right/left as Blupi
+  turns and up/down for targets at different heights. Evidence: build-probe/compass-relative/.
 - Cheat catalog27 entries includes compass/help/cheats. Recognized prefixes consume following
   letter keys until release, including the final S of weelkeys; the original rolling buffer survives
   slow typing. A fresh movement key still works. CMake/macro GALAXY_EGGBERT_ENABLE_CHEATS defaults ON;
