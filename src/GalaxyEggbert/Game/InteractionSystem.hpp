@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <array>
 #include <functional>
+#include <optional>
 #include <random>
 #include <unordered_set>
 #include <vector>
@@ -662,6 +663,10 @@ namespace GalaxyEggbert::Game
         void TickMagicTrail(WorldRuntime& worldRuntime, float blupiX, float blupiY, float blupiZ, bool isShielded,
                              bool isPowered);
 
+        // Galaxy HUD addition (owner 2026-11-08): straight-line distance in world blocks,
+        // excluding collected chests even while their reward is still flying to the HUD.
+        [[nodiscard]] static std::optional<float> NearestTreasureDistance(
+            const WorldRuntime& world, float x, float y, float z) noexcept;
         [[nodiscard]] int TreasuresCollected() const noexcept { return treasuresCollected_; }
         [[nodiscard]] int TotalTreasures() const noexcept { return totalTreasures_ < 0 ? 0 : totalTreasures_; }
         // Testability accessor for the Blitz-emitter zap sound's lazy world

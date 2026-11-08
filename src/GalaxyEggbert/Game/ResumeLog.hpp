@@ -25,6 +25,7 @@ namespace GalaxyEggbert::Game
         unsigned buttons = 0;
         int viewportWidth = 1, viewportHeight = 1;
         std::vector<ResumeTouch> touches;
+        bool touchControlsEnabled = false; // capability at capture time, also used on replay
         bool accelValid = false;
         bool accelReset = false;
         float accelY = 0.0f; // The only accelerometer component read by play.

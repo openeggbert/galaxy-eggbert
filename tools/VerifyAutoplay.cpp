@@ -427,15 +427,23 @@ int main()
         input.viewportWidth = 1280; input.viewportHeight = 720;
         input.touches = {{7, 123.45678f, 300.0f, 1}, {8, 700.0f, 250.0f, 3}};
         input.accelValid = true; input.accelY = -0.123456791f;
+        input.touchControlsEnabled = true;
         log.Append(input); log.Append(input);
-        input.keys.clear(); log.Append(input);
+        input.keys.clear(); input.touchControlsEnabled = false; log.Append(input);
         check(log.runs.size() == 2 && log.runs[0].count == 2 && log.TickCount() == 3,
               "resume RLE merges only consecutive identical ticks");
         ResumeLog parsed;
         const auto text = log.Serialize();
         check(ResumeLog::Parse(text, "test build", parsed) && parsed.start == log.start && parsed.runs == log.runs,
-              "resume v2 round trip retains world path/hash, start, all raw inputs and exact float values");
-        check(text.starts_with("GALAXY_RESUME 2\n"), "resume writes format version 2");
+              "resume v3 round trip retains world identity, touch capability and all raw inputs");
+        check(text.starts_with("GALAXY_RESUME 3\n"), "resume writes format version 3");
+        check(parsed.runs[0].input.touchControlsEnabled && !parsed.runs[1].input.touchControlsEnabled,
+              "resume replays the captured touch capability without querying the current device");
+        auto oldBody = text.substr(0, text.rfind("\nEND ") + 1);
+        oldBody.replace(0, std::string("GALAXY_RESUME 3").size(), "GALAXY_RESUME 2");
+        check(!ResumeLog::Parse(oldBody + "END " + std::to_string(ResumeLog::HashBytes(oldBody)) + "\n",
+                               "test build", parsed) && parsed.start == log.start,
+              "version 2 without a captured touch capability is refused transactionally");
         check(parsed.MatchesWorld(log.start.worldPath, log.start.worldHash), "same world is accepted");
         check(!parsed.MatchesWorld(log.start.worldPath, log.start.worldHash ^ 1), "changed world hash is refused");
         check(!parsed.MatchesWorld("worlds3d/world045.vwr", log.start.worldHash), "different world path is refused");

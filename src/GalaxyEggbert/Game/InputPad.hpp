@@ -139,6 +139,10 @@ namespace GalaxyEggbert::Game
         void DrawPlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                       int viewportW, int viewportH);
 
+        // Galaxy's F1 overlay: black text over a translucent white panel.
+        void DrawControlsHelp(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                              int viewportW, int viewportH, bool cheats = false);
+
         // Pause-row buttons. showBack/showRestart mirror the real
         // conditional visibility (`mission!=1`, `mission!=1 &&
         // mission%10!=0`) -- Menu/Setup/Continue are always shown, matching
@@ -486,6 +490,7 @@ namespace GalaxyEggbert::Game
             Ghost,        // "ghost" (MODERN): walk through walls
             Quick,        // "quick" (MODERN): F7/F8 unlocked
             Zoom,         // "zoom" (MODERN): the view out 1x -> 2x -> 4x -> 8x -> 16x (6 %) -> 1x
+            Help,         // "help" / "cheats": display every supported cheat and its effect
         };
         struct TypedCheatResult
         {
@@ -499,6 +504,7 @@ namespace GalaxyEggbert::Game
         {
             const char* word;
             TypedCheat cheat;
+            const char* description;
         };
         [[nodiscard]] static const TypedCheatWord* TypedCheatWords(int& count) noexcept;
         // Each result is set for exactly the one call where its word was completed; always empty
@@ -594,6 +600,7 @@ namespace GalaxyEggbert::Game
             // selected gamer slot -- content-creation tooling, exempt from
             // the faithful-remake rule (see plan.md section 6).
             bool editorPressed = false;
+            bool exitPressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;
@@ -700,6 +707,7 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> speedyblupiEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> gearEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> buttonEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> helpPanelEffect_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> padRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> padPressedRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> pauseBgRenderer_;
@@ -714,6 +722,7 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> speedyblupiRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> gearRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> buttonRenderer_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> helpPanelRenderer_;
         bool loaded_ = false;
 
         // Edge-trigger press tracking: which logical button (if any) the

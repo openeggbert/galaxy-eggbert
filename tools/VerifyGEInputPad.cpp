@@ -1,4 +1,5 @@
 #include <GalaxyEggbert/Game/GamepadInput.hpp>
+#include <GalaxyEggbert/Game/ControlInput.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
 
 #include <Microsoft/Xna/Framework/Input/MouseState.hpp>
@@ -7,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <unordered_set>
 
 // Scripted, non-interactive verification of InputPad (2026-07-13,
 // plan.md MENU-021..027/028..039) -- proves the on-screen D-pad/Jump/
@@ -39,6 +41,52 @@ int main()
         return MouseState(x, y, 0, left, ButtonState::Released, ButtonState::Released,
                            ButtonState::Released, ButtonState::Released);
     };
+
+    {
+        using Microsoft::Xna::Framework::Input::KeyboardState;
+        using Microsoft::Xna::Framework::Input::Keys;
+        const auto keys = [](std::initializer_list<Keys> held) {
+            return KeyboardState(std::unordered_set<Keys>(held));
+        };
+        const auto wasd = ReadPlayDirections(keys({Keys::W, Keys::A}));
+        const auto arrows = ReadPlayDirections(keys({Keys::Up, Keys::Left}));
+        check(wasd.move == arrows.move && wasd.turn == arrows.turn && wasd.move == 1 && wasd.turn == -1,
+              "WASD uses the same movement and turning as the arrows");
+        const auto reverse = ReadPlayDirections(keys({Keys::S, Keys::D}));
+        check(reverse.move == -1 && reverse.turn == 1, "S and D map to Down and Right");
+        const auto both = ReadPlayDirections(keys({Keys::W, Keys::Up, Keys::D, Keys::Right}));
+        check(both.move == 1 && both.turn == 1, "WASD plus arrows cannot double movement speed");
+        const auto opposite = ReadPlayDirections(keys({Keys::W, Keys::Down, Keys::Left, Keys::D}));
+        check(opposite.move == 0 && opposite.turn == 0, "opposing keys from either set cancel");
+        check(ReadPlayDirections(keys({Keys::X})).backUp &&
+                  ReadPlayDirections(keys({Keys::RightControl})).backUp &&
+                  !ReadPlayDirections(keys({Keys::S})).backUp,
+              "X and Right Ctrl back up; S retains the turn-around command");
+        ControlsHelp help;
+        check(!help.Update(keys({})), "closed help lets the game update");
+        check(help.Update(keys({Keys::F1})) && help.shown, "F1 opens help and freezes the game");
+        check(help.Update(keys({Keys::F1})) && help.shown, "holding F1 keeps help open");
+        (void)help.Update(keys({}));
+        check(help.Update(keys({Keys::Escape})) && !help.shown, "Escape closes help and consumes its frame");
+        check(!help.Update(keys({Keys::Escape})), "help releases the game after closing");
+        (void)help.Update(keys({}));
+        (void)help.Update(keys({Keys::F1}));
+        (void)help.Update(keys({}));
+        check(help.Update(keys({Keys::F1})) && !help.shown, "a second F1 press closes help");
+    }
+
+    {
+        InputPad pad;
+        const auto press = pad.UpdateInit(mouse(585, 50, true), kViewportW, kViewportH);
+        const auto held = pad.UpdateInit(mouse(585, 50, true), kViewportW, kViewportH);
+        const auto release = pad.UpdateInit(mouse(585, 50, false), kViewportW, kViewportH);
+        check(!press.exitPressed && !held.exitPressed && release.exitPressed && !release.playPressed &&
+                  !release.editorPressed && !release.setupPressed && release.gamerSelected == -1,
+              "main-menu Exit fires once on release and cannot trigger other buttons");
+        (void)pad.UpdateInit(mouse(1170, 100, true), 1280, 960);
+        check(pad.UpdateInit(mouse(1170, 100, false), 1280, 960).exitPressed,
+              "Exit hit area scales with the viewport");
+    }
 
     // --- Play: D-pad discrete drag ---
     {
@@ -715,15 +763,16 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 24;
+        bool all = count == 26;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
             const auto [fired, firings] = type(pad, words[i].word);
             const bool quickInside = words[i].cheat == TC::QuickLollipop; // "quick" fires on the way
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
+            all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: each of the original's 21 words and ghost/quick/zoom fires its own cheat");
+        check(all, "Typed cheats: all 26 words including help/cheats fire and have an explanation");
         InputPad pad;
         check(type(pad, "givecopter").first == TC::GiveCopter && type(pad, "copter").first == TC::None,
               "Typed cheats: givecopter fires; the buffer is cleared after a word (\"copter\" alone is nothing)");

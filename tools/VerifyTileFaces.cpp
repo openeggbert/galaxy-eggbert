@@ -11,6 +11,7 @@
 #include <GalaxyEggbert/Game/TerrainModelCells.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
+#include <GalaxyEggbert/Game/WaterSurface.hpp>
 
 #include <algorithm>
 #include <array>
@@ -34,6 +35,41 @@ int main()
         allOk = allOk && condition;
     };
     const GalaxyEggbert::Game::TileAtlas atlas;
+    {
+        using GalaxyEggbert::Worlds::World;
+        using GalaxyEggbert::Worlds::Block;
+        using namespace GalaxyEggbert::BlockTypes;
+        using GalaxyEggbert::Game::WaterSurfaceFaces;
+        World water(2);
+        water.setBlock(5, 5, 5, Block::make(Water1));
+        check(WaterSurfaceFaces(water, 5, 5, 5) == 0x3f,
+              "an isolated water block retains its six exterior faces");
+        water.setBlock(6, 5, 5, Block::make(Water2));
+        const auto positiveX = 1u << static_cast<unsigned>(BoxFace::PositiveX);
+        const auto negativeX = 1u << static_cast<unsigned>(BoxFace::NegativeX);
+        check(WaterSurfaceFaces(water, 5, 5, 5) == (0x3f ^ positiveX) &&
+                  WaterSurfaceFaces(water, 6, 5, 5) == (0x3f ^ negativeX),
+              "mixed water families hide both internal faces at their shared boundary");
+        water.setBlock(5, 6, 5, Block::make(92)); // a stored animation frame is water too
+        check((WaterSurfaceFaces(water, 5, 5, 5) & (1u << unsigned(BoxFace::PositiveY))) == 0 &&
+                  (WaterSurfaceFaces(water, 5, 6, 5) & (1u << unsigned(BoxFace::NegativeY))) == 0,
+              "a submerged cell has no internal ceiling, including beside an animation frame");
+        World pool(2);
+        int faces = 0;
+        for (int x = 4; x <= 6; ++x)
+            for (int y = 4; y <= 6; ++y)
+                for (int z = 4; z <= 6; ++z) pool.setBlock(x, y, z, Block::make(Water1));
+        for (int x = 4; x <= 6; ++x)
+            for (int y = 4; y <= 6; ++y)
+                for (int z = 4; z <= 6; ++z)
+                    for (unsigned face = 0; face < 6; ++face)
+                        faces += (WaterSurfaceFaces(pool, x, y, z) >> face) & 1;
+        check(WaterSurfaceFaces(pool, 5, 5, 5) == 0 && faces == 54,
+              "a 3x3x3 pool draws only its 54 exterior faces instead of 162 stacked faces");
+        pool.setBlock(0, 0, 0, Block::make(Water1));
+        check(WaterSurfaceFaces(pool, 0, 0, 0) == 0x3f,
+              "water at the world boundary keeps its outward faces without out-of-range reads");
+    }
     const auto faces = [&atlas](int icon)
     {
         BoxFaces out;

@@ -18,6 +18,7 @@
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/TrainingHints.hpp>
 #include <GalaxyEggbert/Game/InputPad.hpp>
+#include <GalaxyEggbert/Game/ControlInput.hpp>
 #include <GalaxyEggbert/Game/SaveData.hpp>
 #include <GalaxyEggbert/Game/Autoplay.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
@@ -655,6 +656,8 @@ namespace GalaxyEggbert::CNA
         int touchQuietFrames_ = 0;
         GalaxyEggbert::Def::GamePhase phase_ = GalaxyEggbert::Def::GamePhase::Wait;
         bool pauseKeyWasDown_ = false;
+        GalaxyEggbert::Game::ControlsHelp controlsHelp_;
+        bool menuConfirmWasDown_ = false;
         bool phaseReturnKeyWasDown_ = false;
         // Draw()'s own frame counter (NEXT.md §5, 2026-07-13) -- lets the
         // one-shot HUD screenshot diagnostic wait for a frame strictly

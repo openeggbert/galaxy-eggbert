@@ -182,6 +182,7 @@ namespace GalaxyEggbert::Game
             // it, drawn in its place (0: none found, the rock); and whether its blade turns to X.
             std::uint16_t floorIcon = 0;
             bool rotated = false;
+            std::uint8_t waterFaces = 0x3f; // BoxFace bits, exterior of the connected water volume
         };
 
         // Shared rebuild logic for m_animRenderer/m_waterRenderer: computes

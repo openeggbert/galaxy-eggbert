@@ -1107,6 +1107,21 @@ namespace GalaxyEggbert::Game
         return out;
     }
 
+    std::optional<float> InteractionSystem::NearestTreasureDistance(
+        const WorldRuntime& world, float x, float y, float z) noexcept
+    {
+        std::optional<float> nearestSquared;
+        for (const auto& obj : world.GetMobileObjects())
+        {
+            if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType5) continue;
+            const float dx = obj.currentX - x, dy = obj.currentY - y, dz = obj.currentZ - z;
+            const float squared = dx * dx + dy * dy + dz * dz;
+            if (!nearestSquared || squared < *nearestSquared) nearestSquared = squared;
+        }
+        if (!nearestSquared) return std::nullopt;
+        return std::sqrt(*nearestSquared);
+    }
+
     void InteractionSystem::OpenDoor(WorldRuntime& worldRuntime, int gx, int gy, int gz, Sound& sound)
     {
         OpenDoorAt(worldRuntime, gx, gy, gz, sound);

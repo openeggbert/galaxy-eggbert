@@ -398,7 +398,7 @@ namespace GalaxyEggbert::Game
         struct InitLayout
         {
             Rect gamer[3];
-            Rect setup, play, editor;
+            Rect setup, play, editor, exit;
             Rect leftPanel, rightPanel;
             float scale;
         };
@@ -423,6 +423,7 @@ namespace GalaxyEggbert::Game
             l.play = Rect{w - 20.0f * s - f2, h - 40.0f * s - f2, w - 20.0f * s, h - 40.0f * s};
             l.editor = Rect{w - 20.0f * s - f2 * 0.75f, h - 20.0f * s - f2 * 2.1f,
                             w - 20.0f * s - f2 * 0.25f, h - 20.0f * s - f2 * 1.6f};
+            l.exit = Rect{w - 130.0f * s, 15.0f * s, w - 20.0f * s, 69.0f * s};
             l.leftPanel = Rect{10.0f * s, h - 325.0f * s, 260.0f * s, h - 10.0f * s};
             l.rightPanel = Rect{w - 170.0f * s, h - 325.0f * s, w - 10.0f * s, h - 10.0f * s};
             l.scale = s;
@@ -475,6 +476,7 @@ namespace GalaxyEggbert::Game
         constexpr int kInitControlSetup = 3;
         constexpr int kInitControlPlay = 4;
         constexpr int kInitControlEditor = 5;
+        constexpr int kInitControlExit = 6;
 
         // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
         // dedicated research pass into the real `fadeOutPhase` mechanic):
@@ -557,7 +559,7 @@ namespace GalaxyEggbert::Game
             "Content/backgrounds/wait.png",
             "Content/icons/jauge.png",
             "Content/backgrounds/init.png",
-            "Content/backgrounds/speedyblupi.png",
+            "Content/backgrounds/galaxyeggbert.png",
             "Content/backgrounds/gear.png",
             "Content/icons/button.png",
         };
@@ -605,6 +607,9 @@ namespace GalaxyEggbert::Game
         speedyblupiEffect_ = makeEffect(speedyblupiTexture_);
         gearEffect_ = makeEffect(gearTexture_);
         buttonEffect_ = makeEffect(buttonTexture_);
+        helpPanelEffect_ = std::make_unique<BasicEffect>(device);
+        helpPanelEffect_->VertexColorEnabled = false;
+        helpPanelEffect_->setTextureEnabledProperty(false);
         loaded_ = true;
     }
 
@@ -739,6 +744,90 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, panel, viewportW, viewportH, 0.6f);
         FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
+    void InputPad::DrawControlsHelp(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                    int viewportW, int viewportH, bool cheats)
+    {
+        if (!loaded_ || viewportW <= 0 || viewportH <= 0) return;
+        const float s = std::min(float(viewportW) / kRefW, float(viewportH) / kRefH);
+        const float ox = (float(viewportW) - kRefW * s) * 0.5f;
+        const float oy = (float(viewportH) - kRefH * s) * 0.5f;
+        const std::vector<Quad> panel{{ox + 10 * s, oy + 10 * s, ox + 630 * s, oy + 470 * s,
+                                       0, 0, 1, 1}};
+        std::vector<Quad> text;
+        const auto line = [&](const char* label, float x, float y, float size = 0.48f) {
+            AppendGamerLabel(text, label, ox + x * s, oy + y * s, size, s);
+        };
+        if (cheats)
+        {
+            line("Galaxy Eggbert - Cheats", 28, 22, 0.85f);
+            line("Type a word during play (no Enter needed).", 28, 54, 0.45f);
+            int count = 0;
+            const auto* words = TypedCheatWords(count);
+            const int perColumn = (count + 1) / 2;
+            for (int i = 0; i < count; ++i)
+            {
+                const float x = i < perColumn ? 28.0f : 335.0f;
+                const float y = 78.0f + float(i % perColumn) * 27.0f;
+                line(words[i].word, x, y, 0.48f);
+                line(words[i].description, x, y + 14.0f, 0.4f);
+            }
+        }
+        else
+        {
+            line("Galaxy Eggbert - Controls", 28, 22, 0.85f);
+            line("KEYBOARD", 28, 62, 0.65f);
+            const char* keyboard[] = {
+                "W / Up: walk forward",
+                "A D / Left Right: turn",
+                "S / Down: turn around, then walk",
+                "Left Ctrl: jump / helicopter up",
+                "Space: action / use / fire",
+                "X / Right Ctrl: back up",
+                "Left Shift: crouch / dive",
+                "Crouch + S / Down: pull crate",
+                "Right Shift: look up",
+                "Esc: pause / continue",
+                "Enter: Play / Continue",
+                "F1: show / hide this help",
+                "F3: first / third person",
+                "F11: full screen",
+                "F5 / F6: normal / fast speed",
+                "Tab: slow / normal speed",
+                "F12: cheat menu",
+                "F7 / F8: faster (quick cheat)"};
+            float y = 90;
+            for (const char* label : keyboard) { line(label, 28, y); y += 17; }
+            line("GAMEPAD", 335, 62, 0.65f);
+            const char* gamepad[] = {
+                "Left stick / D-pad: walk, turn",
+                "Down: turn around, then walk",
+                "A: jump / helicopter up",
+                "A: Play / Continue in menus",
+                "B / X: action / use / fire",
+                "RB: back up",
+                "LB: crouch / dive",
+                "LB + Down: pull crate",
+                "Y: look up",
+                "Start / Back: pause / continue"};
+            y = 90;
+            for (const char* label : gamepad) { line(label, 335, y); y += 17; }
+            line("MOUSE", 335, 285, 0.65f);
+            line("Left click: menu buttons", 335, 313);
+            line("Hold left + drag: look around", 335, 330);
+            line("Walking returns the camera", 335, 347);
+            line("Touch controls: touch screens only", 335, 383);
+            line("Type help: cheats explained", 335, 405);
+        }
+        line("Game paused - F1 or Esc to close", 28, 439, 0.6f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *helpPanelEffect_, helpPanelRenderer_, panel, viewportW, viewportH, 0.87f);
+        const auto diffuse = textEffect_->getDiffuseColorProperty();
+        textEffect_->setDiffuseColorProperty({0.0f, 0.0f, 0.0f});
+        FlushQuads(device, *textEffect_, textRenderer_, text, viewportW, viewportH, 1.0f);
+        textEffect_->setDiffuseColorProperty(diffuse);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
@@ -1877,30 +1966,32 @@ namespace GalaxyEggbert::Game
     const InputPad::TypedCheatWord* InputPad::TypedCheatWords(int& count) noexcept
     {
         static constexpr TypedCheatWord kWords[] = {
-            {"opendoors", TypedCheat::OpenDoors},
-            {"cleanall", TypedCheat::CleanAll},
-            {"megablupi", TypedCheat::MegaBlupi},
-            {"layegg", TypedCheat::LayEgg},
-            {"killegg", TypedCheat::KillEgg},
-            {"funskate", TypedCheat::FunSkate},
-            {"givecopter", TypedCheat::GiveCopter},
-            {"jeepdrive", TypedCheat::JeepDrive},
-            {"alltreasure", TypedCheat::AllTreasure},
-            {"endgoal", TypedCheat::EndGoal},
-            {"showsecret", TypedCheat::ShowSecret},
-            {"roundshield", TypedCheat::RoundShield},
-            {"quicklollypop", TypedCheat::QuickLollipop},
-            {"tenbombs", TypedCheat::TenBombs},
-            {"birdlime", TypedCheat::BirdLime},
-            {"drivetank", TypedCheat::DriveTank},
-            {"powercharge", TypedCheat::PowerCharge},
-            {"hidedrink", TypedCheat::HideDrink},
-            {"iovercraft", TypedCheat::IOvercraft},
-            {"udynamite", TypedCheat::UDynamite},
-            {"weelkeys", TypedCheat::WeelKeys},
-            {"quick", TypedCheat::Quick},
-            {"ghost", TypedCheat::Ghost},
-            {"zoom", TypedCheat::Zoom},
+            {"opendoors", TypedCheat::OpenDoors, "Toggle hub doors; give every key"},
+            {"cleanall", TypedCheat::CleanAll, "Clear enemies and hazards"},
+            {"megablupi", TypedCheat::MegaBlupi, "Toggle invincibility"},
+            {"layegg", TypedCheat::LayEgg, "Set lives to nine"},
+            {"killegg", TypedCheat::KillEgg, "No effect, as in the original"},
+            {"funskate", TypedCheat::FunSkate, "Ride a skateboard"},
+            {"givecopter", TypedCheat::GiveCopter, "Fly a helicopter"},
+            {"jeepdrive", TypedCheat::JeepDrive, "Drive a jeep"},
+            {"alltreasure", TypedCheat::AllTreasure, "Collect all remaining chests"},
+            {"endgoal", TypedCheat::EndGoal, "Teleport to the exit (needs chests)"},
+            {"showsecret", TypedCheat::ShowSecret, "Toggle visible flight barriers"},
+            {"roundshield", TypedCheat::RoundShield, "Grant a temporary shield"},
+            {"quicklollypop", TypedCheat::QuickLollipop, "Grant the lollipop power"},
+            {"tenbombs", TypedCheat::TenBombs, "Give ten decoys"},
+            {"birdlime", TypedCheat::BirdLime, "Give ten glue shots"},
+            {"drivetank", TypedCheat::DriveTank, "Drive a tank"},
+            {"powercharge", TypedCheat::PowerCharge, "Grant the cloud power"},
+            {"hidedrink", TypedCheat::HideDrink, "Grant temporary invisibility"},
+            {"iovercraft", TypedCheat::IOvercraft, "Ride an overcraft"},
+            {"udynamite", TypedCheat::UDynamite, "Give one dynamite stick"},
+            {"weelkeys", TypedCheat::WeelKeys, "Give all three keys"},
+            {"quick", TypedCheat::Quick, "Toggle F7/F8 speed shortcuts"},
+            {"ghost", TypedCheat::Ghost, "Toggle ghost mode (pass walls)"},
+            {"zoom", TypedCheat::Zoom, "Cycle chase-camera distance"},
+            {"help", TypedCheat::Help, "List cheats and explanations"},
+            {"cheats", TypedCheat::Help, "Same as help (Mobile Eggbert)"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;
@@ -2175,6 +2266,7 @@ namespace GalaxyEggbert::Game
         const bool overSetup = InRect(mouseX, mouseY, layout.setup);
         const bool overPlay = InRect(mouseX, mouseY, layout.play);
         const bool overEditor = InRect(mouseX, mouseY, layout.editor);
+        const bool overExit = InRect(mouseX, mouseY, layout.exit);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -2184,6 +2276,7 @@ namespace GalaxyEggbert::Game
             else if (overSetup) activeControl_ = kInitControlSetup;
             else if (overPlay) activeControl_ = kInitControlPlay;
             else if (overEditor) activeControl_ = kInitControlEditor;
+            else if (overExit) activeControl_ = kInitControlExit;
             else activeControl_ = -1;
         }
 
@@ -2199,6 +2292,7 @@ namespace GalaxyEggbert::Game
                 case kInitControlSetup: result.setupPressed = true; break;
                 case kInitControlPlay: result.playPressed = true; break;
                 case kInitControlEditor: result.editorPressed = true; break;
+                case kInitControlExit: result.exitPressed = true; break;
                 default: break;
             }
             activeControl_ = -1;
@@ -2370,6 +2464,9 @@ namespace GalaxyEggbert::Game
                           kIconInitPlay);
             appendIconQuad(activeControl_ == kInitControlEditor ? pressedQuads : normalQuads, layout.editor,
                           kIconInitEditorFace);
+            appendIconQuad(activeControl_ == kInitControlExit ? pressedQuads : normalQuads, layout.exit, 21);
+            AppendCenteredLabel(labelQuads, "Exit", (layout.exit.x0 + layout.exit.x1) * 0.5f,
+                                (layout.exit.y0 + layout.exit.y1) * 0.5f - 12.0f * s, s);
 
             // Real labels: TX_BUTTON_PLAY under Play, TX_BUTTON_SETUP right of
             // Setup (Game1::DrawButtonsText()); the editor's label under its

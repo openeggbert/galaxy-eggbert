@@ -1,9 +1,10 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-06 (native build, 112/112 CTest, golden frames and trace, all 78
-playthroughs with the resume self-test (play pass 33: 77 replays equal); the Web/Emscripten build
+_Last verified: 2026-11-08 (native build, 112/112 CTest, golden frames and trace, controls/HUD/water
+checks and missions 012/051 with the resume self-test). The all-78-playthrough baseline remains
+2026-11-06 (play pass 33: 77 replays equal). The Web/Emscripten build was verified
 2026-11-06 in headless Chrome; the whole-campaign run
-remains the 2026-10-27 verification). Update this file
+remains the 2026-10-27 verification. Update this file
 whenever a change alters the current state, a known limitation, a supported build, or the actionable
 backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`), where work stands in
 `handoff.md`, the active plan in `plans/GALAXY_EGGBERT_COMPLETION.md`._
@@ -51,6 +52,24 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Controls/menu update (2026-11-08): Play's touch buttons and their mouse hit areas are enabled
+  only when CNA reports a touch screen. F1 toggles black controls help on a translucent white panel
+  and freezes the current screen; F1/Escape closes it. WASD aliases the arrows (S turns around),
+  X/Right Ctrl backs up. The first connected gamepad in XNA slots 1-4 drives play; A also confirms
+  Resume, Pause and Win/Lost. The main menu has Exit, and Setup uses the new Galaxy Eggbert logo.
+  Resume format v3 records touch capability so reconstruction does not depend on the current device;
+  older logs fall back to the checkpoint. Native build and 112/112 CTest pass; live Xvfb screenshots,
+  an SDL virtual gamepad and mission 012 with the resume equality self-test verified the changes.
+  The HUD also shows just a number at the bottom: direct 3D distance to the nearest uncollected
+  chest in blocks (one decimal), hiding the readout immediately when no active chest remains.
+  Typing `help` or `cheats` opens a
+  paused overlay listing all supported cheat words and their explanations, including the original's
+  deliberately ineffective `killegg`.
+- Underwater visibility (2026-11-08): adjacent water cells now render their exterior faces only
+  (`WaterSurface.hpp`), removing the stacked translucent internal walls that obscured swimmers,
+  fish and routes. The animated exterior and above-water coverage remain. Verified by face-mask
+  tests and before/after third-/first-person captures in mission 051.
+
 - Ghost cheat matches MODERN Mobile Eggbert (BD-0081 / OR-0075, 2026-11-06): skips tile reactions
   and object contacts, uses March/Stop even in mid-air, and draws at 0.75 opacity (model and sprite
   fallback). Existing active followers still home, and existing dynamite blasts remain lethal,
@@ -69,8 +88,9 @@ content-authoring UX, but not new gameplay mechanics.
   walking, respawn, falling, footprint/crate support and temporary platforms.
 - BD-0077 / Q-015 (2026-11-06): interrupted missions resume from their recorded moment via
   `ResumeLog` (mission start plus deterministic input replay), saved on Play deactivation and
-  deleted on clean exit. Format v2 records the mission path and FNV-1a hash of the exact world
-  bytes loaded; v1 and changed worlds are refused. Desktop build identity includes a lazily
+  deleted on clean exit. Format v3 retains v2's mission path and FNV-1a hash of the exact world
+  bytes loaded and adds touch capability (2026-11-08); old versions and changed worlds are refused.
+  Desktop build identity includes a lazily
   cached executable hash (Linux verified; Windows/macOS paths implemented); unreadable executables,
   Android and Emscripten retain the compile-time identifier. The existing checkpoint remains the fallback. Native verification:
   112/112 CTest, equality self-tests and passing playthroughs for 012/025/045/051/199, plus desktop
@@ -129,13 +149,13 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   turning is 135°/s, and Blupi no longer walks up one-block steps — he jumps, as in
   `Decor::TestPath`. Menus fill the bars beside their 640×480 images and text uses the
   original proportional glyph widths.
-- Controls added 2026-11-02 (owner's requests): Right Ctrl backs Blupi up (on foot or in a
+- Controls added 2026-11-02 and extended 2026-11-08 (owner's requests): X or Right Ctrl backs Blupi up (on foot or in a
   vehicle; Down still turns him round); Left Ctrl (Jump) climbs the helicopter as Up does
   (Decor.cpp); a gamepad (`GamepadInput.hpp`): left stick/D-pad walk and turn, A jump (and Enter:
   Play in the main menu), B/X action, RB back up, LB crouch, Y look up, Start pause; touch
   screens: the on-screen pad takes several fingers at once (`InputPad::UpdatePlayTouches`: stick
   and Jump together) and has a back-up button over the stick. Not tried on real hardware yet
-  (no gamepad or touch screen here).
+  (no physical gamepad or touch screen here); an SDL virtual gamepad was verified on 2026-11-08.
 - Third person shows the real Blupi converted from the original Ray Dream scenes
   (`avatars3d/blupi/`, `tools/rd4_to_gltf/`) with a clip, expression, props and vehicle per
   animation state, and parked vehicles as 3D models (re-exported 2026-10-24: the overcraft now

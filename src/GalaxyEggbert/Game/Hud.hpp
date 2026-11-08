@@ -10,6 +10,7 @@
 #include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -149,7 +150,8 @@ namespace GalaxyEggbert::Game
                   bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                   bool voyageIsBlupiChannel,
                   float voyageX, float voyageY,
-                  GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity = 1.0f);
+                  GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity = 1.0f,
+                  std::optional<float> nearestTreasureDistance = std::nullopt);
 
         // Projects a 3D world position into this class's own 640x480
         // reference screen space (plan.md `158`) -- the real Voyage

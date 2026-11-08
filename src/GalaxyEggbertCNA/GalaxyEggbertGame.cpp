@@ -118,13 +118,19 @@ namespace GalaxyEggbert::CNA
         constexpr int kGoldenCaptureCount =
             static_cast<int>(sizeof(kGoldenCaptureTicks) / sizeof(kGoldenCaptureTicks[0]));
 
-        // The first gamepad as the keys it stands for (GamepadInput.hpp: the owner's request of
-        // 2026-11-02; Mobile Eggbert has no gamepad).
+        // The first connected gamepad as keys (including a pad assigned to another XNA slot).
+        // GamepadInput.hpp: the owner's request of 2026-11-02; Mobile Eggbert has no gamepad.
         GalaxyEggbert::Game::GamepadFrame ReadGamepadFrame()
         {
             using namespace Microsoft::Xna::Framework::Input;
             GalaxyEggbert::Game::GamepadFrame f;
-            const GamePadState pad = GamePad::GetState(Microsoft::Xna::Framework::PlayerIndex::One);
+            GamePadState pad;
+            using Microsoft::Xna::Framework::PlayerIndex;
+            for (const auto player : {PlayerIndex::One, PlayerIndex::Two, PlayerIndex::Three, PlayerIndex::Four})
+            {
+                pad = GamePad::GetState(player);
+                if (pad.getIsConnectedProperty()) break;
+            }
             f.connected = pad.getIsConnectedProperty();
             if (!f.connected)
             {
@@ -1827,6 +1833,7 @@ namespace GalaxyEggbert::CNA
         tickInput_.viewportHeight = viewport.getHeightProperty();
         if (!SuppressLiveInput())
         {
+            tickInput_.touchControlsEnabled = Touch::TouchPanel::GetCapabilities().getIsConnectedProperty();
             for (const auto& touch : Touch::TouchPanel::GetState())
                 tickInput_.touches.push_back({touch.getIdProperty(), touch.getPositionProperty().X,
                     touch.getPositionProperty().Y, static_cast<int>(touch.getStateProperty())});
@@ -1912,6 +1919,8 @@ namespace GalaxyEggbert::CNA
     {
         inputPad_.ResetMissionInput();
         inputPad_.SetJumpRight(saveData_.GetJumpRight());
+        controlsHelp_ = {};
+        menuConfirmWasDown_ = false;
         jumpKeyWasDown_ = actionKeyWasDown_ = pauseKeyWasDown_ = phaseReturnKeyWasDown_ = false;
         f5KeyWasDown_ = f6KeyWasDown_ = f7KeyWasDown_ = f8KeyWasDown_ = f12KeyWasDown_ = tabKeyWasDown_ = false;
         cameraModeKeyWasDown_ = fullscreenKeyWasDown_ = false;
@@ -3557,6 +3566,10 @@ namespace GalaxyEggbert::CNA
             case TC::Zoom:
                 cheatZoomStep_ = (cheatZoomStep_ + 1) % 5; // 1x, 2x, 4x, 8x, 16x (6 %), back to 1x
                 break;
+            case TC::Help:
+                controlsHelp_.shown = true;
+                controlsHelp_.cheats = true;
+                break;
             case TC::Ghost:
             case TC::Quick:
             case TC::None:
@@ -3672,6 +3685,15 @@ namespace GalaxyEggbert::CNA
         sound_.SetListener(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
 
         constexpr float dt = 1.0f / 60.0f;
+        const auto helpKeys = CurrentKeyboardState();
+        if (controlsHelp_.Update(helpKeys))
+        {
+            inputPad_.ResetTouchState();
+            mouseLookActive_ = false;
+            pauseKeyWasDown_ = helpKeys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Escape);
+            menuConfirmWasDown_ = helpKeys.IsKeyDown(Microsoft::Xna::Framework::Input::Keys::Enter);
+            return;
+        }
         phaseTimeSeconds_ += dt;
 
         // Real fade-out phase-transition commit (plan.md MENU-088/089) --
@@ -3715,6 +3737,9 @@ namespace GalaxyEggbert::CNA
             using Microsoft::Xna::Framework::Input::ButtonState;
             using Microsoft::Xna::Framework::Input::Keys;
             const auto phaseKeys = CurrentKeyboardState();
+            const bool confirmDown = phaseKeys.IsKeyDown(Keys::Enter);
+            const bool menuConfirmPressed = confirmDown && !menuConfirmWasDown_;
+            menuConfirmWasDown_ = confirmDown;
             auto viewport = getGraphicsDeviceProperty().getViewportProperty();
             viewport.setWidthProperty(tickInput_.viewportWidth);
             viewport.setHeightProperty(tickInput_.viewportHeight);
@@ -3742,8 +3767,16 @@ namespace GalaxyEggbert::CNA
                 touchQuietFrames_ = touches.empty() ? std::max(0, touchQuietFrames_ - 1) : 15;
                 const auto mouse = touchQuietFrames_ > 0 ? Microsoft::Xna::Framework::Input::MouseState{}
                                                          : CurrentMouseState();
-                inputPadClaimedMouse = inputPad_.UpdatePlay(
-                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
+                // Invisible desktop controls must not claim clicks intended for the camera.
+                if (tickInput_.touchControlsEnabled)
+                {
+                    inputPadClaimedMouse = inputPad_.UpdatePlay(
+                        mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), padPlayInput);
+                }
+                else
+                {
+                    inputPad_.ResetTouchState();
+                }
                 {
                     GalaxyEggbert::Game::InputPad::PlayInput touchInput;
                     if (inputPad_.UpdatePlayTouches(touches, viewport.getWidthProperty(),
@@ -3757,6 +3790,7 @@ namespace GalaxyEggbert::CNA
                     padPlayInput.actionPressed = padPlayInput.actionPressed || touchInput.actionPressed;
                     padPlayInput.pausePressed = padPlayInput.pausePressed || touchInput.pausePressed;
                     padPlayInput.backUpHeld = padPlayInput.backUpHeld || touchInput.backUpHeld;
+                    padPlayInput.crouchHeld = padPlayInput.crouchHeld || touchInput.crouchHeld;
                 }
                 mousePausePressed = padPlayInput.pausePressed;
 
@@ -3794,6 +3828,12 @@ namespace GalaxyEggbert::CNA
                 // there.
                 const auto typedCheat = inputPad_.UpdateTypedGhostCheat(phaseKeys, /*isPlayPhase=*/true);
                 ApplyTypedCheat(typedCheat.cheat);
+                if (typedCheat.cheat == InputPad::TypedCheat::Help)
+                {
+                    inputPad_.ResetTouchState();
+                    mouseLookActive_ = false;
+                    return;
+                }
                 if (typedCheat.ghostTyped)
                 {
                     blupi_.ToggleGhost(worldRuntime_.GetWorld());
@@ -4065,6 +4105,11 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetSelectedGamer(initInput.gamerSelected);
                     if (!replayingResume_) saveData_.Save();
                 }
+                if (initInput.exitPressed)
+                {
+                    Exit();
+                    return;
+                }
                 if (initInput.playPressed)
                 {
                     // Real InitPlay: `SetPhase(Play, 1)` -- always
@@ -4119,7 +4164,7 @@ namespace GalaxyEggbert::CNA
                 const auto mouse = CurrentMouseState();
                 const auto resumeInput = inputPad_.UpdateResume(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
-                if (resumeInput.continuePressed)
+                if (resumeInput.continuePressed || menuConfirmPressed)
                 {
                     // Game1.cpp:255-270, Decor.cpp:11146-11300: continue the saved moment.
                     if (pendingResume_)
@@ -4222,7 +4267,7 @@ namespace GalaxyEggbert::CNA
             }
             pauseKeyWasDown_ = pausePressed;
 
-            if (mouseContinuePressed)
+            if (mouseContinuePressed || (phase_ == GalaxyEggbert::Def::GamePhase::Pause && menuConfirmPressed))
             {
                 // Real PauseContinue: resume in place.
                 SetPhase(GalaxyEggbert::Def::GamePhase::Play);
@@ -4305,7 +4350,7 @@ namespace GalaxyEggbert::CNA
                 const auto mouse = CurrentMouseState();
                 const bool mouseReturnPressed = inputPad_.UpdateWinLost(
                     mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
-                const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || mouseReturnPressed;
+                const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || confirmDown || mouseReturnPressed;
                 if (returnPressed && !phaseReturnKeyWasDown_)
                 {
                     if (editorPlayTestActive_)
@@ -4425,12 +4470,9 @@ namespace GalaxyEggbert::CNA
             // crouches and RShift looks up; RCtrl backs up (2026-11-02).
             using Microsoft::Xna::Framework::Input::Keys;
             const auto keys = CurrentKeyboardState();
-            float turnInput = 0.0f;
-            float moveInput = 0.0f;
-            if (keys.IsKeyDown(Keys::Left))  turnInput -= 1.0f;
-            if (keys.IsKeyDown(Keys::Right)) turnInput += 1.0f;
-            if (keys.IsKeyDown(Keys::Up))    moveInput += 1.0f;
-            if (keys.IsKeyDown(Keys::Down))  moveInput -= 1.0f;
+            const auto directions = GalaxyEggbert::Game::ReadPlayDirections(keys);
+            float turnInput = directions.turn;
+            float moveInput = directions.move;
             // On-screen D-pad OR'd in (2026-07-13, plan.md MENU-021..024):
             // both axes are already the same discrete {-1,0,+1} shape as
             // the keyboard reads above, so a plain add+clamp combines them
@@ -4490,7 +4532,7 @@ namespace GalaxyEggbert::CNA
                 // Right Ctrl backs him up (owner 2026-11-02: "pravý ctrl bude couvání"), on foot or
                 // in a vehicle, facing as he is: a Galaxy addition beside Down's turn-around (the
                 // original has no backing up); a gamepad's RB and the on-screen back-up button too.
-                if ((keys.IsKeyDown(Keys::RightControl) || padPlayInput.backUpHeld) && turnAroundRemaining_ <= 0.0f &&
+                if ((directions.backUp || padPlayInput.backUpHeld) && turnAroundRemaining_ <= 0.0f &&
                     !pullingStance)
                 {
                     moveInput = -1.0f;
@@ -8298,7 +8340,9 @@ namespace GalaxyEggbert::CNA
                           interaction_.VoyageIconId(),
                           interaction_.VoyageIsButtonChannel(), interaction_.VoyageIsBlupiChannel(),
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
-                          gameSpeed_, blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()));
+                          gameSpeed_, blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()),
+                          InteractionSystem::NearestTreasureDistance(
+                              worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()));
             }
 
             // On-screen touch controls (2026-07-13, plan.md
@@ -8365,7 +8409,8 @@ namespace GalaxyEggbert::CNA
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
-                inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                if (tickInput_.touchControlsEnabled)
+                    inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                            activeCheats_);
             }
@@ -8391,6 +8436,11 @@ namespace GalaxyEggbert::CNA
             if (cheatMenuShown_ && phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
                 inputPad_.DrawCheatMenu(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+            }
+            if (controlsHelp_.shown)
+            {
+                inputPad_.DrawControlsHelp(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                          controlsHelp_.cheats);
             }
         }
 

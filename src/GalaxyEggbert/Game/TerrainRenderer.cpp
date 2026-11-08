@@ -8,6 +8,7 @@
 #include "InnerPillarBoxTiles.hpp"
 #include "ThinBarTiles.hpp"
 #include "WorldRuntime.hpp"
+#include "WaterSurface.hpp"
 
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -582,7 +583,9 @@ namespace GalaxyEggbert::Game
                     }
                     if (IsWater(animBase))
                     {
-                        m_waterBlocks.push_back({worldX, worldY, worldZ, animBase});
+                        AnimBlock water{worldX, worldY, worldZ, animBase};
+                        water.waterFaces = WaterSurfaceFaces(world, x, y, z);
+                        m_waterBlocks.push_back(water);
                         continue;
                     }
                     if (IsAnimated(animBase))
@@ -1211,7 +1214,17 @@ namespace GalaxyEggbert::Game
                 continue;
             }
 
-            AddCenteredBox(cubes, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), tileUv);
+            if (definition.water)
+            {
+                CnaEngine::Graphics::BoxFaces faces;
+                for (std::size_t face = 0; face < faces.size(); ++face)
+                    faces[face] = {(block.waterFaces & (1u << face)) != 0, tileUv};
+                AddCenteredBox(cubes, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), faces);
+            }
+            else
+            {
+                AddCenteredBox(cubes, center, Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f), tileUv);
+            }
         }
 
         if (cubes.Mesh().Empty() && mesh.Mesh().Empty())

@@ -6,6 +6,7 @@
 #include <Microsoft/Xna/Framework/Vector4.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 
@@ -249,7 +250,8 @@ namespace GalaxyEggbert::Game
                      bool voyageActive, int voyageIconId, bool voyageIsButtonChannel,
                      bool voyageIsBlupiChannel,
                      float voyageX, float voyageY,
-                     GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity)
+                     GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity,
+                     std::optional<float> nearestTreasureDistance)
     {
         if (!loaded_)
         {
@@ -675,6 +677,36 @@ namespace GalaxyEggbert::Game
                 q.u1 = (static_cast<float>(gcol + 1) * kGlyphCellPx) / textSheetW;
                 q.v1 = (static_cast<float>(grow + 1) * kGlyphCellPx) / textSheetH;
                 textQuads.push_back(q);
+                penX += TextMetrics::Advance(c) * textScale;
+            }
+        }
+
+        // Owner-requested Galaxy HUD aid. World coordinates use one unit per block; this is
+        // direct 3D distance, not an estimate of the route through the level.
+        if (nearestTreasureDistance && std::isfinite(*nearestTreasureDistance) && *nearestTreasureDistance >= 0.0f)
+        {
+            char label[80];
+            std::snprintf(label, sizeof(label), "%.1f", *nearestTreasureDistance);
+            constexpr float textScale = 0.6f, top = 450.0f;
+            const float width = TextMetrics::Width(label) * textScale;
+            const float left = kRefW * 0.5f - width * 0.5f;
+            const float padW = static_cast<float>(padTexture_.getWidthProperty());
+            const float padH = static_cast<float>(padTexture_.getHeightProperty());
+            const int col = kPanelIcon % kPadCols, row = kPanelIcon / kPadCols;
+            padQuads.push_back({refToScreenX(left - 6), refToScreenY(top - 3),
+                                refToScreenX(left + width + 6), refToScreenY(top + 23),
+                                col * kPadCellPx / padW, row * kPadCellPx / padH,
+                                (col + 1) * kPadCellPx / padW, (row + 1) * kPadCellPx / padH});
+            float penX = left;
+            for (const char c : std::string_view(label))
+            {
+                const int rank = TextMetrics::GlyphIndex(c);
+                const int gcol = rank % kGlyphCols, grow = rank / kGlyphCols;
+                const float cellPx = kGlyphCellPx * textScale * scale;
+                textQuads.push_back({refToScreenX(penX), refToScreenY(top),
+                                     refToScreenX(penX) + cellPx, refToScreenY(top) + cellPx,
+                                     gcol * kGlyphCellPx / textSheetW, grow * kGlyphCellPx / textSheetH,
+                                     (gcol + 1) * kGlyphCellPx / textSheetW, (grow + 1) * kGlyphCellPx / textSheetH});
                 penX += TextMetrics::Advance(c) * textScale;
             }
         }

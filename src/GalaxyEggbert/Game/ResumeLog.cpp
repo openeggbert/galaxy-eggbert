@@ -60,7 +60,7 @@ namespace GalaxyEggbert::Game
         std::ostringstream out;
         out.imbue(std::locale::classic());
         out << std::setprecision(std::numeric_limits<float>::max_digits10);
-        out << "GALAXY_RESUME 2\n" << std::quoted(start.build) << '\n';
+        out << "GALAXY_RESUME 3\n" << std::quoted(start.build) << '\n';
         out << std::quoted(start.worldPath) << ' ' << start.worldHash << '\n';
         out << start.mission << ' ' << start.lives << ' ' << start.speed << ' ' << start.seed << ' '
             << start.x << ' ' << start.y << ' ' << start.z << ' ' << start.yaw << ' '
@@ -76,7 +76,7 @@ namespace GalaxyEggbert::Game
                 << ' ' << f.viewportWidth << ' ' << f.viewportHeight << ' ' << f.touches.size();
             for (const auto& touch : f.touches)
                 out << ' ' << touch.id << ' ' << touch.x << ' ' << touch.y << ' ' << touch.state;
-            out << ' ' << f.accelValid << ' ' << f.accelReset << ' ' << f.accelY << '\n';
+            out << ' ' << f.touchControlsEnabled << ' ' << f.accelValid << ' ' << f.accelReset << ' ' << f.accelY << '\n';
         }
         const auto body = out.str();
         out << "END " << HashBytes(body) << '\n';
@@ -102,7 +102,7 @@ namespace GalaxyEggbert::Game
         std::string magic;
         int version;
         if (!(in >> magic >> version >> std::quoted(s.build)) || magic != "GALAXY_RESUME" ||
-            version != 2 || s.build != build) return false;
+            version != 3 || s.build != build) return false;
         if (!(in >> std::quoted(s.worldPath) >> s.worldHash) || s.worldPath.empty() ||
             s.worldPath.size() > 4096 || s.worldPath.find('\0') != std::string::npos) return false;
         if (!(in >> s.mission >> s.lives >> s.speed >> s.seed >> s.x >> s.y >> s.z >> s.yaw
@@ -141,7 +141,8 @@ namespace GalaxyEggbert::Game
                     !std::isfinite(touch.x) || !std::isfinite(touch.y)) return false;
                 f.touches.push_back(touch);
             }
-            if (!(in >> f.accelValid >> f.accelReset >> f.accelY) || !std::isfinite(f.accelY)) return false;
+            if (!(in >> f.touchControlsEnabled >> f.accelValid >> f.accelReset >> f.accelY) ||
+                !std::isfinite(f.accelY)) return false;
             parsed.runs.push_back(std::move(run));
         }
         in >> std::ws;

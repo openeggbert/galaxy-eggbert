@@ -701,6 +701,37 @@ int main(int argc, char** argv)
         check(interaction.GameOverCount() == 1, "a death with no life in reserve is the game over, exactly once");
     }
 
+    {
+        WorldRuntime distanceWorld;
+        auto& objects = distanceWorld.GetMobileObjectsMutable();
+        check(!InteractionSystem::NearestTreasureDistance(distanceWorld, 10, 2, -5),
+              "nearest-chest HUD is absent in a world without chests");
+        MobileObjSpec nearChest;
+        nearChest.type = GalaxyEggbert::Def::ObjectType::ObjectType5;
+        nearChest.active = true;
+        nearChest.currentX = 13; nearChest.currentY = 6; nearChest.currentZ = -5;
+        auto farChest = nearChest;
+        farChest.currentX = 10; farChest.currentY = 2; farChest.currentZ = 7;
+        auto collected = nearChest;
+        collected.active = false;
+        collected.currentX = 10; collected.currentY = 2;
+        auto nonChest = collected;
+        nonChest.active = true;
+        nonChest.type = GalaxyEggbert::Def::ObjectType::ObjectType6;
+        objects = {farChest, collected, nonChest, nearChest};
+        const auto distance = InteractionSystem::NearestTreasureDistance(distanceWorld, 10, 2, -5);
+        check(distance && std::fabs(*distance - 5.0f) < 0.0001f,
+              "nearest-chest distance uses all three axes and ignores collected chests and other pickups");
+        const auto atChest = InteractionSystem::NearestTreasureDistance(distanceWorld, 13, 6, -5);
+        check(atChest && *atChest == 0, "standing at an active chest displays zero blocks");
+        objects.back().active = false;
+        const auto next = InteractionSystem::NearestTreasureDistance(distanceWorld, 10, 2, -5);
+        check(next && *next == 12, "collecting the nearest chest immediately selects the next active one");
+        objects.front().active = false;
+        check(!InteractionSystem::NearestTreasureDistance(distanceWorld, 10, 2, -5),
+              "collecting the last chest hides the distance even before its reward finishes flying");
+    }
+
     if (const auto* chest = findFirst(GalaxyEggbert::Def::ObjectType::ObjectType5))
     {
         const float cx = chest->currentX, cy = chest->currentY, cz = chest->currentZ;

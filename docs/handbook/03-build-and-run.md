@@ -154,11 +154,45 @@ own run directories under `build-probe/` with symlinks to the repository's asset
 never touch it. `ctest` leaves it alone too (`VerifyGESaveData` uses its own
 `build-cna-opengl3/verify-savedata/`).
 
-Basic controls (from `GalaxyEggbertGame.cpp`): Left/Right turn, Up/Down walk (Right Ctrl walks
-backwards), Left Ctrl jump, Space action, Left Shift crouch, Right Shift look up, Esc pause, F3
-first/third person (third is the default), F11 full screen, F5/F6 game speed, Tab slow motion,
-F12 the cheat menu. A gamepad and on-screen touch controls exist (`GamepadInput.hpp`, `InputPad`);
-they have not been tried on real hardware yet (`CURRENT.md`).
+Press **F1** for controls help (black text on a translucent white panel). It freezes the current
+screen; F1 or Esc closes it. **WASD or the arrows** move Blupi: W/Up walks forward, A/D or
+Left/Right turns, S/Down turns around and then walks in the new direction. **X or Right Ctrl**
+backs up while keeping his facing. Left Ctrl jumps (also climbs in a helicopter), Space acts/uses/
+fires, Left Shift crouches or dives, Right Shift looks up. Crouch + S/Down pulls a crate.
+Esc pauses/continues, F3 switches first/third person (third is the default), F11 toggles full screen,
+F5/F6 selects normal/fast speed, Tab toggles slow motion, F12 opens the cheat menu. Left-click menu
+buttons; hold the left mouse button and drag to look around. Walking returns the camera behind him.
+The main menu's **Exit** button closes the game.
+
+The bottom HUD shows just a number: the nearest remaining chest's straight-line **3D distance in
+blocks**, to one decimal place. This is a distance through space, not a route length. The readout
+disappears as soon as all chests have been collected, including while the last chest's reward is
+still flying to the counter.
+Type **help** or **cheats** during play, without Enter, for every supported cheat word and its
+explanation. This overlay pauses the game and closes with F1 or Esc. `cheats` is the Mobile Eggbert
+MODERN name (`InputPad.cpp:1318`); `help` is Galaxy's requested alias. `killegg` is listed with its
+actual behavior: no effect, as in the reference.
+
+Water renders the exterior of connected water cells rather than six overlapping faces per cell.
+This keeps the animated surface while making underwater swimming readable in both camera views.
+
+The first connected gamepad in XNA slots 1-4 controls play (`GamepadInput.hpp`):
+
+| Gamepad control (Xbox names) | Action |
+|---|---|
+| Left stick / D-pad | Walk and turn; Down turns around and then walks |
+| A | Jump / helicopter up; Play or Continue in menus, return from Win/Lost |
+| B or X | Action / use / fire |
+| RB | Back up |
+| LB | Crouch / dive; LB + Down pulls a crate |
+| Y | Look up |
+| Start or Back | Pause / continue; Back/Escape from the main menu exits |
+
+Play's on-screen controls appear only when CNA detects touch-screen capability, including on
+devices with both a keyboard and a touch screen. Desktop mouse clicks in their former areas go
+to camera look. The desktop and an SDL virtual gamepad were checked live on 2026-11-08; physical
+gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v3 to
+record touch capability; an older/incompatible log falls back to the saved checkpoint.
 
 Headless runs: the game needs a GL context. Under `xvfb-run` set `SDL_AUDIODRIVER=dummy` to keep it
 silent; the QA scripts already do.

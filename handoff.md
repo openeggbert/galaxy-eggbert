@@ -6,7 +6,58 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-06 evening (Claude Code's last session; the Codex CLI continues: see the next section)._
+_Last updated: 2026-11-08 (controls, help, HUD and underwater visibility)._
+
+## Latest completed task — controls, help, HUD and water (2026-11-08)
+
+Owner-requested changes in this task:
+
+- Play touch controls are drawn and mouse-hit-tested only when CNA's
+  `TouchPanel::GetCapabilities()` reports a connected touch device. Desktop clicks in their former
+  areas can drag the camera. Also fixed the dropped touch `crouchHeld` when merging multiple fingers.
+- WASD aliases the arrow directions; S retains Down's turn-around behavior. X and Right Ctrl back
+  up without turning. F1 opens black controls help on a translucent white panel; F1/Escape closes
+  it. The current screen/simulation freezes while either help overlay is open.
+- All XNA gamepad slots 1-4 are scanned for the first connected pad. Existing play mapping is
+  retained; A now also confirms Resume/Pause/Win/Lost. Verified movement, jump, Start pause and
+  A continue through an SDL virtual gamepad, not just synthesized keyboard keys. Physical gamepad
+  and touch-screen hardware are still untested.
+- Main menu: labeled Exit button calls the normal game exit. Setup and the title fallback use
+  `Content/backgrounds/galaxyeggbert.png`, matching the old gold logo's style.
+- Bottom HUD: just a small number, the direct 3D distance in blocks (one decimal) to the nearest
+  active treasure chest (ObjectType5). No label at the top; no number after the last chest is
+  collected, even before its Voyage reward lands. `InteractionSystem::NearestTreasureDistance`
+  has no controller/camera/graphics dependency.
+- Typing `help` or the reference's `cheats` alias opens every supported cheat word with its effect.
+  Descriptions live beside the recognized words in `InputPad::TypedCheatWords`, including the
+  deliberately ineffective `killegg`. No new gameplay effects or unimplemented reference cheats.
+  Reference: Mobile Eggbert `InputPad.cpp:1318` (MODERN `cheats` overlay).
+- Water: the six faces of every voxel were blending over the swimmer, including internal faces
+  between adjacent water cells. `WaterSurfaceFaces` removes these, including mixed water families
+  and stored animation frames, while preserving the animated exterior. First- and third-person
+  before/after views in 051 show Blupi, fish and the cistern walls clearly.
+- Resume format **v3** records the touch capability per input tick so replay is independent of the
+  current hardware. Old versions are refused and use the existing checkpoint fallback. No sibling
+  repository was modified.
+
+Verification: native build, 112/112 CTest, live menu/Exit/Setup/F1/WASD/X/mouse checks, cheat help
+and its frozen-frame equality, `alltreasure` hiding the distance, missions 012 and 051 with
+`RESUME SELFTEST equal`. Evidence and the virtual-controller fixture are under
+`build-probe/controls/` (ignored). Use held `keydown` / `keyup` with sleeps for typed cheats;
+`qa_live.sh`'s bare `key` can be too short for a game tick. Native builds here need
+`CCACHE_DISABLE=1` inside the sandbox because `/rv/cnaccache` is read-only; use the existing build
+tree and at most six compiler jobs. Private Xvfb runs need local socket access beyond the sandbox.
+
+The movement trace is unchanged. Three golden image references were reviewed and refreshed for
+the hidden desktop buttons, bottom distance number and water surfaces; an independent capture
+matches all three byte for byte. The pre-change host was
+also built against the same libraries for comparison (`baseline-run/`): before adding the HUD
+number/water fix, old/new renders were pixel-identical outside the six touch-control rectangles.
+The older committed references also had minor renderer differences with that pre-change host;
+the old references and A/B differences are retained in the task's ignored evidence directory.
+
+The previous author/queue handoff follows unchanged; this task did not take over unrelated audit
+or content work. Nothing was pushed.
 
 ## Who continues (2026-11-06, updated late evening) — read this first
 
@@ -1168,7 +1219,8 @@ is a full library built 2026-10-27 with the current settings).
 
 ## 7. Gotchas
 
-- `tests/golden/` is current as of 2026-11-06 (BD-0077's fixed tick, BD-0078's grounded start).
+- `tests/golden/` is current as of 2026-11-08 (desktop controls hidden, bottom chest-distance number,
+  water exterior faces; the movement trace is unchanged).
 - The chase camera orbits to Blupi's side after 3 s idle; `--spawn` yaw 0 faces -Z, 90 +X.
 - Types 32 and 33: the code's names ("blupih"/"blupit") do not match their icons; check against
   mobile-eggbert before converting.
