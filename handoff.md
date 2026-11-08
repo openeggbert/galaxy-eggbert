@@ -8,6 +8,21 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-08 (controls, help, HUD and underwater visibility)._
 
+## Music previews ready for the owner (2026-11-08)
+
+`music-previews/retro-010-019/` contains ten original GM compositions, each with its own hook,
+harmony, instrument combination and introduction/A/A'/B/B'/reprise/coda form. There are ten OGGs,
+ten editable MIDI sources, `playlist.m3u`, Czech descriptions in `README.txt`, and machine-readable
+track/verification metadata. Audio is 44.1 kHz stereo, approximately 85-125 seconds per piece;
+FFmpeg checked all files, loudness and true peaks (no clipping; `verification.json`). The source is
+`tools/music/compose_previews.py`, rendered through the existing `render_music.py` and system GM
+soundfont. No reference score/melody was copied; these are new previews, not archival Daniel Roux
+music. None is in Content or assigned to a world. The owner has the folder/playlist link to listen.
+
+Active follow-ups in this session: editor Ctrl up / Space Place; complete touch/gamepad editor
+controls; Shift+NumPad 3D selection (also via device UI); whole-number chest distance; full exit/key
+cheer before transitions; lava must kill on actual contact, not merely from being over its tile.
+
 ## Latest follow-up — underwater colour and distance position (2026-11-08)
 
 Owner: clear water looked dry; the distance number beside/behind the lives was unacceptable.

@@ -52,6 +52,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Ten original retro General MIDI music previews (2026-11-08) are in
+  `music-previews/retro-010-019/`: OGG, editable MIDI, a listening playlist and track descriptions.
+  They are outside `Content/` and have no world assignments. Reproduce with
+  `python3 tools/music/compose_previews.py --render`; audio verification is in that directory.
+
 - Controls/menu update (2026-11-08): Play's touch buttons and their mouse hit areas are enabled
   only when CNA reports a touch screen. F1 toggles black controls help on a translucent white panel
   and freezes the current screen; F1/Escape closes it. WASD aliases the arrows (S turns around),
