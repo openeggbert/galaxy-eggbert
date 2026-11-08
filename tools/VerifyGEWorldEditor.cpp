@@ -1303,6 +1303,32 @@ int main()
         check(!linked() && history.Undo(target) && linked(),
               "pasting an independent switch clears an old link and Undo restores it");
     }
+    {
+        World world=slab;
+        WorldEditor editor;
+        editor.EnterEditing(0,10,0);
+        CnaEngine::Graphics::Camera camera;
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::LeftShift,Keys::NumPad6},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::Space},restMouse,0,800,480,camera,world);
+        const auto coordinate=editor.CurrentEditTarget(world);
+        check(coordinate && coordinate->x==placeX+1 && coordinate->y==placeY && coordinate->z==placeZ,
+              "placing a selected region does not shift its coordinate onto the newly written surface");
+        editor.Update(KeyboardState{Keys::D},restMouse,.1f,800,480,camera,world);
+        const auto after=editor.CurrentEditTarget(world);
+        check(after && coordinate && after->x==coordinate->x && after->y==coordinate->y && after->z==coordinate->z,
+              "the NumPad coordinate stays fixed while the camera moves");
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::Delete},restMouse,0,800,480,camera,world);
+        check(world.getBlock(placeX,placeY,placeZ).isAir() && world.getBlock(placeX+1,placeY,placeZ).isAir(),
+              "Delete clears the complete selected region");
+        editor.Update(KeyboardState{},restMouse,0,800,480,camera,world);
+        editor.Update(KeyboardState{Keys::U},restMouse,0,800,480,camera,world);
+        check(!world.getBlock(placeX,placeY,placeZ).isAir() && !world.getBlock(placeX+1,placeY,placeZ).isAir(),
+              "one Undo restores the deleted region");
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

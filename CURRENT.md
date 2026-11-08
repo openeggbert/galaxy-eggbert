@@ -52,6 +52,10 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- NumPad-selected editor coordinates stay fixed when flying the camera or placing terrain;
+  NumPad5/Tools Reset resumes cursor aiming. Selection and Place share one outline when they
+  occupy the same cell. Delete clears an extended region with one Undo. Unit coverage and
+  normal-render camera/turn/delete/Undo captures pass (build-probe/editor-turn/anchored-shots/).
 - A saw is an independent blade in its own voxel: no generated support cube, floor texture
   selection or solid invisible cell. Its original mesh rests on the cell bottom; disk/body
   contact follows it, stopped blades are harmless and the block/air below is independent.

@@ -89,6 +89,7 @@ namespace GalaxyEggbert::Editor
         aimKind_ = AimKind::None;
         placementOffsetX_ = placementOffsetY_ = placementOffsetZ_ = 0;
         placementOffsetKeyHeldLastFrame_ = false;
+        manualPlacement_ = false;
         highlightRenderer_.Hide();
         commandStack_ = EditCommandStack();
         boxFirstCornerPlaced_ = false;
@@ -122,7 +123,8 @@ namespace GalaxyEggbert::Editor
         // (the centre aims when there is none yet, e.g. a touch that began on a button).
         const bool looking =
             mouse.getRightButtonProperty() == Microsoft::Xna::Framework::Input::ButtonState::Pressed;
-        if (!navigation.keepAim && (looking || !palette_.IsPointerOverControl(mouse, viewportWidth, viewportHeight)))
+        if (!navigation.keepAim && !manualPlacement_ &&
+            (looking || !palette_.IsPointerOverControl(mouse, viewportWidth, viewportHeight)))
         {
             AimAt(world, navigation.centeredAim ? forward : AimDirection(forward, mouse, viewportWidth, viewportHeight, camera));
         }
@@ -235,6 +237,9 @@ namespace GalaxyEggbert::Editor
         int viewportWidth, int viewportHeight, const Worlds::World& world)
     {
         liftEndpoints_.Draw(device,camera,world);
+        const auto target = CurrentEditTarget(world);
+        const bool sameCell = target && target->x==placementCellX_ &&
+            target->y==placementCellY_ && target->z==placementCellZ_;
         if (showingBox_)
         {
             highlightRenderer_.ShowBox(
@@ -242,7 +247,7 @@ namespace GalaxyEggbert::Editor
                 boxMaxRenderX_, boxMaxRenderY_, boxMaxRenderZ_);
             highlightRenderer_.Draw(device, camera);
         }
-        else if (hasHighlight_)
+        else if (hasHighlight_ && !sameCell)
         {
             highlightRenderer_.ShowCell(device, highlightX_, highlightY_, highlightZ_);
             highlightRenderer_.Draw(device, camera);
@@ -253,7 +258,7 @@ namespace GalaxyEggbert::Editor
         }
 
         auto status = StatusLines();
-        if (const auto target = CurrentEditTarget(world))
+        if (target)
         {
             selectionHighlightRenderer_.ShowSelectedObject(device,
                 float(target->x)-Game::WorldRuntime::kWorldCenterX, float(target->y),

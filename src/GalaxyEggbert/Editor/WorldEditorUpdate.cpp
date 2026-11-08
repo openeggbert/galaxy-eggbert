@@ -170,6 +170,7 @@ namespace GalaxyEggbert::Editor
                                 keyboard.IsKeyDown(Keys::Home) || keyboard.IsKeyDown(Keys::PageUp)));
         if (offsetAction || (offsetKey && !placementOffsetKeyHeldLastFrame_))
         {
+            manualPlacement_ = true;
             if (extend)
             {
                 if (!extendedSelection_ && hasHighlight_)
@@ -207,6 +208,7 @@ namespace GalaxyEggbert::Editor
             if (reset)
             {
                 placementOffsetX_ = placementOffsetY_ = placementOffsetZ_ = 0;
+                manualPlacement_ = false;
                 extendedSelection_ = false;
             }
             else
@@ -428,6 +430,7 @@ namespace GalaxyEggbert::Editor
             (input.leftHeld && !leftHeldLastFrame_ && !input.palette.clickConsumed) ||
             input.palette.action == EditorPalette::Action::PlaceSelection;
         const bool remove = (input.middleHeld && !middleHeldLastFrame_) ||
+            (input.deleteObjectHeld && !deleteObjectKeyHeldLastFrame_) ||
             input.palette.action == EditorPalette::Action::DeleteAtTarget;
         if ((!place && !remove) || !hasHighlight_) return false;
         if (place && (palette_.IsObjectMode() || palette_.IsBigDecorMode() || palette_.IsSpawnPointMode())) return true;
@@ -1062,7 +1065,7 @@ namespace GalaxyEggbert::Editor
             lines.emplace_back("C C: copy a box (two corners)  P: paste it  Q: turn  X: mirror");
             lines.emplace_back("M: music  ARROWS: background  RMB: look  WASD: fly  CTRL: up  SHIFT/Z: down");
             lines.emplace_back("SPACE/PLACE: place   SHIFT + NUMPAD: extend a 3D selection");
-            lines.emplace_back("NUMPAD: move the red preview   H: hide the keys");
+            lines.emplace_back("NUMPAD: fixed coordinate  NUMPAD5: aim again  H: hide keys");
         }
         else if (!pendingEnd_)
         {

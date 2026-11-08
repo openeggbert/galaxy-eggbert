@@ -244,6 +244,8 @@ The red outline marks the selected cell, with its coordinates in the status; the
 marks where Place will add a block. Delete/Backspace, middle click and Tools Remove delete
 the red selection; V changes its terrain variant. Each removal is undoable. Shift does not
 lower the camera while extending a selection or using touch/gamepad Select 3D.
+NumPad coordinates stay fixed while moving the camera or placing blocks. NumPad5 (Tools Reset)
+returns to mouse aiming. Delete also clears a selected cuboid as one undoable edit.
 
 Touch: the Move pad flies horizontally; Up/Down changes height; drag the world with another finger
 to look. Choose palette entries and Place with their existing buttons. **Tools > Select 3D** replaces

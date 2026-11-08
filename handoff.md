@@ -10,6 +10,14 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Coordinate follow-up complete: NumPad/offset controls hold the aim anchor rather than
+  raycasting again after each camera move or newly written surface. NumPad5/Tools Reset returns
+  to pointer aiming. Same-cell selection/Place draws only the red outline, avoiding overlapping
+  cyan/red borders. Delete handles the whole extended cuboid, with one Undo. Pure coordinate
+  stability/camera/region tests and native anchored-shots checks pass. All114 CTest pass.
+  Saw mission checks also pass15/15; campaigncheck and watercheck pass, stage3 --rides has every
+  target reachable (stage1/2 retain their documented locked sections). Only the verified debug
+  layout follow-up remains to be committed separately.
 - Standalone saw request is complete: generated floors/material heuristic and solid saw masks
   removed. Decor/scie.rd4 is bottom-aligned by+.425 (measured Y[-.499,.433]); disk contact uses
   the same offset, including body/swept fall and rotation. Stopped blades stay harmless.
@@ -23,8 +31,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   plus114/114 CTest and normal-render native probes over air/brick/panel. A temporary GPU-draw
   stub accelerates simulation scripts only. Full campaign hits the same world021 egg timeout
   at26658 as the preserved pre-change binary, a pre-existing verification limit. Evidence:
-  build-probe/saw-independent/. Verified editor-coordinate/debug-layout follow-ups still need
-  their separate commits. Older support-cube notes below are superseded by this entry.
+  build-probe/saw-independent/. Older support-cube notes below are superseded by this entry.
 - Owner's14-43-15 screenshot showed the old ray-hit selection and the adjacent Place preview
   both red. These are now distinct: selected cell red wire/tint, Place cyan wire. Status shows
   the selected XYZ. V, O and all removal routes now use CurrentEditTarget; Delete works on

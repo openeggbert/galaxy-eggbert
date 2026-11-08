@@ -341,6 +341,7 @@ namespace GalaxyEggbert::Editor
         std::uint16_t placementCellY_ = 0;
         std::uint16_t placementCellZ_ = 0;
         bool placementOffsetKeyHeldLastFrame_ = false;
+        bool manualPlacement_ = false;
 
         bool leftHeldLastFrame_ = false;
         bool middleHeldLastFrame_ = false;

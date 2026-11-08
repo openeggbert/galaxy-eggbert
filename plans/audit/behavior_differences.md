@@ -1640,6 +1640,16 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0106 — NumPad selection drift after camera/terrain changes — FIXED_AND_VERIFIED
+
+NumPad coordinates previously stayed relative to a raycast updated every frame. Flying the
+camera or placing a region could change that base hit and shift the selected cell. Explicit
+coordinate mode now holds the aim anchor until NumPad5/Tools Reset. Red selection and cyan
+Place use one outline when coincident; Delete clears the entire extended region with one Undo.
+Tests cover placement, camera movement, region removal/restoration; native camera/turn/delete
+captures keep XYZ51,1,28 fixed and show one red border. All114 CTest pass. Evidence:
+build-probe/editor-turn/anchored-shots/. Gameplay is unchanged.
+
 ## BD-0105 — Independent saw cell instead of an imposed floor — FIXED_AND_VERIFIED
 
 Owner: a saw must be only a saw, independent of the block below. The renderer explicitly

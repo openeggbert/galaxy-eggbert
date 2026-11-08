@@ -203,7 +203,7 @@ gallery gets its own slot. The browser also offers backups (three generations), 
 from `customworlds/shared/` (a download and a file picker on the web), delete with confirmation, and
 a thumbnail per slot.
 
-Inside a world: W/A/S/D with Space and Left Ctrl fly the camera; the mouse aims; the icon palette
+Inside a world: W/A/S/D fly, Ctrl rises, Shift/Z descends, Space places; the mouse aims; the icon palette
 (ten groups in Eggbert 2's order) selects blocks, objects, BigDecor, start, background and music;
 clicking again on the cell just placed cycles its variants (Ctrl places without cycling); rocks are
 re-tiled to what borders them; undo and redo cover every edit; a box can be filled, copied and
