@@ -85,9 +85,9 @@ namespace GalaxyEggbert::Editor
                                   {0, 0, 0, 0, 0, 182, 158, 0},
                                   {7, 0, 0, 0, 0, 0, 0, 21},
                                   {11, 5, 96, 97, 98, 63, 62, 64}, {},
-                                  // PlaceDecor10 indices1-4 are player starts. Custom worlds
-                                  // use rank0 for every colour; 5/6 are posts/signs, 7 the final key.
-                                  {0, 1, 1, 1, 1, 0, 0, 0}),
+                                  // Independent player starts, yellow/orange/blue/green.
+                                  // Slots5/6 are posts/signs, 7 the final key (PlaceDecor10).
+                                  {0, 1, 2, 3, 4, 0, 0, 0}),
         };
     }
 

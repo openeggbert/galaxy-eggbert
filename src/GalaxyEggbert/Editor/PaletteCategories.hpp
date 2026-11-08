@@ -38,8 +38,7 @@ namespace GalaxyEggbert::Editor
         // Secret wooden case: the crate is camouflaged as the current
         // terrain selection instead of looking like an ordinary crate.
         std::vector<int> objectVisualIconIds;
-        // Non-zero marks the matching source glyph as the editor's
-        // world-level Blupi start-position tool.
+        // 0 = not a start; 1/2/3/4 select yellow/orange/blue/green independently.
         std::vector<int> spawnPointIds;
         // Populated by EDITOR-126 for source BigDecor placements.
         std::vector<int> bigDecorIconIds;

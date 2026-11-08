@@ -57,12 +57,13 @@ content-authoring UX, but not new gameplay mechanics.
   endpoints differ; ordinary stationary mines, treasure and chasing hazards do not. Coincident
   endpoints show one cube. Existing double-sided/depth-tested rendering is preserved. Pure
   route tests and native fish/mine placement/save checks pass (build-probe/editor-fixes/).
-- The four coloured Blupi buttons in the editor set the single player start, as the
-  original does in custom worlds. They no longer place personal mines; genuine mines
-  200-203 and the Treasures mine entry remain valid. A translucent Blupi marks the start,
-  and its XYZ appears in editor status. Save/load, Undo/Redo and native Play from the chosen
-  start pass, together with all 114 tests. The same palette correction restores posts182,
-  signs158 and the final golden key21 to the neighbouring source-menu slots.
+- Editor Blupi starts are independent: one yellow, orange, blue and green start, each
+  drawn in its own palette colour. Moving/removing a colour leaves the others intact, including
+  starts sharing one cell; Undo/Redo and save/load preserve each separately. Yellow remains the
+  single-player spawn. Non-yellow starts use additive metadata7; existing worlds need no migration.
+  This supersedes the rejected initial shared-yellow mapping. Personal mines remain separate.
+  All 114 tests and native place/move/delete/Undo/reload/Play checks pass
+  (build-probe/player-start-colors/). Neighbouring palette slots remain posts182/signs158/key21.
 - Editor placement keeps a single exit: placing a red arrow or final golden key replaces
   the previous exit, as blupi_recon PlaceDecor10 does. Clipboard stamps obey the same rule,
   including removal outside the pasted box. One Undo restores removed/overwritten objects;

@@ -20,6 +20,7 @@
 #include <limits>
 #include <sstream>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
+#include <GalaxyEggbert/Editor/PlayerStartColor.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include "GalaxyEggbert/BlockTypes.hpp"
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
@@ -3317,6 +3318,7 @@ namespace GalaxyEggbert::CNA
         using Microsoft::Xna::Framework::Color;
         using Microsoft::Xna::Framework::Graphics::Texture2D;
         enemyBlupiTextures_.clear();
+        for (auto& textures : editorStartTextures_) textures.clear();
         if (!blupiModelIsReal_ || !blupiModel_)
         {
             return;
@@ -3405,22 +3407,20 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::DrawEditorSpawn(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
     {
         if (phase_!=GalaxyEggbert::Def::GamePhase::Editor || worldEditor_.IsBrowsing() ||
-            !worldRuntime_.GetWorld().hasSpawnPoint() || !blupiModelIsReal_ || !blupiModel_ || !blupiEffect_ ||
+            !blupiModelIsReal_ || !blupiModel_ || !blupiEffect_ ||
             blupiModel_->Clips.count("Stop")==0) return;
         using namespace Microsoft::Xna::Framework;
         using namespace Microsoft::Xna::Framework::Graphics;
-        const auto& w=worldRuntime_.GetWorld();
+        const auto starts=CollectPlayerStarts(worldRuntime_.GetWorld());
+        if (starts.empty()) return;
         std::vector<Matrix> bones;
         blupiModel_->ComputeBoneTransformsEXT("Stop",System::TimeSpan::FromSeconds(0),false,bones);
         blupiEffect_->SetBoneTransforms(bones);
-        blupiEffect_->setWorldProperty(Matrix::CreateScale(kRealModelScale)*Matrix::CreateRotationY(3.14159265f)*
-            Matrix::CreateTranslation(float(w.spawnX())-WorldRuntime::kWorldCenterX,float(w.spawnY())-.5f,
-                                      float(w.spawnZ())-WorldRuntime::kWorldCenterZ));
         blupiEffect_->setViewProperty(camera_.View());
         blupiEffect_->setProjectionProperty(camera_.Projection());
         const auto diffuse=blupiEffect_->getDiffuseColorProperty();
         blupiEffect_->setDiffuseColorProperty(Vector3::One);
-        blupiEffect_->setAlphaProperty(.65f);
+        blupiEffect_->setAlphaProperty(.85f);
         device.setBlendStateProperty(BlendState::NonPremultiplied);
         device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
         device.setRasterizerStateProperty(RasterizerState::CullCounterClockwise);
@@ -3430,14 +3430,39 @@ namespace GalaxyEggbert::CNA
             const int index=faces->second.front();
             if (index>=0 && index<static_cast<int>(blupiFaces_.size())) face=&blupiFaces_[index];
         }
-        for (const auto& part : blupiModel_->Parts)
+        for (const auto& start : starts)
         {
-            blupiEffect_->setTextureProperty(face && part.Name==blupiFacePart_ ? face : part.Texture);
-            blupiEffect_->Apply();
-            device.SetVertexBuffer(part.Part->getVertexBufferProperty());
-            device.SetIndexBuffer(part.Part->getIndexBufferProperty());
-            device.DrawIndexedPrimitives(PrimitiveType::TriangleList,part.Part->getVertexOffsetProperty(),0,
-                part.Part->getNumVerticesProperty(),part.Part->getStartIndexProperty(),part.Part->getPrimitiveCountProperty());
+            blupiEffect_->setWorldProperty(Matrix::CreateScale(kRealModelScale)*Matrix::CreateRotationY(3.14159265f)*
+                Matrix::CreateTranslation(float(start.x)-WorldRuntime::kWorldCenterX,float(start.y)-.5f,
+                                          float(start.z)-WorldRuntime::kWorldCenterZ));
+            const auto coloredTexture = [&](Texture2D* source) -> Texture2D* {
+                if (!source || start.color==PlayerStartColor::Yellow) return source;
+                auto& textures=editorStartTextures_[static_cast<int>(start.color)-1];
+                if (const auto found=textures.find(source);found!=textures.end()) return found->second.get();
+                const int width=source->getWidthProperty(),height=source->getHeightProperty();
+                std::vector<Color> pixels(static_cast<std::size_t>(width)*height);
+                source->GetData(pixels.data(),static_cast<int>(pixels.size()));
+                for (auto& pixel : pixels)
+                {
+                    std::uint8_t r=pixel.getRProperty(),g=pixel.getGProperty(),b=pixel.getBProperty();
+                    GalaxyEggbert::Editor::RecolorPlayerStartPixel(start.color,r,g,b);
+                    pixel=Color(r,g,b,pixel.getAProperty());
+                }
+                auto texture=std::make_unique<Texture2D>(device,width,height);
+                texture->SetData(pixels.data(),static_cast<int>(pixels.size()));
+                auto* result=texture.get();
+                textures.emplace(source,std::move(texture));
+                return result;
+            };
+            for (const auto& part : blupiModel_->Parts)
+            {
+                blupiEffect_->setTextureProperty(coloredTexture(face && part.Name==blupiFacePart_ ? face : part.Texture));
+                blupiEffect_->Apply();
+                device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                device.DrawIndexedPrimitives(PrimitiveType::TriangleList,part.Part->getVertexOffsetProperty(),0,
+                    part.Part->getNumVerticesProperty(),part.Part->getStartIndexProperty(),part.Part->getPrimitiveCountProperty());
+            }
         }
         blupiEffect_->setAlphaProperty(1);
         blupiEffect_->setDiffuseColorProperty(diffuse);

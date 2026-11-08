@@ -1640,6 +1640,21 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0112 — All coloured starts aliased yellow and rendered yellow — FIXED_AND_VERIFIED
+
+Owner rejected BD-0110: choosing orange moved yellow and still displayed yellow. The earlier
+fix copied PlaceDecor10's custom-world rank0 alias, which was not the intended editor feature.
+Owner explicitly confirmed four independent starts; ordinary play uses yellow. PlayerStart.hpp
+now represents each colour independently, preserving yellow's header and adding non-yellow
+metadata7 bits at their cells. Shared cells, per-colour moves/removal, Undo/Redo and save/load
+preserve every other start. The original mesh is shown in yellow/orange/blue/green using body
+colours from existing palette icons5/96/97/98; recolour preserves whites and other materials.
+No multiplayer simulation added. Native tests place all four, move orange, Undo/Redo, delete and
+restore it, save and reopen; all four colours and positions survive. Saved-file inspection keeps
+yellow46,1,28, orange57,1,28, blue53,1,28, green56,1,28 with no MoveObjects. Native Play/debug
+uses yellow46,1,28. Input/data/recolour regressions and all114 CTest pass. Evidence:
+build-probe/player-start-colors/. The initial shared-start interpretation was incomplete.
+
 ## BD-0111 — Missing endpoint cubes for fish and other patrolling objects — FIXED_AND_VERIFIED
 
 The marker builder filtered ObjectSemanticKind::Lift only. Reference decblock.cpp BUILD
@@ -1654,7 +1669,7 @@ fish placement produces cubes1/2 at50,1,28 and54,1,28; a mine route also shows v
 Saved fish timing/endpoints match the authored route. All 114 CTest pass.
 Evidence: build-probe/editor-fixes/.
 
-## BD-0110 — Coloured player starts placed personal mines — FIXED_AND_VERIFIED
+## BD-0110 — Coloured player starts placed personal mines — FIXED_AND_VERIFIED (mine mapping; start semantics superseded by BD-0112)
 
 The Characters and goals palette mapped four Blupi buttons to real personal-mine IDs200-203.
 Reference PlaceDecor10 indices1-4 edits m_blupiStartPos; custom worlds share rank0 across all

@@ -258,9 +258,9 @@ namespace GalaxyEggbert::Editor
         }
 
         auto status = StatusLines();
-        if (world.hasSpawnPoint())
-            status.push_back("Player start X:"+std::to_string(world.spawnX())+" Y:"+
-                std::to_string(world.spawnY())+" Z:"+std::to_string(world.spawnZ()));
+        for (const auto& start : CollectPlayerStarts(world))
+            status.push_back(std::string(PlayerStartNames[static_cast<int>(start.color)])+" start X:"+
+                std::to_string(start.x)+" Y:"+std::to_string(start.y)+" Z:"+std::to_string(start.z));
         if (target)
         {
             selectionHighlightRenderer_.ShowSelectedObject(device,

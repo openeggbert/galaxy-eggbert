@@ -463,6 +463,23 @@ have all three fields non-zero after encoding and remain inside the world,
 otherwise loading rejects the malformed file. Runtime presentation shifts
 X/Z by the normal world-centre offset and leaves Y unchanged.
 
+### Independent coloured player starts (2026-11-08)
+
+The editor has four independent starts: yellow/orange/blue/green (ranks 0/1/2/3).
+The owner explicitly chose independent starts in custom worlds; unlike the original custom-world
+editor's rank-0 aliasing, placing orange never moves yellow. Normal single-player gameplay
+continues to use only the existing yellow header spawn and its historical unset fallback.
+
+Yellow keeps the three existing header fields. Orange/blue/green use sparse `metadataType = 7`,
+anchored at the exact raw-grid start cell. The payload is one non-zero byte: bit1 = orange,
+bit2 = blue, bit3 = green; other bits must be zero. Several colours can share one cell. Each
+colour may appear at most once in the world. `PlayerStart.hpp` collects, finds, moves and clears
+these records while preserving other colours at the same cell. Moving a colour removes only
+its old bit; removing the last bit removes the metadata record. The existing generic metadata
+serialization preserves these records without changing header size or version. Old files have
+no extra coloured starts. They are editor data, never MoveObjects or hazards. Clipboard stamps
+continue to omit player starts of every colour, as they already omitted the header spawn.
+
 ## Recommended Future World Header
 
 **Note (2026-07-09):** this section is still a hypothetical, unbuilt future

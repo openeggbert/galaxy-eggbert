@@ -187,6 +187,7 @@ namespace GalaxyEggbert::Editor
                     buttonIconIds[static_cast<std::size_t>(index)] : 0;
                 if (spawnPoint > 0)
                 {
+                    selectedPlayerStartColor_ = static_cast<PlayerStartColor>(spawnPoint-1);
                     placementKind_ = PlacementKind::SpawnPoint;
                     openCategory_ = -1;
                 }

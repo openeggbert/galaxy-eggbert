@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
+#include <GalaxyEggbert/PlayerStart.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
 
@@ -81,6 +82,7 @@ namespace GalaxyEggbert::Editor
         std::uint32_t musicAfter = 0;
         SpawnPointState spawnBefore;
         SpawnPointState spawnAfter;
+        PlayerStartColor spawnColor = PlayerStartColor::Yellow;
 
         std::uint16_t bigDecorAnchorX = 0;
         std::uint16_t bigDecorAnchorY = 0;

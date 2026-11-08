@@ -1036,6 +1036,10 @@ namespace GalaxyEggbert::CNA
         std::unordered_map<const Microsoft::Xna::Framework::Graphics::Texture2D*,
                            std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>>
             enemyBlupiTextures_;
+        // Editor-only variants of yellow body/face materials, keyed by the original texture.
+        std::array<std::unordered_map<const Microsoft::Xna::Framework::Graphics::Texture2D*,
+                                     std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D>>,3>
+            editorStartTextures_;
         void BuildEnemyBlupiTextures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         [[nodiscard]] bool EnemyBlupiModelDrawn(const GalaxyEggbert::Game::MobileObjSpec& obj) const;
         // A cell's quarter turns from the editor (PlateRotationMetadata.hpp, OR-0071); world coordinates.

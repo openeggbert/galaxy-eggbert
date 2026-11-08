@@ -483,10 +483,11 @@ namespace GalaxyEggbert::Editor
         if (palette_.IsSpawnPointMode())
         {
             command.kind = EditCommand::Kind::SpawnPointEdit;
-            command.spawnBefore = {
-                world.hasSpawnPoint(), world.spawnX(), world.spawnY(), world.spawnZ()};
+            command.spawnColor = palette_.SelectedPlayerStartColor();
+            if (const auto old=FindPlayerStart(world,command.spawnColor))
+                command.spawnBefore = {true,old->x,old->y,old->z};
             command.spawnAfter = {true, x, y, z};
-            world.setSpawnPoint(x, y, z);
+            SetPlayerStart(world,{command.spawnColor,x,y,z});
         }
         else if (palette_.IsBigDecorMode())
         {
@@ -646,6 +647,22 @@ namespace GalaxyEggbert::Editor
         const bool middle = input.middleHeld && !middleHeldLastFrame_ && !input.palette.clickConsumed;
         const bool key = input.deleteObjectHeld && !deleteObjectKeyHeldLastFrame_;
         if ((!toolbar && !middle && !key) || boxFirstCornerPlaced_) return false;
+        if (palette_.IsSpawnPointMode() && hasHighlight_)
+        {
+            const auto color=palette_.SelectedPlayerStartColor();
+            const auto start=FindPlayerStart(world,color);
+            if (start && start->x==placementCellX_ && start->y==placementCellY_ && start->z==placementCellZ_)
+            {
+                EditCommand command;
+                command.kind=EditCommand::Kind::SpawnPointEdit;
+                command.spawnColor=color;
+                command.spawnBefore={true,start->x,start->y,start->z};
+                ClearPlayerStart(world,color);
+                commandStack_.Push(std::move(command));
+                MarkMutated();
+                return true;
+            }
+        }
         const auto target = CurrentEditTarget(world);
         if (!target) return true;
         const auto [kind,x,y,z] = *target;

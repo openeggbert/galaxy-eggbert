@@ -26,15 +26,15 @@ namespace GalaxyEggbert::Editor
         }
 
         void ApplySpawnPointState(
-            Worlds::World& world, const SpawnPointState& state)
+            Worlds::World& world, const SpawnPointState& state, PlayerStartColor color)
         {
             if (state.present)
             {
-                world.setSpawnPoint(state.x, state.y, state.z);
+                SetPlayerStart(world,{color,state.x,state.y,state.z});
             }
             else
             {
-                world.clearSpawnPoint();
+                ClearPlayerStart(world,color);
             }
         }
 
@@ -85,7 +85,7 @@ namespace GalaxyEggbert::Editor
                 world.setMusicTrack(forward ? command.musicAfter : command.musicBefore);
                 break;
             case EditCommand::Kind::SpawnPointEdit:
-                ApplySpawnPointState(world, forward ? command.spawnAfter : command.spawnBefore);
+                ApplySpawnPointState(world, forward ? command.spawnAfter : command.spawnBefore, command.spawnColor);
                 break;
             case EditCommand::Kind::BigDecorEdit:
                 ApplyBigDecorState(world, command, forward ? command.bigDecorAfter : command.bigDecorBefore);

@@ -10,6 +10,20 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Coloured starts corrected after owner clarification (BD-0112). The earlier rank0 alias
+  followed original custom-world behaviour but was rejected: owner explicitly chose four
+  independent coloured starts, with yellow used in normal play. PlayerStart.hpp keeps yellow
+  in its existing header, stores orange/blue/green as metadata7 bit masks, allows shared cells
+  and relocates/removes only the selected colour. Spawn history records colour; matching-colour
+  Delete/Tools Remove at the preview works with Undo. Palette records now use ids1/2/3/4.
+  Editor renders every start using the original Stop mesh, recolouring yellow materials from
+  existing button96-98 palette colours; whites/eyes/other materials preserved, variants cached.
+  Status lists each colour's XYZ. Tests cover each input selection/move/remove/history/save,
+  overlap, invalid destinations, independent yellow and recolour. All114 CTest pass. Native own
+  profile: yellow46,1,28; orange50->57 with Undo/delete/restore; blue53; green56. Reload retains
+  four correctly coloured markers, Play/debug starts yellow46,1,28. Evidence:
+  build-probe/player-start-colors/. No sibling edits or push. Earlier BD-0110 shared-start
+  claims below are superseded by this correction.
 - Fish/creature endpoint cubes complete (BD-0111): LiftEndpoint* generalized/renamed to
   ObjectPath*. The old filter admitted lifts only. Registry patrolTicksPerCell also admits
   all eight reference creatures/moving mines/fish; optional patrolMotion objects show their
@@ -19,7 +33,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   retained. Native fish first/second placement and moving-mine XYZ route shots, saved-file
   inspection and all 114 CTest pass. Evidence: build-probe/editor-fixes/. This editor batch
   (single exit, coloured player starts, route cubes) is complete; no sibling edits or push.
-- Coloured editor Blupi starts complete (BD-0110): characters slots1-4 now select the
+- Initial coloured-start fix (BD-0110; shared-start mapping superseded by BD-0112): characters slots1-4 now select the
   existing world-header spawn tool instead of personal mines200-203. PlaceDecor10 shares
   rank0 among all four colours in custom worlds, so no multiplayer mechanic or mine-record
   migration was added. Selected-button highlight stays singular. Slots5/6/7 also corrected

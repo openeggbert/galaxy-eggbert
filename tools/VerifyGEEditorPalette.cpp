@@ -1,3 +1,4 @@
+#include <GalaxyEggbert/Editor/PlayerStartColor.hpp>
 #include <GalaxyEggbert/Editor/AutoTile.hpp>
 #include <GalaxyEggbert/Editor/EditorPalette.hpp>
 #include <GalaxyEggbert/Editor/EditorPaletteLayout.hpp>
@@ -87,7 +88,7 @@ int main()
     check(sourceCategories[7].objectTypeIds[9] == 12 &&
               sourceCategories[7].objectVisualIconIds[9] == -1,
           "Secret wooden case retains the crate behavior and current-terrain camouflage profile");
-    check(sourceCategories[9].spawnPointIds==std::vector<int>{0,1,1,1,1,0,0,0} &&
+    check(sourceCategories[9].spawnPointIds==std::vector<int>{0,1,2,3,4,0,0,0} &&
           sourceCategories[9].objectTypeIds==std::vector<int>{7,0,0,0,0,0,0,21} &&
           sourceCategories[9].iconIds[5]==182 && sourceCategories[9].iconIds[6]==158,
           "PlaceDecor10 maps four coloured player starts, posts/signs and the final key to their real roles");
@@ -552,7 +553,8 @@ int main()
         EditorPalette palette;
         (void)click(palette,30.f,450.f);
         const auto start=click(palette,72.f+42.f*colour,450.f);
-        check(start.clickConsumed && palette.IsSpawnPointMode() && !palette.IsObjectMode(),
+        check(start.clickConsumed && palette.IsSpawnPointMode() && !palette.IsObjectMode() &&
+                  static_cast<int>(palette.SelectedPlayerStartColor())==colour-1,
               "each coloured Blupi button selects the world spawn tool, never a personal mine");
         check(!palette.IsNotYetImplementedNoticeVisible(),"all coloured start tools are implemented");
     }
@@ -678,6 +680,8 @@ int main()
         constexpr const char* kSpawnSavePath =
             "verify_ge_editor_palette_spawn.vwr";
         World world;
+        const auto color=static_cast<GalaxyEggbert::PlayerStartColor>(colour-1);
+        if (colour>1) world.setSpawnPoint(10,1,10);
         WorldEditor editor;
         editor.SetWorldPath(kSpawnSavePath);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
@@ -704,23 +708,76 @@ int main()
         // Re-aim after closing the popup, independently of which colour was clicked.
         editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
         tap(499, 451);
-        check(world.hasSpawnPoint() && world.spawnX() == 50 &&
-                  world.spawnY() == 0 && world.spawnZ() == 23,
+        check(GalaxyEggbert::FindPlayerStart(world,color)==
+                  GalaxyEggbert::PlayerStart{color,50,0,23},
               "PLACE stores Level start at the exact red-preview cell");
         check(GalaxyEggbert::CollectMoveObjects(world).empty(),"placing a coloured player start creates no mine or other object");
         pressKey(Keys::U);
-        check(!world.hasSpawnPoint(),
-              "undo restores the legacy unset spawn state");
+        check(!GalaxyEggbert::FindPlayerStart(world,color),
+              "undo removes only the placed colour");
         pressKey(Keys::R);
-        check(world.hasSpawnPoint() && world.spawnX() == 50 &&
-                  world.spawnY() == 0 && world.spawnZ() == 23,
+        check(GalaxyEggbert::FindPlayerStart(world,color)==
+                  GalaxyEggbert::PlayerStart{color,50,0,23},
               "redo restores the placed Level start");
         pressKey(Keys::Enter);
         const World loaded = World::loadFromFile(kSpawnSavePath);
-        check(loaded.hasSpawnPoint() && loaded.spawnX() == 50 &&
-                  loaded.spawnY() == 0 && loaded.spawnZ() == 23,
+        check(GalaxyEggbert::FindPlayerStart(loaded,color)==
+                  GalaxyEggbert::PlayerStart{color,50,0,23},
               "saving and reloading retains the placed Level start");
+        if (colour>1)
+            check(loaded.hasSpawnPoint() && loaded.spawnX()==10 && loaded.spawnY()==1 && loaded.spawnZ()==10,
+                  "orange/blue/green placement, Undo/Redo and save never overwrite the yellow start");
+        pressKey(Keys::NumPad6);
+        pressKey(Keys::Space);
+        check(GalaxyEggbert::FindPlayerStart(world,color)==GalaxyEggbert::PlayerStart{color,51,0,23},
+              "placing the same colour again relocates only that colour");
+        pressKey(Keys::U);
+        check(GalaxyEggbert::FindPlayerStart(world,color)==GalaxyEggbert::PlayerStart{color,50,0,23},
+              "Undo restores that colour's previous position");
+        pressKey(Keys::R);
+        pressKey(Keys::Delete);
+        check(!GalaxyEggbert::FindPlayerStart(world,color),"Delete removes the selected colour at the placement cell");
+        pressKey(Keys::U);
+        check(GalaxyEggbert::FindPlayerStart(world,color)==GalaxyEggbert::PlayerStart{color,51,0,23},
+              "Undo restores the removed colour");
+        if (colour>1)
+            check(world.spawnX()==10 && world.spawnY()==1 && world.spawnZ()==10,
+                  "moving/deleting a non-yellow start preserves the single-player spawn");
         std::remove(kSpawnSavePath);
+    }
+
+    {
+        using namespace GalaxyEggbert;
+        World world;
+        for (int c=0;c<4;++c) SetPlayerStart(world,{static_cast<PlayerStartColor>(c),12,3,14});
+        check(CollectPlayerStarts(world).size()==4,"all four colours may share a cell without replacing one another");
+        SetPlayerStart(world,{PlayerStartColor::Orange,20,4,21});
+        check(FindPlayerStart(world,PlayerStartColor::Yellow)==PlayerStart{PlayerStartColor::Yellow,12,3,14} &&
+              FindPlayerStart(world,PlayerStartColor::Blue)==PlayerStart{PlayerStartColor::Blue,12,3,14} &&
+              FindPlayerStart(world,PlayerStartColor::Green)==PlayerStart{PlayerStartColor::Green,12,3,14},
+              "moving orange out of a shared cell preserves yellow, blue and green");
+        world.saveToFile("verify_player_starts.vwr");
+        const auto loaded=World::loadFromFile("verify_player_starts.vwr");
+        check(CollectPlayerStarts(loaded)==CollectPlayerStarts(world),"all independent colours survive a file round trip");
+        std::remove("verify_player_starts.vwr");
+        ClearPlayerStart(world,PlayerStartColor::Blue);
+        check(CollectPlayerStarts(world).size()==3 && FindPlayerStart(world,PlayerStartColor::Green).has_value(),
+              "removing blue preserves the green start sharing its cell");
+        bool rejected=false;
+        try { SetPlayerStart(world,{PlayerStartColor::Orange,500,1,1}); }
+        catch (const std::out_of_range&) { rejected=true; }
+        check(rejected && FindPlayerStart(world,PlayerStartColor::Orange)==PlayerStart{PlayerStartColor::Orange,20,4,21},
+              "an invalid destination never destroys the previous coloured start");
+        constexpr std::array<std::array<int,3>,4> expected{{{255,255,0},{255,165,23},{23,199,255},{23,255,31}}};
+        for (int c=0;c<4;++c)
+        {
+            std::uint8_t r=255,g=255,b=0;
+            RecolorPlayerStartPixel(static_cast<PlayerStartColor>(c),r,g,b);
+            check(std::array<int,3>{r,g,b}==expected[c],"each marker has its palette body colour");
+            r=g=b=180;
+            RecolorPlayerStartPixel(static_cast<PlayerStartColor>(c),r,g,b);
+            check(r==180 && g==180 && b==180,"marker recolour preserves whites and greys");
+        }
     }
 
     {

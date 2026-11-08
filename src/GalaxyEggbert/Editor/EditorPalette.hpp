@@ -7,6 +7,7 @@
 #include "PaletteCategories.hpp"
 
 #include <GalaxyEggbert/Def/ObjectType.hpp>
+#include <GalaxyEggbert/PlayerStart.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
@@ -84,6 +85,7 @@ namespace GalaxyEggbert::Editor
         {
             return placementKind_ == PlacementKind::SpawnPoint;
         }
+        [[nodiscard]] PlayerStartColor SelectedPlayerStartColor() const noexcept { return selectedPlayerStartColor_; }
 
         [[nodiscard]] bool IsBigDecorMode() const noexcept
         {
@@ -177,6 +179,7 @@ namespace GalaxyEggbert::Editor
         int selectedObjectVisualIcon_ = 0;
         int selectedButtonIcon_ = 0;
         int selectedBigDecorIcon_ = 0;
+        PlayerStartColor selectedPlayerStartColor_ = PlayerStartColor::Yellow;
         PlacementKind placementKind_ = PlacementKind::Block;
         int selectedSkyRegion_ = 0;
         int selectedMusicTrack_ = 0;
