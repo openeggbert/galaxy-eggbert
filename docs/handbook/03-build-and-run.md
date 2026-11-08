@@ -186,7 +186,8 @@ explanation. This overlay pauses the game and closes with F1 or Esc. `cheats` is
 MODERN name (`InputPad.cpp:1318`); `help` is Galaxy's requested alias. `killegg` is listed with its
 actual behavior: no effect, as in the reference.
 
-Type **debug** to toggle runtime diagnostics during play: simulation time, mission/region,
+Type **debug** to toggle runtime diagnostics during play. Its panel and label/value columns
+stay fixed as digits change, including separate XYZ/velocity columns. It shows simulation time, mission/region,
 lives, XYZ position and cells, XYZ velocity (blocks/second), heading, animation, movement modes,
 speed and input devices. The panel is upper-right on desktop and upper-centre with touch controls.
 Type it again to hide it. It also works in an editor play-test; fairplay clears/blocks it.

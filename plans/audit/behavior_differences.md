@@ -1640,6 +1640,15 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0107 — Debug panel shifted as numbers changed — FIXED_AND_VERIFIED
+
+Owner: right-side diagnostics jumped with changing digits. DrawDebug measured the longest
+current line and right-aligned the whole panel. It now has fixed width316 and fixed label/value
+columns, with separate XYZ/velocity positions, secondary fields/time ticks and a fixed numeric
+glyph advance. Touch stays centred between controls. Native ground/walking/heli captures keep
+the same panel bounds; the325-tick toggle/fairplay script and touch layout pass. Existing114
+CTest pass. Evidence: build-probe/debug-layout/. Gameplay and cheat parsing are unchanged.
+
 ## BD-0106 — NumPad selection drift after camera/terrain changes — FIXED_AND_VERIFIED
 
 NumPad coordinates previously stayed relative to a raycast updated every frame. Flying the

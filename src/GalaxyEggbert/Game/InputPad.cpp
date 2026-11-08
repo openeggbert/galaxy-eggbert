@@ -1,4 +1,5 @@
 #include "InputPad.hpp"
+#include <sstream>
 #include "TextMetrics.hpp"
 #include "CheatConfig.hpp"
 
@@ -772,8 +773,7 @@ namespace GalaxyEggbert::Game
         if (!loaded_ || !kCheatsEnabled || lines.empty() || viewportW <= 0 || viewportH <= 0) return;
         const float s = std::min(float(viewportW) / kRefW, float(viewportH) / kRefH);
         constexpr float font = .5f, lineHeight = 16.f, padding = 5.f;
-        float width = 0;
-        for (const auto& line : lines) width = std::max(width, TextMetrics::Width(line) * font);
+        constexpr float width = 316.f; // fixed anchor, independent of changing digits/modes
         // Centre the touch panel between the side controls, clear of Action as well as Pause.
         const float right = touchControls ? viewportW * .5f + width * s * .5f : viewportW - padding * s;
         const float left = right - width * s;
@@ -781,8 +781,59 @@ namespace GalaxyEggbert::Game
         const std::vector<Quad> panel{{left - padding * s, top - 3 * s, right + 3 * s,
             top + (lines.size() * lineHeight + 3) * s, 0, 0, 1, 1}};
         std::vector<Quad> text;
-        for (std::size_t i = 0; i < lines.size(); ++i)
-            AppendGamerLabel(text, lines[i], left, top + i * lineHeight * s, font, s);
+        const auto numeric = [&](const std::string& value,float x,float y) {
+            for (std::size_t i=0;i<value.size();++i)
+                AppendGamerLabel(text,std::string(1,value[i]),x+float(i)*9.5f*s,y,font,s);
+        };
+        for (std::size_t i=0;i<lines.size();++i)
+        {
+            const float y=top+float(i)*lineHeight*s;
+            const auto colon=lines[i].find(':');
+            if (colon==std::string::npos) { AppendGamerLabel(text,lines[i],left,y,font,s); continue; }
+            const auto label=lines[i].substr(0,colon);
+            auto value=lines[i].substr(colon+2);
+            AppendGamerLabel(text,label=="vel" ? "vel b/s:" : label+":",left,y,font,s);
+            if (label=="pos" || label=="cell" || label=="vel")
+            {
+                std::istringstream parts(value);
+                for (int column=0;column<3;++column)
+                {
+                    std::string token;
+                    parts>>token;
+                    numeric(token,left+(70.f+80.f*column)*s,y);
+                }
+                continue;
+            }
+            std::string secondLabel,secondValue;
+            if (label=="time")
+            {
+                const auto ticks=value.find(" (");
+                if (ticks!=std::string::npos)
+                {
+                    secondLabel="ticks:";
+                    secondValue=value.substr(ticks+2,value.find(" ticks",ticks)-ticks-2);
+                    value.resize(ticks);
+                }
+            }
+            else if (const auto next=value.find("  "); next!=std::string::npos)
+            {
+                const auto nextColon=value.find(':',next+2);
+                if (nextColon!=std::string::npos)
+                {
+                    secondLabel=value.substr(next+2,nextColon-next-1);
+                    secondValue=value.substr(nextColon+2);
+                    value.resize(next);
+                }
+            }
+            if (label=="mode" || label=="gamepad") AppendGamerLabel(text,value,left+70.f*s,y,font,s);
+            else numeric(value,left+70.f*s,y);
+            if (!secondLabel.empty())
+            {
+                AppendGamerLabel(text,secondLabel,left+160.f*s,y,font,s);
+                if (label=="gamepad") AppendGamerLabel(text,secondValue,left+218.f*s,y,font,s);
+                else numeric(secondValue,left+218.f*s,y);
+            }
+        }
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *helpPanelEffect_, helpPanelRenderer_, panel, viewportW, viewportH, .72f);
         const auto diffuse = textEffect_->getDiffuseColorProperty();

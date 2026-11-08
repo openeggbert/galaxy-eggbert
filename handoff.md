@@ -10,14 +10,21 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Latest debug-layout report complete: replaced text-measured width/right alignment with a
+  fixed316-reference-pixel panel. Labels and values have fixed columns; XYZ/velocity each get
+  three stable positions, paired fields/time ticks have fixed secondary columns, numbers use
+  fixed glyph advance. Ground/walking/heli screenshots keep the same bounds; the touch panel
+  stays centred and clear of controls. Native toggle script passes325 ticks; touch capture
+  checked. Evidence: build-probe/debug-layout/. All current owner requests in this batch are
+  committed separately;114/114 CTest and all15 saw missions pass. The unchanged full-campaign
+  world021 egg timeout is recorded below. No sibling changes in this batch, main cheats ON.
 - Coordinate follow-up complete: NumPad/offset controls hold the aim anchor rather than
   raycasting again after each camera move or newly written surface. NumPad5/Tools Reset returns
   to pointer aiming. Same-cell selection/Place draws only the red outline, avoiding overlapping
   cyan/red borders. Delete handles the whole extended cuboid, with one Undo. Pure coordinate
   stability/camera/region tests and native anchored-shots checks pass. All114 CTest pass.
   Saw mission checks also pass15/15; campaigncheck and watercheck pass, stage3 --rides has every
-  target reachable (stage1/2 retain their documented locked sections). Only the verified debug
-  layout follow-up remains to be committed separately.
+  target reachable (stage1/2 retain their documented locked sections).
 - Standalone saw request is complete: generated floors/material heuristic and solid saw masks
   removed. Decor/scie.rd4 is bottom-aligned by+.425 (measured Y[-.499,.433]); disk contact uses
   the same offset, including body/swept fall and rotation. Stopped blades stay harmless.

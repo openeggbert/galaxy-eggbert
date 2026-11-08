@@ -52,6 +52,10 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Debug diagnostics have a fixed-width panel and fixed label/value columns, including three
+  separate XYZ/velocity columns and secondary fields. Numeric glyphs use a fixed advance;
+  changing digits, modes or device states no longer shifts the panel or neighbouring values.
+  Native ground/walking/helicopter and touch captures pass (build-probe/debug-layout/).
 - NumPad-selected editor coordinates stay fixed when flying the camera or placing terrain;
   NumPad5/Tools Reset resumes cursor aiming. Selection and Place share one outline when they
   occupy the same cell. Delete clears an extended region with one Undo. Unit coverage and
