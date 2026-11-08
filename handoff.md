@@ -10,6 +10,12 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- F9 report analyzed only, as requested: native CNA Game.cpp maps F9 to immediate GL context
+  loss/recreate. EasyGLTextureRenderer::recreate_gl_resource uploads level0, then allocates higher
+  mip levels with null data instead of restoring their contents. Galaxy's custom terrain mip atlas
+  therefore samples black when minified (far or grazing floor), while near surfaces retain level0.
+  Confirmed before/after captures in build-probe/f9-analysis/ and recorded as upstream_bugs UB-009.
+  No F9/context/mip code or sibling repository was modified for this report.
 - Follow-up `fairplay`: toggles InputPad's runtime cheat-entry lock, clearing persistent
   megablupi/ghost/doors/secrets/compass/quick/zoom flags on locking, and closes/blocks F12 and hidden
   menu/gesture. Only fairplay remains recognized while locked. Consumable rewards and earlier

@@ -241,3 +241,23 @@ Fix upstream: add `#include <algorithm>` to `WetBus.cpp`. Galaxy Eggbert has no 
 web build stays on its previous output (2026-11-06) until CNA is fixed.
 
 UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web build linked again on 2026-11-07.
+
+## UB-009 — CNA EasyGL restores only the base texture contents after F9
+
+- **Found:** 2026-11-08; owner's black distant floor after F9, reproduced on native OpenGL33.
+  Read-only source inspection at CNA `6d0954d70`.
+- **Entry point:** CNA `modules/runtime/src/Game.cpp:1482` maps F9 to DebugSimulateContextLoss.
+  On desktop EasyGLRenderer recreates the context immediately, then notifies recoverable resources.
+- **Cause:** `modules/renderers/easygl/src/EasyGLRenderer.cpp:3164`,
+  EasyGLTextureRenderer::recreate_gl_resource, restores pixels only for level0. Its subsequent
+  AllocateDeclaredLevels call (3143) uploads null contents for levels1+. The common Texture2D layer
+  retains extra mip buffers, but this recovery path shares/replays only the base pixels.
+- **Galaxy impact:** LoadContent builds and uploads a padded terrain atlas with authored mip
+  levels. After F9, level0 still works nearby while distant or grazing floor surfaces select empty
+  higher levels and become black. The apparent distance threshold depends on viewing angle and
+  minification, rather than a fixed world-cell boundary.
+- **Reproduction:** load a textured-floor level, capture, press F9, capture again. Isolated probe783
+  and before/after PNGs are under `build-probe/f9-analysis/`; the log confirms context recreation.
+- **Status:** open, analysis only at the owner's explicit request. No sibling repository, texture
+  loading, context recovery or terrain workaround was changed. A future upstream correction must
+  restore all uploaded mip contents, preserving authored levels rather than replacing them.

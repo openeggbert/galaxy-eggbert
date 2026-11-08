@@ -220,12 +220,16 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 
 ## Known limitations
 
+- Native F9 context recovery loses terrain mip contents above level0 (UB-009): close texture
+  detail returns, but minified/distant floor faces become black. Reproduced and traced to CNA
+  EasyGL's recovery allocation without higher-level upload. Owner requested analysis only;
+  no recovery/rendering workaround or upstream fix was applied. Evidence: build-probe/f9-analysis/.
 - Controls since 2026-10-25: third person is the default view, F3 toggles first person (was C),
   turning is 135°/s, and Blupi no longer walks up one-block steps — he jumps, as in
   `Decor::TestPath`. Menus fill the bars beside their 640×480 images and text uses the
   original proportional glyph widths.
 - Controls added 2026-11-02 and extended 2026-11-08 (owner's requests): X or Right Ctrl backs Blupi up (on foot or in a
-  vehicle; Down still turns him round); Left Ctrl fires in armed vehicles; Right Shift climbs the helicopter
+  vehicle; Down still turns him round); Left Ctrl fires in the tank and climbs the helicopter; Right Shift also climbs
   (gamepad A and touch Jump also climb); a gamepad (`GamepadInput.hpp`): left stick/D-pad walk and turn, A jump (and Enter:
   Play in the main menu), B/X action, RB back up, LB crouch, Y look up, Start pause; touch
   screens: the on-screen pad takes several fingers at once (`InputPad::UpdatePlayTouches`: stick
