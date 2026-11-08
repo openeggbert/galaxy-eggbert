@@ -10,6 +10,13 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- UB-009 is now fixed with explicit owner approval in CNAee3235984 (included in current
+  CNA594eb28dc): EasyGL retains/replays higher authored raw mip bytes and existing DXT levels,
+  including compressed base0. The initial analysis-only instruction was superseded by that
+  approval. A new real-GPU textureLod test failed on levels1-3 after each native loss before the
+  fix; all15 shader-lifecycle tests now pass, including Color partial-update preservation and
+  DXT1 chains across two recoveries. Native Galaxy before/after F9 retains textured floors.
+  Evidence: build-probe/ub009/. No game workaround or generated terrain mips were introduced.
 - Latest givecopter follow-up: the owner also reproduced intermittent failures in palace hub020,
   sometimes relieved by turning. Their process was on Wayland and used the newly built binary;
   the early text-only fix and then a tested snapshot fallback were insufficient. A fixture proved
@@ -48,7 +55,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 - Compass alignment follow-up: the facing row shows `|` when aligned and the height row `-`
   on the same layer. Turning and height arrows and their tolerances remain unchanged. Unit
   coverage and a live aligned capture (distance6, |, -) pass in build-probe/latest-controls/.
-- F9 report analyzed only, as requested: native CNA Game.cpp maps F9 to immediate GL context
+- Initial F9 report was analyzed only, as then requested: native CNA Game.cpp maps F9 to immediate GL context
   loss/recreate. EasyGLTextureRenderer::recreate_gl_resource uploads level0, then allocates higher
   mip levels with null data instead of restoring their contents. Galaxy's custom terrain mip atlas
   therefore samples black when minified (far or grazing floor), while near surfaces retain level0.

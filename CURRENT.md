@@ -52,6 +52,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Native F9 context recovery (UB-009) is fixed in owner-authorized CNA `ee3235984`: EasyGL
+  replays every authored raw/compressed mip level rather than only level0. GPU tests sample
+  actual Color/DXT1 mip contents across two context losses, including a partial update; all15
+  shader-lifecycle cases pass. Galaxy's distant floor retains textures after F9. No game-side
+  mip regeneration/workaround was added. Evidence: build-probe/ub009/.
 - Editor/input update (2026-11-08): Ctrl raises the 3D camera, Z lowers it, Space places. Shift
   with NumPad extends a 3D region; Place fills it and Undo restores it in one command. Touch Move,
   Up/Down, world drag and Tools cover editing without a keyboard, including a live 3×2×8 fill.
@@ -232,10 +237,6 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 - Source now requires CNA `594eb28dc` (optional KeyDownEXT); its parent `ee3235984` fixes UB-009.
   Both are local CNA commits. The published CI dependency pin predates this API and needs advancing
   after CNA publication; no push was requested. Local native build/tests use the new checkout.
-- Native F9 context recovery loses terrain mip contents above level0 (UB-009): close texture
-  detail returns, but minified/distant floor faces become black. Reproduced and traced to CNA
-  EasyGL's recovery allocation without higher-level upload. Owner requested analysis only;
-  no recovery/rendering workaround or upstream fix was applied. Evidence: build-probe/f9-analysis/.
 - Controls since 2026-10-25: third person is the default view, F3 toggles first person (was C),
   turning is 135°/s, and Blupi no longer walks up one-block steps — he jumps, as in
   `Decor::TestPath`. Menus fill the bars beside their 640×480 images and text uses the

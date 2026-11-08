@@ -258,6 +258,10 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   minification, rather than a fixed world-cell boundary.
 - **Reproduction:** load a textured-floor level, capture, press F9, capture again. Isolated probe783
   and before/after PNGs are under `build-probe/f9-analysis/`; the log confirms context recreation.
-- **Status:** open, analysis only at the owner's explicit request. No sibling repository, texture
-  loading, context recovery or terrain workaround was changed. A future upstream correction must
-  restore all uploaded mip contents, preserving authored levels rather than replacing them.
+- **Status:** fixed and verified in CNA `ee3235984` after the owner explicitly authorized the
+  upstream repair. EasyGL retains uploaded non-base declared-format bytes and replays each authored
+  level; existing DXT shadows are also replayed, including level0. No generated/replacement mips.
+  New GPU tests sample actual Color/DXT1 levels before/after two native losses; the unpatched
+  Color test lost levels1-3, while the fixed full15 shader-lifecycle cases pass. A native Galaxy
+  F9 capture also retains distant floor detail. Evidence: build-probe/ub009/. The initial analysis
+  respected the earlier no-fix instruction; this later authorization superseded it.
