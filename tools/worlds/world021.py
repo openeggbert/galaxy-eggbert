@@ -142,7 +142,7 @@ def main(argv) -> int:
     # The red arrow's room (x 26-35), roofed, entered along X through the bar marked 6.
     stone(w, 26, 5, 14, 35, 5, 32, rng, chance=0.1)
     w.clear(36, 1, 23)
-    w.clear(36, 2, 23)
+    # Keep the stone lintel at y=2: the one-cell bar must close the entire doorway.
     door(36, 1, 23, 6)                              # crossed along X from (37, 1, 23)
     for x, z in rect(28, 20, 33, 26):
         w.set(x, 0, z, GRASS)

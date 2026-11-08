@@ -8,6 +8,30 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-08 (controls, help, HUD and underwater visibility)._
 
+## Campaign lift looks and treasure gates (2026-11-08)
+
+Completed: `tools/worldkit.py ORIGINAL_LIFT_ICONS` is the small approved fidelity table of
+unique type-1 lift icons in each original worldNNN.txt. Authoring cycles that mission's palette;
+where its 2D mission has no lift it uses the confirmed palette of the same themed world. All 52
+campaign generators with ordinary lifts were rerun. The 829 changed MoveObject records differ
+only in `icon`; paths, count, speed, dwell, spawn, sky and music are unchanged. There are 43 looks,
+including the palace's 387, metal 340, station tiles, toys and bricks. Existing editor block-look
+selection and `LiftVisual` already support these. No reference maps/assets were copied.
+
+World021 is the first mission of palace hub020 (not 121). Restoring its stone lintel at (36,2,23)
+closes the bypass above gate6. Auditing every campaign treasure gate found another upper lane in
+055: its three-cell corridors had only two door cells; now all three open at the same threshold.
+Other open-above cases are deliberate gallery exhibits (998/999). Existing playthroughs 021 and
+055 pass; `build-probe/gameplay-1108/gate.txt` proves a jump fails with zero chests and crossing
+succeeds with six. Lift-only metadata comparison: `build-probe/lift-style-verification.json`.
+The 091 generator writes correctly but its pre-existing D41 authoring audit returns nonzero;
+all regenerated static cells except the specified gates match the committed baseline exactly.
+
+Ongoing in this session: keyboard-free editor and 3D selection; compass opt-in, whole-number
+chest/exit distance and X/Y/Z arrows; build-time cheats switch and typing/movement isolation;
+full cheer at all exits; visible lava contact; safe saw support cube and blade landing only;
+fullscreen menu button/persistence; safe fan body/motor versus rotor-only contacts.
+
 ## Music previews ready for the owner (2026-11-08)
 
 `music-previews/retro-010-019/` contains ten original GM compositions, each with its own hook,

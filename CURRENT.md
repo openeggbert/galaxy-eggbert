@@ -52,6 +52,17 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Moving-platform looks (2026-11-08): the 52 authored campaign worlds with ordinary lifts now
+  choose their tile looks from the same-numbered original mission's confirmed lift palette (or
+  its world's palette when that 2D mission had no lifts). `tools/worldkit.py ORIGINAL_LIFT_ICONS`
+  cites the small source data table; 829 lift records have explicit looks, covering 43 tile ids.
+  Paths, timing, objects and other world data are unchanged. World021's gate 6 retains a solid
+  lintel instead of a jumpable hole; world055's three-cell-high treasure gates now seal their
+  whole corridor. The remaining campaign treasure gates were audited; open display exhibits in
+  worlds998/999 are intentional. Verified: world metadata comparison, CTest, playthroughs 021/055,
+  and a live attempt to jump gate 6 before collecting chests, then pass it after six chests.
+
+
 - Ten original retro General MIDI music previews (2026-11-08) are in
   `music-previews/retro-010-019/`: OGG, editable MIDI, a listening playlist and track descriptions.
   They are outside `Content/` and have no world assignments. Reproduce with

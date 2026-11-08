@@ -66,7 +66,8 @@ def main(argv) -> int:
 
     def door(cells, walk, n, k):
         for x, z in cells:
-            for y in (walk, walk + 1):
+            # Seal all three cells of the corridor, including its upper balloon lane.
+            for y in (walk, walk + 1, walk + 2):
                 w.set(x, y, z, 0 if stage >= k else treasure_door(n))
 
     # ---- A, the start shaft (inside x 20-26, z 68-74, walk 10, roof at 24) -------------------

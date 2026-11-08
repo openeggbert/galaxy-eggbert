@@ -1429,8 +1429,10 @@ levels use 29 most, then 361, 387, 340, 153, 215 ...), drawn as that tile moving
 - Verified: `VerifyTileUvBounds` (the three paths); ctest 112/112; golden frames and trace unchanged;
   probe world `build-probe/lift-tiles/` (made by `make.py`; lifts wearing 29, 361, 153, 387, 340, 215
   at x 44-54): `lifts-moving.png` -- 29 its model, the others their tile's cube, moving.
-- No campaign world sets a lift's look other than 29, so the player sees no change until worlds or
-  the editor use it.
+- Follow-up 2026-11-08 (owner): all 52 authored campaign worlds with general lifts now use their
+  original mission's confirmed tile palette (`tools/worldkit.py ORIGINAL_LIFT_ICONS`); 829 records
+  gain explicit looks, 43 different tile ids. Paths/timing/counts and every non-icon object field
+  compare equal. Palace021 uses 387. Playthroughs 021/055 pass.
 - The editor (owner 2026-11-07, option A): the four lifts in "Moving mechanisms" take the look of the
   block picked last (`objectVisualIconIds` -2: the selected block once one was picked, else the default
   look, the lift tile 29; the conveyor lift 47 keeps its own). `VerifyGEEditorPalette` covers the three

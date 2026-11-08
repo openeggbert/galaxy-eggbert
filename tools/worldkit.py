@@ -116,9 +116,70 @@ def _bits_for(count: int) -> int:
     return bits
 
 
+# Lift tile palettes from ../mobile-eggbert/worlds/worldNNN.txt, MoveObject type=1 icon.
+# Small fidelity data table (standing owner approval, 2026-10-25). Only looks are reused;
+# paths, counts and geometry remain the hand-authored 3D worlds. Cycle each mission's palette
+# in authoring order; if its 2D mission had no lift, use its world's confirmed palette.
+ORIGINAL_LIFT_ICONS = {
+    11: (29,),
+    21: (387,),
+    22: (261, 387),
+    23: (387, 29),
+    24: (387,),
+    25: (387,),
+    31: (190,),
+    34: (216, 10, 29, 262),
+    42: (340,),
+    44: (340,),
+    45: (340,),
+    46: (340, 29, 17),
+    50: (84,),
+    51: (13,),
+    52: (80,),
+    53: (78, 81, 79),
+    54: (84,),
+    55: (89,),
+    56: (80, 89, 88),
+    57: (78, 87, 89, 88, 90),
+    58: (89,),
+    61: (361, 29),
+    62: (361,),
+    63: (78, 361, 79, 80, 83, 84),
+    64: (361, 29),
+    65: (29, 361),
+    66: (361,),
+    71: (215, 230, 218),
+    73: (218, 229, 215),
+    74: (215, 227),
+    75: (218, 217),
+    82: (29,),
+    83: (29, 17, 24),
+    84: (29, 257),
+    91: (16,),
+    93: (16,),
+    95: (338,),
+    102: (153, 29),
+    103: (29,),
+    104: (153, 46),
+    105: (153, 75, 74),
+    106: (29, 153, 75, 74),
+    107: (29, 75, 153, 74),
+    111: (29, 10),
+    112: (23, 15, 18),
+    113: (29, 23, 11),
+    114: (1, 10, 3, 29),
+    122: (284, 261, 338),
+    123: (261,),
+    124: (261,),
+    125: (261,),
+    199: (361, 231, 397, 262, 157, 90, 87),
+}
+
+
 class World:
     def __init__(self, mission: int = 0, sky: int = 0, music: int | None = None):
         self.mission = mission
+        self._lift_style_index = 0
         self.sky = sky
         # The background music (OR-0014): 0 none, 1-10 the original tracks music000-009;
         # stored in the sky-region word's second byte (World Format.md). By default the
@@ -198,6 +259,14 @@ class World:
             cells = max(abs(ex - x), abs(ey - y), abs(ez - z))
             advance = recede = cells * ticks_per_cell
             stop_start = stop_end = rest
+        if otype == ObjectType.LIFT and icon == 0:
+            palette = ORIGINAL_LIFT_ICONS.get(self.mission)
+            if not palette and 10 <= self.mission < 130:
+                palette = tuple(dict.fromkeys(icon for n, icons in ORIGINAL_LIFT_ICONS.items()
+                                               if n // 10 == self.mission // 10 for icon in icons))
+            if palette:
+                icon = palette[self._lift_style_index % len(palette)]
+                self._lift_style_index += 1
         payload = struct.pack("<B11fH", otype, x, y, z, ex, ey, ez, speed, advance, recede, stop_start,
                               stop_end, icon)
         self._record(int(x // 1), int(y // 1), int(z // 1), MOVE_OBJECT_TYPE, payload)
