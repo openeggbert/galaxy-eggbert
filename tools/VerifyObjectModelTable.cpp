@@ -1,10 +1,14 @@
 #include <GalaxyEggbert/Game/ObjectModelTable.hpp>
+#include <GalaxyEggbert/Game/BlockModels.hpp>
 
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <filesystem>
+#include <cstring>
+#include <vector>
 
 // Scripted verification of ObjectModelTable (plan.md BB3D-011): icons.txt parsing, lookups by
 // sheet and icon, the billboard fallback for unlisted icons, rejected lines, and, given the
@@ -81,6 +85,40 @@ int main(int argc, char** argv)
         std::ifstream index(dir + "/index.txt");
         check(index.good(), dir + "/index.txt exists");
         ObjectModelTable table;
+        // Owner's upper-half-only saw: the baked animation poses must never bring
+        // vertices back below the flat cut, and that cut must be closed from below.
+        {
+            const auto saw=std::filesystem::path(dir)/"saw378_scie";
+            bool valid=std::filesystem::exists(saw/"upper-half.json");
+            int parts=0,capVertices=0;
+            for (const auto& file : std::filesystem::directory_iterator(saw))
+            {
+                const auto name=file.path().filename().string();
+                if (!name.starts_with("saw_upper_") || !name.ends_with(".verts.bin")) continue;
+                ++parts;
+                std::ifstream in(file.path(),std::ios::binary);
+                const std::vector<char> data((std::istreambuf_iterator<char>(in)),{});
+                valid &= !data.empty() && data.size()%52==0;
+                int partCaps=0;
+                for (std::size_t at=0;at+52<=data.size();at+=52)
+                {
+                    float position[3],normal[3];
+                    std::memcpy(position,data.data()+at,sizeof(position));
+                    std::memcpy(normal,data.data()+at+12,sizeof(normal));
+                    valid &= std::isfinite(position[1]) && position[1]>=0 && position[1]<.49f;
+                    if (position[1]==0 && normal[1]<-.99f) { ++capVertices; ++partCaps; }
+                }
+                valid &= partCaps>0;
+            }
+            check(valid && parts==3 && capVertices>0,"all three saw poses keep only the upper half, with a closed flat base");
+            for (const float time : {.05f,.25f,.3f})
+            {
+                int visible=0;
+                for (const auto* name : {"saw_upper_0_0","saw_upper_1_0","saw_upper_2_0"})
+                    visible+=IsVisibleSawPart(name,time);
+                check(visible==1,"each animated saw icon draws exactly one clipped pose");
+            }
+        }
         int models = 0;
         for (std::string name; std::getline(index, name);)
         {

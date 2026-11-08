@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import export_cna_avatar  # noqa: E402
 import lower_spheres  # noqa: E402
+import saw_upper_half  # noqa: E402
 
 
 def main(argv=None) -> int:
@@ -46,6 +47,8 @@ def main(argv=None) -> int:
         # Its spheres tessellated to their size (lower_spheres.py: a stud needs no 960 triangles).
         for line in lower_spheres.lower_spheres(out):
             print(line)
+        if name == "saw378_scie":
+            saw_upper_half.bake(out)
     (args.out / "index.txt").write_text("# avatars3d/objects/<directory>/, one per line; export_objects.py\n"
                                         + "".join(f"{n}\n" for n in names))
     print(f"{len(names)} object model(s) -> {args.out}")

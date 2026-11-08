@@ -1470,9 +1470,8 @@ namespace GalaxyEggbert::Game
 
     bool BlupiController::IsTouchingSawBlade(const Worlds::World& world, float previousFeetY) const noexcept
     {
-        // The recovered disk occupies its own cell: render Y [-.499,.433], hence
-        // physical Y [.001,.933] (Blupi feet render half a cell below physical Y).
-        // Test the visible disk against his body, including a swept fall through it.
+        // Only the upper half of the recovered disk is visible, its flat cut at
+        // the cell bottom. The hidden lower half never participates in contact.
         constexpr float footRadius=11.f/64.f, radius=.466f, thickness=.20f;
         const float x=m_x+kWorldCenterX,z=m_z+kWorldCenterZ;
         const int n=world.blocksPerAxis();
@@ -1488,9 +1487,8 @@ namespace GalaxyEggbert::Game
                     const float across=std::fabs(turned ? x-gx : z-gz);
                     if (along>radius || across>thickness+footRadius) continue;
                     const float halfHeight=std::sqrt(radius*radius-along*along);
-                    const float centerY=gy+.042f+kSawModelYOffset;
-                    const float bladeBottom=centerY-halfHeight, bladeTop=centerY+halfHeight;
-                    if (m_y<=bladeTop && std::max(m_y,previousFeetY)+kHeadHeight>=bladeBottom)
+                    const float bladeBottom=static_cast<float>(gy), bladeTop=gy+halfHeight;
+                    if (m_y<=bladeTop && std::max(m_y,previousFeetY)+kHeadHeight>bladeBottom+.0001f)
                         return true;
                 }
         return false;

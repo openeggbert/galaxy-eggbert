@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "cutY": -0.45815,
+  "times": [
+    0.05,
+    0.25,
+    0.3
+  ],
+  "sourceHashes": {
+    "skeleton.bin": "056bbb996b178d49b362559eb6f85eaeb24c6080cf98215bf5e22ebf3d10245f",
+    "clips/Frames.clip.bin": "0c6a9d80360db71d0b7a628d7ed634ad445f50a3aecc14931c86a39c6e35aea8",
+    "saw378_rd_c3c3c3.verts.bin": "11e4b95a0fe7eed445c8c27852eb67c9c75c3e046ce6884ede4819dc06d06635",
+    "saw378_rd_c3c3c3.idx.bin": "a762cb6eff7048b030e57440c4074759f41a45563c0fe75df20e5d699ceea8be"
+  },
+  "boundsY": [
+    [
+      0.0,
+      0.461960107088089
+    ],
+    [
+      0.0,
+      0.4619104862213135
+    ],
+    [
+      0.0,
+      0.466187447309494
+    ]
+  ]
+}

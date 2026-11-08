@@ -3817,19 +3817,25 @@ int main(int argc, char** argv)
         check(!b.IsTouchingSawBlade(sawWorld,1),"beside the thin disk is safe");
         b.SetPosition(.6f,0,0);
         check(!b.IsTouchingSawBlade(sawWorld,0),"touching the actual block below the blade is safe");
-        b.SetPosition(0,1.9f,0);
-        check(b.IsTouchingSawBlade(sawWorld,2.2f),"falling feet hit the top of the complete visible blade");
-        check(b.IsTouchingSawBlade(sawWorld,1.8f),"rising into the disk also makes contact");
+        b.SetPosition(0,1.3f,0);
+        check(b.IsTouchingSawBlade(sawWorld,1.6f),"falling feet hit the visible upper semicircle");
+        check(b.IsTouchingSawBlade(sawWorld,1.2f),"rising into the visible upper semicircle also makes contact");
+        b.SetPosition(0,1.6f,0);
+        check(!b.IsTouchingSawBlade(sawWorld,1.6f),"the space above the half-height saw is clear");
         b.SetPosition(0,2.1f,0);
         check(!b.IsTouchingSawBlade(sawWorld,2.3f),"above the entire blade is clear");
         b.SetPosition(0,2,0);
         check(!b.IsTouchingSawBlade(sawWorld,2),"a lift at the next whole layer clears the blade's tooth tips");
-        b.SetPosition(0,1.5f,.45f);
-        check(!b.IsTouchingSawBlade(sawWorld,1.6f),"missing the disk sideways is safe");
+        b.SetPosition(0,1.2f,.45f);
+        check(!b.IsTouchingSawBlade(sawWorld,1.3f),"missing the disk sideways is safe");
         SetPlateRotated(sawWorld,50,1,50,true);
         check(b.IsTouchingSawBlade(sawWorld,1.6f),"the blade's own cell holds its lethal orientation");
         sawWorld.setBlock(50,1,50,Worlds::Block::make(BlockTypes::SawStopped));
         check(!b.IsTouchingSawBlade(sawWorld,1.6f),"a stopped blade is harmless");
+        Worlds::World suspended;
+        suspended.setBlock(50,3,50,Worlds::Block::make(BlockTypes::Saw));
+        b.SetPosition(0,1.8f,0);
+        check(!b.IsTouchingSawBlade(suspended,1.8f),"the removed lower half below the cut never kills");
         for (const auto icon : {BlockTypes::Saw,BlockTypes::SawStopped,std::uint16_t(380),std::uint16_t(383)})
         {
             check(GetBlockDefinition(icon).collisionMask==0,"a saw never supplies an invisible solid cube");

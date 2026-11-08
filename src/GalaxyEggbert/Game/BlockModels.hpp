@@ -57,9 +57,15 @@ namespace GalaxyEggbert::Game
 
     // Decor/scie.rd4's blade in its own cell, with no invented terrain beneath it.
     inline constexpr std::array<std::uint16_t,2> kSawModelBases{BlockTypes::Saw,BlockTypes::SawStopped};
-    // The exported sprite-origin disk spans Y[-.924,.008]. Rest its bottom on the
-    // cell's bottom: Y[-.499,.433], with no overlap into either neighbouring layer.
-    inline constexpr float kSawModelYOffset = .425f;
+    // The exported poses contain only the upper half, with the cut at local Y=0.
+    // Rest that flat cut on the cell bottom; its upper teeth reach about .466 up.
+    inline constexpr float kSawModelYOffset = -.5f;
+    [[nodiscard]] inline bool IsVisibleSawPart(std::string_view name,float seconds) noexcept
+    {
+        if (!name.starts_with("saw_upper_")) return true;
+        const char pose=seconds<.15f ? '0' : seconds<.275f ? '1' : '2';
+        return name.size()>10 && name[10]==pose;
+    }
 
     // Still terrain icons drawn as their original scene's model when avatars3d/objects has one for
     // their object-m icon (VIS-0077/0078/0378/0400): the stone column 76 (Decor/support1.rd4), the

@@ -995,8 +995,13 @@ namespace GalaxyEggbert::Game
             if (definition.renderMode == GalaxyEggbert::BlockRenderMode::SawBlade)
             {
                 if (std::find(m_sawModelBases.begin(),m_sawModelBases.end(),block.base)==m_sawModelBases.end())
-                    mesh.AddPlate(center,kInnerFlatPlateWidth,.93f,
-                        plateRotated ? CnaEngine::Graphics::PlateAxis::X : CnaEngine::Graphics::PlateAxis::Z,tileUv);
+                {
+                    auto upperUv=tileUv;
+                    upperUv.v1=(tileUv.v0+tileUv.v1)*.5f;
+                    constexpr float height=.466f;
+                    mesh.AddPlate({block.x,block.y-.5f+height*.5f,block.z},kInnerFlatPlateWidth,height,
+                        plateRotated ? CnaEngine::Graphics::PlateAxis::X : CnaEngine::Graphics::PlateAxis::Z,upperUv);
+                }
                 continue;
             }
 

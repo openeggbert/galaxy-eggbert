@@ -25,6 +25,17 @@ Plan and status: `plan.md` Phase 7B (`BB3D-*`).
   would have drawn the icon's billboard, turned by the yaw about +Y, then mirrored as listed
   (`GalaxyEggbertGame.cpp`, `ObjectModelTable`); icons not listed stay billboards.
 
+Saw exception (owner,2026-11-08): only the upper half of `saw378_scie` is visible. After the
+source poses are exported, `tools/rd4_to_gltf/saw_upper_half.py` clips each pose at the disk's
+centre, closes the cut and bakes three exclusive poses into the existing animation format.
+The cut is local Y=0; the game places it on the cell bottom. Diameter, texture and icon IDs/times
+are unchanged. `upper-half.json` records the input hashes and bounds. The source GLB/IoU images
+still describe the complete original disk before this requested display cut.
+
+`export_objects.py` applies the cut automatically. A direct single-model export needs the
+same post-step; `python3 tools/rd4_to_gltf/saw_upper_half.py --check avatars3d/objects/saw378_scie`
+verifies all poses and their closed base without numpy.
+
 ## Regenerate
 
 ```bash

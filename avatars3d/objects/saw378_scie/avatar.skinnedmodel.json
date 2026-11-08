@@ -2,9 +2,35 @@
   "skeleton": "skeleton.bin",
   "parts": [
     {
-      "name": "saw378_rd_c3c3c3",
-      "vertices": "saw378_rd_c3c3c3.verts.bin",
-      "indices": "saw378_rd_c3c3c3.idx.bin",
+      "name": "saw_upper_0_0",
+      "vertices": "saw_upper_0_0.verts.bin",
+      "indices": "saw_upper_0_0.idx.bin",
+      "vertexStride": 52,
+      "texture": "saw378_rd_c3c3c3.png",
+      "diffuseColor": [
+        0.5510026675461114,
+        0.5510026675461114,
+        0.5510026675461114,
+        1.0
+      ]
+    },
+    {
+      "name": "saw_upper_1_0",
+      "vertices": "saw_upper_1_0.verts.bin",
+      "indices": "saw_upper_1_0.idx.bin",
+      "vertexStride": 52,
+      "texture": "saw378_rd_c3c3c3.png",
+      "diffuseColor": [
+        0.5510026675461114,
+        0.5510026675461114,
+        0.5510026675461114,
+        1.0
+      ]
+    },
+    {
+      "name": "saw_upper_2_0",
+      "vertices": "saw_upper_2_0.verts.bin",
+      "indices": "saw_upper_2_0.idx.bin",
       "vertexStride": 52,
       "texture": "saw378_rd_c3c3c3.png",
       "diffuseColor": [

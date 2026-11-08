@@ -6692,7 +6692,7 @@ namespace GalaxyEggbert::CNA
         };
         // The exact posed mesh overlaid in depth-tested translucent red.
         const auto drawEditorTint = [&](const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT& model,
-                                        bool selected, bool boothFrontOnly = false) {
+                                        bool selected, bool boothFrontOnly = false, float poseSeconds = -1.f) {
             if (!selected || !blupiEffect_) return;
             using namespace Microsoft::Xna::Framework::Graphics;
             if (!editorTintTexture_)
@@ -6712,6 +6712,7 @@ namespace GalaxyEggbert::CNA
             device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
             for (const auto& part : model.Parts)
             {
+                if (poseSeconds>=0 && !GalaxyEggbert::Game::IsVisibleSawPart(part.Name,poseSeconds)) continue;
                 if (boothFrontOnly && GalaxyEggbert::Game::IsBoothBodyPart(part.Name)) continue;
                 blupiEffect_->Apply();
                 device.SetVertexBuffer(part.Part->getVertexBufferProperty());
@@ -7413,6 +7414,7 @@ namespace GalaxyEggbert::CNA
                     blupiEffect_->SetBoneTransforms(boneTransforms);
                     for (const auto& part : model.Parts)
                     {
+                        if (!GalaxyEggbert::Game::IsVisibleSawPart(part.Name,pose.seconds)) continue;
                         if (boothFrontOnly && GalaxyEggbert::Game::IsBoothBodyPart(part.Name))
                         {
                             continue; // a teleporter's other sides: its plate and lights only
@@ -7430,7 +7432,7 @@ namespace GalaxyEggbert::CNA
                             part.Part->getPrimitiveCountProperty());
                         perfModelTriangles_ += part.Part->getPrimitiveCountProperty();
                     }
-                    drawEditorTint(model,tintModelCell,boothFrontOnly);
+                    drawEditorTint(model,tintModelCell,boothFrontOnly,pose.seconds);
                     ++perfModelDraws_;
                 };
                 // The clay bridge: its row of lumps across the whole cell (BlockModels.hpp).

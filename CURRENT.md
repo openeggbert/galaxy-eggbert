@@ -52,6 +52,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Saw correction: only the upper semicircle is drawn, with its flat cut on the cell bottom.
+  All three original animation poses are clipped/capped before export; the lower half cannot
+  rotate back into view. The lethal volume is the same upper half. Diameter/texture/IDs stay
+  unchanged; fallback sprite UVs are cropped too. Native front/below checks, asset validation,
+  all114 CTest and all15 saw missions pass (build-probe/saw-half/).
 - Debug diagnostics have a fixed-width panel and fixed label/value columns, including three
   separate XYZ/velocity columns and secondary fields. Numeric glyphs use a fixed advance;
   changing digits, modes or device states no longer shifts the panel or neighbouring values.
@@ -61,7 +66,7 @@ content-authoring UX, but not new gameplay mechanics.
   occupy the same cell. Delete clears an extended region with one Undo. Unit coverage and
   normal-render camera/turn/delete/Undo captures pass (build-probe/editor-turn/anchored-shots/).
 - A saw is an independent blade in its own voxel: no generated support cube, floor texture
-  selection or solid invisible cell. Its original mesh rests on the cell bottom; disk/body
+  selection or solid invisible cell. Its original mesh's upper half rests on the cell bottom; disk/body
   contact follows it, stopped blades are harmless and the block/air below is independent.
   New v2 worlds set flag bit0. Runtime upgrades old implicit-floor files in memory to explicit
   floor + blade cells, retaining orientation and switch links. Saving records the new flag;
