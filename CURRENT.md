@@ -52,6 +52,10 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- The large green column/vase models (BigDecor66-69, owner screenshot13-22-15) are solid,
+  using the existing collision shapes fitted to their 3D geometry. Registry-driven extraction
+  applies in campaign and custom/editor play worlds. The level checker now reads the same registry.
+  A before/after live walk stops at the model instead of passing through; world199 still reaches Win.
 - Native F9 context recovery (UB-009) is fixed in owner-authorized CNA `ee3235984`: EasyGL
   replays every authored raw/compressed mip level rather than only level0. GPU tests sample
   actual Color/DXT1 mip contents across two context losses, including a partial update; all15

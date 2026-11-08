@@ -109,10 +109,10 @@ namespace GalaxyEggbert
     // 23-25, the houses 26-27, the machines 28-31, the toys 36-47, the palace pieces 87-88 and the Blupi
     // statue 89 -- as their models' shapes (WorldRuntime::SolidBigDecorBoxes); without a measured shape
     // a column of kSolidBigDecorHeight cells over the anchor (the 128 px picture: 2 blocks). The
-    // slime 66-69 and 203 stay passable.
-    inline constexpr std::array<std::uint16_t, 31> kSolidBigDecorIcons{
+    // green columns/vase 66-69 are solid too (owner 2026-11-08); 203 stays passable.
+    inline constexpr std::array<std::uint16_t, 35> kSolidBigDecorIcons{
         16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
-        36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 87, 88, 89};
+        36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 66, 67, 68, 69, 87, 88, 89};
     inline constexpr int kSolidBigDecorHeight = 2;
     [[nodiscard]] inline constexpr bool IsSolidBigDecorIcon(std::uint16_t icon) noexcept
     {

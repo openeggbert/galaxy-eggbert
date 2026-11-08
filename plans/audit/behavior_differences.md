@@ -1627,3 +1627,15 @@ CNA's input suite passes five shuffled iterations (653pass/1harness skip each). 
 with25ms presses,180ms frames and all text events dropped mounts and climbs without turning.
 The owner's exact intermittent desktop event stream was not captured; no cause was inferred solely
 from the turning observation. Evidence: build-probe/cheat-source/.
+
+## BD-0100 — large green decor remained passable — FIXED_AND_VERIFIED
+
+Owner 2026-11-08, screenshot13-22-15: make the large green forms impassable. These are explo
+BigDecor66-69 (recovered columns/vase), previously explicitly excluded from solid decor. They
+now join the authoritative registry's solid set, activating the existing model-fit extraction and
+collision path in campaign/custom play. Smaller plants23-25 were already included. The level
+checker now reads the same registry constants rather than duplicating the classification.
+A VWR metadata/shape regression covers all4 at actual shape height. Live probe786 walks through
+before (z37.91) and stops at the model after (z46.91); the screenshot matches the owner's model.
+Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
+court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.

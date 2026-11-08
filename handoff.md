@@ -10,6 +10,17 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Owner screenshot13-22-15's large green forms are BigDecor66-69 (columns/vase); their registry
+  entries explicitly remained passable. They now join kSolidBigDecorIcons, so existing recovered
+  model-fit boxes become active in campaign and custom/editor play worlds. No generic full voxel
+  substitute was added. levelcheck reads the registry instead of duplicating its list/height.
+  A synthetic metadata/shape test covers all4 at full height; live probe786's walk changed from
+  z37.91 (through the column) to z46.91 (stopped before it). Full world199 reaches Win at40139
+  and its script passes at40259. Rebuilt all native targets;113/113 CTest pass. Evidence:
+  build-probe/green-decor/. Small plants23-25 were already solid;203 remains its existing type.
+  Static levelcheck199 --rides reports unreachable targets identically before/after this change
+  (baseline receipt in the same directory); it is not a new collision failure. The full live
+  autoplay is the completion witness for this vehicle/teleporter-heavy world.
 - UB-009 is now fixed with explicit owner approval in CNAee3235984 (included in current
   CNA594eb28dc): EasyGL retains/replays higher authored raw mip bytes and existing DXT levels,
   including compressed base0. The initial analysis-only instruction was superseded by that

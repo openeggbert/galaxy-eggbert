@@ -178,6 +178,35 @@ int main()
         allOk = allOk && fittedOk;
     }
 
+    // Owner 2026-11-08: the large green columns/vase in the editor gallery must be solid.
+    {
+        constexpr const char* path = "green_decor_collision_test.vwr";
+        GalaxyEggbert::Worlds::World world;
+        GalaxyEggbert::Game::BigDecorShapes shapes;
+        for (int icon = 66; icon <= 69; ++icon)
+        {
+            GalaxyEggbert::PlaceBigDecor(world, {static_cast<std::uint16_t>(icon),
+                static_cast<std::uint16_t>(40 + 4 * (icon - 66)), 1, 50});
+            shapes[icon] = {{-.7f,.7f,0.f,3.5f,-.6f,.6f}};
+        }
+        world.saveToFile(path);
+        GalaxyEggbert::Game::WorldRuntime runtime;
+        const bool loaded = runtime.LoadFromVwrFile(path);
+        std::remove(path);
+        runtime.SetBigDecorShapes(shapes);
+        const auto boxes = runtime.SolidBigDecorBoxes();
+        bool correct = loaded && boxes.size() == 4;
+        for (int i = 0; i < 4; ++i)
+        {
+            bool inside = false;
+            for (const auto& box : boxes) inside |= box.Contains(40.f + 4 * i, 4.f, 50.f);
+            correct &= inside;
+        }
+        std::cout << (correct ? "PASS" : "FAIL")
+                  << ": green decor66-69 produces full model-height collision boxes" << std::endl;
+        allOk &= correct;
+    }
+
     // Malformed-cell regression (found via a fresh code audit, 2026-07-23):
     // std::stoi() used to run directly on a Decor:/BigDecor: cell with no
     // try/catch anywhere in LoadFromMobileEggbertFile() or its callers --

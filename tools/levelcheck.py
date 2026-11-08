@@ -39,6 +39,7 @@ import argparse
 import math
 import collections
 import csv
+import re
 import sys
 from pathlib import Path
 
@@ -50,8 +51,9 @@ SIZE = 100
 CRUSHER_HAZARD = 3  # BlockHazardKind::Crusher (tools/data/blocks.csv)
 DRIP_HAZARD = 6     # BlockHazardKind::Drip: hangs in an open cell (BD-0033), nothing stands on it
 LIFTS = {1, 47, 48}
-SOLID_BIGDECOR = set(range(16, 32)) | set(range(36, 48)) | {87, 88, 89}
-SOLID_BIGDECOR_HEIGHT = 2
+_REGISTRY = (Path(__file__).resolve().parents[1] / "include/GalaxyEggbert/BlockDefinitionRegistry.hpp").read_text()
+SOLID_BIGDECOR = set(map(int, re.findall(r"\d+", re.search(r"kSolidBigDecorIcons\s*\{([^}]+)\}", _REGISTRY).group(1))))
+SOLID_BIGDECOR_HEIGHT = int(re.search(r"kSolidBigDecorHeight\s*=\s*(\d+)", _REGISTRY).group(1))
 OBJECTS = Path(__file__).resolve().parents[1] / "avatars3d" / "objects"
 VERTEX = None  # numpy dtype, made on first use (the models' 52-byte vertices)
 
