@@ -1612,3 +1612,18 @@ transitions. All28 words, repeated E, simultaneous snapshots, fairplay and OFF g
 Resume format6 records the event letter/mode. Live rapid typing now mounts/climbs in the same
 editor world, and a final live text-event resume reports SELFTEST equal. Final113/113 CTest pass;
 player source-world SHA256 is unchanged. Evidence: build-probe/latest-controls/.
+
+## BD-0099 — cheat capture depended on snapshots or IME delivery — FIXED_AND_VERIFIED
+
+The owner again reported givecopter failure in editor play and palace hub020, with help/compass
+working and turning sometimes restoring it. The previous text-only path swallowed input when
+native text mode was active but delivered no characters (reproduced with an SDL event fixture).
+A temporary first-source snapshot fallback passed that case but still cannot retain short presses
+between frames. With explicit owner approval, CNA594eb28dc adds optional Keyboard::KeyDownEXT:
+ordered, non-repeat physical presses, preserving Keyboard.GetState and existing text dispatch.
+Galaxy uses one queued source for typed cheats on all devices, including keyboard+touch, without
+starting an IME/OSK. Autoplay retains snapshots; resume6 captures the event letter per tick.
+CNA's input suite passes five shuffled iterations (653pass/1harness skip each). A live hub020 run
+with25ms presses,180ms frames and all text events dropped mounts and climbs without turning.
+The owner's exact intermittent desktop event stream was not captured; no cause was inferred solely
+from the turning observation. Evidence: build-probe/cheat-source/.

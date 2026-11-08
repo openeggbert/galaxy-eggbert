@@ -752,8 +752,7 @@ namespace GalaxyEggbert::CNA
         std::optional<GalaxyEggbert::Game::ResumeLog> pendingResume_;
         GalaxyEggbert::Game::ResumeInput tickInput_;
         std::deque<char> pendingCheatLetters_;
-        std::uint64_t textInputToken_ = 0;
-        bool cheatTextInputActive_ = false;
+        std::uint64_t keyInputToken_ = 0;
         bool missionStartPending_ = false;
         bool recordingResume_ = false;
         bool replayingResume_ = false;

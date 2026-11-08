@@ -33,7 +33,6 @@
 #include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Input/GamePad.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
-#include <Microsoft/Xna/Framework/Input/TextInputEXT.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 #include <Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
@@ -869,21 +868,19 @@ namespace GalaxyEggbert::CNA
         saveData_.Load();
         graphics_->setIsFullScreenProperty(saveData_.GetFullscreen());
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
-        textInputToken_ = Microsoft::Xna::Framework::Input::TextInputEXT::TextInput.Add([this](char16_t c) {
-            if (!cheatTextInputActive_ || phase_ != GalaxyEggbert::Def::GamePhase::Play ||
-                controlsHelp_.shown || replayingResume_ || fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None ||
-                !getIsActiveProperty()) return;
-            if (c >= u'A' && c <= u'Z') c += u'a' - u'A';
-            if (c >= u'a' && c <= u'z' && pendingCheatLetters_.size() < 256)
-                pendingCheatLetters_.push_back(static_cast<char>(c));
+        keyInputToken_ = Microsoft::Xna::Framework::Input::Keyboard::KeyDownEXT.Add([this](auto key) {
+            using Microsoft::Xna::Framework::Input::Keys;
+            if (!GalaxyEggbert::Game::kCheatsEnabled || SuppressLiveInput() ||
+                phase_ != GalaxyEggbert::Def::GamePhase::Play || controlsHelp_.shown || replayingResume_ ||
+                fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None) return;
+            if (key >= Keys::A && key <= Keys::Z && pendingCheatLetters_.size() < 256)
+                pendingCheatLetters_.push_back(static_cast<char>('a' + int(key) - int(Keys::A)));
         });
     }
 
     GalaxyEggbertGame::~GalaxyEggbertGame()
     {
-        using Microsoft::Xna::Framework::Input::TextInputEXT;
-        TextInputEXT::TextInput.Remove(textInputToken_);
-        if (cheatTextInputActive_) TextInputEXT::StopTextInput();
+        Microsoft::Xna::Framework::Input::Keyboard::KeyDownEXT.Remove(keyInputToken_);
     }
 
     void GalaxyEggbertGame::LoadContent()
@@ -1868,19 +1865,10 @@ namespace GalaxyEggbert::CNA
                     touch.getPositionProperty().Y, static_cast<int>(touch.getStateProperty())});
         }
 
-        // On touch devices text-input mode can raise an on-screen keyboard over Play.
-        // Keep their existing controls; desktop text events queue short key presses losslessly.
-        const bool wantText = GalaxyEggbert::Game::kCheatsEnabled && !SuppressLiveInput() &&
-            phase_ == GalaxyEggbert::Def::GamePhase::Play && !controlsHelp_.shown &&
-            !tickInput_.touchControlsEnabled;
-        if (wantText != cheatTextInputActive_)
-        {
-            if (wantText) TextInputEXT::StartTextInput();
-            else TextInputEXT::StopTextInput();
-            cheatTextInputActive_ = wantText && TextInputEXT::IsTextInputActive();
-            pendingCheatLetters_.clear();
-        }
-        if (cheatTextInputActive_)
+        // Physical presses arrive in event order, even if released between updates.
+        // They work with a touch screen too, without starting an on-screen keyboard/IME.
+        // Autoplay keeps its recorded keyboard-snapshot path.
+        if (!SuppressLiveInput() && GalaxyEggbert::Game::kCheatsEnabled)
         {
             tickInput_.cheatLetter = 0;
             if (!pendingCheatLetters_.empty())
@@ -1889,7 +1877,6 @@ namespace GalaxyEggbert::CNA
                 pendingCheatLetters_.pop_front();
             }
         }
-
     }
 
     Microsoft::Xna::Framework::Input::MouseState GalaxyEggbertGame::CurrentMouseState() const
@@ -3600,7 +3587,10 @@ namespace GalaxyEggbert::CNA
             case TC::LayEgg: ApplyCheat(4); break;
             case TC::KillEgg: break; // no case in Decor::CheatAction
             case TC::FunSkate: vehicle(VM::Skateboard); break;
-            case TC::GiveCopter: vehicle(VM::Helicopter); break;
+            case TC::GiveCopter:
+                vehicle(VM::Helicopter);
+                std::cout << "GalaxyEggbertCNA: givecopter activated." << std::endl;
+                break;
             case TC::JeepDrive: vehicle(VM::Jeep); break;
             case TC::DriveTank: vehicle(VM::Tank); break;
             case TC::IOvercraft: vehicle(VM::Overcraft); break;

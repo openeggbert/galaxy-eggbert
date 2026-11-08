@@ -177,8 +177,10 @@ chooses right, since either half-turn is valid.
 It is a direction/distance through space, not a route finder. Touch layouts keep the whole panel
 clear of the controls. Recognized cheat prefixes consume their following letter keys until
 release, so the S ending `weelkeys` cannot turn Blupi around; a fresh S still works.
-Non-touch play captures ordered text events, including short key presses between frames, so
-rapid cheat typing works in complex editor worlds too. No Enter is needed.
+Play captures ordered physical key-down events through CNA's optional `Keyboard::KeyDownEXT`,
+including short presses released between updates. This works with keyboards on touch devices
+without opening an on-screen keyboard or depending on an IME. No Enter is needed.
+The current source requires CNA commit `594eb28dc` or newer; `Keyboard.GetState()` is unchanged.
 Type **help** or **cheats** during play, without Enter, for every supported cheat word and its
 explanation. This overlay pauses the game and closes with F1 or Esc. `cheats` is the Mobile Eggbert
 MODERN name (`InputPad.cpp:1318`); `help` is Galaxy's requested alias. `killegg` is listed with its

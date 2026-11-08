@@ -10,6 +10,21 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Latest givecopter follow-up: the owner also reproduced intermittent failures in palace hub020,
+  sometimes relieved by turning. Their process was on Wayland and used the newly built binary;
+  the early text-only fix and then a tested snapshot fallback were insufficient. A fixture proved
+  that SDL text mode can be active without delivered letters, swallowing even slow cheats; the
+  fallback still has the old between-frame limitations. The owner explicitly approved a CNA
+  optional KeyDownEXT event after discussing XNA compatibility/other games. CNA594eb28dc emits
+  ordered non-repeat physical presses without changing GetState; its full input suite passed
+  five shuffled iterations (654 each:653pass,1harness-default skip). Galaxy now queues those
+  events for cheats on all devices, with no TextInputEXT start/stop and no second snapshot feed.
+  Autoplay retains snapshots and resume format6 records event letters. A palace-hub live test
+  at180ms frames,25ms presses and dropped text events activates givecopter without rotating.
+  Evidence: build-probe/cheat-source/. The exact live owner's failure was not instrumented, so
+  turning's causal role was not established; input loss/IME dependence is removed at its source.
+  Source needs CNA594eb28dc; CI's old published CNA pin must advance after publishing the local
+  CNA commits. No push was requested. Earlier text-input evidence below is historical.
 - Reproduced the latest givecopter failure using a read-only copy of gamerC's custom_002.vwr:
   Editor → second slot → Play accepted150ms presses, but lost25ms presses. Snapshot-only parsing
   misses down/up between frames and can alphabetize multiple simultaneous fresh keys. Non-touch

@@ -72,9 +72,10 @@ content-authoring UX, but not new gameplay mechanics.
   the target's same height shows `-` (within3 degrees and0.1 block respectively).
   Touch layouts leave it clear of controls. `help`/`cheats` explain it. Recognized cheat prefixes
   consume letter controls through release (`weelkeys` no longer turns Blupi with its final S);
-  slow typing still works. On non-touch Play, ordered CNA text events also retain short presses
-  between frames: rapid givecopter now works in the owner's second editor world. Touch/autoplay
-  keep the snapshot path. All28 words and fairplay are covered; a live text-input resume matches.
+  slow typing still works. Typed cheats now use CNA Keyboard::KeyDownEXT's ordered non-repeat
+  physical presses on every device, including keyboards used with touch screens. No IME/text-input
+  mode is needed; autoplay keeps its snapshot path. Fast givecopter is verified while standing in
+  the palace hub with180ms frames and no text events. Resume format6 records those letter events.
   CMake/macro `GALAXY_EGGBERT_ENABLE_CHEATS=OFF` disables typed and hidden
   cheats. Both builds were tested; the current local build is **ON**. Resume format6 stores compass and the fairplay lock.
 - Vehicle glue fire: **F**, gamepad **RT**, or held touch **Fire**. The tank also accepts Left Ctrl. Tank shots
@@ -228,6 +229,9 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 
 ## Known limitations
 
+- Source now requires CNA `594eb28dc` (optional KeyDownEXT); its parent `ee3235984` fixes UB-009.
+  Both are local CNA commits. The published CI dependency pin predates this API and needs advancing
+  after CNA publication; no push was requested. Local native build/tests use the new checkout.
 - Native F9 context recovery loses terrain mip contents above level0 (UB-009): close texture
   detail returns, but minified/distant floor faces become black. Reproduced and traced to CNA
   EasyGL's recovery allocation without higher-level upload. Owner requested analysis only;
