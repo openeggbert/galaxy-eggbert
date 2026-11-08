@@ -170,7 +170,47 @@ namespace GalaxyEggbert::Game
         padEffect_ = makeEffect(padTexture_);
         jaugeEffect_ = makeEffect(jaugeTexture_);
         buttonEffect_ = makeEffect(buttonTexture_);
+        underwaterEffect_ = std::make_unique<BasicEffect>(device);
+        underwaterEffect_->VertexColorEnabled = false;
+        underwaterEffect_->setTextureEnabledProperty(false);
+        using Microsoft::Xna::Framework::Graphics::Blend;
+        underwaterMultiply_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BlendState>();
+        underwaterMultiply_->setColorSourceBlendProperty(Blend::DestinationColor);
+        underwaterMultiply_->setColorDestinationBlendProperty(Blend::Zero);
+        underwaterMultiply_->setAlphaSourceBlendProperty(Blend::Zero);
+        underwaterMultiply_->setAlphaDestinationBlendProperty(Blend::One);
         loaded_ = true;
+    }
+
+    void Hud::DrawUnderwaterTint(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                int viewportW, int viewportH, float immersion)
+    {
+        if (!loaded_ || !std::isfinite(immersion) || immersion <= 0 || viewportW <= 0 || viewportH <= 0) return;
+        immersion = std::clamp(immersion, 0.0f, 1.0f);
+        if (!underwaterRenderer_ || underwaterWidth_ != viewportW || underwaterHeight_ != viewportH)
+        {
+            auto mesh = MakeTexturedMeshBuilder();
+            AppendQuadUv(mesh, 0, 0, float(viewportW), float(viewportH), 0, 0, 1, 1);
+            underwaterRenderer_ = UploadTexturedMesh(device, mesh.Mesh());
+            underwaterWidth_ = viewportW;
+            underwaterHeight_ = viewportH;
+        }
+        auto& effect = *underwaterEffect_;
+        using Microsoft::Xna::Framework::Matrix;
+        using Microsoft::Xna::Framework::Graphics::BlendState;
+        effect.World = effect.View = Matrix::getIdentityProperty();
+        effect.Projection = Matrix::CreateOrthographicOffCenter(0, float(viewportW), float(viewportH), 0, 0, 1);
+        // A single colour treatment for the completed world: mild red absorption, then blue
+        // water haze. It keeps detail and does not accumulate per water cell or affect the HUD.
+        effect.setAlphaProperty(1.0f);
+        effect.setDiffuseColorProperty({1.0f - 0.30f * immersion, 1.0f - 0.10f * immersion, 1.0f});
+        device.setBlendStateProperty(*underwaterMultiply_);
+        underwaterRenderer_->Draw(device, effect);
+        effect.setDiffuseColorProperty({0.02f, 0.34f, 0.95f});
+        effect.setAlphaProperty(0.32f * immersion);
+        device.setBlendStateProperty(BlendState::AlphaBlend); // BasicEffect supplies premultiplied colour
+        underwaterRenderer_->Draw(device, effect);
+        device.setBlendStateProperty(BlendState::Opaque);
     }
 
     void Hud::FlushQuads(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
@@ -251,7 +291,7 @@ namespace GalaxyEggbert::Game
                      bool voyageIsBlupiChannel,
                      float voyageX, float voyageY,
                      GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity,
-                     std::optional<float> nearestTreasureDistance)
+                     std::optional<float> nearestTreasureDistance, bool rightTouchStick)
     {
         if (!loaded_)
         {
@@ -687,9 +727,12 @@ namespace GalaxyEggbert::Game
         {
             char label[80];
             std::snprintf(label, sizeof(label), "%.1f", *nearestTreasureDistance);
-            constexpr float textScale = 0.6f, top = 450.0f;
+            constexpr float textScale = 0.6f, top = 338.0f;
             const float width = TextMetrics::Width(label) * textScale;
-            const float left = kRefW * 0.5f - width * 0.5f;
+            // Own lower-right readout, above the existing HUD and Jump button. When the touch
+            // stick is mirrored to the right, keep clear of its ring as well.
+            const float right = (float(viewportW) - offsetX) / scale - (rightTouchStick ? 190.0f : 18.0f);
+            const float left = right - width;
             const float padW = static_cast<float>(padTexture_.getWidthProperty());
             const float padH = static_cast<float>(padTexture_.getHeightProperty());
             const int col = kPanelIcon % kPadCols, row = kPanelIcon / kPadCols;

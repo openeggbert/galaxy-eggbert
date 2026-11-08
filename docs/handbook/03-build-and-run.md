@@ -164,7 +164,7 @@ F5/F6 selects normal/fast speed, Tab toggles slow motion, F12 opens the cheat me
 buttons; hold the left mouse button and drag to look around. Walking returns the camera behind him.
 The main menu's **Exit** button closes the game.
 
-The bottom HUD shows just a number: the nearest remaining chest's straight-line **3D distance in
+The lower-right readout above the HUD/buttons shows just a number: the nearest remaining chest's straight-line **3D distance in
 blocks**, to one decimal place. This is a distance through space, not a route length. The readout
 disappears as soon as all chests have been collected, including while the last chest's reward is
 still flying to the counter.
@@ -175,6 +175,8 @@ actual behavior: no effect, as in the reference.
 
 Water renders the exterior of connected water cells rather than six overlapping faces per cell.
 This keeps the animated surface while making underwater swimming readable in both camera views.
+A submerged camera also gets a blue haze and reduced warm colours, fading at the waterline;
+the HUD and menus retain their normal colours. A camera above the surface gets no extra tint.
 
 The first connected gamepad in XNA slots 1-4 controls play (`GamepadInput.hpp`):
 

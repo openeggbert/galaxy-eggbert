@@ -8,6 +8,25 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-08 (controls, help, HUD and underwater visibility)._
 
+## Latest follow-up — underwater colour and distance position (2026-11-08)
+
+Owner: clear water looked dry; the distance number beside/behind the lives was unacceptable.
+`WaterViewImmersion` checks the actual camera's grid cell and fades during the final 0.35 block
+below the surface. Before any HUD/menu drawing, `Hud::DrawUnderwaterTint` applies mild warm-colour
+absorption and a blue haze to the completed world, with a cached full-screen mesh. It does not
+stack with water depth. Both camera views stay readable; a camera above water and HUD/help colours
+are unchanged. The number now has a separate lower-right position at reference Y338, above the
+existing HUD, Jump button and first-person indicator; it shifts left clear of a mirrored right
+touch stick. Its meaning and disappearance after the final chest remain unchanged.
+
+Verification: native build, 112/112 CTest, mission 051 and `RESUME SELFTEST equal`, unchanged golden
+movement trace, first-/third-person underwater and above-water/help captures. The three dry
+golden frames changed only inside the old/new number rectangles (zero differing pixels elsewhere)
+and were refreshed for that intentional move. Evidence: `build-probe/underwater-tint/`.
+
+Next owner requests remain separate: Ctrl rises / Space places in the editor, and ten new original
+retro music previews in a separate listening directory, with no world assignments.
+
 ## Latest completed task — controls, help, HUD and water (2026-11-08)
 
 Owner-requested changes in this task:

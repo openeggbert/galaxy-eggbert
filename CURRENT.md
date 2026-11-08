@@ -69,6 +69,9 @@ content-authoring UX, but not new gameplay mechanics.
   (`WaterSurface.hpp`), removing the stacked translucent internal walls that obscured swimmers,
   fish and routes. The animated exterior and above-water coverage remain. Verified by face-mask
   tests and before/after third-/first-person captures in mission 051.
+  Follow-up: the submerged camera now receives mild warm-colour absorption and a blue haze;
+  it fades over the last 0.35 block below the surface. HUD/menu colours remain untouched.
+  The chest-distance number has its own lower-right position above the HUD/buttons, clear of lives.
 
 - Ghost cheat matches MODERN Mobile Eggbert (BD-0081 / OR-0075, 2026-11-06): skips tile reactions
   and object contacts, uses March/Stop even in mid-air, and draws at 0.75 opacity (model and sprite

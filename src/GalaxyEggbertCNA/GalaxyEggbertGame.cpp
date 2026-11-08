@@ -1,5 +1,7 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <GalaxyEggbert/Game/WaterSurface.hpp>
+
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 #endif
@@ -8264,6 +8266,15 @@ namespace GalaxyEggbert::CNA
         // re-enables depth at the top of every frame regardless).
         device.SetDepthTestEnabled(false);
 
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
+        {
+            const auto& viewport = device.getViewportProperty();
+            const auto& eye = camera_.Position();
+            hud_.DrawUnderwaterTint(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                GalaxyEggbert::Game::WaterViewImmersion(worldRuntime_.GetWorld(),
+                    eye.X + WorldRuntime::kWorldCenterX, eye.Y, eye.Z + WorldRuntime::kWorldCenterZ));
+        }
+
         // Real mobile-eggbert bottom HUD + interim animation-state
         // indicator (2026-07-10, see Hud.hpp for the full layout AND for
         // why this is real 3D quads instead of SpriteBatch -- CNA's Vulkan
@@ -8342,7 +8353,8 @@ namespace GalaxyEggbert::CNA
                           interaction_.VoyageDrawX(), interaction_.VoyageDrawY(),
                           gameSpeed_, blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()),
                           InteractionSystem::NearestTreasureDistance(
-                              worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()));
+                              worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ()),
+                          tickInput_.touchControlsEnabled && !saveData_.GetJumpRight());
             }
 
             // On-screen touch controls (2026-07-13, plan.md

@@ -69,6 +69,21 @@ int main()
         pool.setBlock(0, 0, 0, Block::make(Water1));
         check(WaterSurfaceFaces(pool, 0, 0, 0) == 0x3f,
               "water at the world boundary keeps its outward faces without out-of-range reads");
+        using GalaxyEggbert::Game::WaterViewImmersion;
+        check(WaterViewImmersion(pool, 5, 5, 5) == 1.0f &&
+                  WaterViewImmersion(pool, 5, 6.1f, 5) == 1.0f,
+              "a submerged camera receives full underwater colour treatment");
+        const float shallow = WaterViewImmersion(pool, 5, 6.325f, 5);
+        check(std::fabs(shallow - 0.5f) < 0.0001f &&
+                  WaterViewImmersion(pool, 5, 6.49f, 5) < shallow &&
+                  WaterViewImmersion(pool, 5, 6.5f, 5) == 0.0f,
+              "underwater colour fades smoothly at the actual surface and disappears above it");
+        check(WaterViewImmersion(pool, 3, 5, 5) == 0.0f &&
+                  WaterViewImmersion(pool, -1, 5, 5) == 0.0f &&
+                  WaterViewImmersion(pool, 5, 1000000, 5) == 0.0f,
+              "a dry or out-of-world camera remains untinted even beside a swimming Blupi");
+        check(WaterViewImmersion(water, 5, 6, 5) == 1.0f,
+              "stored animated water frames receive the underwater view treatment too");
     }
     const auto faces = [&atlas](int icon)
     {

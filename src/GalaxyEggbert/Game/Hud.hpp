@@ -4,6 +4,7 @@
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
+#include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 #include <Microsoft/Xna/Framework/Matrix.hpp>
@@ -66,6 +67,10 @@ namespace GalaxyEggbert::Game
         // files, matching the established one-instance-per-draw-path
         // pattern (see blupiObjectTexture_ vs blupiIconTexture_ there).
         void LoadContent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+
+        // Draw after the world and before every HUD/menu quad, with depth testing disabled.
+        void DrawUnderwaterTint(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                int viewportW, int viewportH, float immersion);
 
         // Draws the full HUD. Call as the LAST draw of the frame (see the
         // class comment for why order matters), with depth testing already
@@ -151,7 +156,8 @@ namespace GalaxyEggbert::Game
                   bool voyageIsBlupiChannel,
                   float voyageX, float voyageY,
                   GalaxyEggbert::Def::GameSpeed gameSpeed, float animOpacity = 1.0f,
-                  std::optional<float> nearestTreasureDistance = std::nullopt);
+                  std::optional<float> nearestTreasureDistance = std::nullopt,
+                  bool rightTouchStick = false);
 
         // Projects a 3D world position into this class's own 640x480
         // reference screen space (plan.md `158`) -- the real Voyage
@@ -207,5 +213,9 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> buttonRenderer_;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> hintPanelRenderer_;
         bool loaded_ = false;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> underwaterEffect_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BlendState> underwaterMultiply_;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> underwaterRenderer_;
+        int underwaterWidth_ = 0, underwaterHeight_ = 0;
     };
 }
