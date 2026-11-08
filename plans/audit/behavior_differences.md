@@ -1564,3 +1564,12 @@ Controller regression and live reproduction verify that the resulting helicopter
 The earlier request added Ctrl fire to both armed vehicles. The owner clarified that helicopter
 Left Ctrl must climb. The physical Ctrl→F remap now applies only in the tank. Helicopter F still
 drops glue, Ctrl/RightShift rise, LeftShift descends; gamepad A/LB and separate RT fire are unchanged.
+
+## BD-0094 — editor endpoint markers showed through opaque terrain — FIXED_AND_VERIFIED
+
+The host disabled depth testing before the editor overlay pass. Setting DepthStencilState::Default
+inside LiftEndpointRenderer did not restore CNA's independent explicit depth switch. The renderer
+now enables that switch for the marker draw and disables it again for subsequent screen controls.
+A scene enclosing both endpoints in solid terrain matches its no-marker baseline exactly; an
+exposed-marker capture retains both numbers and the double-sided interior walls. No global culling
+or terrain-rendering change. Evidence: build-probe/marker-occlusion/.

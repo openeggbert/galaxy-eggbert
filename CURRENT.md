@@ -59,6 +59,8 @@ content-authoring UX, but not new gameplay mechanics.
   shoulders offset cells, Y switches to a menu cursor, Start saves and Back stops with protection.
   Lifts show original numbered start/end cubes (icons30/31), whose painted faces render from both
   sides with alpha-test depth writes. These same cubes in terrain now show their rear faces.
+  Endpoint markers explicitly re-enable depth testing after HUD setup, so opaque terrain hides
+  them. An enclosed-marker capture matches the same scene without markers pixel for pixel.
   Editor lifts also preview their XYZ patrol, dwell and return using Play's same movement routine;
   the authored endpoints and marker positions remain unchanged.
 - Main menu: **Help** opens F1's panel and [Close] dismisses it by mouse/touch without a click

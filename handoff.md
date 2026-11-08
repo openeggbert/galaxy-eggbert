@@ -71,6 +71,11 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   in the editor. Registry doubleSidedCutout on30/31 and shared double-sided box geometry also fix
   rear faces of the terrain exhibits: alpha-test holes show the back while paint writes depth.
   Live editor probe confirms endpoints and side/inside faces; pure tests cover markers and windings.
+  Owner follow-up: endpoints were visible through terrain because the host's HUD depth override
+  remained disabled independently of DepthStencilState::Default. LiftEndpointRenderer now enables
+  the explicit CNA depth switch for its world draw, then restores the overlay state. Enclosed
+  markers render identically to a marker-free baseline (zero differing pixels); exposed markers
+  and inner walls remain visible. Evidence: build-probe/marker-occlusion/ fixed/baseline/visible.
   Follow-up: `blupi_recon/src/decblock.cpp:1114` calls MoveObjectStep before its phase check, even
   in BUILD. Editor now calls `InteractionSystem::AdvanceEditorPlatforms` after any presentation
   resync, reusing Play's exact AdvancePatrolStep for active lift families1/47/48. Only runtime

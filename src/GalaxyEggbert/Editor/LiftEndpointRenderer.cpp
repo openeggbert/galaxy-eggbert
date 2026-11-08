@@ -52,7 +52,11 @@ void LiftEndpointRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDev
     // Depth writes hide the rear paint behind opaque foreground paint, while alpha-test
     // holes show the rear edges. Every face is double-sided, including from inside.
     device.setBlendStateProperty(BlendState::Opaque);
+    // WorldEditor draws after the host disables depth for its HUD. The explicit
+    // CNA depth switch is independent of DepthStencilState::Default.
+    device.SetDepthTestEnabled(true);
     device.setDepthStencilStateProperty(DepthStencilState::Default);
     mesh_->Draw(device, *effect_);
+    device.SetDepthTestEnabled(false); // subsequent editor controls are screen overlays
 }
 } // namespace GalaxyEggbert::Editor
