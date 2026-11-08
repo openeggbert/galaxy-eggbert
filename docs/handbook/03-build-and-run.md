@@ -177,6 +177,8 @@ chooses right, since either half-turn is valid.
 It is a direction/distance through space, not a route finder. Touch layouts keep the whole panel
 clear of the controls. Recognized cheat prefixes consume their following letter keys until
 release, so the S ending `weelkeys` cannot turn Blupi around; a fresh S still works.
+Non-touch play captures ordered text events, including short key presses between frames, so
+rapid cheat typing works in complex editor worlds too. No Enter is needed.
 Type **help** or **cheats** during play, without Enter, for every supported cheat word and its
 explanation. This overlay pauses the game and closes with F1 or Esc. `cheats` is the Mobile Eggbert
 MODERN name (`InputPad.cpp:1318`); `help` is Galaxy's requested alias. `killegg` is listed with its
@@ -210,8 +212,8 @@ The first connected gamepad in XNA slots 1-4 controls play (`GamepadInput.hpp`):
 Play's on-screen controls appear only when CNA detects touch-screen capability, including on
 devices with both a keyboard and a touch screen. Desktop mouse clicks in their former areas go
 to camera look. The desktop and an SDL virtual gamepad were checked live on 2026-11-08; physical
-gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v5 to
-record touch capability, the compass toggle and the fairplay lock; an older/incompatible log falls back to the saved checkpoint.
+gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v6 to
+record touch capability, compass, fairplay and ordered cheat letters; an older/incompatible log falls back to the saved checkpoint.
 
 Tank shots follow its exact heading at any angle; helicopter glue drops vertically, only in flight and off a lift.
 Both need ammunition (the green ammo pack; `birdlime` supplies ten when cheats are enabled).

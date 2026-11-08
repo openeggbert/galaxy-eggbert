@@ -430,22 +430,25 @@ int main()
         input.touches = {{7, 123.45678f, 300.0f, 1}, {8, 700.0f, 250.0f, 3}};
         input.accelValid = true; input.accelY = -0.123456791f;
         input.touchControlsEnabled = true;
+        input.cheatLetter = 'e';
         log.Append(input); log.Append(input);
-        input.keys.clear(); input.touchControlsEnabled = false; log.Append(input);
+        input.keys.clear(); input.touchControlsEnabled = false; input.cheatLetter = 0; log.Append(input);
         check(log.runs.size() == 2 && log.runs[0].count == 2 && log.TickCount() == 3,
               "resume RLE merges only consecutive identical ticks");
         ResumeLog parsed;
         const auto text = log.Serialize();
         check(ResumeLog::Parse(text, "test build", parsed) && parsed.start == log.start && parsed.runs == log.runs,
-              "resume v5 round trip retains world identity, compass, cheat lock, touch capability and all raw inputs");
-        check(text.starts_with("GALAXY_RESUME 5\n"), "resume writes format version 5");
+              "resume v6 round trip retains world identity, compass, cheat lock, ordered text and all raw inputs");
+        check(text.starts_with("GALAXY_RESUME 6\n"), "resume writes format version 6");
+        check(parsed.runs[0].input.cheatLetter=='e' && parsed.runs[1].input.cheatLetter==0,
+              "resume retains ordered cheat letters independently of held gameplay keys");
         check(parsed.runs[0].input.touchControlsEnabled && !parsed.runs[1].input.touchControlsEnabled,
               "resume replays the captured touch capability without querying the current device");
         auto oldBody = text.substr(0, text.rfind("\nEND ") + 1);
-        oldBody.replace(0, std::string("GALAXY_RESUME 5").size(), "GALAXY_RESUME 4");
+        oldBody.replace(0, std::string("GALAXY_RESUME 6").size(), "GALAXY_RESUME 5");
         check(!ResumeLog::Parse(oldBody + "END " + std::to_string(ResumeLog::HashBytes(oldBody)) + "\n",
                                "test build", parsed) && parsed.start == log.start,
-              "version 4 without the initial cheat lock state is refused transactionally");
+              "version 5 without ordered text input is refused transactionally");
         check(parsed.MatchesWorld(log.start.worldPath, log.start.worldHash), "same world is accepted");
         check(!parsed.MatchesWorld(log.start.worldPath, log.start.worldHash ^ 1), "changed world hash is refused");
         check(!parsed.MatchesWorld("worlds3d/world045.vwr", log.start.worldHash), "different world path is refused");

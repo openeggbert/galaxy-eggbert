@@ -2065,7 +2065,8 @@ namespace GalaxyEggbert::Game
     }
 
     InputPad::TypedCheatResult InputPad::UpdateTypedGhostCheat(
-        const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept
+        const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase,
+        int orderedLetter) noexcept
     {
         using Microsoft::Xna::Framework::Input::Keys;
 
@@ -2090,7 +2091,10 @@ namespace GalaxyEggbert::Game
         {
             const bool down = keyboard.IsKeyDown(kLetterKeys[li]);
             if (!down) suppressedGameplayLetters_ &= ~(1u << li);
-            if (down && !letterKeyWasDown_[li])
+            // Text events preserve short presses and their order between rendered frames.
+            // -1 keeps the snapshot path for autoplay and devices without text input;
+            // 0 means text input is active but no new letter arrived this tick.
+            if (orderedLetter >= 0 ? orderedLetter == 'a' + li : down && !letterKeyWasDown_[li])
             {
                 typedCheatBuffer_ += static_cast<char>('a' + li);
                 typedIdleSeconds_ = 0;

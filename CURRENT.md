@@ -72,8 +72,11 @@ content-authoring UX, but not new gameplay mechanics.
   the target's same height shows `-` (within3 degrees and0.1 block respectively).
   Touch layouts leave it clear of controls. `help`/`cheats` explain it. Recognized cheat prefixes
   consume letter controls through release (`weelkeys` no longer turns Blupi with its final S);
-  slow typing still works. CMake/macro `GALAXY_EGGBERT_ENABLE_CHEATS=OFF` disables typed and hidden
-  cheats. Both builds were tested; the current local build is **ON**. Resume format5 stores compass and the fairplay lock.
+  slow typing still works. On non-touch Play, ordered CNA text events also retain short presses
+  between frames: rapid givecopter now works in the owner's second editor world. Touch/autoplay
+  keep the snapshot path. All28 words and fairplay are covered; a live text-input resume matches.
+  CMake/macro `GALAXY_EGGBERT_ENABLE_CHEATS=OFF` disables typed and hidden
+  cheats. Both builds were tested; the current local build is **ON**. Resume format6 stores compass and the fairplay lock.
 - Vehicle glue fire: **F**, gamepad **RT**, or held touch **Fire**. The tank also accepts Left Ctrl. Tank shots
   follow the tank's continuous heading, including angles between the former eight directions;
   helicopter glue falls downward while airborne/off a lift. Ammo and original timings
@@ -87,7 +90,7 @@ content-authoring UX, but not new gameplay mechanics.
   showsecret, compass, quick and zoom; only fairplay can then be typed to unlock again. F12 and
   the hidden menu/gesture are blocked too. Previously acquired lives, bombs, ammo, keys, vehicles,
   powers and completed world changes remain. Unlocking permits new cheats without restoring old
-  toggles. Normal F1 help remains available. Resume format5 retains the lock.
+  toggles. Normal F1 help remains available. Resume format6 retains the lock.
 - Vehicle cheats now replace Ghost instead of leaving GhostStep active under a helicopter's
   camera. A blocked ghost pose returns to the last valid position when leaving that mode. The
   owner later reported givecopter working again; the separate ghost→givecopter failure was
@@ -135,7 +138,7 @@ content-authoring UX, but not new gameplay mechanics.
   and freezes the current screen; F1/Escape closes it. WASD aliases the arrows (S turns around),
   X/Right Ctrl backs up. The first connected gamepad in XNA slots 1-4 drives play; A also confirms
   Resume, Pause and Win/Lost. The main menu has Exit, and Setup uses the new Galaxy Eggbert logo.
-  Resume format v5 records touch capability, compass and the cheat-input lock so reconstruction does not depend on the current device;
+  Resume format v6 records ordered cheat letters, touch capability, compass and the cheat-input lock so reconstruction does not depend on the current device;
   older logs fall back to the checkpoint. Native build and 112/112 CTest pass; live Xvfb screenshots,
   an SDL virtual gamepad and mission 012 with the resume equality self-test verified the changes.
   The opt-in compass HUD aid is described above.
@@ -168,7 +171,7 @@ content-authoring UX, but not new gameplay mechanics.
   walking, respawn, falling, footprint/crate support and temporary platforms.
 - BD-0077 / Q-015 (2026-11-06): interrupted missions resume from their recorded moment via
   `ResumeLog` (mission start plus deterministic input replay), saved on Play deactivation and
-  deleted on clean exit. Format v5 retains the mission path and FNV-1a hash of the exact world
+  deleted on clean exit. Format v6 retains the mission path and FNV-1a hash of the exact world
   bytes loaded, touch capability, compass and cheat-input lock (2026-11-08); old versions and changed worlds are refused.
   Desktop build identity includes a lazily
   cached executable hash (Linux verified; Windows/macOS paths implemented); unreadable executables,

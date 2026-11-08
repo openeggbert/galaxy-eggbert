@@ -516,7 +516,8 @@ namespace GalaxyEggbert::Game
         // Each result is set for exactly the one call where its word was completed; always empty
         // outside Play.
         [[nodiscard]] TypedCheatResult UpdateTypedGhostCheat(
-            const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase) noexcept;
+            const Microsoft::Xna::Framework::Input::KeyboardState& keyboard, bool isPlayPhase,
+            int orderedLetter = -1) noexcept;
         [[nodiscard]] Microsoft::Xna::Framework::Input::KeyboardState FilterGameplayKeyboard(
             const Microsoft::Xna::Framework::Input::KeyboardState& keyboard) const;
 

@@ -33,6 +33,7 @@
 #include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Input/GamePad.hpp>
 #include <Microsoft/Xna/Framework/Input/Keyboard.hpp>
+#include <Microsoft/Xna/Framework/Input/TextInputEXT.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 #include <Microsoft/Xna/Framework/Input/Touch/TouchPanel.hpp>
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
@@ -868,6 +869,21 @@ namespace GalaxyEggbert::CNA
         saveData_.Load();
         graphics_->setIsFullScreenProperty(saveData_.GetFullscreen());
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
+        textInputToken_ = Microsoft::Xna::Framework::Input::TextInputEXT::TextInput.Add([this](char16_t c) {
+            if (!cheatTextInputActive_ || phase_ != GalaxyEggbert::Def::GamePhase::Play ||
+                controlsHelp_.shown || replayingResume_ || fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None ||
+                !getIsActiveProperty()) return;
+            if (c >= u'A' && c <= u'Z') c += u'a' - u'A';
+            if (c >= u'a' && c <= u'z' && pendingCheatLetters_.size() < 256)
+                pendingCheatLetters_.push_back(static_cast<char>(c));
+        });
+    }
+
+    GalaxyEggbertGame::~GalaxyEggbertGame()
+    {
+        using Microsoft::Xna::Framework::Input::TextInputEXT;
+        TextInputEXT::TextInput.Remove(textInputToken_);
+        if (cheatTextInputActive_) TextInputEXT::StopTextInput();
     }
 
     void GalaxyEggbertGame::LoadContent()
@@ -1852,6 +1868,28 @@ namespace GalaxyEggbert::CNA
                     touch.getPositionProperty().Y, static_cast<int>(touch.getStateProperty())});
         }
 
+        // On touch devices text-input mode can raise an on-screen keyboard over Play.
+        // Keep their existing controls; desktop text events queue short key presses losslessly.
+        const bool wantText = GalaxyEggbert::Game::kCheatsEnabled && !SuppressLiveInput() &&
+            phase_ == GalaxyEggbert::Def::GamePhase::Play && !controlsHelp_.shown &&
+            !tickInput_.touchControlsEnabled;
+        if (wantText != cheatTextInputActive_)
+        {
+            if (wantText) TextInputEXT::StartTextInput();
+            else TextInputEXT::StopTextInput();
+            cheatTextInputActive_ = wantText && TextInputEXT::IsTextInputActive();
+            pendingCheatLetters_.clear();
+        }
+        if (cheatTextInputActive_)
+        {
+            tickInput_.cheatLetter = 0;
+            if (!pendingCheatLetters_.empty())
+            {
+                tickInput_.cheatLetter = pendingCheatLetters_.front();
+                pendingCheatLetters_.pop_front();
+            }
+        }
+
     }
 
     Microsoft::Xna::Framework::Input::MouseState GalaxyEggbertGame::CurrentMouseState() const
@@ -1872,6 +1910,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::OnDeactivated(System::Object* sender, const System::EventArgs& args)
     {
+        pendingCheatLetters_.clear();
         // Game1.cpp:186-198: only deactivation during Play writes CurrentWrite.
         if (phase_ == GalaxyEggbert::Def::GamePhase::Play && missionStartPending_ &&
             fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
@@ -1931,6 +1970,7 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::ResetMissionInput()
     {
+        pendingCheatLetters_.clear();
         inputPad_.ResetMissionInput();
         inputPad_.SetJumpRight(saveData_.GetJumpRight());
         controlsHelp_ = {};
@@ -2605,7 +2645,11 @@ namespace GalaxyEggbert::CNA
         // Game1.cpp:1023 stops world sound on a phase change. Motor loops belong
         // to the live vehicle, not the menu or the next world.
         // Resume will start the appropriate loop again on its first Play update.
-        if (next != GamePhase::Play) StopVehicleMotorSound();
+        if (next != GamePhase::Play)
+        {
+            StopVehicleMotorSound();
+            pendingCheatLetters_.clear();
+        }
         phase_ = next;
         editorDevices_.Reset();
         if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)
@@ -3923,7 +3967,8 @@ namespace GalaxyEggbert::CNA
                 // layered on top of (not instead of) the on-screen cheat
                 // menu above, same "layered" idiom already established
                 // there.
-                const auto typedCheat = inputPad_.UpdateTypedGhostCheat(phaseKeys, /*isPlayPhase=*/true);
+                const auto typedCheat = inputPad_.UpdateTypedGhostCheat(
+                    phaseKeys, /*isPlayPhase=*/true, tickInput_.cheatLetter);
                 ApplyTypedCheat(typedCheat.cheat);
                 if (typedCheat.cheat == InputPad::TypedCheat::Help)
                 {

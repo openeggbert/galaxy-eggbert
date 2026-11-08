@@ -10,6 +10,15 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Reproduced the latest givecopter failure using a read-only copy of gamerC's custom_002.vwr:
+  Editor → second slot → Play accepted150ms presses, but lost25ms presses. Snapshot-only parsing
+  misses down/up between frames and can alphabetize multiple simultaneous fresh keys. Non-touch
+  Play now uses CNA TextInputEXT events queued in arrival order, one letter/tick; physical held
+  controls remain independent. Touch/autoplay retain snapshot input, and menus/help/focus loss
+  clear pending text. All28 words, fairplay and snapshot de-duplication are tested. Resume format6
+  stores each tick's event letter/mode; a live rapid-givecopter reconstruction reports equal.
+  Before/after and source hash: build-probe/editor-copter/ and build-probe/latest-controls/.
+  Player world/save data was not edited. Final native build and all113 CTest pass, cheats ON.
 - Vehicle motor lifecycle: SetPhase now stops all8 vehicle start/run/stop channels on leaving
   Play and clears activeMotorLoop_; custom play-test replacement also stops them. Continue
   restarts the correct loop. Original Game1.cpp:1023 stops world sounds on transitions. A live
@@ -34,7 +43,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   megablupi/ghost/doors/secrets/compass/quick/zoom flags on locking, and closes/blocks F12 and hidden
   menu/gesture. Only fairplay remains recognized while locked. Consumable rewards and earlier
   effects (lives, bombs, ammo, keys, vehicles, powers, world changes) are retained. Unlocking does
-  not reactivate old toggles. The lock survives input resets and resume format5 (older versions
+  not reactivate old toggles. The lock survives input resets and resume format6 (older versions
   checkpoint-fallback). Parser tests cover all28 words, locked matching and unlock; CMake OFF
   VerifyGEInputPad passed and cache restored ON. Live toggle test preserves9 lives,10 bombs,
   ammo/keys/dynamite and reports RESUME SELFTEST equal while locked. Evidence: build-probe/fairplay/.
@@ -72,7 +81,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   letter keys until release, including the final S of weelkeys; the original rolling buffer survives
   slow typing. A fresh movement key still works. CMake/macro GALAXY_EGGBERT_ENABLE_CHEATS defaults ON;
   OFF gates typed words, hidden gesture/menu, F12 and cheat application. OFF build+113tests/live
-  checked, then restored ON; current binary/cache are ON and all words tested. Resume format5 stores
+  checked, then restored ON; current binary/cache are ON and all words tested. Resume format6 stores
   compass and the fairplay lock (older logs checkpoint-fallback); mission051 reconstruction reports RESUME SELFTEST equal.
 - Main menu Help matches F1. Its visible [Close] consumes its pointer through release, preventing
   click-through into Exit/Play. Fullscreen/Window is upper left, names the other mode, and persists

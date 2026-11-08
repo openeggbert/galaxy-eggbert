@@ -882,6 +882,32 @@ int main()
         for (int i=0; i<120; ++i) (void)walking.UpdateTypedGhostCheat(KeyboardState{Keys::W}, true);
         check(walking.FilterGameplayKeyboard(KeyboardState{Keys::W}).IsKeyDown(Keys::W),
               "ordinary held movement does not become cheat typing");
+        int eventWordCount=0;
+        const auto* eventWords=InputPad::TypedCheatWords(eventWordCount);
+        for (int i=0;i<eventWordCount;++i)
+        {
+            InputPad eventPad;
+            auto result=InputPad::TypedCheat::None;
+            // Every physical key has already been released before the next Update.
+            for (char c:std::string(eventWords[i].word))
+                result=eventPad.UpdateTypedGhostCheat(KeyboardState{},true,c).cheat;
+            check(result==eventWords[i].cheat, "ordered text events recognize a cheat without any held keys");
+        }
+        InputPad events;
+        check(events.UpdateTypedGhostCheat(KeyboardState{Keys::G},true,0).cheat==InputPad::TypedCheat::None,
+              "text mode does not also feed the polled keyboard into the cheat buffer");
+        auto copter=InputPad::TypedCheat::None;
+        for (char c:std::string("givecopter"))
+            copter=events.UpdateTypedGhostCheat(KeyboardState{Keys::G,Keys::R},true,c).cheat;
+        check(copter==InputPad::TypedCheat::GiveCopter,
+              "ordered givecopter ignores simultaneous snapshot letters and repeated E is preserved");
+        events.SetCheatEntryLocked(true);
+        for (char c:std::string("givecopter"))
+            copter=events.UpdateTypedGhostCheat(KeyboardState{},true,c).cheat;
+        check(copter==InputPad::TypedCheat::None,"fairplay also blocks queued text cheats");
+        for (char c:std::string("fairplay"))
+            copter=events.UpdateTypedGhostCheat(KeyboardState{},true,c).cheat;
+        check(copter==InputPad::TypedCheat::FairPlay,"queued text can still unlock fairplay");
     }
     }
     else
@@ -898,6 +924,9 @@ int main()
             (void)pad.UpdateTypedGhostCheat(KeyboardState{},true);
         }
         check(none, "cheats-OFF build exposes and recognizes no typed cheats");
+        for(char c:std::string("givecopterfairplay"))
+            none &= pad.UpdateTypedGhostCheat(KeyboardState{},true,c).cheat==InputPad::TypedCheat::None;
+        check(none,"cheats-OFF build also ignores ordered text events");
         check(!pad.UpdateCheatGesture(mouse(70,200,true),640,480) &&
                   pad.UpdateCheatMenu(mouse(50,240,false),640,480)==0,
               "cheats-OFF build cannot unlock or activate the hidden cheat menu");

@@ -41,6 +41,7 @@
 #include <Microsoft/Xna/Framework/Media/Song.hpp>
 
 #include <cstdint>
+#include <deque>
 #include <optional>
 #include <cstdio>
 #include <filesystem>
@@ -69,6 +70,7 @@ namespace GalaxyEggbert::CNA
     {
     public:
         GalaxyEggbertGame();
+        ~GalaxyEggbertGame() override;
 
         void LoadContent() override;
         void OnDeactivated(System::Object* sender, const System::EventArgs& args) override;
@@ -749,6 +751,9 @@ namespace GalaxyEggbert::CNA
         std::uint64_t loadedMissionHash_ = 0;
         std::optional<GalaxyEggbert::Game::ResumeLog> pendingResume_;
         GalaxyEggbert::Game::ResumeInput tickInput_;
+        std::deque<char> pendingCheatLetters_;
+        std::uint64_t textInputToken_ = 0;
+        bool cheatTextInputActive_ = false;
         bool missionStartPending_ = false;
         bool recordingResume_ = false;
         bool replayingResume_ = false;

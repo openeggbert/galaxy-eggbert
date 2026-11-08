@@ -1599,3 +1599,16 @@ Play or replacing a custom play-test world. Continue restarts the current vehicl
 are unaffected. A sound-enabled live run reached Pause, Init and mission1 after a helicopter flight;
 native channel15/16/18 states were Stopped (2), with no later motor starts. Temporary state logging
 was removed. Evidence: build-probe/latest-controls/motor-menu-shots/. All113 CTest pass.
+
+## BD-0098 — rapid givecopter typing was lost between frames — FIXED_AND_VERIFIED
+
+Owner 2026-11-08: fresh launch → Editor → second world → Play → givecopter did nothing. On an
+isolated read-only copy of gamerC/custom_002.vwr,150ms presses worked and25ms presses failed.
+Keyboard snapshots miss a down/up between updates; multiple new letters were also processed in
+alphabetical order. Non-touch Play now starts CNA TextInputEXT and queues ASCII letters in event
+order, draining one/tick independently of held gameplay controls. Polling remains for touch and
+autoplay; event mode never also feeds snapshot letters. Pending text clears on mode/world/focus
+transitions. All28 words, repeated E, simultaneous snapshots, fairplay and OFF guards are covered.
+Resume format6 records the event letter/mode. Live rapid typing now mounts/climbs in the same
+editor world, and a final live text-event resume reports SELFTEST equal. Final113/113 CTest pass;
+player source-world SHA256 is unchanged. Evidence: build-probe/latest-controls/.
