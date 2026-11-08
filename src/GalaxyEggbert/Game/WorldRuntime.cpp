@@ -1,4 +1,5 @@
 #include "WorldRuntime.hpp"
+#include "LegacySawFloors.hpp"
 #include "FanGeometry.hpp"
 #include "PlateRotationMetadata.hpp"
 
@@ -275,6 +276,7 @@ namespace GalaxyEggbert::Game
         try
         {
             world_ = std::make_unique<Worlds::World>(Worlds::World::loadFromStream(in));
+            UpgradeLegacySawFloors(*world_);
         }
         catch (const std::exception&)
         {
@@ -541,6 +543,9 @@ namespace GalaxyEggbert::Game
                                                  : GalaxyEggbert::BlockTypes::Saw;
         const std::uint16_t sawTo = turningOn ? GalaxyEggbert::BlockTypes::Saw
                                                : GalaxyEggbert::BlockTypes::SawStopped;
+        int sawY=gy;
+        if (const auto* offset=world_->findBlockExtraMetadata(gx,gy,gz,kLegacySwitchSawRowMetadataType);
+            offset && offset->size()==1 && (*offset)[0]==1 && gy+1<blocksPerAxis) ++sawY;
         for (int sx = gx - 20; sx <= gx + 20; ++sx)
         {
             if (sx < 0 || sx >= blocksPerAxis)
@@ -548,11 +553,11 @@ namespace GalaxyEggbert::Game
                 continue;
             }
             const auto sawBlock = world_->getBlock(static_cast<std::uint16_t>(sx),
-                                                     static_cast<std::uint16_t>(gy),
+                                                     static_cast<std::uint16_t>(sawY),
                                                      static_cast<std::uint16_t>(gz));
             if (sawBlock.type() == sawFrom)
             {
-                world_->setBlock(static_cast<std::uint16_t>(sx), static_cast<std::uint16_t>(gy),
+                world_->setBlock(static_cast<std::uint16_t>(sx), static_cast<std::uint16_t>(sawY),
                                   static_cast<std::uint16_t>(gz), Worlds::Block::make(sawTo));
             }
         }

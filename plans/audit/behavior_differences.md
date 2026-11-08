@@ -1640,6 +1640,26 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0105 — Independent saw cell instead of an imposed floor — FIXED_AND_VERIFIED
+
+Owner: a saw must be only a saw, independent of the block below. The renderer explicitly
+invented a textured support cube and drew the blade one cell above, while collision gave
+that support a full mask. Both conventions are removed for independent cells. The recovered
+Decor/scie.rd4 mesh rests on its own cell bottom (offset+.425, measured Y[-.499,.433]); the
+visible disk's body/swept contact uses the same offset and rotation. A stopped saw is harmless.
+Original empty masks now prevent solid invisible terrain. No media assets were changed.
+
+v2 flag bit0 marks independent data. Legacy floor-cell files are upgraded only in memory,
+materializing their previous floor and moving the blade above it; occupied cells are never
+overwritten. Rotation and type6 switch links survive save/reload and clipboard Undo/Redo.
+World062 already puts its saws in walking layer21 over floor20: its flag alone changes, with
+byte-identical generator output. This prevents an extra raised cube under its low ceiling.
+All15 affected mission scripts pass unchanged, including062 and199;114/114 CTest pass.
+Simulation runs use a temporary GPU-draw stub; normal rendering was checked over air, brick
+and a blue panel. Evidence: build-probe/saw-independent/. The full campaign times out on
+world021's egg at26658 ticks in both pre-change and final binaries; that mission passes alone.
+This baseline verification failure is not claimed fixed by the saw change.
+
 ## BD-0104 — Selection/Place ambiguity, deletion and Shift descent — FIXED_AND_VERIFIED
 
 Owner screenshot14-43-15 showed red edit tint and a different red Place cube. Selection now

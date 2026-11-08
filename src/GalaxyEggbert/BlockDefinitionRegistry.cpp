@@ -83,14 +83,6 @@ namespace GalaxyEggbert
         {
             definitions_[static_cast<std::size_t>(icon)].collisionMask = 0xFFFF;
         }
-        // The saw stands above a rendered floor cube in Galaxy. Its original 2D
-        // empty mask must not make that support passable from the side (owner 2026-11-08).
-        // The blade's separate contact test applies only above this solid cell.
-        for (int icon = Saw; icon <= 383; ++icon)
-        {
-            definitions_[static_cast<std::size_t>(icon)].collisionMask = 0xFFFF;
-        }
-
         // Central render-mode classification. Per-face mesh construction
         // remains in the focused renderer helpers, but no renderer chooses a
         // mode by maintaining its own parallel icon list.
@@ -115,7 +107,7 @@ namespace GalaxyEggbert
         });
         SetRenderMode(definitions_, BlockRenderMode::TripleCrossBillboard,
                       {53, 54, 55, 56, 57, 58, 59, 60, 63, 64});
-        SetRenderMode(definitions_, BlockRenderMode::GroundAnchoredPlate,
+        SetRenderMode(definitions_, BlockRenderMode::SawBlade,
                       {BlockTypes::Saw, BlockTypes::SawStopped});
 
         for (const int icon : {202, 330, 331, 332, 333})
@@ -329,10 +321,12 @@ namespace GalaxyEggbert
         for (std::uint16_t icon = 1; icon <= MaxObjectMIcon; ++icon)
         {
             auto& d = definitions_[icon];
-            d.decor = d.collisionMask == 0 && d.hazard == BlockHazardKind::None && !d.water && !d.spring &&
+            // The standalone blade is passable terrain too; only its actual disk contact kills.
+            d.decor = d.renderMode == BlockRenderMode::SawBlade ||
+                     (d.collisionMask == 0 && d.hazard == BlockHazardKind::None && !d.water && !d.spring &&
                       !d.bridge && !d.switchBlock && d.doorKeyType < 0 && d.teleporterIndex <= 0 &&
-                      d.fanDirection == BlockFanDirection::None && d.renderMode != BlockRenderMode::GroundAnchoredPlate &&
-                      d.animation.baseIcon != Temp && !isDoorBar(icon) && !isWind(icon) && !isBarre(icon);
+                      d.fanDirection == BlockFanDirection::None && d.renderMode != BlockRenderMode::SawBlade &&
+                      d.animation.baseIcon != Temp && !isDoorBar(icon) && !isWind(icon) && !isBarre(icon));
         }
     }
 

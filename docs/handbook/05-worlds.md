@@ -212,6 +212,12 @@ to the editor. The editor places the game's existing blocks and objects, applies
 table above, and adds no gameplay. Key assignments are in `WorldEditorUpdate.cpp`; the parity
 evidence against the original's editors is `plans/audit/editor_parity.md`.
 
+Saws occupy their own cells, create no supporting block and keep the original empty collision
+mask. Their actual disk contact kills; a stopped blade is harmless. Any block or air below is
+independent. Old implicit-floor v2 files are upgraded in memory before editing/play, keeping
+explicit floor blocks and switch links. New saves set the independent-cell flag; loading never
+rewrites a player file. See `World Format.md` for the compatibility records.
+
 An editor world has no generator. To ship one as a campaign-style world it would have to be named
 `worldNNN.vwr` with a matching mission number (`VerifyShippedWorlds` enforces it); how the editor
 assigns a mission number is not verified.

@@ -52,6 +52,18 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- A saw is an independent blade in its own voxel: no generated support cube, floor texture
+  selection or solid invisible cell. Its original mesh rests on the cell bottom; disk/body
+  contact follows it, stopped blades are harmless and the block/air below is independent.
+  New v2 worlds set flag bit0. Runtime upgrades old implicit-floor files in memory to explicit
+  floor + blade cells, retaining orientation and switch links. Saving records the new flag;
+  occupied cells above are never overwritten. Copy/paste/Undo retain migrated switch links.
+  World062 already authors saws at walking21 above floor20: only its header flag changes,
+  and regenerated output matches. Native standalone/brick/panel checks,114/114 CTest and all15
+  affected mission scripts pass (build-probe/saw-independent/). Scripts use normal simulation
+  with a temporary GPU-draw stub; visual checks use normal rendering. The full campaign stops
+  at world021's egg expectation at26658 ticks identically in the saved pre-change binary;
+  that standalone mission passes. Whole-campaign success is not claimed.
 - Editor selection follow-up: red outline/tint marks the edit target, cyan the Place cell.
   Selection coordinates appear in the status. Delete/Backspace, middle button and Tools Remove
   share the same target as O and V, including NumPad coordinates and objects outside object
@@ -135,10 +147,9 @@ content-authoring UX, but not new gameplay mechanics.
   the same return handling covers the other reusable action pickups.
 
 - Visible hazard contact (2026-11-08): lava collision/support and lethal contact share the
-  Amapi pool's animated height field; being over its voxel is safe. A saw's supporting cube is
-  harmless; walking into or jumping onto its exposed disk kills, including level-height contact.
-  Its rendered support cube is solid horizontally as well as vertically, including stopped blades;
-  the original empty 2D collision mask no longer allows walking through that cube.
+  Amapi pool's animated height field; being over its voxel is safe. A saw has no implicit support
+  cube: walking into or jumping onto its visible disk kills. An actual block below retains its
+  own collision independently. The blade's empty mask prevents an invisible cube.
   Fan collision follows the recovered
   motor/base/shaft/hub, and only the swept blade annulus is lethal (all six directions, including
   rotated side fans). Existing invincibility/vehicle gates, death effects and wind-column removal

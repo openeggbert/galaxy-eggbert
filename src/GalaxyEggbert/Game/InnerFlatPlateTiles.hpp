@@ -28,7 +28,7 @@ namespace GalaxyEggbert::Game
     // frame/bracket), so GetInnerFlatPlateAxis() returns PlateAxis::Y
     // (horizontal, matching the grass-top overlay's usage of the same axis)
     // for those 5 only. Saw/SawStopped (378/379) is deliberately NOT in
-    // this list -- see BlockRenderMode::GroundAnchoredPlate
+    // this list -- see BlockRenderMode::SawBlade
     // for why it needs its own additive (solid-cube-plus-overlay) handling
     // instead of an exclusive InnerFlatPlate.
     // The icon's own default axis (PlateAxis::Z for every confirmed icon

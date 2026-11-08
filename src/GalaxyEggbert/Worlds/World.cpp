@@ -15,7 +15,7 @@ namespace GalaxyEggbert::Worlds {
 namespace {
 
 constexpr char WorldMagic[4] = {'V', 'W', 'R', '1'};
-constexpr std::uint8_t WorldFlagsNone = 0;
+constexpr std::uint8_t WorldFlagIndependentSawCells = 1;
 constexpr std::uint16_t ChunkTableFlagEmpty = 0x0001;
 
 // v2 (2026-07-09, breaking change): 20-byte v1 core (magic/version/
@@ -308,7 +308,7 @@ void World::saveToFile(const std::filesystem::path& path) const {
     Binary::writeU8(out, VoxelConfig::FormatVersion);
     Binary::writeU8(out, VoxelConfig::ChunkSize);
     Binary::writeU8(out, chunksPerAxis_);
-    Binary::writeU8(out, WorldFlagsNone);
+    Binary::writeU8(out, legacySawFloors_ ? 0 : WorldFlagIndependentSawCells);
     Binary::writeU32LE(out, static_cast<std::uint32_t>(chunks_.size()));
     Binary::writeU32LE(out, static_cast<std::uint32_t>(tableOffset));
     Binary::writeU32LE(out, static_cast<std::uint32_t>(dataOffset));
@@ -370,7 +370,7 @@ World World::loadFromStream(std::istream& in) {
     if (chunkSize != VoxelConfig::ChunkSize) {
         throw std::runtime_error("Unsupported chunk size in world file");
     }
-    if (flags != WorldFlagsNone) {
+    if ((flags & ~WorldFlagIndependentSawCells) != 0) {
         throw std::runtime_error("Unsupported world flags");
     }
 
@@ -380,6 +380,7 @@ World World::loadFromStream(std::istream& in) {
     }
 
     World world(chunksPerAxis);
+    world.legacySawFloors_ = (flags & WorldFlagIndependentSawCells) == 0;
     world.skyRegion_ = skyRegion & 0xFFu;
     world.setMusicTrack((skyRegion >> 8) & 0xFFu);
     world.missionNumber_ = missionNumber;

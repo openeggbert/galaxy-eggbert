@@ -47,7 +47,7 @@ def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 3 and argv[1] == "--stage" else None
     out = Path(argv[3]) if stage is not None else Path(__file__).resolve().parents[2] / "worlds3d" / "world102.vwr"
     rng = random.Random(102)
-    w = World(mission=102, sky=7)
+    w = World(mission=102, sky=7, legacy_saw_floors=True)
     ridden = stage is not None and stage >= 1
     opened = stage is not None and stage >= 2
 

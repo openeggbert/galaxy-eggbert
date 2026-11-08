@@ -193,6 +193,7 @@ void GenerateDemoWorld(int missionNumber, const std::filesystem::path& outPath)
     using namespace GalaxyEggbert::Worlds;
 
     World world;
+    world.setLegacySawFloors(true); // historical floor-cell authoring; normalized on load
 
     // Real background image demo (NEXT.md §3, 2026-07-09) -- region 3 is a
     // real mobile-eggbert region (Content/backgrounds/decor003.png), not

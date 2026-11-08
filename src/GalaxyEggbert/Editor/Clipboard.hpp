@@ -30,6 +30,7 @@ namespace GalaxyEggbert::Editor
             Worlds::Block block;
             int plateTurns = -1;  // the cell's type-2 byte (0-3), -1 when it has none
             int objectTurns = -1; // its type-5 byte, -1 when it has none
+            int legacySwitchRow = -1; // type6 compatibility link, -1 when absent
         };
         struct Decor
         {

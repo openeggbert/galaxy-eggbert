@@ -20,7 +20,7 @@ namespace GalaxyEggbert
         ThinBar,
         InnerFlatPlate,
         TripleCrossBillboard,
-        GroundAnchoredPlate,
+        SawBlade,
     };
 
     enum class BlockHazardKind : std::uint8_t
@@ -84,7 +84,8 @@ namespace GalaxyEggbert
         // Decor Blupi passes through, as the original's empty quarter-cell mask makes it (D41):
         // no collision, no hazard, and none of the roles the game gives a tile under or in front
         // of him (water, springs, bridges, doors, teleporters, fans, wind, bars, switches, the saw
-        // plates, the Temp saucers). Neither a floor nor a ceiling to him.
+        // plates, the Temp saucers). Standalone saws are passable too, with a separate disk
+        // contact test. None is a floor or ceiling to him.
         bool decor = false;
 
         BlockHazardKind hazard = BlockHazardKind::None;

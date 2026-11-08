@@ -1635,8 +1635,8 @@ namespace GalaxyEggbert::CNA
         }
         if (objectModelTable_.Find(ObjectTextureSource::ObjectM, GalaxyEggbert::BlockTypes::Saw) != nullptr)
         {
-            terrainRenderer_->SetModelOverFloorBases(std::vector<std::uint16_t>(
-                GalaxyEggbert::Game::kModelOverFloorBases.begin(), GalaxyEggbert::Game::kModelOverFloorBases.end()));
+            terrainRenderer_->SetSawModelBases(std::vector<std::uint16_t>(
+                GalaxyEggbert::Game::kSawModelBases.begin(), GalaxyEggbert::Game::kSawModelBases.end()));
         }
     }
 
@@ -7583,14 +7583,13 @@ namespace GalaxyEggbert::CNA
                     {
                         tintModelCell = editorSelected(TargetKind::Block,cell.x+WorldRuntime::kWorldCenterX,
                             cell.y,cell.z+WorldRuntime::kWorldCenterZ);
-                        const bool overFloor =
-                            std::find(GalaxyEggbert::Game::kModelOverFloorBases.begin(),
-                                      GalaxyEggbert::Game::kModelOverFloorBases.end(),
-                                      cell.base) != GalaxyEggbert::Game::kModelOverFloorBases.end();
-                        if (overFloor)
+                        const bool saw =
+                            std::find(GalaxyEggbert::Game::kSawModelBases.begin(),
+                                      GalaxyEggbert::Game::kSawModelBases.end(),
+                                      cell.base) != GalaxyEggbert::Game::kSawModelBases.end();
+                        if (saw)
                         {
-                            // The saw standing on its floor cell (the cell listed is the one above),
-                            // its blade along the corridor (openSide carries the placement's turn).
+                            // Independent blade in its own cell; openSide carries its axis.
                             const int icon =
                                 GalaxyEggbert::ResolveBlockAnimationIconAt(
                                     cell.base, worldRuntime_.GetAnimPhase(), static_cast<int>(std::lround(cell.x)),
@@ -7600,7 +7599,7 @@ namespace GalaxyEggbert::CNA
                                 if (const ObjectModelPose* pose = objectModelTable_.Find(
                                         ObjectTextureSource::ObjectM, static_cast<std::uint16_t>(icon)))
                                 {
-                                    drawModel(*pose, cell.x, cell.y, cell.z,
+                                    drawModel(*pose, cell.x, cell.y + GalaxyEggbert::Game::kSawModelYOffset, cell.z,
                                               GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
                                                   1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.x, cell.y, cell.z)));
                                 }

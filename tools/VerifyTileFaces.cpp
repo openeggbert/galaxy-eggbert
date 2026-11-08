@@ -698,11 +698,11 @@ int main()
         check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
               "non-air change under lava refuses its stale baked bottom mask");
         w.setBlock(10, 6, 10, Block::air());
-        w.setBlock(10, 5, 10, Block::make(76)); // non-occluding pillar, but a saw-floor candidate
+        w.setBlock(10, 5, 10, Block::make(76)); // non-occluding pillar beside an independent saw
         revision = w.blockRevision();
         w.setBlock(10, 5, 10, Block::air());
-        check(!CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
-              "a model used by a nearby saw's floor selection forces rebuild");
+        check(CanPatchTerrainModels(w, w.blockChangesSince(revision), icons, opaque, noRelief),
+              "a nearby saw does not depend on the removed model's material");
         w.setBlock(10, 5, 10, Block::make(201)); // a model whose opaque tile can occlude
         revision = w.blockRevision();
         w.setBlock(10, 5, 10, Block::air());

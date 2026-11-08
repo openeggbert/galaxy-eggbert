@@ -41,7 +41,7 @@ def brick(w, x0, y0, z0, x1, y1, z1):
 def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 2 and argv[1] == "--stage" else 0
     rng = random.Random(22)
-    w = World(mission=22, sky=25)
+    w = World(mission=22, sky=25, legacy_saw_floors=True)
 
     def crate(start, solved, k):
         w.place(O.CRATE, *(solved if stage >= k else start))

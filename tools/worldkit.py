@@ -177,8 +177,10 @@ ORIGINAL_LIFT_ICONS = {
 
 
 class World:
-    def __init__(self, mission: int = 0, sky: int = 0, music: int | None = None):
+    def __init__(self, mission: int = 0, sky: int = 0, music: int | None = None,
+                 legacy_saw_floors: bool = False):
         self.mission = mission
+        self.legacy_saw_floors = legacy_saw_floors
         self._lift_style_index = 0
         self.sky = sky
         # The background music (OR-0014): 0 none, 1-10 the original tracks music000-009;
@@ -357,7 +359,8 @@ class World:
                         blobs.append(blob)
                         offset += len(blob)
         sx, sy, sz = (c + 1 for c in self.spawn) if self.spawn else (0, 0, 0)
-        header = b"VWR1" + struct.pack("<BBBBIIIIIIII", 2, CHUNK, PER_AXIS, 0, count, HEADER_SIZE,
+        header = b"VWR1" + struct.pack("<BBBBIIIIIIII", 2, CHUNK, PER_AXIS,
+                                       0 if self.legacy_saw_floors else 1, count, HEADER_SIZE,
                                        data_offset, (self.sky & 0xFF) | ((self.music & 0xFF) << 8),
                                        self.mission, sx, sy, sz)
         return header + b"".join(table) + b"".join(blobs)

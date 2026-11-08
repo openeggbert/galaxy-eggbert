@@ -89,6 +89,11 @@ public:
      */
     void setMissionNumber(std::uint32_t missionNumber) noexcept { missionNumber_ = missionNumber; }
 
+    // v2 flag0 files used saw cells as implicit floors. Gameplay upgrades them once,
+    // in memory, before editing/play; new worlds store independent saw cells (flag1).
+    [[nodiscard]] bool hasLegacySawFloors() const noexcept { return legacySawFloors_; }
+    void setLegacySawFloors(bool legacy) noexcept { legacySawFloors_ = legacy; }
+
     /**
      * @brief Whether this world carries an explicit Blupi start cell.
      *
@@ -286,6 +291,7 @@ private:
     std::uint32_t skyRegion_ = 0;
     std::uint32_t musicTrack_ = 0;
     std::uint32_t missionNumber_ = 0;
+    bool legacySawFloors_ = false;
     bool hasSpawnPoint_ = false;
     std::uint16_t spawnX_ = 0;
     std::uint16_t spawnY_ = 0;

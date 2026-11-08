@@ -38,7 +38,7 @@ def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 3 and argv[1] == "--stage" else None
     out = Path(argv[3]) if stage is not None else Path(__file__).resolve().parents[2] / "worlds3d" / "world062.vwr"
     rng = random.Random(62)
-    w = World(mission=62, sky=4)
+    w = World(mission=62, sky=4, legacy_saw_floors=False)
     slime(w, 14, 0, 2, 82, 30, 63)
 
     def carve(x0, y0, z0, x1, y1, z1):
@@ -82,6 +82,7 @@ def main(argv) -> int:
     mine(w, 46, 21, 23)
     for x, z in ((46, 38), (60, 23), (53, 29)):
         w.place(O.EGG, x, 21, z)
+    # These saws already occupy Blupi's layer21 above the real floor20. Keep independent cells.
     # U3, the saw corridor north (five wide), three rows of saws across it, the green key and
     # treasure 2 in the room at its end.
     carve(52, 21, 21, 54, 23, 21)

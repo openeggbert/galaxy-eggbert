@@ -5,6 +5,7 @@
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/PlateRotationMetadata.hpp>
+#include <GalaxyEggbert/Game/LegacySawFloors.hpp>
 
 #include <algorithm>
 #include <array>
@@ -119,6 +120,7 @@ namespace GalaxyEggbert::Editor
                                                 static_cast<std::uint16_t>(wz));
                     cell.plateTurns = TurnByte(world, wx, wy, wz, Game::kPlateRotationMetadataType);
                     cell.objectTurns = TurnByte(world, wx, wy, wz, Game::kObjectTurnMetadataType);
+                    cell.legacySwitchRow = TurnByte(world,wx,wy,wz,Game::kLegacySwitchSawRowMetadataType);
                 }
             }
         }
@@ -321,6 +323,21 @@ namespace GalaxyEggbert::Editor
                     if (!keep || cell.objectTurns >= 0)
                     {
                         setTurns(wx, wy, wz, true, cell.objectTurns);
+                    }
+                    if (!keep || cell.legacySwitchRow>=0)
+                    {
+                        EditCommand meta;
+                        meta.kind=EditCommand::Kind::MetadataEdit;
+                        meta.metadataX=wx; meta.metadataY=wy; meta.metadataZ=wz;
+                        meta.metadataType=Game::kLegacySwitchSawRowMetadataType;
+                        if (const auto* old=world.findBlockExtraMetadata(wx,wy,wz,meta.metadataType)) meta.metadataBefore=*old;
+                        if (cell.legacySwitchRow==1) meta.metadataAfter=std::vector<std::uint8_t>{1};
+                        if (meta.metadataBefore!=meta.metadataAfter)
+                        {
+                            if (meta.metadataAfter) world.setBlockExtraMetadata(wx,wy,wz,meta.metadataType,*meta.metadataAfter);
+                            else world.removeBlockExtraMetadata(wx,wy,wz,meta.metadataType);
+                            turns.push_back(std::move(meta));
+                        }
                     }
                 }
             }

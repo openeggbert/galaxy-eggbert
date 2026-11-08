@@ -41,7 +41,7 @@ def tower(w, cx, cz, half, tiers, rng):
 def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 2 and argv[1] == "--stage" else None
     rng = random.Random(21)
-    w = World(mission=21, sky=25)
+    w = World(mission=21, sky=25, legacy_saw_floors=True)
 
     def door(x, y, z, n):
         if stage is None or n > stage:

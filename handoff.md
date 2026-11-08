@@ -10,6 +10,21 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Standalone saw request is complete: generated floors/material heuristic and solid saw masks
+  removed. Decor/scie.rd4 is bottom-aligned by+.425 (measured Y[-.499,.433]); disk contact uses
+  the same offset, including body/swept fall and rotation. Stopped blades stay harmless.
+  v2 flag bit0 distinguishes independent cells. Runtime upgrades flag0 files in memory,
+  preserving explicit floor, rotation and type6 switch-row offset. Low-level load/save keeps
+  old bytes; saving an upgraded editor world writes flag1. No player files edited. Clipboard
+  copy/paste has an undoable metadata edit for type6. World062's saws were already authored
+  above floor20 at walking21: its one-byte flag change makes that explicit, avoiding a raised
+  cube under the low ceiling. Regeneration matches every byte. Historical builders opt into
+  flag0; future worldkit worlds default independent. All15 affected scripts pass (199:40259),
+  plus114/114 CTest and normal-render native probes over air/brick/panel. A temporary GPU-draw
+  stub accelerates simulation scripts only. Full campaign hits the same world021 egg timeout
+  at26658 as the preserved pre-change binary, a pre-existing verification limit. Evidence:
+  build-probe/saw-independent/. Verified editor-coordinate/debug-layout follow-ups still need
+  their separate commits. Older support-cube notes below are superseded by this entry.
 - Owner's14-43-15 screenshot showed the old ray-hit selection and the adjacent Place preview
   both red. These are now distinct: selected cell red wire/tint, Place cyan wire. Status shows
   the selected XYZ. V, O and all removal routes now use CurrentEditTarget; Delete works on
@@ -17,7 +32,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   short native presses too. Undo cases cover all three kinds. Shift-alone descends (Z stays),
   Shift+NumPad/held selection and device selecting mode never descend. Build,113/113 CTest
   and native Delete/Undo/Shift capture pass in build-probe/editor-turn/selection-*.
-  Saw work is in progress separately; do not treat that uncommitted work as verified yet.
+  The subsequent standalone-saw request is completed in the newer entry above.
 - New owner-requested debug cheat:29-word catalogue, active-name toggle and read-only diagnostics
   derived from current world/controller/input data. Mobile MODERN field set adapted to raw XYZ,
   measured simulation-step velocity and the real20Hz clock. Desktop panel upper-right, touch
@@ -43,8 +58,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   a matching translucent red box, replacing the old magenta G box. Native tree/window and
   NumPad→O→save verified, plus113/113 CTest. First tint trial tried LightingEnabled=false,
   which SkinnedEffect rejects; corrected to an emissive overlay and repeated live successfully.
-  Evidence: build-probe/editor-turn/. Remaining authorized request: saw independent of any
-  imposed support cube, with arbitrary block/air below it. No O example remains unaddressed.
+  Evidence: build-probe/editor-turn/. The subsequent standalone-saw request is completed above.
 - Publication follow-up (owner: commit/push everything): both CNA changes were pushed to
   origin/next at594eb28dc before publishing Galaxy. The standard ci_pin_siblings.py script
   advances only CNA to that published revision; all other verified sibling pins are unchanged.

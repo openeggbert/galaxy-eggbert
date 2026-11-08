@@ -3,6 +3,7 @@
 #include "BarRows.hpp"
 #include "LavaHeight.hpp"
 #include "FanGeometry.hpp"
+#include "BlockModels.hpp"
 #include "WorldRuntime.hpp"
 
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
@@ -1469,29 +1470,27 @@ namespace GalaxyEggbert::Game
 
     bool BlupiController::IsTouchingSawBlade(const Worlds::World& world, float previousFeetY) const noexcept
     {
-        // Decor/scie.rd4's recovered saw378_scie: a vertical disk, radius about .46,
-        // depth +/-.20, top .508 over the floor. Walking onto the exposed blade is
-        // lethal too: vertical motion is not required. The support cube stays safe.
-        constexpr float footRadius=11.f/64.f, radius=.46f, thickness=.20f;
+        // The recovered disk occupies its own cell: render Y [-.499,.433], hence
+        // physical Y [.001,.933] (Blupi feet render half a cell below physical Y).
+        // Test the visible disk against his body, including a swept fall through it.
+        constexpr float footRadius=11.f/64.f, radius=.466f, thickness=.20f;
         const float x=m_x+kWorldCenterX,z=m_z+kWorldCenterZ;
         const int n=world.blocksPerAxis();
         for (int gx=std::max(0,int(std::floor(x-.7f))); gx<=std::min(n-1,int(std::ceil(x+.7f))); ++gx)
             for (int gz=std::max(0,int(std::floor(z-.7f))); gz<=std::min(n-1,int(std::ceil(z+.7f))); ++gz)
-                for (int gy=std::max(0,int(std::floor(m_y))-2);
-                     gy<=std::min(n-1,int(std::floor(std::max(previousFeetY,m_y)))); ++gy)
+                for (int gy=std::max(0,int(std::floor(std::min(previousFeetY,m_y)))-1);
+                     gy<=std::min(n-1,int(std::floor(std::max(previousFeetY,m_y)+kHeadHeight))); ++gy)
                 {
-                    if (GalaxyEggbert::GetBlockDefinition(world.getBlock(gx,gy,gz).type()).hazard !=
-                        GalaxyEggbert::BlockHazardKind::Saw) continue;
+                    if (GetBlockDefinition(world.getBlock(gx,gy,gz).type()).hazard != BlockHazardKind::Saw) continue;
                     const bool turned = IsPlateRotated(world,gx,gy,gz) !=
-                        (gy+1<n && (ObjectQuarterTurns(world,gx,gy+1,gz)%2 != 0));
+                        (ObjectQuarterTurns(world,gx,gy,gz)%2 != 0);
                     const float along=std::max(0.f,std::fabs(turned ? z-gz : x-gx)-footRadius);
                     const float across=std::fabs(turned ? x-gx : z-gz);
                     if (along>radius || across>thickness+footRadius) continue;
-                    const float floor=gy+1.f;
-                    const float bladeTop=floor+.04f+std::sqrt(radius*radius-along*along);
-                    const bool touching = m_y>=floor-.0051f && m_y<=bladeTop;
-                    const bool fallingThrough = previousFeetY>m_y && previousFeetY>=floor && m_y<=bladeTop;
-                    if (touching || fallingThrough)
+                    const float halfHeight=std::sqrt(radius*radius-along*along);
+                    const float centerY=gy+.042f+kSawModelYOffset;
+                    const float bladeBottom=centerY-halfHeight, bladeTop=centerY+halfHeight;
+                    if (m_y<=bladeTop && std::max(m_y,previousFeetY)+kHeadHeight>=bladeBottom)
                         return true;
                 }
         return false;

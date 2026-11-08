@@ -42,7 +42,7 @@ LH = 22                      # the lava hall's floor: Blupi walks at 23
 def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 2 and argv[1] == "--stage" else 0
     rng = random.Random(25)
-    w = World(mission=25, sky=30)
+    w = World(mission=25, sky=30, legacy_saw_floors=True)
 
     def white(x0, y0, z0, x1, y1, z1, chance=0.2):
         stone(w, x0, y0, z0, x1, y1, z1, rng, chance=chance)

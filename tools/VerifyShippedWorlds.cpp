@@ -9,6 +9,7 @@
 #include "GalaxyEggbert/Worlds/World.hpp"
 #include "GalaxyEggbert/Game/BlupiController.hpp"
 #include "GalaxyEggbert/Game/WorldRuntime.hpp"
+#include "GalaxyEggbert/Game/LegacySawFloors.hpp"
 
 #include <algorithm>
 #include <array>
@@ -120,11 +121,14 @@ namespace
                     return "WorldRuntime::LoadFromVwrFile() refused it";
                 const World& world = runtime.GetWorld();
                 const int n = world.blocksPerAxis();
+                int sawY=y;
+                if (const auto* row=world.findBlockExtraMetadata(x,y,z,GalaxyEggbert::Game::kLegacySwitchSawRowMetadataType);
+                    row && *row==std::vector<std::uint8_t>{1}) ++sawY;
                 const auto turning = [&]
                 {
                     int count = 0;
                     for (int sx = 0; sx < n; ++sx)
-                        count += world.getBlock(static_cast<std::uint16_t>(sx), static_cast<std::uint16_t>(y),
+                        count += world.getBlock(static_cast<std::uint16_t>(sx), static_cast<std::uint16_t>(sawY),
                                                 static_cast<std::uint16_t>(z)).type() == 378;
                     return count;
                 };

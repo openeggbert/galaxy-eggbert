@@ -37,7 +37,7 @@ SPAWN = (48, 11, 56 + OZ)
 def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 2 and argv[1] == "--stage" else 0
     rng = random.Random(23)
-    w = World(mission=23, sky=28)
+    w = World(mission=23, sky=28, legacy_saw_floors=True)
 
     def z(v):
         return v + OZ

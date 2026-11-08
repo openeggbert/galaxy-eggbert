@@ -41,7 +41,7 @@ namespace
     {
         using GalaxyEggbert::BlockRenderMode;
         if (icon == 0) return BlockRenderMode::Air;
-        if (icon >= 378 && icon <= 383) return BlockRenderMode::GroundAnchoredPlate;
+        if (icon >= 378 && icon <= 383) return BlockRenderMode::SawBlade;
         if (IsOneOf(icon, {76, 182, 183, 384, 385})) return BlockRenderMode::InnerPillarBox;
         if (icon == 202) return BlockRenderMode::ThinBar;
         if (IsOneOf(icon, {
@@ -211,19 +211,18 @@ int main()
                 expectedMask |= static_cast<std::uint16_t>(1u << cell);
             }
         }
-        const bool sawSupport = icon >= BlockTypes::Saw && icon <= 383;
-        if (sawSupport || std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(), icon) !=
+        if (std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(), icon) !=
             GalaxyEggbert::kSolidIn3DDecor.end())
         {
             expectedMask = 0xFFFF; // OR-0069: solid in 3D, a whole block
         }
         Check(definition.collisionMask == expectedMask,
-              "registry collision mask matches the source with explicit solid 3D decor/saw supports");
+              "registry collision mask matches the source with explicit solid 3D decor");
         // The original's own decision (its empty mask), kept for OR-0069's solid decor too.
         const bool solidIn3D = std::find(GalaxyEggbert::kSolidIn3DDecor.begin(), GalaxyEggbert::kSolidIn3DDecor.end(),
                                          icon) != GalaxyEggbert::kSolidIn3DDecor.end();
         Check(definition.mobileTransparent ==
-                  ((expectedMask == 0 || solidIn3D || sawSupport) && icon != BlockTypes::Lava &&
+                  ((expectedMask == 0 || solidIn3D) && icon != BlockTypes::Lava &&
                    icon != BlockTypes::Crusher),
               "mobile transparent/pass decision preserves its collision exceptions");
         Check(BlockTypes::isMobileTransparent(icon) == definition.mobileTransparent,
@@ -253,7 +252,7 @@ int main()
           "a saw turns through 378-383");
     Check(GetBlockDefinition(BlockTypes::SawStopped).animation.frameCount == 1 &&
               GetBlockDefinition(BlockTypes::SawStopped).animation.frames[0] == BlockTypes::SawStopped &&
-              GetBlockDefinition(BlockTypes::SawStopped).renderMode == BlockRenderMode::GroundAnchoredPlate,
+              GetBlockDefinition(BlockTypes::SawStopped).renderMode == BlockRenderMode::SawBlade,
           "a switched-off saw is drawn still, as the same plate");
     Check(!BlockTypes::isHazard(BlockTypes::SawStopped) && BlockTypes::isHazard(BlockTypes::Saw),
           "a switched-off saw is harmless");

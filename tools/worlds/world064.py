@@ -46,7 +46,7 @@ def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 3 and argv[1] == "--stage" else None
     out = Path(argv[3]) if stage is not None else Path(__file__).resolve().parents[2] / "worlds3d" / "world064.vwr"
     rng = random.Random(64)
-    w = World(mission=64, sky=31)
+    w = World(mission=64, sky=31, legacy_saw_floors=True)
     solved = stage is not None and stage >= 4
 
     def carve(x0, y0, z0, x1, y1, z1):

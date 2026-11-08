@@ -43,7 +43,7 @@ def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 3 and argv[1] == "--stage" else 0
     out = Path(argv[3]) if len(argv) > 3 else Path(__file__).resolve().parents[2] / "worlds3d" / "world092.vwr"
     rng = random.Random(92)
-    w = World(mission=92, sky=27)
+    w = World(mission=92, sky=27, legacy_saw_floors=True)
 
     def mass(x0, y0, z0, x1, y1, z1):
         clay(w, x0, y0, z0, x1, y1, z1, rng)

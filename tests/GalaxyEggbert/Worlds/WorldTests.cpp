@@ -314,7 +314,7 @@ TEST(WorldSerializationTests, LoadRejectsUnsupportedFlags) {
 
     std::string bytes = readAllBytes(filePath);
     ASSERT_GE(bytes.size(), 8u);
-    bytes[7] = static_cast<char>(1);
+    bytes[7] = static_cast<char>(0x80);
     writeAllBytes(filePath, bytes);
 
     EXPECT_THROW(static_cast<void>(World::loadFromFile(filePath)), std::runtime_error);
@@ -349,6 +349,27 @@ TEST(WorldTests, BlockRevisionCountsBlockChanges) {
     EXPECT_EQ(world.blockRevision(), start + 2);
     world.setMissionNumber(11); // not a block
     EXPECT_EQ(world.blockRevision(), start + 2);
+}
+
+} // namespace GalaxyEggbert::Worlds
+
+namespace GalaxyEggbert::Worlds {
+TEST(WorldSerializationTests, IndependentSawFlagIsPreservedWithoutRewritingLegacyData) {
+    const auto path=makeTempPath(".vwr");
+    World world;
+    world.setBlock(5,5,5,Block::make(378));
+    world.saveToFile(path);
+    auto bytes=readAllBytes(path);
+    EXPECT_EQ(static_cast<unsigned char>(bytes[7]),1);
+    EXPECT_FALSE(World::loadFromFile(path).hasLegacySawFloors());
+    bytes[7]=0;
+    writeAllBytes(path,bytes);
+    auto old=World::loadFromFile(path);
+    EXPECT_TRUE(old.hasLegacySawFloors());
+    EXPECT_EQ(old.getBlock(5,5,5).type(),378);
+    old.saveToFile(path);
+    EXPECT_EQ(readAllBytes(path),bytes);
+    removeFileNoThrow(path);
 }
 
 } // namespace GalaxyEggbert::Worlds

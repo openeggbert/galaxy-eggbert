@@ -37,7 +37,7 @@ SPAWN = (50, 11, 59)
 def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 2 and argv[1] == "--stage" else 0
     rng = random.Random(24)
-    w = World(mission=24, sky=28)
+    w = World(mission=24, sky=28, legacy_saw_floors=True)
 
     def white(x0, y0, z0, x1, y1, z1, chance=0.2):
         stone(w, x0, y0, z0, x1, y1, z1, rng, chance=chance)

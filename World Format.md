@@ -337,16 +337,26 @@ in the chunk and ignore it, and every existing world (none has type 4) reads as 
 ### Turns (metadata types 2 and 5, 2026-11-04)
 
 Type 2 (`kPlateRotationMetadataType`, `src/GalaxyEggbert/Game/PlateRotationMetadata.hpp`) is a
-cell's tile turn, one byte: bit 0 swaps a plate's, a fan's or a wind tile's axis (X and Z,
-M3D-0005), and the byte as 0-3 is the quarter turns a model with a front (teleporters, signs, the
-switch, balustrade, trestle, emitter) takes from the side it faces by itself (OR-0071). Worlds
-saved before carry 0 or 1 and read as before.
+cell's tile turn, one byte: bit0 swaps a plate's, a fan's or a wind tile's axis (X and Z,
+M3D-0005). The stored byte is0-3, with its odd bit read for that axis. Worlds saved before
+carry0 or1 and read as before. Front-facing models use type5, so a sign's older plate bit
+does not rotate its 3D model too.
 
 Type 5 (`kObjectTurnMetadataType`) is the quarter turns, one byte 0-3, of the object (a still
 MoveObject) or BigDecor anchored in that cell: drawn turned are the still objects, the parked
 vehicles and the BigDecor models; a moving object keeps the facing of its travel. A type of its
 own, so turning a treasure that lies in a wind cell does not turn the wind. Both are set by the
 editor's O key. Compatibility: additive, as type 4.
+
+The editor also stores front-facing terrain models and single-face cubes (e.g. a house
+window) in type5, separately from the plate/fan/wind axis bit in type2.
+
+### Legacy switch row (metadata type 6, 2026-11-08)
+
+Type6 is a one-byte payload `{1}` used only when upgrading an old implicit saw-floor file.
+The switch stays in its original cell, while its saw row moves up one cell. Its existing
+X±20/Z link therefore uses Y+1. New switches use their own Y and have no such record.
+Editor copy/paste and its Undo/Redo carry this record with the switch.
 
 ## World File `VWR1`
 
@@ -383,7 +393,7 @@ Current v2 layout:
 |      4 |    1 | version          | `2`                                                         |
 |      5 |    1 | chunkSize        | `10`                                                        |
 |      6 |    1 | chunksPerAxis    | usually `10`                                                |
-|      7 |    1 | flags            | `0` in v2                                                   |
+|      7 |    1 | flags            | bit0: independent saw cells; other bits reserved             |
 |      8 |    4 | chunkCount       | `chunksPerAxis³`                                            |
 |     12 |    4 | chunkTableOffset | usually `40` (the v2 header size)                           |
 |     16 |    4 | chunkDataOffset  | start of the chunk data section                             |
@@ -392,6 +402,15 @@ Current v2 layout:
 |     28 |    4 | spawnXPlusOne    | raw-grid spawn X + 1; all three spawn fields `0` means unset |
 |     32 |    4 | spawnYPlusOne    | raw-grid spawn Y + 1                                         |
 |     36 |    4 | spawnZPlusOne    | raw-grid spawn Z + 1                                         |
+
+Since 2026-11-08 new worlds set flag bit0 (`1`): a saw occupies its own cell and generates
+no terrain. Older v2 files have flags0. The low-level reader preserves those bytes/data;
+WorldRuntime upgrades them in memory before editing/play: an unoccupied cell above an old
+saw receives the blade, and the formerly invented floor becomes an explicit block. Plate
+orientation and switch-row links are preserved. Occupied cells above are never overwritten;
+those blades stay independent in their existing cells. Saving the upgraded world sets bit0,
+so conversion does not repeat. Loading alone never rewrites a player file. Historical world
+builders opt into `legacy_saw_floors=True`; new worldkit worlds default to independent cells.
 
 Header size: 40 bytes (up from 32 in v1).
 

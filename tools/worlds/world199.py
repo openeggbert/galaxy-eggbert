@@ -892,7 +892,7 @@ def main(argv) -> int:
         args = args[2:]
     out = Path(args[0]) if args else Path(__file__).resolve().parents[2] / "worlds3d" / "world199.vwr"
     rng = random.Random(199)
-    w = World(mission=199, sky=31)
+    w = World(mission=199, sky=31, legacy_saw_floors=True)
     calm = stage is not None and stage >= 1
     slime(w, 2, 2, 2, 97, 97, 97)                      # the jungle: every place is cut out of it
     for build in SECTIONS:

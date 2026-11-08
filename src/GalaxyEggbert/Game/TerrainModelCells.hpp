@@ -91,8 +91,7 @@ inline std::optional<TerrainModelCell> ComputeTerrainModelCell(const Worlds::Wor
 }
 
 // A switch turning a saw on or off (378 <-> 379, WorldRuntime::TryActivateSwitch). Both are animated
-// cells (TerrainRenderer's anim blocks): never occluders, never a floor candidate of a saw around them,
-// and their own floor is chosen by the same rule, so the swap changes only the cell's anim-block base
+// cells (TerrainRenderer's anim blocks): never occluders, so a swap changes only the anim-block base
 // (OR-0074's patch, extended to the saws 2026-11-07: a toggle rebuilt the whole terrain).
 inline bool IsSawIcon(Worlds::Block block)
 {
@@ -146,12 +145,6 @@ bool CanPatchTerrainModels(const Worlds::World &world, const Worlds::World::Bloc
                !IsTerrainOccluder(block, coverage) && !d.water && !d.animation.IsAnimated() && !d.grassTop &&
                !hasRelief(block.type());
     };
-    const auto floorCandidate = [](Worlds::Block block) {
-        if (block.isAir())
-            return false;
-        const auto &d = GetBlockDefinition(block.type());
-        return d.collisionMask == 0xFFFF && !d.animation.IsAnimated() && d.hazard == BlockHazardKind::None;
-    };
     const int axis = world.blocksPerAxis();
     for (const auto &c : changes.cells)
     {
@@ -171,20 +164,7 @@ bool CanPatchTerrainModels(const Worlds::World &world, const Worlds::World::Bloc
             if (!above.isAir() && GetBlockDefinition(above.type()).animation.baseIcon == BlockTypes::Lava)
                 return false;
         }
-        // A saw's baked floor chooses a solid icon within 3 cells at its height, then one below.
-        // Refuse any potential change to that choice; bridge frames are never floor candidates.
-        if (floorCandidate(old) || floorCandidate(next))
-        {
-            for (int y = c.y; y <= c.y + 1 && y < axis; ++y)
-                for (int z = std::max(0, c.z - 3); z <= c.z + 3 && z < axis; ++z)
-                    for (int x = std::max(0, c.x - 3); x <= c.x + 3 && x < axis; ++x)
-                    {
-                        const auto other = world.getBlock(x, y, z);
-                        if (!other.isAir() &&
-                            GetBlockDefinition(other.type()).renderMode == BlockRenderMode::GroundAnchoredPlate)
-                            return false;
-                    }
-        }
+
     }
     return true;
 }

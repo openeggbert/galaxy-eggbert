@@ -5,6 +5,11 @@ original). Staged variants for `levelcheck.py`: `--stage K out.vwr` (K ≥ 1 no 
 mines, the shuttle a floor; K ≥ 2 the key doors open, the flooded way as floors; K ≥ 3 the exit's
 door open).
 
+The saws in U3 are at the player's layer21 above the real floor20. The file now explicitly
+uses independent saw cells (v2 flag bit0); its block/object data is unchanged. Treating those
+tiles as additional floor cubes raised them under the corridor's ceiling and made the full
+blade impossible to clear. The original playthrough passes unchanged (18367 ticks,2026-11-08).
+
 **Reference** (`worlds/world062.txt`, video 5:32:32-5:44:35): a labyrinth of slime tunnels, Blupi
 starting in a blue machine structure top left, the red arrow far top right behind a door that
 wants all six treasures (426). Two keys and their doors: the green key (50) opens 335, the blue

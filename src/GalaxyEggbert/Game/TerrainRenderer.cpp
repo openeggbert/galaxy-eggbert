@@ -54,47 +54,6 @@ namespace GalaxyEggbert::Game
         constexpr float kTripleCrossWidth = 0.8f;
         constexpr float kTripleCrossHeight = 1.0f;
 
-        // Saw/SawStopped: 5 rounds of live user feedback, all 2026-07-11
-        // except the last two (2026-07-20). Several further rounds the
-        // same day (exact 180-degree in-plane rotation, size, and
-        // position/offset tweaks) were tried and explicitly reverted --
-        // this 5-round state is the confirmed-good one; do not re-attempt
-        // those without new, explicit user direction.
-        // (1) bottom-anchored vertical plate -- sank below the visible
-        //     floor line, read as buried/cutting into the ground;
-        // (2) top-anchored vertical plate, hanging down from the block's
-        //     top face -- fixed the sinking, but neither round questioned
-        //     the VERTICAL axis itself;
-        // (3) a live screenshot showed the vertical plate as a thin
-        //     diagonal wedge jammed into the corridor's side wall, clearly
-        //     wrong -- read at the time as "should lie FLAT on the floor
-        //     instead" (PlateAxis::Y);
-        // (4) making it an EXCLUSIVE InnerFlatPlate (hollow block, no solid
-        //     cube at all -- the same category every other InnerFlatPlate
-        //     icon uses) then read as a hole/pit in the floor, since
-        //     nothing filled the gap where an ordinary solid floor block
-        //     would be -- fixed additively (a normal solid floor cube PLUS
-        //     the blade as an overlay, same idiom as the registry's grass-top
-        //     grass-top overlay just below in the main Build() loop);
-        // (5) with the hole fixed, the user's final word against THIS
-        //     round's own screenshot: the blade should be upright again
-        //     after all (round 3's actual problem was being hidden in a
-        //     hole/wrong-looking, not the vertical axis itself) -- rooted
-        //     AT the floor (bottom edge at the walkable surface, extending
-        //     UP), same idiom as every other InnerFlatPlate icon's vertical
-        //     default, still additive on top of the solid floor cube from
-        //     round 4 (not reverting to an exclusive/hollow InnerFlatPlate).
-        // The solid floor cube uses the standard RockPile tile (NOT the
-        // confusingly-named Ground/icon 10, a machine-piece graphic per
-        // BlockTypes.hpp's own NOTE -- no per-placement floor-texture
-        // concept exists in the world format either way).
-        // Shifts the underlying floor cube DOWN so its own top face sits
-        // strictly clear of the blade plate's bottom edge (real,
-        // unambiguous geometry, not same-buffer depth-test tie-breaking --
-        // see RebuildAnimatedRenderer()'s own comment for why that
-        // mattered when the plate was still horizontal).
-        constexpr float kSawPlateEpsilon = 0.02f;
-
         // Since 2026-11-02 the teleporters are their original model in one cell
         // (BlockModels.hpp, OR-0025): this cube and tip are only the fallback
         // without avatars3d/objects.
@@ -619,72 +578,7 @@ namespace GalaxyEggbert::Game
                                 (sideIs(0, 0, 1, true) ? 4 : 0) | (sideIs(0, 0, -1, true) ? 8 : 0) |
                                 (sideIs(0, -1, 0, false) ? 16 : 0));
                         }
-                        std::uint16_t floorIcon = 0;
-                        if (definition.renderMode == GalaxyEggbert::BlockRenderMode::GroundAnchoredPlate)
-                        {
-                            // The saw's floor: the commonest plain solid block around it, at its
-                            // height within 3 cells (a row of saws on a catwalk has only saws
-                            // beside each), else under it; RockPile only when none.
-                            std::array<std::pair<std::uint16_t, int>, 8> seen{};
-                            const auto consider = [&](int dx, int dy, int dz) {
-                                const int nx = x + dx, ny = y + dy, nz = z + dz;
-                                if (nx < 0 || ny < 0 || nz < 0 || nx >= blocksPerAxis || ny >= blocksPerAxis ||
-                                    nz >= blocksPerAxis)
-                                {
-                                    return;
-                                }
-                                const auto other = world.getBlock(static_cast<std::uint16_t>(nx),
-                                                                  static_cast<std::uint16_t>(ny),
-                                                                  static_cast<std::uint16_t>(nz));
-                                if (other.isAir())
-                                {
-                                    return;
-                                }
-                                const auto& od = GalaxyEggbert::GetBlockDefinition(other.type());
-                                if (od.collisionMask != 0xFFFF || od.animation.IsAnimated() ||
-                                    od.hazard != GalaxyEggbert::BlockHazardKind::None)
-                                {
-                                    return;
-                                }
-                                for (auto& entry : seen)
-                                {
-                                    if (entry.second == 0 || entry.first == other.type())
-                                    {
-                                        entry.first = other.type();
-                                        ++entry.second;
-                                        return;
-                                    }
-                                }
-                            };
-                            for (int dy : {0, -1})
-                            {
-                                for (int dz = -3; dz <= 3; ++dz)
-                                {
-                                    for (int dx = -3; dx <= 3; ++dx)
-                                    {
-                                        if (dx != 0 || dz != 0 || dy != 0)
-                                        {
-                                            consider(dx, dy, dz);
-                                        }
-                                    }
-                                }
-                                int best = 0;
-                                for (const auto& entry : seen)
-                                {
-                                    if (entry.second > best)
-                                    {
-                                        best = entry.second;
-                                        floorIcon = entry.first;
-                                    }
-                                }
-                                if (floorIcon != 0)
-                                {
-                                    break;
-                                }
-                            }
-                        }
-                        AnimBlock animBlock{worldX, worldY, worldZ, animBase, lavaSides};
-                        animBlock.floorIcon = floorIcon;
+                        AnimBlock animBlock{worldX,worldY,worldZ,animBase,lavaSides};
                         animBlock.rotated = m_rotatedPlatePositions.count(PackPlatePositionKey(x, y, z)) != 0;
                         if (animBase == GalaxyEggbert::BlockTypes::Lava)
                         {
@@ -785,13 +679,13 @@ namespace GalaxyEggbert::Game
                     // blocks (the common case in bulk fills like the ground
                     // floor/walls/staircase) actually get culled.
                     //
-                    // Note: Saw/SawStopped (GroundAnchoredPlate mode) never
+                    // Note: Saw/SawStopped (SawBlade mode) never
                     // reaches this point -- both are always animated
                     // (IsAnimated(Saw) above), so they're diverted into
                     // m_animBlocks earlier in this same loop; their ground-
                     // anchored-overlay handling lives in
                     // RebuildAnimatedRenderer() instead (see
-                    // GroundAnchoredPlate mode's own comment above and that
+                    // SawBlade mode's own comment above and that
                     // call site for the full history).
                     //
                     // The tile's own texels pick the pass (TileCoverage.hpp).
@@ -1050,30 +944,6 @@ namespace GalaxyEggbert::Game
             m_grassRenderer = UploadLitTexturedMeshParts(device, grassMesh.Mesh());
         }
 
-        // The saws' floor cells: plain opaque floor blocks, drawn with the static mesh so they
-        // write depth. In the animated (semi-transparent, depth-read) pass the saw's model showed
-        // through its own floor: a whole blade over a one-wide catwalk of saws (owner 2026-11-02:
-        // only its upper half should show, as the original's sprite).
-        {
-            auto sawFloors = MakeLitTexturedMeshBuilder();
-            for (const auto& block : m_animBlocks)
-            {
-                if (GalaxyEggbert::GetBlockDefinition(block.base).renderMode ==
-                    GalaxyEggbert::BlockRenderMode::GroundAnchoredPlate)
-                {
-                    AddCenteredBox(sawFloors,
-                                   Microsoft::Xna::Framework::Vector3(block.x, block.y - kSawPlateEpsilon, block.z),
-                                   Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
-                                   m_tileAtlas->GetTileUv(block.floorIcon != 0 ? block.floorIcon
-                                                                               : GalaxyEggbert::BlockTypes::RockPile));
-                }
-            }
-            if (!sawFloors.Mesh().Empty())
-            {
-                m_sawFloorRenderer = UploadLitTexturedMeshParts(device, sawFloors.Mesh());
-            }
-        }
-
         Update(device, 0);
     }
 
@@ -1122,73 +992,11 @@ namespace GalaxyEggbert::Game
             // demo block: without this, fan blocks always fell through to a
             // plain untextured-on-every-face UniformCube and their
             // DirectionalCubeTiles entry was silently dead code.
-            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::GroundAnchoredPlate)
+            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::SawBlade)
             {
-                // Saw/SawStopped (2026-07-20): animated (378-383 cycle), so
-                // this path -- NOT the constructor's main Build() loop
-                // (which routes these into m_animBlocks before it would
-                // ever reach an equivalent check) -- is what actually
-                // renders it; see the constructor's own GroundAnchoredPlate
-                // comment block for the full round-by-round history. No
-                // face-culling here since RebuildAnimatedRenderer never had
-                // any (every animated block already renders all 6 faces via
-                // plain `batch.Add()` below) -- consistent with that, the
-                // underlying floor cube is likewise always-6-faces-visible.
-                //
-                // Uses RockPile, NOT Ground (icon 10) -- despite the name,
-                // `Ground` is a confirmed machine-piece DirectionalCube
-                // graphic (BlockTypes.hpp's own NOTE), not bulk floor
-                // material; it rendered as a jarring blue riveted plate
-                // here. RockPile is confirmed genuine bulk UniformCube
-                // terrain, matching the surrounding demo corridor's own
-                // floor. kSawPlateEpsilon shifts the cube's own top face
-                // down, strictly clear of the vertical plate's bottom edge
-                // (from back when the plate was horizontal and exactly
-                // coplanar with the cube's top face, a genuine same-buffer
-                // depth-test tie; kept even now that the plate is vertical
-                // again, since a hairline gap there is harmless and
-                // removing it would need re-verifying that concern).
-                // Vertical again (2026-07-20, 5th round): the user's own
-                // "flat on the floor" read of round 3's screenshot turned
-                // out to mean "don't hide it in a hole" (round 4's actual
-                // fix), not "the blade itself should lie flat" -- final
-                // word, against this round's own screenshot: upright,
-                // rooted AT the floor (bottom edge at the walkable surface,
-                // extending UP), same idiom as every other InnerFlatPlate
-                // icon's vertical default. Axis still respects the per-
-                // placement rotation flag (PlateRotationMetadata.hpp) so
-                // it can face whichever way its own corridor runs. This is
-                // the confirmed-good state as of this round -- do not
-                // pursue exact-180-degree in-plane rotation or size/offset
-                // tweaks again without explicit new user direction; several
-                // rounds of that were tried and reverted.
-                // With the saw's model (kModelOverFloorBases: Decor/scie.rd4, owner 2026-11-02) the
-                // caller draws the saw standing on this floor; the sprite plate is only the fallback.
-                if (std::find(m_modelOverFloorBases.begin(), m_modelOverFloorBases.end(), block.base) ==
-                    m_modelOverFloorBases.end())
-                {
-                    constexpr float kSawPlateHeight = 0.6f;
-                    mesh.AddPlate(
-                        Microsoft::Xna::Framework::Vector3(block.x, block.y + 0.5f + kSawPlateHeight * 0.5f, block.z),
-                        kInnerFlatPlateWidth, kSawPlateHeight,
-                        plateRotated ? CnaEngine::Graphics::PlateAxis::X : CnaEngine::Graphics::PlateAxis::Z, tileUv);
-                }
-
-                // Floor cube shifted down by kSawPlateEpsilon (not the plate
-                // shifted up) -- the plain cubes (`cubes`) are only appended
-                // to `mesh` AFTER the whole per-block loop finishes, always
-                // landing later in the shared vertex
-                // buffer than every plate appended during the loop, so an
-                // apparent depth-test tie always resolved in the cube's
-                // favor regardless of a same-buffer Y epsilon on the plate
-                // (confirmed live -- a 0.05 plate-side epsilon still didn't
-                // show the blade). Moving the cube's OWN top face strictly
-                // below y+0.5 instead removes the ambiguity as real,
-                // unambiguous geometry rather than relying on depth-test
-                // tie-breaking at all.
-                // The floor as the floor around it (owner 2026-11-02: a rock cube showed in the saw's
-                // place whatever the floor; RockPile only when nothing plain lies beside or under):
-                // m_sawFloorRenderer, built once and drawn opaque with the static mesh.
+                if (std::find(m_sawModelBases.begin(),m_sawModelBases.end(),block.base)==m_sawModelBases.end())
+                    mesh.AddPlate(center,kInnerFlatPlateWidth,.93f,
+                        plateRotated ? CnaEngine::Graphics::PlateAxis::X : CnaEngine::Graphics::PlateAxis::Z,tileUv);
                 continue;
             }
 
@@ -1607,10 +1415,7 @@ namespace GalaxyEggbert::Game
                 chunk.cubes->Draw(device, effect);
             }
         }
-        if (m_sawFloorRenderer)
-        {
-            m_sawFloorRenderer->Draw(device, effect);
-        }
+
         if (m_cutoutEffect)
         {
             // Opaque where drawn, so it writes depth like the static mesh;
@@ -1729,7 +1534,6 @@ namespace GalaxyEggbert::Game
                (m_cutoutRenderer ? m_cutoutRenderer->VertexCount() : 0) +
                (m_animRenderer ? m_animRenderer->VertexCount() : 0) +
                (m_lavaFrames.count(m_lavaIcon) != 0 && m_lavaFrames.at(m_lavaIcon) ? m_lavaFrames.at(m_lavaIcon)->VertexCount() : 0) +
-               (m_sawFloorRenderer ? m_sawFloorRenderer->VertexCount() : 0) +
                (m_waterRenderer ? m_waterRenderer->VertexCount() : 0) +
                (m_grassRenderer ? m_grassRenderer->VertexCount() : 0) + ReliefCubeCount(m_reliefChunks, true);
     }

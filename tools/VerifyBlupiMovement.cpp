@@ -2,6 +2,7 @@
 #include <GalaxyEggbert/Game/BlupiController.hpp>
 #include <GalaxyEggbert/Game/CharredBlupi.hpp>
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
+#include <GalaxyEggbert/Game/LegacySawFloors.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
@@ -2672,9 +2673,9 @@ int main(int argc, char** argv)
                 }
                 check(stander.GetY() > 6.9f && !GalaxyEggbert::GetBlockDefinition(201).decor,
                       "the girder is solid in 3D: Blupi stands on it (OR-0069)");
-                check(!GalaxyEggbert::GetBlockDefinition(68).decor && !GalaxyEggbert::GetBlockDefinition(379).decor &&
+                check(!GalaxyEggbert::GetBlockDefinition(68).decor && GalaxyEggbert::GetBlockDefinition(379).decor &&
                           !GalaxyEggbert::GetBlockDefinition(384).decor,
-                      "lava, the stopped saw and the switch are no decor: still the ground under him");
+                      "lava and the switch retain ground; a stopped standalone saw is passable");
             }
 
             // D52: Blupi jumps off a lift. Standing on one (RideLift), a jump starts him rising and
@@ -3800,11 +3801,9 @@ int main(int argc, char** argv)
         Worlds::World sawWorld;
         for (std::uint16_t x=48;x<=52;++x) for (std::uint16_t z=48;z<=53;++z)
             sawWorld.setBlock(x,0,z,Worlds::Block::make(BlockTypes::Ground));
-        sawWorld.setBlock(50,0,50,Worlds::Block::make(BlockTypes::Saw));
+        sawWorld.setBlock(50,1,50,Worlds::Block::make(BlockTypes::Saw));
         BlupiController b;
-        b.SetPosition(0,1,1);
-        b.SetYaw(0);
-        b.SettleOnGround(sawWorld);
+        b.SetPosition(0,1,1); b.SetYaw(0); b.SettleOnGround(sawWorld);
         bool walkedIntoBlade=false;
         for (int i=0;i<100 && !walkedIntoBlade;++i)
         {
@@ -3812,44 +3811,69 @@ int main(int argc, char** argv)
             b.Step(sawWorld,0,1,false,false,false,dt);
             walkedIntoBlade=b.IsTouchingSawBlade(sawWorld,previousY);
         }
-        check(walkedIntoBlade && !b.IsInvincible() && std::fabs(b.GetY()-1)<.01f,
-              "ordinary mortal walking into a saw hits its blade while staying at floor height");
-        b.SetPosition(0,1,0);
-        check(b.IsTouchingSawBlade(sawWorld,1), "walking onto the exposed saw kills without any downward motion");
+        check(walkedIntoBlade && std::fabs(b.GetY()-1)<.01f,
+              "walking into a blade in its own cell kills at floor height");
         b.SetPosition(0,1,.45f);
-        check(!b.IsTouchingSawBlade(sawWorld,1), "walking on the support beside the thin blade stays safe");
-        b.SetPosition(.6f,.5f,0);
-        check(!b.IsTouchingSawBlade(sawWorld,.7f), "touching the cube's side below the blade is harmless");
-        b.SetPosition(0,1.4f,0);
-        check(b.IsTouchingSawBlade(sawWorld,1.6f), "descending feet hit the exposed blade above its cube");
-        check(b.IsTouchingSawBlade(sawWorld,1.2f), "rising into the exposed blade is also actual contact");
-        b.SetPosition(0,1.8f,0);
-        check(!b.IsTouchingSawBlade(sawWorld,2), "above the blade is still clear");
-        b.SetPosition(0,1.3f,.45f);
-        check(!b.IsTouchingSawBlade(sawWorld,1.6f), "missing the thin disk sideways is harmless");
-        SetPlateRotated(sawWorld,50,0,50,true);
-        check(b.IsTouchingSawBlade(sawWorld,1.6f), "turning the blade also turns its lethal footprint");
-        sawWorld.setBlock(50,0,50,Worlds::Block::make(BlockTypes::SawStopped));
-        check(!b.IsTouchingSawBlade(sawWorld,1.6f), "a stopped blade remains harmless");
-
+        check(!b.IsTouchingSawBlade(sawWorld,1),"beside the thin disk is safe");
+        b.SetPosition(.6f,0,0);
+        check(!b.IsTouchingSawBlade(sawWorld,0),"touching the actual block below the blade is safe");
+        b.SetPosition(0,1.9f,0);
+        check(b.IsTouchingSawBlade(sawWorld,2.2f),"falling feet hit the top of the complete visible blade");
+        check(b.IsTouchingSawBlade(sawWorld,1.8f),"rising into the disk also makes contact");
+        b.SetPosition(0,2.1f,0);
+        check(!b.IsTouchingSawBlade(sawWorld,2.3f),"above the entire blade is clear");
+        b.SetPosition(0,2,0);
+        check(!b.IsTouchingSawBlade(sawWorld,2),"a lift at the next whole layer clears the blade's tooth tips");
+        b.SetPosition(0,1.5f,.45f);
+        check(!b.IsTouchingSawBlade(sawWorld,1.6f),"missing the disk sideways is safe");
+        SetPlateRotated(sawWorld,50,1,50,true);
+        check(b.IsTouchingSawBlade(sawWorld,1.6f),"the blade's own cell holds its lethal orientation");
+        sawWorld.setBlock(50,1,50,Worlds::Block::make(BlockTypes::SawStopped));
+        check(!b.IsTouchingSawBlade(sawWorld,1.6f),"a stopped blade is harmless");
         for (const auto icon : {BlockTypes::Saw,BlockTypes::SawStopped,std::uint16_t(380),std::uint16_t(383)})
         {
-            Worlds::World supportWorld;
-            for (std::uint16_t x=48;x<=53;++x) for (std::uint16_t z=48;z<=53;++z)
-                supportWorld.setBlock(x,0,z,Worlds::Block::make(BlockTypes::Ground));
-            supportWorld.setBlock(50,1,50,Worlds::Block::make(icon));
-            for (bool alongX : {false,true})
-            {
-                BlupiController walker;
-                walker.SetPosition(alongX ? 1.5f : 0,1,alongX ? 0 : 1.5f);
-                walker.SetYaw(alongX ? -1.57079633f : 0);
-                walker.SettleOnGround(supportWorld);
-                for (int i=0;i<150;++i) walker.Step(supportWorld,0,1,false,false,false,dt);
-                check((alongX ? walker.GetX() : walker.GetZ())>.5f &&
-                      std::fabs(walker.GetY()-1)<.01f && !walker.IsTouchingSawBlade(supportWorld,1),
-                      "active/stopped saw support cubes block X/Z walking below the blade without killing");
-            }
+            check(GetBlockDefinition(icon).collisionMask==0,"a saw never supplies an invisible solid cube");
+            Worlds::World floating;
+            floating.setBlock(50,3,50,Worlds::Block::make(icon));
+            UpgradeLegacySawFloors(floating);
+            check(floating.getBlock(50,2,50).isAir() && floating.getBlock(50,3,50).type()==icon,
+                  "a newly authored floating saw creates no block beneath itself");
+            floating.setBlock(50,2,50,Worlds::Block::make(261));
+            UpgradeLegacySawFloors(floating);
+            check(floating.getBlock(50,2,50).type()==261 && floating.getBlock(50,3,50).type()==icon,
+                  "an arbitrary block below a new saw is left untouched");
         }
+        Worlds::World legacy(1);
+        legacy.setLegacySawFloors(true);
+        legacy.setBlock(5,3,5,Worlds::Block::make(BlockTypes::Saw));
+        legacy.setBlock(4,3,5,Worlds::Block::make(BlockTypes::Ground));
+        legacy.setBlock(2,3,5,Worlds::Block::make(BlockTypes::Switch));
+        SetPlateRotated(legacy,5,3,5,true);
+        UpgradeLegacySawFloors(legacy);
+        check(!legacy.hasLegacySawFloors() && legacy.getBlock(5,3,5).type()==BlockTypes::Ground &&
+              legacy.getBlock(5,4,5).type()==BlockTypes::Saw && IsPlateRotated(legacy,5,4,5),
+              "old implicit floor becomes an explicit block, with the independent saw and its orientation above it");
+        const auto* link=legacy.findBlockExtraMetadata(2,3,5,kLegacySwitchSawRowMetadataType);
+        check(link && *link==std::vector<std::uint8_t>{1},"the old switch retains its migrated saw-row link");
+        UpgradeLegacySawFloors(legacy);
+        check(legacy.getBlock(5,5,5).isAir() && legacy.getBlock(5,4,5).type()==BlockTypes::Saw,
+              "legacy saw conversion happens only once");
+        Worlds::World crowded(1);
+        crowded.setLegacySawFloors(true);
+        crowded.setBlock(5,3,5,Worlds::Block::make(BlockTypes::Saw));
+        crowded.setBlock(5,4,5,Worlds::Block::make(261));
+        UpgradeLegacySawFloors(crowded);
+        check(crowded.getBlock(5,3,5).type()==BlockTypes::Saw && crowded.getBlock(5,4,5).type()==261,
+              "legacy conversion never overwrites an occupied cell above a saw");
+        Worlds::World corridor(1);
+        corridor.setLegacySawFloors(false);
+        corridor.setBlock(5,2,5,Worlds::Block::make(BlockTypes::Ground));
+        corridor.setBlock(5,3,5,Worlds::Block::make(BlockTypes::Saw));
+        corridor.setBlock(4,3,5,Worlds::Block::make(BlockTypes::Ground));
+        corridor.setBlock(4,4,5,Worlds::Block::make(BlockTypes::Ground));
+        UpgradeLegacySawFloors(corridor);
+        check(corridor.getBlock(5,3,5).type()==BlockTypes::Saw && corridor.getBlock(5,4,5).isAir(),
+              "an independent saw above a floor stays in its own cell; the nearby wall creates no pedestal");
     }
 
     {

@@ -10,6 +10,7 @@
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
 #include <GalaxyEggbert/Editor/EditorCommandKeys.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
+#include <GalaxyEggbert/Game/LegacySawFloors.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -1283,6 +1284,25 @@ int main()
               "moving lifts show marker1 at start and marker2 at end; still lifts avoid overlapping labels and chests get none");
     }
 
+    {
+        World source;
+        source.setBlock(2,2,2,Block::make(384));
+        source.setBlockExtraMetadata(2,2,2,kLegacySwitchSawRowMetadataType,{1});
+        const auto clip=CopyBox(source,{2,2,2,2,2,2});
+        check(clip.cells[0].legacySwitchRow==1 && TurnedQuarter(clip).cells[0].legacySwitchRow==1,
+              "copying/turning a migrated switch retains its vertical saw-row link");
+        World target;
+        EditCommandStack history;
+        history.Push(PasteBox(target,clip,5,2,5,false,[] {return 0;}));
+        const auto linked=[&] { const auto* p=target.findBlockExtraMetadata(5,2,5,kLegacySwitchSawRowMetadataType);
+            return p && *p==std::vector<std::uint8_t>{1}; };
+        check(linked() && history.Undo(target) && !linked() && history.Redo(target) && linked(),
+              "paste/Undo/Redo preserve the migrated switch link without leaving stale metadata");
+        source.removeBlockExtraMetadata(2,2,2,kLegacySwitchSawRowMetadataType);
+        history.Push(PasteBox(target,CopyBox(source,{2,2,2,2,2,2}),5,2,5,false,[] {return 0;}));
+        check(!linked() && history.Undo(target) && linked(),
+              "pasting an independent switch clears an old link and Undo restores it");
+    }
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }

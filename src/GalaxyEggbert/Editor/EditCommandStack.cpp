@@ -110,6 +110,15 @@ namespace GalaxyEggbert::Editor
                     }
                 }
                 break;
+            case EditCommand::Kind::MetadataEdit:
+            {
+                const auto& value=forward ? command.metadataAfter : command.metadataBefore;
+                if (value) world.setBlockExtraMetadata(command.metadataX,command.metadataY,command.metadataZ,
+                    command.metadataType,*value);
+                else world.removeBlockExtraMetadata(command.metadataX,command.metadataY,command.metadataZ,
+                    command.metadataType);
+                break;
+            }
             }
         }
     }

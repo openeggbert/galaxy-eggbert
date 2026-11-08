@@ -122,6 +122,7 @@ class Grid:
     def __init__(self, world: dict, blocks: dict[int, dict]):
         self.blocks = blocks
         self.cells = {p: raw >> 4 for p, raw in world["blocks"].items()}
+        self.legacy_saw_floors = not (world.get("flags", 0) & 1)
         self.objects = world["objects"]
         self.solid_objects = set()      # crates stand like blocks
         for o in self.objects:
@@ -166,7 +167,12 @@ class Grid:
                                      int((z0 + (z1 - z0) * t) // 1)))
 
     def info(self, p):
-        return self.blocks.get(self.cells.get(p, 0), self.blocks[0])
+        icon = self.cells.get(p, 0)
+        b = self.blocks.get(icon, self.blocks[0])
+        # Old files' implicit floors become real blocks at runtime. New saw cells are empty.
+        if self.legacy_saw_floors and 378 <= icon <= 383:
+            return {**b, "solid": 1, "collision_mask": 65535}
+        return b
 
     def free(self, p) -> bool:
         x, y, z = p

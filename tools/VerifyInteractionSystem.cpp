@@ -2299,7 +2299,7 @@ int main(int argc, char** argv)
         const auto getSwitchType = [&world]()
         { return world.GetWorld().getBlock(65, 0, 67).type(); };
         const auto getSawType = [&world]()
-        { return world.GetWorld().getBlock(70, 0, 67).type(); };
+        { return world.GetWorld().getBlock(70, 1, 67).type(); }; // legacy floor materialized at y0
 
         check(getSwitchType() == BlockTypes::SwitchOff, "switch starts SwitchOff, matching the saw's SawStopped start");
         check(getSawType() == BlockTypes::SawStopped, "linked saw starts SawStopped (safe)");

@@ -31,7 +31,7 @@ def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 3 and argv[1] == "--stage" else None
     out = Path(argv[3]) if stage is not None else Path(__file__).resolve().parents[2] / "worlds3d" / "world112.vwr"
     rng = random.Random(112)
-    w = World(mission=112, sky=0)
+    w = World(mission=112, sky=0, legacy_saw_floors=True)
     calm = stage is not None and stage >= 1
 
     def panel(x0, y0, z0, x1, y1, z1):

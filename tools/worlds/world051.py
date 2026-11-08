@@ -47,7 +47,7 @@ def patrol(w, otype, start, end, ticks, stop):
 def main(argv) -> int:
     stage = int(argv[2]) if len(argv) > 2 and argv[1] == "--stage" else 0
     rng = random.Random(51)
-    w = World(mission=51, sky=24)
+    w = World(mission=51, sky=24, legacy_saw_floors=True)
 
     def plates(x0, y0, z0, x1, y1, z1):
         metal(w, x0, y0, z0, x1, y1, z1, rng)
