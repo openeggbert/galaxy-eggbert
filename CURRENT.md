@@ -224,6 +224,9 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Verification baseline
 
+The current source and CI use published CNA `594eb28dc` (optional KeyDownEXT), including
+`ee3235984` (UB-009 mip recovery). The native local checks used that exact checkout.
+
 As of the date above, rebuilding, testing, and live-running the current source succeeds for the
 verified native and WebGL 2 configurations:
 
@@ -238,9 +241,6 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 
 ## Known limitations
 
-- Source now requires CNA `594eb28dc` (optional KeyDownEXT); its parent `ee3235984` fixes UB-009.
-  Both are local CNA commits. The published CI dependency pin predates this API and needs advancing
-  after CNA publication; no push was requested. Local native build/tests use the new checkout.
 - Controls since 2026-10-25: third person is the default view, F3 toggles first person (was C),
   turning is 135°/s, and Blupi no longer walks up one-block steps — he jumps, as in
   `Decor::TestPath`. Menus fill the bars beside their 640×480 images and text uses the

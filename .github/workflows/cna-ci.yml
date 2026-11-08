@@ -41,7 +41,7 @@ jobs:
         with:
           repository: libcna/cna
           # Updated with cna-engine and the other locally verified siblings by the pin script.
-          ref: b3e855caedcde898f4b76c165cac4ea99cb1f347 # v0.2.0-556-gb3e855cae
+          ref: 594eb28dc5129b20c822d51032fd0c02e20a55d8 # v0.2.0-626-g594eb28dc
           path: cna
           submodules: true # non-recursive on purpose -- avoids SDL_mixer's own nested
                             # optional-codec submodules this project's CMake args disable

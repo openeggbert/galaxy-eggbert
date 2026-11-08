@@ -10,6 +10,12 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Publication follow-up (owner: commit/push everything): both CNA changes were pushed to
+  origin/next at594eb28dc before publishing Galaxy. The standard ci_pin_siblings.py script
+  advances only CNA to that published revision; all other verified sibling pins are unchanged.
+  CURRENT's former unpublished-dependency limitation is removed. Code verification remains the
+  completed native build,113/113 CTest, five input-suite repeats and15 lifecycle GPU cases;
+  publication changes only the dependency pin and this documentation.
 - Owner screenshot13-22-15's large green forms are BigDecor66-69 (columns/vase); their registry
   entries explicitly remained passable. They now join kSolidBigDecorIcons, so existing recovered
   model-fit boxes become active in campaign and custom/editor play worlds. No generic full voxel
@@ -41,8 +47,8 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   at180ms frames,25ms presses and dropped text events activates givecopter without rotating.
   Evidence: build-probe/cheat-source/. The exact live owner's failure was not instrumented, so
   turning's causal role was not established; input loss/IME dependence is removed at its source.
-  Source needs CNA594eb28dc; CI's old published CNA pin must advance after publishing the local
-  CNA commits. No push was requested. Earlier text-input evidence below is historical.
+  Source needs CNA594eb28dc, now published on origin/next and pinned by Galaxy CI.
+  Earlier text-input evidence below is historical.
 - Reproduced the latest givecopter failure using a read-only copy of gamerC's custom_002.vwr:
   Editor → second slot → Play accepted150ms presses, but lost25ms presses. Snapshot-only parsing
   misses down/up between frames and can alphabetize multiple simultaneous fresh keys. Non-touch
