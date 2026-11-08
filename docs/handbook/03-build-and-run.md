@@ -213,7 +213,7 @@ to camera look. The desktop and an SDL virtual gamepad were checked live on 2026
 gamepad/touch-screen verification remains outstanding. Interrupted-mission logs use format v5 to
 record touch capability, the compass toggle and the fairplay lock; an older/incompatible log falls back to the saved checkpoint.
 
-Tank shots fly forwards; helicopter glue drops vertically, only in flight and off a lift.
+Tank shots follow its exact heading at any angle; helicopter glue drops vertically, only in flight and off a lift.
 Both need ammunition (the green ammo pack; `birdlime` supplies ten when cheats are enabled).
 Holding Fire repeats at the original cooldown. Touch devices show a separate **Fire** button
 while driving either armed vehicle; entering/leaving remains Action. The tank-only physical Ctrl alias is

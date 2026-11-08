@@ -1580,3 +1580,12 @@ Owner 2026-11-08: the second row shows `|` when Blupi faces the objective and th
 when on its height. Existing shortest-turn and vertical arrows,3-degree/0.1-block tolerances,
 rounding and objective selection remain. Unit checks cover wrapped heading and vertical-only
 objectives; the live probe785 shows6 / | / -. All113 CTest pass.
+
+## BD-0096 — tank glue was restricted to eight headings — FIXED_AND_VERIFIED
+
+Owner 2026-11-08: tank shots should follow Blupi's actual3D heading. InteractionSystem now accepts
+optional continuous fire yaw; legacy callers retain their tile-facing fallback. A shared DDA
+extracted from the verified editor raycast finds the first solid/temporary blocker along that ray,
+retaining cardinal half-cell stand-off,5ticks/block speed, ammo and firing cadence. Heli/enemy
+shots are unchanged. Eight yaw tests include17°/73°, and cardinal/oblique wall tests plus the
+editor verifier and all113 CTest pass. Live shots: build-probe/latest-controls/tank-run/.

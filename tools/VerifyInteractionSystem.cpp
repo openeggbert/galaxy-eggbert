@@ -4,6 +4,7 @@
 #include <GalaxyEggbert/Game/CratePush.hpp>
 #include <GalaxyEggbert/Game/Hud.hpp>
 #include <GalaxyEggbert/Game/InteractionSystem.hpp>
+#include <GalaxyEggbert/Game/TankShot.hpp>
 #include <GalaxyEggbert/Game/ReusablePickup.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/ObjectIcons.hpp>
@@ -1514,6 +1515,44 @@ int main(int argc, char** argv)
     else
     {
         check(false, "found a bullet pack (ObjectType29) in the sample world");
+    }
+
+    // Player tank shots use continuous yaw, even when the tile-facing hint is quantized.
+    {
+        constexpr float pi=std::numbers::pi_v<float>;
+        for (float degrees : {0.f,17.f,45.f,73.f,123.f,181.f,233.f,279.f})
+        {
+            const float yaw=degrees*pi/180;
+            WorldRuntime rt;
+            InteractionSystem firing;
+            firing.CheatSetBullets(10);
+            firing.Update(dt,rt,0,1,0,0,sound,false,false,0,-1,false,true,true,true,true,
+                          true,true,false,true,false,true,0,false,false,false,false,true,false,true,yaw);
+            const auto& shots=rt.GetMobileObjects();
+            const auto shot=std::find_if(shots.begin(),shots.end(),[](const auto& obj) {
+                return obj.active && obj.type==GalaxyEggbert::Def::ObjectType::ObjectType23 && obj.firedByBlupi;
+            });
+            bool correct=false;
+            if (shot!=shots.end())
+            {
+                const float dx=shot->posEndX-shot->posStartX,dz=shot->posEndZ-shot->posStartZ;
+                const float length=std::hypot(dx,dz);
+                correct=length>0 && std::fabs(dx/length-std::sin(yaw))<.00001f &&
+                        std::fabs(dz/length+std::cos(yaw))<.00001f &&
+                        std::fabs(shot->stepAdvanceTicks-5*length)<.001f;
+            }
+            check(correct && firing.BulletCount()==9,
+                  "tank projectile follows arbitrary yaw at a constant speed and consumes one shot");
+        }
+        Worlds::World wall;
+        wall.setBlock(60,1,50,Worlds::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        check(std::fabs(AimTankShot(wall,50,1,50,pi/2).distance-9)<.0001f,
+              "continuous tank ray preserves cardinal wall stand-off");
+        wall.setBlock(52,1,44,Worlds::Block::make(GalaxyEggbert::BlockTypes::Ground));
+        const float yaw=17*pi/180;
+        const auto aim=AimTankShot(wall,50,1,50,yaw);
+        check(std::fabs(aim.distance-(5.5f/std::cos(yaw)-.5f))<.0001f,
+              "an oblique tank ray stops at the actual wall along its shot direction");
     }
 
     // 3.71. Player-fired Tank bullet (plan.md BULLET-001, real

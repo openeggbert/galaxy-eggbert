@@ -10,6 +10,11 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Tank glue follows continuous yaw instead of the integer tile-facing vector's eight directions.
+  A shared engine-independent DDA was extracted from the editor raycast for wall range; its
+  existing blocker policy and half-cell stand-off are retained. Eight heading/projectile tests,
+  cardinal/oblique wall tests, the editor verifier and all113 tests pass. Live17°/73° captures:
+  build-probe/latest-controls/tank-run/. Heli and enemy shot directions remain their original rules.
 - Compass alignment follow-up: the facing row shows `|` when aligned and the height row `-`
   on the same layer. Turning and height arrows and their tolerances remain unchanged. Unit
   coverage and a live aligned capture (distance6, |, -) pass in build-probe/latest-controls/.

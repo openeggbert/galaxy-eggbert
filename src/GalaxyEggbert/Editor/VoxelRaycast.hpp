@@ -1,30 +1,14 @@
 #pragma once
 
 #include <GalaxyEggbert/Worlds/World.hpp>
+#include <GalaxyEggbert/Worlds/GridRaycast.hpp>
 
 #include <cstdint>
 
 namespace GalaxyEggbert::Editor
 {
     // Result of a Raycast() call (see below).
-    struct RaycastHit
-    {
-        bool hit = false;
-        std::uint16_t x = 0;
-        std::uint16_t y = 0;
-        std::uint16_t z = 0;
-
-        // Outward face normal of the hit cell, i.e. the side the ray
-        // arrived from -- (hitCell + normal) is the adjacent, currently-air
-        // cell a "place block" tool should write to; the hit cell itself
-        // is what a "remove block" tool should clear. All-zero if the ray's
-        // OWN ORIGIN started inside a solid block (no face was crossed).
-        std::int8_t normalX = 0;
-        std::int8_t normalY = 0;
-        std::int8_t normalZ = 0;
-
-        float distance = 0.0f;
-    };
+    using RaycastHit = Worlds::GridRaycastHit;
 
     // Amanatides-Woo voxel DDA raycast against @p world's dense block grid,
     // stopping at the first non-air cell within @p maxDistance.

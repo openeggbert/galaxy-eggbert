@@ -75,7 +75,8 @@ content-authoring UX, but not new gameplay mechanics.
   slow typing still works. CMake/macro `GALAXY_EGGBERT_ENABLE_CHEATS=OFF` disables typed and hidden
   cheats. Both builds were tested; the current local build is **ON**. Resume format5 stores compass and the fairplay lock.
 - Vehicle glue fire: **F**, gamepad **RT**, or held touch **Fire**. The tank also accepts Left Ctrl. Tank shots
-  go forwards; helicopter glue falls downward while airborne/off a lift. Ammo and original timings
+  follow the tank's continuous heading, including angles between the former eight directions;
+  helicopter glue falls downward while airborne/off a lift. Ammo and original timings
   are unchanged. Space/B/X keep enter/leave separate; A/touch Jump and Right Shift still climb the
   helicopter; physical Left Ctrl now also climbs it (owner follow-up), Left Shift descends.
   Live keyboard, virtual gamepad and direct-touch captures show green projectiles.

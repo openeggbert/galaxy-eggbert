@@ -1,4 +1,5 @@
 #include "InteractionSystem.hpp"
+#include "TankShot.hpp"
 
 #include "CratePush.hpp"
 #include "ObjectDefinitionRegistry.hpp"
@@ -709,7 +710,7 @@ namespace GalaxyEggbert::Game
         // skipping the dwell entirely, matching real ObjectStart's own
         // `step=2; time=0` initialization (a fresh shot never dwells at its
         // spawn point).
-        MobileObjSpec MakeBullet(const MobileObjSpec& obj, float dirX, float dirY, float dirZ, int dist)
+        MobileObjSpec MakeBullet(const MobileObjSpec& obj, float dirX, float dirY, float dirZ, float dist)
         {
             MobileObjSpec bullet;
             bullet.type = GalaxyEggbert::Def::ObjectType::ObjectType23;
@@ -1172,7 +1173,8 @@ namespace GalaxyEggbert::Game
                                       bool blupiCanGrantInvert, bool blupiActionPressedEdge,
                                       bool blupiCanPushCrate, float blupiMoveDZ, bool blupiHoldingCrate,
                                       bool blupiArmoredVehicle, bool blupiDropsGlue, bool blupiHidden,
-                                      bool blupiFocused, bool blupiOutOfPlay, bool blupiCanInteract)
+                                      bool blupiFocused, bool blupiOutOfPlay, bool blupiCanInteract,
+                                      std::optional<float> blupiFireYaw)
     {
         events_.clear();
         ridingLift_ = false;
@@ -2577,19 +2579,22 @@ namespace GalaxyEggbert::Game
                 {
                     int gx, gy, gz;
                     ToGridCell(world, blupiX, blupiY, blupiZ, gx, gy, gz);
-                    const int dist = SearchAirDistance(world, gx, gy, gz, blupiFacingDX, 0, blupiFacingDZ);
+                    const auto aim = blupiFireYaw
+                        ? AimTankShot(world,blupiX+WorldRuntime::kWorldCenterX,blupiY,
+                                      blupiZ+WorldRuntime::kWorldCenterZ,*blupiFireYaw)
+                        : TankShotAim{float(blupiFacingDX),float(blupiFacingDZ),
+                            float(SearchAirDistance(world,gx,gy,gz,blupiFacingDX,0,blupiFacingDZ))};
                     --bulletCount_;
                     fireCooldownTimer_ = kFireCooldownSeconds;
                     events_.push_back(Event{EventKind::TankFired});
                     sound.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel52);
-                    if (dist > 0)
+                    if (aim.distance > 0)
                     {
                         MobileObjSpec blupiPos{};
                         blupiPos.currentX = blupiX;
                         blupiPos.currentY = blupiY;
                         blupiPos.currentZ = blupiZ;
-                        MobileObjSpec shot = MakeBullet(blupiPos, static_cast<float>(blupiFacingDX), 0.0f,
-                                                        static_cast<float>(blupiFacingDZ), dist);
+                        MobileObjSpec shot = MakeBullet(blupiPos,aim.dx,0,aim.dz,aim.distance);
                         shot.firedByBlupi = true;
                         pendingSpawns.push_back(shot);
                     }
