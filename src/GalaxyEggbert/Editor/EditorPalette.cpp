@@ -257,6 +257,7 @@ namespace GalaxyEggbert::Editor
             selectedSkyRegion_,
             selectedMusicTrack_,
             selectedBigDecorIcon_,
+            selectedButtonIcon_,
             IsObjectMode(),
             IsSpawnPointMode(),
             IsBigDecorMode(),

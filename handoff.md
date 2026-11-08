@@ -10,13 +10,21 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Coloured editor Blupi starts complete (BD-0110): characters slots1-4 now select the
+  existing world-header spawn tool instead of personal mines200-203. PlaceDecor10 shares
+  rank0 among all four colours in custom worlds, so no multiplayer mechanic or mine-record
+  migration was added. Selected-button highlight stays singular. Slots5/6/7 also corrected
+  to posts182/signs158/final key21. Editor draws the original Stop model translucently at
+  the saved spawn and shows its XYZ; suppresses the stale former play character. All four
+  buttons, save/reload and Undo/Redo tested. Native own-profile snapshots and saved-file
+  inspection confirm no mines, unique spawn51,1,32 and Play from that start; 114/114 pass.
+  Evidence: build-probe/editor-fixes/. Remaining editor request: fish/creature route cubes.
 - Single editor exit complete (BD-0109): placing arrow7 or final key21 removes the old
   exit, including clipboard stamps whose old exit is outside the box. The operation is one
   history entry, preserves overwritten target objects on Undo and refreshes stale G selection.
   World data APIs and existing campaign contents are unchanged. Source: blupi_recon
   PlaceDecor10. Native arrow relocation/Undo/Redo/save and all 114 CTest tests pass. Evidence:
-  build-probe/editor-fixes/ (own profile, no player files edited). Coloured player starts
-  and fish/creature route markers are the remaining editor requests in this batch.
+  build-probe/editor-fixes/ (own profile, no player files edited).
 - Owner corrected the saw appearance: keep only the upper half, cut edge at cell bottom.
   Done: saw_upper_half.py poses the existing source mesh at .05/.25/.3, clips at centreY,
   caps the base and bakes three exclusive poses. Canonical export_objects runs it after export;
@@ -25,8 +33,6 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   and crops fallback UVs. Contact tests only the upper semicircle; hidden lower/upper-clear
   spaces are safe. Native front/below checks,114/114 CTest and all15 saw missions pass.
   Full campaign retains its pre-existing world021 egg timeout26658. Evidence: build-probe/saw-half/.
-  Remaining new owner requests: coloured Blupi palette entries incorrectly place mines and
-  must define player starts; route endpoint cubes are missing for fish and other creatures.
 - Latest debug-layout report complete: replaced text-measured width/right alignment with a
   fixed316-reference-pixel panel. Labels and values have fixed columns; XYZ/velocity each get
   three stable positions, paired fields/time ticks have fixed secondary columns, numbers use

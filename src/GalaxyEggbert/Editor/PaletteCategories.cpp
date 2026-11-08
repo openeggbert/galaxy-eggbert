@@ -82,10 +82,12 @@ namespace GalaxyEggbert::Editor
                                   {46, 13, 24, 19, 28},
                                   {119, 24, 71, 57, 85}),
             FreeMixedMenuCategory("Characters and goals",
-                                  {0, 0, 0, 0, 0, Door1, 0, 0},
-                                  {7, 200, 201, 202, 203, 0, 0, 49},
+                                  {0, 0, 0, 0, 0, 182, 158, 0},
+                                  {7, 0, 0, 0, 0, 0, 0, 21},
                                   {11, 5, 96, 97, 98, 63, 62, 64}, {},
-                                  {0, 0, 0, 0, 0, 0, 1, 0}),
+                                  // PlaceDecor10 indices1-4 are player starts. Custom worlds
+                                  // use rank0 for every colour; 5/6 are posts/signs, 7 the final key.
+                                  {0, 1, 1, 1, 1, 0, 0, 0}),
         };
     }
 

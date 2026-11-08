@@ -30,6 +30,7 @@ namespace GalaxyEggbert::Editor
             int selectedSkyRegion = 0;
             int selectedMusicTrack = 0;
             int selectedBigDecorIcon = 0;
+            int selectedButtonIcon = 0;
             bool objectMode = false;
             bool spawnPointMode = false;
             bool bigDecorMode = false;

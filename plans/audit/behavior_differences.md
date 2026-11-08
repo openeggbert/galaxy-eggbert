@@ -1640,6 +1640,19 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0110 — Coloured player starts placed personal mines — FIXED_AND_VERIFIED
+
+The Characters and goals palette mapped four Blupi buttons to real personal-mine IDs200-203.
+Reference PlaceDecor10 indices1-4 edits m_blupiStartPos; custom worlds share rank0 across all
+colours. All four buttons now use the existing unique world-header spawn, with separate button
+highlighting. A translucent original Stop model and status XYZ mark it in the editor. Actual
+personal mines and their records are preserved; no invented multiplayer or colour mechanic.
+Neighbouring misread slots5/6/7 now select the source posts182/signs158/final key21 instead of
+door/spawn/door-key. Tests exercise every menu cell, all four spawn buttons, no mine object,
+save/load and Undo/Redo. Native shots show all four placements; the saved world has spawn51,1,32
+and only fish17, moving mine16 and arrow7; Play uses the new start. All 114 CTest pass.
+Evidence: build-probe/editor-fixes/.
+
 ## BD-0109 — One exit when placing arrows or final keys — FIXED_AND_VERIFIED
 
 Owner requested a single red arrow. blupi_recon games/sb2/src/decdesign.cpp PlaceDecor10

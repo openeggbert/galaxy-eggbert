@@ -3402,6 +3402,49 @@ namespace GalaxyEggbert::CNA
                blupiEffect_ && !enemyBlupiTextures_.empty();
     }
 
+    void GalaxyEggbertGame::DrawEditorSpawn(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        if (phase_!=GalaxyEggbert::Def::GamePhase::Editor || worldEditor_.IsBrowsing() ||
+            !worldRuntime_.GetWorld().hasSpawnPoint() || !blupiModelIsReal_ || !blupiModel_ || !blupiEffect_ ||
+            blupiModel_->Clips.count("Stop")==0) return;
+        using namespace Microsoft::Xna::Framework;
+        using namespace Microsoft::Xna::Framework::Graphics;
+        const auto& w=worldRuntime_.GetWorld();
+        std::vector<Matrix> bones;
+        blupiModel_->ComputeBoneTransformsEXT("Stop",System::TimeSpan::FromSeconds(0),false,bones);
+        blupiEffect_->SetBoneTransforms(bones);
+        blupiEffect_->setWorldProperty(Matrix::CreateScale(kRealModelScale)*Matrix::CreateRotationY(3.14159265f)*
+            Matrix::CreateTranslation(float(w.spawnX())-WorldRuntime::kWorldCenterX,float(w.spawnY())-.5f,
+                                      float(w.spawnZ())-WorldRuntime::kWorldCenterZ));
+        blupiEffect_->setViewProperty(camera_.View());
+        blupiEffect_->setProjectionProperty(camera_.Projection());
+        const auto diffuse=blupiEffect_->getDiffuseColorProperty();
+        blupiEffect_->setDiffuseColorProperty(Vector3::One);
+        blupiEffect_->setAlphaProperty(.65f);
+        device.setBlendStateProperty(BlendState::NonPremultiplied);
+        device.setDepthStencilStateProperty(DepthStencilState::DepthRead);
+        device.setRasterizerStateProperty(RasterizerState::CullCounterClockwise);
+        Texture2D* face=nullptr;
+        if (const auto faces=blupiClipFaces_.find("Stop"); faces!=blupiClipFaces_.end() && !faces->second.empty())
+        {
+            const int index=faces->second.front();
+            if (index>=0 && index<static_cast<int>(blupiFaces_.size())) face=&blupiFaces_[index];
+        }
+        for (const auto& part : blupiModel_->Parts)
+        {
+            blupiEffect_->setTextureProperty(face && part.Name==blupiFacePart_ ? face : part.Texture);
+            blupiEffect_->Apply();
+            device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+            device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+            device.DrawIndexedPrimitives(PrimitiveType::TriangleList,part.Part->getVertexOffsetProperty(),0,
+                part.Part->getNumVerticesProperty(),part.Part->getStartIndexProperty(),part.Part->getPrimitiveCountProperty());
+        }
+        blupiEffect_->setAlphaProperty(1);
+        blupiEffect_->setDiffuseColorProperty(diffuse);
+        device.setDepthStencilStateProperty(DepthStencilState::Default);
+        device.setBlendStateProperty(BlendState::Opaque);
+    }
+
     void GalaxyEggbertGame::DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
     {
         // OR-0063 (EnemyBlupi.hpp): his model and his helicopter or tank in the clip and frame the
@@ -7110,7 +7153,8 @@ namespace GalaxyEggbert::CNA
             const bool translucentBlupi = blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()) < 1.0f;
             const auto drawBlupi = [&]()
             {
-                if (cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
+                if (phase_ != GalaxyEggbert::Def::GamePhase::Editor &&
+                    cameraMode_ == CameraMode::ThirdPersonModel && blupiModelLoaded_ && blupiEffect_ &&
                     blupiModel_->Clips.count(blupiActiveClipName_) != 0 &&
                     !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) && !BlupiDrawnAsDeathSprite())
                 {
@@ -7893,6 +7937,7 @@ namespace GalaxyEggbert::CNA
             // Blend a ghost/Hide over the completed opaque scene. DepthRead tests walls in
             // front without preventing objects behind him from showing through his 0.75 alpha.
             if (translucentBlupi) drawBlupi();
+            DrawEditorSpawn(device);
 
             // The terrain's semi-transparent pass after Blupi and every model, so water covers
             // what lies in it (OR-0052: a chest under water looked dry from above).

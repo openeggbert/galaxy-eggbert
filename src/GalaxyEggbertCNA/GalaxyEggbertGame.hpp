@@ -1043,6 +1043,7 @@ namespace GalaxyEggbert::CNA
         // An object's or BigDecor's quarter turns at its cell (kObjectTurnMetadataType, OR-0071).
         [[nodiscard]] int CellObjectQuarterTurns(float x, float y, float z) const;
         void DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        void DrawEditorSpawn(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         // Draw()'s body; Draw() times it for GALAXY_PERF.
         void DrawFrame();
         // A vehicle pickup's model and standing clip when the real vehicle

@@ -182,7 +182,9 @@ namespace GalaxyEggbert::Editor
                 const bool selected =
                     (musicTrack >= 0 && musicTrack == state.selectedMusicTrack) ||
                     (skyRegion >= 0 && skyRegion == state.selectedSkyRegion) ||
-                    (skyRegion == -1 && spawnPoint > 0 && state.spawnPointMode) ||
+                    (skyRegion == -1 && spawnPoint > 0 && state.spawnPointMode &&
+                     i<static_cast<int>(state.contentButtonIconIds.size()) &&
+                     state.contentButtonIconIds[i]==state.selectedButtonIcon) ||
                     (skyRegion == -1 && bigDecorIcon > 0 && state.bigDecorMode &&
                      bigDecorIcon == state.selectedBigDecorIcon) ||
                     (skyRegion == -1 && spawnPoint == 0 && bigDecorIcon == 0 &&

@@ -52,6 +52,12 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- The four coloured Blupi buttons in the editor set the single player start, as the
+  original does in custom worlds. They no longer place personal mines; genuine mines
+  200-203 and the Treasures mine entry remain valid. A translucent Blupi marks the start,
+  and its XYZ appears in editor status. Save/load, Undo/Redo and native Play from the chosen
+  start pass, together with all 114 tests. The same palette correction restores posts182,
+  signs158 and the final golden key21 to the neighbouring source-menu slots.
 - Editor placement keeps a single exit: placing a red arrow or final golden key replaces
   the previous exit, as blupi_recon PlaceDecor10 does. Clipboard stamps obey the same rule,
   including removal outside the pasted box. One Undo restores removed/overwritten objects;

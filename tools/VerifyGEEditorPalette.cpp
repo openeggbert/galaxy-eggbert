@@ -87,8 +87,10 @@ int main()
     check(sourceCategories[7].objectTypeIds[9] == 12 &&
               sourceCategories[7].objectVisualIconIds[9] == -1,
           "Secret wooden case retains the crate behavior and current-terrain camouflage profile");
-    check(sourceCategories[9].spawnPointIds[6] == 1,
-          "Level start is represented by the dedicated world spawn tool");
+    check(sourceCategories[9].spawnPointIds==std::vector<int>{0,1,1,1,1,0,0,0} &&
+          sourceCategories[9].objectTypeIds==std::vector<int>{7,0,0,0,0,0,0,21} &&
+          sourceCategories[9].iconIds[5]==182 && sourceCategories[9].iconIds[6]==158,
+          "PlaceDecor10 maps four coloured player starts, posts/signs and the final key to their real roles");
     const std::vector<int> expectedBigDecor = {
         20, 16, 23, 0, 26, 28, 45, 66, 87, 0, 0,
     };
@@ -545,15 +547,14 @@ int main()
               "the conveyor lift keeps its own look");
     }
 
+    for (int colour=1;colour<=4;++colour)
     {
         EditorPalette palette;
-        (void)click(palette, 30.0f, 450.0f);
-        const auto levelStart = click(palette, 324.0f, 450.0f);
-        check(levelStart.clickConsumed && palette.IsSpawnPointMode() &&
-                  !palette.IsObjectMode(),
-              "Level start selects the dedicated spawn-point placement mode");
-        check(!palette.IsNotYetImplementedNoticeVisible(),
-              "the implemented Level start does not raise the temporary notice");
+        (void)click(palette,30.f,450.f);
+        const auto start=click(palette,72.f+42.f*colour,450.f);
+        check(start.clickConsumed && palette.IsSpawnPointMode() && !palette.IsObjectMode(),
+              "each coloured Blupi button selects the world spawn tool, never a personal mine");
+        check(!palette.IsNotYetImplementedNoticeVisible(),"all coloured start tools are implemented");
     }
 
     for (const int index : {0, 1, 2, 4, 5, 6, 7, 8})
@@ -672,6 +673,7 @@ int main()
               "placing Secret wooden case persists its exact camouflage variant");
     }
 
+    for (int colour=1;colour<=4;++colour)
     {
         constexpr const char* kSpawnSavePath =
             "verify_ge_editor_palette_spawn.vwr";
@@ -698,11 +700,14 @@ int main()
         };
 
         tap(30, 450);
-        tap(324, 450);
+        tap(72+42*colour, 450);
+        // Re-aim after closing the popup, independently of which colour was clicked.
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
         tap(499, 451);
         check(world.hasSpawnPoint() && world.spawnX() == 50 &&
                   world.spawnY() == 0 && world.spawnZ() == 23,
               "PLACE stores Level start at the exact red-preview cell");
+        check(GalaxyEggbert::CollectMoveObjects(world).empty(),"placing a coloured player start creates no mine or other object");
         pressKey(Keys::U);
         check(!world.hasSpawnPoint(),
               "undo restores the legacy unset spawn state");
