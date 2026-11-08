@@ -8,7 +8,7 @@
 #include "EditorBrowserScreen.hpp"
 #include "EditorHighlightRenderer.hpp"
 #include "EditorPalette.hpp"
-#include "LiftEndpointRenderer.hpp"
+#include "ObjectPathRenderer.hpp"
 #include "EditorVariants.hpp"
 
 #include <CnaEngine/Graphics/Camera.hpp>
@@ -369,7 +369,7 @@ namespace GalaxyEggbert::Editor
 
         EditCommandStack commandStack_;
         EditorPalette palette_;
-        LiftEndpointRenderer liftEndpoints_;
+        ObjectPathRenderer pathEndpoints_;
         VariantCycler variants_; // the original's variant families (ED-0001)
         VariantCycler bigDecorVariants_{BigDecorVariantFamilies()}; // ED-0006
         // The auto-tiler's dice (AutoTile.hpp: the original's random twins of a variant).

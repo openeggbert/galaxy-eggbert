@@ -170,7 +170,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
         src/GalaxyEggbert/Editor/EditorDeviceControls.cpp
-        src/GalaxyEggbert/Editor/LiftEndpointRenderer.cpp
+        src/GalaxyEggbert/Editor/ObjectPathRenderer.cpp
         src/GalaxyEggbert/Editor/VoxelRaycast.cpp
         src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
         src/GalaxyEggbert/Editor/EditCommandStack.cpp
@@ -457,7 +457,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
         src/GalaxyEggbert/Editor/EditorDeviceControls.cpp
-        src/GalaxyEggbert/Editor/LiftEndpointRenderer.cpp
+        src/GalaxyEggbert/Editor/ObjectPathRenderer.cpp
         src/GalaxyEggbert/Editor/VoxelRaycast.cpp
         src/GalaxyEggbert/Editor/EditorHighlightRenderer.cpp
         src/GalaxyEggbert/Editor/EditCommandStack.cpp

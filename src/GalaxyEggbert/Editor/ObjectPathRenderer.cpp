@@ -1,4 +1,4 @@
-#include "LiftEndpointRenderer.hpp"
+#include "ObjectPathRenderer.hpp"
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
@@ -8,12 +8,12 @@
 
 namespace GalaxyEggbert::Editor
 {
-void LiftEndpointRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice &device,
+void ObjectPathRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice &device,
                                 const CnaEngine::Graphics::Camera &camera, const Worlds::World &world)
 {
     using namespace Microsoft::Xna::Framework;
     using namespace Microsoft::Xna::Framework::Graphics;
-    auto markers = BuildLiftEndpointMarkers(CollectMoveObjects(world));
+    auto markers = BuildObjectPathMarkers(CollectMoveObjects(world));
     if (markers.empty())
     {
         markers_.clear();

@@ -52,6 +52,11 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Editor route cubes1/2 now cover fish, moving mines, birds, wasps, creatures, enemy Blupis
+  and every lift type, using registry motion capabilities. Optional patrols show a route when
+  endpoints differ; ordinary stationary mines, treasure and chasing hazards do not. Coincident
+  endpoints show one cube. Existing double-sided/depth-tested rendering is preserved. Pure
+  route tests and native fish/mine placement/save checks pass (build-probe/editor-fixes/).
 - The four coloured Blupi buttons in the editor set the single player start, as the
   original does in custom worlds. They no longer place personal mines; genuine mines
   200-203 and the Treasures mine entry remain valid. A translucent Blupi marks the start,

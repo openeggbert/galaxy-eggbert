@@ -10,6 +10,15 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
 
 ## Latest input/editor/UI work (2026-11-08)
 
+- Fish/creature endpoint cubes complete (BD-0111): LiftEndpoint* generalized/renamed to
+  ObjectPath*. The old filter admitted lifts only. Registry patrolTicksPerCell also admits
+  all eight reference creatures/moving mines/fish; optional patrolMotion objects show their
+  explicitly differing endpoints. Special fish/mine motion does not set patrolMotion, so that
+  flag alone was insufficient. Same-cell endpoints draw one cube, ordinary stationary mines,
+  treasure and chasing hazards stay unmarked. Existing depth testing and double-sided faces
+  retained. Native fish first/second placement and moving-mine XYZ route shots, saved-file
+  inspection and all 114 CTest pass. Evidence: build-probe/editor-fixes/. This editor batch
+  (single exit, coloured player starts, route cubes) is complete; no sibling edits or push.
 - Coloured editor Blupi starts complete (BD-0110): characters slots1-4 now select the
   existing world-header spawn tool instead of personal mines200-203. PlaceDecor10 shares
   rank0 among all four colours in custom worlds, so no multiplayer mechanic or mine-record
@@ -18,7 +27,7 @@ _Last updated: 2026-11-08 (editor/device controls, compass, fullscreen/help, glu
   the saved spawn and shows its XYZ; suppresses the stale former play character. All four
   buttons, save/reload and Undo/Redo tested. Native own-profile snapshots and saved-file
   inspection confirm no mines, unique spawn51,1,32 and Play from that start; 114/114 pass.
-  Evidence: build-probe/editor-fixes/. Remaining editor request: fish/creature route cubes.
+  Evidence: build-probe/editor-fixes/.
 - Single editor exit complete (BD-0109): placing arrow7 or final key21 removes the old
   exit, including clipboard stamps whose old exit is outside the box. The operation is one
   history entry, preserves overwritten target objects on Undo and refreshes stale G selection.

@@ -1640,6 +1640,20 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0111 — Missing endpoint cubes for fish and other patrolling objects — FIXED_AND_VERIFIED
+
+The marker builder filtered ObjectSemanticKind::Lift only. Reference decblock.cpp BUILD
+draws object-m30/31 for all lift types, moving mines, bulldozers, fish, birds, wasps, creatures
+and both enemy Blupis. ObjectPathMarkers now uses registry lift/timing/motion capabilities.
+Fish17 and moving mine16 use special motion, so patrolMotion alone cannot identify them;
+their patrolTicksPerCell does. Optional patrols get markers only with differing endpoints;
+coincident fixed-route ends draw one cube. Treasure and chasing hazards remain unmarked.
+No motion/timing or gameplay changes. Renderer retains double-sided faces and explicit depth
+testing. All 11 reference route types and optional/static/excluded cases are tested. Native
+fish placement produces cubes1/2 at50,1,28 and54,1,28; a mine route also shows vertical endpoints.
+Saved fish timing/endpoints match the authored route. All 114 CTest pass.
+Evidence: build-probe/editor-fixes/.
+
 ## BD-0110 — Coloured player starts placed personal mines — FIXED_AND_VERIFIED
 
 The Characters and goals palette mapped four Blupi buttons to real personal-mine IDs200-203.

@@ -236,7 +236,7 @@ namespace GalaxyEggbert::Editor
         const CnaEngine::Graphics::Camera& camera,
         int viewportWidth, int viewportHeight, const Worlds::World& world)
     {
-        liftEndpoints_.Draw(device,camera,world);
+        pathEndpoints_.Draw(device,camera,world);
         const auto target = CurrentEditTarget(world);
         const bool sameCell = target && target->x==placementCellX_ &&
             target->y==placementCellY_ && target->z==placementCellZ_;

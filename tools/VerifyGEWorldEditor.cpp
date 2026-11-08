@@ -1278,7 +1278,7 @@ int main()
         auto still=lift;still.type=GalaxyEggbert::Def::ObjectType::ObjectType47;
         still.posEndX=2;still.posEndY=3;still.posEndZ=4;
         auto chest=lift;chest.type=GalaxyEggbert::Def::ObjectType::ObjectType5;
-        const auto markers=GalaxyEggbert::Editor::BuildLiftEndpointMarkers({lift,still,chest});
+        const auto markers=GalaxyEggbert::Editor::BuildObjectPathMarkers({lift,still,chest});
         check(markers.size()==3 && markers[0].icon==30 && markers[0].x==2 &&
               markers[1].icon==31 && markers[1].y==9 && markers[1].z==10 && markers[2].icon==30,
               "moving lifts show marker1 at start and marker2 at end; still lifts avoid overlapping labels and chests get none");
@@ -1377,6 +1377,34 @@ int main()
         check(exits(world)==1 && records.size()==1 && records[0].type==GalaxyEggbert::Def::ObjectType::ObjectType21,
               "a clipboard containing several goals still leaves only the last exit/key");
     }
+    {
+        for (int type : {1,47,48,4,16,17,20,32,33,44,54})
+        {
+            GalaxyEggbert::MoveObjectRecord r;
+            r.type=static_cast<GalaxyEggbert::Def::ObjectType>(type);
+            r.posStartX=2;r.posStartY=3;r.posStartZ=4;r.posEndX=8;r.posEndY=9;r.posEndZ=10;
+            const auto markers=BuildObjectPathMarkers({r});
+            check(markers.size()==2 && markers[0].icon==30 && markers[0].x==2 && markers[1].icon==31 && markers[1].z==10,
+                  "every lift/creature/moving-mine/fish route shows markers1 and2 at its authored endpoints");
+            r.posEndX=2;r.posEndY=3;r.posEndZ=4;
+            check(BuildObjectPathMarkers({r}).size()==1,"a still path object shows only its start until an end is chosen");
+        }
+        GalaxyEggbert::MoveObjectRecord r;
+        r.posStartX=2;r.posStartY=3;r.posStartZ=4;r.posEndX=8;r.posEndY=9;r.posEndZ=10;
+        for (int type : {2,3})
+        {
+            r.type=static_cast<GalaxyEggbert::Def::ObjectType>(type);
+            check(BuildObjectPathMarkers({r}).size()==2,"an optional patrol shows its explicitly authored route");
+            auto still=r;still.posEndX=2;still.posEndY=3;still.posEndZ=4;
+            check(BuildObjectPathMarkers({still}).empty(),"an ordinary stationary mine gets no route cubes");
+        }
+        for (int type : {5,96,97})
+        {
+            r.type=static_cast<GalaxyEggbert::Def::ObjectType>(type);
+            check(BuildObjectPathMarkers({r}).empty(),"treasures and chasing hazards have no authored route markers");
+        }
+    }
+
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;
 }
