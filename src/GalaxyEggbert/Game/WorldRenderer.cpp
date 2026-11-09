@@ -362,6 +362,9 @@ namespace GalaxyEggbert::Game
                 {
                     shader.SetTexture(0, *texture);
                 }
+                m_scene.SetPartMaterial(model.partMaterials != nullptr && i < model.partMaterials->size()
+                                            ? &(*model.partMaterials)[i]
+                                            : nullptr);
                 shader.Apply();
                 DrawPart(device, part);
                 if (model.counted)
@@ -567,6 +570,7 @@ namespace GalaxyEggbert::Game
                                        const WorldRenderAssets& assets)
     {
         // Rebuilt every frame: a billboard's corners follow the camera's right and up.
+        const bool shadowedSprites = m_modelShading && m_scene.ShadowMapped();
         if (m_billboardMeshes.size() < frame.billboards.size())
         {
             m_billboardMeshes.resize(frame.billboards.size());
@@ -585,6 +589,12 @@ namespace GalaxyEggbert::Game
                 continue;
             }
             m_billboardMeshes[i] = UploadTexturedMesh(device, mesh.Mesh());
+            if (shadowedSprites)
+            {
+                // High: the sprite darkened where the sun's shadow falls on it.
+                m_billboardMeshes[i]->Draw(device, m_scene.SpriteWith(effect->getTextureProperty(), batch.alpha));
+                continue;
+            }
             SetCamera(*effect, frame.camera);
             if (batch.alpha != 1.0f)
             {
@@ -603,6 +613,11 @@ namespace GalaxyEggbert::Game
             if (!mesh.Mesh().Empty())
             {
                 m_marineMesh = UploadTexturedMesh(device, mesh.Mesh());
+                if (shadowedSprites)
+                {
+                    m_marineMesh->Draw(device, m_scene.SpriteWith(assets.objectM->getTextureProperty(), 1.0f));
+                    return;
+                }
                 SetCamera(*assets.objectM, frame.camera);
                 m_marineMesh->Draw(device, *assets.objectM);
             }

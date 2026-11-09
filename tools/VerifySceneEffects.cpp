@@ -1,10 +1,12 @@
 // VerifySceneEffects: what the 3D effects draw, decided without a GPU (SceneEffectsLogic.hpp) -- where a
 // soft shadow falls and how dark it is, which lights a frame keeps, how a terrain corner is occluded.
 
+#include <GalaxyEggbert/Game/ProceduralMaterial.hpp>
 #include <GalaxyEggbert/Game/SceneEffectsLogic.hpp>
 
 #include <cmath>
 #include <cstdio>
+#include <sstream>
 
 namespace
 {
@@ -172,6 +174,34 @@ int main()
     plate.normals.emplace_back(0.0f, 1.0f, 0.0f);
     BakeAmbientOcclusion(plate, room, coverage, 0, 0);
     Check(Near(Grey(plate, 0), 1.0f, 0.01f), "a vertex off the grid stays white");
+
+    // --- The Ray Dream materials (materials.txt) ----------------------------------------------------
+    std::istringstream text(
+        "# a palm\n"
+        "material rd_be5f1e\n"
+        "colour 0.766 0.5 0.258\n"
+        "layer marble 0.844 0.41 0.227 2.9788 7.6187 2.5712 0 0.9681\n"
+        "layer wood 0.688 0.293 0 4.096 3.4918 2.8093 1 0.6983\n"
+        "layer marble 1 1 1 1 1 1 0 0.5\n"
+        "bump spots 0.5 1 0.5873\n"
+        "material rd_000000\n"
+        "bump grain 0.35 1 0.5\n"
+        "nonsense line\n");
+    const auto materials = GalaxyEggbert::Game::ReadProceduralMaterials(text);
+    const auto* palm = GalaxyEggbert::Game::FindPartMaterial(materials, "bd_plante1a_rd_be5f1e");
+    Check(palm != nullptr && palm->hasColour && Near(palm->colour.X, 0.766f), "a part finds its material by its colour suffix");
+    Check(palm != nullptr && palm->layerCount == 2 &&
+              palm->layers[0].pattern == GalaxyEggbert::Game::MaterialPattern::Marble &&
+              palm->layers[1].pattern == GalaxyEggbert::Game::MaterialPattern::Wood && palm->layers[1].axis == 1,
+          "two layers kept (a third dropped): marble, then wood along y");
+    Check(palm != nullptr && palm->bump == GalaxyEggbert::Game::MaterialBump::Spots && Near(palm->bumpThreshold, 0.5873f),
+          "its spots bump");
+    const auto* grain = GalaxyEggbert::Game::FindPartMaterial(materials, "x_rd_000000");
+    Check(grain != nullptr && !grain->hasColour && grain->bump == GalaxyEggbert::Game::MaterialBump::Grain,
+          "a bump alone (an image's: grain)");
+    Check(GalaxyEggbert::Game::FindPartMaterial(materials, "bd_plante1a_rd_tex_p08_Assistant_3D") == nullptr &&
+              GalaxyEggbert::Game::FindPartMaterial(materials, "no_suffix") == nullptr,
+          "a textured part and an unnamed one have none");
 
     std::printf("%s\n", failures == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED");
     return failures == 0 ? 0 : 1;

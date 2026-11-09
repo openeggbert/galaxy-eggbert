@@ -291,6 +291,18 @@ every icon of a sprite sheet against renders of the scenes without Blupi (their 
 cameras), giving the scene each object's sprites were rendered from. Commands in the script's
 docstring; results feed `assets-3d-analysis.md` and `plan.md` Phase 7B (`BB3D-*`).
 
+## Procedural materials for the game's 3D effects
+
+`procedural_materials.py --originals <speedyblupi-data/originals> --objects objects.txt --out
+../../avatars3d/objects` writes beside each object model a `materials.txt`: for each flat part
+(`rd_rrggbb`) whose Ray Dream shader mixed colours by a pattern (wood `swod`, marble `smrb`, spots
+`sspt`) or had a bump channel, its colours (toned and recoloured as the converter toned the part),
+the patterns with their parameters (scale, spacing, perturbation, axis, blend) and its bump (spots,
+or `grain` for an image bump). The game's model shader draws them at the "3D effects" level high
+(`src/GalaxyEggbert/Game/ProceduralMaterial.hpp`); the meshes and textures are untouched. Ray
+Dream's own noise is not known: the patterns are drawn with the files' colours and parameters over
+a value noise, not texel for texel.
+
 ## Not converted yet (next steps)
 
 - Procedural shaders (the skateboard's wood shows its flat colour); texture maps in rectangle
@@ -298,5 +310,6 @@ docstring; results feed `assets-3d-analysis.md` and `plan.md` Phase 7B (`BB3D-*`
 - Masters still skipped: stars (`COFA`), 3D text (`tx`), fog (`fogg`); 3ds Max (`max/`,
   `Element/shield*.max`) and Amapi (`.a3d`) files are not Ray Dream at all.
 - Twisted sweeps (none in the archive's objects). Procedural patterns (wood, marble, spots) are
-  flat colours (`smix` the mean of its inputs).
+  flat colours (`smix` the mean of its inputs) in the meshes; the 3D effects draw them again from
+  `materials.txt` (above).
 - Highlight, shininess and the other shader channels (the glTF material is plain PBR).

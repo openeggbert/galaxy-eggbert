@@ -12,6 +12,7 @@
 // declared), never touched.
 
 #include <GalaxyEggbert/Def/ObjectType.hpp>
+#include <GalaxyEggbert/Game/ProceduralMaterial.hpp>
 
 #include <CnaEngine/Graphics/MeshBuilder.hpp>
 #include <CnaEngine/Graphics/TextureAtlas.hpp>
@@ -121,6 +122,9 @@ namespace GalaxyEggbert::Game
         float cullRadius = -1.0f;          // >= 0: skipped when this sphere round `cullCenter` is out of view
         Microsoft::Xna::Framework::Vector3 cullCenter;
         bool counted = false;              // counted in the perf statistics (object models)
+        // Each part's Ray Dream material (ProceduralMaterial.hpp), for the effects' model shader: one
+        // per part, or nullptr (none).
+        const std::vector<ProceduralMaterial>* partMaterials = nullptr;
     };
 
     // A textured quad set drawn with one texture (the signs' painted faces, the sparks).

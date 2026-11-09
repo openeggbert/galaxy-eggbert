@@ -113,6 +113,7 @@ namespace GalaxyEggbert::Game
         std::vector<std::unique_ptr<CnaEngine::Graphics::GpuMesh>> m_particleMeshes;
         SurfaceShaders m_surfaces;
         SceneShaders m_scene;
+        unsigned m_shadowFrame = 0;
         bool m_sceneShading = false; // this frame's terrain drawn with m_scene (medium and high)
         bool m_modelShading = false; // ... and the models, cubes and grass (high)
         WorldRenderStatistics m_statistics;

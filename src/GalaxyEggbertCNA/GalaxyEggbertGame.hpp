@@ -1260,6 +1260,8 @@ namespace GalaxyEggbert::CNA
         // the frustum test of the model pass (drawModel). Models out of view are not drawn: the
         // treasure chest is 68 068 triangles, a plant 182 496. GALAXY_MODEL_CULL=0 draws them all.
         std::vector<float> objectModelRadii_;
+        // Per object model, its parts' Ray Dream materials (empty: none), for the effects' model shader.
+        std::vector<std::vector<GalaxyEggbert::Game::ProceduralMaterial>> objectPartMaterials_;
         bool modelCulling_ = true;
         // GALAXY_PERF=1 (measurements): every 2 s on stdout the mean Draw time and the model pass's
         // models drawn, their triangles and the models culled, a frame each.

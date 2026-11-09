@@ -480,6 +480,33 @@ namespace GalaxyEggbert::CNA
                             content.Load<std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT>>(
                                 "objects/" + name + "/avatar"));
                         objectModelRadii_.push_back(ModelFileReach("avatars3d/objects/" + name));
+                        // Its parts' Ray Dream materials (tools/rd4_to_gltf/procedural_materials.py), for the
+                        // 3D effects: one per part, empty when it has none.
+                        {
+                            std::vector<GalaxyEggbert::Game::ProceduralMaterial> parts;
+                            std::ifstream file("avatars3d/objects/" + name + "/materials.txt");
+                            if (file)
+                            {
+                                const auto materials = GalaxyEggbert::Game::ReadProceduralMaterials(file);
+                                const auto& model = *objectModels_.back();
+                                parts.resize(model.Parts.size());
+                                bool any = false;
+                                for (std::size_t i = 0; i < model.Parts.size(); ++i)
+                                {
+                                    if (const auto* material =
+                                            GalaxyEggbert::Game::FindPartMaterial(materials, model.Parts[i].Name))
+                                    {
+                                        parts[i] = *material;
+                                        any = true;
+                                    }
+                                }
+                                if (!any)
+                                {
+                                    parts.clear();
+                                }
+                            }
+                            objectPartMaterials_.push_back(std::move(parts));
+                        }
                         // The solid BigDecor's shapes (Q-014), as this model draws their icons.
                         for (const auto icon : GalaxyEggbert::kSolidBigDecorIcons)
                         {

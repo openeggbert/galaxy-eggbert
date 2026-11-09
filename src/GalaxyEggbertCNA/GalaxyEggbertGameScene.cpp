@@ -736,6 +736,10 @@ namespace GalaxyEggbert::CNA
             model.boothFrontOnly = boothFrontOnly;
             model.editorSelected = tintModelCell;
             model.counted = true;
+            if (index < objectPartMaterials_.size() && !objectPartMaterials_[index].empty())
+            {
+                model.partMaterials = &objectPartMaterials_[index];
+            }
             models.push_back(std::move(model));
             return models.back();
         };
