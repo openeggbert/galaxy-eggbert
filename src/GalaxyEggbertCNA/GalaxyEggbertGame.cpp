@@ -92,8 +92,7 @@ namespace GalaxyEggbert::CNA
 
     float detail::GameSpeedFactor(GalaxyEggbert::Def::GameSpeed speed) noexcept
     {
-        return (speed == GalaxyEggbert::Def::GameSpeed::Slow) ? 0.5f
-                                                           : static_cast<float>(GalaxyEggbert::Def::ToRaw(speed));
+        return GalaxyEggbert::Def::SpeedFactor(speed);
     }
 
     // GetBackBufferData()'s no-rect overload reads the WHOLE backbuffer, and CNA sizes
@@ -1415,7 +1414,7 @@ namespace GalaxyEggbert::CNA
                     blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
                     cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = false;
                     cheatZoomStep_ = 0;
-                    if (gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
+                    if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))
                         gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
                     activeCheats_.clear();
                     activeCheats_.push_back("fairplay");

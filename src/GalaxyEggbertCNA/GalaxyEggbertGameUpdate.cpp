@@ -3315,7 +3315,7 @@ namespace GalaxyEggbert::CNA
             if (typedCheat.quickTyped)
             {
                 quickCheatEnabled_ = !quickCheatEnabled_;
-                if (!quickCheatEnabled_ && gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
+                if (!quickCheatEnabled_ && GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))
                 {
                     gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Fast;
                 }
@@ -3333,7 +3333,7 @@ namespace GalaxyEggbert::CNA
             // 582-594): drop back to Normal if speed is still >Fast
             // with neither quick nor ghost active (this engine has no
             // Shift-boost to also check, per the above).
-            if (!quickCheatEnabled_ && !blupi_.IsGhost() && gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
+            if (!quickCheatEnabled_ && !blupi_.IsGhost() && GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))
             {
                 gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
             }
@@ -3364,13 +3364,12 @@ namespace GalaxyEggbert::CNA
                 }
                 f8KeyWasDown_ = f8Down;
             }
-            // Real Tab: toggle Slow<->Normal (InputPad.cpp:657-676).
+            // Tab: the original's toggles Slow<->Normal (InputPad.cpp:657-676); Galaxy's steps 0.5, 0.25,
+            // 0.125 and back to normal (the owner, 2026-11-09).
             const bool tabDown = phaseKeys.IsKeyDown(Keys::Tab);
             if (tabDown && !tabKeyWasDown_)
             {
-                gameSpeed_ = (gameSpeed_ == GalaxyEggbert::Def::GameSpeed::Slow)
-                                 ? GalaxyEggbert::Def::GameSpeed::Normal
-                                 : GalaxyEggbert::Def::GameSpeed::Slow;
+                gameSpeed_ = GalaxyEggbert::Def::NextSlowSpeed(gameSpeed_);
             }
             tabKeyWasDown_ = tabDown;
             // Real F12: a second, direct way to open/close the cheat
