@@ -2,6 +2,8 @@
 // (DrawOverlay) and the frame captures (DrawFrameCaptures). Split out of GalaxyEggbertGame.cpp.
 #include "GalaxyEggbertGame.hpp"
 
+#include <Microsoft/Xna/Framework/Vector4.hpp>
+
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/DebugOverlay.hpp>
@@ -91,6 +93,76 @@ namespace GalaxyEggbert::CNA
                 perfModelDraws_ = perfModelTriangles_ = perfModelCulled_ = 0;
             }
         }
+    }
+
+    void GalaxyEggbertGame::DrawPositionAxes(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                             int viewportH, float left, float top)
+    {
+        // The "position" cheat's axes (the owner, 2026-11-09): the world's X, Y and Z as three arrows in
+        // the editor's colours (red, green, blue), under the cheats' list, turning as the camera turns --
+        // which way to face to go along X, Y or Z. Drawn in the world a little in front of the camera
+        // (so they turn with it), over everything, about two lines of text high.
+        using Microsoft::Xna::Framework::Vector3;
+        using Microsoft::Xna::Framework::Vector4;
+        const float s = static_cast<float>(viewportH) / 480.0f;
+        // Their foot: under the list, a little in from its left.
+        const float footX = left + 36.0f * s;
+        const float footY = top + 44.0f * s;
+        const float ndcX = footX / static_cast<float>(viewportW) * 2.0f - 1.0f;
+        const float ndcY = 1.0f - footY / static_cast<float>(viewportH) * 2.0f;
+        constexpr float kDepth = 2.0f;
+        const float tanY = std::tan(camera_.FieldOfView() * 0.5f);
+        const float tanX = tanY * camera_.AspectRatio();
+        const Vector3 forward = camera_.Forward();
+        const Vector3 right = camera_.Right();
+        const Vector3 up = camera_.Up();
+        const Vector3 foot = camera_.Position() + forward * kDepth + right * (ndcX * kDepth * tanX) + up * (ndcY * kDepth * tanY);
+        // About 22 reference pixels long on the screen.
+        const float length = 22.0f / 480.0f * 2.0f * kDepth * tanY;
+        struct Axis
+        {
+            Vector3 direction;
+            Microsoft::Xna::Framework::Color colour;
+            const char* name;
+        };
+        const Axis axes[3] = {{Vector3(1.0f, 0.0f, 0.0f), Microsoft::Xna::Framework::Color(235, 70, 60), "X"},
+                              {Vector3(0.0f, 1.0f, 0.0f), Microsoft::Xna::Framework::Color(70, 215, 95), "Y"},
+                              {Vector3(0.0f, 0.0f, 1.0f), Microsoft::Xna::Framework::Color(70, 135, 250), "Z"}};
+        positionAxes_.Clear();
+        std::vector<GalaxyEggbert::Game::InputPad::ScreenLabel> labels;
+        const auto viewProjection = camera_.ViewProjection();
+        for (const auto& axis : axes)
+        {
+            const Vector3 tip = foot + axis.direction * length;
+            // A thicker shaft (three lines a hair apart across the view) and an arrowhead facing the camera.
+            Vector3 across = Vector3::Cross(axis.direction, forward);
+            if (across.LengthSquared() < 1e-4f)
+            {
+                across = up;
+            }
+            across.Normalize();
+            const float hair = length * 0.03f;
+            for (const float o : {-hair, 0.0f, hair})
+            {
+                positionAxes_.Line(foot + across * o, tip + across * o, axis.colour);
+            }
+            const Vector3 back = tip - axis.direction * (length * 0.28f);
+            positionAxes_.Line(tip, back + across * (length * 0.14f), axis.colour);
+            positionAxes_.Line(tip, back - across * (length * 0.14f), axis.colour);
+            positionAxes_.Line(back + across * (length * 0.14f), back - across * (length * 0.14f), axis.colour);
+            // Its name past its tip, where the camera sees it.
+            const Vector3 at = foot + axis.direction * (length * 1.35f);
+            const Vector4 clip = Vector4::Transform(Vector4(at.X, at.Y, at.Z, 1.0f), viewProjection);
+            if (clip.W > 0.01f)
+            {
+                labels.push_back({(clip.X / clip.W * 0.5f + 0.5f) * static_cast<float>(viewportW),
+                                  (0.5f - clip.Y / clip.W * 0.5f) * static_cast<float>(viewportH), axis.name,
+                                  Vector3(axis.colour.getRProperty() / 255.0f, axis.colour.getGProperty() / 255.0f,
+                                          axis.colour.getBProperty() / 255.0f)});
+            }
+        }
+        positionAxes_.Draw(device, camera_, false);
+        inputPad_.DrawLabels(device, viewportW, viewportH, labels);
     }
 
     std::vector<std::string> GalaxyEggbertGame::ActiveCheatNames() const
@@ -635,6 +707,11 @@ namespace GalaxyEggbert::CNA
                     const auto cheats = ActiveCheatNames();
                     names.insert(names.end(), cheats.begin(), cheats.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
+                    if (std::find(activeCheats_.begin(), activeCheats_.end(), "position") != activeCheats_.end())
+                    {
+                        const auto list = GalaxyEggbert::Game::InputPad::ActiveCheatsRect(names, viewport.getHeightProperty());
+                        DrawPositionAxes(device, viewport.getWidthProperty(), viewport.getHeightProperty(), list.x0, list.y1);
+                    }
                     if (noticeApart)
                     {
                         // Under the hint's banner (40 reference pixels) and under the list beside it.

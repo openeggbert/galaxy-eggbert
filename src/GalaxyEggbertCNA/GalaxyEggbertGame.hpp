@@ -48,6 +48,7 @@
 #include <Microsoft/Xna/Framework/Media/Song.hpp>
 
 #include <chrono>
+#include <CnaEngine/Graphics/DebugDraw.hpp>
 #include <cstdint>
 #include <deque>
 #include <optional>
@@ -735,6 +736,10 @@ namespace GalaxyEggbert::CNA
         std::chrono::steady_clock::time_point fpsSince_{};
         float fpsShown_ = 0.0f;
         [[nodiscard]] std::vector<std::string> ActiveCheatNames() const;
+        // The "position" cheat's axes: X, Y, Z as arrows turning with the camera, under the cheats' list.
+        CnaEngine::Graphics::DebugDraw positionAxes_;
+        void DrawPositionAxes(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                              float left, float top);
         std::array<float, 3> debugVelocity_{};
         // The autoplay's `switches` / `saws` conditions: the switches pressed in this mission and the
         // saws 378 turning now (-1: not counted yet; counted again after each press).

@@ -133,6 +133,16 @@ namespace GalaxyEggbert::Game
         // the training hint's banner while it shows; the cheats keep the original's place).
         void DrawActiveCheats(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                               int viewportH, const std::vector<std::string>& names, float top = 0.0f);
+        // Words in colour centred on screen points (the "position" cheat's axes' names).
+        struct ScreenLabel
+        {
+            float x = 0.0f;
+            float y = 0.0f;
+            std::string text;
+            Microsoft::Xna::Framework::Vector3 colour;
+        };
+        void DrawLabels(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                        const std::vector<ScreenLabel>& labels);
         // MODERN debug diagnostics, top-right; touch layouts leave Pause accessible above it.
         void DrawDebug(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                        int viewportH, const std::vector<std::string>& lines, bool touchControls);
@@ -797,6 +807,9 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> lostBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> setupBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> textEffect_;
+        // The glyphs white (text.png's are black), for words in colour (DrawLabels); made on first use.
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> whiteTextTexture_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> whiteTextEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> waitBgEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> jaugeEffect_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> initBgEffect_;

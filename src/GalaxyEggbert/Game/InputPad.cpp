@@ -793,6 +793,46 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    void InputPad::DrawLabels(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH,
+                              const std::vector<ScreenLabel>& labels)
+    {
+        if (!loaded_ || labels.empty() || viewportH <= 0)
+        {
+            return;
+        }
+        if (!whiteTextEffect_)
+        {
+            // text.png's glyphs are black: a white copy takes any colour from the effect's diffuse.
+            const int w = textTexture_.getWidthProperty();
+            const int h = textTexture_.getHeightProperty();
+            std::vector<Microsoft::Xna::Framework::Color> texels(static_cast<std::size_t>(w) * static_cast<std::size_t>(h));
+            textTexture_.GetData(texels.data(), static_cast<int>(texels.size()));
+            for (auto& texel : texels)
+            {
+                texel = Microsoft::Xna::Framework::Color(255, 255, 255, static_cast<int>(texel.getAProperty()));
+            }
+            whiteTextTexture_ = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(device, w, h);
+            whiteTextTexture_->SetData(texels.data(), static_cast<int>(texels.size()));
+            whiteTextEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
+            whiteTextEffect_->VertexColorEnabled = false;
+            whiteTextEffect_->setTextureEnabledProperty(true);
+            whiteTextEffect_->setTextureProperty(whiteTextTexture_.get());
+        }
+        constexpr float kScale = 0.55f;
+        const float s = static_cast<float>(viewportH) / kRefH;
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        for (const auto& label : labels)
+        {
+            const float width = static_cast<float>(TextMetrics::Width(label.text)) * kScale * s;
+            const float height = kGlyphCellPx * kScale * s;
+            std::vector<Quad> glyphs;
+            AppendGamerLabel(glyphs, label.text, label.x - width * 0.5f, label.y - height * 0.5f, kScale, s);
+            whiteTextEffect_->setDiffuseColorProperty(label.colour);
+            FlushQuads(device, *whiteTextEffect_, textRenderer_, glyphs, viewportW, viewportH, 1.0f);
+        }
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     void InputPad::DrawDebug(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                              int viewportH, const std::vector<std::string>& lines, bool touchControls)
     {
