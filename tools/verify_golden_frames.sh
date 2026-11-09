@@ -39,29 +39,43 @@ fi
 
 frames=(golden_frame_0060.png golden_frame_0120.png golden_frame_0180.png)
 
-for f in "${frames[@]}"; do
-    rm -f "${build_dir}/${f}"
-done
-
-(cd "${build_dir}" && timeout 20 "./GalaxyEggbert" --golden-capture) > /dev/null 2>&1 || true
-
+# The classic look (GALAXY_EFFECTS=0, whatever the build directory's savedata.txt says), then the 3D
+# effects at medium and high (the Setup's "3D effects", 2026-11-09) against their own references in
+# tests/golden/effects-<level>/. GOLDEN_UPDATE=1 writes the effects' references from this build
+# (after a deliberate change of the effects; the classic ones are only ever replaced by hand).
 all_ok=1
-for f in "${frames[@]}"; do
-    fresh="${build_dir}/${f}"
-    reference="${golden_dir}/${f}"
-    if [[ ! -f "${fresh}" ]]; then
-        echo "FAIL: ${f} was not captured"
-        all_ok=0
-    elif [[ ! -f "${reference}" ]]; then
-        echo "FAIL: ${f} has no reference copy at ${reference}"
-        all_ok=0
-    elif cmp -s "${fresh}" "${reference}"; then
-        echo "PASS: ${f} matches the approved reference"
-    else
-        echo "FAIL: ${f} differs from the approved reference (${reference})"
-        all_ok=0
-    fi
-done
+check_level() {
+    local level="$1" reference_dir="$2"
+    for f in "${frames[@]}"; do
+        rm -f "${build_dir}/${f}"
+    done
+    (cd "${build_dir}" && GALAXY_EFFECTS="${level}" timeout 90 "./GalaxyEggbert" --golden-capture) > /dev/null 2>&1 || true
+    for f in "${frames[@]}"; do
+        fresh="${build_dir}/${f}"
+        reference="${reference_dir}/${f}"
+        label="${f} (effects ${level})"
+        if [[ ! -f "${fresh}" ]]; then
+            echo "FAIL: ${label} was not captured"
+            all_ok=0
+        elif [[ "${GOLDEN_UPDATE:-}" == 1 && "${level}" != 0 ]]; then
+            mkdir -p "${reference_dir}"
+            cp "${fresh}" "${reference}"
+            echo "UPDATED: ${label} -> ${reference}"
+        elif [[ ! -f "${reference}" ]]; then
+            echo "FAIL: ${label} has no reference copy at ${reference}"
+            all_ok=0
+        elif cmp -s "${fresh}" "${reference}"; then
+            echo "PASS: ${label} matches the approved reference"
+        else
+            echo "FAIL: ${label} differs from the approved reference (${reference})"
+            all_ok=0
+        fi
+    done
+}
+
+check_level 0 "${golden_dir}"
+check_level medium "${golden_dir}/effects-medium"
+check_level high "${golden_dir}/effects-high"
 
 if [[ "${all_ok}" -eq 1 ]]; then
     echo "ALL CHECKS PASSED"
