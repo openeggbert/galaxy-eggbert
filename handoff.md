@@ -54,6 +54,16 @@ with the release audit.
   the gamer's galaxy progress starts over (`SaveData::ResetGalaxyProgress`, via
   `BrowserRequest::galaxyImported`). Tests `VerifyGEEditorStorage`; live
   `harness/case_galaxy_share.py` (`galaxy-share-sheet.png`).
+- A galaxy's name (same day): `GalaxyDir()/name.txt` (`GalaxyName`/`SetGalaxyName`, letters, digits,
+  single spaces, '-' and '\'', 24 at most), a `name <size>` entry in its pack (`UnpackGalaxy`
+  `GalaxyPack::name`, `PeekGalaxyPackName` for the list), the receiver's galaxy takes it on import
+  (or none); its export is named after it (`Star-Fields.galaxy`). The galaxy screen's title is
+  clicked to name it: typed keys (the host forwards `KeyDownEXT` to `WorldEditor::TypeKey` while
+  `WantsText()`; a Shift press is caught as an event for the next letter, as the frame's snapshot
+  misses a quick one), Enter or a click elsewhere keeps it, Escape leaves it. The import list and
+  the menu's player panel show it ("Star Fields : 0 gates", cut with "..." when long; read again
+  on each return to the menu). Typing needs a keyboard (not on a touch-only device). Tests
+  `VerifyGEEditorStorage`; live `harness/case_galaxy_name.py` (`galaxy-name-sheet.png`).
 - The demo positions from the main menu (same day): a Demos button left of Exit (over Galaxy,
   `InputPad` `InitLayout::demos`, `demosPressed`) opens the same screen over the pause screen's
   picture (`UpdateDemoSlotsScreen`/`DrawDemoSlotsScreen`, shared with Pause): Export, Import and

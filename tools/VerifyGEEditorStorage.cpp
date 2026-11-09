@@ -885,6 +885,74 @@ int main()
         std::filesystem::remove(SharedWorldsDir(), error); // only when nothing else is in it
     }
 
+    // A galaxy's name: kept beside it, in its pack, its export's file name, typed on its screen.
+    {
+        using Microsoft::Xna::Framework::Input::Keys;
+        std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
+        std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
+        std::filesystem::create_directories(GalaxyDir(kStorageSlot), error);
+        CreateGalaxyStarterWorld(1).saveToFile(GalaxyWorldPath(kStorageSlot, 1));
+        check(SanitizeGalaxyName("  Star   Fields!? ") == "Star Fields" &&
+                  SanitizeGalaxyName("Blupi's land-2") == "Blupi's land-2" &&
+                  SanitizeGalaxyName(std::string(40, 'x')).size() == kGalaxyNameMax && SanitizeGalaxyName("!!!").empty(),
+              "galaxy name: letters, digits, single spaces, '-' and '\'', at most 24");
+        const bool none = GalaxyName(kStorageSlot).empty() && GalaxyExportName(kStorageSlot) == "player77-galaxy.galaxy";
+        (void)SetGalaxyName(kStorageSlot, "Star Fields");
+        check(none && GalaxyName(kStorageSlot) == "Star Fields" && GalaxyExportName(kStorageSlot) == "Star-Fields.galaxy",
+              "galaxy name: kept beside the galaxy, its export named after it");
+        const auto exported = ExportGalaxy(kStorageSlot);
+        const auto unpacked = UnpackGalaxy([&] {
+            std::ifstream in(exported, std::ios::binary);
+            return std::string((std::istreambuf_iterator<char>(in)), {});
+        }());
+        (void)SetGalaxyName(kBrowserSlot, "Old name");
+        const int places = ImportGalaxy(kBrowserSlot, exported);
+        check(exported.filename() == "Star-Fields.galaxy" && unpacked && unpacked->name == "Star Fields" &&
+                  PeekGalaxyPackName(exported) == "Star Fields" && places == 1 && GalaxyName(kBrowserSlot) == "Star Fields",
+              "galaxy name: in the pack, read from it without unpacking, the receiver's galaxy takes it");
+        (void)SetGalaxyName(kStorageSlot, "");
+        const auto plain = ExportGalaxy(kStorageSlot);
+        (void)ImportGalaxy(kBrowserSlot, plain);
+        check(GalaxyName(kStorageSlot).empty() && PeekGalaxyPackName(plain).empty() && GalaxyName(kBrowserSlot).empty(),
+              "galaxy name: forgotten when emptied; a pack without one leaves the receiver's galaxy unnamed");
+        std::filesystem::remove(exported, error);
+        std::filesystem::remove(plain, error);
+
+        GalaxyBrowserScreen named;
+        named.Refresh(kStorageSlot);
+        const auto tapName = [&named](const GalaxyEggbert::Game::QuadBatch::Rect& r) {
+            const int x = int((r.x0 + r.x1) * 0.5f), y = int((r.y0 + r.y1) * 0.5f);
+            (void)named.Update(MouseState(x, y, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+                                          ButtonState::Released, ButtonState::Released));
+            return named.Update(MouseState(x, y, 0, ButtonState::Released, ButtonState::Released,
+                                           ButtonState::Released, ButtonState::Released, ButtonState::Released));
+        };
+        (void)tapName(GalaxyBrowserScreen::NameRect());
+        const bool typing = named.Naming();
+        for (const auto& [key, shift] : std::vector<std::pair<Keys, bool>>{
+                 {Keys::S, true}, {Keys::K, false}, {Keys::Y, false}, {Keys::Space, false}, {Keys::D2, false},
+                 {Keys::X, false}, {Keys::Back, false}})
+            named.TypeKey(key, shift);
+        named.TypeKey(Keys::Enter, false);
+        check(typing && !named.Naming() && named.Name() == "Sky 2" && GalaxyName(kStorageSlot) == "Sky 2",
+              "galaxy screen: a click on the title, typed keys (Shift, digits, Backspace), Enter keeps the name");
+        (void)tapName(GalaxyBrowserScreen::NameRect());
+        named.TypeKey(Keys::Z, false);
+        const auto idle = MouseState(400, 240, 0, ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                                     ButtonState::Released, ButtonState::Released);
+        (void)named.Update(idle, true); // Escape
+        const bool cancelled = !named.Naming() && named.Name() == "Sky 2" && GalaxyName(kStorageSlot) == "Sky 2";
+        (void)named.Update(idle, false);
+        (void)tapName(GalaxyBrowserScreen::NameRect());
+        named.TypeKey(Keys::Back, false);
+        (void)tapName(GalaxyBrowserScreen::WorldRect(5)); // a click elsewhere keeps it
+        check(cancelled && !named.Naming() && GalaxyName(kStorageSlot) == "Sky", // trimmed
+              "galaxy screen: Escape leaves the name as it was; a click elsewhere keeps the one typed");
+        std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
+        std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
+        std::filesystem::remove(SharedWorldsDir(), error);
+    }
+
     // The player's recordings made in a galaxy travel in its pack, to the receiver's shared demos.
     {
         using namespace GalaxyEggbert::Game;

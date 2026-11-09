@@ -699,8 +699,10 @@ namespace GalaxyEggbert::Game
             int mainGates = 0;
             int secondaryGates = 0;
             // Galaxy's own (BD-0119): the gates opened in the gamer's galaxy, -1 when the gamer has
-            // none (no main hub, no progress): shown on the Blupi line, right-aligned.
+            // none (no main hub, no progress): shown on the Blupi line, right-aligned, by the
+            // galaxy's name when it has one.
             int galaxyGates = -1;
+            std::string galaxyName;
         };
         void DrawInit(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                      int viewportW, int viewportH, float phaseTimeSeconds,

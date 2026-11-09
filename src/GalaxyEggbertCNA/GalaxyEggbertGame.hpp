@@ -898,6 +898,14 @@ namespace GalaxyEggbert::CNA
         // world played has an edit kept (CustomWorldStorage HasCampaignEdit(), only ever on the web);
         // its first click arms it ("Sure?"), the second puts the shipped world back and restarts.
         bool revertArmed_ = false;
+        // Keys typed into the galaxy's name (the editor's galaxy screen), with Shift, as they came.
+        std::vector<std::pair<Microsoft::Xna::Framework::Input::Keys, bool>> browserTypedKeys_;
+        // A Shift press seen as an event: the next key typed is a capital (the frame's snapshot can
+        // miss a Shift pressed and let go between two updates).
+        bool typedShiftPending_ = false;
+        // The players' galaxies' names for the menu's panel, read again on each return to the menu.
+        std::array<std::string, 3> galaxyNames_{};
+        bool galaxyNamesStale_ = true;
         [[nodiscard]] bool CanRevertWorld() const;
         void RevertWorld();
 

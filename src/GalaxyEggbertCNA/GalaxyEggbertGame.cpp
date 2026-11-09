@@ -886,6 +886,18 @@ namespace GalaxyEggbert::CNA
             if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
             {
                 if (!worldEditor_.IsBrowsing()) editorCommandKeys_.Record(key);
+                else if (worldEditor_.WantsText() && browserTypedKeys_.size() < 64)
+                {
+                    if (key == Keys::LeftShift || key == Keys::RightShift)
+                    {
+                        typedShiftPending_ = true;
+                        return;
+                    }
+                    const auto keys = Microsoft::Xna::Framework::Input::Keyboard::GetState();
+                    browserTypedKeys_.emplace_back(key, typedShiftPending_ || keys.IsKeyDown(Keys::LeftShift) ||
+                                                            keys.IsKeyDown(Keys::RightShift));
+                    typedShiftPending_ = false;
+                }
                 return;
             }
             if (!GalaxyEggbert::Game::kCheatsEnabled || phase_ != GalaxyEggbert::Def::GamePhase::Play) return;
@@ -3596,6 +3608,7 @@ namespace GalaxyEggbert::CNA
         using GalaxyEggbert::Def::GamePhase;
         if (next != GamePhase::Pause) demoSlotsShown_ = false;
         if (next != GamePhase::Pause) revertArmed_ = false;
+        if (next == GamePhase::Init) galaxyNamesStale_ = true; // a name typed in the editor shows
         // Pause, Win, Lost or a menu end a demo (and its recording) rather than show over it.
         if (next != GamePhase::Play && ((demoActive_ && demoSessionLive_) || demoRecording_))
         {
@@ -5583,6 +5596,10 @@ namespace GalaxyEggbert::CNA
                 const auto mouse = phaseMouse;
                 if (worldEditor_.IsBrowsing())
                 {
+                    // The galaxy's name being typed takes the keys (Escape stays the screen's back).
+                    for (const auto& [typed, shift] : browserTypedKeys_)
+                        if (worldEditor_.WantsText()) worldEditor_.TypeKey(typed, shift);
+                    browserTypedKeys_.clear();
                     const auto request = worldEditor_.UpdateBrowsing(
                         mouse, viewport.getWidthProperty(), viewport.getHeightProperty(),
                         phaseKeys.IsKeyDown(Keys::Escape));
@@ -9885,12 +9902,16 @@ namespace GalaxyEggbert::CNA
                     gamers[static_cast<std::size_t>(g)] = InputPad::InitGamerInfo{
                         saveData_.GetLivesForGamer(g), saveData_.GetMainGatesForGamer(g),
                         saveData_.GetSecondaryGatesForGamer(g)};
-                    // The player's own galaxy (BD-0119), once it has a main hub or progress.
+                    // The player's own galaxy (BD-0119), once it has a main hub or progress, by its name.
                     std::error_code ignored;
                     if (saveData_.GalaxyProgress(g).hasProgress ||
                         std::filesystem::exists(GalaxyEggbert::Editor::GalaxyWorldPath(g, 1), ignored))
                         gamers[static_cast<std::size_t>(g)].galaxyGates = saveData_.GetGalaxyGatesForGamer(g);
+                    if (galaxyNamesStale_)
+                        galaxyNames_[static_cast<std::size_t>(g)] = GalaxyEggbert::Editor::GalaxyName(g);
+                    gamers[static_cast<std::size_t>(g)].galaxyName = galaxyNames_[static_cast<std::size_t>(g)];
                 }
+                galaxyNamesStale_ = false;
                 inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                    phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,
                                    /*overTitleScene=*/titleSceneActive_, graphics_ && graphics_->getIsFullScreenProperty());

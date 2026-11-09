@@ -105,6 +105,55 @@ namespace GalaxyEggbert::Editor
         return {row.x1 - 26.0f, row.y0 + 2.0f, row.x1 - 2.0f, row.y1 - 2.0f};
     }
 
+    // The title, top left of the places' panel.
+    Rect GalaxyBrowserScreen::NameRect() noexcept { return {16.0f, 10.0f, 366.0f, 44.0f}; }
+
+    void GalaxyBrowserScreen::ListImports()
+    {
+        imports_ = ListSharedGalaxies();
+        importNames_.clear();
+        for (const auto& pack : imports_) importNames_.push_back(PeekGalaxyPackName(pack));
+    }
+
+    void GalaxyBrowserScreen::KeepName()
+    {
+        naming_ = false;
+        const std::string kept = SanitizeGalaxyName(nameDraft_);
+        if (kept == name_) return;
+        message_ = SetGalaxyName(gamerSlot_, kept) ? (kept.empty() ? "The galaxy has no name now." : "Named " + kept + ".")
+                                                   : "The name could not be kept.";
+        name_ = GalaxyName(gamerSlot_);
+    }
+
+    void GalaxyBrowserScreen::TypeKey(Microsoft::Xna::Framework::Input::Keys key, bool shift)
+    {
+        using Microsoft::Xna::Framework::Input::Keys;
+        if (!naming_) return;
+        const int k = static_cast<int>(key);
+        if (key == Keys::Enter)
+        {
+            KeepName();
+            return;
+        }
+        if (key == Keys::Back)
+        {
+            if (!nameDraft_.empty()) nameDraft_.pop_back();
+            return;
+        }
+        char c = 0;
+        if (k >= static_cast<int>(Keys::A) && k <= static_cast<int>(Keys::Z))
+            c = static_cast<char>((shift ? 'A' : 'a') + (k - static_cast<int>(Keys::A)));
+        else if (k >= static_cast<int>(Keys::D0) && k <= static_cast<int>(Keys::D9))
+            c = static_cast<char>('0' + (k - static_cast<int>(Keys::D0)));
+        else if (k >= static_cast<int>(Keys::NumPad0) && k <= static_cast<int>(Keys::NumPad9))
+            c = static_cast<char>('0' + (k - static_cast<int>(Keys::NumPad0)));
+        else if (key == Keys::Space)
+            c = ' ';
+        else if (key == Keys::OemMinus || key == Keys::Subtract)
+            c = '-';
+        if (c != 0 && nameDraft_.size() < kGalaxyNameMax) nameDraft_ += c;
+    }
+
     Rect GalaxyBrowserScreen::ImportPrevRect() noexcept { return {604.0f, 312.0f, 664.0f, 342.0f}; }
     Rect GalaxyBrowserScreen::ImportNextRect() noexcept { return {726.0f, 312.0f, 786.0f, 342.0f}; }
 
@@ -136,7 +185,7 @@ namespace GalaxyEggbert::Editor
             return;
         }
         restoreMode_ = false;
-        imports_ = ListSharedGalaxies();
+        ListImports();
         message_ = RequestUpload(SharedWorldsDir(), kGalaxyPackExtension)
                        ? "Choose a .galaxy file: it is listed on the right."
                        : "Put .galaxy files in " + SharedWorldsDir().generic_string() + "/: they are listed on the right.";
@@ -145,6 +194,7 @@ namespace GalaxyEggbert::Editor
     void GalaxyBrowserScreen::Refresh(int gamerSlot)
     {
         gamerSlot_ = gamerSlot;
+        name_ = GalaxyName(gamerSlot);
         exists_.assign(200, false);
         backups_.assign(200, 0);
         std::error_code ec;
@@ -221,17 +271,39 @@ namespace GalaxyEggbert::Editor
         UpdateResult result;
         if (importMode_ && ConsumeUploadDone())
         {
-            imports_ = ListSharedGalaxies();
+            ListImports();
             armedImport_ = armedImportDelete_ = -1;
             importPage_ = 0; // the file just chosen is the newest
             message_ = "The file is listed on the right: two clicks make it this galaxy.";
         }
         const bool backTriggered = backPressed && !backWasDown_;
         backWasDown_ = backPressed;
+        if (backTriggered && naming_)
+        {
+            naming_ = false; // Escape: the name as it was
+            message_.clear();
+            mouseWasDown_ = down;
+            return result;
+        }
         if (backTriggered)
         {
             result.action = Action::Back;
             armedDelete_ = 0;
+            mouseWasDown_ = down;
+            return result;
+        }
+        if (!down && mouseWasDown_ && naming_)
+        {
+            // A click ends the naming: the name is kept (the title's own click too).
+            KeepName();
+            mouseWasDown_ = down;
+            return result;
+        }
+        if (!down && mouseWasDown_ && InRect(x, y, NameRect()))
+        {
+            naming_ = true;
+            nameDraft_ = name_;
+            message_ = "Type its name: Enter keeps it, Escape leaves it as it was.";
             mouseWasDown_ = down;
             return result;
         }
@@ -288,7 +360,7 @@ namespace GalaxyEggbert::Editor
                     }
                     std::error_code removed;
                     std::filesystem::remove(pack, removed);
-                    imports_ = ListSharedGalaxies();
+                    ListImports();
                     const int left = std::max(1, (static_cast<int>(imports_.size()) + kImportRowsShown - 1) / kImportRowsShown);
                     importPage_ = std::min(importPage_, left - 1);
                     message_ = removed ? name + " could not be deleted." : name + " deleted.";
@@ -408,6 +480,8 @@ namespace GalaxyEggbert::Editor
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         icon(panels, {10.0f, 10.0f, 590.0f, 470.0f}, kIconPanel);
+        if (naming_)
+            for (int layer = 0; layer < 2; ++layer) icon(panels, NameRect(), kIconPanel); // the field being typed in
         icon(panels, {598.0f, 10.0f, 792.0f, 350.0f}, kIconPanel);
         button(BackButtonRect(), kIconReturn);
         icon(restoreMode_ ? buttons : panels, BackupsRect(), restoreMode_ ? kIconBlank : kIconPanel);
@@ -452,7 +526,16 @@ namespace GalaxyEggbert::Editor
         FlushQuads(device, *padEffect_, padRenderer_, buttons, viewportWidth, viewportHeight, 1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, pressed, viewportWidth, viewportHeight, kPressedOpacity);
 
-        text(labels, std::string("Galaxy - Player ") + static_cast<char>('A' + gamerSlot_), 22.0f, 18.0f, 0.6f);
+        const std::string player = std::string(" - Player ") + static_cast<char>('A' + gamerSlot_);
+        if (naming_)
+            text(labels, "Name: " + nameDraft_ + "_", 22.0f, 18.0f, 0.6f);
+        else if (name_.empty())
+        {
+            text(labels, "Galaxy" + player, 22.0f, 18.0f, 0.6f);
+            text(faint, "(click: name it)", 22.0f + Width("Galaxy" + player) * 0.6f + 8.0f, 24.0f, 0.36f);
+        }
+        else
+            text(labels, name_ + player, 22.0f, 18.0f, 0.6f);
         const auto place = [&](const Rect& r, int mission, const std::string& face, const std::string& caption) {
             const bool there = Exists(mission);
             auto& bucket = there ? labels : faint;
@@ -515,8 +598,10 @@ namespace GalaxyEggbert::Editor
                 const int index = importPage_ * kImportRowsShown + i;
                 if (index >= static_cast<int>(imports_.size())) break;
                 const Rect row = ImportRowRect(i);
+                const std::string& packName = importNames_[static_cast<std::size_t>(index)];
                 std::string name = armedImport_ == index         ? "Replace? Click again"
                                    : armedImportDelete_ == index ? "Delete? Its bin again"
+                                   : !packName.empty()           ? packName
                                                                  : imports_[static_cast<std::size_t>(index)].stem().string();
                 while (!name.empty() && Width(name) * 0.36f > row.x1 - row.x0 - 40.0f) name.pop_back();
                 text(labels, name, row.x0 + 6.0f, (row.y0 + row.y1 - kGlyphCellPx * 0.36f) * 0.5f, 0.36f);

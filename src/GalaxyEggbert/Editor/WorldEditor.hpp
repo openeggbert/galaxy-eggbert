@@ -82,6 +82,9 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] bool IsBrowsing() const noexcept { return browsing_; }
         // The browser on the gamer's galaxy (the menu's Galaxy button before it has a main hub).
         void ShowGalaxy();
+        // The galaxy screen takes typed keys while its name is being typed (GalaxyBrowserScreen).
+        [[nodiscard]] bool WantsText() const noexcept { return browsing_ && galaxyView_ && galaxyScreen_.Naming(); }
+        void TypeKey(Microsoft::Xna::Framework::Input::Keys key, bool shift) { galaxyScreen_.TypeKey(key, shift); }
         [[nodiscard]] bool ShowsGalaxy() const noexcept { return galaxyView_; }
         void ShowSlots() noexcept { galaxyView_ = false; }
 

@@ -112,7 +112,9 @@ content-authoring UX, but not new gameplay mechanics.
   Continue in the galaxy, `GALAXY_RESUME_SELFTEST` equal in mission 11). Shared (2026-11-09): the
   galaxy screen's Export writes the whole galaxy as one file (`customworlds/shared/A-galaxy.galaxy`,
   a download on the web), Import replaces it with a listed one (two clicks; the old places in their
-  backups, its progress started over). The menu's player panel shows "Galaxy : N gates". Live on the
+  backups, its progress started over). The menu's player panel shows "Galaxy : N gates" (or the
+  galaxy's name: it is named by clicking the galaxy screen's title and typing; the name travels in
+  its pack and names its export file). Live on the
   desktop and the web (a desktop pack imported there, exported back byte for byte).
 - All four editor Blupi starts participate in G/Tools Pick and the shared cursor/NumPad
   edit target, with red selection outline/model tint. O/Tools Turn rotates each independently

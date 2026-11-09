@@ -1659,7 +1659,8 @@ a place from the galaxy screen (a bin, two clicks, into `galaxy/backups/`; Backu
 file as the campaign's does (focus lost in play); Continue goes back into the galaxy the log names
 (`BeginResume()`). Since 2026-11-09 a whole galaxy is shared as one `.galaxy` file (the galaxy
 screen's Export and Import; an import keeps the old places in their backups and starts the
-galaxy's progress over) and the menu's player panel shows its gates. No change to the campaign.
+galaxy's progress over, a pack carries its demos and its name) and the menu's player panel shows
+its gates under its name. No change to the campaign.
 Validation:
 `VerifyGEEditorStorage`, `VerifyGESaveData`, `VerifyInteractionSystem`, `VerifyGEInputPad`, live
 (handoff.md "Recordings, ten demos, xnjttjpo, galaxies" and "Galaxy: delete and Continue"), the

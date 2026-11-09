@@ -592,10 +592,75 @@ namespace GalaxyEggbert::Editor
         return positions;
     }
 
+    std::string SanitizeGalaxyName(const std::string& name)
+    {
+        std::string out;
+        for (const char c : name)
+        {
+            const bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == ' ' ||
+                            c == '-' || c == '\'';
+            if (!ok || (c == ' ' && (out.empty() || out.back() == ' '))) continue;
+            if (out.size() < kGalaxyNameMax) out += c;
+        }
+        while (!out.empty() && out.back() == ' ') out.pop_back();
+        return out;
+    }
+
+    std::string GalaxyName(int gamerSlot)
+    {
+        const auto text = ReadBytes(GalaxyDir(gamerSlot) / "name.txt");
+        return text ? SanitizeGalaxyName(*text) : std::string();
+    }
+
+    bool SetGalaxyName(int gamerSlot, const std::string& name)
+    {
+        const std::string clean = SanitizeGalaxyName(name);
+        std::error_code ec;
+        const auto path = GalaxyDir(gamerSlot) / "name.txt";
+        if (clean.empty())
+        {
+            std::filesystem::remove(path, ec);
+            return true;
+        }
+        std::filesystem::create_directories(GalaxyDir(gamerSlot), ec);
+        std::ofstream out(path, std::ios::binary | std::ios::trunc);
+        out << clean;
+        return static_cast<bool>(out);
+    }
+
+    std::string PeekGalaxyPackName(const std::filesystem::path& pack)
+    {
+        // The entries' sizes lead from one to the next; the name is the only one read.
+        const auto bytes = ReadBytes(pack);
+        const std::string header = kGalaxyPackHeader;
+        if (!bytes || bytes->compare(0, header.size(), header) != 0) return {};
+        std::size_t at = header.size();
+        while (at < bytes->size())
+        {
+            const std::size_t lineEnd = bytes->find('\n', at);
+            if (lineEnd == std::string::npos) return {};
+            std::istringstream line(bytes->substr(at, lineEnd - at));
+            std::string word;
+            std::size_t size = 0;
+            if (!(line >> word) || word == "END") return {};
+            if (word == "name")
+            {
+                if (!(line >> size) || size > 256) return {};
+                return SanitizeGalaxyName(bytes->substr(lineEnd + 1, size));
+            }
+            int number = 0;
+            if (!(line >> number >> size)) return {};
+            at = lineEnd + 1 + size;
+        }
+        return {};
+    }
+
     std::string PackGalaxy(int gamerSlot)
     {
         std::string body = kGalaxyPackHeader;
         int places = 0;
+        if (const std::string name = GalaxyName(gamerSlot); !name.empty())
+            body += "name " + std::to_string(name.size()) + "\n" + name;
         for (int mission = 1; mission < 200; ++mission)
         {
             if (!IsGalaxyMission(mission)) continue;
@@ -639,6 +704,16 @@ namespace GalaxyEggbert::Editor
             int number = 0;
             std::size_t size = 0;
             std::string rest;
+            if (body.compare(at, 5, "name ") == 0)
+            {
+                // The galaxy's name: "name <size>", once, before anything else is fine but not needed.
+                if (!(line >> word >> size) || (line >> rest) || size > 256 || size > bodyEnd - (lineEnd + 1) ||
+                    !unpacked.name.empty())
+                    return std::nullopt;
+                unpacked.name = SanitizeGalaxyName(body.substr(lineEnd + 1, size));
+                at = lineEnd + 1 + size;
+                continue;
+            }
             if (!(line >> word >> number >> size) || (word != "world" && word != "demo") || (line >> rest) ||
                 size > kGalaxyPackMaxWorld || size > bodyEnd - (lineEnd + 1))
                 return std::nullopt;
@@ -671,6 +746,13 @@ namespace GalaxyEggbert::Editor
 
     std::string GalaxyExportName(int gamerSlot)
     {
+        std::string named = GalaxyName(gamerSlot);
+        if (!named.empty())
+        {
+            std::replace(named.begin(), named.end(), ' ', '-');
+            std::replace(named.begin(), named.end(), '\'', '-');
+            return named + kGalaxyPackExtension;
+        }
         const std::string player = gamerSlot >= 0 && gamerSlot <= 2 ? std::string(1, static_cast<char>('A' + gamerSlot))
                                                                     : "player" + std::to_string(gamerSlot);
         return player + "-galaxy" + kGalaxyPackExtension;
@@ -731,6 +813,7 @@ namespace GalaxyEggbert::Editor
             if (IsGalaxyMission(mission) && std::filesystem::exists(path, ec)) (void)DeleteSlotWorld(path);
         }
         std::filesystem::create_directories(GalaxyDir(gamerSlot), ec);
+        (void)SetGalaxyName(gamerSlot, unpacked->name); // the pack's, or none
         int written = 0;
         for (const auto& [mission, world] : worlds)
         {

@@ -5,6 +5,7 @@
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
+#include <Microsoft/Xna/Framework/Input/Keys.hpp>
 #include <Microsoft/Xna/Framework/Input/Mouse.hpp>
 
 #include <filesystem>
@@ -43,6 +44,13 @@ namespace GalaxyEggbert::Editor
 
         // Rescans which of the gamer's galaxy worlds exist (on entering, and after a creation).
         void Refresh(int gamerSlot);
+
+        // Naming the galaxy (2026-11-09): a click on the title starts it; typed keys (letters, Shift
+        // for capitals, digits, space, '-', Backspace) edit it, Enter or a click elsewhere keeps it,
+        // Escape leaves the name as it was. The caller forwards the keys while Naming().
+        [[nodiscard]] bool Naming() const noexcept { return naming_; }
+        void TypeKey(Microsoft::Xna::Framework::Input::Keys key, bool shift);
+        [[nodiscard]] const std::string& Name() const noexcept { return name_; }
         UpdateResult Update(const Microsoft::Xna::Framework::Input::MouseState& mouse, bool backPressed = false);
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportWidth, int viewportHeight);
 
@@ -65,6 +73,7 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect DeleteRect(
             const GalaxyEggbert::Game::QuadBatch::Rect& place) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackupsRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect NameRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ExportRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRect() noexcept;
         // Row @p index (0-7) of a page of the galaxies to import, where the help is; the bin on its
@@ -109,6 +118,12 @@ namespace GalaxyEggbert::Editor
         int armedImport_ = -1;                       // the file (index in imports_) clicked once, -1 none
         int armedImportDelete_ = -1;                 // the file whose bin was clicked once, -1 none
         int importPage_ = 0;                         // kImportRowsShown files a page
+        std::vector<std::string> importNames_;       // the packs' names (PeekGalaxyPackName), "" none
+        std::string name_;                           // the galaxy's name (GalaxyName)
+        bool naming_ = false;
+        std::string nameDraft_;
+        void ListImports();
+        void KeepName();
         bool mouseWasDown_ = false;
         float mouseX_ = -1.0f, mouseY_ = -1.0f;
         bool backWasDown_ = false;

@@ -183,7 +183,19 @@ namespace GalaxyEggbert::Editor
     {
         std::map<int, std::string> worlds; // by mission
         std::map<int, std::string> demos;  // by the demo position they were recorded into
+        std::string name;                  // the galaxy's name, "" none ("name <size>" entry)
     };
+
+    // A galaxy's name (2026-11-09): its title on the galaxy screen, the menu's player panel, the
+    // import list and its export's file name. Letters, digits, spaces, '-' and '\'', at most
+    // kGalaxyNameMax characters; kept in GalaxyDir()/name.txt.
+    constexpr std::size_t kGalaxyNameMax = 24;
+    [[nodiscard]] std::string SanitizeGalaxyName(const std::string& name);
+    [[nodiscard]] std::string GalaxyName(int gamerSlot);
+    // Empty forgets the name. False when it could not be written.
+    bool SetGalaxyName(int gamerSlot, const std::string& name);
+    // The name a pack carries, read without unpacking it ("" none or not a pack).
+    [[nodiscard]] std::string PeekGalaxyPackName(const std::filesystem::path& pack);
     // The demo positions (1-10) holding a recording of the player's made in @p gamerSlot's galaxy
     // (DemoReplay UserDemoPath(), its world one of the galaxy's files).
     [[nodiscard]] std::vector<int> GalaxyRecordings(int gamerSlot);
@@ -193,7 +205,8 @@ namespace GalaxyEggbert::Editor
     // a place or a position twice, a place that is not a galaxy's, or a world that does not load. A
     // demo this game cannot play (another simulation revision) is left out, the galaxy kept.
     [[nodiscard]] std::optional<GalaxyPack> UnpackGalaxy(const std::string& pack);
-    // "A-galaxy.galaxy" (players A-C), "player7-galaxy.galaxy" otherwise.
+    // "<its name>.galaxy" (spaces as '-') for a named galaxy, else "A-galaxy.galaxy" (players A-C),
+    // "player7-galaxy.galaxy" otherwise.
     [[nodiscard]] std::string GalaxyExportName(int gamerSlot);
     // PackGalaxy() written into SharedWorldsDir() as GalaxyExportName(), numbered when that is taken
     // (A-galaxy-2.galaxy ...: an earlier export stays); its path, or empty when there is nothing to
@@ -202,7 +215,8 @@ namespace GalaxyEggbert::Editor
     // The packs in SharedWorldsDir(), the newest first.
     [[nodiscard]] std::vector<std::filesystem::path> ListSharedGalaxies();
     // Makes @p pack the gamer's galaxy: every place the galaxy has now goes into its backups
-    // first (DeleteSlotWorld(), so Backups brings it back), then the pack's worlds are written. Its
+    // first (DeleteSlotWorld(), so Backups brings it back), then the pack's worlds and its name are
+    // written. Its
     // demos go to the shared demos (DemoReplay SharedDemoDir(), "<pack name>-demo-<position>.gdemo"),
     // listed by the demo positions' Import: no position of the player's is overwritten. The number
     // of places imported (@p demos: of demos); -1 when the pack is not valid, nothing touched.

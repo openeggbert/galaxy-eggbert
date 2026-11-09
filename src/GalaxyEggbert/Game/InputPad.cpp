@@ -2914,10 +2914,19 @@ namespace GalaxyEggbert::Game
                 if (info.galaxyGates >= 0)
                 {
                     // Right-aligned in the panel, smaller when it would reach the Blupi count.
-                    const std::string galaxy = "Galaxy : " + std::to_string(info.galaxyGates) +
-                                               (info.galaxyGates == 1 ? " gate" : " gates");
+                    const std::string gates = " : " + std::to_string(info.galaxyGates) +
+                                              (info.galaxyGates == 1 ? " gate" : " gates");
+                    std::string named = info.galaxyName.empty() ? std::string("Galaxy") : info.galaxyName;
                     const float right = layout.leftPanel.x1 - 8.0f * s;
                     const float room = right - (textLeft + (TextMetrics::Width(blupi) * kGamerBodyScale + 10.0f) * s);
+                    // A long name is cut ("...") where even the smallest letters would reach Blupi's count.
+                    bool cut = false;
+                    while (named.size() > 1 && TextMetrics::Width(named + (cut ? "..." : "") + gates) * 0.3f * s > room)
+                    {
+                        named.pop_back();
+                        cut = true;
+                    }
+                    const std::string galaxy = named + (cut ? "..." : "") + gates;
                     const float scale = std::max(0.3f, std::min(kGamerBodyScale, room / (TextMetrics::Width(galaxy) * s)));
                     AppendGamerLabel(labelQuads, galaxy, right - TextMetrics::Width(galaxy) * scale * s,
                                      r.y0 + (kGamerLivesYOffset + (kGamerBodyScale - scale) * 16.0f) * s, scale, s);
