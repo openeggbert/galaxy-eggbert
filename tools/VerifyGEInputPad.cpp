@@ -128,6 +128,12 @@ int main()
         check(!pad.UpdateInit(mouse(725, 109, false), 800, 480).galaxyPressed &&
                   !pad.UpdateInit(mouse(725, 109, false), 800, 480).demoPressed,
               "a press on Galaxy released over Demo does neither");
+        // The Demos button (the demo positions from the menu) over Galaxy, left of Exit.
+        (void)pad.UpdateInit(mouse(605, 42, true), 800, 480);
+        const auto demosRelease = pad.UpdateInit(mouse(605, 42, false), 800, 480);
+        check(demosRelease.demosPressed && !demosRelease.galaxyPressed && !demosRelease.exitPressed &&
+                  !demosRelease.demoPressed && !demosRelease.fullscreenPressed,
+              "main-menu Demos fires on release and only Demos");
         // Pause's Record button (BD-0116), top right, only where it is shown.
         {
             InputPad pause;

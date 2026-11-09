@@ -54,6 +54,12 @@ with the release audit.
   the gamer's galaxy progress starts over (`SaveData::ResetGalaxyProgress`, via
   `BrowserRequest::galaxyImported`). Tests `VerifyGEEditorStorage`; live
   `harness/case_galaxy_share.py` (`galaxy-share-sheet.png`).
+- The demo positions from the main menu (same day): a Demos button left of Exit (over Galaxy,
+  `InputPad` `InitLayout::demos`, `demosPressed`) opens the same screen over the pause screen's
+  picture (`UpdateDemoSlotsScreen`/`DrawDemoSlotsScreen`, shared with Pause): Export, Import and
+  Original work, a position clicked says a recording is made in a mission (Pause > Record); Escape
+  closes it (not the game), and the menu's 40-s demo timer waits while it is open. Live
+  `harness/case_menu_demos.py` (`menu-demos-sheet.png`, `menu-demos2-sheet.png`).
 - No file replaces another any more (same day, `Game/FreeFileName.hpp`): a second export is
   numbered (`A-galaxy-2.galaxy`, `A-demo-5-2.gdemo`), so are a pack's demos landing among the shared
   demos and, on the web, a picked file whose name is taken (`PlatformFiles.cpp`). Tests

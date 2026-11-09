@@ -687,6 +687,8 @@ namespace GalaxyEggbert::Game
             bool demoPressed = false;
             // Galaxy's own (BD-0119): plays the selected player's galaxy (or builds it, if new).
             bool galaxyPressed = false;
+            // Galaxy's own (2026-11-09): the demo positions from the menu (Export, Import, Original).
+            bool demosPressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;

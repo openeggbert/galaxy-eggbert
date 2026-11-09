@@ -412,7 +412,7 @@ namespace GalaxyEggbert::Game
         struct InitLayout
         {
             Rect gamer[3];
-            Rect setup, play, editor, exit, fullscreen, help, demo, galaxy;
+            Rect setup, play, editor, exit, fullscreen, help, demo, galaxy, demos;
             Rect leftPanel, rightPanel;
             float scale;
         };
@@ -445,6 +445,9 @@ namespace GalaxyEggbert::Game
             l.demo = Rect{w - 130.0f * s, 82.0f * s, w - 20.0f * s, 136.0f * s};
             // The player's own galaxy (BD-0119), left of Demo.
             l.galaxy = Rect{w - 250.0f * s, 82.0f * s, w - 140.0f * s, 136.0f * s};
+            // The demo positions (Export, Import, Original) without a mission first (2026-11-09):
+            // left of Exit, over Galaxy.
+            l.demos = Rect{w - 250.0f * s, 15.0f * s, w - 140.0f * s, 69.0f * s};
             l.leftPanel = Rect{10.0f * s, h - 325.0f * s, 260.0f * s, h - 10.0f * s};
             l.rightPanel = Rect{w - 170.0f * s, h - 325.0f * s, w - 10.0f * s, h - 10.0f * s};
             l.scale = s;
@@ -502,6 +505,7 @@ namespace GalaxyEggbert::Game
         constexpr int kInitControlHelp = 8;
         constexpr int kInitControlDemo = 9;
         constexpr int kInitControlGalaxy = 10;
+        constexpr int kInitControlDemos = 11;
 
         // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
         // dedicated research pass into the real `fadeOutPhase` mechanic):
@@ -2710,6 +2714,7 @@ namespace GalaxyEggbert::Game
         const bool overHelp = InRect(mouseX, mouseY, layout.help);
         const bool overDemo = InRect(mouseX, mouseY, layout.demo);
         const bool overGalaxy = InRect(mouseX, mouseY, layout.galaxy);
+        const bool overDemos = InRect(mouseX, mouseY, layout.demos);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -2724,6 +2729,7 @@ namespace GalaxyEggbert::Game
             else if (overHelp) activeControl_ = kInitControlHelp;
             else if (overDemo) activeControl_ = kInitControlDemo;
             else if (overGalaxy) activeControl_ = kInitControlGalaxy;
+            else if (overDemos) activeControl_ = kInitControlDemos;
             else activeControl_ = -1;
         }
 
@@ -2744,6 +2750,7 @@ namespace GalaxyEggbert::Game
                 case kInitControlHelp: result.helpPressed = overHelp; break;
                 case kInitControlDemo: result.demoPressed = overDemo; break;
                 case kInitControlGalaxy: result.galaxyPressed = overGalaxy; break;
+                case kInitControlDemos: result.demosPressed = overDemos; break;
                 default: break;
             }
             activeControl_ = -1;
@@ -2942,6 +2949,9 @@ namespace GalaxyEggbert::Game
             appendIconQuad(activeControl_ == kInitControlGalaxy ? pressedQuads : normalQuads, layout.galaxy, 21);
             AppendCenteredLabel(labelQuads, "Galaxy", (layout.galaxy.x0 + layout.galaxy.x1) * 0.5f,
                                 (layout.galaxy.y0 + layout.galaxy.y1) * 0.5f - 12.0f * s, s);
+            appendIconQuad(activeControl_ == kInitControlDemos ? pressedQuads : normalQuads, layout.demos, 21);
+            AppendCenteredLabel(labelQuads, "Demos", (layout.demos.x0 + layout.demos.x1) * 0.5f,
+                                (layout.demos.y0 + layout.demos.y1) * 0.5f - 12.0f * s, s);
 
             // Real labels: TX_BUTTON_PLAY under Play, TX_BUTTON_SETUP right of
             // Setup (Game1::DrawButtonsText()); the editor's label under its

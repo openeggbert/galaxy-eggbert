@@ -884,6 +884,11 @@ namespace GalaxyEggbert::CNA
         int demoImportPage_ = 0;     // InputPad::kDemoListRows files a page
         int demoDeleteArmed_ = -1;   // the file (index in demoImports_) whose bin was clicked once
         void ListDemoImports();
+        // The demo positions' screen (over Pause, or from the menu's Demos button: no recording there).
+        void UpdateDemoSlotsScreen(const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportW,
+                                   int viewportH);
+        void DrawDemoSlotsScreen(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                 int viewportH);
         [[nodiscard]] int DemoImportPages() const noexcept;
         void HandleDemoSlotClick(int slot);
         void ToggleDemoImport();
