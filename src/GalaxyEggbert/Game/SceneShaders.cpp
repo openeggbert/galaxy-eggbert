@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Game/SurfaceShaders.hpp>
 #include <GalaxyEggbert/Game/TerrainLighting.hpp>
+#include <GalaxyEggbert/Game/UltraLogic.hpp>
 
 #include <CNA/ShaderDialectEXT.hpp>
 
@@ -200,7 +201,7 @@ vec4 Fogged(vec4 color)
 
         // The terrain, lit as BasicEffect with the terrain light; the sun's part shadowed, the corners
         // occluded (vertex colour), the point lights added.
-        std::string TerrainVertex(bool occluded)
+        std::string TerrainVertex(bool occluded, bool ultra = false)
         {
             std::string source = R"(
 layout(location = 0) in vec3 aPosition;
@@ -234,6 +235,12 @@ void main()
     vLightPos = uLightViewProj * vec4(world.xyz + normalize(vNormal) * 0.04, 1.0);
     vLightPosFar = uLightViewProjFar * vec4(world.xyz + normalize(vNormal) * 0.12, 1.0);
 )";
+            if (ultra)
+            {
+                // Ultra: the baked colour whole (the light from around, UltraLogic.hpp's bake), as vGi.
+                source = "out vec4 vGi;\n" + source;
+                source += occluded ? "    vGi = aColor;\n" : "    vGi = vec4(0.5, 0.5, 0.5, 1.0);\n";
+            }
             source += occluded ? "    vOcclusion = aColor.r;\n}\n" : "    vOcclusion = 1.0;\n}\n";
             return source;
         }
@@ -419,7 +426,8 @@ vec3 Bumped(vec3 n, float h)
     vec3 grad = sign(det) * (dhdx * r1 + dhdy * r2);
     return normalize(abs(det) * n - grad);
 }
-void main()
+)";
+        const char* const kModelMain = R"(void main()
 {
     vec4 tex = texture(uTexture, vUv);
     vec3 n = normalize(vNormal);
@@ -445,6 +453,169 @@ void main()
     vec3 color = tex.rgb * (diffuse * uDiffuse + uEmissive + PointLights(n, true)) +
                  uKeySpecular * highlight * sun * uSpecular;
     FragColor = Fogged(vec4(color, tex.a * uMaterial.y));
+}
+)";
+
+        // ---- Ultra (UltraFinish.hpp): physically based light, in linear light, written as display colour
+        // unclipped (the HDR target keeps what goes above 1). GGX (Trowbridge-Reitz) highlights with
+        // Schlick's Fresnel and Smith's visibility; the sky's light from the world's background picture
+        // (its irradiance as spherical harmonics, its reflection from ever softer levels by roughness, Karis'
+        // analytic split-sum); the sun and the point lights as the other levels place them.
+        const char* const kUltraLighting = R"(
+uniform sampler2D uEnv;           // unit 3: the sky picture, its levels ever softer
+uniform sampler2D uSurfaceMap;    // unit 4: roughness, metalness, cavity
+uniform sampler2D uNormalMap;     // unit 5: the surface's normals (uv space)
+uniform sampler2D uScreenOcclusion; // unit 6: r ambient, g contact shadow
+uniform vec3 uSh[9];
+uniform vec4 uEnvInfo;            // repeats, the levels' last, -, -
+uniform vec4 uMaps;               // normal map, surface map, screen occlusion (on 1), -
+uniform vec2 uScreenTexel;
+uniform vec3 uSunDir;
+uniform vec2 uSunLight;           // the sun's light, the sky's (multiplying the irradiance)
+uniform vec3 uEyePos;
+const float PI = 3.14159265;
+vec3 ToLinear(vec3 c) { return pow(max(c, vec3(0.0)), vec3(2.2)); }
+vec3 ToDisplay(vec3 c) { return pow(max(c, vec3(0.0)), vec3(1.0 / 2.2)); }
+vec3 Irradiance(vec3 n)
+{
+    vec3 e = uSh[0] * 0.282095;
+    e += uSh[1] * (0.488603 * n.y) + uSh[2] * (0.488603 * n.z) + uSh[3] * (0.488603 * n.x);
+    e += uSh[4] * (1.092548 * n.x * n.y) + uSh[5] * (1.092548 * n.y * n.z) + uSh[6] * (0.315392 * (3.0 * n.z * n.z - 1.0));
+    e += uSh[7] * (1.092548 * n.x * n.z) + uSh[8] * (0.546274 * (n.x * n.x - n.y * n.y));
+    return max(e, vec3(0.0)) * uSunLight.y;
+}
+vec3 Environment(vec3 d, float roughness)
+{
+    float wide = 6.2831853 / max(1.0, uEnvInfo.x);
+    vec2 uv = vec2(atan(d.x, -d.z) / wide, 0.5 - asin(clamp(d.y, -1.0, 1.0)) / (wide * 0.75));
+    return ToLinear(textureLod(uEnv, uv, roughness * uEnvInfo.y).rgb);
+}
+vec4 ScreenOcclusion()
+{
+    if (uMaps.z < 0.5) return vec4(1.0);
+    return texelFetch(uScreenOcclusion, ivec2(gl_FragCoord.xy), 0);
+}
+// The normal map's normal on a surface turned n at uv (the frame from the screen-space derivatives).
+vec3 NormalMapped(vec3 n, vec2 uv)
+{
+    if (uMaps.x < 0.5) return n;
+    vec3 m = texture(uNormalMap, uv).xyz * 2.0 - 1.0;
+    vec3 dp1 = dFdx(vWorld);
+    vec3 dp2 = dFdy(vWorld);
+    vec2 duv1 = dFdx(uv);
+    vec2 duv2 = dFdy(uv);
+    vec3 dp2perp = cross(dp2, n);
+    vec3 dp1perp = cross(n, dp1);
+    vec3 t = dp2perp * duv1.x + dp1perp * duv2.x;
+    vec3 b = dp2perp * duv1.y + dp1perp * duv2.y;
+    float scale = max(dot(t, t), dot(b, b));
+    if (scale <= 0.0) return n;
+    scale = inversesqrt(scale);
+    return normalize(t * (m.x * scale) + b * (m.y * scale) + n * m.z);
+}
+// What one light (from l) gives a surface: Lambert's diffuse and the GGX highlight, times n.l.
+vec3 Direct(vec3 diffuse, vec3 f0, vec3 n, vec3 v, vec3 l, float a, float nv)
+{
+    float nl = max(dot(n, l), 0.0);
+    if (nl <= 0.0) return vec3(0.0);
+    vec3 h = normalize(l + v);
+    float nh = max(dot(n, h), 0.0);
+    float vh = max(dot(v, h), 0.0);
+    vec3 f = f0 + (1.0 - f0) * pow(1.0 - vh, 5.0);
+    float a2 = a * a;
+    float d = nh * nh * (a2 - 1.0) + 1.0;
+    float D = a2 / (PI * d * d);
+    float k = a * 0.5;
+    float V = 0.25 / ((nl * (1.0 - k) + k) * (nv * (1.0 - k) + k));
+    return (diffuse * (1.0 - f) + D * V * f * PI) * nl;
+}
+// Karis' analytic fit of the split-sum's scale and bias.
+vec3 EnvironmentBrdf(vec3 f0, float roughness, float nv)
+{
+    const vec4 c0 = vec4(-1.0, -0.0275, -0.572, 0.022);
+    const vec4 c1 = vec4(1.0, 0.0425, 1.04, -0.04);
+    vec4 r = roughness * c0 + c1;
+    float a004 = min(r.x * r.x, exp2(-9.28 * nv)) * r.x + r.y;
+    vec2 ab = vec2(-1.04, 1.04) * a004 + r.zw;
+    return f0 * ab.x + ab.y;
+}
+// A surface's light: albedo (linear), its normal, the way to the eye, roughness, metalness, its
+// dielectric reflectance's scale (1: 4 %), the sun's share reaching it (shadow), the ambient's (occlusion)
+// and the light from around (gi: 1 the open sky; the bake's colour).
+vec3 Shade(vec3 albedo, vec3 n, vec3 v, float roughness, float metalness, float specular, float sun, float ao, vec3 gi)
+{
+    roughness = clamp(roughness, 0.04, 1.0);
+    vec3 f0 = mix(vec3(0.04 * specular), albedo, metalness);
+    vec3 diffuse = albedo * (1.0 - metalness);
+    float a = roughness * roughness;
+    float nv = max(dot(n, v), 0.0001);
+    vec3 color = Direct(diffuse, f0, n, v, -uSunDir, a, nv) * (uSunLight.x * sun);
+    for (int i = 0; i < 8; ++i)
+    {
+        if (i >= uPointCount) break;
+        vec3 toLight = uPointPos[i] - vWorld;
+        float distance = length(toLight);
+        float reach = clamp(1.0 - distance / uPointRadius[i], 0.0, 1.0);
+        if (reach <= 0.0) continue;
+        color += Direct(diffuse, f0, n, v, toLight / max(distance, 0.001), a, nv) * ToLinear(uPointColor[i]) * (reach * reach * 1.4);
+    }
+    float sky = clamp(dot(gi, vec3(0.3333)), 0.0, 1.0);
+    color += diffuse * Irradiance(n) * gi * ao;
+    color += Environment(reflect(-v, n), roughness) * EnvironmentBrdf(f0, roughness, nv) * (ao * sky);
+    return color;
+}
+)";
+
+        // Ultra's terrain: the atlas's surface and normals, the sun shadowed and its contact shadow, the
+        // baked light from around (vGi: its colour twice over, its occlusion) and the screen's occlusion.
+        const char* const kTerrainUltraFragment = R"(
+uniform float uDebug;
+in vec2 vUv;
+in vec3 vNormal;
+in vec4 vGi;
+void main()
+{
+    vec4 tex = texture(uTexture, vUv);
+    vec4 surface = uMaps.y > 0.5 ? texture(uSurfaceMap, vUv) : vec4(0.75, 0.0, 1.0, 1.0);
+    vec3 n = NormalMapped(normalize(vNormal), vUv);
+    vec4 screen = ScreenOcclusion();
+    float sun = SunLight() * screen.g;
+    if (uDebug > 0.5) { FragColor = vec4(vec3(uDebug > 1.5 ? vGi.a * screen.r : sun), 1.0); return; }
+    vec3 v = normalize(uEyePos - vWorld);
+    vec3 color = Shade(ToLinear(tex.rgb), n, v, surface.r, surface.g, 1.0, sun, vGi.a * screen.r * surface.b, vGi.rgb * 2.0);
+    FragColor = Fogged(vec4(ToDisplay(color), tex.a));
+}
+)";
+
+        // Ultra's models: the part's colour (its texture, its Ray Dream pattern, its tint), its surface
+        // (uSurface: roughness, metalness, reflectance; from its Ray Dream shader or its specular power),
+        // its glow (linear, above white: it blooms).
+        const char* const kModelUltraMain = R"(
+uniform vec4 uSurface;
+uniform vec3 uGlow;
+void main()
+{
+    vec4 tex = texture(uTexture, vUv);
+    vec3 n = normalize(vNormal);
+    vec3 rd = vLocal * 21.116;
+    if (uMatInfo.x > 0.5)
+    {
+        vec3 c = mix(uMatColour0, uMatColour1, Pattern(uMatLayer0, uMatAxes.x, uMatAxes.y, rd));
+        if (uMatInfo.x > 1.5) c = mix(c, uMatColour2, Pattern(uMatLayer1, uMatAxes.z, uMatAxes.w, rd));
+        tex.rgb = c;
+    }
+    if (uMatInfo.y > 0.5)
+    {
+        float h = uMatInfo.y < 1.5 ? smoothstep(uMatInfo.w - 0.06, uMatInfo.w + 0.06, Fbm(rd / 3.0))
+                                   : Fbm(rd * 0.8);
+        n = Bumped(n, h * uMatInfo.z * (uMatInfo.y < 1.5 ? 0.03 : 0.012));
+    }
+    vec3 albedo = ToLinear(tex.rgb * uDiffuse);
+    vec4 screen = ScreenOcclusion();
+    vec3 v = normalize(uEyePos - vWorld);
+    vec3 color = Shade(albedo, n, v, uSurface.x, uSurface.y, uSurface.z, SunLight() * screen.g, screen.r, vec3(1.0));
+    color += albedo * ToLinear(uEmissive) + uGlow;
+    FragColor = Fogged(vec4(ToDisplay(color), tex.a * uMaterial.y));
 }
 )";
 
@@ -521,7 +692,8 @@ void main()
         m_occluded = CompileShaderEffect(device, "the terrain shader", TerrainVertex(true), lighting + kTerrainFragment);
         m_lit = CompileShaderEffect(device, "the relief shader", TerrainVertex(false), lighting + kTerrainFragment);
         m_cutout = CompileShaderEffect(device, "the cutout shader", kCutoutVertex, lighting + kCutoutFragment);
-        m_model = CompileShaderEffect(device, "the model shader", skin + kModelVertex, lighting + kModelFragment);
+        m_model = CompileShaderEffect(device, "the model shader", skin + kModelVertex,
+                                      lighting + kModelFragment + kModelMain);
         m_sprite = CompileShaderEffect(device, "the sprite shader", kSpriteVertex, lighting + kSpriteFragment);
         m_ready = m_depthSolid && m_depthCutout && m_depthSkinned && m_occluded && m_lit && m_cutout && m_model && m_sprite;
         if (!m_ready)
@@ -709,12 +881,54 @@ void main()
         effect.SetUniformInt("uPointCount", count);
     }
 
-    void SceneShaders::SetFrame(Graphics::GraphicsDevice& device, const SceneFrame& frame, const Graphics::BasicEffect& terrain)
+    void SceneShaders::SetFrame(Graphics::GraphicsDevice& device, const SceneFrame& frame, const Graphics::BasicEffect& terrain,
+                                const UltraSceneAssets* ultra)
     {
         m_frame = &frame;
+        m_ultraActive = false;
         if (!m_ready)
         {
             return;
+        }
+        if (ultra != nullptr && frame.effects.ultra)
+        {
+            if (!m_ultraTried)
+            {
+                // Ultra's programs: the same vertex shaders (the terrain's with its baked colour whole).
+                m_ultraTried = true;
+                const std::string lighting = std::string(kLighting) + kUltraLighting;
+                const std::string skin = kSkin;
+                m_ultraOccluded = CompileShaderEffect(device, "Ultra's terrain shader", TerrainVertex(true, true),
+                                                      lighting + kTerrainUltraFragment);
+                m_ultraLit = CompileShaderEffect(device, "Ultra's relief shader", TerrainVertex(false, true),
+                                                 lighting + kTerrainUltraFragment);
+                m_ultraModel = CompileShaderEffect(device, "Ultra's model shader", skin + kModelVertex,
+                                                   lighting + kModelFragment + kModelUltraMain);
+                m_ultraReady = m_ultraOccluded && m_ultraLit && m_ultraModel;
+                if (m_ultraReady)
+                {
+                    for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get(), m_ultraModel.get()})
+                    {
+                        effect->SetUniformInt("uTexture", 0);
+                        effect->SetUniformInt("uShadowMap", 1);
+                        effect->SetUniformInt("uShadowMapFar", 2);
+                        effect->SetUniformInt("uEnv", 3);
+                        effect->SetUniformInt("uSurfaceMap", 4);
+                        effect->SetUniformInt("uNormalMap", 5);
+                        effect->SetUniformInt("uScreenOcclusion", 6);
+                    }
+                    m_white = std::make_unique<Graphics::Texture2D>(device, 1, 1);
+                    const Microsoft::Xna::Framework::Color white(255, 255, 255, 255);
+                    m_white->SetData(&white, 1);
+                    // The sky wraps round the horizon and stops at its top and bottom; blended between its
+                    // levels.
+                    m_envSampler.setFilterProperty(Graphics::TextureFilter::Linear);
+                    m_envSampler.setAddressUProperty(Graphics::TextureAddressMode::Wrap);
+                    m_envSampler.setAddressVProperty(Graphics::TextureAddressMode::Clamp);
+                    m_envSampler.setAddressWProperty(Graphics::TextureAddressMode::Clamp);
+                }
+            }
+            m_ultraActive = m_ultraReady;
         }
         // The shadow map holds packed depth: read it texel by texel, never blended.
         device.getSamplerStatesProperty()[1] = Graphics::SamplerState::PointClamp;
@@ -739,11 +953,83 @@ void main()
         SetCommon(*m_model);
         const auto& eye = frame.camera.position;
         m_model->SetUniformVec3("uEye", eye.X, eye.Y, eye.Z);
+        if (m_ultraActive)
+        {
+            for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get()})
+            {
+                SetCommon(*effect);
+                effect->setWorldProperty(terrain.World);
+                if (auto* texture = terrain.getTextureProperty())
+                {
+                    effect->SetTexture(0, *texture);
+                }
+                effect->SetUniformFloat("uDebug", m_debug);
+            }
+            SetCommon(*m_ultraModel);
+            SetUltra(device, *ultra);
+        }
+    }
+
+    void SceneShaders::SetUltra(Graphics::GraphicsDevice& device, const UltraSceneAssets& ultra)
+    {
+        const auto& frame = *m_frame;
+        const Vector3 sun = SunDirection();
+        const auto& eye = frame.camera.position;
+        // The background's wraps round the horizon, as WorldRenderer::DrawBackground lays it.
+        constexpr float kTwoPi = 6.28318530718f;
+        const float horizontalFov = 2.0f * std::atan(std::tan(frame.camera.fieldOfView * 0.5f) * frame.camera.aspectRatio);
+        const float repeats = std::max(1.0f, std::round(kTwoPi / std::max(horizontalFov, 0.01f)));
+        float sh[27];
+        for (std::size_t i = 0; i < 9; ++i)
+        {
+            sh[i * 3] = ultra.irradiance[i].X;
+            sh[i * 3 + 1] = ultra.irradiance[i].Y;
+            sh[i * 3 + 2] = ultra.irradiance[i].Z;
+        }
+        const auto& viewport = device.getViewportProperty();
+        for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get(), m_ultraModel.get()})
+        {
+            effect->SetUniformVec3("uSunDir", sun.X, sun.Y, sun.Z);
+            effect->SetUniformVec2("uSunLight", kUltraSun, 1.0f);
+            effect->SetUniformVec3("uEyePos", eye.X, eye.Y, eye.Z);
+            effect->SetUniformVec3Array("uSh", sh, 9);
+            effect->SetUniformVec4("uEnvInfo", repeats, static_cast<float>(std::max(0, ultra.environmentLevels - 1)), 0.0f, 0.0f);
+            effect->SetUniformVec4("uMaps", ultra.terrainNormals != nullptr ? 1.0f : 0.0f,
+                                   ultra.terrainSurface != nullptr ? 1.0f : 0.0f,
+                                   ultra.screenOcclusion != nullptr ? 1.0f : 0.0f, 0.0f);
+            effect->SetUniformVec2("uScreenTexel", 1.0f / std::max(1, viewport.getWidthProperty()),
+                                   1.0f / std::max(1, viewport.getHeightProperty()));
+            effect->SetTexture(3, ultra.environment != nullptr ? *ultra.environment : *m_white);
+            effect->SetTexture(4, ultra.terrainSurface != nullptr ? *ultra.terrainSurface : *m_white);
+            effect->SetTexture(5, ultra.terrainNormals != nullptr ? *ultra.terrainNormals : *m_white);
+            effect->SetTexture(6, ultra.screenOcclusion != nullptr ? *ultra.screenOcclusion : *m_white);
+        }
+        auto& samplers = device.getSamplerStatesProperty();
+        samplers[3] = m_envSampler;
+        samplers[4] = Graphics::SamplerState::LinearWrap;
+        samplers[5] = Graphics::SamplerState::LinearWrap;
+        samplers[6] = Graphics::SamplerState::PointClamp;
     }
 
     void SceneShaders::SetPartMaterial(const ProceduralMaterial* material)
     {
-        auto& effect = *m_model;
+        auto& effect = Model();
+        if (m_ultraActive)
+        {
+            // Ultra: the part's surface from its Ray Dream shader (else the model's, PrepareModel's), its glow.
+            if (material != nullptr && material->hasSurface)
+            {
+                const auto surface = SurfaceFromRayDream(material->highlight, material->shininess, material->reflection);
+                effect.SetUniformVec4("uSurface", surface.roughness, surface.metalness, surface.specular, 0.0f);
+                effect.SetUniformVec3("uGlow", material->glow.X * 2.5f, material->glow.Y * 2.5f, material->glow.Z * 2.5f);
+            }
+            else
+            {
+                effect.SetUniformVec4("uSurface", m_modelSurface.roughness, m_modelSurface.metalness, m_modelSurface.specular,
+                                      0.0f);
+                effect.SetUniformVec3("uGlow", 0.0f, 0.0f, 0.0f);
+            }
+        }
         if (material == nullptr || (!material->hasColour && material->bump == MaterialBump::None))
         {
             effect.SetUniformVec4("uMatInfo", 0.0f, 0.0f, 0.0f, 0.0f);
@@ -772,12 +1058,13 @@ void main()
 
     Graphics::ShaderEffect& SceneShaders::LitWith(Graphics::Texture2D* texture, const Matrix& world)
     {
-        m_lit->setWorldProperty(world);
+        auto& lit = *Lit();
+        lit.setWorldProperty(world);
         if (texture != nullptr)
         {
-            m_lit->SetTexture(0, *texture);
+            lit.SetTexture(0, *texture);
         }
-        return *m_lit;
+        return lit;
     }
 
     bool SceneShaders::PrepareModel(Graphics::SkinnedEffect& stock, const std::vector<Matrix>& bones, const Matrix& world,
@@ -787,7 +1074,7 @@ void main()
         {
             return false;
         }
-        auto& effect = *m_model;
+        auto& effect = Model();
         effect.setWorldProperty(world);
         SetBones(effect, bones);
         const auto ambient = stock.getAmbientLightColorProperty();
@@ -814,6 +1101,10 @@ void main()
         effect.SetUniformVec3("uSpecular", specular.X, specular.Y, specular.Z);
         effect.SetUniformVec3("uEmissive", emissive.X, emissive.Y, emissive.Z);
         effect.SetUniformVec2("uMaterial", std::max(1.0f, stock.getSpecularPowerProperty()), alpha);
+        if (m_ultraActive)
+        {
+            m_modelSurface = SurfaceFromSpecularPower(stock.getSpecularPowerProperty());
+        }
         return true;
     }
 }

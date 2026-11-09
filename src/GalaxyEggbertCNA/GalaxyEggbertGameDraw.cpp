@@ -242,6 +242,7 @@ namespace GalaxyEggbert::CNA
         assets.blupi1 = blupi1ObjectEffect_.get();
         assets.bigDecor = bigDecorEffect_.get();
         assets.terrainRenderer = terrainRenderer_.get();
+        assets.ultra = UltraSceneAssetsForFrame(getGraphicsDeviceProperty());
         return assets;
     }
 

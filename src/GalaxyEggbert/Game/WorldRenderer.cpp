@@ -171,7 +171,7 @@ namespace GalaxyEggbert::Game
         TerrainShading shading;
         if (frame.effects.surfaces && m_surfaces.Prepare(device))
         {
-            m_surfaces.Update(*assets.terrain, frame);
+            m_surfaces.Update(device, *assets.terrain, frame, frame.effects.ultra ? assets.ultra : nullptr);
             shading.lava = m_surfaces.Lava();
             shading.water = m_surfaces.Water();
         }
@@ -182,7 +182,7 @@ namespace GalaxyEggbert::Game
         m_modelShading = m_sceneShading && (frame.effects.shadowMap || frame.effects.pointLights);
         if (m_sceneShading)
         {
-            m_scene.SetFrame(device, frame, *assets.terrain);
+            m_scene.SetFrame(device, frame, *assets.terrain, frame.effects.ultra ? assets.ultra : nullptr);
             shading.occluded = m_scene.Occluded();
             shading.lit = m_scene.Lit();
             shading.cutout = m_scene.Cutout();

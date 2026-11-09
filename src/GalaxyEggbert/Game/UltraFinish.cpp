@@ -92,7 +92,7 @@ uniform float uRate;
 void main()
 {
     float mean = exp(texelFetch(uTexture, ivec2(0), 0).r);
-    float target = clamp(1.35 * sqrt(0.17 / max(mean, 0.001)), 0.8, 2.2);
+    float target = clamp(1.35 * sqrt(0.17 / max(mean, 0.001)), 0.85, 1.8);
     float previous = texelFetch(uPrevious, ivec2(0), 0).r;
     FragColor = vec4(uRate >= 1.0 ? target : mix(previous, target, uRate), 0.0, 0.0, 1.0);
 }

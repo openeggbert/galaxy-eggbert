@@ -10,6 +10,10 @@
 //     colour <r> <g> <b>
 //     layer <marble|wood|spots> <r> <g> <b> <scale> <spacing> <perturbation> <axis> <blend>
 //     bump <spots|grain> <amplitude> <scale> <threshold>
+//     surface <highlight> <shininess> <reflection> <glow r> <glow g> <glow b>
+//
+// The surface (its shader's highlight, shininess, reflection and glow) is the Ultra level's: its
+// roughness, metalness and emission (UltraLogic.hpp SurfaceFromRayDream).
 
 #include <Microsoft/Xna/Framework/Vector3.hpp>
 
@@ -58,6 +62,11 @@ namespace GalaxyEggbert::Game
         float bumpAmplitude = 0.0f;
         float bumpScale = 1.0f;
         float bumpThreshold = 0.5f;
+        bool hasSurface = false;
+        float highlight = 0.5f;  // 0..1
+        float shininess = 0.5f;  // 0..1
+        float reflection = 0.0f; // 0..1
+        Microsoft::Xna::Framework::Vector3 glow;
     };
 
     using ProceduralMaterials = std::unordered_map<std::string, ProceduralMaterial>;
@@ -115,6 +124,15 @@ namespace GalaxyEggbert::Game
                     {
                         current->layers[static_cast<std::size_t>(current->layerCount++)] = layer;
                     }
+                }
+            }
+            else if (kind == "surface")
+            {
+                float r = 0, g = 0, b = 0;
+                if (words >> current->highlight >> current->shininess >> current->reflection >> r >> g >> b)
+                {
+                    current->hasSurface = true;
+                    current->glow = Microsoft::Xna::Framework::Vector3(r, g, b);
                 }
             }
             else if (kind == "bump")

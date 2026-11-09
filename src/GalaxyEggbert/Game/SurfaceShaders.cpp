@@ -4,6 +4,7 @@
 
 #include <CNA/ShaderDialectEXT.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 
@@ -126,6 +127,69 @@ void main()
 )";
     }
 
+    namespace
+    {
+        // Ultra (UltraFinish.hpp): in linear light, written unclipped. The water reflects the sky (the
+        // world's background, by Schlick's Fresnel; what stands round it, UltraFinish's screen-space
+        // reflections) and the sun glints off it far above white; the lava glows above white.
+        const char* const kSurfaceUltra = R"(
+uniform sampler2D uEnv;     // unit 3: the sky picture, its levels ever softer
+uniform vec4 uEnvInfo;      // repeats, the levels' last
+vec3 ToLinear(vec3 c) { return pow(max(c, vec3(0.0)), vec3(2.2)); }
+vec3 ToDisplay(vec3 c) { return pow(max(c, vec3(0.0)), vec3(1.0 / 2.2)); }
+vec3 Environment(vec3 d, float roughness)
+{
+    float wide = 6.2831853 / max(1.0, uEnvInfo.x);
+    vec2 uv = vec2(atan(d.x, -d.z) / wide, 0.5 - asin(clamp(d.y, -1.0, 1.0)) / (wide * 0.75));
+    return ToLinear(textureLod(uEnv, uv, roughness * uEnvInfo.y).rgb);
+}
+)";
+        const char* const kWaterUltraFragment = R"(
+void main()
+{
+    vec4 tex = texture(uTexture, vUv);
+    vec3 n = normalize(vNormal);
+    float top = clamp(n.y, 0.0, 1.0);
+    vec2 q = vWorld.xz;
+    float t = uTime;
+    vec2 slope = vec2(cos(q.x * 3.1 + t * 1.7) * 0.6 + cos((q.x + q.y) * 4.3 - t * 2.3) * 0.4,
+                      cos(q.y * 2.7 - t * 1.3) * 0.6 + cos((q.y - q.x) * 3.7 + t * 1.9) * 0.4);
+    vec3 waved = normalize(n + vec3(slope.x, 0.0, slope.y) * 0.12 * top);
+    vec3 body = ToLinear(Lit(tex.rgb, waved));
+    float dance = sin(q.x * 5.3 + t * 2.1) * sin(q.y * 4.7 - t * 1.7) + sin((q.x - q.y) * 3.1 + t * 1.3) * 0.5;
+    body *= 1.0 + 0.12 * dance * top;
+    vec3 toEye = normalize(uCamera - vWorld);
+    float nv = max(dot(waved, toEye), 0.0);
+    float fresnel = 0.02 + 0.98 * pow(1.0 - nv, 5.0);
+    vec3 sky = Environment(reflect(-toEye, waved), 0.08);
+    vec3 color = mix(body, sky, fresnel * top);
+    // The sun's glint: GGX, roughness 0.12, its light 0.75 (UltraLogic.hpp kUltraSun).
+    vec3 h = normalize(-uLightDir + toEye);
+    float nh = max(dot(waved, h), 0.0);
+    float a2 = 0.12 * 0.12 * 0.12 * 0.12;
+    float d = nh * nh * (a2 - 1.0) + 1.0;
+    color += vec3(1.0, 0.97, 0.9) * (a2 / (3.14159 * d * d)) * 0.25 * fresnel * max(0.0, dot(waved, -uLightDir)) * top;
+    float alpha = tex.a * mix(0.78, 1.0, fresnel);
+    FragColor = Fogged(vec4(ToDisplay(color), alpha));
+}
+)";
+        const char* const kLavaUltraFragment = R"(
+void main()
+{
+    vec4 tex = texture(uTexture, vUv);
+    vec3 n = normalize(vNormal);
+    vec3 color = ToLinear(Lit(tex.rgb, n));
+    float t = uTime;
+    vec2 q = vWorld.xz * 1.7 + vec2(t * 0.11, -t * 0.07);
+    float heat = Noise(q) * 0.6 + Noise(q * 2.3 - vec2(t * 0.17, t * 0.13)) * 0.4;
+    float pulse = 0.5 + 0.5 * sin(t * 2.1 + Noise(vWorld.xz * 0.6) * 6.2831);
+    vec3 glow = ToLinear(tex.rgb) * (0.6 + 0.5 * pulse);
+    glow += vec3(1.0, 0.42, 0.06) * smoothstep(0.55, 0.95, heat) * 2.6;
+    FragColor = Fogged(vec4(ToDisplay(color + glow), tex.a));
+}
+)";
+    }
+
     std::string GlslPreamble(const Graphics::GraphicsDevice& device)
     {
         switch (device.GetShaderDialectEXT())
@@ -200,8 +264,37 @@ void main()
         effect.SetUniformFloat("uTime", effects.seconds);
     }
 
-    void SurfaceShaders::Update(const Graphics::BasicEffect& terrain, const SceneFrame& frame)
+    void SurfaceShaders::Update(Graphics::GraphicsDevice& device, const Graphics::BasicEffect& terrain, const SceneFrame& frame,
+                                const UltraSceneAssets* ultra)
     {
+        m_ultraActive = false;
+        if (ultra != nullptr && frame.effects.ultra && ultra->environment != nullptr)
+        {
+            if (!m_ultraTried)
+            {
+                m_ultraTried = true;
+                const std::string common = std::string(kSurfaceCommon) + kSurfaceUltra;
+                m_ultraWater = CompileShaderEffect(device, "Ultra's water shader", kSurfaceVertex, common + kWaterUltraFragment);
+                m_ultraLava = CompileShaderEffect(device, "Ultra's lava shader", kSurfaceVertex, common + kLavaUltraFragment);
+            }
+            m_ultraActive = m_ultraWater && m_ultraLava;
+            if (m_ultraActive)
+            {
+                constexpr float kTwoPi = 6.28318530718f;
+                const float horizontalFov =
+                    2.0f * std::atan(std::tan(frame.camera.fieldOfView * 0.5f) * frame.camera.aspectRatio);
+                const float repeats = std::max(1.0f, std::round(kTwoPi / std::max(horizontalFov, 0.01f)));
+                for (auto* effect : {m_ultraWater.get(), m_ultraLava.get()})
+                {
+                    SetCommon(*effect, terrain, frame);
+                    effect->SetUniformInt("uEnv", 3);
+                    effect->SetTexture(3, *ultra->environment);
+                    effect->SetUniformVec4("uEnvInfo", repeats, static_cast<float>(std::max(0, ultra->environmentLevels - 1)),
+                                           0.0f, 0.0f);
+                }
+                return;
+            }
+        }
         if (m_water)
         {
             SetCommon(*m_water, terrain, frame);

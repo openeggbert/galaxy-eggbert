@@ -1248,6 +1248,16 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Game::EffectParticles effectParticles_;
         GalaxyEggbert::Game::PostProcess postProcess_;
         GalaxyEggbert::Game::UltraFinish ultraFinish_; // Ultra's HDR finish in place of postProcess_
+        // What Ultra lends the world's shaders (UltraAssets.hpp) and what it points at.
+        GalaxyEggbert::Game::UltraSceneAssets ultraAssets_;
+        GalaxyEggbert::Game::SkyEnvironment ultraSkyData_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> ultraSky_;
+        void BuildUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const std::uint8_t* rgba, int width,
+                           int height);
+        void UploadUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        // Ultra's lending for this frame (its textures made on its first frame); nullptr below Ultra.
+        const GalaxyEggbert::Game::UltraSceneAssets* UltraSceneAssetsForFrame(
+            Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         bool worldIntoTarget_ = false; // the world is being drawn into postProcess_'s target
         // The world's sky colour for the effects' distance haze: the middle of its background picture.
         Microsoft::Xna::Framework::Vector3 backgroundHaze_{0.0f, 35.0f / 255.0f, 98.0f / 255.0f};

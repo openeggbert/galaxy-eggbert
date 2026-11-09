@@ -5,6 +5,7 @@
 // editor's tint texture); the content it draws with -- the loaded effects, textures, models and the
 // terrain's meshes -- belongs to the game, which lends it each frame (WorldRenderAssets).
 
+#include <GalaxyEggbert/Game/UltraAssets.hpp>
 #include <GalaxyEggbert/Game/SceneFrame.hpp>
 #include <GalaxyEggbert/Game/SceneShaders.hpp>
 #include <GalaxyEggbert/Game/SurfaceShaders.hpp>
@@ -40,6 +41,7 @@ namespace GalaxyEggbert::Game
         Microsoft::Xna::Framework::Graphics::BasicEffect* blupi1 = nullptr;   // blupi1.png
         Microsoft::Xna::Framework::Graphics::BasicEffect* bigDecor = nullptr; // explo.png, big decor
         TerrainRenderer* terrainRenderer = nullptr;
+        const UltraSceneAssets* ultra = nullptr; // Ultra's sky, maps and screen occlusion
     };
 
     struct WorldRenderStatistics

@@ -710,6 +710,16 @@ namespace GalaxyEggbert::CNA
                             static_cast<float>(r / count / 255.0), static_cast<float>(g / count / 255.0),
                             static_cast<float>(b / count / 255.0));
                     }
+                    // Ultra's sky light: the same picture.
+                    std::vector<std::uint8_t> rgba(texels.size() * 4);
+                    for (std::size_t i = 0; i < texels.size(); ++i)
+                    {
+                        rgba[i * 4] = texels[i].getRProperty();
+                        rgba[i * 4 + 1] = texels[i].getGProperty();
+                        rgba[i * 4 + 2] = texels[i].getBProperty();
+                        rgba[i * 4 + 3] = 255;
+                    }
+                    BuildUltraSky(device, rgba.data(), width, height);
                 }
                 std::cout << "GalaxyEggbertCNA: background loaded — " << backgroundPath << " ("
                           << backgroundTexture_.getWidthProperty() << "x"
@@ -719,6 +729,7 @@ namespace GalaxyEggbert::CNA
             else
             {
                 backgroundLoaded_ = false;
+                BuildUltraSky(device, nullptr, 0, 0);
                 std::cout << "GalaxyEggbertCNA: no background image for region "
                           << worldRuntime_.GetSkyRegion() << " (" << backgroundPath
                           << " not found) — falling back to flat clear color." << std::endl;
@@ -812,6 +823,56 @@ namespace GalaxyEggbert::CNA
             terrainReliefOverhangs_ = overhang != nullptr && std::string(overhang) == "1";
         }
         return terrainReliefs_.Empty() ? nullptr : &terrainReliefs_;
+    }
+
+    void GalaxyEggbertGame::BuildUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                          const std::uint8_t* rgba, int width, int height)
+    {
+        // The 3D effects' Ultra level lights the world with its background picture (UltraLogic.hpp): its
+        // levels for the reflections, its irradiance for the light from around. Computed with every world
+        // (small: 128 x 96 and its levels), so that the Setup can turn Ultra on at once; its texture made on
+        // Ultra's first frame (UltraSceneAssetsForFrame), so that the other levels allocate nothing more --
+        // a texture made here moved a High golden frame by 45 pixels.
+        (void) device;
+        ultraSkyData_ = GalaxyEggbert::Game::BuildSkyEnvironment(rgba, width, height, 4.0f, backgroundHaze_);
+        ultraSky_.reset();
+        ultraAssets_.environment = nullptr;
+        ultraAssets_.irradiance = ultraSkyData_.irradiance;
+    }
+
+    const GalaxyEggbert::Game::UltraSceneAssets* GalaxyEggbertGame::UltraSceneAssetsForFrame(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        if (!sceneFrame_.effects.ultra || ultraSkyData_.levels.empty())
+        {
+            return nullptr;
+        }
+        if (!ultraSky_)
+        {
+            UploadUltraSky(device);
+        }
+        return &ultraAssets_;
+    }
+
+    void GalaxyEggbertGame::UploadUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        const auto& sky = ultraSkyData_;
+        ultraSky_ = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(
+            device, sky.width, sky.height, /*mipMap=*/true, Microsoft::Xna::Framework::Graphics::SurfaceFormat::Color);
+        const int levels = std::min(ultraSky_->getLevelCountProperty(), static_cast<int>(sky.levels.size()));
+        for (int level = 0; level < levels; ++level)
+        {
+            const auto& data = sky.levels[static_cast<std::size_t>(level)];
+            std::vector<Microsoft::Xna::Framework::Color> colors(data.size() / 4);
+            for (std::size_t i = 0; i < colors.size(); ++i)
+            {
+                colors[i] = Microsoft::Xna::Framework::Color(static_cast<int>(data[i * 4]), static_cast<int>(data[i * 4 + 1]),
+                                                             static_cast<int>(data[i * 4 + 2]), 255);
+            }
+            ultraSky_->SetData(level, nullptr, colors.data(), 0, static_cast<int>(colors.size()));
+        }
+        ultraAssets_.environment = ultraSky_.get();
+        ultraAssets_.environmentLevels = levels;
     }
 
     bool GalaxyEggbertGame::Effects3DWanted() const

@@ -11,12 +11,20 @@
 //
 // Desktop GLSL 3.30 or GLSL ES 3.00 (ShaderEffect); where they do not compile, Ready() is false and the
 // stock effects draw as without the effects (the fog, the soft round shadows and the particles remain).
+//
+// Ultra (SceneEffects::ultra) draws the terrain and the models with programs of their own, compiled
+// apart (the other levels' programs are untouched): physically based light in linear light, the sky's
+// light from the world's background picture, the atlas's surface maps, the screen's occlusion
+// (UltraAssets.hpp). Where they do not compile, Ultra's world is lit as High's.
 
 #include <GalaxyEggbert/Game/SceneFrame.hpp>
+#include <GalaxyEggbert/Game/UltraAssets.hpp>
+#include <GalaxyEggbert/Game/UltraLogic.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
 #include <Microsoft/Xna/Framework/Graphics/RenderTarget2D.hpp>
+#include <Microsoft/Xna/Framework/Graphics/SamplerState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/ShaderEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
@@ -64,10 +72,20 @@ namespace GalaxyEggbert::Game
 
         // --- The main pass ----------------------------------------------------------------------------
         // The frame's camera, fog, lights and shadow for every shader; the terrain's texture and camera.
+        // `ultra` (Ultra's lending, nullptr otherwise) switches the terrain's and the models' programs to
+        // Ultra's for this frame.
         void SetFrame(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
-                      const Microsoft::Xna::Framework::Graphics::BasicEffect& terrain);
-        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Occluded() const { return m_occluded.get(); }
-        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Lit() const { return m_lit.get(); }
+                      const Microsoft::Xna::Framework::Graphics::BasicEffect& terrain,
+                      const UltraSceneAssets* ultra = nullptr);
+        [[nodiscard]] bool UltraActive() const noexcept { return m_ultraActive; }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Occluded() const
+        {
+            return m_ultraActive ? m_ultraOccluded.get() : m_occluded.get();
+        }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Lit() const
+        {
+            return m_ultraActive ? m_ultraLit.get() : m_lit.get();
+        }
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Cutout() const { return m_cutout.get(); }
         // A lit (position, normal, uv) mesh with its own texture and world (the cubes, the grass).
         Microsoft::Xna::Framework::Graphics::ShaderEffect& LitWith(Microsoft::Xna::Framework::Graphics::Texture2D* texture,
@@ -77,7 +95,10 @@ namespace GalaxyEggbert::Game
                           const std::vector<Microsoft::Xna::Framework::Matrix>& bones,
                           const Microsoft::Xna::Framework::Matrix& world, float alpha, bool tinted,
                           const Microsoft::Xna::Framework::Vector3& tint);
-        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& Model() { return *m_model; }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& Model()
+        {
+            return m_ultraActive ? *m_ultraModel : *m_model;
+        }
         // The part about to be drawn with Model(): its Ray Dream material (nullptr: its texture as it is).
         void SetPartMaterial(const ProceduralMaterial* material);
         // The billboards (position, uv) on this sheet's texture, at this alpha, darkened in the sun's shadow.
@@ -86,6 +107,7 @@ namespace GalaxyEggbert::Game
 
     private:
         void SetCommon(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect);
+        void SetUltra(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const UltraSceneAssets& ultra);
         static void SetBones(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect,
                              const std::vector<Microsoft::Xna::Framework::Matrix>& bones);
 
@@ -110,5 +132,15 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_cutout;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_model;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_sprite;
+        // Ultra's programs, compiled on its first frame.
+        bool m_ultraTried = false;
+        bool m_ultraReady = false;
+        bool m_ultraActive = false;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraOccluded;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraLit;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraModel;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_white; // 1x1, for what is missing
+        Microsoft::Xna::Framework::Graphics::SamplerState m_envSampler;
+        UltraSurface m_modelSurface; // the model being drawn's own (its specular power)
     };
 }

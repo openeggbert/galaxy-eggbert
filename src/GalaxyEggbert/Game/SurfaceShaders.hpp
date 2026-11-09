@@ -9,6 +9,7 @@
 // and the terrain keeps its own effect.
 
 #include <GalaxyEggbert/Game/SceneFrame.hpp>
+#include <GalaxyEggbert/Game/UltraAssets.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
@@ -33,11 +34,20 @@ namespace GalaxyEggbert::Game
     public:
         // Compiles both on first use; false when the device cannot (they are then never tried again).
         bool Prepare(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
-        // Takes the terrain effect's camera and texture and the frame's fog and clock.
-        void Update(const Microsoft::Xna::Framework::Graphics::BasicEffect& terrain, const SceneFrame& frame);
+        // Takes the terrain effect's camera and texture and the frame's fog and clock; `ultra` (Ultra's
+        // lending, nullptr otherwise) switches both to Ultra's programs for this frame.
+        void Update(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                    const Microsoft::Xna::Framework::Graphics::BasicEffect& terrain, const SceneFrame& frame,
+                    const UltraSceneAssets* ultra = nullptr);
 
-        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Water() const noexcept { return m_water.get(); }
-        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Lava() const noexcept { return m_lava.get(); }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Water() const noexcept
+        {
+            return m_ultraActive ? m_ultraWater.get() : m_water.get();
+        }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Lava() const noexcept
+        {
+            return m_ultraActive ? m_ultraLava.get() : m_lava.get();
+        }
 
     private:
         void SetCommon(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect,
@@ -46,5 +56,9 @@ namespace GalaxyEggbert::Game
         bool m_tried = false;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_water;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_lava;
+        bool m_ultraTried = false;
+        bool m_ultraActive = false;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraWater;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraLava;
     };
 }
