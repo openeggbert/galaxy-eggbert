@@ -6,6 +6,12 @@ constraints (faithful remake, `../mobile-eggbert` never modified, no copied code
 guards for engine differences). Choosing this direction is the project owner's call — this document
 commits to nothing; it only proposes._
 
+> **Status (2026-11-09):** Phases 1-2 are done as **one** renderer, by the owner's decision (no
+> second renderer): `SceneFrame` (a draw list, `src/GalaxyEggbert/Game/SceneFrame.hpp`) built by
+> `GalaxyEggbertGameScene.cpp`, drawn by `WorldRenderer`, byte-equal to the code before. Phase 4's
+> look came as an optional effects layer inside it (the Setup's "3D effects": fog, sun-thrown soft
+> shadows, water/lava shaders, glow and grade, particles), not as `GERendererHi`. See `CURRENT.md`.
+
 ---
 
 ## Short answer

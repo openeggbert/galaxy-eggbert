@@ -12,6 +12,8 @@
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/BoltMesh.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
+#include <GalaxyEggbert/Game/EffectParticles.hpp>
+#include <GalaxyEggbert/Game/TerrainLighting.hpp>
 #include <GalaxyEggbert/Game/EnemyBlupi.hpp>
 #include <GalaxyEggbert/Game/GlueStrands.hpp>
 #include <GalaxyEggbert/Game/LiftVisual.hpp>
@@ -24,6 +26,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+#include <optional>
 
 namespace GalaxyEggbert::CNA
 {
@@ -71,6 +74,31 @@ namespace GalaxyEggbert::CNA
                 textures.push_back(face != nullptr && part.Name == facePart ? face : other(part.Texture));
             }
             return textures;
+        }
+
+        // The top of the highest solid (or water) cell under (x, z) at or below `fromY` (render space:
+        // a cell's centre at its integer coordinates), within 12 blocks; none outside the world.
+        std::optional<float> GroundBelow(const Worlds::World& world, float x, float fromY, float z)
+        {
+            const long n = static_cast<long>(world.blocksPerAxis());
+            const long gx = std::lround(x) + WorldRuntime::kWorldCenterX;
+            const long gz = std::lround(z) + WorldRuntime::kWorldCenterZ;
+            if (gx < 0 || gz < 0 || gx >= n || gz >= n || !std::isfinite(fromY))
+            {
+                return std::nullopt;
+            }
+            const long top = std::min<long>(n - 1, static_cast<long>(std::floor(fromY - 0.5f + 0.05f)));
+            for (long gy = top; gy >= 0 && gy >= top - 12; --gy)
+            {
+                const auto& definition = GalaxyEggbert::GetBlockDefinition(
+                    world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
+                                   static_cast<std::uint16_t>(gz)).type());
+                if (definition.collisionMask != 0 || definition.water)
+                {
+                    return static_cast<float>(gy) + 0.5f;
+                }
+            }
+            return std::nullopt;
         }
 
         std::vector<Texture2D*> PartTextures(const SkinnedModelEXT& model, Texture2D* face, const std::string& facePart)
@@ -132,6 +160,103 @@ namespace GalaxyEggbert::CNA
             AppendSceneEditorStarts(frame.editorStarts);
         }
         AppendSceneBillboards(frame);
+        AppendSceneEffects(frame);
+    }
+
+    void GalaxyEggbertGame::AppendSceneEffects(SceneFrame& frame)
+    {
+        // The 3D effects (the Setup's "3D effects"): presentation only, nothing of the game changes.
+        auto& effects = frame.effects;
+        effects.enabled = Effects3DWanted() && frame.world;
+        if (!effects.enabled)
+        {
+            effectParticles_.Clear();
+            return;
+        }
+        // The distance haze in the colour of the world's own sky (its background picture's middle).
+        effects.fogColor = backgroundHaze_;
+        effects.fogStart = 20.0f;
+        effects.fogEnd = 140.0f;
+        effects.seconds = static_cast<float>(worldRuntime_.GetAnimPhase()) / 60.0f;
+
+        const auto& world = worldRuntime_.GetWorld();
+        const auto& objects = worldRuntime_.GetMobileObjects();
+        // The sun's way (TerrainLighting.hpp): a shadow falls this far along X and Z per block of height.
+        const float sunX = kTerrainLight.directionX / -kTerrainLight.directionY;
+        const float sunZ = kTerrainLight.directionZ / -kTerrainLight.directionY;
+        const auto addShadow = [&](float x, float feetY, float z, float radius, float darkness)
+        {
+            const auto under = GroundBelow(world, x, feetY, z);
+            if (!under)
+            {
+                return;
+            }
+            const float height = std::max(0.0f, feetY - *under);
+            constexpr float kReach = 10.0f; // gone by this height
+            if (height >= kReach)
+            {
+                return;
+            }
+            // Thrown away from the sun, on the ground where it lands there.
+            const float sx = x + sunX * height;
+            const float sz = z + sunZ * height;
+            const float ground = GroundBelow(world, sx, feetY, sz).value_or(*under);
+            const float fade = 1.0f - height / kReach;
+            SceneShadow shadow;
+            shadow.center = Vector3(sx, ground, sz);
+            shadow.radius = radius * (1.0f + height * 0.08f);
+            shadow.strength = darkness * fade * std::sqrt(fade);
+            effects.shadows.push_back(shadow);
+        };
+        // Blupi's, when he is seen.
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Editor && cameraMode_ == CameraMode::ThirdPersonModel &&
+            !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()))
+        {
+            addShadow(blupi_.GetX(), blupi_.GetY() - 0.5f, blupi_.GetZ(), 0.34f, 0.55f);
+        }
+        // Every object standing or flying in the world: pickups, enemies, vehicles (not the effects, nor
+        // the lifts and crates, solid themselves).
+        for (const auto& obj : objects)
+        {
+            if (!obj.active)
+            {
+                continue;
+            }
+            const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+            if (!visual.visible || visual.renderMode == ObjectRenderMode::SolidCube ||
+                GetObjectDefinition(obj.type).semanticKind == ObjectSemanticKind::Effect)
+            {
+                continue;
+            }
+            addShadow(obj.currentX, obj.currentY - 0.5f, obj.currentZ, 0.32f, 0.45f);
+        }
+
+        // The explosions, splashes and sparks: their sprites become particles (EffectParticles.hpp).
+        effectParticles_.Advance(worldRuntime_.GetAnimPhase());
+        for (auto& batch : frame.billboards)
+        {
+            auto& quads = batch.quads;
+            quads.erase(std::remove_if(quads.begin(), quads.end(),
+                                       [&](const SceneQuad& quad)
+                                       {
+                                           if (quad.sourceObject < 0 ||
+                                               quad.sourceObject >= static_cast<int>(objects.size()))
+                                           {
+                                               return false;
+                                           }
+                                           ParticleKind kind{};
+                                           if (!EffectParticleKind(objects[static_cast<std::size_t>(quad.sourceObject)].type,
+                                                                   kind))
+                                           {
+                                               return false;
+                                           }
+                                           effectParticles_.Feed(quad.sourceObject, kind, batch.sheet, quad.uv, quad.center);
+                                           return ParticlesReplaceSprite(kind);
+                                       }),
+                        quads.end());
+        }
+        const auto invView = Matrix::Invert(camera_.View());
+        effectParticles_.Append(effects.particles, invView.getRightProperty(), invView.getUpProperty());
     }
 
     bool GalaxyEggbertGame::SceneEditorSelected(int kind, float rawX, float rawY, float rawZ) const

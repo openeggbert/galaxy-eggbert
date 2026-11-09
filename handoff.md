@@ -6,7 +6,40 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-09 (the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## SceneFrame + WorldRenderer, and the optional 3D effects (2026-11-09) — verified desktop and web
+
+Owner's request: wire `SceneFrame`, wrap the drawing as the renderer (no second renderer), then 3D
+effects and particles instead of the effects' billboards; effects off by default (a Setup toggle),
+on every platform, particles cut from the original sprites.
+
+- Commits: the frame's drawing moved to `src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp` (DrawWorld,
+  DrawOverlay, DrawFrameCaptures; shared helpers in `GameInternal.hpp`); then `SceneFrame` rewritten
+  as the draw list, built by `GalaxyEggbertGameScene.cpp` (`BuildSceneFrame`, `AppendScene*`), drawn
+  by `src/GalaxyEggbert/Game/WorldRenderer.cpp` from it and `WorldRenderAssets` (the game's loaded
+  effects, lent each frame); then the effects.
+- Effects: `WorldEffects.cpp` (fog on every world effect and the terrain's cutout pass, the shadow
+  pass after the opaque terrain, the particles after the billboards), `SurfaceShaders.cpp` (water and
+  lava GLSL, desktop 3.30 / ES 3.00 by `GetShaderDialectEXT()`, passed to
+  `TerrainRenderer::DrawOpaque/DrawTransparent`), `PostProcess.cpp` (scene render target, bright
+  pass, two blur passes, screen composite with saturation and vignette; HUD after it),
+  `EffectParticles.cpp` (Fire 8-11, Splash 14/15/35/98-100, Sparkle 39/41/42/57/58/90-93; fire and
+  splashes replace their billboard, sparkles keep it). The builder's `AppendSceneEffects` sets fog
+  (start 20, end 140, colour = the background picture's middle rows, `backgroundHaze_`), shadows
+  (`GroundBelow`, thrown along `kTerrainLight`) and diverts the effect objects' quads to particles.
+  Setup: "3D effects" at x 450 on the Accelerometer row (the sensitivity slider ends at 440).
+- The one-shot terrain check (`CheckTerrainVisibility`) skips while the world goes into the render
+  target (CNA refuses `GetBackBufferData` with a target bound).
+- Verified: effects off -- golden frames and trace equal, 1728 autoplay frames of 11 missions
+  (`build-probe/render-refactor/shots.sh`, `compare.sh`; four frames of 055/065 differ between two
+  runs of the same binary and are skipped, `flaky.txt`) and 28 editor frames byte-equal to the build
+  before; effects on -- the 11 missions and the editor pass, the golden trace and the 065/199
+  autoplay traces equal; the Setup toggle clicked live (saved `effects3d=1`); web: `build-cna-webgl2`
+  rebuilt, headless Chrome (`build-probe/render-refactor/web_fx.py`) toggled it in the main menu's
+  Setup and played, no shader error. `VerifyEffectParticles` (CTest, 118/118). Android not run.
+- Next, if wanted: real shadow mapping (a depth pass from the sun and terrain/model shaders that
+  read it), shadows on models, a GLES3/Android run.
 
 ## Brick wall ends ragged towards the open (2026-11-09, Q-011) — verified on desktop
 

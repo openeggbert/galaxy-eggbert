@@ -61,6 +61,10 @@ namespace GalaxyEggbert::Game
             {
                 terrainRelief_ = (value == "1");
             }
+            else if (key == "effects3d")
+            {
+                effects3D_ = (value == "1");
+            }
             else if (key == "accelSensitivity")
             {
                 accelSensitivity_ = ClampVolume(std::atoi(value.c_str()));
@@ -140,6 +144,7 @@ namespace GalaxyEggbert::Game
         out << "accelSensitivity=" << accelSensitivity_ << "\n";
         out << "fullscreen=" << (fullscreen_ ? "1" : "0") << "\n";
         out << "terrainRelief=" << (terrainRelief_ ? "1" : "0") << "\n";
+        out << "effects3d=" << (effects3D_ ? "1" : "0") << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         const auto writeSlot = [&out](const char* prefix, int gamer, const GamerSlot& slot)
         {

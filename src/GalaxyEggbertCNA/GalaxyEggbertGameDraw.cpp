@@ -172,7 +172,20 @@ namespace GalaxyEggbert::CNA
             (phase_ != GalaxyEggbert::Def::GamePhase::Init || titleSceneActive_) &&
             !(phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing() && !titleSceneActive_))
         {
+            // The 3D effects' finish (PostProcess.hpp): the world into a render target, then onto the
+            // screen with its glow and grade; without them, or where the device cannot, straight on.
+            const bool finish = Effects3DWanted() && postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98));
+            if (finish)
+            {
+                device.SetDepthTestEnabled(true);
+            }
+            worldIntoTarget_ = finish;
             DrawWorld(device, soulDrawnIn3D);
+            worldIntoTarget_ = false;
+            if (finish)
+            {
+                postProcess_.End(device);
+            }
         }
 
         // Restore opaque state after the AlphaBlend block above (billboards
@@ -219,6 +232,10 @@ namespace GalaxyEggbert::CNA
     // every model are drawn and before the billboards.
     void GalaxyEggbertGame::CheckTerrainVisibility(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
     {
+        if (worldIntoTarget_)
+        {
+            return; // the backbuffer cannot be read while the world goes into the effects' target
+        }
         static bool terrainPixelPrinted = false;
         if (!terrainPixelPrinted)
         {
@@ -436,7 +453,7 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
                                     saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
-                                    fadeOutPhase_, TerrainReliefWanted());
+                                    fadeOutPhase_, TerrainReliefWanted(), Effects3DWanted());
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {

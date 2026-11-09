@@ -32,6 +32,8 @@
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/SceneFrame.hpp>
+#include <GalaxyEggbert/Game/EffectParticles.hpp>
+#include <GalaxyEggbert/Game/PostProcess.hpp>
 #include <GalaxyEggbert/Game/WorldRenderer.hpp>
 #include <CnaEngine/Graphics/Camera.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
@@ -1219,6 +1221,12 @@ namespace GalaxyEggbert::CNA
         void AppendSceneDecals(GalaxyEggbert::Game::SceneFrame& frame);
         void AppendSceneEditorStarts(std::vector<GalaxyEggbert::Game::SceneModel>& models);
         void AppendSceneBillboards(GalaxyEggbert::Game::SceneFrame& frame);
+        void AppendSceneEffects(GalaxyEggbert::Game::SceneFrame& frame);
+        GalaxyEggbert::Game::EffectParticles effectParticles_;
+        GalaxyEggbert::Game::PostProcess postProcess_;
+        bool worldIntoTarget_ = false; // the world is being drawn into postProcess_'s target
+        // The world's sky colour for the effects' distance haze: the middle of its background picture.
+        Microsoft::Xna::Framework::Vector3 backgroundHaze_{0.0f, 35.0f / 255.0f, 98.0f / 255.0f};
         GalaxyEggbert::Game::SceneFrame sceneFrame_;
         GalaxyEggbert::Game::WorldRenderer worldRenderer_;
         // The editor's target, read once a frame for the scene's selection overlays.
@@ -1293,6 +1301,8 @@ namespace GalaxyEggbert::CNA
         // pickup, teleporting, waving goodbye or cheering. The spike traps snap then (BD-0067).
         // The Setup's "3D terrain" (SaveData::GetTerrainRelief), or GALAXY_TERRAIN_RELIEF when set.
         [[nodiscard]] bool TerrainReliefWanted() const;
+        // The Setup's "3D effects" (SaveData::GetEffects3D), or GALAXY_EFFECTS=0/1 for tests.
+        [[nodiscard]] bool Effects3DWanted() const;
         // After the setting changed: the reliefs loaded or dropped, the terrain built again.
         void ApplyTerrainReliefSetting();
         [[nodiscard]] bool BlupiFocusRaw() const

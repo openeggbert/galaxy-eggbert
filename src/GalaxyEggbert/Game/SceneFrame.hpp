@@ -16,6 +16,7 @@
 #include <CnaEngine/Graphics/MeshBuilder.hpp>
 #include <CnaEngine/Graphics/TextureAtlas.hpp>
 
+#include <Microsoft/Xna/Framework/Color.hpp>
 #include <Microsoft/Xna/Framework/Matrix.hpp>
 #include <Microsoft/Xna/Framework/Vector2.hpp>
 #include <Microsoft/Xna/Framework/Vector3.hpp>
@@ -54,6 +55,8 @@ namespace GalaxyEggbert::Game
         CnaEngine::Graphics::UvRect uv;
         int sourceObject = -1;                     // index in WorldRuntime::GetMobileObjects(), or -1
         int sourceIcon = -1;                       // its icon on its sheet
+        float rotation = 0.0f;                     // radians in the view plane (particles)
+        Microsoft::Xna::Framework::Color color = Microsoft::Xna::Framework::Color::White; // particles: tint, alpha
     };
 
     // The sheets a billboard batch is cut from: each its own texture and effect.
@@ -134,6 +137,28 @@ namespace GalaxyEggbert::Game
         CnaEngine::Graphics::MeshData mesh;
     };
 
+    // A soft round shadow on the ground under something (the effects layer's sun shadows): the
+    // point on the ground it falls on, its radius in blocks and how dark it is (0..1).
+    struct SceneShadow
+    {
+        Microsoft::Xna::Framework::Vector3 center;
+        float radius = 0.5f;
+        float strength = 0.5f;
+    };
+
+    // The 3D effects (the Setup's "3D effects", SaveData::GetEffects3D): presentation only. Off, the
+    // world is drawn exactly as without them.
+    struct SceneEffects
+    {
+        bool enabled = false;
+        Microsoft::Xna::Framework::Vector3 fogColor;
+        float fogStart = 0.0f;   // blocks from the camera where the fog begins
+        float fogEnd = 1.0f;     // where it is whole
+        float seconds = 0.0f;    // the effects' clock (the simulation's ticks / 60): water, lava, glow
+        std::vector<SceneShadow> shadows;
+        std::vector<SceneBillboardBatch> particles; // the explosions, splashes and sparks
+    };
+
     struct SceneFrame
     {
         SceneCamera camera;
@@ -168,6 +193,8 @@ namespace GalaxyEggbert::Game
         // The big decor cells drawn as the marine animation (on object-m.png, its own pass).
         std::vector<SceneQuad> marine;
 
+        SceneEffects effects;
+
         void Clear()
         {
             world = terrain = false;
@@ -186,6 +213,9 @@ namespace GalaxyEggbert::Game
             editorStarts.clear();
             billboards.clear();
             marine.clear();
+            effects.enabled = false;
+            effects.shadows.clear();
+            effects.particles.clear();
         }
     };
 }

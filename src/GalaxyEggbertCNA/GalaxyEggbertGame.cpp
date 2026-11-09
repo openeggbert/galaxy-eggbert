@@ -1488,6 +1488,35 @@ namespace GalaxyEggbert::CNA
                 backgroundEffect_->setTextureEnabledProperty(true);
                 backgroundEffect_->setTextureProperty(&backgroundTexture_);
                 backgroundLoaded_ = true;
+                {
+                    // The 3D effects' distance haze takes the picture's own colour: the average of its
+                    // middle rows, where its horizon is.
+                    const int width = backgroundTexture_.getWidthProperty();
+                    const int height = backgroundTexture_.getHeightProperty();
+                    std::vector<Microsoft::Xna::Framework::Color> texels(static_cast<std::size_t>(width) *
+                                                                         static_cast<std::size_t>(height));
+                    backgroundTexture_.GetData(texels.data(), static_cast<int>(texels.size()));
+                    double r = 0.0, g = 0.0, b = 0.0;
+                    long count = 0;
+                    for (int y = height * 35 / 100; y < height * 75 / 100; ++y)
+                    {
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const auto& c = texels[static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+                                                   static_cast<std::size_t>(x)];
+                            r += c.getRProperty();
+                            g += c.getGProperty();
+                            b += c.getBProperty();
+                            ++count;
+                        }
+                    }
+                    if (count > 0)
+                    {
+                        backgroundHaze_ = Microsoft::Xna::Framework::Vector3(
+                            static_cast<float>(r / count / 255.0), static_cast<float>(g / count / 255.0),
+                            static_cast<float>(b / count / 255.0));
+                    }
+                }
                 std::cout << "GalaxyEggbertCNA: background loaded — " << backgroundPath << " ("
                           << backgroundTexture_.getWidthProperty() << "x"
                           << backgroundTexture_.getHeightProperty() << " px, region "
@@ -1608,6 +1637,16 @@ namespace GalaxyEggbert::CNA
             terrainReliefOverhangs_ = overhang != nullptr && std::string(overhang) == "1";
         }
         return terrainReliefs_.Empty() ? nullptr : &terrainReliefs_;
+    }
+
+    bool GalaxyEggbertGame::Effects3DWanted() const
+    {
+        // GALAXY_EFFECTS=0 or =1 overrides the Setup's "3D effects" (tests, comparisons).
+        if (const char* on = std::getenv("GALAXY_EFFECTS"); on != nullptr && *on != '\0')
+        {
+            return std::string(on) != "0";
+        }
+        return saveData_.GetEffects3D();
     }
 
     bool GalaxyEggbertGame::TerrainReliefWanted() const
@@ -2475,6 +2514,7 @@ namespace GalaxyEggbert::CNA
         profile.SetEffectsVolume(own.GetEffectsVolume());
         profile.SetMusicVolume(own.GetMusicVolume());
         profile.SetTerrainRelief(own.GetTerrainRelief());
+        profile.SetEffects3D(own.GetEffects3D());
         profile.SetFullscreen(own.GetFullscreen());
         profile.SetGalaxyMode(demoGalaxy >= 0);
         saveData_ = profile;
@@ -5212,6 +5252,13 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetTerrainRelief(!saveData_.GetTerrainRelief());
                     SavePlayerData();
                     ApplyTerrainReliefSetting();
+                }
+                if (setupInput.effectsToggled)
+                {
+                    // 3D effects on or off (SaveData::GetEffects3D): the next frame is drawn with or
+                    // without them.
+                    saveData_.SetEffects3D(!saveData_.GetEffects3D());
+                    SavePlayerData();
                 }
                 if (setupInput.resetPressed)
                 {

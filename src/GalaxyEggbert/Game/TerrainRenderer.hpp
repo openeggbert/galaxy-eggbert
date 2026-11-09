@@ -95,10 +95,14 @@ namespace GalaxyEggbert::Game
         // transparent icons; depth-read), which must come after everything opaque, or water
         // does not cover what lies in it (owner 2026-11-02, OR-0052: a chest under water
         // looked dry).
+        // `lavaEffect` / `waterEffect`, when given, draw the lava pools / the water instead of `effect`
+        // (the 3D effects' shaders, SurfaceShaders.hpp).
         void DrawOpaque(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                        Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
+                        Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
+                        Microsoft::Xna::Framework::Graphics::Effect* lavaEffect = nullptr) const;
         void DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                             Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const;
+                             Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
+                             Microsoft::Xna::Framework::Graphics::Effect* waterEffect = nullptr) const;
 
         // Draws the grass-top overlay (icon 107 blocks' real grass texture,
         // NEXT.md §8 task 3) with a SEPARATE effect/texture bind from the

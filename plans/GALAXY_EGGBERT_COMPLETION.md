@@ -57,6 +57,11 @@ integrate, replacing billboards only after verification. Where no source can be 
 build a modest reconstruction from sprites/footage, never an extravagant replacement. Effects
 (explosions, splashes, sparks, glows) may stay billboards (decision of 2026-10-24).
 
+**Optional 3D effects (owner, 2026-11-09).** A Setup setting, off by default, may add presentation
+effects over this faithful look: fog, shadows, water and lava shaders, glow and grade, effects as
+particles cut from the original sprites. They change neither the models (still the Ray Dream
+originals) nor anything of the game; off, the picture is exactly the classic one (`CURRENT.md`).
+
 **Validation criteria for a model:** silhouette IoU against its sprites (`build_object_library`
 reports, `compare.png`); consistent outward winding (no face lost to back-face culling — check
 added 2026-10-25, §7.2); correct scale against Blupi and a 64-pixel block; checked live from

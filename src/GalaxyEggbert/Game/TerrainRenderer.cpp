@@ -1586,7 +1586,8 @@ namespace GalaxyEggbert::Game
     }
 
     void TerrainRenderer::DrawOpaque(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                       Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
+                                       Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
+                                       Microsoft::Xna::Framework::Graphics::Effect* lavaEffect) const
     {
         // The recovered lava pool samples only the tile's solid body (AppendLavaCell).
         // Write its depth before models, including translucent ghost/Hide Blupi: drawing
@@ -1594,7 +1595,7 @@ namespace GalaxyEggbert::Game
         const auto lava = m_lavaFrames.find(m_lavaIcon);
         if (lava != m_lavaFrames.end() && lava->second)
         {
-            lava->second->Draw(device, effect);
+            lava->second->Draw(device, lavaEffect != nullptr ? *lavaEffect : effect);
         }
         if (m_staticRenderer)
         {
@@ -1623,6 +1624,14 @@ namespace GalaxyEggbert::Game
             m_cutoutEffect->setViewProperty(effect.getViewProperty());
             m_cutoutEffect->setProjectionProperty(effect.getProjectionProperty());
             m_cutoutEffect->setTextureProperty(effect.getTextureProperty());
+            // And its fog (the effects layer's; off otherwise).
+            m_cutoutEffect->setFogEnabledProperty(effect.getFogEnabledProperty());
+            if (effect.getFogEnabledProperty())
+            {
+                m_cutoutEffect->setFogColorProperty(effect.getFogColorProperty());
+                m_cutoutEffect->setFogStartProperty(effect.getFogStartProperty());
+                m_cutoutEffect->setFogEndProperty(effect.getFogEndProperty());
+            }
             if (m_cutoutRenderer)
             {
                 m_cutoutRenderer->Draw(device, *m_cutoutEffect);
@@ -1645,7 +1654,8 @@ namespace GalaxyEggbert::Game
     }
 
     void TerrainRenderer::DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                            Microsoft::Xna::Framework::Graphics::BasicEffect& effect) const
+                                            Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
+                                            Microsoft::Xna::Framework::Graphics::Effect* waterEffect) const
     {
         const auto blitz = m_blitzFrames.find(m_blitzIcon);
         const GpuMeshParts* blitzRenderer = blitz != m_blitzFrames.end() ? blitz->second.get() : nullptr;
@@ -1699,7 +1709,7 @@ namespace GalaxyEggbert::Game
             }
             if (m_waterRenderer)
             {
-                m_waterRenderer->Draw(device, effect);
+                m_waterRenderer->Draw(device, waterEffect != nullptr ? *waterEffect : effect);
             }
             device.setDepthStencilStateProperty(DepthStencilState::Default);
             device.setBlendStateProperty(BlendState::Opaque);

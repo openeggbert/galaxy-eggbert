@@ -6,6 +6,7 @@
 // terrain's meshes -- belongs to the game, which lends it each frame (WorldRenderAssets).
 
 #include <GalaxyEggbert/Game/SceneFrame.hpp>
+#include <GalaxyEggbert/Game/SurfaceShaders.hpp>
 
 #include <CnaEngine/Graphics/GpuMesh.hpp>
 
@@ -75,6 +76,13 @@ namespace GalaxyEggbert::Game
                         const WorldRenderAssets& assets);
         void DrawBillboards(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
                             const WorldRenderAssets& assets);
+        // The effects layer (SceneEffects, WorldEffects.cpp): fog on every world effect (or off again),
+        // the shadows on the ground, the particles.
+        void ApplyFog(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                      const WorldRenderAssets& assets);
+        void DrawShadows(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame);
+        void DrawParticles(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                           const WorldRenderAssets& assets);
         Microsoft::Xna::Framework::Graphics::BasicEffect& DecalEffect(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         Microsoft::Xna::Framework::Graphics::BasicEffect* SheetEffect(SceneSheet sheet,
@@ -87,6 +95,11 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> m_decalEffect;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_tintTexture;
         std::vector<Microsoft::Xna::Framework::Matrix> m_bones;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> m_shadowEffect;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_shadowTexture;
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_shadowMesh;
+        std::vector<std::unique_ptr<CnaEngine::Graphics::GpuMesh>> m_particleMeshes;
+        SurfaceShaders m_surfaces;
         WorldRenderStatistics m_statistics;
     };
 }

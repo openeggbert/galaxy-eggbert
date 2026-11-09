@@ -56,6 +56,18 @@ namespace GalaxyEggbert::Game
             return !(model.boothFrontOnly && IsBoothBodyPart(part.Name));
         }
 
+        // The decal effect is made on first use: fogged as the rest of the world (the effects layer).
+        void FogDecals(Graphics::BasicEffect& effect, const SceneFrame& frame)
+        {
+            effect.setFogEnabledProperty(frame.effects.enabled);
+            if (frame.effects.enabled)
+            {
+                effect.setFogColorProperty(frame.effects.fogColor);
+                effect.setFogStartProperty(frame.effects.fogStart);
+                effect.setFogEndProperty(frame.effects.fogEnd);
+            }
+        }
+
         CnaEngine::Graphics::MeshBuilder QuadMesh(const std::vector<SceneQuad>& quads)
         {
             auto mesh = MakeTexturedMeshBuilder();
@@ -74,6 +86,7 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
+        ApplyFog(device, frame, assets);
         DrawBackground(device, frame, assets);
         if (frame.terrain && assets.terrainRenderer != nullptr && assets.terrain != nullptr)
         {
@@ -83,6 +96,10 @@ namespace GalaxyEggbert::Game
         // Texture2D(path) loads PNGs unpremultiplied, which NonPremultiplied blends right).
         device.setBlendStateProperty(Graphics::BlendState::NonPremultiplied);
         DrawBillboards(device, frame, assets);
+        if (frame.effects.enabled)
+        {
+            DrawParticles(device, frame, assets);
+        }
     }
 
     void WorldRenderer::DrawBackground(Graphics::GraphicsDevice& device, const SceneFrame& frame,
@@ -149,6 +166,15 @@ namespace GalaxyEggbert::Game
     {
         auto& terrain = *assets.terrainRenderer;
         SetCamera(*assets.terrain, frame.camera);
+        // The 3D effects' water and lava shaders, where the device compiles them.
+        Graphics::Effect* lavaEffect = nullptr;
+        Graphics::Effect* waterEffect = nullptr;
+        if (frame.effects.enabled && m_surfaces.Prepare(device))
+        {
+            m_surfaces.Update(*assets.terrain, frame);
+            lavaEffect = m_surfaces.Lava();
+            waterEffect = m_surfaces.Water();
+        }
         // The reliefs near the camera's target (Q-012), then the opaque terrain; its semi-transparent
         // pass (water) after the models.
         {
@@ -163,7 +189,11 @@ namespace GalaxyEggbert::Game
                           << ms.count() << " ms." << std::endl;
             }
         }
-        terrain.DrawOpaque(device, *assets.terrain);
+        terrain.DrawOpaque(device, *assets.terrain, lavaEffect);
+        if (frame.effects.enabled)
+        {
+            DrawShadows(device, frame);
+        }
 
         DrawCubes(device, frame, assets);
 
@@ -217,7 +247,7 @@ namespace GalaxyEggbert::Game
         // The terrain's semi-transparent pass after Blupi and every model, so water covers what lies
         // in it (OR-0052: a chest under water looked dry from above).
         device.setRasterizerStateProperty(Graphics::RasterizerState::CullCounterClockwise);
-        terrain.DrawTransparent(device, *assets.terrain);
+        terrain.DrawTransparent(device, *assets.terrain, waterEffect);
 
         if (terrainDrawn)
         {
@@ -389,6 +419,7 @@ namespace GalaxyEggbert::Game
         if (frame.signDecalPass)
         {
             auto& effect = DecalEffect(device);
+            FogDecals(effect, frame);
             SetCamera(effect, frame.camera);
             device.setBlendStateProperty(Graphics::BlendState::AlphaBlend);
             device.setRasterizerStateProperty(Graphics::RasterizerState::CullCounterClockwise);
@@ -419,6 +450,7 @@ namespace GalaxyEggbert::Game
         if (!frame.electrodeSparks.empty() || !frame.dynamiteSparks.empty())
         {
             auto& effect = DecalEffect(device);
+            FogDecals(effect, frame);
             SetCamera(effect, frame.camera);
             device.setBlendStateProperty(Graphics::BlendState::AlphaBlend);
             device.setRasterizerStateProperty(Graphics::RasterizerState::CullNone);

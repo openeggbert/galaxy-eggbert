@@ -61,6 +61,23 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- The world is drawn from a `SceneFrame` by `WorldRenderer` (2026-11-09, the owner's request; the seam
+  of `renderers.md`, one renderer, no second one): `GalaxyEggbertGameScene.cpp` reads the simulation
+  into a draw list (cubes, models and poses, decals, sparks, billboard batches, in the order the
+  world has always been drawn), `src/GalaxyEggbert/Game/WorldRenderer.cpp` draws it with the effects
+  the game loads; `GalaxyEggbertGameDraw.cpp` holds the frame (world, HUD/menus/editor, captures).
+  A refactor only: golden frames, 1728 autoplay frames of 11 missions and 28 editor frames
+  byte-equal to the build before it.
+- 3D effects (2026-11-09, the owner's request; the Setup's "3D effects", `effects3d=` in
+  savedata.txt, off by default; `GALAXY_EFFECTS=0/1` overrides it for tests): distance fog in the
+  colour of the world's background, soft sun-thrown shadows under Blupi and the objects, water
+  (ripples, caustics, sky at a glancing view, sun glints) and lava (pulse, crawling hot spots)
+  shaders, a glow on what shines with a light grade (`PostProcess`: render target, bright pass,
+  blur, screen composite), and the explosions, splashes and sparks as particles cut from their own
+  sprite frames (`EffectParticles`, stepped by ticks). Presentation only: the golden trace and the
+  autoplay traces are equal with them on; off, every frame is byte-equal to the build without them.
+  Desktop OPENGL33 checked under Xvfb (11 missions, the editor, the Setup toggle live); the WebGL 2
+  build checked in headless Chrome (toggle in the main menu's Setup, saved, shaders compiled, played).
 - Main-menu demos (owner request 2026-11-08, Speedy Blupi's `CEvent::Demo*`, blupi_recon
   `src/event.cpp:3712-3825`; BD-0115): the menu's Demo button (under Exit), or 40 s without input
   in the settled main menu of the active window, plays the ten positions in turn
@@ -404,6 +421,11 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   2026-10-24). Effects, the charge and the shield (sparks) stay billboards; procedural
   textures (bark, metal noise, wood grain) are flat colours. First person still uses an invisible collision
   point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
+- 3D effects: the shadows are soft round ones thrown along the sun's way onto the ground below (no
+  shadow map: what models cast on each other and on walls is not shown); the water and lava shaders
+  and the glow need GLSL source (`ShaderEffect`) and render targets: OPENGL33 and WEBGL2 checked,
+  Android (OPENGLES3) not run; elsewhere they are left out by themselves and the fog, shadows and
+  particles remain.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not
   call Windows supported until both pass.
 - Editor text is deliberately limited to functional readouts/notices (XYZ coordinates, background

@@ -197,6 +197,13 @@ namespace GalaxyEggbert::Game
             const Rect row = SetupZoomRect(m);
             return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
         }
+        // "3D effects" (a Galaxy setting, 2026-11-09: fog, shadows, shaders, particles), under 3D terrain,
+        // at x 450 on the Accelerometer row.
+        Rect SetupEffectsRect(const ScreenMetrics& m) noexcept
+        {
+            const Rect row = SetupAccelRect(m);
+            return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
+        }
         // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
         // of its label, the effects' (0) then the music's (1); each its label over a track drawn
         // as the original's Slider (Slider.cpp: jauge.png's empty cell, pad icon 1 for the knob).
@@ -208,7 +215,9 @@ namespace GalaxyEggbert::Game
             const float left = 250.0f * m.s;
             const float width = (m.w - 20.0f * m.s - left) * 0.5f;
             const float x0 = left + width * static_cast<float>(which == 2 ? 0 : which);
-            return Rect{x0 + 10.0f * m.s, row.y0, x0 + width - 10.0f * m.s, row.y1};
+            // The sensitivity slider ends short of the 3D effects toggle in its row.
+            const float x1 = which == 2 ? std::min(x0 + width, 440.0f * m.s) : x0 + width;
+            return Rect{x0 + 10.0f * m.s, row.y0, x1 - 10.0f * m.s, row.y1};
         }
         Rect SetupSliderTrackRect(int which, const ScreenMetrics& m) noexcept
         {
@@ -306,6 +315,7 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlMusicVolume = 7;
         constexpr int kSetupControlAccelSensitivity = 8;
         constexpr int kSetupControlTerrain = 9;
+        constexpr int kSetupControlEffects = 10;
         constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
@@ -1909,6 +1919,7 @@ namespace GalaxyEggbert::Game
         const bool overZoom = InRect(mouseX, mouseY, SetupZoomRect(m));
         const bool overAccel = InRect(mouseX, mouseY, SetupAccelRect(m));
         const bool overTerrain = InRect(mouseX, mouseY, SetupTerrainRect(m));
+        const bool overEffectsToggle = InRect(mouseX, mouseY, SetupEffectsRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
@@ -1925,6 +1936,7 @@ namespace GalaxyEggbert::Game
             else if (overZoom) activeControl_ = kSetupControlZoom;
             else if (overAccel) activeControl_ = kSetupControlAccel;
             else if (overTerrain) activeControl_ = kSetupControlTerrain;
+            else if (overEffectsToggle) activeControl_ = kSetupControlEffects;
             else if (overReset) activeControl_ = kSetupControlReset;
             else if (overReturn) activeControl_ = kSetupControlReturn;
             else activeControl_ = -1;
@@ -1957,6 +1969,7 @@ namespace GalaxyEggbert::Game
             else if (activeControl_ == kSetupControlZoom && overZoom) result.zoomToggled = true;
             else if (activeControl_ == kSetupControlAccel && overAccel) result.accelToggled = true;
             else if (activeControl_ == kSetupControlTerrain && overTerrain) result.terrainToggled = true;
+            else if (activeControl_ == kSetupControlEffects && overEffectsToggle) result.effectsToggled = true;
             else if (activeControl_ == kSetupControlReset) result.resetPressed = true;
             else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
             activeControl_ = -1;
@@ -1970,7 +1983,7 @@ namespace GalaxyEggbert::Game
                               int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom,
                               bool accel, bool showReset, int selectedGamer, int effectsVolume,
                               int musicVolume, int accelSensitivity, float phaseTimeSeconds,
-                              GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief)
+                              GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief, bool effects3D)
     {
         if (!loaded_)
         {
@@ -2073,6 +2086,8 @@ namespace GalaxyEggbert::Game
             appendButton(SetupAccelRect(m), accel ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlAccel);
             appendButton(SetupTerrainRect(m), terrainRelief ? kIconSetupToggleOn : kIconSetupToggleOff,
                          kSetupControlTerrain);
+            appendButton(SetupEffectsRect(m), effects3D ? kIconSetupToggleOn : kIconSetupToggleOff,
+                         kSetupControlEffects);
             if (showReset)
             {
                 appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);
@@ -2116,6 +2131,7 @@ namespace GalaxyEggbert::Game
             appendLabel(SetupZoomRect(m), "Automatic zoom on action");
             appendLabel(SetupAccelRect(m), "Accelerometer");
             appendLabel(SetupTerrainRect(m), "3D terrain");
+            appendLabel(SetupEffectsRect(m), "3D effects");
             if (showReset)
             {
                 // Real TX_BUTTON_SETUP_RESET, two lines ("Player {0} :\nErase

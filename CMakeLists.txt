@@ -147,6 +147,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp
         src/GalaxyEggbert/Game/WorldRenderer.cpp
+        src/GalaxyEggbert/Game/WorldEffects.cpp
+        src/GalaxyEggbert/Game/EffectParticles.cpp
+        src/GalaxyEggbert/Game/SurfaceShaders.cpp
+        src/GalaxyEggbert/Game/PostProcess.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/TerrainRenderer.cpp
@@ -423,6 +427,28 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         # ("worlds3d/world999.vwr") is relative, same quirk noted above.
         add_test(NAME VerifyInteractionSystem COMMAND VerifyInteractionSystem
                  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    endif()
+
+    # The 3D effects' particles (EffectParticles.hpp): stepped by ticks, the same every run and at
+    # any frame rate. XNA math and cna-engine's CPU-side types only.
+    add_executable(VerifyEffectParticles
+        tools/VerifyEffectParticles.cpp
+        src/GalaxyEggbert/Game/EffectParticles.cpp
+    )
+    target_include_directories(VerifyEffectParticles PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang" AND NOT WIN32 AND _ge_cna_backend_target)
+        target_link_libraries(VerifyEffectParticles PRIVATE
+            -Wl,--start-group CNA ${_ge_cna_backend_target} -Wl,--end-group
+            SHARP_RUNTIME)
+    else()
+        target_link_libraries(VerifyEffectParticles PRIVATE CNA SHARP_RUNTIME)
+    endif()
+    target_link_libraries(VerifyEffectParticles PRIVATE CnaEngine::Graphics)
+    if(BUILD_TESTING)
+        add_test(NAME VerifyEffectParticles COMMAND VerifyEffectParticles)
     endif()
 
     # Scripted verification for InputPad (2026-07-13, on-screen D-pad/
