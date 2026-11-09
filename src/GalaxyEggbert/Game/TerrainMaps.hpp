@@ -15,6 +15,8 @@
 
 #include <algorithm>
 #include <array>
+#include <future>
+#include <thread>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -24,6 +26,32 @@ namespace GalaxyEggbert::Game
 {
     namespace MapsDetail
     {
+        // f(first, last) over rows [0, rows) in bands, on up to eight threads (one on the web).
+        template <typename F>
+        void ParallelRows(int rows, F&& f)
+        {
+#if defined(__EMSCRIPTEN__)
+            f(0, rows);
+#else
+            const int threads = std::clamp(static_cast<int>(std::thread::hardware_concurrency()) / 2, 1, 8);
+            if (threads <= 1 || rows < 64)
+            {
+                f(0, rows);
+                return;
+            }
+            std::vector<std::future<void>> bands;
+            const int band = (rows + threads - 1) / threads;
+            for (int first = 0; first < rows; first += band)
+            {
+                bands.push_back(std::async(std::launch::async, [&f, first, last = std::min(rows, first + band)] { f(first, last); }));
+            }
+            for (auto& done : bands)
+            {
+                done.get();
+            }
+#endif
+        }
+
         inline float CatmullRom(float p0, float p1, float p2, float p3, float t) noexcept
         {
             return 0.5f * (2.0f * p1 + (-p0 + p2) * t + (2.0f * p0 - 5.0f * p1 + 4.0f * p2 - p3) * t * t +
@@ -50,7 +78,8 @@ namespace GalaxyEggbert::Game
             return static_cast<float>(rgba[(static_cast<std::size_t>(y) * static_cast<std::size_t>(w) + static_cast<std::size_t>(x)) * 4 +
                                            static_cast<std::size_t>(c)]);
         };
-        for (int oy = 0; oy < oh; ++oy)
+        MapsDetail::ParallelRows(oh, [&](int firstRow, int lastRow) {
+        for (int oy = firstRow; oy < lastRow; ++oy)
         {
             // The output texel's centre in the source's texel space.
             const float sy = (static_cast<float>(oy) + 0.5f) * scaleY - 0.5f;
@@ -75,6 +104,7 @@ namespace GalaxyEggbert::Game
                 }
             }
         }
+        });
         return out;
     }
 
@@ -178,7 +208,8 @@ namespace GalaxyEggbert::Game
                         static_cast<std::size_t>(std::clamp(x, 0, w - 1))];
         };
         std::vector<float> height(texels);
-        for (int y = 0; y < h; ++y)
+        MapsDetail::ParallelRows(h, [&](int firstRow, int lastRow) {
+        for (int y = firstRow; y < lastRow; ++y)
         {
             for (int x = 0; x < w; ++x)
             {
@@ -189,6 +220,7 @@ namespace GalaxyEggbert::Game
                 height[static_cast<std::size_t>(y) * static_cast<std::size_t>(w) + static_cast<std::size_t>(x)] = sum / 16.0f;
             }
         }
+        });
         const auto H = [&](int x, int y)
         {
             return height[static_cast<std::size_t>(std::clamp(y, 0, h - 1)) * static_cast<std::size_t>(w) +
@@ -205,7 +237,8 @@ namespace GalaxyEggbert::Game
         // Roughness, metalness of each class (UltraLogic.hpp's surfaces: smoother is shinier).
         static constexpr float kRough[5] = {0.7f, 0.32f, 0.85f, 0.65f, 0.38f};
         static constexpr float kMetal[5] = {0.0f, 0.5f, 0.0f, 0.0f, 0.0f};
-        for (int y = 0; y < h; ++y)
+        MapsDetail::ParallelRows(h, [&](int firstRow, int lastRow) {
+        for (int y = firstRow; y < lastRow; ++y)
         {
             for (int x = 0; x < w; ++x)
             {
@@ -243,6 +276,7 @@ namespace GalaxyEggbert::Game
                 maps.surface[i + 3] = 255;
             }
         }
+        });
         return maps;
     }
 }

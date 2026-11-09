@@ -576,7 +576,11 @@ namespace GalaxyEggbert::Game
                 continue;
             }
             effect.Apply();
-            DrawPart(device, part);
+            // Ultra draws the model smoother: the red over the same smoother mesh, not inside it.
+            if (!m_scene.UltraActive() || !DrawSmoothPart(device, *part.Part))
+            {
+                DrawPart(device, part);
+            }
         }
         effect.setDiffuseColorProperty(diffuse);
         effect.setAlphaProperty(alpha);
