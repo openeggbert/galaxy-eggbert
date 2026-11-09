@@ -8,10 +8,11 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-09 (galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
-## Galaxy: delete and Continue (2026-11-09, BD-0119) — verified on desktop
+## Galaxy: delete and Continue, web runtime (2026-11-09, BD-0119) — verified on desktop and web
 
 The owner kept Q-017's three choices and asked for: deleting galaxy worlds, Continue (resume) in a
-galaxy, a web runtime check, commits.
+galaxy, a web runtime check, commits (`17435a54` the earlier work, `ef7e16a8` delete, `78e772ce`
+Continue).
 
 - Delete: `GalaxyBrowserScreen` puts the world screen's bin on each place that exists (main hub,
   199, the selected world's hub and missions): the first click arms it (tick, "Delete?"), any other
@@ -21,6 +22,20 @@ galaxy, a web runtime check, commits.
 - Continue: `StartResumeLog()` records the resume log in a galaxy too; `BeginResume()` recognises a
   galaxy file in the log (`ParseGalaxyWorldPath()`), reads it from there and sets `galaxyGamer_`
   and the galaxy mode before `LoadMission()`. A campaign log clears both. One `resume.txt` as before.
+- Web runtime (2026-11-09, the rebuilt `build-cna-webgl2` in headless Chrome over DevTools:
+  `build-probe/demo-live/harness/web_live.py`, `web_case.py`, `web_demo5.py`; evidence
+  `build-probe/demo-live/web-sheet.png`, `web/console.log`): the page loads (93/93 sounds, menu
+  with Galaxy and Demo); Demo plays demo 1 to its end "finished" (the desktop recording replays
+  equal in wasm) and demo 2 follows, Escape stops; Galaxy with no main hub -> the galaxy screen,
+  the main hub made and edited, then played from `/save/customworlds/gamer0/galaxy/` (IDBFS);
+  Pause > Record > position 5 in the galaxy writes `/save/demos/demo005.gdemo`; Home leaves the
+  galaxy; Play + typed xnjttjpo opens the editor on mission 1 and Stop goes back; after a page
+  reload the galaxy still plays and position 5 shows "Recorded, Galaxy 1"; with that profile the Demo cycle played demos 1-4 and then the player's
+  recording from `/save/demos/demo005.gdemo`, all five "finished" (`web_demo5.py`). No exception on
+  the page. On the web xnjttjpo saves the shipped world only in the session's memory (the packed
+  `worlds3d/` is not persistent; its backup in `/save/customworlds/campaign-backups/` is), so an
+  edit lasts until the page is reloaded. Headless Chrome: `DISPLAY` unset, a fresh
+  `--user-data-dir` (deleted afterwards, 291 MB).
 - Verified: `VerifyGEEditorStorage` (arm/disarm/delete, no bin on a place not made, Backups,
   "no backup"), 117/117 CTest; live `harness/case_galaxy_delete.py` (`galaxy-delete-sheet.png`)
   and `case_galaxy_resume.py` (focus lost on the galaxy's main hub -> resume.txt names
@@ -113,9 +128,9 @@ choices of Q-017 (the name Galaxy, xnjttjpo saving the shipped file, a pause end
   (`cycle10-sheet.png`, 20 s into each), 44.9-45.5 s apiece, each "finished" as recorded, the
   cycle wrapping after demo 10. The harness's first "none skipped" check also counted the
   intentionally empty positions 1-3. The corrected check, run on the same log, passes.
-- The web build (`build-cna-webgl2`) compiles and links with all ten demos packed. Not run: web
-  and Android runtime, a physical gamepad or touch screen. (Deleting galaxy places and Continue in
-  a galaxy came on 2026-11-09, the section above.)
+- The web build (`build-cna-webgl2`) compiles and links with all ten demos packed; its runtime was
+  checked on 2026-11-09 (the section above). Not run: Android, a physical gamepad or touch screen.
+  (Deleting galaxy places and Continue in a galaxy came on 2026-11-09, the section above.)
 - While this was built, the CNA working tree (another session's uncommitted edit) briefly crashed
   every start (UB-010 in upstream_bugs.md); it was fixed there at 22:32 and Galaxy rebuilt. The
   verified binary includes CNA's then-uncommitted graphics edits.

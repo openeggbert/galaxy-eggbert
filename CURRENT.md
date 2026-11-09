@@ -4,7 +4,7 @@ _Last verified: 2026-11-09 (native build, 117/117 CTest including the ten main-m
 golden frames and trace equal to tests/golden (2026-11-08), live checks of demo recording, xnjttjpo
 and the players' galaxies (with delete/restore and Continue in a galaxy, 2026-11-09), controls/HUD/water checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
 2026-11-06 (play pass 33: 77 replays equal). The Web/Emscripten build was verified
-2026-11-06 in headless Chrome; the whole-campaign run
+2026-11-09 in headless Chrome (demos, recording, galaxy, xnjttjpo, persistence over a reload); the whole-campaign run
 remains the 2026-10-27 verification. Update this file
 whenever a change alters the current state, a known limitation, a supported build, or the actionable
 backlog. Keep historical detail in `plan.md` (and the frozen `NEXT.md`), where work stands in
@@ -66,9 +66,10 @@ content-authoring UX, but not new gameplay mechanics.
   incompatible or stale demos are skipped. Not in Play, Pause, Setup, the editor or menu fades.
   Desktop verified live under Xvfb (button, idle start 40.02 s after the last input, reset by
   activity, every stop input, the cycle and its repeat, the 800x480 window and 1280x720
-  fullscreen, 45 s of demo in 44.9 s, sound, focus loss, files untouched, Resume after); the web
-  build compiles with the demos packed; web and Android were not run, nor a physical gamepad or
-  touch screen. `tools/record_demo.sh`, `tools/verify_demos.sh`, CTest
+  fullscreen, 45 s of demo in 44.9 s, sound, focus loss, files untouched, Resume after). Web
+  (2026-11-09, headless Chrome over DevTools): the shipped demos replay as recorded, a recording
+  made there is kept in `/save/demos/` over a reload and replays as recorded (demos 1-5 in turn, the fifth a galaxy recording made on the web). Android was not run, nor a physical
+  gamepad or touch screen. `tools/record_demo.sh`, `tools/verify_demos.sh`, CTest
   `VerifyDemoReplay`/`VerifyDemoFiles`/`VerifyDemoReplays`. Evidence: `build-probe/demo-live/`.
 - The player records a demo (BD-0116; how Speedy Blupi did it by a trick:
   `plans/audit/speedy_blupi_demos.md`): Pause's Record button shows the ten demo positions; the one
