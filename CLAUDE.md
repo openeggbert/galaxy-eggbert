@@ -59,7 +59,9 @@ guidance.
 
 - `src/GalaxyEggbertCNA/` — thin CNA application host (`GalaxyEggbertGame`) and platform wiring.
   `GalaxyEggbertGame` is split by topic: `GalaxyEggbertGame.cpp` (constructor, input, vehicles,
-  sounds, cheats), `...Load.cpp`, `...Demo.cpp`, `...Missions.cpp`, `...Update.cpp` (UpdateTick),
+  sounds, cheats), `...Load.cpp`, `...Demo.cpp`, `...Missions.cpp`, `...Update.cpp` (UpdateTick and its steps:
+  UpdateTickScreens/UpdateScreenPlay, UpdateTickWorld, UpdateTickActions, UpdateTickEvents,
+  UpdateTickCamera),
   `...Scene.cpp` (the SceneFrame: what the world draws), `...Draw.cpp` (the frame); shared
   file-local helpers in `GameHelpers.hpp`/`GameInternal.hpp`. The world is drawn by
   `src/GalaxyEggbert/Game/WorldRenderer` from the SceneFrame (renderers.md).

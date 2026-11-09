@@ -68,22 +68,27 @@ content-authoring UX, but not new gameplay mechanics.
   the game loads; `GalaxyEggbertGameDraw.cpp` holds the frame (world, HUD/menus/editor, captures).
   A refactor only: golden frames, 1728 autoplay frames of 11 missions and 28 editor frames
   byte-equal to the build before it.
-- 3D effects (2026-11-09, the owner's request; the Setup's "3D effects", `effects3d=` in
-  savedata.txt, off by default; `GALAXY_EFFECTS=0/1` overrides it for tests): distance fog in the
-  colour of the world's background; real sun shadows (`SceneShaders`: a shadow map of the terrain,
-  cubes and every model, 44 blocks round the camera's target) on the terrain and the models, soft
-  round ones left for what is drawn as a sprite; ambient occlusion baked into the terrain's corners;
-  point lights from explosions, the lightning, the nearest lava and the electrodes; water
-  (ripples, caustics, sky at a glancing view, sun glints) and lava (pulse, crawling hot spots)
-  shaders; a glow on what shines with a light grade and FXAA (`PostProcess`); the explosions,
-  splashes and sparks as particles cut from their own sprite frames, and Blupi's moments too (dust
-  landing and running, a splash into water, bubbles under it, stars as he teleports, sparks off the
-  lava; `EffectParticles`, stepped by ticks). The terrain and models are then drawn with GLSL of
-  their own, lit as their stock effects light them. `GALAXY_EFFECTS_DEBUG=shadow|occlusion` draws
-  the terrain as that factor alone. Presentation only: the golden trace and the
-  autoplay traces are equal with them on; off, every frame is byte-equal to the build without them.
-  Desktop OPENGL33 checked under Xvfb (11 missions, the editor, the Setup toggle live); the WebGL 2
-  build checked in headless Chrome (toggle in the main menu's Setup, saved, shaders compiled, played).
+- 3D effects (2026-11-09, the owner's requests; the Setup's "3D effects" steps Off, Low, Medium,
+  High, saved as `effectsLevel=0..3`, off by default; `GALAXY_EFFECTS=0-3|off|low|medium|high`
+  overrides it). Low: distance fog in the colour of the world's background, soft round shadows,
+  the explosions, splashes and sparks as particles cut from their own sprite frames and Blupi's
+  moments (dust landing and running, a splash into water, bubbles under it, stars as he teleports,
+  sparks off the lava; `EffectParticles`, stepped by ticks). Medium: + ambient occlusion baked into
+  the terrain's corners, the water (ripples, caustics, sky at a glancing view, sun glints) and lava
+  (pulse, crawling hot spots) shaders, FXAA. High: + real sun shadows (`SceneShaders`: two
+  cascades, 44 blocks round the camera's target and 160 ahead, soft 16-sample PCF) thrown by the
+  terrain, the cubes, every model and every sprite onto everything; point lights from explosions,
+  the lightning, the nearest lava and the electrodes; the models' Ray Dream procedural materials
+  (wood, marble, spots and bump, from `avatars3d/objects/*/materials.txt`,
+  `tools/rd4_to_gltf/procedural_materials.py`); a glow on what shines with a light grade
+  (`PostProcess`). `GALAXY_EFFECTS_DEBUG=shadow|occlusion` draws the terrain as that factor alone.
+  Presentation only: the golden trace and the autoplay traces are equal with them on; off, every
+  frame is byte-equal to the build without them. Golden frames per level: `tests/golden`,
+  `tests/golden/effects-medium`, `tests/golden/effects-high` (`tools/verify_golden_frames.sh`).
+  Measured draw time (GALAXY_PERF, Xvfb llvmpipe, i.e. a CPU rasteriser: relative only), mission
+  105: off 23 ms, low 24, medium 25, high 68. Desktop OPENGL33 checked under Xvfb (11 missions at
+  each level, the editor, the Setup live); the WebGL 2 build checked in headless Chrome (high set in
+  the main menu's Setup, every shader compiled, played).
 - Main-menu demos (owner request 2026-11-08, Speedy Blupi's `CEvent::Demo*`, blupi_recon
   `src/event.cpp:3712-3825`; BD-0115): the menu's Demo button (under Exit), or 40 s without input
   in the settled main menu of the active window, plays the ten positions in turn
@@ -427,9 +432,9 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   2026-10-24). Effects, the charge and the shield (sparks) stay billboards; procedural
   textures (bark, metal noise, wood grain) are flat colours. First person still uses an invisible collision
   point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
-- 3D effects: the shadow map covers 44 blocks round the camera's target (beyond it no sun shadow;
-  billboards neither cast nor receive one); skinned models above 56 bones (none today) would be drawn
-  by the stock effect. The shaders, the shadow map and the glow need GLSL source (`ShaderEffect`) and
+- 3D effects: the sun's shadow reaches 160 blocks ahead of the camera (the far cascade drawn every
+  third frame); the procedural materials are Ray Dream's colours and parameters over a value noise,
+  not its own noise; skinned models above 56 bones (none today) would be drawn by the stock effect. The shaders, the shadow map and the glow need GLSL source (`ShaderEffect`) and
   render targets: OPENGL33 and WEBGL2 checked, Android (OPENGLES3) not run; where they do not
   compile they are left out by themselves (no ambient occlusion either) and the fog, soft shadows
   and particles remain.

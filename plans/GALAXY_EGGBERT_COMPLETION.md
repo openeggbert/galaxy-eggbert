@@ -230,7 +230,8 @@ Candidates (investigate when a world or the editor needs them; none implemented 
   without the owner's list. 2026-10-27: plant 3a's compare sheet (sprite, model, overlap) shows the
   model faithful; its 0.65 comes from the thin leaves and the sprite cut at the icon's bottom edge,
   not from a wrong shape. The owner will send the list of models that look wrong (D11).
-- `BB3D-032` fish head ~15 % large; `BB3D-050` grass blades wide; procedural textures flat.
+- `BB3D-032` fish head ~15 % large; `BB3D-050` grass blades wide; procedural textures flat (the 3D
+  effects at high draw them again from the Ray Dream shaders: `materials.txt`, 2026-11-09).
   Tried 2026-10-27 on palm 1a's trunk: its marble blend (`smix` of three browns by `smrb`)
   baked into the free-form's atlas with an approximate seeded noise. It did not bring the model
   nearer its sprite: mean colour error on the trunk 27.7 -> 32.1, luminance spread 15.4 -> 19.6

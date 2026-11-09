@@ -6,7 +6,30 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-09 (3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## 3D effects, third round; UpdateTick split (2026-11-09) — verified desktop and web
+
+Owner's request: levels instead of one switch with a measurement, golden frames for the effects,
+Ray Dream materials on the models, better shadows (sprites, cascades, softer), UpdateTick split.
+
+- `8e6f15c1` levels (SaveData `effectsLevel`, Setup steps Off/Low/Medium/High, SceneEffects flags
+  occlusion/surfaces/smoothing/shadowMap/pointLights/glow; PostProcess::End(glow) FXAA only at
+  medium; shadow map 1024, glow at a quarter size). `83977567` cascades (near 44 every frame, far 160
+  ahead every third, `m_farReady`), tent PCF 16 samples, sprites cast (upright across the sun, alpha
+  cut) and receive (sprite shader, lookup 0.7 toward the sun), round shadows only without the map;
+  materials (`procedural_materials.py` -> 19 `materials.txt`; `ProceduralMaterial.hpp`;
+  `objectPartMaterials_`; model shader `Pattern()`/`Bumped()` in model space, 21.116 RD units a
+  block). `5b063474` effects golden frames (`GOLDEN_UPDATE=1` writes them). `cb03fee7` UpdateTick
+  split (UpdateTickScreens/UpdateScreenPlay/UpdateTickWorld/UpdateTickActions/UpdateTickEvents/
+  UpdateTickCamera; a block's bare return became `return true` and the caller returns).
+- Measured (GALAXY_PERF, Xvfb llvmpipe: relative only), mission 105 draw ms: off 23, low 24,
+  medium 25, high 79 (first) -> 51 (smaller map, quarter glow) -> 99 (two cascades) -> 68 (far one
+  every third frame).
+- Verified: classic golden frames/trace, 1728 autoplay frames, 28 editor frames byte-equal after
+  every commit; every level plays the 11 missions; effects golden frames equal over three runs;
+  Pause/Setup live; WebGL 2 in headless Chrome at high (every shader compiled). 119/119 CTest.
+  Android not run.
 
 ## 3D effects, second round; GalaxyEggbertGame split (2026-11-09) — verified desktop and web
 
