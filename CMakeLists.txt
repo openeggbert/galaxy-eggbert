@@ -53,6 +53,10 @@ set_source_files_properties(
     src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
     src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp
     src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp
+    src/GalaxyEggbertCNA/GalaxyEggbertGameLoad.cpp
+    src/GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp
+    src/GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
+    src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
     src/GalaxyEggbert/Game/InputPad.cpp
     tools/VerifyGEInputPad.cpp
     PROPERTIES COMPILE_DEFINITIONS
@@ -146,6 +150,10 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameLoad.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameDemo.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameMissions.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameUpdate.cpp
         src/GalaxyEggbert/Game/WorldRenderer.cpp
         src/GalaxyEggbert/Game/WorldEffects.cpp
         src/GalaxyEggbert/Game/EffectParticles.cpp
