@@ -169,13 +169,17 @@ namespace GalaxyEggbert::Game
         // The 3D effects' shaders, where the device compiles them: water and lava, and the terrain's
         // shadowed, occluded, point-lit shading (SceneShaders.hpp).
         TerrainShading shading;
-        if (frame.effects.enabled && m_surfaces.Prepare(device))
+        if (frame.effects.surfaces && m_surfaces.Prepare(device))
         {
             m_surfaces.Update(*assets.terrain, frame);
             shading.lava = m_surfaces.Lava();
             shading.water = m_surfaces.Water();
         }
-        m_sceneShading = frame.effects.enabled && m_scene.Prepare(device);
+        // Medium: the terrain's occlusion (its shaders, no shadow, no lights); high: the shadow map and
+        // the lights on the terrain, the cubes, the grass and the models too.
+        m_sceneShading = (frame.effects.occlusion || frame.effects.shadowMap || frame.effects.pointLights) &&
+                         m_scene.Prepare(device);
+        m_modelShading = m_sceneShading && (frame.effects.shadowMap || frame.effects.pointLights);
         if (m_sceneShading)
         {
             m_scene.SetFrame(device, frame, *assets.terrain);
@@ -209,7 +213,7 @@ namespace GalaxyEggbert::Game
         {
             // Icon 107's grass-top overlay: its own texture and effect, right after the opaque terrain.
             SetCamera(*assets.grass, frame.camera);
-            if (m_sceneShading)
+            if (m_modelShading)
             {
                 terrain.DrawGrass(device, m_scene.LitWith(assets.grass->getTextureProperty(), Matrix::getIdentityProperty()));
             }
@@ -286,7 +290,7 @@ namespace GalaxyEggbert::Game
         }
         // With the effects' shading the cubes take the terrain's light, shadows and point lights.
         const auto cubeEffect = [&](const Matrix& world) -> Graphics::Effect& {
-            if (m_sceneShading)
+            if (m_modelShading)
             {
                 return m_scene.LitWith(assets.cubes->getTextureProperty(), world);
             }
@@ -334,7 +338,7 @@ namespace GalaxyEggbert::Game
                                               ? Graphics::RasterizerState::CullClockwise
                                               : Graphics::RasterizerState::CullCounterClockwise);
         // With the effects' shading: the model shader (shadow, point lights), lit as `effect` is set up.
-        const bool shaded = m_sceneShading && m_scene.PrepareModel(effect, m_bones, model.world, model.alpha,
+        const bool shaded = m_modelShading && m_scene.PrepareModel(effect, m_bones, model.world, model.alpha,
                                                                    model.tinted, model.tint);
         if (shaded)
         {

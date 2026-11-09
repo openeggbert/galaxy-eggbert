@@ -61,9 +61,14 @@ namespace GalaxyEggbert::Game
             {
                 terrainRelief_ = (value == "1");
             }
+            else if (key == "effectsLevel")
+            {
+                SetEffectsLevel(std::atoi(value.c_str()));
+            }
             else if (key == "effects3d")
             {
-                effects3D_ = (value == "1");
+                // The first build's switch: on was everything (high).
+                SetEffectsLevel(value == "1" ? 3 : 0);
             }
             else if (key == "accelSensitivity")
             {
@@ -144,7 +149,7 @@ namespace GalaxyEggbert::Game
         out << "accelSensitivity=" << accelSensitivity_ << "\n";
         out << "fullscreen=" << (fullscreen_ ? "1" : "0") << "\n";
         out << "terrainRelief=" << (terrainRelief_ ? "1" : "0") << "\n";
-        out << "effects3d=" << (effects3D_ ? "1" : "0") << "\n";
+        out << "effectsLevel=" << effectsLevel_ << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         const auto writeSlot = [&out](const char* prefix, int gamer, const GamerSlot& slot)
         {

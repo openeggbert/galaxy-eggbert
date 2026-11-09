@@ -130,13 +130,14 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] bool GetTerrainRelief() const noexcept { return terrainRelief_; }
         void SetTerrainRelief(bool on) noexcept { terrainRelief_ = on; }
         static constexpr bool kTerrainReliefDefault = false;
-        // The 3D effects (a Galaxy setting, the owner's request of 2026-11-09): fog, the shadows under
-        // Blupi and the objects, the water and lava shaders, the glow of what shines, the explosions,
-        // splashes and sparks as particles. Presentation only, off by default (the classic look); the
-        // Setup's "3D effects" turns them on. Saved as `effects3d=`.
-        [[nodiscard]] bool GetEffects3D() const noexcept { return effects3D_; }
-        void SetEffects3D(bool on) noexcept { effects3D_ = on; }
-        static constexpr bool kEffects3DDefault = false;
+        // The 3D effects (a Galaxy setting, the owner's requests of 2026-11-09), by level: 0 off (the
+        // classic look, the default), 1 low (fog, soft round shadows, particles), 2 medium (+ ambient
+        // occlusion, the water and lava shaders, edge smoothing), 3 high (+ the sun's shadow map, point
+        // lights, the glow). Presentation only; the Setup's "3D effects" steps through them. Saved as
+        // `effectsLevel=` (the first build's `effects3d=1` reads as high).
+        [[nodiscard]] int GetEffectsLevel() const noexcept { return effectsLevel_; }
+        void SetEffectsLevel(int level) noexcept { effectsLevel_ = level < 0 ? 0 : level > 3 ? 3 : level; }
+        static constexpr int kEffectsLevelDefault = 0;
         [[nodiscard]] int GetMusicVolume() const noexcept { return musicVolume_; }
         void SetMusicVolume(int volume) noexcept { musicVolume_ = ClampVolume(volume); }
         [[nodiscard]] static int ClampVolume(int volume) noexcept { return volume < 0 ? 0 : volume > 100 ? 100 : volume; }
@@ -257,7 +258,7 @@ namespace GalaxyEggbert::Game
         int musicVolume_ = 100;
         int accelSensitivity_ = 50;
         bool terrainRelief_ = kTerrainReliefDefault;
-        bool effects3D_ = kEffects3DDefault;
+        int effectsLevel_ = kEffectsLevelDefault;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
         GamerSlot galaxies_[kGamerCount];

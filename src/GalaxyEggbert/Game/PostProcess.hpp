@@ -26,8 +26,8 @@ namespace GalaxyEggbert::Game
         // device cannot: then nothing is bound and the caller draws to the screen.
         bool Begin(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                    const Microsoft::Xna::Framework::Color& clear);
-        // Back to the screen: the scene with its glow and grade over the whole backbuffer.
-        void End(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        // Back to the screen: the scene smoothed (FXAA), with its glow and grade when `glow`.
+        void End(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool glow = true);
 
     private:
         bool Prepare(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int width, int height);

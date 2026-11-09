@@ -33,6 +33,7 @@ namespace GalaxyEggbert::Game
     public:
         static constexpr int kMaxBones = 56;     // the real Blupi's skeleton; WebGL 2's uniform floor
         static constexpr int kMaxLights = 8;
+        static constexpr int kShadowSize = 1024; // texels a side: 44 blocks, a 23rd of a block each
 
         // Compiles everything on first use; false when the device cannot (never tried again).
         bool Prepare(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
@@ -49,6 +50,7 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* SkinnedCaster(
             const std::vector<Microsoft::Xna::Framework::Matrix>& bones, const Microsoft::Xna::Framework::Matrix& world);
         [[nodiscard]] bool ShadowMapped() const noexcept { return m_shadowValid; }
+        void DropShadowMap() noexcept { m_shadowValid = false; }
 
         // --- The main pass ----------------------------------------------------------------------------
         // The frame's camera, fog, lights and shadow for every shader; the terrain's texture and camera.

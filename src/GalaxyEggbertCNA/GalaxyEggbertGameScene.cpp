@@ -145,7 +145,10 @@ namespace GalaxyEggbert::CNA
     {
         // The 3D effects (the Setup's "3D effects"): presentation only, nothing of the game changes.
         auto& effects = frame.effects;
-        effects.enabled = Effects3DWanted() && frame.world;
+        effects.level = frame.world ? EffectsLevel() : 0;
+        effects.enabled = effects.level >= 1;
+        effects.occlusion = effects.surfaces = effects.smoothing = effects.level >= 2;
+        effects.shadowMap = effects.pointLights = effects.glow = effects.level >= 3;
         if (!effects.enabled)
         {
             effectParticles_.Clear();
@@ -199,7 +202,8 @@ namespace GalaxyEggbert::CNA
 
         // What lights what is near it: explosions and the lightning first, then the nearest lava and
         // the electrodes (SceneShaders.hpp's point lights; at most kMaxLights, the nearest first;
-        // SceneEffectsLogic.hpp).
+        // SceneEffectsLogic.hpp). High only.
+        if (effects.pointLights)
         {
             const float t = effects.seconds;
             std::vector<ScenePointLight> strong;

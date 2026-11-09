@@ -152,8 +152,9 @@ void main()
                 m_graded.reset();
                 m_scene = std::make_unique<Graphics::RenderTarget2D>(device, width, height, false, Graphics::SurfaceFormat::Color,
                                                                      Graphics::DepthFormat::Depth24Stencil8);
-                const int halfW = std::max(1, width / 2);
-                const int halfH = std::max(1, height / 2);
+                // The glow at a quarter of the size (a sixteenth of the pixels): blurred anyway.
+                const int halfW = std::max(1, width / 4);
+                const int halfH = std::max(1, height / 4);
                 m_bright = std::make_unique<Graphics::RenderTarget2D>(device, halfW, halfH, false, Graphics::SurfaceFormat::Color,
                                                                       Graphics::DepthFormat::None);
                 m_blur = std::make_unique<Graphics::RenderTarget2D>(device, halfW, halfH, false, Graphics::SurfaceFormat::Color,
@@ -199,7 +200,7 @@ void main()
         m_batch->End();
     }
 
-    void PostProcess::End(Graphics::GraphicsDevice& device)
+    void PostProcess::End(Graphics::GraphicsDevice& device, bool glow)
     {
         // The device's states as the world left them, for what is drawn after (the HUD).
         const Graphics::BlendState blend = device.getBlendStateProperty();
@@ -207,19 +208,23 @@ void main()
         const Graphics::RasterizerState raster = device.getRasterizerStateProperty();
         const Graphics::SamplerState sampler = device.getSamplerStatesProperty()[0];
 
-        const int halfW = m_bright->getWidthProperty();
-        const int halfH = m_bright->getHeightProperty();
-        Pass(device, m_bright.get(), *m_scene, *m_brightPass, halfW, halfH);
-        m_blurPass->SetUniformVec2("uStep", 1.0f / static_cast<float>(halfW), 0.0f);
-        Pass(device, m_blur.get(), *m_bright, *m_blurPass, halfW, halfH);
-        m_blurPass->SetUniformVec2("uStep", 0.0f, 1.0f / static_cast<float>(halfH));
-        Pass(device, m_bright.get(), *m_blur, *m_blurPass, halfW, halfH);
-
-        m_composite->SetTexture(1, *m_bright);
-        Pass(device, m_graded.get(), *m_scene, *m_composite, m_width, m_height);
+        Graphics::RenderTarget2D* smoothed = m_scene.get();
+        if (glow)
+        {
+            const int halfW = m_bright->getWidthProperty();
+            const int halfH = m_bright->getHeightProperty();
+            Pass(device, m_bright.get(), *m_scene, *m_brightPass, halfW, halfH);
+            m_blurPass->SetUniformVec2("uStep", 1.0f / static_cast<float>(halfW), 0.0f);
+            Pass(device, m_blur.get(), *m_bright, *m_blurPass, halfW, halfH);
+            m_blurPass->SetUniformVec2("uStep", 0.0f, 1.0f / static_cast<float>(halfH));
+            Pass(device, m_bright.get(), *m_blur, *m_blurPass, halfW, halfH);
+            m_composite->SetTexture(1, *m_bright);
+            Pass(device, m_graded.get(), *m_scene, *m_composite, m_width, m_height);
+            smoothed = m_graded.get();
+        }
         device.SetRenderTarget(nullptr);
         m_fxaa->SetUniformVec2("uTexel", 1.0f / static_cast<float>(m_width), 1.0f / static_cast<float>(m_height));
-        Pass(device, nullptr, *m_graded, *m_fxaa, m_width, m_height);
+        Pass(device, nullptr, *smoothed, *m_fxaa, m_width, m_height);
 
         device.setBlendStateProperty(blend);
         device.setDepthStencilStateProperty(depth);

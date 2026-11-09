@@ -179,7 +179,9 @@ namespace GalaxyEggbert::CNA
             worldRenderer_.RenderShadowMap(device, sceneFrame_, assets);
             // The 3D effects' finish (PostProcess.hpp): the world into a render target, then onto the
             // screen with its glow and grade; without them, or where the device cannot, straight on.
-            const bool finish = Effects3DWanted() && postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98));
+            const auto& effects = sceneFrame_.effects;
+            const bool finish = (effects.smoothing || effects.glow) &&
+                                postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98));
             if (!finish && sceneFrame_.effects.enabled)
             {
                 device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98)); // the screen again after the shadow map
@@ -193,7 +195,7 @@ namespace GalaxyEggbert::CNA
             worldIntoTarget_ = false;
             if (finish)
             {
-                postProcess_.End(device);
+                postProcess_.End(device, effects.glow);
             }
         }
 
@@ -466,7 +468,7 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
                                     saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
-                                    fadeOutPhase_, TerrainReliefWanted(), Effects3DWanted());
+                                    fadeOutPhase_, TerrainReliefWanted(), EffectsLevel());
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {

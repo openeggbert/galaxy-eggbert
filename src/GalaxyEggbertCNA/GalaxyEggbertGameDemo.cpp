@@ -547,7 +547,7 @@ namespace GalaxyEggbert::CNA
         profile.SetEffectsVolume(own.GetEffectsVolume());
         profile.SetMusicVolume(own.GetMusicVolume());
         profile.SetTerrainRelief(own.GetTerrainRelief());
-        profile.SetEffects3D(own.GetEffects3D());
+        profile.SetEffectsLevel(own.GetEffectsLevel());
         profile.SetFullscreen(own.GetFullscreen());
         profile.SetGalaxyMode(demoGalaxy >= 0);
         saveData_ = profile;

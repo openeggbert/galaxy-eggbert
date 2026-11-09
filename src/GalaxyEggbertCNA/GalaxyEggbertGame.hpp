@@ -1312,6 +1312,8 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool TerrainReliefWanted() const;
         // The Setup's "3D effects" (SaveData::GetEffects3D), or GALAXY_EFFECTS=0/1 for tests.
         [[nodiscard]] bool Effects3DWanted() const;
+        // The level: 0 off, 1 low, 2 medium, 3 high (SaveData::GetEffectsLevel, or GALAXY_EFFECTS).
+        [[nodiscard]] int EffectsLevel() const;
         // The terrain built with the effects' ambient occlusion (Effects3DWanted() and their shader compiles).
         [[nodiscard]] bool TerrainOcclusionWanted();
         // After the setting changed: the reliefs loaded or dropped, the terrain built again.

@@ -1983,7 +1983,7 @@ namespace GalaxyEggbert::Game
                               int viewportW, int viewportH, bool soundsOn, bool jumpRight, bool autoZoom,
                               bool accel, bool showReset, int selectedGamer, int effectsVolume,
                               int musicVolume, int accelSensitivity, float phaseTimeSeconds,
-                              GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief, bool effects3D)
+                              GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief, int effectsLevel)
     {
         if (!loaded_)
         {
@@ -2086,7 +2086,7 @@ namespace GalaxyEggbert::Game
             appendButton(SetupAccelRect(m), accel ? kIconSetupToggleOn : kIconSetupToggleOff, kSetupControlAccel);
             appendButton(SetupTerrainRect(m), terrainRelief ? kIconSetupToggleOn : kIconSetupToggleOff,
                          kSetupControlTerrain);
-            appendButton(SetupEffectsRect(m), effects3D ? kIconSetupToggleOn : kIconSetupToggleOff,
+            appendButton(SetupEffectsRect(m), effectsLevel > 0 ? kIconSetupToggleOn : kIconSetupToggleOff,
                          kSetupControlEffects);
             if (showReset)
             {
@@ -2131,7 +2131,12 @@ namespace GalaxyEggbert::Game
             appendLabel(SetupZoomRect(m), "Automatic zoom on action");
             appendLabel(SetupAccelRect(m), "Accelerometer");
             appendLabel(SetupTerrainRect(m), "3D terrain");
-            appendLabel(SetupEffectsRect(m), "3D effects");
+            {
+                // Its level under it: a press steps to the next (off, low, medium, high).
+                static const char* const kLevels[4] = {"Off", "Low", "Medium", "High"};
+                appendLabel(SetupEffectsRect(m),
+                            std::string("3D effects\n") + kLevels[effectsLevel < 0 ? 0 : effectsLevel > 3 ? 3 : effectsLevel]);
+            }
             if (showReset)
             {
                 // Real TX_BUTTON_SETUP_RESET, two lines ("Player {0} :\nErase

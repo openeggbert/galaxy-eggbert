@@ -789,19 +789,31 @@ namespace GalaxyEggbert::CNA
 
     bool GalaxyEggbertGame::Effects3DWanted() const
     {
-        // GALAXY_EFFECTS=0 or =1 overrides the Setup's "3D effects" (tests, comparisons).
-        if (const char* on = std::getenv("GALAXY_EFFECTS"); on != nullptr && *on != '\0')
-        {
-            return std::string(on) != "0";
-        }
-        return saveData_.GetEffects3D();
+        return EffectsLevel() > 0;
     }
+
+    int GalaxyEggbertGame::EffectsLevel() const
+    {
+        // GALAXY_EFFECTS overrides the Setup's "3D effects" (tests, comparisons): 0-3 or off, low,
+        // medium, high.
+        if (const char* level = std::getenv("GALAXY_EFFECTS"); level != nullptr && *level != '\0')
+        {
+            const std::string text(level);
+            if (text == "off") return 0;
+            if (text == "low") return 1;
+            if (text == "medium") return 2;
+            if (text == "high") return 3;
+            return std::clamp(std::atoi(level), 0, 3);
+        }
+        return saveData_.GetEffectsLevel();
+    }
+
 
     bool GalaxyEggbertGame::TerrainOcclusionWanted()
     {
         // The 3D effects' ambient occlusion is baked into the terrain only where their terrain shader
         // draws it (the stock effect cannot).
-        return Effects3DWanted() && worldRenderer_.TerrainShadersReady(getGraphicsDeviceProperty());
+        return EffectsLevel() >= 2 && worldRenderer_.TerrainShadersReady(getGraphicsDeviceProperty());
     }
 
     bool GalaxyEggbertGame::TerrainReliefWanted() const

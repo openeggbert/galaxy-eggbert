@@ -149,8 +149,9 @@ namespace GalaxyEggbert::Game
     void WorldRenderer::RenderShadowMap(Graphics::GraphicsDevice& device, const SceneFrame& frame,
                                         const WorldRenderAssets& assets)
     {
-        if (!frame.world || !frame.effects.enabled || !m_scene.Prepare(device))
+        if (!frame.world || !frame.effects.shadowMap || !m_scene.Prepare(device))
         {
+            m_scene.DropShadowMap(); // none this frame (a lower level): the shaders must not read the last
             return;
         }
         m_scene.BeginShadowPass(device, frame);

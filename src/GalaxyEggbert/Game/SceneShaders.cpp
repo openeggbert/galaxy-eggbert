@@ -377,8 +377,7 @@ void main()
             effect->SetUniformInt("uTexture", 0);
             effect->SetUniformInt("uShadowMap", 1);
         }
-        // Smaller where the GPU is likely smaller (GLSL ES: WebGL, Android).
-        m_shadowSize = device.GetShaderDialectEXT() == CNA::ShaderDialectEXT::GlslEs ? 1024 : 2048;
+        m_shadowSize = kShadowSize;
         // GALAXY_EFFECTS_DEBUG=shadow or =occlusion draws the terrain as that factor alone (grey).
         if (const char* debug = std::getenv("GALAXY_EFFECTS_DEBUG"))
         {
