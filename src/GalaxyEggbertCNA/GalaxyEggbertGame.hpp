@@ -1265,6 +1265,12 @@ namespace GalaxyEggbert::CNA
         void BuildUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const std::uint8_t* rgba, int width,
                            int height);
         void UploadUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        // Ultra's terrain atlas, finer, with its normals and surface (TerrainMaps.hpp): on its first frame.
+        void BuildUltraTerrainMaps(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        bool ultraTerrainMapsTried_ = false;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> ultraTerrainAlbedo_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> ultraTerrainNormals_;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> ultraTerrainSurface_;
         // Ultra's lending for this frame (its textures made on its first frame); nullptr below Ultra.
         const GalaxyEggbert::Game::UltraSceneAssets* UltraSceneAssetsForFrame(
             Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);

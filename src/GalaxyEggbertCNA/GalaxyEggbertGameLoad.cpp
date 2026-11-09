@@ -2,6 +2,7 @@
 #include "GalaxyEggbertGame.hpp"
 #include "GameInternal.hpp"
 
+#include <GalaxyEggbert/Game/TerrainMaps.hpp>
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/DebugOverlay.hpp>
@@ -865,7 +866,71 @@ namespace GalaxyEggbert::CNA
         {
             UploadUltraSky(device);
         }
+        if (!ultraTerrainMapsTried_)
+        {
+            ultraTerrainMapsTried_ = true;
+            BuildUltraTerrainMaps(device);
+        }
         return &ultraAssets_;
+    }
+
+    void GalaxyEggbertGame::BuildUltraTerrainMaps(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+    {
+        // Ultra's terrain atlas (TerrainMaps.hpp): finer (twice, as near as HiDef's 4096 allows), its normals
+        // and its surface, from the
+        // padded atlas's own texels, each with its levels. Once, on Ultra's first frame (a second or so).
+        const auto started = std::chrono::steady_clock::now();
+        const int width = terrainMipTexture_.getWidthProperty();
+        const int height = terrainMipTexture_.getHeightProperty();
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+        std::vector<Microsoft::Xna::Framework::Color> texels(static_cast<std::size_t>(width) * static_cast<std::size_t>(height));
+        terrainMipTexture_.GetData(0, nullptr, texels.data(), 0, static_cast<int>(texels.size()));
+        std::vector<std::uint8_t> rgba(texels.size() * 4);
+        for (std::size_t i = 0; i < texels.size(); ++i)
+        {
+            rgba[i * 4] = texels[i].getRProperty();
+            rgba[i * 4 + 1] = texels[i].getGProperty();
+            rgba[i * 4 + 2] = texels[i].getBProperty();
+            rgba[i * 4 + 3] = texels[i].getAProperty();
+        }
+        const auto upload = [&](std::vector<std::uint8_t> level, int w, int h)
+        {
+            auto texture = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(
+                device, w, h, /*mipMap=*/true, Microsoft::Xna::Framework::Graphics::SurfaceFormat::Color);
+            const int levels = texture->getLevelCountProperty();
+            for (int mip = 0; mip < levels; ++mip)
+            {
+                std::vector<Microsoft::Xna::Framework::Color> colors(static_cast<std::size_t>(w) * static_cast<std::size_t>(h));
+                for (std::size_t i = 0; i < colors.size(); ++i)
+                {
+                    colors[i] = Microsoft::Xna::Framework::Color(static_cast<int>(level[i * 4]), static_cast<int>(level[i * 4 + 1]),
+                                                                 static_cast<int>(level[i * 4 + 2]), static_cast<int>(level[i * 4 + 3]));
+                }
+                texture->SetData(mip, nullptr, colors.data(), 0, static_cast<int>(colors.size()));
+                if (mip + 1 < levels)
+                {
+                    level = GalaxyEggbert::Game::DownsampleHalf(level, w, h);
+                    w = std::max(1, w / 2);
+                    h = std::max(1, h / 2);
+                }
+            }
+            return texture;
+        };
+        auto maps = GalaxyEggbert::Game::BuildSurfaceMaps(rgba.data(), width, height,
+                                                          GalaxyEggbert::Game::TileAtlas::kPaddedPitch);
+        ultraTerrainNormals_ = upload(std::move(maps.normals), width, height);
+        ultraTerrainSurface_ = upload(std::move(maps.surface), width, height);
+        const auto fine = GalaxyEggbert::Game::UpscaledSize(width, height);
+        ultraTerrainAlbedo_ = upload(GalaxyEggbert::Game::Upscale(rgba.data(), width, height, fine[0], fine[1]), fine[0], fine[1]);
+        ultraAssets_.terrainNormals = ultraTerrainNormals_.get();
+        ultraAssets_.terrainSurface = ultraTerrainSurface_.get();
+        ultraAssets_.terrainAlbedo = ultraTerrainAlbedo_.get();
+        const auto ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+        std::cout << "GalaxyEggbertCNA: Ultra's terrain maps made (" << fine[0] << "x" << fine[1] << " colours, "
+                  << width << "x" << height << " normals and surface) in " << ms << " ms." << std::endl;
     }
 
     void GalaxyEggbertGame::UploadUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)

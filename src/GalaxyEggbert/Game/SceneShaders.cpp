@@ -1124,12 +1124,17 @@ void main()
             effect->SetUniformVec3("uEyePos", eye.X, eye.Y, eye.Z);
             effect->SetUniformVec3Array("uSh", sh, 9);
             effect->SetUniformVec4("uEnvInfo", repeats, static_cast<float>(std::max(0, ultra.environmentLevels - 1)), 0.0f, 0.0f);
+            m_ultraScreenOcclusion = ultra.screenOcclusion != nullptr;
             effect->SetUniformVec4("uMaps", ultra.terrainNormals != nullptr ? 1.0f : 0.0f,
                                    ultra.terrainSurface != nullptr ? 1.0f : 0.0f,
                                    ultra.screenOcclusion != nullptr ? 1.0f : 0.0f, 0.0f);
             effect->SetUniformVec2("uScreenTexel", 1.0f / std::max(1, viewport.getWidthProperty()),
                                    1.0f / std::max(1, viewport.getHeightProperty()));
             effect->SetTexture(3, ultra.environment != nullptr ? *ultra.environment : *m_white);
+            if (effect != m_ultraModel.get() && ultra.terrainAlbedo != nullptr)
+            {
+                effect->SetTexture(0, *ultra.terrainAlbedo); // the atlas, finer
+            }
             effect->SetTexture(4, ultra.terrainSurface != nullptr ? *ultra.terrainSurface : *m_white);
             effect->SetTexture(5, ultra.terrainNormals != nullptr ? *ultra.terrainNormals : *m_white);
             effect->SetTexture(6, ultra.screenOcclusion != nullptr ? *ultra.screenOcclusion : *m_white);
@@ -1189,6 +1194,11 @@ void main()
     Graphics::ShaderEffect& SceneShaders::LitWith(Graphics::Texture2D* texture, const Matrix& world)
     {
         auto& lit = *Lit();
+        if (m_ultraActive)
+        {
+            // Another texture than the atlas (the cubes, the grass): the atlas's maps do not fit it.
+            lit.SetUniformVec4("uMaps", 0.0f, 0.0f, m_ultraScreenOcclusion ? 1.0f : 0.0f, 0.0f);
+        }
         lit.setWorldProperty(world);
         if (texture != nullptr)
         {

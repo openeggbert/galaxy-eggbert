@@ -164,5 +164,6 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_white; // 1x1, for what is missing
         Microsoft::Xna::Framework::Graphics::SamplerState m_envSampler;
         UltraSurface m_modelSurface; // the model being drawn's own (its specular power)
+        bool m_ultraScreenOcclusion = false;
     };
 }

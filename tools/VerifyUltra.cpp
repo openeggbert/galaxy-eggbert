@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Game/ProceduralMaterial.hpp>
 #include <GalaxyEggbert/Game/TerrainGi.hpp>
+#include <GalaxyEggbert/Game/TerrainMaps.hpp>
 #include <GalaxyEggbert/Game/UltraLogic.hpp>
 
 #include <sstream>
@@ -180,6 +181,57 @@ int main()
         Check(face.colors.size() == 4 && std::abs(static_cast<int>(face.colors[0].getRProperty()) - 128) <= 8 &&
                   face.colors[0].getAProperty() == 255,
               "an open face's corners: the open sky's light halved (128), no occlusion (255)");
+    }
+
+    // The atlas made finer and given a surface (TerrainMaps.hpp).
+    {
+        using namespace GalaxyEggbert::Game;
+        const auto size = UpscaledSize(1920, 2112);
+        Check(size[1] == 4096 && size[0] < 4096 && size[0] > 3700, "the finer atlas stays within HiDef's 4096");
+        std::vector<std::uint8_t> flat(16 * 16 * 4, 0);
+        for (std::size_t i = 0; i < flat.size(); i += 4)
+        {
+            flat[i] = 100;
+            flat[i + 1] = 120;
+            flat[i + 2] = 140;
+            flat[i + 3] = 255;
+        }
+        const auto fine = Upscale(flat.data(), 16, 16, 30, 32);
+        bool even = fine.size() == static_cast<std::size_t>(30 * 32 * 4);
+        for (std::size_t i = 0; even && i < fine.size(); i += 4)
+        {
+            even = fine[i] == 100 && fine[i + 1] == 120 && fine[i + 2] == 140 && fine[i + 3] == 255;
+        }
+        Check(even, "an even picture stays even made finer");
+        const auto plain = BuildSurfaceMaps(flat.data(), 16, 16, 16);
+        Check(plain.normals[0] == 128 && plain.normals[1] == 128 && plain.normals[2] == 255,
+              "an even picture's normal points straight out");
+        // A ramp brighter toward +u: its normal leans toward -u (the light's slope).
+        std::vector<std::uint8_t> ramp(16 * 16 * 4, 255);
+        for (int y = 0; y < 16; ++y)
+            for (int x = 0; x < 16; ++x)
+            {
+                auto* t = &ramp[static_cast<std::size_t>((y * 16 + x) * 4)];
+                t[0] = t[1] = t[2] = static_cast<std::uint8_t>(x * 12);
+            }
+        const auto sloped = BuildSurfaceMaps(ramp.data(), 16, 16, 16);
+        const std::size_t middle = static_cast<std::size_t>((8 * 16 + 8) * 4);
+        Check(sloped.normals[middle] < 120 && std::abs(static_cast<int>(sloped.normals[middle + 1]) - 128) <= 2,
+              "a picture brightening along u leans its normal back along u");
+        // The classes: an even bright grey tile is metal, a busy grey one stone, an even brown one wood.
+        std::vector<std::uint8_t> tiles(48 * 16 * 4, 255);
+        for (int y = 0; y < 16; ++y)
+            for (int x = 0; x < 48; ++x)
+            {
+                auto* t = &tiles[static_cast<std::size_t>((y * 48 + x) * 4)];
+                if (x < 16) { t[0] = t[1] = t[2] = 180; }
+                else if (x < 32) { const std::uint8_t v = ((x + y) % 2) != 0 ? 60 : 160; t[0] = t[1] = t[2] = v; }
+                else { t[0] = 150; t[1] = 95; t[2] = 45; }
+            }
+        const auto classes = BuildSurfaceMaps(tiles.data(), 48, 16, 16).classes;
+        Check(classes.size() == 3 && classes[0] == SurfaceClass::Metal && classes[1] == SurfaceClass::Stone &&
+                  classes[2] == SurfaceClass::Wood,
+              "tiles told apart: even bright grey metal, busy grey stone, brown wood");
     }
 
     std::printf("%s\n", failures == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED");

@@ -18,6 +18,8 @@ namespace GalaxyEggbert::Game
         int environmentLevels = 1;
         // ...and its irradiance (UltraLogic.hpp SkyEnvironment::irradiance).
         std::array<Microsoft::Xna::Framework::Vector3, 9> irradiance{};
+        // The terrain atlas finer (TerrainMaps.hpp Upscale), for Ultra's terrain; nullptr: as it is.
+        Microsoft::Xna::Framework::Graphics::Texture2D* terrainAlbedo = nullptr;
         // The terrain atlas's surface (roughness, metalness, cavity) and normals, texel for texel with its
         // colours; nullptr: an even surface.
         Microsoft::Xna::Framework::Graphics::Texture2D* terrainSurface = nullptr;
