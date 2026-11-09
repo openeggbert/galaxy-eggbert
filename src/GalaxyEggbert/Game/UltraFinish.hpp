@@ -32,6 +32,7 @@
 #include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <array>
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -68,6 +69,11 @@ namespace GalaxyEggbert::Game
         Microsoft::Xna::Framework::Graphics::Texture2D* EndGeometry(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                                                     const SceneFrame& frame,
                                                                     const Microsoft::Xna::Framework::Vector3& sunDirection);
+        // The frame's projection moved by a fraction of a pixel of a `width` x `height` target (the TAA's
+        // samples, a new one each frame); `projection` kept as it was for the reprojection. Before the
+        // frame is drawn, on every Ultra frame.
+        [[nodiscard]] Microsoft::Xna::Framework::Matrix Jitter(const Microsoft::Xna::Framework::Matrix& projection, int width,
+                                                               int height);
         // Reflects (the water: screen-space reflections), exposes, glows, tonemaps and grades the scene
         // onto the screen (the viewport's logical surface).
         void End(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
@@ -98,6 +104,12 @@ namespace GalaxyEggbert::Game
         bool m_exposureFresh = true; // the first frame takes the picture's exposure at once
         bool m_gradeReady = false;
         bool m_geometryValid = false; // this frame's geometry drawn
+        bool m_historyValid = false;  // the TAA's last result is of the last frame
+        bool m_previousValid = false;
+        int m_historyIndex = 0;
+        Microsoft::Xna::Framework::Matrix m_projection;             // this frame's, before its jitter
+        Microsoft::Xna::Framework::Matrix m_previousViewProjection; // the last frame's
+        std::chrono::steady_clock::time_point m_previousTime;
         unsigned m_frame = 0;
         Microsoft::Xna::Framework::Vector3 m_gradeSky;
 
@@ -113,6 +125,7 @@ namespace GalaxyEggbert::Game
         Target m_occlusionSmooth;              // the shaders' screen occlusion
         Target m_reflection;                   // the reflections: colour, weight
         Target m_fog;                          // the air, half the size: light scattered in, what is left
+        std::array<Target, 2> m_history;       // the TAA's results, in turn
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_grade;
         Shader m_logLuminance;
         Shader m_reduce;
@@ -126,6 +139,8 @@ namespace GalaxyEggbert::Game
         Shader m_occlusionBlur;
         Shader m_reflections;
         Shader m_fogPass;
+        Shader m_temporal;
+        Shader m_lens;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> m_batch;
     };
 }

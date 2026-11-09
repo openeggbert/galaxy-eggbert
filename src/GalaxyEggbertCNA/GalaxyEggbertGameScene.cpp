@@ -151,6 +151,7 @@ namespace GalaxyEggbert::CNA
         effects.shadowMap = effects.pointLights = effects.glow = effects.level >= 3;
         effects.ultra = effects.level >= 4;
         effects.steadyShadows = goldenCaptureMode_ || goldenTraceMode_ || autoplay_ != nullptr;
+        effects.capture = effects.steadyShadows;
         if (!effects.enabled)
         {
             effectParticles_.Clear();

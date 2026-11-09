@@ -11,6 +11,7 @@
 #include <Microsoft/Xna/Framework/Rectangle.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -288,6 +289,115 @@ void main()
 }
 )";
 
+        // Temporal anti-aliasing: each frame's projection is moved by a fraction of a pixel (Jitter); this
+        // frame's pixel blended with last frame's at the same point of the world (found again from the
+        // depth and last frame's camera), last frame's held within the colours round this pixel (so what
+        // moved leaves no ghost). In display colour (after the tonemapping), where its blend is even.
+        const char* const kTemporal = R"(
+uniform sampler2D uTexture;   // this frame, graded
+uniform sampler2D uHistory;   // unit 1: the last result (bilinear)
+uniform sampler2D uGeometry;  // unit 2
+uniform mat4 uInvView;
+uniform mat4 uPrevViewProj;
+uniform float uHistoryValid;
+void main()
+{
+    ivec2 size = textureSize(uTexture, 0);
+    ivec2 at = ivec2(TexCoord * vec2(size));
+    vec3 current = Fetch(uTexture, at).rgb;
+    vec3 low = current;
+    vec3 high = current;
+    for (int y = -1; y <= 1; ++y)
+    {
+        for (int x = -1; x <= 1; ++x)
+        {
+            vec3 c = Fetch(uTexture, at + ivec2(x, y)).rgb;
+            low = min(low, c);
+            high = max(high, c);
+        }
+    }
+    float depth = Fetch(uGeometry, at).b;
+    if (depth <= 0.0) depth = 1000.0;
+    vec2 uv = (vec2(at) + 0.5) / vec2(size);
+    vec3 world = (uInvView * vec4(ViewAt(uv, depth), 1.0)).xyz;
+    vec4 previous = uPrevViewProj * vec4(world, 1.0);
+    vec2 back = previous.xy / previous.w * 0.5 + 0.5;
+    float valid = uHistoryValid * (back.x > 0.0 && back.y > 0.0 && back.x < 1.0 && back.y < 1.0 ? 1.0 : 0.0);
+    vec3 history = clamp(texture(uHistory, back).rgb, low, high);
+    FragColor = vec4(mix(current, history, 0.88 * valid), 1.0);
+}
+)";
+
+        // The last touches, onto the screen: the far scenery out of focus (the focus on Blupi; a disc of
+        // twelve taps, nearer pixels kept out of a farther one's blur), the camera's own motion blurred
+        // along each pixel's way since the last frame (eight taps, half a frame's shutter), film grain.
+        const char* const kLens = R"(
+uniform sampler2D uTexture;   // the anti-aliased frame (bilinear)
+uniform sampler2D uGeometry;  // unit 1
+uniform mat4 uInvView;
+uniform mat4 uPrevViewProj;
+uniform vec4 uFocus;          // the focus distance, the sharp range beyond it, the most blur (pixels), on
+uniform vec2 uMotion;         // the shutter (fraction of a frame), on
+uniform float uGrain;
+float DepthAt(vec2 uv)
+{
+    ivec2 size = textureSize(uGeometry, 0);
+    float d = texelFetch(uGeometry, clamp(ivec2(uv * vec2(size)), ivec2(0), size - 1), 0).b;
+    return d <= 0.0 ? 1000.0 : d;
+}
+float Blur(float depth)
+{
+    return uFocus.w * clamp((depth - uFocus.x - uFocus.y) / max(depth, 1.0) * 2.5, 0.0, 1.0) * uFocus.z;
+}
+void main()
+{
+    vec2 size = vec2(textureSize(uTexture, 0));
+    vec2 uv = TexCoord;
+    float depth = DepthAt(uv);
+    vec3 color = texture(uTexture, uv).rgb;
+    // Depth of field (far only: what Blupi stands in front of stays sharp).
+    float radius = Blur(depth);
+    if (radius > 0.5)
+    {
+        vec3 sum = color;
+        float total = 1.0;
+        for (int i = 0; i < 12; ++i)
+        {
+            float r = sqrt((float(i) + 0.5) / 12.0) * radius;
+            float a = float(i) * 2.3999632;
+            vec2 at = uv + vec2(cos(a), sin(a)) * r / size;
+            float w = Blur(DepthAt(at)) >= r * 0.5 ? 1.0 : 0.0;
+            sum += texture(uTexture, at).rgb * w;
+            total += w;
+        }
+        color = sum / total;
+    }
+    // Motion blur (the camera's).
+    if (uMotion.y > 0.5)
+    {
+        vec3 world = (uInvView * vec4(ViewAt(uv, depth), 1.0)).xyz;
+        vec4 previous = uPrevViewProj * vec4(world, 1.0);
+        vec2 back = previous.xy / previous.w * 0.5 + 0.5;
+        vec2 velocity = (uv - back) * uMotion.x;
+        float pixels = length(velocity * size);
+        if (pixels > 1.0)
+        {
+            velocity *= min(1.0, 24.0 / pixels);
+            vec3 sum = color;
+            for (int i = 1; i < 8; ++i)
+            {
+                sum += texture(uTexture, uv - velocity * (float(i) / 7.0 - 0.5)).rgb;
+            }
+            color = sum / 8.0;
+        }
+    }
+    // Film grain: finer in the light.
+    float grain = Noise(gl_FragCoord.xy) - 0.5;
+    color += grain * uGrain * (1.0 - 0.6 * dot(color, vec3(0.3333)));
+    FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
+}
+)";
+
         // The scene's mean log luminance per cell of a 64x64 grid (16 samples each).
         const char* const kLogLuminance = R"(
 uniform sampler2D uTexture;
@@ -493,9 +603,12 @@ void main()
             m_reflections = CompileShaderEffect(device, "the screen-space reflections", PostVertexSource(),
                                                 geometry + kReflections);
             m_fogPass = CompileShaderEffect(device, "the volumetric fog", PostVertexSource(), geometry + kFog);
+            m_temporal = CompileShaderEffect(device, "the temporal anti-aliasing", PostVertexSource(), geometry + kTemporal);
+            m_lens = CompileShaderEffect(device, "the lens (depth of field, motion blur, grain)", PostVertexSource(),
+                                         geometry + kLens);
             m_fxaa = CompileShaderEffect(device, "the Ultra edge smoothing (FXAA)", PostVertexSource(), FxaaFragmentSource());
             if (!m_logLuminance || !m_reduce || !m_adapt || !m_bloomPrefilter || !m_bloomDown || !m_bloomUp || !m_tonemap ||
-                !m_fxaa || !m_occlusion || !m_occlusionBlur || !m_reflections || !m_fogPass)
+                !m_fxaa || !m_occlusion || !m_occlusionBlur || !m_reflections || !m_fogPass || !m_temporal || !m_lens)
             {
                 m_failed = true;
                 m_tonemap.reset();
@@ -509,6 +622,9 @@ void main()
             m_tonemap->SetUniformInt("uReflection", 4);
             m_tonemap->SetUniformInt("uOcclusion", 5);
             m_tonemap->SetUniformInt("uFog", 6);
+            m_temporal->SetUniformInt("uHistory", 1);
+            m_temporal->SetUniformInt("uGeometry", 2);
+            m_lens->SetUniformInt("uGeometry", 1);
             m_fogPass->SetUniformInt("uShadowNear", 1);
             m_fogPass->SetUniformInt("uShadowFar", 2);
             m_occlusionBlur->SetUniformInt("uGeometry", 1);
@@ -550,6 +666,11 @@ void main()
                 m_occlusionSmooth = target(width, height, Graphics::SurfaceFormat::Color, false);
                 m_reflection = target(width, height, hdr, false);
                 m_fog = target(width / 2, height / 2, hdr, false);
+                for (auto& history : m_history)
+                {
+                    history = target(width, height, Graphics::SurfaceFormat::Color, false);
+                }
+                m_historyValid = false;
                 m_geometryValid = false;
                 m_width = width;
                 m_height = height;
@@ -585,6 +706,35 @@ void main()
         device.SetRenderTarget(m_scene.get());
         device.Clear(clear);
         return true;
+    }
+
+    Microsoft::Xna::Framework::Matrix UltraFinish::Jitter(const Microsoft::Xna::Framework::Matrix& projection, int width,
+                                                          int height)
+    {
+        // Halton (2, 3), eight points a cycle: a different fraction of a pixel each frame, evenly over it.
+        const auto halton = [](int index, int base)
+        {
+            float f = 1.0f, r = 0.0f;
+            for (int i = index; i > 0; i /= base)
+            {
+                f /= static_cast<float>(base);
+                r += f * static_cast<float>(i % base);
+            }
+            return r;
+        };
+        m_projection = projection;
+        if (width <= 0 || height <= 0)
+        {
+            return projection;
+        }
+        const int index = static_cast<int>(m_frame % 8u) + 1;
+        const float jx = (halton(index, 2) - 0.5f) * 2.0f / static_cast<float>(width);
+        const float jy = (halton(index, 3) - 0.5f) * 2.0f / static_cast<float>(height);
+        // XNA's perspective divides by -z (M34 = -1): moving M31 and M32 by -j moves every point by j.
+        auto jittered = projection;
+        jittered.M31 -= jx;
+        jittered.M32 -= jy;
+        return jittered;
     }
 
     bool UltraFinish::BeginGeometry(Graphics::GraphicsDevice& device, int width, int height)
@@ -788,14 +938,73 @@ void main()
         m_tonemap->SetUniformInt("uDebug", debug);
         Pass(device, m_graded.get(), *m_scene, *m_tonemap, m_width, m_height);
 
-        device.SetRenderTarget(nullptr);
-        samplers[0] = Graphics::SamplerState::LinearClamp;
-        m_fxaa->SetUniformVec2("uTexel", 1.0f / static_cast<float>(m_width), 1.0f / static_cast<float>(m_height));
-        m_batch->Begin(Graphics::SpriteSortMode::Immediate, &Graphics::BlendState::Opaque, &Graphics::SamplerState::LinearClamp,
-                       &Graphics::DepthStencilState::None, &Graphics::RasterizerState::CullNone, m_fxaa.get());
-        m_batch->Draw(*m_graded, Microsoft::Xna::Framework::Rectangle(0, 0, m_screenWidth, m_screenHeight),
-                      Microsoft::Xna::Framework::Rectangle(0, 0, m_width, m_height), Microsoft::Xna::Framework::Color::White);
-        m_batch->End();
+        // Anti-aliased over the frames (TAA) with this frame's geometry and last frame's camera; without
+        // the geometry, FXAA as the other levels.
+        const auto setMatrix = [](Graphics::ShaderEffect& effect, const char* name, const Microsoft::Xna::Framework::Matrix& m)
+        {
+            const float values[16] = {m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24,
+                                      m.M31, m.M32, m.M33, m.M34, m.M41, m.M42, m.M43, m.M44};
+            effect.SetUniformMat4(name, values);
+        };
+        const auto viewProjection = frame.camera.view * m_projection;
+        const auto inverseView = Microsoft::Xna::Framework::Matrix::Invert(frame.camera.view);
+        if (m_geometryValid)
+        {
+            auto& history = *m_history[static_cast<std::size_t>(m_historyIndex)];
+            auto& result = *m_history[static_cast<std::size_t>(1 - m_historyIndex)];
+            samplers[1] = Graphics::SamplerState::LinearClamp;
+            samplers[2] = Graphics::SamplerState::PointClamp;
+            SetCamera(*m_temporal, frame);
+            setMatrix(*m_temporal, "uInvView", inverseView);
+            setMatrix(*m_temporal, "uPrevViewProj", m_previousViewProjection);
+            m_temporal->SetUniformFloat("uHistoryValid", m_historyValid && !frame.effects.capture ? 1.0f : 0.0f);
+            m_temporal->SetTexture(1, history);
+            m_temporal->SetTexture(2, *m_geometry);
+            Pass(device, &result, *m_graded, *m_temporal, m_width, m_height);
+            m_historyIndex = 1 - m_historyIndex;
+            m_historyValid = true;
+
+            // The lens, onto the screen.
+            device.SetRenderTarget(nullptr);
+            samplers[1] = Graphics::SamplerState::PointClamp;
+            SetCamera(*m_lens, frame);
+            setMatrix(*m_lens, "uInvView", inverseView);
+            setMatrix(*m_lens, "uPrevViewProj", m_previousViewProjection);
+            const auto& eye = frame.camera.position;
+            const auto& target = frame.camera.target;
+            const float focus = std::sqrt((target.X - eye.X) * (target.X - eye.X) + (target.Y - eye.Y) * (target.Y - eye.Y) +
+                                          (target.Z - eye.Z) * (target.Z - eye.Z));
+            // Sharp to twelve blocks past Blupi; at most 5 pixels a 1080-line screen's blur.
+            m_lens->SetUniformVec4("uFocus", focus, 12.0f, 5.0f * static_cast<float>(m_height) / 1080.0f, 1.0f);
+            // Half a 60 Hz frame's shutter, whatever the frame's own length: a slow machine moves the
+            // camera farther between its frames, not for longer while the shutter is open.
+            const auto now = std::chrono::steady_clock::now();
+            const float frameSeconds = m_previousValid ? std::chrono::duration<float>(now - m_previousTime).count() : 1.0f / 60.0f;
+            m_previousTime = now;
+            const float shutter = std::clamp(0.5f * (1.0f / 60.0f) / std::max(frameSeconds, 1.0f / 240.0f), 0.0f, 0.5f);
+            m_lens->SetUniformVec2("uMotion", shutter, m_previousValid && !frame.effects.capture ? 1.0f : 0.0f);
+            m_lens->SetUniformFloat("uGrain", 0.035f);
+            m_lens->SetTexture(1, *m_geometry);
+            m_batch->Begin(Graphics::SpriteSortMode::Immediate, &Graphics::BlendState::Opaque, &Graphics::SamplerState::LinearClamp,
+                           &Graphics::DepthStencilState::None, &Graphics::RasterizerState::CullNone, m_lens.get());
+            m_batch->Draw(result, Microsoft::Xna::Framework::Rectangle(0, 0, m_screenWidth, m_screenHeight),
+                          Microsoft::Xna::Framework::Rectangle(0, 0, m_width, m_height), Microsoft::Xna::Framework::Color::White);
+            m_batch->End();
+        }
+        else
+        {
+            m_historyValid = false;
+            device.SetRenderTarget(nullptr);
+            samplers[0] = Graphics::SamplerState::LinearClamp;
+            m_fxaa->SetUniformVec2("uTexel", 1.0f / static_cast<float>(m_width), 1.0f / static_cast<float>(m_height));
+            m_batch->Begin(Graphics::SpriteSortMode::Immediate, &Graphics::BlendState::Opaque, &Graphics::SamplerState::LinearClamp,
+                           &Graphics::DepthStencilState::None, &Graphics::RasterizerState::CullNone, m_fxaa.get());
+            m_batch->Draw(*m_graded, Microsoft::Xna::Framework::Rectangle(0, 0, m_screenWidth, m_screenHeight),
+                          Microsoft::Xna::Framework::Rectangle(0, 0, m_width, m_height), Microsoft::Xna::Framework::Color::White);
+            m_batch->End();
+        }
+        m_previousViewProjection = viewProjection;
+        m_previousValid = true;
 
         device.setBlendStateProperty(blend);
         device.setDepthStencilStateProperty(depth);

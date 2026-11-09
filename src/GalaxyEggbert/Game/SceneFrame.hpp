@@ -175,6 +175,9 @@ namespace GalaxyEggbert::Game
         // The far shadow cascade every frame, not every third drawn one: the captures (golden frames,
         // autoplay shots), whose pixels must not depend on which ticks the machine found time to draw.
         bool steadyShadows = false;
+        // A capture (the same cases): Ultra's frame-to-frame effects off (the TAA's history, the motion
+        // blur), the frames captured being far apart.
+        bool capture = false;
         Microsoft::Xna::Framework::Vector3 fogColor;
         float fogStart = 0.0f;   // blocks from the camera where the fog begins
         float fogEnd = 1.0f;     // where it is whole

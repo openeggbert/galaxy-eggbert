@@ -213,20 +213,22 @@ namespace GalaxyEggbert::CNA
             // What to draw (GalaxyEggbertGameScene.cpp); with the 3D effects, first the sun's shadow map
             // (it has its own target, so before the frame's).
             BuildSceneFrame(sceneFrame_, soulDrawnIn3D);
-            const auto assets = SceneAssets();
-            worldRenderer_.RenderShadowMap(device, sceneFrame_, assets);
-            // The 3D effects' finish (PostProcess.hpp): the world into a render target, then onto the
-            // screen with its glow and grade; without them, or where the device cannot, straight on.
             // Ultra draws the world at the window's own pixels, not the 800x480 logical surface's (which
-            // CNA scales up to the window); the HUD after it stays on the logical surface.
-            const auto& effects = sceneFrame_.effects;
+            // CNA scales up to the window); the HUD after it stays on the logical surface. Its frames are
+            // moved by a fraction of a pixel each (the TAA's samples).
             int targetW = 0, targetH = 0;
-            if (effects.ultra)
+            if (sceneFrame_.effects.ultra)
             {
                 const auto client = getWindowProperty().getClientBoundsProperty();
                 targetW = client.Width;
                 targetH = client.Height;
+                sceneFrame_.camera.projection = ultraFinish_.Jitter(sceneFrame_.camera.projection, targetW, targetH);
             }
+            const auto assets = SceneAssets();
+            worldRenderer_.RenderShadowMap(device, sceneFrame_, assets);
+            // The 3D effects' finish (PostProcess.hpp): the world into a render target, then onto the
+            // screen with its glow and grade; without them, or where the device cannot, straight on.
+            const auto& effects = sceneFrame_.effects;
             // Ultra: first what each pixel shows (its normal, depth, mirror), and the screen's occlusion of it
             // for the world's shaders (UltraFinish.hpp).
             ultraAssets_.screenOcclusion = nullptr;
