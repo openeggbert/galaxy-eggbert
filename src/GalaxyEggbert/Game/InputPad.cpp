@@ -735,7 +735,8 @@ namespace GalaxyEggbert::Game
         }
     }
 
-    InputPad::CheatListRect InputPad::ActiveCheatsRect(const std::vector<std::string>& names, int viewportH) noexcept
+    InputPad::CheatListRect InputPad::ActiveCheatsRect(const std::vector<std::string>& names, int viewportH,
+                                                       float top) noexcept
     {
         constexpr float kScale = 0.55f, kLine = 18.0f, kPad = 3.0f, kAt = 5.0f;
         const float s = static_cast<float>(viewportH) / kRefH;
@@ -744,12 +745,12 @@ namespace GalaxyEggbert::Game
         {
             maxWidth = std::max(maxWidth, TextMetrics::Width(name) * kScale);
         }
-        return CheatListRect{(kAt - kPad) * s, (kAt - kPad) * s, (kAt + maxWidth + kPad) * s,
-                             (kAt + kLine * static_cast<float>(names.size()) + kPad) * s};
+        return CheatListRect{(kAt - kPad) * s, (top + kAt - kPad) * s, (kAt + maxWidth + kPad) * s,
+                             (top + kAt + kLine * static_cast<float>(names.size()) + kPad) * s};
     }
 
     void InputPad::DrawActiveCheats(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                                     int viewportH, const std::vector<std::string>& names)
+                                     int viewportH, const std::vector<std::string>& names, float top)
     {
         if (!loaded_ || names.empty())
         {
@@ -757,7 +758,7 @@ namespace GalaxyEggbert::Game
         }
         constexpr float kScale = 0.55f, kLine = 18.0f, kAt = 5.0f;
         const float s = static_cast<float>(viewportH) / kRefH;
-        const CheatListRect r = ActiveCheatsRect(names, viewportH);
+        const CheatListRect r = ActiveCheatsRect(names, viewportH, top);
         std::vector<Quad> panel;
         {
             Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
@@ -766,7 +767,7 @@ namespace GalaxyEggbert::Game
             panel.push_back(q);
         }
         std::vector<Quad> labels;
-        float y = kAt;
+        float y = top + kAt;
         for (const auto& name : names)
         {
             AppendGamerLabel(labels, name, kAt * s, y * s, kScale, s);

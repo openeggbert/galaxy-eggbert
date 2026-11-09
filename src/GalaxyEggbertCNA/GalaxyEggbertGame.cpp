@@ -9695,6 +9695,9 @@ namespace GalaxyEggbert::CNA
             // character/buttons below -- fully hiding the normal HUD
             // outside Play via a dedicated draw call instead of a generic
             // text message.
+            // Whether the training hint's banner (Hud, the top 40 reference pixels) is up: Galaxy's own
+            // notices are drawn under it then (the cheats keep the original's place).
+            bool trainingHintShown = false;
             const bool phaseHasRealScreen = phase_ == GalaxyEggbert::Def::GamePhase::Pause ||
                                              phase_ == GalaxyEggbert::Def::GamePhase::Win ||
                                              phase_ == GalaxyEggbert::Def::GamePhase::Lost ||
@@ -9725,6 +9728,7 @@ namespace GalaxyEggbert::CNA
                     : FindTrainingHintInZones(worldRuntime_.GetMissionNumber(), hintZones, hintGridX, hintGridY,
                                               hintGridZ, interaction_.TreasuresCollected(), blupi_.IsInVehicle(),
                                               interaction_.DynamiteCount() > 0, hintAccel);
+                trainingHintShown = !trainingHint.empty();
                 // Real treasure-counter hub gate (SCORE-017, Decor.cpp:1236)
                 // -- same "mission != 1 && mission % 10 != 0" expression
                 // already used for the Pause-menu showRestart gate above.
@@ -9874,9 +9878,17 @@ namespace GalaxyEggbert::CNA
                     // what the last recording became.
                     std::vector<std::string> names;
                     if (demoRecording_ && demoRecordSlot_ > 0) names.push_back("REC");
-                    if (demoNoticeSeconds_ > 0.0f) names.push_back(demoNotice_);
+                    const bool noticeApart = demoNoticeSeconds_ > 0.0f && trainingHintShown;
+                    if (demoNoticeSeconds_ > 0.0f && !noticeApart) names.push_back(demoNotice_);
                     names.insert(names.end(), activeCheats_.begin(), activeCheats_.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
+                    if (noticeApart)
+                    {
+                        // Under the hint's banner (40 reference pixels) and under the list beside it.
+                        const float listBottom = names.empty() ? 0.0f : 5.0f + 18.0f * static_cast<float>(names.size());
+                        inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                                   {demoNotice_}, std::max(40.0f, listBottom));
+                    }
                 }
                 if (cheatDebug_ && GalaxyEggbert::Game::kCheatsEnabled)
                 {

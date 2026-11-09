@@ -110,8 +110,10 @@ with the release audit.
   world as shipped in `customworlds/campaign-originals/` at the first visit (`KeepCampaignOriginal`
   renews it when the shipped file changed since, e.g. regenerated); `HasCampaignEdit()` is "the kept
   edit and the file are the same bytes", so a regenerated or updated world shows no Original. Live
-  `harness/case_original_desktop.py` (`original-desktop-sheet.png`). The notice is drawn where the
-  cheats are (top left) and can meet the mission's opening hint for a few seconds.
+  `harness/case_original_desktop.py` (`original-desktop-sheet.png`). Galaxy's own notices (this one,
+  a recording's) are drawn under the training hint's banner while it shows (`DrawActiveCheats(...,
+  top)`, under the cheats beside it too); the cheats keep the original's place
+  (`notice-under-hint.png`).
 - Web runtime of all of it (`harness/web_share.py`, the rebuilt `build-cna-webgl2`): the desktop's
   `A-galaxy.galaxy` imported through the file picker (CDP `Page.setInterceptFileChooserDialog`,
   `DOM.setFileInputFiles`), played, and exported again as a download byte for byte equal; the

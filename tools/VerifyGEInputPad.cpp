@@ -559,6 +559,11 @@ int main()
         check(std::fabs(one.x0 - 2.0f) < 0.01f && std::fabs(one.y0 - 2.0f) < 0.01f &&
                   std::fabs(one.y1 - 26.0f) < 0.01f && std::fabs(two.y1 - 44.0f) < 0.01f && two.x1 > one.x1,
               "the active cheats' panel: top-left, 18 px a name, as wide as the longest");
+        // Galaxy's own notice under the training hint's banner (its 40 reference pixels).
+        const auto under = InputPad::ActiveCheatsRect({"Mission 11: the world as shipped again."}, kViewportH, 40.0f);
+        check(under.y0 >= 40.0f * kViewportH / 480.0f && std::fabs(under.y1 - under.y0 - 24.0f) < 0.01f &&
+                  std::fabs(under.x0 - one.x0) < 0.01f,
+              "a notice moved under the hint's banner keeps its height and left edge");
     }
     {
         // Jump on the left (the setting off): the stick and the buttons trade sides.

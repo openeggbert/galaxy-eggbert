@@ -129,8 +129,10 @@ namespace GalaxyEggbert::Game
         // The active persistent cheats in the top-left corner during Play, as Mobile Eggbert's port
         // lists them (InputPad.cpp:1290-1316: pad icon 15 under them at 0.6 opacity, padding 3; each
         // name DrawTextLeft at scale 0.55, a line every 18 px from (5, 5)); nothing when empty.
+        // @p top moves the list down by that many reference pixels (Galaxy's own notices, drawn under
+        // the training hint's banner while it shows; the cheats keep the original's place).
         void DrawActiveCheats(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                              int viewportH, const std::vector<std::string>& names);
+                              int viewportH, const std::vector<std::string>& names, float top = 0.0f);
         // MODERN debug diagnostics, top-right; touch layouts leave Pause accessible above it.
         void DrawDebug(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                        int viewportH, const std::vector<std::string>& lines, bool touchControls);
@@ -139,7 +141,8 @@ namespace GalaxyEggbert::Game
         {
             float x0, y0, x1, y1;
         };
-        [[nodiscard]] static CheatListRect ActiveCheatsRect(const std::vector<std::string>& names, int viewportH) noexcept;
+        [[nodiscard]] static CheatListRect ActiveCheatsRect(const std::vector<std::string>& names, int viewportH,
+                                                            float top = 0.0f) noexcept;
 
         void DrawPlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                       int viewportW, int viewportH);
