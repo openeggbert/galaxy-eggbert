@@ -738,6 +738,14 @@ namespace GalaxyEggbert::CNA
         float drawAlpha_ = 1.0f;      // how far between the last two steps the frame is drawn
         Microsoft::Xna::Framework::Vector3 previousEye_, previousTarget_, previousBlupi_;
         Microsoft::Xna::Framework::Vector3 blupiDrawOffset_; // the interpolated Blupi's offset, while drawing
+        // Every moving object where the last step began (type, active, place), to draw it part way too.
+        struct ObjectPlace
+        {
+            GalaxyEggbert::Def::ObjectType type{};
+            bool active = false;
+            float x = 0.0f, y = 0.0f, z = 0.0f;
+        };
+        std::vector<ObjectPlace> previousObjects_;
         // The lightning's zaps (PlayBlitzZaps): the world's animation tick last heard.
         int blitzZapPhase_ = -1;
         void PlayBlitzZaps();

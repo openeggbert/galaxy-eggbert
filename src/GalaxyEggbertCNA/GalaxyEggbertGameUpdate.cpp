@@ -119,6 +119,13 @@ namespace GalaxyEggbert::CNA
             previousEye_ = camera_.Position();
             previousTarget_ = cameraTarget_;
             previousBlupi_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+            const auto& objects = worldRuntime_.GetMobileObjects();
+            previousObjects_.resize(objects.size());
+            for (std::size_t i = 0; i < objects.size(); ++i)
+            {
+                previousObjects_[i] = {objects[i].type, objects[i].active, objects[i].currentX, objects[i].currentY,
+                                       objects[i].currentZ};
+            }
             drawAlpha_ = static_cast<float>(tickClock_ / kTick);
         }
         if (demoVerifyPending_)

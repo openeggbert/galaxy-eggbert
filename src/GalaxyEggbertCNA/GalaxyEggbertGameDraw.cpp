@@ -96,11 +96,41 @@ namespace GalaxyEggbert::CNA
             }
             blupiDrawOffset_ = lerp(previousBlupi_, blupi) - blupi;
         }
+        // Every moving object too (the lifts, the enemies, the mines...): part way from where the step
+        // found it, unless it was not the same one then or jumped (a respawn, a teleport).
+        std::vector<std::pair<std::size_t, ObjectPlace>> moved;
+        if (between)
+        {
+            auto& objects = worldRuntime_.GetMobileObjectsMutable();
+            const float t = drawAlpha_;
+            for (std::size_t i = 0; i < objects.size() && i < previousObjects_.size(); ++i)
+            {
+                auto& obj = objects[i];
+                const auto& before = previousObjects_[i];
+                const float dx = obj.currentX - before.x, dy = obj.currentY - before.y, dz = obj.currentZ - before.z;
+                if (!obj.active || !before.active || obj.type != before.type || dx * dx + dy * dy + dz * dz > 4.0f ||
+                    (dx == 0.0f && dy == 0.0f && dz == 0.0f))
+                {
+                    continue;
+                }
+                moved.emplace_back(i, ObjectPlace{obj.type, obj.active, obj.currentX, obj.currentY, obj.currentZ});
+                obj.currentX = before.x + dx * t;
+                obj.currentY = before.y + dy * t;
+                obj.currentZ = before.z + dz * t;
+            }
+        }
         DrawFrame();
         if (between)
         {
             camera_.SetLookAt(eye, target);
             blupiDrawOffset_ = Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f);
+            auto& objects = worldRuntime_.GetMobileObjectsMutable();
+            for (const auto& [i, place] : moved)
+            {
+                objects[i].currentX = place.x;
+                objects[i].currentY = place.y;
+                objects[i].currentZ = place.z;
+            }
         }
         if (perfEnabled_)
         {
