@@ -291,12 +291,14 @@ namespace GalaxyEggbert::Editor
         return result;
     }
 
-    void WorldEditor::Draw(
+    void WorldEditor::DrawWorldOverlays(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-        const CnaEngine::Graphics::Camera& camera,
-        int viewportWidth, int viewportHeight, const Worlds::World& world)
+        const CnaEngine::Graphics::Camera& camera, const Worlds::World& world)
     {
+        // The path ends depth-tested; the cursor's cell and the selection's box over everything, as when
+        // they were drawn after the HUD had turned the depth test off.
         pathEndpoints_.Draw(device,camera,world);
+        device.SetDepthTestEnabled(false);
         const auto target = CurrentEditTarget(world);
         const bool sameCell = target && target->x==placementCellX_ &&
             target->y==placementCellY_ && target->z==placementCellZ_;
@@ -316,23 +318,34 @@ namespace GalaxyEggbert::Editor
         {
             highlightRenderer_.Hide();
         }
-
-        auto status = StatusLines();
-        for (const auto& start : CollectPlayerStarts(world))
-            status.push_back(std::string(PlayerStartNames[static_cast<int>(start.color)])+" start X:"+
-                std::to_string(start.x)+" Y:"+std::to_string(start.y)+" Z:"+std::to_string(start.z));
         if (target)
         {
             selectionHighlightRenderer_.ShowSelectedObject(device,
                 float(target->x)-Game::WorldRuntime::kWorldCenterX, float(target->y),
                 float(target->z)-Game::WorldRuntime::kWorldCenterZ);
             selectionHighlightRenderer_.Draw(device,camera);
+        }
+        else selectionHighlightRenderer_.Hide();
+    }
+
+    void WorldEditor::Draw(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+        const CnaEngine::Graphics::Camera& camera,
+        int viewportWidth, int viewportHeight, const Worlds::World& world)
+    {
+        (void) camera;
+        const auto target = CurrentEditTarget(world);
+        auto status = StatusLines();
+        for (const auto& start : CollectPlayerStarts(world))
+            status.push_back(std::string(PlayerStartNames[static_cast<int>(start.color)])+" start X:"+
+                std::to_string(start.x)+" Y:"+std::to_string(start.y)+" Z:"+std::to_string(start.z));
+        if (target)
+        {
             status.insert(status.begin(), "Red selection X:"+std::to_string(target->x)+" Y:"+
                 std::to_string(target->y)+" Z:"+std::to_string(target->z));
             if (target->kind==EditTarget::Kind::PlayerStart)
                 status.insert(status.begin(),std::string(PlayerStartNames[static_cast<int>(target->color)])+" Blupi: O turns, DEL removes");
         }
-        else selectionHighlightRenderer_.Hide();
 
         palette_.Draw(
             device, viewportWidth, viewportHeight, stopConfirmArmed_, hasHighlight_,

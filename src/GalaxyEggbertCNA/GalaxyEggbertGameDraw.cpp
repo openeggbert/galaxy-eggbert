@@ -168,8 +168,11 @@ namespace GalaxyEggbert::CNA
         // The menu (Init) shows the world when it is Galaxy's title scene.
         // The Clear2 death's soul drawn as its 3D model this frame: the HUD leaves out its sprite.
         bool soulDrawnIn3D = false;
+        // Nor under the Setup, which covers the whole screen (setup.png and its bars): with the 3D effects
+        // the hidden world cost a whole frame's shadows and finish there.
         if ((phase_ != GalaxyEggbert::Def::GamePhase::Wait || titleSceneActive_) &&
             (phase_ != GalaxyEggbert::Def::GamePhase::Init || titleSceneActive_) &&
+            phase_ != GalaxyEggbert::Def::GamePhase::MainSetup && phase_ != GalaxyEggbert::Def::GamePhase::PlaySetup &&
             !(phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing() && !titleSceneActive_))
         {
             // What to draw (GalaxyEggbertGameScene.cpp); with the 3D effects, first the sun's shadow map
@@ -203,6 +206,11 @@ namespace GalaxyEggbert::CNA
             }
             worldIntoTarget_ = finish;
             DrawWorld(device, assets);
+            // The editor's gizmos with the world, against its depth (in the effects' target when there is one).
+            if (phase_ == GalaxyEggbert::Def::GamePhase::Editor && !worldEditor_.IsBrowsing())
+            {
+                worldEditor_.DrawWorldOverlays(device, camera_, worldRuntime_.GetWorld());
+            }
             worldIntoTarget_ = false;
             if (ultra)
             {

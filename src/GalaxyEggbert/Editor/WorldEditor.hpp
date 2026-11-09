@@ -207,6 +207,12 @@ namespace GalaxyEggbert::Editor
             return cameraTarget_;
         }
 
+        // What the editor draws in the world, depth-tested against it: the objects' path ends (the 1 and
+        // 2 cubes), the cell under the cursor or the box, the red selection's box. Drawn with the world,
+        // into its target (with the 3D effects the world goes into one of its own, its depth there).
+        void DrawWorldOverlays(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                               const CnaEngine::Graphics::Camera& camera, const Worlds::World& world);
+        // Its status lines and palette, over the finished frame.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   const CnaEngine::Graphics::Camera& camera,
                   int viewportWidth, int viewportHeight, const Worlds::World& world);

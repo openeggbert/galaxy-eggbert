@@ -266,6 +266,10 @@ namespace GalaxyEggbert::Game
         // The terrain's semi-transparent pass after Blupi and every model, so water covers what lies
         // in it (OR-0052: a chest under water looked dry from above).
         device.setRasterizerStateProperty(Graphics::RasterizerState::CullCounterClockwise);
+        if (shading.water != nullptr)
+        {
+            m_surfaces.BindTextures(*assets.terrain, frame.effects.ultra ? assets.ultra : nullptr);
+        }
         terrain.DrawTransparent(device, *assets.terrain, &shading);
 
         if (terrainDrawn)
@@ -379,12 +383,20 @@ namespace GalaxyEggbert::Game
             }
             if (model.editorSelected)
             {
-                // The selection overlay stays the stock effect's: it takes this pose.
+                // The selection overlay stays the stock effect's: it takes this pose. Its skinning rounds
+                // a little otherwise than the model shader's, so its red lay just behind the very mesh it
+                // marks and the depth test hid it: pulled toward the camera a hair.
                 effect.setWorldProperty(model.world);
                 effect.setViewProperty(frame.camera.view);
                 effect.setProjectionProperty(frame.camera.projection);
                 effect.SetBoneTransforms(m_bones);
+                const Graphics::RasterizerState raster = device.getRasterizerStateProperty();
+                Graphics::RasterizerState biased = raster;
+                biased.setDepthBiasProperty(-0.00002f);
+                biased.setSlopeScaleDepthBiasProperty(-1.0f);
+                device.setRasterizerStateProperty(biased);
                 DrawSelectionOverlay(device, effect, model);
+                device.setRasterizerStateProperty(raster);
             }
             if (model.counted)
             {

@@ -40,6 +40,12 @@ namespace GalaxyEggbert::Game
                     const Microsoft::Xna::Framework::Graphics::BasicEffect& terrain, const SceneFrame& frame,
                     const UltraSceneAssets* ultra = nullptr);
 
+        // Binds their textures again. CNA binds a ShaderEffect's texture when it is set, not when it draws:
+        // the water draws last of all (after the models, each binding its own), so it sampled whatever
+        // texture came last -- the water's colour changed with the view, opaque (reported).
+        void BindTextures(const Microsoft::Xna::Framework::Graphics::BasicEffect& terrain,
+                          const UltraSceneAssets* ultra = nullptr);
+
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* Water() const noexcept
         {
             return m_ultraActive ? m_ultraWater.get() : m_water.get();

@@ -81,8 +81,10 @@ float Noise(vec2 p)
 }
 )";
 
-        // Water: its own tile, its top rippling (moving waves bend the light), the sky's colour on it at a
-        // glancing view and the sun glinting off it; a little clearer looked into straight down.
+        // Water: its own tile in its own colour and clearness (as without the effects), its top rippling
+        // (moving waves bend the light a little), light playing over it and the sun glinting off it. Not
+        // the sky's colour at a glancing view: the haze is the background's middle, often green or white,
+        // and the water seen from above turned that colour, changing as the camera moved (reported).
         const char* const kWaterFragment = R"(
 void main()
 {
@@ -93,18 +95,15 @@ void main()
     float t = uTime;
     vec2 slope = vec2(cos(q.x * 3.1 + t * 1.7) * 0.6 + cos((q.x + q.y) * 4.3 - t * 2.3) * 0.4,
                       cos(q.y * 2.7 - t * 1.3) * 0.6 + cos((q.y - q.x) * 3.7 + t * 1.9) * 0.4);
-    vec3 waved = normalize(n + vec3(slope.x, 0.0, slope.y) * 0.16 * top);
+    vec3 waved = normalize(n + vec3(slope.x, 0.0, slope.y) * 0.1 * top);
     vec3 color = Lit(tex.rgb, waved);
     // Light dancing on the surface (caustics), slowly drifting.
     float dance = sin(q.x * 5.3 + t * 2.1) * sin(q.y * 4.7 - t * 1.7) + sin((q.x - q.y) * 3.1 + t * 1.3) * 0.5;
-    color *= 1.0 + 0.09 * dance * top;
+    color *= 1.0 + 0.06 * dance * top;
     vec3 toEye = normalize(uCamera - vWorld);
-    float glance = pow(1.0 - max(0.0, dot(waved, toEye)), 3.0) * top;
-    color = mix(color, uSky, glance * 0.45);
     vec3 halfway = normalize(-uLightDir + toEye);
-    color += vec3(1.0, 0.97, 0.9) * pow(max(0.0, dot(waved, halfway)), 80.0) * 0.55 * top;
-    float alpha = tex.a * mix(0.82, 1.0, glance);
-    FragColor = Fogged(vec4(color, alpha));
+    color += vec3(1.0, 0.97, 0.9) * pow(max(0.0, dot(waved, halfway)), 120.0) * 0.35 * top;
+    FragColor = Fogged(vec4(color, tex.a));
 }
 )";
 
@@ -154,23 +153,24 @@ void main()
     float t = uTime;
     vec2 slope = vec2(cos(q.x * 3.1 + t * 1.7) * 0.6 + cos((q.x + q.y) * 4.3 - t * 2.3) * 0.4,
                       cos(q.y * 2.7 - t * 1.3) * 0.6 + cos((q.y - q.x) * 3.7 + t * 1.9) * 0.4);
-    vec3 waved = normalize(n + vec3(slope.x, 0.0, slope.y) * 0.12 * top);
+    vec3 waved = normalize(n + vec3(slope.x, 0.0, slope.y) * 0.1 * top);
     vec3 body = ToLinear(Lit(tex.rgb, waved));
     float dance = sin(q.x * 5.3 + t * 2.1) * sin(q.y * 4.7 - t * 1.7) + sin((q.x - q.y) * 3.1 + t * 1.3) * 0.5;
-    body *= 1.0 + 0.12 * dance * top;
+    body *= 1.0 + 0.08 * dance * top;
     vec3 toEye = normalize(uCamera - vWorld);
     float nv = max(dot(waved, toEye), 0.0);
     float fresnel = 0.02 + 0.98 * pow(1.0 - nv, 5.0);
+    // The sky's reflection, half of Fresnel's: the picture stands far off, not over the water (a room's
+    // pool would show it through its ceiling); what does stand round it, the screen-space reflections.
     vec3 sky = Environment(reflect(-toEye, waved), 0.08);
-    vec3 color = mix(body, sky, fresnel * top);
+    vec3 color = mix(body, sky, fresnel * top * 0.5);
     // The sun's glint: GGX, roughness 0.12, its light 0.75 (UltraLogic.hpp kUltraSun).
     vec3 h = normalize(-uLightDir + toEye);
     float nh = max(dot(waved, h), 0.0);
     float a2 = 0.12 * 0.12 * 0.12 * 0.12;
     float d = nh * nh * (a2 - 1.0) + 1.0;
     color += vec3(1.0, 0.97, 0.9) * (a2 / (3.14159 * d * d)) * 0.25 * fresnel * max(0.0, dot(waved, -uLightDir)) * top;
-    float alpha = tex.a * mix(0.78, 1.0, fresnel);
-    FragColor = Fogged(vec4(ToDisplay(color), alpha));
+    FragColor = Fogged(vec4(ToDisplay(color), tex.a));
 }
 )";
         const char* const kLavaUltraFragment = R"(
@@ -262,6 +262,22 @@ void main()
         effect.SetUniformVec3("uFog", effects.fogStart, effects.fogEnd, effects.enabled ? 1.0f : 0.0f);
         effect.SetUniformVec3("uSky", effects.fogColor.X, effects.fogColor.Y, effects.fogColor.Z);
         effect.SetUniformFloat("uTime", effects.seconds);
+    }
+
+    void SurfaceShaders::BindTextures(const Graphics::BasicEffect& terrain, const UltraSceneAssets* ultra)
+    {
+        auto* texture = terrain.getTextureProperty();
+        for (auto* effect : {Water(), Lava()})
+        {
+            if (effect != nullptr && texture != nullptr)
+            {
+                effect->SetTexture(0, *texture);
+            }
+            if (effect != nullptr && m_ultraActive && ultra != nullptr && ultra->environment != nullptr)
+            {
+                effect->SetTexture(3, *ultra->environment);
+            }
+        }
     }
 
     void SurfaceShaders::Update(Graphics::GraphicsDevice& device, const Graphics::BasicEffect& terrain, const SceneFrame& frame,
