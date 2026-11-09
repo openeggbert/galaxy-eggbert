@@ -1657,11 +1657,15 @@ world 13's (no showcase), a galaxy world's play-test following its signs in the 
 a place from the galaxy screen (a bin, two clicks, into `galaxy/backups/`; Backups brings it back;
 2026-11-09), `--galaxy` for the QA autoplay. Since 2026-11-09 a galaxy mission writes the resume
 file as the campaign's does (focus lost in play); Continue goes back into the galaxy the log names
-(`BeginResume()`). No change to the campaign. Validation:
+(`BeginResume()`). Since 2026-11-09 a whole galaxy is shared as one `.galaxy` file (the galaxy
+screen's Export and Import; an import keeps the old places in their backups and starts the
+galaxy's progress over) and the menu's player panel shows its gates. No change to the campaign.
+Validation:
 `VerifyGEEditorStorage`, `VerifyGESaveData`, `VerifyInteractionSystem`, `VerifyGEInputPad`, live
 (handoff.md "Recordings, ten demos, xnjttjpo, galaxies" and "Galaxy: delete and Continue"), the
-resume self-test in a galaxy mission. Evidence: `build-probe/demo-live/galaxy/`, `galaxy-delete/`,
-`galaxy-resume/`, `galaxy-resume-selftest/`.
+resume self-test in a galaxy mission, the sharing on the desktop and the web (handoff.md "Sharing
+galaxies and demos"). Evidence: `build-probe/demo-live/galaxy/`, `galaxy-delete/`,
+`galaxy-resume/`, `galaxy-resume-selftest/`, `galaxy-share-sheet.png`, `web/`.
 
 ## BD-0118 — xnjttjpo: the 3D editor on the world being played (owner request) — FIXED_AND_VERIFIED
 
@@ -1675,9 +1679,12 @@ play-test), the editor's Stop goes back to the mission from its start with its l
 version before each visit's first save is kept (three generations) in
 `customworlds/campaign-backups/`, no thumbnail written beside the shipped worlds. A galaxy world
 opens the same way, its backups beside it. Edited shipped worlds make the demos recorded in them
-refuse to play (world hash) until recorded again. Validation: `VerifyGEInputPad` (the word),
-`VerifyGEWorldEditor` (Stop, backups, no thumbnail), `VerifyGEEditorStorage` (BackUpWorldTo), live.
-Evidence: `build-probe/demo-live/xmission/`.
+refuse to play (world hash) until recorded again. On the web (2026-11-09), where the shipped worlds
+are the page's packed data, each save is also kept in `/save/customworlds/campaign-edits/` and laid
+over them at every start, so an edit outlasts a reload. Validation: `VerifyGEInputPad` (the word),
+`VerifyGEWorldEditor` (Stop, backups, no thumbnail, the web's copy), `VerifyGEEditorStorage`
+(BackUpWorldTo, ApplyCampaignEdits), live, the web in headless Chrome.
+Evidence: `build-probe/demo-live/xmission/`, `web/`.
 
 ## BD-0117 — Ten shipped demos (owner request) — FIXED_AND_VERIFIED
 
@@ -1702,9 +1709,12 @@ ends it; it is written as `demos/demo%03d.gdemo` beside savedata.txt (`/save/dem
 said for four seconds; a mission change waits until it is written, so the recording ends exactly
 as its replay does. The game is otherwise played as always (progress saved). Position n plays the
 player's recording if there is one and it can be played, the shipped demo otherwise. Campaign and
-galaxy worlds can be recorded (a galaxy recording names its galaxy file). Validation:
-`VerifyGEInputPad` (Record, positions), `VerifyDemoReplay` (paths), live recordings replayed
-"equal" by `--verify-demo`. Evidence: `build-probe/demo-live/record/`, `galaxy/`.
+galaxy worlds can be recorded (a galaxy recording names its galaxy file). Since 2026-11-09 the
+positions' Export and Import share recordings as `.gdemo` files (`demos/shared/`; downloads and the
+file picker on the web), and a galaxy recording finds its world by hash in any player's galaxy, on
+either platform. Validation: `VerifyGEInputPad` (Record, positions, Export, Import),
+`VerifyDemoReplay` (paths, export, import), live recordings replayed "equal" by `--verify-demo`.
+Evidence: `build-probe/demo-live/record/`, `galaxy/`, `demo-share-sheet.png`, `web/`.
 
 ## BD-0115 — Main-menu demos (owner request, from Speedy Blupi) — FIXED_AND_VERIFIED
 

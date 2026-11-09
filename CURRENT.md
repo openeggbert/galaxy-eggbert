@@ -1,7 +1,8 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-09 (native build, 117/117 CTest including the ten main-menu demo replays,
-golden frames and trace equal to tests/golden (2026-11-08), live checks of demo recording, xnjttjpo
+_Last verified: 2026-11-09 (native build, 117/117 CTest including the ten main-menu demo replays, live
+and web checks of galaxy and demo sharing and of xnjttjpo's kept edits on the web,
+golden frames equal to tests/golden (2026-11-09; the trace 2026-11-08), live checks of demo recording, xnjttjpo
 and the players' galaxies (with delete/restore and Continue in a galaxy, 2026-11-09), controls/HUD/water checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
 2026-11-06 (play pass 33: 77 replays equal). The Web/Emscripten build was verified
 2026-11-09 in headless Chrome (demos, recording, galaxy, xnjttjpo, persistence over a reload); the whole-campaign run
@@ -77,10 +78,17 @@ content-authoring UX, but not new gameplay mechanics.
   minutes), into `demos/demo%03d.gdemo` beside savedata.txt; that position then plays it instead
   of its shipped demo ("Original" gives the shipped one back). Campaign and galaxy missions; the
   game is played and saved as always. Live: recorded, replayed equal, played by the menu, restored.
+  Shared (2026-11-09): the positions' Export copies a position's demo to `demos/shared/A-demo-N.gdemo`
+  (a download on the web), Import copies a shared `.gdemo` (the web's file picker) into a position;
+  a galaxy recording finds its world by hash in any player's galaxy, on either platform. Live on the
+  desktop and the web (a desktop galaxy recording imported on the web and into another player's
+  galaxy on the desktop, replayed equal).
 - xnjttjpo (BD-0118, Speedy Blupi's XMISSION): typed in play, the 3D editor opens on the world being
   played; saving writes the shipped world file itself (the version before kept in
   `customworlds/campaign-backups/`), Stop returns to the mission from its start. Live verified on a
-  copy of the worlds.
+  copy of the worlds. On the web (2026-11-09) the save is also kept in the browser's storage
+  (`/save/customworlds/campaign-edits/`) and laid over the packed worlds at every start: an edit
+  outlasts a reload (verified in headless Chrome).
 - Each player's own galaxy (BD-0119): the menu's Galaxy button plays the selected player's world
   system, a main hub, world hubs 1-14 and their missions 1-8 (and 199), built in the editor's
   galaxy screen (world screen's Galaxy button; `customworlds/gamerN/galaxy/`), with the campaign's
@@ -88,7 +96,11 @@ content-authoring UX, but not new gameplay mechanics.
   (bin, two clicks, into `galaxy/backups/`) and brought back with Backups. A galaxy mission writes
   the resume file like the campaign; Continue resumes it in the galaxy. Live verified (made, played
   hub to hub to mission, progress kept apart, `--galaxy` autoplay, delete/restore, focus lost ->
-  Continue in the galaxy, `GALAXY_RESUME_SELFTEST` equal in mission 11).
+  Continue in the galaxy, `GALAXY_RESUME_SELFTEST` equal in mission 11). Shared (2026-11-09): the
+  galaxy screen's Export writes the whole galaxy as one file (`customworlds/shared/A-galaxy.galaxy`,
+  a download on the web), Import replaces it with a listed one (two clicks; the old places in their
+  backups, its progress started over). The menu's player panel shows "Galaxy : N gates". Live on the
+  desktop and the web (a desktop pack imported there, exported back byte for byte).
 - All four editor Blupi starts participate in G/Tools Pick and the shared cursor/NumPad
   edit target, with red selection outline/model tint. O/Tools Turn rotates each independently
   by 90 degrees; moves, deletion, Undo/Redo and reload preserve its heading. Shared-cell starts
@@ -386,25 +398,39 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
 
 ## Open work, in priority classes
 
-### Active and explicitly approved
+_Brought in line with the release audit (`plans/audit/release_audit.md`, 2026-11-06) and the
+fidelity audit's waves (`plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md` §3) on 2026-11-09. The fidelity
+audit (milestone G, waves A-F) is done and every ledger is settled (0 open rows); the completion
+plan's milestones A-F are done (`plans/GALAXY_EGGBERT_COMPLETION.md` §13). The owner's later
+requests (main-menu demos, recordings, xnjttjpo, the players' galaxies, sharing them, BD-0115 to
+BD-0119) are done too. What is left:_
 
-- **The fidelity audit (milestone G, since 2026-11-01)**: `plans/GALAXY_EGGBERT_FIDELITY_AUDIT.md`
-  and its ledgers in `plans/audit/`. Fixed so far: crate push/pull (D60), lifts over the
-  original's speeds (BD-0006: 31 lifts; 061's shuttle ladder), crate support (BD-0003). Open: the
-  editor's variant cycling (ED-0001/0006), follow stars and shots vs decor (BD-0004), lava as a pool
-  from the original Amapi sources, fans and pillars 76/77 as their original 3D scenes (all 2026-11-01;
-  110/110, all 78 playthroughs, the whole campaign 761140 ticks). Open: pillars 375-377/399, the wind
-  tiles, the 56 `.max` sources (BLOCKED, MR-0001), a human play pass, Waves C and E.
-- The completion campaign (`plans/GALAXY_EGGBERT_COMPLETION.md`): owner-reported defects D1-D12
-  (§5), then milestones B-F (representative mission, model/animation parity, hubs and missions,
-  editor slots and title screen, stabilisation).
+### Waiting on the owner
 
-### Needs user direction or visual judgement
+- **A release of the desktop and web builds**: they pass every automated check; the release audit
+  (§6) leaves only the owner's word.
+- Q-010/Q-011's remainder (`plans/audit/owner_questions.md`): whether the cheese holes should be
+  see-through and the brick ends ragged where they border air (the black was a bug, fixed).
+- Optional: a human play pass (MR-0004 lists what to try); the owner judged the automated
+  playthroughs sufficient (MR-0007), so it does not hold anything up.
 
-- `AscenseurVertigo` platform geometry, `ThinMechanical` geometry, water treatment, architectural
-  kit assembly, and residual seam-line transparency.
-- The real Blupi model/rig and its target presentation.
-- `TILE-005`: author the remaining full 3D worlds. This is valid but sizeable content work.
+### Outside the code's reach here
+
+- Android played on a device (Q-009, OR-0011): the APK builds and draws the 3D models in the
+  emulator since CNA's UB-007 fix; there is no device or KVM here to play it.
+- A physical gamepad and touch screen: verified with an SDL virtual gamepad only.
+- Windows: the `SDL_GPU` path has had no fresh cross-build or live 3D run; not supported until both
+  pass.
+
+### Decided, kept as they are
+
+- The 56 `.max` sources are not converted (MR-0001, closed by the owner as MR-0010): the shields
+  and the charge stay the original's sprites, Blupi comes from the Ray Dream scenes.
+- Procedural textures (bark, metal noise, wood grain) stay flat colours: a bake measured worse
+  (`plans/GALAXY_EGGBERT_COMPLETION.md` §7.3); the wind tiles stay 2D effects (no 3D scene exists).
+- BB3D-032, the fish's head: cosmetic, every lead tested (`plan.md`).
+- On the web an xnjttjpo edit is kept in the browser's storage (`CampaignEditsDir()`); there is no
+  button to undo it there (its backups are in `/save/customworlds/campaign-backups/`).
 
 ### Ready for an explicitly chosen engineering session
 

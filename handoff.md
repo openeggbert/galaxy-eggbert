@@ -54,7 +54,10 @@ with the release audit.
   web's `/save/...` path) and exported again equal; xnjttjpo + Right + Enter changed
   `worlds3d/world001.vwr` and kept the copy, and after a page reload the edited world was laid over
   the shipped one again ("1 shipped world(s) as edited with xnjttjpo"), the imported demo still
-  there; no exception. 117/117 CTest, golden frames equal.
+  there; no exception. With that profile (`web_demo7.py`) the Demo cycle played demos 1-6 and then
+  position 7, the desktop's galaxy recording, all seven "finished" (the desktop recording replays
+  equal in wasm from the web's galaxy path). 117/117 CTest, golden frames equal. The Chrome
+  profile (`build-probe/demo-live/web/chrome-profile`) was deleted afterwards.
 
 ## Galaxy: delete and Continue, web runtime (2026-11-09, BD-0119) — verified on desktop and web
 
