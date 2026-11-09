@@ -80,6 +80,46 @@ void main()
     FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
 }
 )";
+
+        // FXAA (after Timothy Lottes' FXAA 3, the console variant): where the luma steps across an edge,
+        // the pixel is blended along the edge's direction, so block edges come out smooth, not stepped.
+        const char* const kFxaaFragment = R"(
+uniform sampler2D uTexture;
+uniform vec2 uTexel;
+in vec2 TexCoord;
+out vec4 FragColor;
+float Luma(vec3 c) { return dot(c, vec3(0.299, 0.587, 0.114)); }
+void main()
+{
+    vec3 rgbNW = texture(uTexture, TexCoord + vec2(-1.0, -1.0) * uTexel).rgb;
+    vec3 rgbNE = texture(uTexture, TexCoord + vec2(1.0, -1.0) * uTexel).rgb;
+    vec3 rgbSW = texture(uTexture, TexCoord + vec2(-1.0, 1.0) * uTexel).rgb;
+    vec3 rgbSE = texture(uTexture, TexCoord + vec2(1.0, 1.0) * uTexel).rgb;
+    vec3 rgbM = texture(uTexture, TexCoord).rgb;
+    float lumaNW = Luma(rgbNW);
+    float lumaNE = Luma(rgbNE);
+    float lumaSW = Luma(rgbSW);
+    float lumaSE = Luma(rgbSE);
+    float lumaM = Luma(rgbM);
+    float lumaMin = min(lumaM, min(min(lumaNW, lumaNE), min(lumaSW, lumaSE)));
+    float lumaMax = max(lumaM, max(max(lumaNW, lumaNE), max(lumaSW, lumaSE)));
+    if (lumaMax - lumaMin < max(0.0312, lumaMax * 0.125))
+    {
+        FragColor = vec4(rgbM, 1.0);
+        return;
+    }
+    vec2 dir = vec2(-((lumaNW + lumaNE) - (lumaSW + lumaSE)), (lumaNW + lumaSW) - (lumaNE + lumaSE));
+    float reduce = max((lumaNW + lumaNE + lumaSW + lumaSE) * (0.25 / 8.0), 1.0 / 128.0);
+    float rcpDirMin = 1.0 / (min(abs(dir.x), abs(dir.y)) + reduce);
+    dir = clamp(dir * rcpDirMin, vec2(-8.0), vec2(8.0)) * uTexel;
+    vec3 rgbA = 0.5 * (texture(uTexture, TexCoord + dir * (1.0 / 3.0 - 0.5)).rgb +
+                       texture(uTexture, TexCoord + dir * (2.0 / 3.0 - 0.5)).rgb);
+    vec3 rgbB = rgbA * 0.5 + 0.25 * (texture(uTexture, TexCoord - dir * 0.5).rgb +
+                                     texture(uTexture, TexCoord + dir * 0.5).rgb);
+    float lumaB = Luma(rgbB);
+    FragColor = vec4((lumaB < lumaMin || lumaB > lumaMax) ? rgbA : rgbB, 1.0);
+}
+)";
     }
 
     bool PostProcess::Prepare(Graphics::GraphicsDevice& device, int width, int height)
@@ -93,7 +133,8 @@ void main()
             m_brightPass = CompileShaderEffect(device, "the glow's bright pass", kPostVertex, kBrightFragment);
             m_blurPass = CompileShaderEffect(device, "the glow's blur", kPostVertex, kBlurFragment);
             m_composite = CompileShaderEffect(device, "the glow's composite", kPostVertex, kCompositeFragment);
-            if (!m_brightPass || !m_blurPass || !m_composite)
+            m_fxaa = CompileShaderEffect(device, "the edge smoothing (FXAA)", kPostVertex, kFxaaFragment);
+            if (!m_brightPass || !m_blurPass || !m_composite || !m_fxaa)
             {
                 m_failed = true;
                 return false;
@@ -108,6 +149,7 @@ void main()
                 m_scene.reset();
                 m_bright.reset();
                 m_blur.reset();
+                m_graded.reset();
                 m_scene = std::make_unique<Graphics::RenderTarget2D>(device, width, height, false, Graphics::SurfaceFormat::Color,
                                                                      Graphics::DepthFormat::Depth24Stencil8);
                 const int halfW = std::max(1, width / 2);
@@ -116,6 +158,8 @@ void main()
                                                                       Graphics::DepthFormat::None);
                 m_blur = std::make_unique<Graphics::RenderTarget2D>(device, halfW, halfH, false, Graphics::SurfaceFormat::Color,
                                                                     Graphics::DepthFormat::None);
+                m_graded = std::make_unique<Graphics::RenderTarget2D>(device, width, height, false,
+                                                                      Graphics::SurfaceFormat::Color, Graphics::DepthFormat::None);
                 m_width = width;
                 m_height = height;
             }
@@ -171,9 +215,11 @@ void main()
         m_blurPass->SetUniformVec2("uStep", 0.0f, 1.0f / static_cast<float>(halfH));
         Pass(device, m_bright.get(), *m_blur, *m_blurPass, halfW, halfH);
 
-        device.SetRenderTarget(nullptr);
         m_composite->SetTexture(1, *m_bright);
-        Pass(device, nullptr, *m_scene, *m_composite, m_width, m_height);
+        Pass(device, m_graded.get(), *m_scene, *m_composite, m_width, m_height);
+        device.SetRenderTarget(nullptr);
+        m_fxaa->SetUniformVec2("uTexel", 1.0f / static_cast<float>(m_width), 1.0f / static_cast<float>(m_height));
+        Pass(device, nullptr, *m_graded, *m_fxaa, m_width, m_height);
 
         device.setBlendStateProperty(blend);
         device.setDepthStencilStateProperty(depth);

@@ -3,7 +3,8 @@
 // The 3D effects' finish (the Setup's "3D effects"): the world is drawn into a render target, then put on
 // the screen with what shines glowing (bloom: the bright parts, blurred, laid over the picture -- lava,
 // the lightning, explosions, the sun on water) and a light grade (a touch more colour, the corners a
-// little darker). The HUD is drawn after it, untouched.
+// little darker), then smoothed (FXAA: the stair-steps along the blocks' edges blended away). The HUD is
+// drawn after it, untouched.
 //
 // Render targets and GLSL source (desktop GLSL or GLSL ES, ShaderEffect); where either is missing,
 // Begin() is false and the world is drawn straight to the screen as without the effects.
@@ -41,9 +42,11 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> m_scene;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> m_bright;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> m_blur;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> m_graded; // before the smoothing
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_brightPass;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_blurPass;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_composite;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_fxaa;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> m_batch;
     };
 }
