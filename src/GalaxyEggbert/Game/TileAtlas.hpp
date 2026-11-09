@@ -44,21 +44,45 @@ namespace GalaxyEggbert::Game
         static constexpr int kPaddedWidth = kPaddedColumns * kPaddedPitch;
         static constexpr int kPaddedHeight = kPaddedRows * kPaddedPitch;
 
+        // The padded sheet's layout at a texture scale (TextureScale.hpp): 1 is the constants above; 2 (the
+        // 2x object-m.png, 128-texel tiles) keeps the border at 16 texels, so the sheet is 3200 x 3520 and
+        // stays inside HiDef's 4096 (twice the 1x layout would be 3840 x 4224).
+        struct PaddedLayout
+        {
+            int tile = 64;
+            int border = kPaddedBorder;
+            int pitch = kPaddedPitch;
+            int width = kPaddedWidth;
+            int height = kPaddedHeight;
+        };
+        [[nodiscard]] static constexpr PaddedLayout PaddedLayoutFor(int scale) noexcept
+        {
+            const int tile = 64 * (scale < 1 ? 1 : scale);
+            const int pitch = tile + 2 * kPaddedBorder;
+            return PaddedLayout{tile, kPaddedBorder, pitch, kPaddedColumns * pitch, kPaddedRows * pitch};
+        }
+
         TileAtlas() = default;
-        explicit TileAtlas(Layout layout) : layout_(layout) {}
+        explicit TileAtlas(Layout layout, int scale = 1) : layout_(layout), scale_(scale < 1 ? 1 : scale) {}
 
         // UV rect for a block type. Returns an all-zero UvRect for Air (0),
         // negative values, or any type outside the sheet's grid.
         [[nodiscard]] CnaEngine::Graphics::UvRect GetTileUv(int blockType) const;
+        [[nodiscard]] int Scale() const noexcept { return scale_; }
+        [[nodiscard]] PaddedLayout Padded() const noexcept { return PaddedLayoutFor(scale_); }
 
     private:
         Layout layout_ = Layout::Sheet;
+        int scale_ = 1;
     };
 
     // The padded terrain sheet (TileAtlas::Layout::Padded) from object-m.png's texels (RGBA, row by
     // row, width x height): each icon's 64 x 64 texels at (border + col * pitch, border + row *
     // pitch), the border round it filled with its nearest edge texel.
-    [[nodiscard]] std::vector<std::uint8_t> BuildPaddedSheet(const std::uint8_t* sheetRgba, int width, int height);
+    // `scale`: the sheet's texture scale (TextureScale.hpp): 2 for the 2x object-m.png, laid out as
+    // TileAtlas::PaddedLayoutFor(2).
+    [[nodiscard]] std::vector<std::uint8_t> BuildPaddedSheet(const std::uint8_t* sheetRgba, int width, int height,
+                                                             int scale = 1);
 
     // The next mip level of an RGBA image (each texel the mean of a 2 x 2 block; odd edges clamp).
     [[nodiscard]] std::vector<std::uint8_t> DownsampleHalf(const std::vector<std::uint8_t>& rgba, int width, int height);

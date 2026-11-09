@@ -3,6 +3,7 @@
 #include <tuple>
 #include <sstream>
 #include "TextMetrics.hpp"
+#include "TextureScale.hpp"
 #include "CheatConfig.hpp"
 
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
@@ -213,6 +214,13 @@ namespace GalaxyEggbert::Game
         // left column of its own, over Sound effects, under the title. It stood in the Accelerometer row,
         // where the sensitivity slider took its place with the accelerometer on (a phone's, reported).
         Rect SetupFrameRateRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(2.5f, 2.0f, m); }
+        // "Textures" (a Galaxy setting, 2026-11-09, ../ray.md: auto, 1x, 2x; TextureScale.hpp), at x 450 on
+        // the Frame rate row, over Erase progress; applies at the next start.
+        Rect SetupTexturesRect(const ScreenMetrics& m) noexcept
+        {
+            const Rect row = SetupFrameRateRect(m);
+            return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
+        }
         // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
         // of its label, the effects' (0) then the music's (1); each its label over a track drawn
         // as the original's Slider (Slider.cpp: jauge.png's empty cell, pad icon 1 for the knob).
@@ -328,6 +336,7 @@ namespace GalaxyEggbert::Game
         constexpr int kSetupControlTerrain = 9;
         constexpr int kSetupControlEffects = 10;
         constexpr int kSetupControlFrameRate = 11;
+        constexpr int kSetupControlTextures = 12;
         constexpr int kSetupSliderKnobIcon = 1; // Slider::Draw's DrawIcon(Pad, 1, ...)
 
         constexpr int kResumeControlMenu = 0;
@@ -623,19 +632,26 @@ namespace GalaxyEggbert::Game
             }
         }
 
-        padTexture_ = Texture2D(kPaths[0], device);
-        pauseBgTexture_ = Texture2D(kPaths[1], device);
-        blupiyoupieTexture_ = Texture2D(kPaths[2], device);
-        winBgTexture_ = Texture2D(kPaths[3], device);
-        lostBgTexture_ = Texture2D(kPaths[4], device);
-        setupBgTexture_ = Texture2D(kPaths[5], device);
-        textTexture_ = Texture2D(kPaths[6], device);
-        waitBgTexture_ = Texture2D(kPaths[7], device);
-        jaugeTexture_ = Texture2D(kPaths[8], device);
-        initBgTexture_ = Texture2D(kPaths[9], device);
-        speedyblupiTexture_ = Texture2D(kPaths[10], device);
-        gearTexture_ = Texture2D(kPaths[11], device);
-        buttonTexture_ = Texture2D(kPaths[12], device);
+        // 2x sheets when wanted (TextureScale.hpp); each texture remembers the scale it was loaded at.
+        const auto LoadScaled = [&device](Texture2D& target, const char* path)
+        {
+            int scale = 1;
+            target = Texture2D(ScaledContentPath(path, &scale), device);
+            SetTextureScale(&target, scale);
+        };
+        LoadScaled(padTexture_, kPaths[0]);
+        LoadScaled(pauseBgTexture_, kPaths[1]);
+        LoadScaled(blupiyoupieTexture_, kPaths[2]);
+        LoadScaled(winBgTexture_, kPaths[3]);
+        LoadScaled(lostBgTexture_, kPaths[4]);
+        LoadScaled(setupBgTexture_, kPaths[5]);
+        LoadScaled(textTexture_, kPaths[6]);
+        LoadScaled(waitBgTexture_, kPaths[7]);
+        LoadScaled(jaugeTexture_, kPaths[8]);
+        LoadScaled(initBgTexture_, kPaths[9]);
+        LoadScaled(speedyblupiTexture_, kPaths[10]);
+        LoadScaled(gearTexture_, kPaths[11]);
+        LoadScaled(buttonTexture_, kPaths[12]);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -705,8 +721,8 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
-        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
-        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float textSheetW = LogicalWidth(textTexture_);
+        const float textSheetH = LogicalHeight(textTexture_);
         const float glyphScale = kPauseLabelScale * viewportScale;
         const float cellPx = kGlyphCellPx * glyphScale;
         float penX = centerX - TextMetrics::Width(text) * glyphScale * 0.5f;
@@ -736,8 +752,8 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
-        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
-        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float textSheetW = LogicalWidth(textTexture_);
+        const float textSheetH = LogicalHeight(textTexture_);
         const float glyphScale = kSetupLabelScale * viewportScale;
         const float cellPx = kGlyphCellPx * glyphScale;
         const float topY = centerY - kSetupLabelYNudge * viewportScale;
@@ -788,8 +804,8 @@ namespace GalaxyEggbert::Game
         std::vector<Quad> panel;
         {
             Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
-            PadIconUv(kInitPanelIcon, static_cast<float>(padTexture_.getWidthProperty()),
-                      static_cast<float>(padTexture_.getHeightProperty()), q.u0, q.v0, q.u1, q.v1);
+            PadIconUv(kInitPanelIcon, LogicalWidth(padTexture_),
+                      LogicalHeight(padTexture_), q.u0, q.v0, q.u1, q.v1);
             panel.push_back(q);
         }
         std::vector<Quad> labels;
@@ -825,6 +841,7 @@ namespace GalaxyEggbert::Game
             }
             whiteTextTexture_ = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(device, w, h);
             whiteTextTexture_->SetData(texels.data(), static_cast<int>(texels.size()));
+            SetTextureScale(whiteTextTexture_.get(), TextureScaleOf(&textTexture_));
             whiteTextEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
             whiteTextEffect_->VertexColorEnabled = false;
             whiteTextEffect_->setTextureEnabledProperty(true);
@@ -1020,8 +1037,8 @@ namespace GalaxyEggbert::Game
         {
             return;
         }
-        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
-        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float textSheetW = LogicalWidth(textTexture_);
+        const float textSheetH = LogicalHeight(textTexture_);
         const float glyphScale = labelScale * viewportScale;
         const float cellPx = kGlyphCellPx * glyphScale;
         float penX = leftX;
@@ -1054,8 +1071,8 @@ namespace GalaxyEggbert::Game
         anim.centerY = kCharacterCenterY;
         anim.opacity = 1.0f;
 
-        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
-        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
+        const float charW = LogicalWidth(blupiyoupieTexture_);
+        const float charH = LogicalHeight(blupiyoupieTexture_);
 
         if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
         {
@@ -1363,8 +1380,8 @@ namespace GalaxyEggbert::Game
 
         const ScreenMetrics m = Metrics(viewportW, viewportH);
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
 
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
@@ -1591,8 +1608,8 @@ namespace GalaxyEggbert::Game
         }
         const float s = static_cast<float>(viewportH) / kRefH;
         const float w = static_cast<float>(viewportW);
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
         std::vector<Quad> panels, normal, pressed, labels, faint;
         const auto icon = [&](std::vector<Quad>& bucket, const Rect& r, int index) {
             Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
@@ -1761,8 +1778,8 @@ namespace GalaxyEggbert::Game
                                 anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
@@ -1918,8 +1935,8 @@ namespace GalaxyEggbert::Game
         // the exact real formulas this ports): Win pulses forever between
         // 0.5x/1.5x native size, no rotation; Lost grows from nothing to
         // native size once over 5s with a decaying 6-turn spin.
-        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
-        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
+        const float charW = LogicalWidth(blupiyoupieTexture_);
+        const float charH = LogicalHeight(blupiyoupieTexture_);
         float num;
         float rotationDegrees = 0.0f;
         if (won)
@@ -1947,8 +1964,8 @@ namespace GalaxyEggbert::Game
                                 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         {
@@ -2001,6 +2018,7 @@ namespace GalaxyEggbert::Game
         const bool overTerrain = InRect(mouseX, mouseY, SetupTerrainRect(m));
         const bool overEffectsToggle = InRect(mouseX, mouseY, SetupEffectsRect(m));
         const bool overFrameRate = InRect(mouseX, mouseY, SetupFrameRateRect(m));
+        const bool overTextures = InRect(mouseX, mouseY, SetupTexturesRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
@@ -2019,6 +2037,7 @@ namespace GalaxyEggbert::Game
             else if (overTerrain) activeControl_ = kSetupControlTerrain;
             else if (overEffectsToggle) activeControl_ = kSetupControlEffects;
             else if (overFrameRate) activeControl_ = kSetupControlFrameRate;
+            else if (overTextures) activeControl_ = kSetupControlTextures;
             else if (overReset) activeControl_ = kSetupControlReset;
             else if (overReturn) activeControl_ = kSetupControlReturn;
             else activeControl_ = -1;
@@ -2053,6 +2072,7 @@ namespace GalaxyEggbert::Game
             else if (activeControl_ == kSetupControlTerrain && overTerrain) result.terrainToggled = true;
             else if (activeControl_ == kSetupControlEffects && overEffectsToggle) result.effectsToggled = true;
             else if (activeControl_ == kSetupControlFrameRate && overFrameRate) result.frameRateToggled = true;
+            else if (activeControl_ == kSetupControlTextures && overTextures) result.texturesToggled = true;
             else if (activeControl_ == kSetupControlReset) result.resetPressed = true;
             else if (activeControl_ == kSetupControlReturn) result.returnPressed = true;
             activeControl_ = -1;
@@ -2067,7 +2087,7 @@ namespace GalaxyEggbert::Game
                               bool accel, bool showReset, int selectedGamer, int effectsVolume,
                               int musicVolume, int accelSensitivity, float phaseTimeSeconds,
                               GalaxyEggbert::Def::GamePhase fadeOutPhase, bool terrainRelief, int effectsLevel,
-                              int frameRate)
+                              int frameRate, int textureScale)
     {
         if (!loaded_)
         {
@@ -2120,8 +2140,8 @@ namespace GalaxyEggbert::Game
         AppendRotatedQuadUv(gearMesh, screenX(kGear2CenterX), refToScreenY(kGear2CenterY),
                             kGear2Half * scale, kGear2Half * scale, anim.gearRotation2, 0.0f, 0.0f, 1.0f, 1.0f);
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
@@ -2174,6 +2194,8 @@ namespace GalaxyEggbert::Game
                          kSetupControlEffects);
             appendButton(SetupFrameRateRect(m), frameRate > 60 ? kIconSetupToggleOn : kIconSetupToggleOff,
                          kSetupControlFrameRate);
+            appendButton(SetupTexturesRect(m), textureScale == 1 ? kIconSetupToggleOff : kIconSetupToggleOn,
+                         kSetupControlTextures);
             if (showReset)
             {
                 appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);
@@ -2183,8 +2205,8 @@ namespace GalaxyEggbert::Game
             appendLabel(SetupSoundsRect(m), "Sound effects");
             // The two volume sliders right of it: label over the track, the knob at the value.
             {
-                const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
-                const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
+                const float jaugeSheetW = LogicalWidth(jaugeTexture_);
+                const float jaugeSheetH = LogicalHeight(jaugeTexture_);
                 const int volumes[3] = {effectsVolume, musicVolume, accelSensitivity};
                 const char* const names[3] = {"Sound effects", "Music", "Sensitivity"};
                 for (int which = 0; which < (accel ? 3 : 2); ++which)
@@ -2223,6 +2245,10 @@ namespace GalaxyEggbert::Game
                 appendLabel(SetupEffectsRect(m),
                             std::string("3D effects\n") + kLevels[effectsLevel < 0 ? 0 : effectsLevel > 4 ? 4 : effectsLevel]);
                 appendLabel(SetupFrameRateRect(m), "Frame rate: " + std::to_string(frameRate) + " fps");
+                static const char* const kTextures[3] = {"Auto", "1x", "2x"};
+                appendLabel(SetupTexturesRect(m),
+                            std::string("Textures: ") + kTextures[textureScale == 1 || textureScale == 2 ? textureScale : 0] +
+                                "\n(next start)");
             }
             if (showReset)
             {
@@ -2334,8 +2360,8 @@ namespace GalaxyEggbert::Game
                                 anim.halfW * scale, anim.halfH * scale, anim.rotationDegrees, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
@@ -2635,8 +2661,8 @@ namespace GalaxyEggbert::Game
         const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
         const auto refToScreenY = [&](float y) { return y * scale; };
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
@@ -2694,8 +2720,8 @@ namespace GalaxyEggbert::Game
             }
         }
         const int filledWidth = level * 114 / 100;
-        const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
-        const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
+        const float jaugeSheetW = LogicalWidth(jaugeTexture_);
+        const float jaugeSheetH = LogicalHeight(jaugeTexture_);
         const float gaugeW = kJaugeCellW * kJaugeZoom * scale;
         const float gaugeH = kJaugeCellH * kJaugeZoom * scale;
         const float x0 = (w - gaugeW) * 0.5f;
@@ -2704,8 +2730,8 @@ namespace GalaxyEggbert::Game
         {
             Quad q{x0 - 24.0f * scale, h * 0.40f, x0 + gaugeW + 24.0f * scale, y0 + gaugeH + 14.0f * scale,
                    0.0f, 0.0f, 0.0f, 0.0f};
-            PadIconUv(kInitPanelIcon, static_cast<float>(padTexture_.getWidthProperty()),
-                      static_cast<float>(padTexture_.getHeightProperty()), q.u0, q.v0, q.u1, q.v1);
+            PadIconUv(kInitPanelIcon, LogicalWidth(padTexture_),
+                      LogicalHeight(padTexture_), q.u0, q.v0, q.u1, q.v1);
             panelQuads.push_back(q);
         }
         std::vector<Quad> jaugeQuads;
@@ -2781,8 +2807,8 @@ namespace GalaxyEggbert::Game
         }
         const int filledWidth = level * 114 / 100;
 
-        const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
-        const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
+        const float jaugeSheetW = LogicalWidth(jaugeTexture_);
+        const float jaugeSheetH = LogicalHeight(jaugeTexture_);
         std::vector<Quad> jaugeQuads;
         {
             // Row 0: always-visible empty-gauge background.
@@ -2914,8 +2940,8 @@ namespace GalaxyEggbert::Game
         std::vector<Quad> backgroundQuads{BackgroundBarsQuad(viewportW, viewportH), background};
 
         const float t = std::min(phaseTimeSeconds / kInitEntryDurationSeconds, 1.0f);
-        const float charW = static_cast<float>(blupiyoupieTexture_.getWidthProperty());
-        const float charH = static_cast<float>(blupiyoupieTexture_.getHeightProperty());
+        const float charW = LogicalWidth(blupiyoupieTexture_);
+        const float charH = LogicalHeight(blupiyoupieTexture_);
 
         float titleLeft = kInitTitleLeft, titleRight = kInitTitleRight, titleTop, titleBottom;
         float titleOpacity = 1.0f;
@@ -2996,8 +3022,8 @@ namespace GalaxyEggbert::Game
                                 charHalfW * scale, charHalfH * scale, charRotation, 0.0f, 0.0f, 1.0f, 1.0f);
         }
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = LogicalWidth(padTexture_);
+        const float padSheetH = LogicalHeight(padTexture_);
         std::vector<Quad> normalQuads;
         std::vector<Quad> pressedQuads;
         std::vector<Quad> labelQuads;
@@ -3103,8 +3129,8 @@ namespace GalaxyEggbert::Game
 
             const float iconHalf = (layout.editor.x1 - layout.editor.x0) * kInitEditorIconFraction * 0.5f;
             const float iconCenterY = (layout.editor.y0 + layout.editor.y1) * 0.5f;
-            const float buttonSheetW = static_cast<float>(buttonTexture_.getWidthProperty());
-            const float buttonSheetH = static_cast<float>(buttonTexture_.getHeightProperty());
+            const float buttonSheetW = LogicalWidth(buttonTexture_);
+            const float buttonSheetH = LogicalHeight(buttonTexture_);
             const int col = kButtonIconInitEditor % kButtonCols;
             const int row = kButtonIconInitEditor / kButtonCols;
             editorIconQuads.push_back(Quad{editorCenterX - iconHalf, iconCenterY - iconHalf,

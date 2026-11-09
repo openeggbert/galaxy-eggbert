@@ -1,4 +1,5 @@
 #include "EditorPaletteRenderer.hpp"
+#include <GalaxyEggbert/Game/TextureScale.hpp>
 
 #include <GalaxyEggbert/Game/QuadBatch.hpp>
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
@@ -113,7 +114,11 @@ namespace GalaxyEggbert::Editor
         }
         if (!impl_->buttonTexture)
         {
-            impl_->buttonTexture = std::make_unique<Texture2D>("Content/icons/button.png", device);
+            {
+                int scale = 1;
+                impl_->buttonTexture = std::make_unique<Texture2D>(Game::ScaledContentPath("Content/icons/button.png", &scale), device);
+                Game::SetTextureScale(impl_->buttonTexture.get(), scale);
+            }
             impl_->buttonEffect = std::make_unique<BasicEffect>(device);
             impl_->buttonEffect->VertexColorEnabled = false;
             impl_->buttonEffect->setTextureEnabledProperty(true);
@@ -121,7 +126,11 @@ namespace GalaxyEggbert::Editor
         impl_->buttonEffect->setTextureProperty(impl_->buttonTexture.get());
         if (!impl_->textTexture && std::filesystem::exists("Content/icons/text.png"))
         {
-            impl_->textTexture = std::make_unique<Texture2D>("Content/icons/text.png", device);
+            {
+                int scale = 1;
+                impl_->textTexture = std::make_unique<Texture2D>(Game::ScaledContentPath("Content/icons/text.png", &scale), device);
+                Game::SetTextureScale(impl_->textTexture.get(), scale);
+            }
             impl_->textEffect = std::make_unique<BasicEffect>(device);
             impl_->textEffect->VertexColorEnabled = false;
             impl_->textEffect->setTextureEnabledProperty(true);
@@ -221,8 +230,8 @@ namespace GalaxyEggbert::Editor
         const auto appendButtonIcon = [&](std::vector<GalaxyEggbert::Game::QuadBatch::Quad>& quads, int icon,
                                           const GalaxyEggbert::Game::QuadBatch::Rect& rect)
         {
-            const float sheetWidth = static_cast<float>(impl_->buttonTexture->getWidthProperty());
-            const float sheetHeight = static_cast<float>(impl_->buttonTexture->getHeightProperty());
+            const float sheetWidth = Game::LogicalWidth(*impl_->buttonTexture);
+            const float sheetHeight = Game::LogicalHeight(*impl_->buttonTexture);
             const int sheetIcon = icon + kButtonSheetIconOffset;
             const int column = sheetIcon % kButtonColumns;
             const int row = sheetIcon / kButtonColumns;
@@ -325,9 +334,9 @@ namespace GalaxyEggbert::Editor
             if (impl_->textTexture && impl_->textEffect)
             {
                 const float sheetWidth =
-                    static_cast<float>(impl_->textTexture->getWidthProperty());
+                    Game::LogicalWidth(*impl_->textTexture);
                 const float sheetHeight =
-                    static_cast<float>(impl_->textTexture->getHeightProperty());
+                    Game::LogicalHeight(*impl_->textTexture);
                 std::vector<GalaxyEggbert::Game::QuadBatch::Quad> numberBackgrounds;
                 std::vector<GalaxyEggbert::Game::QuadBatch::Quad> numberLabels;
                 for (int i = 0; i < static_cast<int>(state.contentSkyRegionIds.size()); ++i)
@@ -362,8 +371,8 @@ namespace GalaxyEggbert::Editor
         // The music cells: the note with its track's number ("-": none).
         if (!state.contentMusicTrackIds.empty() && impl_->textTexture && impl_->textEffect)
         {
-            const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
-            const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
+            const float sheetWidth = Game::LogicalWidth(*impl_->textTexture);
+            const float sheetHeight = Game::LogicalHeight(*impl_->textTexture);
             std::vector<GalaxyEggbert::Game::QuadBatch::Quad> numberBackgrounds;
             std::vector<GalaxyEggbert::Game::QuadBatch::Quad> numberLabels;
             for (int i = 0; i < static_cast<int>(state.contentMusicTrackIds.size()); ++i)
@@ -424,8 +433,8 @@ namespace GalaxyEggbert::Editor
             constexpr const char* kLabels[EditorPaletteLayout::PlacementButtonCount] = {
                 "X-", "X+", "Y-", "Y+", "Z-", "Z+", "PLACE",
             };
-            const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
-            const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
+            const float sheetWidth = Game::LogicalWidth(*impl_->textTexture);
+            const float sheetHeight = Game::LogicalHeight(*impl_->textTexture);
             std::vector<GalaxyEggbert::Game::QuadBatch::Quad> axisLabels;
             for (int i = 0; i < EditorPaletteLayout::PlacementPlaceIndex; ++i)
             {
@@ -495,8 +504,8 @@ namespace GalaxyEggbert::Editor
         // the status lines.
         if (!state.viewLabels.empty() && impl_->textTexture && impl_->textEffect)
         {
-            const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
-            const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
+            const float sheetWidth = Game::LogicalWidth(*impl_->textTexture);
+            const float sheetHeight = Game::LogicalHeight(*impl_->textTexture);
             const float height = kGlyphCellPx * kTextScale;
             for (const auto& label : state.viewLabels)
             {
@@ -519,8 +528,8 @@ namespace GalaxyEggbert::Editor
         // The status lines (a prompt, the keys) over the view, right of the menu column.
         if (!state.statusLines.empty() && impl_->textTexture && impl_->textEffect)
         {
-            const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
-            const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
+            const float sheetWidth = Game::LogicalWidth(*impl_->textTexture);
+            const float sheetHeight = Game::LogicalHeight(*impl_->textTexture);
             const float lineHeight = kGlyphCellPx * kTextScale + 4.0f;
             float widest = 0.0f;
             for (const auto& line : state.statusLines)
@@ -564,8 +573,8 @@ namespace GalaxyEggbert::Editor
             std::vector<GalaxyEggbert::Game::QuadBatch::Quad> notice;
             AppendLabel(
                 notice, kMessage, left, top,
-                static_cast<float>(impl_->textTexture->getWidthProperty()),
-                static_cast<float>(impl_->textTexture->getHeightProperty()));
+                Game::LogicalWidth(*impl_->textTexture),
+                Game::LogicalHeight(*impl_->textTexture));
             impl_->textEffect->setDiffuseColorProperty({1.0f, 0.05f, 0.05f});
             GalaxyEggbert::Game::QuadBatch::FlushQuads(
                 device, *impl_->textEffect, impl_->textRenderer, notice,

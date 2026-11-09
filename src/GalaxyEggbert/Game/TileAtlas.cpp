@@ -37,12 +37,16 @@ namespace GalaxyEggbert::Game
 
         if (layout_ == Layout::Padded)
         {
+            const PaddedLayout p = Padded();
             const int icon = static_cast<int>(definition.textureIcon);
             const int col = icon % kPaddedColumns;
             const int row = icon / kPaddedColumns;
-            const float u0 = static_cast<float>(kPaddedBorder + col * kPaddedPitch) / kPaddedWidth;
-            const float v0 = static_cast<float>(kPaddedBorder + row * kPaddedPitch) / kPaddedHeight;
-            return CnaEngine::Graphics::UvRect{u0, v0, u0 + 64.0f / kPaddedWidth, v0 + 64.0f / kPaddedHeight};
+            const float w = static_cast<float>(p.width);
+            const float h = static_cast<float>(p.height);
+            const float u0 = static_cast<float>(p.border + col * p.pitch) / w;
+            const float v0 = static_cast<float>(p.border + row * p.pitch) / h;
+            return CnaEngine::Graphics::UvRect{u0, v0, u0 + static_cast<float>(p.tile) / w,
+                                               v0 + static_cast<float>(p.tile) / h};
         }
         float uOff = 0.0f;
         float vOff = 0.0f;
@@ -52,17 +56,18 @@ namespace GalaxyEggbert::Game
         return CnaEngine::Graphics::UvRect{uOff, vOff, uOff + uScale, vOff + vScale};
     }
 
-    std::vector<std::uint8_t> BuildPaddedSheet(const std::uint8_t* sheetRgba, int width, int height)
+    std::vector<std::uint8_t> BuildPaddedSheet(const std::uint8_t* sheetRgba, int width, int height, int scale)
     {
-        constexpr int W = TileAtlas::kPaddedWidth;
-        constexpr int H = TileAtlas::kPaddedHeight;
+        const TileAtlas::PaddedLayout p = TileAtlas::PaddedLayoutFor(scale);
+        const int W = p.width;
+        const int H = p.height;
         std::vector<std::uint8_t> out(static_cast<std::size_t>(W) * H * 4, 0);
         if (sheetRgba == nullptr)
         {
             return out;
         }
-        constexpr int kTile = BlockTypes::kTileSize;
-        constexpr int kGap = BlockTypes::kSheetGap;
+        const int kTile = BlockTypes::kTileSize * (scale < 1 ? 1 : scale);
+        const int kGap = BlockTypes::kSheetGap * (scale < 1 ? 1 : scale);
         for (int row = 0; row < TileAtlas::kPaddedRows; ++row)
         {
             for (int col = 0; col < TileAtlas::kPaddedColumns; ++col)
@@ -73,14 +78,14 @@ namespace GalaxyEggbert::Game
                 {
                     continue;
                 }
-                const int dx0 = col * TileAtlas::kPaddedPitch;
-                const int dy0 = row * TileAtlas::kPaddedPitch;
-                for (int y = 0; y < TileAtlas::kPaddedPitch; ++y)
+                const int dx0 = col * p.pitch;
+                const int dy0 = row * p.pitch;
+                for (int y = 0; y < p.pitch; ++y)
                 {
-                    const int ty = std::clamp(y - TileAtlas::kPaddedBorder, 0, kTile - 1);
-                    for (int x = 0; x < TileAtlas::kPaddedPitch; ++x)
+                    const int ty = std::clamp(y - p.border, 0, kTile - 1);
+                    for (int x = 0; x < p.pitch; ++x)
                     {
-                        const int tx = std::clamp(x - TileAtlas::kPaddedBorder, 0, kTile - 1);
+                        const int tx = std::clamp(x - p.border, 0, kTile - 1);
                         const std::uint8_t* src =
                             sheetRgba + (static_cast<std::size_t>(sy0 + ty) * width + (sx0 + tx)) * 4;
                         std::uint8_t* dst = out.data() + (static_cast<std::size_t>(dy0 + y) * W + (dx0 + x)) * 4;

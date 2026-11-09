@@ -1,4 +1,5 @@
 #include "ObjectPathRenderer.hpp"
+#include <GalaxyEggbert/Game/TextureScale.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 #include <GalaxyEggbert/Game/TileAtlas.hpp>
@@ -22,7 +23,11 @@ void ObjectPathRenderer::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevic
     }
     if (!effect_)
     {
-        texture_ = std::make_unique<Texture2D>("Content/icons/object-m.png", device);
+        {
+            int scale = 1;
+            texture_ = std::make_unique<Texture2D>(Game::ScaledContentPath("Content/icons/object-m.png", &scale), device);
+            Game::SetTextureScale(texture_.get(), scale);
+        }
         effect_ = std::make_unique<AlphaTestEffect>(device);
         effect_->setTextureProperty(texture_.get());
         effect_->setVertexColorEnabledProperty(false);

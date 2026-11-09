@@ -721,7 +721,8 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
                                     saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
-                                    fadeOutPhase_, TerrainReliefWanted(), EffectsLevel(), saveData_.GetFrameRate());
+                                    fadeOutPhase_, TerrainReliefWanted(), EffectsLevel(), saveData_.GetFrameRate(),
+                                    saveData_.GetTextureScale());
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {

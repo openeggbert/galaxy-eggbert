@@ -3,6 +3,8 @@
 #include "GameInternal.hpp"
 
 #include <GalaxyEggbert/Game/TerrainMaps.hpp>
+#include <GalaxyEggbert/Game/TextureScale.hpp>
+#include <Microsoft/Xna/Framework/Graphics/GraphicsAdapter.hpp>
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
 #include <GalaxyEggbert/Game/DebugOverlay.hpp>
@@ -140,11 +142,28 @@ namespace GalaxyEggbert::CNA
         // one box per non-air cell, textured via TileAtlas.
         auto& device = getGraphicsDeviceProperty();
 
+        // The textures' size for this run (TextureScale.hpp: the Setup's "Textures", GALAXY_TEXTURES, or
+        // auto: 2x with Ultra on a display at least 1000 pixels tall), decided once before any texture loads.
+        GalaxyEggbert::Game::SetTextureScaleSetting(saveData_.GetTextureScale());
+        const int displayHeight = Microsoft::Xna::Framework::Graphics::GraphicsAdapter::getDefaultAdapterProperty()
+                                      .getCurrentDisplayModeProperty()
+                                      .getHeightProperty();
+        const int wantedTextureScale = GalaxyEggbert::Game::ResolveTextureScale(
+            displayHeight, EffectsLevel() >= GalaxyEggbert::Game::SaveData::kEffectsLevelUltra);
+        std::cout << "GalaxyEggbertCNA: textures " << wantedTextureScale << "x (setting "
+                  << saveData_.GetTextureScale() << ", display " << displayHeight << " px tall, effects level "
+                  << EffectsLevel() << ")." << std::endl;
+
         // object-m.png was already copied next to this binary at build time
         // (plan.md E3D-MIG-030); loaded directly via CNA's own Texture2D —
         // no mobile-eggbert Pixmap reuse (SpriteBatch-coupled, not usable for
-        // this 3D BasicEffect draw path).
-        terrainTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/object-m.png", device);
+        // this 3D BasicEffect draw path). Content/icons2x/object-m.png when 2x is wanted: twice the size,
+        // every tile and gap twice as large, so every texel step below takes the scale.
+        int terrainScale = 1;
+        terrainTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
+            GalaxyEggbert::Game::ScaledContentPath("Content/icons/object-m.png", &terrainScale), device);
+        GalaxyEggbert::Game::SetTextureScale(&terrainTexture_, terrainScale);
+        terrainTileAtlas_ = GalaxyEggbert::Game::TileAtlas(GalaxyEggbert::Game::TileAtlas::Layout::Padded, terrainScale);
         std::cout << "GalaxyEggbertCNA: terrain texture loaded — "
                   << terrainTexture_.getWidthProperty() << "x"
                   << terrainTexture_.getHeightProperty() << " px." << std::endl;
@@ -160,17 +179,21 @@ namespace GalaxyEggbert::CNA
             {
                 alpha[i] = texels[i].getAProperty();
             }
-            tileCoverage_ = GalaxyEggbert::Game::ClassifyTileSheet(alpha.data(), width, height);
+            tileCoverage_ = GalaxyEggbert::Game::ClassifyTileSheet(alpha.data(), width, height, terrainScale);
             GalaxyEggbert::Game::MarkSeeThroughTiles(tileCoverage_); // the cheese's holes (Q-010)
             // The brick edge pieces' ragged ends (Q-011) are a table measured from this sheet: say so if
             // the sheet loaded tells otherwise (BrickEdges.hpp).
+            // (Measured in the 1x sheet's texel rows: a 2x sheet is the same picture, the 1x one is checked
+            // whenever it loads.)
             for (const auto& tile : GalaxyEggbert::Game::BrickEdges::kTiles)
             {
-                constexpr int kPitch = GalaxyEggbert::BlockTypes::kTileSize + GalaxyEggbert::BlockTypes::kSheetGap;
-                const int columns = width / GalaxyEggbert::BlockTypes::kTileSize;
-                const int x0 = GalaxyEggbert::BlockTypes::kSheetGap + tile.icon % columns * kPitch;
-                const int y0 = GalaxyEggbert::BlockTypes::kSheetGap + tile.icon / columns * kPitch;
-                if (y0 + GalaxyEggbert::BlockTypes::kTileSize > height || x0 + GalaxyEggbert::BlockTypes::kTileSize > width)
+                const int tileTexels = GalaxyEggbert::BlockTypes::kTileSize * terrainScale;
+                const int gap = GalaxyEggbert::BlockTypes::kSheetGap * terrainScale;
+                const int kPitch = tileTexels + gap;
+                const int columns = width / tileTexels;
+                const int x0 = gap + tile.icon % columns * kPitch;
+                const int y0 = gap + tile.icon / columns * kPitch;
+                if (terrainScale != 1 || y0 + tileTexels > height || x0 + tileTexels > width)
                     continue;
                 const std::uint8_t* at = alpha.data() + static_cast<std::size_t>(y0) * width + x0;
                 using GalaxyEggbert::Game::BrickEdges::MeasureCourseInsets;
@@ -194,8 +217,8 @@ namespace GalaxyEggbert::CNA
                 rgba[i * 4 + 2] = texels[i].getBProperty();
                 rgba[i * 4 + 3] = texels[i].getAProperty();
             }
-            GalaxyEggbert::Game::FillBrickEdgesFromWholeBrick(rgba.data(), width, height); // Q-011
-            GalaxyEggbert::Game::FillOpaqueTilesClearTexels(rgba.data(), width, height, tileCoverage_);
+            GalaxyEggbert::Game::FillBrickEdgesFromWholeBrick(rgba.data(), width, height, terrainScale); // Q-011
+            GalaxyEggbert::Game::FillOpaqueTilesClearTexels(rgba.data(), width, height, tileCoverage_, terrainScale);
             for (std::size_t i = 0; i < texels.size(); ++i)
             {
                 texels[i] = Microsoft::Xna::Framework::Color(rgba[i * 4 + 0], rgba[i * 4 + 1], rgba[i * 4 + 2],
@@ -204,11 +227,12 @@ namespace GalaxyEggbert::CNA
             terrainTexture_.SetData(texels.data(), static_cast<int>(texels.size()));
             // The terrain's padded copy with its mip levels (TileAtlas.hpp Layout::Padded): distant
             // floors no longer shimmer into rings.
-            constexpr int kPadW = GalaxyEggbert::Game::TileAtlas::kPaddedWidth;
-            constexpr int kPadH = GalaxyEggbert::Game::TileAtlas::kPaddedHeight;
-            auto level = GalaxyEggbert::Game::BuildPaddedSheet(rgba.data(), width, height);
+            const auto padded = terrainTileAtlas_.Padded();
+            const int kPadW = padded.width;
+            const int kPadH = padded.height;
+            auto level = GalaxyEggbert::Game::BuildPaddedSheet(rgba.data(), width, height, terrainScale);
             // Each block type's colour for Ultra's light from around (TerrainGi.hpp): its padded tile's
-            // mean (the inner 64 x 64, its border being copies of its edge).
+            // mean (the inner tile, its border being copies of its edge).
             terrainGi_.albedo.assign(1024, Microsoft::Xna::Framework::Vector3(0.2f, 0.2f, 0.2f));
             for (int type = 1; type < static_cast<int>(terrainGi_.albedo.size()); ++type)
             {
@@ -231,9 +255,10 @@ namespace GalaxyEggbert::CNA
                     int frames = 0;
                     for (const int icon : icons)
                     {
-                        const int x0 = TileAtlas::kPaddedBorder + (icon % TileAtlas::kPaddedColumns) * TileAtlas::kPaddedPitch;
-                        const int y0 = TileAtlas::kPaddedBorder + (icon / TileAtlas::kPaddedColumns) * TileAtlas::kPaddedPitch;
-                        const auto t = GalaxyEggbert::Game::TileTint(level.data(), kPadW, x0, y0, x0 + 64, y0 + 64);
+                        const int x0 = padded.border + (icon % TileAtlas::kPaddedColumns) * padded.pitch;
+                        const int y0 = padded.border + (icon / TileAtlas::kPaddedColumns) * padded.pitch;
+                        const auto t = GalaxyEggbert::Game::TileTint(level.data(), kPadW, x0, y0, x0 + padded.tile,
+                                                                     y0 + padded.tile);
                         if (t.W <= 0.0f) continue;
                         sum = sum + t;
                         ++frames;
@@ -298,7 +323,12 @@ namespace GalaxyEggbert::CNA
 
         // Billboard rendering for MoveObjects (15-3d-render-mapping-design.md
         // §5/§7) — element.png from the approved mobile-eggbert assets.
-        objectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/element.png", device);
+        {
+            int scale = 1;
+            objectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
+                GalaxyEggbert::Game::ScaledContentPath("Content/icons/element.png", &scale), device);
+            GalaxyEggbert::Game::SetTextureScale(&objectTexture_, scale);
+        }
         objectEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         objectEffect_->VertexColorEnabled = false;
         objectEffect_->setTextureEnabledProperty(true);
@@ -319,7 +349,12 @@ namespace GalaxyEggbert::CNA
         // loaded anywhere else in GalaxyEggbertCNA, so this is a genuinely
         // new texture load (already copied next to this binary at build
         // time, same mechanism as element.png/object-m.png).
-        exploTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/explo.png", device);
+        {
+            int scale = 1;
+            exploTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
+                GalaxyEggbert::Game::ScaledContentPath("Content/icons/explo.png", &scale), device);
+            GalaxyEggbert::Game::SetTextureScale(&exploTexture_, scale);
+        }
         exploEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         exploEffect_->VertexColorEnabled = false;
         exploEffect_->setTextureEnabledProperty(true);
@@ -330,13 +365,23 @@ namespace GalaxyEggbert::CNA
         // Texture2D instances from blupiIconTexture_ above even though
         // ObjectType200 loads the same blupi.png file, since that one is
         // owned by the 2D SpriteBatch HUD path, not this 3D BasicEffect path.
-        blupiObjectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/blupi.png", device);
+        {
+            int scale = 1;
+            blupiObjectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
+                GalaxyEggbert::Game::ScaledContentPath("Content/icons/blupi.png", &scale), device);
+            GalaxyEggbert::Game::SetTextureScale(&blupiObjectTexture_, scale);
+        }
         blupiObjectEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         blupiObjectEffect_->VertexColorEnabled = false;
         blupiObjectEffect_->setTextureEnabledProperty(true);
         blupiObjectEffect_->setTextureProperty(&blupiObjectTexture_);
 
-        blupi1ObjectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D("Content/icons/blupi1.png", device);
+        {
+            int scale = 1;
+            blupi1ObjectTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
+                GalaxyEggbert::Game::ScaledContentPath("Content/icons/blupi1.png", &scale), device);
+            GalaxyEggbert::Game::SetTextureScale(&blupi1ObjectTexture_, scale);
+        }
         blupi1ObjectEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
         blupi1ObjectEffect_->VertexColorEnabled = false;
         blupi1ObjectEffect_->setTextureEnabledProperty(true);
@@ -712,7 +757,10 @@ namespace GalaxyEggbert::CNA
                           "Content/backgrounds/decor%03u.png", worldRuntime_.GetSkyRegion());
             if (std::filesystem::exists(backgroundPath))
             {
-                backgroundTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(backgroundPath, device);
+                int backgroundScale = 1;
+                backgroundTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
+                    GalaxyEggbert::Game::ScaledContentPath(backgroundPath, &backgroundScale), device);
+                GalaxyEggbert::Game::SetTextureScale(&backgroundTexture_, backgroundScale);
                 backgroundEffect_ = std::make_unique<Microsoft::Xna::Framework::Graphics::BasicEffect>(device);
                 backgroundEffect_->VertexColorEnabled = false;
                 backgroundEffect_->setTextureEnabledProperty(true);
@@ -940,15 +988,23 @@ namespace GalaxyEggbert::CNA
             }
             return texture;
         };
-        auto maps = GalaxyEggbert::Game::BuildSurfaceMaps(rgba.data(), width, height,
-                                                          GalaxyEggbert::Game::TileAtlas::kPaddedPitch);
+        // A 2x atlas (TextureScale.hpp): its slopes per texel are half as steep, so the relief's strength
+        // doubles to stay the same per tile; and it is already finer, so it is not upscaled again.
+        const int atlasScale = terrainTileAtlas_.Scale();
+        auto maps = GalaxyEggbert::Game::BuildSurfaceMaps(rgba.data(), width, height, terrainTileAtlas_.Padded().pitch,
+                                                          3.0f * static_cast<float>(atlasScale));
         ultraTerrainNormals_ = upload(std::move(maps.normals), width, height);
         ultraTerrainSurface_ = upload(std::move(maps.surface), width, height);
-        const auto fine = GalaxyEggbert::Game::UpscaledSize(width, height);
-        ultraTerrainAlbedo_ = upload(GalaxyEggbert::Game::Upscale(rgba.data(), width, height, fine[0], fine[1]), fine[0], fine[1]);
+        const auto fine = atlasScale > 1 ? std::array<int, 2>{width, height}
+                                         : GalaxyEggbert::Game::UpscaledSize(width, height);
+        if (atlasScale == 1)
+        {
+            ultraTerrainAlbedo_ =
+                upload(GalaxyEggbert::Game::Upscale(rgba.data(), width, height, fine[0], fine[1]), fine[0], fine[1]);
+        }
         ultraAssets_.terrainNormals = ultraTerrainNormals_.get();
         ultraAssets_.terrainSurface = ultraTerrainSurface_.get();
-        ultraAssets_.terrainAlbedo = ultraTerrainAlbedo_.get();
+        ultraAssets_.terrainAlbedo = ultraTerrainAlbedo_.get(); // nullptr at 2x: the atlas as it is
         const auto ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
         std::cout << "GalaxyEggbertCNA: Ultra's terrain maps made (" << fine[0] << "x" << fine[1] << " colours, "
                   << width << "x" << height << " normals and surface) in " << ms << " ms." << std::endl;

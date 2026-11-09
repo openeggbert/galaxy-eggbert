@@ -8,6 +8,27 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## 2x textures (../ray.md, 2026-11-09) — code done, the re-rendered sheets follow
+
+- The game loads `Content/icons2x/` and `Content/backgrounds2x/` (sheets at twice the size, the
+  1x layout times two, re-rendered from the original Ray Dream scenes in
+  `../speedyblupi-hd/`) when 2x is wanted: Setup's new "Textures" (Auto / 1x / 2x, at x 450 on
+  the Frame rate row; `SaveData textureScale`, applies at the next start) or
+  `GALAXY_TEXTURES=1x|2x|auto`. Auto = 2x on desktop with Ultra on a display at least 1000 px tall
+  (Galaxy draws on CNA's 800x480 logical surface; only Ultra draws the world at the window's
+  pixels); always 1x on the web and Android. `TextureScale.hpp`: `ScaledContentPath` (falls back
+  to 1x unless the 2x file is exactly twice the 1x one), per-texture scale, `LogicalWidth/Height`
+  for every pixel-to-UV computation (Hud, InputPad, editor).
+- Terrain at 2x: `TileAtlas(Layout::Padded, 2)` / `PaddedLayoutFor(2)` = 128-texel tiles in a
+  16-texel border, 3200x3520 (twice the 1x layout would be 3840x4224, over HiDef's 4096);
+  `ClassifyTileSheet`, `FillOpaqueTilesClearTexels`, `FillBrickEdgesFromWholeBrick`,
+  `BuildPaddedSheet` take the scale; Ultra's maps keep their relief strength (x scale) and the 2x
+  atlas is not upscaled again. Verifiers: VerifyTileFaces / VerifyTileCoverage on synthetic 2x
+  sheets. Checked live with upscaled stand-in 2x sheets: 1x and 2x screenshots of mission 11 have
+  the same layout (mean difference 0.65).
+- Next: the Ray Dream 2x sheets into `Content/icons2x/` + `Content/backgrounds2x/` (owner-approved
+  asset set, ray.md), then a live check in campaign worlds with `GALAXY_TEXTURES=2x GALAXY_EFFECTS=ultra`.
+
 ## Owner's batch, evening of 2026-11-09 — verified desktop; Android not run on a device
 
 - `22c1ed3d` contact shadows without dither (separable normal/depth-weighted blur, upward faces

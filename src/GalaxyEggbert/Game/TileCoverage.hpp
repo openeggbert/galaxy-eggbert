@@ -44,16 +44,17 @@ namespace GalaxyEggbert::Game
     // Classifies every icon of a sheet laid out as object-m.png (BlockTypes.hpp: kTileSize
     // texels with a kSheetGap-texel gap before each), from its alpha channel: one byte per
     // texel, row by row, width * height bytes. Icons that do not fit the sheet are left out.
-    [[nodiscard]] inline std::vector<TileCoverage> ClassifyTileSheet(const std::uint8_t* alpha, int width, int height)
+    [[nodiscard]] inline std::vector<TileCoverage> ClassifyTileSheet(const std::uint8_t* alpha, int width, int height,
+                                                                    int scale = 1)
     {
         std::vector<TileCoverage> coverage;
         if (alpha == nullptr || width <= 0 || height <= 0)
         {
             return coverage;
         }
-        constexpr int kTileSize = BlockTypes::kTileSize;
-        constexpr int kSheetGap = BlockTypes::kSheetGap;
-        constexpr int kPitch = kTileSize + kSheetGap;
+        const int kTileSize = BlockTypes::kTileSize * scale;
+        const int kSheetGap = BlockTypes::kSheetGap * scale;
+        const int kPitch = kTileSize + kSheetGap;
         const int columns = width / kTileSize;
         const int rows = height / kTileSize;
         for (int row = 0; row < rows; ++row)
@@ -117,15 +118,15 @@ namespace GalaxyEggbert::Game
     // classified opaque are touched: the cutout and blended ones keep their shapes. `rgba`: 4 bytes
     // a texel, row by row, the sheet as ClassifyTileSheet's.
     inline void FillOpaqueTilesClearTexels(std::uint8_t* rgba, int width, int height,
-                                           const std::vector<TileCoverage>& coverage)
+                                           const std::vector<TileCoverage>& coverage, int scale = 1)
     {
         if (rgba == nullptr || width <= 0 || height <= 0)
         {
             return;
         }
-        constexpr int kTileSize = BlockTypes::kTileSize;
-        constexpr int kSheetGap = BlockTypes::kSheetGap;
-        constexpr int kPitch = kTileSize + kSheetGap;
+        const int kTileSize = BlockTypes::kTileSize * scale;
+        const int kSheetGap = BlockTypes::kSheetGap * scale;
+        const int kPitch = kTileSize + kSheetGap;
         const int columns = width / kTileSize;
         std::vector<std::uint8_t> filled(static_cast<std::size_t>(kTileSize) * kTileSize);
         std::vector<std::uint8_t> next;
@@ -214,16 +215,17 @@ namespace GalaxyEggbert::Game
     // sheet layout.
     inline constexpr int kWholeBrick = 261;
     inline constexpr int kBrickEdgePieces[] = {262, 263, 283};
-    inline void FillBrickEdgesFromWholeBrick(std::uint8_t* rgba, int width, int height)
+    inline void FillBrickEdgesFromWholeBrick(std::uint8_t* rgba, int width, int height, int scale = 1)
     {
         if (rgba == nullptr || width <= 0 || height <= 0) return;
-        constexpr int kTileSize = BlockTypes::kTileSize;
-        constexpr int kPitch = kTileSize + BlockTypes::kSheetGap;
+        const int kTileSize = BlockTypes::kTileSize * scale;
+        const int kSheetGap = BlockTypes::kSheetGap * scale;
+        const int kPitch = kTileSize + kSheetGap;
         const int columns = width / kTileSize;
         if (columns <= 0) return;
         const auto origin = [&](int icon, int& x0, int& y0) {
-            x0 = BlockTypes::kSheetGap + (icon % columns) * kPitch;
-            y0 = BlockTypes::kSheetGap + (icon / columns) * kPitch;
+            x0 = kSheetGap + (icon % columns) * kPitch;
+            y0 = kSheetGap + (icon / columns) * kPitch;
             return x0 + kTileSize <= width && y0 + kTileSize <= height;
         };
         int sx = 0, sy = 0;

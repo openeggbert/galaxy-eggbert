@@ -1,4 +1,5 @@
 #include "EditorBrowserScreen.hpp"
+#include <GalaxyEggbert/Game/TextureScale.hpp>
 
 #include "CustomWorldStorage.hpp"
 #include "PlatformFiles.hpp"
@@ -368,7 +369,11 @@ namespace GalaxyEggbert::Editor
         {
             return; // degrades to no text, same graceful-failure shape as InputPad::LoadContent()
         }
-        textTexture_ = Texture2D("Content/icons/text.png", device);
+        {
+            int scale = 1;
+            textTexture_ = Texture2D(Game::ScaledContentPath("Content/icons/text.png", &scale), device);
+            Game::SetTextureScale(&textTexture_, scale);
+        }
         textEffect_ = std::make_unique<BasicEffect>(device);
         textEffect_->VertexColorEnabled = false;
         textEffect_->setTextureEnabledProperty(true);
@@ -378,7 +383,11 @@ namespace GalaxyEggbert::Editor
         {
             return;
         }
-        padTexture_ = Texture2D("Content/icons/pad.png", device);
+        {
+            int scale = 1;
+            padTexture_ = Texture2D(Game::ScaledContentPath("Content/icons/pad.png", &scale), device);
+            Game::SetTextureScale(&padTexture_, scale);
+        }
         padEffect_ = std::make_unique<BasicEffect>(device);
         padEffect_->VertexColorEnabled = false;
         padEffect_->setTextureEnabledProperty(true);
@@ -410,8 +419,8 @@ namespace GalaxyEggbert::Editor
         using GalaxyEggbert::Game::TextMetrics::Width;
         device.setBlendStateProperty(BlendState::NonPremultiplied);
 
-        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        const float padSheetW = Game::LogicalWidth(padTexture_);
+        const float padSheetH = Game::LogicalHeight(padTexture_);
         std::vector<Quad> panels;
         std::vector<Quad> buttons;
         std::vector<Quad> pressedButtons;
@@ -487,8 +496,8 @@ namespace GalaxyEggbert::Editor
                                                                                                       : 1.0f);
         }
 
-        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
-        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float textSheetW = Game::LogicalWidth(textTexture_);
+        const float textSheetH = Game::LogicalHeight(textTexture_);
         std::vector<Quad> labels;
         std::vector<Quad> faintLabels;
         const auto label = [&](std::vector<Quad>& bucket, const std::string& text, float x, float y, float scale)

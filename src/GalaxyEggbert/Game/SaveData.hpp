@@ -151,6 +151,10 @@ namespace GalaxyEggbert::Game
                 frameRate_ = rate == allowed ? allowed : frameRate_;
             }
         }
+        // The textures' size (a Galaxy setting, 2026-11-09, ../ray.md): 0 auto (2x on a window at least
+        // 1000 pixels tall), 1 or 2 (Content/icons2x/, TextureScale.hpp). Applies at the next start.
+        [[nodiscard]] int GetTextureScale() const noexcept { return textureScale_; }
+        void SetTextureScale(int scale) noexcept { textureScale_ = scale == 1 || scale == 2 ? scale : 0; }
         // The next one of kFrameRates, round to 60 after the last.
         [[nodiscard]] static int NextFrameRate(int rate) noexcept
         {
@@ -285,6 +289,7 @@ namespace GalaxyEggbert::Game
         bool terrainRelief_ = kTerrainReliefDefault;
         int effectsLevel_ = kEffectsLevelDefault;
         int frameRate_ = 60;
+        int textureScale_ = 0;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
         GamerSlot galaxies_[kGamerCount];

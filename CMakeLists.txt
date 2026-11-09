@@ -180,6 +180,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/Sound.cpp
         src/GalaxyEggbert/Game/InteractionSystem.cpp
         src/GalaxyEggbert/Game/Hud.cpp
+        src/GalaxyEggbert/Game/TextureScale.cpp
         src/GalaxyEggbert/Game/TrainingHints.cpp
         src/GalaxyEggbert/Game/InputPad.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
@@ -409,6 +410,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/ObjectIcons.cpp
         src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         src/GalaxyEggbert/Game/Hud.cpp
+        src/GalaxyEggbert/Game/TextureScale.cpp
         ${GE_SHARED_SOURCES}
     )
     target_include_directories(VerifyInteractionSystem PRIVATE
@@ -471,6 +473,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     add_executable(VerifyGEInputPad
         tools/VerifyGEInputPad.cpp
         src/GalaxyEggbert/Game/InputPad.cpp
+        src/GalaxyEggbert/Game/TextureScale.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
     )
     target_include_directories(VerifyGEInputPad PRIVATE
@@ -523,6 +526,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/TerrainRelief.cpp
         src/GalaxyEggbert/Game/SwatchUv.cpp
         src/GalaxyEggbert/Game/Hud.cpp
+        src/GalaxyEggbert/Game/TextureScale.cpp
         src/GalaxyEggbert/Game/ObjectIcons.cpp
         src/GalaxyEggbert/Game/ObjectDefinitionRegistry.cpp
         ${GE_SHARED_SOURCES}

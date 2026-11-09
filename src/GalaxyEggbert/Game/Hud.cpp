@@ -1,5 +1,6 @@
 #include "Hud.hpp"
 #include "TextMetrics.hpp"
+#include "TextureScale.hpp"
 
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Matrix.hpp>
@@ -149,12 +150,19 @@ namespace GalaxyEggbert::Game
             }
         }
 
-        blupiTexture_ = Texture2D(kPaths[0], device);
-        elementTexture_ = Texture2D(kPaths[1], device);
-        textTexture_ = Texture2D(kPaths[2], device);
-        padTexture_ = Texture2D(kPaths[3], device);
-        jaugeTexture_ = Texture2D(kPaths[4], device);
-        buttonTexture_ = Texture2D(kPaths[5], device);
+        // 2x sheets when wanted (TextureScale.hpp); each texture remembers the scale it was loaded at.
+        const auto LoadScaled = [&device](Texture2D& target, const char* path)
+        {
+            int scale = 1;
+            target = Texture2D(ScaledContentPath(path, &scale), device);
+            SetTextureScale(&target, scale);
+        };
+        LoadScaled(blupiTexture_, kPaths[0]);
+        LoadScaled(elementTexture_, kPaths[1]);
+        LoadScaled(textTexture_, kPaths[2]);
+        LoadScaled(padTexture_, kPaths[3]);
+        LoadScaled(jaugeTexture_, kPaths[4]);
+        LoadScaled(buttonTexture_, kPaths[5]);
 
         const auto makeEffect = [&device](Texture2D& texture)
         {
@@ -306,8 +314,8 @@ namespace GalaxyEggbert::Game
         const auto refToScreenX = [&](float x) { return offsetX + x * scale; };
         const auto refToScreenY = [&](float y) { return y * scale; };
 
-        const float textSheetW = static_cast<float>(textTexture_.getWidthProperty());
-        const float textSheetH = static_cast<float>(textTexture_.getHeightProperty());
+        const float textSheetW = LogicalWidth(textTexture_);
+        const float textSheetH = LogicalHeight(textTexture_);
 
         // Non-Play phase overlay (plan.md HUD-023): the real HUD is fully
         // hidden, replaced by just this one big centered message.
@@ -348,14 +356,14 @@ namespace GalaxyEggbert::Game
             return;
         }
 
-        const float blupiSheetW = static_cast<float>(blupiTexture_.getWidthProperty());
-        const float blupiSheetH = static_cast<float>(blupiTexture_.getHeightProperty());
-        const float elementSheetW = static_cast<float>(elementTexture_.getWidthProperty());
-        const float elementSheetH = static_cast<float>(elementTexture_.getHeightProperty());
-        const float jaugeSheetW = static_cast<float>(jaugeTexture_.getWidthProperty());
-        const float jaugeSheetH = static_cast<float>(jaugeTexture_.getHeightProperty());
-        const float buttonSheetW = static_cast<float>(buttonTexture_.getWidthProperty());
-        const float buttonSheetH = static_cast<float>(buttonTexture_.getHeightProperty());
+        const float blupiSheetW = LogicalWidth(blupiTexture_);
+        const float blupiSheetH = LogicalHeight(blupiTexture_);
+        const float elementSheetW = LogicalWidth(elementTexture_);
+        const float elementSheetH = LogicalHeight(elementTexture_);
+        const float jaugeSheetW = LogicalWidth(jaugeTexture_);
+        const float jaugeSheetH = LogicalHeight(jaugeTexture_);
+        const float buttonSheetW = LogicalWidth(buttonTexture_);
+        const float buttonSheetH = LogicalHeight(buttonTexture_);
 
         std::vector<Quad> animQuads;
         std::vector<Quad> blupiQuads;
@@ -577,8 +585,8 @@ namespace GalaxyEggbert::Game
             panel.y1 = refToScreenY(kPanelY1);
             const int col = kPanelIcon % kPadCols;
             const int row = kPanelIcon / kPadCols;
-            const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-            const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+            const float padSheetW = LogicalWidth(padTexture_);
+            const float padSheetH = LogicalHeight(padTexture_);
             panel.u0 = (static_cast<float>(col) * kPadCellPx) / padSheetW;
             panel.v0 = (static_cast<float>(row) * kPadCellPx) / padSheetH;
             panel.u1 = (static_cast<float>(col + 1) * kPadCellPx) / padSheetW;
@@ -632,8 +640,8 @@ namespace GalaxyEggbert::Game
             speedPanel.y1 = refToScreenY(kSpeedBaseY + kSpeedTextH + kSpeedPadding);
             const int speedCol = kPanelIcon % kPadCols;
             const int speedRow = kPanelIcon / kPadCols;
-            const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-            const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+            const float padSheetW = LogicalWidth(padTexture_);
+            const float padSheetH = LogicalHeight(padTexture_);
             speedPanel.u0 = (static_cast<float>(speedCol) * kPadCellPx) / padSheetW;
             speedPanel.v0 = (static_cast<float>(speedRow) * kPadCellPx) / padSheetH;
             speedPanel.u1 = (static_cast<float>(speedCol + 1) * kPadCellPx) / padSheetW;
@@ -689,8 +697,8 @@ namespace GalaxyEggbert::Game
             panel.y1 = refToScreenY(kHintPanelY1);
             const int col = kPanelIcon % kPadCols;
             const int row = kPanelIcon / kPadCols;
-            const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
-            const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+            const float padSheetW = LogicalWidth(padTexture_);
+            const float padSheetH = LogicalHeight(padTexture_);
             panel.u0 = (static_cast<float>(col) * kPadCellPx) / padSheetW;
             panel.v0 = (static_cast<float>(row) * kPadCellPx) / padSheetH;
             panel.u1 = (static_cast<float>(col + 1) * kPadCellPx) / padSheetW;
@@ -739,7 +747,7 @@ namespace GalaxyEggbert::Game
             // Leave room for Crouch as well as Jump in either touch layout.
             const float right=(float(viewportW)-offsetX)/scale-(rightTouchControls ? 250.f : 18.f);
             const float left=right-width;
-            const float padW=float(padTexture_.getWidthProperty()),padH=float(padTexture_.getHeightProperty());
+            const float padW=LogicalWidth(padTexture_),padH=LogicalHeight(padTexture_);
             const int col=kPanelIcon%kPadCols,row=kPanelIcon/kPadCols;
             padQuads.push_back({refToScreenX(left-6),refToScreenY(top-3),refToScreenX(right+6),
                 refToScreenY(top+rowHeight*2+23),col*kPadCellPx/padW,row*kPadCellPx/padH,

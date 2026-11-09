@@ -452,6 +452,39 @@ int main()
         const auto at = [&](int x, int y) { return &out[(static_cast<std::size_t>(y) * G::TileAtlas::kPaddedWidth + x) * 4]; };
         check(at(0, 0)[0] == 255 && at(95, 50)[0] == 255 && at(96, 0)[1] == 255 && at(96 + 95, 95)[1] == 255,
               "each tile's border is its own edge colour, no neighbour bleeding in");
+        // The 2x sheet (TextureScale.hpp, Content/icons2x/object-m.png): 128-texel tiles, 2-texel gaps; its
+        // padded layout keeps a 16-texel border, so the atlas is 3200 x 3520 (inside HiDef's 4096).
+        {
+            const auto p2 = G::TileAtlas::PaddedLayoutFor(2);
+            check(p2.tile == 128 && p2.border == 16 && p2.pitch == 160 && p2.width == 3200 && p2.height == 3520,
+                  "the 2x padded atlas is 3200 x 3520: 128-texel tiles in a 16-texel border");
+            const auto p1 = G::TileAtlas::PaddedLayoutFor(1);
+            check(p1.width == G::TileAtlas::kPaddedWidth && p1.height == G::TileAtlas::kPaddedHeight &&
+                      p1.pitch == G::TileAtlas::kPaddedPitch,
+                  "the 1x padded layout is the constants'");
+            const G::TileAtlas padded2(G::TileAtlas::Layout::Padded, 2);
+            const auto uv2 = padded2.GetTileUv(10);
+            check(std::fabs(uv2.u0 - (16.0f + 10 * 160.0f) / 3200.0f) < 1e-6f &&
+                      std::fabs(uv2.v0 - 16.0f / 3520.0f) < 1e-6f && std::fabs((uv2.u1 - uv2.u0) * 3200.0f - 128.0f) < 1e-3f,
+                  "the 2x atlas puts icon 10 at column 10, 128 texels inside its border");
+            // The same two tiles at 2x.
+            constexpr int kW2 = 2 * kW, kH2 = 2 * kH;
+            std::vector<std::uint8_t> sheet2(static_cast<std::size_t>(kW2) * kH2 * 4, 0);
+            for (int y = 0; y < kH2; ++y)
+            {
+                for (int x = 0; x < kW2; ++x)
+                {
+                    const std::uint8_t* s = &sheet[(static_cast<std::size_t>(y / 2) * kW + x / 2) * 4];
+                    std::copy(s, s + 4, &sheet2[(static_cast<std::size_t>(y) * kW2 + x) * 4]);
+                }
+            }
+            const auto out2 = G::BuildPaddedSheet(sheet2.data(), kW2, kH2, 2);
+            const auto at2 = [&](int x, int y) { return &out2[(static_cast<std::size_t>(y) * 3200 + x) * 4]; };
+            check(out2.size() == static_cast<std::size_t>(3200) * 3520 * 4 && at2(0, 0)[0] == 255 &&
+                      at2(159, 100)[0] == 255 && at2(160, 0)[1] == 255 && at2(160 + 159, 159)[1] == 255 &&
+                      at2(16 + 127, 16 + 127)[0] == 255 && at2(160 + 16, 16)[1] == 255,
+                  "the 2x padded sheet: each 128-texel tile in its own colour, borders included");
+        }
         std::vector<std::uint8_t> two{0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255, 255, 255, 255, 255};
         const auto half = G::DownsampleHalf(two, 2, 2);
         check(half.size() == 4 && half[0] == 128 && half[3] == 255, "a mip texel is the mean of its 2 x 2 block");

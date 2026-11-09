@@ -1,4 +1,5 @@
 #include "EditorDeviceControls.hpp"
+#include <GalaxyEggbert/Game/TextureScale.hpp>
 
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
@@ -444,15 +445,19 @@ void EditorDeviceControls::Draw(Microsoft::Xna::Framework::Graphics::GraphicsDev
         rendering_->flat = std::make_unique<BasicEffect>(device);
         rendering_->flat->VertexColorEnabled = false;
         rendering_->flat->setTextureEnabledProperty(false);
-        rendering_->font = std::make_unique<Texture2D>("Content/icons/text.png", device);
+        {
+            int scale = 1;
+            rendering_->font = std::make_unique<Texture2D>(Game::ScaledContentPath("Content/icons/text.png", &scale), device);
+            Game::SetTextureScale(rendering_->font.get(), scale);
+        }
         rendering_->text = std::make_unique<BasicEffect>(device);
         rendering_->text->VertexColorEnabled = false;
         rendering_->text->setTextureEnabledProperty(true);
         rendering_->text->setTextureProperty(rendering_->font.get());
     }
     std::vector<Quad> panels, active, labels, cursor;
-    const float s = Scale(h), tw = float(rendering_->font->getWidthProperty()),
-                th = float(rendering_->font->getHeightProperty());
+    const float s = Scale(h), tw = Game::LogicalWidth(*rendering_->font),
+                th = Game::LogicalHeight(*rendering_->font);
     const auto label = [&](const std::string &text, Rect r, float font = .43f) {
         float x = (r.x0 + r.x1) * .5f - GalaxyEggbert::Game::TextMetrics::Width(text) * font * s * .5f;
         const float y = (r.y0 + r.y1) * .5f - 12 * font * s;

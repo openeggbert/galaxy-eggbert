@@ -627,6 +627,12 @@ namespace GalaxyEggbert::CNA
                 SavePlayerData();
                 ApplyTerrainReliefSetting();
             }
+            if (setupInput.texturesToggled)
+            {
+                // Textures: auto, 1x, 2x in turn (TextureScale.hpp); they load at the next start.
+                saveData_.SetTextureScale((saveData_.GetTextureScale() + 1) % 3);
+                SavePlayerData();
+            }
             if (setupInput.frameRateToggled)
             {
                 saveData_.SetFrameRate(GalaxyEggbert::Game::SaveData::NextFrameRate(saveData_.GetFrameRate()));

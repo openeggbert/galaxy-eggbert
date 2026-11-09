@@ -1,4 +1,5 @@
 #include "GalaxyBrowserScreen.hpp"
+#include <GalaxyEggbert/Game/TextureScale.hpp>
 
 #include "CustomWorldStorage.hpp"
 #include "PlatformFiles.hpp"
@@ -437,12 +438,20 @@ namespace GalaxyEggbert::Editor
         using Microsoft::Xna::Framework::Graphics::Texture2D;
         if (!std::filesystem::exists("Content/icons/text.png") || !std::filesystem::exists("Content/icons/pad.png"))
             return;
-        textTexture_ = Texture2D("Content/icons/text.png", device);
+        {
+            int scale = 1;
+            textTexture_ = Texture2D(Game::ScaledContentPath("Content/icons/text.png", &scale), device);
+            Game::SetTextureScale(&textTexture_, scale);
+        }
         textEffect_ = std::make_unique<BasicEffect>(device);
         textEffect_->VertexColorEnabled = false;
         textEffect_->setTextureEnabledProperty(true);
         textEffect_->setTextureProperty(&textTexture_);
-        padTexture_ = Texture2D("Content/icons/pad.png", device);
+        {
+            int scale = 1;
+            padTexture_ = Texture2D(Game::ScaledContentPath("Content/icons/pad.png", &scale), device);
+            Game::SetTextureScale(&padTexture_, scale);
+        }
         padEffect_ = std::make_unique<BasicEffect>(device);
         padEffect_->VertexColorEnabled = false;
         padEffect_->setTextureEnabledProperty(true);
@@ -458,10 +467,10 @@ namespace GalaxyEggbert::Editor
         using GalaxyEggbert::Game::QuadBatch::FlushQuads;
         using GalaxyEggbert::Game::QuadBatch::InRect;
         using GalaxyEggbert::Game::TextMetrics::Width;
-        const float padW = static_cast<float>(padTexture_.getWidthProperty());
-        const float padH = static_cast<float>(padTexture_.getHeightProperty());
-        const float textW = static_cast<float>(textTexture_.getWidthProperty());
-        const float textH = static_cast<float>(textTexture_.getHeightProperty());
+        const float padW = Game::LogicalWidth(padTexture_);
+        const float padH = Game::LogicalHeight(padTexture_);
+        const float textW = Game::LogicalWidth(textTexture_);
+        const float textH = Game::LogicalHeight(textTexture_);
         std::vector<Quad> panels, buttons, pressed, labels, faint;
         const auto icon = [&](std::vector<Quad>& bucket, const Rect& r, int index) {
             Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};

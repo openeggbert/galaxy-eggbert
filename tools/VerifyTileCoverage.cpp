@@ -89,6 +89,22 @@ int main()
               CoverageOf({}, 2) == TileCoverage::Opaque,
           "An icon the table does not have is opaque");
     check(ClassifyTileSheet(nullptr, 10, 10).empty(), "No sheet, no table");
+    {
+        // The 2x sheet (Content/icons2x/object-m.png): every texel of the 1x sheet twice each way, gaps
+        // included; classified with scale 2 it gives the 1x sheet's table.
+        const int w2 = sheet.width * 2, h2 = sheet.height * 2;
+        std::vector<std::uint8_t> alpha2(static_cast<std::size_t>(w2) * static_cast<std::size_t>(h2));
+        for (int y = 0; y < h2; ++y)
+        {
+            for (int x = 0; x < w2; ++x)
+            {
+                alpha2[static_cast<std::size_t>(y) * static_cast<std::size_t>(w2) + static_cast<std::size_t>(x)] =
+                    sheet.alpha[static_cast<std::size_t>(y / 2) * static_cast<std::size_t>(sheet.width) +
+                                static_cast<std::size_t>(x / 2)];
+            }
+        }
+        check(ClassifyTileSheet(alpha2.data(), w2, h2, 2) == coverage, "A 2x sheet classifies as its 1x sheet");
+    }
 
     // The real sheet's layout: 1301 x 1431 texels hold 20 x 22 icons.
     const std::vector<std::uint8_t> real(1301u * 1431u, 255);
