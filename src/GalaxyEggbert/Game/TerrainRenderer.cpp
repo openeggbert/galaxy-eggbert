@@ -1792,6 +1792,54 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    void TerrainRenderer::DrawGeometryPass(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                           Microsoft::Xna::Framework::Graphics::Effect& colored,
+                                           Microsoft::Xna::Framework::Graphics::Effect& plain,
+                                           Microsoft::Xna::Framework::Graphics::Effect& cutout) const
+    {
+        // As DrawShadowCasters, each mesh with the program of its vertices: the baked-colour meshes
+        // (with the occlusion) `colored`, the others `plain`.
+        auto& baked = m_ambientOcclusion ? colored : plain;
+        const auto lava = m_lavaFrames.find(m_lavaIcon);
+        if (lava != m_lavaFrames.end() && lava->second)
+        {
+            lava->second->Draw(device, plain);
+        }
+        if (m_staticRenderer)
+        {
+            m_staticRenderer->Draw(device, baked);
+        }
+        for (const auto& chunk : m_reliefChunks)
+        {
+            if (chunk.near && chunk.relief)
+            {
+                if (chunk.relief->lit)
+                {
+                    chunk.relief->lit->Draw(device, plain);
+                }
+                if (chunk.relief->cut)
+                {
+                    chunk.relief->cut->Draw(device, cutout);
+                }
+            }
+            else
+            {
+                if (chunk.cubes)
+                {
+                    chunk.cubes->Draw(device, baked);
+                }
+                if (chunk.cutouts)
+                {
+                    chunk.cutouts->Draw(device, cutout);
+                }
+            }
+        }
+        if (m_cutoutRenderer)
+        {
+            m_cutoutRenderer->Draw(device, cutout);
+        }
+    }
+
     void TerrainRenderer::DrawWater(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                     Microsoft::Xna::Framework::Graphics::Effect& effect) const
     {

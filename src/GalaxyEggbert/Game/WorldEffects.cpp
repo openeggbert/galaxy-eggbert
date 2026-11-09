@@ -300,7 +300,20 @@ namespace GalaxyEggbert::Game
             {
                 cutout.SetTexture(0, *texture);
             }
-            assets.terrainRenderer->DrawShadowCasters(device, solid, cutout);
+            // The terrain with its surface map (a mirror where smooth or metal), when Ultra has it.
+            if (assets.ultra != nullptr && assets.ultra->terrainSurface != nullptr)
+            {
+                auto& colored = m_scene.GeometryOccluded();
+                auto& plain = m_scene.GeometryLit();
+                colored.SetTexture(4, *assets.ultra->terrainSurface);
+                plain.SetTexture(4, *assets.ultra->terrainSurface);
+                device.getSamplerStatesProperty()[4] = Graphics::SamplerState::LinearWrap;
+                assets.terrainRenderer->DrawGeometryPass(device, colored, plain, cutout);
+            }
+            else
+            {
+                assets.terrainRenderer->DrawShadowCasters(device, solid, cutout);
+            }
             auto cubes = MakeLitTexturedMeshBuilder();
             for (const auto& cube : frame.cubes)
             {

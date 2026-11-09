@@ -522,6 +522,39 @@ void main()
     FragColor = Geometry();
 }
 )";
+        // The terrain's own: its texture coordinates (at `uvLocation`: 3 after the baked colour, 2 without)
+        // for the atlas's surface map, its metal and its smoothness a mirror for the reflections (a
+        // polished floor, a metal plate).
+        std::string GeometryTerrainVertex(int uvLocation)
+        {
+            return "layout(location = 0) in vec3 aPosition;\nlayout(location = " + std::to_string(uvLocation) +
+                   ") in vec2 aTexCoord;\n" + R"(
+uniform mat4 World;
+uniform mat4 View;
+uniform mat4 Projection;
+out vec3 vView;
+out vec2 vUv;
+void main()
+{
+    vec4 view = View * (World * vec4(aPosition, 1.0));
+    vView = view.xyz;
+    vUv = aTexCoord;
+    gl_Position = Projection * view;
+    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+}
+)";
+        }
+        const char* const kGeometryTerrainFragment = R"(
+uniform sampler2D uSurfaceMap; // unit 4: roughness, metalness, cavity
+in vec2 vUv;
+void main()
+{
+    vec4 surface = texture(uSurfaceMap, vUv);
+    float mirror = clamp(surface.g * (1.0 - surface.r) * 1.1 + max(0.0, 0.42 - surface.r) * 1.2, 0.0, 0.7);
+    vec4 g = Geometry();
+    FragColor = vec4(g.rgb, max(uReflect, mirror));
+}
+)";
         const char* const kGeometrySkinnedVertex = R"(
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec3 aNormal;
@@ -1044,8 +1077,12 @@ void main()
                                                    std::string(kGeometryCommon) + kGeometryCutoutFragment);
             m_geometrySkinned = CompileShaderEffect(device, "Ultra's geometry pass (models)", skin + kGeometrySkinnedVertex,
                                                     std::string(kGeometryCommon) + kGeometrySolidFragment);
+            m_geometryOccluded = CompileShaderEffect(device, "Ultra's geometry pass (terrain)", GeometryTerrainVertex(3),
+                                                     std::string(kGeometryCommon) + kGeometryTerrainFragment);
+            m_geometryLit = CompileShaderEffect(device, "Ultra's geometry pass (reliefs)", GeometryTerrainVertex(2),
+                                                std::string(kGeometryCommon) + kGeometryTerrainFragment);
             m_ultraReady = m_ultraOccluded && m_ultraLit && m_ultraModel && m_geometrySolid && m_geometryCutout &&
-                           m_geometrySkinned;
+                           m_geometrySkinned && m_geometryOccluded && m_geometryLit;
             if (m_ultraReady)
             {
                 for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get(), m_ultraModel.get()})
@@ -1078,7 +1115,8 @@ void main()
         {
             return false;
         }
-        for (auto* effect : {m_geometrySolid.get(), m_geometryCutout.get(), m_geometrySkinned.get()})
+        for (auto* effect : {m_geometrySolid.get(), m_geometryCutout.get(), m_geometrySkinned.get(), m_geometryOccluded.get(),
+                             m_geometryLit.get()})
         {
             effect->setWorldProperty(Matrix::getIdentityProperty());
             effect->setViewProperty(frame.camera.view);
@@ -1086,6 +1124,8 @@ void main()
             effect->SetUniformFloat("uReflect", 0.0f);
         }
         m_geometryCutout->SetUniformInt("uTexture", 0);
+        m_geometryOccluded->SetUniformInt("uSurfaceMap", 4);
+        m_geometryLit->SetUniformInt("uSurfaceMap", 4);
         return true;
     }
 

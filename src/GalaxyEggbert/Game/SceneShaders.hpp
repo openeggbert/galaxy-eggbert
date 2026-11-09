@@ -121,6 +121,10 @@ namespace GalaxyEggbert::Game
         bool PrepareUltra(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometrySolid() { return *m_geometrySolid; }
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometryCutout() { return *m_geometryCutout; }
+        // The terrain's (its surface map: a mirror where it is smooth or metal), for its meshes with the
+        // baked colour (Occluded) and without (Lit); the surface map bound on unit 4 by the caller.
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometryOccluded() { return *m_geometryOccluded; }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometryLit() { return *m_geometryLit; }
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* SkinnedGeometry(
             const std::vector<Microsoft::Xna::Framework::Matrix>& bones, const Microsoft::Xna::Framework::Matrix& world);
 
@@ -161,6 +165,8 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometrySolid;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometryCutout;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometrySkinned;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometryOccluded;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometryLit;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_white; // 1x1, for what is missing
         Microsoft::Xna::Framework::Graphics::SamplerState m_envSampler;
         UltraSurface m_modelSurface; // the model being drawn's own (its specular power)
