@@ -87,7 +87,8 @@ content-authoring UX, but not new gameplay mechanics.
   game is played and saved as always. Live: recorded, replayed equal, played by the menu, restored.
   Shared (2026-11-09): the positions' Export copies a position's demo to `demos/shared/A-demo-N.gdemo`
   (a download on the web), Import copies a shared `.gdemo` (the web's file picker) into a position;
-  a galaxy recording finds its world by hash in any player's galaxy, on either platform. Live on the
+  a galaxy recording finds its world by hash in any player's galaxy, on either platform. Import's
+  list pages by seven, a row's bin deletes the shared file (two clicks); the galaxy list the same. Live on the
   desktop and the web (a desktop galaxy recording imported on the web and into another player's
   galaxy on the desktop, replayed equal).
 - xnjttjpo (BD-0118, Speedy Blupi's XMISSION): typed in play, the 3D editor opens on the world being

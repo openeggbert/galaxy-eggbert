@@ -249,25 +249,36 @@ namespace GalaxyEggbert::Game
             bool exportPressed = false;
             bool importPressed = false;
             int importRow = 0; // 1-kDemoListRows: a file of the list chosen (the list shown)
+            int deleteRow = 0; // 1-kDemoListRows: the bin of that row
+            bool prevPage = false, nextPage = false;
         };
-        // Import's list of shared files (2026-11-09), in place of the positions: one row a file.
-        static constexpr int kDemoListRows = 8;
-        // @p listRows >= 0: the list of that many files is shown instead of the positions.
+        // Import's list of shared files (2026-11-09), in place of the positions: a page of rows, a
+        // file each with its bin; arrows under them when there is more than a page.
+        static constexpr int kDemoListRows = 7;
+        // @p listRows >= 0: the list's page of that many files is shown instead of the positions
+        // (@p paged: with its arrows).
         [[nodiscard]] DemoSlotsInput UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                      int viewportW, int viewportH,
-                                                     const std::vector<DemoSlotInfo>& slots, int listRows = -1) noexcept;
+                                                     const std::vector<DemoSlotInfo>& slots, int listRows = -1,
+                                                     bool paged = false) noexcept;
         // @p activeMode: 0 recording, 1 Export on, 2 Import on (its button drawn held).
-        // @p listRows: Import's file list, drawn in place of the positions (nullptr: the positions).
+        // @p listRows: the page of Import's file list, drawn in place of the positions (nullptr: the
+        // positions); @p armedRow its row whose bin was clicked once (-1 none); @p pageLabel "p / n"
+        // with the arrows (empty: one page).
         void DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                            int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message,
                            const std::string& title = "Record a demo: choose its position", int activeMode = 0,
-                           const std::vector<std::string>* listRows = nullptr);
+                           const std::vector<std::string>* listRows = nullptr, int armedRow = -1,
+                           const std::string& pageLabel = {});
         [[nodiscard]] static QuadBatch::Rect DemoSlotRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoRestoreRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoCancelRect(int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoExportRect(int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoImportRect(int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoListRowRect(int index, int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoListDeleteRect(int index, int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoListPrevRect(int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoListNextRect(int viewportW, int viewportH) noexcept;
 
         // Win/Lost screens (plan.md MENU-046..057). Real backgrounds
         // (win.png/lost.png, confirmed 640x480) plus the real

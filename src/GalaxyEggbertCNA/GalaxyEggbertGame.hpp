@@ -881,7 +881,10 @@ namespace GalaxyEggbert::CNA
         std::vector<std::string> demoImports_;
         std::vector<std::string> demoImportRows_;
         std::size_t demoImportIndex_ = 0;
+        int demoImportPage_ = 0;     // InputPad::kDemoListRows files a page
+        int demoDeleteArmed_ = -1;   // the file (index in demoImports_) whose bin was clicked once
         void ListDemoImports();
+        [[nodiscard]] int DemoImportPages() const noexcept;
         void HandleDemoSlotClick(int slot);
         void ToggleDemoImport();
         [[nodiscard]] std::string DemoImportPrompt() const;

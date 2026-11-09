@@ -86,7 +86,13 @@ with the release audit.
   as a list in place of the positions (up to 8 rows: the file, its mission or galaxy place and length,
   or why it cannot be read; `InputPad::DemoListRowRect`, mode 3 in the host): a row chooses the
   file, then a position imports it; Import from a chosen file shows the list again
-  (`demo-import-list-sheet.png`).
+  (`demo-import-list-sheet.png`). Later the same day: pages of seven with "<" / ">" and "p / n"
+  under them, a bin at each row's right end deleting the shared file on the second click in a row
+  (any other click disarms it), and the rows on the panel's own calm picture instead of a stretched
+  button (`InputPad::DemoListDeleteRect`/`DemoListPrevRect`/`DemoListNextRect`; the host's
+  `demoImportPage_`, `demoDeleteArmed_`). `VerifyGEInputPad`; live `harness/case_demo_list.py`
+  (`demo-list-sheet.png`: 9 files on two pages, one deleted, one imported from page 2). 117/117
+  CTest, golden frames equal.
 - xnjttjpo on the web: the shipped worlds there are the page's packed data, in memory, so a save
   in the xnjttjpo session is also copied into `/save/customworlds/campaign-edits/` (the editor's
   `BeginOutsideSession(backupDir, keepCopyIn)`, given only under `__EMSCRIPTEN__` for a campaign

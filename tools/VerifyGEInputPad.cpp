@@ -194,6 +194,26 @@ int main()
             check(row.importRow == 3 && row.recordSlot == 0 && beyond.importRow == 0 && underList.recordSlot == 0 &&
                       underList.importRow == 0 && last.y1 <= 380.0f && InputPad::DemoListRowRect(0, 800, 480).y0 >= 60.0f,
                   "Demo positions: Import's list in their place, a row chooses its file, the positions hidden under it");
+            const auto [bx, by] = at(InputPad::DemoListDeleteRect(1, 800, 480));
+            (void)pause.UpdateDemoSlots(mouse(bx, by, true), 800, 480, slots, 3);
+            const auto bin = pause.UpdateDemoSlots(mouse(bx, by, false), 800, 480, slots, 3);
+            const auto [px, py] = at(InputPad::DemoListNextRect(800, 480));
+            (void)pause.UpdateDemoSlots(mouse(px, py, true), 800, 480, slots, 3, true);
+            const auto next = pause.UpdateDemoSlots(mouse(px, py, false), 800, 480, slots, 3, true);
+            (void)pause.UpdateDemoSlots(mouse(px, py, true), 800, 480, slots, 3, false);
+            const auto noArrows = pause.UpdateDemoSlots(mouse(px, py, false), 800, 480, slots, 3, false);
+            bool binsIn = true;
+            for (int i = 0; i < InputPad::kDemoListRows; ++i)
+            {
+                const auto r = InputPad::DemoListRowRect(i, 800, 480), d = InputPad::DemoListDeleteRect(i, 800, 480);
+                binsIn = binsIn && d.x0 > r.x0 && d.x1 <= r.x1 && d.y0 >= r.y0 && d.y1 <= r.y1;
+            }
+            const auto prevR = InputPad::DemoListPrevRect(800, 480), nextR = InputPad::DemoListNextRect(800, 480);
+            const auto lastRow = InputPad::DemoListRowRect(InputPad::kDemoListRows - 1, 800, 480);
+            check(bin.deleteRow == 2 && bin.importRow == 0 && next.nextPage && !next.prevPage && !noArrows.nextPage &&
+                      binsIn && prevR.y0 >= lastRow.y1 && nextR.y1 <= 380.0f &&
+                      nextR.y1 <= InputPad::DemoImportRect(800, 480).y0,
+                  "Demo positions' list: a row's bin is its own control, the arrows under the rows only when paged");
             check(third.recordSlot == 3 && third.restoreSlot == 0 && restore.restoreSlot == 5 && restore.recordSlot == 0 &&
                       noOriginal.restoreSlot == 0 && noOriginal.recordSlot == 0 && cancel.cancelPressed &&
                       cancel.recordSlot == 0 && moved.recordSlot == 0 && !moved.cancelPressed && tenth.recordSlot == 10,

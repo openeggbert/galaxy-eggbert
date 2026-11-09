@@ -1407,6 +1407,27 @@ namespace GalaxyEggbert::Game
         return Rect{cx - 300.0f * s, y0, cx + 300.0f * s, y0 + 32.0f * s};
     }
 
+    QuadBatch::Rect InputPad::DemoListDeleteRect(int index, int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const Rect row = DemoListRowRect(index, viewportW, viewportH);
+        return Rect{row.x1 - 34.0f * s, row.y0 + 3.0f * s, row.x1 - 8.0f * s, row.y1 - 3.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoListPrevRect(int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx - 300.0f * s, 342.0f * s, cx - 230.0f * s, 374.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoListNextRect(int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx + 230.0f * s, 342.0f * s, cx + 300.0f * s, 374.0f * s};
+    }
+
     QuadBatch::Rect InputPad::DemoImportRect(int viewportW, int viewportH) noexcept
     {
         const float s = static_cast<float>(viewportH) / kRefH;
@@ -1416,7 +1437,8 @@ namespace GalaxyEggbert::Game
 
     InputPad::DemoSlotsInput InputPad::UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                        int viewportW, int viewportH,
-                                                       const std::vector<DemoSlotInfo>& slots, int listRows) noexcept
+                                                       const std::vector<DemoSlotInfo>& slots, int listRows,
+                                                       bool paged) noexcept
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         DemoSlotsInput result;
@@ -1424,10 +1446,14 @@ namespace GalaxyEggbert::Game
         const float y = static_cast<float>(mouse.getYProperty());
         const bool down = mouse.getLeftButtonProperty() == ButtonState::Pressed;
         // Controls: 0-9 the slots, 10-19 their Original buttons, 20 Cancel, 21 Export, 22 Import,
-        // 30-37 the list's rows (the list replaces the slots).
+        // 30-36 the list's rows, 40-46 their bins (the list replaces the slots), 50/51 its arrows.
         const auto over = [&]() {
             for (int i = 0; i < listRows && i < kDemoListRows; ++i)
+                if (InRect(x, y, DemoListDeleteRect(i, viewportW, viewportH))) return 40 + i;
+            for (int i = 0; i < listRows && i < kDemoListRows; ++i)
                 if (InRect(x, y, DemoListRowRect(i, viewportW, viewportH))) return 30 + i;
+            if (paged && InRect(x, y, DemoListPrevRect(viewportW, viewportH))) return 50;
+            if (paged && InRect(x, y, DemoListNextRect(viewportW, viewportH))) return 51;
             for (int i = 0; listRows < 0 && i < static_cast<int>(slots.size()) && i < 10; ++i)
             {
                 if (InRect(x, y, DemoSlotRect(i, viewportW, viewportH))) return i;
@@ -1448,7 +1474,10 @@ namespace GalaxyEggbert::Game
                 else if (demoSlotsControl_ == 20) result.cancelPressed = true;
                 else if (demoSlotsControl_ == 21) result.exportPressed = true;
                 else if (demoSlotsControl_ == 22) result.importPressed = true;
-                else result.importRow = demoSlotsControl_ - 29;
+                else if (demoSlotsControl_ < 40) result.importRow = demoSlotsControl_ - 29;
+                else if (demoSlotsControl_ < 50) result.deleteRow = demoSlotsControl_ - 39;
+                else if (demoSlotsControl_ == 50) result.prevPage = true;
+                else result.nextPage = true;
             }
             demoSlotsControl_ = -1;
         }
@@ -1458,7 +1487,8 @@ namespace GalaxyEggbert::Game
 
     void InputPad::DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                                  int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message,
-                                 const std::string& title, int activeMode, const std::vector<std::string>* listRows)
+                                 const std::string& title, int activeMode, const std::vector<std::string>* listRows,
+                                 int armedRow, const std::string& pageLabel)
     {
         if (!loaded_)
         {
@@ -1479,13 +1509,25 @@ namespace GalaxyEggbert::Game
         };
         icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
         centred(labels, title, w * 0.5f, 34.0f * s, 0.7f);
+        std::vector<Quad> rows; // a calm ground under each row (the panel's own picture)
         for (int i = 0; listRows != nullptr && i < static_cast<int>(listRows->size()) && i < kDemoListRows; ++i)
         {
             const Rect r = DemoListRowRect(i, viewportW, viewportH);
-            icon(demoSlotsControl_ == 30 + i ? pressed : normal, r, 21);
-            std::string row = (*listRows)[static_cast<std::size_t>(i)];
-            while (!row.empty() && TextMetrics::Width(row) * 0.45f * s > r.x1 - r.x0 - 16.0f * s) row.pop_back();
+            icon(demoSlotsControl_ == 30 + i ? pressed : rows, r, demoSlotsControl_ == 30 + i ? 21 : kInitPanelIcon);
+            icon(demoSlotsControl_ == 40 + i ? pressed : normal, DemoListDeleteRect(i, viewportW, viewportH),
+                 armedRow == i ? 13 : 20); // the tick, the bin
+            std::string row = armedRow == i ? "Delete it? Click its bin again." : (*listRows)[static_cast<std::size_t>(i)];
+            while (!row.empty() && TextMetrics::Width(row) * 0.45f * s > r.x1 - r.x0 - 52.0f * s) row.pop_back();
             AppendGamerLabel(labels, row, r.x0 + 10.0f * s, r.y0 + 6.0f * s, 0.45f, s);
+        }
+        if (listRows != nullptr && !pageLabel.empty())
+        {
+            const Rect prev = DemoListPrevRect(viewportW, viewportH), next = DemoListNextRect(viewportW, viewportH);
+            icon(demoSlotsControl_ == 50 ? pressed : normal, prev, 21);
+            icon(demoSlotsControl_ == 51 ? pressed : normal, next, 21);
+            centred(labels, "<", (prev.x0 + prev.x1) * 0.5f, prev.y0 + 6.0f * s, 0.6f);
+            centred(labels, ">", (next.x0 + next.x1) * 0.5f, next.y0 + 6.0f * s, 0.6f);
+            centred(labels, pageLabel, w * 0.5f, prev.y0 + 8.0f * s, 0.5f);
         }
         for (int i = 0; listRows == nullptr && i < static_cast<int>(slots.size()) && i < 10; ++i)
         {
@@ -1516,6 +1558,7 @@ namespace GalaxyEggbert::Game
         if (!message.empty()) centred(labels, message, w * 0.5f, 384.0f * s, 0.45f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, panels, viewportW, viewportH, 0.75f);
+        FlushQuads(device, *padEffect_, padRenderer_, rows, viewportW, viewportH, 0.6f);
         FlushQuads(device, *padEffect_, padRenderer_, normal, viewportW, viewportH, 1.0f);
         FlushQuads(device, *padEffect_, padPressedRenderer_, pressed, viewportW, viewportH, kPausePressedAlpha);
         FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
