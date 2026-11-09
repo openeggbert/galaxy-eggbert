@@ -8,6 +8,34 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## Owner's batch, evening of 2026-11-09 — verified desktop; Android not run on a device
+
+- `22c1ed3d` contact shadows without dither (separable normal/depth-weighted blur, upward faces
+  only); `608e7a3a` SSR on metal and polished floors (the geometry pass reads the surface map).
+- `8ed6ed0a` typed cheat `honest` (the owner's name for it; `nocheats` ended in the word `cheats`):
+  every cheat off and cheat entry locked until the application quits, fairplay and honest
+  included. Resume logs record it as `cheatsLocked 2`; a demo keeps the player's lock; a resume
+  reconstruction ends with it applied again. Typed words match the longest word now.
+- `1505aae6` the jeep drives off a lift onto the block beside it: its edge test (ground under
+  each end) counts the tops of lifts level with its wheels (`InteractionSystem::LiftTopsNear`,
+  `BlupiController::SetLiftTops`); it tipped and rolled back onto the lift before.
+- `0e318cb4` Ultra sprites and particles lit (sun through its shadow, sky irradiance, point
+  lights), fire/sparks/stars above white (`SceneQuad::glow`); relief GI (`ReliefChunkGi`, an
+  8x8x8x6 table per relief chunk from its far cubes' bake, read as an ambient cube;
+  `GALAXY_EFFECTS_DEBUG=gi`); the water's 2D tile replaced at medium/high/Ultra (body colour from
+  `TileTint`, waves `WaterWaves.hpp`, Fresnel clearness, glint, Snell's window from inside; Ultra's
+  geometry pass carries the waves, so the reflections ripple). Golden frames unchanged (no water).
+- `1bc1ac82` Android: the Setup's frame rate is its own row over Sound effects (the sensitivity
+  slider hid it); with the accelerometer delivering readings the stick becomes Forward/Back
+  buttons (Back = back up; the back-up button hidden; `GALAXY_ACCEL_PAD=1` shows them on a
+  desktop); the accelerometer's support is asked once instead of every tick, and the log says
+  present / started / first reading / no reading in 3 s.
+
+Open (Android, owner's reports): the accelerometer did not react on the phone and the game
+sometimes freezes until the app is restarted. Neither reproduced: no device was connected. Next:
+`adb logcat -s SDL SDL/APP GalaxyEggbertCNA` (or the whole logcat) with Accelerometer on in a
+mission, and after a freeze (when: after the app was in the background, during play, at Continue?).
+
 ## Android: own package id (2026-11-09) — installed and started on a phone
 
 The APK's `applicationId` was `org.openeggbert.speedyblupi`, the same as mobile-eggbert's Android
