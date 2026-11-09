@@ -31,6 +31,15 @@ _Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel G
   desktop); the accelerometer's support is asked once instead of every tick, and the log says
   present / started / first reading / no reading in 3 s.
 
+- `2e898a51`, `3bb6a3a4` verification and the cave sprites: `GALAXY_INTERP_TRACE=<file>` writes each
+  frame drawn in Play (live at 240 fps under Xvfb: a lift and the tank's projectile in 051 drawn
+  part way within a step, the camera's shake eased); `GALAXY_EFFECTS_DEBUG=sprites` shows Ultra's
+  sprite light; sprites and particles now take the light from around at their cell
+  (`SceneQuad::gi`, FaceIndirectLight looking up, cached by cell), so in a cave they are as dark as
+  its floor; `GALAXY_RELIEF_GI=0` draws the reliefs without their GI to compare (011 with
+  `GALAXY_TERRAIN_RELIEF=1`: 55-145 thousand of 384 thousand pixels differ). The reliefs are off by
+  default (`terrainRelief=0`): their GI shows only with the Setup's "3D terrain" on.
+
 Open (Android, owner's reports): the accelerometer did not react on the phone and the game
 sometimes freezes until the app is restarted. Neither reproduced: no device was connected. Next:
 `adb logcat -s SDL SDL/APP GalaxyEggbertCNA` (or the whole logcat) with Accelerometer on in a
