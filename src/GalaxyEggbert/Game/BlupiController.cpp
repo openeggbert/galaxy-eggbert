@@ -91,6 +91,18 @@ namespace GalaxyEggbert::Game
             ~FlightBarrierScope() { g_passesFlightBarrier = false; }
         };
 
+        // A teleporter's top is a floor from above only (IsPointSolid): for Blupi's feet, coming down
+        // onto it or standing on it, when they set off at or above it. Set round the feet's queries;
+        // every other query (his head, his sides, his feet rising) passes it.
+        float g_feetFrom = -1.0e9f;
+
+        struct FeetScope
+        {
+            float saved;
+            explicit FeetScope(float from) : saved(g_feetFrom) { g_feetFrom = from; }
+            ~FeetScope() { g_feetFrom = saved; }
+        };
+
         int ClampGrid(int v, int blocksPerAxis)
         {
             return std::clamp(v, 0, blocksPerAxis - 1);
@@ -427,6 +439,7 @@ namespace GalaxyEggbert::Game
         constexpr float kFootPoints[5][2] = {{0.0f, 0.0f}, {kFoot, 0.0f}, {-kFoot, 0.0f}, {0.0f, kFoot}, {0.0f, -kFoot}};
         if (y < m_y)
         {
+            const FeetScope feet(m_y);
             for (const auto& foot : kFootPoints)
             {
                 if (IsPointSolid(world, m_x + foot[0], m_y - 0.05f, m_z + foot[1], false, false))
@@ -477,6 +490,7 @@ namespace GalaxyEggbert::Game
             constexpr float kProbe = 9.0f / 64.0f;
             const float fx = std::sin(m_yaw);
             const float fz = -std::cos(m_yaw);
+            const FeetScope feet(m_y);
             return IsPointSolid(world, m_x + fx * kProbe, m_y - 0.05f, m_z + fz * kProbe, tempPassable, false) &&
                    IsPointSolid(world, m_x - fx * kProbe, m_y - 0.05f, m_z - fz * kProbe, tempPassable, false);
         }
@@ -509,6 +523,7 @@ namespace GalaxyEggbert::Game
 
     bool BlupiController::CanStandAt(const Worlds::World& world, float x, float y, float z, bool tempPassable)
     {
+        const FeetScope feet(y);
         return !IsPointSolid(world, x, y + 0.05f, z, tempPassable) &&
                !IsPointSolid(world, x, y + kHeadHeight, z, tempPassable) &&
                IsPointSolid(world, x, y - 0.05f, z, tempPassable, false);
@@ -605,8 +620,14 @@ namespace GalaxyEggbert::Game
             // IsEcraseur, its table_decor_quart mask empty): he walks into it, nothing stands on it.
             return false;
         }
-        if (GalaxyEggbert::BlockTypes::isTeleporter(blockType) ||
-            GalaxyEggbert::BlockTypes::isWind(blockType) ||
+        if (GalaxyEggbert::BlockTypes::isTeleporter(blockType))
+        {
+            // Its top is a floor from above (jumped on, Blupi fell through it: reported 2026-11-09), for
+            // his feet only and only from above it (g_feetFrom): he still walks into the cell under it
+            // to be teleported (GetBlockTypeAbove) and jumps under it, his head passing into it.
+            return g_feetFrom >= static_cast<float>(gy) + 1.0f - 0.02f && y - static_cast<float>(gy) >= 0.5f;
+        }
+        if (GalaxyEggbert::BlockTypes::isWind(blockType) ||
             GalaxyEggbert::BlockTypes::isWater(blockType) ||
             GalaxyEggbert::BlockTypes::isBarre(blockType))
         {
@@ -770,6 +791,7 @@ namespace GalaxyEggbert::Game
             if (!yBlocked)
             {
                 const float candidateY = startY + stepDy * static_cast<float>(i);
+                const FeetScope feet(stepDy <= 0.0f ? clearY : -1.0e9f); // a floor for feet coming down only
                 if (IsPointSolid(world, clearX, candidateY, clearZ, tempPassable, checkSubcellVertical) ||
                     (stepDy > 0.0f &&
                      IsPointSolid(world, clearX, candidateY + kHeadHeight, clearZ, tempPassable, checkSubcellVertical)) ||
@@ -810,6 +832,7 @@ namespace GalaxyEggbert::Game
         // onGround is always a ground-detection question, regardless of this
         // call's own checkSubcellVertical -- always coarse (see
         // IsPointSolid()'s own comment for why).
+        const FeetScope feet(result.y);
         result.onGround = IsPointSolid(world, result.x, result.y - 0.05f, result.z, tempPassable, false) ||
                           footprintSolid(result.x, result.y - 0.05f, result.z, true);
         return result;
@@ -1296,6 +1319,7 @@ namespace GalaxyEggbert::Game
         constexpr float kFootOffset = 11.0f / 64.0f;
         const float fx = std::sin(m_yaw) * kFootOffset;
         const float fz = -std::cos(m_yaw) * kFootOffset;
+        const FeetScope feet(m_y);
         return m_onGround && IsPointSolid(world, m_x + fx, m_y - 0.05f, m_z + fz, tempPassable, false) &&
                IsPointSolid(world, m_x - fx, m_y - 0.05f, m_z - fz, tempPassable, false);
     }

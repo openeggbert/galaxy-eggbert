@@ -1294,6 +1294,40 @@ int main(int argc, char** argv)
         check(onTeleporter.GetBlockTypeAbove(synthetic) == BlockTypes::Teleport1,
               "GetBlockTypeAbove() identifies the teleporter pillar one cell above Blupi (E3D-MIG-147 detection)");
 
+        // From above, the pillar's top is a floor (reported 2026-11-09: jumped on, Blupi fell through
+        // it): dropped over it, he lands on its top (Y=3) and stays there.
+        {
+            BlupiController dropped;
+            dropped.SetPosition(static_cast<float>(kTeleX) - 50.0f, 4.5f, static_cast<float>(kTeleZ) - 50.0f);
+            for (int i = 0; i < 240 && !dropped.IsOnGround(); ++i)
+            {
+                dropped.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            for (int i = 0; i < 30; ++i)
+            {
+                dropped.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            }
+            std::cout << "Blupi Y dropped onto the teleporter pillar: " << dropped.GetY() << std::endl;
+            check(dropped.IsOnGround() && std::fabs(dropped.GetY() - 3.0f) < 0.01f,
+                  "dropped from above, Blupi lands on the teleporter pillar's top, not through it");
+        }
+        // Jumping beneath it, his head passes into it (only feet from above stop on it): he comes back
+        // down to the floor under it.
+        {
+            BlupiController jumper;
+            jumper.SetPosition(static_cast<float>(kTeleX) - 50.0f, 1.0f, static_cast<float>(kTeleZ) - 50.0f);
+            jumper.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+            jumper.Step(synthetic, 0.0f, 0.0f, true, false, false, dt);
+            float highest = jumper.GetY();
+            for (int i = 0; i < 240; ++i)
+            {
+                jumper.Step(synthetic, 0.0f, 0.0f, false, false, false, dt);
+                highest = std::max(highest, jumper.GetY());
+            }
+            check(highest > 1.3f && jumper.IsOnGround() && std::fabs(jumper.GetY() - 1.0f) < 0.01f,
+                  "a jump beneath the teleporter rises into it and lands back on the floor under it");
+        }
+
         check(onTeleporter.TriggerTeleport(BlockTypes::Teleport1), "TriggerTeleport() returns true while grounded");
         check(onTeleporter.IsTeleporting(), "IsTeleporting() is true immediately after TriggerTeleport()");
         check(onTeleporter.GetTeleportIcon() == BlockTypes::Teleport1, "GetTeleportIcon() remembers which icon triggered it");
