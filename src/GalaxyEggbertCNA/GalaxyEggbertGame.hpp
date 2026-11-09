@@ -743,6 +743,19 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] Microsoft::Xna::Framework::Input::KeyboardState CurrentKeyboardState() const;
         void StepAutoplay();
         void UpdateTick();
+        // UpdateTick's parts (GalaxyEggbertGameUpdate.cpp): every phase's screen input, then the world in
+        // play. Each true when the tick ends there.
+        bool UpdateTickScreens(float dt, GalaxyEggbert::Game::InputPad::PlayInput& padPlayInput, bool& inputPadClaimedMouse);
+        bool UpdateTickWorld(float dt, float simDt, const GalaxyEggbert::Game::InputPad::PlayInput& padPlayInput, bool inputPadClaimedMouse);
+        bool UpdateTickCamera(float dt, float simDt, const Microsoft::Xna::Framework::Input::KeyboardState& keys,
+                              bool inputPadClaimedMouse, bool crouchHeld, bool lookUpHeld, float moveInput, float turnInput);
+        bool UpdateTickEvents(int gameOverCountBeforeUpdate, bool wasBallooned);
+        bool UpdateScreenPlay(const Microsoft::Xna::Framework::Input::KeyboardState& phaseKeys,
+                              const Microsoft::Xna::Framework::Graphics::Viewport& viewport,
+                              GalaxyEggbert::Game::InputPad::PlayInput& padPlayInput, bool& inputPadClaimedMouse,
+                              bool& mousePausePressed);
+        bool UpdateTickActions(bool actionPressedEdge, bool& actionUsed, bool& jumpPressed, float stepStartFeetY,
+                               bool tempPassable, bool wasNage, bool wasSurf);
         void CaptureInput();
         [[nodiscard]] Microsoft::Xna::Framework::Matrix BlupiModelWorld(const GalaxyEggbert::Game::CharredShape& charred) const;
         // The body's lean, render only (Decor::BlupiSearchIcon, m_blupiRealRotation; OR-0080): the
