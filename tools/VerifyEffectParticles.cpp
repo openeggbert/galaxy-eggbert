@@ -163,18 +163,26 @@ int main()
     // shown; the fire and the sparks shine above white (Ultra), the dust does not.
     {
         GalaxyEggbert::Game::EffectParticles lagged;
-        lagged.Advance(1);
+        lagged.Advance(1); // starts the clock
+        lagged.Advance(2); // a tick on: bursts emit
         lagged.Burst(ParticleKind::Fire, 3, SceneSheet::Explo, kUv, Vector3(0.0f, 0.0f, 0.0f), 4);
         lagged.Burst(ParticleKind::Dust, 3, SceneSheet::Element, kUv, Vector3(0.0f, 0.0f, 0.0f), 2);
         std::vector<GalaxyEggbert::Game::SceneBillboardBatch> now, half;
         lagged.Append(now, Vector3(1, 0, 0), Vector3(0, 1, 0));
         lagged.Append(half, Vector3(1, 0, 0), Vector3(0, 1, 0), 0.5f);
-        const auto& p0 = lagged.Particles().front();
-        const auto& q0 = now.front().quads.front();
-        const auto& q1 = half.front().quads.front();
-        const Vector3 back = p0.position - p0.velocity * 0.5f;
-        Check(q0.center == p0.position && std::fabs(q1.center.X - back.X) < 1e-6f && std::fabs(q1.center.Y - back.Y) < 1e-6f,
-              "half a tick behind: drawn back along its velocity by half of it");
+        const bool some = !lagged.Particles().empty() && !now.empty() && !now.front().quads.empty() && !half.empty() &&
+                          !half.front().quads.empty();
+        Check(some, "a burst of fire and dust to draw");
+        if (some)
+        {
+            const auto& p0 = lagged.Particles().front();
+            const auto& q0 = now.front().quads.front();
+            const auto& q1 = half.front().quads.front();
+            const Vector3 back = p0.position - p0.velocity * 0.5f;
+            Check(q0.center == p0.position && std::fabs(q1.center.X - back.X) < 1e-6f &&
+                      std::fabs(q1.center.Y - back.Y) < 1e-6f,
+                  "half a tick behind: drawn back along its velocity by half of it");
+        }
         bool glows = false, dull = false;
         for (const auto& batch : now)
             for (const auto& quad : batch.quads)
