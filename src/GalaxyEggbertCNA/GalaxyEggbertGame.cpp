@@ -20,6 +20,7 @@
 #include <limits>
 #include <sstream>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
+#include <GalaxyEggbert/Editor/PlatformFiles.hpp>
 #include <GalaxyEggbert/Editor/PlayerStartColor.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include "GalaxyEggbert/BlockTypes.hpp"
@@ -2338,6 +2339,37 @@ namespace GalaxyEggbert::CNA
         return StartDemoFile(GalaxyEggbert::Game::DemoPath(number), number);
     }
 
+    std::string GalaxyEggbertGame::ResolveDemoWorld(GalaxyEggbert::Game::DemoRecording& demo, int& galaxy) const
+    {
+        using GalaxyEggbert::Game::ResumeLog;
+        auto& start = demo.log.start;
+        galaxy = -1;
+        const auto campaign = MissionWorldPath(start.mission);
+        if (start.worldPath == campaign || !GalaxyEggbert::Editor::IsGalaxyMission(start.mission)) return campaign;
+        const auto named = GalaxyEggbert::Editor::ParseGalaxyWorldPath(start.worldPath);
+        std::vector<int> players;
+        if (named && named->second == start.mission) players.push_back(named->first);
+        for (int g = 0; g < 3; ++g)
+            if (std::find(players.begin(), players.end(), g) == players.end()) players.push_back(g);
+        for (const int g : players)
+        {
+            const auto path = GalaxyEggbert::Editor::GalaxyWorldPath(g, start.mission).generic_string();
+            const auto bytes = ReadWorldBytes(path);
+            if (bytes && ResumeLog::HashBytes(*bytes) == start.worldHash)
+            {
+                galaxy = g;
+                start.worldPath = path;
+                return path;
+            }
+        }
+        if (named && named->second == start.mission)
+        {
+            galaxy = named->first; // its world changed or is gone: reported as such
+            return start.worldPath;
+        }
+        return campaign;
+    }
+
     bool GalaxyEggbertGame::StartDemoFile(const std::string& path, int number)
     {
         using namespace GalaxyEggbert::Game;
@@ -2349,16 +2381,7 @@ namespace GalaxyEggbert::CNA
         int demoGalaxy = -1; // a recording made in a player's galaxy (BD-0119) plays from its file
         if (status == DemoLoadStatus::Ok)
         {
-            auto worldPath = MissionWorldPath(demo.log.start.mission);
-            if (demo.log.start.worldPath != worldPath)
-            {
-                const auto galaxy = GalaxyEggbert::Editor::ParseGalaxyWorldPath(demo.log.start.worldPath);
-                if (galaxy && galaxy->second == demo.log.start.mission)
-                {
-                    demoGalaxy = galaxy->first;
-                    worldPath = demo.log.start.worldPath;
-                }
-            }
+            const auto worldPath = ResolveDemoWorld(demo, demoGalaxy);
             world = ReadWorldBytes(worldPath);
             status = DemoWorldStatus(demo, worldPath, world);
             if (status == DemoLoadStatus::Ok)
@@ -2696,7 +2719,7 @@ namespace GalaxyEggbert::CNA
             if (ok)
             {
                 const int mission = demo.log.start.mission;
-                const bool galaxy = GalaxyEggbert::Editor::ParseGalaxyWorldPath(demo.log.start.worldPath).has_value();
+                const bool galaxy = demo.log.start.worldPath.find("/galaxy/world") != std::string::npos;
                 info.line2 = (galaxy ? "Galaxy " : "Mission ") + std::to_string(mission);
             }
             else if (info.recorded)
@@ -2712,6 +2735,94 @@ namespace GalaxyEggbert::CNA
         std::cout << "GalaxyEggbertCNA: " << text << std::endl;
         demoNotice_ = std::move(text);
         demoNoticeSeconds_ = 4.0f;
+    }
+
+    std::string GalaxyEggbertGame::DemoImportPrompt() const
+    {
+        if (demoImports_.empty())
+            return "Put .gdemo files in " + GalaxyEggbert::Game::SharedDemoDir() + "/ to import them.";
+        const std::string name = std::filesystem::path(demoImports_[demoImportIndex_]).filename().string();
+        return "Import " + name + ": click a position" +
+               (demoImports_.size() > 1 ? " (Import again: the next file)." : ".");
+    }
+
+    void GalaxyEggbertGame::ToggleDemoImport()
+    {
+        // Import again steps through the shared files, after the last one it is off.
+        if (demoSlotsMode_ == 2 && demoImportIndex_ + 1 < demoImports_.size())
+        {
+            ++demoImportIndex_;
+            demoSlotsMessage_ = DemoImportPrompt();
+            return;
+        }
+        if (demoSlotsMode_ == 2)
+        {
+            demoSlotsMode_ = 0;
+            demoSlotsMessage_.clear();
+            return;
+        }
+        demoSlotsMode_ = 2;
+        demoImports_ = GalaxyEggbert::Game::ListSharedDemos();
+        demoImportIndex_ = 0;
+        demoSlotsMessage_ = GalaxyEggbert::Editor::RequestUpload(GalaxyEggbert::Game::SharedDemoDir(), ".gdemo")
+                                ? "Choose a .gdemo file, then click a position."
+                                : DemoImportPrompt();
+    }
+
+    void GalaxyEggbertGame::HandleDemoSlotClick(int slot)
+    {
+        using namespace GalaxyEggbert::Game;
+        const std::string position = "Position " + std::to_string(slot);
+        if (demoSlotsMode_ == 0)
+        {
+            StartPlayerRecording(slot);
+            return;
+        }
+        if (demoSlotsMode_ == 1)
+        {
+            demoSlotsMode_ = 0;
+            const auto exported = ExportDemo(DemoSlotPath(slot), saveData_.GetSelectedGamer(), slot);
+            if (exported.empty())
+            {
+                demoSlotsMessage_ = position + " has no demo to export.";
+                return;
+            }
+            const std::string name = std::filesystem::path(exported).filename().string();
+            demoSlotsMessage_ = GalaxyEggbert::Editor::OfferDownload(exported, name)
+                                    ? "Demo " + std::to_string(slot) + " exported: downloaded as " + name + "."
+                                    : "Demo " + std::to_string(slot) + " exported to " + exported + ".";
+            std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
+            return;
+        }
+        if (demoImports_.empty())
+        {
+            demoSlotsMessage_ = DemoImportPrompt();
+            return;
+        }
+        demoSlotsMode_ = 0;
+        const std::string source = demoImports_[demoImportIndex_];
+        const std::string name = std::filesystem::path(source).filename().string();
+        const auto status = ImportDemo(source, slot);
+        if (status != DemoLoadStatus::Ok)
+        {
+            demoSlotsMessage_ = name + " cannot be imported: " + DemoLoadStatusText(status) + ".";
+            std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
+            return;
+        }
+        demoSlotInfos_ = DemoSlotInfos();
+        // Whether it can play here: its world, the campaign's or a galaxy's.
+        DemoRecording demo;
+        const auto text = ReadWorldBytes(UserDemoPath(slot));
+        int galaxy = -1;
+        bool playable = false;
+        if (text && ParseDemo(*text, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok)
+        {
+            const auto world = ResolveDemoWorld(demo, galaxy);
+            playable = DemoWorldStatus(demo, world, ReadWorldBytes(world)) == DemoLoadStatus::Ok;
+        }
+        demoSlotsMessage_ = position + " plays " + name + " now." +
+                            (playable ? "" : " Its world is not here: it is skipped until it is.");
+        std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
     }
 
     void GalaxyEggbertGame::StartPlayerRecording(int slot)
@@ -4966,9 +5077,24 @@ namespace GalaxyEggbert::CNA
                     // The demo positions over the pause screen (BD-0116).
                     const auto slots = inputPad_.UpdateDemoSlots(mouse, viewport.getWidthProperty(),
                                                                  viewport.getHeightProperty(), demoSlotInfos_);
+                    if (demoSlotsMode_ == 2 && GalaxyEggbert::Editor::ConsumeUploadDone())
+                    {
+                        demoImports_ = GalaxyEggbert::Game::ListSharedDemos();
+                        demoImportIndex_ = 0; // the file just chosen is the newest
+                        demoSlotsMessage_ = DemoImportPrompt();
+                    }
                     if (slots.recordSlot > 0)
                     {
-                        StartPlayerRecording(slots.recordSlot);
+                        HandleDemoSlotClick(slots.recordSlot);
+                    }
+                    else if (slots.exportPressed)
+                    {
+                        demoSlotsMode_ = demoSlotsMode_ == 1 ? 0 : 1;
+                        demoSlotsMessage_ = demoSlotsMode_ == 1 ? "Click a position to export its demo." : "";
+                    }
+                    else if (slots.importPressed)
+                    {
+                        ToggleDemoImport();
                     }
                     else if (slots.restoreSlot > 0)
                     {
@@ -4980,7 +5106,16 @@ namespace GalaxyEggbert::CNA
                     }
                     else if (slots.cancelPressed)
                     {
-                        demoSlotsShown_ = false;
+                        // Cancel leaves Export or Import first, then the positions.
+                        if (demoSlotsMode_ != 0)
+                        {
+                            demoSlotsMode_ = 0;
+                            demoSlotsMessage_.clear();
+                        }
+                        else
+                        {
+                            demoSlotsShown_ = false;
+                        }
                     }
                 }
                 else
@@ -4996,6 +5131,7 @@ namespace GalaxyEggbert::CNA
                     if (pauseInput.recordPressed)
                     {
                         demoSlotsShown_ = true;
+                        demoSlotsMode_ = 0;
                         demoSlotInfos_ = DemoSlotInfos();
                         demoSlotsMessage_.clear();
                     }
@@ -9508,7 +9644,11 @@ namespace GalaxyEggbert::CNA
                     phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_);
                 if (demoSlotsShown_)
                     inputPad_.DrawDemoSlots(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                            demoSlotInfos_, demoSlotsMessage_);
+                                            demoSlotInfos_, demoSlotsMessage_,
+                                            demoSlotsMode_ == 1   ? "Export a demo: choose its position"
+                                            : demoSlotsMode_ == 2 ? "Import a demo: choose its position"
+                                                                  : "Record a demo: choose its position",
+                                            demoSlotsMode_);
                 else if (demoNoticeSeconds_ > 0.0f)
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                                {demoNotice_});

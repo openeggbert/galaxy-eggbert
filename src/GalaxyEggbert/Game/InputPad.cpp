@@ -1,4 +1,6 @@
 #include "InputPad.hpp"
+
+#include <tuple>
 #include <sstream>
 #include "TextMetrics.hpp"
 #include "CheatConfig.hpp"
@@ -1382,6 +1384,20 @@ namespace GalaxyEggbert::Game
         return Rect{cx - 60.0f * s, 412.0f * s, cx + 60.0f * s, 466.0f * s};
     }
 
+    QuadBatch::Rect InputPad::DemoExportRect(int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx - 290.0f * s, 412.0f * s, cx - 170.0f * s, 466.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoImportRect(int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx + 170.0f * s, 412.0f * s, cx + 290.0f * s, 466.0f * s};
+    }
+
     InputPad::DemoSlotsInput InputPad::UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                        int viewportW, int viewportH,
                                                        const std::vector<DemoSlotInfo>& slots) noexcept
@@ -1391,7 +1407,7 @@ namespace GalaxyEggbert::Game
         const float x = static_cast<float>(mouse.getXProperty());
         const float y = static_cast<float>(mouse.getYProperty());
         const bool down = mouse.getLeftButtonProperty() == ButtonState::Pressed;
-        // Controls: 0-9 the slots, 10-19 their Original buttons, 20 Cancel.
+        // Controls: 0-9 the slots, 10-19 their Original buttons, 20 Cancel, 21 Export, 22 Import.
         const auto over = [&]() {
             for (int i = 0; i < static_cast<int>(slots.size()) && i < 10; ++i)
             {
@@ -1399,7 +1415,9 @@ namespace GalaxyEggbert::Game
                 if (slots[static_cast<std::size_t>(i)].recorded && InRect(x, y, DemoRestoreRect(i, viewportW, viewportH)))
                     return 10 + i;
             }
-            return InRect(x, y, DemoCancelRect(viewportW, viewportH)) ? 20 : -1;
+            if (InRect(x, y, DemoCancelRect(viewportW, viewportH))) return 20;
+            if (InRect(x, y, DemoExportRect(viewportW, viewportH))) return 21;
+            return InRect(x, y, DemoImportRect(viewportW, viewportH)) ? 22 : -1;
         };
         if (down && !mouseWasDown_) demoSlotsControl_ = over();
         if (!down && mouseWasDown_)
@@ -1408,7 +1426,9 @@ namespace GalaxyEggbert::Game
             {
                 if (demoSlotsControl_ < 10) result.recordSlot = demoSlotsControl_ + 1;
                 else if (demoSlotsControl_ < 20) result.restoreSlot = demoSlotsControl_ - 9;
-                else result.cancelPressed = true;
+                else if (demoSlotsControl_ == 20) result.cancelPressed = true;
+                else if (demoSlotsControl_ == 21) result.exportPressed = true;
+                else result.importPressed = true;
             }
             demoSlotsControl_ = -1;
         }
@@ -1417,7 +1437,8 @@ namespace GalaxyEggbert::Game
     }
 
     void InputPad::DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                                 int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message)
+                                 int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message,
+                                 const std::string& title, int activeMode)
     {
         if (!loaded_)
         {
@@ -1437,7 +1458,7 @@ namespace GalaxyEggbert::Game
             AppendGamerLabel(bucket, text, cx - TextMetrics::Width(text) * size * s * 0.5f, top, size, s);
         };
         icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
-        centred(labels, "Record a demo: choose its position", w * 0.5f, 34.0f * s, 0.7f);
+        centred(labels, title, w * 0.5f, 34.0f * s, 0.7f);
         for (int i = 0; i < static_cast<int>(slots.size()) && i < 10; ++i)
         {
             const auto& slot = slots[static_cast<std::size_t>(i)];
@@ -1457,6 +1478,13 @@ namespace GalaxyEggbert::Game
         const Rect cancel = DemoCancelRect(viewportW, viewportH);
         icon(demoSlotsControl_ == 20 ? pressed : normal, cancel, 21);
         centred(labels, "Cancel", (cancel.x0 + cancel.x1) * 0.5f, cancel.y0 + 16.0f * s, 0.6f);
+        for (const auto& [control, rect, caption] :
+             {std::tuple<int, Rect, const char*>{21, DemoExportRect(viewportW, viewportH), "Export"},
+              std::tuple<int, Rect, const char*>{22, DemoImportRect(viewportW, viewportH), "Import"}})
+        {
+            icon(demoSlotsControl_ == control || activeMode == control - 20 ? pressed : normal, rect, 21);
+            centred(labels, caption, (rect.x0 + rect.x1) * 0.5f, rect.y0 + 16.0f * s, 0.6f);
+        }
         if (!message.empty()) centred(labels, message, w * 0.5f, 384.0f * s, 0.45f);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
         FlushQuads(device, *padEffect_, padRenderer_, panels, viewportW, viewportH, 0.75f);

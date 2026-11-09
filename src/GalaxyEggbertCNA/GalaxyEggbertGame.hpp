@@ -799,6 +799,11 @@ namespace GalaxyEggbert::CNA
         };
         bool StartDemo(int number);
         bool StartDemoFile(const std::string& path, int number);
+        // The world file a demo plays in: the campaign's, or a galaxy's (BD-0119) -- the recording
+        // player's, else (a demo shared with its galaxy, maybe from another platform) any player's
+        // galaxy whose world has the recording's hash; @p galaxy is that player, -1 the campaign.
+        // A galaxy found under another path becomes the demo's own (demo.log.start.worldPath).
+        [[nodiscard]] std::string ResolveDemoWorld(GalaxyEggbert::Game::DemoRecording& demo, int& galaxy) const;
         // The demos after demoNumber_ in turn (DemoOrderAfter()); false when none can play.
         bool StartNextDemo();
         // The demo's end: the next demo, or the menu.
@@ -868,6 +873,15 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] std::string DemoSlotPath(int slot) const;
         [[nodiscard]] std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> DemoSlotInfos() const;
         void ShowDemoNotice(std::string text);
+        // Sharing recordings (2026-11-09): the positions' Export and Import change what a click on
+        // a position does: 0 records, 1 exports its demo, 2 imports demoImports_[demoImportIndex_]
+        // (the shared .gdemo files, newest first; Import again steps to the next one).
+        int demoSlotsMode_ = 0;
+        std::vector<std::string> demoImports_;
+        std::size_t demoImportIndex_ = 0;
+        void HandleDemoSlotClick(int slot);
+        void ToggleDemoImport();
+        [[nodiscard]] std::string DemoImportPrompt() const;
 
         // The xnjttjpo cheat (BD-0118, Speedy Blupi's XMISSION): the 3D editor on the world being
         // played, its Stop back to that mission from its start. editorMission_ is the mission

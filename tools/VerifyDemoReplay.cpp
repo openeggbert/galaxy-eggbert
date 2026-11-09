@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -177,6 +178,40 @@ int main(int argc, char** argv)
               "demos are numbered files in Content/demos/");
         check(UserDemoPath(3) == UserDemoDir() + "/demo003.gdemo" && UserDemoDir() == "demos" && kDemoSlotCount == 10,
               "the player's recording of position 3 is demos/demo003.gdemo beside savedata.txt (BD-0116)");
+    }
+
+    // ---- sharing recordings: export into demos/shared/, import into a position ----
+    {
+        // In a folder of its own: the build folder's demos/ may hold someone's recordings.
+        const auto home = std::filesystem::current_path();
+        const auto here = home / "verify-run" / "demo-share";
+        std::error_code error;
+        std::filesystem::remove_all(here, error);
+        std::filesystem::create_directories(here, error);
+        std::filesystem::current_path(here, error);
+        const std::string text = SampleDemo().Serialize();
+        std::filesystem::create_directories(UserDemoDir(), error);
+        { std::ofstream out(UserDemoPath(4), std::ios::binary); out << text; }
+        const auto exported = ExportDemo(UserDemoPath(4), 0, 4);
+        const auto none = ExportDemo(UserDemoPath(5), 0, 5);
+        std::ifstream copy(exported, std::ios::binary);
+        const std::string copied((std::istreambuf_iterator<char>(copy)), {});
+        check(SharedDemoDir() == "demos/shared" && DemoExportName(1, 7) == "B-demo-7.gdemo" &&
+                  exported == "demos/shared/A-demo-4.gdemo" && copied == text && none.empty() &&
+                  ListSharedDemos() == std::vector<std::string>{exported},
+              "a position's demo exports as demos/shared/A-demo-4.gdemo; a position without a file exports nothing");
+        { std::ofstream out(SharedDemoDir() + "/broken.gdemo", std::ios::binary); out << text.substr(0, text.size() / 2); }
+        const auto refused = ImportDemo(SharedDemoDir() + "/broken.gdemo", 6);
+        const auto missing = ImportDemo(SharedDemoDir() + "/nothing.gdemo", 6);
+        const bool untouched = !std::filesystem::exists(UserDemoPath(6));
+        const auto imported = ImportDemo(exported, 6);
+        std::ifstream six(UserDemoPath(6), std::ios::binary);
+        const std::string sixth((std::istreambuf_iterator<char>(six)), {});
+        check(refused == DemoLoadStatus::Corrupt && missing == DemoLoadStatus::Missing && untouched &&
+                  imported == DemoLoadStatus::Ok && sixth == text,
+              "an import checks the file first: a damaged or missing one writes nothing, a good one becomes position 6");
+        std::filesystem::current_path(home, error);
+        std::filesystem::remove_all(here, error);
     }
 
     // ---- the end signature ----

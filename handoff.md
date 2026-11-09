@@ -28,6 +28,18 @@ with the release audit.
   would reach the Blupi count), for a gamer whose galaxy has a main hub or progress
   (`InitGamerInfo::galaxyGates`, `SaveData::GetGalaxyGatesForGamer`). `VerifyGESaveData`; live
   (same sheet).
+- Demos shared (`DemoReplay` `SharedDemoDir`/`DemoExportName`/`ExportDemo`/`ImportDemo`/
+  `ListSharedDemos`): the demo positions (Pause > Record) have Export and Import beside Cancel.
+  Export, then a position: its demo (the player's or the shipped one) is copied to
+  `demos/shared/A-demo-N.gdemo` (downloaded on the web). Import (the web's file picker first),
+  then a position: the newest shared `.gdemo` (Import again: the next one) becomes it once
+  `ParseDemo()` accepts it; the line says whether its world is here. Cancel leaves the mode
+  first. A recording made in a galaxy finds its world by hash in any player's galaxy, also under
+  another platform's path (`ResolveDemoWorld()`, used by `StartDemoFile()`), so a demo shared
+  with its galaxy plays wherever that galaxy was imported. Tests `VerifyDemoReplay`,
+  `VerifyGEInputPad`; live `harness/case_demo_share.py` (`demo-share-sheet.png`: export of
+  position 1, import of a recording from A's galaxy into position 7 with only B's galaxy holding
+  that world, `--verify-demo` equal, 224 ticks).
 
 ## Galaxy: delete and Continue, web runtime (2026-11-09, BD-0119) — verified on desktop and web
 

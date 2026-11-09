@@ -2,6 +2,9 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <iomanip>
 #include <locale>
 #include <set>
@@ -43,6 +46,72 @@ namespace GalaxyEggbert::Game
         char name[32];
         std::snprintf(name, sizeof(name), "/demo%03d.gdemo", number);
         return UserDemoDir() + name;
+    }
+
+    std::string SharedDemoDir()
+    {
+        return UserDemoDir() + "/shared";
+    }
+
+    std::string DemoExportName(int gamer, int slot)
+    {
+        const std::string player = gamer >= 0 && gamer <= 2 ? std::string(1, static_cast<char>('A' + gamer))
+                                                            : "player" + std::to_string(gamer);
+        return player + "-demo-" + std::to_string(slot) + ".gdemo";
+    }
+
+    std::string ExportDemo(const std::string& source, int gamer, int slot)
+    {
+        std::error_code error;
+        if (!std::filesystem::is_regular_file(source, error)) return {};
+        std::filesystem::create_directories(SharedDemoDir(), error);
+        const auto target = std::filesystem::path(SharedDemoDir()) / DemoExportName(gamer, slot);
+        if (!std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing, error))
+            return {};
+        return target.generic_string();
+    }
+
+    std::vector<std::string> ListSharedDemos()
+    {
+        std::vector<std::pair<std::filesystem::file_time_type, std::string>> found;
+        std::error_code error;
+        for (const auto& entry : std::filesystem::directory_iterator(SharedDemoDir(), error))
+        {
+            if (entry.is_regular_file(error) && entry.path().extension() == ".gdemo")
+                found.emplace_back(entry.last_write_time(error), entry.path().generic_string());
+        }
+        std::sort(found.begin(), found.end(), [](const auto& a, const auto& b) {
+            return a.first != b.first ? a.first > b.first : a.second < b.second;
+        });
+        std::vector<std::string> paths;
+        for (auto& [time, path] : found) paths.push_back(std::move(path));
+        return paths;
+    }
+
+    DemoLoadStatus ImportDemo(const std::string& source, int slot)
+    {
+        std::ifstream in(source, std::ios::binary);
+        if (!in) return DemoLoadStatus::Missing;
+        const std::string text((std::istreambuf_iterator<char>(in)), {});
+        DemoRecording demo;
+        const auto status = ParseDemo(text, kDemoSimulationRevision, demo);
+        if (status != DemoLoadStatus::Ok) return status;
+        std::error_code error;
+        std::filesystem::create_directories(UserDemoDir(), error);
+        const std::string target = UserDemoPath(slot);
+        const std::string temporary = target + ".tmp";
+        {
+            std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+            out << text;
+            if (!out) return DemoLoadStatus::Missing;
+        }
+        std::filesystem::rename(temporary, target, error);
+        if (error)
+        {
+            std::filesystem::remove(temporary, error);
+            return DemoLoadStatus::Missing;
+        }
+        return DemoLoadStatus::Ok;
     }
 
     std::string DemoRecording::Serialize() const

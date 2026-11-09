@@ -157,6 +157,18 @@ int main()
             const auto [tx, ty] = at(InputPad::DemoSlotRect(9, 1280, 960));
             (void)pause.UpdateDemoSlots(mouse(tx, ty, true), 1280, 960, slots);
             const auto tenth = pause.UpdateDemoSlots(mouse(tx, ty, false), 1280, 960, slots);
+            const auto [ex, ey] = at(InputPad::DemoExportRect(800, 480));
+            (void)pause.UpdateDemoSlots(mouse(ex, ey, true), 800, 480, slots);
+            const auto exportButton = pause.UpdateDemoSlots(mouse(ex, ey, false), 800, 480, slots);
+            const auto [ix, iy] = at(InputPad::DemoImportRect(800, 480));
+            (void)pause.UpdateDemoSlots(mouse(ix, iy, true), 800, 480, slots);
+            const auto importButton = pause.UpdateDemoSlots(mouse(ix, iy, false), 800, 480, slots);
+            const auto cancelBox = InputPad::DemoCancelRect(800, 480);
+            const auto exportRect = InputPad::DemoExportRect(800, 480), importRect = InputPad::DemoImportRect(800, 480);
+            check(exportButton.exportPressed && !exportButton.importPressed && !exportButton.cancelPressed &&
+                      importButton.importPressed && !importButton.exportPressed && exportRect.x1 <= cancelBox.x0 &&
+                      cancelBox.x1 <= importRect.x0 && exportRect.x0 >= 400.0f - 320.0f && importRect.x1 <= 400.0f + 320.0f,
+                  "Demo positions: Export and Import beside Cancel, inside the panel");
             check(third.recordSlot == 3 && third.restoreSlot == 0 && restore.restoreSlot == 5 && restore.recordSlot == 0 &&
                       noOriginal.restoreSlot == 0 && noOriginal.recordSlot == 0 && cancel.cancelPressed &&
                       cancel.recordSlot == 0 && moved.recordSlot == 0 && !moved.cancelPressed && tenth.recordSlot == 10,

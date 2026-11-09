@@ -227,7 +227,9 @@ namespace GalaxyEggbert::Game
 
         // The ten demo positions (BD-0116), over the pause screen: a click on one records the
         // mission into it, "Original" under a recorded one gives it back its shipped demo, Cancel
-        // (or Escape, the caller) closes it. Released over the same control, as the menu's buttons.
+        // (or Escape, the caller) closes it. Export and Import (2026-11-09) beside Cancel switch
+        // what a click on a position does (the caller's mode, shown by the title and the button
+        // drawn pressed). Released over the same control, as the menu's buttons.
         struct DemoSlotInfo
         {
             bool recorded = false; // the player's recording, not the shipped demo
@@ -235,18 +237,24 @@ namespace GalaxyEggbert::Game
         };
         struct DemoSlotsInput
         {
-            int recordSlot = 0;  // 1-10: record into it
+            int recordSlot = 0;  // 1-10: the position clicked (record into it, or export/import it)
             int restoreSlot = 0; // 1-10: its shipped demo again
             bool cancelPressed = false;
+            bool exportPressed = false;
+            bool importPressed = false;
         };
         [[nodiscard]] DemoSlotsInput UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                      int viewportW, int viewportH,
                                                      const std::vector<DemoSlotInfo>& slots) noexcept;
+        // @p activeMode: 0 recording, 1 Export on, 2 Import on (its button drawn held).
         void DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
-                           int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message);
+                           int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message,
+                           const std::string& title = "Record a demo: choose its position", int activeMode = 0);
         [[nodiscard]] static QuadBatch::Rect DemoSlotRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoRestoreRect(int index, int viewportW, int viewportH) noexcept;
         [[nodiscard]] static QuadBatch::Rect DemoCancelRect(int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoExportRect(int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoImportRect(int viewportW, int viewportH) noexcept;
 
         // Win/Lost screens (plan.md MENU-046..057). Real backgrounds
         // (win.png/lost.png, confirmed 640x480) plus the real

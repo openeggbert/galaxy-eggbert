@@ -49,6 +49,18 @@ namespace GalaxyEggbert::Game
     [[nodiscard]] std::string UserDemoPath(int number);
     [[nodiscard]] std::string UserDemoDir();
 
+    // Sharing recordings (2026-11-09), as the editor shares worlds (ED-0012): an export is a copy in
+    // SharedDemoDir() (UserDemoDir()/shared; downloaded on the web as well), an import copies a
+    // .gdemo from there (the web's file picker writes it there) into a position.
+    [[nodiscard]] std::string SharedDemoDir();
+    // "A-demo-5.gdemo" (players A-C), "player7-demo-5.gdemo" otherwise.
+    [[nodiscard]] std::string DemoExportName(int gamer, int slot);
+    // Copies @p source (a position's demo) into SharedDemoDir() as DemoExportName() (an earlier one
+    // replaced); its path, or empty when there is no such file or the copy failed.
+    [[nodiscard]] std::string ExportDemo(const std::string& source, int gamer, int slot);
+    // The .gdemo files in SharedDemoDir(), the newest first.
+    [[nodiscard]] std::vector<std::string> ListSharedDemos();
+
     struct DemoRecording
     {
         int simulationRevision = kDemoSimulationRevision;
@@ -77,6 +89,9 @@ namespace GalaxyEggbert::Game
     // checks), normal game speed and kDemoMaxTicks. Transactional: `out` is unchanged on failure.
     // The world is checked by the host against the file it would load (DemoWorldStatus()).
     [[nodiscard]] DemoLoadStatus ParseDemo(const std::string& text, int expectedRevision, DemoRecording& out);
+    // Copies @p source into position @p slot (UserDemoPath()) once ParseDemo() accepts it (its world
+    // is the host's to find when it plays); the status, Ok when copied, and nothing written otherwise.
+    [[nodiscard]] DemoLoadStatus ImportDemo(const std::string& source, int slot);
     // Whether the recording's world is the file whose bytes these are (nullopt: unreadable).
     [[nodiscard]] DemoLoadStatus DemoWorldStatus(const DemoRecording& demo, const std::string& path,
                                                  const std::optional<std::string>& worldBytes);
