@@ -3,6 +3,9 @@
 #include <GalaxyEggbert/Game/ProceduralMaterial.hpp>
 #include <GalaxyEggbert/Game/TerrainGi.hpp>
 #include <GalaxyEggbert/Game/TerrainMaps.hpp>
+#include <GalaxyEggbert/Game/ModelSubdivision.hpp>
+
+#include <cstring>
 #include <GalaxyEggbert/Game/UltraLogic.hpp>
 
 #include <sstream>
@@ -232,6 +235,80 @@ int main()
         Check(classes.size() == 3 && classes[0] == SurfaceClass::Metal && classes[1] == SurfaceClass::Stone &&
                   classes[2] == SurfaceClass::Wood,
               "tiles told apart: even bright grey metal, busy grey stone, brown wood");
+    }
+
+    // The models made smoother (ModelSubdivision.hpp): vertices of position, normal, uv, weights, bones.
+    {
+        using namespace GalaxyEggbert::Game;
+        SubdivisionLayout layout;
+        layout.stride = 52;
+        layout.position = 0;
+        layout.normal = 12;
+        layout.uv = 24;
+        layout.weights = 32;
+        layout.bones = 48;
+        const auto make = [&](const std::vector<std::array<float, 6>>& points, std::vector<std::uint8_t> bones = {})
+        {
+            std::vector<std::uint8_t> bytes(points.size() * 52, 0);
+            for (std::size_t i = 0; i < points.size(); ++i)
+            {
+                std::memcpy(&bytes[i * 52], points[i].data(), 24);
+                const float uv[2] = {points[i][0], points[i][2]};
+                std::memcpy(&bytes[i * 52 + 24], uv, 8);
+                const float weights[4] = {1.0f, 0.0f, 0.0f, 0.0f};
+                std::memcpy(&bytes[i * 52 + 32], weights, 16);
+                bytes[i * 52 + 48] = bones.empty() ? 0 : bones[i];
+            }
+            return bytes;
+        };
+        const auto read = [](const SubdividedMesh& mesh, std::size_t i, int offset)
+        {
+            std::array<float, 3> v{};
+            std::memcpy(v.data(), &mesh.vertices[i * 52 + static_cast<std::size_t>(offset)], 12);
+            return v;
+        };
+        // A flat triangle stays flat, cut in nine.
+        const auto flat = make({{0, 0, 0, 0, 1, 0}, {1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0}});
+        const auto cut = SubdivideMesh(flat.data(), 3, {0, 1, 2}, layout, 3);
+        bool level = cut.indices.size() == 27 && cut.vertexCount == 10;
+        for (int i = 0; i < cut.vertexCount; ++i)
+        {
+            level = level && std::fabs(read(cut, static_cast<std::size_t>(i), 0)[1]) < 1e-5f;
+        }
+        Check(level, "a flat triangle stays flat, nine triangles of ten vertices");
+        // A face of an octahedron with its normals pointing out from the middle: it bulges toward the
+        // sphere (its middle further out than the flat face's).
+        const float s = 0.57735f;
+        const auto round = make({{1, 0, 0, 1, 0, 0}, {0, 1, 0, 0, 1, 0}, {0, 0, 1, 0, 0, 1}});
+        const auto bulged = SubdivideMesh(round.data(), 3, {0, 1, 2}, layout, 3);
+        float farthest = 0.0f;
+        for (int i = 0; i < bulged.vertexCount; ++i)
+        {
+            const auto p = read(bulged, static_cast<std::size_t>(i), 0);
+            farthest = std::max(farthest, std::sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]));
+        }
+        Check(farthest > s + 0.1f && farthest <= 1.0f + 1e-4f, "a smooth face bulges out toward its normals");
+        // A box's corner: three faces meeting, each its own normal: the creases keep the faces flat.
+        const auto box = make({{0, 1, 0, 0, 1, 0}, {1, 1, 0, 0, 1, 0}, {0, 1, 1, 0, 1, 0},
+                               {0, 1, 0, -1, 0, 0}, {0, 0, 0, -1, 0, 0}, {0, 1, 1, -1, 0, 0}});
+        const auto boxed = SubdivideMesh(box.data(), 6, {0, 1, 2, 3, 4, 5}, layout, 3);
+        bool flatTop = true;
+        for (int i = 0; i < 10; ++i)
+        {
+            flatTop = flatTop && std::fabs(read(boxed, static_cast<std::size_t>(i), 0)[1] - 1.0f) < 1e-4f;
+        }
+        Check(flatTop, "a box's face keeps flat where its corners are creased");
+        // The skin across two bones: the new vertices' weights sum to one.
+        const auto skinned = make({{0, 0, 0, 0, 1, 0}, {1, 0, 0, 0, 1, 0}, {0, 0, 1, 0, 1, 0}}, {0, 3, 3});
+        const auto blended = SubdivideMesh(skinned.data(), 3, {0, 1, 2}, layout, 2);
+        bool sums = true;
+        for (int i = 0; i < blended.vertexCount; ++i)
+        {
+            float w[4];
+            std::memcpy(w, &blended.vertices[static_cast<std::size_t>(i) * 52 + 32], 16);
+            sums = sums && std::fabs(w[0] + w[1] + w[2] + w[3] - 1.0f) < 1e-4f;
+        }
+        Check(sums, "the new vertices' bone weights sum to one");
     }
 
     std::printf("%s\n", failures == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED");

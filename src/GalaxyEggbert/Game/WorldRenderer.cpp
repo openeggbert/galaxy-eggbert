@@ -1,5 +1,7 @@
 #include <GalaxyEggbert/Game/WorldRenderer.hpp>
 
+#include <GalaxyEggbert/Game/ModelSubdivision.hpp>
+
 #include <GalaxyEggbert/Game/BlockModels.hpp>
 #include <GalaxyEggbert/Game/TerrainRenderer.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
@@ -370,7 +372,11 @@ namespace GalaxyEggbert::Game
                                             ? &(*model.partMaterials)[i]
                                             : nullptr);
                 shader.Apply();
-                DrawPart(device, part);
+                // Ultra: the part smoother (its subdivided copy).
+                if (!m_scene.UltraActive() || !DrawSmoothPart(device, *part.Part))
+                {
+                    DrawPart(device, part);
+                }
                 if (model.counted)
                 {
                     m_statistics.modelTriangles += part.Part->getPrimitiveCountProperty();
@@ -456,6 +462,92 @@ namespace GalaxyEggbert::Game
         {
             ++m_statistics.modelDraws;
         }
+    }
+
+    bool WorldRenderer::DrawSmoothPart(Graphics::GraphicsDevice& device, const Graphics::ModelMeshPart& part)
+    {
+        auto found = m_smoothParts.find(&part);
+        if (found == m_smoothParts.end())
+        {
+            SmoothPart smooth;
+            try
+            {
+                auto* vertexBuffer = part.getVertexBufferProperty();
+                auto* indexBuffer = part.getIndexBufferProperty();
+                const int primitives = part.getPrimitiveCountProperty();
+                if (vertexBuffer != nullptr && indexBuffer != nullptr && primitives > 0 && primitives <= 60000)
+                {
+                    const auto& declaration = vertexBuffer->getVertexDeclarationProperty();
+                    SubdivisionLayout layout;
+                    layout.stride = declaration.getVertexStrideProperty();
+                    for (const auto& element : declaration.GetVertexElements())
+                    {
+                        const auto usage = element.getVertexElementUsageProperty();
+                        const auto format = element.getVertexElementFormatProperty();
+                        const int offset = element.getOffsetProperty();
+                        if (usage == Graphics::VertexElementUsage::Position && format == Graphics::VertexElementFormat::Vector3)
+                            layout.position = offset;
+                        else if (usage == Graphics::VertexElementUsage::Normal && format == Graphics::VertexElementFormat::Vector3)
+                            layout.normal = offset;
+                        else if (usage == Graphics::VertexElementUsage::TextureCoordinate &&
+                                 format == Graphics::VertexElementFormat::Vector2 && element.getUsageIndexProperty() == 0)
+                            layout.uv = offset;
+                        else if (usage == Graphics::VertexElementUsage::BlendWeight && format == Graphics::VertexElementFormat::Vector4)
+                            layout.weights = offset;
+                        else if (usage == Graphics::VertexElementUsage::BlendIndices && format == Graphics::VertexElementFormat::Byte4)
+                            layout.bones = offset;
+                    }
+                    const int vertexCount = vertexBuffer->getVertexCountProperty();
+                    std::vector<std::uint8_t> bytes(static_cast<std::size_t>(vertexCount) * static_cast<std::size_t>(layout.stride));
+                    vertexBuffer->GetDataRawEXT(0, bytes.data(), vertexCount, layout.stride);
+                    const int count = primitives * 3;
+                    std::vector<std::uint32_t> indices(static_cast<std::size_t>(count));
+                    if (indexBuffer->getIndexElementSizeProperty() == Graphics::IndexElementSize::SixteenBits)
+                    {
+                        std::vector<std::uint16_t> narrow(static_cast<std::size_t>(count));
+                        indexBuffer->GetData(narrow.data(), part.getStartIndexProperty(), count);
+                        std::copy(narrow.begin(), narrow.end(), indices.begin());
+                    }
+                    else
+                    {
+                        indexBuffer->GetData(indices.data(), part.getStartIndexProperty(), count);
+                    }
+                    for (auto& index : indices)
+                    {
+                        index += static_cast<std::uint32_t>(part.getVertexOffsetProperty());
+                    }
+                    // Three cuts an edge where the part is small, two where it is already fine.
+                    const auto mesh = SubdivideMesh(bytes.data(), vertexCount, indices, layout, primitives <= 4000 ? 3 : 2);
+                    if (layout.position >= 0 && mesh.vertexCount > 0 && !mesh.indices.empty())
+                    {
+                        smooth.vertices = std::make_unique<Graphics::VertexBuffer>(device, declaration, mesh.vertexCount,
+                                                                                    Graphics::BufferUsage::None);
+                        smooth.vertices->SetDataRaw(mesh.vertices.data(), mesh.vertexCount, layout.stride);
+                        smooth.indices = std::make_unique<Graphics::IndexBuffer>(
+                            device, Graphics::IndexElementSize::ThirtyTwoBits, static_cast<int>(mesh.indices.size()),
+                            Graphics::BufferUsage::None);
+                        smooth.indices->SetData(mesh.indices.data(), static_cast<int>(mesh.indices.size()));
+                        smooth.vertexCount = mesh.vertexCount;
+                        smooth.primitiveCount = static_cast<int>(mesh.indices.size() / 3);
+                    }
+                }
+            }
+            catch (const std::exception& error)
+            {
+                std::cout << "GalaxyEggbertCNA: Ultra: a model part not made smoother (" << error.what() << ")." << std::endl;
+                smooth = SmoothPart{};
+            }
+            found = m_smoothParts.emplace(&part, std::move(smooth)).first;
+        }
+        const auto& smooth = found->second;
+        if (!smooth.vertices || !smooth.indices)
+        {
+            return false;
+        }
+        device.SetVertexBuffer(smooth.vertices.get());
+        device.SetIndexBuffer(smooth.indices.get());
+        device.DrawIndexedPrimitives(Graphics::PrimitiveType::TriangleList, 0, 0, smooth.vertexCount, 0, smooth.primitiveCount);
+        return true;
     }
 
     void WorldRenderer::DrawSelectionOverlay(Graphics::GraphicsDevice& device, Graphics::SkinnedEffect& effect,

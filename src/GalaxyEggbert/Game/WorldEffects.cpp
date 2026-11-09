@@ -340,6 +340,10 @@ namespace GalaxyEggbert::Game
                     continue;
                 }
                 effect->Apply();
+                if (DrawSmoothPart(device, *part.Part))
+                {
+                    continue; // as the main pass draws it, smoother
+                }
                 device.SetVertexBuffer(part.Part->getVertexBufferProperty());
                 device.SetIndexBuffer(part.Part->getIndexBufferProperty());
                 device.DrawIndexedPrimitives(Graphics::PrimitiveType::TriangleList, part.Part->getVertexOffsetProperty(), 0,

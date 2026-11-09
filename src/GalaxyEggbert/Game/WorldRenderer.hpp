@@ -14,10 +14,14 @@
 
 #include <Microsoft/Xna/Framework/Graphics/BasicEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/GraphicsDevice.hpp>
+#include <Microsoft/Xna/Framework/Graphics/IndexBuffer.hpp>
+#include <Microsoft/Xna/Framework/Graphics/ModelMeshPart.hpp>
+#include <Microsoft/Xna/Framework/Graphics/VertexBuffer.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <functional>
+#include <unordered_map>
 #include <memory>
 #include <vector>
 
@@ -63,6 +67,10 @@ namespace GalaxyEggbert::Game
         // The 3D effects' shadow map (SceneShaders.hpp): what throws a shadow, drawn from the sun into its
         // target. Before Draw() and before anything is drawn into the frame's own target; leaves the
         // screen bound. Nothing without the effects or where the device cannot.
+        // Ultra's smoother model part (ModelSubdivision.hpp): made the first time it is asked for, drawn
+        // with the effect already applied; false where it cannot be (the part is drawn as it is then).
+        bool DrawSmoothPart(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                            const Microsoft::Xna::Framework::Graphics::ModelMeshPart& part);
         // The 3D effects' shading (its sun's shadow map, for Ultra's fog).
         [[nodiscard]] const SceneShaders& Scene() const noexcept { return m_scene; }
         // Ultra's geometry pass into the bound target (UltraFinish::BeginGeometry): each pixel's normal,
@@ -121,6 +129,14 @@ namespace GalaxyEggbert::Game
         std::vector<std::unique_ptr<CnaEngine::Graphics::GpuMesh>> m_particleMeshes;
         SurfaceShaders m_surfaces;
         SceneShaders m_scene;
+        struct SmoothPart
+        {
+            std::unique_ptr<Microsoft::Xna::Framework::Graphics::VertexBuffer> vertices;
+            std::unique_ptr<Microsoft::Xna::Framework::Graphics::IndexBuffer> indices;
+            int vertexCount = 0;
+            int primitiveCount = 0;
+        };
+        std::unordered_map<const Microsoft::Xna::Framework::Graphics::ModelMeshPart*, SmoothPart> m_smoothParts;
         unsigned m_shadowFrame = 0;
         bool m_sceneShading = false; // this frame's terrain drawn with m_scene (medium and high)
         bool m_modelShading = false; // ... and the models, cubes and grass (high)
