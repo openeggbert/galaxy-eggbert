@@ -68,6 +68,7 @@ float Noise(vec2 p) { return fract(52.9829189 * fract(dot(p + uFrame * 5.588238,
         const char* const kOcclusion = R"(
 uniform sampler2D uTexture; // the geometry
 uniform vec3 uSunView;      // the way to the sun, in view space
+uniform vec3 uUpView;       // the world's up, in view space
 float DepthAt(vec2 uv)
 {
     ivec2 size = textureSize(uTexture, 0);
@@ -105,14 +106,17 @@ void main()
     }
     float ao = pow(clamp(1.0 - occluded / 12.0, 0.0, 1.0), 1.4);
     float contact = 1.0;
-    if (dot(n, uSunView) > 0.2 && g.b < 40.0)
+    // On what faces up only (floors, tops: where things stand and the small shadows at their feet
+    // matter): on walls seen edge on and on round bodies the march found their own surface again in the
+    // depth, a fine grid of false shadow.
+    if (dot(n, uSunView) > 0.2 && dot(n, uUpView) > 0.6 && g.b < 40.0)
     {
         // Thin occluders only (a tenth of a block): a thick one, Blupi's body, hides what lies behind it
         // in the depth, and the march would take that for its own shadow. Nor a surface turned as this one
         // is (its own plane, its own rounded body).
-        float step = 0.05;
-        float travelled = step * (1.0 + noise);
-        for (int i = 0; i < 10; ++i)
+        float step = 0.04;
+        float travelled = step * (1.0 + noise * 0.5);
+        for (int i = 0; i < 16; ++i)
         {
             vec3 q = p + n * 0.04 + uSunView * travelled;
             vec2 quv = Project(q);
@@ -136,27 +140,31 @@ void main()
 }
 )";
 
-        // The occlusion smoothed over 5x5, where the depth agrees (its edges kept).
+        // The occlusion smoothed along uStep (across, then down: two passes), nine taps on a Gaussian,
+        // where the depth agrees (its edges kept): the rays' per-pixel turn left no dither behind.
         const char* const kOcclusionBlur = R"(
 uniform sampler2D uTexture;  // the occlusion
 uniform sampler2D uGeometry;
+uniform vec2 uStep;
 void main()
 {
     ivec2 size = textureSize(uTexture, 0);
     ivec2 at = ivec2(gl_FragCoord.xy);
-    float d0 = texelFetch(uGeometry, at, 0).b;
+    vec4 g0 = texelFetch(uGeometry, at, 0);
+    float d0 = g0.b;
+    vec3 n0 = OctDecode(g0.rg);
     vec2 sum = vec2(0.0);
     float total = 0.0;
-    for (int y = -2; y <= 2; ++y)
+    for (int i = -4; i <= 4; ++i)
     {
-        for (int x = -2; x <= 2; ++x)
-        {
-            ivec2 q = clamp(at + ivec2(x, y), ivec2(0), size - 1);
-            float d = texelFetch(uGeometry, q, 0).b;
-            float w = exp(-abs(d - d0) / (0.04 * d0 + 0.05));
-            sum += texelFetch(uTexture, q, 0).rg * w;
-            total += w;
-        }
+        ivec2 q = clamp(at + ivec2(uStep) * i, ivec2(0), size - 1);
+        vec4 g = texelFetch(uGeometry, q, 0);
+        // The same surface: turned alike and near in depth (a surface seen edge on changes depth fast
+        // from pixel to pixel; its normal does not).
+        float w = exp(-float(i * i) / 10.0) * pow(max(dot(OctDecode(g.rg), n0), 0.0), 8.0) *
+                  exp(-abs(g.b - d0) / (0.1 * d0 + 0.1));
+        sum += texelFetch(uTexture, q, 0).rg * w;
+        total += w;
     }
     FragColor = vec4(sum / max(total, 0.0001), 0.0, 1.0);
 }
@@ -600,7 +608,7 @@ void main()
             m_tonemap = compile("the tonemapping", kTonemap);
             const std::string geometry = std::string(kCommon) + kGeometry;
             m_occlusion = CompileShaderEffect(device, "the screen's occlusion", PostVertexSource(), geometry + kOcclusion);
-            m_occlusionBlur = compile("the occlusion's blur", kOcclusionBlur);
+            m_occlusionBlur = CompileShaderEffect(device, "the occlusion's blur", PostVertexSource(), geometry + kOcclusionBlur);
             m_reflections = CompileShaderEffect(device, "the screen-space reflections", PostVertexSource(),
                                                 geometry + kReflections);
             m_fogPass = CompileShaderEffect(device, "the volumetric fog", PostVertexSource(), geometry + kFog);
@@ -665,6 +673,7 @@ void main()
                 m_geometry = target(width, height, Graphics::SurfaceFormat::Vector4, true);
                 m_occlusionRaw = target(width, height, Graphics::SurfaceFormat::Color, false);
                 m_occlusionSmooth = target(width, height, Graphics::SurfaceFormat::Color, false);
+                m_occlusionAcross = target(width, height, Graphics::SurfaceFormat::Color, false);
                 m_reflection = target(width, height, hdr, false);
                 m_fog = target(width / 2, height / 2, hdr, false);
                 for (auto& history : m_history)
@@ -780,9 +789,15 @@ void main()
         const auto toSun = Vector3::TransformNormal(Vector3(-sunDirection.X, -sunDirection.Y, -sunDirection.Z), frame.camera.view);
         const float length = std::sqrt(toSun.X * toSun.X + toSun.Y * toSun.Y + toSun.Z * toSun.Z);
         m_occlusion->SetUniformVec3("uSunView", toSun.X / length, toSun.Y / length, toSun.Z / length);
+        const auto up = Vector3::TransformNormal(Vector3(0.0f, 1.0f, 0.0f), frame.camera.view);
+        m_occlusion->SetUniformVec3("uUpView", up.X, up.Y, up.Z);
         Pass(device, m_occlusionRaw.get(), *m_geometry, *m_occlusion, m_width, m_height);
         m_occlusionBlur->SetTexture(1, *m_geometry);
-        Pass(device, m_occlusionSmooth.get(), *m_occlusionRaw, *m_occlusionBlur, m_width, m_height);
+        m_occlusionBlur->SetUniformVec2("uStep", 1.0f, 0.0f);
+        Pass(device, m_occlusionAcross.get(), *m_occlusionRaw, *m_occlusionBlur, m_width, m_height);
+        m_occlusionBlur->SetTexture(1, *m_geometry);
+        m_occlusionBlur->SetUniformVec2("uStep", 0.0f, 1.0f);
+        Pass(device, m_occlusionSmooth.get(), *m_occlusionAcross, *m_occlusionBlur, m_width, m_height);
         device.SetRenderTarget(nullptr);
         samplers[1] = saved1;
         device.setBlendStateProperty(blend);

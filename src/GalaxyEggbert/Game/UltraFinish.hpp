@@ -123,6 +123,7 @@ namespace GalaxyEggbert::Game
         Target m_geometry;                     // normal (octahedral), depth, mirror; its depth buffer
         Target m_occlusionRaw;
         Target m_occlusionSmooth;              // the shaders' screen occlusion
+        Target m_occlusionAcross;              // its blur's first pass
         Target m_reflection;                   // the reflections: colour, weight
         Target m_fog;                          // the air, half the size: light scattered in, what is left
         std::array<Target, 2> m_history;       // the TAA's results, in turn
