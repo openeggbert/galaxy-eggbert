@@ -1533,7 +1533,8 @@ namespace GalaxyEggbert::CNA
 
         terrainDrawSecret_ = TerrainDrawSecret();
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), terrainTileAtlas_, tileCoverage_,
-                                                             terrainDrawSecret_, StillModelIcons(), TerrainReliefs());
+                                                             terrainDrawSecret_, StillModelIcons(), TerrainReliefs(),
+                                                             TerrainOcclusionWanted());
         terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
         terrainReliefWarm_ = false;
         ApplyBlockModels();
@@ -1601,7 +1602,8 @@ namespace GalaxyEggbert::CNA
             terrainDrawSecret_ = TerrainDrawSecret();
             auto rebuilt =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), terrainTileAtlas_,
-                                                  tileCoverage_, terrainDrawSecret_, StillModelIcons(), TerrainReliefs());
+                                                  tileCoverage_, terrainDrawSecret_, StillModelIcons(), TerrainReliefs(),
+                                                             TerrainOcclusionWanted());
             rebuilt->SetReliefOverhangs(terrainReliefOverhangs_);
             // The unchanged chunks keep their reliefs; the changed ones are built in the background.
             rebuilt->AdoptReliefs(*terrainRenderer_);
@@ -1649,6 +1651,13 @@ namespace GalaxyEggbert::CNA
         return saveData_.GetEffects3D();
     }
 
+    bool GalaxyEggbertGame::TerrainOcclusionWanted()
+    {
+        // The 3D effects' ambient occlusion is baked into the terrain only where their terrain shader
+        // draws it (the stock effect cannot).
+        return Effects3DWanted() && worldRenderer_.TerrainShadersReady(getGraphicsDeviceProperty());
+    }
+
     bool GalaxyEggbertGame::TerrainReliefWanted() const
     {
         // GALAXY_TERRAIN_RELIEF=0 or =1 overrides the Setup's "3D terrain" (tests, measurements).
@@ -1672,7 +1681,8 @@ namespace GalaxyEggbert::CNA
         {
             terrainRenderer_ = std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(),
                                                                  terrainTileAtlas_, tileCoverage_, terrainDrawSecret_,
-                                                                 StillModelIcons(), TerrainReliefs());
+                                                                 StillModelIcons(), TerrainReliefs(),
+                                                             TerrainOcclusionWanted());
             terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
             terrainReliefWarm_ = false;
             ApplyBlockModels();
@@ -5259,6 +5269,11 @@ namespace GalaxyEggbert::CNA
                     // without them.
                     saveData_.SetEffects3D(!saveData_.GetEffects3D());
                     SavePlayerData();
+                    // The terrain built again, with or without its ambient occlusion.
+                    if (terrainRenderer_ && terrainRenderer_->AmbientOcclusion() != TerrainOcclusionWanted())
+                    {
+                        ApplyTerrainReliefSetting();
+                    }
                 }
                 if (setupInput.resetPressed)
                 {

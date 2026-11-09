@@ -12,6 +12,11 @@
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/DepthStencilState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/IEffectFog.hpp>
+#include <Microsoft/Xna/Framework/Graphics/ModelMeshPart.hpp>
+#include <Microsoft/Xna/Framework/Graphics/PrimitiveType.hpp>
+#include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
+#include <GalaxyEggbert/Game/BlockModels.hpp>
+#include <GalaxyEggbert/Game/TerrainRenderer.hpp>
 #include <Microsoft/Xna/Framework/Graphics/RasterizerState.hpp>
 
 #include <algorithm>
@@ -112,8 +117,13 @@ namespace GalaxyEggbert::Game
         }
         auto mesh = ColoredQuadBuilder();
         constexpr float kLift = 0.015f; // a hair over the ground, against depth fighting
+        const bool mapped = m_scene.ShadowMapped();
         for (const auto& shadow : frame.effects.shadows)
         {
+            if (mapped && shadow.model)
+            {
+                continue; // its model throws its real shadow (the shadow map)
+            }
             const float alpha = std::clamp(shadow.strength, 0.0f, 1.0f);
             mesh.SetColor(Color(255, 255, 255, static_cast<int>(std::lround(alpha * 255.0f))));
             // Lying on the ground: right along +X, up along -Z (its front faces +Y).
@@ -134,6 +144,102 @@ namespace GalaxyEggbert::Game
         m_shadowMesh->Draw(device, *m_shadowEffect);
         device.setDepthStencilStateProperty(Graphics::DepthStencilState::Default);
         device.setBlendStateProperty(Graphics::BlendState::Opaque);
+    }
+
+    void WorldRenderer::RenderShadowMap(Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                                        const WorldRenderAssets& assets)
+    {
+        if (!frame.world || !frame.effects.enabled || !m_scene.Prepare(device))
+        {
+            return;
+        }
+        m_scene.BeginShadowPass(device, frame);
+        if (!m_scene.ShadowMapped())
+        {
+            return;
+        }
+        device.setBlendStateProperty(Graphics::BlendState::Opaque);
+        device.setDepthStencilStateProperty(Graphics::DepthStencilState::Default);
+        // Both sides: the terrain's meshes hold only its open faces, a model may be open too.
+        device.setRasterizerStateProperty(Graphics::RasterizerState::CullNone);
+        auto& solid = m_scene.DepthSolid();
+        auto& cutout = m_scene.DepthCutout();
+        if (frame.terrain && assets.terrainRenderer != nullptr && assets.terrain != nullptr)
+        {
+            if (auto* texture = assets.terrain->getTextureProperty())
+            {
+                cutout.SetTexture(0, *texture);
+            }
+            solid.setWorldProperty(Matrix::getIdentityProperty());
+            cutout.setWorldProperty(Matrix::getIdentityProperty());
+            assets.terrainRenderer->DrawShadowCasters(device, solid, cutout);
+
+            // The lifts and crates.
+            auto cubes = MakeLitTexturedMeshBuilder();
+            for (const auto& cube : frame.cubes)
+            {
+                AddCenteredBox(cubes, cube.center, cube.size, cube.faces);
+            }
+            if (!cubes.Mesh().Empty())
+            {
+                UploadLitTexturedMesh(device, cubes.Mesh())->Draw(device, solid);
+            }
+        }
+        // The models near enough to throw a shadow into the map (it spans 44 blocks round the target).
+        const auto& focus = frame.camera.target;
+        const auto cast = [&](const SceneModel& model) {
+            if (model.model == nullptr || model.translucent)
+            {
+                return;
+            }
+            const auto at = model.world.getTranslationProperty();
+            const float dx = at.X - focus.X, dy = at.Y - focus.Y, dz = at.Z - focus.Z;
+            if (dx * dx + dy * dy + dz * dz > 32.0f * 32.0f)
+            {
+                return;
+            }
+            model.model->ComputeBoneTransformsEXT(model.clip, System::TimeSpan::FromSeconds(model.seconds), model.loop,
+                                                  m_bones);
+            auto* caster = m_scene.SkinnedCaster(m_bones, model.world);
+            if (caster == nullptr)
+            {
+                return;
+            }
+            for (const auto& part : model.model->Parts)
+            {
+                if (model.sawSeconds >= 0.0f && !IsVisibleSawPart(part.Name, model.sawSeconds))
+                {
+                    continue;
+                }
+                if (model.boothFrontOnly && IsBoothBodyPart(part.Name))
+                {
+                    continue;
+                }
+                caster->Apply();
+                device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                device.DrawIndexedPrimitives(Graphics::PrimitiveType::TriangleList, part.Part->getVertexOffsetProperty(), 0,
+                                             part.Part->getNumVerticesProperty(), part.Part->getStartIndexProperty(),
+                                             part.Part->getPrimitiveCountProperty());
+            }
+        };
+        if (assets.models != nullptr)
+        {
+            for (const auto& model : frame.opaqueModels)
+            {
+                cast(model);
+            }
+            for (const auto& model : frame.objectModels)
+            {
+                cast(model);
+            }
+            for (const auto& model : frame.translucentModels)
+            {
+                cast(model); // the translucent ones throw none (cast() skips them)
+            }
+        }
+        m_scene.EndShadowPass(device);
+        device.setRasterizerStateProperty(Graphics::RasterizerState::CullCounterClockwise);
     }
 
     void WorldRenderer::DrawParticles(Graphics::GraphicsDevice& device, const SceneFrame& frame,

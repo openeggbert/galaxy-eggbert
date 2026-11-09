@@ -13,6 +13,7 @@
 #include <GalaxyEggbert/Game/BoltMesh.hpp>
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/EffectParticles.hpp>
+#include <GalaxyEggbert/Game/SceneShaders.hpp>
 #include <GalaxyEggbert/Game/TerrainLighting.hpp>
 #include <GalaxyEggbert/Game/EnemyBlupi.hpp>
 #include <GalaxyEggbert/Game/GlueStrands.hpp>
@@ -184,7 +185,7 @@ namespace GalaxyEggbert::CNA
         // The sun's way (TerrainLighting.hpp): a shadow falls this far along X and Z per block of height.
         const float sunX = kTerrainLight.directionX / -kTerrainLight.directionY;
         const float sunZ = kTerrainLight.directionZ / -kTerrainLight.directionY;
-        const auto addShadow = [&](float x, float feetY, float z, float radius, float darkness)
+        const auto addShadow = [&](float x, float feetY, float z, float radius, float darkness, bool model)
         {
             const auto under = GroundBelow(world, x, feetY, z);
             if (!under)
@@ -206,13 +207,15 @@ namespace GalaxyEggbert::CNA
             shadow.center = Vector3(sx, ground, sz);
             shadow.radius = radius * (1.0f + height * 0.08f);
             shadow.strength = darkness * fade * std::sqrt(fade);
+            shadow.model = model;
             effects.shadows.push_back(shadow);
         };
         // Blupi's, when he is seen.
         if (phase_ != GalaxyEggbert::Def::GamePhase::Editor && cameraMode_ == CameraMode::ThirdPersonModel &&
             !(blupiModelIsReal_ && blupi_.IsAnimIconInvisible()))
         {
-            addShadow(blupi_.GetX(), blupi_.GetY() - 0.5f, blupi_.GetZ(), 0.34f, 0.55f);
+            addShadow(blupi_.GetX(), blupi_.GetY() - 0.5f, blupi_.GetZ(), 0.34f, 0.55f,
+                      blupiModelLoaded_ && !BlupiDrawnAsDeathSprite());
         }
         // Every object standing or flying in the world: pickups, enemies, vehicles (not the effects, nor
         // the lifts and crates, solid themselves).
@@ -228,7 +231,111 @@ namespace GalaxyEggbert::CNA
             {
                 continue;
             }
-            addShadow(obj.currentX, obj.currentY - 0.5f, obj.currentZ, 0.32f, 0.45f);
+            // Drawn as a 3D model, it throws its real shadow when the shadow map is drawn.
+            ObjectTextureSource sheet{};
+            int icon = 0;
+            const bool model = (ObjectSprite(obj, sheet, icon) && objectModelTable_.Find(sheet, icon) != nullptr) ||
+                               ParkedVehicleModel(obj.type).model != nullptr || EnemyBlupiModelDrawn(obj) ||
+                               ConveyorLiftModel(obj) != nullptr;
+            addShadow(obj.currentX, obj.currentY - 0.5f, obj.currentZ, 0.32f, 0.45f, model);
+        }
+
+        // What lights what is near it: explosions and the lightning first, then the nearest lava and
+        // the electrodes (SceneShaders.hpp's point lights; at most kMaxLights, the nearest first).
+        {
+            const auto& target = cameraTarget_;
+            const auto distance = [&](const Vector3& p) {
+                const float dx = p.X - target.X, dy = p.Y - target.Y, dz = p.Z - target.Z;
+                return std::sqrt(dx * dx + dy * dy + dz * dz);
+            };
+            const float t = effects.seconds;
+            std::vector<std::pair<float, ScenePointLight>> strong;
+            std::vector<std::pair<float, ScenePointLight>> weak;
+            for (const auto& obj : objects)
+            {
+                ParticleKind kind{};
+                if (!obj.active || !EffectParticleKind(obj.type, kind) || kind != ParticleKind::Fire ||
+                    !ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon).visible)
+                {
+                    continue;
+                }
+                // A blast of several objects (a crate wall) is one light: those within 3 blocks of one
+                // already lit add nothing.
+                const Vector3 at(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
+                if (std::any_of(strong.begin(), strong.end(), [&](const auto& lit) {
+                        const auto d = lit.second.position - at;
+                        return d.X * d.X + d.Y * d.Y + d.Z * d.Z < 9.0f;
+                    }))
+                {
+                    continue;
+                }
+                ScenePointLight light;
+                light.position = at;
+                light.color = Vector3(1.0f, 0.62f, 0.28f) * 0.85f;
+                light.radius = 4.5f;
+                strong.emplace_back(distance(light.position), light);
+            }
+            if (terrainRenderer_)
+            {
+                if (terrainRenderer_->BlitzShown())
+                {
+                    for (const auto& cell : terrainRenderer_->BlitzCells())
+                    {
+                        ScenePointLight light;
+                        light.position = cell;
+                        light.color = Vector3(0.6f, 0.75f, 1.0f) * 1.8f;
+                        light.radius = 6.0f;
+                        strong.emplace_back(distance(cell), light);
+                    }
+                }
+                // The lava: its nearest cells, a light every few blocks, flickering.
+                auto lava = terrainRenderer_->LavaCells();
+                std::sort(lava.begin(), lava.end(),
+                          [&](const Vector3& a, const Vector3& b) { return distance(a) < distance(b); });
+                std::vector<Vector3> chosen;
+                for (const auto& cell : lava)
+                {
+                    if (chosen.size() >= 4 || distance(cell) > 18.0f)
+                    {
+                        break;
+                    }
+                    if (std::any_of(chosen.begin(), chosen.end(), [&](const Vector3& c) {
+                            const float dx = c.X - cell.X, dz = c.Z - cell.Z;
+                            return dx * dx + dz * dz < 9.0f;
+                        }))
+                    {
+                        continue;
+                    }
+                    chosen.push_back(cell);
+                    const float flicker = 0.85f + 0.15f * std::sin(t * 7.3f + static_cast<float>(chosen.size()) * 1.7f);
+                    ScenePointLight light;
+                    light.position = cell + Vector3(0.0f, 0.45f, 0.0f);
+                    light.color = Vector3(1.0f, 0.42f, 0.1f) * (0.9f * flicker);
+                    light.radius = 3.5f;
+                    weak.emplace_back(distance(light.position), light);
+                }
+            }
+            for (const auto& cell : electrodeCells_)
+            {
+                ScenePointLight light;
+                light.position = Vector3(cell.x, cell.y, cell.z);
+                light.color = Vector3(0.55f, 0.75f, 1.0f) * 0.9f;
+                light.radius = 2.5f;
+                weak.emplace_back(distance(light.position), light);
+            }
+            const auto byDistance = [](const auto& a, const auto& b) { return a.first < b.first; };
+            std::sort(strong.begin(), strong.end(), byDistance);
+            std::sort(weak.begin(), weak.end(), byDistance);
+            for (const auto* list : {&strong, &weak})
+            {
+                for (const auto& [far, light] : *list)
+                {
+                    if (effects.lights.size() < static_cast<std::size_t>(SceneShaders::kMaxLights) && far < 30.0f)
+                    {
+                        effects.lights.push_back(light);
+                    }
+                }
+            }
         }
 
         // The explosions, splashes and sparks: their sprites become particles (EffectParticles.hpp).

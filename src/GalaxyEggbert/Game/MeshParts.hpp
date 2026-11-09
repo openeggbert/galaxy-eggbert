@@ -129,6 +129,19 @@ namespace GalaxyEggbert::Game
         return std::make_unique<GpuMeshParts>(std::move(parts));
     }
 
+    // A lit mesh with a colour per vertex (the 3D effects' ambient occlusion), PositionNormalColorTexture.
+    [[nodiscard]] inline std::unique_ptr<GpuMeshParts> UploadLitColoredTexturedMeshParts(
+        Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const CnaEngine::Graphics::MeshData& mesh)
+    {
+        std::vector<CnaEngine::Graphics::GpuMesh> parts;
+        for (const auto& part : SplitMeshData(mesh))
+        {
+            parts.push_back(CnaEngine::Graphics::GpuMesh::Upload(
+                device, part, CnaEngine::Graphics::VertexLayout::PositionNormalColorTexture()));
+        }
+        return std::make_unique<GpuMeshParts>(std::move(parts));
+    }
+
     [[nodiscard]] inline std::unique_ptr<GpuMeshParts> UploadBakedLitTexturedMeshParts(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, CnaEngine::Graphics::MeshData mesh)
     {

@@ -166,14 +166,22 @@ namespace GalaxyEggbert::Game
     {
         auto& terrain = *assets.terrainRenderer;
         SetCamera(*assets.terrain, frame.camera);
-        // The 3D effects' water and lava shaders, where the device compiles them.
-        Graphics::Effect* lavaEffect = nullptr;
-        Graphics::Effect* waterEffect = nullptr;
+        // The 3D effects' shaders, where the device compiles them: water and lava, and the terrain's
+        // shadowed, occluded, point-lit shading (SceneShaders.hpp).
+        TerrainShading shading;
         if (frame.effects.enabled && m_surfaces.Prepare(device))
         {
             m_surfaces.Update(*assets.terrain, frame);
-            lavaEffect = m_surfaces.Lava();
-            waterEffect = m_surfaces.Water();
+            shading.lava = m_surfaces.Lava();
+            shading.water = m_surfaces.Water();
+        }
+        m_sceneShading = frame.effects.enabled && m_scene.Prepare(device);
+        if (m_sceneShading)
+        {
+            m_scene.SetFrame(device, frame, *assets.terrain);
+            shading.occluded = m_scene.Occluded();
+            shading.lit = m_scene.Lit();
+            shading.cutout = m_scene.Cutout();
         }
         // The reliefs near the camera's target (Q-012), then the opaque terrain; its semi-transparent
         // pass (water) after the models.
@@ -189,7 +197,7 @@ namespace GalaxyEggbert::Game
                           << ms.count() << " ms." << std::endl;
             }
         }
-        terrain.DrawOpaque(device, *assets.terrain, lavaEffect);
+        terrain.DrawOpaque(device, *assets.terrain, &shading);
         if (frame.effects.enabled)
         {
             DrawShadows(device, frame);
@@ -201,7 +209,14 @@ namespace GalaxyEggbert::Game
         {
             // Icon 107's grass-top overlay: its own texture and effect, right after the opaque terrain.
             SetCamera(*assets.grass, frame.camera);
-            terrain.DrawGrass(device, *assets.grass);
+            if (m_sceneShading)
+            {
+                terrain.DrawGrass(device, m_scene.LitWith(assets.grass->getTextureProperty(), Matrix::getIdentityProperty()));
+            }
+            else
+            {
+                terrain.DrawGrass(device, *assets.grass);
+            }
         }
 
         if (assets.models != nullptr)
@@ -247,7 +262,7 @@ namespace GalaxyEggbert::Game
         // The terrain's semi-transparent pass after Blupi and every model, so water covers what lies
         // in it (OR-0052: a chest under water looked dry from above).
         device.setRasterizerStateProperty(Graphics::RasterizerState::CullCounterClockwise);
-        terrain.DrawTransparent(device, *assets.terrain, waterEffect);
+        terrain.DrawTransparent(device, *assets.terrain, &shading);
 
         if (terrainDrawn)
         {
@@ -269,20 +284,27 @@ namespace GalaxyEggbert::Game
         {
             AddCenteredBox(cubeMesh, cube.center, cube.size, cube.faces);
         }
+        // With the effects' shading the cubes take the terrain's light, shadows and point lights.
+        const auto cubeEffect = [&](const Matrix& world) -> Graphics::Effect& {
+            if (m_sceneShading)
+            {
+                return m_scene.LitWith(assets.cubes->getTextureProperty(), world);
+            }
+            SetCamera(*assets.cubes, frame.camera);
+            assets.cubes->World = world;
+            return *assets.cubes;
+        };
         if (!cubeMesh.Mesh().Empty())
         {
             m_cubeMesh = UploadLitTexturedMesh(device, cubeMesh.Mesh());
-            SetCamera(*assets.cubes, frame.camera);
-            m_cubeMesh->Draw(device, *assets.cubes);
+            m_cubeMesh->Draw(device, cubeEffect(Matrix::getIdentityProperty()));
         }
         for (const auto& piece : frame.cubePieces)
         {
             auto pieceMesh = MakeLitTexturedMeshBuilder();
             AddCenteredBox(pieceMesh, Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f, 1.0f, 1.0f), piece.uv);
             auto pieceRenderer = UploadLitTexturedMesh(device, pieceMesh.Mesh());
-            SetCamera(*assets.cubes, frame.camera);
-            assets.cubes->World = piece.world;
-            pieceRenderer->Draw(device, *assets.cubes);
+            pieceRenderer->Draw(device, cubeEffect(piece.world));
             assets.cubes->World = Matrix::getIdentityProperty();
         }
     }
@@ -311,6 +333,58 @@ namespace GalaxyEggbert::Game
         device.setRasterizerStateProperty(model.cull == SceneCull::Clockwise
                                               ? Graphics::RasterizerState::CullClockwise
                                               : Graphics::RasterizerState::CullCounterClockwise);
+        // With the effects' shading: the model shader (shadow, point lights), lit as `effect` is set up.
+        const bool shaded = m_sceneShading && m_scene.PrepareModel(effect, m_bones, model.world, model.alpha,
+                                                                   model.tinted, model.tint);
+        if (shaded)
+        {
+            if (model.translucent)
+            {
+                device.setBlendStateProperty(Graphics::BlendState::AlphaBlend);
+                device.setDepthStencilStateProperty(Graphics::DepthStencilState::DepthRead);
+            }
+            auto& shader = m_scene.Model();
+            const auto& parts = model.model->Parts;
+            for (std::size_t i = 0; i < parts.size(); ++i)
+            {
+                const auto& part = parts[i];
+                if (!PartShown(model, part))
+                {
+                    continue;
+                }
+                Graphics::Texture2D* texture =
+                    i < model.partTextures.size() && model.partTextures[i] != nullptr ? model.partTextures[i] : part.Texture;
+                if (texture != nullptr)
+                {
+                    shader.SetTexture(0, *texture);
+                }
+                shader.Apply();
+                DrawPart(device, part);
+                if (model.counted)
+                {
+                    m_statistics.modelTriangles += part.Part->getPrimitiveCountProperty();
+                }
+            }
+            if (model.translucent)
+            {
+                device.setBlendStateProperty(Graphics::BlendState::Opaque);
+                device.setDepthStencilStateProperty(Graphics::DepthStencilState::Default);
+            }
+            if (model.editorSelected)
+            {
+                // The selection overlay stays the stock effect's: it takes this pose.
+                effect.setWorldProperty(model.world);
+                effect.setViewProperty(frame.camera.view);
+                effect.setProjectionProperty(frame.camera.projection);
+                effect.SetBoneTransforms(m_bones);
+                DrawSelectionOverlay(device, effect, model);
+            }
+            if (model.counted)
+            {
+                ++m_statistics.modelDraws;
+            }
+            return;
+        }
         effect.setWorldProperty(model.world);
         effect.setViewProperty(frame.camera.view);
         effect.setProjectionProperty(frame.camera.projection);

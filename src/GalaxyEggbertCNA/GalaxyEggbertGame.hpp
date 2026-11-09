@@ -1206,7 +1206,10 @@ namespace GalaxyEggbert::CNA
         void DrawFrame();
         // DrawFrame's parts (GalaxyEggbertGameDraw.cpp): the 3D world, then the HUD, menus and editor
         // over it, then the frame's captures (screenshots, golden frames, autoplay shots).
-        void DrawWorld(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool& soulDrawnIn3D);
+        void DrawWorld(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                       const GalaxyEggbert::Game::WorldRenderAssets& assets);
+        // The game's loaded content the world is drawn with, lent to the renderer.
+        [[nodiscard]] GalaxyEggbert::Game::WorldRenderAssets SceneAssets();
         void DrawOverlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool soulDrawnIn3D);
         void DrawFrameCaptures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         void CheckTerrainVisibility(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
@@ -1303,6 +1306,8 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] bool TerrainReliefWanted() const;
         // The Setup's "3D effects" (SaveData::GetEffects3D), or GALAXY_EFFECTS=0/1 for tests.
         [[nodiscard]] bool Effects3DWanted() const;
+        // The terrain built with the effects' ambient occlusion (Effects3DWanted() and their shader compiles).
+        [[nodiscard]] bool TerrainOcclusionWanted();
         // After the setting changed: the reliefs loaded or dropped, the terrain built again.
         void ApplyTerrainReliefSetting();
         [[nodiscard]] bool BlupiFocusRaw() const

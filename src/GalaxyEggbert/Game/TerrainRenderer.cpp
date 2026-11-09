@@ -337,6 +337,66 @@ namespace GalaxyEggbert::Game
             return IsTerrainOccluder(world.getBlock(x, y, z), tileCoverage);
         }
 
+        // The 3D effects' ambient occlusion, baked into a vertex colour: a cube face's corner is darker the
+        // more of the cells round it (in the layer in front of the face) are solid, as the light of a sky
+        // is cut off in a corner (Minecraft's "smooth lighting"). Only the axis-aligned faces of whole
+        // cells take it (corners on the grid); every other vertex (plates, reliefs) stays white.
+        void BakeAmbientOcclusion(CnaEngine::Graphics::MeshData& mesh, const Worlds::World& world,
+                                  const std::vector<TileCoverage>& tileCoverage)
+        {
+            constexpr float kLevels[5] = {1.0f, 0.8f, 0.66f, 0.56f, 0.5f};
+            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
+            mesh.colors.assign(mesh.positions.size(), Microsoft::Xna::Framework::Color::White);
+            const auto onHalf = [](float value) {
+                const float f = value - std::floor(value);
+                return std::fabs(f - 0.5f) < 0.02f;
+            };
+            for (std::size_t i = 0; i < mesh.positions.size() && i < mesh.normals.size(); ++i)
+            {
+                const auto& p = mesh.positions[i];
+                const auto& n = mesh.normals[i];
+                const float c[3] = {p.X, p.Y, p.Z};
+                const float d[3] = {n.X, n.Y, n.Z};
+                int axis = -1;
+                for (int a = 0; a < 3; ++a)
+                {
+                    if (std::fabs(d[a]) > 0.99f)
+                    {
+                        axis = a;
+                    }
+                }
+                if (axis < 0 || !onHalf(c[0]) || !onHalf(c[1]) || !onHalf(c[2]))
+                {
+                    continue;
+                }
+                // The layer of cells in front of the face, and the four of them round this corner.
+                float front[3] = {c[0], c[1], c[2]};
+                front[axis] += (d[axis] > 0.0f ? 0.5f : -0.5f);
+                const int u = (axis + 1) % 3;
+                const int v = (axis + 2) % 3;
+                int solid = 0;
+                for (const float du : {-0.5f, 0.5f})
+                {
+                    for (const float dv : {-0.5f, 0.5f})
+                    {
+                        float cell[3] = {front[0], front[1], front[2]};
+                        cell[u] += du;
+                        cell[v] += dv;
+                        // Render space to the grid: x and z are centred on the world (kWorldCenterX/Z).
+                        const int gx = static_cast<int>(std::lround(cell[0])) + kWorldCenterX;
+                        const int gy = static_cast<int>(std::lround(cell[1]));
+                        const int gz = static_cast<int>(std::lround(cell[2])) + kWorldCenterZ;
+                        if (IsOccluderBlock(world, blocksPerAxis, gx, gy, gz, tileCoverage))
+                        {
+                            ++solid;
+                        }
+                    }
+                }
+                const float level = kLevels[solid];
+                mesh.colors[i] = Microsoft::Xna::Framework::Color(level, level, level, 1.0f);
+            }
+        }
+
         // A face of a DirectionalCube hidden by its neighbour (IsOccluderBlock), as a plain cube's
         // faces are: the machine panel (10) and its kin fill whole worlds, and drawing every face
         // between two of them overflowed the GPU's vertex buffer (D47).
@@ -547,9 +607,10 @@ namespace GalaxyEggbert::Game
                                          const TileAtlas& tileAtlas,
                                          const std::vector<TileCoverage>& tileCoverage, bool drawSecret,
                                          std::vector<std::uint16_t> modelDrawnIcons,
-                                         const TerrainReliefTable* reliefs)
+                                         const TerrainReliefTable* reliefs, bool ambientOcclusion)
         : m_reliefs(reliefs != nullptr && !reliefs->Empty() ? reliefs : nullptr), m_tileAtlas(&tileAtlas)
     {
+        m_ambientOcclusion = ambientOcclusion;
         // Icons 108/109's DirectionalCube entry reuses icon 107's own side
         // texture (DirectionalCubeTiles.cpp) -- computed once here since
         // it never changes, threaded through AppendSpecialGeometry.
@@ -1084,14 +1145,32 @@ namespace GalaxyEggbert::Game
         // terrain, so this was never reachable until now.
         if (!staticMesh.Mesh().Empty())
         {
-            m_staticRenderer = UploadLitTexturedMeshParts(device, staticMesh.Mesh());
+            if (m_ambientOcclusion)
+            {
+                auto occluded = staticMesh.Take();
+                BakeAmbientOcclusion(occluded, world, tileCoverage);
+                m_staticRenderer = UploadLitColoredTexturedMeshParts(device, occluded);
+            }
+            else
+            {
+                m_staticRenderer = UploadLitTexturedMeshParts(device, staticMesh.Mesh());
+            }
         }
 
         for (std::size_t i = 0; i < m_reliefChunks.size(); ++i)
         {
             if (!reliefChunkCubes[i].Mesh().Empty())
             {
-                m_reliefChunks[i].cubes = UploadLitTexturedMeshParts(device, reliefChunkCubes[i].Mesh());
+                if (m_ambientOcclusion)
+                {
+                    auto occluded = reliefChunkCubes[i].Take();
+                    BakeAmbientOcclusion(occluded, world, tileCoverage);
+                    m_reliefChunks[i].cubes = UploadLitColoredTexturedMeshParts(device, occluded);
+                }
+                else
+                {
+                    m_reliefChunks[i].cubes = UploadLitTexturedMeshParts(device, reliefChunkCubes[i].Mesh());
+                }
             }
             if (!reliefChunkGrass[i].Mesh().Empty())
             {
@@ -1099,7 +1178,12 @@ namespace GalaxyEggbert::Game
             }
             if (!reliefChunkCutouts[i].Mesh().Empty())
             {
-                m_reliefChunks[i].cutouts = UploadBakedLitTexturedMeshParts(device, reliefChunkCutouts[i].Take());
+                auto cutouts = reliefChunkCutouts[i].Take();
+                if (m_ambientOcclusion)
+                {
+                    BakeAmbientOcclusion(cutouts, world, tileCoverage);
+                }
+                m_reliefChunks[i].cutouts = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
             }
             m_reliefChunks[i].signature = ReliefSignature(m_reliefChunks[i].cells);
         }
@@ -1110,7 +1194,12 @@ namespace GalaxyEggbert::Game
         {
             if (!cutoutMesh.Mesh().Empty())
             {
-                m_cutoutRenderer = UploadBakedLitTexturedMeshParts(device, cutoutMesh.Take());
+                auto cutouts = cutoutMesh.Take();
+                if (m_ambientOcclusion)
+                {
+                    BakeAmbientOcclusion(cutouts, world, tileCoverage);
+                }
+                m_cutoutRenderer = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
             }
             m_cutoutEffect = std::make_unique<Microsoft::Xna::Framework::Graphics::AlphaTestEffect>(device);
             m_cutoutEffect->setVertexColorEnabledProperty(true);
@@ -1587,8 +1676,17 @@ namespace GalaxyEggbert::Game
 
     void TerrainRenderer::DrawOpaque(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                        Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                                       Microsoft::Xna::Framework::Graphics::Effect* lavaEffect) const
+                                       const TerrainShading* shading) const
     {
+        Microsoft::Xna::Framework::Graphics::Effect* lavaEffect = shading != nullptr ? shading->lava : nullptr;
+        // The static mesh and the far cubes: their occluded shader when the mesh carries the occlusion.
+        Microsoft::Xna::Framework::Graphics::Effect& cubesEffect =
+            shading != nullptr && shading->occluded != nullptr && m_ambientOcclusion
+                ? *shading->occluded
+                : static_cast<Microsoft::Xna::Framework::Graphics::Effect&>(effect);
+        Microsoft::Xna::Framework::Graphics::Effect& reliefEffect =
+            shading != nullptr && shading->lit != nullptr ? *shading->lit
+                                                         : static_cast<Microsoft::Xna::Framework::Graphics::Effect&>(effect);
         // The recovered lava pool samples only the tile's solid body (AppendLavaCell).
         // Write its depth before models, including translucent ghost/Hide Blupi: drawing
         // lava in the final blended pass painted pools behind him over his silhouette.
@@ -1599,7 +1697,7 @@ namespace GalaxyEggbert::Game
         }
         if (m_staticRenderer)
         {
-            m_staticRenderer->Draw(device, effect);
+            m_staticRenderer->Draw(device, cubesEffect);
         }
         for (const auto& chunk : m_reliefChunks)
         {
@@ -1607,16 +1705,38 @@ namespace GalaxyEggbert::Game
             {
                 if (chunk.relief->lit)
                 {
-                    chunk.relief->lit->Draw(device, effect);
+                    chunk.relief->lit->Draw(device, reliefEffect);
                 }
             }
             else if (chunk.cubes)
             {
-                chunk.cubes->Draw(device, effect);
+                chunk.cubes->Draw(device, cubesEffect);
             }
         }
 
-        if (m_cutoutEffect)
+        if (m_cutoutEffect && shading != nullptr && shading->cutout != nullptr)
+        {
+            // The effects' cutout shader (it tests the alpha itself).
+            if (m_cutoutRenderer)
+            {
+                m_cutoutRenderer->Draw(device, *shading->cutout);
+            }
+            for (const auto& chunk : m_reliefChunks)
+            {
+                if (chunk.near && chunk.relief)
+                {
+                    if (chunk.relief->cut)
+                    {
+                        chunk.relief->cut->Draw(device, *shading->cutout);
+                    }
+                }
+                else if (chunk.cutouts)
+                {
+                    chunk.cutouts->Draw(device, *shading->cutout);
+                }
+            }
+        }
+        else if (m_cutoutEffect)
         {
             // Opaque where drawn, so it writes depth like the static mesh;
             // the clear texels are discarded by the alpha test.
@@ -1655,8 +1775,9 @@ namespace GalaxyEggbert::Game
 
     void TerrainRenderer::DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                             Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                                            Microsoft::Xna::Framework::Graphics::Effect* waterEffect) const
+                                            const TerrainShading* shading) const
     {
+        Microsoft::Xna::Framework::Graphics::Effect* waterEffect = shading != nullptr ? shading->water : nullptr;
         const auto blitz = m_blitzFrames.find(m_blitzIcon);
         const GpuMeshParts* blitzRenderer = blitz != m_blitzFrames.end() ? blitz->second.get() : nullptr;
         const GpuMeshParts* windRenderer =
@@ -1716,8 +1837,74 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    void TerrainRenderer::DrawShadowCasters(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                            Microsoft::Xna::Framework::Graphics::Effect& solid,
+                                            Microsoft::Xna::Framework::Graphics::Effect& cutout) const
+    {
+        const auto lava = m_lavaFrames.find(m_lavaIcon);
+        if (lava != m_lavaFrames.end() && lava->second)
+        {
+            lava->second->Draw(device, solid);
+        }
+        if (m_staticRenderer)
+        {
+            m_staticRenderer->Draw(device, solid);
+        }
+        for (const auto& chunk : m_reliefChunks)
+        {
+            if (chunk.near && chunk.relief)
+            {
+                if (chunk.relief->lit)
+                {
+                    chunk.relief->lit->Draw(device, solid);
+                }
+                if (chunk.relief->cut)
+                {
+                    chunk.relief->cut->Draw(device, cutout);
+                }
+            }
+            else
+            {
+                if (chunk.cubes)
+                {
+                    chunk.cubes->Draw(device, solid);
+                }
+                if (chunk.cutouts)
+                {
+                    chunk.cutouts->Draw(device, cutout);
+                }
+            }
+        }
+        if (m_cutoutRenderer)
+        {
+            m_cutoutRenderer->Draw(device, cutout);
+        }
+    }
+
+    std::vector<Microsoft::Xna::Framework::Vector3> TerrainRenderer::LavaCells() const
+    {
+        std::vector<Microsoft::Xna::Framework::Vector3> cells;
+        cells.reserve(m_lavaBlocks.size());
+        for (const auto& block : m_lavaBlocks)
+        {
+            cells.emplace_back(block.x, block.y, block.z);
+        }
+        return cells;
+    }
+
+    std::vector<Microsoft::Xna::Framework::Vector3> TerrainRenderer::BlitzCells() const
+    {
+        std::vector<Microsoft::Xna::Framework::Vector3> cells;
+        cells.reserve(m_blitzBlocks.size());
+        for (const auto& block : m_blitzBlocks)
+        {
+            cells.emplace_back(block.x, block.y, block.z);
+        }
+        return cells;
+    }
+
     void TerrainRenderer::DrawGrass(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                      Microsoft::Xna::Framework::Graphics::BasicEffect& grassEffect) const
+                                      Microsoft::Xna::Framework::Graphics::Effect& grassEffect) const
     {
         if (m_grassRenderer)
         {

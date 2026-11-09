@@ -41,6 +41,17 @@ namespace GalaxyEggbert::Game
     // sixth mesh drawn with an alpha test, and the faint ones (TileCoverage::Translucent:
     // cobwebs) join the alpha-blended static mesh. The recovered 3D lava pools have their own
     // cached frame meshes, drawn opaque with depth writes: only their tile's solid body is sampled.
+    // The 3D effects' terrain shaders (SceneShaders.hpp), each in place of the stock effect for the meshes
+    // of its vertex layout; nullptr keeps the stock one.
+    struct TerrainShading
+    {
+        Microsoft::Xna::Framework::Graphics::Effect* occluded = nullptr; // static + far cubes (with ambient occlusion)
+        Microsoft::Xna::Framework::Graphics::Effect* lit = nullptr;      // the reliefs (position, normal, uv)
+        Microsoft::Xna::Framework::Graphics::Effect* cutout = nullptr;   // the cutouts (position, baked colour, uv)
+        Microsoft::Xna::Framework::Graphics::Effect* lava = nullptr;
+        Microsoft::Xna::Framework::Graphics::Effect* water = nullptr;
+    };
+
     class TerrainRenderer
     {
     public:
@@ -55,7 +66,12 @@ namespace GalaxyEggbert::Game
                           std::vector<std::uint16_t> modelDrawnIcons = {},
                           // Tiles drawn as their scene's relief near the focus (UpdateRelief, Q-012);
                           // must outlive the renderer.
-                          const TerrainReliefTable* reliefs = nullptr);
+                          const TerrainReliefTable* reliefs = nullptr,
+                          // The 3D effects' ambient occlusion: the static mesh and the far chunks' cubes
+                          // carry how shut in each corner is (vertex colour, PositionNormalColorTexture),
+                          // for TerrainShading::occluded; drawn with the stock effect, they must not.
+                          bool ambientOcclusion = false);
+        [[nodiscard]] bool AmbientOcclusion() const noexcept { return m_ambientOcclusion; }
 
         // Rebuilds the animated-tile mesh for animPhase (no-op if unchanged
         // since the last call). Call once per frame with
@@ -99,10 +115,20 @@ namespace GalaxyEggbert::Game
         // (the 3D effects' shaders, SurfaceShaders.hpp).
         void DrawOpaque(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                         Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                        Microsoft::Xna::Framework::Graphics::Effect* lavaEffect = nullptr) const;
+                        const TerrainShading* shading = nullptr) const;
         void DrawTransparent(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                              Microsoft::Xna::Framework::Graphics::BasicEffect& effect,
-                             Microsoft::Xna::Framework::Graphics::Effect* waterEffect = nullptr) const;
+                             const TerrainShading* shading = nullptr) const;
+        // What throws a shadow (the 3D effects' shadow map): every opaque mesh with `solid`, the cutouts
+        // with `cutout` (it tests their alpha); both take their camera from the caller.
+        void DrawShadowCasters(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                               Microsoft::Xna::Framework::Graphics::Effect& solid,
+                               Microsoft::Xna::Framework::Graphics::Effect& cutout) const;
+        // The lava cells and the lightning cells, and whether the lightning strikes now (the effects'
+        // lights).
+        [[nodiscard]] std::vector<Microsoft::Xna::Framework::Vector3> LavaCells() const;
+        [[nodiscard]] std::vector<Microsoft::Xna::Framework::Vector3> BlitzCells() const;
+        [[nodiscard]] bool BlitzShown() const noexcept { return m_blitzIcon >= 0 && m_blitzFrames.count(m_blitzIcon) != 0 && m_blitzFrames.at(m_blitzIcon) != nullptr; }
 
         // Draws the grass-top overlay (icon 107 blocks' real grass texture,
         // NEXT.md §8 task 3) with a SEPARATE effect/texture bind from the
@@ -113,7 +139,7 @@ namespace GalaxyEggbert::Game
         // its own grass texture + View/Projection/World before calling.
         // No-op if no icon-107 blocks exist in this World.
         void DrawGrass(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                       Microsoft::Xna::Framework::Graphics::BasicEffect& grassEffect) const;
+                       Microsoft::Xna::Framework::Graphics::Effect& grassEffect) const;
 
         [[nodiscard]] int BlockCount() const noexcept { return m_blockCount; }
         // Brick edge cells drawn ragged towards the open (Q-011, BrickEdges.hpp).
@@ -253,6 +279,7 @@ namespace GalaxyEggbert::Game
         bool m_reliefOverhangs = false;
 
         std::unique_ptr<GpuMeshParts> m_staticRenderer;
+        bool m_ambientOcclusion = false;
         std::unique_ptr<GpuMeshParts> m_transparentStaticRenderer;
         // Lit by vertex colour (AlphaTestEffect has no lights: BakeTerrainLighting()).
         std::unique_ptr<GpuMeshParts> m_cutoutRenderer;

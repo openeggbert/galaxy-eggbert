@@ -6,6 +6,7 @@
 // terrain's meshes -- belongs to the game, which lends it each frame (WorldRenderAssets).
 
 #include <GalaxyEggbert/Game/SceneFrame.hpp>
+#include <GalaxyEggbert/Game/SceneShaders.hpp>
 #include <GalaxyEggbert/Game/SurfaceShaders.hpp>
 
 #include <CnaEngine/Graphics/GpuMesh.hpp>
@@ -57,6 +58,17 @@ namespace GalaxyEggbert::Game
 
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
                   const WorldRenderAssets& assets, const TerrainDrawnHook& terrainDrawn = {});
+        // The 3D effects' shadow map (SceneShaders.hpp): what throws a shadow, drawn from the sun into its
+        // target. Before Draw() and before anything is drawn into the frame's own target; leaves the
+        // screen bound. Nothing without the effects or where the device cannot.
+        void RenderShadowMap(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                             const WorldRenderAssets& assets);
+        // Whether the terrain should be built with its ambient occlusion: the effects' terrain shader
+        // compiles on this device (compiled here on first ask).
+        [[nodiscard]] bool TerrainShadersReady(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device)
+        {
+            return m_scene.Prepare(device);
+        }
 
         [[nodiscard]] const WorldRenderStatistics& Statistics() const noexcept { return m_statistics; }
         void ResetStatistics() noexcept { m_statistics = {}; }
@@ -100,6 +112,8 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_shadowMesh;
         std::vector<std::unique_ptr<CnaEngine::Graphics::GpuMesh>> m_particleMeshes;
         SurfaceShaders m_surfaces;
+        SceneShaders m_scene;
+        bool m_sceneShading = false; // this frame's terrain and models drawn with m_scene
         WorldRenderStatistics m_statistics;
     };
 }

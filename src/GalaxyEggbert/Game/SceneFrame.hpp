@@ -144,6 +144,15 @@ namespace GalaxyEggbert::Game
         Microsoft::Xna::Framework::Vector3 center;
         float radius = 0.5f;
         float strength = 0.5f;
+        bool model = false;      // thrown by a 3D model: the shadow map draws its real shadow instead
+    };
+
+    // A light something bright throws on what is near it (the effects' lava, explosions, lightning).
+    struct ScenePointLight
+    {
+        Microsoft::Xna::Framework::Vector3 position;
+        Microsoft::Xna::Framework::Vector3 color;  // its strength in it (1 = a full white light)
+        float radius = 4.0f;                        // blocks: nothing beyond
     };
 
     // The 3D effects (the Setup's "3D effects", SaveData::GetEffects3D): presentation only. Off, the
@@ -156,6 +165,7 @@ namespace GalaxyEggbert::Game
         float fogEnd = 1.0f;     // where it is whole
         float seconds = 0.0f;    // the effects' clock (the simulation's ticks / 60): water, lava, glow
         std::vector<SceneShadow> shadows;
+        std::vector<ScenePointLight> lights;
         std::vector<SceneBillboardBatch> particles; // the explosions, splashes and sparks
     };
 
@@ -215,6 +225,7 @@ namespace GalaxyEggbert::Game
             marine.clear();
             effects.enabled = false;
             effects.shadows.clear();
+            effects.lights.clear();
             effects.particles.clear();
         }
     };

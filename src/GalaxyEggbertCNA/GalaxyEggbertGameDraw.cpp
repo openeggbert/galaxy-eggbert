@@ -172,15 +172,24 @@ namespace GalaxyEggbert::CNA
             (phase_ != GalaxyEggbert::Def::GamePhase::Init || titleSceneActive_) &&
             !(phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing() && !titleSceneActive_))
         {
+            // What to draw (GalaxyEggbertGameScene.cpp); with the 3D effects, first the sun's shadow map
+            // (it has its own target, so before the frame's).
+            BuildSceneFrame(sceneFrame_, soulDrawnIn3D);
+            const auto assets = SceneAssets();
+            worldRenderer_.RenderShadowMap(device, sceneFrame_, assets);
             // The 3D effects' finish (PostProcess.hpp): the world into a render target, then onto the
             // screen with its glow and grade; without them, or where the device cannot, straight on.
             const bool finish = Effects3DWanted() && postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98));
-            if (finish)
+            if (!finish && sceneFrame_.effects.enabled)
+            {
+                device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98)); // the screen again after the shadow map
+            }
+            if (sceneFrame_.effects.enabled)
             {
                 device.SetDepthTestEnabled(true);
             }
             worldIntoTarget_ = finish;
-            DrawWorld(device, soulDrawnIn3D);
+            DrawWorld(device, assets);
             worldIntoTarget_ = false;
             if (finish)
             {
@@ -201,11 +210,8 @@ namespace GalaxyEggbert::CNA
         DrawFrameCaptures(device);
     }
 
-    void GalaxyEggbertGame::DrawWorld(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                                      bool& soulDrawnIn3D)
+    GalaxyEggbert::Game::WorldRenderAssets GalaxyEggbertGame::SceneAssets()
     {
-        // What to draw (GalaxyEggbertGameScene.cpp), then the renderer draws it (WorldRenderer).
-        BuildSceneFrame(sceneFrame_, soulDrawnIn3D);
         GalaxyEggbert::Game::WorldRenderAssets assets;
         assets.background = backgroundLoaded_ ? backgroundEffect_.get() : nullptr;
         assets.terrain = terrainEffect_.get();
@@ -219,6 +225,13 @@ namespace GalaxyEggbert::CNA
         assets.blupi1 = blupi1ObjectEffect_.get();
         assets.bigDecor = bigDecorEffect_.get();
         assets.terrainRenderer = terrainRenderer_.get();
+        return assets;
+    }
+
+    void GalaxyEggbertGame::DrawWorld(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                      const GalaxyEggbert::Game::WorldRenderAssets& assets)
+    {
+        // The renderer draws the frame built (BuildSceneFrame) from the game's content (SceneAssets).
         worldRenderer_.ResetStatistics();
         worldRenderer_.Draw(device, sceneFrame_, assets,
                             [this](Microsoft::Xna::Framework::Graphics::GraphicsDevice& drawn) { CheckTerrainVisibility(drawn); });

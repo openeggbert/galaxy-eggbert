@@ -101,11 +101,17 @@ namespace GalaxyEggbert::Game
     [[nodiscard]] inline std::unique_ptr<CnaEngine::Graphics::GpuMesh> UploadBakedLitTexturedMesh(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, CnaEngine::Graphics::MeshData mesh)
     {
+        // A mesh that already has colours (the 3D effects' ambient occlusion) keeps them as a factor.
+        const bool occluded = mesh.colors.size() == mesh.positions.size();
         mesh.colors.resize(mesh.positions.size());
         for (std::size_t i = 0; i < mesh.normals.size() && i < mesh.colors.size(); ++i)
         {
             const auto& normal = mesh.normals[i];
-            const float brightness = TerrainFaceBrightness(normal.X, normal.Y, normal.Z);
+            float brightness = TerrainFaceBrightness(normal.X, normal.Y, normal.Z);
+            if (occluded)
+            {
+                brightness *= static_cast<float>(mesh.colors[i].getRProperty()) / 255.0f;
+            }
             mesh.colors[i] = Microsoft::Xna::Framework::Color(brightness, brightness, brightness, 1.0f);
         }
         return std::make_unique<CnaEngine::Graphics::GpuMesh>(CnaEngine::Graphics::GpuMesh::Upload(

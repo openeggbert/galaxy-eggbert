@@ -150,6 +150,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/WorldEffects.cpp
         src/GalaxyEggbert/Game/EffectParticles.cpp
         src/GalaxyEggbert/Game/SurfaceShaders.cpp
+        src/GalaxyEggbert/Game/SceneShaders.cpp
         src/GalaxyEggbert/Game/PostProcess.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
