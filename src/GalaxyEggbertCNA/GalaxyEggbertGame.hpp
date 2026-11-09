@@ -725,6 +725,9 @@ namespace GalaxyEggbert::CNA
         int cheatZoomStep_ = 0;
         bool cheatCompass_ = false;
         bool cheatDebug_ = false;
+        // The lightning's zaps (PlayBlitzZaps): the world's animation tick last heard.
+        int blitzZapPhase_ = -1;
+        void PlayBlitzZaps();
         // The "fps" cheat: the frames drawn a second (measured over half a second at a time), shown
         // as its entry in the cheats' list ("fps 60").
         bool cheatFps_ = false;

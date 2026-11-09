@@ -381,6 +381,46 @@ namespace GalaxyEggbert::CNA
 
     // UpdateTick's screens: every phase's input (the menus, Setup, Pause, Win/Lost, the editor, the
     // demos' screens, the phase keys). True when the tick ends here.
+    void GalaxyEggbertGame::PlayBlitzZaps()
+    {
+        // The lightning's zap (Decor::BlitzActif, Decor.cpp:620; reported missing 2026-11-09): every
+        // lightning cell (305) with its emitter (304) over it plays channel 69 where it is, on six ticks
+        // of the 100-tick flicker cycle (0, 7, 18, 25, 33, 44), heard within the original's reach of the
+        // view (Sound::PlayAt). On each tick of the world's 20 a second the update passes.
+        const int phase = worldRuntime_.GetAnimPhase();
+        if (phase == blitzZapPhase_ || !terrainRenderer_)
+        {
+            return;
+        }
+        const int from = blitzZapPhase_ < phase && phase - blitzZapPhase_ <= 4 ? blitzZapPhase_ + 1 : phase;
+        blitzZapPhase_ = phase;
+        bool zap = false;
+        for (int tick = from; tick <= phase; ++tick)
+        {
+            const int cycle = ((tick % 100) + 100) % 100;
+            zap = zap || cycle == 0 || cycle == 7 || cycle == 18 || cycle == 25 || cycle == 33 || cycle == 44;
+        }
+        if (!zap)
+        {
+            return;
+        }
+        const auto& world = worldRuntime_.GetWorld();
+        const int n = static_cast<int>(world.blocksPerAxis());
+        for (const auto& cell : terrainRenderer_->BlitzCells())
+        {
+            const int gx = static_cast<int>(std::lround(cell.X)) + WorldRuntime::kWorldCenterX;
+            const int gy = static_cast<int>(std::lround(cell.Y)) + 1;
+            const int gz = static_cast<int>(std::lround(cell.Z)) + WorldRuntime::kWorldCenterZ;
+            if (gx < 0 || gy < 0 || gz < 0 || gx >= n || gy >= n || gz >= n ||
+                world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy), static_cast<std::uint16_t>(gz))
+                        .type() != GalaxyEggbert::BlockTypes::BlitzEmitter)
+            {
+                continue;
+            }
+            sound_.PlayAt(GalaxyEggbert::Def::SoundChannel::SoundChannel69, cell.X, cell.Y, cell.Z);
+        }
+    }
+
     bool GalaxyEggbertGame::UpdateTickScreens(float dt, InputPad::PlayInput& padPlayInput, bool& inputPadClaimedMouse)
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
@@ -1883,9 +1923,9 @@ namespace GalaxyEggbert::CNA
         // only on even ticks within the first half (`num%2==0 &&
         // num<50` -- a rapid flicker for ~2.5s, 25% duty cycle over the
         // full ~5s period, then fully inactive for the second half).
-        // The real cosmetic emitter tile (icon 304, sits one cell
-        // above 305, times a zap sound cue only) is NOT implemented --
-        // audio-only polish, not the hazard itself.
+        // The emitter tile (icon 304, one cell above 305) times the zap's
+        // sound: PlayBlitzZaps() below.
+        PlayBlitzZaps();
         // Lightning and saws catch Blupi in his own cell (Decor::IsBlitz/IsScie(m_blupiPos)),
         // as well as under his feet where worlds lay them as floor.
         const auto blockHere = blupi_.GetBlockTypeAt(worldRuntime_.GetWorld());
