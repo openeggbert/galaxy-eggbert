@@ -1682,7 +1682,8 @@ opens the same way, its backups beside it. Edited shipped worlds make the demos 
 refuse to play (world hash) until recorded again. On the web (2026-11-09), where the shipped worlds
 are the page's packed data, each save is also kept in `/save/customworlds/campaign-edits/` and laid
 over them at every start, so an edit outlasts a reload; Pause's "Original" (two clicks) puts the
-shipped world back. Validation: `VerifyGEInputPad` (the word),
+shipped world back, on the desktop too (the original kept in `customworlds/campaign-originals/`).
+Validation: `VerifyGEInputPad` (the word),
 `VerifyGEWorldEditor` (Stop, backups, no thumbnail, the web's copy), `VerifyGEEditorStorage`
 (BackUpWorldTo, ApplyCampaignEdits), live, the web in headless Chrome.
 Evidence: `build-probe/demo-live/xmission/`, `web/`.

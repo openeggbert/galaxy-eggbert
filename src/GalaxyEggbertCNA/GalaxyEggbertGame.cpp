@@ -3298,16 +3298,15 @@ namespace GalaxyEggbert::CNA
         // folder (a galaxy world's beside it, as the editor's).
         // On the web the shipped worlds are the page's data, in memory: a save is kept in the browser's
         // storage too and laid over them at the next start (main.cpp, ApplyCampaignEdits()).
+        // A shipped world's saves are also kept as the edit (on the web laid over the packed worlds
+        // at the next start), and the world as shipped is kept first, for Pause's "Original" (on the
+        // web ApplyCampaignEdits() kept it already if an edit was laid over it at the start).
         std::filesystem::path keepCopy;
-#if defined(__EMSCRIPTEN__)
         if (galaxyGamer_ < 0)
         {
             keepCopy = GalaxyEggbert::Editor::CampaignEditsDir();
-            // The world as shipped, for Pause's "Original" (ApplyCampaignEdits() kept it already if
-            // an edit was laid over it at the start).
             GalaxyEggbert::Editor::KeepCampaignOriginal(path, GalaxyEggbert::Editor::CampaignOriginalsDir());
         }
-#endif
         worldEditor_.BeginOutsideSession(galaxyGamer_ >= 0 ? std::filesystem::path{}
                                                            : GalaxyEggbert::Editor::CampaignBackupsDir(),
                                          keepCopy);

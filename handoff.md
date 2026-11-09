@@ -94,7 +94,13 @@ with the release audit.
   by `ApplyCampaignEdits()` before it lays an edit over it, and by `OpenMissionInEditor()` before
   the first save. Tests `VerifyGEWorldEditor`, `VerifyGEEditorStorage`, `VerifyGEInputPad`; web
   `harness/web_revert.py` (`web-revert-sheet.png`): undone right after an edit, and after a reload
-  that laid the edit over the shipped world; another reload lays nothing.
+  that laid the edit over the shipped world; another reload lays nothing. On the desktop too (same
+  day): every xnjttjpo save of a campaign world is also kept in `customworlds/campaign-edits/`, the
+  world as shipped in `customworlds/campaign-originals/` at the first visit (`KeepCampaignOriginal`
+  renews it when the shipped file changed since, e.g. regenerated); `HasCampaignEdit()` is "the kept
+  edit and the file are the same bytes", so a regenerated or updated world shows no Original. Live
+  `harness/case_original_desktop.py` (`original-desktop-sheet.png`). The notice is drawn where the
+  cheats are (top left) and can meet the mission's opening hint for a few seconds.
 - Web runtime of all of it (`harness/web_share.py`, the rebuilt `build-cna-webgl2`): the desktop's
   `A-galaxy.galaxy` imported through the file picker (CDP `Page.setInterceptFileChooserDialog`,
   `DOM.setFileInputFiles`), played, and exported again as a download byte for byte equal; the

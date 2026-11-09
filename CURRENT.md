@@ -96,8 +96,9 @@ content-authoring UX, but not new gameplay mechanics.
   copy of the worlds. On the web (2026-11-09) the save is also kept in the browser's storage
   (`/save/customworlds/campaign-edits/`) and laid over the packed worlds at every start: an edit
   outlasts a reload (verified in headless Chrome). Pause then shows "Original" (left of Record) for
-  an edited world: "Sure?", then the world as shipped again (kept in memory before an edit is laid
-  over it or saved, `CampaignOriginalsDir()`), the kept edit dropped, the mission restarted.
+  an edited world, on the web and the desktop: "Sure?", then the world as shipped again (kept before
+  the first edit: on the web in memory, on the desktop in `customworlds/campaign-originals/`), the
+  kept edit dropped, the mission restarted.
 - Each player's own galaxy (BD-0119): the menu's Galaxy button plays the selected player's world
   system, a main hub, world hubs 1-14 and their missions 1-8 (and 199), built in the editor's
   galaxy screen (world screen's Galaxy button; `customworlds/gamerN/galaxy/`), with the campaign's

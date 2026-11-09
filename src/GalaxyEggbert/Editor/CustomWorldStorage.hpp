@@ -79,25 +79,29 @@ namespace GalaxyEggbert::Editor
     // before the edits of each visit, as a slot's backups (the shipped folder stays clean).
     [[nodiscard]] std::filesystem::path CampaignBackupsDir();
 
-    // Where the web build keeps the shipped worlds edited with xnjttjpo (2026-11-09): there the
-    // shipped worlds are the page's packed data, in memory, so a save of one is also copied here
-    // (in the browser's storage), and ApplyCampaignEdits() lays the copies over the shipped worlds
-    // at every start. The desktop edits its worlds3d/ files themselves and keeps nothing here.
+    // The shipped worlds edited with xnjttjpo (2026-11-09): every save of one is also copied here.
+    // On the web, where the shipped worlds are the page's packed data in memory, ApplyCampaignEdits()
+    // lays the copies over them at every start (the browser's storage keeps them); the desktop edits
+    // its worlds3d/ files themselves and keeps the copy to know the file is still its edit.
     [[nodiscard]] std::filesystem::path CampaignEditsDir();
     // Copies every worldNNN.vwr of CampaignEditsDir() over @p worldsDir's file of that name, the file
     // as it was kept first in @p originalsDir when given (and not there yet); how many it copied.
     int ApplyCampaignEdits(const std::filesystem::path& worldsDir, const std::filesystem::path& originalsDir = {});
-    // Where the web build keeps, for the page's life, the shipped worlds as packed before an edit
-    // was laid over them or saved (KeepCampaignOriginal()): "worlds3d-shipped" beside worlds3d/, in
-    // memory, not in the browser's storage (the page's data holds them anyway).
+    // Where the shipped worlds are kept as they came before an edit (KeepCampaignOriginal()), for
+    // Pause's "Original": on the web "worlds3d-shipped" beside worlds3d/, in memory for the page's
+    // life (its data holds them anyway); on the desktop, whose files are edited in place,
+    // CustomWorldsRoot()/campaign-originals.
     [[nodiscard]] std::filesystem::path CampaignOriginalsDir();
-    // Keeps @p world as it is now in @p originalsDir, unless a copy is there already.
+    // Keeps @p world as it is now in @p originalsDir -- unless it is an edit (HasCampaignEdit()), when
+    // the original kept before it stays; a shipped world changed since (an update, a regenerated
+    // world) replaces an older original.
     void KeepCampaignOriginal(const std::filesystem::path& world, const std::filesystem::path& originalsDir);
-    // Whether the shipped world @p world has an edit kept in CampaignEditsDir().
+    // Whether the shipped world @p world is an edit: its copy kept in CampaignEditsDir() and the file
+    // still that copy (a world regenerated or updated since is the shipped one again).
     [[nodiscard]] bool HasCampaignEdit(const std::filesystem::path& world);
-    // The shipped world as it came (the web's "Original" in Pause): @p world from @p originalsDir
-    // again, its edit dropped from CampaignEditsDir() (its versions stay in CampaignBackupsDir()).
-    // False when no original was kept (the edit is dropped all the same: the next start loads the
+    // The shipped world as it came (Pause's "Original"): @p world from @p originalsDir again, its
+    // edit and the kept original dropped (its versions stay in CampaignBackupsDir()). False when no
+    // original was kept (the edit is dropped all the same: on the web the next start loads the
     // shipped world).
     bool RevertCampaignEdit(const std::filesystem::path& world, const std::filesystem::path& originalsDir);
 

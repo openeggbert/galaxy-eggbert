@@ -27,6 +27,8 @@ namespace GalaxyEggbert::Editor
 #else
         constexpr const char* kCustomWorldsRoot = "customworlds";
 #endif
+        // A file's bytes; nothing when it cannot be read (defined with the galaxy packs below).
+        std::optional<std::string> ReadBytes(const std::filesystem::path& path);
     }
 
     std::filesystem::path CustomWorldsDir(int gamerSlot)
@@ -182,22 +184,29 @@ namespace GalaxyEggbert::Editor
 
     std::filesystem::path CampaignOriginalsDir()
     {
+#if defined(__EMSCRIPTEN__)
         return "worlds3d-shipped";
+#else
+        return CustomWorldsRoot() / "campaign-originals";
+#endif
+    }
+
+    bool HasCampaignEdit(const std::filesystem::path& world)
+    {
+        if (world.filename().empty()) return false;
+        const auto edit = ReadBytes(CampaignEditsDir() / world.filename());
+        const auto now = edit ? ReadBytes(world) : std::nullopt;
+        return edit && now && *edit == *now;
     }
 
     void KeepCampaignOriginal(const std::filesystem::path& world, const std::filesystem::path& originalsDir)
     {
         std::error_code ec;
+        if (originalsDir.empty() || !std::filesystem::exists(world, ec)) return;
         const auto kept = originalsDir / world.filename();
-        if (originalsDir.empty() || std::filesystem::exists(kept, ec) || !std::filesystem::exists(world, ec)) return;
+        if (HasCampaignEdit(world) && std::filesystem::exists(kept, ec)) return; // the original before the edit
         std::filesystem::create_directories(originalsDir, ec);
-        std::filesystem::copy_file(world, kept, std::filesystem::copy_options::none, ec);
-    }
-
-    bool HasCampaignEdit(const std::filesystem::path& world)
-    {
-        std::error_code ec;
-        return !world.filename().empty() && std::filesystem::exists(CampaignEditsDir() / world.filename(), ec);
+        std::filesystem::copy_file(world, kept, std::filesystem::copy_options::overwrite_existing, ec);
     }
 
     bool RevertCampaignEdit(const std::filesystem::path& world, const std::filesystem::path& originalsDir)
@@ -206,7 +215,9 @@ namespace GalaxyEggbert::Editor
         std::filesystem::remove(CampaignEditsDir() / world.filename(), ec);
         const auto kept = originalsDir / world.filename();
         if (originalsDir.empty() || !std::filesystem::exists(kept, ec)) return false;
-        return std::filesystem::copy_file(kept, world, std::filesystem::copy_options::overwrite_existing, ec);
+        const bool restored = std::filesystem::copy_file(kept, world, std::filesystem::copy_options::overwrite_existing, ec);
+        if (restored) std::filesystem::remove(kept, ec);
+        return restored;
     }
 
     int ApplyCampaignEdits(const std::filesystem::path& worldsDir, const std::filesystem::path& originalsDir)
