@@ -116,6 +116,7 @@ namespace GalaxyEggbert::CNA
                 return;
             }
             tickClock_ = std::min(tickClock_ - kTick, kTick * 0.999); // one step per pass, no catching up
+            ++interpolatedTicks_;
             previousEye_ = camera_.Position();
             previousTarget_ = cameraTarget_;
             previousBlupi_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());

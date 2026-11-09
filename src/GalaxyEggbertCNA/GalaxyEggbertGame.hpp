@@ -744,6 +744,9 @@ namespace GalaxyEggbert::CNA
         double tickClock_ = 0.0;      // seconds since the last step
         float drawAlpha_ = 1.0f;      // how far between the last two steps the frame is drawn
         Microsoft::Xna::Framework::Vector3 previousEye_, previousTarget_, previousBlupi_;
+        // The steps taken while drawing between them; GALAXY_INTERP_TRACE=<file> writes each frame drawn
+        // between two (the step, how far, the camera drawn with its shake, a moving object drawn part way).
+        std::uint64_t interpolatedTicks_ = 0;
         Microsoft::Xna::Framework::Vector3 blupiDrawOffset_; // the interpolated Blupi's offset, while drawing
         // Every moving object where the last step began (type, active, place), to draw it part way too.
         struct ObjectPlace

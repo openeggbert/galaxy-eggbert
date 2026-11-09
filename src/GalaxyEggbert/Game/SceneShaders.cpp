@@ -254,8 +254,8 @@ in vec3 vNormal;
 in float vOcclusion;
 void main()
 {
-    if (uDebug > 1.5) { FragColor = vec4(vec3(vOcclusion), 1.0); return; }
-    if (uDebug > 0.5) { FragColor = vec4(vec3(SunLight()), 1.0); return; }
+    if (uDebug > 1.5 && uDebug < 2.5) { FragColor = vec4(vec3(vOcclusion), 1.0); return; }
+    if (uDebug > 0.5 && uDebug < 1.5) { FragColor = vec4(vec3(SunLight()), 1.0); return; }
     vec4 tex = texture(uTexture, vUv);
     vec3 n = normalize(vNormal);
     float sun = max(0.0, dot(n, -uLightDir)) * mix(1.0, SunLight(), uShadow.w);
@@ -751,8 +751,8 @@ void main()
     vec4 screen = ScreenOcclusion();
     float sun = SunLight() * screen.g;
     vec3 gi = uReliefGiBox.w > 0.5 ? ReliefGi(normalize(vNormal)) : vGi.rgb * 2.0;
-    if (uDebug > 2.5) { FragColor = vec4(gi * 0.5, 1.0); return; }
-    if (uDebug > 0.5) { FragColor = vec4(vec3(uDebug > 1.5 ? vGi.a * screen.r : sun), 1.0); return; }
+    if (uDebug > 2.5 && uDebug < 3.5) { FragColor = vec4(gi * 0.5, 1.0); return; }
+    if (uDebug > 0.5 && uDebug < 2.5) { FragColor = vec4(vec3(uDebug > 1.5 ? vGi.a * screen.r : sun), 1.0); return; }
     vec3 v = normalize(uEyePos - vWorld);
     vec3 color = Shade(ToLinear(tex.rgb), n, v, surface.r, surface.g, 1.0, sun, vGi.a * screen.r * surface.b, gi);
     FragColor = Fogged(vec4(ToDisplay(color), tex.a));
@@ -882,6 +882,7 @@ void main()
         const char* const kSpriteUltraFragment = R"(
 uniform float uAlpha;
 uniform float uGlow;
+uniform float uDebug; // 4: GALAXY_EFFECTS_DEBUG=sprites, the light it takes (halved), magenta what shines
 in vec2 vUv;
 in vec4 vColor;
 void main()
@@ -903,7 +904,9 @@ void main()
             light += ToLinear(uPointColor[i]) * (reach * reach * 0.8);
         }
         color = albedo * light;
+        if (uDebug > 3.5) { FragColor = vec4(ToDisplay(light) * 0.5, tex.a * uAlpha); return; }
     }
+    if (uDebug > 3.5) { FragColor = vec4(1.0, 0.0, 1.0, tex.a * uAlpha); return; }
     FragColor = Fogged(vec4(ToDisplay(color), tex.a * uAlpha));
 }
 )";
@@ -957,10 +960,12 @@ void main()
         // GALAXY_EFFECTS_DEBUG=shadow or =occlusion draws the terrain as that factor alone (grey).
         if (const char* debug = std::getenv("GALAXY_EFFECTS_DEBUG"))
         {
-            // =gi (Ultra): the light from around, halved.
+            // =gi (Ultra): the light from around, halved; =sprites (Ultra): the sprites' and particles'
+            // light, halved (magenta: what shines).
             m_debug = std::string(debug) == "shadow"      ? 1.0f
                       : std::string(debug) == "occlusion" ? 2.0f
                       : std::string(debug) == "gi"        ? 3.0f
+                      : std::string(debug) == "sprites"   ? 4.0f
                                                           : 0.0f;
         }
         try
@@ -1241,6 +1246,7 @@ void main()
                 SetCommon(*effect);
                 effect->setWorldProperty(Matrix::getIdentityProperty());
                 effect->SetUniformVec3("uLightDir", direction.X, direction.Y, direction.Z);
+                effect->SetUniformFloat("uDebug", m_debug);
             }
             SetUltra(device, *ultra);
         }

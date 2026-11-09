@@ -120,6 +120,27 @@ namespace GalaxyEggbert::CNA
                 obj.currentZ = before.z + dz * t;
             }
         }
+        static std::FILE* interpTrace = []() -> std::FILE*
+        {
+            const char* path = std::getenv("GALAXY_INTERP_TRACE");
+            return path != nullptr && *path != '\0' ? std::fopen(path, "w") : nullptr;
+        }();
+        if (interpTrace != nullptr && phase_ == GalaxyEggbert::Def::GamePhase::Play)
+        {
+            const auto drawnEye = camera_.Position();
+            std::fprintf(interpTrace, "step %llu alpha %.3f between %d eye %.4f %.4f %.4f shake %.2f %.2f lag %.3f moved %zu",
+                         static_cast<unsigned long long>(interpolatedTicks_), drawAlpha_, between ? 1 : 0, drawnEye.X,
+                         drawnEye.Y, drawnEye.Z, cameraShake_.GetOffsetX(), cameraShake_.GetOffsetY(), particleLag_,
+                         moved.size());
+            if (!moved.empty())
+            {
+                const auto& obj = worldRuntime_.GetMobileObjects()[moved.front().first];
+                std::fprintf(interpTrace, " object %zu type %d at %.4f %.4f %.4f", moved.front().first,
+                             static_cast<int>(obj.type), obj.currentX, obj.currentY, obj.currentZ);
+            }
+            std::fputc('\n', interpTrace);
+            std::fflush(interpTrace);
+        }
         DrawFrame();
         if (between)
         {
