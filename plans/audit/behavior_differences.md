@@ -1653,10 +1653,15 @@ golden key, win/back formulas); its progress is a second GamerSlot per gamer in 
 (`galaxyN.*`, written only once used), so the campaign's is untouched. Galaxy's own: the menu's
 Galaxy button (left of Demo; the editor's galaxy screen while there is no main hub), the editor's
 galaxy screen (world screen's Galaxy button), starters with their signs, main-hub sign 13 being
-world 13's (no showcase), a galaxy world's play-test following its signs in the galaxy, no resume
-file for galaxies, `--galaxy` for the QA autoplay. No change to the campaign. Validation:
+world 13's (no showcase), a galaxy world's play-test following its signs in the galaxy, deleting
+a place from the galaxy screen (a bin, two clicks, into `galaxy/backups/`; Backups brings it back;
+2026-11-09), `--galaxy` for the QA autoplay. Since 2026-11-09 a galaxy mission writes the resume
+file as the campaign's does (focus lost in play); Continue goes back into the galaxy the log names
+(`BeginResume()`). No change to the campaign. Validation:
 `VerifyGEEditorStorage`, `VerifyGESaveData`, `VerifyInteractionSystem`, `VerifyGEInputPad`, live
-(handoff.md "Recordings, ten demos, xnjttjpo, galaxies"). Evidence: `build-probe/demo-live/galaxy/`.
+(handoff.md "Recordings, ten demos, xnjttjpo, galaxies" and "Galaxy: delete and Continue"), the
+resume self-test in a galaxy mission. Evidence: `build-probe/demo-live/galaxy/`, `galaxy-delete/`,
+`galaxy-resume/`, `galaxy-resume-selftest/`.
 
 ## BD-0118 — xnjttjpo: the 3D editor on the world being played (owner request) — FIXED_AND_VERIFIED
 

@@ -1,8 +1,8 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-08 (native build, 117/117 CTest including the ten main-menu demo replays,
-golden frames and trace equal to tests/golden, live checks of demo recording, xnjttjpo and the
-players' galaxies, controls/HUD/water checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
+_Last verified: 2026-11-09 (native build, 117/117 CTest including the ten main-menu demo replays,
+golden frames and trace equal to tests/golden (2026-11-08), live checks of demo recording, xnjttjpo
+and the players' galaxies (with delete/restore and Continue in a galaxy, 2026-11-09), controls/HUD/water checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
 2026-11-06 (play pass 33: 77 replays equal). The Web/Emscripten build was verified
 2026-11-06 in headless Chrome; the whole-campaign run
 remains the 2026-10-27 verification. Update this file
@@ -83,8 +83,11 @@ content-authoring UX, but not new gameplay mechanics.
 - Each player's own galaxy (BD-0119): the menu's Galaxy button plays the selected player's world
   system, a main hub, world hubs 1-14 and their missions 1-8 (and 199), built in the editor's
   galaxy screen (world screen's Galaxy button; `customworlds/gamerN/galaxy/`), with the campaign's
-  hub rules and its own saved progress (`galaxyN.*`). No resume file inside a galaxy. Live verified
-  (made, played hub to hub to mission, progress kept apart, `--galaxy` autoplay).
+  hub rules and its own saved progress (`galaxyN.*`). Places are deleted from the galaxy screen
+  (bin, two clicks, into `galaxy/backups/`) and brought back with Backups. A galaxy mission writes
+  the resume file like the campaign; Continue resumes it in the galaxy. Live verified (made, played
+  hub to hub to mission, progress kept apart, `--galaxy` autoplay, delete/restore, focus lost ->
+  Continue in the galaxy, `GALAXY_RESUME_SELFTEST` equal in mission 11).
 - All four editor Blupi starts participate in G/Tools Pick and the shared cursor/NumPad
   edit target, with red selection outline/model tint. O/Tools Turn rotates each independently
   by 90 degrees; moves, deletion, Undo/Redo and reload preserve its heading. Shared-cell starts

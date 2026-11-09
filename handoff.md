@@ -6,7 +6,28 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-08 (demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-09 (galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Galaxy: delete and Continue (2026-11-09, BD-0119) — verified on desktop
+
+The owner kept Q-017's three choices and asked for: deleting galaxy worlds, Continue (resume) in a
+galaxy, a web runtime check, commits.
+
+- Delete: `GalaxyBrowserScreen` puts the world screen's bin on each place that exists (main hub,
+  199, the selected world's hub and missions): the first click arms it (tick, "Delete?"), any other
+  click disarms, a second click deletes into `galaxy/backups/` (`DeleteSlotWorld()`). Backups
+  (left of Back) switches to restoring: a click brings the place's newest backup back
+  (`RestoreBackup()`, the line under the places says what happened); the bins are hidden then.
+- Continue: `StartResumeLog()` records the resume log in a galaxy too; `BeginResume()` recognises a
+  galaxy file in the log (`ParseGalaxyWorldPath()`), reads it from there and sets `galaxyGamer_`
+  and the galaxy mode before `LoadMission()`. A campaign log clears both. One `resume.txt` as before.
+- Verified: `VerifyGEEditorStorage` (arm/disarm/delete, no bin on a place not made, Backups,
+  "no backup"), 117/117 CTest; live `harness/case_galaxy_delete.py` (`galaxy-delete-sheet.png`)
+  and `case_galaxy_resume.py` (focus lost on the galaxy's main hub -> resume.txt names
+  `customworlds/gamer0/galaxy/world001.vwr` -> restart -> Continue -> the main hub from that file,
+  its world sign -> hub 10 of the galaxy, progress in `galaxy0.*`, the campaign untouched);
+  `GALAXY_RESUME_SELFTEST=60` and `=200` in `--galaxy --mission 11` autoplay: equal, mission
+  completed into hub 10 (`galaxy-resume-selftest/`); the campaign's `case_resume.py` still passes.
 
 ## Recordings, ten demos, xnjttjpo, galaxies (2026-11-08, BD-0116-0119) — verified on desktop, committed 2026-11-09
 
@@ -65,7 +86,8 @@ choices of Q-017 (the name Galaxy, xnjttjpo saving the shipped file, a pause end
   every progress accessor then uses the gamer's galaxy slot (`galaxyN.*` in savedata.txt, written
   only once used; the mode is not saved; Reset keeps it). `MissionPath()` reads the galaxy's files,
   `LoadMission()` overrides the world's mission number with its place, main-hub sign 13 is world
-  130 (`ComputeWorldSelectTarget(..., galaxy)`), no resume file. The menu (`SetPhase(Init)`) leaves
+  130 (`ComputeWorldSelectTarget(..., galaxy)`), the resume file as in the campaign (since
+  2026-11-09, below). The menu (`SetPhase(Init)`) leaves
   the galaxy. A galaxy world's editor play-test follows its signs within the galaxy. QA:
   `--galaxy --mission N [--autoplay s]` plays the selected player's galaxy.
 - Tests: `VerifyGEInputPad` (Galaxy and Record buttons, the positions screen, xnjttjpo, 30 words),
@@ -92,8 +114,8 @@ choices of Q-017 (the name Galaxy, xnjttjpo saving the shipped file, a pause end
   cycle wrapping after demo 10. The harness's first "none skipped" check also counted the
   intentionally empty positions 1-3. The corrected check, run on the same log, passes.
 - The web build (`build-cna-webgl2`) compiles and links with all ten demos packed. Not run: web
-  and Android runtime, a physical gamepad or touch screen. No way yet to delete a galaxy
-  world from the galaxy screen (its backups are in `galaxy/backups/`).
+  and Android runtime, a physical gamepad or touch screen. (Deleting galaxy places and Continue in
+  a galaxy came on 2026-11-09, the section above.)
 - While this was built, the CNA working tree (another session's uncommitted edit) briefly crashed
   every start (UB-010 in upstream_bugs.md); it was fixed there at 22:32 and Galaxy rebuilt. The
   verified binary includes CNA's then-uncommitted graphics edits.

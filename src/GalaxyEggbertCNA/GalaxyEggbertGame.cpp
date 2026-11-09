@@ -2056,14 +2056,25 @@ namespace GalaxyEggbert::CNA
         saveData_.Write(settings);
         start.saveData = settings.str();
         resumeTicks_ = 0;
-        // No resume file for a galaxy (BD-0119): Continue resumes the campaign only.
-        recordingResume_ = !editorPlayTestActive_ && !loadedMissionPath_.empty() && galaxyGamer_ < 0;
+        // A galaxy's mission too (BD-0119): its log names the galaxy's file, BeginResume() goes back
+        // into the galaxy.
+        recordingResume_ = !editorPlayTestActive_ && !loadedMissionPath_.empty();
         missionStartPending_ = false;
     }
 
     bool GalaxyEggbertGame::BeginResume(ResumeLog log)
     {
-        const auto path = MissionWorldPath(log.start.mission);
+        auto path = MissionWorldPath(log.start.mission);
+        int galaxy = -1; // a mission of a player's galaxy (BD-0119) continues there, from its file
+        if (log.start.worldPath != path)
+        {
+            const auto parsed = GalaxyEggbert::Editor::ParseGalaxyWorldPath(log.start.worldPath);
+            if (parsed && parsed->second == log.start.mission)
+            {
+                galaxy = parsed->first;
+                path = log.start.worldPath;
+            }
+        }
         const auto bytes = ReadWorldBytes(path);
         // Validate before replacing the current mission or settings.
         if (!bytes || !log.MatchesWorld(path, ResumeLog::HashBytes(*bytes)))
@@ -2089,6 +2100,10 @@ namespace GalaxyEggbert::CNA
         saveData_ = SaveData{};
         std::istringstream settings(start.saveData);
         saveData_.Read(settings);
+        // Back into the galaxy the log was written in, or the campaign (LoadMission() reads its file
+        // and its progress by these).
+        galaxyGamer_ = galaxy;
+        saveData_.SetGalaxyMode(galaxy >= 0);
         sound_.SetEnabled(saveData_.GetSoundEnabled());
         sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
         quickCheatEnabled_ = start.quickCheat;
