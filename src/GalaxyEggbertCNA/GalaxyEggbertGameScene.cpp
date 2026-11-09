@@ -149,6 +149,7 @@ namespace GalaxyEggbert::CNA
         effects.enabled = effects.level >= 1;
         effects.occlusion = effects.surfaces = effects.smoothing = effects.level >= 2;
         effects.shadowMap = effects.pointLights = effects.glow = effects.level >= 3;
+        effects.ultra = effects.level >= 4;
         if (!effects.enabled)
         {
             effectParticles_.Clear();

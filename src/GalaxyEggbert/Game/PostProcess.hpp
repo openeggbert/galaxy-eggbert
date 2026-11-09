@@ -24,8 +24,10 @@ namespace GalaxyEggbert::Game
     public:
         // Draws what follows into the scene target (cleared to `clear`, its depth too). False when the
         // device cannot: then nothing is bound and the caller draws to the screen.
+        // `width` x `height` (when given) is the target's size in pixels where it differs from the
+        // viewport's (ultra: the window's own pixels, the viewport being the 800x480 logical surface's).
         bool Begin(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
-                   const Microsoft::Xna::Framework::Color& clear);
+                   const Microsoft::Xna::Framework::Color& clear, int width = 0, int height = 0);
         // Back to the screen: the scene smoothed (FXAA), with its glow and grade when `glow`.
         void End(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool glow = true);
 
@@ -37,8 +39,10 @@ namespace GalaxyEggbert::Game
                   Microsoft::Xna::Framework::Graphics::ShaderEffect& effect, int width, int height);
 
         bool m_failed = false;
-        int m_width = 0;
+        int m_width = 0;       // the targets'
         int m_height = 0;
+        int m_screenWidth = 0; // the viewport's, where the result goes
+        int m_screenHeight = 0;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> m_scene;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> m_bright;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D> m_blur;

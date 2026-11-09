@@ -179,9 +179,18 @@ namespace GalaxyEggbert::CNA
             worldRenderer_.RenderShadowMap(device, sceneFrame_, assets);
             // The 3D effects' finish (PostProcess.hpp): the world into a render target, then onto the
             // screen with its glow and grade; without them, or where the device cannot, straight on.
+            // Ultra draws the world at the window's own pixels, not the 800x480 logical surface's (which
+            // CNA scales up to the window); the HUD after it stays on the logical surface.
             const auto& effects = sceneFrame_.effects;
+            int targetW = 0, targetH = 0;
+            if (effects.ultra)
+            {
+                const auto client = getWindowProperty().getClientBoundsProperty();
+                targetW = client.Width;
+                targetH = client.Height;
+            }
             const bool finish = (effects.smoothing || effects.glow) &&
-                                postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98));
+                                postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98), targetW, targetH);
             if (!finish && sceneFrame_.effects.enabled)
             {
                 device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98)); // the screen again after the shadow map

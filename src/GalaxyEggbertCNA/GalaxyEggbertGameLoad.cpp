@@ -821,8 +821,8 @@ namespace GalaxyEggbert::CNA
 
     int GalaxyEggbertGame::EffectsLevel() const
     {
-        // GALAXY_EFFECTS overrides the Setup's "3D effects" (tests, comparisons): 0-3 or off, low,
-        // medium, high.
+        // GALAXY_EFFECTS overrides the Setup's "3D effects" (tests, comparisons): 0-4 or off, low,
+        // medium, high, ultra.
         if (const char* level = std::getenv("GALAXY_EFFECTS"); level != nullptr && *level != '\0')
         {
             const std::string text(level);
@@ -830,7 +830,8 @@ namespace GalaxyEggbert::CNA
             if (text == "low") return 1;
             if (text == "medium") return 2;
             if (text == "high") return 3;
-            return std::clamp(std::atoi(level), 0, 3);
+            if (text == "ultra") return 4;
+            return std::clamp(std::atoi(level), 0, GalaxyEggbert::Game::SaveData::kEffectsLevelUltra);
         }
         return saveData_.GetEffectsLevel();
     }

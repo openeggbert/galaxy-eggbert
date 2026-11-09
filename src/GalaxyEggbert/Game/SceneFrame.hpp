@@ -164,13 +164,14 @@ namespace GalaxyEggbert::Game
     struct SceneEffects
     {
         bool enabled = false;    // any level: fog, the soft round shadows, the particles
-        int level = 0;           // 1 low, 2 medium, 3 high (SaveData::GetEffectsLevel)
+        int level = 0;           // 1 low, 2 medium, 3 high, 4 ultra (SaveData::GetEffectsLevel)
         bool occlusion = false;  // medium: the terrain's ambient occlusion
         bool surfaces = false;   // medium: the water and lava shaders
         bool smoothing = false;  // medium: FXAA
         bool shadowMap = false;  // high: the sun's shadow map
         bool pointLights = false; // high: the point lights
         bool glow = false;       // high: bloom and the grade
+        bool ultra = false;      // ultra: the world at the screen's own resolution, in HDR (UltraFinish.hpp)
         Microsoft::Xna::Framework::Vector3 fogColor;
         float fogStart = 0.0f;   // blocks from the camera where the fog begins
         float fogEnd = 1.0f;     // where it is whole

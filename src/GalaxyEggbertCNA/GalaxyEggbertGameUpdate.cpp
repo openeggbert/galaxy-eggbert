@@ -558,7 +558,7 @@ namespace GalaxyEggbert::CNA
             {
                 // 3D effects on or off (SaveData::GetEffects3D): the next frame is drawn with or
                 // without them.
-                saveData_.SetEffectsLevel((saveData_.GetEffectsLevel() + 1) % 4);
+                saveData_.SetEffectsLevel((saveData_.GetEffectsLevel() + 1) % (GalaxyEggbert::Game::SaveData::kEffectsLevelUltra + 1));
                 SavePlayerData();
                 // The terrain built again, with or without its ambient occlusion.
                 if (terrainRenderer_ && terrainRenderer_->AmbientOcclusion() != TerrainOcclusionWanted())

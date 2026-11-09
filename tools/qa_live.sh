@@ -24,6 +24,8 @@
 #   mousedown <x> <y> / mouseup   hold the left button at window coordinates / let it go
 #   move <x> <y>             move the mouse to window coordinates
 #   focus                    give the game window the keyboard focus again
+#   resize <w> <h>           resize the game window (QA_LIVE_SCREEN=<w>x<h> enlarges the display,
+#                            default 1280x720)
 set -u
 
 if [[ $# -lt 3 ]]; then
@@ -37,7 +39,7 @@ steps="$(cd "$(dirname "$3")" && pwd)/$(basename "$3")"
 shift 3
 
 if [[ -z "${QA_LIVE_INNER:-}" ]]; then
-    QA_LIVE_INNER=1 exec xvfb-run -a -s "-screen 0 1280x720x24" "$0" "$build" "$out" "$steps" "$@"
+    QA_LIVE_INNER=1 exec xvfb-run -a -s "-screen 0 ${QA_LIVE_SCREEN:-1280x720}x24" "$0" "$build" "$out" "$steps" "$@"
 fi
 
 run="${QA_LIVE_RUN:-$repo/build-probe/qa-run}"
@@ -94,6 +96,7 @@ while read -r cmd a b; do
             xdotool mousedown 1 ;;
         mouseup) xdotool mouseup 1 ;;
         focus) xdotool windowfocus "$wid" 2>/dev/null ;;
+        resize) xdotool windowsize "$wid" "$a" "$b" 2>/dev/null ;;
         "#"*|"") ;;
         *) echo "qa_live.sh: unknown step '$cmd'" >&2 ;;
     esac

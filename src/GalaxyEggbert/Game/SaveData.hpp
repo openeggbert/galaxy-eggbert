@@ -136,7 +136,8 @@ namespace GalaxyEggbert::Game
         // lights, the glow). Presentation only; the Setup's "3D effects" steps through them. Saved as
         // `effectsLevel=` (the first build's `effects3d=1` reads as high).
         [[nodiscard]] int GetEffectsLevel() const noexcept { return effectsLevel_; }
-        void SetEffectsLevel(int level) noexcept { effectsLevel_ = level < 0 ? 0 : level > 3 ? 3 : level; }
+        void SetEffectsLevel(int level) noexcept { effectsLevel_ = level < 0 ? 0 : level > kEffectsLevelUltra ? kEffectsLevelUltra : level; }
+        static constexpr int kEffectsLevelUltra = 4; // off, low, medium, high, ultra
         static constexpr int kEffectsLevelDefault = 0;
         [[nodiscard]] int GetMusicVolume() const noexcept { return musicVolume_; }
         void SetMusicVolume(int volume) noexcept { musicVolume_ = ClampVolume(volume); }

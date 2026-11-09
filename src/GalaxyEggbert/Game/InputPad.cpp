@@ -2132,10 +2132,10 @@ namespace GalaxyEggbert::Game
             appendLabel(SetupAccelRect(m), "Accelerometer");
             appendLabel(SetupTerrainRect(m), "3D terrain");
             {
-                // Its level under it: a press steps to the next (off, low, medium, high).
-                static const char* const kLevels[4] = {"Off", "Low", "Medium", "High"};
+                // Its level under it: a press steps to the next (off, low, medium, high, ultra).
+                static const char* const kLevels[5] = {"Off", "Low", "Medium", "High", "Ultra"};
                 appendLabel(SetupEffectsRect(m),
-                            std::string("3D effects\n") + kLevels[effectsLevel < 0 ? 0 : effectsLevel > 3 ? 3 : effectsLevel]);
+                            std::string("3D effects\n") + kLevels[effectsLevel < 0 ? 0 : effectsLevel > 4 ? 4 : effectsLevel]);
             }
             if (showReset)
             {

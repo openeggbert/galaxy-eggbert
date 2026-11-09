@@ -174,12 +174,18 @@ void main()
         return true;
     }
 
-    bool PostProcess::Begin(Graphics::GraphicsDevice& device, const Microsoft::Xna::Framework::Color& clear)
+    bool PostProcess::Begin(Graphics::GraphicsDevice& device, const Microsoft::Xna::Framework::Color& clear, int width,
+                            int height)
     {
         const auto viewport = device.getViewportProperty();
-        const int width = viewport.getWidthProperty();
-        const int height = viewport.getHeightProperty();
-        if (width <= 0 || height <= 0 || !Prepare(device, width, height))
+        m_screenWidth = viewport.getWidthProperty();
+        m_screenHeight = viewport.getHeightProperty();
+        if (width <= 0 || height <= 0)
+        {
+            width = m_screenWidth;
+            height = m_screenHeight;
+        }
+        if (m_screenWidth <= 0 || m_screenHeight <= 0 || width <= 0 || height <= 0 || !Prepare(device, width, height))
         {
             return false;
         }
@@ -224,7 +230,7 @@ void main()
         }
         device.SetRenderTarget(nullptr);
         m_fxaa->SetUniformVec2("uTexel", 1.0f / static_cast<float>(m_width), 1.0f / static_cast<float>(m_height));
-        Pass(device, nullptr, *smoothed, *m_fxaa, m_width, m_height);
+        Pass(device, nullptr, *smoothed, *m_fxaa, m_screenWidth, m_screenHeight);
 
         device.setBlendStateProperty(blend);
         device.setDepthStencilStateProperty(depth);
