@@ -6,7 +6,55 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Ultra; frame rate; fixes from the owner's reports (2026-11-09) — verified desktop
+
+Ultra is a fifth "3D effects" level (`effectsLevel=4`, `GALAXY_EFFECTS=4|ultra`), desktop only in
+practice. Levels 0-3 stay byte-identical (golden frames after every commit). Each point its commit:
+
+- `e7074660` native resolution: the world into a target of the window's client size
+  (`getClientBoundsProperty`), the HUD on the logical surface after it.
+- `365af650` `UltraFinish`: RGBA16F (`HdrBlendable`, PreserveContents: a discarded target is XNA
+  purple) scene, ACES (Hill, white normalised /0.79, exposure 1.35), auto exposure on the GPU
+  (64 -> 1x1 log luminance, two 1x1 targets in turn, clamp 0.85-1.8), HDR bloom chain (6 halves, tent
+  up), a 32^3 grade per world (`UltraLogic.hpp` BuildGradeTable from the sky's haze). Every pass
+  fetches texels itself (half floats are point-only in XNA's rules).
+- `90e1062e` PBR (`SceneShaders` Ultra programs compiled apart: GGX, Schlick, Smith, Karis split-sum),
+  the sky's light (`BuildSkyEnvironment`: the background as 128x96 levels + SH9 irradiance at 40 % of
+  its hue, made at load, its texture on Ultra's first frame: a texture made at load moved a High
+  golden frame), Ultra water/lava, Ray Dream `surface` lines (highlight, shininess, reflection, glow)
+  for all 121 object models (`procedural_materials.py`).
+- `92a90955` geometry pass (`WorldRenderer::DrawGeometry`, RGBA32F: half floats were too coarse for
+  depth): SSAO (12 rays), contact shadows (thin occluders nearer the camera only), SSR on the water.
+- `ebfec1d1` voxel GI (`TerrainGi.hpp`: 16 rays a face over the grid, sky + one sunlit bounce of the
+  tiles' mean colours, smoothed per corner, min 0.45), baked only at Ultra.
+- `d9b5ae06` volumetric height fog with god rays (20 steps against the shadow cascades, half size).
+- `afa8b3de` TAA (Halton jitter, depth reprojection, neighbourhood clamp), far DoF on Blupi's
+  distance, camera motion blur (60 Hz shutter), grain; captures turn the frame-to-frame parts off
+  (`SceneEffects::capture`).
+- `9a76df0d` the atlas finer (Catmull-Rom to HiDef's 4096) with normals (Sobel of brightness) and a
+  surface map (tile classes, cavity), made on Ultra's first frame (~2 s, logged).
+- `6b4a2b62` PN-triangle subdivision of the model parts (`ModelSubdivision.hpp`, creases > 40 deg
+  straight), made per part the first time Ultra draws it; the geometry pass uses it too.
+- Tests: `VerifyUltra` (grade, ACES, sky, surfaces, GI, maps, subdivision). Debug views:
+  `GALAXY_ULTRA_DEBUG=1..9`.
+
+The owner's reports and requests the same day: `fb038986` High water sampled the last bound texture
+(ShaderEffect textures bind when set; rebound before the water) and the editor's gizmos/selection with
+the effects; `514a9e38` the far cascade every frame in captures (golden frames were timing-dependent);
+`75b28c95` a teleporter's top is a floor from above (one-way, feet only); `e3d39b59` the lightning's
+zap (channel 69, Decor::BlitzActif); `bf47cf4d` editor axes on the world's bounds; `4d92262a` `fps`,
+`78c8a6ef`/`062a05f9` `position` cheats (position and turning axes); `65c8c168` the fade into the
+Setup 0.25 s (measured 1.2-1.4 s before, the same in yesterday's build); `a75c642a`/`1c3e60bc` the
+Setup's frame rate (60/120/144/240: a 60 Hz tick gate, camera and Blupi interpolated, vsync off above
+60; never in captures, demo verification or resume replay). `391194ae` UB-010 marked fixed.
+
+- Checked: web music plays in mission 11 on today's web build (audio output peak 0.42-0.49 in
+  headless Chrome); the hub has no music in the original either (world001 `music=0`). world054's
+  autoplay fails at its line 97 with or without the teleporter change (pre-existing, not chased).
+- Open: Ultra not run on Android/web; the editor's red overlay under Ultra's smoother models can sit
+  inside them; the frame rate interpolates only the camera and Blupi.
 
 ## 3D effects, third round; UpdateTick split (2026-11-09) — verified desktop and web
 

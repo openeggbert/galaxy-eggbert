@@ -69,8 +69,12 @@ content-authoring UX, but not new gameplay mechanics.
   A refactor only: golden frames, 1728 autoplay frames of 11 missions and 28 editor frames
   byte-equal to the build before it.
 - 3D effects (2026-11-09, the owner's requests; the Setup's "3D effects" steps Off, Low, Medium,
-  High, saved as `effectsLevel=0..3`, off by default; `GALAXY_EFFECTS=0-3|off|low|medium|high`
-  overrides it). Low: distance fog in the colour of the world's background, soft round shadows,
+  High, Ultra, saved as `effectsLevel=0..4`, off by default; `GALAXY_EFFECTS=0-4|off|low|medium|high|ultra`
+  overrides it). Ultra (desktop): the world at the window's own pixels in HDR (ACES, auto exposure,
+  HDR bloom, a grade per world), physically based light with the sky's light from the background,
+  SSAO, contact shadows, screen-space reflections on the water, a voxel GI baked into the terrain,
+  volumetric fog with god rays, TAA, depth of field, motion blur, grain, the atlas finer with normal
+  and surface maps, the models subdivided (PN triangles); handoff.md has its parts. Low: distance fog in the colour of the world's background, soft round shadows,
   the explosions, splashes and sparks as particles cut from their own sprite frames and Blupi's
   moments (dust landing and running, a splash into water, bubbles under it, stars as he teleports,
   sparks off the lava; `EffectParticles`, stepped by ticks). Medium: + ambient occlusion baked into
@@ -432,8 +436,10 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   2026-10-24). Effects, the charge and the shield (sparks) stay billboards; procedural
   textures (bark, metal noise, wood grain) are flat colours. First person still uses an invisible collision
   point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
-- 3D effects: the sun's shadow reaches 160 blocks ahead of the camera (the far cascade drawn every
-  third frame); the procedural materials are Ray Dream's colours and parameters over a value noise,
+- 3D effects: Ultra's first frame makes the finer atlas and its maps (~2 s); Ultra not run on
+  Android or the web. The Setup's frame rate above 60 interpolates the camera and Blupi only (the
+  rest steps 60 times a second). The sun's shadow reaches 160 blocks ahead of the camera (the far
+  cascade drawn every third frame); the procedural materials are Ray Dream's colours and parameters over a value noise,
   not its own noise; skinned models above 56 bones (none today) would be drawn by the stock effect. The shaders, the shadow map and the glow need GLSL source (`ShaderEffect`) and
   render targets: OPENGL33 and WEBGL2 checked, Android (OPENGLES3) not run; where they do not
   compile they are left out by themselves (no ambient occlusion either) and the fog, soft shadows
