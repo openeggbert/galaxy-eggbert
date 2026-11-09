@@ -83,6 +83,12 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
+        if (!frameRateApplied_)
+        {
+            // The Setup's frame rate, once the capture and replay modes are known (the first pass).
+            frameRateApplied_ = true;
+            ApplyFrameRate();
+        }
         {
             // Real seconds for the menu's idle timer (DemoReplay.hpp), whatever the game's speed;
             // a long stall (a suspended machine) counts as a quarter of a second.
@@ -97,6 +103,23 @@ namespace GalaxyEggbert::CNA
             ReplayBatch();
             SuppressDraw();
             return;
+        }
+        // The Setup's frame rate above 60 (ApplyFrameRate): the loop runs that often, the game steps
+        // once each 1/60 s of it; the frames between draw the camera and Blupi interpolated.
+        if (frameRateInterpolating_)
+        {
+            constexpr double kTick = 1.0 / 60.0;
+            tickClock_ += gameTime.getElapsedGameTimeProperty().getTotalSecondsProperty();
+            if (tickClock_ < kTick)
+            {
+                drawAlpha_ = static_cast<float>(tickClock_ / kTick);
+                return;
+            }
+            tickClock_ = std::min(tickClock_ - kTick, kTick * 0.999); // one step per pass, no catching up
+            previousEye_ = camera_.Position();
+            previousTarget_ = cameraTarget_;
+            previousBlupi_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+            drawAlpha_ = static_cast<float>(tickClock_ / kTick);
         }
         if (demoVerifyPending_)
         {
@@ -595,6 +618,12 @@ namespace GalaxyEggbert::CNA
                 saveData_.SetTerrainRelief(!saveData_.GetTerrainRelief());
                 SavePlayerData();
                 ApplyTerrainReliefSetting();
+            }
+            if (setupInput.frameRateToggled)
+            {
+                saveData_.SetFrameRate(GalaxyEggbert::Game::SaveData::NextFrameRate(saveData_.GetFrameRate()));
+                SavePlayerData();
+                ApplyFrameRate();
             }
             if (setupInput.effectsToggled)
             {

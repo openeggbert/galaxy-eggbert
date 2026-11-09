@@ -394,8 +394,42 @@ namespace GalaxyEggbert::CNA
             Microsoft::Xna::Framework::Matrix::CreateTranslation(0.0f, 0.4f, 0.0f) *
             Microsoft::Xna::Framework::Matrix::CreateRotationY(modelYaw) *
             Microsoft::Xna::Framework::Matrix::CreateTranslation(
-                blupi_.GetX(), blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop,
-                blupi_.GetZ());
+                blupi_.GetX() + blupiDrawOffset_.X, blupi_.GetY() + kPlaceholderModelYOffset - suspendDrop + blupiDrawOffset_.Y,
+                blupi_.GetZ() + blupiDrawOffset_.Z);
+    }
+
+    bool GalaxyEggbertGame::FrameRateInterpolates() const noexcept
+    {
+        // The captures, the demos and the replays step once a loop pass, at its own pace.
+        return saveData_.GetFrameRate() > 60 && !autoplay_ && !goldenCaptureMode_ && !goldenTraceMode_ &&
+               !demoVerifying_ && !replayingResume_;
+    }
+
+    void GalaxyEggbertGame::ApplyFrameRate()
+    {
+        const bool interpolate = FrameRateInterpolates();
+        const int rate = interpolate ? saveData_.GetFrameRate() : 60;
+        if (interpolate != frameRateInterpolating_ || interpolate)
+        {
+            tickClock_ = 0.0;
+            drawAlpha_ = 1.0f;
+            previousEye_ = camera_.Position();
+            previousTarget_ = cameraTarget_;
+            previousBlupi_ = Microsoft::Xna::Framework::Vector3(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+        }
+        frameRateInterpolating_ = interpolate;
+        if (!autoplay_)
+        {
+            setTargetElapsedTimeProperty(System::TimeSpan::FromSeconds(1.0 / static_cast<double>(rate)));
+        }
+        // Above 60 the screen's refresh must not hold the frames back (most are 60 Hz).
+        if (graphics_ && graphics_->getSynchronizeWithVerticalRetraceProperty() != (rate <= 60))
+        {
+            graphics_->setSynchronizeWithVerticalRetraceProperty(rate <= 60);
+            graphics_->ApplyChanges();
+        }
+        std::cout << "GalaxyEggbertCNA: frame rate " << rate << (interpolate ? " (the steps between interpolated)" : "")
+                  << "." << std::endl;
     }
 
     Microsoft::Xna::Framework::Graphics::Texture2D* GalaxyEggbertGame::BlupiFaceTexture()

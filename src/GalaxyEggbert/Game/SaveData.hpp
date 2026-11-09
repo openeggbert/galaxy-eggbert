@@ -139,6 +139,30 @@ namespace GalaxyEggbert::Game
         void SetEffectsLevel(int level) noexcept { effectsLevel_ = level < 0 ? 0 : level > kEffectsLevelUltra ? kEffectsLevelUltra : level; }
         static constexpr int kEffectsLevelUltra = 4; // off, low, medium, high, ultra
         static constexpr int kEffectsLevelDefault = 0;
+        // The frames drawn a second (a Galaxy setting, the owner 2026-11-09): 60 as the original, or
+        // more (the game still steps 60 times a second; the frames between are interpolated).
+        static constexpr int kFrameRates[4] = {60, 120, 144, 240};
+        [[nodiscard]] int GetFrameRate() const noexcept { return frameRate_; }
+        void SetFrameRate(int rate) noexcept
+        {
+            frameRate_ = 60;
+            for (const int allowed : kFrameRates)
+            {
+                frameRate_ = rate == allowed ? allowed : frameRate_;
+            }
+        }
+        // The next one of kFrameRates, round to 60 after the last.
+        [[nodiscard]] static int NextFrameRate(int rate) noexcept
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                if (kFrameRates[i] == rate)
+                {
+                    return kFrameRates[(i + 1) % 4];
+                }
+            }
+            return kFrameRates[0];
+        }
         [[nodiscard]] int GetMusicVolume() const noexcept { return musicVolume_; }
         void SetMusicVolume(int volume) noexcept { musicVolume_ = ClampVolume(volume); }
         [[nodiscard]] static int ClampVolume(int volume) noexcept { return volume < 0 ? 0 : volume > 100 ? 100 : volume; }
@@ -260,6 +284,7 @@ namespace GalaxyEggbert::Game
         int accelSensitivity_ = 50;
         bool terrainRelief_ = kTerrainReliefDefault;
         int effectsLevel_ = kEffectsLevelDefault;
+        int frameRate_ = 60;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
         GamerSlot galaxies_[kGamerCount];

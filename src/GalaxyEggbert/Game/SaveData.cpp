@@ -65,6 +65,10 @@ namespace GalaxyEggbert::Game
             {
                 SetEffectsLevel(std::atoi(value.c_str()));
             }
+            else if (key == "frameRate")
+            {
+                SetFrameRate(std::atoi(value.c_str()));
+            }
             else if (key == "effects3d")
             {
                 // The first build's switch: on was everything (high).
@@ -150,6 +154,7 @@ namespace GalaxyEggbert::Game
         out << "fullscreen=" << (fullscreen_ ? "1" : "0") << "\n";
         out << "terrainRelief=" << (terrainRelief_ ? "1" : "0") << "\n";
         out << "effectsLevel=" << effectsLevel_ << "\n";
+        out << "frameRate=" << frameRate_ << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
         const auto writeSlot = [&out](const char* prefix, int gamer, const GamerSlot& slot)
         {

@@ -726,6 +726,18 @@ namespace GalaxyEggbert::CNA
         int cheatZoomStep_ = 0;
         bool cheatCompass_ = false;
         bool cheatDebug_ = false;
+        // The Setup's frame rate (SaveData::GetFrameRate): above 60 the loop draws that often while the
+        // game still steps 60 times a second (Update's tick gate); the frames between two steps show the
+        // camera and Blupi part way between them (drawAlpha_). Never in the captures, demos and
+        // replays, whose ticks must be the loop's.
+        void ApplyFrameRate();
+        [[nodiscard]] bool FrameRateInterpolates() const noexcept;
+        bool frameRateInterpolating_ = false;
+        bool frameRateApplied_ = false;
+        double tickClock_ = 0.0;      // seconds since the last step
+        float drawAlpha_ = 1.0f;      // how far between the last two steps the frame is drawn
+        Microsoft::Xna::Framework::Vector3 previousEye_, previousTarget_, previousBlupi_;
+        Microsoft::Xna::Framework::Vector3 blupiDrawOffset_; // the interpolated Blupi's offset, while drawing
         // The lightning's zaps (PlayBlitzZaps): the world's animation tick last heard.
         int blitzZapPhase_ = -1;
         void PlayBlitzZaps();

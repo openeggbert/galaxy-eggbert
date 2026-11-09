@@ -78,7 +78,30 @@ namespace GalaxyEggbert::CNA
         (void)gameTime;
         if (replayingResume_) return;
         const auto perfStart = std::chrono::steady_clock::now();
+        // Above 60 frames a second, between two steps: the camera and Blupi drawn part way between them.
+        const bool between = frameRateInterpolating_ && drawAlpha_ < 0.999f && phase_ == GalaxyEggbert::Def::GamePhase::Play;
+        const auto eye = camera_.Position();
+        const auto target = cameraTarget_;
+        if (between)
+        {
+            const float t = drawAlpha_;
+            const auto lerp = [t](const Microsoft::Xna::Framework::Vector3& a, const Microsoft::Xna::Framework::Vector3& b)
+            { return a + (b - a) * t; };
+            const Microsoft::Xna::Framework::Vector3 blupi(blupi_.GetX(), blupi_.GetY(), blupi_.GetZ());
+            const auto drawnEye = lerp(previousEye_, eye);
+            const auto drawnTarget = lerp(previousTarget_, target);
+            if (drawnEye != drawnTarget)
+            {
+                camera_.SetLookAt(drawnEye, drawnTarget);
+            }
+            blupiDrawOffset_ = lerp(previousBlupi_, blupi) - blupi;
+        }
         DrawFrame();
+        if (between)
+        {
+            camera_.SetLookAt(eye, target);
+            blupiDrawOffset_ = Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f);
+        }
         if (perfEnabled_)
         {
             perfDrawSeconds_ += std::chrono::duration<double>(std::chrono::steady_clock::now() - perfStart).count();
@@ -635,7 +658,7 @@ namespace GalaxyEggbert::CNA
                                     saveData_.GetAccelActive(), phase_ == GalaxyEggbert::Def::GamePhase::MainSetup,
                                     saveData_.GetSelectedGamer(), saveData_.GetEffectsVolume(),
                                     saveData_.GetMusicVolume(), saveData_.GetAccelSensitivity(), phaseTimeSeconds_,
-                                    fadeOutPhase_, TerrainReliefWanted(), EffectsLevel());
+                                    fadeOutPhase_, TerrainReliefWanted(), EffectsLevel(), saveData_.GetFrameRate());
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Resume)
             {

@@ -406,6 +406,7 @@ namespace GalaxyEggbert::Game
             bool accelToggled = false; // SetupAccel: the accelerometer
             bool terrainToggled = false; // 3D terrain (a Galaxy setting, SaveData::GetTerrainRelief)
             bool effectsToggled = false; // 3D effects: the next level (a Galaxy setting, SaveData::GetEffectsLevel)
+            bool frameRateToggled = false; // Frame rate: the next one (SaveData::GetFrameRate)
             bool resetPressed = false;
             bool returnPressed = false;
             // The volume sliders (0..100) while one is dragged, -1 otherwise; volumeReleased the
@@ -428,7 +429,7 @@ namespace GalaxyEggbert::Game
                        bool showReset, int selectedGamer, int effectsVolume, int musicVolume,
                        int accelSensitivity, float phaseTimeSeconds,
                        GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
-                       bool terrainRelief = true, int effectsLevel = 0);
+                       bool terrainRelief = true, int effectsLevel = 0, int frameRate = 60);
 
         // Resume screen (plan.md MENU-040..045). Real background is
         // pause.png, the SAME image as Pause (confirmed via `Game1.cpp`'s
