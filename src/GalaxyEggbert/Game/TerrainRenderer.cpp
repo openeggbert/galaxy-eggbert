@@ -1,4 +1,5 @@
 #include "TerrainRenderer.hpp"
+#include "SceneEffectsLogic.hpp"
 
 #include "LavaSurface.hpp"
 #include "BlockModels.hpp"
@@ -335,66 +336,6 @@ namespace GalaxyEggbert::Game
             if (x < 0 || y < 0 || z < 0 || x >= blocksPerAxis || y >= blocksPerAxis || z >= blocksPerAxis)
                 return false;
             return IsTerrainOccluder(world.getBlock(x, y, z), tileCoverage);
-        }
-
-        // The 3D effects' ambient occlusion, baked into a vertex colour: a cube face's corner is darker the
-        // more of the cells round it (in the layer in front of the face) are solid, as the light of a sky
-        // is cut off in a corner (Minecraft's "smooth lighting"). Only the axis-aligned faces of whole
-        // cells take it (corners on the grid); every other vertex (plates, reliefs) stays white.
-        void BakeAmbientOcclusion(CnaEngine::Graphics::MeshData& mesh, const Worlds::World& world,
-                                  const std::vector<TileCoverage>& tileCoverage)
-        {
-            constexpr float kLevels[5] = {1.0f, 0.8f, 0.66f, 0.56f, 0.5f};
-            const int blocksPerAxis = static_cast<int>(world.blocksPerAxis());
-            mesh.colors.assign(mesh.positions.size(), Microsoft::Xna::Framework::Color::White);
-            const auto onHalf = [](float value) {
-                const float f = value - std::floor(value);
-                return std::fabs(f - 0.5f) < 0.02f;
-            };
-            for (std::size_t i = 0; i < mesh.positions.size() && i < mesh.normals.size(); ++i)
-            {
-                const auto& p = mesh.positions[i];
-                const auto& n = mesh.normals[i];
-                const float c[3] = {p.X, p.Y, p.Z};
-                const float d[3] = {n.X, n.Y, n.Z};
-                int axis = -1;
-                for (int a = 0; a < 3; ++a)
-                {
-                    if (std::fabs(d[a]) > 0.99f)
-                    {
-                        axis = a;
-                    }
-                }
-                if (axis < 0 || !onHalf(c[0]) || !onHalf(c[1]) || !onHalf(c[2]))
-                {
-                    continue;
-                }
-                // The layer of cells in front of the face, and the four of them round this corner.
-                float front[3] = {c[0], c[1], c[2]};
-                front[axis] += (d[axis] > 0.0f ? 0.5f : -0.5f);
-                const int u = (axis + 1) % 3;
-                const int v = (axis + 2) % 3;
-                int solid = 0;
-                for (const float du : {-0.5f, 0.5f})
-                {
-                    for (const float dv : {-0.5f, 0.5f})
-                    {
-                        float cell[3] = {front[0], front[1], front[2]};
-                        cell[u] += du;
-                        cell[v] += dv;
-                        // Render space to the grid: x and z are centred on the world (kWorldCenterX/Z).
-                        const int gx = static_cast<int>(std::lround(cell[0])) + kWorldCenterX;
-                        const int gy = static_cast<int>(std::lround(cell[1]));
-                        const int gz = static_cast<int>(std::lround(cell[2])) + kWorldCenterZ;
-                        if (IsOccluderBlock(world, blocksPerAxis, gx, gy, gz, tileCoverage))
-                        {
-                            ++solid;
-                        }
-                    }
-                }
-                const float level = kLevels[solid];
-                mesh.colors[i] = Microsoft::Xna::Framework::Color(level, level, level, 1.0f);
-            }
         }
 
         // A face of a DirectionalCube hidden by its neighbour (IsOccluderBlock), as a plain cube's
@@ -1148,7 +1089,7 @@ namespace GalaxyEggbert::Game
             if (m_ambientOcclusion)
             {
                 auto occluded = staticMesh.Take();
-                BakeAmbientOcclusion(occluded, world, tileCoverage);
+                BakeAmbientOcclusion(occluded, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
                 m_staticRenderer = UploadLitColoredTexturedMeshParts(device, occluded);
             }
             else
@@ -1164,7 +1105,7 @@ namespace GalaxyEggbert::Game
                 if (m_ambientOcclusion)
                 {
                     auto occluded = reliefChunkCubes[i].Take();
-                    BakeAmbientOcclusion(occluded, world, tileCoverage);
+                    BakeAmbientOcclusion(occluded, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
                     m_reliefChunks[i].cubes = UploadLitColoredTexturedMeshParts(device, occluded);
                 }
                 else
@@ -1181,7 +1122,7 @@ namespace GalaxyEggbert::Game
                 auto cutouts = reliefChunkCutouts[i].Take();
                 if (m_ambientOcclusion)
                 {
-                    BakeAmbientOcclusion(cutouts, world, tileCoverage);
+                    BakeAmbientOcclusion(cutouts, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
                 }
                 m_reliefChunks[i].cutouts = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
             }
@@ -1197,7 +1138,7 @@ namespace GalaxyEggbert::Game
                 auto cutouts = cutoutMesh.Take();
                 if (m_ambientOcclusion)
                 {
-                    BakeAmbientOcclusion(cutouts, world, tileCoverage);
+                    BakeAmbientOcclusion(cutouts, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
                 }
                 m_cutoutRenderer = UploadBakedLitTexturedMeshParts(device, std::move(cutouts));
             }

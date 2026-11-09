@@ -14,6 +14,7 @@
 #include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
 #include <GalaxyEggbert/Game/EffectParticles.hpp>
 #include <GalaxyEggbert/Game/SceneShaders.hpp>
+#include <GalaxyEggbert/Game/SceneEffectsLogic.hpp>
 #include <GalaxyEggbert/Game/TerrainLighting.hpp>
 #include <GalaxyEggbert/Game/EnemyBlupi.hpp>
 #include <GalaxyEggbert/Game/GlueStrands.hpp>
@@ -76,31 +77,6 @@ namespace GalaxyEggbert::CNA
                 textures.push_back(face != nullptr && part.Name == facePart ? face : other(part.Texture));
             }
             return textures;
-        }
-
-        // The top of the highest solid (or water) cell under (x, z) at or below `fromY` (render space:
-        // a cell's centre at its integer coordinates), within 12 blocks; none outside the world.
-        std::optional<float> GroundBelow(const Worlds::World& world, float x, float fromY, float z)
-        {
-            const long n = static_cast<long>(world.blocksPerAxis());
-            const long gx = std::lround(x) + WorldRuntime::kWorldCenterX;
-            const long gz = std::lround(z) + WorldRuntime::kWorldCenterZ;
-            if (gx < 0 || gz < 0 || gx >= n || gz >= n || !std::isfinite(fromY))
-            {
-                return std::nullopt;
-            }
-            const long top = std::min<long>(n - 1, static_cast<long>(std::floor(fromY - 0.5f + 0.05f)));
-            for (long gy = top; gy >= 0 && gy >= top - 12; --gy)
-            {
-                const auto& definition = GalaxyEggbert::GetBlockDefinition(
-                    world.getBlock(static_cast<std::uint16_t>(gx), static_cast<std::uint16_t>(gy),
-                                   static_cast<std::uint16_t>(gz)).type());
-                if (definition.collisionMask != 0 || definition.water)
-                {
-                    return static_cast<float>(gy) + 0.5f;
-                }
-            }
-            return std::nullopt;
         }
 
         std::vector<Texture2D*> PartTextures(const SkinnedModelEXT& model, Texture2D* face, const std::string& facePart)
@@ -183,33 +159,13 @@ namespace GalaxyEggbert::CNA
 
         const auto& world = worldRuntime_.GetWorld();
         const auto& objects = worldRuntime_.GetMobileObjects();
-        // The sun's way (TerrainLighting.hpp): a shadow falls this far along X and Z per block of height.
-        const float sunX = kTerrainLight.directionX / -kTerrainLight.directionY;
-        const float sunZ = kTerrainLight.directionZ / -kTerrainLight.directionY;
         const auto addShadow = [&](float x, float feetY, float z, float radius, float darkness, bool model)
         {
-            const auto under = GroundBelow(world, x, feetY, z);
-            if (!under)
+            if (const auto shadow = PlaceShadow(world, x, feetY, z, radius, darkness, model, WorldRuntime::kWorldCenterX,
+                                                WorldRuntime::kWorldCenterZ))
             {
-                return;
+                effects.shadows.push_back(*shadow);
             }
-            const float height = std::max(0.0f, feetY - *under);
-            constexpr float kReach = 10.0f; // gone by this height
-            if (height >= kReach)
-            {
-                return;
-            }
-            // Thrown away from the sun, on the ground where it lands there.
-            const float sx = x + sunX * height;
-            const float sz = z + sunZ * height;
-            const float ground = GroundBelow(world, sx, feetY, sz).value_or(*under);
-            const float fade = 1.0f - height / kReach;
-            SceneShadow shadow;
-            shadow.center = Vector3(sx, ground, sz);
-            shadow.radius = radius * (1.0f + height * 0.08f);
-            shadow.strength = darkness * fade * std::sqrt(fade);
-            shadow.model = model;
-            effects.shadows.push_back(shadow);
         };
         // Blupi's, when he is seen.
         if (phase_ != GalaxyEggbert::Def::GamePhase::Editor && cameraMode_ == CameraMode::ThirdPersonModel &&
@@ -242,16 +198,12 @@ namespace GalaxyEggbert::CNA
         }
 
         // What lights what is near it: explosions and the lightning first, then the nearest lava and
-        // the electrodes (SceneShaders.hpp's point lights; at most kMaxLights, the nearest first).
+        // the electrodes (SceneShaders.hpp's point lights; at most kMaxLights, the nearest first;
+        // SceneEffectsLogic.hpp).
         {
-            const auto& target = cameraTarget_;
-            const auto distance = [&](const Vector3& p) {
-                const float dx = p.X - target.X, dy = p.Y - target.Y, dz = p.Z - target.Z;
-                return std::sqrt(dx * dx + dy * dy + dz * dz);
-            };
             const float t = effects.seconds;
-            std::vector<std::pair<float, ScenePointLight>> strong;
-            std::vector<std::pair<float, ScenePointLight>> weak;
+            std::vector<ScenePointLight> strong;
+            std::vector<ScenePointLight> weak;
             for (const auto& obj : objects)
             {
                 ParticleKind kind{};
@@ -260,21 +212,13 @@ namespace GalaxyEggbert::CNA
                 {
                     continue;
                 }
-                // A blast of several objects (a crate wall) is one light: those within 3 blocks of one
-                // already lit add nothing.
+                // A blast of several objects (a crate wall) is one light.
                 const Vector3 at(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
-                if (std::any_of(strong.begin(), strong.end(), [&](const auto& lit) {
-                        const auto d = lit.second.position - at;
-                        return d.X * d.X + d.Y * d.Y + d.Z * d.Z < 9.0f;
-                    }))
+                if (NearAnyLight(strong, at, 3.0f))
                 {
                     continue;
                 }
-                ScenePointLight light;
-                light.position = at;
-                light.color = Vector3(1.0f, 0.62f, 0.28f) * 0.85f;
-                light.radius = 4.5f;
-                strong.emplace_back(distance(light.position), light);
+                strong.push_back(ScenePointLight{at, Vector3(1.0f, 0.62f, 0.28f) * 0.85f, 4.5f});
             }
             if (terrainRenderer_)
             {
@@ -282,61 +226,24 @@ namespace GalaxyEggbert::CNA
                 {
                     for (const auto& cell : terrainRenderer_->BlitzCells())
                     {
-                        ScenePointLight light;
-                        light.position = cell;
-                        light.color = Vector3(0.6f, 0.75f, 1.0f) * 1.8f;
-                        light.radius = 6.0f;
-                        strong.emplace_back(distance(cell), light);
+                        strong.push_back(ScenePointLight{cell, Vector3(0.6f, 0.75f, 1.0f) * 1.8f, 6.0f});
                     }
                 }
                 // The lava: its nearest cells, a light every few blocks, flickering.
-                auto lava = terrainRenderer_->LavaCells();
-                std::sort(lava.begin(), lava.end(),
-                          [&](const Vector3& a, const Vector3& b) { return distance(a) < distance(b); });
-                std::vector<Vector3> chosen;
-                for (const auto& cell : lava)
+                const auto lava = PickLavaLightCells(terrainRenderer_->LavaCells(), cameraTarget_);
+                for (std::size_t i = 0; i < lava.size(); ++i)
                 {
-                    if (chosen.size() >= 4 || distance(cell) > 18.0f)
-                    {
-                        break;
-                    }
-                    if (std::any_of(chosen.begin(), chosen.end(), [&](const Vector3& c) {
-                            const float dx = c.X - cell.X, dz = c.Z - cell.Z;
-                            return dx * dx + dz * dz < 9.0f;
-                        }))
-                    {
-                        continue;
-                    }
-                    chosen.push_back(cell);
-                    const float flicker = 0.85f + 0.15f * std::sin(t * 7.3f + static_cast<float>(chosen.size()) * 1.7f);
-                    ScenePointLight light;
-                    light.position = cell + Vector3(0.0f, 0.45f, 0.0f);
-                    light.color = Vector3(1.0f, 0.42f, 0.1f) * (0.9f * flicker);
-                    light.radius = 3.5f;
-                    weak.emplace_back(distance(light.position), light);
+                    const float flicker = 0.85f + 0.15f * std::sin(t * 7.3f + static_cast<float>(i + 1) * 1.7f);
+                    weak.push_back(ScenePointLight{lava[i] + Vector3(0.0f, 0.45f, 0.0f),
+                                                   Vector3(1.0f, 0.42f, 0.1f) * (0.9f * flicker), 3.5f});
                 }
             }
             for (const auto& cell : electrodeCells_)
             {
-                ScenePointLight light;
-                light.position = Vector3(cell.x, cell.y, cell.z);
-                light.color = Vector3(0.55f, 0.75f, 1.0f) * 0.9f;
-                light.radius = 2.5f;
-                weak.emplace_back(distance(light.position), light);
+                weak.push_back(ScenePointLight{Vector3(cell.x, cell.y, cell.z), Vector3(0.55f, 0.75f, 1.0f) * 0.9f, 2.5f});
             }
-            const auto byDistance = [](const auto& a, const auto& b) { return a.first < b.first; };
-            std::sort(strong.begin(), strong.end(), byDistance);
-            std::sort(weak.begin(), weak.end(), byDistance);
-            for (const auto* list : {&strong, &weak})
-            {
-                for (const auto& [far, light] : *list)
-                {
-                    if (effects.lights.size() < static_cast<std::size_t>(SceneShaders::kMaxLights) && far < 30.0f)
-                    {
-                        effects.lights.push_back(light);
-                    }
-                }
-            }
+            effects.lights = SelectSceneLights(cameraTarget_, std::move(strong), std::move(weak),
+                                               static_cast<std::size_t>(SceneShaders::kMaxLights));
         }
 
         // The explosions, splashes and sparks: their sprites become particles (EffectParticles.hpp).

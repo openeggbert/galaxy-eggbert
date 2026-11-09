@@ -565,6 +565,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     ge_add_editor_verify(VerifyGEEditorObjects tools/VerifyGEEditorObjects.cpp)
     ge_add_editor_verify(VerifyDefinitionRegistries tools/VerifyDefinitionRegistries.cpp)
     ge_add_editor_verify(VerifyTileFaces tools/VerifyTileFaces.cpp)
+    # The 3D effects' decisions without a GPU (SceneEffectsLogic.hpp): shadows, lights, occlusion.
+    ge_add_editor_verify(VerifySceneEffects tools/VerifySceneEffects.cpp)
 
     # -------------------------------------------------------------------
     # Linux runtime bundle (BUILD-010)
