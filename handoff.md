@@ -54,6 +54,11 @@ with the release audit.
   the gamer's galaxy progress starts over (`SaveData::ResetGalaxyProgress`, via
   `BrowserRequest::galaxyImported`). Tests `VerifyGEEditorStorage`; live
   `harness/case_galaxy_share.py` (`galaxy-share-sheet.png`).
+- The galaxy import list (same day): pages of eight with "<" / ">" and "p / n" under them, a bin at
+  each row's right end deleting the shared file on the second click in a row (`ImportDeleteRect`;
+  on the web the browser's storage is the only place a player could reach it); Export and Import
+  on a dark ground of their own over the title scene's logo, both drawn as panels. Tests
+  `VerifyGEEditorStorage`; live `harness/case_galaxy_list.py` (`galaxy-list-sheet.png`).
 - A galaxy's demos travel with it (2026-11-09): the pack also holds the player's recordings made in
   that galaxy (`GalaxyRecordings()`: positions 1-10 whose world is one of the galaxy's files) as
   `demo <position> <size>` entries; an unpack keeps the galaxy and leaves out a demo this game cannot

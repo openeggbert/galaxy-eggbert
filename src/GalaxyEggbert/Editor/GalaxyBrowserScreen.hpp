@@ -26,7 +26,9 @@ namespace GalaxyEggbert::Editor
     // galaxy as one file (ExportGalaxy(); downloaded on the web); Import lists the galaxies in
     // SharedWorldsDir() where the help is (on the web it opens the file picker first) and a row
     // clicked twice replaces this galaxy with it (ImportGalaxy(), the places there now kept in their
-    // backups). Raw 800x480 pixels, as EditorBrowserScreen.
+    // backups). The list pages by eight (arrows under it), and a row's bin deletes the shared file
+    // (two clicks; on the web the browser's storage is the only place a player could reach it).
+    // Raw 800x480 pixels, as EditorBrowserScreen.
     class GalaxyBrowserScreen
     {
     public:
@@ -65,9 +67,15 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackupsRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ExportRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRect() noexcept;
-        // Row @p index (0-8) of the galaxies to import, where the help is.
+        // Row @p index (0-7) of a page of the galaxies to import, where the help is; the bin on its
+        // right end (two clicks delete the file); the pages' arrows under the rows.
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRowRect(int index) noexcept;
-        static constexpr int kImportRowsShown = 9;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportDeleteRect(int index) noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportPrevRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportNextRect() noexcept;
+        static constexpr int kImportRowsShown = 8;
+        [[nodiscard]] int ImportPage() const noexcept { return importPage_; }
+        [[nodiscard]] std::size_t ImportCount() const noexcept { return imports_.size(); }
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect() noexcept;
 
     private:
@@ -98,7 +106,9 @@ namespace GalaxyEggbert::Editor
         std::string message_;
         bool importMode_ = false;
         std::vector<std::filesystem::path> imports_; // the galaxies listed to import
-        int armedImport_ = -1;                       // the row clicked once, -1 none
+        int armedImport_ = -1;                       // the file (index in imports_) clicked once, -1 none
+        int armedImportDelete_ = -1;                 // the file whose bin was clicked once, -1 none
+        int importPage_ = 0;                         // kImportRowsShown files a page
         bool mouseWasDown_ = false;
         float mouseX_ = -1.0f, mouseY_ = -1.0f;
         bool backWasDown_ = false;

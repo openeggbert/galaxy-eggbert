@@ -5,6 +5,8 @@
 
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 
+#include <algorithm>
+
 #include <Microsoft/Xna/Framework/Graphics/BlendState.hpp>
 #include <Microsoft/Xna/Framework/Input/ButtonState.hpp>
 
@@ -97,6 +99,15 @@ namespace GalaxyEggbert::Editor
         return {604.0f, y0, 786.0f, y0 + 28.0f};
     }
 
+    Rect GalaxyBrowserScreen::ImportDeleteRect(int index) noexcept
+    {
+        const Rect row = ImportRowRect(index);
+        return {row.x1 - 26.0f, row.y0 + 2.0f, row.x1 - 2.0f, row.y1 - 2.0f};
+    }
+
+    Rect GalaxyBrowserScreen::ImportPrevRect() noexcept { return {604.0f, 312.0f, 664.0f, 342.0f}; }
+    Rect GalaxyBrowserScreen::ImportNextRect() noexcept { return {726.0f, 312.0f, 786.0f, 342.0f}; }
+
     void GalaxyBrowserScreen::Export()
     {
         const auto exported = ExportGalaxy(gamerSlot_);
@@ -117,6 +128,8 @@ namespace GalaxyEggbert::Editor
     {
         importMode_ = !importMode_;
         armedImport_ = -1;
+        armedImportDelete_ = -1;
+        importPage_ = 0;
         if (!importMode_)
         {
             message_.clear();
@@ -209,7 +222,8 @@ namespace GalaxyEggbert::Editor
         if (importMode_ && ConsumeUploadDone())
         {
             imports_ = ListSharedGalaxies();
-            armedImport_ = -1;
+            armedImport_ = armedImportDelete_ = -1;
+            importPage_ = 0; // the file just chosen is the newest
             message_ = "The file is listed on the right: two clicks make it this galaxy.";
         }
         const bool backTriggered = backPressed && !backWasDown_;
@@ -249,15 +263,40 @@ namespace GalaxyEggbert::Editor
                 handled = true;
             }
             int armedRow = -1;
-            for (int i = 0; importMode_ && !handled && i < static_cast<int>(imports_.size()) && i < kImportRowsShown; ++i)
+            int armedBin = -1;
+            const int pages = std::max(1, (static_cast<int>(imports_.size()) + kImportRowsShown - 1) / kImportRowsShown);
+            if (importMode_ && !handled && (InRect(x, y, ImportPrevRect()) || InRect(x, y, ImportNextRect())))
             {
-                if (!InRect(x, y, ImportRowRect(i))) continue;
+                const int step = InRect(x, y, ImportPrevRect()) ? -1 : 1;
+                importPage_ = std::clamp(importPage_ + step, 0, pages - 1);
                 handled = true;
-                const auto& pack = imports_[static_cast<std::size_t>(i)];
+            }
+            for (int i = 0; importMode_ && !handled && i < kImportRowsShown; ++i)
+            {
+                const int index = importPage_ * kImportRowsShown + i;
+                if (index >= static_cast<int>(imports_.size()) || !InRect(x, y, ImportRowRect(i))) continue;
+                handled = true;
+                const auto pack = imports_[static_cast<std::size_t>(index)];
                 const std::string name = pack.filename().string();
-                if (armedImport_ != i)
+                if (InRect(x, y, ImportDeleteRect(i)))
                 {
-                    armedRow = i;
+                    if (armedImportDelete_ != index)
+                    {
+                        armedBin = index;
+                        message_ = "Delete " + name + "? Click its bin again.";
+                        break;
+                    }
+                    std::error_code removed;
+                    std::filesystem::remove(pack, removed);
+                    imports_ = ListSharedGalaxies();
+                    const int left = std::max(1, (static_cast<int>(imports_.size()) + kImportRowsShown - 1) / kImportRowsShown);
+                    importPage_ = std::min(importPage_, left - 1);
+                    message_ = removed ? name + " could not be deleted." : name + " deleted.";
+                    break;
+                }
+                if (armedImport_ != index)
+                {
+                    armedRow = index;
                     message_ = "Replace this galaxy with " + name + "? Click it again.";
                     break;
                 }
@@ -277,6 +316,7 @@ namespace GalaxyEggbert::Editor
                                              " (Pause > Record > Import) imported.");
             }
             armedImport_ = armedRow;
+            armedImportDelete_ = armedBin;
             for (const auto& shown : Shown())
             {
                 if (handled || restoreMode_ || !Exists(shown.mission) || !InRect(x, y, DeleteRect(shown.rect)))
@@ -371,11 +411,28 @@ namespace GalaxyEggbert::Editor
         icon(panels, {598.0f, 10.0f, 792.0f, 350.0f}, kIconPanel);
         button(BackButtonRect(), kIconReturn);
         icon(restoreMode_ ? buttons : panels, BackupsRect(), restoreMode_ ? kIconBlank : kIconPanel);
-        button(ExportRect(), kIconBlank);
+        // Export and Import on a dark ground of their own: they lie over the title scene's logo.
+        const Rect ground{ExportRect().x0 - 8.0f, ExportRect().y0 - 6.0f, ImportRect().x1 + 6.0f, ImportRect().y1 + 6.0f};
+        for (int layer = 0; layer < 3; ++layer) icon(panels, ground, kIconPanel);
+        icon(held && InRect(mouseX_, mouseY_, ExportRect()) ? buttons : panels, ExportRect(),
+             held && InRect(mouseX_, mouseY_, ExportRect()) ? kIconBlank : kIconPanel);
         icon(importMode_ ? buttons : panels, ImportRect(), importMode_ ? kIconBlank : kIconPanel);
+        const int importPages = std::max(1, (static_cast<int>(imports_.size()) + kImportRowsShown - 1) / kImportRowsShown);
         if (importMode_)
-            for (int i = 0; i < static_cast<int>(imports_.size()) && i < kImportRowsShown; ++i)
-                icon(armedImport_ == i ? buttons : panels, ImportRowRect(i), armedImport_ == i ? kIconBlank : kIconPanel);
+        {
+            for (int i = 0; i < kImportRowsShown; ++i)
+            {
+                const int index = importPage_ * kImportRowsShown + i;
+                if (index >= static_cast<int>(imports_.size())) break;
+                icon(armedImport_ == index ? buttons : panels, ImportRowRect(i), armedImport_ == index ? kIconBlank : kIconPanel);
+                button(ImportDeleteRect(i), armedImportDelete_ == index ? kIconConfirm : kIconTrash);
+            }
+            if (importPages > 1)
+            {
+                button(ImportPrevRect(), kIconBlank);
+                button(ImportNextRect(), kIconBlank);
+            }
+        }
         button(MainHubRect(), kIconBlank);
         button(BonusRect(), kIconBlank);
         for (int world = 1; world <= kGalaxyWorldCount; ++world)
@@ -453,12 +510,25 @@ namespace GalaxyEggbert::Editor
                 text(faint, "No .galaxy file", 606.0f, 54.0f, 0.36f);
                 text(faint, "to import yet.", 606.0f, 73.0f, 0.36f);
             }
-            for (int i = 0; i < static_cast<int>(imports_.size()) && i < kImportRowsShown; ++i)
+            for (int i = 0; i < kImportRowsShown; ++i)
             {
+                const int index = importPage_ * kImportRowsShown + i;
+                if (index >= static_cast<int>(imports_.size())) break;
                 const Rect row = ImportRowRect(i);
-                std::string name = armedImport_ == i ? "Replace? Click again" : imports_[static_cast<std::size_t>(i)].stem().string();
-                while (!name.empty() && Width(name) * 0.36f > row.x1 - row.x0 - 12.0f) name.pop_back();
+                std::string name = armedImport_ == index         ? "Replace? Click again"
+                                   : armedImportDelete_ == index ? "Delete? Its bin again"
+                                                                 : imports_[static_cast<std::size_t>(index)].stem().string();
+                while (!name.empty() && Width(name) * 0.36f > row.x1 - row.x0 - 40.0f) name.pop_back();
                 text(labels, name, row.x0 + 6.0f, (row.y0 + row.y1 - kGlyphCellPx * 0.36f) * 0.5f, 0.36f);
+            }
+            if (importPages > 1)
+            {
+                const float mid = (ImportPrevRect().y0 + ImportPrevRect().y1 - kGlyphCellPx * 0.5f) * 0.5f;
+                centred(importPage_ > 0 ? labels : faint, "<", ImportPrevRect(), mid, 0.5f);
+                centred(importPage_ + 1 < importPages ? labels : faint, ">", ImportNextRect(), mid, 0.5f);
+                centred(labels, std::to_string(importPage_ + 1) + " / " + std::to_string(importPages),
+                        Rect{ImportPrevRect().x1, ImportPrevRect().y0, ImportNextRect().x0, ImportNextRect().y1},
+                        (ImportPrevRect().y0 + ImportPrevRect().y1 - kGlyphCellPx * 0.4f) * 0.5f, 0.4f);
             }
         }
         else
@@ -472,7 +542,7 @@ namespace GalaxyEggbert::Editor
         }
         for (const auto& [rect, caption] : {std::pair<Rect, const char*>{ExportRect(), "Export"},
                                             std::pair<Rect, const char*>{ImportRect(), "Import"}})
-            centred(labels, caption, rect, (rect.y0 + rect.y1 - kGlyphCellPx * 0.4f) * 0.5f, 0.4f);
+            centred(labels, caption, rect, (rect.y0 + rect.y1 - kGlyphCellPx * 0.45f) * 0.5f, 0.45f);
         centred(labels, "Backups", BackupsRect(), (BackupsRect().y0 + BackupsRect().y1 - kGlyphCellPx * 0.4f) * 0.5f,
                 0.4f);
         if (!message_.empty()) text(labels, message_, 22.0f, 446.0f, 0.4f);

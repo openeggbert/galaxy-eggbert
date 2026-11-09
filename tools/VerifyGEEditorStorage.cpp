@@ -832,6 +832,52 @@ int main()
                   screen.Message() == "player77-galaxy.galaxy: 4 places imported (Backups brings back the old ones).",
               "galaxy screen: Export writes the pack; Import lists it, a row's second click makes it this galaxy");
         std::filesystem::remove(exported, error);
+
+        // The list pages by eight; a row's bin deletes its file on the second click.
+        for (int i = 0; i < 10; ++i)
+        {
+            std::ofstream out(SharedWorldsDir() / ("page-" + std::to_string(i) + ".galaxy"), std::ios::binary);
+            out << "x";
+        }
+        GalaxyBrowserScreen pages;
+        pages.Refresh(kBrowserSlot);
+        const auto tap = [&pages](const GalaxyEggbert::Game::QuadBatch::Rect& r) {
+            const int x = int((r.x0 + r.x1) * 0.5f), y = int((r.y0 + r.y1) * 0.5f);
+            (void)pages.Update(MouseState(x, y, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+                                          ButtonState::Released, ButtonState::Released));
+            return pages.Update(MouseState(x, y, 0, ButtonState::Released, ButtonState::Released,
+                                           ButtonState::Released, ButtonState::Released, ButtonState::Released));
+        };
+        (void)tap(GalaxyBrowserScreen::ImportRect());
+        const bool ten = pages.ImportCount() == 10 && pages.ImportPage() == 0;
+        (void)tap(GalaxyBrowserScreen::ImportNextRect());
+        const bool second = pages.ImportPage() == 1;
+        (void)tap(GalaxyBrowserScreen::ImportNextRect());
+        const bool last = pages.ImportPage() == 1;
+        (void)tap(GalaxyBrowserScreen::ImportPrevRect());
+        check(ten && second && last && pages.ImportPage() == 0,
+              "galaxy import list: ten files on two pages, the arrows step between them and stop at the ends");
+        const auto armBin = tap(GalaxyBrowserScreen::ImportDeleteRect(0));
+        const bool armedKept = pages.ImportCount() == 10 && !armBin.imported;
+        (void)tap(GalaxyBrowserScreen::WorldRect(3)); // any other click disarms
+        (void)tap(GalaxyBrowserScreen::ImportDeleteRect(0));
+        const bool rearmedKept = pages.ImportCount() == 10;
+        (void)tap(GalaxyBrowserScreen::ImportDeleteRect(0));
+        check(armedKept && rearmedKept && pages.ImportCount() == 9 && ListSharedGalaxies().size() == 9 &&
+                  pages.Message().find(" deleted.") != std::string::npos,
+              "galaxy import list: a row's bin deletes the file on the second click in a row, nothing on the first");
+        bool layout = true;
+        for (int i = 0; i < GalaxyBrowserScreen::kImportRowsShown; ++i)
+        {
+            const auto row = GalaxyBrowserScreen::ImportRowRect(i), bin = GalaxyBrowserScreen::ImportDeleteRect(i);
+            layout = layout && bin.x0 > row.x0 && bin.x1 <= row.x1 && bin.y0 >= row.y0 && bin.y1 <= row.y1;
+        }
+        const auto lastRow = GalaxyBrowserScreen::ImportRowRect(GalaxyBrowserScreen::kImportRowsShown - 1);
+        layout = layout && GalaxyBrowserScreen::ImportPrevRect().y0 >= lastRow.y1 &&
+                 GalaxyBrowserScreen::ImportNextRect().y1 <= 350.0f &&
+                 GalaxyBrowserScreen::ImportPrevRect().x1 < GalaxyBrowserScreen::ImportNextRect().x0;
+        check(layout, "galaxy import list: the bins in their rows, the arrows under the last row in the panel");
+        for (const auto& file : ListSharedGalaxies()) std::filesystem::remove(file, error);
         std::filesystem::remove(SharedWorldsDir(), error); // only when nothing else is in it
     }
 
