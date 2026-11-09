@@ -206,6 +206,20 @@ namespace GalaxyEggbert::CNA
             constexpr int kPadW = GalaxyEggbert::Game::TileAtlas::kPaddedWidth;
             constexpr int kPadH = GalaxyEggbert::Game::TileAtlas::kPaddedHeight;
             auto level = GalaxyEggbert::Game::BuildPaddedSheet(rgba.data(), width, height);
+            // Each block type's colour for Ultra's light from around (TerrainGi.hpp): its padded tile's
+            // mean (the inner 64 x 64, its border being copies of its edge).
+            terrainGi_.albedo.assign(1024, Microsoft::Xna::Framework::Vector3(0.2f, 0.2f, 0.2f));
+            for (int type = 1; type < static_cast<int>(terrainGi_.albedo.size()); ++type)
+            {
+                const auto uv = terrainTileAtlas_.GetTileUv(type);
+                if (uv.u1 <= uv.u0 || uv.v1 <= uv.v0)
+                {
+                    continue;
+                }
+                terrainGi_.albedo[static_cast<std::size_t>(type)] = GalaxyEggbert::Game::TileAlbedo(
+                    level.data(), kPadW, static_cast<int>(uv.u0 * kPadW), static_cast<int>(uv.v0 * kPadH),
+                    static_cast<int>(uv.u1 * kPadW), static_cast<int>(uv.v1 * kPadH));
+            }
             terrainMipTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
                 device, kPadW, kPadH, /*mipMap=*/true, Microsoft::Xna::Framework::Graphics::SurfaceFormat::Color);
             int levelW = kPadW, levelH = kPadH;
@@ -739,7 +753,7 @@ namespace GalaxyEggbert::CNA
         terrainDrawSecret_ = TerrainDrawSecret();
         terrainRenderer_ = std::make_unique<TerrainRenderer>(device, worldRuntime_.GetWorld(), terrainTileAtlas_, tileCoverage_,
                                                              terrainDrawSecret_, StillModelIcons(), TerrainReliefs(),
-                                                             TerrainOcclusionWanted());
+                                                             TerrainOcclusionWanted(), TerrainGiWanted());
         terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
         terrainReliefWarm_ = false;
         ApplyBlockModels();
@@ -787,7 +801,7 @@ namespace GalaxyEggbert::CNA
             auto rebuilt =
                 std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(), terrainTileAtlas_,
                                                   tileCoverage_, terrainDrawSecret_, StillModelIcons(), TerrainReliefs(),
-                                                             TerrainOcclusionWanted());
+                                                             TerrainOcclusionWanted(), TerrainGiWanted());
             rebuilt->SetReliefOverhangs(terrainReliefOverhangs_);
             // The unchanged chunks keep their reliefs; the changed ones are built in the background.
             rebuilt->AdoptReliefs(*terrainRenderer_);
@@ -898,6 +912,18 @@ namespace GalaxyEggbert::CNA
     }
 
 
+    const GalaxyEggbert::Game::TerrainGiSettings* GalaxyEggbertGame::TerrainGiWanted()
+    {
+        // Ultra's light from around, baked with the occlusion (TerrainGi.hpp): where its shaders draw it.
+        if (EffectsLevel() < GalaxyEggbert::Game::SaveData::kEffectsLevelUltra || terrainGi_.albedo.empty() ||
+            !TerrainOcclusionWanted())
+        {
+            return nullptr;
+        }
+        terrainGi_.sunDirection = GalaxyEggbert::Game::SceneShaders::SunDirection();
+        return &terrainGi_;
+    }
+
     bool GalaxyEggbertGame::TerrainOcclusionWanted()
     {
         // The 3D effects' ambient occlusion is baked into the terrain only where their terrain shader
@@ -929,7 +955,7 @@ namespace GalaxyEggbert::CNA
             terrainRenderer_ = std::make_unique<TerrainRenderer>(getGraphicsDeviceProperty(), worldRuntime_.GetWorld(),
                                                                  terrainTileAtlas_, tileCoverage_, terrainDrawSecret_,
                                                                  StillModelIcons(), TerrainReliefs(),
-                                                             TerrainOcclusionWanted());
+                                                             TerrainOcclusionWanted(), TerrainGiWanted());
             terrainRenderer_->SetReliefOverhangs(terrainReliefOverhangs_);
             terrainReliefWarm_ = false;
             ApplyBlockModels();

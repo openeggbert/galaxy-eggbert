@@ -561,7 +561,8 @@ namespace GalaxyEggbert::CNA
                 saveData_.SetEffectsLevel((saveData_.GetEffectsLevel() + 1) % (GalaxyEggbert::Game::SaveData::kEffectsLevelUltra + 1));
                 SavePlayerData();
                 // The terrain built again, with or without its ambient occlusion.
-                if (terrainRenderer_ && terrainRenderer_->AmbientOcclusion() != TerrainOcclusionWanted())
+                if (terrainRenderer_ && (terrainRenderer_->AmbientOcclusion() != TerrainOcclusionWanted() ||
+                                         terrainRenderer_->GlobalIllumination() != (TerrainGiWanted() != nullptr)))
                 {
                     ApplyTerrainReliefSetting();
                 }

@@ -9,6 +9,7 @@
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <GalaxyEggbert/Game/TerrainGi.hpp>
 #include <GalaxyEggbert/Game/MeshParts.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 
@@ -70,8 +71,12 @@ namespace GalaxyEggbert::Game
                           // The 3D effects' ambient occlusion: the static mesh and the far chunks' cubes
                           // carry how shut in each corner is (vertex colour, PositionNormalColorTexture),
                           // for TerrainShading::occluded; drawn with the stock effect, they must not.
-                          bool ambientOcclusion = false);
+                          bool ambientOcclusion = false,
+                          // Ultra's light from around (TerrainGi.hpp) baked into that vertex colour instead
+                          // (with ambientOcclusion; nullptr: the occlusion alone). Read while building only.
+                          const TerrainGiSettings* globalIllumination = nullptr);
         [[nodiscard]] bool AmbientOcclusion() const noexcept { return m_ambientOcclusion; }
+        [[nodiscard]] bool GlobalIllumination() const noexcept { return m_globalIllumination; }
 
         // Rebuilds the animated-tile mesh for animPhase (no-op if unchanged
         // since the last call). Call once per frame with
@@ -283,6 +288,7 @@ namespace GalaxyEggbert::Game
 
         std::unique_ptr<GpuMeshParts> m_staticRenderer;
         bool m_ambientOcclusion = false;
+        bool m_globalIllumination = false;
         std::unique_ptr<GpuMeshParts> m_transparentStaticRenderer;
         // Lit by vertex colour (AlphaTestEffect has no lights: BakeTerrainLighting()).
         std::unique_ptr<GpuMeshParts> m_cutoutRenderer;

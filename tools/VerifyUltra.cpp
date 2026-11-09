@@ -1,6 +1,7 @@
 // VerifyUltra: what the 3D effects' Ultra level computes on the CPU (UltraLogic.hpp), without a GPU.
 
 #include <GalaxyEggbert/Game/ProceduralMaterial.hpp>
+#include <GalaxyEggbert/Game/TerrainGi.hpp>
 #include <GalaxyEggbert/Game/UltraLogic.hpp>
 
 #include <sstream>
@@ -123,6 +124,63 @@ int main()
     Check(gold != nullptr && gold->hasSurface && !gold->hasColour && std::fabs(gold->reflection - 0.6019f) < 1e-4f &&
               gold->glow.X == 1.0f,
           "a surface line: highlight, shininess, reflection, glow");
+
+    // The light from around (TerrainGi.hpp): a floor under the open sky gets the sky's (1); under a roof
+    // a little above it, much less; beside a green wall, a green tint.
+    {
+        using GalaxyEggbert::Worlds::Block;
+        using GalaxyEggbert::Worlds::World;
+        const std::vector<GalaxyEggbert::Game::TileCoverage> none;
+        std::uint16_t solid = 0;
+        for (std::uint16_t type = 1; type < 400 && solid == 0; ++type)
+        {
+            if (GalaxyEggbert::GetBlockDefinition(type).collisionMask != 0 &&
+                GalaxyEggbert::Game::IsTerrainOccluder(Block::make(type), none))
+            {
+                solid = type;
+            }
+        }
+        Check(solid != 0, "the registry has a whole opaque cube");
+        World world(2); // 20 blocks a side
+        for (int x = 0; x < 20; ++x)
+            for (int z = 0; z < 20; ++z)
+                world.setBlock(static_cast<std::uint16_t>(x), 2, static_cast<std::uint16_t>(z), Block::make(solid));
+        GalaxyEggbert::Game::TerrainGiSettings settings;
+        settings.albedo.assign(1024, Vector3(0.3f, 0.3f, 0.3f));
+        settings.sunDirection = Vector3(0.25f, -0.9f, -0.35f);
+        settings.sunDirection.Normalize();
+        settings.minimum = 0.0f;
+        const Vector3 up(0.0f, 1.0f, 0.0f);
+        const auto open = GalaxyEggbert::Game::FaceIndirectLight(world, none, 10, 3, 10, up, settings);
+        Check(std::fabs(open.X - 1.0f) < 0.05f && std::fabs(open.Z - 1.0f) < 0.05f, "an open floor gets the open sky's light (1)");
+        // A roof two cells over a 7 x 7 patch.
+        for (int x = 7; x < 14; ++x)
+            for (int z = 7; z < 14; ++z)
+                world.setBlock(static_cast<std::uint16_t>(x), 5, static_cast<std::uint16_t>(z), Block::make(solid));
+        const auto covered = GalaxyEggbert::Game::FaceIndirectLight(world, none, 10, 3, 10, up, settings);
+        Check(covered.X < 0.5f && covered.X > 0.0f, "under a roof: less than half (the roof's underside, the sides open)");
+        // A green wall beside an open floor: the floor's light turns green.
+        GalaxyEggbert::Game::TerrainGiSettings green = settings;
+        green.albedo[solid] = Vector3(0.05f, 0.6f, 0.05f);
+        for (int y = 3; y < 9; ++y)
+            for (int z = 0; z < 20; ++z)
+                world.setBlock(2, static_cast<std::uint16_t>(y), static_cast<std::uint16_t>(z), Block::make(solid));
+        const auto beside = GalaxyEggbert::Game::FaceIndirectLight(world, none, 3, 3, 3, up, green);
+        Check(beside.Y > beside.X + 0.02f, "beside a green wall the light from around is greener");
+        // The bake: a face's corners carry it halved in rgb, the occlusion in alpha.
+        CnaEngine::Graphics::MeshData face;
+        for (const float dx : {-0.5f, 0.5f})
+            for (const float dz : {-0.5f, 0.5f})
+            {
+                face.positions.emplace_back(16.0f + dx, 2.5f, 16.0f + dz);
+                face.normals.emplace_back(0.0f, 1.0f, 0.0f);
+            }
+        face.indices = {0, 1, 2, 2, 1, 3};
+        GalaxyEggbert::Game::BakeGlobalIllumination(face, world, none, 0, 0, settings);
+        Check(face.colors.size() == 4 && std::abs(static_cast<int>(face.colors[0].getRProperty()) - 128) <= 8 &&
+                  face.colors[0].getAProperty() == 255,
+              "an open face's corners: the open sky's light halved (128), no occlusion (255)");
+    }
 
     std::printf("%s\n", failures == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED");
     return failures == 0 ? 0 : 1;

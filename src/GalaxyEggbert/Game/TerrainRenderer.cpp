@@ -548,10 +548,24 @@ namespace GalaxyEggbert::Game
                                          const TileAtlas& tileAtlas,
                                          const std::vector<TileCoverage>& tileCoverage, bool drawSecret,
                                          std::vector<std::uint16_t> modelDrawnIcons,
-                                         const TerrainReliefTable* reliefs, bool ambientOcclusion)
+                                         const TerrainReliefTable* reliefs, bool ambientOcclusion,
+                                         const TerrainGiSettings* globalIllumination)
         : m_reliefs(reliefs != nullptr && !reliefs->Empty() ? reliefs : nullptr), m_tileAtlas(&tileAtlas)
     {
         m_ambientOcclusion = ambientOcclusion;
+        m_globalIllumination = ambientOcclusion && globalIllumination != nullptr;
+        // The occlusion alone, or (Ultra) the light from around with it.
+        const auto bake = [&](CnaEngine::Graphics::MeshData& mesh)
+        {
+            if (m_globalIllumination)
+            {
+                BakeGlobalIllumination(mesh, world, tileCoverage, kWorldCenterX, kWorldCenterZ, *globalIllumination);
+            }
+            else
+            {
+                BakeAmbientOcclusion(mesh, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
+            }
+        };
         // Icons 108/109's DirectionalCube entry reuses icon 107's own side
         // texture (DirectionalCubeTiles.cpp) -- computed once here since
         // it never changes, threaded through AppendSpecialGeometry.
@@ -1089,7 +1103,7 @@ namespace GalaxyEggbert::Game
             if (m_ambientOcclusion)
             {
                 auto occluded = staticMesh.Take();
-                BakeAmbientOcclusion(occluded, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
+                bake(occluded);
                 m_staticRenderer = UploadLitColoredTexturedMeshParts(device, occluded);
             }
             else
@@ -1105,7 +1119,7 @@ namespace GalaxyEggbert::Game
                 if (m_ambientOcclusion)
                 {
                     auto occluded = reliefChunkCubes[i].Take();
-                    BakeAmbientOcclusion(occluded, world, tileCoverage, kWorldCenterX, kWorldCenterZ);
+                    bake(occluded);
                     m_reliefChunks[i].cubes = UploadLitColoredTexturedMeshParts(device, occluded);
                 }
                 else

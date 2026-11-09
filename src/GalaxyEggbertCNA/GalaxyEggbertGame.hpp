@@ -1258,6 +1258,9 @@ namespace GalaxyEggbert::CNA
         // What Ultra lends the world's shaders (UltraAssets.hpp) and what it points at.
         GalaxyEggbert::Game::UltraSceneAssets ultraAssets_;
         GalaxyEggbert::Game::SkyEnvironment ultraSkyData_;
+        // Ultra's light from around for the terrain (TerrainGi.hpp): the block types' colours, at load.
+        GalaxyEggbert::Game::TerrainGiSettings terrainGi_;
+        const GalaxyEggbert::Game::TerrainGiSettings* TerrainGiWanted();
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> ultraSky_;
         void BuildUltraSky(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const std::uint8_t* rgba, int width,
                            int height);
