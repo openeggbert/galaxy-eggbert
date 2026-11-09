@@ -43,6 +43,11 @@ EM_JS(void, galaxy_request_upload, (const char* directory, const char* extension
                 FS.mkdirTree(dir);
             } catch (e) {
             }
+            // A file of that name already there stays: name-2.ext, name-3.ext ...
+            var stem = name.slice(0, name.length - ext.length);
+            for (var n = 2; FS.analyzePath(dir + '/' + name).exists && n < 10000; ++n) {
+                name = stem + '-' + n + ext;
+            }
             FS.writeFile(dir + '/' + name, new Uint8Array(reader.result));
             Module['galaxyUploadDone'] = 1;
             console.log('Galaxy Eggbert: imported ' + dir + '/' + name);

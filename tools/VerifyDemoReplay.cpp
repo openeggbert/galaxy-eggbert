@@ -200,6 +200,10 @@ int main(int argc, char** argv)
                   exported == "demos/shared/A-demo-4.gdemo" && copied == text && none.empty() &&
                   ListSharedDemos() == std::vector<std::string>{exported},
               "a position's demo exports as demos/shared/A-demo-4.gdemo; a position without a file exports nothing");
+        const auto second = ExportDemo(UserDemoPath(4), 0, 4);
+        check(second == "demos/shared/A-demo-4-2.gdemo" && std::filesystem::exists(exported) && ListSharedDemos().size() == 2,
+              "a second export of position 4 is numbered (A-demo-4-2.gdemo), the first stays");
+        std::filesystem::remove(second, error);
         { std::ofstream out(SharedDemoDir() + "/broken.gdemo", std::ios::binary); out << text.substr(0, text.size() / 2); }
         const auto refused = ImportDemo(SharedDemoDir() + "/broken.gdemo", 6);
         const auto missing = ImportDemo(SharedDemoDir() + "/nothing.gdemo", 6);

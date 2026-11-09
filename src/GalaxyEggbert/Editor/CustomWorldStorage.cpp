@@ -1,6 +1,7 @@
 #include "CustomWorldStorage.hpp"
 
 #include <GalaxyEggbert/Game/DemoReplay.hpp>
+#include <GalaxyEggbert/Game/FreeFileName.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -681,7 +682,9 @@ namespace GalaxyEggbert::Editor
         if (pack.empty()) return {};
         std::error_code ec;
         std::filesystem::create_directories(SharedWorldsDir(), ec);
-        const auto target = SharedWorldsDir() / GalaxyExportName(gamerSlot);
+        const std::string name = GalaxyExportName(gamerSlot);
+        const auto target = GalaxyEggbert::Game::FreeFileName(SharedWorldsDir(), std::filesystem::path(name).stem().string(),
+                                                              kGalaxyPackExtension); // an earlier export stays
         const auto temporary = std::filesystem::path(target.string() + ".tmp");
         {
             std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
@@ -739,8 +742,9 @@ namespace GalaxyEggbert::Editor
         if (!unpacked->demos.empty()) std::filesystem::create_directories(GalaxyEggbert::Game::SharedDemoDir(), ec);
         for (const auto& [position, demo] : unpacked->demos)
         {
-            const auto target = std::filesystem::path(GalaxyEggbert::Game::SharedDemoDir()) /
-                                (pack.stem().string() + "-demo-" + std::to_string(position) + ".gdemo");
+            const auto target = GalaxyEggbert::Game::FreeFileName(GalaxyEggbert::Game::SharedDemoDir(),
+                                                                  pack.stem().string() + "-demo-" + std::to_string(position),
+                                                                  ".gdemo");
             std::ofstream out(target, std::ios::binary | std::ios::trunc);
             out << demo;
             if (out && demos != nullptr) ++*demos;

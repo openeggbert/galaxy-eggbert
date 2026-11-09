@@ -54,6 +54,10 @@ with the release audit.
   the gamer's galaxy progress starts over (`SaveData::ResetGalaxyProgress`, via
   `BrowserRequest::galaxyImported`). Tests `VerifyGEEditorStorage`; live
   `harness/case_galaxy_share.py` (`galaxy-share-sheet.png`).
+- No file replaces another any more (same day, `Game/FreeFileName.hpp`): a second export is
+  numbered (`A-galaxy-2.galaxy`, `A-demo-5-2.gdemo`), so are a pack's demos landing among the shared
+  demos and, on the web, a picked file whose name is taken (`PlatformFiles.cpp`). Tests
+  `VerifyGEEditorStorage`, `VerifyDemoReplay`.
 - The galaxy import list (same day): pages of eight with "<" / ">" and "p / n" under them, a bin at
   each row's right end deleting the shared file on the second click in a row (`ImportDeleteRect`;
   on the web the browser's storage is the only place a player could reach it); Export and Import

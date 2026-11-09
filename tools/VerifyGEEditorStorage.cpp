@@ -783,6 +783,10 @@ int main()
                   readAll(exported) == pack && std::find(listed.begin(), listed.end(), exported) != listed.end() &&
                   ListSharedWorlds().end() == std::find(ListSharedWorlds().begin(), ListSharedWorlds().end(), exported),
               "galaxy export: the pack in the shared folder, listed as a galaxy and not as a world");
+        const auto again = ExportGalaxy(kStorageSlot);
+        check(again == SharedWorldsDir() / "player77-galaxy-2.galaxy" && readAll(exported) == pack && readAll(again) == pack,
+              "galaxy export: a second export is numbered, the first stays");
+        std::filesystem::remove(again, error);
 
         // The other gamer has a galaxy of their own: hub 20 and mission 21.
         std::filesystem::create_directories(GalaxyDir(kBrowserSlot), error);

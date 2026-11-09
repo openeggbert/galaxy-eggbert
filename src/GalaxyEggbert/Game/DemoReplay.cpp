@@ -1,4 +1,5 @@
 #include "DemoReplay.hpp"
+#include "FreeFileName.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -65,8 +66,10 @@ namespace GalaxyEggbert::Game
         std::error_code error;
         if (!std::filesystem::is_regular_file(source, error)) return {};
         std::filesystem::create_directories(SharedDemoDir(), error);
-        const auto target = std::filesystem::path(SharedDemoDir()) / DemoExportName(gamer, slot);
-        if (!std::filesystem::copy_file(source, target, std::filesystem::copy_options::overwrite_existing, error))
+        // An earlier export stays: A-demo-5.gdemo, A-demo-5-2.gdemo ...
+        const std::string name = DemoExportName(gamer, slot);
+        const auto target = FreeFileName(SharedDemoDir(), std::filesystem::path(name).stem().string(), ".gdemo");
+        if (!std::filesystem::copy_file(source, target, std::filesystem::copy_options::none, error))
             return {};
         return target.generic_string();
     }

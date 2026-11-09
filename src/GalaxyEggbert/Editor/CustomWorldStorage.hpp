@@ -195,8 +195,9 @@ namespace GalaxyEggbert::Editor
     [[nodiscard]] std::optional<GalaxyPack> UnpackGalaxy(const std::string& pack);
     // "A-galaxy.galaxy" (players A-C), "player7-galaxy.galaxy" otherwise.
     [[nodiscard]] std::string GalaxyExportName(int gamerSlot);
-    // PackGalaxy() written into SharedWorldsDir() as GalaxyExportName() (an earlier one replaced);
-    // its path, or empty when there is nothing to export or the write failed.
+    // PackGalaxy() written into SharedWorldsDir() as GalaxyExportName(), numbered when that is taken
+    // (A-galaxy-2.galaxy ...: an earlier export stays); its path, or empty when there is nothing to
+    // export or the write failed.
     [[nodiscard]] std::filesystem::path ExportGalaxy(int gamerSlot);
     // The packs in SharedWorldsDir(), the newest first.
     [[nodiscard]] std::vector<std::filesystem::path> ListSharedGalaxies();

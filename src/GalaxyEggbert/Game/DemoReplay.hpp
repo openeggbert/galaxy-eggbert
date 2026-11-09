@@ -55,8 +55,9 @@ namespace GalaxyEggbert::Game
     [[nodiscard]] std::string SharedDemoDir();
     // "A-demo-5.gdemo" (players A-C), "player7-demo-5.gdemo" otherwise.
     [[nodiscard]] std::string DemoExportName(int gamer, int slot);
-    // Copies @p source (a position's demo) into SharedDemoDir() as DemoExportName() (an earlier one
-    // replaced); its path, or empty when there is no such file or the copy failed.
+    // Copies @p source (a position's demo) into SharedDemoDir() as DemoExportName(), numbered when
+    // that is taken (A-demo-5-2.gdemo ...: an earlier export stays); its path, or empty when there is
+    // no such file or the copy failed.
     [[nodiscard]] std::string ExportDemo(const std::string& source, int gamer, int slot);
     // The .gdemo files in SharedDemoDir(), the newest first.
     [[nodiscard]] std::vector<std::string> ListSharedDemos();
