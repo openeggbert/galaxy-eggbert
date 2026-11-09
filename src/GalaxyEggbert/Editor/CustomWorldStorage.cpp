@@ -6,6 +6,9 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstdio>
+#include <fstream>
+#include <iterator>
+#include <sstream>
 #include <string>
 
 namespace GalaxyEggbert::Editor
@@ -476,5 +479,161 @@ namespace GalaxyEggbert::Editor
         world.setSpawnPoint(50, 1, 51);
         world.setMissionNumber(static_cast<std::uint32_t>(mission));
         return world;
+    }
+
+    namespace
+    {
+        constexpr const char* kGalaxyPackHeader = "GALAXY_PACK 1\n";
+        constexpr std::size_t kGalaxyPackMaxWorld = 64u * 1024u * 1024u;
+
+        std::uint64_t BytesHash(const std::string& bytes)
+        {
+            std::uint64_t hash = 1469598103934665603ULL;
+            for (const unsigned char c : bytes) hash = (hash ^ c) * 1099511628211ULL;
+            return hash;
+        }
+
+        std::string HashText(std::uint64_t hash)
+        {
+            char text[17];
+            std::snprintf(text, sizeof(text), "%016llx", static_cast<unsigned long long>(hash));
+            return text;
+        }
+
+        std::optional<std::string> ReadBytes(const std::filesystem::path& path)
+        {
+            std::ifstream in(path, std::ios::binary);
+            if (!in) return std::nullopt;
+            std::string bytes((std::istreambuf_iterator<char>(in)), {});
+            if (in.bad()) return std::nullopt;
+            return bytes;
+        }
+    }
+
+    std::string PackGalaxy(int gamerSlot)
+    {
+        std::string body = kGalaxyPackHeader;
+        int places = 0;
+        for (int mission = 1; mission < 200; ++mission)
+        {
+            if (!IsGalaxyMission(mission)) continue;
+            const auto bytes = ReadBytes(GalaxyWorldPath(gamerSlot, mission));
+            if (!bytes) continue;
+            body += "world " + std::to_string(mission) + " " + std::to_string(bytes->size()) + "\n";
+            body += *bytes;
+            ++places;
+        }
+        if (places == 0) return {};
+        return body + "END " + HashText(BytesHash(body)) + "\n";
+    }
+
+    std::optional<std::map<int, std::string>> UnpackGalaxy(const std::string& pack)
+    {
+        const std::string header = kGalaxyPackHeader;
+        // The footer: "END " + 16 hex digits + "\n", over everything before it.
+        constexpr std::size_t kFooter = 4 + 16 + 1;
+        if (pack.size() < header.size() + kFooter || pack.compare(0, header.size(), header) != 0) return std::nullopt;
+        const std::size_t bodyEnd = pack.size() - kFooter;
+        const std::string body = pack.substr(0, bodyEnd);
+        if (pack.compare(bodyEnd, 4, "END ") != 0 || pack.back() != '\n' ||
+            pack.substr(bodyEnd + 4, 16) != HashText(BytesHash(body)))
+            return std::nullopt;
+        std::map<int, std::string> worlds;
+        std::size_t at = header.size();
+        while (at < bodyEnd)
+        {
+            const std::size_t lineEnd = body.find('\n', at);
+            if (lineEnd == std::string::npos) return std::nullopt;
+            std::istringstream line(body.substr(at, lineEnd - at));
+            std::string word;
+            int mission = 0;
+            std::size_t size = 0;
+            std::string rest;
+            if (!(line >> word >> mission >> size) || word != "world" || (line >> rest) || !IsGalaxyMission(mission) ||
+                worlds.count(mission) != 0 || size > kGalaxyPackMaxWorld || size > bodyEnd - (lineEnd + 1))
+                return std::nullopt;
+            std::string bytes = body.substr(lineEnd + 1, size);
+            try
+            {
+                std::istringstream stream(bytes, std::ios::in | std::ios::binary);
+                (void)GalaxyEggbert::Worlds::World::loadFromStream(stream);
+            }
+            catch (const std::exception&)
+            {
+                return std::nullopt;
+            }
+            worlds.emplace(mission, std::move(bytes));
+            at = lineEnd + 1 + size;
+        }
+        if (worlds.empty()) return std::nullopt;
+        return worlds;
+    }
+
+    std::string GalaxyExportName(int gamerSlot)
+    {
+        const std::string player = gamerSlot >= 0 && gamerSlot <= 2 ? std::string(1, static_cast<char>('A' + gamerSlot))
+                                                                    : "player" + std::to_string(gamerSlot);
+        return player + "-galaxy" + kGalaxyPackExtension;
+    }
+
+    std::filesystem::path ExportGalaxy(int gamerSlot)
+    {
+        const std::string pack = PackGalaxy(gamerSlot);
+        if (pack.empty()) return {};
+        std::error_code ec;
+        std::filesystem::create_directories(SharedWorldsDir(), ec);
+        const auto target = SharedWorldsDir() / GalaxyExportName(gamerSlot);
+        const auto temporary = std::filesystem::path(target.string() + ".tmp");
+        {
+            std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+            out << pack;
+            if (!out) return {};
+        }
+        std::filesystem::rename(temporary, target, ec);
+        if (ec)
+        {
+            std::filesystem::remove(temporary, ec);
+            return {};
+        }
+        return target;
+    }
+
+    std::vector<std::filesystem::path> ListSharedGalaxies()
+    {
+        std::vector<std::pair<std::filesystem::file_time_type, std::filesystem::path>> found;
+        std::error_code ec;
+        for (const auto& entry : std::filesystem::directory_iterator(SharedWorldsDir(), ec))
+        {
+            if (entry.is_regular_file(ec) && entry.path().extension() == kGalaxyPackExtension)
+                found.emplace_back(entry.last_write_time(ec), entry.path());
+        }
+        std::sort(found.begin(), found.end(), [](const auto& a, const auto& b) {
+            return a.first != b.first ? a.first > b.first : a.second < b.second;
+        });
+        std::vector<std::filesystem::path> paths;
+        for (auto& [time, path] : found) paths.push_back(std::move(path));
+        return paths;
+    }
+
+    int ImportGalaxy(int gamerSlot, const std::filesystem::path& pack)
+    {
+        const auto bytes = ReadBytes(pack);
+        const auto worlds = bytes ? UnpackGalaxy(*bytes) : std::nullopt;
+        if (!worlds) return -1;
+        std::error_code ec;
+        for (int mission = 1; mission < 200; ++mission)
+        {
+            const auto path = GalaxyWorldPath(gamerSlot, mission);
+            if (IsGalaxyMission(mission) && std::filesystem::exists(path, ec)) (void)DeleteSlotWorld(path);
+        }
+        std::filesystem::create_directories(GalaxyDir(gamerSlot), ec);
+        int written = 0;
+        for (const auto& [mission, world] : *worlds)
+        {
+            std::ofstream out(GalaxyWorldPath(gamerSlot, mission), std::ios::binary | std::ios::trunc);
+            out << world;
+            if (out) ++written;
+        }
+        return written;
     }
 }

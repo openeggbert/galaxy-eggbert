@@ -12,7 +12,9 @@
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 
 int main()
 {
@@ -663,6 +665,106 @@ int main()
         (void)click(GalaxyBrowserScreen::BackupsRect());
         check(noBackup.action == GAction::New && told && !std::filesystem::exists(GalaxyWorldPath(kBrowserSlot, 199)),
               "galaxy: restoring a place without a backup only says so");
+    }
+
+    // A whole galaxy in one file: packed, damaged, exported, imported over another gamer's galaxy.
+    {
+        std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
+        std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
+        check(PackGalaxy(kStorageSlot).empty() && ExportGalaxy(kStorageSlot).empty(),
+              "galaxy pack: nothing to pack or export while the galaxy has no place");
+        std::filesystem::create_directories(GalaxyDir(kStorageSlot), error);
+        for (const int mission : {1, 10, 11, 199})
+            CreateGalaxyStarterWorld(mission).saveToFile(GalaxyWorldPath(kStorageSlot, mission));
+        const auto readAll = [](const std::filesystem::path& path) {
+            std::ifstream in(path, std::ios::binary);
+            return std::string((std::istreambuf_iterator<char>(in)), {});
+        };
+        const std::string pack = PackGalaxy(kStorageSlot);
+        const auto unpacked = UnpackGalaxy(pack);
+        bool same = unpacked && unpacked->size() == 4;
+        for (const int mission : {1, 10, 11, 199})
+            same = same && unpacked->count(mission) == 1 &&
+                   unpacked->at(mission) == readAll(GalaxyWorldPath(kStorageSlot, mission));
+        check(same && pack.rfind("GALAXY_PACK 1\n", 0) == 0,
+              "galaxy pack: its four places, byte for byte, behind the header");
+        std::string flipped = pack;
+        flipped[pack.size() / 2] = static_cast<char>(flipped[pack.size() / 2] ^ 0x20);
+        const std::string otherVersion = "GALAXY_PACK 2\n" + pack.substr(std::string("GALAXY_PACK 1\n").size());
+        // A place a galaxy does not have, with a correct footer: refused all the same.
+        std::string foreign = "GALAXY_PACK 1\n";
+        const std::string world = unpacked ? unpacked->at(11) : std::string();
+        foreign += "world 19 " + std::to_string(world.size()) + "\n" + world;
+        std::uint64_t hash = 1469598103934665603ULL;
+        for (const unsigned char c : foreign) hash = (hash ^ c) * 1099511628211ULL;
+        char footer[32];
+        std::snprintf(footer, sizeof(footer), "END %016llx\n", static_cast<unsigned long long>(hash));
+        const std::string foreignPack = foreign + footer;
+        std::string notAWorld = "GALAXY_PACK 1\nworld 11 4\nVWR1";
+        hash = 1469598103934665603ULL;
+        for (const unsigned char c : notAWorld) hash = (hash ^ c) * 1099511628211ULL;
+        std::snprintf(footer, sizeof(footer), "END %016llx\n", static_cast<unsigned long long>(hash));
+        notAWorld += footer;
+        check(!UnpackGalaxy(flipped) && !UnpackGalaxy(pack.substr(0, pack.size() - 3)) && !UnpackGalaxy(otherVersion) &&
+                  !UnpackGalaxy(foreignPack) && !UnpackGalaxy(notAWorld) && !UnpackGalaxy(""),
+              "galaxy pack: a changed byte, a cut, another version, a foreign place or a broken world is refused");
+
+        const auto exported = ExportGalaxy(kStorageSlot);
+        const auto listed = ListSharedGalaxies();
+        check(exported == SharedWorldsDir() / "player77-galaxy.galaxy" && GalaxyExportName(0) == "A-galaxy.galaxy" &&
+                  readAll(exported) == pack && std::find(listed.begin(), listed.end(), exported) != listed.end() &&
+                  ListSharedWorlds().end() == std::find(ListSharedWorlds().begin(), ListSharedWorlds().end(), exported),
+              "galaxy export: the pack in the shared folder, listed as a galaxy and not as a world");
+
+        // The other gamer has a galaxy of their own: hub 20 and mission 21.
+        std::filesystem::create_directories(GalaxyDir(kBrowserSlot), error);
+        CreateGalaxyStarterWorld(20).saveToFile(GalaxyWorldPath(kBrowserSlot, 20));
+        CreateGalaxyStarterWorld(21).saveToFile(GalaxyWorldPath(kBrowserSlot, 21));
+        const auto broken = SharedWorldsDir() / "broken.galaxy";
+        { std::ofstream out(broken, std::ios::binary); out << flipped; }
+        const int refused = ImportGalaxy(kBrowserSlot, broken);
+        const bool untouched = std::filesystem::exists(GalaxyWorldPath(kBrowserSlot, 20)) &&
+                               !std::filesystem::exists(GalaxyWorldPath(kBrowserSlot, 1));
+        const int imported = ImportGalaxy(kBrowserSlot, exported);
+        bool equal = imported == 4;
+        for (const int mission : {1, 10, 11, 199})
+            equal = equal && readAll(GalaxyWorldPath(kBrowserSlot, mission)) == readAll(GalaxyWorldPath(kStorageSlot, mission));
+        check(refused == -1 && untouched && equal && !std::filesystem::exists(GalaxyWorldPath(kBrowserSlot, 20)) &&
+                  BackupCount(GalaxyWorldPath(kBrowserSlot, 20)) == 1 && BackupCount(GalaxyWorldPath(kBrowserSlot, 21)) == 1,
+              "galaxy import: a damaged pack touches nothing; a good one replaces the galaxy, the old places in its backups");
+
+        // The galaxy screen: Export, Import's list, a row clicked twice.
+        GalaxyBrowserScreen screen;
+        screen.Refresh(kBrowserSlot);
+        const auto click = [&screen](const GalaxyEggbert::Game::QuadBatch::Rect& r) {
+            const int x = int((r.x0 + r.x1) * 0.5f), y = int((r.y0 + r.y1) * 0.5f);
+            (void)screen.Update(MouseState(x, y, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+                                           ButtonState::Released, ButtonState::Released));
+            return screen.Update(MouseState(x, y, 0, ButtonState::Released, ButtonState::Released,
+                                            ButtonState::Released, ButtonState::Released, ButtonState::Released));
+        };
+        (void)click(GalaxyBrowserScreen::ExportRect());
+        const bool exportedHere = screen.Message() == "Galaxy exported to " +
+                                                          (SharedWorldsDir() / "player78-galaxy.galaxy").generic_string() + "." &&
+                                  std::filesystem::exists(SharedWorldsDir() / "player78-galaxy.galaxy");
+        std::filesystem::remove(broken, error);
+        std::filesystem::remove(SharedWorldsDir() / "player78-galaxy.galaxy", error);
+        std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
+        // The pack exported from slot 77 is the one listed; its galaxy is gone, slot 78 differs now.
+        std::filesystem::remove(GalaxyWorldPath(kBrowserSlot, 199), error);
+        screen.Refresh(kBrowserSlot);
+        (void)click(GalaxyBrowserScreen::ImportRect());
+        const bool listing = screen.ImportMode();
+        const auto row = GalaxyBrowserScreen::ImportRowRect(0);
+        const auto once = click(row);
+        const bool notYet = !once.imported && !std::filesystem::exists(GalaxyWorldPath(kBrowserSlot, 199));
+        const auto twice = click(row);
+        check(exportedHere && listing && notYet && twice.imported && !screen.ImportMode() &&
+                  std::filesystem::exists(GalaxyWorldPath(kBrowserSlot, 199)) &&
+                  screen.Message() == "player77-galaxy.galaxy: 4 places imported (Backups brings back the old ones).",
+              "galaxy screen: Export writes the pack; Import lists it, a row's second click makes it this galaxy");
+        std::filesystem::remove(exported, error);
+        std::filesystem::remove(SharedWorldsDir(), error); // only when nothing else is in it
     }
 
     std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);

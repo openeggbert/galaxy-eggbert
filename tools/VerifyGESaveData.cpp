@@ -259,6 +259,18 @@ int main()
         SaveData mode = reloaded;
         check(mode.GetGalaxyMode() && (mode.Reset(), mode.GetGalaxyMode()) && mode.GetMissionNumber() == 0,
               "galaxy: Reset() clears the progress but keeps the session in its galaxy");
+        SaveData gates = reloaded;
+        gates.UnlockMissionDoor(183); // a main gate of the galaxy, beside door 12
+        const int counted = gates.GetGalaxyGatesForGamer(1);
+        gates.SetGalaxyMode(false);
+        const bool campaignGates = gates.GetMainGatesForGamer(1) == 0 && gates.GetSecondaryGatesForGamer(1) == 1; // door 22
+        gates.ResetGalaxyProgress(1);
+        std::ostringstream afterReset;
+        gates.Write(afterReset);
+        check(counted == 2 && campaignGates && gates.GetGalaxyGatesForGamer(1) == 0 &&
+                  gates.GalaxyProgress(1).missionNumber == 0 && gates.GetMissionNumber() == 23 &&
+                  afterReset.str().find("galaxy1.") == std::string::npos,
+              "galaxy: the menu counts its gates apart; an imported galaxy's progress starts over, the campaign's kept");
     }
 
     std::remove("savedata.txt");

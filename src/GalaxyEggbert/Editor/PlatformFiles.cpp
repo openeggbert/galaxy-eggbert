@@ -22,11 +22,12 @@ EM_JS(int, galaxy_offer_download, (const char* file, const char* name), {
     }
 });
 
-EM_JS(void, galaxy_request_upload, (const char* directory), {
+EM_JS(void, galaxy_request_upload, (const char* directory, const char* extension), {
     var dir = UTF8ToString(directory);
+    var ext = UTF8ToString(extension);
     var input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.vwr';
+    input.accept = ext;
     input.onchange = function() {
         var file = input.files && input.files[0];
         if (!file) {
@@ -35,8 +36,8 @@ EM_JS(void, galaxy_request_upload, (const char* directory), {
         var reader = new FileReader();
         reader.onload = function() {
             var name = file.name.replace(/[^A-Za-z0-9._-]/g, '_');
-            if (!/\.vwr$/i.test(name)) {
-                name += '.vwr';
+            if (name.slice(-ext.length).toLowerCase() !== ext.toLowerCase()) {
+                name += ext;
             }
             try {
                 FS.mkdirTree(dir);
@@ -66,9 +67,9 @@ namespace GalaxyEggbert::Editor
         return galaxy_offer_download(file.string().c_str(), name.c_str()) != 0;
     }
 
-    bool RequestUpload(const std::filesystem::path& directory)
+    bool RequestUpload(const std::filesystem::path& directory, const std::string& extension)
     {
-        galaxy_request_upload(directory.string().c_str());
+        galaxy_request_upload(directory.string().c_str(), extension.c_str());
         return true;
     }
 
@@ -82,7 +83,7 @@ namespace GalaxyEggbert::Editor
         return false;
     }
 
-    bool RequestUpload(const std::filesystem::path&)
+    bool RequestUpload(const std::filesystem::path&, const std::string&)
     {
         return false;
     }

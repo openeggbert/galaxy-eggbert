@@ -2787,8 +2787,19 @@ namespace GalaxyEggbert::Game
                                 r.y0 + kGamerMDoorsYOffset * s, kGamerBodyScale, s);
                 AppendGamerLabel(labelQuads, "Secondary gates : " + std::to_string(info.secondaryGates) + "/52",
                                 textLeft, r.y0 + kGamerSDoorsYOffset * s, kGamerBodyScale, s);
-                AppendGamerLabel(labelQuads, "Blupi : " + std::to_string(info.lives), textLeft,
-                                r.y0 + kGamerLivesYOffset * s, kGamerBodyScale, s);
+                const std::string blupi = "Blupi : " + std::to_string(info.lives);
+                AppendGamerLabel(labelQuads, blupi, textLeft, r.y0 + kGamerLivesYOffset * s, kGamerBodyScale, s);
+                if (info.galaxyGates >= 0)
+                {
+                    // Right-aligned in the panel, smaller when it would reach the Blupi count.
+                    const std::string galaxy = "Galaxy : " + std::to_string(info.galaxyGates) +
+                                               (info.galaxyGates == 1 ? " gate" : " gates");
+                    const float right = layout.leftPanel.x1 - 8.0f * s;
+                    const float room = right - (textLeft + (TextMetrics::Width(blupi) * kGamerBodyScale + 10.0f) * s);
+                    const float scale = std::max(0.3f, std::min(kGamerBodyScale, room / (TextMetrics::Width(galaxy) * s)));
+                    AppendGamerLabel(labelQuads, galaxy, right - TextMetrics::Width(galaxy) * scale * s,
+                                     r.y0 + (kGamerLivesYOffset + (kGamerBodyScale - scale) * 16.0f) * s, scale, s);
+                }
             };
             appendGamerRow(0, kInitControlGamerA, kIconInitGamerAOff, kIconInitGamerASel, 'A');
             appendGamerRow(1, kInitControlGamerB, kIconInitGamerBOff, kIconInitGamerBSel, 'B');

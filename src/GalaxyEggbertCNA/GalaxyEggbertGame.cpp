@@ -5262,6 +5262,12 @@ namespace GalaxyEggbert::CNA
                     const auto request = worldEditor_.UpdateBrowsing(
                         mouse, viewport.getWidthProperty(), viewport.getHeightProperty(),
                         phaseKeys.IsKeyDown(Keys::Escape));
+                    if (request.galaxyImported)
+                    {
+                        // Another galaxy in place of the player's: its doors and checkpoint start over.
+                        saveData_.ResetGalaxyProgress(saveData_.GetSelectedGamer());
+                        SavePlayerData();
+                    }
                     if (request.shouldReturnToMenu)
                     {
                         SetPhase(GalaxyEggbert::Def::GamePhase::Init, /*bypassFade=*/true);
@@ -9551,6 +9557,11 @@ namespace GalaxyEggbert::CNA
                     gamers[static_cast<std::size_t>(g)] = InputPad::InitGamerInfo{
                         saveData_.GetLivesForGamer(g), saveData_.GetMainGatesForGamer(g),
                         saveData_.GetSecondaryGatesForGamer(g)};
+                    // The player's own galaxy (BD-0119), once it has a main hub or progress.
+                    std::error_code ignored;
+                    if (saveData_.GalaxyProgress(g).hasProgress ||
+                        std::filesystem::exists(GalaxyEggbert::Editor::GalaxyWorldPath(g, 1), ignored))
+                        gamers[static_cast<std::size_t>(g)].galaxyGates = saveData_.GetGalaxyGatesForGamer(g);
                 }
                 inputPad_.DrawInit(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                    phaseTimeSeconds_, saveData_.GetSelectedGamer(), gamers, fadeOutPhase_,

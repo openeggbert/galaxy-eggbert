@@ -2,6 +2,8 @@
 
 #include <GalaxyEggbert/Worlds/World.hpp>
 
+#include <map>
+
 #include <filesystem>
 #include <optional>
 #include <utility>
@@ -143,6 +145,29 @@ namespace GalaxyEggbert::Editor
     // mission sign 1 and the return sign for a world hub, the chest and exit for a mission; Blupi's
     // start set in the file.
     [[nodiscard]] GalaxyEggbert::Worlds::World CreateGalaxyStarterWorld(int mission);
+
+    // ---- A whole galaxy in one file (2026-11-09) ----
+    // "GALAXY_PACK 1\n", then each place as "world <mission> <size>\n" and its .vwr bytes, then
+    // "END <FNV-1a of everything before it, 16 hex digits>\n". Shared as a world is (ED-0012):
+    // an export lands in SharedWorldsDir() (and is downloaded on the web), an import is read from
+    // there (the web's file picker writes it there).
+    constexpr const char* kGalaxyPackExtension = ".galaxy";
+    // The gamer's galaxy packed; empty when it has no place yet.
+    [[nodiscard]] std::string PackGalaxy(int gamerSlot);
+    // A pack's worlds by mission; nothing when it is damaged or truncated, of another version,
+    // holds a place twice or one that is not a galaxy's, or a world that does not load.
+    [[nodiscard]] std::optional<std::map<int, std::string>> UnpackGalaxy(const std::string& pack);
+    // "A-galaxy.galaxy" (players A-C), "player7-galaxy.galaxy" otherwise.
+    [[nodiscard]] std::string GalaxyExportName(int gamerSlot);
+    // PackGalaxy() written into SharedWorldsDir() as GalaxyExportName() (an earlier one replaced);
+    // its path, or empty when there is nothing to export or the write failed.
+    [[nodiscard]] std::filesystem::path ExportGalaxy(int gamerSlot);
+    // The packs in SharedWorldsDir(), the newest first.
+    [[nodiscard]] std::vector<std::filesystem::path> ListSharedGalaxies();
+    // Makes @p pack the gamer's galaxy: every place the galaxy has now goes into its backups
+    // first (DeleteSlotWorld(), so Backups brings it back), then the pack's worlds are written.
+    // The number of places imported; -1 when the pack is not valid, and then nothing is touched.
+    int ImportGalaxy(int gamerSlot, const std::filesystem::path& pack);
 
     // The first scene a new Galaxy 3D editor world opens with. It is a
     // compact playable tutorial rather than an all-air volume: a 3x3 Rock

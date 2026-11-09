@@ -22,8 +22,11 @@ namespace GalaxyEggbert::Editor
     // As on the world screen, a place that exists has a bin on its corner: the first click arms it
     // (a tick, the caption "Delete?"), a second click on it deletes the file into the galaxy's
     // backups (DeleteSlotWorld); Backups switches to bringing a place's newest backup back
-    // (RestoreBackup; again steps further back, round to where it began). Raw 800x480 pixels, as
-    // EditorBrowserScreen.
+    // (RestoreBackup; again steps further back, round to where it began). Export writes the whole
+    // galaxy as one file (ExportGalaxy(); downloaded on the web); Import lists the galaxies in
+    // SharedWorldsDir() where the help is (on the web it opens the file picker first) and a row
+    // clicked twice replaces this galaxy with it (ImportGalaxy(), the places there now kept in their
+    // backups). Raw 800x480 pixels, as EditorBrowserScreen.
     class GalaxyBrowserScreen
     {
     public:
@@ -33,6 +36,7 @@ namespace GalaxyEggbert::Editor
             Action action = Action::None;
             int mission = 0;            // Open/New: the galaxy mission
             std::filesystem::path path; // its file
+            bool imported = false;      // another galaxy replaced this one (its progress starts over)
         };
 
         // Rescans which of the gamer's galaxy worlds exist (on entering, and after a creation).
@@ -46,6 +50,7 @@ namespace GalaxyEggbert::Editor
         // Whether Backups is on (a click on a place restores instead of opening), and the line
         // under the places (what the last delete or restore did).
         [[nodiscard]] bool RestoreMode() const noexcept { return restoreMode_; }
+        [[nodiscard]] bool ImportMode() const noexcept { return importMode_; }
         [[nodiscard]] const std::string& Message() const noexcept { return message_; }
 
         // Rects, public for the tests: the main hub, the bonus world, world n's number (1-14), the
@@ -58,6 +63,11 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect DeleteRect(
             const GalaxyEggbert::Game::QuadBatch::Rect& place) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackupsRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ExportRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRect() noexcept;
+        // Row @p index (0-8) of the galaxies to import, where the help is.
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRowRect(int index) noexcept;
+        static constexpr int kImportRowsShown = 9;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect() noexcept;
 
     private:
@@ -68,6 +78,8 @@ namespace GalaxyEggbert::Editor
         };
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         void Restore(int mission);
+        void Export();
+        void ToggleImport();
         [[nodiscard]] bool Exists(int mission) const noexcept;
         [[nodiscard]] int Backups(int mission) const noexcept;
         [[nodiscard]] bool WorldHasAny(int world) const noexcept;
@@ -84,6 +96,9 @@ namespace GalaxyEggbert::Editor
         int restoreSteps_ = 0;
         int restoreCycle_ = 0;    // its backups and the world it had: restores come round to it
         std::string message_;
+        bool importMode_ = false;
+        std::vector<std::filesystem::path> imports_; // the galaxies listed to import
+        int armedImport_ = -1;                       // the row clicked once, -1 none
         bool mouseWasDown_ = false;
         float mouseX_ = -1.0f, mouseY_ = -1.0f;
         bool backWasDown_ = false;

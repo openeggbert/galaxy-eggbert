@@ -114,6 +114,8 @@ namespace GalaxyEggbert::Editor
             std::filesystem::path createPath;
             // A galaxy world (BD-0119): its mission, for CreateGalaxyStarterWorld(); 0 a slot's.
             int galaxyMission = 0;
+            // Another galaxy replaced the gamer's (GalaxyBrowserScreen Import): its progress starts over.
+            bool galaxyImported = false;
             bool shouldReturnToMenu = false;
         };
 

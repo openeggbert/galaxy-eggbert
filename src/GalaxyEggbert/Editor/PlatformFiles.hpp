@@ -14,9 +14,10 @@ namespace GalaxyEggbert::Editor
     // Offers @p file to the player as a download named @p name.
     bool OfferDownload(const std::filesystem::path& file, const std::string& name);
 
-    // Opens the browser's file picker; a .vwr chosen is written into @p directory (ConsumeUploadDone
+    // Opens the browser's file picker; a file of @p extension (".vwr", ".galaxy", ".gdemo") chosen
+    // is written into @p directory, the extension added when its name lacks it (ConsumeUploadDone
     // tells when; the picker gives no word when it is cancelled).
-    bool RequestUpload(const std::filesystem::path& directory);
+    bool RequestUpload(const std::filesystem::path& directory, const std::string& extension = ".vwr");
 
     // True once after RequestUpload's file was written.
     bool ConsumeUploadDone();

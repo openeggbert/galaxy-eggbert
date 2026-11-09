@@ -1,6 +1,7 @@
 #include "GalaxyBrowserScreen.hpp"
 
 #include "CustomWorldStorage.hpp"
+#include "PlatformFiles.hpp"
 
 #include <GalaxyEggbert/Game/TextMetrics.hpp>
 
@@ -86,6 +87,45 @@ namespace GalaxyEggbert::Editor
 
     Rect GalaxyBrowserScreen::BackButtonRect() noexcept { return {680.0f, 360.0f, 780.0f, 460.0f}; }
 
+    // Top right of the places' panel, beside the bonus world.
+    Rect GalaxyBrowserScreen::ExportRect() noexcept { return {380.0f, 60.0f, 480.0f, 96.0f}; }
+    Rect GalaxyBrowserScreen::ImportRect() noexcept { return {488.0f, 60.0f, 588.0f, 96.0f}; }
+
+    Rect GalaxyBrowserScreen::ImportRowRect(int index) noexcept
+    {
+        const float y0 = 50.0f + static_cast<float>(index) * 32.0f;
+        return {604.0f, y0, 786.0f, y0 + 28.0f};
+    }
+
+    void GalaxyBrowserScreen::Export()
+    {
+        const auto exported = ExportGalaxy(gamerSlot_);
+        if (exported.empty())
+        {
+            message_ = "Nothing to export: the galaxy has no place yet.";
+            return;
+        }
+        const std::string name = exported.filename().string();
+        message_ = OfferDownload(exported, name) ? "Galaxy exported: downloaded as " + name + "."
+                                                 : "Galaxy exported to " + exported.generic_string() + ".";
+    }
+
+    void GalaxyBrowserScreen::ToggleImport()
+    {
+        importMode_ = !importMode_;
+        armedImport_ = -1;
+        if (!importMode_)
+        {
+            message_.clear();
+            return;
+        }
+        restoreMode_ = false;
+        imports_ = ListSharedGalaxies();
+        message_ = RequestUpload(SharedWorldsDir(), kGalaxyPackExtension)
+                       ? "Choose a .galaxy file: it is listed on the right."
+                       : "Put .galaxy files in " + SharedWorldsDir().generic_string() + "/: they are listed on the right.";
+    }
+
     void GalaxyBrowserScreen::Refresh(int gamerSlot)
     {
         gamerSlot_ = gamerSlot;
@@ -163,6 +203,12 @@ namespace GalaxyEggbert::Editor
         mouseX_ = x;
         mouseY_ = y;
         UpdateResult result;
+        if (importMode_ && ConsumeUploadDone())
+        {
+            imports_ = ListSharedGalaxies();
+            armedImport_ = -1;
+            message_ = "The file is listed on the right: two clicks make it this galaxy.";
+        }
         const bool backTriggered = backPressed && !backWasDown_;
         backWasDown_ = backPressed;
         if (backTriggered)
@@ -185,9 +231,46 @@ namespace GalaxyEggbert::Editor
             {
                 restoreMode_ = !restoreMode_;
                 restoreMission_ = 0;
+                importMode_ = false;
                 message_ = restoreMode_ ? "Click a place to bring back its backup." : "";
                 handled = true;
             }
+            else if (InRect(x, y, ExportRect()))
+            {
+                Export();
+                handled = true;
+            }
+            else if (InRect(x, y, ImportRect()))
+            {
+                ToggleImport();
+                handled = true;
+            }
+            int armedRow = -1;
+            for (int i = 0; importMode_ && !handled && i < static_cast<int>(imports_.size()) && i < kImportRowsShown; ++i)
+            {
+                if (!InRect(x, y, ImportRowRect(i))) continue;
+                handled = true;
+                const auto& pack = imports_[static_cast<std::size_t>(i)];
+                const std::string name = pack.filename().string();
+                if (armedImport_ != i)
+                {
+                    armedRow = i;
+                    message_ = "Replace this galaxy with " + name + "? Click it again.";
+                    break;
+                }
+                const int places = ImportGalaxy(gamerSlot_, pack);
+                if (places < 0)
+                {
+                    message_ = name + " is not a galaxy this game can read.";
+                    break;
+                }
+                Refresh(gamerSlot_);
+                importMode_ = false;
+                result.imported = true;
+                message_ = name + ": " + std::to_string(places) + (places == 1 ? " place" : " places") +
+                           " imported (Backups brings back the old ones).";
+            }
+            armedImport_ = armedRow;
             for (const auto& shown : Shown())
             {
                 if (handled || restoreMode_ || !Exists(shown.mission) || !InRect(x, y, DeleteRect(shown.rect)))
@@ -282,6 +365,11 @@ namespace GalaxyEggbert::Editor
         icon(panels, {598.0f, 10.0f, 792.0f, 350.0f}, kIconPanel);
         button(BackButtonRect(), kIconReturn);
         icon(restoreMode_ ? buttons : panels, BackupsRect(), restoreMode_ ? kIconBlank : kIconPanel);
+        button(ExportRect(), kIconBlank);
+        icon(importMode_ ? buttons : panels, ImportRect(), importMode_ ? kIconBlank : kIconPanel);
+        if (importMode_)
+            for (int i = 0; i < static_cast<int>(imports_.size()) && i < kImportRowsShown; ++i)
+                icon(armedImport_ == i ? buttons : panels, ImportRowRect(i), armedImport_ == i ? kIconBlank : kIconPanel);
         button(MainHubRect(), kIconBlank);
         button(BonusRect(), kIconBlank);
         for (int world = 1; world <= kGalaxyWorldCount; ++world)
@@ -351,12 +439,34 @@ namespace GalaxyEggbert::Editor
             "deletes (two clicks);",
             "Backups brings it back.",
         };
-        float y = 20.0f;
-        for (const char* line : help)
+        if (importMode_)
         {
-            text(labels, line, 606.0f, y, 0.36f);
-            y += 19.0f;
+            text(labels, "Import a galaxy", 606.0f, 18.0f, 0.45f);
+            if (imports_.empty())
+            {
+                text(faint, "No .galaxy file", 606.0f, 54.0f, 0.36f);
+                text(faint, "to import yet.", 606.0f, 73.0f, 0.36f);
+            }
+            for (int i = 0; i < static_cast<int>(imports_.size()) && i < kImportRowsShown; ++i)
+            {
+                const Rect row = ImportRowRect(i);
+                std::string name = armedImport_ == i ? "Replace? Click again" : imports_[static_cast<std::size_t>(i)].stem().string();
+                while (!name.empty() && Width(name) * 0.36f > row.x1 - row.x0 - 12.0f) name.pop_back();
+                text(labels, name, row.x0 + 6.0f, (row.y0 + row.y1 - kGlyphCellPx * 0.36f) * 0.5f, 0.36f);
+            }
         }
+        else
+        {
+            float y = 20.0f;
+            for (const char* line : help)
+            {
+                text(labels, line, 606.0f, y, 0.36f);
+                y += 19.0f;
+            }
+        }
+        for (const auto& [rect, caption] : {std::pair<Rect, const char*>{ExportRect(), "Export"},
+                                            std::pair<Rect, const char*>{ImportRect(), "Import"}})
+            centred(labels, caption, rect, (rect.y0 + rect.y1 - kGlyphCellPx * 0.4f) * 0.5f, 0.4f);
         centred(labels, "Backups", BackupsRect(), (BackupsRect().y0 + BackupsRect().y1 - kGlyphCellPx * 0.4f) * 0.5f,
                 0.4f);
         if (!message_.empty()) text(labels, message_, 22.0f, 446.0f, 0.4f);

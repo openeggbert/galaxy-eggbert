@@ -6,7 +6,28 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-09 (galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Sharing galaxies and demos, galaxy gates in the menu, xnjttjpo on the web (2026-11-09)
+
+The owner's list after the galaxy work: a whole galaxy in one file, the galaxy's progress in the
+menu, .gdemo export/import, xnjttjpo edits kept on the web, `CURRENT.md`'s open work brought in line
+with the release audit.
+
+- A galaxy in one file (`CustomWorldStorage` `PackGalaxy`/`UnpackGalaxy`/`ExportGalaxy`/
+  `ImportGalaxy`/`ListSharedGalaxies`): `GALAXY_PACK 1`, `world <mission> <size>` + the .vwr bytes
+  per place, `END <FNV-1a>`; an unpack refuses a changed byte, a cut, another version, a place a
+  galaxy has not, a world that does not load. The galaxy screen's Export writes
+  `customworlds/shared/A-galaxy.galaxy` (downloaded on the web); Import lists the `.galaxy` files
+  there in place of the help (on the web the file picker first: `RequestUpload(dir, extension)`),
+  a row's first click asks, the second makes it the galaxy: the places there go into their backups,
+  the gamer's galaxy progress starts over (`SaveData::ResetGalaxyProgress`, via
+  `BrowserRequest::galaxyImported`). Tests `VerifyGEEditorStorage`; live
+  `harness/case_galaxy_share.py` (`galaxy-share-sheet.png`).
+- The menu's player panel: "Galaxy : N gates" on the Blupi line, right-aligned (smaller when it
+  would reach the Blupi count), for a gamer whose galaxy has a main hub or progress
+  (`InitGamerInfo::galaxyGates`, `SaveData::GetGalaxyGatesForGamer`). `VerifyGESaveData`; live
+  (same sheet).
 
 ## Galaxy: delete and Continue, web runtime (2026-11-09, BD-0119) — verified on desktop and web
 

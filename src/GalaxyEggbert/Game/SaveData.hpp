@@ -217,6 +217,14 @@ namespace GalaxyEggbert::Game
         // only once there is some). The mode itself is the session's, never saved.
         void SetGalaxyMode(bool on) noexcept { galaxyMode_ = on; }
         [[nodiscard]] bool GetGalaxyMode() const noexcept { return galaxyMode_; }
+        // Forgets @p gamer's galaxy progress (another galaxy was imported in its place).
+        void ResetGalaxyProgress(int gamer) noexcept { galaxies_[std::clamp(gamer, 0, kGamerCount - 1)] = GamerSlot{}; }
+        // Gates opened in @p gamer's galaxy, main and secondary together (the menu's panel).
+        [[nodiscard]] int GetGalaxyGatesForGamer(int gamer) const noexcept
+        {
+            const auto& doors = GalaxyProgress(gamer).doorsUnlocked;
+            return static_cast<int>(std::count(doors.begin(), doors.end(), true));
+        }
         // The galaxy progress of @p gamer, whatever the mode (the menu, the tests).
         [[nodiscard]] const GamerSlot& GalaxyProgress(int gamer) const noexcept
         {
