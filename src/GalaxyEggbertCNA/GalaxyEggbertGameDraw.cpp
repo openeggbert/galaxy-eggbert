@@ -189,8 +189,10 @@ namespace GalaxyEggbert::CNA
                 targetW = client.Width;
                 targetH = client.Height;
             }
-            const bool finish = (effects.smoothing || effects.glow) &&
-                                postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98), targetW, targetH);
+            const bool ultra = effects.ultra &&
+                               ultraFinish_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98), targetW, targetH);
+            const bool finish = ultra || ((effects.smoothing || effects.glow) &&
+                                          postProcess_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98), targetW, targetH));
             if (!finish && sceneFrame_.effects.enabled)
             {
                 device.Clear(Microsoft::Xna::Framework::Color(0, 35, 98)); // the screen again after the shadow map
@@ -202,7 +204,11 @@ namespace GalaxyEggbert::CNA
             worldIntoTarget_ = finish;
             DrawWorld(device, assets);
             worldIntoTarget_ = false;
-            if (finish)
+            if (ultra)
+            {
+                ultraFinish_.End(device, sceneFrame_);
+            }
+            else if (finish)
             {
                 postProcess_.End(device, effects.glow);
             }

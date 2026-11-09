@@ -34,6 +34,7 @@
 #include <GalaxyEggbert/Game/SceneFrame.hpp>
 #include <GalaxyEggbert/Game/EffectParticles.hpp>
 #include <GalaxyEggbert/Game/PostProcess.hpp>
+#include <GalaxyEggbert/Game/UltraFinish.hpp>
 #include <GalaxyEggbert/Game/WorldRenderer.hpp>
 #include <CnaEngine/Graphics/Camera.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
@@ -1246,6 +1247,7 @@ namespace GalaxyEggbert::CNA
         int momentAirTicks_ = 0;
         GalaxyEggbert::Game::EffectParticles effectParticles_;
         GalaxyEggbert::Game::PostProcess postProcess_;
+        GalaxyEggbert::Game::UltraFinish ultraFinish_; // Ultra's HDR finish in place of postProcess_
         bool worldIntoTarget_ = false; // the world is being drawn into postProcess_'s target
         // The world's sky colour for the effects' distance haze: the middle of its background picture.
         Microsoft::Xna::Framework::Vector3 backgroundHaze_{0.0f, 35.0f / 255.0f, 98.0f / 255.0f};

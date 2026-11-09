@@ -160,6 +160,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/SurfaceShaders.cpp
         src/GalaxyEggbert/Game/SceneShaders.cpp
         src/GalaxyEggbert/Game/PostProcess.cpp
+        src/GalaxyEggbert/Game/UltraFinish.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/TerrainRenderer.cpp
@@ -567,6 +568,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     ge_add_editor_verify(VerifyTileFaces tools/VerifyTileFaces.cpp)
     # The 3D effects' decisions without a GPU (SceneEffectsLogic.hpp): shadows, lights, occlusion.
     ge_add_editor_verify(VerifySceneEffects tools/VerifySceneEffects.cpp)
+    ge_add_editor_verify(VerifyUltra tools/VerifyUltra.cpp)
 
     # -------------------------------------------------------------------
     # Linux runtime bundle (BUILD-010)

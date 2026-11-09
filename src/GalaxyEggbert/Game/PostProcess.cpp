@@ -18,7 +18,7 @@ namespace GalaxyEggbert::Game
         namespace Graphics = Microsoft::Xna::Framework::Graphics;
 
         // SpriteBatch's vertices (CNA's sprite layout); the quad's corners map the source whole.
-        const char* const kPostVertex = R"(
+        const char* const kPostVertexSource = R"(
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec2 aTexCoord;
 layout(location = 2) in vec4 aColor;
@@ -83,7 +83,7 @@ void main()
 
         // FXAA (after Timothy Lottes' FXAA 3, the console variant): where the luma steps across an edge,
         // the pixel is blended along the edge's direction, so block edges come out smooth, not stepped.
-        const char* const kFxaaFragment = R"(
+        const char* const kFxaaFragmentSource = R"(
 uniform sampler2D uTexture;
 uniform vec2 uTexel;
 in vec2 TexCoord;
@@ -122,6 +122,16 @@ void main()
 )";
     }
 
+    const char* PostVertexSource() noexcept
+    {
+        return kPostVertexSource;
+    }
+
+    const char* FxaaFragmentSource() noexcept
+    {
+        return kFxaaFragmentSource;
+    }
+
     bool PostProcess::Prepare(Graphics::GraphicsDevice& device, int width, int height)
     {
         if (m_failed)
@@ -130,10 +140,10 @@ void main()
         }
         if (!m_composite)
         {
-            m_brightPass = CompileShaderEffect(device, "the glow's bright pass", kPostVertex, kBrightFragment);
-            m_blurPass = CompileShaderEffect(device, "the glow's blur", kPostVertex, kBlurFragment);
-            m_composite = CompileShaderEffect(device, "the glow's composite", kPostVertex, kCompositeFragment);
-            m_fxaa = CompileShaderEffect(device, "the edge smoothing (FXAA)", kPostVertex, kFxaaFragment);
+            m_brightPass = CompileShaderEffect(device, "the glow's bright pass", kPostVertexSource, kBrightFragment);
+            m_blurPass = CompileShaderEffect(device, "the glow's blur", kPostVertexSource, kBlurFragment);
+            m_composite = CompileShaderEffect(device, "the glow's composite", kPostVertexSource, kCompositeFragment);
+            m_fxaa = CompileShaderEffect(device, "the edge smoothing (FXAA)", kPostVertexSource, kFxaaFragmentSource);
             if (!m_brightPass || !m_blurPass || !m_composite || !m_fxaa)
             {
                 m_failed = true;

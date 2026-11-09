@@ -19,6 +19,11 @@
 
 namespace GalaxyEggbert::Game
 {
+    // The full-screen passes' vertex shader (SpriteBatch's vertices: TexCoord across the source) and
+    // the FXAA fragment shader, shared with the Ultra finish (UltraFinish.hpp).
+    [[nodiscard]] const char* PostVertexSource() noexcept;
+    [[nodiscard]] const char* FxaaFragmentSource() noexcept;
+
     class PostProcess
     {
     public:
