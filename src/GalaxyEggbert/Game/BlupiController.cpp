@@ -2086,7 +2086,15 @@ namespace GalaxyEggbert::Game
                 const auto groundAt = [&](float along)
                 {
                     const float d = 2.0f / 64.0f;
-                    return IsPointSolid(world, m_x + fx * along, m_y - d, m_z + fz * along, tempPassable, false);
+                    const float px = m_x + fx * along, pz = m_z + fz * along;
+                    for (int i = 0; i < m_liftTopCount; ++i)
+                    {
+                        if (std::fabs(px - m_liftTops[i][0]) <= 0.5f && std::fabs(pz - m_liftTops[i][1]) <= 0.5f)
+                        {
+                            return true;
+                        }
+                    }
+                    return IsPointSolid(world, px, m_y - d, pz, tempPassable, false);
                 };
                 const bool frontOpen = !groundAt(kJeepStripNear) && !groundAt((kJeepStripNear + kJeepStripFar) * 0.5f) &&
                                        !groundAt(kJeepStripFar);

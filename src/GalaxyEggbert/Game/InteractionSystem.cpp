@@ -2693,6 +2693,23 @@ namespace GalaxyEggbert::Game
         return false;
     }
 
+    int InteractionSystem::LiftTopsNear(const WorldRuntime& worldRuntime, float x, float y, float z,
+                                        std::array<std::array<float, 2>, 4>& tops)
+    {
+        int count = 0;
+        for (const auto& obj : worldRuntime.GetMobileObjects())
+        {
+            if (count == static_cast<int>(tops.size())) break;
+            if (!obj.active || GetObjectDefinition(obj.type).semanticKind != ObjectSemanticKind::Lift) continue;
+            if (std::fabs(obj.currentX - x) < 1.5f && std::fabs(obj.currentZ - z) < 1.5f &&
+                std::fabs(y - LiftRiderCenterY(obj.currentY)) < 0.2f)
+            {
+                tops[static_cast<std::size_t>(count++)] = {obj.currentX, obj.currentZ};
+            }
+        }
+        return count;
+    }
+
     bool InteractionSystem::IsTrajectoryCell(const WorldRuntime& worldRuntime, float x, float y, float z) const
     {
         const int n = static_cast<int>(worldRuntime.GetWorld().blocksPerAxis());

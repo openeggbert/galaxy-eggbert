@@ -931,6 +931,42 @@ int main(int argc, char** argv)
                   "on the middle of its block the jeep stays level and still");
         }
 
+        // A jeep driven off a lift onto the block beside it, level with the lift's top (the owner,
+        // 2026-11-09): the lift is ground under its back end (SetLiftTops), so it drives on; with the
+        // terrain alone its back end was over nothing, it tipped and rolled back onto the lift.
+        {
+            Worlds::World beside;
+            beside.setBlock(51, 31, 50, Worlds::Block::make(396)); // x 0.5-1.5, its top at 32
+            const auto drive = [&](bool liftTops)
+            {
+                BlupiController jeep;
+                jeep.SetPosition(-0.2f, 32.0f, 0.0f);
+                jeep.SetYaw(1.57079632679f); // +X
+                jeep.TriggerMount(BlupiController::VehicleMode::Jeep, false, false);
+                float maxTilt = 0.0f;
+                for (int i = 0; i < 60 && jeep.GetX() < 1.0f; ++i)
+                {
+                    const bool riding = std::fabs(jeep.GetX()) < 0.65f && std::fabs(jeep.GetY() - 32.0f) < 0.2f;
+                    jeep.SetRidingLift(riding);
+                    jeep.SetLiftUnder(0.0f, 0.0f, false);
+                    BlupiController::LiftTops tops{};
+                    tops[0] = {0.0f, 0.0f};
+                    jeep.SetLiftTops(tops, liftTops ? 1 : 0);
+                    jeep.Step(beside, 0.0f, 1.0f, false, false, false, 0.05f);
+                    if (riding) jeep.RideLift(beside, jeep.GetX(), 32.0f, jeep.GetZ());
+                    maxTilt = std::max(maxTilt, std::fabs(jeep.GetVehicleTilt()));
+                }
+                return std::make_pair(jeep, maxTilt);
+            };
+            const auto [off, offTilt] = drive(true);
+            const auto [stuck, stuckTilt] = drive(false);
+            std::cout << "Jeep off a lift: x " << off.GetX() << " tilt " << offTilt * 57.2958f
+                      << " deg (the terrain alone: x " << stuck.GetX() << ", tilt " << stuckTilt * 57.2958f << " deg)"
+                      << std::endl;
+            check(off.GetX() >= 1.0f && std::fabs(off.GetY() - 32.0f) < 0.05f && offTilt == 0.0f && stuck.GetX() < 0.7f,
+                  "a jeep drives off a lift onto the block beside it, level, without tipping back (SetLiftTops)");
+        }
+
         // The helicopter as the original flies it (EasyMove, Decor.cpp:3724-3835; BD-0070): idle in
         // the air it sinks at 1 px a tick (10 px in ten ticks); along it gains 0.5 px a tick (0.5 + 1 +
         // ... + 10 = 105 px in twenty ticks, its 12 not yet reached).

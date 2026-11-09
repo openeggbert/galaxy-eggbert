@@ -1268,6 +1268,13 @@ namespace GalaxyEggbert::CNA
         blupi_.SetTurning(turnAroundRemaining_ > 0.0f && !blupi_.IsInVehicle());
         blupi_.SetRidingLift(interaction_.IsRidingLift());
         blupi_.SetLiftUnder(interaction_.RideLiftX(), interaction_.RideLiftZ(), interaction_.RideLiftIsConveyor());
+        {
+            BlupiController::LiftTops tops{};
+            const int count = blupi_.IsInVehicle()
+                                  ? InteractionSystem::LiftTopsNear(worldRuntime_, blupi_.GetX(), blupi_.GetY(), blupi_.GetZ(), tops)
+                                  : 0;
+            blupi_.SetLiftTops(tops, count);
+        }
         blupi_.SetLiftBelow(blupi_.GetVehicleMode() == BlupiController::VehicleMode::Overcraft &&
                             InteractionSystem::LiftWithinOverHeight(worldRuntime_, blupi_.GetX(), blupi_.GetY(),
                                                                      blupi_.GetZ()));

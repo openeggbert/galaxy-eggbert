@@ -1398,6 +1398,18 @@ namespace GalaxyEggbert::Game
         // A lift within the overcraft's reach under him (InteractionSystem::LiftWithinOverHeight):
         // it may climb over it as over the ground (BD-0052).
         void SetLiftBelow(bool below) noexcept { m_liftBelow = below; }
+        // The tops of the lifts level with his feet near him (InteractionSystem::LiftTopsNear), each
+        // its cube's middle: ground for the jeep's ends as the terrain is (its strips feel for any
+        // ground, Decor.cpp:4180-4192). Without them a jeep driving off a lift onto the block beside
+        // it found its back end over nothing, tipped and rolled back onto the lift (the owner,
+        // 2026-11-09).
+        static constexpr int kMaxLiftTops = 4;
+        using LiftTops = std::array<std::array<float, 2>, kMaxLiftTops>;
+        void SetLiftTops(const LiftTops& tops, int count) noexcept
+        {
+            m_liftTops = tops;
+            m_liftTopCount = count < 0 ? 0 : (count > kMaxLiftTops ? kMaxLiftTops : count);
+        }
         void SetLiftUnder(float x, float z, bool conveyor) noexcept
         {
             m_liftUnderX = x;
@@ -1500,6 +1512,8 @@ namespace GalaxyEggbert::Game
         float m_liftUnderZ = 0.0f;
         bool m_liftUnderConveyor = false;
         bool m_liftBelow = false;    // SetLiftBelow()
+        LiftTops m_liftTops{};       // SetLiftTops()
+        int m_liftTopCount = 0;
         bool m_inWind = false;       // a wind tile at his middle this frame
 
         // Real Decor::DecorDetect() equivalent (INFRA-005, plan.md §7):

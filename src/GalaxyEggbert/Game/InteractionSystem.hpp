@@ -996,6 +996,11 @@ namespace GalaxyEggbert::Game
         // top from 18 px over his feet to 79 under them, within 50 px across: the overcraft may
         // climb over it.
         [[nodiscard]] static bool LiftWithinOverHeight(const WorldRuntime& worldRuntime, float x, float y, float z);
+        // The lifts whose tops are level with his feet (as riding one takes: within 0.2) and whose
+        // cubes lie within a block and a half of him, their middles (x, z), at most tops.size():
+        // BlupiController::SetLiftTops. Returns how many.
+        [[nodiscard]] static int LiftTopsNear(const WorldRuntime& worldRuntime, float x, float y, float z,
+                                              std::array<std::array<float, 2>, 4>& tops);
         [[nodiscard]] float RideLiftX() const noexcept { return rideLiftX_; }
         [[nodiscard]] float RideLiftZ() const noexcept { return rideLiftZ_; }
         [[nodiscard]] bool RideLiftIsConveyor() const noexcept { return rideLiftConveyor_; }
