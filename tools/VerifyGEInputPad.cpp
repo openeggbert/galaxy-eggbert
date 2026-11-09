@@ -528,6 +528,20 @@ int main()
         InputPad::PlayInput mouseIn;
         (void)mousePad.UpdatePlay(mouse(457, 413, true), kViewportW, kViewportH, mouseIn);
         check(mouseIn.crouchHeld, "mouse: pressed on the crouch button, it is held");
+        // With the accelerometer steering (SetAccelerometerMode): no stick; Forward and Back in its
+        // corner, where Action and Jump stand in the other one; Back backs him up.
+        InputPad tilt;
+        tilt.SetAccelerometerMode(true);
+        (void)tilt.UpdatePlayTouches({TP{1, 67.0f, 278.0f, true, false}}, kViewportW, kViewportH, in);
+        check(in.moveInput == 1.0f && in.turnInput == 0.0f && !in.backUpHeld, "accelerometer: Forward held walks him on");
+        (void)tilt.UpdatePlayTouches({TP{1, 67.0f, 278.0f, false, true}}, kViewportW, kViewportH, in);
+        (void)tilt.UpdatePlayTouches({TP{2, 70.0f, 410.0f, true, false}}, kViewportW, kViewportH, in);
+        check(in.backUpHeld && in.moveInput == 0.0f, "accelerometer: Back held backs him up");
+        (void)tilt.UpdatePlayTouches({TP{2, 70.0f, 410.0f, false, true}}, kViewportW, kViewportH, in);
+        (void)tilt.UpdatePlayTouches({TP{3, 150.0f, 330.0f, true, false}}, kViewportW, kViewportH, in);
+        (void)tilt.UpdatePlayTouches({TP{3, 190.0f, 330.0f, false, false}}, kViewportW, kViewportH, in);
+        check(in.moveInput == 0.0f && in.turnInput == 0.0f && !in.backUpHeld,
+              "accelerometer: no stick where it stood (the tilt turns him)");
     }
     {
         // A gamepad as keys (GamepadInput.hpp, owner 2026-11-02): none when unplugged; the stick past

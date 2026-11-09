@@ -35,6 +35,7 @@ namespace GalaxyEggbert::Game::QuadBatch
     {
         float x0, y0, x1, y1;
         float u0, v0, u1, v1;
+        float rotation = 0.0f; // degrees about its centre, clockwise on screen (an arrow turned)
     };
 
     // Appends one axis-aligned quad (2 triangles, 4 vertices) to existing

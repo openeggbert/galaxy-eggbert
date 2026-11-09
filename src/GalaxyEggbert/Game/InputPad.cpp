@@ -141,6 +141,11 @@ namespace GalaxyEggbert::Game
             return jumpRight ? right : MirrorX(right, m);
         }
 
+        // With the accelerometer (SetAccelerometerMode): Forward and Back in the stick's corner, as
+        // Action and Jump stand in the other one (Back in the corner, Forward over it).
+        Rect PlayForwardRect(const ScreenMetrics& m, bool jumpRight) noexcept { return PlayActionRect(m, !jumpRight); }
+        Rect PlayBackRect(const ScreenMetrics& m, bool jumpRight) noexcept { return PlayJumpRect(m, !jumpRight); }
+
         Rect PlayFireRect(const ScreenMetrics& m, bool jumpRight) noexcept
         {
             const Rect right{m.w-m.f1*2.4f,m.h-m.f1*2.6f,m.w-m.f1*1.4f,m.h-m.f1*1.6f};
@@ -204,15 +209,10 @@ namespace GalaxyEggbert::Game
             const Rect row = SetupAccelRect(m);
             return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
         }
-        // "Frame rate" (a Galaxy setting, 2026-11-09: 60, 120, 144, 240 frames a second), in the
-        // Accelerometer row right of its label, where the sensitivity slider stands while the
-        // accelerometer is on (a phone's): it gives the slider its place then.
-        Rect SetupFrameRateRect(const ScreenMetrics& m) noexcept
-        {
-            const Rect row = SetupAccelRect(m);
-            const float x = 250.0f * m.s;
-            return Rect{x, row.y0, x + m.f2 * 0.5f, row.y1};
-        }
+        // "Frame rate" (a Galaxy setting, 2026-11-09: 60, 120, 144, 240 frames a second): a row of the
+        // left column of its own, over Sound effects, under the title. It stood in the Accelerometer row,
+        // where the sensitivity slider took its place with the accelerometer on (a phone's, reported).
+        Rect SetupFrameRateRect(const ScreenMetrics& m) noexcept { return SetupColumnRect(2.5f, 2.0f, m); }
         // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
         // of its label, the effects' (0) then the music's (1); each its label over a track drawn
         // as the original's Slider (Slider.cpp: jauge.png's empty cell, pad icon 1 for the knob).
@@ -303,6 +303,8 @@ namespace GalaxyEggbert::Game
         constexpr int kPlayControlBackUp = 4;
         constexpr int kPlayControlCrouch = 5;
         constexpr int kPlayControlFire = 6;
+        constexpr int kPlayControlForward = 7; // the accelerometer's Forward (its Back is kPlayControlBackUp)
+        constexpr int kIconPlayArrow = 7;      // pad.png's arrow (it points right): turned up and down
 
         constexpr int kPauseControlMenu = 0;
         constexpr int kPauseControlBack = 1;
@@ -665,7 +667,7 @@ namespace GalaxyEggbert::Game
     void InputPad::ResetMissionInput() noexcept
     {
         ResetTouchState();
-        dpadTouchId_ = actionTouchId_ = pauseTouchId_ = backUpTouchId_ = crouchTouchId_ = -1;
+        dpadTouchId_ = actionTouchId_ = pauseTouchId_ = backUpTouchId_ = crouchTouchId_ = forwardTouchId_ = -1;
         cheatActiveControl_ = -1;
         cheatMouseWasDown_ = false;
         cheatGestureIndex_ = 0;
@@ -681,7 +683,7 @@ namespace GalaxyEggbert::Game
         activeControl_ = -1;
         previousPlayTouches_.clear();
         fireTouchHeld_=false;
-        dpadTouchId_=actionTouchId_=pauseTouchId_=backUpTouchId_=crouchTouchId_=-1;
+        dpadTouchId_=actionTouchId_=pauseTouchId_=backUpTouchId_=crouchTouchId_=forwardTouchId_=-1;
         mouseWasDown_ = false;
         dpadDragOffsetX_ = 0.0f;
         dpadDragOffsetY_ = 0.0f;
@@ -1163,12 +1165,13 @@ namespace GalaxyEggbert::Game
 
         const auto padCenter = DPadCenter(m, jumpRight_);
         const float padHalf = kDPadRadius * m.s;
-        const bool overDPad = InRect(mouseX, mouseY, Rect{padCenter.X - padHalf, padCenter.Y - padHalf,
-                                                          padCenter.X + padHalf, padCenter.Y + padHalf});
+        const bool overDPad = !accelMode_ && InRect(mouseX, mouseY, Rect{padCenter.X - padHalf, padCenter.Y - padHalf,
+                                                                         padCenter.X + padHalf, padCenter.Y + padHalf});
         const bool overJump = InRect(mouseX, mouseY, PlayJumpRect(m, jumpRight_));
         const bool overAction = InRect(mouseX, mouseY, PlayActionRect(m, jumpRight_));
         const bool overPause = InRect(mouseX, mouseY, PlayPauseRect(m));
-        const bool overBackUp = InRect(mouseX, mouseY, PlayBackUpRect(m, jumpRight_));
+        const bool overBackUp = InRect(mouseX, mouseY, accelMode_ ? PlayBackRect(m, jumpRight_) : PlayBackUpRect(m, jumpRight_));
+        const bool overForward = accelMode_ && InRect(mouseX, mouseY, PlayForwardRect(m, jumpRight_));
         const bool overCrouch = InRect(mouseX, mouseY, PlayCrouchRect(m, jumpRight_));
         const bool overFire = vehicleFireEnabled_ && InRect(mouseX,mouseY,PlayFireRect(m,jumpRight_));
 
@@ -1176,6 +1179,7 @@ namespace GalaxyEggbert::Game
         {
             if (overFire) activeControl_ = kPlayControlFire;
             else if (overBackUp) activeControl_ = kPlayControlBackUp;
+            else if (overForward) activeControl_ = kPlayControlForward;
             else if (overCrouch) activeControl_ = kPlayControlCrouch;
             else if (overDPad) activeControl_ = kPlayControlDPad;
             else if (overJump) activeControl_ = kPlayControlJump;
@@ -1191,6 +1195,7 @@ namespace GalaxyEggbert::Game
         outInput.fireHeld = mouseDown && overFire;
         outInput.backUpHeld = mouseDown && activeControl_ == kPlayControlBackUp;
         outInput.crouchHeld = mouseDown && activeControl_ == kPlayControlCrouch;
+        if (mouseDown && activeControl_ == kPlayControlForward) outInput.moveInput = 1.0f;
 
         // Real discrete D-pad: only active while the drag that STARTED on
         // the pad continues, using the CURRENT drag point each frame (not
@@ -1249,7 +1254,8 @@ namespace GalaxyEggbert::Game
         const Rect jumpRect = PlayJumpRect(m, jumpRight_);
         const Rect actionRect = PlayActionRect(m, jumpRight_);
         const Rect pauseRect = PlayPauseRect(m);
-        const Rect backRect = PlayBackUpRect(m, jumpRight_);
+        const Rect backRect = accelMode_ ? PlayBackRect(m, jumpRight_) : PlayBackUpRect(m, jumpRight_);
+        const Rect forwardRect = PlayForwardRect(m, jumpRight_);
         const Rect crouchRect = PlayCrouchRect(m, jumpRight_);
         bool onControl = false;
         bool dpadSeen = false;
@@ -1258,8 +1264,9 @@ namespace GalaxyEggbert::Game
             if (t.pressed)
             {
                 if (InRect(t.x, t.y, backRect) && backUpTouchId_ < 0) backUpTouchId_ = t.id;
+                else if (accelMode_ && InRect(t.x, t.y, forwardRect) && forwardTouchId_ < 0) forwardTouchId_ = t.id;
                 else if (InRect(t.x, t.y, crouchRect) && crouchTouchId_ < 0) crouchTouchId_ = t.id;
-                else if (InRect(t.x, t.y, padRect) && dpadTouchId_ < 0) dpadTouchId_ = t.id;
+                else if (!accelMode_ && InRect(t.x, t.y, padRect) && dpadTouchId_ < 0) dpadTouchId_ = t.id;
                 else if (InRect(t.x, t.y, actionRect)) actionTouchId_ = t.id;
                 else if (InRect(t.x, t.y, pauseRect)) pauseTouchId_ = t.id;
             }
@@ -1302,6 +1309,12 @@ namespace GalaxyEggbert::Game
                 if (down) outInput.crouchHeld = true;
                 else crouchTouchId_ = -1;
             }
+            if (t.id == forwardTouchId_)
+            {
+                onControl = true;
+                if (down) outInput.moveInput = 1.0f;
+                else forwardTouchId_ = -1;
+            }
             if (t.id == actionTouchId_)
             {
                 onControl = true;
@@ -1333,6 +1346,7 @@ namespace GalaxyEggbert::Game
         };
         if (backUpTouchId_ >= 0 && !present(backUpTouchId_)) backUpTouchId_ = -1;
         if (crouchTouchId_ >= 0 && !present(crouchTouchId_)) crouchTouchId_ = -1;
+        if (forwardTouchId_ >= 0 && (!accelMode_ || !present(forwardTouchId_))) forwardTouchId_ = -1;
         if (actionTouchId_ >= 0 && !present(actionTouchId_)) actionTouchId_ = -1;
         if (pauseTouchId_ >= 0 && !present(pauseTouchId_)) pauseTouchId_ = -1;
         fireTouchHeld_=outInput.fireHeld;
@@ -1370,13 +1384,27 @@ namespace GalaxyEggbert::Game
         // when not actively dragging, snapping back to center).
         const auto padCenter = DPadCenter(m, jumpRight_);
         const float drawHalf = kDPadDrawRadius * m.s;
-        appendIconQuad(normalQuads, padCenter.X - drawHalf, padCenter.Y - drawHalf, padCenter.X + drawHalf,
-                       padCenter.Y + drawHalf, kIconDPadRing);
-        const float thumbCx = padCenter.X + dpadDragOffsetX_ * m.s;
-        const float thumbCy = padCenter.Y + dpadDragOffsetY_ * m.s;
-        appendIconQuad(activeControl_ == kPlayControlDPad ? pressedQuads : normalQuads,
-                       thumbCx - drawHalf, thumbCy - drawHalf, thumbCx + drawHalf, thumbCy + drawHalf,
-                       kIconDPadThumb);
+        if (!accelMode_)
+        {
+            appendIconQuad(normalQuads, padCenter.X - drawHalf, padCenter.Y - drawHalf, padCenter.X + drawHalf,
+                           padCenter.Y + drawHalf, kIconDPadRing);
+            const float thumbCx = padCenter.X + dpadDragOffsetX_ * m.s;
+            const float thumbCy = padCenter.Y + dpadDragOffsetY_ * m.s;
+            appendIconQuad(activeControl_ == kPlayControlDPad ? pressedQuads : normalQuads,
+                           thumbCx - drawHalf, thumbCy - drawHalf, thumbCx + drawHalf, thumbCy + drawHalf,
+                           kIconDPadThumb);
+        }
+        else
+        {
+            // Forward (the arrow turned up) and Back (turned down) in the stick's corner.
+            const auto appendArrow = [&](bool pressed, const Rect& r, float rotation)
+            {
+                appendIconQuad(pressed ? pressedQuads : normalQuads, r.x0, r.y0, r.x1, r.y1, kIconPlayArrow);
+                (pressed ? pressedQuads : normalQuads).back().rotation = rotation;
+            };
+            appendArrow(activeControl_ == kPlayControlForward || forwardTouchId_ >= 0, PlayForwardRect(m, jumpRight_), -90.0f);
+            appendArrow(activeControl_ == kPlayControlBackUp || backUpTouchId_ >= 0, PlayBackRect(m, jumpRight_), 90.0f);
+        }
 
         const auto appendRect = [&](std::vector<Quad>& bucket, const Rect& r, int icon)
         {
@@ -1387,9 +1415,11 @@ namespace GalaxyEggbert::Game
                    kIconPlayAction);
         appendRect(activeControl_ == kPlayControlPause ? pressedQuads : normalQuads, PlayPauseRect(m),
                    kIconPlayPause);
-        // The back-up button (Galaxy's, 2026-11-02), the Setup's return arrow over the stick.
-        appendRect(activeControl_ == kPlayControlBackUp || backUpTouchId_ >= 0 ? pressedQuads : normalQuads,
-                   PlayBackUpRect(m, jumpRight_), kIconSetupReturn);
+        // The back-up button (Galaxy's, 2026-11-02), the Setup's return arrow over the stick; with the
+        // accelerometer the Back button is it.
+        if (!accelMode_)
+            appendRect(activeControl_ == kPlayControlBackUp || backUpTouchId_ >= 0 ? pressedQuads : normalQuads,
+                       PlayBackUpRect(m, jumpRight_), kIconSetupReturn);
         appendRect(activeControl_ == kPlayControlCrouch || crouchTouchId_ >= 0 ? pressedQuads : normalQuads,
                    PlayCrouchRect(m, jumpRight_), kIconPlayDown);
 
@@ -1970,7 +2000,7 @@ namespace GalaxyEggbert::Game
         const bool overAccel = InRect(mouseX, mouseY, SetupAccelRect(m));
         const bool overTerrain = InRect(mouseX, mouseY, SetupTerrainRect(m));
         const bool overEffectsToggle = InRect(mouseX, mouseY, SetupEffectsRect(m));
-        const bool overFrameRate = !accelOn && InRect(mouseX, mouseY, SetupFrameRateRect(m));
+        const bool overFrameRate = InRect(mouseX, mouseY, SetupFrameRateRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
@@ -2142,11 +2172,8 @@ namespace GalaxyEggbert::Game
                          kSetupControlTerrain);
             appendButton(SetupEffectsRect(m), effectsLevel > 0 ? kIconSetupToggleOn : kIconSetupToggleOff,
                          kSetupControlEffects);
-            if (!accel)
-            {
-                appendButton(SetupFrameRateRect(m), frameRate > 60 ? kIconSetupToggleOn : kIconSetupToggleOff,
-                             kSetupControlFrameRate);
-            }
+            appendButton(SetupFrameRateRect(m), frameRate > 60 ? kIconSetupToggleOn : kIconSetupToggleOff,
+                         kSetupControlFrameRate);
             if (showReset)
             {
                 appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);
@@ -2195,10 +2222,7 @@ namespace GalaxyEggbert::Game
                 static const char* const kLevels[5] = {"Off", "Low", "Medium", "High", "Ultra"};
                 appendLabel(SetupEffectsRect(m),
                             std::string("3D effects\n") + kLevels[effectsLevel < 0 ? 0 : effectsLevel > 4 ? 4 : effectsLevel]);
-                if (!accel)
-                {
-                    appendLabel(SetupFrameRateRect(m), "Frame rate\n" + std::to_string(frameRate) + " fps");
-                }
+                appendLabel(SetupFrameRateRect(m), "Frame rate: " + std::to_string(frameRate) + " fps");
             }
             if (showReset)
             {

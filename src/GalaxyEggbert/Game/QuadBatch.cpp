@@ -61,7 +61,11 @@ namespace GalaxyEggbert::Game::QuadBatch
         auto mesh = MakeTexturedMeshBuilder();
         for (const Quad& q : quads)
         {
-            AppendQuadUv(mesh, q.x0, q.y0, q.x1, q.y1, q.u0, q.v0, q.u1, q.v1);
+            if (q.rotation != 0.0f)
+                AppendRotatedQuadUv(mesh, (q.x0 + q.x1) * 0.5f, (q.y0 + q.y1) * 0.5f, (q.x1 - q.x0) * 0.5f, (q.y1 - q.y0) * 0.5f,
+                                    q.rotation, q.u0, q.v0, q.u1, q.v1);
+            else
+                AppendQuadUv(mesh, q.x0, q.y0, q.x1, q.y1, q.u0, q.v0, q.u1, q.v1);
         }
 
         effect.World = Microsoft::Xna::Framework::Matrix::getIdentityProperty();

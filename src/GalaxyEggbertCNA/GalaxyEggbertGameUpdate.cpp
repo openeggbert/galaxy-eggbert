@@ -3197,6 +3197,11 @@ namespace GalaxyEggbert::CNA
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         using Microsoft::Xna::Framework::Input::Keys;
+            // The accelerometer steering him (its readings arriving): Forward and Back for the stick.
+            // GALAXY_ACCEL_PAD=1 shows them without a sensor (a desktop's look at them).
+            static const bool accelPadShown = [] { const char* v = std::getenv("GALAXY_ACCEL_PAD"); return v && *v == '1'; }();
+            inputPad_.SetAccelerometerMode(accelPadShown ||
+                                           (accel_ != nullptr && accel_->getIsDataValidProperty() && !demoActive_ && !replayingResume_));
             inputPad_.SetVehicleFireEnabled(blupi_.GetVehicleMode()==BlupiController::VehicleMode::Tank ||
                 blupi_.GetVehicleMode()==BlupiController::VehicleMode::Helicopter);
             // Several fingers at once (owner 2026-11-02: touch devices). While fingers are on

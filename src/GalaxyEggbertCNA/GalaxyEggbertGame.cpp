@@ -690,7 +690,16 @@ namespace GalaxyEggbert::CNA
         if (!replayingResume_ && !demoActive_)
         {
             using Microsoft::Devices::Sensors::Accelerometer;
-            const bool wanted = saveData_.GetAccelActive() && !autoplay_ && Accelerometer::getIsSupportedProperty();
+            // Whether there is one, asked once: CNA asks the platform each time (on Android SDL lists
+            // the device's sensors), and this ran every tick.
+            if (saveData_.GetAccelActive() && !autoplay_ && !accelSupportProbed_)
+            {
+                accelSupportProbed_ = true;
+                accelSupported_ = Accelerometer::getIsSupportedProperty();
+                std::cout << "GalaxyEggbertCNA: accelerometer " << (accelSupported_ ? "present" : "not present")
+                          << "." << std::endl;
+            }
+            const bool wanted = saveData_.GetAccelActive() && !autoplay_ && accelSupported_;
             if (wanted && !accel_)
             {
                 try
@@ -698,11 +707,23 @@ namespace GalaxyEggbert::CNA
                     accel_ = std::make_unique<Accelerometer>();
                     accel_->Start();
                 }
-                catch (...)
+                catch (const std::exception& error)
                 {
+                    std::cout << "GalaxyEggbertCNA: accelerometer did not start: " << error.what() << std::endl;
                     accel_.reset(); // no permission or no sensor after all (the original's StartAccel)
+                    accelSupported_ = false;
                     return 0.0f;
                 }
+                catch (...)
+                {
+                    std::cout << "GalaxyEggbertCNA: accelerometer did not start." << std::endl;
+                    accel_.reset();
+                    accelSupported_ = false;
+                    return 0.0f;
+                }
+                std::cout << "GalaxyEggbertCNA: accelerometer started." << std::endl;
+                accelTicksWithoutData_ = 0;
+                accelReported_ = false;
                 tickInput_.accelReset = !resumeAccelWarmStart_;
                 resumeAccelWarmStart_ = false;
             }
@@ -715,7 +736,18 @@ namespace GalaxyEggbert::CNA
             if (accel_ && accel_->getIsDataValidProperty())
             {
                 tickInput_.accelValid = true;
-                tickInput_.accelY = accel_->getCurrentValueProperty().getAccelerationProperty().Y;
+                const auto acceleration = accel_->getCurrentValueProperty().getAccelerationProperty();
+                tickInput_.accelY = acceleration.Y;
+                if (!accelReported_)
+                {
+                    accelReported_ = true;
+                    std::cout << "GalaxyEggbertCNA: accelerometer reading (" << acceleration.X << ", " << acceleration.Y
+                              << ", " << acceleration.Z << ") g." << std::endl;
+                }
+            }
+            else if (accel_ && ++accelTicksWithoutData_ == 180)
+            {
+                std::cout << "GalaxyEggbertCNA: accelerometer started but no reading in 3 s." << std::endl;
             }
         }
         if (tickInput_.accelReset)

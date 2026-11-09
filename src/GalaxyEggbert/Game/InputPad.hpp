@@ -101,6 +101,11 @@ namespace GalaxyEggbert::Game
             bool crouchHeld = false;
         };
         void SetVehicleFireEnabled(bool enabled) noexcept { vehicleFireEnabled_=enabled; }
+        // The accelerometer steering (the Setup's, the device's sensor delivering): the stick gives way
+        // to a Forward and a Back button in its corner (Back as the back-up button, which is not shown
+        // then), the device's tilt turning him (the owner, 2026-11-09).
+        void SetAccelerometerMode(bool on) noexcept { accelMode_ = on; }
+        [[nodiscard]] bool IsAccelerometerMode() const noexcept { return accelMode_; }
         // One finger on a touch screen (CNA's TouchLocation, in screen pixels).
         struct TouchPoint
         {
@@ -860,6 +865,8 @@ namespace GalaxyEggbert::Game
         bool mouseWasDown_ = false;
         // UpdatePlayTouches(): the finger holding each control (-1: none).
         int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;
+        int forwardTouchId_ = -1; // SetAccelerometerMode(): the Forward button's finger
+        bool accelMode_ = false;
 
         // Live D-pad drag offset (reference-space pixels from the pad's
         // center), used only to position the thumb icon in DrawPlay --
