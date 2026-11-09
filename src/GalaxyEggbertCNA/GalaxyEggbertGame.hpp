@@ -1213,6 +1213,11 @@ namespace GalaxyEggbert::CNA
         void DrawEditorSpawn(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         // Draw()'s body; Draw() times it for GALAXY_PERF.
         void DrawFrame();
+        // DrawFrame's parts (GalaxyEggbertGameDraw.cpp): the 3D world, then the HUD, menus and editor
+        // over it, then the frame's captures (screenshots, golden frames, autoplay shots).
+        void DrawWorld(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool& soulDrawnIn3D);
+        void DrawOverlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool soulDrawnIn3D);
+        void DrawFrameCaptures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         // A vehicle pickup's model and standing clip when the real vehicle
         // model replaces its billboard (kParkedVehicles); model is nullptr
         // otherwise.

@@ -51,6 +51,7 @@ option(GALAXY_EGGBERT_BUILD_CNA "Build the direct CNA + cna-engine Galaxy Eggber
 option(GALAXY_EGGBERT_ENABLE_CHEATS "Enable typed cheats and the hidden cheat menu" ON)
 set_source_files_properties(
     src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
+    src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp
     src/GalaxyEggbert/Game/InputPad.cpp
     tools/VerifyGEInputPad.cpp
     PROPERTIES COMPILE_DEFINITIONS
@@ -142,6 +143,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
     target_sources(GalaxyEggbertCNA PRIVATE
         src/GalaxyEggbertCNA/main.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/TerrainRenderer.cpp
