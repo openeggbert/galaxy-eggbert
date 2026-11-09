@@ -94,7 +94,10 @@ until ground = 1 max 600
 expect y >= 66.95
 # G, the machine room: across the mine sweeping x 83 (z 58-66) as it turns at z 66, to the east
 # door (x 86); the lift (87) rising flush out of the gap, a jump from it over the last cell.
-go 78.8 65.4
+# Round the stone column at (79, 65) by its north side (BigDecor are solid in play since BD-0080),
+# clear of the well's mouth (x 73-77, z 60-64).
+go 78.1 65.4 tol 0.1
+go 78.1 63.8 tol 0.1
 go 81.8 62 tol 0.15
 near 83 67 66 0.2 max 600
 go 86.35 62 tol 0.1
