@@ -105,6 +105,16 @@ namespace GalaxyEggbert::Game
         Microsoft::Xna::Framework::Graphics::ShaderEffect& SpriteWith(Microsoft::Xna::Framework::Graphics::Texture2D* texture,
                                                                      float alpha);
 
+        // --- Ultra's geometry pass (UltraFinish.hpp) -------------------------------------------------
+        // The frame's camera on the geometry pass's programs; false where Ultra's programs do not compile.
+        bool BeginGeometry(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame);
+        // Compiles Ultra's programs on first use; false where they do not compile (never tried again).
+        bool PrepareUltra(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometrySolid() { return *m_geometrySolid; }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometryCutout() { return *m_geometryCutout; }
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* SkinnedGeometry(
+            const std::vector<Microsoft::Xna::Framework::Matrix>& bones, const Microsoft::Xna::Framework::Matrix& world);
+
     private:
         void SetCommon(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect);
         void SetUltra(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const UltraSceneAssets& ultra);
@@ -139,6 +149,9 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraOccluded;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraLit;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraModel;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometrySolid;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometryCutout;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometrySkinned;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_white; // 1x1, for what is missing
         Microsoft::Xna::Framework::Graphics::SamplerState m_envSampler;
         UltraSurface m_modelSurface; // the model being drawn's own (its specular power)

@@ -456,6 +456,91 @@ vec3 Bumped(vec3 n, float h)
 }
 )";
 
+        // ---- Ultra's geometry pass (UltraFinish.hpp): what each pixel shows, before it is lit -- its normal
+        // in view space (from the screen-space derivatives of its position: any vertex layout, the face's
+        // own), its distance along the view and how much of a mirror it is (water). ----
+        const char* const kGeometryCommon = R"(
+uniform float uReflect;
+in vec3 vView;
+out vec4 FragColor;
+vec2 OctEncode(vec3 n)
+{
+    n /= abs(n.x) + abs(n.y) + abs(n.z);
+    vec2 s = vec2(n.x >= 0.0 ? 1.0 : -1.0, n.y >= 0.0 ? 1.0 : -1.0);
+    return n.z >= 0.0 ? n.xy : (1.0 - abs(n.yx)) * s;
+}
+vec4 Geometry()
+{
+    vec3 n = normalize(cross(dFdx(vView), dFdy(vView)));
+    return vec4(OctEncode(n), -vView.z, uReflect);
+}
+)";
+        const char* const kGeometrySolidVertex = R"(
+layout(location = 0) in vec3 aPosition;
+uniform mat4 World;
+uniform mat4 View;
+uniform mat4 Projection;
+out vec3 vView;
+void main()
+{
+    vec4 view = View * (World * vec4(aPosition, 1.0));
+    vView = view.xyz;
+    gl_Position = Projection * view;
+    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+}
+)";
+        const char* const kGeometrySolidFragment = R"(
+void main()
+{
+    FragColor = Geometry();
+}
+)";
+        const char* const kGeometryCutoutVertex = R"(
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec4 aColor;
+layout(location = 2) in vec2 aTexCoord;
+uniform mat4 World;
+uniform mat4 View;
+uniform mat4 Projection;
+out vec3 vView;
+out vec2 vUv;
+void main()
+{
+    vec4 view = View * (World * vec4(aPosition, 1.0));
+    vView = view.xyz;
+    vUv = aTexCoord;
+    gl_Position = Projection * view;
+    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+}
+)";
+        const char* const kGeometryCutoutFragment = R"(
+uniform sampler2D uTexture;
+in vec2 vUv;
+void main()
+{
+    if (texture(uTexture, vUv).a < 0.5) discard;
+    FragColor = Geometry();
+}
+)";
+        const char* const kGeometrySkinnedVertex = R"(
+layout(location = 0) in vec3 aPosition;
+layout(location = 1) in vec3 aNormal;
+layout(location = 2) in vec2 aTexCoord;
+layout(location = 3) in vec4 aWeights;
+layout(location = 4) in vec4 aIndices;
+uniform mat4 World;
+uniform mat4 View;
+uniform mat4 Projection;
+out vec3 vView;
+void main()
+{
+    vec4 view = View * (World * (Skin(aIndices, aWeights) * vec4(aPosition, 1.0)));
+    vView = view.xyz;
+    gl_Position = Projection * view;
+    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+}
+)";
+
         // ---- Ultra (UltraFinish.hpp): physically based light, in linear light, written as display colour
         // unclipped (the HDR target keeps what goes above 1). GGX (Trowbridge-Reitz) highlights with
         // Schlick's Fresnel and Smith's visibility; the sky's light from the world's background picture
@@ -892,42 +977,7 @@ void main()
         }
         if (ultra != nullptr && frame.effects.ultra)
         {
-            if (!m_ultraTried)
-            {
-                // Ultra's programs: the same vertex shaders (the terrain's with its baked colour whole).
-                m_ultraTried = true;
-                const std::string lighting = std::string(kLighting) + kUltraLighting;
-                const std::string skin = kSkin;
-                m_ultraOccluded = CompileShaderEffect(device, "Ultra's terrain shader", TerrainVertex(true, true),
-                                                      lighting + kTerrainUltraFragment);
-                m_ultraLit = CompileShaderEffect(device, "Ultra's relief shader", TerrainVertex(false, true),
-                                                 lighting + kTerrainUltraFragment);
-                m_ultraModel = CompileShaderEffect(device, "Ultra's model shader", skin + kModelVertex,
-                                                   lighting + kModelFragment + kModelUltraMain);
-                m_ultraReady = m_ultraOccluded && m_ultraLit && m_ultraModel;
-                if (m_ultraReady)
-                {
-                    for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get(), m_ultraModel.get()})
-                    {
-                        effect->SetUniformInt("uTexture", 0);
-                        effect->SetUniformInt("uShadowMap", 1);
-                        effect->SetUniformInt("uShadowMapFar", 2);
-                        effect->SetUniformInt("uEnv", 3);
-                        effect->SetUniformInt("uSurfaceMap", 4);
-                        effect->SetUniformInt("uNormalMap", 5);
-                        effect->SetUniformInt("uScreenOcclusion", 6);
-                    }
-                    m_white = std::make_unique<Graphics::Texture2D>(device, 1, 1);
-                    const Microsoft::Xna::Framework::Color white(255, 255, 255, 255);
-                    m_white->SetData(&white, 1);
-                    // The sky wraps round the horizon and stops at its top and bottom; blended between its
-                    // levels.
-                    m_envSampler.setFilterProperty(Graphics::TextureFilter::Linear);
-                    m_envSampler.setAddressUProperty(Graphics::TextureAddressMode::Wrap);
-                    m_envSampler.setAddressVProperty(Graphics::TextureAddressMode::Clamp);
-                    m_envSampler.setAddressWProperty(Graphics::TextureAddressMode::Clamp);
-                }
-            }
+            PrepareUltra(device);
             m_ultraActive = m_ultraReady;
         }
         // The shadow map holds packed depth: read it texel by texel, never blended.
@@ -968,6 +1018,86 @@ void main()
             SetCommon(*m_ultraModel);
             SetUltra(device, *ultra);
         }
+    }
+
+    bool SceneShaders::PrepareUltra(Graphics::GraphicsDevice& device)
+    {
+        if (!m_ready)
+        {
+            return false;
+        }
+        if (!m_ultraTried)
+        {
+            // Ultra's programs: the same vertex shaders (the terrain's with its baked colour whole).
+            m_ultraTried = true;
+            const std::string lighting = std::string(kLighting) + kUltraLighting;
+            const std::string skin = kSkin;
+            m_ultraOccluded = CompileShaderEffect(device, "Ultra's terrain shader", TerrainVertex(true, true),
+                                                  lighting + kTerrainUltraFragment);
+            m_ultraLit = CompileShaderEffect(device, "Ultra's relief shader", TerrainVertex(false, true),
+                                             lighting + kTerrainUltraFragment);
+            m_ultraModel = CompileShaderEffect(device, "Ultra's model shader", skin + kModelVertex,
+                                               lighting + kModelFragment + kModelUltraMain);
+            m_geometrySolid = CompileShaderEffect(device, "Ultra's geometry pass (solid)", kGeometrySolidVertex,
+                                                  std::string(kGeometryCommon) + kGeometrySolidFragment);
+            m_geometryCutout = CompileShaderEffect(device, "Ultra's geometry pass (cutouts)", kGeometryCutoutVertex,
+                                                   std::string(kGeometryCommon) + kGeometryCutoutFragment);
+            m_geometrySkinned = CompileShaderEffect(device, "Ultra's geometry pass (models)", skin + kGeometrySkinnedVertex,
+                                                    std::string(kGeometryCommon) + kGeometrySolidFragment);
+            m_ultraReady = m_ultraOccluded && m_ultraLit && m_ultraModel && m_geometrySolid && m_geometryCutout &&
+                           m_geometrySkinned;
+            if (m_ultraReady)
+            {
+                for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get(), m_ultraModel.get()})
+                {
+                    effect->SetUniformInt("uTexture", 0);
+                    effect->SetUniformInt("uShadowMap", 1);
+                    effect->SetUniformInt("uShadowMapFar", 2);
+                    effect->SetUniformInt("uEnv", 3);
+                    effect->SetUniformInt("uSurfaceMap", 4);
+                    effect->SetUniformInt("uNormalMap", 5);
+                    effect->SetUniformInt("uScreenOcclusion", 6);
+                }
+                m_white = std::make_unique<Graphics::Texture2D>(device, 1, 1);
+                const Microsoft::Xna::Framework::Color white(255, 255, 255, 255);
+                m_white->SetData(&white, 1);
+                // The sky wraps round the horizon and stops at its top and bottom; blended between its
+                // levels.
+                m_envSampler.setFilterProperty(Graphics::TextureFilter::Linear);
+                m_envSampler.setAddressUProperty(Graphics::TextureAddressMode::Wrap);
+                m_envSampler.setAddressVProperty(Graphics::TextureAddressMode::Clamp);
+                m_envSampler.setAddressWProperty(Graphics::TextureAddressMode::Clamp);
+            }
+        }
+        return m_ultraReady;
+    }
+
+    bool SceneShaders::BeginGeometry(Graphics::GraphicsDevice& device, const SceneFrame& frame)
+    {
+        if (!Prepare(device) || !PrepareUltra(device))
+        {
+            return false;
+        }
+        for (auto* effect : {m_geometrySolid.get(), m_geometryCutout.get(), m_geometrySkinned.get()})
+        {
+            effect->setWorldProperty(Matrix::getIdentityProperty());
+            effect->setViewProperty(frame.camera.view);
+            effect->setProjectionProperty(frame.camera.projection);
+            effect->SetUniformFloat("uReflect", 0.0f);
+        }
+        m_geometryCutout->SetUniformInt("uTexture", 0);
+        return true;
+    }
+
+    Graphics::ShaderEffect* SceneShaders::SkinnedGeometry(const std::vector<Matrix>& bones, const Matrix& world)
+    {
+        if (!m_ultraReady || bones.empty() || bones.size() > static_cast<std::size_t>(kMaxBones))
+        {
+            return nullptr;
+        }
+        m_geometrySkinned->setWorldProperty(world);
+        SetBones(*m_geometrySkinned, bones);
+        return m_geometrySkinned.get();
     }
 
     void SceneShaders::SetUltra(Graphics::GraphicsDevice& device, const UltraSceneAssets& ultra)

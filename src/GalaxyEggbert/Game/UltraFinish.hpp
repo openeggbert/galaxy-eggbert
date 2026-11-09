@@ -47,7 +47,16 @@ namespace GalaxyEggbert::Game
         // its depth too). False when the device cannot: nothing is bound then.
         bool Begin(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                    const Microsoft::Xna::Framework::Color& clear, int width, int height);
-        // Exposes, glows, tonemaps and grades the scene onto the screen (the viewport's logical surface).
+        // The geometry pass (before Begin): binds its target (the same size), cleared; WorldRenderer::
+        // DrawGeometry draws into it. EndGeometry() unbinds it and makes the screen's occlusion of it
+        // (ambient occlusion r, the sun's contact shadow g; at the scene's size, for its shaders), which
+        // it returns. Without a geometry pass this frame, no occlusion and no reflections.
+        bool BeginGeometry(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int width, int height);
+        Microsoft::Xna::Framework::Graphics::Texture2D* EndGeometry(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                                                    const SceneFrame& frame,
+                                                                    const Microsoft::Xna::Framework::Vector3& sunDirection);
+        // Reflects (the water: screen-space reflections), exposes, glows, tonemaps and grades the scene
+        // onto the screen (the viewport's logical surface).
         void End(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame);
 
         [[nodiscard]] int Width() const noexcept { return m_width; }
@@ -61,6 +70,7 @@ namespace GalaxyEggbert::Game
                   Microsoft::Xna::Framework::Graphics::ShaderEffect& effect, int width, int height,
                   bool add = false);
         void Exposure(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        void SetCamera(Microsoft::Xna::Framework::Graphics::ShaderEffect& effect, const SceneFrame& frame) const;
         void Bloom(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         void UpdateGrade(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                          const Microsoft::Xna::Framework::Vector3& sky);
@@ -73,6 +83,8 @@ namespace GalaxyEggbert::Game
         int m_exposureIndex = 0;   // which of the two 1x1 targets holds this frame's exposure
         bool m_exposureFresh = true; // the first frame takes the picture's exposure at once
         bool m_gradeReady = false;
+        bool m_geometryValid = false; // this frame's geometry drawn
+        unsigned m_frame = 0;
         Microsoft::Xna::Framework::Vector3 m_gradeSky;
 
         using Target = std::unique_ptr<Microsoft::Xna::Framework::Graphics::RenderTarget2D>;
@@ -82,6 +94,10 @@ namespace GalaxyEggbert::Game
         std::array<Target, 2> m_exposure;      // 1x1 each, in turn
         std::array<Target, kBloomLevels> m_bloom; // halves of the scene
         Target m_graded;                       // tonemapped, before the anti-aliasing
+        Target m_geometry;                     // normal (octahedral), depth, mirror; its depth buffer
+        Target m_occlusionRaw;
+        Target m_occlusionSmooth;              // the shaders' screen occlusion
+        Target m_reflection;                   // the reflections: colour, weight
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_grade;
         Shader m_logLuminance;
         Shader m_reduce;
@@ -91,6 +107,9 @@ namespace GalaxyEggbert::Game
         Shader m_bloomUp;
         Shader m_tonemap;
         Shader m_fxaa;
+        Shader m_occlusion;
+        Shader m_occlusionBlur;
+        Shader m_reflections;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> m_batch;
     };
 }

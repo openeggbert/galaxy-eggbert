@@ -63,6 +63,10 @@ namespace GalaxyEggbert::Game
         // The 3D effects' shadow map (SceneShaders.hpp): what throws a shadow, drawn from the sun into its
         // target. Before Draw() and before anything is drawn into the frame's own target; leaves the
         // screen bound. Nothing without the effects or where the device cannot.
+        // Ultra's geometry pass into the bound target (UltraFinish::BeginGeometry): each pixel's normal,
+        // depth and mirror. False when there is none (no world, below Ultra, no programs).
+        bool DrawGeometry(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                          const WorldRenderAssets& assets);
         void RenderShadowMap(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
                              const WorldRenderAssets& assets);
         // Whether the terrain should be built with its ambient occlusion: the effects' terrain shader

@@ -279,6 +279,87 @@ namespace GalaxyEggbert::Game
         device.setRasterizerStateProperty(Graphics::RasterizerState::CullCounterClockwise);
     }
 
+    bool WorldRenderer::DrawGeometry(Graphics::GraphicsDevice& device, const SceneFrame& frame, const WorldRenderAssets& assets)
+    {
+        // Ultra's geometry pass (UltraFinish.hpp): the terrain, the lifts and crates, the water (a mirror)
+        // and the solid models, as the shadow map draws them but from the camera; the billboards and the
+        // translucent models are not in it.
+        if (!frame.world || !frame.effects.ultra || !m_scene.BeginGeometry(device, frame))
+        {
+            return false;
+        }
+        device.setBlendStateProperty(Graphics::BlendState::Opaque);
+        device.setDepthStencilStateProperty(Graphics::DepthStencilState::Default);
+        device.setRasterizerStateProperty(Graphics::RasterizerState::CullNone);
+        auto& solid = m_scene.GeometrySolid();
+        auto& cutout = m_scene.GeometryCutout();
+        if (frame.terrain && assets.terrainRenderer != nullptr && assets.terrain != nullptr)
+        {
+            if (auto* texture = assets.terrain->getTextureProperty())
+            {
+                cutout.SetTexture(0, *texture);
+            }
+            assets.terrainRenderer->DrawShadowCasters(device, solid, cutout);
+            auto cubes = MakeLitTexturedMeshBuilder();
+            for (const auto& cube : frame.cubes)
+            {
+                AddCenteredBox(cubes, cube.center, cube.size, cube.faces);
+            }
+            if (!cubes.Mesh().Empty())
+            {
+                UploadLitTexturedMesh(device, cubes.Mesh())->Draw(device, solid);
+            }
+            solid.SetUniformFloat("uReflect", 0.85f);
+            assets.terrainRenderer->DrawWater(device, solid);
+            solid.SetUniformFloat("uReflect", 0.0f);
+        }
+        const auto& eye = frame.camera.position;
+        const auto draw = [&](const SceneModel& model) {
+            if (model.model == nullptr || model.translucent)
+            {
+                return;
+            }
+            const auto at = model.world.getTranslationProperty();
+            const float dx = at.X - eye.X, dy = at.Y - eye.Y, dz = at.Z - eye.Z;
+            if (dx * dx + dy * dy + dz * dz > 150.0f * 150.0f)
+            {
+                return;
+            }
+            model.model->ComputeBoneTransformsEXT(model.clip, System::TimeSpan::FromSeconds(model.seconds), model.loop, m_bones);
+            auto* effect = m_scene.SkinnedGeometry(m_bones, model.world);
+            if (effect == nullptr)
+            {
+                return;
+            }
+            for (const auto& part : model.model->Parts)
+            {
+                if ((model.sawSeconds >= 0.0f && !IsVisibleSawPart(part.Name, model.sawSeconds)) ||
+                    (model.boothFrontOnly && IsBoothBodyPart(part.Name)))
+                {
+                    continue;
+                }
+                effect->Apply();
+                device.SetVertexBuffer(part.Part->getVertexBufferProperty());
+                device.SetIndexBuffer(part.Part->getIndexBufferProperty());
+                device.DrawIndexedPrimitives(Graphics::PrimitiveType::TriangleList, part.Part->getVertexOffsetProperty(), 0,
+                                             part.Part->getNumVerticesProperty(), part.Part->getStartIndexProperty(),
+                                             part.Part->getPrimitiveCountProperty());
+            }
+        };
+        if (assets.models != nullptr)
+        {
+            for (const auto* models : {&frame.opaqueModels, &frame.objectModels})
+            {
+                for (const auto& model : *models)
+                {
+                    draw(model);
+                }
+            }
+        }
+        device.setRasterizerStateProperty(Graphics::RasterizerState::CullCounterClockwise);
+        return true;
+    }
+
     void WorldRenderer::DrawParticles(Graphics::GraphicsDevice& device, const SceneFrame& frame,
                                       const WorldRenderAssets& assets)
     {

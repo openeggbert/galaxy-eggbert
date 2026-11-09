@@ -1778,6 +1778,15 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    void TerrainRenderer::DrawWater(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                    Microsoft::Xna::Framework::Graphics::Effect& effect) const
+    {
+        if (m_waterRenderer)
+        {
+            m_waterRenderer->Draw(device, effect);
+        }
+    }
+
     void TerrainRenderer::DrawShadowCasters(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                             Microsoft::Xna::Framework::Graphics::Effect& solid,
                                             Microsoft::Xna::Framework::Graphics::Effect& cutout) const

@@ -121,6 +121,9 @@ namespace GalaxyEggbert::Game
                              const TerrainShading* shading = nullptr) const;
         // What throws a shadow (the 3D effects' shadow map): every opaque mesh with `solid`, the cutouts
         // with `cutout` (it tests their alpha); both take their camera from the caller.
+        // The water's surface alone, with `effect` (Ultra's geometry pass: a mirror there).
+        void DrawWater(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                       Microsoft::Xna::Framework::Graphics::Effect& effect) const;
         void DrawShadowCasters(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                Microsoft::Xna::Framework::Graphics::Effect& solid,
                                Microsoft::Xna::Framework::Graphics::Effect& cutout) const;

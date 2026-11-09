@@ -192,6 +192,21 @@ namespace GalaxyEggbert::CNA
                 targetW = client.Width;
                 targetH = client.Height;
             }
+            // Ultra: first what each pixel shows (its normal, depth, mirror), and the screen's occlusion of it
+            // for the world's shaders (UltraFinish.hpp).
+            ultraAssets_.screenOcclusion = nullptr;
+            if (effects.ultra && ultraFinish_.BeginGeometry(device, targetW, targetH))
+            {
+                if (worldRenderer_.DrawGeometry(device, sceneFrame_, assets))
+                {
+                    ultraAssets_.screenOcclusion = ultraFinish_.EndGeometry(
+                        device, sceneFrame_, GalaxyEggbert::Game::SceneShaders::SunDirection());
+                }
+                else
+                {
+                    device.SetRenderTarget(nullptr);
+                }
+            }
             const bool ultra = effects.ultra &&
                                ultraFinish_.Begin(device, Microsoft::Xna::Framework::Color(0, 35, 98), targetW, targetH);
             const bool finish = ultra || ((effects.smoothing || effects.glow) &&
