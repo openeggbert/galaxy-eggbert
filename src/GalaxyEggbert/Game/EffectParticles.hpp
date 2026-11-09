@@ -51,6 +51,7 @@ namespace GalaxyEggbert::Game
         int age = 0;
         int life = 30;        // ticks
         Microsoft::Xna::Framework::Color tint = Microsoft::Xna::Framework::Color::White;
+        float glow = 1.0f;    // Ultra: how far above white it shines (the fire, the sparks, the embers, the flash)
     };
 
     class EffectParticles
@@ -75,8 +76,10 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] int Stepped() const noexcept { return m_stepped; }
         [[nodiscard]] int Tick() const noexcept { return m_tick; }
         // The particles as camera-facing quads, in batches by sheet.
+        // `lag`: a fraction of a tick to draw them back along their way (a frame drawn between two
+        // ticks, the Setup's frame rate above 60: where they were part way through the last tick).
         void Append(std::vector<SceneBillboardBatch>& batches, const Microsoft::Xna::Framework::Vector3& right,
-                    const Microsoft::Xna::Framework::Vector3& up) const;
+                    const Microsoft::Xna::Framework::Vector3& up, float lag = 0.0f) const;
         void Clear();
 
         [[nodiscard]] std::size_t Count() const noexcept { return m_particles.size(); }

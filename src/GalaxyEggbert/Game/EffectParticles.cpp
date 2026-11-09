@@ -269,11 +269,16 @@ namespace GalaxyEggbert::Game
                     p.life = static_cast<int>(Between(18.0f, 28.0f, random(piece, 7)));
                     break;
             }
+            p.glow = kind == ParticleKind::Fire                                     ? 2.5f
+                     : kind == ParticleKind::Sparkle || kind == ParticleKind::Ember ? 3.0f
+                     : kind == ParticleKind::Flash                                  ? 3.5f
+                                                                                    : 1.0f;
             m_particles.push_back(p);
         }
     }
 
-    void EffectParticles::Append(std::vector<SceneBillboardBatch>& batches, const Vector3& right, const Vector3& up) const
+    void EffectParticles::Append(std::vector<SceneBillboardBatch>& batches, const Vector3& right, const Vector3& up,
+                                 float lag) const
     {
         for (const auto& p : m_particles)
         {
@@ -288,13 +293,15 @@ namespace GalaxyEggbert::Game
             // Whole for its first half, then fading out.
             const float alpha = t < 0.5f ? 1.0f : 1.0f - (t - 0.5f) * 2.0f;
             SceneQuad quad;
-            quad.center = p.position;
-            quad.size = Vector2(p.size, p.size);
+            quad.center = p.position - p.velocity * lag;
+            const float size = std::max(0.01f, p.size - p.growth * lag);
+            quad.size = Vector2(size, size);
             quad.right = right;
             quad.up = up;
             quad.uv = p.uv;
-            quad.rotation = p.rotation;
+            quad.rotation = p.rotation - p.spin * lag;
             quad.color = Fade(p.tint, alpha);
+            quad.glow = p.glow;
             batch->quads.push_back(quad);
         }
     }

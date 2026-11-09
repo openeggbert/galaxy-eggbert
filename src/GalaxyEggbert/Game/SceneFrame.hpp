@@ -58,6 +58,7 @@ namespace GalaxyEggbert::Game
         int sourceIcon = -1;                       // its icon on its sheet
         float rotation = 0.0f;                     // radians in the view plane (particles)
         Microsoft::Xna::Framework::Color color = Microsoft::Xna::Framework::Color::White; // particles: tint, alpha
+        float glow = 1.0f;                         // Ultra: how far above white it shines (a fire, a spark)
     };
 
     // The sheets a billboard batch is cut from: each its own texture and effect.

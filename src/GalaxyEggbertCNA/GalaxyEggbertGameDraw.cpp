@@ -95,6 +95,7 @@ namespace GalaxyEggbert::CNA
                 camera_.SetLookAt(drawnEye, drawnTarget);
             }
             blupiDrawOffset_ = lerp(previousBlupi_, blupi) - blupi;
+            particleLag_ = 1.0f - t;
         }
         // Every moving object too (the lifts, the enemies, the mines...): part way from where the step
         // found it, unless it was not the same one then or jumped (a respawn, a teleport).
@@ -124,6 +125,7 @@ namespace GalaxyEggbert::CNA
         {
             camera_.SetLookAt(eye, target);
             blupiDrawOffset_ = Microsoft::Xna::Framework::Vector3(0.0f, 0.0f, 0.0f);
+            particleLag_ = 0.0f;
             auto& objects = worldRuntime_.GetMobileObjectsMutable();
             for (const auto& [i, place] : moved)
             {

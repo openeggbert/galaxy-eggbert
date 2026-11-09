@@ -159,6 +159,32 @@ int main()
     }
     Check(tickCount == 4 && fourCount == 4, "a period of 9 crossed four times in 36 ticks at any frame rate");
 
+    // Drawn between two ticks (the frame rate above 60): back along their way by the part of a tick not yet
+    // shown; the fire and the sparks shine above white (Ultra), the dust does not.
+    {
+        GalaxyEggbert::Game::EffectParticles lagged;
+        lagged.Advance(1);
+        lagged.Burst(ParticleKind::Fire, 3, SceneSheet::Explo, kUv, Vector3(0.0f, 0.0f, 0.0f), 4);
+        lagged.Burst(ParticleKind::Dust, 3, SceneSheet::Element, kUv, Vector3(0.0f, 0.0f, 0.0f), 2);
+        std::vector<GalaxyEggbert::Game::SceneBillboardBatch> now, half;
+        lagged.Append(now, Vector3(1, 0, 0), Vector3(0, 1, 0));
+        lagged.Append(half, Vector3(1, 0, 0), Vector3(0, 1, 0), 0.5f);
+        const auto& p0 = lagged.Particles().front();
+        const auto& q0 = now.front().quads.front();
+        const auto& q1 = half.front().quads.front();
+        const Vector3 back = p0.position - p0.velocity * 0.5f;
+        Check(q0.center == p0.position && std::fabs(q1.center.X - back.X) < 1e-6f && std::fabs(q1.center.Y - back.Y) < 1e-6f,
+              "half a tick behind: drawn back along its velocity by half of it");
+        bool glows = false, dull = false;
+        for (const auto& batch : now)
+            for (const auto& quad : batch.quads)
+            {
+                glows = glows || (batch.sheet == SceneSheet::Explo && quad.glow > 2.0f);
+                dull = dull || (batch.sheet == SceneSheet::Element && quad.glow == 1.0f);
+            }
+        Check(glows && dull, "the fire shines above white, the dust does not");
+    }
+
     std::printf("%s\n", failures == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED");
     return failures == 0 ? 0 : 1;
 }

@@ -279,7 +279,9 @@ namespace GalaxyEggbert::CNA
         }
         AppendSceneMoments();
         const auto invView = Matrix::Invert(camera_.View());
-        effectParticles_.Append(effects.particles, invView.getRightProperty(), invView.getUpProperty());
+        // Between two steps (the Setup's frame rate above 60): back along their way by what is left of
+        // the step, as the camera and the objects are drawn part way.
+        effectParticles_.Append(effects.particles, invView.getRightProperty(), invView.getUpProperty(), particleLag_);
     }
 
     void GalaxyEggbertGame::AppendSceneMoments()

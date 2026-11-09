@@ -746,6 +746,7 @@ namespace GalaxyEggbert::CNA
             float x = 0.0f, y = 0.0f, z = 0.0f;
         };
         std::vector<ObjectPlace> previousObjects_;
+        float particleLag_ = 0.0f; // while drawing between two steps: the part of a step not yet shown
         // The lightning's zaps (PlayBlitzZaps): the world's animation tick last heard.
         int blitzZapPhase_ = -1;
         void PlayBlitzZaps();
