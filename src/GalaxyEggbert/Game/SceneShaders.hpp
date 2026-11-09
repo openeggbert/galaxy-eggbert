@@ -68,6 +68,15 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* SkinnedCaster(
             const std::vector<Microsoft::Xna::Framework::Matrix>& bones, const Microsoft::Xna::Framework::Matrix& world);
         [[nodiscard]] bool ShadowMapped() const noexcept { return m_shadowValid; }
+        // The cascades' maps (packed depth) and their light view-projections, for Ultra's fog (UltraFinish).
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::RenderTarget2D* ShadowMap(std::size_t cascade) const
+        {
+            return cascade < kCascades ? m_shadowMaps[cascade].get() : nullptr;
+        }
+        [[nodiscard]] const Microsoft::Xna::Framework::Matrix& LightViewProjection(std::size_t cascade) const
+        {
+            return m_lightViewProjection[cascade < kCascades ? cascade : 0];
+        }
         void DropShadowMap() noexcept { m_shadowValid = m_farReady = false; }
 
         // --- The main pass ----------------------------------------------------------------------------

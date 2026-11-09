@@ -28,6 +28,7 @@
 #include <Microsoft/Xna/Framework/Graphics/ShaderEffect.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SpriteBatch.hpp>
 #include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
+#include <Microsoft/Xna/Framework/Matrix.hpp>
 #include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <array>
@@ -37,6 +38,18 @@
 
 namespace GalaxyEggbert::Game
 {
+    // The sun for Ultra's fog: its shadow map's two cascades (packed depth) and their light
+    // view-projections (SceneShaders), and the way its light goes.
+    struct UltraSun
+    {
+        Microsoft::Xna::Framework::Graphics::Texture2D* shadowNear = nullptr;
+        Microsoft::Xna::Framework::Graphics::Texture2D* shadowFar = nullptr;
+        Microsoft::Xna::Framework::Matrix nearViewProjection;
+        Microsoft::Xna::Framework::Matrix farViewProjection;
+        bool shadowed = false;
+        Microsoft::Xna::Framework::Vector3 direction{0.0f, -1.0f, 0.0f};
+    };
+
     class UltraFinish
     {
     public:
@@ -57,7 +70,8 @@ namespace GalaxyEggbert::Game
                                                                     const Microsoft::Xna::Framework::Vector3& sunDirection);
         // Reflects (the water: screen-space reflections), exposes, glows, tonemaps and grades the scene
         // onto the screen (the viewport's logical surface).
-        void End(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame);
+        void End(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, const SceneFrame& frame,
+                 const UltraSun& sun = {});
 
         [[nodiscard]] int Width() const noexcept { return m_width; }
         [[nodiscard]] int Height() const noexcept { return m_height; }
@@ -98,6 +112,7 @@ namespace GalaxyEggbert::Game
         Target m_occlusionRaw;
         Target m_occlusionSmooth;              // the shaders' screen occlusion
         Target m_reflection;                   // the reflections: colour, weight
+        Target m_fog;                          // the air, half the size: light scattered in, what is left
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_grade;
         Shader m_logLuminance;
         Shader m_reduce;
@@ -110,6 +125,7 @@ namespace GalaxyEggbert::Game
         Shader m_occlusion;
         Shader m_occlusionBlur;
         Shader m_reflections;
+        Shader m_fogPass;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SpriteBatch> m_batch;
     };
 }

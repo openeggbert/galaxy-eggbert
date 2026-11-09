@@ -264,7 +264,16 @@ namespace GalaxyEggbert::CNA
             worldIntoTarget_ = false;
             if (ultra)
             {
-                ultraFinish_.End(device, sceneFrame_);
+                // The sun for its fog: the shadow map's cascades.
+                const auto& scene = worldRenderer_.Scene();
+                GalaxyEggbert::Game::UltraSun sun;
+                sun.shadowed = scene.ShadowMapped();
+                sun.shadowNear = scene.ShadowMap(0);
+                sun.shadowFar = scene.ShadowMap(1);
+                sun.nearViewProjection = scene.LightViewProjection(0);
+                sun.farViewProjection = scene.LightViewProjection(1);
+                sun.direction = GalaxyEggbert::Game::SceneShaders::SunDirection();
+                ultraFinish_.End(device, sceneFrame_, sun);
             }
             else if (finish)
             {

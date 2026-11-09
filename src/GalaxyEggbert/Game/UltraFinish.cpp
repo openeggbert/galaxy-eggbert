@@ -222,6 +222,72 @@ void main()
 }
 )";
 
+        // The air (half the size): along each pixel's view, to what it shows (50 blocks into the sky), 20
+        // steps through a height fog (thicker below Blupi's level, thinning above it); at each the sun's
+        // light where the shadow map lets it through (god rays: Henyey-Greenstein, forward), the sky's haze
+        // everywhere. rgb the light scattered toward the eye (linear), a what is left of the scene behind.
+        const char* const kFog = R"(
+uniform sampler2D uTexture;     // the geometry, full size
+uniform sampler2D uShadowNear;  // unit 1
+uniform sampler2D uShadowFar;   // unit 2
+uniform mat4 uInvView;
+uniform mat4 uLightNear;
+uniform mat4 uLightFar;
+uniform vec3 uSunDir;           // the way the sunlight goes (world)
+uniform vec3 uSunColor;         // linear
+uniform vec3 uFogColor;         // linear: the sky's haze
+uniform vec4 uFogInfo;          // density a block, falloff a block up, the reference height, the shadow map on
+float UnpackDepth(vec4 c) { return dot(c, vec4(1.0, 1.0 / 255.0, 1.0 / 65025.0, 1.0 / 16581375.0)); }
+float Lit(sampler2D map, mat4 light, vec3 w, out bool inside)
+{
+    vec4 p = light * vec4(w, 1.0);
+    vec3 n = p.xyz / p.w;
+    vec2 uv = n.xy * 0.5 + 0.5;
+    inside = uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0 && n.z < 1.0;
+    if (!inside) return 1.0;
+    return n.z - 0.003 <= UnpackDepth(texture(map, uv)) ? 1.0 : 0.0;
+}
+float SunAt(vec3 w)
+{
+    if (uFogInfo.w < 0.5) return 1.0;
+    bool inside;
+    float near = Lit(uShadowNear, uLightNear, w, inside);
+    if (inside) return near;
+    return Lit(uShadowFar, uLightFar, w, inside);
+}
+void main()
+{
+    ivec2 full = textureSize(uTexture, 0);
+    ivec2 at = clamp(ivec2(gl_FragCoord.xy * 2.0), ivec2(0), full - 1);
+    vec2 uv = (vec2(at) + 1.0) / vec2(full);
+    float depth = texelFetch(uTexture, at, 0).b;
+    if (depth <= 0.0) depth = 50.0; // the sky: its picture stands far off, but half that much air over it
+    vec3 eye = (uInvView * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+    vec3 end = (uInvView * vec4(ViewAt(uv, min(depth, 100.0)), 1.0)).xyz;
+    vec3 ray = end - eye;
+    float len = length(ray);
+    vec3 dir = ray / max(len, 0.0001);
+    const int kSteps = 20;
+    float stepLength = len / float(kSteps);
+    float jitter = Noise(gl_FragCoord.xy);
+    float g = 0.65;
+    float cosTheta = dot(dir, -uSunDir);
+    float hg = (1.0 - g * g) / pow(1.0 + g * g - 2.0 * g * cosTheta, 1.5);
+    float phase = mix(0.6, hg, 0.75);
+    vec3 scattered = vec3(0.0);
+    float transmittance = 1.0;
+    for (int i = 0; i < kSteps; ++i)
+    {
+        vec3 w = eye + dir * ((float(i) + jitter) * stepLength);
+        float density = uFogInfo.x * exp(-max(w.y - uFogInfo.z, 0.0) * uFogInfo.y);
+        vec3 light = uSunColor * (SunAt(w) * phase) + uFogColor * 0.6;
+        scattered += transmittance * density * stepLength * light;
+        transmittance *= exp(-density * stepLength);
+    }
+    FragColor = vec4(scattered, transmittance);
+}
+)";
+
         // The scene's mean log luminance per cell of a 64x64 grid (16 samples each).
         const char* const kLogLuminance = R"(
 uniform sampler2D uTexture;
@@ -347,7 +413,8 @@ void main()
         // comes out at 0.95 rather than the fit's 0.71: divided by 0.79), back to display colour, graded by
         // the world's table, the corners a little darker; the reflections laid in first. GALAXY_ULTRA_DEBUG:
         // 1 no grade, 2 no glow, 3 a fixed exposure, 4 the scene as drawn, 5 the exposure (a third of it, as
-        // grey), 6 the ambient occlusion, 7 the contact shadow, 8 the reflections' weight.
+        // grey), 6 the ambient occlusion, 7 the contact shadow, 8 the reflections' weight, 9 the light the
+        // air scatters (four times over).
         const char* const kTonemap = R"(
 uniform sampler2D uTexture;
 uniform sampler2D uBloom;
@@ -355,6 +422,7 @@ uniform sampler2D uExposure;
 uniform sampler2D uGrade;
 uniform sampler2D uReflection; // unit 4: rgb, weight
 uniform sampler2D uOcclusion;  // unit 5: the screen's occlusion (shown by GALAXY_ULTRA_DEBUG 6, 7)
+uniform sampler2D uFog;        // unit 6: the air, half the size (rgb scattered in, a left through)
 uniform float uBloomStrength;
 uniform int uDebug;
 const mat3 kAcesInput = mat3(0.59719, 0.07600, 0.02840, 0.35458, 0.90834, 0.13383, 0.04823, 0.01566, 0.83777);
@@ -380,6 +448,8 @@ void main()
     vec3 c = Linear(Fetch(uTexture, at).rgb);
     vec4 reflection = Fetch(uReflection, at);
     c = mix(c, Linear(reflection.rgb), clamp(reflection.a, 0.0, 1.0));
+    vec4 air = Bilinear(uFog, TexCoord);
+    c = c * air.a + air.rgb;
     float exposure = texelFetch(uExposure, ivec2(0), 0).r;
     if (uDebug == 3) exposure = 1.35;
     vec3 hdr = c * exposure + (uDebug == 2 ? vec3(0.0) : Bilinear(uBloom, TexCoord).rgb * uBloomStrength);
@@ -390,6 +460,7 @@ void main()
     if (uDebug == 6) display = vec3(Fetch(uOcclusion, at).r);
     if (uDebug == 7) display = vec3(Fetch(uOcclusion, at).g);
     if (uDebug == 8) display = vec3(reflection.a);
+    if (uDebug == 9) display = air.rgb * 4.0;
     vec2 d = TexCoord - 0.5;
     display *= 1.0 - dot(d, d) * 0.35;
     FragColor = vec4(clamp(display, 0.0, 1.0), 1.0);
@@ -421,9 +492,10 @@ void main()
             m_occlusionBlur = compile("the occlusion's blur", kOcclusionBlur);
             m_reflections = CompileShaderEffect(device, "the screen-space reflections", PostVertexSource(),
                                                 geometry + kReflections);
+            m_fogPass = CompileShaderEffect(device, "the volumetric fog", PostVertexSource(), geometry + kFog);
             m_fxaa = CompileShaderEffect(device, "the Ultra edge smoothing (FXAA)", PostVertexSource(), FxaaFragmentSource());
             if (!m_logLuminance || !m_reduce || !m_adapt || !m_bloomPrefilter || !m_bloomDown || !m_bloomUp || !m_tonemap ||
-                !m_fxaa || !m_occlusion || !m_occlusionBlur || !m_reflections)
+                !m_fxaa || !m_occlusion || !m_occlusionBlur || !m_reflections || !m_fogPass)
             {
                 m_failed = true;
                 m_tonemap.reset();
@@ -436,6 +508,9 @@ void main()
             m_tonemap->SetUniformInt("uGrade", 3);
             m_tonemap->SetUniformInt("uReflection", 4);
             m_tonemap->SetUniformInt("uOcclusion", 5);
+            m_tonemap->SetUniformInt("uFog", 6);
+            m_fogPass->SetUniformInt("uShadowNear", 1);
+            m_fogPass->SetUniformInt("uShadowFar", 2);
             m_occlusionBlur->SetUniformInt("uGeometry", 1);
             m_reflections->SetUniformInt("uGeometry", 1);
             m_batch = std::make_unique<Graphics::SpriteBatch>(device);
@@ -474,6 +549,7 @@ void main()
                 m_occlusionRaw = target(width, height, Graphics::SurfaceFormat::Color, false);
                 m_occlusionSmooth = target(width, height, Graphics::SurfaceFormat::Color, false);
                 m_reflection = target(width, height, hdr, false);
+                m_fog = target(width / 2, height / 2, hdr, false);
                 m_geometryValid = false;
                 m_width = width;
                 m_height = height;
@@ -639,20 +715,21 @@ void main()
         m_gradeReady = true;
     }
 
-    void UltraFinish::End(Graphics::GraphicsDevice& device, const SceneFrame& frame)
+    void UltraFinish::End(Graphics::GraphicsDevice& device, const SceneFrame& frame, const UltraSun& sun)
     {
         // The device's states as the world left them, for what is drawn after (the HUD).
         const Graphics::BlendState blend = device.getBlendStateProperty();
         const Graphics::DepthStencilState depth = device.getDepthStencilStateProperty();
         const Graphics::RasterizerState raster = device.getRasterizerStateProperty();
         auto& samplers = device.getSamplerStatesProperty();
-        const std::array<Graphics::SamplerState, 6> saved{samplers[0], samplers[1], samplers[2],
-                                                          samplers[3], samplers[4], samplers[5]};
+        const std::array<Graphics::SamplerState, 7> saved{samplers[0], samplers[1], samplers[2], samplers[3],
+                                                          samplers[4], samplers[5], samplers[6]};
         samplers[1] = Graphics::SamplerState::PointClamp;
         samplers[2] = Graphics::SamplerState::PointClamp;
         samplers[3] = Graphics::SamplerState::LinearClamp;
         samplers[4] = Graphics::SamplerState::PointClamp;
         samplers[5] = Graphics::SamplerState::PointClamp;
+        samplers[6] = Graphics::SamplerState::PointClamp;
 
         // The reflections, from the lit scene and the geometry (none without this frame's geometry).
         const bool reflections = m_geometryValid;
@@ -667,6 +744,36 @@ void main()
             device.SetRenderTarget(m_reflection.get());
             device.Clear(Microsoft::Xna::Framework::Color(0, 0, 0, 0));
         }
+        // The air: a height fog lit by the sun through its shadow map (god rays) and by the sky's haze.
+        if (m_geometryValid)
+        {
+            const auto setMatrix = [](Graphics::ShaderEffect& effect, const char* name, const Microsoft::Xna::Framework::Matrix& m)
+            {
+                const float values[16] = {m.M11, m.M12, m.M13, m.M14, m.M21, m.M22, m.M23, m.M24,
+                                          m.M31, m.M32, m.M33, m.M34, m.M41, m.M42, m.M43, m.M44};
+                effect.SetUniformMat4(name, values);
+            };
+            auto& fog = *m_fogPass;
+            SetCamera(fog, frame);
+            setMatrix(fog, "uInvView", Microsoft::Xna::Framework::Matrix::Invert(frame.camera.view));
+            setMatrix(fog, "uLightNear", sun.nearViewProjection);
+            setMatrix(fog, "uLightFar", sun.farViewProjection);
+            fog.SetUniformVec3("uSunDir", sun.direction.X, sun.direction.Y, sun.direction.Z);
+            fog.SetUniformVec3("uSunColor", kUltraSun * 1.0f, kUltraSun * 0.95f, kUltraSun * 0.85f);
+            const auto& haze = frame.effects.fogColor;
+            fog.SetUniformVec3("uFogColor", std::pow(haze.X, 2.2f), std::pow(haze.Y, 2.2f), std::pow(haze.Z, 2.2f));
+            const bool shadowed = sun.shadowed && sun.shadowNear != nullptr && sun.shadowFar != nullptr;
+            // A thin haze, thicker below Blupi's level (three blocks under his camera's target).
+            fog.SetUniformVec4("uFogInfo", 0.014f, 0.1f, frame.camera.target.Y - 3.0f, shadowed ? 1.0f : 0.0f);
+            fog.SetTexture(1, shadowed ? *sun.shadowNear : static_cast<Graphics::Texture2D&>(*m_reflection));
+            fog.SetTexture(2, shadowed ? *sun.shadowFar : static_cast<Graphics::Texture2D&>(*m_reflection));
+            Pass(device, m_fog.get(), *m_geometry, fog, m_fog->getWidthProperty(), m_fog->getHeightProperty());
+        }
+        else
+        {
+            device.SetRenderTarget(m_fog.get());
+            device.Clear(Microsoft::Xna::Framework::Color(0, 0, 0, 255)); // no air: all left through
+        }
         Exposure(device);
         Bloom(device);
         UpdateGrade(device, frame.effects.fogColor);
@@ -675,6 +782,7 @@ void main()
         m_tonemap->SetTexture(3, *m_grade);
         m_tonemap->SetTexture(4, *m_reflection);
         m_tonemap->SetTexture(5, m_geometryValid ? *m_occlusionSmooth : *m_reflection);
+        m_tonemap->SetTexture(6, *m_fog);
         m_tonemap->SetUniformFloat("uBloomStrength", 0.12f);
         static const int debug = [] { const char* d = std::getenv("GALAXY_ULTRA_DEBUG"); return d ? std::atoi(d) : 0; }();
         m_tonemap->SetUniformInt("uDebug", debug);
