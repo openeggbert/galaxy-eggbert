@@ -142,7 +142,7 @@ namespace GalaxyEggbert::Game
             return false;
         if (s.mission < 1 || s.mission > 999 || s.lives < 0 || s.lives > 1000000 ||
             (s.speed != 0 && s.speed != 1 && s.speed != 2 && s.speed != 4 && s.speed != 8) ||
-            s.cameraMode < 0 || s.cameraMode > 1 || s.saveData.size() > 16384 ||
+            s.cameraMode < 0 || s.cameraMode > 1 || s.cheatsLocked < 0 || s.cheatsLocked > 2 || s.saveData.size() > 16384 ||
             !std::isfinite(s.x) || !std::isfinite(s.y) || !std::isfinite(s.z) || !std::isfinite(s.yaw))
             return false;
         std::uint64_t runCount, ticks, actualTicks = 0;

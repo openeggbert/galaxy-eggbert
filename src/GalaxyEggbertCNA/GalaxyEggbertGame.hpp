@@ -664,6 +664,8 @@ namespace GalaxyEggbert::CNA
         // The original's typed cheats (InputPad::TypedCheat; `Decor::CheatAction` for each word,
         // OR-0007); the menu's nine go through ApplyCheat().
         void ApplyTypedCheat(GalaxyEggbert::Game::InputPad::TypedCheat cheat);
+        // fairplay's lock (forRun false) or honest's (true, until the application quits): every cheat off.
+        void TurnCheatsOff(bool forRun);
         // The persistent typed cheats now on, as Mobile Eggbert lists them top-left in Play.
         std::vector<std::string> activeCheats_;
         // The opendoors cheat (Decor's m_bCheatDoors): every hub door opens, at once and as each
@@ -826,6 +828,8 @@ namespace GalaxyEggbert::CNA
         bool missionStartPending_ = false;
         bool recordingResume_ = false;
         bool replayingResume_ = false;
+        // "honest" typed (not by a demo): every cheat stays off until the application quits.
+        bool noCheatsForRun_ = false;
         std::uint32_t missionSeed_ = 0;
         std::size_t replayRun_ = 0;
         std::uint32_t replayRepeat_ = 0;
@@ -845,7 +849,7 @@ namespace GalaxyEggbert::CNA
             int cameraMode = 1;
             GalaxyEggbert::Def::GameSpeed gameSpeed = GalaxyEggbert::Def::GameSpeed::Normal;
             bool quickCheat = false, openDoors = false, showSecret = false, compass = false, debug = false;
-            bool cheatsLocked = false;
+            bool cheatsLocked = false, cheatsLockedForRun = false;
             int lives = 3;
             std::vector<std::string> activeCheats;
             int galaxyGamer = -1;

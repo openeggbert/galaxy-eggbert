@@ -2475,15 +2475,28 @@ namespace GalaxyEggbert::Game
             {"debug", TypedCheat::Debug, "Toggle runtime diagnostics panel"},
             {"fps", TypedCheat::Fps, "Show or hide the frames per second"},
             {"position", TypedCheat::Position, "Show or hide Blupi's position (x y z)"},
+            {"honest", TypedCheat::Honest, "Lock every cheat until the game quits"},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;
     }
 
+    void InputPad::RestoreCheatEntryLock(bool locked, bool lockedForRun) noexcept
+    {
+        cheatEntryLockedForRun_ = lockedForRun;
+        SetCheatEntryLocked(locked);
+    }
+
+    void InputPad::LockCheatEntryForRun() noexcept
+    {
+        cheatEntryLockedForRun_ = true;
+        SetCheatEntryLocked(true);
+    }
+
     void InputPad::SetCheatEntryLocked(bool locked) noexcept
     {
-        cheatEntryLocked_ = locked;
+        cheatEntryLocked_ = locked || cheatEntryLockedForRun_;
         cheatGestureIndex_ = 0;
         cheatActiveControl_ = -1;
         cheatMouseWasDown_ = false;
@@ -2530,25 +2543,29 @@ namespace GalaxyEggbert::Game
 
                 int count = 0;
                 const TypedCheatWord* words = TypedCheatWords(count);
+                // The longest word the buffer ends with, should one word end in another.
+                int matched = -1;
                 for (int ci = 0; ci < count; ++ci)
                 {
-                    if (cheatEntryLocked_ && words[ci].cheat != TypedCheat::FairPlay) continue;
-                    const std::string name = words[ci].word;
+                    if (cheatEntryLocked_ && (cheatEntryLockedForRun_ || words[ci].cheat != TypedCheat::FairPlay)) continue;
+                    const std::string_view name = words[ci].word;
                     if (typedCheatBuffer_.size() >= name.size() &&
-                        typedCheatBuffer_.compare(typedCheatBuffer_.size() - name.size(), name.size(), name) == 0)
+                        typedCheatBuffer_.compare(typedCheatBuffer_.size() - name.size(), name.size(), name) == 0 &&
+                        (matched < 0 || name.size() > std::string_view(words[matched].word).size()))
+                        matched = ci;
+                }
+                if (matched >= 0)
+                {
+                    result.cheat = words[matched].cheat;
+                    completed = true;
+                    result.ghostTyped = result.cheat == TypedCheat::Ghost;
+                    result.quickTyped = result.cheat == TypedCheat::Quick;
+                    // The original clears the buffer after every word; after "quick" that made
+                    // "quicklollypop" impossible to type in the port's MODERN build (its first
+                    // five letters fire "quick"). Kept here so both words work.
+                    if (result.cheat != TypedCheat::Quick)
                     {
-                        result.cheat = words[ci].cheat;
-                        completed = true;
-                        result.ghostTyped = result.cheat == TypedCheat::Ghost;
-                        result.quickTyped = result.cheat == TypedCheat::Quick;
-                        // The original clears the buffer after every word; after "quick" that made
-                        // "quicklollypop" impossible to type in the port's MODERN build (its first
-                        // five letters fire "quick"). Kept here so both words work.
-                        if (result.cheat != TypedCheat::Quick)
-                        {
-                            typedCheatBuffer_.clear();
-                        }
-                        break;
+                        typedCheatBuffer_.clear();
                     }
                 }
                 typingCheat_ = false;

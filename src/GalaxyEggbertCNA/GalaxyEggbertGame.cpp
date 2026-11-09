@@ -1318,7 +1318,7 @@ namespace GalaxyEggbert::CNA
     {
         if (!GalaxyEggbert::Game::kCheatsEnabled) return;
         using TC = GalaxyEggbert::Game::InputPad::TypedCheat;
-        if (inputPad_.IsCheatEntryLocked() && cheat != TC::FairPlay) return;
+        if (inputPad_.IsCheatEntryLocked() && (inputPad_.IsCheatEntryLockedForRun() || cheat != TC::FairPlay)) return;
         using VM = BlupiController::VehicleMode;
         using GalaxyEggbert::Def::SoundChannel;
         const auto vehicle = [this](VM mode)
@@ -1404,33 +1404,44 @@ namespace GalaxyEggbert::CNA
                 if (!demoActive_ && !replayingResume_ && !demoRecording_ && !demoRecordArmed_ && !editorPlayTestActive_)
                     xmissionPending_ = true;
                 break;
+            case TC::Honest:
+                // Every cheat off, as fairplay's lock, and locked until the game quits: no word is taken
+                // any more (fairplay, honest again) (the owner, 2026-11-09). A demo's is its own.
+                if (!demoActive_) noCheatsForRun_ = true;
+                TurnCheatsOff(/*forRun=*/true);
+                break;
             case TC::FairPlay:
-            {
-                const bool locked = !inputPad_.IsCheatEntryLocked();
-                inputPad_.SetCheatEntryLocked(locked);
-                cheatMenuShown_ = false;
-                if (locked)
-                {
-                    blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
-                    cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = false;
-                    cheatZoomStep_ = 0;
-                    if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))
-                        gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
-                    activeCheats_.clear();
-                    activeCheats_.push_back("fairplay");
-                    AdaptHubDoors(worldRuntime_.GetMissionNumber());
-                    RefreshTerrainMeshIfChanged();
-                }
+                if (!inputPad_.IsCheatEntryLocked())
+                    TurnCheatsOff(/*forRun=*/false);
                 else
+                {
+                    inputPad_.SetCheatEntryLocked(false);
+                    cheatMenuShown_ = false;
                     activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "fairplay"),
                                         activeCheats_.end());
+                }
                 break;
-            }
             case TC::Ghost:
             case TC::Quick:
             case TC::None:
                 break; // ghost and quick: handled by the caller
         }
+    }
+
+    void GalaxyEggbertGame::TurnCheatsOff(bool forRun)
+    {
+        if (forRun) inputPad_.LockCheatEntryForRun();
+        else inputPad_.SetCheatEntryLocked(true);
+        cheatMenuShown_ = false;
+        blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
+        cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = false;
+        cheatZoomStep_ = 0;
+        if (GalaxyEggbert::Def::IsBeyondFast(gameSpeed_))
+            gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
+        activeCheats_.clear();
+        activeCheats_.push_back(forRun ? "honest" : "fairplay");
+        AdaptHubDoors(worldRuntime_.GetMissionNumber());
+        RefreshTerrainMeshIfChanged();
     }
 
     GetTypeNameCPP(GalaxyEggbertGame, "GalaxyEggbertGame")

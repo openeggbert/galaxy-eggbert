@@ -165,7 +165,7 @@ namespace GalaxyEggbert::CNA
         start.showSecret = cheatShowSecret_;
         start.compass = cheatCompass_;
         start.debug = cheatDebug_;
-        start.cheatsLocked = inputPad_.IsCheatEntryLocked();
+        start.cheatsLocked = inputPad_.IsCheatEntryLockedForRun() ? 2 : inputPad_.IsCheatEntryLocked() ? 1 : 0;
         start.cameraMode = static_cast<int>(cameraMode_);
         std::ostringstream settings;
         saveData_.Write(settings);
@@ -226,7 +226,8 @@ namespace GalaxyEggbert::CNA
         cheatShowSecret_ = start.showSecret;
         cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
         cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
-        inputPad_.SetCheatEntryLocked(start.cheatsLocked && GalaxyEggbert::Game::kCheatsEnabled);
+        inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
+                                        start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
         gameSpeed_ = GalaxyEggbert::Def::ToGameSpeed(start.speed);
         editorPlayTestActive_ = false;
@@ -241,7 +242,9 @@ namespace GalaxyEggbert::CNA
         activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "debug"), activeCheats_.end());
         if (cheatDebug_) activeCheats_.push_back("debug");
         activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "fairplay"), activeCheats_.end());
-        if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
+        activeCheats_.erase(std::remove(activeCheats_.begin(), activeCheats_.end(), "honest"), activeCheats_.end());
+        if (inputPad_.IsCheatEntryLocked())
+            activeCheats_.push_back(inputPad_.IsCheatEntryLockedForRun() ? "honest" : "fairplay");
         replayRun_ = 0;
         replayRepeat_ = 0;
         resumeTicks_ = 0;
@@ -264,6 +267,8 @@ namespace GalaxyEggbert::CNA
         }
         if (replayRun_ != resumeLog_.runs.size()) return;
         replayingResume_ = false;
+        // "honest" typed in this run after the log was written: its cheats off again, locked.
+        if (noCheatsForRun_ && !inputPad_.IsCheatEntryLockedForRun()) TurnCheatsOff(/*forRun=*/true);
         sound_.SetReplayMuted(false);
         resumeAccelWarmStart_ = true;
         activeMotorLoop_ = GalaxyEggbert::Def::SoundChannel::SoundChannel0;
@@ -524,6 +529,7 @@ namespace GalaxyEggbert::CNA
             demoSaved_.compass = cheatCompass_;
             demoSaved_.debug = cheatDebug_;
             demoSaved_.cheatsLocked = inputPad_.IsCheatEntryLocked();
+            demoSaved_.cheatsLockedForRun = inputPad_.IsCheatEntryLockedForRun();
             demoSaved_.lives = interaction_.Lives();
             demoSaved_.activeCheats = activeCheats_;
             demoSaved_.galaxyGamer = galaxyGamer_;
@@ -563,7 +569,8 @@ namespace GalaxyEggbert::CNA
         cheatShowSecret_ = start.showSecret;
         cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
         cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
-        inputPad_.SetCheatEntryLocked(start.cheatsLocked && GalaxyEggbert::Game::kCheatsEnabled);
+        inputPad_.RestoreCheatEntryLock(start.cheatsLocked != 0 && GalaxyEggbert::Game::kCheatsEnabled,
+                                        start.cheatsLocked == 2 && GalaxyEggbert::Game::kCheatsEnabled);
         cameraMode_ = static_cast<CameraMode>(start.cameraMode);
         gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
         editorPlayTestActive_ = false;
@@ -698,7 +705,7 @@ namespace GalaxyEggbert::CNA
         cheatShowSecret_ = demoSaved_.showSecret;
         cheatCompass_ = demoSaved_.compass;
         cheatDebug_ = demoSaved_.debug;
-        inputPad_.SetCheatEntryLocked(demoSaved_.cheatsLocked);
+        inputPad_.RestoreCheatEntryLock(demoSaved_.cheatsLocked, demoSaved_.cheatsLockedForRun);
         interaction_.SetLives(demoSaved_.lives);
         activeCheats_ = demoSaved_.activeCheats;
         galaxyGamer_ = demoSaved_.galaxyGamer;

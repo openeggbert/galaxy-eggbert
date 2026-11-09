@@ -966,7 +966,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 32;
+        bool all = count == 33;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -975,7 +975,7 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 32 words including debug/fairplay/compass/help/cheats/xnjttjpo/fps/position fire and have an explanation");
+        check(all, "Typed cheats: all 33 words including debug/fairplay/compass/help/cheats/xnjttjpo/fps/position/honest fire and have an explanation");
         {
             InputPad xpad;
             check(type(xpad, "xnjttjpo").first == TC::XMission && type(xpad, "xmission").first == TC::None,
@@ -1000,6 +1000,19 @@ int main()
         check(type(locked,"megablupi").first==TC::MegaBlupi && type(locked,"compass").first==TC::Compass &&
                   type(locked,"debug").first==TC::Debug,
               "unlocking fairplay permits other cheats again");
+        InputPad run;
+        check(type(run,"honest").first==TC::Honest,"Typed cheats: honest fires while cheats are open");
+        run.LockCheatEntryForRun();
+        bool runBlocked=true;
+        for (int i=0;i<count;++i)
+            runBlocked &= type(run,words[i].word).second==0;
+        run.SetCheatEntryLocked(false);
+        run.ResetMissionInput();
+        check(runBlocked && run.IsCheatEntryLocked() && run.IsCheatEntryLockedForRun() &&
+                  type(run,"fairplay").second==0 && type(run,"honest").second==0 && type(run,"debug").second==0,
+              "honest: every word refused (fairplay and honest too) and the lock cannot be lifted");
+        run.RestoreCheatEntryLock(false,false);
+        check(type(run,"debug").first==TC::Debug,"a replay restores the recorded lock exactly");
     }
 
     {

@@ -580,6 +580,7 @@ namespace GalaxyEggbert::Game
             XMission,
             Fps,          // "fps" (MODERN): show or hide the frames drawn a second, in the cheats' list
             Position,     // "position" (MODERN): show or hide Blupi's place in the world (x= y= z=), in the list
+            Honest,       // "honest" (MODERN): every cheat off and locked until the game quits (fairplay too)
         };
         struct TypedCheatResult
         {
@@ -598,6 +599,12 @@ namespace GalaxyEggbert::Game
         [[nodiscard]] static const TypedCheatWord* TypedCheatWords(int& count) noexcept;
         void SetCheatEntryLocked(bool locked) noexcept;
         [[nodiscard]] bool IsCheatEntryLocked() const noexcept { return cheatEntryLocked_; }
+        // "honest": locked for the rest of the run (the application's, every world after): no word is
+        // taken any more, fairplay and honest among them, and SetCheatEntryLocked(false) keeps it locked.
+        void LockCheatEntryForRun() noexcept;
+        [[nodiscard]] bool IsCheatEntryLockedForRun() const noexcept { return cheatEntryLockedForRun_; }
+        // A replay's (a resume reconstruction, a demo) or its end's: both locks exactly as recorded or saved.
+        void RestoreCheatEntryLock(bool locked, bool lockedForRun) noexcept;
         // Each result is set for exactly the one call where its word was completed; always empty
         // outside Play.
         [[nodiscard]] TypedCheatResult UpdateTypedGhostCheat(
@@ -879,6 +886,7 @@ namespace GalaxyEggbert::Game
         // lowercase-letter buffer plus per-key down-edge tracking.
         std::string typedCheatBuffer_;
         bool cheatEntryLocked_ = false;
+        bool cheatEntryLockedForRun_ = false;
         bool letterKeyWasDown_[26] = {};
         std::uint32_t suppressedGameplayLetters_ = 0;
         float typedIdleSeconds_ = 0;
