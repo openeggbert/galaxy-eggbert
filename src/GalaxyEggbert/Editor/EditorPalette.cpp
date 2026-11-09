@@ -241,7 +241,8 @@ namespace GalaxyEggbert::Editor
         int viewportWidth, int viewportHeight, bool stopConfirmArmed,
         bool hasPlacementPreview,
         int placementX, int placementY, int placementZ,
-        const std::vector<std::string>& statusLines)
+        const std::vector<std::string>& statusLines,
+        const std::vector<EditorPaletteRenderer::State::ViewLabel>& viewLabels)
     {
         const EditorPaletteRenderer::State state{
             categories_,
@@ -269,6 +270,7 @@ namespace GalaxyEggbert::Editor
             placementY,
             placementZ,
             statusLines,
+            viewLabels,
         };
         renderer_.Draw(device, layout_, state, viewportWidth, viewportHeight);
     }

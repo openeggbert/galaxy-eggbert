@@ -157,7 +157,8 @@ namespace GalaxyEggbert::Editor
             int viewportWidth, int viewportHeight, bool stopConfirmArmed = false,
             bool hasPlacementPreview = false,
             int placementX = 0, int placementY = 0, int placementZ = 0,
-            const std::vector<std::string>& statusLines = {});
+            const std::vector<std::string>& statusLines = {},
+            const std::vector<EditorPaletteRenderer::State::ViewLabel>& viewLabels = {});
 
     private:
         [[nodiscard]] const PaletteCategory* OpenCategory() const noexcept;

@@ -491,6 +491,31 @@ namespace GalaxyEggbert::Editor
             }
         }
 
+        // The view's labels (the world's axes: X, Y, Z in their colours), on a dark plate each, under
+        // the status lines.
+        if (!state.viewLabels.empty() && impl_->textTexture && impl_->textEffect)
+        {
+            const float sheetWidth = static_cast<float>(impl_->textTexture->getWidthProperty());
+            const float sheetHeight = static_cast<float>(impl_->textTexture->getHeightProperty());
+            const float height = kGlyphCellPx * kTextScale;
+            for (const auto& label : state.viewLabels)
+            {
+                const float width = LabelWidth(label.text.c_str());
+                const float left = label.x - width * 0.5f;
+                const float top = label.y - height * 0.5f;
+                const std::vector<GalaxyEggbert::Game::QuadBatch::Quad> plate = {
+                    {left - 4.0f, top - 2.0f, left + width + 4.0f, top + height + 2.0f, 0, 0, 1, 1}};
+                impl_->flatEffect->setDiffuseColorProperty({0.05f, 0.05f, 0.08f});
+                GalaxyEggbert::Game::QuadBatch::FlushQuads(
+                    device, *impl_->flatEffect, impl_->flatRenderer, plate, viewportWidth, viewportHeight, 0.6f);
+                std::vector<GalaxyEggbert::Game::QuadBatch::Quad> glyphs;
+                AppendLabel(glyphs, label.text.c_str(), left, top, sheetWidth, sheetHeight);
+                impl_->textEffect->setDiffuseColorProperty(label.colour);
+                GalaxyEggbert::Game::QuadBatch::FlushQuads(
+                    device, *impl_->textEffect, impl_->textRenderer, glyphs, viewportWidth, viewportHeight, 1.0f);
+            }
+        }
+
         // The status lines (a prompt, the keys) over the view, right of the menu column.
         if (!state.statusLines.empty() && impl_->textTexture && impl_->textEffect)
         {

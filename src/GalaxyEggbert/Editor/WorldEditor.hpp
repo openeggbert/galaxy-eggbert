@@ -13,6 +13,7 @@
 #include "EditorVariants.hpp"
 
 #include <CnaEngine/Graphics/Camera.hpp>
+#include <CnaEngine/Graphics/DebugDraw.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 #include <GalaxyEggbert/Worlds/Block.hpp>
 #include <GalaxyEggbert/Worlds/World.hpp>
@@ -212,12 +213,18 @@ namespace GalaxyEggbert::Editor
         // into its target (with the 3D effects the world goes into one of its own, its depth there).
         void DrawWorldOverlays(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                                const CnaEngine::Graphics::Camera& camera, const Worlds::World& world);
-        // Its status lines and palette, over the finished frame.
+        // Its status lines and palette, over the finished frame; the world's axes' names.
         void Draw(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                   const CnaEngine::Graphics::Camera& camera,
                   int viewportWidth, int viewportHeight, const Worlds::World& world);
 
     private:
+        void DrawWorldAxes(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                           const CnaEngine::Graphics::Camera& camera, const Worlds::World& world);
+        [[nodiscard]] std::vector<EditorPaletteRenderer::State::ViewLabel> AxisLabels(
+            const CnaEngine::Graphics::Camera& camera, int viewportWidth, int viewportHeight,
+            const Worlds::World& world) const;
+
         struct FrameInput
         {
             EditorPalette::UpdateResult palette;
@@ -401,6 +408,7 @@ namespace GalaxyEggbert::Editor
         EditCommandStack commandStack_;
         EditorPalette palette_;
         ObjectPathRenderer pathEndpoints_;
+        CnaEngine::Graphics::DebugDraw worldAxes_; // the world's bounds, X red, Y green, Z blue
         VariantCycler variants_; // the original's variant families (ED-0001)
         VariantCycler bigDecorVariants_{BigDecorVariantFamilies()}; // ED-0006
         // The auto-tiler's dice (AutoTile.hpp: the original's random twins of a variant).

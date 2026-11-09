@@ -42,6 +42,15 @@ namespace GalaxyEggbert::Editor
             int placementZ = 0;
             // Lines over the view, top left of it (WorldEditor::StatusLines: a prompt, the keys).
             std::vector<std::string> statusLines;
+            // Words placed in the view (the world's axes' names), centred on their screen points.
+            struct ViewLabel
+            {
+                float x = 0.0f;
+                float y = 0.0f;
+                std::string text;
+                Microsoft::Xna::Framework::Vector3 colour;
+            };
+            std::vector<ViewLabel> viewLabels;
         };
 
         EditorPaletteRenderer();

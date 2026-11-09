@@ -1,5 +1,7 @@
 #include "WorldEditor.hpp"
 
+#include <Microsoft/Xna/Framework/Vector4.hpp>
+
 #include "CustomWorldStorage.hpp"
 #include <GalaxyEggbert/Game/WorldRuntime.hpp>
 
@@ -295,8 +297,10 @@ namespace GalaxyEggbert::Editor
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         const CnaEngine::Graphics::Camera& camera, const Worlds::World& world)
     {
-        // The path ends depth-tested; the cursor's cell and the selection's box over everything, as when
-        // they were drawn after the HUD had turned the depth test off.
+        // The world's axes on its bounds; the path ends depth-tested; the cursor's cell and the
+        // selection's box over everything, as when they were drawn after the HUD had turned the depth
+        // test off.
+        DrawWorldAxes(device, camera, world);
         pathEndpoints_.Draw(device,camera,world);
         device.SetDepthTestEnabled(false);
         const auto target = CurrentEditTarget(world);
@@ -328,12 +332,99 @@ namespace GalaxyEggbert::Editor
         else selectionHighlightRenderer_.Hide();
     }
 
+    namespace
+    {
+        // The world's bounds in render space: cell (x, y, z) is centred on (x - 50, y, z - 50).
+        struct WorldBounds
+        {
+            float x0, x1, y0, y1, z0, z1;
+        };
+
+        WorldBounds BoundsOf(const Worlds::World& world)
+        {
+            const float n = static_cast<float>(world.blocksPerAxis());
+            const float cx = static_cast<float>(Game::WorldRuntime::kWorldCenterX);
+            const float cz = static_cast<float>(Game::WorldRuntime::kWorldCenterZ);
+            return {-0.5f - cx, n - 0.5f - cx, -0.5f, n - 0.5f, -0.5f - cz, n - 0.5f - cz};
+        }
+
+        const Microsoft::Xna::Framework::Color kAxisX(235, 70, 60);
+        const Microsoft::Xna::Framework::Color kAxisY(70, 215, 95);
+        const Microsoft::Xna::Framework::Color kAxisZ(70, 135, 250);
+    }
+
+    void WorldEditor::DrawWorldAxes(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
+                                    const CnaEngine::Graphics::Camera& camera, const Worlds::World& world)
+    {
+        // The world's twelve edges, each in its axis's colour (X red, Y green, Z blue), and along the three
+        // that leave its origin corner (cell 0, 0, 0) a tick every ten cells, a longer one every fifty.
+        using Microsoft::Xna::Framework::Vector3;
+        const auto b = BoundsOf(world);
+        worldAxes_.Clear();
+        for (const float y : {b.y0, b.y1})
+            for (const float z : {b.z0, b.z1})
+                worldAxes_.Line(Vector3(b.x0, y, z), Vector3(b.x1, y, z), kAxisX);
+        for (const float x : {b.x0, b.x1})
+            for (const float z : {b.z0, b.z1})
+                worldAxes_.Line(Vector3(x, b.y0, z), Vector3(x, b.y1, z), kAxisY);
+        for (const float x : {b.x0, b.x1})
+            for (const float y : {b.y0, b.y1})
+                worldAxes_.Line(Vector3(x, y, b.z0), Vector3(x, y, b.z1), kAxisZ);
+        const int n = static_cast<int>(world.blocksPerAxis());
+        for (int i = 10; i < n; i += 10)
+        {
+            const float length = i % 50 == 0 ? 1.6f : 0.8f;
+            const float at = static_cast<float>(i);
+            worldAxes_.Line(Vector3(b.x0 + at, b.y0, b.z0), Vector3(b.x0 + at, b.y0 + length, b.z0), kAxisX);
+            worldAxes_.Line(Vector3(b.x0 + at, b.y0, b.z0), Vector3(b.x0 + at, b.y0, b.z0 + length), kAxisX);
+            worldAxes_.Line(Vector3(b.x0, b.y0 + at, b.z0), Vector3(b.x0 + length, b.y0 + at, b.z0), kAxisY);
+            worldAxes_.Line(Vector3(b.x0, b.y0 + at, b.z0), Vector3(b.x0, b.y0 + at, b.z0 + length), kAxisY);
+            worldAxes_.Line(Vector3(b.x0, b.y0, b.z0 + at), Vector3(b.x0 + length, b.y0, b.z0 + at), kAxisZ);
+            worldAxes_.Line(Vector3(b.x0, b.y0, b.z0 + at), Vector3(b.x0, b.y0 + length, b.z0 + at), kAxisZ);
+        }
+        device.SetDepthTestEnabled(true);
+        worldAxes_.Draw(device, camera, true);
+    }
+
+    std::vector<EditorPaletteRenderer::State::ViewLabel> WorldEditor::AxisLabels(
+        const CnaEngine::Graphics::Camera& camera, int viewportWidth, int viewportHeight,
+        const Worlds::World& world) const
+    {
+        // The axes' names past their ends (and 0 at the origin corner), where the camera sees them.
+        using Microsoft::Xna::Framework::Vector3;
+        using Microsoft::Xna::Framework::Vector4;
+        const auto b = BoundsOf(world);
+        const auto viewProjection = camera.View() * camera.Projection();
+        std::vector<EditorPaletteRenderer::State::ViewLabel> labels;
+        const auto add = [&](const Vector3& at, const char* text, const Microsoft::Xna::Framework::Color& colour)
+        {
+            const Vector4 clip = Vector4::Transform(Vector4(at.X, at.Y, at.Z, 1.0f), viewProjection);
+            if (clip.W <= 0.05f)
+            {
+                return; // behind the camera
+            }
+            const float x = (clip.X / clip.W * 0.5f + 0.5f) * static_cast<float>(viewportWidth);
+            const float y = (0.5f - clip.Y / clip.W * 0.5f) * static_cast<float>(viewportHeight);
+            if (x < -20.0f || y < -20.0f || x > viewportWidth + 20.0f || y > viewportHeight + 20.0f)
+            {
+                return;
+            }
+            labels.push_back({x, y, text,
+                              Vector3(colour.getRProperty() / 255.0f, colour.getGProperty() / 255.0f,
+                                      colour.getBProperty() / 255.0f)});
+        };
+        add(Vector3(b.x1 + 1.5f, b.y0, b.z0), "X", kAxisX);
+        add(Vector3(b.x0, b.y1 + 1.5f, b.z0), "Y", kAxisY);
+        add(Vector3(b.x0, b.y0, b.z1 + 1.5f), "Z", kAxisZ);
+        add(Vector3(b.x0 - 1.0f, b.y0 - 1.0f, b.z0 - 1.0f), "0", Microsoft::Xna::Framework::Color(230, 230, 230));
+        return labels;
+    }
+
     void WorldEditor::Draw(
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         const CnaEngine::Graphics::Camera& camera,
         int viewportWidth, int viewportHeight, const Worlds::World& world)
     {
-        (void) camera;
         const auto target = CurrentEditTarget(world);
         auto status = StatusLines();
         for (const auto& start : CollectPlayerStarts(world))
@@ -349,6 +440,7 @@ namespace GalaxyEggbert::Editor
 
         palette_.Draw(
             device, viewportWidth, viewportHeight, stopConfirmArmed_, hasHighlight_,
-            placementCellX_, placementCellY_, placementCellZ_, status);
+            placementCellX_, placementCellY_, placementCellZ_, status,
+            AxisLabels(camera, viewportWidth, viewportHeight, world));
     }
 }
