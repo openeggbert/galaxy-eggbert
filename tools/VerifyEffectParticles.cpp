@@ -129,6 +129,36 @@ int main()
     }
     Check(many.Count() <= EffectParticles::kMaxParticles + 2, "the particles stay under their cap");
 
+    // Bursts (Blupi's moments): once per frame whose tick moved on, none while paused; the periodic
+    // ones count the multiples the stepped ticks crossed, whatever the frame rate.
+    EffectParticles moments;
+    moments.Advance(10);
+    moments.Burst(ParticleKind::Dust, 1, SceneSheet::Element, kUv, Vector3(0.0f, 0.0f, 0.0f), 10);
+    Check(moments.Count() == 0, "no burst in the frame that starts the clock");
+    moments.Advance(11);
+    moments.Burst(ParticleKind::Dust, 1, SceneSheet::Element, kUv, Vector3(0.0f, 0.0f, 0.0f), 10);
+    Check(moments.Count() == 10, "a burst of ten after a tick");
+    moments.Advance(11);
+    moments.Burst(ParticleKind::Dust, 1, SceneSheet::Element, kUv, Vector3(0.0f, 0.0f, 0.0f), 10);
+    Check(moments.Count() == 10, "no burst while the tick stands still");
+    EffectParticles everyTick;
+    EffectParticles everyFour;
+    everyTick.Advance(0);
+    everyFour.Advance(0);
+    int tickCount = 0;
+    int fourCount = 0;
+    for (int tick = 1; tick <= 36; ++tick)
+    {
+        everyTick.Advance(tick);
+        tickCount += everyTick.Crossed(9);
+        if (tick % 4 == 0)
+        {
+            everyFour.Advance(tick);
+            fourCount += everyFour.Crossed(9);
+        }
+    }
+    Check(tickCount == 4 && fourCount == 4, "a period of 9 crossed four times in 36 ticks at any frame rate");
+
     std::printf("%s\n", failures == 0 ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED");
     return failures == 0 ? 0 : 1;
 }

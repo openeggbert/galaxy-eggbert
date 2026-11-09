@@ -21,6 +21,11 @@ namespace GalaxyEggbert::Game
         Fire,    // explosions: a ball of flame pieces bursting out, rising, growing, fading
         Splash,  // water thrown up and falling back
         Sparkle, // sparks and stars drifting off (the sprite is kept, the sparks trail it)
+        // Blupi's and the world's own moments (presentation only, Burst()):
+        Dust,    // a puff of dust where he lands or runs
+        Bubble,  // a bubble rising from him under water
+        Ember,   // a spark rising from the lava
+        Flash,   // stars bursting out as he teleports
     };
 
     // Whether an effect object becomes particles, and which kind; false keeps its billboard alone.
@@ -59,6 +64,16 @@ namespace GalaxyEggbert::Game
         // centre. Emits its pieces for each tick Advance() stepped.
         void Feed(int objectIndex, ParticleKind kind, SceneSheet sheet, const CnaEngine::Graphics::UvRect& uv,
                   const Microsoft::Xna::Framework::Vector3& center);
+        // A burst of `count` particles of `kind` from `center`, cut from `uv` on `sheet` and tinted, once
+        // per call in a frame whose tick moved on (none while paused); `seed` keeps bursts apart.
+        void Burst(ParticleKind kind, int seed, SceneSheet sheet, const CnaEngine::Graphics::UvRect& uv,
+                   const Microsoft::Xna::Framework::Vector3& center, int count,
+                   const Microsoft::Xna::Framework::Color& tint = Microsoft::Xna::Framework::Color::White);
+        // How many multiples of `period` (plus `phase`) the ticks stepped this frame crossed: a periodic
+        // emission that does not depend on the frame rate.
+        [[nodiscard]] int Crossed(int period, int phase = 0) const noexcept;
+        [[nodiscard]] int Stepped() const noexcept { return m_stepped; }
+        [[nodiscard]] int Tick() const noexcept { return m_tick; }
         // The particles as camera-facing quads, in batches by sheet.
         void Append(std::vector<SceneBillboardBatch>& batches, const Microsoft::Xna::Framework::Vector3& right,
                     const Microsoft::Xna::Framework::Vector3& up) const;
@@ -71,7 +86,8 @@ namespace GalaxyEggbert::Game
 
     private:
         void Emit(int objectIndex, int tick, ParticleKind kind, SceneSheet sheet, const CnaEngine::Graphics::UvRect& uv,
-                  const Microsoft::Xna::Framework::Vector3& center);
+                  const Microsoft::Xna::Framework::Vector3& center, int count = -1,
+                  const Microsoft::Xna::Framework::Color& tint = Microsoft::Xna::Framework::Color::White);
 
         int m_tick = -1;
         int m_stepped = 0;

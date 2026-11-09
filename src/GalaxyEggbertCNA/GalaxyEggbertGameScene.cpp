@@ -21,6 +21,7 @@
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
 #include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
+#include <GalaxyEggbert/Game/WaterSurface.hpp>
 
 #include <Microsoft/Xna/Framework/Color.hpp>
 
@@ -362,8 +363,105 @@ namespace GalaxyEggbert::CNA
                                        }),
                         quads.end());
         }
+        AppendSceneMoments();
         const auto invView = Matrix::Invert(camera_.View());
         effectParticles_.Append(effects.particles, invView.getRightProperty(), invView.getUpProperty());
+    }
+
+    void GalaxyEggbertGame::AppendSceneMoments()
+    {
+        // Blupi's and the world's moments as particles (presentation only, read from the state the game
+        // already has): dust where he lands and runs, a splash as he goes into water, bubbles from him
+        // under it, stars as he teleports, sparks rising from the lava. Pieces of the original sprites:
+        // the pollution puff (element 179-186), the plouf splash (object-m 99-102), the blup bubbles
+        // (object-m 103-106), the stars (element 152-156).
+        auto& particles = effectParticles_;
+        const int stepped = particles.Stepped();
+        const int tick = particles.Tick();
+        const auto element = [](int icon) { return Uv(GetElementIconUv(icon)); };
+        const bool playing = phase_ == GalaxyEggbert::Def::GamePhase::Play;
+        const bool seen = playing && cameraMode_ == CameraMode::ThirdPersonModel && !blupi_.IsAnimIconInvisible();
+        const bool ground = blupi_.IsOnGround();
+        const bool swimming = blupi_.IsNage();
+        const bool teleporting = blupi_.IsTeleporting();
+        const Vector3 feet(blupi_.GetX(), blupi_.GetY() - 0.5f, blupi_.GetZ());
+        if (seen && stepped > 0)
+        {
+            // Landing after a jump or a fall (not a step), and running on foot.
+            if (ground && !momentWasGround_ && momentAirTicks_ >= 12 && !swimming)
+            {
+                particles.Burst(ParticleKind::Dust, 1, SceneSheet::Element, element(181), feet, 10,
+                                Microsoft::Xna::Framework::Color(214, 196, 168, 255));
+            }
+            const auto anim = blupi_.GetAnimState();
+            if (ground && !swimming && anim == BlupiController::AnimState::March)
+            {
+                if (const int puffs = particles.Crossed(9); puffs > 0)
+                {
+                    particles.Burst(ParticleKind::Dust, 2, SceneSheet::Element, element(179 + (tick / 9) % 4), feet,
+                                    puffs * 2, Microsoft::Xna::Framework::Color(214, 196, 168, 200));
+                }
+            }
+            // Into the water: a splash at its top.
+            if (swimming && !momentWasSwimming_)
+            {
+                particles.Burst(ParticleKind::Splash, 3, SceneSheet::ObjectM, tileAtlas_.GetTileUv(101),
+                                feet + Vector3(0.0f, 0.4f, 0.0f), 14);
+            }
+            // Under it: a bubble now and then.
+            const auto& world = worldRuntime_.GetWorld();
+            const Vector3 head = feet + Vector3(0.0f, 0.8f, 0.0f);
+            if (swimming && GalaxyEggbert::Game::WaterViewImmersion(world, head.X + WorldRuntime::kWorldCenterX, head.Y,
+                                                                    head.Z + WorldRuntime::kWorldCenterZ) > 0.9f)
+            {
+                if (const int bubbles = particles.Crossed(14); bubbles > 0)
+                {
+                    particles.Burst(ParticleKind::Bubble, 4, SceneSheet::ObjectM, tileAtlas_.GetTileUv(103 + (tick / 14) % 4),
+                                    head, bubbles);
+                }
+            }
+            // Teleporting: stars bursting out as he goes and as he comes.
+            if (teleporting != momentWasTeleporting_)
+            {
+                particles.Burst(ParticleKind::Flash, 5, SceneSheet::Element, element(152 + tick % 5),
+                                feet + Vector3(0.0f, 0.5f, 0.0f), 24, Microsoft::Xna::Framework::Color(255, 250, 220, 255));
+            }
+        }
+        if (stepped > 0)
+        {
+            momentAirTicks_ = ground ? 0 : momentAirTicks_ + stepped;
+            momentWasGround_ = ground;
+            momentWasSwimming_ = swimming;
+            momentWasTeleporting_ = teleporting;
+        }
+
+        // The lava's sparks: from its cells nearest the camera's target, a few a second.
+        if (terrainRenderer_ && stepped > 0)
+        {
+            if (const int sparks = particles.Crossed(4); sparks > 0)
+            {
+                auto lava = terrainRenderer_->LavaCells();
+                const auto& target = cameraTarget_;
+                const auto far = [&](const Vector3& p) {
+                    const float dx = p.X - target.X, dz = p.Z - target.Z, dy = p.Y - target.Y;
+                    return dx * dx + dy * dy + dz * dz;
+                };
+                std::sort(lava.begin(), lava.end(), [&](const Vector3& a, const Vector3& b) { return far(a) < far(b); });
+                const std::size_t near = std::min<std::size_t>(lava.size(), 24);
+                for (int k = 0; k < sparks && near > 0; ++k)
+                {
+                    // A cell among the nearest, picked by the tick (the same every run).
+                    const std::size_t pick = static_cast<std::size_t>((tick / 4 + k) * 7919) % near;
+                    if (far(lava[pick]) > 16.0f * 16.0f)
+                    {
+                        continue;
+                    }
+                    particles.Burst(ParticleKind::Ember, 6 + static_cast<int>(pick), SceneSheet::Element,
+                                    element(152 + (tick / 4 + k) % 5), lava[pick] + Vector3(0.0f, 0.45f, 0.0f), 1,
+                                    Microsoft::Xna::Framework::Color(255, 150, 40, 255));
+                }
+            }
+        }
     }
 
     bool GalaxyEggbertGame::SceneEditorSelected(int kind, float rawX, float rawY, float rawZ) const

@@ -141,8 +141,27 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    void EffectParticles::Burst(ParticleKind kind, int seed, SceneSheet sheet, const CnaEngine::Graphics::UvRect& uv,
+                                const Vector3& center, int count, const Color& tint)
+    {
+        if (m_stepped > 0 && count > 0)
+        {
+            Emit(100000 + seed, m_tick, kind, sheet, uv, center, count, tint);
+        }
+    }
+
+    int EffectParticles::Crossed(int period, int phase) const noexcept
+    {
+        if (period <= 0 || m_stepped <= 0)
+        {
+            return 0;
+        }
+        const auto floorDiv = [period](int value) { return value >= 0 ? value / period : -((-value + period - 1) / period); };
+        return floorDiv(m_tick - phase) - floorDiv(m_tick - m_stepped - phase);
+    }
+
     void EffectParticles::Emit(int objectIndex, int tick, ParticleKind kind, SceneSheet sheet,
-                               const CnaEngine::Graphics::UvRect& uv, const Vector3& center)
+                               const CnaEngine::Graphics::UvRect& uv, const Vector3& center, int burst, const Color& tint)
     {
         if (m_particles.size() >= kMaxParticles)
         {
@@ -157,12 +176,18 @@ namespace GalaxyEggbert::Game
             case ParticleKind::Fire: count = 1 + (tick % 2 == 0 ? 1 : 0); break;
             case ParticleKind::Splash: count = 2; break;
             case ParticleKind::Sparkle: count = tick % 2 == 0 ? 1 : 0; break;
+            default: count = 0; break;
+        }
+        if (burst >= 0)
+        {
+            count = burst;
         }
         for (int piece = 0; piece < count; ++piece)
         {
             EffectParticle p;
             p.sheet = sheet;
             p.uv = uv;
+            p.tint = tint;
             const Vector3 direction = Direction(random(piece, 0), random(piece, 1));
             p.rotation = random(piece, 2) * 6.28318530718f;
             p.spin = Between(-0.12f, 0.12f, random(piece, 3));
@@ -185,8 +210,8 @@ namespace GalaxyEggbert::Game
                     p.velocity = Vector3(direction.X * 0.035f, Between(0.07f, 0.13f, random(piece, 5)), direction.Z * 0.035f);
                     p.drag = 0.985f;
                     p.gravity = 0.0085f;
-                    p.size = Between(0.18f, 0.3f, random(piece, 6));
-                    p.growth = -0.002f;
+                    p.size = Between(0.32f, 0.5f, random(piece, 6));
+                    p.growth = -0.003f;
                     p.life = static_cast<int>(Between(20.0f, 30.0f, random(piece, 7)));
                     break;
                 case ParticleKind::Sparkle:
@@ -198,6 +223,50 @@ namespace GalaxyEggbert::Game
                     p.size = Between(0.22f, 0.36f, random(piece, 6));
                     p.growth = -0.008f;
                     p.life = static_cast<int>(Between(16.0f, 26.0f, random(piece, 7)));
+                    break;
+                case ParticleKind::Dust:
+                    // Kicked up round his feet, spreading low and slowing, swelling as it thins.
+                    p.position = center + Vector3(direction.X * 0.25f, 0.05f, direction.Z * 0.25f);
+                    p.velocity = Vector3(direction.X * Between(0.018f, 0.04f, random(piece, 5)),
+                                         Between(0.006f, 0.02f, random(piece, 4)),
+                                         direction.Z * Between(0.018f, 0.04f, random(piece, 5)));
+                    p.drag = 0.9f;
+                    p.gravity = -0.0004f;
+                    p.size = Between(0.5f, 0.75f, random(piece, 6));
+                    p.growth = 0.012f;
+                    p.life = static_cast<int>(Between(18.0f, 30.0f, random(piece, 7)));
+                    break;
+                case ParticleKind::Bubble:
+                    // Rising faster as it goes, wobbling a little.
+                    p.position = center + Vector3(direction.X * 0.12f, 0.0f, direction.Z * 0.12f);
+                    p.velocity = Vector3(direction.X * 0.006f, Between(0.018f, 0.03f, random(piece, 5)), direction.Z * 0.006f);
+                    p.drag = 1.0f;
+                    p.gravity = -0.0006f;
+                    p.size = Between(0.5f, 0.75f, random(piece, 6));
+                    p.growth = 0.002f;
+                    p.spin = 0.0f;
+                    p.life = static_cast<int>(Between(40.0f, 60.0f, random(piece, 7)));
+                    break;
+                case ParticleKind::Ember:
+                    // Off the lava's top, rising and drifting, burning out.
+                    p.position = center + Vector3(Between(-0.45f, 0.45f, random(piece, 4)), 0.0f,
+                                                  Between(-0.45f, 0.45f, random(piece, 8)));
+                    p.velocity = Vector3(direction.X * 0.008f, Between(0.02f, 0.04f, random(piece, 5)), direction.Z * 0.008f);
+                    p.drag = 0.985f;
+                    p.gravity = -0.0002f;
+                    p.size = Between(0.45f, 0.65f, random(piece, 6));
+                    p.growth = -0.006f;
+                    p.life = static_cast<int>(Between(35.0f, 55.0f, random(piece, 7)));
+                    break;
+                case ParticleKind::Flash:
+                    // Stars thrown out every way, slowing, shrinking.
+                    p.position = center + direction * 0.1f;
+                    p.velocity = direction * Between(0.05f, 0.09f, random(piece, 5));
+                    p.drag = 0.9f;
+                    p.gravity = 0.0f;
+                    p.size = Between(0.6f, 0.9f, random(piece, 6));
+                    p.growth = -0.015f;
+                    p.life = static_cast<int>(Between(18.0f, 28.0f, random(piece, 7)));
                     break;
             }
             m_particles.push_back(p);

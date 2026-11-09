@@ -1225,6 +1225,12 @@ namespace GalaxyEggbert::CNA
         void AppendSceneEditorStarts(std::vector<GalaxyEggbert::Game::SceneModel>& models);
         void AppendSceneBillboards(GalaxyEggbert::Game::SceneFrame& frame);
         void AppendSceneEffects(GalaxyEggbert::Game::SceneFrame& frame);
+        void AppendSceneMoments();
+        // What AppendSceneMoments() saw last tick (landing, into the water, teleporting).
+        bool momentWasGround_ = true;
+        bool momentWasSwimming_ = false;
+        bool momentWasTeleporting_ = false;
+        int momentAirTicks_ = 0;
         GalaxyEggbert::Game::EffectParticles effectParticles_;
         GalaxyEggbert::Game::PostProcess postProcess_;
         bool worldIntoTarget_ = false; // the world is being drawn into postProcess_'s target
