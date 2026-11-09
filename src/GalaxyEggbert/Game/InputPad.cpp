@@ -204,12 +204,13 @@ namespace GalaxyEggbert::Game
             const Rect row = SetupAccelRect(m);
             return Rect{450.0f * m.s, row.y0, 450.0f * m.s + m.f2 * 0.5f, row.y1};
         }
-        // "Frame rate" (a Galaxy setting, 2026-11-09: 60, 120, 144, 240 frames a second), right of Erase
-        // progress on its row, as far right as its label leaves room for.
+        // "Frame rate" (a Galaxy setting, 2026-11-09: 60, 120, 144, 240 frames a second), in the
+        // Accelerometer row right of its label, where the sensitivity slider stands while the
+        // accelerometer is on (a phone's): it gives the slider its place then.
         Rect SetupFrameRateRect(const ScreenMetrics& m) noexcept
         {
-            const Rect row = SetupJumpRect(m);
-            const float x = std::max(620.0f * m.s, m.w - 180.0f * m.s);
+            const Rect row = SetupAccelRect(m);
+            const float x = 250.0f * m.s;
             return Rect{x, row.y0, x + m.f2 * 0.5f, row.y1};
         }
         // The volume sliders (a Galaxy addition, 2026-11-02): side by side in the Sounds row, right
@@ -1969,7 +1970,7 @@ namespace GalaxyEggbert::Game
         const bool overAccel = InRect(mouseX, mouseY, SetupAccelRect(m));
         const bool overTerrain = InRect(mouseX, mouseY, SetupTerrainRect(m));
         const bool overEffectsToggle = InRect(mouseX, mouseY, SetupEffectsRect(m));
-        const bool overFrameRate = InRect(mouseX, mouseY, SetupFrameRateRect(m));
+        const bool overFrameRate = !accelOn && InRect(mouseX, mouseY, SetupFrameRateRect(m));
         const bool overReset = showReset && InRect(mouseX, mouseY, SetupResetRect(m));
         const bool overReturn = InRect(mouseX, mouseY, SetupReturnRect(m));
         const bool overEffects = InRect(mouseX, mouseY, SetupSliderRect(0, m));
@@ -2141,8 +2142,11 @@ namespace GalaxyEggbert::Game
                          kSetupControlTerrain);
             appendButton(SetupEffectsRect(m), effectsLevel > 0 ? kIconSetupToggleOn : kIconSetupToggleOff,
                          kSetupControlEffects);
-            appendButton(SetupFrameRateRect(m), frameRate > 60 ? kIconSetupToggleOn : kIconSetupToggleOff,
-                         kSetupControlFrameRate);
+            if (!accel)
+            {
+                appendButton(SetupFrameRateRect(m), frameRate > 60 ? kIconSetupToggleOn : kIconSetupToggleOff,
+                             kSetupControlFrameRate);
+            }
             if (showReset)
             {
                 appendButton(SetupResetRect(m), kIconSetupReset, kSetupControlReset);
@@ -2191,7 +2195,10 @@ namespace GalaxyEggbert::Game
                 static const char* const kLevels[5] = {"Off", "Low", "Medium", "High", "Ultra"};
                 appendLabel(SetupEffectsRect(m),
                             std::string("3D effects\n") + kLevels[effectsLevel < 0 ? 0 : effectsLevel > 4 ? 4 : effectsLevel]);
-                appendLabel(SetupFrameRateRect(m), "Frame rate\n" + std::to_string(frameRate) + " fps");
+                if (!accel)
+                {
+                    appendLabel(SetupFrameRateRect(m), "Frame rate\n" + std::to_string(frameRate) + " fps");
+                }
             }
             if (showReset)
             {
