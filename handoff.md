@@ -40,6 +40,21 @@ with the release audit.
   `VerifyGEInputPad`; live `harness/case_demo_share.py` (`demo-share-sheet.png`: export of
   position 1, import of a recording from A's galaxy into position 7 with only B's galaxy holding
   that world, `--verify-demo` equal, 224 ticks).
+- xnjttjpo on the web: the shipped worlds there are the page's packed data, in memory, so a save
+  in the xnjttjpo session is also copied into `/save/customworlds/campaign-edits/` (the editor's
+  `BeginOutsideSession(backupDir, keepCopyIn)`, given only under `__EMSCRIPTEN__` for a campaign
+  world) and `main.cpp` lays those copies over `worlds3d/` before anything loads
+  (`ApplyCampaignEdits()`, worldNNN.vwr names only). The desktop is unchanged (it edits the files
+  themselves). No undo button on the web (the backups are in `/save/customworlds/campaign-backups/`).
+  Tests `VerifyGEWorldEditor`, `VerifyGEEditorStorage`.
+- Web runtime of all of it (`harness/web_share.py`, the rebuilt `build-cna-webgl2`): the desktop's
+  `A-galaxy.galaxy` imported through the file picker (CDP `Page.setInterceptFileChooserDialog`,
+  `DOM.setFileInputFiles`), played, and exported again as a download byte for byte equal; the
+  desktop's galaxy recording imported into position 7 ("plays ... now": its world found under the
+  web's `/save/...` path) and exported again equal; xnjttjpo + Right + Enter changed
+  `worlds3d/world001.vwr` and kept the copy, and after a page reload the edited world was laid over
+  the shipped one again ("1 shipped world(s) as edited with xnjttjpo"), the imported demo still
+  there; no exception. 117/117 CTest, golden frames equal.
 
 ## Galaxy: delete and Continue, web runtime (2026-11-09, BD-0119) — verified on desktop and web
 

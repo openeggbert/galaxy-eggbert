@@ -695,6 +695,13 @@ namespace GalaxyEggbert::Editor
             backedUpPath_ = worldPath_;
         }
         world.saveToFile(worldPath_);
+        if (outsideSession_ && !outsideCopyDir_.empty())
+        {
+            std::error_code error;
+            std::filesystem::create_directories(outsideCopyDir_, error);
+            std::filesystem::copy_file(worldPath_, outsideCopyDir_ / worldPath_.filename(),
+                                       std::filesystem::copy_options::overwrite_existing, error);
+        }
         if (!outsideSession_)
         {
             thumbnailRequest_ = ThumbnailPath(worldPath_);

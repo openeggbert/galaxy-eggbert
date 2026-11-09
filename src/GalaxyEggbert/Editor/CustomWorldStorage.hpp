@@ -79,6 +79,15 @@ namespace GalaxyEggbert::Editor
     // before the edits of each visit, as a slot's backups (the shipped folder stays clean).
     [[nodiscard]] std::filesystem::path CampaignBackupsDir();
 
+    // Where the web build keeps the shipped worlds edited with xnjttjpo (2026-11-09): there the
+    // shipped worlds are the page's packed data, in memory, so a save of one is also copied here
+    // (in the browser's storage), and ApplyCampaignEdits() lays the copies over the shipped worlds
+    // at every start. The desktop edits its worlds3d/ files themselves and keeps nothing here.
+    [[nodiscard]] std::filesystem::path CampaignEditsDir();
+    // Copies every worldNNN.vwr of CampaignEditsDir() over @p worldsDir's file of that name; how
+    // many it copied.
+    int ApplyCampaignEdits(const std::filesystem::path& worldsDir);
+
     // Restores the newest backup of @p world: it takes the world's place, the older ones move up a
     // generation and the world as it was becomes the oldest -- so restoring again steps further
     // back and comes round to where it began; nothing is lost. A deleted slot (no world) takes its

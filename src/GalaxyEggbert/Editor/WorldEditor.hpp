@@ -155,8 +155,10 @@ namespace GalaxyEggbert::Editor
         // campaign or galaxy mission being played). Its Stop does not open the browser: it raises
         // ConsumeLeaveRequested() for the caller, which goes back to the mission. Saves back the
         // file up into @p backupDir (empty: beside it, as the browser's worlds) and take no
-        // thumbnail (a shipped world's folder holds none). EndOutsideSession() ends it.
-        void BeginOutsideSession(std::filesystem::path backupDir);
+        // thumbnail (a shipped world's folder holds none). Each save is also copied into
+        // @p keepCopyIn when it is given (the web build's CampaignEditsDir()). EndOutsideSession()
+        // ends it.
+        void BeginOutsideSession(std::filesystem::path backupDir, std::filesystem::path keepCopyIn = {});
         void EndOutsideSession() noexcept;
         [[nodiscard]] bool InOutsideSession() const noexcept { return outsideSession_; }
         [[nodiscard]] bool ConsumeLeaveRequested() noexcept { return std::exchange(leaveRequested_, false); }
@@ -488,5 +490,6 @@ namespace GalaxyEggbert::Editor
         bool outsideSession_ = false;
         bool leaveRequested_ = false;
         std::filesystem::path outsideBackupDir_;
+        std::filesystem::path outsideCopyDir_; // each save copied there too (BeginOutsideSession)
     };
 }

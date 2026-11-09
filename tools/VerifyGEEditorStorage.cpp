@@ -667,6 +667,29 @@ int main()
               "galaxy: restoring a place without a backup only says so");
     }
 
+    // The web's xnjttjpo edits: copies in CampaignEditsDir() laid over the shipped worlds at start.
+    {
+        const std::filesystem::path worlds = "verify_campaign_edits_worlds";
+        std::filesystem::remove_all(worlds, error);
+        std::filesystem::remove_all(CampaignEditsDir(), error);
+        std::filesystem::create_directories(worlds, error);
+        std::filesystem::create_directories(CampaignEditsDir(), error);
+        CreateGalaxyStarterWorld(1).saveToFile(worlds / "world011.vwr");
+        CreateGalaxyStarterWorld(10).saveToFile(worlds / "world012.vwr");
+        CreateGalaxyStarterWorld(72).saveToFile(CampaignEditsDir() / "world011.vwr");
+        CreateGalaxyStarterWorld(72).saveToFile(CampaignEditsDir() / "world11.vwr");
+        CreateGalaxyStarterWorld(72).saveToFile(CampaignEditsDir() / "title.vwr");
+        const bool intoMissing = ApplyCampaignEdits("verify_no_such_folder") == 0; // nowhere to copy to
+        const int applied = ApplyCampaignEdits(worlds);
+        check(CampaignEditsDir() == CustomWorldsRoot() / "campaign-edits" && applied == 1 &&
+                  World::loadFromFile(worlds / "world011.vwr").missionNumber() == 72 &&
+                  World::loadFromFile(worlds / "world012.vwr").missionNumber() == 10 &&
+                  !std::filesystem::exists(worlds / "world11.vwr") && !std::filesystem::exists(worlds / "title.vwr") && intoMissing,
+              "xnjttjpo on the web: the kept edits (worldNNN.vwr only) are laid over the shipped worlds");
+        std::filesystem::remove_all(worlds, error);
+        std::filesystem::remove_all(CampaignEditsDir(), error);
+    }
+
     // A whole galaxy in one file: packed, damaged, exported, imported over another gamer's galaxy.
     {
         std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);

@@ -1025,7 +1025,7 @@ int main()
         original.saveToFile(shipped);
         World world = World::loadFromFile(shipped);
         WorldEditor editor;
-        editor.BeginOutsideSession(dir / "backups");
+        editor.BeginOutsideSession(dir / "backups", dir / "edits"); // the web's copy (CampaignEditsDir())
         editor.SetWorldPath(shipped);
         editor.EnterEditing(0.0f, 10.0f, 0.0f);
         CnaEngine::Graphics::Camera camera;
@@ -1044,6 +1044,9 @@ int main()
                   editor.ConsumeThumbnailRequest().empty() && !fs::exists(dir / "shipped" / "world042.png"),
               "xnjttjpo: Enter saves the shipped file in place, its first version backed up in the player's "
               "folder, no thumbnail beside it");
+        check(fs::exists(dir / "edits" / "world042.vwr") &&
+                  World::loadFromFile(dir / "edits" / "world042.vwr").skyRegion() == world.skyRegion(),
+              "xnjttjpo on the web: each save is also copied where the browser keeps it");
         clickStop(editor, world, camera);
         check(editor.ConsumeLeaveRequested() && !editor.IsBrowsing(), "xnjttjpo: after the save, Stop goes back");
         editor.EndOutsideSession();

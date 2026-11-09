@@ -262,11 +262,12 @@ namespace GalaxyEggbert::Editor
         return result;
     }
 
-    void WorldEditor::BeginOutsideSession(std::filesystem::path backupDir)
+    void WorldEditor::BeginOutsideSession(std::filesystem::path backupDir, std::filesystem::path keepCopyIn)
     {
         outsideSession_ = true;
         leaveRequested_ = false;
         outsideBackupDir_ = std::move(backupDir);
+        outsideCopyDir_ = std::move(keepCopyIn);
         backedUpPath_.clear(); // its first save keeps the world as it was
     }
 
@@ -275,6 +276,7 @@ namespace GalaxyEggbert::Editor
         outsideSession_ = false;
         leaveRequested_ = false;
         outsideBackupDir_.clear();
+        outsideCopyDir_.clear();
         backedUpPath_.clear();
     }
 

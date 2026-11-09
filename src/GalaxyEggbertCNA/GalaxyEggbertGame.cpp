@@ -3247,8 +3247,15 @@ namespace GalaxyEggbert::CNA
         editorMissionLives_ = interaction_.Lives();
         // As XMISSION wrote data\worldNNN.blp: the shipped file itself, its backups in the player's
         // folder (a galaxy world's beside it, as the editor's).
+        // On the web the shipped worlds are the page's data, in memory: a save is kept in the browser's
+        // storage too and laid over them at the next start (main.cpp, ApplyCampaignEdits()).
+        std::filesystem::path keepCopy;
+#if defined(__EMSCRIPTEN__)
+        if (galaxyGamer_ < 0) keepCopy = GalaxyEggbert::Editor::CampaignEditsDir();
+#endif
         worldEditor_.BeginOutsideSession(galaxyGamer_ >= 0 ? std::filesystem::path{}
-                                                           : GalaxyEggbert::Editor::CampaignBackupsDir());
+                                                           : GalaxyEggbert::Editor::CampaignBackupsDir(),
+                                         keepCopy);
         LoadCustomWorldForEditing(path);
         SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
         std::cout << "GalaxyEggbertCNA: xnjttjpo: editing mission " << mission << " (" << path.generic_string()

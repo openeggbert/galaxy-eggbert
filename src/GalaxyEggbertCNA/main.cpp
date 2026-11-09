@@ -1,5 +1,7 @@
 #include "GalaxyEggbertGame.hpp"
 
+#include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
+
 // On Android the Java side starts the game through SDL_main: CNA's entry point header renames
 // main() to it (empty on the other platforms).
 #include <CNA/Platform/Entrypoint.hpp>
@@ -50,6 +52,13 @@ int RunGame(int argc, char** argv)
     {
         return 1;
     }
+#endif
+#if defined(__EMSCRIPTEN__)
+    // The shipped worlds edited with xnjttjpo (BD-0118), kept in the browser's storage: over the
+    // page's packed ones before anything loads a world.
+    if (const int edits = GalaxyEggbert::Editor::ApplyCampaignEdits("worlds3d"); edits > 0)
+        std::cout << "GalaxyEggbertCNA: " << edits << " shipped world(s) as edited with xnjttjpo ("
+                  << GalaxyEggbert::Editor::CampaignEditsDir().generic_string() << ")." << std::endl;
 #endif
     auto* game = new GalaxyEggbert::CNA::GalaxyEggbertGame();
     // Main-menu demos (DemoReplay.hpp): `--record-demo <file>` with `--mission N` (optionally

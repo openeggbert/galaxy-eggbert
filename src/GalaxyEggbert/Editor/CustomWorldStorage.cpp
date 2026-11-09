@@ -172,6 +172,28 @@ namespace GalaxyEggbert::Editor
         return CustomWorldsRoot() / "campaign-backups";
     }
 
+    std::filesystem::path CampaignEditsDir()
+    {
+        return CustomWorldsRoot() / "campaign-edits";
+    }
+
+    int ApplyCampaignEdits(const std::filesystem::path& worldsDir)
+    {
+        int copied = 0;
+        std::error_code ec;
+        for (const auto& entry : std::filesystem::directory_iterator(CampaignEditsDir(), ec))
+        {
+            const std::string name = entry.path().filename().string();
+            const bool world = name.size() == 12 && name.rfind("world", 0) == 0 &&
+                               name.compare(8, 4, ".vwr") == 0 &&
+                               std::all_of(name.begin() + 5, name.begin() + 8, [](char c) { return c >= '0' && c <= '9'; });
+            if (!world || !entry.is_regular_file(ec)) continue;
+            if (std::filesystem::copy_file(entry.path(), worldsDir / name, std::filesystem::copy_options::overwrite_existing, ec))
+                ++copied;
+        }
+        return copied;
+    }
+
     bool RestoreBackup(const std::filesystem::path& world)
     {
         const int count = BackupCount(world);
