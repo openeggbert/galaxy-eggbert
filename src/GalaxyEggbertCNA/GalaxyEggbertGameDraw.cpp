@@ -93,9 +93,44 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    std::vector<std::string> GalaxyEggbertGame::ActiveCheatNames() const
+    {
+        // The cheats' names as listed; the "fps" cheat's with its reading.
+        std::vector<std::string> names = activeCheats_;
+        for (auto& name : names)
+        {
+            if (name == "fps")
+            {
+                char text[32];
+                if (fpsShown_ > 0.0f)
+                    std::snprintf(text, sizeof(text), "fps %.0f", static_cast<double>(fpsShown_));
+                else
+                    std::snprintf(text, sizeof(text), "fps --"); // before its first half second
+                name = text;
+            }
+        }
+        return names;
+    }
+
     void GalaxyEggbertGame::DrawFrame()
     {
         auto& device = getGraphicsDeviceProperty();
+        // The frames drawn a second, for the "fps" cheat: counted always (cheap), read every half second.
+        {
+            const auto now = std::chrono::steady_clock::now();
+            if (fpsFrames_ == 0 && fpsSince_ == std::chrono::steady_clock::time_point{})
+            {
+                fpsSince_ = now;
+            }
+            ++fpsFrames_;
+            const float elapsed = std::chrono::duration<float>(now - fpsSince_).count();
+            if (elapsed >= 0.5f)
+            {
+                fpsShown_ = static_cast<float>(fpsFrames_) / elapsed;
+                fpsFrames_ = 0;
+                fpsSince_ = now;
+            }
+        }
         // Root-caused 2026-07-13 (NEXT.md §5's "screenshot_hud.png blue-
         // background anomaly", Vulkan-only): calling GetBackBufferData()
         // mid-frame -- as the terrain-visibility diagnostic below does --
@@ -564,7 +599,8 @@ namespace GalaxyEggbert::CNA
                 {
                     // Speedy Blupi shows TX_DEMOPLAY ("Demo") top left while a demo plays.
                     std::vector<std::string> names{"Demo"};
-                    names.insert(names.end(), activeCheats_.begin(), activeCheats_.end());
+                    const auto cheats = ActiveCheatNames();
+                    names.insert(names.end(), cheats.begin(), cheats.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
                 }
                 else
@@ -575,7 +611,8 @@ namespace GalaxyEggbert::CNA
                     if (demoRecording_ && demoRecordSlot_ > 0) names.push_back("REC");
                     const bool noticeApart = demoNoticeSeconds_ > 0.0f && trainingHintShown;
                     if (demoNoticeSeconds_ > 0.0f && !noticeApart) names.push_back(demoNotice_);
-                    names.insert(names.end(), activeCheats_.begin(), activeCheats_.end());
+                    const auto cheats = ActiveCheatNames();
+                    names.insert(names.end(), cheats.begin(), cheats.end());
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
                     if (noticeApart)
                     {

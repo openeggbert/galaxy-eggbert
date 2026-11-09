@@ -2410,6 +2410,7 @@ namespace GalaxyEggbert::Game
             {"compass", TypedCheat::Compass, "Toggle distance + turn/height arrows"},
             {"fairplay", TypedCheat::FairPlay, "Toggle cheat lock; clear active toggles"},
             {"debug", TypedCheat::Debug, "Toggle runtime diagnostics panel"},
+            {"fps", TypedCheat::Fps, "Show or hide the frames per second"},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));

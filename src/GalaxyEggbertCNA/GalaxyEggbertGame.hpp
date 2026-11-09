@@ -725,6 +725,13 @@ namespace GalaxyEggbert::CNA
         int cheatZoomStep_ = 0;
         bool cheatCompass_ = false;
         bool cheatDebug_ = false;
+        // The "fps" cheat: the frames drawn a second (measured over half a second at a time), shown
+        // as its entry in the cheats' list ("fps 60").
+        bool cheatFps_ = false;
+        int fpsFrames_ = 0;
+        std::chrono::steady_clock::time_point fpsSince_{};
+        float fpsShown_ = 0.0f;
+        [[nodiscard]] std::vector<std::string> ActiveCheatNames() const;
         std::array<float, 3> debugVelocity_{};
         // The autoplay's `switches` / `saws` conditions: the switches pressed in this mission and the
         // saws 378 turning now (-1: not counted yet; counted again after each press).

@@ -966,7 +966,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 30;
+        bool all = count == 31;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -975,7 +975,7 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 30 words including debug/fairplay/compass/help/cheats/xnjttjpo fire and have an explanation");
+        check(all, "Typed cheats: all 31 words including debug/fairplay/compass/help/cheats/xnjttjpo/fps fire and have an explanation");
         {
             InputPad xpad;
             check(type(xpad, "xnjttjpo").first == TC::XMission && type(xpad, "xmission").first == TC::None,

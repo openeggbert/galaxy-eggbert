@@ -1362,6 +1362,9 @@ namespace GalaxyEggbert::CNA
             case TC::Debug:
                 cheatDebug_ = !cheatDebug_;
                 break;
+            case TC::Fps:
+                cheatFps_ = !cheatFps_;
+                break;
             case TC::XMission:
                 // Speedy Blupi's XMISSION (BD-0118): the editor on this world, after this tick. Not in
                 // a replay (a demo, a resume reconstruction), a recording or a play-test.
@@ -1376,7 +1379,7 @@ namespace GalaxyEggbert::CNA
                 if (locked)
                 {
                     blupi_.DisablePersistentCheats(worldRuntime_.GetWorld());
-                    cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = quickCheatEnabled_ = false;
+                    cheatDoors_ = cheatShowSecret_ = cheatCompass_ = cheatDebug_ = cheatFps_ = quickCheatEnabled_ = false;
                     cheatZoomStep_ = 0;
                     if (gameSpeed_ > GalaxyEggbert::Def::GameSpeed::Fast)
                         gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;

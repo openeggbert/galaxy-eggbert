@@ -567,6 +567,7 @@ namespace GalaxyEggbert::Game
             // the first one more), editing the official worlds; here the 3D editor on the world
             // being played (BD-0118). Not in Mobile Eggbert, which has no editor.
             XMission,
+            Fps,          // "fps" (MODERN): show or hide the frames drawn a second, in the cheats' list
         };
         struct TypedCheatResult
         {
