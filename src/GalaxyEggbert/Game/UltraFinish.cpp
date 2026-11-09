@@ -223,7 +223,7 @@ void main()
 }
 )";
 
-        // The air (half the size): along each pixel's view, to what it shows (50 blocks into the sky), 20
+        // The air (half the size): along each pixel's view, to what it shows (none over the sky), 20
         // steps through a height fog (thicker below Blupi's level, thinning above it); at each the sun's
         // light where the shadow map lets it through (god rays: Henyey-Greenstein, forward), the sky's haze
         // everywhere. rgb the light scattered toward the eye (linear), a what is left of the scene behind.
@@ -262,7 +262,8 @@ void main()
     ivec2 at = clamp(ivec2(gl_FragCoord.xy * 2.0), ivec2(0), full - 1);
     vec2 uv = (vec2(at) + 1.0) / vec2(full);
     float depth = texelFetch(uTexture, at, 0).b;
-    if (depth <= 0.0) depth = 50.0; // the sky: its picture stands far off, but half that much air over it
+    // The sky: its picture is painted with its own air (a night sky turned white under ours).
+    if (depth <= 0.0) { FragColor = vec4(0.0, 0.0, 0.0, 1.0); return; }
     vec3 eye = (uInvView * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     vec3 end = (uInvView * vec4(ViewAt(uv, min(depth, 100.0)), 1.0)).xyz;
     vec3 ray = end - eye;
@@ -909,8 +910,11 @@ void main()
             setMatrix(fog, "uLightNear", sun.nearViewProjection);
             setMatrix(fog, "uLightFar", sun.farViewProjection);
             fog.SetUniformVec3("uSunDir", sun.direction.X, sun.direction.Y, sun.direction.Z);
-            fog.SetUniformVec3("uSunColor", kUltraSun * 1.0f, kUltraSun * 0.95f, kUltraSun * 0.85f);
+            // The sun's light in the air as bright as the world's sky is (a night world's air holds
+            // almost none of it).
             const auto& haze = frame.effects.fogColor;
+            const float daylight = std::clamp((0.2126f * haze.X + 0.7152f * haze.Y + 0.0722f * haze.Z) * 2.0f, 0.1f, 1.0f);
+            fog.SetUniformVec3("uSunColor", kUltraSun * daylight, kUltraSun * 0.95f * daylight, kUltraSun * 0.85f * daylight);
             fog.SetUniformVec3("uFogColor", std::pow(haze.X, 2.2f), std::pow(haze.Y, 2.2f), std::pow(haze.Z, 2.2f));
             const bool shadowed = sun.shadowed && sun.shadowNear != nullptr && sun.shadowFar != nullptr;
             // A thin haze, thicker below Blupi's level (three blocks under his camera's target).
