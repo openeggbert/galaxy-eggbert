@@ -51,10 +51,17 @@ Setup's frame rate (60/120/144/240: a 60 Hz tick gate, camera and Blupi interpol
 60; never in captures, demo verification or resume replay). `391194ae` UB-010 marked fixed.
 
 - Checked: web music plays in mission 11 on today's web build (audio output peak 0.42-0.49 in
-  headless Chrome); the hub has no music in the original either (world001 `music=0`). world054's
-  autoplay fails at its line 97 with or without the teleporter change (pre-existing, not chased).
-- Open: Ultra not run on Android/web; the editor's red overlay under Ultra's smoother models can sit
-  inside them; the frame rate interpolates only the camera and Blupi.
+  headless Chrome); the owner's site lacked `Content/music/` (solved there). The hub has no music in
+  the original either (world001 `music=0`).
+- Later the same day: `e2525543` Ultra's fog leaves the sky picture alone (a night sky went white);
+  `fcc1a627` Tab steps 0.5/0.25/0.125/1 (`GameSpeed::SuperSlow`/`UltraSlow`, `IsBeyondFast`);
+  `87078cf2` world054's playthrough round the machine room's column (solid since BD-0080, b19db064;
+  world054 and world050 pass); `ccd7906c` above 60 fps every moving object interpolated too (snapshot
+  per step, skipped on a jump over two blocks or another object); `c2a243b6` the atlas maps on up to
+  eight threads (1.0 s, was 1.8-2.9) and the editor's red over the smoother models. Ultra checked in
+  WebGL 2 (headless Chrome): every shader compiles, the maps take 4.1 s there. Loading 105 at Ultra
+  takes 0.45 s more than at High (GI bake and programs).
+- Open: Ultra not run on Android; the camera lag stays as it is (the owner's decision).
 
 ## 3D effects, third round; UpdateTick split (2026-11-09) — verified desktop and web
 
