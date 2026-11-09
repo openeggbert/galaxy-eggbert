@@ -568,6 +568,7 @@ namespace GalaxyEggbert::Game
             // being played (BD-0118). Not in Mobile Eggbert, which has no editor.
             XMission,
             Fps,          // "fps" (MODERN): show or hide the frames drawn a second, in the cheats' list
+            Position,     // "position" (MODERN): show or hide Blupi's place in the world (x= y= z=), in the list
         };
         struct TypedCheatResult
         {

@@ -2411,6 +2411,7 @@ namespace GalaxyEggbert::Game
             {"fairplay", TypedCheat::FairPlay, "Toggle cheat lock; clear active toggles"},
             {"debug", TypedCheat::Debug, "Toggle runtime diagnostics panel"},
             {"fps", TypedCheat::Fps, "Show or hide the frames per second"},
+            {"position", TypedCheat::Position, "Show or hide Blupi's position (x y z)"},
             {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));

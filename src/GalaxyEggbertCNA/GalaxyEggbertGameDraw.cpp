@@ -95,7 +95,8 @@ namespace GalaxyEggbert::CNA
 
     std::vector<std::string> GalaxyEggbertGame::ActiveCheatNames() const
     {
-        // The cheats' names as listed; the "fps" cheat's with its reading.
+        // The cheats' names as listed; the "fps" cheat's with its reading, the "position" cheat's with
+        // Blupi's place (the editor's cells: x and z from the world's corner, y up).
         std::vector<std::string> names = activeCheats_;
         for (auto& name : names)
         {
@@ -106,6 +107,15 @@ namespace GalaxyEggbert::CNA
                     std::snprintf(text, sizeof(text), "fps %.0f", static_cast<double>(fpsShown_));
                 else
                     std::snprintf(text, sizeof(text), "fps --"); // before its first half second
+                name = text;
+            }
+            else if (name == "position")
+            {
+                char text[64];
+                std::snprintf(text, sizeof(text), "x=%.1f y=%.1f z=%.1f",
+                              static_cast<double>(blupi_.GetX() + GalaxyEggbert::Game::WorldRuntime::kWorldCenterX),
+                              static_cast<double>(blupi_.GetY()),
+                              static_cast<double>(blupi_.GetZ() + GalaxyEggbert::Game::WorldRuntime::kWorldCenterZ));
                 name = text;
             }
         }

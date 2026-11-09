@@ -3219,6 +3219,7 @@ namespace GalaxyEggbert::CNA
                     case TC::Compass: toggle("compass"); break;
                     case TC::Debug: toggle("debug"); break;
                     case TC::Fps: toggle("fps"); break;
+                    case TC::Position: toggle("position"); break;
                     case TC::Zoom:
                     {
                         // Listed with its step (the view's size as Mobile Eggbert's 100/50/25/12 %).
