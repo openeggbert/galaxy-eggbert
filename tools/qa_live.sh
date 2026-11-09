@@ -24,6 +24,7 @@
 #   mousedown <x> <y> / mouseup   hold the left button at window coordinates / let it go
 #   move <x> <y>             move the mouse to window coordinates
 #   focus                    give the game window the keyboard focus again
+#   type <word>              type the word's letters (xdotool type: a typed cheat)
 #   resize <w> <h>           resize the game window (QA_LIVE_SCREEN=<w>x<h> enlarges the display,
 #                            default 1280x720)
 set -u
@@ -97,6 +98,7 @@ while read -r cmd a b; do
         mouseup) xdotool mouseup 1 ;;
         focus) xdotool windowfocus "$wid" 2>/dev/null ;;
         resize) xdotool windowsize "$wid" "$a" "$b" 2>/dev/null ;;
+        type) xdotool type --delay 150 "$a" ;;
         "#"*|"") ;;
         *) echo "qa_live.sh: unknown step '$cmd'" >&2 ;;
     esac
