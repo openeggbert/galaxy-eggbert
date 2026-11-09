@@ -265,3 +265,20 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   Color test lost levels1-3, while the fixed full15 shader-lifecycle cases pass. A native Galaxy
   F9 capture also retains distant floor detail. Evidence: build-probe/ub009/. The initial analysis
   respected the earlier no-fix instruction; this later authorization superseded it.
+
+## UB-010 — CNA working tree: GraphicsDevice's sampler collections bind before `untrackedResourceIdentities_` exists
+
+- **Found:** 2026-11-08 22:25, building Galaxy against the live CNA working tree (HEAD `1d0f89a20`
+  plus uncommitted edits of 22:19 to `GraphicsDevice.hpp/.cpp` and `GraphicsResource.hpp/.cpp`,
+  being made by another session). Read-only inspection; CNA was not modified.
+- **Symptom:** every Galaxy start segfaults in the `Game` constructor: `GraphicsDevice::GraphicsDevice`
+  -> `SamplerStateCollection::SamplerStateCollection` ->
+  `GraphicsResource::BindSharedResourceIdentityToDevice` (gdb backtrace).
+- **Cause:** the new code in `BindSharedResourceIdentityToDevice` (GraphicsResource.cpp, ~line 565)
+  pushes into `device->untrackedResourceIdentities_`, but that member is declared at
+  `GraphicsDevice.hpp:2002`, after `samplerStates_` (1989) and `vertexSamplerStates_` (1991). The
+  sampler collections are constructed first and bind their states to the device while the vector is
+  not yet constructed.
+- **Galaxy impact:** none in the code; any build made while this edit is in the tree cannot start.
+  Galaxy waited for the working tree to change and built again (no workaround in Galaxy).
+- **Status:** uncommitted work in progress when found; recheck once the CNA session commits.

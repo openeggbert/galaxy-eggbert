@@ -166,6 +166,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/Autoplay.cpp
         src/GalaxyEggbert/Game/ResumeLog.cpp
+        src/GalaxyEggbert/Game/DemoReplay.cpp
         src/GalaxyEggbert/Game/SaveData.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
@@ -184,6 +185,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/EditorPaletteRenderer.cpp
         src/GalaxyEggbert/Editor/CustomWorldStorage.cpp
         src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp
+        src/GalaxyEggbert/Editor/GalaxyBrowserScreen.cpp
         ${GE_SHARED_SOURCES}
     )
 
@@ -342,7 +344,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
             "SHELL:--shell-file ${CMAKE_CURRENT_SOURCE_DIR}/cmake/web/shell-cna.html"
         )
 
-        foreach(_content_dir Content/icons Content/backgrounds Content/sounds)
+        foreach(_content_dir Content/icons Content/backgrounds Content/sounds Content/demos)
             if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_content_dir}")
                 target_link_options(GalaxyEggbertCNA PRIVATE
                     "SHELL:--preload-file ${CMAKE_CURRENT_SOURCE_DIR}/${_content_dir}@/${_content_dir}")
@@ -471,6 +473,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/EditorPaletteRenderer.cpp
         src/GalaxyEggbert/Editor/CustomWorldStorage.cpp
         src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp
+        src/GalaxyEggbert/Editor/GalaxyBrowserScreen.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp
@@ -694,6 +697,24 @@ target_include_directories(VerifyAutoplay PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+# The main menu's demos (DemoReplay.hpp): their file format and compatibility checks, the idle timer,
+# the input that stops a demo, and the order they play in; engine-independent. The shipped demos
+# themselves are checked by the VerifyDemoFiles test below (and replayed by tools/verify_demos.sh).
+add_executable(VerifyDemoReplay
+        tools/VerifyDemoReplay.cpp
+        src/GalaxyEggbert/Game/DemoReplay.cpp
+        src/GalaxyEggbert/Game/ResumeLog.cpp
+)
+
+target_include_directories(VerifyDemoReplay PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+if(EMSCRIPTEN)
+    # --shipped reads Content/demos/ and worlds3d/ from the real file system under Node.
+    target_link_options(VerifyDemoReplay PRIVATE -sNODERAWFS=1)
+endif()
+
 # INFRA-003 (plan.md §7): ObjectIcons.hpp/.cpp is engine-agnostic (only
 # depends on Def/ObjectType.hpp, see GenerateSampleWorld3D's own comment
 # above) -- a data-integrity regression test for its 34 historical "Fixed"
@@ -914,6 +935,19 @@ if(BUILD_TESTING)
     # function of a BlockTypes icon id (plan.md TEST-007).
     add_test(NAME VerifyTerrainAnimDivisor COMMAND VerifyTerrainAnimDivisor)
     add_test(NAME VerifyAutoplay COMMAND VerifyAutoplay)
+    add_test(NAME VerifyDemoReplay COMMAND VerifyDemoReplay)
+    # Every shipped demo parses with the current simulation revision and matches its world's bytes.
+    add_test(NAME VerifyDemoFiles COMMAND VerifyDemoReplay --shipped
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+    # The shipped demos replayed by the game itself under Xvfb (tools/verify_demos.sh): a simulation
+    # change that makes one replay differently fails here; then bump kDemoSimulationRevision and
+    # record the demos again (handoff.md, "Main-menu demos"). Runs from the build directory's own
+    # verify-demos/, with stand-in player files it checks are left untouched.
+    find_program(GE_XVFB_RUN xvfb-run)
+    if(GE_XVFB_RUN AND TARGET GalaxyEggbertCNA AND NOT EMSCRIPTEN AND NOT ANDROID AND NOT WIN32)
+        add_test(NAME VerifyDemoReplays COMMAND ${CMAKE_SOURCE_DIR}/tools/verify_demos.sh ${CMAKE_BINARY_DIR})
+        set_tests_properties(VerifyDemoReplays PROPERTIES ENVIRONMENT "DEMO_RUN=${CMAKE_BINARY_DIR}/verify-demos")
+    endif()
     # No file/working-directory dependency -- tileUV() is a pure header-only
     # function of a BlockTypes icon id (plan.md TEST-004).
     add_test(NAME VerifyTileUvBounds COMMAND VerifyTileUvBounds)

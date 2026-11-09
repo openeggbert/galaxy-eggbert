@@ -6,6 +6,7 @@
 #include "Clipboard.hpp"
 #include "EditCommandStack.hpp"
 #include "EditorBrowserScreen.hpp"
+#include "GalaxyBrowserScreen.hpp"
 #include "EditorHighlightRenderer.hpp"
 #include "EditorPalette.hpp"
 #include "ObjectPathRenderer.hpp"
@@ -79,6 +80,10 @@ namespace GalaxyEggbert::Editor
         void EnterBrowser(int gamerSlot);
 
         [[nodiscard]] bool IsBrowsing() const noexcept { return browsing_; }
+        // The browser on the gamer's galaxy (the menu's Galaxy button before it has a main hub).
+        void ShowGalaxy();
+        [[nodiscard]] bool ShowsGalaxy() const noexcept { return galaxyView_; }
+        void ShowSlots() noexcept { galaxyView_ = false; }
 
         struct EditTarget
         {
@@ -107,6 +112,8 @@ namespace GalaxyEggbert::Editor
             std::filesystem::path openPath; // valid when shouldOpen
             bool shouldCreateNew = false;    // a new world in the empty slot createPath
             std::filesystem::path createPath;
+            // A galaxy world (BD-0119): its mission, for CreateGalaxyStarterWorld(); 0 a slot's.
+            int galaxyMission = 0;
             bool shouldReturnToMenu = false;
         };
 
@@ -141,6 +148,16 @@ namespace GalaxyEggbert::Editor
         // Consumes the request raised by the dice button after it saves -- once the save's thumbnail
         // was taken (a frame later), so that it shows the world, not the play-test.
         [[nodiscard]] bool ConsumePlayTestRequested() noexcept;
+
+        // A session on a world opened from outside the browser (the xnjttjpo cheat, BD-0118: a
+        // campaign or galaxy mission being played). Its Stop does not open the browser: it raises
+        // ConsumeLeaveRequested() for the caller, which goes back to the mission. Saves back the
+        // file up into @p backupDir (empty: beside it, as the browser's worlds) and take no
+        // thumbnail (a shipped world's folder holds none). EndOutsideSession() ends it.
+        void BeginOutsideSession(std::filesystem::path backupDir);
+        void EndOutsideSession() noexcept;
+        [[nodiscard]] bool InOutsideSession() const noexcept { return outsideSession_; }
+        [[nodiscard]] bool ConsumeLeaveRequested() noexcept { return std::exchange(leaveRequested_, false); }
 
         // The thumbnail a save asks for (ED-0013): the file the caller writes the editor's view to
         // after drawing this frame (CustomWorldStorage ThumbnailPath), once; empty when none.
@@ -464,5 +481,10 @@ namespace GalaxyEggbert::Editor
         bool browsing_ = true;
         int gamerSlot_ = 0;
         EditorBrowserScreen browserScreen_;
+        GalaxyBrowserScreen galaxyScreen_;
+        bool galaxyView_ = false; // the browser shows the galaxy (it opens there again after a visit)
+        bool outsideSession_ = false;
+        bool leaveRequested_ = false;
+        std::filesystem::path outsideBackupDir_;
     };
 }

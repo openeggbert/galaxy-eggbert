@@ -1640,6 +1640,85 @@ before (z37.91) and stops at the model after (z46.91); the screenshot matches th
 Rebuilt native targets and113/113 CTest pass. Complete world199, which uses these forms in its
 court and cave, still reaches Win and passes40259ticks. Evidence: build-probe/green-decor/.
 
+## BD-0119 — Each player's own galaxy (owner request) — FIXED_AND_VERIFIED
+
+Owner (2026-11-08): each of the three players builds a world system of their own, a main hub, sub
+hubs and worlds; the name was left open ("Space, or something else"): **Galaxy**. The reference is
+Speedy Blupi's private worlds (Construction, per gamer: `m_bPrivate`, blupi_recon
+`src/event.cpp:1968-2001`), here as a whole campaign. A gamer's galaxy is
+`customworlds/gamerN/galaxy/world%03d.vwr` with the campaign's numbering: main hub 1, world hubs
+10-140 (the main hub's world signs 1-14), their missions 1-8, the bonus world 199
+(`CustomWorldStorage.hpp`). It is played with the campaign's own rules (signs, doors, gold bars,
+golden key, win/back formulas); its progress is a second GamerSlot per gamer in SaveData
+(`galaxyN.*`, written only once used), so the campaign's is untouched. Galaxy's own: the menu's
+Galaxy button (left of Demo; the editor's galaxy screen while there is no main hub), the editor's
+galaxy screen (world screen's Galaxy button), starters with their signs, main-hub sign 13 being
+world 13's (no showcase), a galaxy world's play-test following its signs in the galaxy, no resume
+file for galaxies, `--galaxy` for the QA autoplay. No change to the campaign. Validation:
+`VerifyGEEditorStorage`, `VerifyGESaveData`, `VerifyInteractionSystem`, `VerifyGEInputPad`, live
+(handoff.md "Recordings, ten demos, xnjttjpo, galaxies"). Evidence: `build-probe/demo-live/galaxy/`.
+
+## BD-0118 — xnjttjpo: the 3D editor on the world being played (owner request) — FIXED_AND_VERIFIED
+
+Owner (2026-11-08): editing the existing worlds in the 3D editor, "a cheat, xnjttjpo as in Speedy
+Blupi", typed in normal play. The original's XMISSION (`src/event.cpp:55`, typed with every letter
+after the first one more, `:4228-4230`) toggles `m_bBuildOfficialMissions`: the Construction screens
+then read and write the official `data\worldNNN.blp` (`:2230`, `:2321`, `:3083`). Kept: the word,
+editing the shipped world file itself. Galaxy's own: no toggle -- typed in play it opens the editor
+on the world being played (after that tick; not in a demo, a resume reconstruction, a recording or a
+play-test), the editor's Stop goes back to the mission from its start with its lives, and the
+version before each visit's first save is kept (three generations) in
+`customworlds/campaign-backups/`, no thumbnail written beside the shipped worlds. A galaxy world
+opens the same way, its backups beside it. Edited shipped worlds make the demos recorded in them
+refuse to play (world hash) until recorded again. Validation: `VerifyGEInputPad` (the word),
+`VerifyGEWorldEditor` (Stop, backups, no thumbnail), `VerifyGEEditorStorage` (BackUpWorldTo), live.
+Evidence: `build-probe/demo-live/xmission/`.
+
+## BD-0117 — Ten shipped demos (owner request) — FIXED_AND_VERIFIED
+
+Owner (2026-11-08): ten demos, not three. The original chains `demo200`... while files exist;
+Galaxy plays ten positions, `Content/demos/demo001-010.gdemo`: missions 011, 074, 105 (as BD-0115)
+and 023, 033, 055, 065, 081, 112, 123, recorded from their QA autoplay scripts
+(`tools/record_demo.sh`, commands in handoff.md). Validation: `VerifyDemoFiles` (ten, parsed, their
+worlds' bytes), `VerifyDemoReplays` (all ten end as recorded).
+
+## BD-0116 — The player records a demo into a position (owner request) — FIXED_AND_VERIFIED
+
+Owner (2026-11-08): find how Speedy Blupi records demos in the game by a trick, then something more
+standard: play a world so that it is saved into a demo position. The trick
+(`plans/audit/speedy_blupi_demos.md`): with XMISSION on, play a world numbered 200-219 from the
+Construction screens; `ChangePhase(WM_PHASE_PLAY)` starts `DemoRecStart()`, leaving Play writes
+`data\demoNNN.blp` (`src/event.cpp:2094-2104`, `:3666-3710`), "REC" top left. Galaxy's own: the pause
+screen's Record button (top right) shows the ten positions (shipped or recorded, with Original to
+give a recorded one its shipped demo back, Cancel); one chosen starts the mission again from its
+start and records it ("REC", as TX_DEMOREC), at the normal speed, F-keys and Tab left out. Leaving
+Play (pause, the lost screen) or the mission (a sign, the exit), ten minutes, or closing the window
+ends it; it is written as `demos/demo%03d.gdemo` beside savedata.txt (`/save/demos` on the web) and
+said for four seconds; a mission change waits until it is written, so the recording ends exactly
+as its replay does. The game is otherwise played as always (progress saved). Position n plays the
+player's recording if there is one and it can be played, the shipped demo otherwise. Campaign and
+galaxy worlds can be recorded (a galaxy recording names its galaxy file). Validation:
+`VerifyGEInputPad` (Record, positions), `VerifyDemoReplay` (paths), live recordings replayed
+"equal" by `--verify-demo`. Evidence: `build-probe/demo-live/record/`, `galaxy/`.
+
+## BD-0115 — Main-menu demos (owner request, from Speedy Blupi) — FIXED_AND_VERIFIED
+
+Owner (2026-11-08): demos like Speedy Blupi's automatic ones. Mobile Eggbert has none; the
+reference is Speedy Blupi (blupi_recon `src/event.cpp:3666-3840` DemoRecStart/DemoPlayStart/
+DemoPlayStop/DemoStep, TreatEvent `:4074-4090`, TX_DEMOPLAY "Demo" drawn at (10,10), sb1
+`port/games/sb1/game/main.cpp:200-220`). Kept from it: DemoStep's idle start in Init (owner: 40 s
+instead of DEF_TIME_DEMO's 1000 ticks, and reset by activity, which the original does not do),
+always from the first demo, the next after each, the first after the last; a key/button stops it
+and returns to Init, mouse movement is ignored; a "Demo" label. Galaxy's own: the Demo button
+(the original's WM_PHASE_DEMO had no Init button), the stop input latched until released, focus
+loss stopping it, and the format: the original's .BLP key-change lists suit only its 2D engine,
+so Galaxy stores its resume log (seed, start state, raw input per 1/60 s tick) under a demo
+header with a simulation revision and the world's hash (`DemoReplay.hpp`). The player's save,
+settings, cheats and resume file are frozen during a demo. No gameplay change. Validation:
+`VerifyDemoReplay`, `VerifyDemoFiles`, `VerifyDemoReplays` (in-game replays equal), the Demo
+button in `VerifyGEInputPad`, live desktop checks (handoff.md "Main-menu demos"). Evidence:
+`build-probe/demo-live/`.
+
 ## BD-0114 — Lava behind ghost Blupi painted over him — FIXED_AND_VERIFIED
 
 Owner: lava looked as if it was in front of Blupi with the ghost cheat. The recovered pool

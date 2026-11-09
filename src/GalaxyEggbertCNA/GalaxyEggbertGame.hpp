@@ -1,6 +1,7 @@
 #pragma once
 
 #include <GalaxyEggbert/Game/ResumeLog.hpp>
+#include <GalaxyEggbert/Game/DemoReplay.hpp>
 #include <GalaxyEggbert/Game/ReusablePickup.hpp>
 #include <map>
 
@@ -41,6 +42,7 @@
 #include <Microsoft/Devices/Sensors/Accelerometer.hpp>
 #include <Microsoft/Xna/Framework/Media/Song.hpp>
 
+#include <chrono>
 #include <cstdint>
 #include <deque>
 #include <optional>
@@ -127,6 +129,8 @@ namespace GalaxyEggbert::CNA
         // (LoadMission()), so live checks reach a world without driving the
         // menus. Not a player-facing feature.
         void EnableStartMission(int missionNumber) noexcept { startMission_ = missionNumber; }
+        // `--galaxy`: --mission N is the selected player's galaxy's (BD-0119; the QA autoplay plays it).
+        void EnableGalaxyStart() noexcept { startGalaxy_ = true; }
         // `--spawn x,y,z` with `--mission`: Blupi starts at that raw-grid cell
         // (the coordinates `.vwr` files and tools/vwr_inspect.py use), facing
         // `--yaw` degrees, instead of the world's own spawn.
@@ -144,6 +148,14 @@ namespace GalaxyEggbert::CNA
         // when the script cannot be read or parsed.
         bool EnableAutoplay(const std::string& scriptPath);
         [[nodiscard]] int AutoplayExitCode() const noexcept { return autoplayExitCode_; }
+        // `--record-demo <file>` with `--mission` (and `--autoplay` for a scripted one): records the
+        // mission from its start as a main-menu demo (DemoReplay.hpp) until Escape, the mission's
+        // end, the autoplay's end, `--demo-ticks N` or the window closing, writes it and exits.
+        // F-keys and Tab (game speed) are left out of the recording. tools/record_demo.sh.
+        void EnableDemoRecording(const std::string& path, int maxTicks, const std::string& title);
+        // `--verify-demo <file>`: replays that demo at once, undrawn and silent, compares its end
+        // state with the recorded one and exits (code 0 when equal). tools/verify_demos.sh.
+        void EnableDemoVerify(const std::string& path);
 
         GetTypeNameHPP()
 
@@ -695,6 +707,7 @@ namespace GalaxyEggbert::CNA
         bool goldenTraceArmed_ = false;
         // `--mission N` (EnableStartMission()); 0 means a normal start.
         int startMission_ = 0;
+        bool startGalaxy_ = false;
         bool startSpawnSet_ = false;
         float startSpawnX_ = 0.0f, startSpawnY_ = 0.0f, startSpawnZ_ = 0.0f, startYawDegrees_ = 0.0f;
         bool goldenTraceWritten_ = false;
@@ -765,6 +778,116 @@ namespace GalaxyEggbert::CNA
         std::uint32_t replayRepeat_ = 0;
         std::uint64_t resumeTicks_ = 0;
         bool resumeSelftestDone_ = false;
+
+        // Main-menu demos (DemoReplay.hpp; Speedy Blupi's CEvent::Demo*): a recording replayed tick by
+        // tick into the normal simulation (UpdateTick()) at the normal pace, drawn and heard as play
+        // is. A mode of its own, apart from the resume's fast, silent, undrawn reconstruction
+        // (replayingResume_) and from the QA autoplay. While it plays, the player's data is frozen:
+        // SavePlayerData() and DeleteResumeFile() do nothing, OnDeactivated() writes nothing, and
+        // StopDemo() puts back the profile, settings and cheats StartDemo() set aside. Loading
+        // another mission or leaving Play ends the demo instead (LoadMission(), SetPhase()).
+        struct DemoSavedState
+        {
+            GalaxyEggbert::Game::SaveData saveData;
+            int cameraMode = 1;
+            GalaxyEggbert::Def::GameSpeed gameSpeed = GalaxyEggbert::Def::GameSpeed::Normal;
+            bool quickCheat = false, openDoors = false, showSecret = false, compass = false, debug = false;
+            bool cheatsLocked = false;
+            int lives = 3;
+            std::vector<std::string> activeCheats;
+            int galaxyGamer = -1;
+        };
+        bool StartDemo(int number);
+        bool StartDemoFile(const std::string& path, int number);
+        // The demos after demoNumber_ in turn (DemoOrderAfter()); false when none can play.
+        bool StartNextDemo();
+        // The demo's end: the next demo, or the menu.
+        void EndOfDemo();
+        // Back to the main menu with the player's state, from any demo moment.
+        void StopDemo();
+        void UpdateDemo();
+        // One recorded tick; false when the demo ended (EndOfDemo() or StopDemo() ran).
+        bool DemoTick();
+        // The menu's idle timer and the input latch after a demo; true when a demo started.
+        bool UpdateDemoMenu();
+        [[nodiscard]] int CountDemos() const;
+        [[nodiscard]] GalaxyEggbert::Game::DemoLiveInput ReadDemoLiveInput(bool fromTickInput);
+        // SaveData::Save() unless a resume reconstruction or a demo is playing.
+        void SavePlayerData();
+        void BeginDemoRecording();
+        bool FinishDemoRecording(); // true when the file was written
+        bool demoActive_ = false;
+        bool demoSessionLive_ = false; // its start is set up: leaving the mission or Play now ends it
+        bool demoEndRequested_ = false;
+        bool demoStopRequested_ = false; // the window was deactivated during the demo
+        bool menuInputLatched_ = false;  // after a demo: menu input ignored until nothing is held
+        GalaxyEggbert::Game::DemoRecording demo_;
+        DemoSavedState demoSaved_;
+        int demoNumber_ = 0;
+        std::size_t demoRun_ = 0;
+        std::uint32_t demoRepeat_ = 0;
+        std::uint64_t demoTicks_ = 0;
+        GalaxyEggbert::Game::DemoIdleTimer demoIdleTimer_;
+        GalaxyEggbert::Game::DemoLiveInput demoLastLive_;
+        std::vector<int> demoKeyEvents_; // native key presses since the last DemoLiveInput
+        std::chrono::steady_clock::time_point demoClock_{};
+        float demoClockSeconds_ = 0.0f; // real seconds since the previous Update(), at most 0.25
+        bool demoClockStarted_ = false;
+        std::string demoRecordPath_, demoRecordTitle_;
+        int demoRecordMaxTicks_ = 0;
+        bool demoRecordArmed_ = false, demoRecording_ = false;
+        GalaxyEggbert::Game::ResumeLog demoRecordLog_;
+        std::string demoVerifyPath_;
+        bool demoVerifyPending_ = false, demoVerifying_ = false;
+
+        // The player's own demo recordings (BD-0116): Pause's Record button shows the ten demo
+        // positions (demoSlotsShown_); the one chosen records the mission again from its start
+        // (demoRecordSlot_, into UserDemoPath()), as the developer's --record-demo does, but the
+        // game goes on afterwards. A mission change that ends the recording is held back until
+        // the recording is written (deferredMission_), so that the recording ends as its replay
+        // will. demoNotice_ says what happened, for a few seconds.
+        bool demoSlotsShown_ = false;
+        std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> demoSlotInfos_; // read as they open
+        // Pause shows Record: a mission of the campaign or a galaxy being played, nothing recorded or
+        // replayed, no play-test.
+        [[nodiscard]] bool CanRecordDemo() const noexcept
+        {
+            return !editorPlayTestActive_ && !demoActive_ && !replayingResume_ && !demoRecording_ &&
+                   !demoRecordArmed_ && demoRecordPath_.empty() && !loadedMissionPath_.empty() &&
+                   worldRuntime_.GetMissionNumber() > 0 && !autoplay_;
+        }
+        int demoRecordSlot_ = 0; // 1-10 while the player records; 0 the developer's recording
+        int deferredMission_ = 0;
+        std::string demoSlotsMessage_;
+        std::string demoNotice_;
+        float demoNoticeSeconds_ = 0.0f;
+        void StartPlayerRecording(int slot);
+        // After FinishDemoRecording() of the player's recording: the notice, the held-back mission.
+        void EndPlayerRecording(bool written);
+        // Which file demo position @p slot plays: the player's recording if it is there.
+        [[nodiscard]] std::string DemoSlotPath(int slot) const;
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> DemoSlotInfos() const;
+        void ShowDemoNotice(std::string text);
+
+        // The xnjttjpo cheat (BD-0118, Speedy Blupi's XMISSION): the 3D editor on the world being
+        // played, its Stop back to that mission from its start. editorMission_ is the mission
+        // (0: an ordinary editor visit), with the lives it had.
+        bool xmissionPending_ = false;
+        int editorMission_ = 0;
+        int editorMissionLives_ = 3;
+        void OpenMissionInEditor();
+        void LeaveMissionEditor();
+
+        // The player's own galaxy (BD-0119, CustomWorldStorage GalaxyDir()): played with the
+        // campaign's rules from its own folder, the gamer's galaxy progress in SaveData. -1: the
+        // campaign. No resume file is written for it.
+        int galaxyGamer_ = -1;
+        // The file of @p mission: the galaxy's while one is played, the shipped one otherwise.
+        [[nodiscard]] std::string MissionPath(int mission) const;
+        // The menu's Galaxy button: its main hub (or where its player left it), or the editor's
+        // galaxy screen while it has no main hub.
+        void StartGalaxy();
+        void LeaveGalaxy();
         bool resumeAccelWarmStart_ = false;
         std::map<std::string, std::string> resumeSelftestSignature_;
         int goldenTraceTick_ = 0;

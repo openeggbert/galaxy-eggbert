@@ -82,6 +82,7 @@ namespace GalaxyEggbert::Game
         // number directly, matching real `m_doors[mission]` semantics 1:1 --
         // no separate per-world re-indexing.
         std::array<bool, 200> doorsUnlocked{};
+        bool operator==(const GamerSlot&) const = default;
     };
 
     class SaveData
@@ -167,17 +168,17 @@ namespace GalaxyEggbert::Game
             return static_cast<int>(std::count(doors.begin() + 180, doors.end(), true));
         }
 
-        [[nodiscard]] int GetLives() const noexcept { return gamers_[selectedGamer_].lives; }
-        void SetLives(int lives) noexcept { gamers_[selectedGamer_].lives = lives; }
+        [[nodiscard]] int GetLives() const noexcept { return Current().lives; }
+        void SetLives(int lives) noexcept { Current().lives = lives; }
 
-        [[nodiscard]] int GetMissionNumber() const noexcept { return gamers_[selectedGamer_].missionNumber; }
-        void SetMissionNumber(int missionNumber) noexcept { gamers_[selectedGamer_].missionNumber = missionNumber; }
+        [[nodiscard]] int GetMissionNumber() const noexcept { return Current().missionNumber; }
+        void SetMissionNumber(int missionNumber) noexcept { Current().missionNumber = missionNumber; }
 
-        [[nodiscard]] int GetLastWorld() const noexcept { return gamers_[selectedGamer_].lastWorld; }
-        void SetLastWorld(int world) noexcept { gamers_[selectedGamer_].lastWorld = world; }
+        [[nodiscard]] int GetLastWorld() const noexcept { return Current().lastWorld; }
+        void SetLastWorld(int world) noexcept { Current().lastWorld = world; }
 
-        [[nodiscard]] bool GetHasProgress() const noexcept { return gamers_[selectedGamer_].hasProgress; }
-        void SetHasProgress(bool hasProgress) noexcept { gamers_[selectedGamer_].hasProgress = hasProgress; }
+        [[nodiscard]] bool GetHasProgress() const noexcept { return Current().hasProgress; }
+        void SetHasProgress(bool hasProgress) noexcept { Current().hasProgress = hasProgress; }
 
         // Real per-sublevel door-unlock state (see `GamerSlot::doorsUnlocked`'s
         // own comment) -- `mission` indexes directly, same convention as
@@ -185,12 +186,12 @@ namespace GalaxyEggbert::Game
         // false (defensive; every real mission number fits comfortably).
         [[nodiscard]] bool IsMissionDoorUnlocked(int mission) const noexcept
         {
-            const auto& doors = gamers_[selectedGamer_].doorsUnlocked;
+            const auto& doors = Current().doorsUnlocked;
             return mission >= 0 && mission < static_cast<int>(doors.size()) && doors[static_cast<std::size_t>(mission)];
         }
         void UnlockMissionDoor(int mission) noexcept
         {
-            auto& doors = gamers_[selectedGamer_].doorsUnlocked;
+            auto& doors = Current().doorsUnlocked;
             if (mission >= 0 && mission < static_cast<int>(doors.size()))
             {
                 doors[static_cast<std::size_t>(mission)] = true;
@@ -203,7 +204,24 @@ namespace GalaxyEggbert::Game
         // writes immediately, matching the real source's own
         // `Reset(); Write();` pair (`Game1.cpp`'s real `SetupReset`/cheat
         // handler).
-        void Reset() noexcept { *this = SaveData(); }
+        void Reset() noexcept
+        {
+            const bool galaxy = galaxyMode_;
+            *this = SaveData();
+            galaxyMode_ = galaxy;
+        }
+
+        // The player's own galaxy (BD-0119, CustomWorldStorage GalaxyDir()): while it is played the
+        // progress accessors above (lives, mission, last world, doors) read and write each gamer's
+        // galaxy progress, kept apart from the campaign's ("galaxy0.lives=" ... in the file, written
+        // only once there is some). The mode itself is the session's, never saved.
+        void SetGalaxyMode(bool on) noexcept { galaxyMode_ = on; }
+        [[nodiscard]] bool GetGalaxyMode() const noexcept { return galaxyMode_; }
+        // The galaxy progress of @p gamer, whatever the mode (the menu, the tests).
+        [[nodiscard]] const GamerSlot& GalaxyProgress(int gamer) const noexcept
+        {
+            return galaxies_[std::clamp(gamer, 0, kGamerCount - 1)];
+        }
 
     private:
         // Web build (2026-07-17): under /save so it lands on the IDBFS mount
@@ -226,5 +244,15 @@ namespace GalaxyEggbert::Game
         bool terrainRelief_ = kTerrainReliefDefault;
         int selectedGamer_ = 0;
         GamerSlot gamers_[kGamerCount];
+        GamerSlot galaxies_[kGamerCount];
+        bool galaxyMode_ = false;
+        [[nodiscard]] GamerSlot& Current() noexcept
+        {
+            return galaxyMode_ ? galaxies_[selectedGamer_] : gamers_[selectedGamer_];
+        }
+        [[nodiscard]] const GamerSlot& Current() const noexcept
+        {
+            return galaxyMode_ ? galaxies_[selectedGamer_] : gamers_[selectedGamer_];
+        }
     };
 }

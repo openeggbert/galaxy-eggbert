@@ -17,6 +17,24 @@ original's timing, smoother in 3D). Still the owner's:
 - Nothing waits on the owner. Q-015 answered "udelej" and built 2026-11-06 (BD-0077). D11 closed by the owner
   2026-11-06 ("Ne, D11 uzavřít", MR-0009); OR-0041 answered and fixed 2026-11-05 (BD-0074).
 
+### Q-017 — Demo recording, xnjttjpo and the players' galaxies: three choices made meanwhile (2026-11-08) — DONE (kept) 2026-11-09
+
+Built as below (BD-0116-0119); each is a small change if the owner prefers the other option.
+The owner kept all three as built on 2026-11-09 (Galaxy; the shipped file; a pause ends it).
+
+- **The name "Galaxy"** for each player's own world system (the owner: "Space, or something else").
+  It matches the game's title: each player builds their own galaxy of worlds. Alternatives: Space,
+  Universe, "My worlds". Recommendation: keep Galaxy.
+- **xnjttjpo saves the shipped world file itself** (`worlds3d/worldNNN.vwr`), as XMISSION wrote
+  `data\worldNNN.blp`; the version before each visit is kept in `customworlds/campaign-backups/`.
+  (b) would keep edits as per-player copies that override the shipped worlds: safer for players,
+  but every world load would have to look for them. Recommendation: keep (a). It is a cheat, and in
+  a checkout it lets the owner edit the campaign. A hand edit is overwritten when tools/worlds/
+  regenerates the world.
+- **A recording ends when Play is left, pausing included**, as in Speedy Blupi (any phase but Play
+  stops it). A demo replays only Play, so a pause cannot sit in the middle of one. The recording
+  made up to the pause is kept. Recommendation: keep.
+
 ### Q-015 — Resume: continue the mission where it was left, as the original? (2026-11-06) — DONE (a) 2026-11-06
 
 The original writes the whole mission in progress when the game loses focus during play and, if the

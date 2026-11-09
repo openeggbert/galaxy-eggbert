@@ -13,6 +13,7 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <string>
 
 namespace
 {
@@ -51,6 +52,11 @@ int RunGame(int argc, char** argv)
     }
 #endif
     auto* game = new GalaxyEggbert::CNA::GalaxyEggbertGame();
+    // Main-menu demos (DemoReplay.hpp): `--record-demo <file>` with `--mission N` (optionally
+    // `--autoplay <script>`, `--demo-ticks N`, `--demo-title <text>`) records one, `--verify-demo
+    // <file>` replays one and compares its end (tools/record_demo.sh, tools/verify_demos.sh).
+    std::string recordDemo, demoTitle;
+    int demoTicks = 0;
     // INFRA-001 (plan.md §7): a permanent, committed deterministic
     // golden-screenshot capture mode -- loads the fixed demo world, runs a
     // fixed number of ticks, captures screenshots at fixed tick indices to
@@ -80,6 +86,27 @@ int RunGame(int argc, char** argv)
             delete game;
             return 2;
         }
+        if (std::strcmp(argv[i], "--record-demo") == 0 && i + 1 < argc)
+        {
+            recordDemo = argv[++i];
+        }
+        if (std::strcmp(argv[i], "--demo-ticks") == 0 && i + 1 < argc)
+        {
+            demoTicks = std::atoi(argv[++i]);
+        }
+        if (std::strcmp(argv[i], "--demo-title") == 0 && i + 1 < argc)
+        {
+            demoTitle = argv[++i];
+        }
+        if (std::strcmp(argv[i], "--verify-demo") == 0 && i + 1 < argc)
+        {
+            game->EnableDemoVerify(argv[++i]);
+        }
+        // QA: `--mission N` from the selected player's own galaxy (BD-0119), with its progress.
+        if (std::strcmp(argv[i], "--galaxy") == 0)
+        {
+            game->EnableGalaxyStart();
+        }
         if (std::strcmp(argv[i], "--spawn") == 0 && i + 1 < argc)
         {
             float x = 0.0f, y = 0.0f, z = 0.0f, yaw = 0.0f;
@@ -89,6 +116,10 @@ int RunGame(int argc, char** argv)
                 game->EnableStartSpawn(x, y, z, yaw);
             }
         }
+    }
+    if (!recordDemo.empty())
+    {
+        game->EnableDemoRecording(recordDemo, demoTicks, demoTitle);
     }
     game->Run();
     const int exitCode = game->AutoplayExitCode();

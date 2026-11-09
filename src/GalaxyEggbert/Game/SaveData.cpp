@@ -80,30 +80,35 @@ namespace GalaxyEggbert::Game
                     selectedGamer_ = parsed;
                 }
             }
-            else if (key.rfind("gamer", 0) == 0 && key.size() > 6 && key[6] == '.')
+            else if ((key.rfind("gamer", 0) == 0 && key.size() > 6 && key[6] == '.') ||
+                     (key.rfind("galaxy", 0) == 0 && key.size() > 7 && key[7] == '.'))
             {
-                const int gamer = key[5] - '0';
+                // gamerN.field: the campaign's progress; galaxyN.field: the player's galaxy (BD-0119).
+                const bool galaxy = key[2] == 'l'; // "galaxy", not "gamer"
+                const std::size_t digit = galaxy ? 6 : 5;
+                const int gamer = key[digit] - '0';
                 if (gamer < 0 || gamer >= kGamerCount) continue;
-                const std::string field = key.substr(7);
+                const std::string field = key.substr(digit + 2);
+                GamerSlot& slot = galaxy ? galaxies_[gamer] : gamers_[gamer];
                 if (field == "lives")
                 {
-                    gamers_[gamer].lives = std::atoi(value.c_str());
+                    slot.lives = std::atoi(value.c_str());
                 }
                 else if (field == "missionNumber")
                 {
-                    gamers_[gamer].missionNumber = std::atoi(value.c_str());
+                    slot.missionNumber = std::atoi(value.c_str());
                 }
                 else if (field == "lastWorld")
                 {
-                    gamers_[gamer].lastWorld = std::atoi(value.c_str());
+                    slot.lastWorld = std::atoi(value.c_str());
                 }
                 else if (field == "hasProgress")
                 {
-                    gamers_[gamer].hasProgress = (value == "1");
+                    slot.hasProgress = (value == "1");
                 }
                 else if (field == "doorsUnlocked")
                 {
-                    auto& doors = gamers_[gamer].doorsUnlocked;
+                    auto& doors = slot.doorsUnlocked;
                     for (std::size_t i = 0; i < doors.size() && i < value.size(); ++i)
                     {
                         doors[i] = (value[i] == '1');
@@ -136,18 +141,27 @@ namespace GalaxyEggbert::Game
         out << "fullscreen=" << (fullscreen_ ? "1" : "0") << "\n";
         out << "terrainRelief=" << (terrainRelief_ ? "1" : "0") << "\n";
         out << "selectedGamer=" << selectedGamer_ << "\n";
-        for (int gamer = 0; gamer < kGamerCount; ++gamer)
+        const auto writeSlot = [&out](const char* prefix, int gamer, const GamerSlot& slot)
         {
-            out << "gamer" << gamer << ".lives=" << gamers_[gamer].lives << "\n";
-            out << "gamer" << gamer << ".missionNumber=" << gamers_[gamer].missionNumber << "\n";
-            out << "gamer" << gamer << ".lastWorld=" << gamers_[gamer].lastWorld << "\n";
-            out << "gamer" << gamer << ".hasProgress=" << (gamers_[gamer].hasProgress ? "1" : "0") << "\n";
-            out << "gamer" << gamer << ".doorsUnlocked=";
-            for (bool unlocked : gamers_[gamer].doorsUnlocked)
+            out << prefix << gamer << ".lives=" << slot.lives << "\n";
+            out << prefix << gamer << ".missionNumber=" << slot.missionNumber << "\n";
+            out << prefix << gamer << ".lastWorld=" << slot.lastWorld << "\n";
+            out << prefix << gamer << ".hasProgress=" << (slot.hasProgress ? "1" : "0") << "\n";
+            out << prefix << gamer << ".doorsUnlocked=";
+            for (bool unlocked : slot.doorsUnlocked)
             {
                 out << (unlocked ? '1' : '0');
             }
             out << "\n";
+        };
+        for (int gamer = 0; gamer < kGamerCount; ++gamer)
+        {
+            writeSlot("gamer", gamer, gamers_[gamer]);
+        }
+        // A galaxy never played leaves the file as it was before galaxies existed.
+        for (int gamer = 0; gamer < kGamerCount; ++gamer)
+        {
+            if (!(galaxies_[gamer] == GamerSlot{})) writeSlot("galaxy", gamer, galaxies_[gamer]);
         }
     }
 }

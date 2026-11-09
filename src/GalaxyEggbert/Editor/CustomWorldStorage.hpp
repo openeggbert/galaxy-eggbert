@@ -3,6 +3,8 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <filesystem>
+#include <optional>
+#include <utility>
 #include <string>
 #include <vector>
 
@@ -64,6 +66,17 @@ namespace GalaxyEggbert::Editor
     // oldest dropped. False when there is no file to keep.
     bool BackUpWorld(const std::filesystem::path& world);
 
+    // The same, the backups kept in @p backupDir (world011.1.vwr ...) instead of beside the world:
+    // a shipped world edited with xnjttjpo (BD-0118) keeps its backups in CampaignBackupsDir().
+    bool BackUpWorldTo(const std::filesystem::path& world, const std::filesystem::path& backupDir);
+
+    // The folder holding every gamer's folder ("customworlds", on the web /save/customworlds).
+    [[nodiscard]] std::filesystem::path CustomWorldsRoot();
+
+    // Where the shipped worlds edited in play (xnjttjpo) keep their backups: the three versions
+    // before the edits of each visit, as a slot's backups (the shipped folder stays clean).
+    [[nodiscard]] std::filesystem::path CampaignBackupsDir();
+
     // Restores the newest backup of @p world: it takes the world's place, the older ones move up a
     // generation and the world as it was becomes the oldest -- so restoring again steps further
     // back and comes round to where it began; nothing is lost. A deleted slot (no world) takes its
@@ -105,6 +118,31 @@ namespace GalaxyEggbert::Editor
     // shipped gallery for as long as it is left unedited (the marker `.gallery-seeded` keeps the
     // slot and the hash of what was copied). Returns true when it wrote the slot.
     bool SeedGallerySlot(int gamerSlot, const std::filesystem::path& gallery);
+
+    // ---- The player's own galaxy (BD-0119) ----
+    // Each gamer builds a whole campaign of their own: a main hub (mission 1) whose world signs
+    // 1-14 lead to world hubs (missions 10, 20, ... 140), whose mission signs 1-8 lead to the
+    // missions (11-18, ... 141-148), and the bonus world (199) after the main hub's exit -- the
+    // campaign's own numbering, so the hubs, doors, gold bars and signs work as the campaign's.
+    // The files are CustomWorldsDir()/galaxy/world%03d.vwr; its progress is SaveData's galaxy slot.
+    constexpr int kGalaxyWorldCount = 14;      // the main hub's world signs (BlockTypes WorldSelect1-14)
+    constexpr int kGalaxyMissionsPerWorld = 8; // a world hub's mission signs (MissionSign1-8)
+    constexpr int kGalaxyBonusMission = 199;
+
+    [[nodiscard]] std::filesystem::path GalaxyDir(int gamerSlot);
+    // Mission @p mission's file in the gamer's galaxy (which may not exist yet).
+    [[nodiscard]] std::filesystem::path GalaxyWorldPath(int gamerSlot, int mission);
+    // Whether @p mission is a place of a galaxy: 1, 10-140 by tens, their missions 1-8, 199.
+    [[nodiscard]] bool IsGalaxyMission(int mission) noexcept;
+    // The gamer and mission of a galaxy world's path as GalaxyWorldPath() spells it (generic
+    // form), nothing for any other path: a demo names its world by this path.
+    [[nodiscard]] std::optional<std::pair<int, int>> ParseGalaxyWorldPath(const std::string& path);
+    // "Main hub", "World 3", "World 3, mission 2", "Bonus world".
+    [[nodiscard]] std::string GalaxyMissionName(int mission);
+    // A new galaxy world to start from: the starter board, with world sign 1 for the main hub,
+    // mission sign 1 and the return sign for a world hub, the chest and exit for a mission; Blupi's
+    // start set in the file.
+    [[nodiscard]] GalaxyEggbert::Worlds::World CreateGalaxyStarterWorld(int mission);
 
     // The first scene a new Galaxy 3D editor world opens with. It is a
     // compact playable tutorial rather than an all-air volume: a 3x3 Rock

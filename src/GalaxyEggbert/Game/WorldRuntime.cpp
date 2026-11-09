@@ -420,11 +420,11 @@ namespace GalaxyEggbert::Game
         return cycle >= 18;
     }
 
-    int WorldRuntime::ComputeWorldSelectTarget(int currentMission, int selectIndex) noexcept
+    int WorldRuntime::ComputeWorldSelectTarget(int currentMission, int selectIndex, bool galaxy) noexcept
     {
         if (currentMission == 1)
         {
-            return selectIndex == 13 ? 999 : selectIndex * 10;
+            return selectIndex == 13 && !galaxy ? 999 : selectIndex * 10;
         }
         if (selectIndex == 199)
         {

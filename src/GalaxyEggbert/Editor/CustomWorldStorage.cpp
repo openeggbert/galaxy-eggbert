@@ -122,24 +122,51 @@ namespace GalaxyEggbert::Editor
         return count;
     }
 
+    namespace
+    {
+        // Keeps @p world as generation 1 of the backups at path(generation), the older ones one
+        // generation further, the oldest dropped.
+        template <typename Path>
+        bool RotateBackups(const std::filesystem::path& world, const Path& path)
+        {
+            std::error_code ec;
+            if (!std::filesystem::exists(world, ec))
+            {
+                return false;
+            }
+            std::filesystem::create_directories(path(1).parent_path(), ec);
+            std::filesystem::remove(path(kBackupGenerations), ec);
+            for (int generation = kBackupGenerations - 1; generation >= 1; --generation)
+            {
+                if (std::filesystem::exists(path(generation), ec))
+                {
+                    std::filesystem::rename(path(generation), path(generation + 1), ec);
+                }
+            }
+            return std::filesystem::copy_file(world, path(1), std::filesystem::copy_options::overwrite_existing, ec);
+        }
+    }
+
     bool BackUpWorld(const std::filesystem::path& world)
     {
-        std::error_code ec;
-        if (!std::filesystem::exists(world, ec))
-        {
-            return false;
-        }
-        std::filesystem::create_directories(BackupPath(world, 1).parent_path(), ec);
-        std::filesystem::remove(BackupPath(world, kBackupGenerations), ec);
-        for (int generation = kBackupGenerations - 1; generation >= 1; --generation)
-        {
-            if (std::filesystem::exists(BackupPath(world, generation), ec))
-            {
-                std::filesystem::rename(BackupPath(world, generation), BackupPath(world, generation + 1), ec);
-            }
-        }
-        return std::filesystem::copy_file(world, BackupPath(world, 1), std::filesystem::copy_options::overwrite_existing,
-                                          ec);
+        return RotateBackups(world, [&](int generation) { return BackupPath(world, generation); });
+    }
+
+    bool BackUpWorldTo(const std::filesystem::path& world, const std::filesystem::path& backupDir)
+    {
+        return RotateBackups(world, [&](int generation) {
+            return backupDir / (world.stem().string() + "." + std::to_string(generation) + world.extension().string());
+        });
+    }
+
+    std::filesystem::path CustomWorldsRoot()
+    {
+        return kCustomWorldsRoot;
+    }
+
+    std::filesystem::path CampaignBackupsDir()
+    {
+        return CustomWorldsRoot() / "campaign-backups";
     }
 
     bool RestoreBackup(const std::filesystem::path& world)
@@ -370,6 +397,84 @@ namespace GalaxyEggbert::Editor
         };
         placeStationary(GalaxyEggbert::Def::ObjectType::ObjectType5, kCenter, 1, kCenter);       // chest in the centre
         placeStationary(GalaxyEggbert::Def::ObjectType::ObjectType7, kCenter - 1, 1, kCenter);   // exit arrow at one edge
+        return world;
+    }
+
+    std::filesystem::path GalaxyDir(int gamerSlot)
+    {
+        return CustomWorldsDir(gamerSlot) / "galaxy";
+    }
+
+    std::filesystem::path GalaxyWorldPath(int gamerSlot, int mission)
+    {
+        char name[32];
+        std::snprintf(name, sizeof(name), "world%03d.vwr", mission);
+        return GalaxyDir(gamerSlot) / name;
+    }
+
+    bool IsGalaxyMission(int mission) noexcept
+    {
+        if (mission == 1 || mission == kGalaxyBonusMission) return true;
+        const int world = mission / 10;
+        const int place = mission % 10;
+        return world >= 1 && world <= kGalaxyWorldCount && place <= kGalaxyMissionsPerWorld;
+    }
+
+    std::optional<std::pair<int, int>> ParseGalaxyWorldPath(const std::string& path)
+    {
+        for (int gamer = 0; gamer < 3; ++gamer)
+        {
+            const std::string prefix = GalaxyDir(gamer).generic_string() + "/world";
+            if (path.size() != prefix.size() + 7 || path.compare(0, prefix.size(), prefix) != 0 ||
+                path.compare(path.size() - 4, 4, ".vwr") != 0)
+                continue;
+            int mission = 0;
+            for (std::size_t i = prefix.size(); i < prefix.size() + 3; ++i)
+            {
+                if (path[i] < '0' || path[i] > '9') return std::nullopt;
+                mission = mission * 10 + (path[i] - '0');
+            }
+            if (!IsGalaxyMission(mission)) return std::nullopt;
+            return std::make_pair(gamer, mission);
+        }
+        return std::nullopt;
+    }
+
+    std::string GalaxyMissionName(int mission)
+    {
+        if (mission == 1) return "Main hub";
+        if (mission == kGalaxyBonusMission) return "Bonus world";
+        const std::string world = "World " + std::to_string(mission / 10);
+        return mission % 10 == 0 ? world : world + ", mission " + std::to_string(mission % 10);
+    }
+
+    GalaxyEggbert::Worlds::World CreateGalaxyStarterWorld(int mission)
+    {
+        using GalaxyEggbert::Worlds::Block;
+        if (mission != 1 && mission % 10 != 0)
+        {
+            auto world = CreateEditorStarterWorld(); // a mission: the chest and the exit
+            world.setSpawnPoint(51, 1, 50);
+            world.setMissionNumber(static_cast<std::uint32_t>(mission));
+            return world;
+        }
+        GalaxyEggbert::Worlds::World world;
+        for (std::uint16_t x = 49; x <= 51; ++x)
+            for (std::uint16_t z = 49; z <= 51; ++z)
+                world.setBlock(x, 0, z, Block::make(GalaxyEggbert::BlockTypes::RockPile));
+        // Blupi starts facing -Z (no player start object: yaw 0) with the sign two cells ahead, so
+        // walking forward takes him there; a world hub's way back is beside him.
+        if (mission == 1)
+        {
+            world.setBlock(50, 1, 49, Block::make(GalaxyEggbert::BlockTypes::WorldSelect1));
+        }
+        else
+        {
+            world.setBlock(50, 1, 49, Block::make(GalaxyEggbert::BlockTypes::MissionSign1));
+            world.setBlock(49, 1, 51, Block::make(GalaxyEggbert::BlockTypes::ReturnSign));
+        }
+        world.setSpawnPoint(50, 1, 51);
+        world.setMissionNumber(static_cast<std::uint32_t>(mission));
         return world;
     }
 }

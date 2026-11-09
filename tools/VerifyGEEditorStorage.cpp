@@ -1,5 +1,6 @@
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
 #include <GalaxyEggbert/Editor/EditorBrowserScreen.hpp>
+#include <GalaxyEggbert/Editor/GalaxyBrowserScreen.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
@@ -501,6 +502,113 @@ int main()
         check(browser.Message().find("shared") != std::string::npos, "Import (not the web) says where to put files");
         std::filesystem::remove(shared, error);
         std::filesystem::remove(SharedWorldsDir(), error); // only when nothing else is in it
+    }
+
+    // BD-0119: the player's own galaxy -- the campaign's numbering in the gamer's galaxy folder.
+    {
+        check(GalaxyWorldPath(kStorageSlot, 23) == CustomWorldsDir(kStorageSlot) / "galaxy" / "world023.vwr" &&
+                  GalaxyWorldPath(kStorageSlot, 1).filename() == "world001.vwr",
+              "galaxy: world NNN of a gamer's galaxy lives in its galaxy folder");
+        bool places = IsGalaxyMission(1) && IsGalaxyMission(10) && IsGalaxyMission(18) && IsGalaxyMission(140) &&
+                      IsGalaxyMission(148) && IsGalaxyMission(199);
+        for (int not_ : {0, 2, 9, 19, 149, 150, 198, 200, 999}) places = places && !IsGalaxyMission(not_);
+        check(places, "galaxy: the main hub, world hubs 10-140, their missions 1-8 and 199 only");
+        const auto parsed = ParseGalaxyWorldPath(GalaxyWorldPath(1, 23).generic_string());
+        check(parsed && parsed->first == 1 && parsed->second == 23 &&
+                  !ParseGalaxyWorldPath(GalaxyWorldPath(1, 19).generic_string()) &&
+                  !ParseGalaxyWorldPath("worlds3d/world023.vwr") &&
+                  !ParseGalaxyWorldPath(GalaxyWorldPath(1, 23).generic_string() + "x") &&
+                  !ParseGalaxyWorldPath(GalaxyWorldPath(kStorageSlot, 23).generic_string()),
+              "galaxy: a galaxy world's path names its player (A-C) and mission, nothing else does");
+        check(GalaxyMissionName(1) == "Main hub" && GalaxyMissionName(30) == "World 3" &&
+                  GalaxyMissionName(34) == "World 3, mission 4" && GalaxyMissionName(199) == "Bonus world",
+              "galaxy: names of its places");
+        const World hub = CreateGalaxyStarterWorld(1);
+        const World worldHub = CreateGalaxyStarterWorld(70);
+        const World mission = CreateGalaxyStarterWorld(72);
+        check(hub.getBlock(50, 1, 49).type() == GalaxyEggbert::BlockTypes::WorldSelect1 && hub.hasSpawnPoint() &&
+                  hub.spawnX() == 50 && hub.spawnZ() == 51 && hub.missionNumber() == 1 &&
+                  worldHub.getBlock(50, 1, 49).type() == GalaxyEggbert::BlockTypes::MissionSign1 &&
+                  worldHub.getBlock(49, 1, 51).type() == GalaxyEggbert::BlockTypes::ReturnSign &&
+                  worldHub.missionNumber() == 70 && mission.missionNumber() == 72 && mission.hasSpawnPoint() &&
+                  mission.getBlock(50, 0, 50).type() == GalaxyEggbert::BlockTypes::RockPile,
+              "galaxy: new places start with their signs (main hub: world 1; world hub: mission 1 and the way "
+              "back), their mission number and Blupi's start");
+
+        // Backups elsewhere (xnjttjpo's shipped worlds, BD-0118).
+        const auto dir = CustomWorldsDir(kStorageSlot) / "elsewhere";
+        std::filesystem::create_directories(dir, error);
+        const auto shippedWorld = dir / "world050.vwr";
+        hub.saveToFile(shippedWorld);
+        const bool first = BackUpWorldTo(shippedWorld, dir / "kept");
+        mission.saveToFile(shippedWorld);
+        const bool second = BackUpWorldTo(shippedWorld, dir / "kept");
+        check(first && second && World::loadFromFile(dir / "kept" / "world050.2.vwr").missionNumber() == 1 &&
+                  World::loadFromFile(dir / "kept" / "world050.1.vwr").missionNumber() == 72 &&
+                  !std::filesystem::exists(dir / "backups") &&
+                  CampaignBackupsDir() == CustomWorldsRoot() / "campaign-backups",
+              "BackUpWorldTo keeps the generations in the folder given, the newest as .1");
+
+        // The editor's galaxy screen.
+        std::filesystem::remove_all(CustomWorldsDir(kBrowserSlot), error);
+        WorldEditor editor;
+        editor.EnterBrowser(kBrowserSlot);
+        const auto press = [&](float x, float y, bool back = false) {
+            const MouseState down(int(x), int(y), 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+                                  ButtonState::Released, ButtonState::Released);
+            const MouseState up(int(x), int(y), 0, ButtonState::Released, ButtonState::Released,
+                                ButtonState::Released, ButtonState::Released, ButtonState::Released);
+            (void)editor.UpdateBrowsing(down, 800, 480, back);
+            return editor.UpdateBrowsing(up, 800, 480, back);
+        };
+        const auto mid = [](const GalaxyEggbert::Game::QuadBatch::Rect& r) {
+            return std::make_pair((r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f);
+        };
+        auto [gx, gy] = mid(EditorBrowserScreen::GalaxyRect());
+        const auto toGalaxy = press(gx, gy);
+        check(editor.ShowsGalaxy() && !toGalaxy.shouldOpen && !toGalaxy.shouldCreateNew && !toGalaxy.shouldReturnToMenu,
+              "galaxy: the world screen's Galaxy button shows the galaxy");
+        auto [hx, hy] = mid(GalaxyBrowserScreen::MainHubRect());
+        const auto newHub = press(hx, hy);
+        check(newHub.shouldCreateNew && newHub.galaxyMission == 1 && newHub.createPath == GalaxyWorldPath(kBrowserSlot, 1),
+              "galaxy: the main hub not made yet is created, from its starter");
+        std::filesystem::create_directories(GalaxyDir(kBrowserSlot), error);
+        CreateGalaxyStarterWorld(1).saveToFile(GalaxyWorldPath(kBrowserSlot, 1));
+        editor.ShowGalaxy(); // rescans, as coming back from editing does
+        const auto openHub = press(hx, hy);
+        auto [w4x, w4y] = mid(GalaxyBrowserScreen::WorldRect(4));
+        const auto select = press(w4x, w4y);
+        auto [p3x, p3y] = mid(GalaxyBrowserScreen::PlaceRect(3));
+        const auto place = press(p3x, p3y);
+        auto [p0x, p0y] = mid(GalaxyBrowserScreen::PlaceRect(0));
+        const auto worldHubRequest = press(p0x, p0y);
+        check(openHub.shouldOpen && openHub.galaxyMission == 1 && !select.shouldOpen && !select.shouldCreateNew &&
+                  place.shouldCreateNew && place.galaxyMission == 43 &&
+                  place.createPath == GalaxyWorldPath(kBrowserSlot, 43) && worldHubRequest.galaxyMission == 40,
+              "galaxy: an existing place opens; a world's number selects it; its hub and missions are its own");
+        auto [bx, by] = mid(GalaxyBrowserScreen::BonusRect());
+        check(press(bx, by).galaxyMission == 199, "galaxy: the bonus world is world 199");
+        const MouseState idle(400, 240, 0, ButtonState::Released, ButtonState::Released, ButtonState::Released,
+                              ButtonState::Released, ButtonState::Released);
+        const auto escape = editor.UpdateBrowsing(idle, 800, 480, true);
+        const auto held = editor.UpdateBrowsing(idle, 800, 480, true);
+        const auto again = editor.UpdateBrowsing(idle, 800, 480, false);
+        const auto menu = editor.UpdateBrowsing(idle, 800, 480, true);
+        check(!escape.shouldReturnToMenu && !editor.ShowsGalaxy() && !held.shouldReturnToMenu &&
+                  !again.shouldReturnToMenu && menu.shouldReturnToMenu,
+              "galaxy: Escape goes back to the world screen, and only a second Escape to the menu");
+        bool apart = true;
+        std::vector<GalaxyEggbert::Game::QuadBatch::Rect> rects{GalaxyBrowserScreen::MainHubRect(),
+                                                                 GalaxyBrowserScreen::BonusRect(),
+                                                                 GalaxyBrowserScreen::BackButtonRect()};
+        for (int world = 1; world <= kGalaxyWorldCount; ++world) rects.push_back(GalaxyBrowserScreen::WorldRect(world));
+        for (int p = 0; p <= kGalaxyMissionsPerWorld; ++p) rects.push_back(GalaxyBrowserScreen::PlaceRect(p));
+        for (std::size_t i = 0; i < rects.size(); ++i)
+            for (std::size_t j = i + 1; j < rects.size(); ++j)
+                apart = apart && (rects[i].x1 <= rects[j].x0 || rects[j].x1 <= rects[i].x0 ||
+                                  rects[i].y1 <= rects[j].y0 || rects[j].y1 <= rects[i].y0);
+        for (const auto& r : rects) apart = apart && r.x0 >= 0.0f && r.x1 <= 800.0f && r.y0 >= 0.0f && r.y1 <= 480.0f;
+        check(apart, "galaxy: its screen's buttons do not overlap and fit 800x480");
     }
 
     std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);

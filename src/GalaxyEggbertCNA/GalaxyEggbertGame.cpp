@@ -872,6 +872,13 @@ namespace GalaxyEggbert::CNA
         camera_.SetLookAt(Microsoft::Xna::Framework::Vector3(0.0f, 2.0f, 5.0f), cameraTarget_);
         keyInputToken_ = Microsoft::Xna::Framework::Input::Keyboard::KeyDownEXT.Add([this](auto key) {
             using Microsoft::Xna::Framework::Input::Keys;
+            // A demo or the menu's idle timer sees presses shorter than an update (DemoLiveInput);
+            // a demo's typed letters are not cheats.
+            if (!SuppressLiveInput() && (demoActive_ || phase_ == GalaxyEggbert::Def::GamePhase::Init))
+            {
+                if (demoKeyEvents_.size() < 64) demoKeyEvents_.push_back(static_cast<int>(key));
+                if (demoActive_) return;
+            }
             if (SuppressLiveInput() || controlsHelp_.shown || replayingResume_ ||
                 fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None) return;
             if (phase_ == GalaxyEggbert::Def::GamePhase::Editor)
@@ -1901,6 +1908,8 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::DeleteResumeFile() const noexcept
     {
+        // A demo never touches the player's resume file (DemoReplay.hpp).
+        if (demoActive_) return;
         std::error_code ignored;
         std::filesystem::remove(ResumeLog::kPath, ignored);
     }
@@ -1909,11 +1918,19 @@ namespace GalaxyEggbert::CNA
     {
         pendingCheatLetters_.clear();
         editorCommandKeys_.Reset();
+        if (demoActive_)
+        {
+            // A demo is not the player's game: nothing is written or deleted, and the menu returns.
+            demoStopRequested_ = true;
+            Game::OnDeactivated(sender, args);
+            return;
+        }
         // Game1.cpp:186-198: only deactivation during Play writes CurrentWrite.
         if (phase_ == GalaxyEggbert::Def::GamePhase::Play && missionStartPending_ &&
             fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
         {
             StartResumeLog();
+            if (demoRecordArmed_) BeginDemoRecording(); // as Update() would have, from this start
         }
         if ((replayingResume_ || phase_ == GalaxyEggbert::Def::GamePhase::Play) &&
             recordingResume_ && !missionStartPending_)
@@ -1941,7 +1958,9 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::OnExiting(System::Object* sender, const System::EventArgs& args)
     {
-        // Game1.cpp:205-208: a clean exit deletes CurrentWrite.
+        // A recording being made is written when the window closes (--record-demo).
+        FinishDemoRecording();
+        // Game1.cpp:205-208: a clean exit deletes CurrentWrite (not during a demo: DeleteResumeFile()).
         DeleteResumeFile();
         Game::OnExiting(sender, args);
     }
@@ -2037,7 +2056,8 @@ namespace GalaxyEggbert::CNA
         saveData_.Write(settings);
         start.saveData = settings.str();
         resumeTicks_ = 0;
-        recordingResume_ = !editorPlayTestActive_ && !loadedMissionPath_.empty();
+        // No resume file for a galaxy (BD-0119): Continue resumes the campaign only.
+        recordingResume_ = !editorPlayTestActive_ && !loadedMissionPath_.empty() && galaxyGamer_ < 0;
         missionStartPending_ = false;
     }
 
@@ -2209,6 +2229,523 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    // ---- Main-menu demos (DemoReplay.hpp) ----
+
+    void GalaxyEggbertGame::EnableDemoRecording(const std::string& path, int maxTicks, const std::string& title)
+    {
+        demoRecordPath_ = path;
+        demoRecordMaxTicks_ = std::max(0, maxTicks);
+        demoRecordTitle_ = title;
+        demoRecordArmed_ = !path.empty();
+    }
+
+    void GalaxyEggbertGame::EnableDemoVerify(const std::string& path)
+    {
+        demoVerifyPath_ = path;
+        demoVerifyPending_ = demoVerifying_ = true;
+        // One fixed step per tick as fast as the machine goes, undrawn (UpdateDemo()).
+        setIsFixedTimeStepProperty(false);
+    }
+
+    void GalaxyEggbertGame::SavePlayerData()
+    {
+        // A resume reconstruction replays settings already saved; a demo is not the player's game.
+        if (replayingResume_ || demoActive_) return;
+        saveData_.Save();
+    }
+
+    int GalaxyEggbertGame::CountDemos() const
+    {
+        // The ten positions (the original's demo200 ... while files exist); an empty one is skipped.
+        return GalaxyEggbert::Game::kDemoSlotCount;
+    }
+
+    std::string GalaxyEggbertGame::DemoSlotPath(int slot) const
+    {
+        const auto own = GalaxyEggbert::Game::UserDemoPath(slot);
+        std::error_code error;
+        return std::filesystem::exists(own, error) ? own : GalaxyEggbert::Game::DemoPath(slot);
+    }
+
+    GalaxyEggbert::Game::DemoLiveInput GalaxyEggbertGame::ReadDemoLiveInput(bool fromTickInput)
+    {
+        using namespace Microsoft::Xna::Framework::Input;
+        using Touch::TouchLocationState;
+        GalaxyEggbert::Game::DemoLiveInput live;
+        live.keyEvents.swap(demoKeyEvents_);
+        const auto addTouch = [&live](int state) {
+            if (state == static_cast<int>(TouchLocationState::Pressed))
+            {
+                ++live.touches;
+                ++live.touchPresses;
+            }
+            else if (state == static_cast<int>(TouchLocationState::Moved))
+            {
+                ++live.touches;
+            }
+        };
+        if (fromTickInput)
+        {
+            // The menu's own live capture (CaptureInput()).
+            live.keys = tickInput_.keys;
+            live.mouseX = tickInput_.mouseX;
+            live.mouseY = tickInput_.mouseY;
+            live.wheel = tickInput_.wheel;
+            live.mouseButtons = tickInput_.buttons;
+            for (const auto& touch : tickInput_.touches) addTouch(touch.state);
+        }
+        else
+        {
+            // During a demo the game reads the recording; the player is read here only.
+            for (const auto key : Keyboard::GetState().GetPressedKeys()) live.keys.push_back(static_cast<int>(key));
+            std::sort(live.keys.begin(), live.keys.end());
+            const auto mouse = Mouse::GetState();
+            live.mouseX = mouse.getXProperty();
+            live.mouseY = mouse.getYProperty();
+            live.wheel = mouse.getScrollWheelValueProperty();
+            const ButtonState buttons[] = {mouse.getLeftButtonProperty(), mouse.getMiddleButtonProperty(),
+                mouse.getRightButtonProperty(), mouse.getXButton1Property(), mouse.getXButton2Property()};
+            for (unsigned i = 0; i < 5; ++i)
+                if (buttons[i] == ButtonState::Pressed) live.mouseButtons |= 1u << i;
+            for (const auto& touch : Touch::TouchPanel::GetState()) addTouch(static_cast<int>(touch.getStateProperty()));
+        }
+        live.padButtons = GalaxyEggbert::Game::GamepadKeys(ReadGamepadFrame());
+        return live;
+    }
+
+    bool GalaxyEggbertGame::StartDemo(int number)
+    {
+        // The player's recording of this position (BD-0116), else -- or when it cannot be played --
+        // the shipped demo.
+        const auto own = GalaxyEggbert::Game::UserDemoPath(number);
+        std::error_code error;
+        if (std::filesystem::exists(own, error) && StartDemoFile(own, number)) return true;
+        return StartDemoFile(GalaxyEggbert::Game::DemoPath(number), number);
+    }
+
+    bool GalaxyEggbertGame::StartDemoFile(const std::string& path, int number)
+    {
+        using namespace GalaxyEggbert::Game;
+        // Everything is checked before anything of the player's is touched.
+        DemoRecording demo;
+        const auto text = ReadWorldBytes(path);
+        auto status = text ? ParseDemo(*text, kDemoSimulationRevision, demo) : DemoLoadStatus::Missing;
+        std::optional<std::string> world;
+        int demoGalaxy = -1; // a recording made in a player's galaxy (BD-0119) plays from its file
+        if (status == DemoLoadStatus::Ok)
+        {
+            auto worldPath = MissionWorldPath(demo.log.start.mission);
+            if (demo.log.start.worldPath != worldPath)
+            {
+                const auto galaxy = GalaxyEggbert::Editor::ParseGalaxyWorldPath(demo.log.start.worldPath);
+                if (galaxy && galaxy->second == demo.log.start.mission)
+                {
+                    demoGalaxy = galaxy->first;
+                    worldPath = demo.log.start.worldPath;
+                }
+            }
+            world = ReadWorldBytes(worldPath);
+            status = DemoWorldStatus(demo, worldPath, world);
+            if (status == DemoLoadStatus::Ok)
+            {
+                WorldRuntime probe;
+                std::istringstream stream(*world, std::ios::in | std::ios::binary);
+                if (!probe.LoadFromVwrStream(stream)) status = DemoLoadStatus::WorldMissing;
+            }
+        }
+        if (status != DemoLoadStatus::Ok)
+        {
+            std::cout << "GalaxyEggbertCNA: demo " << path << " skipped: " << DemoLoadStatusText(status) << "."
+                      << std::endl;
+            return false;
+        }
+
+        if (!demoActive_)
+        {
+            // The player's own state, put back by StopDemo().
+            demoSaved_.saveData = saveData_;
+            demoSaved_.cameraMode = static_cast<int>(cameraMode_);
+            demoSaved_.gameSpeed = gameSpeed_;
+            demoSaved_.quickCheat = quickCheatEnabled_;
+            demoSaved_.openDoors = cheatDoors_;
+            demoSaved_.showSecret = cheatShowSecret_;
+            demoSaved_.compass = cheatCompass_;
+            demoSaved_.debug = cheatDebug_;
+            demoSaved_.cheatsLocked = inputPad_.IsCheatEntryLocked();
+            demoSaved_.lives = interaction_.Lives();
+            demoSaved_.activeCheats = activeCheats_;
+            demoSaved_.galaxyGamer = galaxyGamer_;
+        }
+        demoActive_ = true;
+        demoSessionLive_ = demoEndRequested_ = demoStopRequested_ = menuInputLatched_ = false;
+        demo_ = std::move(demo);
+        demoNumber_ = number;
+        demoRun_ = 0;
+        demoRepeat_ = 0;
+        demoTicks_ = 0;
+        const auto& start = demo_.log.start;
+
+        // The recording's profile (its hub doors, last world, controls), heard and drawn with the
+        // player's own sound, volumes and display settings. Never saved.
+        SaveData profile;
+        std::istringstream settings(start.saveData);
+        profile.Read(settings);
+        const auto& own = demoSaved_.saveData;
+        profile.SetSoundEnabled(own.GetSoundEnabled());
+        profile.SetEffectsVolume(own.GetEffectsVolume());
+        profile.SetMusicVolume(own.GetMusicVolume());
+        profile.SetTerrainRelief(own.GetTerrainRelief());
+        profile.SetFullscreen(own.GetFullscreen());
+        profile.SetGalaxyMode(demoGalaxy >= 0);
+        saveData_ = profile;
+        galaxyGamer_ = demoGalaxy;
+        sound_.SetReplayMuted(demoVerifying_);
+        sound_.SetEnabled(saveData_.GetSoundEnabled());
+        sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
+        ApplyMusicVolume();
+
+        // The recorded start, as BeginResume() sets up a resume's.
+        quickCheatEnabled_ = start.quickCheat;
+        cheatDoors_ = start.openDoors;
+        cheatShowSecret_ = start.showSecret;
+        cheatCompass_ = start.compass && GalaxyEggbert::Game::kCheatsEnabled;
+        cheatDebug_ = start.debug && GalaxyEggbert::Game::kCheatsEnabled;
+        inputPad_.SetCheatEntryLocked(start.cheatsLocked && GalaxyEggbert::Game::kCheatsEnabled);
+        cameraMode_ = static_cast<CameraMode>(start.cameraMode);
+        gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
+        editorPlayTestActive_ = false;
+        controlsHelp_ = {};
+        cheatMenuShown_ = false;
+        LoadMission(start.mission, &*world); // the demo's seed, nothing saved, no resume log
+        interaction_.SetLives(start.lives);
+        PlaceBlupi(start.x, start.y, start.z);
+        blupi_.SetYaw(start.yaw);
+        SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
+        ResetMissionInput();
+        activeCheats_.clear();
+        if (cheatCompass_) activeCheats_.push_back("compass");
+        if (cheatDebug_) activeCheats_.push_back("debug");
+        if (inputPad_.IsCheatEntryLocked()) activeCheats_.push_back("fairplay");
+        // What is held as it starts (the click on Demo, say) cannot stop it.
+        if (!demoVerifying_) demoLastLive_ = ReadDemoLiveInput(false);
+        demoSessionLive_ = true;
+        std::cout << "GalaxyEggbertCNA: demo " << path << " \"" << demo_.title << "\": mission " << start.mission
+                  << ", " << demo_.log.TickCount() << " ticks." << std::endl;
+        return true;
+    }
+
+    bool GalaxyEggbertGame::StartNextDemo()
+    {
+        for (const int number : GalaxyEggbert::Game::DemoOrderAfter(demoNumber_, CountDemos()))
+        {
+            if (StartDemo(number)) return true;
+        }
+        return false;
+    }
+
+    bool GalaxyEggbertGame::DemoTick()
+    {
+        if (demoRun_ >= demo_.log.runs.size())
+        {
+            EndOfDemo();
+            return false;
+        }
+        const auto& run = demo_.log.runs[demoRun_];
+        const std::uint32_t count = run.count;
+        tickInput_ = run.input;
+        try
+        {
+            UpdateTick();
+        }
+        catch (const std::exception& error)
+        {
+            // A failure inside the replayed game takes the player back to the menu, never further.
+            std::cout << "GalaxyEggbertCNA: demo " << demoNumber_ << " failed: " << error.what() << std::endl;
+            if (demoVerifying_)
+            {
+                std::cout << "DEMO VERIFY " << demoVerifyPath_ << ": failed" << std::endl;
+                autoplayExitCode_ = 1;
+                Exit();
+                return false;
+            }
+            StopDemo();
+            return false;
+        }
+        ++demoTicks_;
+        if (++demoRepeat_ == count)
+        {
+            demoRepeat_ = 0;
+            ++demoRun_;
+        }
+        if (demoEndRequested_ || demoRun_ >= demo_.log.runs.size())
+        {
+            EndOfDemo();
+            return false;
+        }
+        return true;
+    }
+
+    void GalaxyEggbertGame::UpdateDemo()
+    {
+        if (demoVerifying_)
+        {
+            for (int i = 0; i < 600 && DemoTick(); ++i) {}
+            SuppressDraw();
+            return;
+        }
+        // TreatEvent(): a new key or button stops the demo, a mouse movement does not.
+        const auto live = ReadDemoLiveInput(false);
+        const bool pressed = GalaxyEggbert::Game::DemoNewPress(demoLastLive_, live);
+        demoLastLive_ = live;
+        if (pressed || demoStopRequested_ || !getIsActiveProperty())
+        {
+            StopDemo();
+            return;
+        }
+        DemoTick();
+    }
+
+    void GalaxyEggbertGame::EndOfDemo()
+    {
+        using namespace GalaxyEggbert::Game;
+        const auto different = DemoSignatureDifferences(demo_.endSignature, HashDemoSignature(ResumeSignature()));
+        const bool complete = demoRun_ >= demo_.log.runs.size();
+        std::string differences;
+        if (!complete) differences = "stopped after tick " + std::to_string(demoTicks_);
+        for (const auto& name : different) differences += (differences.empty() ? "" : ", ") + name;
+        if (demoVerifying_)
+        {
+            std::cout << "DEMO VERIFY " << demoVerifyPath_ << ": "
+                      << (differences.empty() ? "equal" : "different: " + differences) << " (" << demoTicks_
+                      << " ticks)" << std::endl;
+            autoplayExitCode_ = differences.empty() ? 0 : 1;
+            Exit();
+            return;
+        }
+        if (differences.empty())
+            std::cout << "GalaxyEggbertCNA: demo " << demoNumber_ << " finished." << std::endl;
+        else
+            std::cout << "GalaxyEggbertCNA: demo " << demoNumber_ << " ended unlike its recording (" << differences
+                      << "); tools/verify_demos.sh checks the demos." << std::endl;
+        // DemoStep(): the next demo, the first again after the last.
+        if (!StartNextDemo()) StopDemo();
+    }
+
+    void GalaxyEggbertGame::StopDemo()
+    {
+        if (!demoActive_) return;
+        demoSessionLive_ = demoEndRequested_ = demoStopRequested_ = false;
+        StopVehicleMotorSound();
+        sound_.StopAll();
+        saveData_ = demoSaved_.saveData;
+        cameraMode_ = static_cast<CameraMode>(demoSaved_.cameraMode);
+        gameSpeed_ = demoSaved_.gameSpeed;
+        quickCheatEnabled_ = demoSaved_.quickCheat;
+        cheatDoors_ = demoSaved_.openDoors;
+        cheatShowSecret_ = demoSaved_.showSecret;
+        cheatCompass_ = demoSaved_.compass;
+        cheatDebug_ = demoSaved_.debug;
+        inputPad_.SetCheatEntryLocked(demoSaved_.cheatsLocked);
+        interaction_.SetLives(demoSaved_.lives);
+        activeCheats_ = demoSaved_.activeCheats;
+        galaxyGamer_ = demoSaved_.galaxyGamer;
+        sound_.SetReplayMuted(false);
+        sound_.SetEnabled(saveData_.GetSoundEnabled());
+        sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
+        ApplyMusicVolume();
+        controlsHelp_ = {};
+        cheatMenuShown_ = false;
+        // Still demoActive_: SetPhase() leaves the resume file alone.
+        SetPhase(GalaxyEggbert::Def::GamePhase::Init, /*bypassFade=*/true);
+        demoActive_ = false;
+        demo_ = {};
+        ResetMissionInput();
+        // The title scene at once, so no frame shows the plain menu over the demo's world.
+        if (titleSceneRequested_) LoadTitleScene();
+        // DemoPlayStop() -> Init; the press that stopped it does not reach the menu.
+        menuInputLatched_ = true;
+        demoLastLive_ = ReadDemoLiveInput(false);
+        demoIdleTimer_.Reset();
+        std::cout << "GalaxyEggbertCNA: demo stopped, back to the menu." << std::endl;
+    }
+
+    bool GalaxyEggbertGame::UpdateDemoMenu()
+    {
+        using GalaxyEggbert::Def::GamePhase;
+        if (SuppressLiveInput() || !demoRecordPath_.empty() || phase_ != GamePhase::Init)
+        {
+            demoIdleTimer_.Reset();
+            menuInputLatched_ = false;
+            return false;
+        }
+        const auto live = ReadDemoLiveInput(true);
+        const bool activity = GalaxyEggbert::Game::DemoActivity(demoLastLive_, live);
+        demoLastLive_ = live;
+        if (menuInputLatched_)
+        {
+            if (GalaxyEggbert::Game::DemoInputHeld(live) || !live.keyEvents.empty())
+            {
+                tickInput_.keys.clear();
+                tickInput_.buttons = 0;
+                tickInput_.touches.clear();
+            }
+            else
+            {
+                menuInputLatched_ = false;
+            }
+        }
+        // Only the settled main menu of the active window counts: not Play, Pause, Setup, the
+        // editor, the help or a menu transition.
+        const bool eligible = fadeOutPhase_ == GamePhase::None && getIsActiveProperty() && !controlsHelp_.shown &&
+                              !menuInputLatched_;
+        if (!demoIdleTimer_.Update(demoClockSeconds_, eligible, activity)) return false;
+        std::cout << "GalaxyEggbertCNA: " << GalaxyEggbert::Game::kDemoIdleSeconds
+                  << " s without input in the main menu: the demos play." << std::endl;
+        demoNumber_ = 0; // DemoStep(): an automatic demo starts with the first
+        if (StartNextDemo()) return true;
+        std::cout << "GalaxyEggbertCNA: no demo can be played." << std::endl;
+        return false;
+    }
+
+    void GalaxyEggbertGame::BeginDemoRecording()
+    {
+        demoRecordArmed_ = false;
+        demoRecordLog_ = {};
+        demoRecordLog_.start = resumeLog_.start; // StartResumeLog() just took it
+        demoRecording_ = true;
+        demoEndRequested_ = false;
+        std::cout << "GalaxyEggbertCNA: recording demo " << demoRecordPath_ << " from mission "
+                  << demoRecordLog_.start.mission
+                  << (demoRecordSlot_ > 0 ? " (leaving the mission or Play ends it)." : " (Escape ends it).")
+                  << std::endl;
+    }
+
+    bool GalaxyEggbertGame::FinishDemoRecording()
+    {
+        if (!demoRecording_) return false;
+        demoRecording_ = false;
+        using namespace GalaxyEggbert::Game;
+        DemoRecording demo;
+        demo.title = demoRecordTitle_;
+        demo.log = std::move(demoRecordLog_);
+        demo.endSignature = HashDemoSignature(ResumeSignature());
+        const std::string text = demo.Serialize();
+        DemoRecording check;
+        const auto status = ParseDemo(text, kDemoSimulationRevision, check);
+        if (status != DemoLoadStatus::Ok)
+        {
+            std::cout << "GalaxyEggbertCNA: demo " << demoRecordPath_ << " not written: " << DemoLoadStatusText(status)
+                      << "." << std::endl;
+            if (demoRecordSlot_ == 0) autoplayExitCode_ = 1;
+            return false;
+        }
+        if (demoRecordSlot_ > 0)
+        {
+            std::error_code made;
+            std::filesystem::create_directories(std::filesystem::path(demoRecordPath_).parent_path(), made);
+        }
+        const std::string temporary = demoRecordPath_ + ".tmp";
+        std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
+        out << text;
+        out.close();
+        std::error_code error;
+        if (out) std::filesystem::rename(temporary, demoRecordPath_, error);
+        if (!out || error)
+        {
+            std::filesystem::remove(temporary, error);
+            std::cout << "GalaxyEggbertCNA: could not write demo " << demoRecordPath_ << "." << std::endl;
+            if (demoRecordSlot_ == 0) autoplayExitCode_ = 1;
+            return false;
+        }
+        std::cout << "GalaxyEggbertCNA: demo recorded: " << demoRecordPath_ << " (mission " << demo.log.start.mission
+                  << ", " << demo.log.TickCount() << " ticks in " << demo.log.runs.size() << " runs)." << std::endl;
+        return true;
+    }
+
+    // ---- The player's own demo recordings (BD-0116) ----
+
+    std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> GalaxyEggbertGame::DemoSlotInfos() const
+    {
+        using namespace GalaxyEggbert::Game;
+        std::vector<InputPad::DemoSlotInfo> slots(static_cast<std::size_t>(kDemoSlotCount));
+        for (int slot = 1; slot <= kDemoSlotCount; ++slot)
+        {
+            auto& info = slots[static_cast<std::size_t>(slot - 1)];
+            const auto own = UserDemoPath(slot);
+            std::error_code error;
+            info.recorded = std::filesystem::exists(own, error);
+            DemoRecording demo;
+            const auto text = ReadWorldBytes(info.recorded ? own : DemoPath(slot));
+            const bool ok = text && ParseDemo(*text, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok;
+            info.line1 = info.recorded ? "Recorded" : ok ? "Shipped" : "Empty";
+            if (ok)
+            {
+                const int mission = demo.log.start.mission;
+                const bool galaxy = GalaxyEggbert::Editor::ParseGalaxyWorldPath(demo.log.start.worldPath).has_value();
+                info.line2 = (galaxy ? "Galaxy " : "Mission ") + std::to_string(mission);
+            }
+            else if (info.recorded)
+            {
+                info.line2 = "(unplayable)";
+            }
+        }
+        return slots;
+    }
+
+    void GalaxyEggbertGame::ShowDemoNotice(std::string text)
+    {
+        std::cout << "GalaxyEggbertCNA: " << text << std::endl;
+        demoNotice_ = std::move(text);
+        demoNoticeSeconds_ = 4.0f;
+    }
+
+    void GalaxyEggbertGame::StartPlayerRecording(int slot)
+    {
+        using namespace GalaxyEggbert::Game;
+        demoSlotsShown_ = false;
+        const int mission = worldRuntime_.GetMissionNumber();
+        // Speedy Blupi's DemoRecStart(): the mission from its start, at the normal speed.
+        demoRecordSlot_ = slot;
+        demoRecordPath_ = UserDemoPath(slot);
+        demoRecordMaxTicks_ = 0; // kDemoMaxTicks, ten minutes
+        demoRecordTitle_ = std::string("Recorded by player ") + static_cast<char>('A' + saveData_.GetSelectedGamer()) +
+                           (galaxyGamer_ >= 0 ? ": " + GalaxyEggbert::Editor::GalaxyMissionName(mission) + " of a galaxy"
+                                              : ": mission " + std::to_string(mission));
+        demoRecordArmed_ = true;
+        deferredMission_ = 0;
+        gameSpeed_ = GalaxyEggbert::Def::GameSpeed::Normal;
+        LoadMission(mission);
+        if (!missionStartPending_)
+        {
+            // Its world could not be loaded again: nothing is armed, the game goes on as it was.
+            demoRecordSlot_ = 0;
+            demoRecordPath_.clear();
+            demoRecordTitle_.clear();
+            demoRecordArmed_ = false;
+            ShowDemoNotice("The demo could not be recorded.");
+            return;
+        }
+        SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
+        std::cout << "GalaxyEggbertCNA: demo position " << slot << ": mission " << mission
+                  << " again from its start, recorded." << std::endl;
+    }
+
+    void GalaxyEggbertGame::EndPlayerRecording(bool written)
+    {
+        const int slot = demoRecordSlot_;
+        demoRecordSlot_ = 0;
+        demoRecordPath_.clear();
+        demoRecordTitle_.clear();
+        demoRecordArmed_ = false;
+        demoEndRequested_ = false;
+        ShowDemoNotice(written ? "Demo recorded in position " + std::to_string(slot) + "."
+                               : "The demo could not be recorded.");
+        if (const int mission = std::exchange(deferredMission_, 0); mission != 0)
+        {
+            LoadMission(mission); // where the recorded mission was going
+        }
+    }
+
     Microsoft::Xna::Framework::Input::KeyboardState GalaxyEggbertGame::CurrentKeyboardState() const
     {
         using namespace Microsoft::Xna::Framework::Input;
@@ -2362,6 +2899,16 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::LoadMission(int missionNumber, const std::string* validatedBytes)
     {
+        // A demo shows one mission: where play would go on to another, the demo (or its recording)
+        // ends instead, with nothing loaded or saved (DemoReplay.hpp).
+        if ((demoActive_ && demoSessionLive_) || demoRecording_)
+        {
+            demoEndRequested_ = true;
+            // The player's recording ends as its replay will (here); the mission follows once it
+            // is written (EndPlayerRecording()).
+            if (demoRecording_ && demoRecordSlot_ > 0) deferredMission_ = missionNumber;
+            return;
+        }
         if (!replayingResume_)
         {
             DeleteResumeFile();
@@ -2374,7 +2921,7 @@ namespace GalaxyEggbert::CNA
         pendingSkate_ = {};
         teleportArrivalGuard_ = false;
         accelWaitZero_ = true; // StartMission(): the first tilt waits for a level device
-        const auto path = MissionWorldPath(missionNumber);
+        const auto path = MissionPath(missionNumber);
         // Hash and decode one snapshot. During resume this is the already validated snapshot,
         // so an editor save/file replacement between validation and load cannot change it.
         const auto fileBytes = validatedBytes ? std::optional<std::string>{} : ReadWorldBytes(path);
@@ -2388,6 +2935,7 @@ namespace GalaxyEggbert::CNA
         }
         loadedMissionPath_ = path;
         loadedMissionHash_ = ResumeLog::HashBytes(*bytes);
+        if (galaxyGamer_ >= 0) worldRuntime_.OverrideMissionNumber(missionNumber); // its place in the galaxy
 
         RebuildWorldPresentation();
 
@@ -2420,7 +2968,9 @@ namespace GalaxyEggbert::CNA
         const int preservedLives = interaction_.Lives();
         interaction_ = InteractionSystem();
         interaction_.SetLives(preservedLives);
-        missionSeed_ = replayingResume_ ? resumeLog_.start.seed : std::random_device{}();
+        missionSeed_ = replayingResume_ ? resumeLog_.start.seed
+                     : demoActive_     ? demo_.log.start.seed
+                                       : std::random_device{}();
         interaction_.SeedRandom(missionSeed_);
         blupi_ = BlupiController();
         // A fresh Blupi knows no BigDecor: give him the solid ones again (M3D-0006). They were set
@@ -2438,6 +2988,12 @@ namespace GalaxyEggbert::CNA
                 worldRuntime_.GetSpawnRenderZ());
             blupi_.SetYaw(worldRuntime_.GetSpawnYaw());
         }
+        else if (galaxyGamer_ >= 0)
+        {
+            // A galaxy world made before its start was set: where the editor's play-test puts him.
+            PlaceBlupi(GalaxyEggbert::Editor::kEditorStarterSpawnRenderX, GalaxyEggbert::Editor::kEditorStarterSpawnY,
+                       GalaxyEggbert::Editor::kEditorStarterSpawnRenderZ);
+        }
         else
         {
             PlaceBlupi(0.0f, 1.0f, 0.0f);
@@ -2452,9 +3008,9 @@ namespace GalaxyEggbert::CNA
         chaseCamera_.Reset(blupi_.GetYaw()); // a new world starts with the camera behind him
         cameraSmoothedInitialized_ = false;  // ... there at once, not easing over from the last world
 
-        missionStartPending_ = !replayingResume_;
+        missionStartPending_ = !replayingResume_ && !demoActive_;
         saveData_.SetMissionNumber(missionNumber);
-        if (!replayingResume_) saveData_.Save();
+        SavePlayerData();
 
         std::cout << "GalaxyEggbertCNA: LoadMission(" << missionNumber << "): loaded " << path << "."
                    << std::endl;
@@ -2469,6 +3025,9 @@ namespace GalaxyEggbert::CNA
                        << "): not found or failed to load." << std::endl;
             return;
         }
+        // A galaxy world is saved as the mission of its place (BD-0119).
+        if (const auto galaxy = GalaxyEggbert::Editor::ParseGalaxyWorldPath(path.generic_string()))
+            worldRuntime_.OverrideMissionNumber(galaxy->second);
 
         RebuildWorldPresentation();
 
@@ -2503,6 +3062,8 @@ namespace GalaxyEggbert::CNA
                        << "): not found or failed to load." << std::endl;
             return;
         }
+        if (const auto galaxy = GalaxyEggbert::Editor::ParseGalaxyWorldPath(path.generic_string()))
+            worldRuntime_.OverrideMissionNumber(galaxy->second);
 
         StopVehicleMotorSound();
         RebuildWorldPresentation();
@@ -2540,6 +3101,89 @@ namespace GalaxyEggbert::CNA
         SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
 
         std::cout << "GalaxyEggbertCNA: LoadCustomWorldForPlayTest(" << path << "): loaded." << std::endl;
+    }
+
+    // ---- xnjttjpo: the world being played in the 3D editor (BD-0118) ----
+
+    void GalaxyEggbertGame::OpenMissionInEditor()
+    {
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Play) return;
+        const int mission = worldRuntime_.GetMissionNumber();
+        const std::filesystem::path path = MissionPath(mission);
+        std::error_code error;
+        if (mission <= 0 || !std::filesystem::exists(path, error))
+        {
+            std::cout << "GalaxyEggbertCNA: xnjttjpo: mission " << mission << " has no world file to edit." << std::endl;
+            return;
+        }
+        StopVehicleMotorSound();
+        editorMission_ = mission;
+        editorMissionLives_ = interaction_.Lives();
+        // As XMISSION wrote data\worldNNN.blp: the shipped file itself, its backups in the player's
+        // folder (a galaxy world's beside it, as the editor's).
+        worldEditor_.BeginOutsideSession(galaxyGamer_ >= 0 ? std::filesystem::path{}
+                                                           : GalaxyEggbert::Editor::CampaignBackupsDir());
+        LoadCustomWorldForEditing(path);
+        SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
+        std::cout << "GalaxyEggbertCNA: xnjttjpo: editing mission " << mission << " (" << path.generic_string()
+                  << ") in the 3D editor; its Stop returns to the mission." << std::endl;
+    }
+
+    void GalaxyEggbertGame::LeaveMissionEditor()
+    {
+        const int mission = std::exchange(editorMission_, 0);
+        worldEditor_.EndOutsideSession();
+        editorPlayTestActive_ = false;
+        SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
+        interaction_.SetLives(editorMissionLives_);
+        LoadMission(mission); // from its start, with what was saved
+        std::cout << "GalaxyEggbertCNA: xnjttjpo: back to mission " << mission << "." << std::endl;
+    }
+
+    // ---- The player's own galaxy (BD-0119) ----
+
+    std::string GalaxyEggbertGame::MissionPath(int mission) const
+    {
+        if (galaxyGamer_ >= 0) return GalaxyEggbert::Editor::GalaxyWorldPath(galaxyGamer_, mission).generic_string();
+        return MissionWorldPath(mission);
+    }
+
+    void GalaxyEggbertGame::StartGalaxy()
+    {
+        const int gamer = saveData_.GetSelectedGamer();
+        std::error_code error;
+        if (!std::filesystem::exists(GalaxyEggbert::Editor::GalaxyWorldPath(gamer, 1), error))
+        {
+            // Nothing to play yet: the editor, on the galaxy, to build its main hub.
+            std::cout << "GalaxyEggbertCNA: player " << static_cast<char>('A' + gamer)
+                      << "'s galaxy has no main hub yet: the editor's galaxy screen." << std::endl;
+            worldEditor_.EnterBrowser(gamer);
+            worldEditor_.ShowGalaxy();
+            SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
+            return;
+        }
+        galaxyGamer_ = gamer;
+        saveData_.SetGalaxyMode(true);
+        int mission = saveData_.GetMissionNumber();
+        if (!GalaxyEggbert::Editor::IsGalaxyMission(mission) ||
+            !std::filesystem::exists(GalaxyEggbert::Editor::GalaxyWorldPath(gamer, mission), error))
+            mission = 1;
+        const int lives = saveData_.GetHasProgress() ? saveData_.GetLives() : 3;
+        saveData_.SetHasProgress(true);
+        interaction_.SetLives(lives);
+        LoadMission(mission);
+        interaction_.SetLives(lives);
+        SetPhase(GalaxyEggbert::Def::GamePhase::Play);
+        std::cout << "GalaxyEggbertCNA: player " << static_cast<char>('A' + gamer) << "'s galaxy: "
+                  << GalaxyEggbert::Editor::GalaxyMissionName(mission) << "." << std::endl;
+    }
+
+    void GalaxyEggbertGame::LeaveGalaxy()
+    {
+        if (galaxyGamer_ < 0) return;
+        galaxyGamer_ = -1;
+        saveData_.SetGalaxyMode(false);
+        std::cout << "GalaxyEggbertCNA: back from the galaxy to the campaign's menu." << std::endl;
     }
 
     void GalaxyEggbertGame::LoadTitleScene()
@@ -2617,6 +3261,14 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::SetPhase(GalaxyEggbert::Def::GamePhase next, bool bypassFade) noexcept
     {
         using GalaxyEggbert::Def::GamePhase;
+        if (next != GamePhase::Pause) demoSlotsShown_ = false;
+        // Pause, Win, Lost or a menu end a demo (and its recording) rather than show over it.
+        if (next != GamePhase::Play && ((demoActive_ && demoSessionLive_) || demoRecording_))
+        {
+            demoEndRequested_ = true;
+        }
+        // The menu is the campaign's: a galaxy being played ends there (BD-0119).
+        if (next == GamePhase::Init && !demoActive_) LeaveGalaxy();
         if (next == GamePhase::Init || next == GamePhase::Win || next == GamePhase::Lost || next == GamePhase::Editor)
         {
             if (!replayingResume_) DeleteResumeFile();
@@ -2804,7 +3456,8 @@ namespace GalaxyEggbert::CNA
 
     float GalaxyEggbertGame::AccelTurnInput()
     {
-        if (!replayingResume_)
+        // A replay (resume or demo) reads the recorded accelerometer, never the device.
+        if (!replayingResume_ && !demoActive_)
         {
             using Microsoft::Devices::Sensors::Accelerometer;
             const bool wanted = saveData_.GetAccelActive() && !autoplay_ && Accelerometer::getIsSupportedProperty();
@@ -2974,7 +3627,8 @@ namespace GalaxyEggbert::CNA
                              phase_ == GamePhase::PlaySetup ||
                              (phase_ == GamePhase::Editor && !worldEditor_.IsBrowsing());
         const std::uint32_t wanted =
-            inWorld && sound_.IsEnabled() && !autoplay_ && !replayingResume_ ? worldRuntime_.GetWorld().musicTrack() : 0u;
+            inWorld && sound_.IsEnabled() && !autoplay_ && !replayingResume_ && !demoVerifying_
+                ? worldRuntime_.GetWorld().musicTrack() : 0u;
         if (wanted == musicPlaying_)
         {
             return;
@@ -3612,10 +4266,10 @@ namespace GalaxyEggbert::CNA
 
     void GalaxyEggbertGame::ToggleFullscreen()
     {
-        if (!graphics_ || replayingResume_) return;
+        if (!graphics_ || replayingResume_ || demoActive_) return;
         graphics_->ToggleFullScreen();
         saveData_.SetFullscreen(graphics_->getIsFullScreenProperty());
-        saveData_.Save();
+        SavePlayerData();
     }
 
     void GalaxyEggbertGame::ApplyCheat(int cheatNumber)
@@ -3642,7 +4296,7 @@ namespace GalaxyEggbert::CNA
                 break;
             case 5: // Reset gamer progress
                 saveData_.Reset();
-                if (!replayingResume_) saveData_.Save();
+                SavePlayerData();
                 inputPad_.SetJumpRight(saveData_.GetJumpRight());
                 break;
             case 6: // Trial mode simulate-toggle -- no observable effect here, Trial phase is unreachable
@@ -3753,6 +4407,12 @@ namespace GalaxyEggbert::CNA
             case TC::Debug:
                 cheatDebug_ = !cheatDebug_;
                 break;
+            case TC::XMission:
+                // Speedy Blupi's XMISSION (BD-0118): the editor on this world, after this tick. Not in
+                // a replay (a demo, a resume reconstruction), a recording or a play-test.
+                if (!demoActive_ && !replayingResume_ && !demoRecording_ && !demoRecordArmed_ && !editorPlayTestActive_)
+                    xmissionPending_ = true;
+                break;
             case TC::FairPlay:
             {
                 const bool locked = !inputPad_.IsCheatEntryLocked();
@@ -3785,13 +4445,39 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::Update(Microsoft::Xna::Framework::GameTime& gameTime)
     {
         Game::Update(gameTime);
+        {
+            // Real seconds for the menu's idle timer (DemoReplay.hpp), whatever the game's speed;
+            // a long stall (a suspended machine) counts as a quarter of a second.
+            const auto now = std::chrono::steady_clock::now();
+            demoClockSeconds_ = demoClockStarted_
+                ? std::min(0.25f, std::chrono::duration<float>(now - demoClock_).count()) : 0.0f;
+            demoClock_ = now;
+            demoClockStarted_ = true;
+        }
         if (replayingResume_)
         {
             ReplayBatch();
             SuppressDraw();
             return;
         }
+        if (demoVerifyPending_)
+        {
+            demoVerifyPending_ = false;
+            if (!StartDemoFile(demoVerifyPath_, 0))
+            {
+                std::cout << "DEMO VERIFY " << demoVerifyPath_ << ": cannot be played" << std::endl;
+                demoVerifying_ = false;
+                autoplayExitCode_ = 1;
+                Exit();
+                return;
+            }
+        }
         UpdateMusic();
+        if (demoActive_)
+        {
+            UpdateDemo();
+            return;
+        }
 
         if (goldenCaptureMode_ && goldenCaptureAwaitingDraw_)
         {
@@ -3840,6 +4526,13 @@ namespace GalaxyEggbert::CNA
         if (startMission_ != 0)
         {
             SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
+            if (startGalaxy_)
+            {
+                galaxyGamer_ = saveData_.GetSelectedGamer();
+                saveData_.SetGalaxyMode(true);
+                std::cout << "GalaxyEggbertCNA: --galaxy: player " << static_cast<char>('A' + galaxyGamer_)
+                          << "'s galaxy." << std::endl;
+            }
             LoadMission(startMission_);
             startMission_ = 0;
             if (startSpawnSet_)
@@ -3856,6 +4549,7 @@ namespace GalaxyEggbert::CNA
             fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::None)
         {
             StartResumeLog();
+            if (demoRecordArmed_) BeginDemoRecording();
         }
         if (autoplay_ && !autoplay_->Finished())
         {
@@ -3873,6 +4567,25 @@ namespace GalaxyEggbert::CNA
             }
         }
         CaptureInput();
+        if (demoRecording_)
+        {
+            using Microsoft::Xna::Framework::Input::Keys;
+            // Escape (a gamepad's Start) ends a developer's recording before it would pause (the
+            // player's pauses, which ends it); the F-keys (camera, fullscreen, help, game speed) and
+            // Tab (slow) are left out of both.
+            if (demoRecordSlot_ == 0 &&
+                std::binary_search(tickInput_.keys.begin(), tickInput_.keys.end(), static_cast<int>(Keys::Escape)))
+            {
+                FinishDemoRecording();
+                Exit();
+                return;
+            }
+            tickInput_.keys.erase(std::remove_if(tickInput_.keys.begin(), tickInput_.keys.end(), [](int key) {
+                return key == static_cast<int>(Keys::Tab) ||
+                       (key >= static_cast<int>(Keys::F1) && key <= static_cast<int>(Keys::F24));
+            }), tickInput_.keys.end());
+        }
+        if (UpdateDemoMenu()) return;
         UpdateTick();
         if (recordingResume_ && !missionStartPending_ && !replayingResume_)
         {
@@ -3880,6 +4593,27 @@ namespace GalaxyEggbert::CNA
             ++resumeTicks_;
             CheckResumeSelftest();
         }
+        if (demoRecording_)
+        {
+            demoRecordLog_.Append(tickInput_);
+            const std::uint64_t limit = demoRecordMaxTicks_ > 0
+                ? std::min<std::uint64_t>(static_cast<std::uint64_t>(demoRecordMaxTicks_), GalaxyEggbert::Game::kDemoMaxTicks)
+                : GalaxyEggbert::Game::kDemoMaxTicks;
+            if (demoEndRequested_ || demoRecordLog_.TickCount() >= limit || (autoplay_ && autoplay_->Finished()))
+            {
+                const bool written = FinishDemoRecording();
+                if (demoRecordSlot_ == 0)
+                    Exit();
+                else
+                    EndPlayerRecording(written);
+            }
+        }
+        if (xmissionPending_)
+        {
+            xmissionPending_ = false;
+            OpenMissionInEditor();
+        }
+        demoNoticeSeconds_ = std::max(0.0f, demoNoticeSeconds_ - demoClockSeconds_);
     }
 
     void GalaxyEggbertGame::UpdateTick()
@@ -3978,7 +4712,8 @@ namespace GalaxyEggbert::CNA
                         touches.push_back({t.id,t.x,t.y,state == TouchLocationState::Pressed,state == TouchLocationState::Released});
                 }
                 auto device = editorDevices_.Update(phaseKeys, phaseMouse,
-                    SuppressLiveInput() || replayingResume_ ? GalaxyEggbert::Game::GamepadFrame{} : ReadGamepadFrame(),
+                    SuppressLiveInput() || replayingResume_ || menuInputLatched_ ? GalaxyEggbert::Game::GamepadFrame{}
+                                                                                : ReadGamepadFrame(),
                     touches, tickInput_.touchControlsEnabled, editing,
                     editing && worldEditor_.Palette().IsPopupOpen(),
                     viewport.getWidthProperty(), viewport.getHeightProperty(), dt,
@@ -4211,13 +4946,45 @@ namespace GalaxyEggbert::CNA
                 const int mission = worldRuntime_.GetMissionNumber();
                 const bool showBack = mission != 1;
                 const bool showRestart = mission != 1 && mission % 10 != 0;
-                const auto pauseInput = inputPad_.UpdatePause(
-                    mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart);
-                mouseContinuePressed = pauseInput.continuePressed;
-                mouseRestartPressed = pauseInput.restartPressed;
-                mouseSetupPressed = pauseInput.setupPressed;
-                mouseMenuPressed = pauseInput.menuPressed;
-                mouseBackPressed = pauseInput.backPressed;
+                if (demoSlotsShown_)
+                {
+                    // The demo positions over the pause screen (BD-0116).
+                    const auto slots = inputPad_.UpdateDemoSlots(mouse, viewport.getWidthProperty(),
+                                                                 viewport.getHeightProperty(), demoSlotInfos_);
+                    if (slots.recordSlot > 0)
+                    {
+                        StartPlayerRecording(slots.recordSlot);
+                    }
+                    else if (slots.restoreSlot > 0)
+                    {
+                        std::error_code error;
+                        std::filesystem::remove(GalaxyEggbert::Game::UserDemoPath(slots.restoreSlot), error);
+                        demoSlotInfos_ = DemoSlotInfos();
+                        demoSlotsMessage_ = "Position " + std::to_string(slots.restoreSlot) + " plays its shipped demo again.";
+                        std::cout << "GalaxyEggbertCNA: " << demoSlotsMessage_ << std::endl;
+                    }
+                    else if (slots.cancelPressed)
+                    {
+                        demoSlotsShown_ = false;
+                    }
+                }
+                else
+                {
+                    const auto pauseInput = inputPad_.UpdatePause(
+                        mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
+                        CanRecordDemo());
+                    mouseContinuePressed = pauseInput.continuePressed;
+                    mouseRestartPressed = pauseInput.restartPressed;
+                    mouseSetupPressed = pauseInput.setupPressed;
+                    mouseMenuPressed = pauseInput.menuPressed;
+                    mouseBackPressed = pauseInput.backPressed;
+                    if (pauseInput.recordPressed)
+                    {
+                        demoSlotsShown_ = true;
+                        demoSlotInfos_ = DemoSlotInfos();
+                        demoSlotsMessage_.clear();
+                    }
+                }
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup ||
                      phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
@@ -4246,7 +5013,7 @@ namespace GalaxyEggbert::CNA
                     // or continuous autosave.
                     sound_.SetEnabled(!sound_.IsEnabled());
                     saveData_.SetSoundEnabled(sound_.IsEnabled());
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                 }
                 // The volume sliders (a Galaxy addition, the owner's request of 2026-11-02): live
                 // while dragged, saved when let go.
@@ -4266,7 +5033,7 @@ namespace GalaxyEggbert::CNA
                 }
                 if (setupInput.volumeReleased)
                 {
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                     // A sample of the effects at the new volume (the Sounds toggle's own click).
                     sound_.Play(GalaxyEggbert::Def::SoundChannel::SoundChannel0);
                 }
@@ -4275,24 +5042,24 @@ namespace GalaxyEggbert::CNA
                 {
                     saveData_.SetJumpRight(!saveData_.GetJumpRight());
                     inputPad_.SetJumpRight(saveData_.GetJumpRight());
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                 }
                 if (setupInput.zoomToggled)
                 {
                     saveData_.SetAutoZoom(!saveData_.GetAutoZoom());
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                 }
                 if (setupInput.accelToggled)
                 {
                     saveData_.SetAccelActive(!saveData_.GetAccelActive());
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                 }
                 if (setupInput.terrainToggled)
                 {
                     // 3D terrain on or off (SaveData::GetTerrainRelief): the terrain is built again
                     // with the reliefs or without them, their memory freed when off.
                     saveData_.SetTerrainRelief(!saveData_.GetTerrainRelief());
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                     ApplyTerrainReliefSetting();
                 }
                 if (setupInput.resetPressed)
@@ -4302,7 +5069,7 @@ namespace GalaxyEggbert::CNA
                     // 2026-07-13 via Game1.cpp), only reachable from
                     // MainSetup (isMainSetup gates its rect/visibility).
                     saveData_.Reset();
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                     inputPad_.SetJumpRight(saveData_.GetJumpRight());
                     sound_.SetEffectsVolume(static_cast<float>(saveData_.GetEffectsVolume()) / 100.0f);
                     ApplyMusicVolume();
@@ -4349,6 +5116,20 @@ namespace GalaxyEggbert::CNA
                     controlsHelp_.cheats=false;
                     return;
                 }
+                // The Demo button plays the demos as the idle timer does (UpdateDemoMenu()).
+                if (initInput.demoPressed)
+                {
+                    demoNumber_ = 0;
+                    if (!StartNextDemo())
+                        std::cout << "GalaxyEggbertCNA: no demo can be played." << std::endl;
+                    return;
+                }
+                // The selected player's own galaxy (BD-0119).
+                if (initInput.galaxyPressed)
+                {
+                    StartGalaxy();
+                    return;
+                }
                 // Enter (a gamepad's A, GamepadInput.hpp) plays as the Play button does: the menu
                 // without a pointer (owner 2026-11-02: gamepads).
                 {
@@ -4366,7 +5147,7 @@ namespace GalaxyEggbert::CNA
                     // selects AND persists that slot, independent of
                     // entering Play (confirmed via research).
                     saveData_.SetSelectedGamer(initInput.gamerSelected);
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                 }
                 if (initInput.exitPressed)
                 {
@@ -4399,6 +5180,7 @@ namespace GalaxyEggbert::CNA
                     // EDITOR-107): opens the in-game 3D world editor's
                     // browser for the currently selected gamer slot.
                     worldEditor_.EnterBrowser(saveData_.GetSelectedGamer());
+                    worldEditor_.ShowSlots();
                     SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
                 }
                 else if (phaseKeys.IsKeyDown(Keys::Escape) && !pauseKeyWasDown_)
@@ -4475,10 +5257,12 @@ namespace GalaxyEggbert::CNA
                     }
                     else if (request.shouldCreateNew && !request.createPath.empty())
                     {
-                        // A new world in the empty slot the player clicked.
+                        // A new world in the empty slot the player clicked -- or the galaxy's place.
                         std::error_code ec;
                         std::filesystem::create_directories(request.createPath.parent_path(), ec);
-                        GalaxyEggbert::Editor::CreateEditorStarterWorld().saveToFile(request.createPath);
+                        (request.galaxyMission > 0 ? GalaxyEggbert::Editor::CreateGalaxyStarterWorld(request.galaxyMission)
+                                                   : GalaxyEggbert::Editor::CreateEditorStarterWorld())
+                            .saveToFile(request.createPath);
                         LoadCustomWorldForEditing(request.createPath);
                     }
                 }
@@ -4508,6 +5292,11 @@ namespace GalaxyEggbert::CNA
                         // this (plan.md EDITOR-108).
                         LoadCustomWorldForPlayTest(worldEditor_.GetWorldPath());
                     }
+                    else if (worldEditor_.ConsumeLeaveRequested() && editorMission_ != 0)
+                    {
+                        // Stop of an xnjttjpo visit (BD-0118): back to the mission.
+                        LeaveMissionEditor();
+                    }
                 }
             }
 
@@ -4524,12 +5313,16 @@ namespace GalaxyEggbert::CNA
                 }
                 else if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
                 {
-                    SetPhase(GalaxyEggbert::Def::GamePhase::Play);
+                    if (demoSlotsShown_)
+                        demoSlotsShown_ = false; // Escape closes the demo positions first
+                    else
+                        SetPhase(GalaxyEggbert::Def::GamePhase::Play);
                 }
             }
             pauseKeyWasDown_ = pausePressed;
 
-            if (mouseContinuePressed || (phase_ == GalaxyEggbert::Def::GamePhase::Pause && menuConfirmPressed))
+            if (mouseContinuePressed ||
+                (phase_ == GalaxyEggbert::Def::GamePhase::Pause && menuConfirmPressed && !demoSlotsShown_))
             {
                 // Real PauseContinue: resume in place.
                 SetPhase(GalaxyEggbert::Def::GamePhase::Play);
@@ -5155,6 +5948,23 @@ namespace GalaxyEggbert::CNA
             // this is just where the deferred LoadMission() finally happens.
             if (wasBye && !blupi_.IsBye())
             {
+                // A galaxy world's play-test goes on in that galaxy (BD-0119), not into the campaign.
+                if (editorPlayTestActive_)
+                {
+                    if (const auto galaxy =
+                            GalaxyEggbert::Editor::ParseGalaxyWorldPath(editorPlayTestWorldPath_.generic_string()))
+                    {
+                        const auto next = GalaxyEggbert::Editor::GalaxyWorldPath(galaxy->first, byePendingTarget_);
+                        std::error_code error;
+                        if (std::filesystem::exists(next, error))
+                            LoadCustomWorldForPlayTest(next);
+                        else
+                            std::cout << "GalaxyEggbertCNA: play-test: "
+                                      << GalaxyEggbert::Editor::GalaxyMissionName(byePendingTarget_)
+                                      << " of this galaxy is not made yet." << std::endl;
+                        return;
+                    }
+                }
                 LoadMission(byePendingTarget_);
                 return;
             }
@@ -5531,7 +6341,10 @@ namespace GalaxyEggbert::CNA
                     if (GalaxyEggbert::BlockTypes::isWorldSelect(groundBlock))
                     {
                         const int target = WorldRuntime::ComputeWorldSelectTarget(
-                            worldRuntime_.GetMissionNumber(), GalaxyEggbert::BlockTypes::worldSelectIndex(groundBlock));
+                            worldRuntime_.GetMissionNumber(), GalaxyEggbert::BlockTypes::worldSelectIndex(groundBlock),
+                            galaxyGamer_ >= 0 ||
+                                (editorPlayTestActive_ && GalaxyEggbert::Editor::ParseGalaxyWorldPath(
+                                                              editorPlayTestWorldPath_.generic_string())));
                         if (blupi_.TriggerBye())
                         {
                             byePendingTarget_ = target;
@@ -6234,7 +7047,7 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetLives(interaction_.Lives());
                     saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
                     saveData_.SetHasProgress(true);
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                 }
                 SetPhase(GalaxyEggbert::Def::GamePhase::Lost);
             }
@@ -6247,7 +7060,7 @@ namespace GalaxyEggbert::CNA
                     saveData_.SetLives(interaction_.Lives());
                     saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
                     saveData_.SetHasProgress(true);
-                    if (!replayingResume_) saveData_.Save();
+                    SavePlayerData();
                 }
                 // The original's exit (Decor.cpp:6160-6180, 6411; Game1::Update): Blupi leaves
                 // his helicopter, cheers facing the viewer for 40 ticks and the next world loads
@@ -8671,12 +9484,21 @@ namespace GalaxyEggbert::CNA
                 const bool showRestart = mission != 1 && mission % 10 != 0;
                 inputPad_.DrawPause(
                     device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
-                    phaseTimeSeconds_, fadeOutPhase_);
+                    phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_);
+                if (demoSlotsShown_)
+                    inputPad_.DrawDemoSlots(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                            demoSlotInfos_, demoSlotsMessage_);
+                else if (demoNoticeSeconds_ > 0.0f)
+                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                               {demoNotice_});
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Win || phase_ == GalaxyEggbert::Def::GamePhase::Lost)
             {
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                      phase_ == GalaxyEggbert::Def::GamePhase::Win, phaseTimeSeconds_);
+                if (demoNoticeSeconds_ > 0.0f)
+                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                               {demoNotice_});
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::PlaySetup ||
                      phase_ == GalaxyEggbert::Def::GamePhase::MainSetup)
@@ -8723,8 +9545,23 @@ namespace GalaxyEggbert::CNA
             {
                 if (tickInput_.touchControlsEnabled)
                     inputPad_.DrawPlay(device, viewport.getWidthProperty(), viewport.getHeightProperty());
-                inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
-                                           activeCheats_);
+                if (demoActive_)
+                {
+                    // Speedy Blupi shows TX_DEMOPLAY ("Demo") top left while a demo plays.
+                    std::vector<std::string> names{"Demo"};
+                    names.insert(names.end(), activeCheats_.begin(), activeCheats_.end());
+                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
+                }
+                else
+                {
+                    // Speedy Blupi's TX_DEMOREC ("REC") while the player records a demo (BD-0116), and
+                    // what the last recording became.
+                    std::vector<std::string> names;
+                    if (demoRecording_ && demoRecordSlot_ > 0) names.push_back("REC");
+                    if (demoNoticeSeconds_ > 0.0f) names.push_back(demoNotice_);
+                    names.insert(names.end(), activeCheats_.begin(), activeCheats_.end());
+                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(), names);
+                }
                 if (cheatDebug_ && GalaxyEggbert::Game::kCheatsEnabled)
                 {
                     GalaxyEggbert::Game::DebugOverlayInfo info;

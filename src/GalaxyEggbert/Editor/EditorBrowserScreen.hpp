@@ -37,7 +37,8 @@ namespace GalaxyEggbert::Editor
     class EditorBrowserScreen
     {
     public:
-        enum class Action { None, Open, New, Back };
+        // Galaxy: the Galaxy button, the gamer's own galaxy (GalaxyBrowserScreen, BD-0119).
+        enum class Action { None, Open, New, Back, Galaxy };
         // What a click on a slot does.
         enum class Mode { Open, Restore, Export };
 
@@ -74,8 +75,12 @@ namespace GalaxyEggbert::Editor
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect RestoreModeRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ExportModeRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect ImportRect() noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect GalaxyRect() noexcept;
         // The worlds beside the slots (OlderRect rows): the shared ones, then the gamer's older ones.
         [[nodiscard]] const std::vector<std::filesystem::path>& OtherWorlds() const noexcept { return older_; }
+
+        // The back key as it is held now: coming back from the galaxy by Escape is not a second Back.
+        void SyncBackKey(bool held) noexcept { backWasDown_ = held; }
 
         [[nodiscard]] Mode CurrentMode() const noexcept { return mode_; }
         // Back to opening worlds, no message (entering the browser).

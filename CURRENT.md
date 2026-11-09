@@ -1,7 +1,8 @@
 # Galaxy Eggbert — Current Truth
 
-_Last verified: 2026-11-08 (native build, 114/114 CTest, golden frames and trace, controls/HUD/water
-checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
+_Last verified: 2026-11-08 (native build, 117/117 CTest including the ten main-menu demo replays,
+golden frames and trace equal to tests/golden, live checks of demo recording, xnjttjpo and the
+players' galaxies, controls/HUD/water checks and mission 051 with the resume self-test). The all-78-playthrough baseline remains
 2026-11-06 (play pass 33: 77 replays equal). The Web/Emscripten build was verified
 2026-11-06 in headless Chrome; the whole-campaign run
 remains the 2026-10-27 verification. Update this file
@@ -52,6 +53,38 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- Main-menu demos (owner request 2026-11-08, Speedy Blupi's `CEvent::Demo*`, blupi_recon
+  `src/event.cpp:3712-3825`; BD-0115): the menu's Demo button (under Exit), or 40 s without input
+  in the settled main menu of the active window, plays the ten positions in turn
+  (`Content/demos/demo001-010.gdemo`: missions 011, 074, 105, 023, 033, 055, 065, 081, 112, 123;
+  45-50 s each; BD-0117), the first again after the last. Recorded input drives
+  the normal simulation at 60 ticks a second, drawn and heard ("Demo" top left). A new key, mouse
+  button, wheel, gamepad button or touch stops it; mouse movement does not; the stopping input
+  never reaches the menu (held until released). Focus loss stops it. The player's profile,
+  settings, cheats and resume file are frozen during a demo and restored after it. Files carry
+  their own header, a simulation revision and their world's hash (`DemoReplay.hpp`); damaged,
+  incompatible or stale demos are skipped. Not in Play, Pause, Setup, the editor or menu fades.
+  Desktop verified live under Xvfb (button, idle start 40.02 s after the last input, reset by
+  activity, every stop input, the cycle and its repeat, the 800x480 window and 1280x720
+  fullscreen, 45 s of demo in 44.9 s, sound, focus loss, files untouched, Resume after); the web
+  build compiles with the demos packed; web and Android were not run, nor a physical gamepad or
+  touch screen. `tools/record_demo.sh`, `tools/verify_demos.sh`, CTest
+  `VerifyDemoReplay`/`VerifyDemoFiles`/`VerifyDemoReplays`. Evidence: `build-probe/demo-live/`.
+- The player records a demo (BD-0116; how Speedy Blupi did it by a trick:
+  `plans/audit/speedy_blupi_demos.md`): Pause's Record button shows the ten demo positions; the one
+  chosen restarts the mission and records it ("REC") until Play or the mission is left (or 10
+  minutes), into `demos/demo%03d.gdemo` beside savedata.txt; that position then plays it instead
+  of its shipped demo ("Original" gives the shipped one back). Campaign and galaxy missions; the
+  game is played and saved as always. Live: recorded, replayed equal, played by the menu, restored.
+- xnjttjpo (BD-0118, Speedy Blupi's XMISSION): typed in play, the 3D editor opens on the world being
+  played; saving writes the shipped world file itself (the version before kept in
+  `customworlds/campaign-backups/`), Stop returns to the mission from its start. Live verified on a
+  copy of the worlds.
+- Each player's own galaxy (BD-0119): the menu's Galaxy button plays the selected player's world
+  system, a main hub, world hubs 1-14 and their missions 1-8 (and 199), built in the editor's
+  galaxy screen (world screen's Galaxy button; `customworlds/gamerN/galaxy/`), with the campaign's
+  hub rules and its own saved progress (`galaxyN.*`). No resume file inside a galaxy. Live verified
+  (made, played hub to hub to mission, progress kept apart, `--galaxy` autoplay).
 - All four editor Blupi starts participate in G/Tools Pick and the shared cursor/NumPad
   edit target, with red selection outline/model tint. O/Tools Turn rotates each independently
   by 90 degrees; moves, deletion, Undo/Redo and reload preserve its heading. Shared-cell starts

@@ -289,6 +289,7 @@ namespace GalaxyEggbert::Game
         constexpr int kPauseControlSetup = 2;
         constexpr int kPauseControlRestart = 3;
         constexpr int kPauseControlContinue = 4;
+        constexpr int kPauseControlRecord = 5;
 
         constexpr int kWinLostControlReturn = 0;
 
@@ -408,7 +409,7 @@ namespace GalaxyEggbert::Game
         struct InitLayout
         {
             Rect gamer[3];
-            Rect setup, play, editor, exit, fullscreen, help;
+            Rect setup, play, editor, exit, fullscreen, help, demo, galaxy;
             Rect leftPanel, rightPanel;
             float scale;
         };
@@ -436,6 +437,11 @@ namespace GalaxyEggbert::Game
             l.help = Rect{20.f*s,82.f*s,130.f*s,136.f*s};
             l.fullscreen = Rect{20.0f * s, 15.0f * s, 190.0f * s, 69.0f * s};
             l.exit = Rect{w - 130.0f * s, 15.0f * s, w - 20.0f * s, 69.0f * s};
+            // Galaxy's Demo button (Speedy Blupi's demos, DemoReplay.hpp): under Exit, as Help is
+            // under Fullscreen on the other side.
+            l.demo = Rect{w - 130.0f * s, 82.0f * s, w - 20.0f * s, 136.0f * s};
+            // The player's own galaxy (BD-0119), left of Demo.
+            l.galaxy = Rect{w - 250.0f * s, 82.0f * s, w - 140.0f * s, 136.0f * s};
             l.leftPanel = Rect{10.0f * s, h - 325.0f * s, 260.0f * s, h - 10.0f * s};
             l.rightPanel = Rect{w - 170.0f * s, h - 325.0f * s, w - 10.0f * s, h - 10.0f * s};
             l.scale = s;
@@ -491,6 +497,8 @@ namespace GalaxyEggbert::Game
         constexpr int kInitControlExit = 6;
         constexpr int kInitControlFullscreen = 7;
         constexpr int kInitControlHelp = 8;
+        constexpr int kInitControlDemo = 9;
+        constexpr int kInitControlGalaxy = 10;
 
         // Real fade-out transitions (plan.md MENU-088/089, 2026-07-13,
         // dedicated research pass into the real `fadeOutPhase` mechanic):
@@ -1341,9 +1349,127 @@ namespace GalaxyEggbert::Game
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
     }
 
+    QuadBatch::Rect InputPad::PauseRecordRect(int viewportW, int viewportH) noexcept
+    {
+        const float w = static_cast<float>(viewportW);
+        const float s = static_cast<float>(viewportH) / kRefH;
+        return Rect{w - 130.0f * s, 15.0f * s, w - 20.0f * s, 69.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoSlotRect(int index, int viewportW, int viewportH) noexcept
+    {
+        // Two rows of five, centred: the number on a blank button, two lines under it.
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        const int col = index % 5;
+        const int row = index / 5;
+        const float x0 = cx + (static_cast<float>(col) * 124.0f - 302.0f) * s;
+        const float y0 = (row == 0 ? 78.0f : 232.0f) * s;
+        return Rect{x0, y0, x0 + 108.0f * s, y0 + 64.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoRestoreRect(int index, int viewportW, int viewportH) noexcept
+    {
+        const Rect slot = DemoSlotRect(index, viewportW, viewportH);
+        const float s = static_cast<float>(viewportH) / kRefH;
+        return Rect{slot.x0, slot.y1 + 46.0f * s, slot.x1, slot.y1 + 76.0f * s};
+    }
+
+    QuadBatch::Rect InputPad::DemoCancelRect(int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        return Rect{cx - 60.0f * s, 412.0f * s, cx + 60.0f * s, 466.0f * s};
+    }
+
+    InputPad::DemoSlotsInput InputPad::UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                       int viewportW, int viewportH,
+                                                       const std::vector<DemoSlotInfo>& slots) noexcept
+    {
+        using Microsoft::Xna::Framework::Input::ButtonState;
+        DemoSlotsInput result;
+        const float x = static_cast<float>(mouse.getXProperty());
+        const float y = static_cast<float>(mouse.getYProperty());
+        const bool down = mouse.getLeftButtonProperty() == ButtonState::Pressed;
+        // Controls: 0-9 the slots, 10-19 their Original buttons, 20 Cancel.
+        const auto over = [&]() {
+            for (int i = 0; i < static_cast<int>(slots.size()) && i < 10; ++i)
+            {
+                if (InRect(x, y, DemoSlotRect(i, viewportW, viewportH))) return i;
+                if (slots[static_cast<std::size_t>(i)].recorded && InRect(x, y, DemoRestoreRect(i, viewportW, viewportH)))
+                    return 10 + i;
+            }
+            return InRect(x, y, DemoCancelRect(viewportW, viewportH)) ? 20 : -1;
+        };
+        if (down && !mouseWasDown_) demoSlotsControl_ = over();
+        if (!down && mouseWasDown_)
+        {
+            if (demoSlotsControl_ >= 0 && demoSlotsControl_ == over())
+            {
+                if (demoSlotsControl_ < 10) result.recordSlot = demoSlotsControl_ + 1;
+                else if (demoSlotsControl_ < 20) result.restoreSlot = demoSlotsControl_ - 9;
+                else result.cancelPressed = true;
+            }
+            demoSlotsControl_ = -1;
+        }
+        mouseWasDown_ = down;
+        return result;
+    }
+
+    void InputPad::DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                                 int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message)
+    {
+        if (!loaded_)
+        {
+            return;
+        }
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float w = static_cast<float>(viewportW);
+        const float padSheetW = static_cast<float>(padTexture_.getWidthProperty());
+        const float padSheetH = static_cast<float>(padTexture_.getHeightProperty());
+        std::vector<Quad> panels, normal, pressed, labels, faint;
+        const auto icon = [&](std::vector<Quad>& bucket, const Rect& r, int index) {
+            Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
+            PadIconUv(index, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+            bucket.push_back(q);
+        };
+        const auto centred = [&](std::vector<Quad>& bucket, const std::string& text, float cx, float top, float size) {
+            AppendGamerLabel(bucket, text, cx - TextMetrics::Width(text) * size * s * 0.5f, top, size, s);
+        };
+        icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
+        centred(labels, "Record a demo: choose its position", w * 0.5f, 34.0f * s, 0.7f);
+        for (int i = 0; i < static_cast<int>(slots.size()) && i < 10; ++i)
+        {
+            const auto& slot = slots[static_cast<std::size_t>(i)];
+            const Rect r = DemoSlotRect(i, viewportW, viewportH);
+            icon(demoSlotsControl_ == i ? pressed : normal, r, 21);
+            const float cx = (r.x0 + r.x1) * 0.5f;
+            centred(labels, std::to_string(i + 1), cx, r.y0 + 14.0f * s, 0.9f);
+            centred(slot.recorded ? labels : faint, slot.line1, cx, r.y1 + 4.0f * s, 0.42f);
+            centred(slot.recorded ? labels : faint, slot.line2, cx, r.y1 + 22.0f * s, 0.42f);
+            if (slot.recorded)
+            {
+                const Rect o = DemoRestoreRect(i, viewportW, viewportH);
+                icon(demoSlotsControl_ == 10 + i ? pressed : normal, o, 21);
+                centred(labels, "Original", cx, o.y0 + 6.0f * s, 0.42f);
+            }
+        }
+        const Rect cancel = DemoCancelRect(viewportW, viewportH);
+        icon(demoSlotsControl_ == 20 ? pressed : normal, cancel, 21);
+        centred(labels, "Cancel", (cancel.x0 + cancel.x1) * 0.5f, cancel.y0 + 16.0f * s, 0.6f);
+        if (!message.empty()) centred(labels, message, w * 0.5f, 384.0f * s, 0.45f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
+        FlushQuads(device, *padEffect_, padRenderer_, panels, viewportW, viewportH, 0.75f);
+        FlushQuads(device, *padEffect_, padRenderer_, normal, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *padEffect_, padPressedRenderer_, pressed, viewportW, viewportH, kPausePressedAlpha);
+        FlushQuads(device, *textEffect_, textRenderer_, labels, viewportW, viewportH, 1.0f);
+        FlushQuads(device, *textEffect_, textRenderer_, faint, viewportW, viewportH, 0.6f);
+        device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);
+    }
+
     InputPad::PauseInput InputPad::UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                     int viewportW, int viewportH,
-                                                    bool showBack, bool showRestart) noexcept
+                                                    bool showBack, bool showRestart, bool showRecord) noexcept
     {
         PauseInput result;
 
@@ -1362,10 +1488,12 @@ namespace GalaxyEggbert::Game
         const bool overSetup = InRect(mouseX, mouseY, PauseButtonRect(2, m));
         const bool overRestart = showRestart && InRect(mouseX, mouseY, PauseButtonRect(3, m));
         const bool overContinue = InRect(mouseX, mouseY, PauseButtonRect(4, m));
+        const bool overRecord = showRecord && InRect(mouseX, mouseY, PauseRecordRect(viewportW, viewportH));
 
         if (mouseDown && !mouseWasDown_)
         {
-            if (overMenu) activeControl_ = kPauseControlMenu;
+            if (overRecord) activeControl_ = kPauseControlRecord;
+            else if (overMenu) activeControl_ = kPauseControlMenu;
             else if (overBack) activeControl_ = kPauseControlBack;
             else if (overSetup) activeControl_ = kPauseControlSetup;
             else if (overRestart) activeControl_ = kPauseControlRestart;
@@ -1383,6 +1511,7 @@ namespace GalaxyEggbert::Game
             else if (activeControl_ == kPauseControlSetup) result.setupPressed = true;
             else if (activeControl_ == kPauseControlMenu) result.menuPressed = true;
             else if (activeControl_ == kPauseControlBack) result.backPressed = true;
+            else if (activeControl_ == kPauseControlRecord) result.recordPressed = overRecord;
             activeControl_ = -1;
         }
 
@@ -1392,7 +1521,8 @@ namespace GalaxyEggbert::Game
 
     void InputPad::DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                               int viewportW, int viewportH, bool showBack, bool showRestart,
-                              float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase)
+                              float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase,
+                              bool showRecord, bool showButtons)
     {
         if (!loaded_)
         {
@@ -1442,7 +1572,8 @@ namespace GalaxyEggbert::Game
         // active (`fadeOutPhase != None`), confirmed via research -- NOT
         // during the entrance flourish (`fadeOutPhase == None` covers
         // both a fresh entry and the settled idle state).
-        if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None)
+        // showButtons: false under the demo positions (BD-0116), whose controls take the screen.
+        if (fadeOutPhase == GalaxyEggbert::Def::GamePhase::None && showButtons)
         {
             // Real button labels (confirmed 2026-07-13 against `Game1::
             // DrawButtonsText()`'s real `DrawTextUnderButton()` calls for
@@ -1486,6 +1617,16 @@ namespace GalaxyEggbert::Game
             appendLabel(2, true, "Setup");
             appendLabel(3, showRestart, "Restart");
             appendLabel(4, true, "Continue");
+            if (showRecord)
+            {
+                // Galaxy's own (BD-0116), as the menu's Exit button.
+                const Rect r = PauseRecordRect(viewportW, viewportH);
+                Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
+                PadIconUv(21, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+                (activeControl_ == kPauseControlRecord ? pressedQuads : normalQuads).push_back(q);
+                AppendCenteredLabel(labelQuads, "Record", (r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f - 12.0f * scale,
+                                    scale);
+            }
         }
 
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::NonPremultiplied);
@@ -2129,6 +2270,7 @@ namespace GalaxyEggbert::Game
             {"compass", TypedCheat::Compass, "Toggle distance + turn/height arrows"},
             {"fairplay", TypedCheat::FairPlay, "Toggle cheat lock; clear active toggles"},
             {"debug", TypedCheat::Debug, "Toggle runtime diagnostics panel"},
+            {"xnjttjpo", TypedCheat::XMission, "Edit this world in the 3D editor"},
         };
         count = static_cast<int>(sizeof(kWords) / sizeof(kWords[0]));
         return kWords;
@@ -2451,6 +2593,8 @@ namespace GalaxyEggbert::Game
         const bool overExit = InRect(mouseX, mouseY, layout.exit);
         const bool overFullscreen = InRect(mouseX, mouseY, layout.fullscreen);
         const bool overHelp = InRect(mouseX, mouseY, layout.help);
+        const bool overDemo = InRect(mouseX, mouseY, layout.demo);
+        const bool overGalaxy = InRect(mouseX, mouseY, layout.galaxy);
 
         if (mouseDown && !mouseWasDown_)
         {
@@ -2463,6 +2607,8 @@ namespace GalaxyEggbert::Game
             else if (overExit) activeControl_ = kInitControlExit;
             else if (overFullscreen) activeControl_ = kInitControlFullscreen;
             else if (overHelp) activeControl_ = kInitControlHelp;
+            else if (overDemo) activeControl_ = kInitControlDemo;
+            else if (overGalaxy) activeControl_ = kInitControlGalaxy;
             else activeControl_ = -1;
         }
 
@@ -2481,6 +2627,8 @@ namespace GalaxyEggbert::Game
                 case kInitControlExit: result.exitPressed = true; break;
                 case kInitControlFullscreen: result.fullscreenPressed = overFullscreen; break;
                 case kInitControlHelp: result.helpPressed = overHelp; break;
+                case kInitControlDemo: result.demoPressed = overDemo; break;
+                case kInitControlGalaxy: result.galaxyPressed = overGalaxy; break;
                 default: break;
             }
             activeControl_ = -1;
@@ -2662,6 +2810,12 @@ namespace GalaxyEggbert::Game
             appendIconQuad(activeControl_ == kInitControlExit ? pressedQuads : normalQuads, layout.exit, 21);
             AppendCenteredLabel(labelQuads, "Exit", (layout.exit.x0 + layout.exit.x1) * 0.5f,
                                 (layout.exit.y0 + layout.exit.y1) * 0.5f - 12.0f * s, s);
+            appendIconQuad(activeControl_ == kInitControlDemo ? pressedQuads : normalQuads, layout.demo, 21);
+            AppendCenteredLabel(labelQuads, "Demo", (layout.demo.x0 + layout.demo.x1) * 0.5f,
+                                (layout.demo.y0 + layout.demo.y1) * 0.5f - 12.0f * s, s);
+            appendIconQuad(activeControl_ == kInitControlGalaxy ? pressedQuads : normalQuads, layout.galaxy, 21);
+            AppendCenteredLabel(labelQuads, "Galaxy", (layout.galaxy.x0 + layout.galaxy.x1) * 0.5f,
+                                (layout.galaxy.y0 + layout.galaxy.y1) * 0.5f - 12.0f * s, s);
 
             // Real labels: TX_BUTTON_PLAY under Play, TX_BUTTON_SETUP right of
             // Setup (Game1::DrawButtonsText()); the editor's label under its

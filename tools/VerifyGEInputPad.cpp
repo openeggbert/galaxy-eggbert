@@ -101,6 +101,84 @@ int main()
         const auto release=pad.UpdateInit(mouse(75,109,false),800,480);
         check(!press.helpPressed && release.helpPressed && !release.fullscreenPressed && !release.playPressed,
               "main-menu Help opens independently on release");
+        // The Demo button stands under Exit (w-130..w-20, 82..136 reference pixels).
+        const auto demoPress = pad.UpdateInit(mouse(725, 109, true), 800, 480);
+        const auto demoRelease = pad.UpdateInit(mouse(725, 109, false), 800, 480);
+        check(!demoPress.demoPressed && demoRelease.demoPressed && !demoRelease.exitPressed &&
+                  !demoRelease.playPressed && !demoRelease.editorPressed && !demoRelease.helpPressed &&
+                  demoRelease.gamerSelected == -1,
+              "main-menu Demo fires once on release and cannot trigger other buttons");
+        (void)pad.UpdateInit(mouse(725, 109, true), 800, 480);
+        check(!pad.UpdateInit(mouse(400, 300, false), 800, 480).demoPressed,
+              "a press on Demo released elsewhere does nothing");
+        (void)pad.UpdateInit(mouse(1170, 220, true), 1280, 960);
+        check(pad.UpdateInit(mouse(1170, 220, false), 1280, 960).demoPressed && !pad.UpdateInit(
+                  mouse(1170, 220, false), 1280, 960).demoPressed,
+              "the Demo hit area scales with the viewport");
+        (void)pad.UpdateInit(mouse(725, 60, true), 800, 480);
+        const auto exitRelease = pad.UpdateInit(mouse(725, 60, false), 800, 480);
+        check(exitRelease.exitPressed && !exitRelease.demoPressed, "Exit above it stays Exit");
+        // The Galaxy button (BD-0119) stands left of Demo (w-250..w-140, 82..136).
+        (void)pad.UpdateInit(mouse(605, 109, true), 800, 480);
+        const auto galaxyRelease = pad.UpdateInit(mouse(605, 109, false), 800, 480);
+        check(galaxyRelease.galaxyPressed && !galaxyRelease.demoPressed && !galaxyRelease.playPressed &&
+                  !galaxyRelease.editorPressed,
+              "main-menu Galaxy fires on release and only Galaxy");
+        (void)pad.UpdateInit(mouse(605, 109, true), 800, 480);
+        check(!pad.UpdateInit(mouse(725, 109, false), 800, 480).galaxyPressed &&
+                  !pad.UpdateInit(mouse(725, 109, false), 800, 480).demoPressed,
+              "a press on Galaxy released over Demo does neither");
+        // Pause's Record button (BD-0116), top right, only where it is shown.
+        {
+            InputPad pause;
+            (void)pause.UpdatePause(mouse(725, 42, true), 800, 480, true, true, true);
+            const auto recorded = pause.UpdatePause(mouse(725, 42, false), 800, 480, true, true, true);
+            (void)pause.UpdatePause(mouse(725, 42, true), 800, 480, true, true, false);
+            const auto hidden = pause.UpdatePause(mouse(725, 42, false), 800, 480, true, true, false);
+            check(recorded.recordPressed && !recorded.continuePressed && !recorded.menuPressed && !hidden.recordPressed,
+                  "Pause: Record fires on release where it is shown, and is absent elsewhere");
+            std::vector<InputPad::DemoSlotInfo> slots(10);
+            slots[4].recorded = true;
+            const auto at = [](const QuadBatch::Rect& r) { return std::make_pair(int((r.x0 + r.x1) / 2), int((r.y0 + r.y1) / 2)); };
+            const auto [sx, sy] = at(InputPad::DemoSlotRect(2, 800, 480));
+            (void)pause.UpdateDemoSlots(mouse(sx, sy, true), 800, 480, slots);
+            const auto third = pause.UpdateDemoSlots(mouse(sx, sy, false), 800, 480, slots);
+            const auto [rx, ry] = at(InputPad::DemoRestoreRect(4, 800, 480));
+            (void)pause.UpdateDemoSlots(mouse(rx, ry, true), 800, 480, slots);
+            const auto restore = pause.UpdateDemoSlots(mouse(rx, ry, false), 800, 480, slots);
+            const auto [ox, oy] = at(InputPad::DemoRestoreRect(2, 800, 480));
+            (void)pause.UpdateDemoSlots(mouse(ox, oy, true), 800, 480, slots);
+            const auto noOriginal = pause.UpdateDemoSlots(mouse(ox, oy, false), 800, 480, slots);
+            const auto [cx, cy] = at(InputPad::DemoCancelRect(800, 480));
+            (void)pause.UpdateDemoSlots(mouse(cx, cy, true), 800, 480, slots);
+            const auto cancel = pause.UpdateDemoSlots(mouse(cx, cy, false), 800, 480, slots);
+            (void)pause.UpdateDemoSlots(mouse(sx, sy, true), 800, 480, slots);
+            const auto moved = pause.UpdateDemoSlots(mouse(cx, cy, false), 800, 480, slots);
+            const auto [tx, ty] = at(InputPad::DemoSlotRect(9, 1280, 960));
+            (void)pause.UpdateDemoSlots(mouse(tx, ty, true), 1280, 960, slots);
+            const auto tenth = pause.UpdateDemoSlots(mouse(tx, ty, false), 1280, 960, slots);
+            check(third.recordSlot == 3 && third.restoreSlot == 0 && restore.restoreSlot == 5 && restore.recordSlot == 0 &&
+                      noOriginal.restoreSlot == 0 && noOriginal.recordSlot == 0 && cancel.cancelPressed &&
+                      cancel.recordSlot == 0 && moved.recordSlot == 0 && !moved.cancelPressed && tenth.recordSlot == 10,
+                  "Demo positions: a slot records into it, Original only under a recorded one, Cancel, a press "
+                  "released elsewhere does nothing, scaled with the viewport");
+            bool apart = true;
+            for (int i = 0; i < 10; ++i)
+                for (int j = 0; j < 10; ++j)
+                {
+                    const auto a = InputPad::DemoSlotRect(i, 800, 480), b = InputPad::DemoRestoreRect(j, 800, 480);
+                    apart &= a.x1 <= b.x0 || b.x1 <= a.x0 || a.y1 <= b.y0 || b.y1 <= a.y0;
+                    if (i != j)
+                    {
+                        const auto c = InputPad::DemoSlotRect(j, 800, 480);
+                        apart &= a.x1 <= c.x0 || c.x1 <= a.x0 || a.y1 <= c.y0 || c.y1 <= a.y0;
+                    }
+                }
+            const auto cancelRect = InputPad::DemoCancelRect(800, 480);
+            apart &= InputPad::DemoRestoreRect(9, 800, 480).y1 <= cancelRect.y0 && cancelRect.y1 <= 480.0f &&
+                     InputPad::DemoSlotRect(0, 800, 480).x0 >= 0.0f && InputPad::DemoSlotRect(4, 800, 480).x1 <= 800.0f;
+            check(apart, "Demo positions: no two controls overlap, all on the screen");
+        }
         ControlsHelp help;help.shown=true;
         const bool over=ControlsHelp::OverClose(695,35,800,480);
         check(over && help.Update({},true,over) && !help.shown,
@@ -820,7 +898,7 @@ int main()
         };
         int count = 0;
         const auto* words = InputPad::TypedCheatWords(count);
-        bool all = count == 29;
+        bool all = count == 30;
         for (int i = 0; i < count; ++i)
         {
             InputPad pad;
@@ -829,7 +907,13 @@ int main()
             all = all && fired == words[i].cheat && firings == (quickInside ? 2 : 1);
             all = all && words[i].description != nullptr && words[i].description[0] != '\0';
         }
-        check(all, "Typed cheats: all 29 words including debug/fairplay/compass/help/cheats fire and have an explanation");
+        check(all, "Typed cheats: all 30 words including debug/fairplay/compass/help/cheats/xnjttjpo fire and have an explanation");
+        {
+            InputPad xpad;
+            check(type(xpad, "xnjttjpo").first == TC::XMission && type(xpad, "xmission").first == TC::None,
+                  "Typed cheats: xnjttjpo (Speedy Blupi's XMISSION, each letter after the first one more) fires, "
+                  "the plain word does not");
+        }
         InputPad pad;
         check(type(pad, "givecopter").first == TC::GiveCopter && type(pad, "copter").first == TC::None,
               "Typed cheats: givecopter fires; the buffer is cleared after a word (\"copter\" alone is nothing)");

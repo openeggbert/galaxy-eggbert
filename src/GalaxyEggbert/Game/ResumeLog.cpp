@@ -55,12 +55,8 @@ namespace GalaxyEggbert::Game
         return count;
     }
 
-    std::string ResumeLog::Serialize() const
+    void ResumeLog::WriteBody(std::ostream& out) const
     {
-        std::ostringstream out;
-        out.imbue(std::locale::classic());
-        out << std::setprecision(std::numeric_limits<float>::max_digits10);
-        out << "GALAXY_RESUME 7\n" << std::quoted(start.build) << '\n';
         out << std::quoted(start.worldPath) << ' ' << start.worldHash << '\n';
         out << start.mission << ' ' << start.lives << ' ' << start.speed << ' ' << start.seed << ' '
             << start.x << ' ' << start.y << ' ' << start.z << ' ' << start.yaw << ' '
@@ -80,31 +76,64 @@ namespace GalaxyEggbert::Game
             out << ' ' << f.touchControlsEnabled << ' ' << f.accelValid << ' ' << f.accelReset << ' ' << f.accelY
                 << ' ' << f.cheatLetter << '\n';
         }
-        const auto body = out.str();
-        out << "END " << HashBytes(body) << '\n';
-        return out.str();
+    }
+
+    void ResumeLog::ImbueStream(std::ios& stream)
+    {
+        stream.imbue(std::locale::classic());
+        stream.precision(std::numeric_limits<float>::max_digits10);
+    }
+
+    std::string ResumeLog::AppendChecksum(const std::string& body)
+    {
+        return body + "END " + std::to_string(HashBytes(body)) + "\n";
+    }
+
+    std::string ResumeLog::Serialize() const
+    {
+        std::ostringstream out;
+        ImbueStream(out);
+        out << "GALAXY_RESUME 7\n" << std::quoted(start.build) << '\n';
+        WriteBody(out);
+        return AppendChecksum(out.str());
+    }
+
+    std::optional<std::string> ResumeLog::VerifiedBody(const std::string& text)
+    {
+        if (text.empty() || text.size() > 128 * 1024 * 1024) return std::nullopt;
+        const auto footer = text.rfind("\nEND ");
+        if (footer == std::string::npos || text.back() != '\n') return std::nullopt;
+        auto body = text.substr(0, footer + 1);
+        std::istringstream end(text.substr(footer + 5));
+        end.imbue(std::locale::classic());
+        std::uint64_t checksum;
+        if (!(end >> checksum) || checksum != HashBytes(body)) return std::nullopt;
+        end >> std::ws;
+        if (!end.eof()) return std::nullopt;
+        return body;
     }
 
     bool ResumeLog::Parse(const std::string& text, const std::string& build, ResumeLog& result)
     {
-        if (text.size() > 128 * 1024 * 1024) return false;
-        const auto footer = text.rfind("\nEND ");
-        if (footer == std::string::npos || text.back() != '\n') return false;
-        const auto body = text.substr(0, footer + 1);
-        std::istringstream end(text.substr(footer + 5));
-        end.imbue(std::locale::classic());
-        std::uint64_t checksum;
-        if (!(end >> checksum) || checksum != HashBytes(body)) return false;
-        end >> std::ws;
-        if (!end.eof()) return false;
-        std::istringstream in(body);
+        const auto body = VerifiedBody(text);
+        if (!body) return false;
+        std::istringstream in(*body);
         in.imbue(std::locale::classic());
         ResumeLog parsed;
-        auto& s = parsed.start;
         std::string magic;
         int version;
-        if (!(in >> magic >> version >> std::quoted(s.build)) || magic != "GALAXY_RESUME" ||
-            version != 7 || s.build != build) return false;
+        if (!(in >> magic >> version >> std::quoted(parsed.start.build)) || magic != "GALAXY_RESUME" ||
+            version != 7 || parsed.start.build != build) return false;
+        if (!ReadBody(in, parsed)) return false;
+        in >> std::ws;
+        if (!in.eof()) return false;
+        result = std::move(parsed);
+        return true;
+    }
+
+    bool ResumeLog::ReadBody(std::istream& in, ResumeLog& parsed)
+    {
+        auto& s = parsed.start;
         if (!(in >> std::quoted(s.worldPath) >> s.worldHash) || s.worldPath.empty() ||
             s.worldPath.size() > 4096 || s.worldPath.find('\0') != std::string::npos) return false;
         if (!(in >> s.mission >> s.lives >> s.speed >> s.seed >> s.x >> s.y >> s.z >> s.yaw
@@ -118,6 +147,7 @@ namespace GalaxyEggbert::Game
             return false;
         std::uint64_t runCount, ticks, actualTicks = 0;
         if (!(in >> runCount >> ticks) || ticks > kMaxTicks || runCount > ticks) return false;
+        parsed.runs.clear();
         for (std::uint64_t i = 0; i < runCount; ++i)
         {
             ResumeRun run;
@@ -149,9 +179,6 @@ namespace GalaxyEggbert::Game
                     (f.cheatLetter < 'a' || f.cheatLetter > 'z'))) return false;
             parsed.runs.push_back(std::move(run));
         }
-        in >> std::ws;
-        if (!in.eof() || actualTicks != ticks) return false;
-        result = std::move(parsed);
-        return true;
+        return actualTicks == ticks;
     }
 }

@@ -187,6 +187,12 @@ namespace GalaxyEggbert::Editor
         return {250.0f, 184.0f, 345.0f, 216.0f};
     }
 
+    GalaxyEggbert::Game::QuadBatch::Rect EditorBrowserScreen::GalaxyRect() noexcept
+    {
+        // Left of Back, under the other worlds.
+        return {598.0f, 372.0f, 674.0f, 448.0f};
+    }
+
     void EditorBrowserScreen::Export(int slotIndex)
     {
         const std::string name = "World " + std::to_string(slotIndex + 1);
@@ -265,6 +271,13 @@ namespace GalaxyEggbert::Editor
             if (InRect(mx, my, BackButtonRect()))
             {
                 result.action = Action::Back;
+            }
+            else if (InRect(mx, my, GalaxyRect()))
+            {
+                result.action = Action::Galaxy;
+                armedDeleteIndex_ = -1;
+                mouseWasDown_ = mouseDown;
+                return result;
             }
             else if (InRect(mx, my, RestoreModeRect()) || InRect(mx, my, ExportModeRect()))
             {
@@ -427,6 +440,7 @@ namespace GalaxyEggbert::Editor
             }
         }
         addButton(BackButtonRect(), kIconReturn);
+        addButton(GalaxyRect(), kIconBlank);
         addIcon(mode_ == Mode::Restore ? buttons : panels, RestoreModeRect(), mode_ == Mode::Restore ? kIconBlank : kIconPanel);
         addIcon(mode_ == Mode::Export ? buttons : panels, ExportModeRect(), mode_ == Mode::Export ? kIconBlank : kIconPanel);
         addIcon(mouseWasDown_ && InRect(mouseX_, mouseY_, ImportRect()) ? buttons : panels, ImportRect(),
@@ -521,6 +535,11 @@ namespace GalaxyEggbert::Editor
         {
             label(labels, text, (rect.x0 + rect.x1 - Width(text) * kCaptionScale) * 0.5f,
                   middle(rect.y0, rect.y1, kCaptionScale), kCaptionScale);
+        }
+        {
+            const Rect r = GalaxyRect();
+            label(labels, "Galaxy", (r.x0 + r.x1 - Width("Galaxy") * kCaptionScale) * 0.5f,
+                  middle(r.y0, r.y1, kCaptionScale), kCaptionScale);
         }
         if (!message_.empty())
         {

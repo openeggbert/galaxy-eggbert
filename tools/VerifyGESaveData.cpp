@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 // Scripted, non-interactive verification of SaveData (2026-07-13,
 // plan.md MENU-067) -- proves Load()/Save() actually round-trip
@@ -215,6 +216,49 @@ int main()
               "SetSelectedGamer() clamps an out-of-range value to the last real gamer slot");
         data.SetSelectedGamer(-5);
         check(data.GetSelectedGamer() == 0, "SetSelectedGamer() clamps a negative value to gamer slot 0");
+    }
+
+    // BD-0119: each gamer's galaxy keeps its own progress, apart from the campaign's.
+    {
+        SaveData data;
+        data.SetSelectedGamer(1);
+        data.SetLives(6);
+        data.SetMissionNumber(23);
+        data.UnlockMissionDoor(22);
+        std::ostringstream before;
+        data.Write(before);
+        check(before.str().find("galaxy") == std::string::npos,
+              "galaxy: a galaxy never played writes nothing (the file is as before galaxies)");
+        data.SetGalaxyMode(true);
+        check(data.GetLives() == 3 && data.GetMissionNumber() == 0 && !data.IsMissionDoorUnlocked(22) &&
+                  !data.GetHasProgress(),
+              "galaxy: in galaxy mode the progress accessors start from a new galaxy");
+        data.SetLives(4);
+        data.SetMissionNumber(12);
+        data.SetLastWorld(1);
+        data.SetHasProgress(true);
+        data.UnlockMissionDoor(12);
+        data.SetGalaxyMode(false);
+        check(data.GetLives() == 6 && data.GetMissionNumber() == 23 && data.IsMissionDoorUnlocked(22) &&
+                  !data.IsMissionDoorUnlocked(12) && data.GalaxyProgress(1).missionNumber == 12 &&
+                  data.GalaxyProgress(1).doorsUnlocked[12] && data.GalaxyProgress(0).missionNumber == 0,
+              "galaxy: the campaign's progress is untouched by the galaxy's, which is the gamer's own");
+        std::ostringstream out;
+        data.Write(out);
+        SaveData reloaded;
+        std::istringstream in(out.str());
+        reloaded.Read(in);
+        reloaded.SetSelectedGamer(1);
+        const bool campaign = reloaded.GetLives() == 6 && reloaded.GetMissionNumber() == 23;
+        reloaded.SetGalaxyMode(true);
+        check(campaign && reloaded.GetLives() == 4 && reloaded.GetMissionNumber() == 12 &&
+                  reloaded.IsMissionDoorUnlocked(12) && reloaded.GetHasProgress() &&
+                  out.str().find("galaxy1.missionNumber=12") != std::string::npos &&
+                  out.str().find("galaxy0.") == std::string::npos,
+              "galaxy: its progress is saved as galaxyN.* and read back, the mode itself is not saved");
+        SaveData mode = reloaded;
+        check(mode.GetGalaxyMode() && (mode.Reset(), mode.GetGalaxyMode()) && mode.GetMissionNumber() == 0,
+              "galaxy: Reset() clears the progress but keeps the session in its galaxy");
     }
 
     std::remove("savedata.txt");

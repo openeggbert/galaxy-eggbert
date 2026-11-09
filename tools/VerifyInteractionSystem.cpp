@@ -4776,6 +4776,10 @@ int main(int argc, char** argv)
               "door bars and other tiles are no signs");
         check(WorldRuntime::ComputeWorldSelectTarget(1, 12) == 120, "main hub sign 12 -> hub 120");
         check(WorldRuntime::ComputeWorldSelectTarget(1, 13) == 999, "main hub showcase sign -> world 999");
+        check(WorldRuntime::ComputeWorldSelectTarget(1, 13, true) == 130 &&
+                  WorldRuntime::ComputeWorldSelectTarget(1, 14, true) == 140 &&
+                  WorldRuntime::ComputeWorldSelectTarget(130, 2, true) == 132,
+              "a player's galaxy: sign 13 is world 13's (BD-0119), the others as the campaign's");
         check(WorldRuntime::ComputeWorldSelectTarget(40, 199) == 1, "return sign in hub 40 -> main hub");
 
         // WorldRuntime::ComputeWinExitTarget() -- the real win-exit

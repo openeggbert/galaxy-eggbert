@@ -690,11 +690,15 @@ namespace GalaxyEggbert::Editor
     {
         if (backedUpPath_ != worldPath_)
         {
-            (void)BackUpWorld(worldPath_);
+            (void)(outsideSession_ && !outsideBackupDir_.empty() ? BackUpWorldTo(worldPath_, outsideBackupDir_)
+                                                                 : BackUpWorld(worldPath_));
             backedUpPath_ = worldPath_;
         }
         world.saveToFile(worldPath_);
-        thumbnailRequest_ = ThumbnailPath(worldPath_);
+        if (!outsideSession_)
+        {
+            thumbnailRequest_ = ThumbnailPath(worldPath_);
+        }
         dirty_ = false;
         stopConfirmArmed_ = false;
     }
@@ -740,7 +744,14 @@ namespace GalaxyEggbert::Editor
             else
             {
                 stopConfirmArmed_ = false;
-                EnterBrowser(gamerSlot_);
+                if (outsideSession_)
+                {
+                    leaveRequested_ = true; // back to the mission it was opened from (BD-0118)
+                }
+                else
+                {
+                    EnterBrowser(gamerSlot_);
+                }
             }
             return true;
         }

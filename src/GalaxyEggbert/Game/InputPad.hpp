@@ -211,14 +211,42 @@ namespace GalaxyEggbert::Game
             // destination) -- the button rect/press-tracking already
             // existed (`kPauseControlBack`), it just wasn't surfaced here.
             bool backPressed = false;
+            // Galaxy's own (BD-0116): the Record button, top right as the menu's Exit -- the demo
+            // positions, then the mission again from its start, recorded.
+            bool recordPressed = false;
         };
         [[nodiscard]] PauseInput UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH,
-                                             bool showBack, bool showRestart) noexcept;
+                                             bool showBack, bool showRestart, bool showRecord = false) noexcept;
         void DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool showBack, bool showRestart,
                        float phaseTimeSeconds,
-                       GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None);
+                       GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
+                       bool showRecord = false, bool showButtons = true);
+        [[nodiscard]] static QuadBatch::Rect PauseRecordRect(int viewportW, int viewportH) noexcept;
+
+        // The ten demo positions (BD-0116), over the pause screen: a click on one records the
+        // mission into it, "Original" under a recorded one gives it back its shipped demo, Cancel
+        // (or Escape, the caller) closes it. Released over the same control, as the menu's buttons.
+        struct DemoSlotInfo
+        {
+            bool recorded = false; // the player's recording, not the shipped demo
+            std::string line1, line2;
+        };
+        struct DemoSlotsInput
+        {
+            int recordSlot = 0;  // 1-10: record into it
+            int restoreSlot = 0; // 1-10: its shipped demo again
+            bool cancelPressed = false;
+        };
+        [[nodiscard]] DemoSlotsInput UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
+                                                     int viewportW, int viewportH,
+                                                     const std::vector<DemoSlotInfo>& slots) noexcept;
+        void DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
+                           int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message);
+        [[nodiscard]] static QuadBatch::Rect DemoSlotRect(int index, int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoRestoreRect(int index, int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect DemoCancelRect(int viewportW, int viewportH) noexcept;
 
         // Win/Lost screens (plan.md MENU-046..057). Real backgrounds
         // (win.png/lost.png, confirmed 640x480) plus the real
@@ -499,6 +527,10 @@ namespace GalaxyEggbert::Game
             Compass,      // "compass": distance to nearest chest, then the exit/key
             FairPlay,     // "fairplay": clear persistent cheats and lock/unlock other cheat input
             Debug,        // "debug" (MODERN): toggle the runtime diagnostics panel
+            // "xnjttjpo": Speedy Blupi's XMISSION (blupi_recon event.cpp:55, every letter after
+            // the first one more), editing the official worlds; here the 3D editor on the world
+            // being played (BD-0118). Not in Mobile Eggbert, which has no editor.
+            XMission,
         };
         struct TypedCheatResult
         {
@@ -616,6 +648,10 @@ namespace GalaxyEggbert::Game
             bool exitPressed = false;
             bool fullscreenPressed = false;
             bool helpPressed = false;
+            // Galaxy's Demo button (DemoReplay.hpp), released over it: plays the demos.
+            bool demoPressed = false;
+            // Galaxy's own (BD-0119): plays the selected player's galaxy (or builds it, if new).
+            bool galaxyPressed = false;
         };
         [[nodiscard]] InitInput UpdateInit(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                            int viewportW, int viewportH) noexcept;
@@ -754,6 +790,7 @@ namespace GalaxyEggbert::Game
         // Reset/Return, kWinLostControlReturn) since only this class
         // needs them.
         int activeControl_ = -1;
+        int demoSlotsControl_ = -1; // the demo positions' control held down (UpdateDemoSlots)
         bool mouseWasDown_ = false;
         // UpdatePlayTouches(): the finger holding each control (-1: none).
         int dpadTouchId_ = -1, actionTouchId_ = -1, pauseTouchId_ = -1, backUpTouchId_ = -1, crouchTouchId_ = -1;

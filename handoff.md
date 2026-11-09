@@ -6,7 +6,167 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-08 (ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-08 (demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Recordings, ten demos, xnjttjpo, galaxies (2026-11-08, BD-0116-0119) — verified on desktop, committed 2026-11-09
+
+Owner request after the main-menu demos: find how Speedy Blupi records demos in the game by a trick
+and offer something more standard (a world played into a demo position), ten demos, editing the
+shipped worlds in the 3D editor by a cheat typed in play ("xnjttjpo as in Speedy Blupi"), and a
+world system of hubs and worlds for each of the three players ("Space, or something else":
+**Galaxy**). Committed with the main-menu demos on 2026-11-09, after the owner kept the three
+choices of Q-017 (the name Galaxy, xnjttjpo saving the shipped file, a pause ending a recording).
+
+- Research: `plans/audit/speedy_blupi_demos.md`. The trick: XMISSION, typed `xnjttjpo` (each letter
+  after the first one more), makes the Construction screens edit the official worlds up to 219;
+  playing world 200-219 records automatically ("REC"); leaving Play writes `data\demo2NN.blp`.
+- Recording (BD-0116): Pause shows a Record button (top right, only in a mission of the campaign
+  or a galaxy: not in a play-test, a demo, a resume reconstruction or an autoplay). It opens the ten
+  demo positions (`InputPad::DrawDemoSlots`, the pause buttons hidden under it): Shipped/Recorded
+  and the mission of each, Original under a recorded one (deletes it), Cancel or Escape. A position
+  chosen restarts the mission from its start (`StartPlayerRecording()`), normal speed, "REC" top
+  left; the recording uses the developer path (`BeginDemoRecording()`/`FinishDemoRecording()`, now
+  returning whether it wrote) with `demoRecordSlot_` 1-10. Leaving Play (pause, the lost screen)
+  or the mission (a sign, the exit), 10 minutes, or closing the window end it. `LoadMission()` is held back
+  (`deferredMission_`) until the file is written, so the recording ends where its replay will, then
+  the mission loads (`EndPlayerRecording()`; a four-second notice). Progress is saved as in normal
+  play. Files: `demos/demo%03d.gdemo` beside savedata.txt (`/save/demos` on the web;
+  `UserDemoPath()`). `StartDemo(n)` plays the player's file of position n, the shipped one when it
+  is missing or unplayable. A galaxy recording names its galaxy world (`start.worldPath`):
+  `StartDemoFile()` accepts that path for the same mission and plays it in that galaxy
+  (`ParseGalaxyWorldPath()`, only gamers 0-2).
+- Ten demos (BD-0117): `Content/demos/demo004-010` added from the QA autoplay scripts:
+  `tools/record_demo.sh build-cna-opengl3 Content/demos/demo004.gdemo 23 --autoplay
+  tools/autoplay/world023.txt --demo-ticks 2700 --demo-title "World 2: the tower of keys"`; the
+  others the same with 005/33 "World 3: the haunted house of the eight wasps", 006/55 "World 5:
+  the dark works", 007/65 "World 6: the slime catacombs", 008/81 "World 8: the sky steps", 009/112
+  "World 11: the machine cavern", 010/123 "World 12: the library" (all 2700 ticks; demo001-003 as
+  below). The game plays positions 1-10 (`kDemoSlotCount`); `VerifyDemoFiles` wants exactly ten.
+- xnjttjpo (BD-0118): `InputPad::TypedCheat::XMission` (word table, Help lists it). Typed in Play
+  it sets `xmissionPending_`; after that tick `OpenMissionInEditor()` opens `MissionPath(mission)`
+  in the editor with `WorldEditor::BeginOutsideSession(backup dir)`: Stop raises
+  `ConsumeLeaveRequested()` instead of the browser (unsaved changes still need a second Stop),
+  saves back up into `customworlds/campaign-backups/` (`BackUpWorldTo()`, three generations, the
+  first save of each visit) and take no thumbnail. `LeaveMissionEditor()` reloads the mission from
+  its start with the lives it had. The save writes the shipped `worlds3d/worldNNN.vwr` itself, as
+  XMISSION wrote `data\worldNNN.blp`: in a checkout that is the repository's file (tools/worlds/
+  generators would overwrite hand edits; a demo or autoplay of that world then needs re-recording).
+  Ignored in a demo, resume reconstruction, recording or play-test. Restore by hand from the backups.
+- Galaxies (BD-0119): `CustomWorldStorage.hpp` (`GalaxyDir()`, `GalaxyWorldPath()`,
+  `IsGalaxyMission()`, `GalaxyMissionName()`, `CreateGalaxyStarterWorld()`): main hub 1, world hubs
+  10-140, missions W1-W8, bonus 199 in `customworlds/gamerN/galaxy/`. Starters: the 3x3 board,
+  Blupi at (50,1,51) facing -Z with the sign two cells ahead (world sign 1 / mission sign 1), a world
+  hub's return sign beside him; missions are the editor's starter (chest and exit); every starter
+  stores its mission number. Editor: the world screen's Galaxy button -> `GalaxyBrowserScreen`
+  (main hub, 199, worlds 1-14 select, the selected world's hub and missions 1-8; faint = not made,
+  a click makes it from its starter); Back/Escape -> the world screen (`SyncBackKey()` keeps one
+  Escape from also leaving it). Play: the menu's Galaxy button (`StartGalaxy()`; with no main hub
+  it opens the editor's galaxy screen) sets `galaxyGamer_` and `SaveData::SetGalaxyMode(true)`:
+  every progress accessor then uses the gamer's galaxy slot (`galaxyN.*` in savedata.txt, written
+  only once used; the mode is not saved; Reset keeps it). `MissionPath()` reads the galaxy's files,
+  `LoadMission()` overrides the world's mission number with its place, main-hub sign 13 is world
+  130 (`ComputeWorldSelectTarget(..., galaxy)`), no resume file. The menu (`SetPhase(Init)`) leaves
+  the galaxy. A galaxy world's editor play-test follows its signs within the galaxy. QA:
+  `--galaxy --mission N [--autoplay s]` plays the selected player's galaxy.
+- Tests: `VerifyGEInputPad` (Galaxy and Record buttons, the positions screen, xnjttjpo, 30 words),
+  `VerifyGESaveData` (galaxy progress apart, file unchanged when unused, round trip, Reset),
+  `VerifyGEEditorStorage` (galaxy paths and places, parsing, starters, BackUpWorldTo, the galaxy
+  screen through WorldEditor incl. Escape), `VerifyGEWorldEditor` (outside session: Stop, second
+  Stop, backups elsewhere, no thumbnail, normal again after), `VerifyInteractionSystem` (sign 13),
+  `VerifyDemoReplay` (user paths, ten shipped). Full CTest 117/117; `tools/verify_demos.sh`: all ten
+  equal, player files unchanged; golden frames and trace identical to tests/golden.
+- Live desktop evidence (`build-probe/demo-live/`, harness copies in `harness/`): `xmission/`:
+  xnjttjpo in mission 11 opens the editor, Right+Enter saves the edit over the (copied) worlds3d
+  file with the old version in campaign-backups, nothing else beside it, Stop reloads mission 11
+  with the new background, again without edits one Stop, the repository's file untouched.
+  `record/`: Pause -> Record -> position 4 -> mission 11 restarts with REC -> Escape writes
+  `demos/demo004.gdemo` (notice shown) -> `--verify-demo` equal; the menu's Demo plays it as
+  position 4; Original removes it; Cancel/Escape record nothing. `galaxy/`: Galaxy with no main hub
+  opens the galaxy screen; main hub, hub 10 and mission 11 made there; Galaxy then plays the main
+  hub from the player's folder, sign 1 -> hub 10; a recording there (position 5) ends at the mission
+  sign, written before mission 11 loads, and replays equal; Home leaves the galaxy; savedata has
+  `galaxy0.*`, the campaign's untouched; `--galaxy --mission 11` autoplay takes the chest and exit,
+  back in hub 10 with door 12 open in `galaxy0.doorsUnlocked` only. `cycle10/`: the menu's Demo
+  plays the seven new demos in turn (positions 1-3 left empty for the check), each drawn
+  (`cycle10-sheet.png`, 20 s into each), 44.9-45.5 s apiece, each "finished" as recorded, the
+  cycle wrapping after demo 10. The harness's first "none skipped" check also counted the
+  intentionally empty positions 1-3. The corrected check, run on the same log, passes.
+- The web build (`build-cna-webgl2`) compiles and links with all ten demos packed. Not run: web
+  and Android runtime, a physical gamepad or touch screen. No way yet to delete a galaxy
+  world from the galaxy screen (its backups are in `galaxy/backups/`).
+- While this was built, the CNA working tree (another session's uncommitted edit) briefly crashed
+  every start (UB-010 in upstream_bugs.md); it was fixed there at 22:32 and Galaxy rebuilt. The
+  verified binary includes CNA's then-uncommitted graphics edits.
+
+## Main-menu demos (2026-11-08, BD-0115) — implemented and verified on desktop, committed 2026-11-09
+
+Owner request: Speedy Blupi's automatic demos (reference `../blupi_recon/src/event.cpp:3666-3840`
+DemoRecStart/DemoPlayStart/DemoPlayStop/DemoStep, TreatEvent `:4074-4090`, sb1 `port/games/sb1/
+game/main.cpp:200-220`). Committed on 2026-11-09 with the recordings (the owner first asked not
+to commit, then asked for it).
+
+- What it does: the main menu's Demo button (under Exit) and 40 s without input in the settled
+  main menu of the active window both call `StartNextDemo()` from demo 1; the demos play in turn
+  and the first follows the last. A demo is a recording replayed tick by tick into the normal
+  `UpdateTick()` at the normal 60 Hz pace, drawn and heard (music and effects), with "Demo" in the
+  top-left panel (TX_DEMOPLAY). A new key (native key events catch taps shorter than an update),
+  mouse button, wheel, gamepad button/stick or touch stops it (`DemoNewPress`); mouse movement
+  alone does not; releases do not. The stopping input is latched until everything is released,
+  so the Escape/Enter/click that stopped it never exits, plays or presses a menu button.
+  Deactivation stops it. Loading another mission or leaving Play inside a demo ends that demo
+  instead (`LoadMission()`/`SetPhase()` hooks), so a desync can never wander into the campaign.
+- Modes kept apart: `demoActive_` (visible demo) vs `replayingResume_` (fast silent resume
+  reconstruction) vs `autoplay_` (QA). Persistence: `SavePlayerData()` replaces every
+  `if (!replayingResume_) saveData_.Save()` and is a no-op during a demo; `DeleteResumeFile()`
+  is a no-op during a demo; `OnDeactivated()` writes/deletes nothing then; `ToggleFullscreen()`
+  and the accelerometer are off. `StartDemo()` sets aside the SaveData profile, camera mode,
+  speed, cheat flags/lock/list and lives; the demo plays with the recording's profile (doors,
+  last world) but the player's own sound, volumes, terrain relief and fullscreen; `StopDemo()`
+  restores all of it, reloads the title scene at once and resets the idle timer.
+- Files (ten since BD-0117, above): `Content/demos/demo001.gdemo` (mission 011: pillars, mine pits, lifts, 2700 ticks),
+  `demo002` (074: skateboard over mines and lava, 2700), `demo003` (105: helicopter over the
+  cavern, 3000). Format `DemoReplay.hpp`: header `GALAXY_DEMO 1`, `kDemoSimulationRevision`
+  (1), title, recording build (information only), the end-state signature (hashed
+  `ResumeSignature()` entries), then the resume log's body (`ResumeLog::WriteBody/ReadBody`,
+  refactored out unchanged) and the FNV footer. Resume files still need the identical build;
+  demos need the same simulation revision and their world's exact bytes. Damaged, other-format,
+  other-revision, changed-world, missing-world or too-long demos are skipped with a log line; with
+  none playable the menu stays. Web preloads `Content/demos`; Android ships all of `Content/`.
+- Recording (developer only): `tools/record_demo.sh build-cna-opengl3 Content/demos/demo001.gdemo
+  11 --autoplay tools/autoplay/world011.txt --demo-ticks 2700 --demo-title "World 1: pillars,
+  mine pits and lifts"` (scripted, Xvfb, seconds); demo002: mission 74, `world074.txt`, 2700,
+  "World 7: skateboard over the mines and lava"; demo003: mission 105, `world105.txt`, 3000,
+  "World 10: helicopter over the cavern". By hand: omit `--autoplay` and play; Escape (or closing
+  the window) ends the recording; F-keys and Tab are left out. The game flags are
+  `--record-demo <file> --mission N [--autoplay s] [--demo-ticks N] [--demo-title t]` and
+  `--verify-demo <file>`.
+- Verification: `tools/verify_demos.sh build-cna-opengl3` replays each demo undrawn and checks
+  `DEMO VERIFY ...: equal` plus untouched stand-in savedata/resume files (CTest
+  `VerifyDemoReplays` runs it when xvfb-run exists); `VerifyDemoFiles` checks every shipped demo
+  against the revision and current world bytes; `VerifyDemoReplay` covers format, compatibility,
+  idle timer, stop input and order; `VerifyGEInputPad` the button. After a world change the
+  affected demo is refused (re-record it); after a simulation change verify_demos reports
+  "different": bump `kDemoSimulationRevision` and re-record all ten (commands here and above).
+- Live desktop evidence (`build-probe/demo-live/`: screenshots, timestamped game logs, the
+  throwaway Python harness in `harness/`): the button; the idle start 40.02 s after the last mouse
+  move (70 s after an earlier one, so activity restarts the count) and again 40.5 s after a stop
+  (the stopping key was held 0.5 s); mouse movement ignored; Escape, Enter, a left click held over
+  Play, a right click, the wheel, a 1 ms key tap and Space each stop it with nothing else
+  activated (the game did not exit or play); no demo in Setup, the editor, Play or Pause after
+  46 s; demos 1-3 end exactly as recorded both in the 800x480 window they were recorded in and
+  in 1280x720 fullscreen (bare Xvfb cannot go fullscreen: `miniwm/`, a 90-line EWMH test window
+  manager, makes SDL's switch work there); 2700 ticks took 44.9 s; demo 1 after demo 3 ends
+  identically again; damaged, other-revision, changed-world and non-demo files are skipped and
+  the cycle wraps to the valid one; with none, or no `Content/demos/`, the button and timer keep
+  the menu; sound through SDL's disk driver (menu RMS 0, demo 99.5 % non-zero samples); another
+  window taking the focus stops a demo; savedata.txt unchanged and no resume.txt; then Play, a
+  real resume.txt on deactivation and, after a restart, Continue replaying it (the debug panel
+  shows the same mission, position and yaw as before). Negative control: a demo with one input
+  changed, or its stored signature changed, is reported "different" by verify_demos.sh (exit 1).
+  Golden trace and the three golden frames equal tests/golden. The web build
+  (`build-cna-webgl2`) compiles and links, its package holding the three demos. Not run: Android
+  (not built) and web runtime,
+  a physical gamepad or touch screen (their stop/activity logic is unit-tested).
 
 ## Latest input/editor/UI work (2026-11-08)
 
@@ -1527,7 +1687,9 @@ probes and converter output). Never build in `/tmp` or the scratchpad. Reconfigu
   build-cna-opengl3 [worldNNN ...]` replays mission scripts; the campaign run is the full replay
   (about two hours of wall time: run it in the background).
 - After any change that can touch gameplay or a world: replay the affected missions, and before
-  calling a batch done, the campaign.
+  calling a batch done, the campaign. Also `tools/verify_demos.sh build-cna-opengl3` (the three
+  main-menu demos, seconds; CTest `VerifyDemoReplays`): "different" means the simulation changed —
+  bump `kDemoSimulationRevision` and re-record them (commands under "Main-menu demos" above).
 - Writing or fixing a script (hard-won rules):
   - Write a section, run, read the trace, repeat; `trace N` logs every tick; `shots N` saves the frames of the next N ticks into the run directory's `autoplay_shots/` (a moment caught without `AUTOPLAY_SHOTS`).
   - Lifts: wait on the leading cube's unique end cell (other cubes pass through intermediate
@@ -1551,7 +1713,9 @@ Worlds are built by `tools/worlds/worldNNN.py` (writes `worlds3d/worldNNN.vwr`; 
 `--stage K out.vwr` for checks). After a change: `python3 tools/levelcheck.py` on the stages the
 world's brief (`plans/briefs/worldNNN.md`) names, `ctest -R VerifyShippedWorlds`, `python3
 tools/campaigncheck.py`, `python3 tools/watercheck.py worlds3d/world*.vwr`, the mission's
-playthrough and a live look; update the brief. Never convert or extrude the 2D maps.
+playthrough and a live look; update the brief. Never convert or extrude the 2D maps. A changed
+world011/074/105 makes its main-menu demo refuse to play (CTest `VerifyDemoFiles` fails): record
+that demo again with `tools/record_demo.sh`.
 
 ### Live checks
 

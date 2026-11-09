@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <iosfwd>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -70,6 +71,16 @@ namespace GalaxyEggbert::Game
         // Transactional: on failure the destination is unchanged. Requires a complete checksum footer.
         static bool Parse(const std::string& text, const std::string& build, ResumeLog& result);
         [[nodiscard]] bool MatchesWorld(const std::string& path, std::uint64_t hash) const;
+        // The format's shared body (world, start state, input runs), also carried by the shipped
+        // demos (DemoReplay.hpp) under their own header. ReadBody validates every field.
+        void WriteBody(std::ostream& out) const;
+        static bool ReadBody(std::istream& in, ResumeLog& parsed);
+        // Classic locale and the float precision that round-trips exactly.
+        static void ImbueStream(std::ios& stream);
+        // The "END <FNV-1a of everything before it>" footer.
+        static std::string AppendChecksum(const std::string& body);
+        // The text before a complete, matching footer; nullopt for truncated or damaged text.
+        static std::optional<std::string> VerifiedBody(const std::string& text);
         // FNV-1a over raw bytes, including NULs. File failures never produce a valid hash.
         static std::uint64_t HashBytes(std::string_view bytes);
         static std::optional<std::uint64_t> HashFile(const std::filesystem::path& path);

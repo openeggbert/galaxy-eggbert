@@ -226,6 +226,13 @@ namespace GalaxyEggbert::Game
         // logic such as the real training-hint overlay. 0 for worlds that
         // never set it (matches the real default for non-tutorial levels).
         [[nodiscard]] int GetMissionNumber() const { return missionNumber_; }
+        // The mission this world is played as, whatever its file says: a player's galaxy world
+        // (BD-0119) is the mission of its place in the galaxy.
+        void OverrideMissionNumber(int mission) noexcept
+        {
+            missionNumber_ = mission;
+            if (world_) world_->setMissionNumber(static_cast<std::uint32_t>(mission));
+        }
         // Raw 20fps animation tick (2026-07-09) -- NOT a ready-to-index
         // frame number; TerrainRenderer::AnimIcon() divides it by each
         // tile type's own real tick divisor before indexing that type's
@@ -294,7 +301,9 @@ namespace GalaxyEggbert::Game
         // The return sign (index 199) leads from a world hub to the main hub, as in the
         // original; in the main hub, index 13 (BlockTypes::DemoPortal, Galaxy's own) leads
         // to the showcase, world 999.
-        [[nodiscard]] static int ComputeWorldSelectTarget(int currentMission, int selectIndex) noexcept;
+        // In a player's galaxy (BD-0119) sign 13 is world 13's, as the other twelve: no showcase.
+        [[nodiscard]] static int ComputeWorldSelectTarget(int currentMission, int selectIndex,
+                                                          bool galaxy = false) noexcept;
         [[nodiscard]] static int ComputeMissionBack(int currentMission) noexcept;
 
         // Real win-exit formula (found 2026-07-17, `Decor.cpp:6411-6434`,

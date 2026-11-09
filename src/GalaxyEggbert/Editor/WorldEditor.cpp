@@ -40,13 +40,44 @@ namespace GalaxyEggbert::Editor
         (void)SeedGallerySlot(gamerSlot, "worlds3d/world998.vwr");
         browserScreen_.ResetMode();
         browserScreen_.Refresh(gamerSlot);
+        galaxyScreen_.Refresh(gamerSlot);
         backedUpPath_.clear(); // the next save of a world opened from here backs it up first
+    }
+
+    void WorldEditor::ShowGalaxy()
+    {
+        galaxyView_ = true;
+        galaxyScreen_.Refresh(gamerSlot_);
     }
 
     WorldEditor::BrowserRequest WorldEditor::UpdateBrowsing(
         const Microsoft::Xna::Framework::Input::MouseState& mouse,
         int viewportWidth, int viewportHeight, bool backPressed)
     {
+        if (galaxyView_)
+        {
+            const auto galaxy = galaxyScreen_.Update(mouse, backPressed);
+            BrowserRequest request;
+            if (galaxy.action == GalaxyBrowserScreen::Action::Back)
+            {
+                galaxyView_ = false; // back to the slots
+                browserScreen_.Refresh(gamerSlot_);
+                browserScreen_.SyncBackKey(backPressed);
+            }
+            else if (galaxy.action == GalaxyBrowserScreen::Action::Open)
+            {
+                request.shouldOpen = true;
+                request.openPath = galaxy.path;
+                request.galaxyMission = galaxy.mission;
+            }
+            else if (galaxy.action == GalaxyBrowserScreen::Action::New)
+            {
+                request.shouldCreateNew = true;
+                request.createPath = galaxy.path;
+                request.galaxyMission = galaxy.mission;
+            }
+            return request;
+        }
         const auto result =
             browserScreen_.Update(mouse, viewportWidth, viewportHeight, backPressed);
         BrowserRequest request;
@@ -64,6 +95,10 @@ namespace GalaxyEggbert::Editor
         {
             request.shouldReturnToMenu = true;
         }
+        else if (result.action == EditorBrowserScreen::Action::Galaxy)
+        {
+            ShowGalaxy();
+        }
         return request;
     }
 
@@ -71,7 +106,10 @@ namespace GalaxyEggbert::Editor
         Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
         int viewportWidth, int viewportHeight)
     {
-        browserScreen_.Draw(device, viewportWidth, viewportHeight);
+        if (galaxyView_)
+            galaxyScreen_.Draw(device, viewportWidth, viewportHeight);
+        else
+            browserScreen_.Draw(device, viewportWidth, viewportHeight);
     }
 
     void WorldEditor::EnterEditing(float startX, float startY, float startZ) noexcept
@@ -221,6 +259,22 @@ namespace GalaxyEggbert::Editor
         const bool result = needsPresentationRebuild_;
         needsPresentationRebuild_ = false;
         return result;
+    }
+
+    void WorldEditor::BeginOutsideSession(std::filesystem::path backupDir)
+    {
+        outsideSession_ = true;
+        leaveRequested_ = false;
+        outsideBackupDir_ = std::move(backupDir);
+        backedUpPath_.clear(); // its first save keeps the world as it was
+    }
+
+    void WorldEditor::EndOutsideSession() noexcept
+    {
+        outsideSession_ = false;
+        leaveRequested_ = false;
+        outsideBackupDir_.clear();
+        backedUpPath_.clear();
     }
 
     bool WorldEditor::ConsumePlayTestRequested() noexcept

@@ -18,6 +18,7 @@
 #include <GalaxyEggbert/Worlds/World.hpp>
 
 #include <algorithm>
+#include <filesystem>
 #include <cmath>
 #include <optional>
 #include <random>
@@ -1008,6 +1009,49 @@ int main()
         clickStop(editor, world, camera);
         check(editor.IsBrowsing(),
               "a second Stop press confirms discarding unsaved changes");
+    }
+
+    // BD-0118: a world opened from play (xnjttjpo) -- its Stop goes back to the caller, never the
+    // browser; its saves keep their backups in the given folder and take no thumbnail.
+    {
+        namespace fs = std::filesystem;
+        std::error_code error;
+        const fs::path dir = "verify_outside_session";
+        fs::remove_all(dir, error);
+        fs::create_directories(dir / "shipped", error);
+        const fs::path shipped = dir / "shipped" / "world042.vwr";
+        World original;
+        original.setBlock(1, 2, 3, Block::make(42));
+        original.saveToFile(shipped);
+        World world = World::loadFromFile(shipped);
+        WorldEditor editor;
+        editor.BeginOutsideSession(dir / "backups");
+        editor.SetWorldPath(shipped);
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        CnaEngine::Graphics::Camera camera;
+        clickStop(editor, world, camera);
+        const bool left = editor.ConsumeLeaveRequested();
+        check(!editor.IsBrowsing() && left && !editor.ConsumeLeaveRequested(),
+              "xnjttjpo: Stop of an unchanged world asks to go back to the mission, once, not to the browser");
+        editor.Update(KeyboardState{Keys::Right}, restMouse, 0.0f, 800, 480, camera, world);
+        clickStop(editor, world, camera);
+        check(!editor.ConsumeLeaveRequested(), "xnjttjpo: the first Stop press protects unsaved changes");
+        editor.Update(KeyboardState{Keys::Enter}, restMouse, 0.0f, 800, 480, camera, world);
+        editor.Update(KeyboardState{}, restMouse, 0.0f, 800, 480, camera, world);
+        check(fs::exists(dir / "backups" / "world042.1.vwr") && !fs::exists(dir / "shipped" / "backups") &&
+                  World::loadFromFile(dir / "backups" / "world042.1.vwr").getBlock(1, 2, 3).type() == 42 &&
+                  World::loadFromFile(shipped).skyRegion() == world.skyRegion() &&
+                  editor.ConsumeThumbnailRequest().empty() && !fs::exists(dir / "shipped" / "world042.png"),
+              "xnjttjpo: Enter saves the shipped file in place, its first version backed up in the player's "
+              "folder, no thumbnail beside it");
+        clickStop(editor, world, camera);
+        check(editor.ConsumeLeaveRequested() && !editor.IsBrowsing(), "xnjttjpo: after the save, Stop goes back");
+        editor.EndOutsideSession();
+        editor.EnterEditing(0.0f, 10.0f, 0.0f);
+        clickStop(editor, world, camera);
+        check(editor.IsBrowsing() && !editor.ConsumeLeaveRequested(),
+              "after the visit, the editor's Stop opens the browser again");
+        fs::remove_all(dir, error);
     }
 
     // ED-0007: the original editor's auto-tiling (AutoTile.hpp, Decor::AdaptBorder). Dice that
