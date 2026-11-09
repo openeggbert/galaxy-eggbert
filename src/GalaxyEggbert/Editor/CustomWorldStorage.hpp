@@ -156,16 +156,26 @@ namespace GalaxyEggbert::Editor
     [[nodiscard]] GalaxyEggbert::Worlds::World CreateGalaxyStarterWorld(int mission);
 
     // ---- A whole galaxy in one file (2026-11-09) ----
-    // "GALAXY_PACK 1\n", then each place as "world <mission> <size>\n" and its .vwr bytes, then
-    // "END <FNV-1a of everything before it, 16 hex digits>\n". Shared as a world is (ED-0012):
-    // an export lands in SharedWorldsDir() (and is downloaded on the web), an import is read from
-    // there (the web's file picker writes it there).
+    // "GALAXY_PACK 1\n", then each place as "world <mission> <size>\n" and its .vwr bytes, then the
+    // player's demo recordings made in the galaxy as "demo <position> <size>\n" and the .gdemo's
+    // bytes, then "END <FNV-1a of everything before it, 16 hex digits>\n". Shared as a world is
+    // (ED-0012): an export lands in SharedWorldsDir() (and is downloaded on the web), an import is
+    // read from there (the web's file picker writes it there).
     constexpr const char* kGalaxyPackExtension = ".galaxy";
-    // The gamer's galaxy packed; empty when it has no place yet.
+    struct GalaxyPack
+    {
+        std::map<int, std::string> worlds; // by mission
+        std::map<int, std::string> demos;  // by the demo position they were recorded into
+    };
+    // The demo positions (1-10) holding a recording of the player's made in @p gamerSlot's galaxy
+    // (DemoReplay UserDemoPath(), its world one of the galaxy's files).
+    [[nodiscard]] std::vector<int> GalaxyRecordings(int gamerSlot);
+    // The gamer's galaxy packed, with GalaxyRecordings(); empty when it has no place yet.
     [[nodiscard]] std::string PackGalaxy(int gamerSlot);
-    // A pack's worlds by mission; nothing when it is damaged or truncated, of another version,
-    // holds a place twice or one that is not a galaxy's, or a world that does not load.
-    [[nodiscard]] std::optional<std::map<int, std::string>> UnpackGalaxy(const std::string& pack);
+    // A pack's worlds and demos; nothing when it is damaged or truncated, of another version, holds
+    // a place or a position twice, a place that is not a galaxy's, or a world that does not load. A
+    // demo this game cannot play (another simulation revision) is left out, the galaxy kept.
+    [[nodiscard]] std::optional<GalaxyPack> UnpackGalaxy(const std::string& pack);
     // "A-galaxy.galaxy" (players A-C), "player7-galaxy.galaxy" otherwise.
     [[nodiscard]] std::string GalaxyExportName(int gamerSlot);
     // PackGalaxy() written into SharedWorldsDir() as GalaxyExportName() (an earlier one replaced);
@@ -174,9 +184,11 @@ namespace GalaxyEggbert::Editor
     // The packs in SharedWorldsDir(), the newest first.
     [[nodiscard]] std::vector<std::filesystem::path> ListSharedGalaxies();
     // Makes @p pack the gamer's galaxy: every place the galaxy has now goes into its backups
-    // first (DeleteSlotWorld(), so Backups brings it back), then the pack's worlds are written.
-    // The number of places imported; -1 when the pack is not valid, and then nothing is touched.
-    int ImportGalaxy(int gamerSlot, const std::filesystem::path& pack);
+    // first (DeleteSlotWorld(), so Backups brings it back), then the pack's worlds are written. Its
+    // demos go to the shared demos (DemoReplay SharedDemoDir(), "<pack name>-demo-<position>.gdemo"),
+    // listed by the demo positions' Import: no position of the player's is overwritten. The number
+    // of places imported (@p demos: of demos); -1 when the pack is not valid, nothing touched.
+    int ImportGalaxy(int gamerSlot, const std::filesystem::path& pack, int* demos = nullptr);
 
     // The first scene a new Galaxy 3D editor world opens with. It is a
     // compact playable tutorial rather than an all-air volume: a 3x3 Rock

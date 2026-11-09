@@ -106,8 +106,11 @@ namespace GalaxyEggbert::Editor
             return;
         }
         const std::string name = exported.filename().string();
-        message_ = OfferDownload(exported, name) ? "Galaxy exported: downloaded as " + name + "."
-                                                 : "Galaxy exported to " + exported.generic_string() + ".";
+        const auto recordings = GalaxyRecordings(gamerSlot_).size();
+        const std::string with = recordings == 0 ? "" : " (" + std::to_string(recordings) +
+                                                            (recordings == 1 ? " demo" : " demos") + " with it)";
+        message_ = OfferDownload(exported, name) ? "Galaxy exported: downloaded as " + name + with + "."
+                                                 : "Galaxy exported to " + exported.generic_string() + with + ".";
     }
 
     void GalaxyBrowserScreen::ToggleImport()
@@ -258,7 +261,8 @@ namespace GalaxyEggbert::Editor
                     message_ = "Replace this galaxy with " + name + "? Click it again.";
                     break;
                 }
-                const int places = ImportGalaxy(gamerSlot_, pack);
+                int demos = 0;
+                const int places = ImportGalaxy(gamerSlot_, pack, &demos);
                 if (places < 0)
                 {
                     message_ = name + " is not a galaxy this game can read.";
@@ -268,7 +272,9 @@ namespace GalaxyEggbert::Editor
                 importMode_ = false;
                 result.imported = true;
                 message_ = name + ": " + std::to_string(places) + (places == 1 ? " place" : " places") +
-                           " imported (Backups brings back the old ones).";
+                           (demos == 0 ? " imported (Backups brings back the old ones)."
+                                       : " and " + std::to_string(demos) + (demos == 1 ? " demo" : " demos") +
+                                             " (Pause > Record > Import) imported.");
             }
             armedImport_ = armedRow;
             for (const auto& shown : Shown())

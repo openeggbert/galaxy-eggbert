@@ -54,6 +54,14 @@ with the release audit.
   the gamer's galaxy progress starts over (`SaveData::ResetGalaxyProgress`, via
   `BrowserRequest::galaxyImported`). Tests `VerifyGEEditorStorage`; live
   `harness/case_galaxy_share.py` (`galaxy-share-sheet.png`).
+- A galaxy's demos travel with it (2026-11-09): the pack also holds the player's recordings made in
+  that galaxy (`GalaxyRecordings()`: positions 1-10 whose world is one of the galaxy's files) as
+  `demo <position> <size>` entries; an unpack keeps the galaxy and leaves out a demo this game cannot
+  play. An import writes them among the shared demos as `<pack name>-demo-<position>.gdemo`, so no
+  position of the receiver's is overwritten: the demo positions' Import lists them (its world is
+  found by hash in the receiver's galaxy, `ResolveDemoWorld()`). The galaxy screen says how many
+  went out or came in. `DemoReplay.cpp`/`ResumeLog.cpp` joined `GEEditorVerifySupport`. Tests
+  `VerifyGEEditorStorage`; live `harness/case_galaxy_demos.py` (`galaxy-demos-sheet.png`).
 - The menu's player panel: "Galaxy : N gates" on the Blupi line, right-aligned (smaller when it
   would reach the Blupi count), for a gamer whose galaxy has a main hub or progress
   (`InitGamerInfo::galaxyGates`, `SaveData::GetGalaxyGatesForGamer`). `VerifyGESaveData`; live

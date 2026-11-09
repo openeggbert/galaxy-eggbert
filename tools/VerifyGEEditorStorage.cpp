@@ -2,6 +2,7 @@
 #include <GalaxyEggbert/Editor/EditorBrowserScreen.hpp>
 #include <GalaxyEggbert/Editor/GalaxyBrowserScreen.hpp>
 #include <GalaxyEggbert/Editor/WorldEditor.hpp>
+#include <GalaxyEggbert/Game/DemoReplay.hpp>
 
 #include <GalaxyEggbert/BigDecorRecord.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -705,10 +706,10 @@ int main()
         };
         const std::string pack = PackGalaxy(kStorageSlot);
         const auto unpacked = UnpackGalaxy(pack);
-        bool same = unpacked && unpacked->size() == 4;
+        bool same = unpacked && unpacked->worlds.size() == 4 && unpacked->demos.empty();
         for (const int mission : {1, 10, 11, 199})
-            same = same && unpacked->count(mission) == 1 &&
-                   unpacked->at(mission) == readAll(GalaxyWorldPath(kStorageSlot, mission));
+            same = same && unpacked->worlds.count(mission) == 1 &&
+                   unpacked->worlds.at(mission) == readAll(GalaxyWorldPath(kStorageSlot, mission));
         check(same && pack.rfind("GALAXY_PACK 1\n", 0) == 0,
               "galaxy pack: its four places, byte for byte, behind the header");
         std::string flipped = pack;
@@ -716,7 +717,7 @@ int main()
         const std::string otherVersion = "GALAXY_PACK 2\n" + pack.substr(std::string("GALAXY_PACK 1\n").size());
         // A place a galaxy does not have, with a correct footer: refused all the same.
         std::string foreign = "GALAXY_PACK 1\n";
-        const std::string world = unpacked ? unpacked->at(11) : std::string();
+        const std::string world = unpacked ? unpacked->worlds.at(11) : std::string();
         foreign += "world 19 " + std::to_string(world.size()) + "\n" + world;
         std::uint64_t hash = 1469598103934665603ULL;
         for (const unsigned char c : foreign) hash = (hash ^ c) * 1099511628211ULL;
@@ -788,6 +789,72 @@ int main()
               "galaxy screen: Export writes the pack; Import lists it, a row's second click makes it this galaxy");
         std::filesystem::remove(exported, error);
         std::filesystem::remove(SharedWorldsDir(), error); // only when nothing else is in it
+    }
+
+    // The player's recordings made in a galaxy travel in its pack, to the receiver's shared demos.
+    {
+        using namespace GalaxyEggbert::Game;
+        constexpr int kGamer = 2; // a real gamer (galaxy paths name players A-C); verify-run is scratch
+        const auto readAll = [](const std::filesystem::path& path) {
+            std::ifstream in(path, std::ios::binary);
+            return std::string((std::istreambuf_iterator<char>(in)), {});
+        };
+        std::filesystem::remove_all(CustomWorldsDir(kGamer), error);
+        std::filesystem::remove_all(UserDemoDir(), error);
+        std::filesystem::create_directories(GalaxyDir(kGamer), error);
+        CreateGalaxyStarterWorld(1).saveToFile(GalaxyWorldPath(kGamer, 1));
+        CreateGalaxyStarterWorld(10).saveToFile(GalaxyWorldPath(kGamer, 10));
+        const auto demoIn = [](const std::string& worldPath, int mission) {
+            DemoRecording demo;
+            demo.title = "a recording";
+            demo.log.start.build = "build";
+            demo.log.start.worldPath = worldPath;
+            demo.log.start.worldHash = ResumeLog::HashBytes("world");
+            demo.log.start.mission = mission;
+            ResumeInput input;
+            input.viewportWidth = 800;
+            input.viewportHeight = 480;
+            demo.log.Append(input);
+            demo.endSignature = HashDemoSignature({{"Blupi", "1 2 3"}});
+            return demo.Serialize();
+        };
+        std::filesystem::create_directories(UserDemoDir(), error);
+        const std::string ours = demoIn(GalaxyWorldPath(kGamer, 10).generic_string(), 10);
+        { std::ofstream out(UserDemoPath(4), std::ios::binary); out << ours; }
+        { std::ofstream out(UserDemoPath(5), std::ios::binary); out << demoIn("worlds3d/world011.vwr", 11); }
+        { std::ofstream out(UserDemoPath(6), std::ios::binary); out << demoIn(GalaxyWorldPath(1, 10).generic_string(), 10); }
+        const auto recordings = GalaxyRecordings(kGamer);
+        const std::string pack = PackGalaxy(kGamer);
+        const auto unpacked = UnpackGalaxy(pack);
+        check(recordings == std::vector<int>{4} && unpacked && unpacked->worlds.size() == 2 &&
+                  unpacked->demos.size() == 1 && unpacked->demos.count(4) == 1 && unpacked->demos.at(4) == ours,
+              "galaxy pack: the player's recordings made in this galaxy go with it, not the campaign's or another galaxy's");
+        // A demo of another simulation revision is left out; the galaxy is kept.
+        std::string body = pack.substr(0, pack.size() - 21);
+        std::string stale = ours;
+        stale.replace(stale.find("GALAXY_DEMO 1\n1\n"), 16, "GALAXY_DEMO 1\n9\n");
+        stale = ResumeLog::AppendChecksum(stale.substr(0, stale.rfind("\nEND ") + 1));
+        body += "demo 7 " + std::to_string(stale.size()) + "\n" + stale;
+        std::uint64_t hash = 1469598103934665603ULL;
+        for (const unsigned char c : body) hash = (hash ^ c) * 1099511628211ULL;
+        char footer[32];
+        std::snprintf(footer, sizeof(footer), "END %016llx\n", static_cast<unsigned long long>(hash));
+        const auto withStale = UnpackGalaxy(body + footer);
+        check(withStale && withStale->worlds.size() == 2 && withStale->demos.size() == 1 && withStale->demos.count(7) == 0,
+              "galaxy pack: a demo this game cannot play is left out, the galaxy kept");
+        const auto file = SharedWorldsDir() / "friend.galaxy";
+        std::filesystem::create_directories(SharedWorldsDir(), error);
+        { std::ofstream out(file, std::ios::binary); out << pack; }
+        int demos = -1;
+        const int places = ImportGalaxy(kBrowserSlot, file, &demos);
+        const auto shared = std::filesystem::path(SharedDemoDir()) / "friend-demo-4.gdemo";
+        check(places == 2 && demos == 1 && readAll(shared) == ours && readAll(UserDemoPath(4)) == ours &&
+                  std::filesystem::exists(UserDemoPath(5)),
+              "galaxy import: its demos land among the shared demos (friend-demo-4.gdemo), no position overwritten");
+        std::filesystem::remove(file, error);
+        std::filesystem::remove(SharedWorldsDir(), error);
+        std::filesystem::remove_all(UserDemoDir(), error);
+        std::filesystem::remove_all(CustomWorldsDir(kGamer), error);
     }
 
     std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);

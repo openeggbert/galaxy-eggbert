@@ -474,6 +474,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/CustomWorldStorage.cpp
         src/GalaxyEggbert/Editor/EditorBrowserScreen.cpp
         src/GalaxyEggbert/Editor/GalaxyBrowserScreen.cpp
+        src/GalaxyEggbert/Game/DemoReplay.cpp
+        src/GalaxyEggbert/Game/ResumeLog.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp

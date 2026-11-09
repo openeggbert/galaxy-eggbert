@@ -1,5 +1,7 @@
 #include "CustomWorldStorage.hpp"
 
+#include <GalaxyEggbert/Game/DemoReplay.hpp>
+
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
 
@@ -8,6 +10,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iterator>
+#include <set>
 #include <sstream>
 #include <string>
 
@@ -532,6 +535,21 @@ namespace GalaxyEggbert::Editor
         }
     }
 
+    std::vector<int> GalaxyRecordings(int gamerSlot)
+    {
+        using namespace GalaxyEggbert::Game;
+        std::vector<int> positions;
+        for (int position = 1; position <= kDemoSlotCount; ++position)
+        {
+            const auto text = ReadBytes(UserDemoPath(position));
+            DemoRecording demo;
+            if (!text || ParseDemo(*text, kDemoSimulationRevision, demo) != DemoLoadStatus::Ok) continue;
+            const auto galaxy = ParseGalaxyWorldPath(demo.log.start.worldPath);
+            if (galaxy && galaxy->first == gamerSlot) positions.push_back(position);
+        }
+        return positions;
+    }
+
     std::string PackGalaxy(int gamerSlot)
     {
         std::string body = kGalaxyPackHeader;
@@ -546,10 +564,17 @@ namespace GalaxyEggbert::Editor
             ++places;
         }
         if (places == 0) return {};
+        for (const int position : GalaxyRecordings(gamerSlot))
+        {
+            const auto bytes = ReadBytes(GalaxyEggbert::Game::UserDemoPath(position));
+            if (!bytes) continue;
+            body += "demo " + std::to_string(position) + " " + std::to_string(bytes->size()) + "\n";
+            body += *bytes;
+        }
         return body + "END " + HashText(BytesHash(body)) + "\n";
     }
 
-    std::optional<std::map<int, std::string>> UnpackGalaxy(const std::string& pack)
+    std::optional<GalaxyPack> UnpackGalaxy(const std::string& pack)
     {
         const std::string header = kGalaxyPackHeader;
         // The footer: "END " + 16 hex digits + "\n", over everything before it.
@@ -560,7 +585,8 @@ namespace GalaxyEggbert::Editor
         if (pack.compare(bodyEnd, 4, "END ") != 0 || pack.back() != '\n' ||
             pack.substr(bodyEnd + 4, 16) != HashText(BytesHash(body)))
             return std::nullopt;
-        std::map<int, std::string> worlds;
+        GalaxyPack unpacked;
+        std::set<int> demoPositions;
         std::size_t at = header.size();
         while (at < bodyEnd)
         {
@@ -568,13 +594,24 @@ namespace GalaxyEggbert::Editor
             if (lineEnd == std::string::npos) return std::nullopt;
             std::istringstream line(body.substr(at, lineEnd - at));
             std::string word;
-            int mission = 0;
+            int number = 0;
             std::size_t size = 0;
             std::string rest;
-            if (!(line >> word >> mission >> size) || word != "world" || (line >> rest) || !IsGalaxyMission(mission) ||
-                worlds.count(mission) != 0 || size > kGalaxyPackMaxWorld || size > bodyEnd - (lineEnd + 1))
+            if (!(line >> word >> number >> size) || (word != "world" && word != "demo") || (line >> rest) ||
+                size > kGalaxyPackMaxWorld || size > bodyEnd - (lineEnd + 1))
                 return std::nullopt;
             std::string bytes = body.substr(lineEnd + 1, size);
+            at = lineEnd + 1 + size;
+            if (word == "demo")
+            {
+                using namespace GalaxyEggbert::Game;
+                if (number < 1 || number > kDemoSlotCount || !demoPositions.insert(number).second) return std::nullopt;
+                DemoRecording demo;
+                if (ParseDemo(bytes, kDemoSimulationRevision, demo) == DemoLoadStatus::Ok)
+                    unpacked.demos.emplace(number, std::move(bytes));
+                continue;
+            }
+            if (!IsGalaxyMission(number) || unpacked.worlds.count(number) != 0) return std::nullopt;
             try
             {
                 std::istringstream stream(bytes, std::ios::in | std::ios::binary);
@@ -584,11 +621,10 @@ namespace GalaxyEggbert::Editor
             {
                 return std::nullopt;
             }
-            worlds.emplace(mission, std::move(bytes));
-            at = lineEnd + 1 + size;
+            unpacked.worlds.emplace(number, std::move(bytes));
         }
-        if (worlds.empty()) return std::nullopt;
-        return worlds;
+        if (unpacked.worlds.empty()) return std::nullopt;
+        return unpacked;
     }
 
     std::string GalaxyExportName(int gamerSlot)
@@ -637,11 +673,13 @@ namespace GalaxyEggbert::Editor
         return paths;
     }
 
-    int ImportGalaxy(int gamerSlot, const std::filesystem::path& pack)
+    int ImportGalaxy(int gamerSlot, const std::filesystem::path& pack, int* demos)
     {
+        if (demos != nullptr) *demos = 0;
         const auto bytes = ReadBytes(pack);
-        const auto worlds = bytes ? UnpackGalaxy(*bytes) : std::nullopt;
-        if (!worlds) return -1;
+        const auto unpacked = bytes ? UnpackGalaxy(*bytes) : std::nullopt;
+        if (!unpacked) return -1;
+        const auto& worlds = unpacked->worlds;
         std::error_code ec;
         for (int mission = 1; mission < 200; ++mission)
         {
@@ -650,11 +688,21 @@ namespace GalaxyEggbert::Editor
         }
         std::filesystem::create_directories(GalaxyDir(gamerSlot), ec);
         int written = 0;
-        for (const auto& [mission, world] : *worlds)
+        for (const auto& [mission, world] : worlds)
         {
             std::ofstream out(GalaxyWorldPath(gamerSlot, mission), std::ios::binary | std::ios::trunc);
             out << world;
             if (out) ++written;
+        }
+        // Its demos among the shared ones, to be placed from the demo positions' Import.
+        if (!unpacked->demos.empty()) std::filesystem::create_directories(GalaxyEggbert::Game::SharedDemoDir(), ec);
+        for (const auto& [position, demo] : unpacked->demos)
+        {
+            const auto target = std::filesystem::path(GalaxyEggbert::Game::SharedDemoDir()) /
+                                (pack.stem().string() + "-demo-" + std::to_string(position) + ".gdemo");
+            std::ofstream out(target, std::ios::binary | std::ios::trunc);
+            out << demo;
+            if (out && demos != nullptr) ++*demos;
         }
         return written;
     }
