@@ -19,7 +19,9 @@ namespace GalaxyEggbert::Editor
         constexpr float kPadCellPx = 140.0f;
         constexpr int kPadCols = 8;
         constexpr int kIconReturn = 8;
+        constexpr int kIconConfirm = 13; // the tick: a second click deletes
         constexpr int kIconPanel = 15;
+        constexpr int kIconTrash = 20;
         constexpr int kIconBlank = 21;
         constexpr float kGlyphCellPx = 32.0f;
         constexpr int kGlyphCols = 16;
@@ -73,23 +75,75 @@ namespace GalaxyEggbert::Editor
         return {x0, 366.0f, x0 + 56.0f, 422.0f};
     }
 
+    // On the place's top-right corner, inside the gap to the next one (as the world screen's bin).
+    Rect GalaxyBrowserScreen::DeleteRect(const Rect& place) noexcept
+    {
+        return {place.x1 - 20.0f, place.y0 - 6.0f, place.x1 + 4.0f, place.y0 + 18.0f};
+    }
+
+    // Left of Back, under the help (where the world screen has its Galaxy button).
+    Rect GalaxyBrowserScreen::BackupsRect() noexcept { return {598.0f, 372.0f, 674.0f, 448.0f}; }
+
     Rect GalaxyBrowserScreen::BackButtonRect() noexcept { return {680.0f, 360.0f, 780.0f, 460.0f}; }
 
     void GalaxyBrowserScreen::Refresh(int gamerSlot)
     {
         gamerSlot_ = gamerSlot;
         exists_.assign(200, false);
+        backups_.assign(200, 0);
         std::error_code ec;
         for (int mission = 1; mission < 200; ++mission)
         {
-            if (IsGalaxyMission(mission))
-                exists_[static_cast<std::size_t>(mission)] = std::filesystem::exists(GalaxyWorldPath(gamerSlot, mission), ec);
+            if (!IsGalaxyMission(mission)) continue;
+            const auto path = GalaxyWorldPath(gamerSlot, mission);
+            exists_[static_cast<std::size_t>(mission)] = std::filesystem::exists(path, ec);
+            backups_[static_cast<std::size_t>(mission)] = BackupCount(path);
         }
+        armedDelete_ = 0;
     }
 
     bool GalaxyBrowserScreen::Exists(int mission) const noexcept
     {
         return mission > 0 && mission < static_cast<int>(exists_.size()) && exists_[static_cast<std::size_t>(mission)];
+    }
+
+    int GalaxyBrowserScreen::Backups(int mission) const noexcept
+    {
+        return mission > 0 && mission < static_cast<int>(backups_.size()) ? backups_[static_cast<std::size_t>(mission)]
+                                                                          : 0;
+    }
+
+    std::vector<GalaxyBrowserScreen::ShownPlace> GalaxyBrowserScreen::Shown() const
+    {
+        std::vector<ShownPlace> shown{{1, MainHubRect()}, {kGalaxyBonusMission, BonusRect()}};
+        for (int place = 0; place <= kGalaxyMissionsPerWorld; ++place)
+            shown.push_back({selectedWorld_ * 10 + place, PlaceRect(place)});
+        return shown;
+    }
+
+    // As EditorBrowserScreen::Restore: the first restore of a place counts the versions it steps
+    // through, so the line can say when it is back as it was.
+    void GalaxyBrowserScreen::Restore(int mission)
+    {
+        const auto path = GalaxyWorldPath(gamerSlot_, mission);
+        const std::string name = GalaxyMissionName(mission);
+        if (restoreMission_ != mission)
+        {
+            restoreMission_ = mission;
+            restoreSteps_ = 0;
+            restoreCycle_ = Exists(mission) ? Backups(mission) + 1 : 0;
+        }
+        if (!RestoreBackup(path))
+        {
+            message_ = name + " has no backup.";
+            return;
+        }
+        ++restoreSteps_;
+        Refresh(gamerSlot_);
+        // A deleted place comes back as its newest backup; one that was there steps through them.
+        message_ = restoreCycle_ == 0                   ? name + " is back."
+                   : restoreSteps_ % restoreCycle_ == 0 ? name + " is back as it was."
+                                                        : name + ": backup restored. Again: an older one.";
     }
 
     bool GalaxyBrowserScreen::WorldHasAny(int world) const noexcept
@@ -114,25 +168,62 @@ namespace GalaxyEggbert::Editor
         if (backTriggered)
         {
             result.action = Action::Back;
+            armedDelete_ = 0;
             mouseWasDown_ = down;
             return result;
         }
         if (!down && mouseWasDown_)
         {
+            int armed = 0;
+            bool handled = false;
+            if (InRect(x, y, BackButtonRect()))
+            {
+                result.action = Action::Back;
+                handled = true;
+            }
+            else if (InRect(x, y, BackupsRect()))
+            {
+                restoreMode_ = !restoreMode_;
+                restoreMission_ = 0;
+                message_ = restoreMode_ ? "Click a place to bring back its backup." : "";
+                handled = true;
+            }
+            for (const auto& shown : Shown())
+            {
+                if (handled || restoreMode_ || !Exists(shown.mission) || !InRect(x, y, DeleteRect(shown.rect)))
+                    continue;
+                handled = true;
+                if (armedDelete_ != shown.mission)
+                {
+                    armed = shown.mission;
+                    continue;
+                }
+                // Into its backups: Backups brings it back.
+                (void)DeleteSlotWorld(GalaxyWorldPath(gamerSlot_, shown.mission));
+                Refresh(gamerSlot_);
+                message_ = GalaxyMissionName(shown.mission) + " deleted (Backups brings it back).";
+            }
             int mission = 0;
-            if (InRect(x, y, BackButtonRect())) result.action = Action::Back;
-            else if (InRect(x, y, MainHubRect())) mission = 1;
-            else if (InRect(x, y, BonusRect())) mission = kGalaxyBonusMission;
-            for (int world = 1; world <= kGalaxyWorldCount; ++world)
-                if (InRect(x, y, WorldRect(world))) selectedWorld_ = world;
-            for (int place = 0; place <= kGalaxyMissionsPerWorld; ++place)
-                if (InRect(x, y, PlaceRect(place))) mission = selectedWorld_ * 10 + place;
-            if (mission != 0)
+            if (!handled)
+            {
+                if (InRect(x, y, MainHubRect())) mission = 1;
+                else if (InRect(x, y, BonusRect())) mission = kGalaxyBonusMission;
+                for (int world = 1; world <= kGalaxyWorldCount; ++world)
+                    if (InRect(x, y, WorldRect(world))) selectedWorld_ = world;
+                for (int place = 0; place <= kGalaxyMissionsPerWorld; ++place)
+                    if (InRect(x, y, PlaceRect(place))) mission = selectedWorld_ * 10 + place;
+            }
+            if (mission != 0 && restoreMode_)
+            {
+                Restore(mission);
+            }
+            else if (mission != 0)
             {
                 result.action = Exists(mission) ? Action::Open : Action::New;
                 result.mission = mission;
                 result.path = GalaxyWorldPath(gamerSlot_, mission);
             }
+            armedDelete_ = armed;
         }
         mouseWasDown_ = down;
         return result;
@@ -190,6 +281,7 @@ namespace GalaxyEggbert::Editor
         icon(panels, {10.0f, 10.0f, 590.0f, 470.0f}, kIconPanel);
         icon(panels, {598.0f, 10.0f, 792.0f, 350.0f}, kIconPanel);
         button(BackButtonRect(), kIconReturn);
+        icon(restoreMode_ ? buttons : panels, BackupsRect(), restoreMode_ ? kIconBlank : kIconPanel);
         button(MainHubRect(), kIconBlank);
         button(BonusRect(), kIconBlank);
         for (int world = 1; world <= kGalaxyWorldCount; ++world)
@@ -199,6 +291,12 @@ namespace GalaxyEggbert::Editor
             button(r, kIconBlank);
         }
         for (int place = 0; place <= kGalaxyMissionsPerWorld; ++place) button(PlaceRect(place), kIconBlank);
+        const auto shown = Shown();
+        if (!restoreMode_)
+        {
+            for (const auto& s : shown)
+                if (Exists(s.mission)) button(DeleteRect(s.rect), armedDelete_ == s.mission ? kIconConfirm : kIconTrash);
+        }
         FlushQuads(device, *padEffect_, padRenderer_, panels, viewportWidth, viewportHeight, kPanelOpacity);
         FlushQuads(device, *padEffect_, padRenderer_, buttons, viewportWidth, viewportHeight, 1.0f);
         FlushQuads(device, *padEffect_, padRenderer_, pressed, viewportWidth, viewportHeight, kPressedOpacity);
@@ -208,7 +306,13 @@ namespace GalaxyEggbert::Editor
             const bool there = Exists(mission);
             auto& bucket = there ? labels : faint;
             centred(bucket, face, r, (r.y0 + r.y1 - kGlyphCellPx * 0.6f) * 0.5f, 0.6f);
-            centred(bucket, there ? caption : "New", r, r.y1 + 3.0f, 0.4f);
+            if (restoreMode_)
+            {
+                const bool has = Backups(mission) > 0;
+                centred(has ? labels : faint, has ? "Restore" : "No backup", r, r.y1 + 3.0f, 0.4f);
+                return;
+            }
+            centred(bucket, !there ? "New" : armedDelete_ == mission ? "Delete?" : caption, r, r.y1 + 3.0f, 0.4f);
         };
         place(MainHubRect(), 1, "Hub", "Main hub");
         place(BonusRect(), kGalaxyBonusMission, "199", "Bonus");
@@ -242,9 +346,10 @@ namespace GalaxyEggbert::Editor
             "the golden key ends the",
             "world. The return sign",
             "leads back.",
-            "",
             "Faint: not made yet; a",
-            "click makes it.",
+            "click makes it. The bin",
+            "deletes (two clicks);",
+            "Backups brings it back.",
         };
         float y = 20.0f;
         for (const char* line : help)
@@ -252,6 +357,9 @@ namespace GalaxyEggbert::Editor
             text(labels, line, 606.0f, y, 0.36f);
             y += 19.0f;
         }
+        centred(labels, "Backups", BackupsRect(), (BackupsRect().y0 + BackupsRect().y1 - kGlyphCellPx * 0.4f) * 0.5f,
+                0.4f);
+        if (!message_.empty()) text(labels, message_, 22.0f, 446.0f, 0.4f);
         FlushQuads(device, *textEffect_, textRenderer_, labels, viewportWidth, viewportHeight, 1.0f);
         FlushQuads(device, *textEffect_, textRenderer_, faint, viewportWidth, viewportHeight, kFaintOpacity);
         device.setBlendStateProperty(Microsoft::Xna::Framework::Graphics::BlendState::Opaque);

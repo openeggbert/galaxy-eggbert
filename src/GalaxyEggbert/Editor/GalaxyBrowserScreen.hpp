@@ -19,7 +19,11 @@ namespace GalaxyEggbert::Editor
     // fourteen worlds below, and the selected world's hub and eight missions at the bottom. A world
     // that exists opens, one that does not is created from its starter (CreateGalaxyStarterWorld)
     // and opened; a click on a world's number only selects it. Back returns to the world screen.
-    // Raw 800x480 pixels, as EditorBrowserScreen.
+    // As on the world screen, a place that exists has a bin on its corner: the first click arms it
+    // (a tick, the caption "Delete?"), a second click on it deletes the file into the galaxy's
+    // backups (DeleteSlotWorld); Backups switches to bringing a place's newest backup back
+    // (RestoreBackup; again steps further back, round to where it began). Raw 800x480 pixels, as
+    // EditorBrowserScreen.
     class GalaxyBrowserScreen
     {
     public:
@@ -39,22 +43,47 @@ namespace GalaxyEggbert::Editor
         // The world whose hub and missions the bottom row shows (1-14).
         [[nodiscard]] int SelectedWorld() const noexcept { return selectedWorld_; }
 
+        // Whether Backups is on (a click on a place restores instead of opening), and the line
+        // under the places (what the last delete or restore did).
+        [[nodiscard]] bool RestoreMode() const noexcept { return restoreMode_; }
+        [[nodiscard]] const std::string& Message() const noexcept { return message_; }
+
         // Rects, public for the tests: the main hub, the bonus world, world n's number (1-14), the
-        // bottom row's place p (0 the hub, 1-8 the missions), Back.
+        // bottom row's place p (0 the hub, 1-8 the missions), the bin on a place's corner, Backups,
+        // Back.
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect MainHubRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BonusRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect WorldRect(int world) noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect PlaceRect(int place) noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect DeleteRect(
+            const GalaxyEggbert::Game::QuadBatch::Rect& place) noexcept;
+        [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackupsRect() noexcept;
         [[nodiscard]] static GalaxyEggbert::Game::QuadBatch::Rect BackButtonRect() noexcept;
 
     private:
+        struct ShownPlace
+        {
+            int mission;
+            GalaxyEggbert::Game::QuadBatch::Rect rect;
+        };
         void EnsureLoaded(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        void Restore(int mission);
         [[nodiscard]] bool Exists(int mission) const noexcept;
+        [[nodiscard]] int Backups(int mission) const noexcept;
         [[nodiscard]] bool WorldHasAny(int world) const noexcept;
+        // The places on the screen now: the main hub, the bonus world, the selected world's nine.
+        [[nodiscard]] std::vector<ShownPlace> Shown() const;
 
         int gamerSlot_ = 0;
         int selectedWorld_ = 1;
         std::vector<bool> exists_ = std::vector<bool>(200, false); // per mission number
+        std::vector<int> backups_ = std::vector<int>(200, 0);      // their backups (0-3)
+        int armedDelete_ = 0;     // the mission whose bin was clicked once, 0 none
+        bool restoreMode_ = false;
+        int restoreMission_ = 0;  // the place the last restores stepped through
+        int restoreSteps_ = 0;
+        int restoreCycle_ = 0;    // its backups and the world it had: restores come round to it
+        std::string message_;
         bool mouseWasDown_ = false;
         float mouseX_ = -1.0f, mouseY_ = -1.0f;
         bool backWasDown_ = false;

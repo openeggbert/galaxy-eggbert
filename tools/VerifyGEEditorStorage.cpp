@@ -600,6 +600,7 @@ int main()
         bool apart = true;
         std::vector<GalaxyEggbert::Game::QuadBatch::Rect> rects{GalaxyBrowserScreen::MainHubRect(),
                                                                  GalaxyBrowserScreen::BonusRect(),
+                                                                 GalaxyBrowserScreen::BackupsRect(),
                                                                  GalaxyBrowserScreen::BackButtonRect()};
         for (int world = 1; world <= kGalaxyWorldCount; ++world) rects.push_back(GalaxyBrowserScreen::WorldRect(world));
         for (int p = 0; p <= kGalaxyMissionsPerWorld; ++p) rects.push_back(GalaxyBrowserScreen::PlaceRect(p));
@@ -609,6 +610,59 @@ int main()
                                   rects[i].y1 <= rects[j].y0 || rects[j].y1 <= rects[i].y0);
         for (const auto& r : rects) apart = apart && r.x0 >= 0.0f && r.x1 <= 800.0f && r.y0 >= 0.0f && r.y1 <= 480.0f;
         check(apart, "galaxy: its screen's buttons do not overlap and fit 800x480");
+        bool binsApart = true;
+        for (int p = 0; p < kGalaxyMissionsPerWorld; ++p)
+            binsApart = binsApart && GalaxyBrowserScreen::DeleteRect(GalaxyBrowserScreen::PlaceRect(p)).x1 <=
+                                         GalaxyBrowserScreen::PlaceRect(p + 1).x0;
+        binsApart = binsApart && GalaxyBrowserScreen::DeleteRect(GalaxyBrowserScreen::MainHubRect()).x1 <=
+                                     GalaxyBrowserScreen::BonusRect().x0;
+        check(binsApart, "galaxy: a place's bin stays clear of the next place");
+
+        // Deleting and bringing back (the main hub made above exists).
+        GalaxyBrowserScreen screen;
+        screen.Refresh(kBrowserSlot);
+        const auto click = [&screen](const GalaxyEggbert::Game::QuadBatch::Rect& r) {
+            const int x = int((r.x0 + r.x1) * 0.5f), y = int((r.y0 + r.y1) * 0.5f);
+            (void)screen.Update(MouseState(x, y, 0, ButtonState::Pressed, ButtonState::Released, ButtonState::Released,
+                                           ButtonState::Released, ButtonState::Released));
+            return screen.Update(MouseState(x, y, 0, ButtonState::Released, ButtonState::Released,
+                                            ButtonState::Released, ButtonState::Released, ButtonState::Released));
+        };
+        using GAction = GalaxyBrowserScreen::Action;
+        const auto hubPath = GalaxyWorldPath(kBrowserSlot, 1);
+        const auto hubBin = GalaxyBrowserScreen::DeleteRect(GalaxyBrowserScreen::MainHubRect());
+        const auto arm = click(hubBin);
+        const bool keptWhenArmed = std::filesystem::exists(hubPath) && arm.action == GAction::None;
+        (void)click(GalaxyBrowserScreen::WorldRect(2)); // any other click disarms
+        const auto rearm = click(hubBin);
+        const bool keptAfterDisarm = std::filesystem::exists(hubPath) && rearm.action == GAction::None;
+        const auto confirm = click(hubBin);
+        check(keptWhenArmed && keptAfterDisarm && confirm.action == GAction::None && !std::filesystem::exists(hubPath) &&
+                  BackupCount(hubPath) >= 1 && screen.Message() == "Main hub deleted (Backups brings it back).",
+              "galaxy: a place's bin deletes on the second click in a row, into the galaxy's backups");
+        const auto gone = click(GalaxyBrowserScreen::MainHubRect());
+        const auto binOfNothing = click(hubBin); // no bin on a place not made: the click is the place's
+        check(gone.action == GAction::New && binOfNothing.action == GAction::New && !std::filesystem::exists(hubPath),
+              "galaxy: a deleted place is made anew on a click, and has no bin");
+        (void)click(GalaxyBrowserScreen::BackupsRect());
+        const bool restoring = screen.RestoreMode();
+        const auto restore = click(GalaxyBrowserScreen::MainHubRect());
+        const std::string restoreMessage = screen.Message();
+        const bool back = std::filesystem::exists(hubPath) && World::loadFromFile(hubPath).missionNumber() == 1;
+        const auto inRestore = click(hubBin); // the bins are off while restoring: the corner restores
+        (void)click(GalaxyBrowserScreen::BackupsRect());
+        const auto open = click(GalaxyBrowserScreen::MainHubRect());
+        check(restoring && restore.action == GAction::None && back && inRestore.action == GAction::None &&
+                  restoreMessage == "Main hub is back." &&
+                  !screen.RestoreMode() && open.action == GAction::Open && open.mission == 1,
+              "galaxy: Backups brings the deleted place back instead of opening it; off again, it opens");
+        const auto noBackup = click(GalaxyBrowserScreen::BonusRect()); // opens/creates normally
+        (void)click(GalaxyBrowserScreen::BackupsRect());
+        (void)click(GalaxyBrowserScreen::BonusRect());
+        const bool told = screen.Message() == "Bonus world has no backup.";
+        (void)click(GalaxyBrowserScreen::BackupsRect());
+        check(noBackup.action == GAction::New && told && !std::filesystem::exists(GalaxyWorldPath(kBrowserSlot, 199)),
+              "galaxy: restoring a place without a backup only says so");
     }
 
     std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);
