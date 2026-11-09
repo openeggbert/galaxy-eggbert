@@ -1391,6 +1391,14 @@ namespace GalaxyEggbert::Game
         return Rect{cx - 290.0f * s, 412.0f * s, cx - 170.0f * s, 466.0f * s};
     }
 
+    QuadBatch::Rect InputPad::DemoListRowRect(int index, int viewportW, int viewportH) noexcept
+    {
+        const float s = static_cast<float>(viewportH) / kRefH;
+        const float cx = static_cast<float>(viewportW) * 0.5f;
+        const float y0 = (72.0f + static_cast<float>(index) * 38.0f) * s;
+        return Rect{cx - 300.0f * s, y0, cx + 300.0f * s, y0 + 32.0f * s};
+    }
+
     QuadBatch::Rect InputPad::DemoImportRect(int viewportW, int viewportH) noexcept
     {
         const float s = static_cast<float>(viewportH) / kRefH;
@@ -1400,16 +1408,19 @@ namespace GalaxyEggbert::Game
 
     InputPad::DemoSlotsInput InputPad::UpdateDemoSlots(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                        int viewportW, int viewportH,
-                                                       const std::vector<DemoSlotInfo>& slots) noexcept
+                                                       const std::vector<DemoSlotInfo>& slots, int listRows) noexcept
     {
         using Microsoft::Xna::Framework::Input::ButtonState;
         DemoSlotsInput result;
         const float x = static_cast<float>(mouse.getXProperty());
         const float y = static_cast<float>(mouse.getYProperty());
         const bool down = mouse.getLeftButtonProperty() == ButtonState::Pressed;
-        // Controls: 0-9 the slots, 10-19 their Original buttons, 20 Cancel, 21 Export, 22 Import.
+        // Controls: 0-9 the slots, 10-19 their Original buttons, 20 Cancel, 21 Export, 22 Import,
+        // 30-37 the list's rows (the list replaces the slots).
         const auto over = [&]() {
-            for (int i = 0; i < static_cast<int>(slots.size()) && i < 10; ++i)
+            for (int i = 0; i < listRows && i < kDemoListRows; ++i)
+                if (InRect(x, y, DemoListRowRect(i, viewportW, viewportH))) return 30 + i;
+            for (int i = 0; listRows < 0 && i < static_cast<int>(slots.size()) && i < 10; ++i)
             {
                 if (InRect(x, y, DemoSlotRect(i, viewportW, viewportH))) return i;
                 if (slots[static_cast<std::size_t>(i)].recorded && InRect(x, y, DemoRestoreRect(i, viewportW, viewportH)))
@@ -1428,7 +1439,8 @@ namespace GalaxyEggbert::Game
                 else if (demoSlotsControl_ < 20) result.restoreSlot = demoSlotsControl_ - 9;
                 else if (demoSlotsControl_ == 20) result.cancelPressed = true;
                 else if (demoSlotsControl_ == 21) result.exportPressed = true;
-                else result.importPressed = true;
+                else if (demoSlotsControl_ == 22) result.importPressed = true;
+                else result.importRow = demoSlotsControl_ - 29;
             }
             demoSlotsControl_ = -1;
         }
@@ -1438,7 +1450,7 @@ namespace GalaxyEggbert::Game
 
     void InputPad::DrawDemoSlots(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW,
                                  int viewportH, const std::vector<DemoSlotInfo>& slots, const std::string& message,
-                                 const std::string& title, int activeMode)
+                                 const std::string& title, int activeMode, const std::vector<std::string>* listRows)
     {
         if (!loaded_)
         {
@@ -1459,7 +1471,15 @@ namespace GalaxyEggbert::Game
         };
         icon(panels, Rect{w * 0.5f - 320.0f * s, 20.0f * s, w * 0.5f + 320.0f * s, 472.0f * s}, kInitPanelIcon);
         centred(labels, title, w * 0.5f, 34.0f * s, 0.7f);
-        for (int i = 0; i < static_cast<int>(slots.size()) && i < 10; ++i)
+        for (int i = 0; listRows != nullptr && i < static_cast<int>(listRows->size()) && i < kDemoListRows; ++i)
+        {
+            const Rect r = DemoListRowRect(i, viewportW, viewportH);
+            icon(demoSlotsControl_ == 30 + i ? pressed : normal, r, 21);
+            std::string row = (*listRows)[static_cast<std::size_t>(i)];
+            while (!row.empty() && TextMetrics::Width(row) * 0.45f * s > r.x1 - r.x0 - 16.0f * s) row.pop_back();
+            AppendGamerLabel(labels, row, r.x0 + 10.0f * s, r.y0 + 6.0f * s, 0.45f, s);
+        }
+        for (int i = 0; listRows == nullptr && i < static_cast<int>(slots.size()) && i < 10; ++i)
         {
             const auto& slot = slots[static_cast<std::size_t>(i)];
             const Rect r = DemoSlotRect(i, viewportW, viewportH);

@@ -69,7 +69,11 @@ with the release audit.
   with its galaxy plays wherever that galaxy was imported. Tests `VerifyDemoReplay`,
   `VerifyGEInputPad`; live `harness/case_demo_share.py` (`demo-share-sheet.png`: export of
   position 1, import of a recording from A's galaxy into position 7 with only B's galaxy holding
-  that world, `--verify-demo` equal, 224 ticks).
+  that world, `--verify-demo` equal, 224 ticks). Since the same day Import shows the shared files
+  as a list in place of the positions (up to 8 rows: the file, its mission or galaxy place and length,
+  or why it cannot be read; `InputPad::DemoListRowRect`, mode 3 in the host): a row chooses the
+  file, then a position imports it; Import from a chosen file shows the list again
+  (`demo-import-list-sheet.png`).
 - xnjttjpo on the web: the shipped worlds there are the page's packed data, in memory, so a save
   in the xnjttjpo session is also copied into `/save/customworlds/campaign-edits/` (the editor's
   `BeginOutsideSession(backupDir, keepCopyIn)`, given only under `__EMSCRIPTEN__` for a campaign

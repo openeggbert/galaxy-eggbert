@@ -169,6 +169,19 @@ int main()
                       importButton.importPressed && !importButton.exportPressed && exportRect.x1 <= cancelBox.x0 &&
                       cancelBox.x1 <= importRect.x0 && exportRect.x0 >= 400.0f - 320.0f && importRect.x1 <= 400.0f + 320.0f,
                   "Demo positions: Export and Import beside Cancel, inside the panel");
+            const auto [lx, ly] = at(InputPad::DemoListRowRect(2, 800, 480));
+            (void)pause.UpdateDemoSlots(mouse(lx, ly, true), 800, 480, slots, 3);
+            const auto row = pause.UpdateDemoSlots(mouse(lx, ly, false), 800, 480, slots, 3);
+            const auto [qx, qy] = at(InputPad::DemoListRowRect(5, 800, 480));
+            (void)pause.UpdateDemoSlots(mouse(qx, qy, true), 800, 480, slots, 3);
+            const auto beyond = pause.UpdateDemoSlots(mouse(qx, qy, false), 800, 480, slots, 3);
+            const auto [hx, hy] = at(InputPad::DemoSlotRect(0, 800, 480));
+            (void)pause.UpdateDemoSlots(mouse(hx, hy, true), 800, 480, slots, 0);
+            const auto underList = pause.UpdateDemoSlots(mouse(hx, hy, false), 800, 480, slots, 0);
+            const auto last = InputPad::DemoListRowRect(InputPad::kDemoListRows - 1, 800, 480);
+            check(row.importRow == 3 && row.recordSlot == 0 && beyond.importRow == 0 && underList.recordSlot == 0 &&
+                      underList.importRow == 0 && last.y1 <= 380.0f && InputPad::DemoListRowRect(0, 800, 480).y0 >= 60.0f,
+                  "Demo positions: Import's list in their place, a row chooses its file, the positions hidden under it");
             check(third.recordSlot == 3 && third.restoreSlot == 0 && restore.restoreSlot == 5 && restore.recordSlot == 0 &&
                       noOriginal.restoreSlot == 0 && noOriginal.recordSlot == 0 && cancel.cancelPressed &&
                       cancel.recordSlot == 0 && moved.recordSlot == 0 && !moved.cancelPressed && tenth.recordSlot == 10,

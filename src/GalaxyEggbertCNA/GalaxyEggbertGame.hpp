@@ -874,11 +874,14 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] std::vector<GalaxyEggbert::Game::InputPad::DemoSlotInfo> DemoSlotInfos() const;
         void ShowDemoNotice(std::string text);
         // Sharing recordings (2026-11-09): the positions' Export and Import change what a click on
-        // a position does: 0 records, 1 exports its demo, 2 imports demoImports_[demoImportIndex_]
-        // (the shared .gdemo files, newest first; Import again steps to the next one).
+        // a position does: 0 records, 1 exports its demo, 2 imports demoImports_[demoImportIndex_];
+        // 3 shows Import's list of the shared .gdemo files (newest first, demoImportRows_ its lines)
+        // in place of the positions, a row chosen goes on to 2.
         int demoSlotsMode_ = 0;
         std::vector<std::string> demoImports_;
+        std::vector<std::string> demoImportRows_;
         std::size_t demoImportIndex_ = 0;
+        void ListDemoImports();
         void HandleDemoSlotClick(int slot);
         void ToggleDemoImport();
         [[nodiscard]] std::string DemoImportPrompt() const;

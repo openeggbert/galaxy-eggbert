@@ -2769,31 +2769,52 @@ namespace GalaxyEggbert::CNA
     {
         if (demoImports_.empty())
             return "Put .gdemo files in " + GalaxyEggbert::Game::SharedDemoDir() + "/ to import them.";
+        if (demoSlotsMode_ == 3) return "Click the file to import.";
         const std::string name = std::filesystem::path(demoImports_[demoImportIndex_]).filename().string();
-        return "Import " + name + ": click a position" +
-               (demoImports_.size() > 1 ? " (Import again: the next file)." : ".");
+        return "Import " + name + ": click a position (Import: the list again).";
+    }
+
+    void GalaxyEggbertGame::ListDemoImports()
+    {
+        using namespace GalaxyEggbert::Game;
+        demoImports_ = ListSharedDemos();
+        demoImportIndex_ = 0;
+        demoImportRows_.clear();
+        for (const auto& path : demoImports_)
+        {
+            // The file and what it holds: its mission, a galaxy's, or why it cannot be imported.
+            std::string row = std::filesystem::path(path).filename().string() + "  -  ";
+            DemoRecording demo;
+            const auto text = ReadWorldBytes(path);
+            const auto status = text ? ParseDemo(*text, kDemoSimulationRevision, demo) : DemoLoadStatus::Missing;
+            if (status == DemoLoadStatus::Ok)
+                row += (demo.log.start.worldPath.find("/galaxy/world") != std::string::npos ? "galaxy " : "mission ") +
+                       std::to_string(demo.log.start.mission) + ", " + std::to_string([&demo] {
+                           std::uint64_t ticks = 0;
+                           for (const auto& run : demo.log.runs) ticks += run.count;
+                           return ticks / 60;
+                       }()) + " s";
+            else
+                row += DemoLoadStatusText(status);
+            demoImportRows_.push_back(std::move(row));
+        }
     }
 
     void GalaxyEggbertGame::ToggleDemoImport()
     {
-        // Import again steps through the shared files, after the last one it is off.
-        if (demoSlotsMode_ == 2 && demoImportIndex_ + 1 < demoImports_.size())
-        {
-            ++demoImportIndex_;
-            demoSlotsMessage_ = DemoImportPrompt();
-            return;
-        }
-        if (demoSlotsMode_ == 2)
+        // Import shows the list of the shared files; from a file chosen, the list again; from the
+        // list, off.
+        if (demoSlotsMode_ == 3)
         {
             demoSlotsMode_ = 0;
             demoSlotsMessage_.clear();
             return;
         }
-        demoSlotsMode_ = 2;
-        demoImports_ = GalaxyEggbert::Game::ListSharedDemos();
-        demoImportIndex_ = 0;
-        demoSlotsMessage_ = GalaxyEggbert::Editor::RequestUpload(GalaxyEggbert::Game::SharedDemoDir(), ".gdemo")
-                                ? "Choose a .gdemo file, then click a position."
+        const bool fromChosen = demoSlotsMode_ == 2;
+        demoSlotsMode_ = 3;
+        ListDemoImports();
+        demoSlotsMessage_ = !fromChosen && GalaxyEggbert::Editor::RequestUpload(GalaxyEggbert::Game::SharedDemoDir(), ".gdemo")
+                                ? "Choose a .gdemo file: it is listed here."
                                 : DemoImportPrompt();
     }
 
@@ -5110,15 +5131,22 @@ namespace GalaxyEggbert::CNA
                 if (demoSlotsShown_)
                 {
                     // The demo positions over the pause screen (BD-0116).
-                    const auto slots = inputPad_.UpdateDemoSlots(mouse, viewport.getWidthProperty(),
-                                                                 viewport.getHeightProperty(), demoSlotInfos_);
-                    if (demoSlotsMode_ == 2 && GalaxyEggbert::Editor::ConsumeUploadDone())
+                    const auto slots = inputPad_.UpdateDemoSlots(
+                        mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), demoSlotInfos_,
+                        demoSlotsMode_ == 3 ? static_cast<int>(demoImportRows_.size()) : -1);
+                    if (demoSlotsMode_ == 3 && GalaxyEggbert::Editor::ConsumeUploadDone())
                     {
-                        demoImports_ = GalaxyEggbert::Game::ListSharedDemos();
-                        demoImportIndex_ = 0; // the file just chosen is the newest
+                        ListDemoImports(); // the file just chosen is the newest, the first row
+                        demoSlotsMessage_ = "The file is listed: click it to import it.";
+                    }
+                    if (slots.importRow > 0 && demoSlotsMode_ == 3 &&
+                        static_cast<std::size_t>(slots.importRow) <= demoImports_.size())
+                    {
+                        demoImportIndex_ = static_cast<std::size_t>(slots.importRow - 1);
+                        demoSlotsMode_ = 2;
                         demoSlotsMessage_ = DemoImportPrompt();
                     }
-                    if (slots.recordSlot > 0)
+                    else if (slots.recordSlot > 0)
                     {
                         HandleDemoSlotClick(slots.recordSlot);
                     }
@@ -9682,8 +9710,10 @@ namespace GalaxyEggbert::CNA
                                             demoSlotInfos_, demoSlotsMessage_,
                                             demoSlotsMode_ == 1   ? "Export a demo: choose its position"
                                             : demoSlotsMode_ == 2 ? "Import a demo: choose its position"
+                                            : demoSlotsMode_ == 3 ? "Import a demo: choose the file"
                                                                   : "Record a demo: choose its position",
-                                            demoSlotsMode_);
+                                            demoSlotsMode_ == 3 ? 2 : demoSlotsMode_,
+                                            demoSlotsMode_ == 3 ? &demoImportRows_ : nullptr);
                 else if (demoNoticeSeconds_ > 0.0f)
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                                {demoNotice_});
