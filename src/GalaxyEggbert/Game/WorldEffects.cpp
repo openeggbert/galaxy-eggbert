@@ -181,8 +181,9 @@ namespace GalaxyEggbert::Game
 
         const auto& focus = frame.camera.target;
         // The far cascade every third frame (its shadows lie far off and change slowly); the near one
-        // every frame.
-        const bool farDue = m_shadowFrame++ % 3 == 0 || !m_scene.ShadowMapped();
+        // every frame. Every frame for the captures (SceneEffects::steadyShadows): which frames are drawn
+        // depends on the machine's speed.
+        const bool farDue = frame.effects.steadyShadows || m_shadowFrame++ % 3 == 0 || !m_scene.ShadowMapped();
         for (int cascade = 0; cascade < static_cast<int>(SceneShaders::kCascades); ++cascade)
         {
             if (cascade > 0 && !farDue)
