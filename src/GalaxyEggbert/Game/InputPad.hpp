@@ -214,16 +214,22 @@ namespace GalaxyEggbert::Game
             // Galaxy's own (BD-0116): the Record button, top right as the menu's Exit -- the demo
             // positions, then the mission again from its start, recorded.
             bool recordPressed = false;
+            // Galaxy's own (2026-11-09): "Original", left of Record, on the web for a shipped world
+            // edited with xnjttjpo: the world as shipped again.
+            bool originalPressed = false;
         };
         [[nodiscard]] PauseInput UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                              int viewportW, int viewportH,
-                                             bool showBack, bool showRestart, bool showRecord = false) noexcept;
+                                             bool showBack, bool showRestart, bool showRecord = false,
+                                             bool showOriginal = false) noexcept;
         void DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                        int viewportW, int viewportH, bool showBack, bool showRestart,
                        float phaseTimeSeconds,
                        GalaxyEggbert::Def::GamePhase fadeOutPhase = GalaxyEggbert::Def::GamePhase::None,
-                       bool showRecord = false, bool showButtons = true);
+                       bool showRecord = false, bool showButtons = true, bool showOriginal = false,
+                       const std::string& originalLabel = "Original");
         [[nodiscard]] static QuadBatch::Rect PauseRecordRect(int viewportW, int viewportH) noexcept;
+        [[nodiscard]] static QuadBatch::Rect PauseOriginalRect(int viewportW, int viewportH) noexcept;
 
         // The ten demo positions (BD-0116), over the pause screen: a click on one records the
         // mission into it, "Original" under a recorded one gives it back its shipped demo, Cancel

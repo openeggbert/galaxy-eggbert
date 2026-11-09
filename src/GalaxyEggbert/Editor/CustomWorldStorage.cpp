@@ -180,7 +180,36 @@ namespace GalaxyEggbert::Editor
         return CustomWorldsRoot() / "campaign-edits";
     }
 
-    int ApplyCampaignEdits(const std::filesystem::path& worldsDir)
+    std::filesystem::path CampaignOriginalsDir()
+    {
+        return "worlds3d-shipped";
+    }
+
+    void KeepCampaignOriginal(const std::filesystem::path& world, const std::filesystem::path& originalsDir)
+    {
+        std::error_code ec;
+        const auto kept = originalsDir / world.filename();
+        if (originalsDir.empty() || std::filesystem::exists(kept, ec) || !std::filesystem::exists(world, ec)) return;
+        std::filesystem::create_directories(originalsDir, ec);
+        std::filesystem::copy_file(world, kept, std::filesystem::copy_options::none, ec);
+    }
+
+    bool HasCampaignEdit(const std::filesystem::path& world)
+    {
+        std::error_code ec;
+        return !world.filename().empty() && std::filesystem::exists(CampaignEditsDir() / world.filename(), ec);
+    }
+
+    bool RevertCampaignEdit(const std::filesystem::path& world, const std::filesystem::path& originalsDir)
+    {
+        std::error_code ec;
+        std::filesystem::remove(CampaignEditsDir() / world.filename(), ec);
+        const auto kept = originalsDir / world.filename();
+        if (originalsDir.empty() || !std::filesystem::exists(kept, ec)) return false;
+        return std::filesystem::copy_file(kept, world, std::filesystem::copy_options::overwrite_existing, ec);
+    }
+
+    int ApplyCampaignEdits(const std::filesystem::path& worldsDir, const std::filesystem::path& originalsDir)
     {
         int copied = 0;
         std::error_code ec;
@@ -191,6 +220,7 @@ namespace GalaxyEggbert::Editor
                                name.compare(8, 4, ".vwr") == 0 &&
                                std::all_of(name.begin() + 5, name.begin() + 8, [](char c) { return c >= '0' && c <= '9'; });
             if (!world || !entry.is_regular_file(ec)) continue;
+            if (!originalsDir.empty()) KeepCampaignOriginal(worldsDir / name, originalsDir);
             if (std::filesystem::copy_file(entry.path(), worldsDir / name, std::filesystem::copy_options::overwrite_existing, ec))
                 ++copied;
         }

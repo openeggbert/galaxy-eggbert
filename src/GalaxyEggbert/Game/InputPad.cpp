@@ -292,6 +292,7 @@ namespace GalaxyEggbert::Game
         constexpr int kPauseControlRestart = 3;
         constexpr int kPauseControlContinue = 4;
         constexpr int kPauseControlRecord = 5;
+        constexpr int kPauseControlOriginal = 6;
 
         constexpr int kWinLostControlReturn = 0;
 
@@ -1358,6 +1359,13 @@ namespace GalaxyEggbert::Game
         return Rect{w - 130.0f * s, 15.0f * s, w - 20.0f * s, 69.0f * s};
     }
 
+    QuadBatch::Rect InputPad::PauseOriginalRect(int viewportW, int viewportH) noexcept
+    {
+        const float w = static_cast<float>(viewportW);
+        const float s = static_cast<float>(viewportH) / kRefH;
+        return Rect{w - 250.0f * s, 15.0f * s, w - 140.0f * s, 69.0f * s};
+    }
+
     QuadBatch::Rect InputPad::DemoSlotRect(int index, int viewportW, int viewportH) noexcept
     {
         // Two rows of five, centred: the number on a blank button, two lines under it.
@@ -1517,7 +1525,8 @@ namespace GalaxyEggbert::Game
 
     InputPad::PauseInput InputPad::UpdatePause(const Microsoft::Xna::Framework::Input::MouseState& mouse,
                                                     int viewportW, int viewportH,
-                                                    bool showBack, bool showRestart, bool showRecord) noexcept
+                                                    bool showBack, bool showRestart, bool showRecord,
+                                                    bool showOriginal) noexcept
     {
         PauseInput result;
 
@@ -1537,10 +1546,12 @@ namespace GalaxyEggbert::Game
         const bool overRestart = showRestart && InRect(mouseX, mouseY, PauseButtonRect(3, m));
         const bool overContinue = InRect(mouseX, mouseY, PauseButtonRect(4, m));
         const bool overRecord = showRecord && InRect(mouseX, mouseY, PauseRecordRect(viewportW, viewportH));
+        const bool overOriginal = showOriginal && InRect(mouseX, mouseY, PauseOriginalRect(viewportW, viewportH));
 
         if (mouseDown && !mouseWasDown_)
         {
             if (overRecord) activeControl_ = kPauseControlRecord;
+            else if (overOriginal) activeControl_ = kPauseControlOriginal;
             else if (overMenu) activeControl_ = kPauseControlMenu;
             else if (overBack) activeControl_ = kPauseControlBack;
             else if (overSetup) activeControl_ = kPauseControlSetup;
@@ -1560,6 +1571,7 @@ namespace GalaxyEggbert::Game
             else if (activeControl_ == kPauseControlMenu) result.menuPressed = true;
             else if (activeControl_ == kPauseControlBack) result.backPressed = true;
             else if (activeControl_ == kPauseControlRecord) result.recordPressed = overRecord;
+            else if (activeControl_ == kPauseControlOriginal) result.originalPressed = overOriginal;
             activeControl_ = -1;
         }
 
@@ -1570,7 +1582,8 @@ namespace GalaxyEggbert::Game
     void InputPad::DrawPause(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device,
                               int viewportW, int viewportH, bool showBack, bool showRestart,
                               float phaseTimeSeconds, GalaxyEggbert::Def::GamePhase fadeOutPhase,
-                              bool showRecord, bool showButtons)
+                              bool showRecord, bool showButtons, bool showOriginal,
+                              const std::string& originalLabel)
     {
         if (!loaded_)
         {
@@ -1674,6 +1687,16 @@ namespace GalaxyEggbert::Game
                 (activeControl_ == kPauseControlRecord ? pressedQuads : normalQuads).push_back(q);
                 AppendCenteredLabel(labelQuads, "Record", (r.x0 + r.x1) * 0.5f, (r.y0 + r.y1) * 0.5f - 12.0f * scale,
                                     scale);
+            }
+            if (showOriginal)
+            {
+                // The shipped world again (the web's xnjttjpo edits), left of Record.
+                const Rect r = PauseOriginalRect(viewportW, viewportH);
+                Quad q{r.x0, r.y0, r.x1, r.y1, 0.0f, 0.0f, 0.0f, 0.0f};
+                PadIconUv(21, padSheetW, padSheetH, q.u0, q.v0, q.u1, q.v1);
+                (activeControl_ == kPauseControlOriginal ? pressedQuads : normalQuads).push_back(q);
+                AppendCenteredLabel(labelQuads, originalLabel, (r.x0 + r.x1) * 0.5f,
+                                    (r.y0 + r.y1) * 0.5f - 12.0f * scale, scale);
             }
         }
 

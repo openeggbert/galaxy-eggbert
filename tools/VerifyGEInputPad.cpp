@@ -169,6 +169,18 @@ int main()
                       importButton.importPressed && !importButton.exportPressed && exportRect.x1 <= cancelBox.x0 &&
                       cancelBox.x1 <= importRect.x0 && exportRect.x0 >= 400.0f - 320.0f && importRect.x1 <= 400.0f + 320.0f,
                   "Demo positions: Export and Import beside Cancel, inside the panel");
+            {
+                const auto [ox, oy] = at(InputPad::PauseOriginalRect(800, 480));
+                InputPad pad;
+                (void)pad.UpdatePause(mouse(ox, oy, true), 800, 480, false, false, true, true);
+                const auto original = pad.UpdatePause(mouse(ox, oy, false), 800, 480, false, false, true, true);
+                (void)pad.UpdatePause(mouse(ox, oy, true), 800, 480, false, false, true, false);
+                const auto hiddenOriginal = pad.UpdatePause(mouse(ox, oy, false), 800, 480, false, false, true, false);
+                const auto o = InputPad::PauseOriginalRect(800, 480), r = InputPad::PauseRecordRect(800, 480);
+                check(original.originalPressed && !original.recordPressed && !hiddenOriginal.originalPressed &&
+                          o.x1 <= r.x0 && o.y0 == r.y0,
+                      "Pause: Original left of Record, only when shown");
+            }
             const auto [lx, ly] = at(InputPad::DemoListRowRect(2, 800, 480));
             (void)pause.UpdateDemoSlots(mouse(lx, ly, true), 800, 480, slots, 3);
             const auto row = pause.UpdateDemoSlots(mouse(lx, ly, false), 800, 480, slots, 3);

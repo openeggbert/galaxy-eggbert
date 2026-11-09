@@ -87,8 +87,14 @@ with the release audit.
   `BeginOutsideSession(backupDir, keepCopyIn)`, given only under `__EMSCRIPTEN__` for a campaign
   world) and `main.cpp` lays those copies over `worlds3d/` before anything loads
   (`ApplyCampaignEdits()`, worldNNN.vwr names only). The desktop is unchanged (it edits the files
-  themselves). No undo button on the web (the backups are in `/save/customworlds/campaign-backups/`).
-  Tests `VerifyGEWorldEditor`, `VerifyGEEditorStorage`.
+  themselves). Undone from Pause (same day): "Original", left of Record, while the campaign world
+  played has a kept edit (`HasCampaignEdit()`; never on the desktop, which keeps none); the first
+  click arms it ("Sure?"), the second `RevertCampaignEdit()`s and restarts the mission. The world as
+  shipped is kept for the page's life in `worlds3d-shipped/` (`CampaignOriginalsDir()`, memory only):
+  by `ApplyCampaignEdits()` before it lays an edit over it, and by `OpenMissionInEditor()` before
+  the first save. Tests `VerifyGEWorldEditor`, `VerifyGEEditorStorage`, `VerifyGEInputPad`; web
+  `harness/web_revert.py` (`web-revert-sheet.png`): undone right after an edit, and after a reload
+  that laid the edit over the shipped world; another reload lays nothing.
 - Web runtime of all of it (`harness/web_share.py`, the rebuilt `build-cna-webgl2`): the desktop's
   `A-galaxy.galaxy` imported through the file picker (CDP `Page.setInterceptFileChooserDialog`,
   `DOM.setFileInputFiles`), played, and exported again as a download byte for byte equal; the

@@ -691,6 +691,34 @@ int main()
         std::filesystem::remove_all(CampaignEditsDir(), error);
     }
 
+    // ... and undone (Pause's "Original"): the shipped world as kept before an edit, the edit dropped.
+    {
+        const std::filesystem::path worlds = "verify_campaign_revert_worlds";
+        const std::filesystem::path originals = "verify_campaign_revert_originals";
+        for (const auto& dir : {worlds, originals, CampaignEditsDir()}) std::filesystem::remove_all(dir, error);
+        std::filesystem::create_directories(worlds, error);
+        std::filesystem::create_directories(CampaignEditsDir(), error);
+        CreateGalaxyStarterWorld(1).saveToFile(worlds / "world011.vwr");   // as shipped: mission 1
+        CreateGalaxyStarterWorld(72).saveToFile(CampaignEditsDir() / "world011.vwr"); // the edit kept
+        const bool edited = HasCampaignEdit(worlds / "world011.vwr") && !HasCampaignEdit(worlds / "world012.vwr");
+        (void)ApplyCampaignEdits(worlds, originals); // a start: the original kept first
+        const bool laid = World::loadFromFile(worlds / "world011.vwr").missionNumber() == 72 &&
+                          World::loadFromFile(originals / "world011.vwr").missionNumber() == 1;
+        (void)ApplyCampaignEdits(worlds, originals); // a second application keeps the first original
+        KeepCampaignOriginal(worlds / "world011.vwr", originals);
+        const bool stillShipped = World::loadFromFile(originals / "world011.vwr").missionNumber() == 1;
+        const bool reverted = RevertCampaignEdit(worlds / "world011.vwr", originals);
+        check(edited && laid && stillShipped && reverted &&
+                  World::loadFromFile(worlds / "world011.vwr").missionNumber() == 1 &&
+                  !HasCampaignEdit(worlds / "world011.vwr") && !std::filesystem::exists(CampaignEditsDir() / "world011.vwr"),
+              "xnjttjpo on the web undone: the world kept as shipped comes back and the edit is dropped");
+        CreateGalaxyStarterWorld(72).saveToFile(CampaignEditsDir() / "world012.vwr");
+        check(!RevertCampaignEdit(worlds / "world012.vwr", originals) && !HasCampaignEdit(worlds / "world012.vwr"),
+              "without a kept original the edit is still dropped (the next start loads the shipped world)");
+        for (const auto& dir : {worlds, originals, CampaignEditsDir()}) std::filesystem::remove_all(dir, error);
+        check(CampaignOriginalsDir() == std::filesystem::path("worlds3d-shipped"), "the originals' folder beside worlds3d/");
+    }
+
     // A whole galaxy in one file: packed, damaged, exported, imported over another gamer's galaxy.
     {
         std::filesystem::remove_all(CustomWorldsDir(kStorageSlot), error);

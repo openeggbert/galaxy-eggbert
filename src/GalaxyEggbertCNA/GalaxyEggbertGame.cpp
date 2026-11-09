@@ -3300,7 +3300,13 @@ namespace GalaxyEggbert::CNA
         // storage too and laid over them at the next start (main.cpp, ApplyCampaignEdits()).
         std::filesystem::path keepCopy;
 #if defined(__EMSCRIPTEN__)
-        if (galaxyGamer_ < 0) keepCopy = GalaxyEggbert::Editor::CampaignEditsDir();
+        if (galaxyGamer_ < 0)
+        {
+            keepCopy = GalaxyEggbert::Editor::CampaignEditsDir();
+            // The world as shipped, for Pause's "Original" (ApplyCampaignEdits() kept it already if
+            // an edit was laid over it at the start).
+            GalaxyEggbert::Editor::KeepCampaignOriginal(path, GalaxyEggbert::Editor::CampaignOriginalsDir());
+        }
 #endif
         worldEditor_.BeginOutsideSession(galaxyGamer_ >= 0 ? std::filesystem::path{}
                                                            : GalaxyEggbert::Editor::CampaignBackupsDir(),
@@ -3309,6 +3315,26 @@ namespace GalaxyEggbert::CNA
         SetPhase(GalaxyEggbert::Def::GamePhase::Editor, /*bypassFade=*/true);
         std::cout << "GalaxyEggbertCNA: xnjttjpo: editing mission " << mission << " (" << path.generic_string()
                   << ") in the 3D editor; its Stop returns to the mission." << std::endl;
+    }
+
+    bool GalaxyEggbertGame::CanRevertWorld() const
+    {
+        return galaxyGamer_ < 0 && !demoActive_ && !editorPlayTestActive_ && !replayingResume_ &&
+               !loadedMissionPath_.empty() && GalaxyEggbert::Editor::HasCampaignEdit(loadedMissionPath_);
+    }
+
+    void GalaxyEggbertGame::RevertWorld()
+    {
+        revertArmed_ = false;
+        const int mission = worldRuntime_.GetMissionNumber();
+        const bool restored =
+            GalaxyEggbert::Editor::RevertCampaignEdit(loadedMissionPath_, GalaxyEggbert::Editor::CampaignOriginalsDir());
+        const int lives = interaction_.Lives();
+        LoadMission(mission); // from its start, as shipped
+        interaction_.SetLives(lives);
+        SetPhase(GalaxyEggbert::Def::GamePhase::Play, /*bypassFade=*/true);
+        ShowDemoNotice(restored ? "Mission " + std::to_string(mission) + ": the world as shipped again."
+                                : "Mission " + std::to_string(mission) + ": the world as shipped from the next start.");
     }
 
     void GalaxyEggbertGame::LeaveMissionEditor()
@@ -3444,6 +3470,7 @@ namespace GalaxyEggbert::CNA
     {
         using GalaxyEggbert::Def::GamePhase;
         if (next != GamePhase::Pause) demoSlotsShown_ = false;
+        if (next != GamePhase::Pause) revertArmed_ = false;
         // Pause, Win, Lost or a menu end a demo (and its recording) rather than show over it.
         if (next != GamePhase::Play && ((demoActive_ && demoSessionLive_) || demoRecording_))
         {
@@ -5185,7 +5212,12 @@ namespace GalaxyEggbert::CNA
                 {
                     const auto pauseInput = inputPad_.UpdatePause(
                         mouse, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
-                        CanRecordDemo());
+                        CanRecordDemo(), CanRevertWorld());
+                    if (pauseInput.originalPressed)
+                    {
+                        if (revertArmed_) RevertWorld();
+                        else revertArmed_ = true;
+                    }
                     mouseContinuePressed = pauseInput.continuePressed;
                     mouseRestartPressed = pauseInput.restartPressed;
                     mouseSetupPressed = pauseInput.setupPressed;
@@ -9704,7 +9736,8 @@ namespace GalaxyEggbert::CNA
                 const bool showRestart = mission != 1 && mission % 10 != 0;
                 inputPad_.DrawPause(
                     device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
-                    phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_);
+                    phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
+                    CanRevertWorld() && !demoSlotsShown_, revertArmed_ ? "Sure?" : "Original");
                 if (demoSlotsShown_)
                     inputPad_.DrawDemoSlots(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                             demoSlotInfos_, demoSlotsMessage_,

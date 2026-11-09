@@ -886,6 +886,13 @@ namespace GalaxyEggbert::CNA
         void ToggleDemoImport();
         [[nodiscard]] std::string DemoImportPrompt() const;
 
+        // The web's xnjttjpo edits undone (2026-11-09): Pause shows "Original" while the campaign
+        // world played has an edit kept (CustomWorldStorage HasCampaignEdit(), only ever on the web);
+        // its first click arms it ("Sure?"), the second puts the shipped world back and restarts.
+        bool revertArmed_ = false;
+        [[nodiscard]] bool CanRevertWorld() const;
+        void RevertWorld();
+
         // The xnjttjpo cheat (BD-0118, Speedy Blupi's XMISSION): the 3D editor on the world being
         // played, its Stop back to that mission from its start. editorMission_ is the mission
         // (0: an ordinary editor visit), with the lives it had.

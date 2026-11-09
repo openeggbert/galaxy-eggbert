@@ -84,9 +84,22 @@ namespace GalaxyEggbert::Editor
     // (in the browser's storage), and ApplyCampaignEdits() lays the copies over the shipped worlds
     // at every start. The desktop edits its worlds3d/ files themselves and keeps nothing here.
     [[nodiscard]] std::filesystem::path CampaignEditsDir();
-    // Copies every worldNNN.vwr of CampaignEditsDir() over @p worldsDir's file of that name; how
-    // many it copied.
-    int ApplyCampaignEdits(const std::filesystem::path& worldsDir);
+    // Copies every worldNNN.vwr of CampaignEditsDir() over @p worldsDir's file of that name, the file
+    // as it was kept first in @p originalsDir when given (and not there yet); how many it copied.
+    int ApplyCampaignEdits(const std::filesystem::path& worldsDir, const std::filesystem::path& originalsDir = {});
+    // Where the web build keeps, for the page's life, the shipped worlds as packed before an edit
+    // was laid over them or saved (KeepCampaignOriginal()): "worlds3d-shipped" beside worlds3d/, in
+    // memory, not in the browser's storage (the page's data holds them anyway).
+    [[nodiscard]] std::filesystem::path CampaignOriginalsDir();
+    // Keeps @p world as it is now in @p originalsDir, unless a copy is there already.
+    void KeepCampaignOriginal(const std::filesystem::path& world, const std::filesystem::path& originalsDir);
+    // Whether the shipped world @p world has an edit kept in CampaignEditsDir().
+    [[nodiscard]] bool HasCampaignEdit(const std::filesystem::path& world);
+    // The shipped world as it came (the web's "Original" in Pause): @p world from @p originalsDir
+    // again, its edit dropped from CampaignEditsDir() (its versions stay in CampaignBackupsDir()).
+    // False when no original was kept (the edit is dropped all the same: the next start loads the
+    // shipped world).
+    bool RevertCampaignEdit(const std::filesystem::path& world, const std::filesystem::path& originalsDir);
 
     // Restores the newest backup of @p world: it takes the world's place, the older ones move up a
     // generation and the world as it was becomes the oldest -- so restoring again steps further
