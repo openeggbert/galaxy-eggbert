@@ -1301,6 +1301,11 @@ namespace GalaxyEggbert::CNA
         GalaxyEggbert::Game::SkyEnvironment ultraSkyData_;
         // Ultra's light from around for the terrain (TerrainGi.hpp): the block types' colours, at load.
         GalaxyEggbert::Game::TerrainGiSettings terrainGi_;
+        // Ultra: the light from around at each billboard and particle (SceneQuad::gi), by cell, cached for
+        // the terrain it was found in (ApplySpriteGi).
+        void ApplySpriteGi(GalaxyEggbert::Game::SceneFrame& frame);
+        std::unordered_map<std::uint64_t, Microsoft::Xna::Framework::Vector3> spriteGiCache_;
+        const void* spriteGiTerrain_ = nullptr;
         // The two waters' bodies for the effects' water shaders (SceneEffects::water), from the atlas.
         std::array<Microsoft::Xna::Framework::Vector4, 2> waterBodies_{};
         const GalaxyEggbert::Game::TerrainGiSettings* TerrainGiWanted();

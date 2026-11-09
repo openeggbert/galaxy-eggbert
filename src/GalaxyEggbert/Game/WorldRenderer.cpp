@@ -18,6 +18,8 @@
 #include <Microsoft/Xna/Framework/Graphics/SamplerState.hpp>
 #include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
 
+#include <CnaEngine/Graphics/VertexLayouts.hpp>
+
 #include <algorithm>
 #include <iterator>
 #include <chrono>
@@ -84,6 +86,35 @@ namespace GalaxyEggbert::Game
             }
             std::sort(glows.begin(), glows.end());
             return glows;
+        }
+
+        // Ultra's billboards: each quad's light from around (SceneQuad::gi) in its vertex colour, halved.
+        std::unique_ptr<CnaEngine::Graphics::GpuMesh> GiQuadMesh(Graphics::GraphicsDevice& device,
+                                                                 const std::vector<SceneQuad>& quads)
+        {
+            CnaEngine::Graphics::MeshBuilder mesh({CnaEngine::Graphics::VertexAttribute::Position,
+                                                   CnaEngine::Graphics::VertexAttribute::Color,
+                                                   CnaEngine::Graphics::VertexAttribute::TexCoord0});
+            for (const auto& quad : quads)
+            {
+                const auto half = [](float v) { return std::clamp(v * 0.5f, 0.0f, 1.0f); };
+                mesh.SetColor(Microsoft::Xna::Framework::Color(half(quad.gi.X), half(quad.gi.Y), half(quad.gi.Z), 1.0f));
+                mesh.AddBillboard(quad.center, quad.size, quad.right, quad.up, quad.uv);
+            }
+            if (mesh.Mesh().Empty())
+            {
+                return nullptr;
+            }
+            return std::make_unique<CnaEngine::Graphics::GpuMesh>(CnaEngine::Graphics::GpuMesh::Upload(
+                device, mesh.Mesh(), CnaEngine::Graphics::VertexLayout::PositionColorTexture()));
+        }
+
+        // The mean of quads' light from around.
+        Vector3 MeanGi(const std::vector<SceneQuad>& quads)
+        {
+            Vector3 sum(0.0f, 0.0f, 0.0f);
+            for (const auto& quad : quads) sum = sum + quad.gi;
+            return quads.empty() ? Vector3(1.0f, 1.0f, 1.0f) : sum / static_cast<float>(quads.size());
         }
 
         CnaEngine::Graphics::MeshBuilder QuadMesh(const std::vector<SceneQuad>& quads)
@@ -203,7 +234,9 @@ namespace GalaxyEggbert::Game
             m_scene.SetFrame(device, frame, *assets.terrain, frame.effects.ultra ? assets.ultra : nullptr);
             shading.occluded = m_scene.Occluded();
             shading.lit = m_scene.Lit();
-            if (m_scene.UltraActive())
+            // GALAXY_RELIEF_GI=0: the reliefs without it (the open sky's light everywhere), to compare.
+            static const bool reliefGiOff = [] { const char* v = std::getenv("GALAXY_RELIEF_GI"); return v && *v == '0'; }();
+            if (m_scene.UltraActive() && !reliefGiOff)
             {
                 shading.reliefGi = [this](Graphics::Texture2D* table, const Vector3& boxMin) { m_scene.SetReliefGi(table, boxMin); };
             }
@@ -720,13 +753,15 @@ namespace GalaxyEggbert::Game
                     std::vector<SceneQuad> shining;
                     std::copy_if(batch.quads.begin(), batch.quads.end(), std::back_inserter(shining),
                                  [glow](const SceneQuad& quad) { return quad.glow == glow; });
-                    const auto part = QuadMesh(shining);
-                    if (part.Mesh().Empty())
+                    auto part = GiQuadMesh(device, shining);
+                    auto* program = m_scene.UltraParticleWith(effect->getTextureProperty(), glow, Vector3(1.0f, 1.0f, 1.0f),
+                                                              /*colorIsGi=*/true, batch.alpha);
+                    if (!part || program == nullptr)
                     {
                         continue;
                     }
-                    m_glowMeshes.push_back(UploadTexturedMesh(device, part.Mesh()));
-                    m_glowMeshes.back()->Draw(device, m_scene.SpriteWith(effect->getTextureProperty(), batch.alpha, glow));
+                    m_glowMeshes.push_back(std::move(part));
+                    m_glowMeshes.back()->Draw(device, *program);
                 }
                 continue;
             }
@@ -762,7 +797,8 @@ namespace GalaxyEggbert::Game
                 m_marineMesh = UploadTexturedMesh(device, mesh.Mesh());
                 if (shadowedSprites)
                 {
-                    m_marineMesh->Draw(device, m_scene.SpriteWith(assets.objectM->getTextureProperty(), 1.0f));
+                    m_marineMesh->Draw(device, m_scene.SpriteWith(assets.objectM->getTextureProperty(), 1.0f, 1.0f,
+                                                                  MeanGi(frame.marine)));
                     return;
                 }
                 SetCamera(*assets.objectM, frame.camera);

@@ -134,9 +134,19 @@ namespace GalaxyEggbert::CNA
                          moved.size());
             if (!moved.empty())
             {
-                const auto& obj = worldRuntime_.GetMobileObjects()[moved.front().first];
-                std::fprintf(interpTrace, " object %zu type %d at %.4f %.4f %.4f", moved.front().first,
-                             static_cast<int>(obj.type), obj.currentX, obj.currentY, obj.currentZ);
+                // A projectile (ObjectType23) when one flies, else the first.
+                std::size_t shown = moved.front().first;
+                for (const auto& [index, place] : moved)
+                {
+                    if (place.type == GalaxyEggbert::Def::ObjectType::ObjectType23)
+                    {
+                        shown = index;
+                        break;
+                    }
+                }
+                const auto& obj = worldRuntime_.GetMobileObjects()[shown];
+                std::fprintf(interpTrace, " object %zu type %d at %.4f %.4f %.4f", shown, static_cast<int>(obj.type),
+                             obj.currentX, obj.currentY, obj.currentZ);
             }
             std::fputc('\n', interpTrace);
             std::fflush(interpTrace);

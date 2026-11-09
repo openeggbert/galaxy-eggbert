@@ -112,16 +112,22 @@ namespace GalaxyEggbert::Game
         void SetPartMaterial(const ProceduralMaterial* material);
         // The billboards (position, uv) on this sheet's texture, at this alpha, darkened in the sun's shadow;
         // at Ultra lit as the rest, or shining `glow` times above white (SceneQuad::glow).
-        Microsoft::Xna::Framework::Graphics::ShaderEffect& SpriteWith(Microsoft::Xna::Framework::Graphics::Texture2D* texture,
-                                                                     float alpha, float glow = 1.0f);
+        // `gi`: the light from around at them (SceneQuad::gi).
+        Microsoft::Xna::Framework::Graphics::ShaderEffect& SpriteWith(
+            Microsoft::Xna::Framework::Graphics::Texture2D* texture, float alpha, float glow = 1.0f,
+            const Microsoft::Xna::Framework::Vector3& gi = Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f));
         // Ultra: the relief about to be drawn with Lit(), its chunk's light from around and its lowest
         // corner (TerrainShading::reliefGi); nullptr: the reliefs done, the baked colour's light again.
         void SetReliefGi(Microsoft::Xna::Framework::Graphics::Texture2D* table, const Microsoft::Xna::Framework::Vector3& boxMin);
         [[nodiscard]] bool UltraParticles() const noexcept { return m_ultraActive && m_ultraParticle != nullptr; }
         // Ultra's particles (position, colour, uv) on this sheet's texture, lit or shining as SpriteWith();
         // nullptr where Ultra is not drawing (BasicEffect draws them).
+        // `gi` the light from around at them; `colorIsGi`: the vertex colour is each one's, halved (the
+        // billboards), not a tint.
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* UltraParticleWith(
-            Microsoft::Xna::Framework::Graphics::Texture2D* texture, float glow);
+            Microsoft::Xna::Framework::Graphics::Texture2D* texture, float glow,
+            const Microsoft::Xna::Framework::Vector3& gi = Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f),
+            bool colorIsGi = false, float alpha = 1.0f);
 
         // --- Ultra's geometry pass (UltraFinish.hpp) -------------------------------------------------
         // The frame's camera on the geometry pass's programs; false where Ultra's programs do not compile.

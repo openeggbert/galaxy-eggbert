@@ -424,8 +424,14 @@ namespace GalaxyEggbert::Game
                 {
                     const auto mesh = build(&glow);
                     if (mesh.Mesh().Empty()) continue;
+                    // Their light from around: the group's mean (a burst stands in one place).
+                    Vector3 gi(0.0f, 0.0f, 0.0f);
+                    int count = 0;
+                    for (const auto& quad : batch.quads)
+                        if (quad.glow == glow) { gi = gi + quad.gi; ++count; }
                     m_glowMeshes.push_back(UploadColored(device, mesh.Mesh()));
-                    m_glowMeshes.back()->Draw(device, *m_scene.UltraParticleWith(effect->getTextureProperty(), glow));
+                    m_glowMeshes.back()->Draw(device, *m_scene.UltraParticleWith(effect->getTextureProperty(), glow,
+                                                                                 gi / static_cast<float>(std::max(count, 1))));
                 }
                 continue;
             }

@@ -835,7 +835,8 @@ void main()
 
         // Ultra's billboards (position, uv) and particles (position, colour, uv): lit as the rest at Ultra
         // -- the sun's whole light through its shadow (a cut-out stands across it whatever its turn), the
-        // sky's irradiance from above, the point lights round it -- so in the open sun a sprite is as
+        // sky's irradiance from above times the light from around at it (SceneQuad::gi: in a cave as
+        // dark as its floor), the point lights round it -- so in the open sun a sprite is as
         // drawn (the sun and the sky together make the classic's 1.05) and in shadow as dark as the
         // ground beside it. What shines (uGlow above 1: an explosion's fire, sparks, stars) is not lit:
         // its colour times uGlow, above white, so it blooms. The texture's colours are premultiplied:
@@ -883,11 +884,14 @@ void main()
 uniform float uAlpha;
 uniform float uGlow;
 uniform float uDebug; // 4: GALAXY_EFFECTS_DEBUG=sprites, the light it takes (halved), magenta what shines
+uniform vec3 uGi;         // the light from around (SceneQuad::gi): the particles' group's, the marine's
+uniform float uColorIsGi; // 1: the vertex colour is its light from around, halved (the billboards), no tint
 in vec2 vUv;
 in vec4 vColor;
 void main()
 {
-    vec4 tex = texture(uTexture, vUv) * vColor;
+    vec3 gi = uColorIsGi > 0.5 ? vColor.rgb * 2.0 : uGi;
+    vec4 tex = texture(uTexture, vUv) * (uColorIsGi > 0.5 ? vec4(1.0) : vColor);
     vec3 albedo = ToLinear(tex.rgb);
     vec3 color;
     if (uGlow > 1.0)
@@ -896,7 +900,7 @@ void main()
     }
     else
     {
-        vec3 light = vec3(uSunLight.x * SunLight()) + Irradiance(vec3(0.0, 1.0, 0.0));
+        vec3 light = vec3(uSunLight.x * SunLight()) + Irradiance(vec3(0.0, 1.0, 0.0)) * gi;
         for (int i = 0; i < 8; ++i)
         {
             if (i >= uPointCount) break;
@@ -1061,11 +1065,13 @@ void main()
         return Normalized(Vector3(light.directionX, light.directionY, light.directionZ));
     }
 
-    Graphics::ShaderEffect& SceneShaders::SpriteWith(Graphics::Texture2D* texture, float alpha, float glow)
+    Graphics::ShaderEffect& SceneShaders::SpriteWith(Graphics::Texture2D* texture, float alpha, float glow, const Vector3& gi)
     {
         if (auto* ultra = UltraSprite(m_ultraSprite.get(), texture, glow))
         {
             ultra->SetUniformFloat("uAlpha", alpha);
+            ultra->SetUniformVec3("uGi", gi.X, gi.Y, gi.Z);
+            ultra->SetUniformFloat("uColorIsGi", 0.0f);
             return *ultra;
         }
         if (texture != nullptr)
@@ -1093,12 +1099,15 @@ void main()
         }
     }
 
-    Graphics::ShaderEffect* SceneShaders::UltraParticleWith(Graphics::Texture2D* texture, float glow)
+    Graphics::ShaderEffect* SceneShaders::UltraParticleWith(Graphics::Texture2D* texture, float glow, const Vector3& gi,
+                                                           bool colorIsGi, float alpha)
     {
         auto* ultra = UltraSprite(m_ultraParticle.get(), texture, glow);
         if (ultra != nullptr)
         {
-            ultra->SetUniformFloat("uAlpha", 1.0f);
+            ultra->SetUniformFloat("uAlpha", alpha);
+            ultra->SetUniformVec3("uGi", gi.X, gi.Y, gi.Z);
+            ultra->SetUniformFloat("uColorIsGi", colorIsGi ? 1.0f : 0.0f);
         }
         return ultra;
     }

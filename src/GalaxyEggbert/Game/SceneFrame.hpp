@@ -60,6 +60,9 @@ namespace GalaxyEggbert::Game
         float rotation = 0.0f;                     // radians in the view plane (particles)
         Microsoft::Xna::Framework::Color color = Microsoft::Xna::Framework::Color::White; // particles: tint, alpha
         float glow = 1.0f;                         // Ultra: how far above white it shines (a fire, a spark)
+        // Ultra: the light from around at it (TerrainGi.hpp FaceIndirectLight looking up, an open sky's 1):
+        // a sprite in a cave as dark as the cave's floor, not lit by the whole sky.
+        Microsoft::Xna::Framework::Vector3 gi = Microsoft::Xna::Framework::Vector3(1.0f, 1.0f, 1.0f);
     };
 
     // The sheets a billboard batch is cut from: each its own texture and effect.

@@ -139,6 +139,7 @@ namespace GalaxyEggbert::CNA
         }
         AppendSceneBillboards(frame);
         AppendSceneEffects(frame);
+        ApplySpriteGi(frame);
     }
 
     void GalaxyEggbertGame::AppendSceneEffects(SceneFrame& frame)
@@ -283,6 +284,52 @@ namespace GalaxyEggbert::CNA
         // Between two steps (the Setup's frame rate above 60): back along their way by what is left of
         // the step, as the camera and the objects are drawn part way.
         effectParticles_.Append(effects.particles, invView.getRightProperty(), invView.getUpProperty(), particleLag_);
+    }
+
+    void GalaxyEggbertGame::ApplySpriteGi(SceneFrame& frame)
+    {
+        const auto* settings = frame.effects.ultra ? TerrainGiWanted() : nullptr;
+        if (settings == nullptr || !terrainRenderer_)
+        {
+            return;
+        }
+        if (spriteGiTerrain_ != terrainRenderer_.get())
+        {
+            spriteGiCache_.clear(); // another terrain (a mission loaded, the terrain rebuilt)
+            spriteGiTerrain_ = terrainRenderer_.get();
+        }
+        const auto& world = worldRuntime_.GetWorld();
+        const Microsoft::Xna::Framework::Vector3 up(0.0f, 1.0f, 0.0f);
+        const auto at = [&](const Microsoft::Xna::Framework::Vector3& p)
+        {
+            // The cell it stands in (blocks are centred on whole numbers; WorldRuntime's centre on X and Z).
+            const int x = static_cast<int>(std::lround(p.X)) + WorldRuntime::kWorldCenterX;
+            const int y = static_cast<int>(std::lround(p.Y));
+            const int z = static_cast<int>(std::lround(p.Z)) + WorldRuntime::kWorldCenterZ;
+            const std::uint64_t key = (static_cast<std::uint64_t>(static_cast<std::uint16_t>(x)) << 32u) |
+                                      (static_cast<std::uint64_t>(static_cast<std::uint16_t>(y)) << 16u) |
+                                      static_cast<std::uint64_t>(static_cast<std::uint16_t>(z));
+            auto found = spriteGiCache_.find(key);
+            if (found == spriteGiCache_.end())
+            {
+                found = spriteGiCache_.emplace(key, FaceIndirectLight(world, tileCoverage_, x, y, z, up, *settings)).first;
+            }
+            return found->second;
+        };
+        for (auto* batches : {&frame.billboards, &frame.effects.particles})
+        {
+            for (auto& batch : *batches)
+            {
+                for (auto& quad : batch.quads)
+                {
+                    quad.gi = at(quad.center);
+                }
+            }
+        }
+        for (auto& quad : frame.marine)
+        {
+            quad.gi = at(quad.center);
+        }
     }
 
     void GalaxyEggbertGame::AppendSceneMoments()
