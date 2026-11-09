@@ -14,9 +14,11 @@
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
 
 #include <Microsoft/Xna/Framework/Graphics/AlphaTestEffect.hpp>
+#include <Microsoft/Xna/Framework/Graphics/Texture2D.hpp>
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <future>
 #include <memory>
 #include <unordered_map>
@@ -51,6 +53,9 @@ namespace GalaxyEggbert::Game
         Microsoft::Xna::Framework::Graphics::Effect* cutout = nullptr;   // the cutouts (position, baked colour, uv)
         Microsoft::Xna::Framework::Graphics::Effect* lava = nullptr;
         Microsoft::Xna::Framework::Graphics::Effect* water = nullptr;
+        // Ultra: the reliefs' light from around, chunk by chunk (TerrainGi.hpp ReliefChunkGi): called with
+        // a near chunk's table and its lowest corner before its relief, with nullptr after the reliefs.
+        std::function<void(Microsoft::Xna::Framework::Graphics::Texture2D*, const Microsoft::Xna::Framework::Vector3&)> reliefGi;
     };
 
     class TerrainRenderer
@@ -279,6 +284,8 @@ namespace GalaxyEggbert::Game
             std::unique_ptr<GpuMeshParts> cubes;
             std::unique_ptr<GpuMeshParts> grassTops; // far: the grass cells' top plates (DrawGrass)
             std::unique_ptr<GpuMeshParts> cutouts;   // far: the plates, alpha-tested (the cutout pass)
+            // Ultra: its light from around for its relief (TerrainGi.hpp ReliefChunkGi), from its cubes' bake.
+            std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> gi;
             std::unique_ptr<ReliefMeshes> relief;               // built (null: not yet, or released)
             std::future<ReliefMeshData> pending;                 // its relief being built
             std::uint64_t signature = 0;                         // of its cells (AdoptReliefs)

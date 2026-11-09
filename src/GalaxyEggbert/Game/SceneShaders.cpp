@@ -1,4 +1,5 @@
 #include <GalaxyEggbert/Game/SceneShaders.hpp>
+#include <GalaxyEggbert/Game/WaterWaves.hpp>
 
 #include <GalaxyEggbert/Game/SurfaceShaders.hpp>
 #include <GalaxyEggbert/Game/TerrainLighting.hpp>
@@ -495,6 +496,43 @@ void main()
     FragColor = Geometry();
 }
 )";
+        // The water's top in the geometry pass: its waves' normal (WaterWaves.hpp), so the reflections
+        // ripple; its sides and the rest as Geometry() makes them.
+        const char* const kGeometryWaterVertex = R"(
+layout(location = 0) in vec3 aPosition;
+uniform mat4 World;
+uniform mat4 View;
+uniform mat4 Projection;
+out vec3 vView;
+out vec3 vWorldPos;
+void main()
+{
+    vec4 world = World * vec4(aPosition, 1.0);
+    vec4 view = View * world;
+    vView = view.xyz;
+    vWorldPos = world.xyz;
+    gl_Position = Projection * view;
+    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+}
+)";
+        const char* const kGeometryWaterFragment = R"(
+uniform mat4 View;
+uniform float uTime;
+in vec3 vWorldPos;
+void main()
+{
+    vec4 g = Geometry();
+    vec3 n = normalize(cross(dFdx(vView), dFdy(vView)));
+    vec3 up = mat3(View) * vec3(0.0, 1.0, 0.0);
+    float along = dot(n, up);
+    if (abs(along) > 0.7)
+    {
+        vec3 waved = mat3(View) * WaveNormal(vWorldPos.xz, uTime, -vView.z);
+        g.xy = OctEncode(normalize(along > 0.0 ? waved : -waved));
+    }
+    FragColor = g;
+}
+)";
         const char* const kGeometryCutoutVertex = R"(
 layout(location = 0) in vec3 aPosition;
 layout(location = 1) in vec4 aColor;
@@ -688,9 +726,23 @@ vec3 Shade(vec3 albedo, vec3 n, vec3 v, float roughness, float metalness, float 
         // baked light from around (vGi: its colour twice over, its occlusion) and the screen's occlusion.
         const char* const kTerrainUltraFragment = R"(
 uniform float uDebug;
+uniform sampler2D uReliefGi;  // unit 7: a relief chunk's light from around (TerrainGi.hpp ReliefChunkGi)
+uniform vec4 uReliefGiBox;    // its lowest corner, on (w)
 in vec2 vUv;
 in vec3 vNormal;
 in vec4 vGi;
+// A relief's light from around: its chunk's faces round its cell as an ambient cube (each axis's face
+// toward the normal, weighted by the normal's square along it), the bake's halving undone.
+vec3 ReliefGi(vec3 n)
+{
+    ivec3 c = clamp(ivec3(floor(vWorld - n * 0.3 - uReliefGiBox.xyz)), ivec3(0), ivec3(7));
+    vec3 w = n * n;
+    int across = c.x + 8 * c.z;
+    vec3 gx = texelFetch(uReliefGi, ivec2(across, c.y + 8 * (n.x > 0.0 ? 1 : 0)), 0).rgb;
+    vec3 gy = texelFetch(uReliefGi, ivec2(across, c.y + 8 * (n.y > 0.0 ? 3 : 2)), 0).rgb;
+    vec3 gz = texelFetch(uReliefGi, ivec2(across, c.y + 8 * (n.z > 0.0 ? 5 : 4)), 0).rgb;
+    return (gx * w.x + gy * w.y + gz * w.z) * 2.0;
+}
 void main()
 {
     vec4 tex = texture(uTexture, vUv);
@@ -698,9 +750,11 @@ void main()
     vec3 n = NormalMapped(normalize(vNormal), vUv);
     vec4 screen = ScreenOcclusion();
     float sun = SunLight() * screen.g;
+    vec3 gi = uReliefGiBox.w > 0.5 ? ReliefGi(normalize(vNormal)) : vGi.rgb * 2.0;
+    if (uDebug > 2.5) { FragColor = vec4(gi * 0.5, 1.0); return; }
     if (uDebug > 0.5) { FragColor = vec4(vec3(uDebug > 1.5 ? vGi.a * screen.r : sun), 1.0); return; }
     vec3 v = normalize(uEyePos - vWorld);
-    vec3 color = Shade(ToLinear(tex.rgb), n, v, surface.r, surface.g, 1.0, sun, vGi.a * screen.r * surface.b, vGi.rgb * 2.0);
+    vec3 color = Shade(ToLinear(tex.rgb), n, v, surface.r, surface.g, 1.0, sun, vGi.a * screen.r * surface.b, gi);
     FragColor = Fogged(vec4(ToDisplay(color), tex.a));
 }
 )";
@@ -779,6 +833,81 @@ void main()
 }
 )";
 
+        // Ultra's billboards (position, uv) and particles (position, colour, uv): lit as the rest at Ultra
+        // -- the sun's whole light through its shadow (a cut-out stands across it whatever its turn), the
+        // sky's irradiance from above, the point lights round it -- so in the open sun a sprite is as
+        // drawn (the sun and the sky together make the classic's 1.05) and in shadow as dark as the
+        // ground beside it. What shines (uGlow above 1: an explosion's fire, sparks, stars) is not lit:
+        // its colour times uGlow, above white, so it blooms. The texture's colours are premultiplied:
+        // ToDisplay(ToLinear(c) * k) is c * k^(1/2.2), its alpha kept.
+        std::string SpriteUltraVertex(bool colored)
+        {
+            std::string source = colored ? "layout(location = 0) in vec3 aPosition;\n"
+                                           "layout(location = 1) in vec4 aColor;\n"
+                                           "layout(location = 2) in vec2 aTexCoord;\n"
+                                         : "layout(location = 0) in vec3 aPosition;\n"
+                                           "layout(location = 1) in vec2 aTexCoord;\n";
+            source += R"(
+uniform mat4 World;
+uniform mat4 View;
+uniform mat4 Projection;
+uniform mat4 uLightViewProj;
+uniform mat4 uLightViewProjFar;
+uniform vec3 uLightDir;
+out vec2 vUv;
+out vec4 vColor;
+out vec3 vWorld;
+out float vDepth;
+out vec4 vLightPos;
+out vec4 vLightPosFar;
+void main()
+{
+    vec4 world = World * vec4(aPosition, 1.0);
+    vec4 view = View * world;
+    gl_Position = Projection * view;
+    gl_Position.z = gl_Position.z * 2.0 - gl_Position.w;
+    vUv = aTexCoord;
+)";
+            source += colored ? "    vColor = aColor;\n" : "    vColor = vec4(1.0);\n";
+            source += R"(
+    vWorld = world.xyz;
+    vDepth = -view.z;
+    vec4 probe = vec4(world.xyz - uLightDir * 0.7, 1.0);
+    vLightPos = uLightViewProj * probe;
+    vLightPosFar = uLightViewProjFar * probe;
+}
+)";
+            return source;
+        }
+        const char* const kSpriteUltraFragment = R"(
+uniform float uAlpha;
+uniform float uGlow;
+in vec2 vUv;
+in vec4 vColor;
+void main()
+{
+    vec4 tex = texture(uTexture, vUv) * vColor;
+    vec3 albedo = ToLinear(tex.rgb);
+    vec3 color;
+    if (uGlow > 1.0)
+    {
+        color = albedo * uGlow;
+    }
+    else
+    {
+        vec3 light = vec3(uSunLight.x * SunLight()) + Irradiance(vec3(0.0, 1.0, 0.0));
+        for (int i = 0; i < 8; ++i)
+        {
+            if (i >= uPointCount) break;
+            float reach = clamp(1.0 - length(uPointPos[i] - vWorld) / uPointRadius[i], 0.0, 1.0);
+            light += ToLinear(uPointColor[i]) * (reach * reach * 0.8);
+        }
+        color = albedo * light;
+    }
+    FragColor = Fogged(vec4(ToDisplay(color), tex.a * uAlpha));
+}
+)";
+
         Vector3 Normalized(const Vector3& v)
         {
             const float length = std::sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
@@ -828,7 +957,11 @@ void main()
         // GALAXY_EFFECTS_DEBUG=shadow or =occlusion draws the terrain as that factor alone (grey).
         if (const char* debug = std::getenv("GALAXY_EFFECTS_DEBUG"))
         {
-            m_debug = std::string(debug) == "shadow" ? 1.0f : std::string(debug) == "occlusion" ? 2.0f : 0.0f;
+            // =gi (Ultra): the light from around, halved.
+            m_debug = std::string(debug) == "shadow"      ? 1.0f
+                      : std::string(debug) == "occlusion" ? 2.0f
+                      : std::string(debug) == "gi"        ? 3.0f
+                                                          : 0.0f;
         }
         try
         {
@@ -923,14 +1056,67 @@ void main()
         return Normalized(Vector3(light.directionX, light.directionY, light.directionZ));
     }
 
-    Graphics::ShaderEffect& SceneShaders::SpriteWith(Graphics::Texture2D* texture, float alpha)
+    Graphics::ShaderEffect& SceneShaders::SpriteWith(Graphics::Texture2D* texture, float alpha, float glow)
     {
+        if (auto* ultra = UltraSprite(m_ultraSprite.get(), texture, glow))
+        {
+            ultra->SetUniformFloat("uAlpha", alpha);
+            return *ultra;
+        }
         if (texture != nullptr)
         {
             m_sprite->SetTexture(0, *texture);
         }
         m_sprite->SetUniformFloat("uAlpha", alpha);
         return *m_sprite;
+    }
+
+    void SceneShaders::SetReliefGi(Graphics::Texture2D* table, const Vector3& boxMin)
+    {
+        if (!m_ultraActive)
+        {
+            return;
+        }
+        if (table != nullptr)
+        {
+            m_ultraLit->SetTexture(7, *table);
+            m_ultraLit->SetUniformVec4("uReliefGiBox", boxMin.X, boxMin.Y, boxMin.Z, 1.0f);
+        }
+        else
+        {
+            m_ultraLit->SetUniformVec4("uReliefGiBox", 0.0f, 0.0f, 0.0f, 0.0f);
+        }
+    }
+
+    Graphics::ShaderEffect* SceneShaders::UltraParticleWith(Graphics::Texture2D* texture, float glow)
+    {
+        auto* ultra = UltraSprite(m_ultraParticle.get(), texture, glow);
+        if (ultra != nullptr)
+        {
+            ultra->SetUniformFloat("uAlpha", 1.0f);
+        }
+        return ultra;
+    }
+
+    Graphics::ShaderEffect* SceneShaders::UltraSprite(Graphics::ShaderEffect* effect, Graphics::Texture2D* texture, float glow)
+    {
+        if (!m_ultraActive || effect == nullptr)
+        {
+            return nullptr;
+        }
+        if (texture != nullptr)
+        {
+            effect->SetTexture(0, *texture);
+        }
+        // The shadow maps again: the textures are bound as they are set, and the passes since may have
+        // taken their units.
+        if (m_shadowValid)
+        {
+            effect->SetTexture(1, *m_shadowMaps[0]);
+            effect->SetTexture(2, *m_shadowMaps[1]);
+        }
+        effect->SetUniformFloat("uGlow", glow);
+        return effect;
     }
 
     void SceneShaders::SetBones(Graphics::ShaderEffect& effect, const std::vector<Matrix>& bones)
@@ -1049,6 +1235,13 @@ void main()
                 effect->SetUniformFloat("uDebug", m_debug);
             }
             SetCommon(*m_ultraModel);
+            for (auto* effect : {m_ultraSprite.get(), m_ultraParticle.get()})
+            {
+                if (effect == nullptr) continue;
+                SetCommon(*effect);
+                effect->setWorldProperty(Matrix::getIdentityProperty());
+                effect->SetUniformVec3("uLightDir", direction.X, direction.Y, direction.Z);
+            }
             SetUltra(device, *ultra);
         }
     }
@@ -1081,12 +1274,21 @@ void main()
                                                      std::string(kGeometryCommon) + kGeometryTerrainFragment);
             m_geometryLit = CompileShaderEffect(device, "Ultra's geometry pass (reliefs)", GeometryTerrainVertex(2),
                                                 std::string(kGeometryCommon) + kGeometryTerrainFragment);
+            m_geometryWater = CompileShaderEffect(device, "Ultra's geometry pass (water)", kGeometryWaterVertex,
+                                                  std::string(kGeometryCommon) + kWaterWavesGlsl + kGeometryWaterFragment);
             m_ultraReady = m_ultraOccluded && m_ultraLit && m_ultraModel && m_geometrySolid && m_geometryCutout &&
                            m_geometrySkinned && m_geometryOccluded && m_geometryLit;
+            // The sprites' and particles': where they do not compile, High's sprite shader and BasicEffect.
+            m_ultraSprite = CompileShaderEffect(device, "Ultra's sprite shader", SpriteUltraVertex(false),
+                                                lighting + kSpriteUltraFragment);
+            m_ultraParticle = CompileShaderEffect(device, "Ultra's particle shader", SpriteUltraVertex(true),
+                                                  lighting + kSpriteUltraFragment);
             if (m_ultraReady)
             {
-                for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get(), m_ultraModel.get()})
+                for (auto* effect : {m_ultraOccluded.get(), m_ultraLit.get(), m_ultraModel.get(), m_ultraSprite.get(),
+                                     m_ultraParticle.get()})
                 {
+                    if (effect == nullptr) continue;
                     effect->SetUniformInt("uTexture", 0);
                     effect->SetUniformInt("uShadowMap", 1);
                     effect->SetUniformInt("uShadowMapFar", 2);
@@ -1094,6 +1296,7 @@ void main()
                     effect->SetUniformInt("uSurfaceMap", 4);
                     effect->SetUniformInt("uNormalMap", 5);
                     effect->SetUniformInt("uScreenOcclusion", 6);
+                    effect->SetUniformInt("uReliefGi", 7);
                 }
                 m_white = std::make_unique<Graphics::Texture2D>(device, 1, 1);
                 const Microsoft::Xna::Framework::Color white(255, 255, 255, 255);
@@ -1122,6 +1325,13 @@ void main()
             effect->setViewProperty(frame.camera.view);
             effect->setProjectionProperty(frame.camera.projection);
             effect->SetUniformFloat("uReflect", 0.0f);
+        }
+        if (m_geometryWater)
+        {
+            m_geometryWater->setWorldProperty(Matrix::getIdentityProperty());
+            m_geometryWater->setViewProperty(frame.camera.view);
+            m_geometryWater->setProjectionProperty(frame.camera.projection);
+            m_geometryWater->SetUniformFloat("uTime", frame.effects.seconds);
         }
         m_geometryCutout->SetUniformInt("uTexture", 0);
         m_geometryOccluded->SetUniformInt("uSurfaceMap", 4);
@@ -1179,11 +1389,20 @@ void main()
             effect->SetTexture(5, ultra.terrainNormals != nullptr ? *ultra.terrainNormals : *m_white);
             effect->SetTexture(6, ultra.screenOcclusion != nullptr ? *ultra.screenOcclusion : *m_white);
         }
+        for (auto* effect : {m_ultraSprite.get(), m_ultraParticle.get()})
+        {
+            if (effect == nullptr) continue;
+            effect->SetUniformVec3("uSunDir", sun.X, sun.Y, sun.Z);
+            effect->SetUniformVec2("uSunLight", kUltraSun, 1.0f);
+            effect->SetUniformVec3Array("uSh", sh, 9);
+            effect->SetUniformVec4("uMaps", 0.0f, 0.0f, 0.0f, 0.0f);
+        }
         auto& samplers = device.getSamplerStatesProperty();
         samplers[3] = m_envSampler;
         samplers[4] = Graphics::SamplerState::LinearWrap;
         samplers[5] = Graphics::SamplerState::LinearWrap;
         samplers[6] = Graphics::SamplerState::PointClamp;
+        samplers[7] = Graphics::SamplerState::PointClamp;
     }
 
     void SceneShaders::SetPartMaterial(const ProceduralMaterial* material)

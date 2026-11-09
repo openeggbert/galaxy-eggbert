@@ -28,6 +28,10 @@ namespace GalaxyEggbert::Game
         Flash,   // stars bursting out as he teleports
     };
 
+    // Ultra: how far above white the explosion channel's shining sprites are drawn (an explosion's fire,
+    // the sparks and stars, the Cloud's sparks; SceneQuad::glow). Their particles shine more (2.5-3.5).
+    inline constexpr float kShiningSpriteGlow = 2.0f;
+
     // Whether an effect object becomes particles, and which kind; false keeps its billboard alone.
     [[nodiscard]] bool EffectParticleKind(GalaxyEggbert::Def::ObjectType type, ParticleKind& kind) noexcept;
     // Whether the effect's own billboard gives way to its particles (fire, splashes) or stays (sparkles).

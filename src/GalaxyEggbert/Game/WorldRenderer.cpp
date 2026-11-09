@@ -19,6 +19,7 @@
 #include <Microsoft/Xna/Framework/Graphics/SkinnedModelEXT.hpp>
 
 #include <algorithm>
+#include <iterator>
 #include <chrono>
 #include <cmath>
 #include <iostream>
@@ -68,6 +69,21 @@ namespace GalaxyEggbert::Game
                 effect.setFogStartProperty(frame.effects.fogStart);
                 effect.setFogEndProperty(frame.effects.fogEnd);
             }
+        }
+
+        // The glows a batch's quads shine at (SceneQuad::glow), each once, in order.
+        std::vector<float> DistinctGlows(const std::vector<SceneQuad>& quads)
+        {
+            std::vector<float> glows;
+            for (const auto& quad : quads)
+            {
+                if (std::find(glows.begin(), glows.end(), quad.glow) == glows.end())
+                {
+                    glows.push_back(quad.glow);
+                }
+            }
+            std::sort(glows.begin(), glows.end());
+            return glows;
         }
 
         CnaEngine::Graphics::MeshBuilder QuadMesh(const std::vector<SceneQuad>& quads)
@@ -187,6 +203,10 @@ namespace GalaxyEggbert::Game
             m_scene.SetFrame(device, frame, *assets.terrain, frame.effects.ultra ? assets.ultra : nullptr);
             shading.occluded = m_scene.Occluded();
             shading.lit = m_scene.Lit();
+            if (m_scene.UltraActive())
+            {
+                shading.reliefGi = [this](Graphics::Texture2D* table, const Vector3& boxMin) { m_scene.SetReliefGi(table, boxMin); };
+            }
             shading.cutout = m_scene.Cutout();
         }
         // The reliefs near the camera's target (Q-012), then the opaque terrain; its semi-transparent
@@ -679,6 +699,7 @@ namespace GalaxyEggbert::Game
     {
         // Rebuilt every frame: a billboard's corners follow the camera's right and up.
         const bool shadowedSprites = m_modelShading && m_scene.ShadowMapped();
+        m_glowMeshes.clear();
         if (m_billboardMeshes.size() < frame.billboards.size())
         {
             m_billboardMeshes.resize(frame.billboards.size());
@@ -689,6 +710,24 @@ namespace GalaxyEggbert::Game
             auto* effect = SheetEffect(batch.sheet, assets);
             if (effect == nullptr || batch.quads.empty())
             {
+                continue;
+            }
+            if (shadowedSprites && m_scene.UltraActive())
+            {
+                // Ultra: lit as the rest, what shines apart above white (SceneShaders::SpriteWith).
+                for (const float glow : DistinctGlows(batch.quads))
+                {
+                    std::vector<SceneQuad> shining;
+                    std::copy_if(batch.quads.begin(), batch.quads.end(), std::back_inserter(shining),
+                                 [glow](const SceneQuad& quad) { return quad.glow == glow; });
+                    const auto part = QuadMesh(shining);
+                    if (part.Mesh().Empty())
+                    {
+                        continue;
+                    }
+                    m_glowMeshes.push_back(UploadTexturedMesh(device, part.Mesh()));
+                    m_glowMeshes.back()->Draw(device, m_scene.SpriteWith(effect->getTextureProperty(), batch.alpha, glow));
+                }
                 continue;
             }
             const auto mesh = QuadMesh(batch.quads);

@@ -110,9 +110,18 @@ namespace GalaxyEggbert::Game
         }
         // The part about to be drawn with Model(): its Ray Dream material (nullptr: its texture as it is).
         void SetPartMaterial(const ProceduralMaterial* material);
-        // The billboards (position, uv) on this sheet's texture, at this alpha, darkened in the sun's shadow.
+        // The billboards (position, uv) on this sheet's texture, at this alpha, darkened in the sun's shadow;
+        // at Ultra lit as the rest, or shining `glow` times above white (SceneQuad::glow).
         Microsoft::Xna::Framework::Graphics::ShaderEffect& SpriteWith(Microsoft::Xna::Framework::Graphics::Texture2D* texture,
-                                                                     float alpha);
+                                                                     float alpha, float glow = 1.0f);
+        // Ultra: the relief about to be drawn with Lit(), its chunk's light from around and its lowest
+        // corner (TerrainShading::reliefGi); nullptr: the reliefs done, the baked colour's light again.
+        void SetReliefGi(Microsoft::Xna::Framework::Graphics::Texture2D* table, const Microsoft::Xna::Framework::Vector3& boxMin);
+        [[nodiscard]] bool UltraParticles() const noexcept { return m_ultraActive && m_ultraParticle != nullptr; }
+        // Ultra's particles (position, colour, uv) on this sheet's texture, lit or shining as SpriteWith();
+        // nullptr where Ultra is not drawing (BasicEffect draws them).
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect* UltraParticleWith(
+            Microsoft::Xna::Framework::Graphics::Texture2D* texture, float glow);
 
         // --- Ultra's geometry pass (UltraFinish.hpp) -------------------------------------------------
         // The frame's camera on the geometry pass's programs; false where Ultra's programs do not compile.
@@ -120,6 +129,11 @@ namespace GalaxyEggbert::Game
         // Compiles Ultra's programs on first use; false where they do not compile (never tried again).
         bool PrepareUltra(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometrySolid() { return *m_geometrySolid; }
+        // The water's surface (its waves' normals); the solid program where it does not compile.
+        [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometryWater()
+        {
+            return m_geometryWater ? *m_geometryWater : *m_geometrySolid;
+        }
         [[nodiscard]] Microsoft::Xna::Framework::Graphics::ShaderEffect& GeometryCutout() { return *m_geometryCutout; }
         // The terrain's (its surface map: a mirror where it is smooth or metal), for its meshes with the
         // baked colour (Occluded) and without (Lit); the surface map bound on unit 4 by the caller.
@@ -167,6 +181,12 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometrySkinned;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometryOccluded;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometryLit;
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_geometryWater; // nullptr: not compiled
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraSprite;   // nullptr: not compiled
+        std::unique_ptr<Microsoft::Xna::Framework::Graphics::ShaderEffect> m_ultraParticle; // nullptr: not compiled
+        Microsoft::Xna::Framework::Graphics::ShaderEffect* UltraSprite(Microsoft::Xna::Framework::Graphics::ShaderEffect* effect,
+                                                                      Microsoft::Xna::Framework::Graphics::Texture2D* texture,
+                                                                      float glow);
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_white; // 1x1, for what is missing
         Microsoft::Xna::Framework::Graphics::SamplerState m_envSampler;
         UltraSurface m_modelSurface; // the model being drawn's own (its specular power)

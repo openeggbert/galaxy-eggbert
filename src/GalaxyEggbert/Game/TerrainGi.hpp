@@ -312,6 +312,133 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    // A relief chunk's light from around, for Ultra's relief shader (SceneShaders.cpp ReliefGi), which
+    // its reliefs read by their place and normal as an ambient cube: from the chunk's far cubes as baked
+    // (BakeGlobalIllumination's vertex colours, `baked`), each face drawn there its corners' mean; a
+    // face not drawn its cell's mean of those drawn, a cell with none the chunk's mean (an open sky's
+    // where nothing is drawn). `boxMin` is the chunk's lowest corner, `cells` its cells along an axis.
+    // Laid out x + cells * z across and y + cells * face down (face: axis * 2, + 1 toward +), rgb as
+    // the vertex colours (the multiplier halved), alpha 255.
+    inline constexpr int kReliefGiFaces = 6;
+    [[nodiscard]] inline std::vector<Microsoft::Xna::Framework::Color> ReliefChunkGi(const CnaEngine::Graphics::MeshData& baked,
+                                                                                    const Microsoft::Xna::Framework::Vector3& boxMin,
+                                                                                    int cells)
+    {
+        using Microsoft::Xna::Framework::Vector3;
+        const int n = std::max(1, cells);
+        const std::size_t slots = static_cast<std::size_t>(n * n * n * kReliefGiFaces);
+        std::vector<Vector3> sum(slots, Vector3(0.0f, 0.0f, 0.0f));
+        std::vector<int> count(slots, 0);
+        const auto slot = [n](int x, int y, int z, int face)
+        {
+            return static_cast<std::size_t>(((face * n + y) * n + z) * n + x);
+        };
+        for (std::size_t i = 0; i < baked.positions.size() && i < baked.normals.size() && i < baked.colors.size(); ++i)
+        {
+            const auto& normal = baked.normals[i];
+            const float d[3] = {normal.X, normal.Y, normal.Z};
+            int axis = 0;
+            for (int k = 1; k < 3; ++k)
+            {
+                if (std::fabs(d[k]) > std::fabs(d[axis])) axis = k;
+            }
+            if (d[axis] == 0.0f) continue;
+            // The corner lies on its face: half a cell back along the normal is inside its cell, but on
+            // the cell's edges too; the face's own cell is the one a little in from it.
+            const auto& p = baked.positions[i];
+            const float inward = 0.25f;
+            const int x = static_cast<int>(std::floor(p.X - normal.X * inward - boxMin.X));
+            const int y = static_cast<int>(std::floor(p.Y - normal.Y * inward - boxMin.Y));
+            const int z = static_cast<int>(std::floor(p.Z - normal.Z * inward - boxMin.Z));
+            if (x < 0 || y < 0 || z < 0 || x >= n || y >= n || z >= n) continue;
+            const int face = axis * 2 + (d[axis] > 0.0f ? 1 : 0);
+            const auto& c = baked.colors[i];
+            const std::size_t at = slot(x, y, z, face);
+            sum[at] = Vector3(sum[at].X + static_cast<float>(c.getRProperty()), sum[at].Y + static_cast<float>(c.getGProperty()),
+                              sum[at].Z + static_cast<float>(c.getBProperty()));
+            ++count[at];
+        }
+        Vector3 chunkSum(0.0f, 0.0f, 0.0f);
+        int chunkCount = 0;
+        for (std::size_t at = 0; at < slots; ++at)
+        {
+            if (count[at] == 0) continue;
+            sum[at] = Vector3(sum[at].X / static_cast<float>(count[at]), sum[at].Y / static_cast<float>(count[at]),
+                              sum[at].Z / static_cast<float>(count[at]));
+            chunkSum = Vector3(chunkSum.X + sum[at].X, chunkSum.Y + sum[at].Y, chunkSum.Z + sum[at].Z);
+            ++chunkCount;
+        }
+        const Vector3 chunkMean = chunkCount > 0 ? Vector3(chunkSum.X / static_cast<float>(chunkCount),
+                                                           chunkSum.Y / static_cast<float>(chunkCount),
+                                                           chunkSum.Z / static_cast<float>(chunkCount))
+                                                 : Vector3(127.5f, 127.5f, 127.5f);
+        std::vector<Microsoft::Xna::Framework::Color> out(slots);
+        for (int z = 0; z < n; ++z)
+        {
+            for (int y = 0; y < n; ++y)
+            {
+                for (int x = 0; x < n; ++x)
+                {
+                    Vector3 cellSum(0.0f, 0.0f, 0.0f);
+                    int drawn = 0;
+                    for (int face = 0; face < kReliefGiFaces; ++face)
+                    {
+                        const std::size_t at = slot(x, y, z, face);
+                        if (count[at] == 0) continue;
+                        cellSum = Vector3(cellSum.X + sum[at].X, cellSum.Y + sum[at].Y, cellSum.Z + sum[at].Z);
+                        ++drawn;
+                    }
+                    const Vector3 cellMean = drawn > 0 ? Vector3(cellSum.X / static_cast<float>(drawn),
+                                                                 cellSum.Y / static_cast<float>(drawn),
+                                                                 cellSum.Z / static_cast<float>(drawn))
+                                                       : chunkMean;
+                    for (int face = 0; face < kReliefGiFaces; ++face)
+                    {
+                        const std::size_t at = slot(x, y, z, face);
+                        const Vector3 v = count[at] > 0 ? sum[at] : cellMean;
+                        const auto byte = [](float value)
+                        {
+                            return static_cast<int>(std::clamp(std::lround(value), 0L, 255L));
+                        };
+                        out[static_cast<std::size_t>((y + n * face) * (n * n) + x + n * z)] =
+                            Microsoft::Xna::Framework::Color(byte(v.X), byte(v.Y), byte(v.Z), 255);
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
+    // A water tile's body for Ultra's water (SurfaceShaders.cpp): its texels' colour weighted by their
+    // alpha, linear, and their mean alpha (its clearness): the colour without the sprite's wavy pattern,
+    // which repeated on every cell's face. Sheet RGBA (not premultiplied), the tile's rectangle in texels.
+    [[nodiscard]] inline Microsoft::Xna::Framework::Vector4 TileTint(const std::uint8_t* rgba, int width, int x0, int y0, int x1,
+                                                                    int y1)
+    {
+        double r = 0.0, g = 0.0, b = 0.0, alpha = 0.0;
+        long count = 0;
+        for (int y = std::max(0, y0); y < y1; ++y)
+        {
+            for (int x = std::max(0, x0); x < x1 && x < width; ++x)
+            {
+                const std::uint8_t* t = rgba + (static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+                                                static_cast<std::size_t>(x)) * 4;
+                const double a = t[3] / 255.0;
+                r += std::pow(t[0] / 255.0, 2.2) * a;
+                g += std::pow(t[1] / 255.0, 2.2) * a;
+                b += std::pow(t[2] / 255.0, 2.2) * a;
+                alpha += a;
+                ++count;
+            }
+        }
+        if (count == 0 || alpha <= 0.0)
+        {
+            return Microsoft::Xna::Framework::Vector4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+        return Microsoft::Xna::Framework::Vector4(static_cast<float>(r / alpha), static_cast<float>(g / alpha),
+                                                  static_cast<float>(b / alpha), static_cast<float>(alpha / count));
+    }
+
     // A block type's colour for the bake: the mean of its atlas tile's opaque texels (sheet RGBA, the
     // tile's rectangle in texels), linear.
     [[nodiscard]] inline Microsoft::Xna::Framework::Vector3 TileAlbedo(const std::uint8_t* rgba, int width, int x0, int y0,

@@ -152,6 +152,7 @@ namespace GalaxyEggbert::CNA
         effects.ultra = effects.level >= 4;
         effects.steadyShadows = goldenCaptureMode_ || goldenTraceMode_ || autoplay_ != nullptr;
         effects.capture = effects.steadyShadows;
+        effects.water = waterBodies_;
         if (!effects.enabled)
         {
             effectParticles_.Clear();
@@ -1384,6 +1385,7 @@ namespace GalaxyEggbert::CNA
                 {
                     batch.quads.push_back(Quad(centre + behind, Vector2(128.0f / 64.0f, 128.0f / 64.0f), cameraRight, cameraUp,
                                                Uv(GetExploIconUv(48 + (worldRuntime_.GetAnimPhase() + k) % 6))));
+                    batch.quads.back().glow = kShiningSpriteGlow;
                 }
             }
             for (std::size_t index = 0; index < objects.size(); ++index)
@@ -1408,6 +1410,13 @@ namespace GalaxyEggbert::CNA
                 batch.quads.push_back(Quad(Vector3(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
                                            objectSize, cameraRight, cameraUp, Uv(GetExploIconUv(visual.icon)),
                                            static_cast<int>(index), visual.icon));
+                // Ultra: an explosion's fire and the sparks and stars shine (SceneQuad::glow); splashes,
+                // smoke and the rest are lit.
+                ParticleKind kind{};
+                if (EffectParticleKind(obj.type, kind) && (kind == ParticleKind::Fire || kind == ParticleKind::Sparkle))
+                {
+                    batch.quads.back().glow = kShiningSpriteGlow;
+                }
             }
             frame.billboards.push_back(std::move(batch));
         }

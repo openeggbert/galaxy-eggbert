@@ -127,6 +127,8 @@ namespace GalaxyEggbert::Game
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> m_shadowTexture;
         std::unique_ptr<CnaEngine::Graphics::GpuMesh> m_shadowMesh;
         std::vector<std::unique_ptr<CnaEngine::Graphics::GpuMesh>> m_particleMeshes;
+        // Ultra: a batch's quads that shine (SceneQuad::glow) each drawn apart at its glow; this frame's.
+        std::vector<std::unique_ptr<CnaEngine::Graphics::GpuMesh>> m_glowMeshes;
         SurfaceShaders m_surfaces;
         SceneShaders m_scene;
         struct SmoothPart

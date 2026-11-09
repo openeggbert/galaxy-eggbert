@@ -186,6 +186,40 @@ int main()
               "an open face's corners: the open sky's light halved (128), no occlusion (255)");
     }
 
+    // A relief chunk's light from around (ReliefChunkGi): a cube's top face's corners in cell (1, 0, 2) of
+    // a 4-cell chunk give that cell's +Y slot their colour; its other faces take the cell's mean, an empty
+    // cell the chunk's.
+    {
+        CnaEngine::Graphics::MeshData baked;
+        const Vector3 boxMin(-0.5f, -0.5f, -0.5f);
+        for (const float dx : {-0.5f, 0.5f})
+            for (const float dz : {-0.5f, 0.5f})
+            {
+                baked.positions.emplace_back(1.0f + dx, 0.5f, 2.0f + dz);
+                baked.normals.emplace_back(0.0f, 1.0f, 0.0f);
+                baked.colors.emplace_back(200, 100, 50, 255);
+            }
+        const auto table = GalaxyEggbert::Game::ReliefChunkGi(baked, boxMin, 4);
+        const auto at = [&](int x, int y, int z, int face) { return table[static_cast<std::size_t>((y + 4 * face) * 16 + x + 4 * z)]; };
+        Check(table.size() == 4u * 4u * 4u * 6u && at(1, 0, 2, 3).getRProperty() == 200 && at(1, 0, 2, 3).getGProperty() == 100 &&
+                  at(1, 0, 2, 0).getRProperty() == 200 && at(3, 3, 3, 5).getBProperty() == 50,
+              "a relief chunk's light from around: the face's own, its cell's other faces and the empty cells its mean");
+    }
+    // A water tile's body (TileTint): its clear texels count for its clearness, not its colour.
+    {
+        std::vector<std::uint8_t> tile(4 * 4 * 4, 0);
+        for (int i = 0; i < 8; ++i)
+        {
+            tile[static_cast<std::size_t>(i * 4)] = 50;
+            tile[static_cast<std::size_t>(i * 4 + 1)] = 180;
+            tile[static_cast<std::size_t>(i * 4 + 2)] = 240;
+            tile[static_cast<std::size_t>(i * 4 + 3)] = 204;
+        }
+        const auto tint = GalaxyEggbert::Game::TileTint(tile.data(), 4, 0, 0, 4, 4);
+        Check(std::fabs(tint.Z - std::pow(240.0f / 255.0f, 2.2f)) < 0.01f && std::fabs(tint.W - 0.4f) < 0.01f,
+              "a water tile's body: its texels' colour (clear ones left out), its clearness their mean alpha");
+    }
+
     // The atlas made finer and given a surface (TerrainMaps.hpp).
     {
         using namespace GalaxyEggbert::Game;

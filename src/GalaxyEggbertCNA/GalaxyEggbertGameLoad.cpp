@@ -221,6 +221,27 @@ namespace GalaxyEggbert::CNA
                     level.data(), kPadW, static_cast<int>(uv.u0 * kPadW), static_cast<int>(uv.v0 * kPadH),
                     static_cast<int>(uv.u1 * kPadW), static_cast<int>(uv.v1 * kPadH));
             }
+            // The effects' water: each water's body, its frames' tints averaged (Water1 92-95, Water2 91,
+            // 96-98).
+            {
+                using GalaxyEggbert::Game::TileAtlas;
+                const auto tint = [&](std::initializer_list<int> icons)
+                {
+                    Microsoft::Xna::Framework::Vector4 sum(0.0f, 0.0f, 0.0f, 0.0f);
+                    int frames = 0;
+                    for (const int icon : icons)
+                    {
+                        const int x0 = TileAtlas::kPaddedBorder + (icon % TileAtlas::kPaddedColumns) * TileAtlas::kPaddedPitch;
+                        const int y0 = TileAtlas::kPaddedBorder + (icon / TileAtlas::kPaddedColumns) * TileAtlas::kPaddedPitch;
+                        const auto t = GalaxyEggbert::Game::TileTint(level.data(), kPadW, x0, y0, x0 + 64, y0 + 64);
+                        if (t.W <= 0.0f) continue;
+                        sum = sum + t;
+                        ++frames;
+                    }
+                    return frames > 0 ? sum / static_cast<float>(frames) : sum;
+                };
+                waterBodies_ = {tint({92, 93, 94, 95}), tint({91, 96, 97, 98})};
+            }
             terrainMipTexture_ = Microsoft::Xna::Framework::Graphics::Texture2D(
                 device, kPadW, kPadH, /*mipMap=*/true, Microsoft::Xna::Framework::Graphics::SurfaceFormat::Color);
             int levelW = kPadW, levelH = kPadH;

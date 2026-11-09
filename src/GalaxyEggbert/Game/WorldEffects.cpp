@@ -323,9 +323,10 @@ namespace GalaxyEggbert::Game
             {
                 UploadLitTexturedMesh(device, cubes.Mesh())->Draw(device, solid);
             }
-            solid.SetUniformFloat("uReflect", 0.85f);
-            assets.terrainRenderer->DrawWater(device, solid);
-            solid.SetUniformFloat("uReflect", 0.0f);
+            auto& water = m_scene.GeometryWater();
+            water.SetUniformFloat("uReflect", 0.85f);
+            assets.terrainRenderer->DrawWater(device, water);
+            water.SetUniformFloat("uReflect", 0.0f);
         }
         const auto& eye = frame.camera.position;
         const auto draw = [&](const SceneModel& model) {
@@ -400,14 +401,35 @@ namespace GalaxyEggbert::Game
             {
                 continue;
             }
-            auto mesh = ColoredQuadBuilder();
-            for (const auto& quad : batch.quads)
+            const auto build = [&batch](const float* glow)
             {
-                mesh.SetColor(quad.color);
-                mesh.AddBillboard(quad.center, quad.size, quad.right, quad.up, quad.uv, Vector2(0.5f, 0.5f),
-                                  quad.rotation);
+                auto mesh = ColoredQuadBuilder();
+                for (const auto& quad : batch.quads)
+                {
+                    if (glow != nullptr && quad.glow != *glow) continue;
+                    mesh.SetColor(quad.color);
+                    mesh.AddBillboard(quad.center, quad.size, quad.right, quad.up, quad.uv, Vector2(0.5f, 0.5f),
+                                      quad.rotation);
+                }
+                return mesh;
+            };
+            if (m_scene.UltraParticles())
+            {
+                // Ultra: lit as the rest, what shines (a fire, sparks, stars) apart above white.
+                std::vector<float> glows;
+                for (const auto& quad : batch.quads)
+                    if (std::find(glows.begin(), glows.end(), quad.glow) == glows.end()) glows.push_back(quad.glow);
+                std::sort(glows.begin(), glows.end());
+                for (const float glow : glows)
+                {
+                    const auto mesh = build(&glow);
+                    if (mesh.Mesh().Empty()) continue;
+                    m_glowMeshes.push_back(UploadColored(device, mesh.Mesh()));
+                    m_glowMeshes.back()->Draw(device, *m_scene.UltraParticleWith(effect->getTextureProperty(), glow));
+                }
+                continue;
             }
-            m_particleMeshes[i] = UploadColored(device, mesh.Mesh());
+            m_particleMeshes[i] = UploadColored(device, build(nullptr).Mesh());
             effect->View = frame.camera.view;
             effect->Projection = frame.camera.projection;
             effect->World = Matrix::getIdentityProperty();

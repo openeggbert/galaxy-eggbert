@@ -23,6 +23,7 @@
 #include <Microsoft/Xna/Framework/Vector3.hpp>
 
 #include <array>
+#include <Microsoft/Xna/Framework/Vector4.hpp>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -183,6 +184,9 @@ namespace GalaxyEggbert::Game
         float fogStart = 0.0f;   // blocks from the camera where the fog begins
         float fogEnd = 1.0f;     // where it is whole
         float seconds = 0.0f;    // the effects' clock (the simulation's ticks / 60): water, lava, glow
+        // The two waters' bodies (Water1, Water2; TerrainGi.hpp TileTint): linear colour, clearness (w 0:
+        // their tiles as they are).
+        std::array<Microsoft::Xna::Framework::Vector4, 2> water{};
         std::vector<SceneShadow> shadows;
         std::vector<ScenePointLight> lights;
         std::vector<SceneBillboardBatch> particles; // the explosions, splashes and sparks

@@ -1120,6 +1120,14 @@ namespace GalaxyEggbert::Game
                 {
                     auto occluded = reliefChunkCubes[i].Take();
                     bake(occluded);
+                    if (m_globalIllumination)
+                    {
+                        const auto table = ReliefChunkGi(occluded, m_reliefChunks[i].boxMin, kReliefChunkCells);
+                        constexpr int k = kReliefChunkCells;
+                        m_reliefChunks[i].gi = std::make_unique<Microsoft::Xna::Framework::Graphics::Texture2D>(
+                            device, k * k, k * kReliefGiFaces);
+                        m_reliefChunks[i].gi->SetData(table.data(), static_cast<int>(table.size()));
+                    }
                     m_reliefChunks[i].cubes = UploadLitColoredTexturedMeshParts(device, occluded);
                 }
                 else
@@ -1654,12 +1662,14 @@ namespace GalaxyEggbert::Game
         {
             m_staticRenderer->Draw(device, cubesEffect);
         }
+        const bool reliefGi = shading != nullptr && shading->reliefGi;
         for (const auto& chunk : m_reliefChunks)
         {
             if (chunk.near && chunk.relief)
             {
                 if (chunk.relief->lit)
                 {
+                    if (reliefGi) shading->reliefGi(chunk.gi.get(), chunk.boxMin);
                     chunk.relief->lit->Draw(device, reliefEffect);
                 }
             }
@@ -1668,6 +1678,7 @@ namespace GalaxyEggbert::Game
                 chunk.cubes->Draw(device, cubesEffect);
             }
         }
+        if (reliefGi) shading->reliefGi(nullptr, Microsoft::Xna::Framework::Vector3());
 
         if (m_cutoutEffect && shading != nullptr && shading->cutout != nullptr)
         {
