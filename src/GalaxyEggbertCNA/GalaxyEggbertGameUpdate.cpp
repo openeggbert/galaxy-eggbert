@@ -293,7 +293,9 @@ namespace GalaxyEggbert::CNA
         // full real deferred-transition mechanic this drives.
         if (fadeOutPhase_ != GalaxyEggbert::Def::GamePhase::None)
         {
-            if (phaseTimeSeconds_ >= kFadeCommitDurationSeconds)
+            const bool intoSetup = fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::MainSetup ||
+                                   fadeOutPhase_ == GalaxyEggbert::Def::GamePhase::PlaySetup;
+            if (phaseTimeSeconds_ >= (intoSetup ? kSetupFadeCommitDurationSeconds : kFadeCommitDurationSeconds))
             {
                 // Real "fadeOutPhase != None is REQUIRED to defer" guard
                 // (see SetPhase()'s own comment) -- calling SetPhase()

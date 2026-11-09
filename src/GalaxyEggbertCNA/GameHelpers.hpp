@@ -548,6 +548,10 @@ namespace GalaxyEggbert::CNA::detail
         // separately-owned constant there, same cross-file convention as
         // kWaitDurationSeconds above).
         inline constexpr float kFadeCommitDurationSeconds = 1.0f;
+        // Into the Setup the menu waits a quarter of that (the owner, 2026-11-09: the Setup took two
+        // seconds to come up, the menu's second and its own slide-in); the other screens keep the
+        // original's second.
+        inline constexpr float kSetupFadeCommitDurationSeconds = 0.25f;
 
         // Third-person chase-camera wall collision (plan.md CAM-005, found
         // 2026-07-17): keeps the camera from clipping through solid
