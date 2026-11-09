@@ -31,6 +31,8 @@
 #include <GalaxyEggbert/Def/GameSpeed.hpp>
 
 #include <GalaxyEggbert/Game/TexturedMesh.hpp>
+#include <GalaxyEggbert/Game/SceneFrame.hpp>
+#include <GalaxyEggbert/Game/WorldRenderer.hpp>
 #include <CnaEngine/Graphics/Camera.hpp>
 #include <Microsoft/Xna/Framework/Game.hpp>
 #include <Microsoft/Xna/Framework/GameTime.hpp>
@@ -226,7 +228,6 @@ namespace GalaxyEggbert::CNA
         // color in that case.
         Microsoft::Xna::Framework::Graphics::Texture2D backgroundTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> backgroundEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> backgroundMeshRenderer_;
         bool backgroundLoaded_ = false;
 
         // Maps block types to object-m.png UV rects (plan.md E3D-MIG-053).
@@ -1070,30 +1071,26 @@ namespace GalaxyEggbert::CNA
         // (15-3d-render-mapping-design.md §5/§7) — element.png, static phase
         // (no animation yet). Rebuilt every frame since billboard vertex
         // positions depend on the camera (MeshBuilder::AddBillboard faces
-        // the camera's right/up) — objectMeshRenderer_ is reconstructed in Draw(),
+        // the camera's right/up) — the WorldRenderer rebuilds its mesh every frame,
         // not lazily cached like terrainRenderer_.
         Microsoft::Xna::Framework::Graphics::Texture2D objectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> objectMeshRenderer_;
-        std::array<std::unique_ptr<CnaEngine::Graphics::GpuMesh>, 5> drinkBubbleRenderers_; // the drink's bubbles
 
         // Billboard rendering for the confirmed object-m.png-sourced
         // MoveObjects (ObjectDefinitionRegistry, NEXT.md §3,
         // 2026-07-09) -- same camera-facing billboard technique as
-        // objectMeshRenderer_ above, but reuses terrainTexture_
+        // the element.png batch above, but reuses terrainTexture_
         // (object-m.png) via its own dedicated effect (BasicEffect only
         // binds one texture at a time), same reason as bigDecorEffect_.
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectMPngEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> objectMPngMeshRenderer_;
 
         // Billboard rendering for the confirmed explo.png-sourced
         // MoveObjects (ObjectDefinitionRegistry, NEXT.md §3,
         // 2026-07-09) -- explosions/visual effects, a genuinely new texture
         // (not previously loaded anywhere in GalaxyEggbertCNA), same
-        // camera-facing billboard technique as objectMeshRenderer_ above.
+        // camera-facing billboard technique as the element.png batch above.
         Microsoft::Xna::Framework::Graphics::Texture2D exploTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> exploEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> exploMeshRenderer_;
 
         // Billboard rendering for the confirmed Blupi-skin MoveObjects
         // (ObjectDefinitionRegistry, NEXT.md §3, 2026-07-09) --
@@ -1107,10 +1104,8 @@ namespace GalaxyEggbert::CNA
         // even though both load the same blupi.png file.
         Microsoft::Xna::Framework::Graphics::Texture2D blupiObjectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupiObjectEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> blupiObjectMeshRenderer_;
         Microsoft::Xna::Framework::Graphics::Texture2D blupi1ObjectTexture_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> blupi1ObjectEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> blupi1ObjectMeshRenderer_;
 
         // Billboard rendering for worldRuntime_'s parsed BigDecor: cells
         // (NEXT.md §8 task 3, mobile-eggbert-reference/
@@ -1139,8 +1134,6 @@ namespace GalaxyEggbert::CNA
         void ApplyBlockModels();
         [[nodiscard]] std::vector<std::uint16_t> StillModelIcons() const;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> bigDecorEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> bigDecorMeshRenderer_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> bigDecorMarineMeshRenderer_;
 
         // Platform-lift/crate UniformCube object path (NEXT.md §8 task 3,
         // mobile-eggbert-reference/15-3d-render-mapping-design.md §5's two
@@ -1157,7 +1150,6 @@ namespace GalaxyEggbert::CNA
         // formulas to actually animate (cheap here, only a handful of cube
         // objects).
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> objectCubeEffect_;
-        std::unique_ptr<CnaEngine::Graphics::GpuMesh> objectCubeMeshRenderer_;
 
         // Third-person-mode 3D model (2026-07-09, NEXT.md §3) -- CNA's
         // generic SkinnedModelEXT/SkinnedEffect path (../cna/docs/
@@ -1172,7 +1164,6 @@ namespace GalaxyEggbert::CNA
         // in first-person mode rather than crashing.
         std::shared_ptr<Microsoft::Xna::Framework::Graphics::SkinnedModelEXT> blupiModel_;
         std::unique_ptr<Microsoft::Xna::Framework::Graphics::SkinnedEffect> blupiEffect_;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::Texture2D> editorTintTexture_;
         bool blupiModelLoaded_ = false;
         bool blupiModelIsReal_ = false;
 
@@ -1209,8 +1200,6 @@ namespace GalaxyEggbert::CNA
         [[nodiscard]] int CellQuarterTurns(float x, float y, float z) const;
         // An object's or BigDecor's quarter turns at its cell (kObjectTurnMetadataType, OR-0071).
         [[nodiscard]] int CellObjectQuarterTurns(float x, float y, float z) const;
-        void DrawEnemyBlupis(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
-        void DrawEditorSpawn(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
         // Draw()'s body; Draw() times it for GALAXY_PERF.
         void DrawFrame();
         // DrawFrame's parts (GalaxyEggbertGameDraw.cpp): the 3D world, then the HUD, menus and editor
@@ -1218,6 +1207,22 @@ namespace GalaxyEggbert::CNA
         void DrawWorld(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool& soulDrawnIn3D);
         void DrawOverlay(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, bool soulDrawnIn3D);
         void DrawFrameCaptures(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        void CheckTerrainVisibility(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device);
+        // The SceneFrame (GalaxyEggbertGameScene.cpp): what the 3D world draws this frame, by part.
+        void BuildSceneFrame(GalaxyEggbert::Game::SceneFrame& frame, bool& soulDrawnIn3D);
+        [[nodiscard]] bool SceneEditorSelected(int kind, float rawX, float rawY, float rawZ) const;
+        void AppendSceneCubes(GalaxyEggbert::Game::SceneFrame& frame);
+        void AppendSceneBlupi(std::vector<GalaxyEggbert::Game::SceneModel>& models);
+        void AppendSceneVehicles(GalaxyEggbert::Game::SceneFrame& frame);
+        void AppendSceneEnemyBlupis(std::vector<GalaxyEggbert::Game::SceneModel>& models);
+        void AppendSceneObjectModels(GalaxyEggbert::Game::SceneFrame& frame, bool& soulDrawnIn3D);
+        void AppendSceneDecals(GalaxyEggbert::Game::SceneFrame& frame);
+        void AppendSceneEditorStarts(std::vector<GalaxyEggbert::Game::SceneModel>& models);
+        void AppendSceneBillboards(GalaxyEggbert::Game::SceneFrame& frame);
+        GalaxyEggbert::Game::SceneFrame sceneFrame_;
+        GalaxyEggbert::Game::WorldRenderer worldRenderer_;
+        // The editor's target, read once a frame for the scene's selection overlays.
+        std::optional<GalaxyEggbert::Editor::WorldEditor::EditTarget> sceneEditTarget_;
         // A vehicle pickup's model and standing clip when the real vehicle
         // model replaces its billboard (kParkedVehicles); model is nullptr
         // otherwise.
@@ -1270,7 +1275,6 @@ namespace GalaxyEggbert::CNA
         std::vector<SignDecalCell> dynamiteSparkCells_;
         // The glue model was drawn this frame: its strands follow (Q-006).
         bool glueStrandsPending_ = false;
-        std::unique_ptr<Microsoft::Xna::Framework::Graphics::BasicEffect> decalEffect_;
         GalaxyEggbert::Game::ObjectModelTable objectModelTable_;
         // The power drawn on him (Decor.cpp:782-818): the shield's orb and sparkles, the power's
         // stars (element.png), the Cloud's three sparks (explo.png), shown while the shared count is

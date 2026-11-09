@@ -52,6 +52,7 @@ option(GALAXY_EGGBERT_ENABLE_CHEATS "Enable typed cheats and the hidden cheat me
 set_source_files_properties(
     src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
     src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp
+    src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp
     src/GalaxyEggbert/Game/InputPad.cpp
     tools/VerifyGEInputPad.cpp
     PROPERTIES COMPILE_DEFINITIONS
@@ -144,6 +145,8 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbertCNA/main.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGame.cpp
         src/GalaxyEggbertCNA/GalaxyEggbertGameDraw.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameScene.cpp
+        src/GalaxyEggbert/Game/WorldRenderer.cpp
         src/GalaxyEggbert/Game/WorldRuntime.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/TerrainRenderer.cpp

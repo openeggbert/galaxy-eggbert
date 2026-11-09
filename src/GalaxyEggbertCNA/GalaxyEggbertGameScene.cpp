@@ -1,0 +1,1231 @@
+// GalaxyEggbertGame's SceneFrame (SceneFrame.hpp): what the 3D world draws this frame, read from the
+// simulation -- which objects show, by which icon or model in which pose, where and turned how. The
+// WorldRenderer draws it (WorldRenderer.hpp); nothing here touches the device's state.
+
+#include "GalaxyEggbertGame.hpp"
+#include "GameInternal.hpp"
+
+#include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
+#include <GalaxyEggbert/BlockTypes.hpp>
+#include <GalaxyEggbert/Editor/PlayerStartColor.hpp>
+#include <GalaxyEggbert/Game/BarRows.hpp>
+#include <GalaxyEggbert/Game/BlockModels.hpp>
+#include <GalaxyEggbert/Game/BoltMesh.hpp>
+#include <GalaxyEggbert/Game/DirectionalCubeTiles.hpp>
+#include <GalaxyEggbert/Game/EnemyBlupi.hpp>
+#include <GalaxyEggbert/Game/GlueStrands.hpp>
+#include <GalaxyEggbert/Game/LiftVisual.hpp>
+#include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
+#include <GalaxyEggbert/Game/ObjectVerticalPlacement.hpp>
+#include <GalaxyEggbert/Game/TexturedMesh.hpp>
+
+#include <Microsoft/Xna/Framework/Color.hpp>
+
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+
+namespace GalaxyEggbert::CNA
+{
+    using namespace GalaxyEggbert::Game;
+    using namespace GalaxyEggbert::CNA::detail;
+
+    namespace
+    {
+        using Microsoft::Xna::Framework::Matrix;
+        using Microsoft::Xna::Framework::Vector2;
+        using Microsoft::Xna::Framework::Vector3;
+        using Microsoft::Xna::Framework::Graphics::SkinnedModelEXT;
+        using Microsoft::Xna::Framework::Graphics::Texture2D;
+
+        constexpr float kPi = 3.14159265358979f;
+
+        CnaEngine::Graphics::UvRect Uv(const ObjectIconUv& uv)
+        {
+            return CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V1};
+        }
+
+        SceneQuad Quad(const Vector3& center, const Vector2& size, const Vector3& right, const Vector3& up,
+                       const CnaEngine::Graphics::UvRect& uv, int sourceObject = -1, int sourceIcon = -1)
+        {
+            SceneQuad quad;
+            quad.center = center;
+            quad.size = size;
+            quad.right = right;
+            quad.up = up;
+            quad.uv = uv;
+            quad.sourceObject = sourceObject;
+            quad.sourceIcon = sourceIcon;
+            return quad;
+        }
+
+        // Each part's texture: `face` on the face part, else `other(part texture)` (nullptr keeps it).
+        template <typename Other>
+        std::vector<Texture2D*> PartTextures(const SkinnedModelEXT& model, Texture2D* face, const std::string& facePart,
+                                             Other&& other)
+        {
+            std::vector<Texture2D*> textures;
+            textures.reserve(model.Parts.size());
+            for (const auto& part : model.Parts)
+            {
+                textures.push_back(face != nullptr && part.Name == facePart ? face : other(part.Texture));
+            }
+            return textures;
+        }
+
+        std::vector<Texture2D*> PartTextures(const SkinnedModelEXT& model, Texture2D* face, const std::string& facePart)
+        {
+            if (face == nullptr)
+            {
+                return {};
+            }
+            return PartTextures(model, face, facePart, [](Texture2D*) -> Texture2D* { return nullptr; });
+        }
+    }
+
+    void GalaxyEggbertGame::BuildSceneFrame(SceneFrame& frame, bool& soulDrawnIn3D)
+    {
+        frame.Clear();
+        frame.world = true;
+        sceneEditTarget_ = phase_ == GalaxyEggbert::Def::GamePhase::Editor && !worldEditor_.IsBrowsing()
+                               ? worldEditor_.CurrentEditTarget(worldRuntime_.GetWorld())
+                               : std::nullopt;
+        frame.camera.view = camera_.View();
+        frame.camera.projection = camera_.Projection();
+        frame.camera.position = camera_.Position();
+        frame.camera.target = cameraTarget_;
+        frame.camera.fieldOfView = camera_.FieldOfView();
+        frame.camera.aspectRatio = camera_.AspectRatio();
+
+        if (terrainRenderer_ && terrainEffect_)
+        {
+            frame.terrain = true;
+            frame.reliefTarget = cameraTarget_;
+            frame.reliefRadius = terrainReliefRadius_;
+            frame.reliefBudget = terrainReliefWarm_ ? 1 : -1;
+            frame.reportReliefTiming = !terrainReliefWarm_ && std::getenv("GALAXY_TERRAIN_RELIEF_TIMING") != nullptr;
+            terrainReliefWarm_ = true;
+
+            if (objectCubeEffect_)
+            {
+                AppendSceneCubes(frame);
+            }
+            // Blupi drawn opaque now, translucent (the drink's Hide, a ghost) over the finished scene.
+            const bool translucentBlupi = blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase()) < 1.0f;
+            if (!translucentBlupi)
+            {
+                AppendSceneBlupi(frame.opaqueModels);
+            }
+            if (blupiEffect_ && blupiModelIsReal_ && !blupiVehicles_.empty())
+            {
+                AppendSceneVehicles(frame);
+            }
+            if (blupiEffect_ && !objectModels_.empty())
+            {
+                AppendSceneObjectModels(frame, soulDrawnIn3D);
+            }
+            AppendSceneDecals(frame);
+            if (translucentBlupi)
+            {
+                AppendSceneBlupi(frame.translucentModels);
+            }
+            AppendSceneEditorStarts(frame.editorStarts);
+        }
+        AppendSceneBillboards(frame);
+    }
+
+    bool GalaxyEggbertGame::SceneEditorSelected(int kind, float rawX, float rawY, float rawZ) const
+    {
+        const auto& target = sceneEditTarget_;
+        return target && static_cast<int>(target->kind) == kind && std::lround(rawX) == target->x &&
+               std::lround(rawY) == target->y && std::lround(rawZ) == target->z;
+    }
+
+    void GalaxyEggbertGame::AppendSceneCubes(SceneFrame& frame)
+    {
+        // The platform lifts and crates (UniformCube objects) on the terrain's sheet, each on its
+        // per-instance phase, so the chenille icon formulas of types 47/48 animate.
+        for (const auto& obj : worldRuntime_.GetMobileObjects())
+        {
+            const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+            if (!obj.active || !visual.visible || visual.renderMode != ObjectRenderMode::SolidCube)
+            {
+                continue;
+            }
+            if (ConveyorLiftModel(obj) != nullptr)
+            {
+                continue; // drawn as Decor/chenille.rds in the model pass
+            }
+            const Vector3 center(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
+            const auto tileUv = tileAtlas_.GetTileUv(visual.icon);
+            const auto addBox = [&](const Vector3& boxCenter, const Vector3& size,
+                                    const CnaEngine::Graphics::BoxFaces& faces) {
+                frame.cubes.push_back(SceneCube{boxCenter, size, faces});
+            };
+            const auto allFaces = [](const CnaEngine::Graphics::UvRect& uv) {
+                CnaEngine::Graphics::BoxFaces faces;
+                faces.fill(CnaEngine::Graphics::BoxFaceStyle{true, uv});
+                return faces;
+            };
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1 &&
+                ChooseLiftDrawPath(visual.icon, false) == LiftDrawPath::BarAndStem)
+            {
+                // The lift tile 29's bar and stem, not a cube of its mostly transparent tile.
+                const float du = tileUv.u1 - tileUv.u0;
+                const float dv = tileUv.v1 - tileUv.v0;
+                for (const auto& part : LiftVisualParts())
+                {
+                    addBox(center + Vector3(0.0f, part.centerYOffset, 0.0f), Vector3(part.width, part.height, part.width),
+                           allFaces(CnaEngine::Graphics::UvRect{tileUv.u0 + part.u0 * du, tileUv.v0 + part.v0 * dv,
+                                                                tileUv.u0 + part.u1 * du, tileUv.v0 + part.v1 * dv}));
+                }
+                continue;
+            }
+            // A lift wearing any other tile (and any other cube object) is that tile's cube moving: a
+            // directional tile with the faces the terrain gives it.
+            const auto& definition = GalaxyEggbert::GetBlockDefinition(static_cast<std::uint16_t>(visual.icon));
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1 &&
+                definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube)
+            {
+                CnaEngine::Graphics::BoxFaces faces;
+                ConfigureDirectionalCubeFaces(visual.icon, tileUv, tileAtlas_.GetTileUv(107), faces);
+                addBox(center, Vector3(1.0f, 1.0f, 1.0f), faces);
+                continue;
+            }
+            addBox(center, Vector3(1.0f, 1.0f, 1.0f), allFaces(tileUv));
+        }
+        // The crates blown away (InteractionSystem::ByeByePiece, BD-0049): each its cube, spinning
+        // about the view axis where it flies.
+        for (const auto& piece : interaction_.ByeByePieces())
+        {
+            if (piece.helicopter || piece.fanIcon >= 0)
+            {
+                continue;
+            }
+            const auto visual = ResolveObjectVisual(piece.look.type, static_cast<int>(piece.look.phase),
+                                                    piece.look.visualIcon);
+            if (!visual.visible || visual.renderMode != ObjectRenderMode::SolidCube)
+            {
+                continue;
+            }
+            SceneCubePiece cube;
+            cube.world = Matrix::CreateRotationZ(-piece.rotationDegrees * 3.14159265f / 180.0f) *
+                         Matrix::CreateTranslation(piece.x, ResolveObjectVisualCenterY(piece.look.type, piece.y), piece.z);
+            cube.uv = tileAtlas_.GetTileUv(visual.icon);
+            frame.cubePieces.push_back(cube);
+        }
+    }
+
+    void GalaxyEggbertGame::AppendSceneBlupi(std::vector<SceneModel>& models)
+    {
+        // His real model (or the placeholder) in third person only. Hidden during the death-lock's
+        // life-loss Voyage, on the frame tables' invisible frames, and drawn as his sprite where the
+        // original's death is a sprite. A frame drawn before the first Play tick has no clip yet.
+        if (phase_ == GalaxyEggbert::Def::GamePhase::Editor || cameraMode_ != CameraMode::ThirdPersonModel ||
+            !blupiModelLoaded_ || !blupiEffect_ || blupiModel_->Clips.count(blupiActiveClipName_) == 0 ||
+            (blupiModelIsReal_ && blupi_.IsAnimIconInvisible()) || BlupiDrawnAsDeathSprite())
+        {
+            return;
+        }
+        constexpr float kCharredShade = 0.07f; // the sprites' soot black
+        // Charred (Clear1, Clear3: CharredBlupi.hpp), shrunk toward his feet as the frame crumbles and
+        // spread out as the heap of ash. Glued (BlupiGlueModel()): flattened and spread under the glue
+        // model, the dark green puddle of the sprites (168-171).
+        auto charred = BlupiCharredShape();
+        const bool gluePuddle = BlupiGlueModel() != nullptr;
+        if (gluePuddle)
+        {
+            charred = GalaxyEggbert::Game::CharredShape{true, 0.06f, 1.5f, false};
+        }
+        // The drink's Hide (Decor.cpp:828-838, OR-0016): his own clips at 30 % opacity, flashing to
+        // full every other pair of ticks once the gauge is down to 25; not depth-written.
+        const float alpha = blupi_.GetDrawOpacity(worldRuntime_.GetAnimPhase());
+        SceneModel body;
+        body.model = blupiModel_.get();
+        body.clip = blupiActiveClipName_;
+        body.seconds = blupiClipTimeSeconds_;
+        body.world = BlupiModelWorld(charred);
+        body.alpha = alpha;
+        body.translucent = alpha < 1.0f;
+        if (charred.charred)
+        {
+            // Burnt black: soot, no sheen; glued, the puddle's dark green.
+            body.tinted = true;
+            body.tint = gluePuddle ? Vector3(0.20f, 0.32f, 0.03f) : Vector3(kCharredShade, kCharredShade, kCharredShade);
+        }
+        body.partTextures = PartTextures(*blupiModel_, BlupiFaceTexture(), blupiFacePart_);
+        models.push_back(std::move(body));
+
+        // The vehicle he rides in this clip (helicopter, jeep, tank, overcraft, skateboard): its own
+        // model, built from the same Ray Dream frames in the same space, so it takes his transform and
+        // clip time.
+        for (const auto& [vehicleName, vehicle] : blupiVehicles_)
+        {
+            if (vehicle->Clips.find(blupiActiveClipName_) == vehicle->Clips.end())
+            {
+                continue;
+            }
+            SceneModel ride;
+            ride.model = vehicle.get();
+            ride.clip = blupiActiveClipName_;
+            ride.seconds = blupiClipTimeSeconds_;
+            ride.world = models.back().world;
+            ride.alpha = alpha;
+            ride.translucent = alpha < 1.0f;
+            models.push_back(std::move(ride));
+        }
+
+        // The Hide's fading ghosts behind him.
+        for (const auto& ghost : hideGhosts_)
+        {
+            if (blupiModel_->Clips.count(ghost.clip) == 0)
+            {
+                continue;
+            }
+            SceneModel echo;
+            echo.model = blupiModel_.get();
+            echo.clip = ghost.clip;
+            echo.seconds = ghost.clipSeconds;
+            echo.world = ghost.world;
+            echo.alpha = std::max(0.0f, (20.0f - ghost.ageTicks) * 0.3f / 20.0f);
+            echo.translucent = true;
+            echo.partTextures = PartTextures(*blupiModel_, ghost.face, blupiFacePart_);
+            models.push_back(std::move(echo));
+        }
+    }
+
+    void GalaxyEggbertGame::AppendSceneVehicles(SceneFrame& frame)
+    {
+        // Parked vehicles: a helicopter, jeep, skateboard, tank or overcraft pickup is its real model
+        // in the first frame of its standing clip instead of its element.png billboard, in both camera
+        // modes, standing on its cell's floor, facing +X as the sprites face right.
+        using TargetKind = GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind;
+        constexpr float kHalfPi = 1.57079632679f;
+        constexpr float kSkateLift = 0.45f; // the upright board hangs this far above the floor, tuned by eye
+        auto& models = frame.opaqueModels;
+        frame.vehiclePassStart = static_cast<int>(models.size());
+        for (const auto& obj : worldRuntime_.GetMobileObjects())
+        {
+            const auto parked = ParkedVehicleModel(obj.type);
+            if (parked.model == nullptr || !obj.active ||
+                !ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon).visible)
+            {
+                continue;
+            }
+            // The parked skateboard of the original (table_skate, element icons 129-135) hangs upright,
+            // its long axis up, a little above the floor, and turns about that axis, 30 degrees an
+            // icon (Decor.cpp:8339; OR-0083).
+            float skateSpin = 0.0f;
+            float skateLift = 0.0f;
+            float skateStand = 0.0f;
+            if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType24)
+            {
+                const int skateIcon = GalaxyEggbert::Game::GetObjIcon(obj.type, static_cast<int>(obj.phase));
+                skateSpin = static_cast<float>(skateIcon - 132) * (30.0f * 3.14159265f / 180.0f);
+                skateStand = kHalfPi;
+                skateLift = kSkateLift;
+            }
+            SceneModel model;
+            model.model = parked.model;
+            model.clip = parked.clip;
+            model.seconds = 0.0;
+            model.loop = false;
+            // Facing +X, turned in the editor a quarter at a time (OR-0071).
+            model.world = Matrix::CreateScale(kRealModelScale) * Matrix::CreateRotationX(skateStand) *
+                          Matrix::CreateRotationY(skateSpin) *
+                          Matrix::CreateRotationY(kHalfPi * static_cast<float>(
+                                                               1 + CellObjectQuarterTurns(obj.posStartX, obj.posStartY,
+                                                                                          obj.posStartZ))) *
+                          Matrix::CreateTranslation(obj.currentX, obj.currentY - 0.5f + skateLift, obj.currentZ);
+            model.editorSelected = SceneEditorSelected(static_cast<int>(TargetKind::Object),
+                                                       obj.posStartX + WorldRuntime::kWorldCenterX, obj.posStartY,
+                                                       obj.posStartZ + WorldRuntime::kWorldCenterZ);
+            models.push_back(std::move(model));
+        }
+        AppendSceneEnemyBlupis(models);
+        // The lost helicopter flying away (ByeByeHelico, BD-0049): its parked model, turned about its
+        // middle as the original's picture spins.
+        const auto helicopter = ParkedVehicleModel(GalaxyEggbert::Def::ObjectType::ObjectType13);
+        for (const auto& piece : interaction_.ByeByePieces())
+        {
+            if (!piece.helicopter || helicopter.model == nullptr)
+            {
+                continue;
+            }
+            SceneModel model;
+            model.model = helicopter.model;
+            model.clip = helicopter.clip;
+            model.seconds = 0.0;
+            model.loop = false;
+            model.world = Matrix::CreateScale(kRealModelScale) * Matrix::CreateRotationY(kHalfPi) *
+                          Matrix::CreateTranslation(0.0f, -0.5f, 0.0f) *
+                          Matrix::CreateRotationZ(-piece.rotationDegrees * 3.14159265f / 180.0f) *
+                          Matrix::CreateTranslation(piece.x, piece.y, piece.z);
+            models.push_back(std::move(model));
+        }
+    }
+
+    void GalaxyEggbertGame::AppendSceneEnemyBlupis(std::vector<SceneModel>& models)
+    {
+        // OR-0063 (EnemyBlupi.hpp): his model and his helicopter or tank in the clip and frame the
+        // original's icon shows, the textures turned green and blue as blupi1.png's, facing along the
+        // patrol. A turn swings his front past the camera, as the sprites turn through their viewer.
+        const auto cameraPosition = Matrix::Invert(camera_.View()).getTranslationProperty();
+        const auto recolored = [&](Texture2D* texture) -> Texture2D*
+        {
+            const auto found = enemyBlupiTextures_.find(texture);
+            return found != enemyBlupiTextures_.end() ? found->second.get() : texture;
+        };
+        for (const auto& obj : worldRuntime_.GetMobileObjects())
+        {
+            if (!obj.active || !EnemyBlupiModelDrawn(obj) ||
+                !ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon).visible)
+            {
+                continue;
+            }
+            const bool tank = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType33;
+            const auto pose = GalaxyEggbert::Game::ResolveEnemyBlupiPose(tank, obj.patrolStep, obj.patrolTime);
+            const std::string clip = GalaxyEggbert::Game::EnemyBlupiClipName(pose.clip);
+            if (blupiModel_->Clips.count(clip) == 0)
+            {
+                continue;
+            }
+            // Facing posStart (yaw0) and posEnd (yaw0 + pi); a model's +Z turned by a yaw a points along
+            // (sin a, cos a). Standing still (posStart = posEnd) he faces +X, the sprites' right.
+            const float dx = obj.posEndX - obj.posStartX;
+            const float dz = obj.posEndZ - obj.posStartZ;
+            const bool still = dx == 0.0f && dz == 0.0f;
+            const float yawStart = still ? -kPi * 0.5f : std::atan2(-dx, -dz);
+            const float towardEnd = still ? 1.0f : pose.towardEnd;
+            // The side the turn swings through: the one facing the camera half way.
+            const float toCameraX = cameraPosition.X - obj.currentX;
+            const float toCameraZ = cameraPosition.Z - obj.currentZ;
+            const float midLeft = yawStart + kPi * 0.5f;
+            const float side = std::sin(midLeft) * toCameraX + std::cos(midLeft) * toCameraZ >= 0.0f ? 1.0f : -1.0f;
+            const float yaw = yawStart + side * kPi * towardEnd;
+            const float seconds = pose.clipTicks / 20.0f;
+            const auto world = Matrix::CreateScale(kRealModelScale) * Matrix::CreateRotationY(yaw) *
+                               Matrix::CreateTranslation(obj.currentX, obj.currentY - 0.5f, obj.currentZ);
+            Texture2D* face = nullptr;
+            if (const auto faces = blupiClipFaces_.find(clip); faces != blupiClipFaces_.end() && !faces->second.empty())
+            {
+                const auto frame = static_cast<std::size_t>(seconds * blupiFaceRate_) % faces->second.size();
+                const int index = faces->second[frame];
+                if (index >= 0 && index < static_cast<int>(blupiFaces_.size()))
+                {
+                    face = recolored(&blupiFaces_[static_cast<std::size_t>(index)]);
+                }
+            }
+            SceneModel body;
+            body.model = blupiModel_.get();
+            body.clip = clip;
+            body.seconds = seconds;
+            body.world = world;
+            body.partTextures = PartTextures(*blupiModel_, face, blupiFacePart_, recolored);
+            models.push_back(std::move(body));
+            for (const auto& [vehicleName, vehicle] : blupiVehicles_)
+            {
+                if (vehicle->Clips.count(clip) == 0)
+                {
+                    continue;
+                }
+                SceneModel ride;
+                ride.model = vehicle.get();
+                ride.clip = clip;
+                ride.seconds = seconds;
+                ride.world = world;
+                ride.partTextures = PartTextures(*vehicle, nullptr, blupiFacePart_, recolored);
+                models.push_back(std::move(ride));
+            }
+        }
+    }
+
+    void GalaxyEggbertGame::AppendSceneObjectModels(SceneFrame& frame, bool& soulDrawnIn3D)
+    {
+        // Objects with a converted 3D model (objectModelTable_, plan.md Phase 7B): drawn where their
+        // billboard would be (skipped in the billboard passes), posed at their icon's frame, turned by
+        // its yaw and flipped as the icon is (left-right or upside down, about the sprite's centre
+        // line: kFlipShift). A model is in blocks with its sprite's view toward +Z, as the parked
+        // vehicles are. BigDecor cells with a model stand on their cell's floor at the original's
+        // size: an explo.png icon is 64, 128 or 144 game pixels (icons.txt), drawn 1:1 in the original
+        // (Pixmap.cpp), where the billboard is 1 block.
+        using TargetKind = GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind;
+        constexpr float kDegrees = 3.14159265358979f / 180.0f;
+        frame.objectModelPass = true;
+        auto& models = frame.objectModels;
+        // The signs drawn this frame whose painted face is a decal (drawn after the models), the
+        // electrodes and dynamite with painted sparks.
+        auto& decalCells = signDecalCells_;
+        decalCells.clear();
+        electrodeCells_.clear();
+        dynamiteSparkCells_.clear();
+        bool tintModelCell = false;
+        const auto drawModel = [&](const ObjectModelPose& pose, float x, float y, float z, float turnRadians = 0.0f,
+                                   float rollRadians = 0.0f, float depthScale = 1.0f, bool boothFrontOnly = false,
+                                   float topScale = 1.0f) -> SceneModel&
+        {
+            const auto index = static_cast<std::size_t>(pose.model);
+            SceneModel model;
+            model.model = objectModels_[index].get();
+            model.clip = "Frames";
+            model.seconds = pose.seconds;
+            model.loop = false;
+            // Models out of view are not drawn (objectModelRadii_): each one's sphere, its reach widened
+            // by its depth scale and sprite offset, a block's margin for its animation.
+            if (modelCulling_ && index < objectModelRadii_.size())
+            {
+                model.cullRadius = objectModelRadii_[index] * std::max(1.0f, std::fabs(depthScale)) +
+                                   static_cast<float>(std::abs(pose.offsetX) + std::abs(pose.offsetY)) / 64.0f + 1.0f;
+                model.cullCenter = Vector3(x, y, z);
+            }
+            // Mirroring turns the triangles' winding around (a negative depth scale too).
+            model.cull = (pose.mirror != 0) != (depthScale < 0.0f) ? SceneCull::Clockwise : SceneCull::CounterClockwise;
+            model.world =
+                Matrix::CreateRotationY(pose.yawDegrees * kDegrees) *
+                Matrix::CreateScale(pose.mirror == 1 ? -1.0f : 1.0f, pose.mirror == 2 ? -1.0f : 1.0f, 1.0f) *
+                Matrix::CreateTranslation((pose.mirror == 1 ? -kFlipShift : 0.0f) + static_cast<float>(pose.offsetX) / 64.0f,
+                                          (pose.mirror == 2 ? kFlipShift : 0.0f) - static_cast<float>(pose.offsetY) / 64.0f,
+                                          0.0f) *
+                Matrix::CreateScale(1.0f, 1.0f, depthScale) *
+                // Scaled about the cell's top (the drip's smallest drops, DripShrink).
+                Matrix::CreateTranslation(0.0f, -0.5f, 0.0f) * Matrix::CreateScale(topScale) *
+                Matrix::CreateTranslation(0.0f, 0.5f, 0.0f) * Matrix::CreateRotationZ(rollRadians) *
+                Matrix::CreateRotationY(turnRadians) * Matrix::CreateTranslation(x, y, z);
+            model.sawSeconds = pose.seconds;
+            model.boothFrontOnly = boothFrontOnly;
+            model.editorSelected = tintModelCell;
+            model.counted = true;
+            models.push_back(std::move(model));
+            return models.back();
+        };
+        // The clay bridge: its row of lumps across the whole cell (BlockModels.hpp).
+        const auto drawBridgeRows = [&](const ObjectModelPose& pose, float x, float y, float z)
+        {
+            for (int row = 0; row < GalaxyEggbert::Game::kBridgeRows; ++row)
+            {
+                const auto placement = GalaxyEggbert::Game::BridgeRowPlacement(row);
+                drawModel(pose, x, y, z + placement.dz, placement.yaw);
+            }
+        };
+        for (const auto& obj : worldRuntime_.GetMobileObjects())
+        {
+            tintModelCell = SceneEditorSelected(static_cast<int>(TargetKind::Object),
+                                                obj.posStartX + WorldRuntime::kWorldCenterX, obj.posStartY,
+                                                obj.posStartZ + WorldRuntime::kWorldCenterZ);
+            ObjectTextureSource sheet{};
+            int icon = 0;
+            const ObjectModelPose* pose = ObjectSprite(obj, sheet, icon) ? objectModelTable_.Find(sheet, icon) : nullptr;
+            if (pose != nullptr && sheet == ObjectTextureSource::ObjectM && GalaxyEggbert::Game::IsClayBridgeIcon(icon))
+            {
+                // ObjectType52 writes every visible frame to the grid, including 367-372. Its terrain
+                // model now owns the drawing (also for the static gallery).
+                if (!terrainRenderer_)
+                    drawBridgeRows(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ);
+            }
+            else if (const ObjectModelPose* conveyor = ConveyorLiftModel(obj))
+            {
+                // The conveyor lift (47/48): its tread on the frame table_chenille(i) shows, stretched
+                // across the cell as the terrain conveyor (ModelDepthScale); the plain lift (1) its round
+                // platform on a funnel and stem, as modelled.
+                const bool plainLift = obj.type == GalaxyEggbert::Def::ObjectType::ObjectType1;
+                const float depth = plainLift ? 1.0f : GalaxyEggbert::Game::ModelDepthScale(311);
+                drawModel(*conveyor, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ,
+                          0.0f, 0.0f, depth);
+                if (!plainLift)
+                {
+                    // The belt on both sides (BlockModels.hpp ModelMirroredInDepth).
+                    drawModel(*conveyor, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY),
+                              obj.currentZ, 0.0f, 0.0f, -depth);
+                }
+            }
+            else if (pose != nullptr)
+            {
+                // A sprite only faces left or right, along X, by its travel along X. One patrolling
+                // mainly along Z is turned from that facing to its real one.
+                const float dx = obj.posEndX - obj.posStartX;
+                const float dz = obj.posEndZ - obj.posStartZ;
+                float turn = 0.0f;
+                if (std::fabs(dz) > std::fabs(dx))
+                {
+                    const float spriteFacing = obj.posStartX > obj.posEndX ? 3.14159265f : 0.0f;
+                    turn = std::atan2(-dz, dx) - spriteFacing;
+                }
+                // A still object turned in the editor (OR-0071: its cell's quarter turns).
+                if (dx == 0.0f && dz == 0.0f && obj.posStartY == obj.posEndY)
+                {
+                    turn += 1.57079632f *
+                            static_cast<float>(CellObjectQuarterTurns(obj.posStartX, obj.posStartY, obj.posStartZ));
+                }
+                drawModel(*pose, obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ, turn);
+                if (obj.type == GalaxyEggbert::Def::ObjectType::ObjectType56 && dynamiteSparks_.count(icon) != 0)
+                {
+                    // Centre of the terminal ring in the shipped dynamite_rd_6e6e00 mesh at Frames=0
+                    // (model space). Anchor the star to the fuse, so orbiting the camera or turning the
+                    // object cannot detach it.
+                    const auto tip = Vector3::Transform(Vector3(0.22986f, -0.38538f, 0.51735f),
+                                                        Matrix::CreateRotationY(turn));
+                    dynamiteSparkCells_.push_back({static_cast<std::uint16_t>(icon), obj.currentX + tip.X,
+                                                   ResolveObjectVisualCenterY(obj.type, obj.currentY) + tip.Y,
+                                                   obj.currentZ + tip.Z, 0.0f});
+                }
+            }
+        }
+        // The pieces flying away with a model (BD-0049): enemies, the invert potion, a fan, spinning
+        // about the view axis as the original's picture does.
+        tintModelCell = false;
+        for (const auto& piece : interaction_.ByeByePieces())
+        {
+            const float spin = -piece.rotationDegrees * kDegrees;
+            if (piece.helicopter)
+            {
+                continue; // the parked vehicles' pass
+            }
+            if (piece.fanIcon >= 0)
+            {
+                if (const ObjectModelPose* fan =
+                        objectModelTable_.Find(ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon))
+                {
+                    drawModel(*fan, piece.x, piece.y, piece.z, 0.0f,
+                              GalaxyEggbert::Game::FanModelRoll(static_cast<std::uint16_t>(piece.fanIcon)) + spin);
+                }
+                continue;
+            }
+            ObjectTextureSource sheet{};
+            int icon = 0;
+            if (ObjectSprite(piece.look, sheet, icon))
+            {
+                if (const ObjectModelPose* pose = objectModelTable_.Find(sheet, icon))
+                {
+                    drawModel(*pose, piece.x, ResolveObjectVisualCenterY(piece.look.type, piece.y), piece.z, 0.0f, spin);
+                }
+            }
+        }
+        // The Clear2 death's soul (OR-0047): element 230-241 as Blupi/blupi-ange.rd4, the turn its
+        // icons show, rising 300 px from where he died (Decor::BlupiDead, VoyageDraw), half transparent
+        // as the sheet's sprite (alpha 127).
+        if (interaction_.VoyageActive() && interaction_.VoyageIsSoul())
+        {
+            if (const ObjectModelPose* pose =
+                    objectModelTable_.Find(ObjectTextureSource::Element, interaction_.VoyageIconId()))
+            {
+                constexpr float kSoulRise = 300.0f / 64.0f;
+                auto& soul = drawModel(*pose, interaction_.VoyageWorldAnchorX(),
+                                       interaction_.VoyageWorldAnchorY() + interaction_.VoyageProgress() * kSoulRise,
+                                       interaction_.VoyageWorldAnchorZ());
+                soul.alpha = 0.5f;
+                soul.translucent = true;
+                soulDrawnIn3D = true;
+            }
+        }
+        // The glue death (element 168-171; Q-006): Blupi/glu.rd4's struggling pose, its yellow made the
+        // sprites' green at conversion (texrecolour), turned the way he faces, its icon's centre 30 px
+        // over his feet; his own model lies flattened under it as the puddle (BlupiGlueModel()).
+        if (const ObjectModelPose* glued = BlupiGlueModel())
+        {
+            drawModel(*glued, blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f, blupi_.GetZ(), kPi - blupi_.GetYaw());
+            glueStrandsPending_ = true;
+        }
+        // The terrain's model cells: fans, saws, animated tiles, pillars, lattices, bars, signs,
+        // teleporters, the clay bridge.
+        if (terrainRenderer_)
+        {
+            for (const auto& cell : terrainRenderer_->ModelCells())
+            {
+                tintModelCell = SceneEditorSelected(static_cast<int>(TargetKind::Block),
+                                                    cell.x + WorldRuntime::kWorldCenterX, cell.y,
+                                                    cell.z + WorldRuntime::kWorldCenterZ);
+                const bool saw = std::find(GalaxyEggbert::Game::kSawModelBases.begin(),
+                                           GalaxyEggbert::Game::kSawModelBases.end(),
+                                           cell.base) != GalaxyEggbert::Game::kSawModelBases.end();
+                if (saw)
+                {
+                    // Independent blade in its own cell; openSide carries its axis.
+                    const int icon = GalaxyEggbert::ResolveBlockAnimationIconAt(
+                        cell.base, worldRuntime_.GetAnimPhase(), static_cast<int>(std::lround(cell.x)),
+                        static_cast<int>(std::lround(cell.y)), static_cast<int>(std::lround(cell.z)));
+                    if (icon >= 0)
+                    {
+                        if (const ObjectModelPose* pose =
+                                objectModelTable_.Find(ObjectTextureSource::ObjectM, static_cast<std::uint16_t>(icon)))
+                        {
+                            drawModel(*pose, cell.x, cell.y + GalaxyEggbert::Game::kSawModelYOffset, cell.z,
+                                      GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
+                                          1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.x, cell.y, cell.z)));
+                        }
+                    }
+                    continue;
+                }
+                if (std::find(GalaxyEggbert::Game::kAnimatedModelBases.begin(),
+                              GalaxyEggbert::Game::kAnimatedModelBases.end(),
+                              cell.base) != GalaxyEggbert::Game::kAnimatedModelBases.end())
+                {
+                    // An animated tile as its scene's model, on the tile's frame (gone: none).
+                    const int icon = GalaxyEggbert::ResolveBlockAnimationIconAt(
+                        cell.base, worldRuntime_.GetAnimPhase(), static_cast<int>(std::lround(cell.x)),
+                        static_cast<int>(std::lround(cell.y)), static_cast<int>(std::lround(cell.z)));
+                    if (icon >= 0)
+                    {
+                        const auto shrink = GalaxyEggbert::Game::DripShrink(icon);
+                        if (const ObjectModelPose* pose =
+                                objectModelTable_.Find(ObjectTextureSource::ObjectM, shrink.modelIcon))
+                        {
+                            drawModel(*pose, cell.x, cell.y, cell.z, 0.0f, 0.0f, 1.0f, false, shrink.scale);
+                        }
+                    }
+                    continue;
+                }
+                if (std::find(GalaxyEggbert::Game::kFanModelBases.begin(), GalaxyEggbert::Game::kFanModelBases.end(),
+                              cell.base) == GalaxyEggbert::Game::kFanModelBases.end())
+                {
+                    // A still icon drawn as its model (a pillar), or a lattice of its frame. The spring
+                    // bounces through its frames (BlockModels.hpp SpringFrameIcon).
+                    const std::uint16_t shown =
+                        cell.base == GalaxyEggbert::BlockTypes::Spring
+                            ? GalaxyEggbert::Game::SpringFrameIcon(
+                                  worldRuntime_.GetAnimPhase(),
+                                  static_cast<int>(std::lround(cell.x)) + WorldRuntime::kWorldCenterX,
+                                  static_cast<int>(std::lround(cell.z)) + WorldRuntime::kWorldCenterZ)
+                            : cell.base;
+                    if (const ObjectModelPose* still = objectModelTable_.Find(ObjectTextureSource::ObjectM, shown))
+                    {
+                        if (std::find(GalaxyEggbert::Game::kLatticeModelIcons.begin(),
+                                      GalaxyEggbert::Game::kLatticeModelIcons.end(),
+                                      cell.base) != GalaxyEggbert::Game::kLatticeModelIcons.end())
+                        {
+                            for (const auto& side : GalaxyEggbert::Game::kLatticeSides)
+                            {
+                                if ((cell.sameSides & side.bit) == 0)
+                                {
+                                    drawModel(*still, cell.x + side.dx, cell.y, cell.z + side.dz, side.yaw);
+                                }
+                            }
+                        }
+                        else if (std::find(GalaxyEggbert::Game::kRowModelIcons.begin(),
+                                           GalaxyEggbert::Game::kRowModelIcons.end(),
+                                           cell.base) != GalaxyEggbert::Game::kRowModelIcons.end())
+                        {
+                            // A bar is two pipes along its row, one under each of Blupi's hands
+                            // (BarRows.hpp); the model runs along X, turned where the row runs along Z.
+                            const bool alongZ =
+                                GalaxyEggbert::Game::ClassifyBarRow((cell.sameSides & 3) != 0, (cell.sameSides & 12) != 0) ==
+                                GalaxyEggbert::Game::BarRow::AlongZ;
+                            for (const float side : {-1.0f, 1.0f})
+                            {
+                                const float offset = side * GalaxyEggbert::Game::kBarPipeOffset;
+                                drawModel(*still, cell.x + (alongZ ? offset : 0.0f), cell.y,
+                                          cell.z + (alongZ ? 0.0f : offset), alongZ ? 1.57079632f : 0.0f);
+                            }
+                        }
+                        else if (std::find(GalaxyEggbert::Game::kFrontModelIcons.begin(),
+                                           GalaxyEggbert::Game::kFrontModelIcons.end(),
+                                           cell.base) != GalaxyEggbert::Game::kFrontModelIcons.end() ||
+                                 GalaxyEggbert::Game::IsSignModelIcon(cell.base))
+                        {
+                            // Turned in the editor a quarter at a time from the side it faces by itself
+                            // (OR-0071), its turns kept as an object's (metadata type 5): the plate-rotation
+                            // bit the hub generators set on signs facing X must not turn the model too.
+                            const float frontYaw =
+                                GalaxyEggbert::Game::FrontModelYaw(cell.openSide) +
+                                1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.x, cell.y, cell.z));
+                            drawModel(*still, cell.x, cell.y, cell.z, frontYaw);
+                            if (GalaxyEggbert::Game::IsTeleporterIcon(cell.base))
+                            {
+                                // The letter plate and lights on its other three sides too
+                                // (BlockModels.hpp IsTeleporterIcon, OR-0056).
+                                for (int quarter = 1; quarter < 4; ++quarter)
+                                {
+                                    const float yaw = frontYaw + 1.57079632f * static_cast<float>(quarter);
+                                    const float out =
+                                        GalaxyEggbert::Game::kBoothSideOffsets[static_cast<std::size_t>(quarter)];
+                                    drawModel(*still, cell.x + out * std::sin(yaw), cell.y, cell.z + out * std::cos(yaw),
+                                              yaw, 0.0f, 1.0f, /*boothFrontOnly=*/true);
+                                }
+                            }
+                            if (signDecals_.count(cell.base) != 0)
+                            {
+                                decalCells.push_back({cell.base, cell.x, cell.y, cell.z, frontYaw});
+                            }
+                        }
+                        else if (GalaxyEggbert::Game::IsClayBridgeIcon(cell.base))
+                        {
+                            drawBridgeRows(*still, cell.x, cell.y, cell.z);
+                        }
+                        else
+                        {
+                            if (GalaxyEggbert::Game::IsElectrodeIcon(cell.base) && electrodeSparks_.count(cell.base) != 0)
+                            {
+                                electrodeCells_.push_back({cell.base, cell.x, cell.y, cell.z, 0.0f});
+                            }
+                            drawModel(*still, cell.x, cell.y, cell.z, 0.0f, 0.0f,
+                                      GalaxyEggbert::Game::ModelDepthScale(cell.base));
+                            if (GalaxyEggbert::Game::ModelMirroredInDepth(cell.base))
+                            {
+                                drawModel(*still, cell.x, cell.y, cell.z, 0.0f, 0.0f,
+                                          -GalaxyEggbert::Game::ModelDepthScale(cell.base));
+                            }
+                        }
+                    }
+                    continue;
+                }
+                const int frameIcon =
+                    GalaxyEggbert::ResolveBlockAnimationIcon(cell.base, worldRuntime_.GetAnimPhase()) - static_cast<int>(cell.base);
+                const ObjectModelPose* pose = objectModelTable_.Find(
+                    ObjectTextureSource::ObjectM, GalaxyEggbert::Game::kFanModelIcon + std::max(0, frameIcon));
+                if (pose != nullptr)
+                {
+                    // A turned side fan blows along Z (M3D-0005): -X turned to -Z is -90 degrees.
+                    drawModel(*pose, cell.x, cell.y, cell.z, cell.openSide == 0 ? -1.57079632f : 0.0f,
+                              GalaxyEggbert::Game::FanModelRoll(cell.base));
+                }
+            }
+        }
+        for (const auto& cell : bigDecorCells_)
+        {
+            tintModelCell = SceneEditorSelected(static_cast<int>(TargetKind::BigDecor),
+                                                cell.worldX + WorldRuntime::kWorldCenterX, cell.worldY,
+                                                cell.worldZ + WorldRuntime::kWorldCenterZ);
+            const ObjectModelPose* pose = objectModelTable_.Find(ObjectTextureSource::Explo, cell.icon);
+            if (pose != nullptr)
+            {
+                const float halfBlocks = static_cast<float>(pose->iconPixels > 0 ? pose->iconPixels : 128) / 128.0f;
+                drawModel(*pose, cell.worldX, cell.worldY - 0.5f + halfBlocks, cell.worldZ,
+                          1.57079632f * static_cast<float>(CellObjectQuarterTurns(cell.worldX, cell.worldY, cell.worldZ)));
+            }
+        }
+    }
+
+    void GalaxyEggbertGame::AppendSceneDecals(SceneFrame& frame)
+    {
+        // The signs' painted faces (MR-0006): each decal on the sign's front and, mirrored so it reads
+        // the right way round, on its back, a hair off the faces.
+        if (!signDecals_.empty() && terrainRenderer_)
+        {
+            frame.signDecalPass = true;
+            for (const auto& cell : signDecalCells_)
+            {
+                const auto found = signDecals_.find(cell.icon);
+                if (found == signDecals_.end())
+                {
+                    continue;
+                }
+                const SignDecal& decal = found->second;
+                const float c = std::cos(cell.yaw), s = std::sin(cell.yaw);
+                // Model (x, y, z) to the world: CreateRotationY(yaw), then the cell.
+                const auto toWorld = [&](float x, float y, float z) {
+                    return Vector3(cell.x + x * c + z * s, cell.y + y, cell.z - x * s + z * c);
+                };
+                const float midX = (decal.left + decal.right) * 0.5f;
+                const float midY = (decal.top + decal.bottom) * 0.5f;
+                const Vector2 size(decal.right - decal.left, decal.top - decal.bottom);
+                constexpr float kLift = 0.004f;
+                const Vector3 right(c, 0.0f, -s);
+                const Vector3 up(0.0f, 1.0f, 0.0f);
+                SceneDecal sceneDecal;
+                sceneDecal.texture = decal.texture.get();
+                sceneDecal.quads.push_back(Quad(toWorld(midX, midY, decal.depth + kLift), size, right, up,
+                                                CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f}));
+                sceneDecal.quads.push_back(Quad(toWorld(-midX, midY, -decal.depth - kLift), size, Vector3(-c, 0.0f, s),
+                                                up, CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f}));
+                frame.signDecals.push_back(std::move(sceneDecal));
+            }
+        }
+
+        // The glue death's strands (owner 2026-11-04, Q-006): the painted strands from his hands to the
+        // puddle and its peaks, as thin tubes in the glue model's plane (GlueStrands.hpp), in their green
+        // from element.png, turned and placed as the glue model is.
+        if (glueStrandsPending_ && objectEffect_)
+        {
+            glueStrandsPending_ = false;
+            const int glueFrame = std::clamp(blupi_.GetRawAnimIcon() - 168, 0, 3);
+            const auto iconUv = GetElementIconUv(168 + glueFrame);
+            const auto& texel = GalaxyEggbert::Game::kGlueTexel[static_cast<std::size_t>(glueFrame)];
+            const Vector2 uv(iconUv.U0 + texel[0] * (iconUv.U1 - iconUv.U0), iconUv.V0 + texel[1] * (iconUv.V1 - iconUv.V0));
+            const float turn = kPi - blupi_.GetYaw();
+            const float c = std::cos(turn), s = std::sin(turn);
+            const Vector3 origin(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f, blupi_.GetZ());
+            auto mesh = MakeTexturedMeshBuilder();
+            GalaxyEggbert::Game::AppendPolylineTubes(
+                mesh, GalaxyEggbert::Game::kGluePoints.data(), GalaxyEggbert::Game::kGluePolylines.data(),
+                GalaxyEggbert::Game::kGlueFrames[static_cast<std::size_t>(glueFrame)], uv, Vector3(0.0f, 1.0f, 0.0f),
+                [&](const Vector3& p) { return Vector3(origin.X + p.X * c + p.Z * s, origin.Y + p.Y, origin.Z - p.X * s + p.Z * c); });
+            frame.glueStrands.shown = true;
+            frame.glueStrands.mesh = mesh.Mesh();
+        }
+
+        // Painted sparks facing the camera over their models (Q-005).
+        if (!electrodeCells_.empty() || !dynamiteSparkCells_.empty())
+        {
+            const auto invView = Matrix::Invert(camera_.View());
+            const auto right = invView.getRightProperty();
+            const auto up = invView.getUpProperty();
+            const auto addSparks = [&](std::vector<SceneDecal>& out, const auto& cells, const auto& textures,
+                                       const Vector2& size, const CnaEngine::Graphics::UvRect& uv)
+            {
+                for (const auto& cell : cells)
+                {
+                    SceneDecal spark;
+                    spark.texture = textures.at(cell.icon).get();
+                    spark.quads.push_back(Quad(Vector3(cell.x, cell.y, cell.z), size, right, up, uv));
+                    out.push_back(std::move(spark));
+                }
+            };
+            addSparks(frame.electrodeSparks, electrodeCells_, electrodeSparks_, Vector2(1.0f, 1.0f),
+                      CnaEngine::Graphics::UvRect{0.0f, 0.0f, 1.0f, 1.0f});
+            // The three stars occupy [38,55) x [44,60) in their 60-pixel cells. Crop the clear margin
+            // so only the star rotates about the 3D fuse tip; preserve the sprite's scale (64 original
+            // pixels per world block).
+            addSparks(frame.dynamiteSparks, dynamiteSparkCells_, dynamiteSparks_, Vector2(17.0f / 64.0f, 16.0f / 64.0f),
+                      CnaEngine::Graphics::UvRect{38.0f / 60.0f, 44.0f / 60.0f, 55.0f / 60.0f, 1.0f});
+        }
+    }
+
+    void GalaxyEggbertGame::AppendSceneEditorStarts(std::vector<SceneModel>& models)
+    {
+        // The editor's player starts: Blupi standing, in the start's colour, the selected colour last.
+        if (phase_ != GalaxyEggbert::Def::GamePhase::Editor || worldEditor_.IsBrowsing() || !blupiModelIsReal_ ||
+            !blupiModel_ || !blupiEffect_ || blupiModel_->Clips.count("Stop") == 0)
+            return;
+        auto& device = getGraphicsDeviceProperty();
+        using Microsoft::Xna::Framework::Color;
+        auto starts = CollectPlayerStarts(worldRuntime_.GetWorld());
+        if (starts.empty()) return;
+        const auto target = worldEditor_.CurrentEditTarget(worldRuntime_.GetWorld());
+        if (target && target->kind == GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind::PlayerStart)
+            std::stable_partition(starts.begin(), starts.end(),
+                                  [&](const auto& start) { return start.color != target->color; });
+        Texture2D* face = nullptr;
+        if (const auto faces = blupiClipFaces_.find("Stop"); faces != blupiClipFaces_.end() && !faces->second.empty())
+        {
+            const int index = faces->second.front();
+            if (index >= 0 && index < static_cast<int>(blupiFaces_.size())) face = &blupiFaces_[index];
+        }
+        for (const auto& start : starts)
+        {
+            const auto coloredTexture = [&](Texture2D* source) -> Texture2D* {
+                if (!source || start.color == PlayerStartColor::Yellow) return source;
+                auto& textures = editorStartTextures_[static_cast<int>(start.color) - 1];
+                if (const auto found = textures.find(source); found != textures.end()) return found->second.get();
+                const int width = source->getWidthProperty(), height = source->getHeightProperty();
+                std::vector<Color> pixels(static_cast<std::size_t>(width) * height);
+                source->GetData(pixels.data(), static_cast<int>(pixels.size()));
+                for (auto& pixel : pixels)
+                {
+                    std::uint8_t r = pixel.getRProperty(), g = pixel.getGProperty(), b = pixel.getBProperty();
+                    GalaxyEggbert::Editor::RecolorPlayerStartPixel(start.color, r, g, b);
+                    pixel = Color(r, g, b, pixel.getAProperty());
+                }
+                auto texture = std::make_unique<Texture2D>(device, width, height);
+                texture->SetData(pixels.data(), static_cast<int>(pixels.size()));
+                auto* result = texture.get();
+                textures.emplace(source, std::move(texture));
+                return result;
+            };
+            SceneModel model;
+            model.model = blupiModel_.get();
+            model.clip = "Stop";
+            model.seconds = 0.0;
+            model.loop = false;
+            model.world = Matrix::CreateScale(kRealModelScale) * Matrix::CreateRotationY(3.14159265f - PlayerStartYaw(start)) *
+                          Matrix::CreateTranslation(float(start.x) - WorldRuntime::kWorldCenterX, float(start.y) - .5f,
+                                                    float(start.z) - WorldRuntime::kWorldCenterZ);
+            model.partTextures = PartTextures(*blupiModel_, nullptr, blupiFacePart_,
+                                              [&](Texture2D*) -> Texture2D* { return nullptr; });
+            for (std::size_t i = 0; i < blupiModel_->Parts.size(); ++i)
+            {
+                const auto& part = blupiModel_->Parts[i];
+                model.partTextures[i] = coloredTexture(face && part.Name == blupiFacePart_ ? face : part.Texture);
+            }
+            // The model itself stays opaque; selection is the same red overlay as other objects.
+            model.editorSelected = target && target->kind == GalaxyEggbert::Editor::WorldEditor::EditTarget::Kind::PlayerStart &&
+                                   target->color == start.color;
+            models.push_back(std::move(model));
+        }
+    }
+
+    void GalaxyEggbertGame::AppendSceneBillboards(SceneFrame& frame)
+    {
+        const auto invView = Matrix::Invert(camera_.View());
+        const auto cameraRight = invView.getRightProperty();
+        const auto cameraUp = invView.getUpProperty();
+        const auto& objects = worldRuntime_.GetMobileObjects();
+        constexpr float kObjectSize = 1.0f;
+        const Vector2 objectSize(kObjectSize, kObjectSize);
+
+        // element.png: the MoveObjects shown as billboards (ObjectDefinitionRegistry's Element source),
+        // each on its per-instance phase; the pieces flying away without a model; his death sprite,
+        // aura and smoke; then the drink's bubbles.
+        if (objectEffect_ &&
+            (!objects.empty() || BlupiDrawnAsDeathSprite() || BlupiCharredShape().smokes ||
+             BlupiAuraShown() != GalaxyEggbert::Def::SecretPower::None))
+        {
+            SceneBillboardBatch batch;
+            batch.sheet = SceneSheet::Element;
+            for (std::size_t index = 0; index < objects.size(); ++index)
+            {
+                const auto& obj = objects[index];
+                // Lifts and crates are cubes; object-m.png-, explo.png- and blupi.png-sourced types
+                // have their own batches. ResolveObjectVisual() is phase-aware because ObjectType38
+                // spends part of its cycle on element.png.
+                const int objPhase = static_cast<int>(obj.phase);
+                const auto visual = ResolveObjectVisual(obj.type, objPhase, obj.visualIcon);
+                if (!obj.active || !visual.visible || visual.renderMode != ObjectRenderMode::Billboard ||
+                    visual.textureSource != ObjectTextureSource::Element || ParkedVehicleModel(obj.type).model != nullptr)
+                {
+                    continue;
+                }
+                // The 7 patrol enemies' per-direction/turn-transition icon tables (ENEMY-013...).
+                const bool patrolGoesLeftFromStart = obj.posStartX > obj.posEndX;
+                const int patrolTimeTicks = static_cast<int>(obj.patrolTime);
+                int icon;
+                if (!TryGetPatrolIcon(obj.type, patrolGoesLeftFromStart, obj.patrolStep, patrolTimeTicks, icon))
+                {
+                    icon = visual.icon;
+                }
+                if (objectModelTable_.Find(ObjectTextureSource::Element, icon) != nullptr)
+                {
+                    continue; // drawn as its 3D model
+                }
+                batch.quads.push_back(Quad(Vector3(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
+                                           objectSize, cameraRight, cameraUp, Uv(GetElementIconUv(icon)),
+                                           static_cast<int>(index), icon));
+            }
+            // A piece flying away without a model (BD-0049): its sprite, turned as the original's.
+            for (const auto& piece : interaction_.ByeByePieces())
+            {
+                ObjectTextureSource sheet{};
+                int icon = 0;
+                if (piece.helicopter || piece.fanIcon >= 0 || !ObjectSprite(piece.look, sheet, icon) ||
+                    sheet != ObjectTextureSource::Element || objectModelTable_.Find(sheet, icon) != nullptr)
+                {
+                    continue;
+                }
+                const float angle = piece.rotationDegrees * 3.14159265f / 180.0f;
+                const auto right = cameraRight * std::cos(angle) - cameraUp * std::sin(angle);
+                const auto up = cameraRight * std::sin(angle) + cameraUp * std::cos(angle);
+                batch.quads.push_back(Quad(Vector3(piece.x, ResolveObjectVisualCenterY(piece.look.type, piece.y), piece.z),
+                                           objectSize, right, up, Uv(GetElementIconUv(icon))));
+            }
+            // His own death sprite (BlupiDrawnAsDeathSprite()): the 60 px icon, its centre 30 px over his
+            // feet (half a cell under GetY()), as the original draws it.
+            if (BlupiDrawnAsDeathSprite())
+            {
+                batch.quads.push_back(Quad(Vector3(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f, blupi_.GetZ()),
+                                           Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp,
+                                           Uv(GetElementIconUv(blupi_.GetDisplayAnimIcon()))));
+            }
+            // The shield's orb (table_shield_blupi, 2 px higher) and sparkles (table_shieldloop), the
+            // power's stars (table_magicloop), a frame every 2 ticks, on his sprite's place, a little
+            // behind him from the camera: the original draws them before him (Decor.cpp:782-806).
+            if (const auto aura = BlupiAuraShown();
+                aura == GalaxyEggbert::Def::SecretPower::Shield || aura == GalaxyEggbert::Def::SecretPower::Power)
+            {
+                static constexpr int kShieldBlupi[16] = {144, 145, 146, 147, 148, 149, 150, 151,
+                                                         266, 267, 268, 269, 270, 271, 272, 273};
+                static constexpr int kShieldLoop[5] = {274, 275, 276, 277, 278};
+                static constexpr int kMagicLoop[5] = {152, 153, 154, 155, 156};
+                const int auraFrame = worldRuntime_.GetAnimPhase() / 2;
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                const Vector3 centre(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f, blupi_.GetZ());
+                const auto add = [&](int icon, float raise)
+                {
+                    batch.quads.push_back(Quad(centre + behind + Vector3(0.0f, raise, 0.0f), Vector2(60.0f / 64.0f, 60.0f / 64.0f),
+                                               cameraRight, cameraUp, Uv(GetElementIconUv(icon))));
+                };
+                if (aura == GalaxyEggbert::Def::SecretPower::Shield)
+                {
+                    add(kShieldBlupi[auraFrame % 16], 2.0f / 64.0f);
+                    add(kShieldLoop[auraFrame % 5], 0.0f);
+                }
+                else
+                {
+                    add(kMagicLoop[auraFrame % 5], 0.0f);
+                }
+            }
+            // The smoke over his heap of ash (46/47, CharredBlupi.hpp): the icon's rows above the heap,
+            // its bottom where the sprite's would be over the model's feet.
+            if (const auto charred = BlupiCharredShape(); charred.smokes)
+            {
+                const auto uv = GetElementIconUv(blupi_.GetRawAnimIcon());
+                constexpr float kRows = static_cast<float>(GalaxyEggbert::Game::kCharredSmokeRows);
+                const float feetY = blupi_.GetY() - 0.5f;
+                const float bottom = feetY + GalaxyEggbert::Game::kCharredSmokeBottomPixels / 64.0f;
+                batch.quads.push_back(Quad(Vector3(blupi_.GetX(), bottom + kRows / 128.0f, blupi_.GetZ()),
+                                           Vector2(60.0f / 64.0f, kRows / 64.0f), cameraRight, cameraUp,
+                                           CnaEngine::Graphics::UvRect{uv.U0, uv.V0, uv.U1, uv.V0 + (uv.V1 - uv.V0) * kRows / 60.0f}));
+            }
+            frame.billboards.push_back(std::move(batch));
+
+            // The drink's bubbles (Decor.cpp:882-895): over each bottle three bubbles (element
+            // 274 + n % 5) rise 3 px a tick for 50 ticks, a third apart (table_drinkoffset 0, 7, 22),
+            // fading from whole to nothing. The fade in five steps: one batch and alpha each.
+            static constexpr int kDrinkOffsets[3] = {0, 7, 22};
+            constexpr int kFadeSteps = 5;
+            std::array<SceneBillboardBatch, kFadeSteps> fades;
+            for (int k = 0; k < kFadeSteps; ++k)
+            {
+                fades[static_cast<std::size_t>(k)].sheet = SceneSheet::Element;
+                // (50 - n) / 50 at the step's middle.
+                fades[static_cast<std::size_t>(k)].alpha =
+                    1.0f - (static_cast<float>(k) + 0.5f) / static_cast<float>(kFadeSteps);
+            }
+            for (const auto& obj : objects)
+            {
+                if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType30)
+                {
+                    continue;
+                }
+                const float centreY = ResolveObjectVisualCenterY(obj.type, obj.currentY);
+                for (const int offset : kDrinkOffsets)
+                {
+                    const int n = (worldRuntime_.GetAnimPhase() + offset) % 50;
+                    const int step = std::min(kFadeSteps - 1, n * kFadeSteps / 50);
+                    fades[static_cast<std::size_t>(step)].quads.push_back(
+                        Quad(Vector3(obj.currentX, centreY + static_cast<float>(n) * 3.0f / 64.0f, obj.currentZ) +
+                                 cameraRight * (2.0f / 64.0f),
+                             Vector2(60.0f / 64.0f, 60.0f / 64.0f), cameraRight, cameraUp, Uv(GetElementIconUv(274 + n % 5))));
+                }
+            }
+            for (auto& fade : fades)
+            {
+                if (!fade.quads.empty())
+                {
+                    frame.billboards.push_back(std::move(fade));
+                }
+            }
+        }
+
+        // object-m.png: the MoveObjects shown from the terrain's sheet (tileAtlas_ UVs).
+        if (objectMPngEffect_ && !objects.empty())
+        {
+            SceneBillboardBatch batch;
+            batch.sheet = SceneSheet::ObjectM;
+            for (std::size_t index = 0; index < objects.size(); ++index)
+            {
+                const auto& obj = objects[index];
+                const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+                if (!obj.active || !visual.visible || visual.renderMode != ObjectRenderMode::Billboard ||
+                    visual.textureSource != ObjectTextureSource::ObjectM)
+                {
+                    continue;
+                }
+                if (objectModelTable_.Find(ObjectTextureSource::ObjectM, visual.icon) != nullptr)
+                {
+                    continue; // drawn as its 3D model
+                }
+                batch.quads.push_back(Quad(Vector3(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
+                                           objectSize, cameraRight, cameraUp, tileAtlas_.GetTileUv(visual.icon),
+                                           static_cast<int>(index), visual.icon));
+            }
+            frame.billboards.push_back(std::move(batch));
+        }
+
+        // explo.png: the explosion channel's MoveObjects, and the Cloud's sparks round him.
+        if (exploEffect_ && (!objects.empty() || BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud))
+        {
+            SceneBillboardBatch batch;
+            batch.sheet = SceneSheet::Explo;
+            // The Cloud's three sparks round him (explo.png 48 + (t + k) % 6, 128 px centred on his
+            // sprite: pos - 34, Decor.cpp:807-818), a little behind him as the original draws them first.
+            if (BlupiAuraShown() == GalaxyEggbert::Def::SecretPower::Cloud)
+            {
+                const auto behind = invView.getForwardProperty() * 0.35f;
+                const Vector3 centre(blupi_.GetX(), blupi_.GetY() - 0.5f + 30.0f / 64.0f, blupi_.GetZ());
+                for (int k = 0; k < 3; ++k)
+                {
+                    batch.quads.push_back(Quad(centre + behind, Vector2(128.0f / 64.0f, 128.0f / 64.0f), cameraRight, cameraUp,
+                                               Uv(GetExploIconUv(48 + (worldRuntime_.GetAnimPhase() + k) % 6))));
+                }
+            }
+            for (std::size_t index = 0; index < objects.size(); ++index)
+            {
+                const auto& obj = objects[index];
+                const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+                if (!obj.active || visual.renderMode != ObjectRenderMode::Billboard ||
+                    visual.textureSource != ObjectTextureSource::Explo)
+                {
+                    continue;
+                }
+                // The -1 "invisible frame" sentinel (VISUAL-009, table_sploutch2/3's leading delay
+                // ticks): nothing this tick, as the original's blank frame.
+                if (!visual.visible)
+                {
+                    continue;
+                }
+                if (objectModelTable_.Find(ObjectTextureSource::Explo, visual.icon) != nullptr)
+                {
+                    continue; // drawn as its 3D model
+                }
+                batch.quads.push_back(Quad(Vector3(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
+                                           objectSize, cameraRight, cameraUp, Uv(GetExploIconUv(visual.icon)),
+                                           static_cast<int>(index), visual.icon));
+            }
+            frame.billboards.push_back(std::move(batch));
+        }
+
+        // blupi.png (ObjectType200) and blupi1.png (201-203): two batches, one texture each.
+        if (blupiObjectEffect_ && blupi1ObjectEffect_ && !objects.empty())
+        {
+            SceneBillboardBatch blupiBatch;
+            blupiBatch.sheet = SceneSheet::Blupi;
+            SceneBillboardBatch blupi1Batch;
+            blupi1Batch.sheet = SceneSheet::Blupi1;
+            for (std::size_t index = 0; index < objects.size(); ++index)
+            {
+                const auto& obj = objects[index];
+                const auto visual = ResolveObjectVisual(obj.type, static_cast<int>(obj.phase), obj.visualIcon);
+                if (!obj.active || !visual.visible || visual.renderMode != ObjectRenderMode::Billboard ||
+                    (visual.textureSource != ObjectTextureSource::Blupi && visual.textureSource != ObjectTextureSource::Blupi1))
+                {
+                    continue;
+                }
+                // The enemy Blupis' patrol tables (ObjectSprite), unless drawn as his model.
+                ObjectTextureSource sheet{};
+                int icon = visual.icon;
+                if (EnemyBlupiModelDrawn(obj) || !ObjectSprite(obj, sheet, icon) ||
+                    objectModelTable_.Find(visual.textureSource, icon) != nullptr)
+                {
+                    continue; // drawn as its 3D model
+                }
+                auto& batch = visual.textureSource == ObjectTextureSource::Blupi1 ? blupi1Batch : blupiBatch;
+                batch.quads.push_back(Quad(Vector3(obj.currentX, ResolveObjectVisualCenterY(obj.type, obj.currentY), obj.currentZ),
+                                           objectSize, cameraRight, cameraUp, Uv(GetBlupiIconUv(icon)),
+                                           static_cast<int>(index), icon));
+            }
+            frame.billboards.push_back(std::move(blupiBatch));
+            frame.billboards.push_back(std::move(blupi1Batch));
+        }
+
+        // The big decor (BigDecor: cells) on explo.png, the source's CHEXPLO layer; cells from a mobile
+        // BigDecor: grid or sparse 3D .vwr BigDecorRecord metadata.
+        if (bigDecorEffect_ && !bigDecorCells_.empty())
+        {
+            SceneBillboardBatch batch;
+            batch.sheet = SceneSheet::BigDecor;
+            constexpr float kBigDecorSize = 1.0f;
+            for (const auto& cell : bigDecorCells_)
+            {
+                if (cell.icon == GalaxyEggbert::BlockTypes::Marine)
+                {
+                    // BigDecor icon 203 is not an explo.png icon: the original draws the object
+                    // channel's marine animation there (Decor.cpp: `num2 = table_marine[m_time /
+                    // ScaleDiv(3) % 11]; channel = Object`), the Marine block's animation.
+                    float u = 0.0f, v = 0.0f, us = 0.0f, vs = 0.0f;
+                    GalaxyEggbert::BlockTypes::tileUV(
+                        GalaxyEggbert::ResolveBlockAnimationIcon(GalaxyEggbert::BlockTypes::Marine, worldRuntime_.GetAnimPhase()),
+                        u, v, us, vs);
+                    frame.marine.push_back(Quad(Vector3(cell.worldX, cell.worldY, cell.worldZ),
+                                                Vector2(kBigDecorSize, kBigDecorSize), cameraRight, cameraUp,
+                                                CnaEngine::Graphics::UvRect{u, v, u + us, v + vs}));
+                    continue;
+                }
+                if (objectModelTable_.Find(ObjectTextureSource::Explo, cell.icon) != nullptr)
+                {
+                    continue; // drawn as its 3D model
+                }
+                batch.quads.push_back(Quad(Vector3(cell.worldX, cell.worldY, cell.worldZ), Vector2(kBigDecorSize, kBigDecorSize),
+                                           cameraRight, cameraUp, Uv(GetBigDecorIconUv(static_cast<int>(cell.icon)))));
+            }
+            frame.billboards.push_back(std::move(batch));
+        }
+    }
+}

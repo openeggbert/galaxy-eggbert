@@ -1,98 +1,191 @@
 #pragma once
 
-// SceneFrame -- the engine-neutral, per-frame description of what to draw
-// (renderers.md, Phase 1). The simulation (already graphics-free) populates a
-// SceneFrame each frame; a renderer consumes ONLY this, never the live sim
-// state. This is the seam that lets two interchangeable renderers exist behind
-// one IGameRenderer (a lightweight CNA + cna-engine renderer today, a hi-fi renderer
-// later) and that gives the golden/behavioral harness (REMAKE-ANALYSIS.md,
-// P0-1) a single deterministic artifact to capture and diff.
+// SceneFrame -- what the 3D world draws this frame (renderers.md, the seam between the simulation and
+// the renderer). GalaxyEggbertGame builds it from the simulation's state (GalaxyEggbertGameScene.cpp:
+// which objects, which icon, which model and pose, where), and WorldRenderer draws only from it and
+// from the loaded assets (WorldRenderer.hpp: how -- effects, meshes, device state, and the optional
+// effects layer). The lists keep the order the world has always been drawn in: what is drawn first
+// stays first, so blending and depth come out the same.
 //
-// Deliberately depends on NO cna-engine/CNA graphics types -- only on the
-// engine-agnostic enums (GalaxyEggbert::Def::ObjectType, GalaxyEggbert::Def::SecretPower) and the graphics-free
-// controller enums (AnimState, VehicleMode). That keeps it headless-testable
-// and consumable by either renderer. Positions are plain world-space floats in
-// the same raw grid space the sim uses; the renderer applies its own
-// render-space shift/camera (see NEXT.md "Coordinate invariants").
-//
-// Status: data contract only, not yet wired. Draw() is not yet repointed to
-// consume it (Phase 1 step 3) and IGameRenderer does not exist yet (Phase 2).
-// HUD is intentionally left out of this first cut -- the real HUD (Hud, 640x480
-// reference space) is rich enough that modelling it blind would be a guess; it
-// is added once a build is available to verify the mapping against Hud.
+// No GraphicsDevice, effect or GPU mesh here: geometry is XNA math and cna-engine's CPU-side texture
+// rectangles and box faces; the loaded models and textures it names are only pointed at (forward
+// declared), never touched.
 
-#include "BlupiController.hpp"          // AnimState, VehicleMode (graphics-free)
 #include <GalaxyEggbert/Def/ObjectType.hpp>
-#include <GalaxyEggbert/Def/SecretPower.hpp>
 
+#include <CnaEngine/Graphics/MeshBuilder.hpp>
+#include <CnaEngine/Graphics/TextureAtlas.hpp>
+
+#include <Microsoft/Xna/Framework/Matrix.hpp>
+#include <Microsoft/Xna/Framework/Vector2.hpp>
+#include <Microsoft/Xna/Framework/Vector3.hpp>
+
+#include <array>
 #include <cstdint>
+#include <string>
 #include <vector>
+
+namespace Microsoft::Xna::Framework::Graphics
+{
+    class SkinnedModelEXT;
+    class Texture2D;
+}
 
 namespace GalaxyEggbert::Game
 {
-    // Minimal world-space vector, kept local so SceneFrame pulls in no
-    // cna-engine/CNA math header. The renderer converts to its own vector type.
-    struct SceneVec3
-    {
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
-    };
-
     struct SceneCamera
     {
-        SceneVec3 position;
-        SceneVec3 target;       // look-at point in world space
-        float fovRadians = 0.0f;
-        bool thirdPerson = false;
+        Microsoft::Xna::Framework::Matrix view;
+        Microsoft::Xna::Framework::Matrix projection;
+        Microsoft::Xna::Framework::Vector3 position;
+        Microsoft::Xna::Framework::Vector3 target; // the chase camera's look-at point
+        float fieldOfView = 0.0f;                  // vertical, radians
+        float aspectRatio = 1.0f;
     };
 
-    // One dynamic object (pickup / enemy / effect / lift / crate). Carries the
-    // SEMANTIC state (type + animation phase + patrol direction), not a resolved
-    // 2D icon: the lightweight renderer resolves the icon exactly as today (via
-    // ObjectIcons::GetObjIcon(type, phase)), while a future hi-fi renderer can
-    // map (type, phase) to a 3D model instead. Position is `current*` from
-    // MobileObjSpec (the live, moved position), not `posStart`.
-    struct SceneObject
+    // A camera-facing (or turned) quad: centre, size in blocks, its right and up vectors, the texture
+    // rectangle. `source` names the MoveObject it shows, if any (the effects layer's particles).
+    struct SceneQuad
     {
-        GalaxyEggbert::Def::ObjectType type{};
-        SceneVec3 position;
-        float phase = 0.0f;     // per-instance animation tick counter
-        float direction = 1.0f; // patrol direction (+1 toward posEnd, -1 back)
-        bool active = true;     // false once a one-shot pickup is collected
+        Microsoft::Xna::Framework::Vector3 center;
+        Microsoft::Xna::Framework::Vector2 size;
+        Microsoft::Xna::Framework::Vector3 right;
+        Microsoft::Xna::Framework::Vector3 up;
+        CnaEngine::Graphics::UvRect uv;
+        int sourceObject = -1;                     // index in WorldRuntime::GetMobileObjects(), or -1
+        int sourceIcon = -1;                       // its icon on its sheet
     };
 
-    // Blupi's presentation state. `visible` is false while he is invisible in
-    // first-person (collision-only) or hidden mid death-loss Voyage; the
-    // renderer decides how to show him (2D indicator, placeholder model, or a
-    // real 3D model once one exists).
-    struct SceneBlupi
+    // The sheets a billboard batch is cut from: each its own texture and effect.
+    enum class SceneSheet : std::uint8_t
     {
-        SceneVec3 position;
-        BlupiController::AnimState animState = BlupiController::AnimState::Stop;
-        BlupiController::VehicleMode vehicleMode = BlupiController::VehicleMode::None;
-        GalaxyEggbert::Def::SecretPower secretPower = GalaxyEggbert::Def::SecretPower::None;
-        int facing = 1;         // +1 right, -1 left (2D sprite mirror axis)
-        bool visible = false;
+        Element,  // element.png
+        ObjectM,  // object-m.png (the terrain's sheet)
+        Explo,    // explo.png, the explosion channel's objects
+        Blupi,    // blupi.png
+        Blupi1,   // blupi1.png
+        BigDecor, // explo.png, the big decor layer
     };
 
-    struct SceneEnvironment
+    struct SceneBillboardBatch
     {
-        int skyRegion = 0;      // world.skyRegion(); selects Content/backgrounds/decorNNN.png
+        SceneSheet sheet = SceneSheet::Element;
+        float alpha = 1.0f;
+        std::vector<SceneQuad> quads;
     };
 
-    // The whole per-frame draw description. Static terrain is NOT re-listed here
-    // every frame -- it is a mesh the renderer builds once on world load and
-    // rebuilds only when `terrainDirty` is set (a world/editor edit), matching
-    // how terrain is actually rendered today. Only per-frame dynamic content
-    // travels through the SceneFrame.
+    // A cube of the cube-object pass (lifts, crates: SolidCube MoveObjects), in the world as it is.
+    struct SceneCube
+    {
+        Microsoft::Xna::Framework::Vector3 center;
+        Microsoft::Xna::Framework::Vector3 size;
+        CnaEngine::Graphics::BoxFaces faces;
+    };
+
+    // A crate flying away (ByeByePiece): a unit cube in its own world transform.
+    struct SceneCubePiece
+    {
+        Microsoft::Xna::Framework::Matrix world;
+        CnaEngine::Graphics::UvRect uv;
+    };
+
+    enum class SceneCull : std::uint8_t
+    {
+        CounterClockwise, // XNA's default
+        Clockwise,        // a mirrored model (its winding turned round)
+    };
+
+    // One skinned model posed and drawn: Blupi, the vehicles, the enemy Blupis, the editor's player
+    // starts, every object, decor and terrain model.
+    struct SceneModel
+    {
+        const Microsoft::Xna::Framework::Graphics::SkinnedModelEXT* model = nullptr;
+        std::string clip;
+        double seconds = 0.0;
+        bool loop = true;
+        Microsoft::Xna::Framework::Matrix world;
+        SceneCull cull = SceneCull::CounterClockwise;
+        float alpha = 1.0f;
+        bool translucent = false;          // alpha blended over the scene, depth read but not written
+        bool tinted = false;               // the charred or glued colour below, without sheen
+        Microsoft::Xna::Framework::Vector3 tint;
+        // Each part's texture when not its own (a face, the enemy's or a start's recoloured copies):
+        // empty, or one entry per part, nullptr keeping the part's own.
+        std::vector<Microsoft::Xna::Framework::Graphics::Texture2D*> partTextures;
+        float sawSeconds = -1.0f;          // >= 0: the saw's parts shown at this pose time only
+        bool boothFrontOnly = false;       // a teleporter's other sides: its plate and lights only
+        bool editorSelected = false;       // the editor's red overlay over it
+        float cullRadius = -1.0f;          // >= 0: skipped when this sphere round `cullCenter` is out of view
+        Microsoft::Xna::Framework::Vector3 cullCenter;
+        bool counted = false;              // counted in the perf statistics (object models)
+    };
+
+    // A textured quad set drawn with one texture (the signs' painted faces, the sparks).
+    struct SceneDecal
+    {
+        Microsoft::Xna::Framework::Graphics::Texture2D* texture = nullptr;
+        std::vector<SceneQuad> quads;
+    };
+
+    // The glue death's strands (GlueStrands.hpp): thin tubes on element.png, already placed.
+    struct SceneGlueStrands
+    {
+        bool shown = false;
+        CnaEngine::Graphics::MeshData mesh;
+    };
+
     struct SceneFrame
     {
         SceneCamera camera;
-        SceneBlupi blupi;
-        SceneEnvironment environment;
-        std::vector<SceneObject> objects;
-        bool terrainDirty = false;   // renderer (re)builds the static terrain mesh when true
-        // HUD: deferred to a build-verified pass (see file header note).
+        bool world = false;                // the 3D world is drawn (not the menus' own screens)
+        bool terrain = false;              // the terrain and everything drawn with it
+
+        // The terrain's reliefs round the camera's target (TerrainRelief.hpp).
+        Microsoft::Xna::Framework::Vector3 reliefTarget;
+        float reliefRadius = 0.0f;
+        int reliefBudget = -1;             // chunks built this frame, -1 all (the first frame)
+        bool reportReliefTiming = false;
+
+        std::vector<SceneCube> cubes;
+        std::vector<SceneCubePiece> cubePieces;
+
+        // In drawing order: Blupi (unless translucent), the parked and enemy vehicles, then every
+        // object model; then the translucent Blupi, then the editor's player starts.
+        std::vector<SceneModel> opaqueModels;
+        int vehiclePassStart = -1;         // where in opaqueModels the parked vehicles' pass begins, if it runs
+        std::vector<SceneModel> objectModels;
+        bool objectModelPass = false;      // the object model pass runs (its closing cull state)
+        bool signDecalPass = false;        // the sign pass runs (its states)
+        std::vector<SceneDecal> signDecals;
+        SceneGlueStrands glueStrands;
+        std::vector<SceneDecal> electrodeSparks;
+        std::vector<SceneDecal> dynamiteSparks;
+        std::vector<SceneModel> translucentModels;
+        std::vector<SceneModel> editorStarts;
+
+        // The billboards after the terrain's translucent pass, batch by batch.
+        std::vector<SceneBillboardBatch> billboards;
+        // The big decor cells drawn as the marine animation (on object-m.png, its own pass).
+        std::vector<SceneQuad> marine;
+
+        void Clear()
+        {
+            world = terrain = false;
+            reportReliefTiming = false;
+            cubes.clear();
+            cubePieces.clear();
+            opaqueModels.clear();
+            vehiclePassStart = -1;
+            objectModels.clear();
+            objectModelPass = signDecalPass = false;
+            signDecals.clear();
+            glueStrands = {};
+            electrodeSparks.clear();
+            dynamiteSparks.clear();
+            translucentModels.clear();
+            editorStarts.clear();
+            billboards.clear();
+            marine.clear();
+        }
     };
 }
