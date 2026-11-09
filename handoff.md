@@ -63,7 +63,11 @@ with the release audit.
   misses a quick one), Enter or a click elsewhere keeps it, Escape leaves it. The import list and
   the menu's player panel show it ("Star Fields : 0 gates", cut with "..." when long; read again
   on each return to the menu). Typing needs a keyboard (not on a touch-only device). Tests
-  `VerifyGEEditorStorage`; live `harness/case_galaxy_name.py` (`galaxy-name-sheet.png`).
+  `VerifyGEEditorStorage`; live `harness/case_galaxy_name.py` (`galaxy-name-sheet.png`). On the web
+  too (`harness/web_names.py`, `web-names-sheet.png`, the rebuilt `build-cna-webgl2`): the menu's
+  Demos, the same file picked twice kept as `demo001.gdemo` and `demo001-2.gdemo`, a bin deleting
+  one from the browser's storage, the galaxy named "Star Fields" from the keyboard (Shift
+  included), its export downloaded as `Star-Fields.galaxy` with its name; no exception.
 - The demo positions from the main menu (same day): a Demos button left of Exit (over Galaxy,
   `InputPad` `InitLayout::demos`, `demosPressed`) opens the same screen over the pause screen's
   picture (`UpdateDemoSlotsScreen`/`DrawDemoSlotsScreen`, shared with Pause): Export, Import and
