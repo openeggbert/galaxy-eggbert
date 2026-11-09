@@ -49,6 +49,13 @@ content-authoring UX, but not new gameplay mechanics.
   panels, the palace, windows, bookshelves; the grass as its scene's slabs back to back. Farther off,
   and for the tiles whose scene the archive lacks (bricks, grey metal plates, some panels), textured
   cubes.
+- The brick wall's edge pieces 262/263/283 (owner 2026-11-09, Q-011: ragged only towards the open):
+  at a wall's open end (air on the piece's clear side and across it, the wall going on behind) the
+  cell is its four courses of bricks, each ending where its bricks end (`BrickEdges.hpp`,
+  `TerrainRenderer` `AppendRaggedBrick`, faces only where seen, a whole neighbour's face drawn over
+  the toothing it would hide); everywhere else a whole cube whose clear texels are the whole brick
+  261's. Visual only (collision stays the cell). 13, 14, 14, 33 and 1 cells in 124, 123, 121, 034
+  and 199 (the worlds scatter the pieces in walls, where they stay whole).
 - Blupi's 3D model (from the Ray Dream originals) has clips for every live table_blupi action,
   including Win, Turn, Vertigo, Recede, the reactions (JumpAie, Ouf*) and the poses between moves.
 
@@ -409,8 +416,6 @@ BD-0119) are done too. What is left:_
 
 - **A release of the desktop and web builds**: they pass every automated check; the release audit
   (§6) leaves only the owner's word.
-- Q-010/Q-011's remainder (`plans/audit/owner_questions.md`): whether the cheese holes should be
-  see-through and the brick ends ragged where they border air (the black was a bug, fixed).
 - Optional: a human play pass (MR-0004 lists what to try); the owner judged the automated
   playthroughs sufficient (MR-0007), so it does not hold anything up.
 

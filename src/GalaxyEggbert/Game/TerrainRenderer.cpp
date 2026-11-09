@@ -3,6 +3,7 @@
 #include "LavaSurface.hpp"
 #include "BlockModels.hpp"
 #include "BoltMesh.hpp"
+#include "BrickEdges.hpp"
 #include "DirectionalCubeTiles.hpp"
 #include "InnerFlatPlateTiles.hpp"
 #include "InnerPillarBoxTiles.hpp"
@@ -358,6 +359,138 @@ namespace GalaxyEggbert::Game
             }
             return mask;
         }
+
+        // What lies across each face of a ragged brick edge cell (BrickEdges.hpp), in BoxFace order.
+        enum class BrickNeighbour : std::uint8_t
+        {
+            Open,   // air, a cell drawn otherwise: the face is seen
+            Whole,  // a block whose face towards the cell is hidden: the cell covers what it does not
+            Ragged, // another ragged brick edge cell: each draws its own faces
+        };
+
+        // A brick edge cell drawn as its four courses (Q-011, BrickEdges.hpp): each course a box ending
+        // where its bricks end on the cell's ragged sides; the faces textured by position, only the parts
+        // that can be seen. A face across a ragged end wears the edge piece @p side (its bricks end with
+        // the course), every other side face and the parts drawn for a Whole neighbour (its face over a
+        // ragged end, hidden by the cell) the whole brick @p whole; top and bottom @p top and @p bottom.
+        void AppendRaggedBrick(CnaEngine::Graphics::MeshBuilder& mesh, const Microsoft::Xna::Framework::Vector3& center,
+                               const BrickEdges::Shape& shape, const CnaEngine::Graphics::UvRect& side,
+                               const CnaEngine::Graphics::UvRect& whole, const CnaEngine::Graphics::UvRect& top,
+                               const CnaEngine::Graphics::UvRect& bottom, const std::array<BrickNeighbour, 6>& across,
+                               const BrickEdges::Shape& above, const BrickEdges::Shape& below)
+        {
+            using CnaEngine::Graphics::BoxFace;
+            using Microsoft::Xna::Framework::Vector3;
+            const Vector3 origin = center - Vector3(0.5f, 0.5f, 0.5f);
+            const auto lerp = [](float a, float b, float t) { return a + (b - a) * t; };
+            const bool raggedX = (shape.raggedSides & ((1u << BrickEdges::PositiveX) | (1u << BrickEdges::NegativeX))) != 0;
+            const bool raggedZ = (shape.raggedSides & ((1u << BrickEdges::PositiveZ) | (1u << BrickEdges::NegativeZ))) != 0;
+            // One face of the box [lo, hi] (cell units, a zero thickness for a lone quad); a cap is a
+            // Whole neighbour's face.
+            const auto face = [&](BoxFace f, Vector3 lo, Vector3 hi, bool cap = false) {
+                const bool alongX = f == BoxFace::PositiveZ || f == BoxFace::NegativeZ;
+                const auto& rect = !cap && (alongX ? raggedX : raggedZ) ? side : whole;
+                const auto sideU = [&](float l) { return lerp(rect.u0, rect.u1, l); };
+                const auto sideV = [&](float ly) { return lerp(rect.v0, rect.v1, 1.0f - ly); };
+                CnaEngine::Graphics::BoxFaces faces;
+                for (auto& style : faces) style.visible = false;
+                auto& style = faces[static_cast<int>(f)];
+                style.visible = true;
+                CnaEngine::Graphics::UvRect uv;
+                switch (f)
+                {
+                case BoxFace::PositiveZ: uv = {sideU(lo.X), sideV(hi.Y), sideU(hi.X), sideV(lo.Y)}; break;
+                case BoxFace::NegativeZ: uv = {sideU(hi.X), sideV(hi.Y), sideU(lo.X), sideV(lo.Y)}; break;
+                case BoxFace::PositiveX: uv = {sideU(hi.Z), sideV(hi.Y), sideU(lo.Z), sideV(lo.Y)}; break;
+                case BoxFace::NegativeX: uv = {sideU(lo.Z), sideV(hi.Y), sideU(hi.Z), sideV(lo.Y)}; break;
+                case BoxFace::PositiveY:
+                    uv = {lerp(top.u0, top.u1, lo.X), lerp(top.v0, top.v1, lo.Z), lerp(top.u0, top.u1, hi.X),
+                          lerp(top.v0, top.v1, hi.Z)};
+                    break;
+                case BoxFace::NegativeY:
+                    uv = {lerp(bottom.u0, bottom.u1, lo.X), lerp(bottom.v0, bottom.v1, 1.0f - hi.Z),
+                          lerp(bottom.u0, bottom.u1, hi.X), lerp(bottom.v0, bottom.v1, 1.0f - lo.Z)};
+                    break;
+                }
+                style.uv = uv;
+                mesh.AddBox(origin + lo, origin + hi, faces);
+            };
+            const auto flat = [&](BoxFace f, const BrickEdges::Rect& r, float y) {
+                face(f, Vector3(r.x0, y, r.z0), Vector3(r.x1, y, r.z1));
+            };
+            static constexpr BoxFace kSideFaces[4] = {BoxFace::PositiveZ, BoxFace::NegativeZ, BoxFace::PositiveX,
+                                                      BoxFace::NegativeX};
+            const BrickEdges::Rect cell{};
+            for (int course = 0; course < BrickEdges::kCourseCount; ++course)
+            {
+                const float yTop = 1.0f - static_cast<float>(BrickEdges::kCourseRows[static_cast<std::size_t>(course)]) /
+                                              BrickEdges::kTileTexels;
+                const float yBottom =
+                    1.0f - static_cast<float>(BrickEdges::kCourseRows[static_cast<std::size_t>(course) + 1]) /
+                               BrickEdges::kTileTexels;
+                const auto r = BrickEdges::CourseRect(shape, course);
+                const auto& inset = shape.inset[static_cast<std::size_t>(course)];
+                for (int s = 0; s < 4; ++s)
+                {
+                    const bool onBoundary = inset[static_cast<std::size_t>(s)] <= BrickEdges::kSliver;
+                    const auto neighbour = across[static_cast<std::size_t>(s)];
+                    if (!onBoundary || neighbour != BrickNeighbour::Whole)
+                    {
+                        face(kSideFaces[s], Vector3(r.x0, yBottom, r.z0), Vector3(r.x1, yTop, r.z1));
+                    }
+                    if (!onBoundary || neighbour != BrickNeighbour::Whole) continue;
+                    // The Whole neighbour's face over the ends beside this course (its own is hidden).
+                    const bool alongX = s == BrickEdges::PositiveZ || s == BrickEdges::NegativeZ;
+                    const float plane = s == BrickEdges::PositiveZ || s == BrickEdges::PositiveX ? 1.0f : 0.0f;
+                    const auto gaps = alongX ? BrickEdges::Outside(r.x0, r.x1) : BrickEdges::Outside(r.z0, r.z1);
+                    const BoxFace inward = kSideFaces[BrickEdges::Opposite(s)];
+                    for (const auto& [a, b] : gaps)
+                    {
+                        if (alongX) face(inward, Vector3(a, yBottom, plane), Vector3(b, yTop, plane), true);
+                        else face(inward, Vector3(plane, yBottom, a), Vector3(plane, yTop, b), true);
+                    }
+                }
+                // Top: the cell's top over its neighbour above, else the step to the course above.
+                if (course == 0)
+                {
+                    const auto up = across[static_cast<int>(BoxFace::PositiveY)];
+                    if (up == BrickNeighbour::Open)
+                        flat(BoxFace::PositiveY, r, yTop);
+                    else
+                    {
+                        const auto cover = up == BrickNeighbour::Whole
+                                               ? cell
+                                               : BrickEdges::CourseRect(above, BrickEdges::kCourseCount - 1);
+                        for (const auto& part : BrickEdges::Subtract(r, cover)) flat(BoxFace::PositiveY, part, yTop);
+                        if (up == BrickNeighbour::Whole)
+                            for (const auto& part : BrickEdges::Subtract(cell, r)) flat(BoxFace::NegativeY, part, yTop);
+                    }
+                }
+                else
+                {
+                    for (const auto& part : BrickEdges::Subtract(r, BrickEdges::CourseRect(shape, course - 1)))
+                        flat(BoxFace::PositiveY, part, yTop);
+                }
+                if (course == BrickEdges::kCourseCount - 1)
+                {
+                    const auto down = across[static_cast<int>(BoxFace::NegativeY)];
+                    if (down == BrickNeighbour::Open)
+                        flat(BoxFace::NegativeY, r, yBottom);
+                    else
+                    {
+                        const auto cover = down == BrickNeighbour::Whole ? cell : BrickEdges::CourseRect(below, 0);
+                        for (const auto& part : BrickEdges::Subtract(r, cover)) flat(BoxFace::NegativeY, part, yBottom);
+                        if (down == BrickNeighbour::Whole)
+                            for (const auto& part : BrickEdges::Subtract(cell, r)) flat(BoxFace::PositiveY, part, yBottom);
+                    }
+                }
+                else
+                {
+                    for (const auto& part : BrickEdges::Subtract(r, BrickEdges::CourseRect(shape, course + 1)))
+                        flat(BoxFace::NegativeY, part, yBottom);
+                }
+            }
+        }
     }
 
     namespace
@@ -493,6 +626,23 @@ namespace GalaxyEggbert::Game
                 }
             }
             return mask;
+        };
+        // The brick edge pieces' shape (Q-011, BrickEdges.hpp) from their horizontal neighbours.
+        const auto brickShapeAt = [&](int cx, int cy, int cz) {
+            const int n = static_cast<int>(world.blocksPerAxis());
+            if (cx < 0 || cy < 0 || cz < 0 || cx >= n || cy >= n || cz >= n) return BrickEdges::Shape{};
+            const int icon = static_cast<int>(world.getBlock(static_cast<std::uint16_t>(cx), static_cast<std::uint16_t>(cy),
+                                                             static_cast<std::uint16_t>(cz)).type());
+            if (!BrickEdges::IsBrickEdgeIcon(icon)) return BrickEdges::Shape{};
+            return BrickEdges::ShapeFor(icon, [&](int s) {
+                const int nx = cx + BrickEdges::kSideDx[static_cast<std::size_t>(s)];
+                const int nz = cz + BrickEdges::kSideDz[static_cast<std::size_t>(s)];
+                if (nx < 0 || nz < 0 || nx >= n || nz >= n) return BrickEdges::Neighbour::Outside;
+                return world.getBlock(static_cast<std::uint16_t>(nx), static_cast<std::uint16_t>(cy),
+                                      static_cast<std::uint16_t>(nz)).isAir()
+                           ? BrickEdges::Neighbour::Air
+                           : BrickEdges::Neighbour::Solid;
+            });
         };
         m_stillModelIcons = modelDrawnIcons;
         double sumX = 0.0;
@@ -802,6 +952,42 @@ namespace GalaxyEggbert::Game
                                                                                  : std::uint8_t{1 | 2};
                         m_reliefChunks[chunkIndex].cells.push_back(cell);
                         continue;
+                    }
+                    if (mesh == &staticMesh && BrickEdges::IsBrickEdgeIcon(icon))
+                    {
+                        const auto shape = brickShapeAt(x, y, z);
+                        if (shape.ragged)
+                        {
+                            // Ragged towards the open (Q-011): its courses, as the bricks end.
+                            static constexpr int kOffsets[6][3] = {{0, 0, 1}, {0, 0, -1}, {1, 0, 0},
+                                                                   {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}};
+                            const std::uint8_t besideRelief = reliefNeighbourFaces(x, y, z);
+                            std::array<BrickNeighbour, 6> across{};
+                            for (int f = 0; f < 6; ++f)
+                            {
+                                const int nx = x + kOffsets[f][0], ny = y + kOffsets[f][1], nz = z + kOffsets[f][2];
+                                if ((besideRelief & (1u << f)) != 0 ||
+                                    !IsOccluderBlock(world, blocksPerAxis, nx, ny, nz, tileCoverage))
+                                    across[static_cast<std::size_t>(f)] = BrickNeighbour::Open;
+                                else
+                                    across[static_cast<std::size_t>(f)] = brickShapeAt(nx, ny, nz).ragged
+                                                                              ? BrickNeighbour::Ragged
+                                                                              : BrickNeighbour::Whole;
+                            }
+                            // The whole brick for the faces that do not end with a course, and for the
+                            // plain cube's top and bottom (283's are its flat colour, as its cube's).
+                            const auto wholeUv = tileAtlas.GetTileUv(GalaxyEggbert::BlockTypes::BrickWall);
+                            CnaEngine::Graphics::BoxFaces cubeFaces;
+                            for (auto& style : cubeFaces) style.uv = wholeUv;
+                            if (definition.renderMode == GalaxyEggbert::BlockRenderMode::DirectionalCube)
+                                ConfigureDirectionalCubeFaces(icon, tileUv, icon107Uv, cubeFaces, -1);
+                            AppendRaggedBrick(staticMesh, center, shape, tileUv, wholeUv,
+                                              cubeFaces[static_cast<int>(CnaEngine::Graphics::BoxFace::PositiveY)].uv,
+                                              cubeFaces[static_cast<int>(CnaEngine::Graphics::BoxFace::NegativeY)].uv,
+                                              across, brickShapeAt(x, y + 1, z), brickShapeAt(x, y - 1, z));
+                            ++m_raggedBrickCount;
+                            continue;
+                        }
                     }
                     if (AppendSpecialGeometry(definition, tileUv, icon107Uv, center, plateRotated, *mesh, hiddenFaces,
                                               texturedSide))

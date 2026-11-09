@@ -1,7 +1,9 @@
 // The terrain's tile coverage (src/GalaxyEggbert/Game/TileCoverage.hpp): which object-m.png
 // tiles are drawn opaque, cut out (alpha test) or blended, read from the sheet's alpha.
+#include <GalaxyEggbert/Game/BrickEdges.hpp>
 #include <GalaxyEggbert/Game/TileCoverage.hpp>
 
+#include <array>
 #include <cstdint>
 #include <iostream>
 #include <vector>
@@ -127,6 +129,98 @@ int main()
         MarkSeeThroughTiles(table);
         check(table[339] == TileCoverage::Cutout && table[338] == TileCoverage::Opaque,
               "the cheese with holes 339 is see-through, its neighbours not");
+    }
+
+    // The brick edge pieces' clear texels take the whole brick's (Q-011: whole bricks elsewhere).
+    {
+        constexpr int kW = 1 + 20 * 65, kH = 1 + 15 * 65;
+        std::vector<std::uint8_t> rgba(static_cast<std::size_t>(kW) * kH * 4, 0);
+        const auto at = [&](int icon, int x, int y) {
+            const int x0 = 1 + (icon % 20) * 65, y0 = 1 + (icon / 20) * 65;
+            return rgba.data() + (static_cast<std::size_t>(y0 + y) * kW + (x0 + x)) * 4;
+        };
+        for (int y = 0; y < 64; ++y)
+            for (int x = 0; x < 64; ++x)
+            {
+                std::uint8_t* whole = at(261, x, y);
+                whole[0] = static_cast<std::uint8_t>(x); whole[1] = static_cast<std::uint8_t>(y); whole[2] = 7; whole[3] = 255;
+                for (const int icon : {262, 263, 283, 264})
+                {
+                    std::uint8_t* t = at(icon, x, y);
+                    const bool clear = x < 5;
+                    t[0] = 200; t[1] = 200; t[2] = 200; t[3] = clear ? 0 : 255;
+                }
+            }
+        GalaxyEggbert::Game::FillBrickEdgesFromWholeBrick(rgba.data(), kW, kH);
+        bool copied = true, kept = true;
+        for (const int icon : {262, 263, 283})
+            copied = copied && at(icon, 3, 40)[0] == 3 && at(icon, 3, 40)[1] == 40 && at(icon, 3, 40)[3] == 255 &&
+                     at(icon, 10, 40)[0] == 200;
+        kept = at(264, 3, 40)[3] == 0;
+        check(copied && kept, "the brick edge pieces' clear texels are the whole brick's at the same place, no other tile's");
+    }
+
+    // The brick edge pieces, ragged towards the open (Q-011, BrickEdges.hpp).
+    {
+        namespace B = GalaxyEggbert::Game::BrickEdges;
+        using N = B::Neighbour;
+        const auto around = [](N pz, N nz, N px, N nx) {
+            return [=](int side) { return side == B::PositiveZ ? pz : side == B::NegativeZ ? nz : side == B::PositiveX ? px : nx; };
+        };
+        // A wall along X, a room on both sides of it (Z), ending at -X.
+        const auto end262 = B::ShapeFor(262, around(N::Air, N::Air, N::Solid, N::Air));
+        check(end262.ragged && end262.raggedSides == (1u << B::NegativeX) &&
+                  end262.inset[0][B::NegativeX] == 5.0f / 64.0f && end262.inset[2][B::NegativeX] == 8.0f / 64.0f &&
+                  end262.inset[1][B::NegativeX] == 0.0f && end262.inset[0][B::NegativeZ] == 0.0f,
+              "262 at a wall's end (-X air, the wall going on at +X): its courses end short at -X, not at its faces");
+        const auto face262 = B::ShapeFor(262, around(N::Solid, N::Air, N::Air, N::Air));
+        check(face262.ragged && face262.raggedSides == (1u << B::NegativeZ),
+              "262 of a wall along Z, ending at -Z: ragged at -Z only");
+        // Scattered in a thick wall's face (the room at -Z, the wall on along X and behind): whole.
+        check(!B::ShapeFor(262, around(N::Solid, N::Air, N::Solid, N::Solid)).ragged &&
+                  !B::ShapeFor(263, around(N::Solid, N::Air, N::Solid, N::Solid)).ragged &&
+                  !B::ShapeFor(283, around(N::Solid, N::Air, N::Solid, N::Solid)).ragged,
+              "an edge piece in the middle of a wall's face stays whole (the worlds scatter them for variety)");
+        // The outer corner of a thick wall's end: its end and its face both open.
+        const auto corner = B::ShapeFor(262, around(N::Solid, N::Air, N::Solid, N::Air));
+        check(corner.raggedSides == ((1u << B::NegativeZ) | (1u << B::NegativeX)),
+              "262 at a thick wall's outer corner is ragged on both open sides");
+        check(!B::ShapeFor(262, around(N::Air, N::Air, N::Air, N::Air)).ragged &&
+                  !B::ShapeFor(262, around(N::Air, N::Air, N::Solid, N::Solid)).ragged &&
+                  !B::ShapeFor(262, around(N::Air, N::Air, N::Outside, N::Air)).ragged,
+              "262 stays whole with no wall behind its left, with no air on its left, or at the world's edge");
+        const auto end263 = B::ShapeFor(263, around(N::Air, N::Air, N::Air, N::Solid));
+        check(end263.raggedSides == (1u << B::PositiveX) && end263.inset[2][B::PositiveX] == 10.0f / 64.0f &&
+                  !B::ShapeFor(263, around(N::Air, N::Air, N::Solid, N::Air)).ragged,
+              "263 is ragged at +X where the wall ends there, never on its left");
+        const auto column = B::ShapeFor(283, around(N::Air, N::Air, N::Air, N::Solid));
+        check(column.raggedSides == ((1u << B::PositiveZ) | (1u << B::NegativeZ) | (1u << B::PositiveX)) &&
+                  column.inset[0][B::NegativeZ] == 7.0f / 64.0f && column.inset[0][B::PositiveX] == 5.0f / 64.0f,
+              "283, the column, is ragged on every side open to the air, its left widths at -X/-Z, right at +X/+Z");
+        check(!B::ShapeFor(261, around(N::Air, N::Air, N::Air, N::Air)).ragged && B::IsBrickEdgeIcon(283) &&
+                  !B::IsBrickEdgeIcon(261),
+              "the whole brick 261 is never ragged");
+
+        const auto rect = B::CourseRect(end262, 2);
+        const auto rest = B::Subtract(B::Rect{}, rect);
+        const auto none = B::Subtract(rect, B::Rect{});
+        const auto disjoint = B::Subtract(B::Rect{0.0f, 0.0f, 0.2f, 1.0f}, B::Rect{0.5f, 0.0f, 1.0f, 1.0f});
+        const auto frame = B::Subtract(B::Rect{}, B::Rect{0.25f, 0.25f, 0.75f, 0.75f});
+        float area = 0.0f;
+        for (const auto& r : frame) area += (r.x1 - r.x0) * (r.z1 - r.z0);
+        check(rect.x0 == 8.0f / 64.0f && rect.x1 == 1.0f && rest.size() == 1 && rest[0].x1 == 8.0f / 64.0f &&
+                  none.empty() && disjoint.size() == 1 && frame.size() == 4 && area > 0.7499f && area < 0.7501f,
+              "a course's section, and what of a section another does not cover");
+
+        std::vector<std::uint8_t> alpha(64 * 64, 255);
+        for (int row = 0; row < 64; ++row)
+            for (int x = 0; x < (row < 17 ? 5 : row < 33 ? 0 : row < 48 ? 8 : 2); ++x) alpha[row * 64 + x] = 0;
+        alpha[0] = 0; alpha[1] = 0; alpha[2] = 0; // a stray clear texel in a row does not change the course's run
+        alpha[17 * 64 + 0] = 0;
+        const auto left = B::MeasureCourseInsets(alpha.data(), 64, true, GalaxyEggbert::Game::kCutoutReferenceAlpha);
+        const auto right = B::MeasureCourseInsets(alpha.data(), 64, false, GalaxyEggbert::Game::kCutoutReferenceAlpha);
+        check(left == B::kTiles[0].left && right == std::array<int, 4>{0, 0, 0, 0},
+              "the courses' insets are each course's most common clear run from the edge");
     }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;

@@ -112,6 +112,8 @@ namespace GalaxyEggbert::Game
                        Microsoft::Xna::Framework::Graphics::BasicEffect& grassEffect) const;
 
         [[nodiscard]] int BlockCount() const noexcept { return m_blockCount; }
+        // Brick edge cells drawn ragged towards the open (Q-011, BrickEdges.hpp).
+        [[nodiscard]] int RaggedBrickCount() const noexcept { return m_raggedBrickCount; }
         [[nodiscard]] int AnimatedBlockCount() const noexcept
         {
             return static_cast<int>(m_animBlocks.size() + m_lavaBlocks.size() + m_blitzBlocks.size() + m_windBlocks.size());
@@ -284,6 +286,7 @@ namespace GalaxyEggbert::Game
         std::unordered_set<std::uint32_t> m_rotatedPlatePositions;
         const TileAtlas* m_tileAtlas = nullptr;
         int m_blockCount = 0;
+        int m_raggedBrickCount = 0;
         float m_centroidX = 0.0f;
         float m_centroidY = 0.0f;
         float m_centroidZ = 0.0f;

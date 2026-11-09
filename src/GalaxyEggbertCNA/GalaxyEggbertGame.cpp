@@ -20,6 +20,7 @@
 #include <limits>
 #include <sstream>
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
+#include <GalaxyEggbert/Game/BrickEdges.hpp>
 #include <GalaxyEggbert/Editor/PlatformFiles.hpp>
 #include <GalaxyEggbert/Editor/PlayerStartColor.hpp>
 #include <GalaxyEggbert/Game/ObjectDefinitionRegistry.hpp>
@@ -979,6 +980,29 @@ namespace GalaxyEggbert::CNA
             }
             tileCoverage_ = GalaxyEggbert::Game::ClassifyTileSheet(alpha.data(), width, height);
             GalaxyEggbert::Game::MarkSeeThroughTiles(tileCoverage_); // the cheese's holes (Q-010)
+            // The brick edge pieces' ragged ends (Q-011) are a table measured from this sheet: say so if
+            // the sheet loaded tells otherwise (BrickEdges.hpp).
+            for (const auto& tile : GalaxyEggbert::Game::BrickEdges::kTiles)
+            {
+                constexpr int kPitch = GalaxyEggbert::BlockTypes::kTileSize + GalaxyEggbert::BlockTypes::kSheetGap;
+                const int columns = width / GalaxyEggbert::BlockTypes::kTileSize;
+                const int x0 = GalaxyEggbert::BlockTypes::kSheetGap + tile.icon % columns * kPitch;
+                const int y0 = GalaxyEggbert::BlockTypes::kSheetGap + tile.icon / columns * kPitch;
+                if (y0 + GalaxyEggbert::BlockTypes::kTileSize > height || x0 + GalaxyEggbert::BlockTypes::kTileSize > width)
+                    continue;
+                const std::uint8_t* at = alpha.data() + static_cast<std::size_t>(y0) * width + x0;
+                using GalaxyEggbert::Game::BrickEdges::MeasureCourseInsets;
+                const auto left = MeasureCourseInsets(at, width, true, GalaxyEggbert::Game::kCutoutReferenceAlpha);
+                const auto right = MeasureCourseInsets(at, width, false, GalaxyEggbert::Game::kCutoutReferenceAlpha);
+                const auto ragged = [](const std::array<int, 4>& measured, const std::array<int, 4>& table) {
+                    for (std::size_t i = 0; i < 4; ++i)
+                        if (table[i] != 0 && measured[i] != table[i]) return false;
+                    return true;
+                };
+                if (!ragged(left, tile.left) || !ragged(right, tile.right))
+                    std::cout << "GalaxyEggbertCNA: warning: brick edge " << tile.icon
+                              << "'s courses differ from BrickEdges::kTiles in this object-m.png." << std::endl;
+            }
             // No black where an opaque tile's sprite is clear (TileCoverage.hpp).
             std::vector<std::uint8_t> rgba(texels.size() * 4);
             for (std::size_t i = 0; i < texels.size(); ++i)
@@ -988,6 +1012,7 @@ namespace GalaxyEggbert::CNA
                 rgba[i * 4 + 2] = texels[i].getBProperty();
                 rgba[i * 4 + 3] = texels[i].getAProperty();
             }
+            GalaxyEggbert::Game::FillBrickEdgesFromWholeBrick(rgba.data(), width, height); // Q-011
             GalaxyEggbert::Game::FillOpaqueTilesClearTexels(rgba.data(), width, height, tileCoverage_);
             for (std::size_t i = 0; i < texels.size(); ++i)
             {
@@ -1471,7 +1496,10 @@ namespace GalaxyEggbert::CNA
         ApplyBlockModels();
         terrainRevision_ = worldRuntime_.GetWorld().blockRevision();
         std::cout << "GalaxyEggbertCNA: world terrain built — " << terrainRenderer_->BlockCount() << " blocks, "
-                  << terrainRenderer_->VertexCount() << " vertices." << std::endl;
+                  << terrainRenderer_->VertexCount() << " vertices";
+        if (terrainRenderer_->RaggedBrickCount() > 0)
+            std::cout << ", " << terrainRenderer_->RaggedBrickCount() << " brick end(s) ragged";
+        std::cout << "." << std::endl;
     }
 
     void GalaxyEggbertGame::AdvanceAfterWin()

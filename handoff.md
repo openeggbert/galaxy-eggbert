@@ -6,7 +6,37 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-09 (brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## Brick wall ends ragged towards the open (2026-11-09, Q-011) — verified on desktop
+
+Asked interactively (the owner had answered Q-010, the cheese, on 2026-11-04 already; only Q-011
+was open): option (b), ragged only where a wall ends in the open, whole bricks elsewhere.
+
+- `src/GalaxyEggbert/Game/BrickEdges.hpp` (pure): the four courses (texel rows 0/17/33/48/64) and how
+  far each stops short on the tile's left/right side, measured from object-m.png's alpha
+  (`kTiles`: 262 left 5/0/8/2, 263 right 0/1/10/3, 283 left 7/3/0/5 and right 5/1/3/0; the game
+  measures the sheet it loads again, `MeasureCourseInsets`, and warns if it differs). `ShapeFor()`:
+  a clear side is ragged when it borders air, so does a side across it (a wall's face has the wall
+  on both sides along it) and, for 262/263, the wall goes on opposite. The first version without
+  the "across" condition notched 945 cells of 124, mostly in the middle of walls: the generators
+  (`tools/worlds/station.py`, `village.py` `BRICK_FACES`) scatter the pieces in brick masses.
+- `TerrainRenderer` `AppendRaggedBrick`: each course a box inset on its ragged sides; side faces
+  drawn unless a Whole (non-ragged occluding) neighbour hides them, horizontal steps only where
+  exposed (`Subtract`), and where a Whole neighbour's face is hidden by the cell over a ragged end,
+  that part drawn from here (caps). Faces across a ragged end wear the edge piece mapped by
+  position (the bricks end with the course), the others and the caps the whole brick 261.
+- `TileCoverage.hpp` `FillBrickEdgesFromWholeBrick`: the pieces' clear texels take 261's, so the
+  whole cubes (and the faces of the ragged ones) show bricks, not the pale mortar-coloured bands the
+  mean fill made in the walls of 123/124/121/034.
+- Verified: `VerifyTileCoverage` (rules, sections, measuring, the fill); a probe world
+  (`build-probe/brick-edges/make_world.py`: walls along X and Z with both ends, a lintel past an
+  end, a free column) live, `build-probe/demo-live/bricks-sheet.png`, `bricks-detail.png`,
+  `bricks-close-detail.png`; campaign 124, 123, 121, 034, 199 loaded (`bricks-campaign-sheet.png`;
+  13/14/14/33/1 ragged cells, vertices as before within 1%); 117/117 CTest; golden trace equal;
+  golden frame 0180 refreshed: 12 pixels of one row (a tree trunk far off) changed by 1/255 in
+  blue, the atlas's mip levels round the changed tiles (frames 0060/0120 equal, two captures
+  identical). Not run on the web (same code path).
 
 ## Sharing galaxies and demos, galaxy gates in the menu, xnjttjpo on the web (2026-11-09)
 

@@ -206,6 +206,45 @@ namespace GalaxyEggbert::Game
         }
     }
 
+    // The brick wall's edge pieces (262, 263, 283) where they are whole cubes (Q-011, the owner
+    // 2026-11-09: whole bricks except at a wall's open end, BrickEdges.hpp): their clear texels take
+    // the whole brick 261's texel at the same place, so the bricks run on to the tile's edge (the
+    // mean of the texels round them, FillOpaqueTilesClearTexels(), made pale bands of mortar colour
+    // in the walls the worlds scatter them in). Call before FillOpaqueTilesClearTexels(); the same
+    // sheet layout.
+    inline constexpr int kWholeBrick = 261;
+    inline constexpr int kBrickEdgePieces[] = {262, 263, 283};
+    inline void FillBrickEdgesFromWholeBrick(std::uint8_t* rgba, int width, int height)
+    {
+        if (rgba == nullptr || width <= 0 || height <= 0) return;
+        constexpr int kTileSize = BlockTypes::kTileSize;
+        constexpr int kPitch = kTileSize + BlockTypes::kSheetGap;
+        const int columns = width / kTileSize;
+        if (columns <= 0) return;
+        const auto origin = [&](int icon, int& x0, int& y0) {
+            x0 = BlockTypes::kSheetGap + (icon % columns) * kPitch;
+            y0 = BlockTypes::kSheetGap + (icon / columns) * kPitch;
+            return x0 + kTileSize <= width && y0 + kTileSize <= height;
+        };
+        int sx = 0, sy = 0;
+        if (!origin(kWholeBrick, sx, sy)) return;
+        for (const int icon : kBrickEdgePieces)
+        {
+            int x0 = 0, y0 = 0;
+            if (!origin(icon, x0, y0)) continue;
+            for (int y = 0; y < kTileSize; ++y)
+            {
+                for (int x = 0; x < kTileSize; ++x)
+                {
+                    std::uint8_t* texel = rgba + (static_cast<std::size_t>(y0 + y) * width + (x0 + x)) * 4;
+                    const std::uint8_t* whole = rgba + (static_cast<std::size_t>(sy + y) * width + (sx + x)) * 4;
+                    if (texel[3] >= kCutoutReferenceAlpha || whole[3] < kCutoutReferenceAlpha) continue;
+                    for (int k = 0; k < 4; ++k) texel[k] = whole[k];
+                }
+            }
+        }
+    }
+
     // An icon's coverage; Opaque for an icon the table does not have (no sheet classified).
     [[nodiscard]] inline TileCoverage CoverageOf(const std::vector<TileCoverage>& coverage, int icon) noexcept
     {

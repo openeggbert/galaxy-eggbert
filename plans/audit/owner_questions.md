@@ -223,7 +223,7 @@ Answer: yes, add turning fans and wind 90 degrees (pushing along Z) as a 3D adap
   drawn in a darker cheese colour, the cube closed; (c) leave it.
   Recommendation: (b) -- the walls stay walls, as everywhere else in the cheese worlds.
 
-## Q-011 — the brick edge pieces (262, 263, 283): ragged edges or whole bricks in 3D? (2026-11-03) — slits fixed, edges now filled
+## Q-011 — the brick edge pieces (262, 263, 283): ragged edges or whole bricks in 3D? (2026-11-03) — DONE (b) 2026-11-09
 
 - The brick wall 261 has three edge pieces whose bricks stop short of the tile on one side
   (262 left, 263 right, 283 bottom; clear texels there): in the original's 2D they make a wall's
@@ -242,8 +242,13 @@ The black was a bug, not a choice: every tile drawn opaque (under a quarter clea
 where its sprite is clear -- the cheese holes, the brick and slime edge pieces (347-363), 69 tiles
 in all. Their clear texels now take the tile's own colour round them (`TileCoverage.hpp`
 `FillOpaqueTilesClearTexels`, `plans/evidence/opaque-tiles-clear-texels.jpg`), i.e. option (a) of
-Q-011 and the closest to (b) of Q-010. Still the owner's to say: whether the cheese holes should
-be see-through or the brick ends ragged on faces that border air.
+Q-011 and the closest to (b) of Q-010. Both were settled later: the cheese's holes see-through
+(2026-11-04, below), the brick ends ragged towards the open (2026-11-09: (b), asked interactively):
+a cell of 262/263/283 at a wall's open end (air on its clear side and across it, the wall going on
+behind) is drawn as its four courses ending where the bricks end (`BrickEdges.hpp`,
+`TerrainRenderer` `AppendRaggedBrick`); elsewhere a whole cube whose clear texels are the whole
+brick 261's (`FillBrickEdgesFromWholeBrick`), which also removed the pale bands the mean fill left
+where the worlds scatter the three in walls.
 
 ### Q-008 done (2026-11-04)
 
@@ -263,7 +268,8 @@ fall burns Blupi (Clear3, channel 8), as the original; its playthrough and the 1
 - **Q-002 bolt**: (a) a generated thin glowing 3D bolt along each sprite's path.
 - **Q-010 cheese 339**: see-through holes.
 - **Q-011 brick edges**: not asked separately; the owner chose only the cheese's see-through holes,
-  so the brick edge pieces stay filled (as `4205ae3`).
+  so the brick edge pieces stay filled (as `4205ae3`). Asked on 2026-11-09: ragged only towards
+  the open (option (b)), done the same day.
 - **Q-004 terrain tiles**: every terrain tile as its Ray Dream model.
 - **Q-005 electrode**: the model with the sprite's sparks as a camera-facing decal.
 - **Q-006 glue death**: add the strands.
