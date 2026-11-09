@@ -6,7 +6,34 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 `plan.md`; verified current state is `CURRENT.md`; the active plan is
 `plans/GALAXY_EGGBERT_COMPLETION.md`.
 
-_Last updated: 2026-11-09 (the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+_Last updated: 2026-11-09 (3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
+
+## 3D effects, second round; GalaxyEggbertGame split (2026-11-09) — verified desktop and web
+
+Owner's request: FXAA, ambient occlusion, real sun shadows (shadow map), dynamic lights, more
+presentation particles, split `GalaxyEggbertGame.cpp`, tests of what is drawn.
+
+- Commits: `5a1b03cd` FXAA (PostProcess: composite into `m_graded`, FXAA pass to the screen);
+  `0d8f40d6` `SceneShaders` (terrain: occluded / lit / cutout shaders; skinned model shader with the
+  SkinnedEffect's own lights read from it; depth shaders solid / cutout / skinned; RGBA8 packed-depth
+  shadow map 2048 or 1024 on GLSL ES, 44 blocks, texel-snapped; 3x3 lookup, a shadow takes 55 % of
+  the sun; up to 8 point lights), `TerrainRenderer` built with `ambientOcclusion` (vertex colour,
+  PositionNormalColorTexture; rebuilt when the toggle changes: `TerrainOcclusionWanted()`),
+  `TerrainShading` for its draws, `DrawShadowCasters`; the frame now built before the shadow pass
+  (DrawFrame: BuildSceneFrame, RenderShadowMap, PostProcess::Begin, DrawWorld); `5148bffa` moments as
+  particles (`AppendSceneMoments`, `EffectParticles::Burst/Crossed`); `eb0b5350` the split
+  (Load/Demo/Missions/Update files, `GameHelpers.hpp`); `3aafdb19` `SceneEffectsLogic.hpp` +
+  `VerifySceneEffects`.
+- Tuning notes: shadows at 80 % made deep corridors gloomy, 55 % kept; explosion lights merged per
+  blast (3 blocks) at 0.85 with the point-light sum capped at 0.9 (8 stacked lights washed blue tiles
+  cyan); explo.png 90-99 are green goo splats, not water: the water splash is object-m 99-102 (plouf),
+  the bubbles object-m 103-106 (blup); particle sizes are of the whole icon cell (the drawing fills
+  part of it).
+- Verified: effects off -- golden frames and trace equal, 1728 autoplay frames and 28 editor frames
+  byte-equal after every commit; effects on -- the 11 missions and the editor pass, the Setup toggle
+  rebuilds the terrain live, `GALAXY_EFFECTS_DEBUG=shadow|occlusion` views checked; the WebGL 2 build
+  in headless Chrome compiles every shader (no "3D effects:" line in the console). 119/119 CTest.
+  Android not run.
 
 ## SceneFrame + WorldRenderer, and the optional 3D effects (2026-11-09) — verified desktop and web
 

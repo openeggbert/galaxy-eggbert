@@ -58,6 +58,11 @@ guidance.
 ## Source layout
 
 - `src/GalaxyEggbertCNA/` — thin CNA application host (`GalaxyEggbertGame`) and platform wiring.
+  `GalaxyEggbertGame` is split by topic: `GalaxyEggbertGame.cpp` (constructor, input, vehicles,
+  sounds, cheats), `...Load.cpp`, `...Demo.cpp`, `...Missions.cpp`, `...Update.cpp` (UpdateTick),
+  `...Scene.cpp` (the SceneFrame: what the world draws), `...Draw.cpp` (the frame); shared
+  file-local helpers in `GameHelpers.hpp`/`GameInternal.hpp`. The world is drawn by
+  `src/GalaxyEggbert/Game/WorldRenderer` from the SceneFrame (renderers.md).
 - `include/GalaxyEggbert/`, `src/GalaxyEggbert/Worlds/` — engine-independent world/data model.
 - `include/GalaxyEggbert/BlockDefinitionRegistry.hpp` — authoritative backend-independent voxel
   definition table; render/collision/gameplay consumers must not duplicate its classifications.

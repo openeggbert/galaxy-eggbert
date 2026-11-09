@@ -70,11 +70,17 @@ content-authoring UX, but not new gameplay mechanics.
   byte-equal to the build before it.
 - 3D effects (2026-11-09, the owner's request; the Setup's "3D effects", `effects3d=` in
   savedata.txt, off by default; `GALAXY_EFFECTS=0/1` overrides it for tests): distance fog in the
-  colour of the world's background, soft sun-thrown shadows under Blupi and the objects, water
+  colour of the world's background; real sun shadows (`SceneShaders`: a shadow map of the terrain,
+  cubes and every model, 44 blocks round the camera's target) on the terrain and the models, soft
+  round ones left for what is drawn as a sprite; ambient occlusion baked into the terrain's corners;
+  point lights from explosions, the lightning, the nearest lava and the electrodes; water
   (ripples, caustics, sky at a glancing view, sun glints) and lava (pulse, crawling hot spots)
-  shaders, a glow on what shines with a light grade (`PostProcess`: render target, bright pass,
-  blur, screen composite), and the explosions, splashes and sparks as particles cut from their own
-  sprite frames (`EffectParticles`, stepped by ticks). Presentation only: the golden trace and the
+  shaders; a glow on what shines with a light grade and FXAA (`PostProcess`); the explosions,
+  splashes and sparks as particles cut from their own sprite frames, and Blupi's moments too (dust
+  landing and running, a splash into water, bubbles under it, stars as he teleports, sparks off the
+  lava; `EffectParticles`, stepped by ticks). The terrain and models are then drawn with GLSL of
+  their own, lit as their stock effects light them. `GALAXY_EFFECTS_DEBUG=shadow|occlusion` draws
+  the terrain as that factor alone. Presentation only: the golden trace and the
   autoplay traces are equal with them on; off, every frame is byte-equal to the build without them.
   Desktop OPENGL33 checked under Xvfb (11 missions, the editor, the Setup toggle live); the WebGL 2
   build checked in headless Chrome (toggle in the main menu's Setup, saved, shaders compiled, played).
@@ -421,11 +427,12 @@ default CTest cases. Full commands and sibling-repository pins live in `handoff.
   2026-10-24). Effects, the charge and the shield (sparks) stay billboards; procedural
   textures (bark, metal noise, wood grain) are flat colours. First person still uses an invisible collision
   point. The fox placeholder remains as a fallback when `avatars3d/blupi/` is absent.
-- 3D effects: the shadows are soft round ones thrown along the sun's way onto the ground below (no
-  shadow map: what models cast on each other and on walls is not shown); the water and lava shaders
-  and the glow need GLSL source (`ShaderEffect`) and render targets: OPENGL33 and WEBGL2 checked,
-  Android (OPENGLES3) not run; elsewhere they are left out by themselves and the fog, shadows and
-  particles remain.
+- 3D effects: the shadow map covers 44 blocks round the camera's target (beyond it no sun shadow;
+  billboards neither cast nor receive one); skinned models above 56 bones (none today) would be drawn
+  by the stock effect. The shaders, the shadow map and the glow need GLSL source (`ShaderEffect`) and
+  render targets: OPENGL33 and WEBGL2 checked, Android (OPENGLES3) not run; where they do not
+  compile they are left out by themselves (no ambient occlusion either) and the fog, soft shadows
+  and particles remain.
 - The current Windows `SDL_GPU` path has not yet had a fresh cross-build and live 3D run; do not
   call Windows supported until both pass.
 - Editor text is deliberately limited to functional readouts/notices (XYZ coordinates, background
