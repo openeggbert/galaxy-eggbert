@@ -281,4 +281,7 @@ UB-008 **fixed** upstream in CNA `e9e009b01` (`#include <algorithm>`); the web b
   not yet constructed.
 - **Galaxy impact:** none in the code; any build made while this edit is in the tree cannot start.
   Galaxy waited for the working tree to change and built again (no workaround in Galaxy).
-- **Status:** uncommitted work in progress when found; recheck once the CNA session commits.
+- **Status:** fixed in CNA `548a6360e` (2026-11-08 23:03): `untrackedResourceIdentities_` is declared
+  before the sampler collections (`GraphicsDevice.hpp:1974`, `samplerStates_` at 1991). Verified
+  2026-11-09: Galaxy built against CNA `e24822397` (which contains it) starts and runs (golden frames,
+  the autoplay playthroughs, CTest).
