@@ -81,7 +81,9 @@ android {
     ndkVersion = "29.0.14206865"
 
     defaultConfig {
-        applicationId "org.openeggbert.speedyblupi"
+        // Its own id: mobile-eggbert's Android app is org.openeggbert.speedyblupi, and the two must
+        // install side by side (2026-11-09).
+        applicationId "org.openeggbert.galaxyeggbert"
         // API 24: CNA's minimum (cna/docs/devices-build.md).
         minSdkVersion 24
         targetSdkVersion 35

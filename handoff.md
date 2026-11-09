@@ -8,6 +8,19 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## Android: own package id (2026-11-09) — installed and started on a phone
+
+The APK's `applicationId` was `org.openeggbert.speedyblupi`, the same as mobile-eggbert's Android
+app (`../mobile-eggbert/android/app/build.gradle`), so it could not install beside it (signature
+mismatch) and `am start` opened mobile-eggbert instead. Now `org.openeggbert.galaxyeggbert`, label
+"Galaxy Eggbert"; the namespace and the Java class `org.openeggbert.speedyblupi.SpeedyBlupiActivity`
+stay. Launch: `adb shell am start -n
+org.openeggbert.galaxyeggbert/org.openeggbert.speedyblupi.SpeedyBlupiActivity` (`ANDROID.md`).
+Release APK (`./gradlew assembleRelease -Pandroid.injected.build.abi=arm64-v8a`, release key) installed
+on a Xiaomi 24040RN64Y (HyperOS asks on the phone before a USB install of a new app): assets copied,
+OpenGL ES 3.2, world001 loaded, the title screen drawn. Not played further. Lint reports
+`HardcodedDebugMode` (the manifest's `android:debuggable="true"`), not fixed.
+
 ## Ultra; frame rate; fixes from the owner's reports (2026-11-09) — verified desktop
 
 Ultra is a fifth "3D effects" level (`effectsLevel=4`, `GALAXY_EFFECTS=4|ultra`), desktop only in

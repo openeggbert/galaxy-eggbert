@@ -86,7 +86,7 @@ Enable **USB debugging** on your device (or start an AVD in Android Studio).
 adb install app/build/outputs/apk/debug/app-debug.apk
 
 # Launch
-adb shell am start -n org.openeggbert.speedyblupi/.SpeedyBlupiActivity
+adb shell am start -n org.openeggbert.galaxyeggbert/org.openeggbert.speedyblupi.SpeedyBlupiActivity
 
 # View logs (filter by the app's tag or by pid)
 adb logcat -s SDL SpeedyBlupi
@@ -103,7 +103,7 @@ emulator -avd <an x86_64 AVD, API 24+> -read-only -no-snapshot -no-window -no-au
          -no-boot-anim -gpu swiftshader_indirect
 adb wait-for-device; adb shell getprop sys.boot_completed   # 1 when booted
 adb install -t -r app/build/intermediates/apk/debug/app-debug.apk
-adb shell am start -n org.openeggbert.speedyblupi/.SpeedyBlupiActivity
+adb shell am start -n org.openeggbert.galaxyeggbert/org.openeggbert.speedyblupi.SpeedyBlupiActivity
 adb exec-out screencap -p > screen.png
 adb logcat -s SDL SDL/APP GalaxyEggbert   # GalaxyEggbert: the game's and CNA's stdout/stderr
 ```
@@ -127,7 +127,7 @@ to see it start, not to play. A touch must then be held for a few seconds to fal
 To uninstall:
 
 ```bash
-adb uninstall org.openeggbert.speedyblupi
+adb uninstall org.openeggbert.galaxyeggbert
 ```
 
 ---
@@ -243,7 +243,7 @@ stamp is kept.
 
 ## Writable / persistent storage
 
-The working directory is the app's internal storage (`/data/data/org.openeggbert.speedyblupi/files`),
+The working directory is the app's internal storage (`/data/data/org.openeggbert.galaxyeggbert/files`),
 so the save file (`savedata.txt`) and the editor's custom worlds (`customworlds/`) are
 written there beside the copied assets. This storage:
 
