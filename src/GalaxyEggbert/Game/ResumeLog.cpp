@@ -1,4 +1,5 @@
 #include "ResumeLog.hpp"
+#include "UserFolder.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -83,6 +84,8 @@ namespace GalaxyEggbert::Game
         stream.imbue(std::locale::classic());
         stream.precision(std::numeric_limits<float>::max_digits10);
     }
+
+    std::string ResumeLog::Path() { return UserPathString("resume.txt"); }
 
     std::string ResumeLog::AppendChecksum(const std::string& body)
     {

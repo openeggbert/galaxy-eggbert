@@ -90,7 +90,7 @@ namespace GalaxyEggbert::Game
     public:
         static constexpr int kGamerCount = 3; // real GameData::TotalLength = 10 + 3*210
 
-        // Reads Content-relative kSavePath if it exists; leaves every
+        // Reads SavePath() if it exists; leaves every
         // field at its default (soundEnabled=true, selectedGamer=0, every
         // gamer slot lives=3/missionNumber=0/hasProgress=false) if the
         // file is missing or unparsable.
@@ -98,7 +98,7 @@ namespace GalaxyEggbert::Game
         void Read(std::istream& in);
         void Write(std::ostream& out) const;
 
-        // Writes the current state to kSavePath, overwriting it.
+        // Writes the current state to SavePath(), overwriting it.
         void Save() const;
 
         [[nodiscard]] bool GetFullscreen() const noexcept { return fullscreen_; }
@@ -269,15 +269,9 @@ namespace GalaxyEggbert::Game
         }
 
     private:
-        // Web build (2026-07-17): under /save so it lands on the IDBFS mount
-        // point CNA's storage preRun hook sets up (persists across page reloads via IndexedDB) --
-        // a platform path difference, not an engine-API one, so it doesn't
-        // fall under CLAUDE.md's "no #ifdef for engine differences" rule.
-#if defined(__EMSCRIPTEN__)
-        static constexpr const char* kSavePath = "/save/savedata.txt";
-#else
-        static constexpr const char* kSavePath = "savedata.txt";
-#endif
+        // savedata.txt in the player's folder (UserFolder.hpp: /save on the web, the IDBFS mount
+        // CNA's storage preRun hook persists; the system's per-user folder on the desktop).
+        [[nodiscard]] static std::string SavePath();
         bool fullscreen_ = false; // desktop preference, shared by all gamer slots
         bool soundEnabled_ = true;
         bool jumpRight_ = true;

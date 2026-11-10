@@ -188,6 +188,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Game/ResumeLog.cpp
         src/GalaxyEggbert/Game/DemoReplay.cpp
         src/GalaxyEggbert/Game/SaveData.cpp
+        src/GalaxyEggbert/Game/UserFolder.cpp
         src/GalaxyEggbert/Editor/WorldEditor.cpp
         src/GalaxyEggbert/Editor/WorldEditorUpdate.cpp
         src/GalaxyEggbert/Editor/EditorDeviceControls.cpp
@@ -520,6 +521,7 @@ if(GALAXY_EGGBERT_BUILD_CNA)
         src/GalaxyEggbert/Editor/GalaxyBrowserScreen.cpp
         src/GalaxyEggbert/Game/DemoReplay.cpp
         src/GalaxyEggbert/Game/ResumeLog.cpp
+        src/GalaxyEggbert/Game/UserFolder.cpp
         src/GalaxyEggbert/Game/QuadBatch.cpp
         src/GalaxyEggbert/Game/TileAtlas.cpp
         src/GalaxyEggbert/Game/DirectionalCubeTiles.cpp
@@ -697,6 +699,7 @@ endif()
 add_executable(VerifyGESaveData
         tools/VerifyGESaveData.cpp
         src/GalaxyEggbert/Game/SaveData.cpp
+        src/GalaxyEggbert/Game/UserFolder.cpp
 )
 
 target_include_directories(VerifyGESaveData PRIVATE
@@ -740,6 +743,7 @@ add_executable(VerifyAutoplay
         tools/VerifyAutoplay.cpp
         src/GalaxyEggbert/Game/Autoplay.cpp
         src/GalaxyEggbert/Game/ResumeLog.cpp
+        src/GalaxyEggbert/Game/UserFolder.cpp
 )
 
 target_include_directories(VerifyAutoplay PRIVATE
@@ -754,6 +758,7 @@ add_executable(VerifyDemoReplay
         tools/VerifyDemoReplay.cpp
         src/GalaxyEggbert/Game/DemoReplay.cpp
         src/GalaxyEggbert/Game/ResumeLog.cpp
+        src/GalaxyEggbert/Game/UserFolder.cpp
 )
 
 target_include_directories(VerifyDemoReplay PRIVATE

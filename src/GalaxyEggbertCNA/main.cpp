@@ -1,6 +1,11 @@
 #include "GalaxyEggbertGame.hpp"
 
 #include <GalaxyEggbert/Editor/CustomWorldStorage.hpp>
+#include <GalaxyEggbert/Game/UserFolder.hpp>
+
+#if !defined(__EMSCRIPTEN__) && !defined(__ANDROID__)
+#include <Microsoft/Xna/Framework/Storage/StorageDevice.hpp>
+#endif
 
 // On Android the Java side starts the game through SDL_main: CNA's entry point header renames
 // main() to it (empty on the other platforms).
@@ -14,12 +19,72 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <string>
 
 namespace
 {
     int RunGame(int argc, char** argv);
+
+    // The player's folder (UserFolder.hpp): `--user DIR`, else GALAXY_USER_DIR (the test scripts:
+    // their run folder), else the system's per-user folder, CNA's StorageDevice root for
+    // "Galaxy Eggbert". A player of an earlier build keeps the files it kept in the working folder:
+    // they are copied over the first time (nothing is moved or overwritten). The web keeps /save,
+    // Android its private storage (the working folder).
+    void ChooseUserFolder(int argc, char** argv)
+    {
+#if defined(__EMSCRIPTEN__) || defined(__ANDROID__)
+        (void)argc;
+        (void)argv;
+#else
+        namespace fs = std::filesystem;
+        std::string chosen;
+        for (int i = 1; i + 1 < argc; ++i)
+            if (std::strcmp(argv[i], "--user") == 0) chosen = argv[i + 1];
+        if (chosen.empty())
+            if (const char* env = std::getenv("GALAXY_USER_DIR"); env != nullptr && *env != '\0') chosen = env;
+        std::error_code error;
+        fs::path folder;
+        if (!chosen.empty())
+        {
+            folder = fs::absolute(fs::path(chosen), error);
+            if (error) folder = chosen;
+        }
+        else
+        {
+            try
+            {
+                Microsoft::Xna::Framework::Storage::StorageDevice::SetAppNameEXT("Galaxy Eggbert");
+                folder = fs::path(Microsoft::Xna::Framework::Storage::StorageDevice::GetStorageRootEXT());
+            }
+            catch (const std::exception& failure)
+            {
+                std::cerr << "GalaxyEggbertCNA: no per-user folder (" << failure.what()
+                          << "), keeping the player's files in the working folder." << std::endl;
+                return;
+            }
+        }
+        folder = folder.lexically_normal();
+        fs::create_directories(folder, error);
+        if (error)
+        {
+            std::cerr << "GalaxyEggbertCNA: cannot create " << folder.string()
+                      << ", keeping the player's files in the working folder." << std::endl;
+            return;
+        }
+        if (chosen.empty())
+        {
+            const fs::path current = fs::current_path(error);
+            if (!error)
+                if (const int copied = GalaxyEggbert::Game::CopyOldUserFiles(current, folder); copied > 0)
+                    std::cout << "GalaxyEggbertCNA: copied " << copied << " file(s) of an earlier build from "
+                              << current.string() << " to " << folder.string() << "." << std::endl;
+        }
+        GalaxyEggbert::Game::SetUserFolder(folder);
+        std::cout << "GalaxyEggbertCNA: the player's files are in " << folder.string() << std::endl;
+#endif
+    }
 }
 
 int main(int argc, char** argv)
@@ -61,6 +126,7 @@ int RunGame(int argc, char** argv)
         std::cout << "GalaxyEggbertCNA: " << edits << " shipped world(s) as edited with xnjttjpo ("
                   << GalaxyEggbert::Editor::CampaignEditsDir().generic_string() << ")." << std::endl;
 #endif
+    ChooseUserFolder(argc, argv);
     auto* game = new GalaxyEggbert::CNA::GalaxyEggbertGame();
     // Main-menu demos (DemoReplay.hpp): `--record-demo <file>` with `--mission N` (optionally
     // `--autoplay <script>`, `--demo-ticks N`, `--demo-title <text>`) records one, `--verify-demo

@@ -8,6 +8,29 @@ what to run next). `NEXT.md` is frozen history (do not add to it); the backlog w
 
 _Last updated: 2026-11-09 (Ultra: HDR, PBR, sky light, SSAO/SSR/contact, voxel GI, volumetric fog, TAA/DoF/motion blur/grain, finer atlas with maps, smoother models; frame rate option; fps and position cheats; teleporter top a floor; lightning zap; editor axes; High water texture fix; 3D effects in three levels, cascaded shadows for sprites too, Ray Dream materials, effects golden frames, UpdateTick split; 3D effects: FXAA, ambient occlusion, sun shadow map, point lights, moments as particles; GalaxyEggbertGame.cpp split by topic; the world drawn from a SceneFrame by WorldRenderer; optional 3D effects; brick wall ends ragged towards the open, Q-011; galaxy and demo sharing, galaxy gates in the menu; galaxy delete and Continue; demo recordings, ten demos, xnjttjpo, players' galaxies; main-menu demos; ghost/lava depth; editor/device controls, compass, fullscreen/help, glue fire, markers and Jeep recovery)._
 
+## The owner's goal of 2026-11-10: user folder, on-screen keyboard, gamepad, demo names, galaxy delete, goodbye, release packages
+
+The owner's list (from the comparison with blupi_recon's port): finish the day's screens for
+touch and gamepad, name demos, delete a whole galaxy, keep the player's files in the system's
+user folder, build release packages, and a goodbye screen on quitting as in Speedy Blupi.
+
+- **User folder (done, desktop verified).** `src/GalaxyEggbert/Game/UserFolder.hpp/.cpp`:
+  `UserPath("savedata.txt")` etc.; savedata.txt, resume.txt, demos/ and customworlds/ all go
+  through it (SaveData::SavePath(), ResumeLog::Path(), UserDemoDir(), CustomWorldsRoot()).
+  main.cpp `ChooseUserFolder()`: `--user DIR`, else `GALAXY_USER_DIR`, else CNA's
+  `StorageDevice::GetStorageRootEXT()` for "Galaxy Eggbert" (`$XDG_DATA_HOME/Galaxy Eggbert`,
+  `~/.local/share/Galaxy Eggbert`, `%LOCALAPPDATA%\Galaxy Eggbert`). The first start without
+  `--user`/env copies an earlier build's files from the working folder when the user folder has
+  no savedata.txt (`CopyOldUserFiles`, nothing moved or overwritten). The web keeps `/save`,
+  Android its private storage (the working folder), the tools and tests the working folder (the
+  folder is empty until the host sets it). **Test runs must pass `GALAXY_USER_DIR`**:
+  autoplay.sh, qa_live.sh, record_demo.sh, verify_demos.sh set it to their run folder,
+  verify_golden_frames/trace.sh to the build folder (`.`), the live harness
+  (`build-probe/demo-live/harness/demo_live.py`) to its run folder. A hand-started
+  `./GalaxyEggbert` in a build folder now uses `~/.local/share/Galaxy Eggbert` (the first time it
+  copies that folder's savedata.txt there). Checked live (build-probe/user-folder/): the copy
+  once, the second start without a copy, `--user` over the default; CTest 120/120.
+
 ## 2x textures (../ray.md, 2026-11-09) — code done, the re-rendered sheets follow
 
 - The game loads `Content/icons2x/` and `Content/backgrounds2x/` (sheets at twice the size, the

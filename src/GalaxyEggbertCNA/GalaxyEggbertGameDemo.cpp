@@ -83,12 +83,12 @@ namespace GalaxyEggbert::CNA
     void GalaxyEggbertGame::ReadResumeLog()
     {
         std::error_code error;
-        const auto size = std::filesystem::file_size(ResumeLog::kPath, error);
+        const auto size = std::filesystem::file_size(ResumeLog::Path(), error);
         if (error) return;
         pendingResume_.reset();
         if (size <= 128 * 1024 * 1024)
         {
-            std::ifstream in(ResumeLog::kPath, std::ios::binary);
+            std::ifstream in(ResumeLog::Path(), std::ios::binary);
             const std::string text((std::istreambuf_iterator<char>(in)), {});
             ResumeLog log;
             if (in && ResumeLog::Parse(text, ResumeBuild(), log))

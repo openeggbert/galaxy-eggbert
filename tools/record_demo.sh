@@ -51,6 +51,8 @@ rm -f "$run/savedata.txt" "$run/resume.txt" "$run/autoplay_trace.txt"
 rm -f "$run/GalaxyEggbert"
 ln "$build/GalaxyEggbert" "$run/GalaxyEggbert"
 
+# The player's files in the run folder, not the system's per-user one (UserFolder.hpp).
+export GALAXY_USER_DIR="$run"
 cd "$run"
 if [[ $scripted == 1 ]]; then
     # Silent unless QA_SOUND=1 (memory: scripted runs must not play through the speakers).

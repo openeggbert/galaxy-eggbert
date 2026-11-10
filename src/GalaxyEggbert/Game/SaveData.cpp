@@ -1,4 +1,5 @@
 #include "SaveData.hpp"
+#include "UserFolder.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -7,9 +8,11 @@
 
 namespace GalaxyEggbert::Game
 {
+    std::string SaveData::SavePath() { return UserPathString("savedata.txt"); }
+
     void SaveData::Load()
     {
-        std::ifstream in(kSavePath);
+        std::ifstream in(SavePath());
         if (!in.is_open())
         {
             return;
@@ -137,10 +140,11 @@ namespace GalaxyEggbert::Game
 
     void SaveData::Save() const
     {
-        std::ofstream out(kSavePath, std::ios::trunc);
+        const std::string path = SavePath();
+        std::ofstream out(path, std::ios::trunc);
         if (!out.is_open())
         {
-            std::printf("SaveData: could not write %s\n", kSavePath);
+            std::printf("SaveData: could not write %s\n", path.c_str());
             return;
         }
         Write(out);

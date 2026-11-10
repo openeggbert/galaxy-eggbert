@@ -49,7 +49,7 @@ check_level() {
     for f in "${frames[@]}"; do
         rm -f "${build_dir}/${f}"
     done
-    (cd "${build_dir}" && GALAXY_EFFECTS="${level}" timeout 90 "./GalaxyEggbert" --golden-capture) > /dev/null 2>&1 || true
+    (cd "${build_dir}" && GALAXY_USER_DIR=. GALAXY_EFFECTS="${level}" timeout 90 "./GalaxyEggbert" --golden-capture) > /dev/null 2>&1 || true
     for f in "${frames[@]}"; do
         fresh="${build_dir}/${f}"
         reference="${reference_dir}/${f}"

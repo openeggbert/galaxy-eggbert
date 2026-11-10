@@ -84,10 +84,7 @@ namespace GalaxyEggbert::Game
         // FNV-1a over raw bytes, including NULs. File failures never produce a valid hash.
         static std::uint64_t HashBytes(std::string_view bytes);
         static std::optional<std::uint64_t> HashFile(const std::filesystem::path& path);
-#if defined(__EMSCRIPTEN__)
-        static constexpr const char* kPath = "/save/resume.txt";
-#else
-        static constexpr const char* kPath = "resume.txt";
-#endif
+        // resume.txt in the player's folder (UserFolder.hpp).
+        [[nodiscard]] static std::string Path();
     };
 }

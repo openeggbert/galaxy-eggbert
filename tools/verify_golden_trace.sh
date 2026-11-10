@@ -45,7 +45,7 @@ fi
 trace="golden_trace.txt"
 rm -f "${build_dir}/${trace}"
 
-(cd "${build_dir}" && timeout 20 "./GalaxyEggbert" --golden-capture-trace) > /dev/null 2>&1 || true
+(cd "${build_dir}" && GALAXY_USER_DIR=. timeout 20 "./GalaxyEggbert" --golden-capture-trace) > /dev/null 2>&1 || true
 
 fresh="${build_dir}/${trace}"
 reference="${golden_dir}/${trace}"

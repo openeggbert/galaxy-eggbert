@@ -2,6 +2,7 @@
 
 #include <GalaxyEggbert/Game/DemoReplay.hpp>
 #include <GalaxyEggbert/Game/FreeFileName.hpp>
+#include <GalaxyEggbert/Game/UserFolder.hpp>
 
 #include <GalaxyEggbert/BlockTypes.hpp>
 #include <GalaxyEggbert/MoveObjectRecord.hpp>
@@ -19,22 +20,15 @@ namespace GalaxyEggbert::Editor
 {
     namespace
     {
-        // Same real Emscripten/IDBFS persistence difference SaveData::
-        // kSavePath already documents -- a platform path, not an engine-API
-        // difference, so it doesn't fall under CLAUDE.md's "no #ifdef for
-        // engine differences" rule.
-#if defined(__EMSCRIPTEN__)
-        constexpr const char* kCustomWorldsRoot = "/save/customworlds";
-#else
-        constexpr const char* kCustomWorldsRoot = "customworlds";
-#endif
+        // In the player's folder beside savedata.txt (UserFolder.hpp: /save/customworlds on the web).
+        std::filesystem::path CustomWorldsRootPath() { return GalaxyEggbert::Game::UserPath("customworlds"); }
         // A file's bytes; nothing when it cannot be read (defined with the galaxy packs below).
         std::optional<std::string> ReadBytes(const std::filesystem::path& path);
     }
 
     std::filesystem::path CustomWorldsDir(int gamerSlot)
     {
-        return std::filesystem::path(kCustomWorldsRoot) / ("gamer" + std::to_string(gamerSlot));
+        return CustomWorldsRootPath() / ("gamer" + std::to_string(gamerSlot));
     }
 
     std::vector<std::filesystem::path> ListCustomWorlds(int gamerSlot)
@@ -170,7 +164,7 @@ namespace GalaxyEggbert::Editor
 
     std::filesystem::path CustomWorldsRoot()
     {
-        return kCustomWorldsRoot;
+        return CustomWorldsRootPath();
     }
 
     std::filesystem::path CampaignBackupsDir()
@@ -287,7 +281,7 @@ namespace GalaxyEggbert::Editor
 
     std::filesystem::path SharedWorldsDir()
     {
-        return std::filesystem::path(kCustomWorldsRoot) / "shared";
+        return CustomWorldsRootPath() / "shared";
     }
 
     std::vector<std::filesystem::path> ListSharedWorlds()

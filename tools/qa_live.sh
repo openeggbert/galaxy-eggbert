@@ -60,6 +60,8 @@ fi
 rm -f "$run/GalaxyEggbertCNA" "$run/GalaxyEggbert"
 ln "$build/GalaxyEggbert" "$run/GalaxyEggbert"
 
+# The player's files in the run folder, not the system's per-user one (UserFolder.hpp).
+export GALAXY_USER_DIR="$run"
 cd "$run"
 # Silent unless QA_SOUND=1: the run would otherwise play through the desktop's speakers.
 audio_driver=dummy

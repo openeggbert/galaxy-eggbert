@@ -538,7 +538,7 @@ namespace GalaxyEggbert::CNA
         // A demo never touches the player's resume file (DemoReplay.hpp).
         if (demoActive_) return;
         std::error_code ignored;
-        std::filesystem::remove(ResumeLog::kPath, ignored);
+        std::filesystem::remove(ResumeLog::Path(), ignored);
     }
 
     void GalaxyEggbertGame::OnDeactivated(System::Object* sender, const System::EventArgs& args)
@@ -563,12 +563,12 @@ namespace GalaxyEggbert::CNA
             recordingResume_ && !missionStartPending_)
         {
             // Keep the complete source log if deactivated while reconstruction is in progress.
-            const std::string temporary = std::string(ResumeLog::kPath) + ".tmp";
+            const std::string temporary = ResumeLog::Path() + ".tmp";
             std::ofstream out(temporary, std::ios::binary | std::ios::trunc);
             out << resumeLog_.Serialize();
             out.close();
             std::error_code error;
-            if (out) std::filesystem::rename(temporary, ResumeLog::kPath, error);
+            if (out) std::filesystem::rename(temporary, ResumeLog::Path(), error);
             if (!out || error)
             {
                 std::cout << "GalaxyEggbertCNA: could not write resume log" << std::endl;

@@ -61,6 +61,12 @@ content-authoring UX, but not new gameplay mechanics.
 
 ## Shipped, working state
 
+- The player's files in the system's user folder (2026-11-10, the owner's request before a
+  release; `UserFolder.hpp`): savedata.txt, resume.txt, demos/ and customworlds/ in
+  `~/.local/share/Galaxy Eggbert` (`$XDG_DATA_HOME`), `%LOCALAPPDATA%\Galaxy Eggbert` on Windows
+  (CNA's StorageDevice root), or `--user DIR` / `GALAXY_USER_DIR` (the test scripts: their run
+  folder). An earlier build's files in the working folder are copied over on the first start.
+  The web keeps /save, Android its private storage.
 - 2x textures (2026-11-09/10, session ray, `../ray.md`; owner-approved): `Content/icons2x/` and
   `Content/backgrounds2x/` load in place of the 1x sheets when 2x is wanted (`TextureScale.hpp`:
   only a file exactly twice the 1x one, else 1x; every pixel-to-UV step divides by the logical 1x

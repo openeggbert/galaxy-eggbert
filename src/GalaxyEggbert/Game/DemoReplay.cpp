@@ -1,5 +1,6 @@
 #include "DemoReplay.hpp"
 #include "FreeFileName.hpp"
+#include "UserFolder.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -34,12 +35,8 @@ namespace GalaxyEggbert::Game
 
     std::string UserDemoDir()
     {
-        // The save file's platform path (SaveData::kSavePath): IDBFS's /save on the web.
-#if defined(__EMSCRIPTEN__)
-        return "/save/demos";
-#else
-        return "demos";
-#endif
+        // Beside savedata.txt, in the player's folder (UserFolder.hpp): IDBFS's /save on the web.
+        return UserPathString("demos");
     }
 
     std::string UserDemoPath(int number)

@@ -20,7 +20,7 @@ namespace GalaxyEggbert::Editor
     // player already picks their slot on the Init screen.
 
     // Directory holding @p gamerSlot's (0-2) custom worlds. Same platform-
-    // path convention as SaveData::kSavePath (CNA mounts that Emscripten/IDBFS
+    // path convention as SaveData::SavePath() (CNA mounts that Emscripten/IDBFS
     // location before main; this is a persistence difference, not an engine-API one).
     [[nodiscard]] std::filesystem::path CustomWorldsDir(int gamerSlot);
 

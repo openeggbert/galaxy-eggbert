@@ -42,6 +42,8 @@ for d in Content avatars3d textures3d worlds3d; do
 done
 rm -f "$run/GalaxyEggbert"
 ln "$build/GalaxyEggbert" "$run/GalaxyEggbert"
+# The player's files in the run folder, not the system's per-user one (UserFolder.hpp).
+export GALAXY_USER_DIR="$run"
 cd "$run"
 # A player's own files, which no demo may change or delete.
 printf 'soundEnabled=1\nselectedGamer=2\ngamer2.lives=7\ngamer2.missionNumber=23\ngamer2.hasProgress=1\n' > savedata.txt
