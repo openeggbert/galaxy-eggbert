@@ -2805,7 +2805,8 @@ namespace GalaxyEggbert::Game
                 }
                 obj.active = false;
                 // Real end point (0,438), Decor.cpp:6098-6100.
-                RequestVoyage(VoyageKind::Perso, 108, true, obj.currentX, obj.currentY, obj.currentZ, 0.0f, 438.0f,
+                // His team's bomb icon flies to the panel (GetIconPerso: 108 + m_team).
+                RequestVoyage(VoyageKind::Perso, 108 + persoTeam_, true, obj.currentX, obj.currentY, obj.currentZ, 0.0f, 438.0f,
                               true);
                 return true;
             }

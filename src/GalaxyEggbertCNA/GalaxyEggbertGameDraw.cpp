@@ -653,6 +653,7 @@ namespace GalaxyEggbert::CNA
                 // already used for the Pause-menu showRestart gate above.
                 const int hudMission = worldRuntime_.GetMissionNumber();
                 const bool showTreasureCounter = hudMission != 1 && hudMission % 10 != 0;
+                hud_.SetPersoTeam(NetTeam()); // his team's bomb icon in a network game
                 hud_.Draw(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                           interaction_.Lives(),
                           interaction_.Key1Count() > 0, interaction_.Key2Count() > 0,
