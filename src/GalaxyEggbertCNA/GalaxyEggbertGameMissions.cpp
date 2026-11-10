@@ -670,7 +670,9 @@ namespace GalaxyEggbert::CNA
             StopVehicleMotorSound();
             pendingCheatLetters_.clear();
         }
+        const GamePhase previous = phase_;
         phase_ = next;
+        NetPhaseChanged(previous, next); // the network game's pause and abandon
         editorDevices_.Reset();
         editorCommandKeys_.Reset();
         if (next == GalaxyEggbert::Def::GamePhase::Init && !titleSceneActive_)

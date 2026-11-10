@@ -66,6 +66,7 @@
 #include <set>
 #include <vector>
 #include "GameInternal.hpp"
+#include <GalaxyEggbert/Net/NetRules.hpp>
 #include <GalaxyEggbert/Game/WorldRenderer.hpp>
 
 namespace GalaxyEggbert::CNA
@@ -693,8 +694,8 @@ namespace GalaxyEggbert::CNA
             if (phase_ == GalaxyEggbert::Def::GamePhase::Pause)
             {
                 const int mission = worldRuntime_.GetMissionNumber();
-                const bool showBack = mission != 1;
-                const bool showRestart = mission != 1 && mission % 10 != 0;
+                const bool showBack = mission != 1 && !NetMatchActive();
+                const bool showRestart = mission != 1 && mission % 10 != 0 && !NetMatchActive();
                 inputPad_.DrawPause(
                     device, viewport.getWidthProperty(), viewport.getHeightProperty(), showBack, showRestart,
                     phaseTimeSeconds_, fadeOutPhase_, CanRecordDemo() && !demoSlotsShown_, !demoSlotsShown_,
@@ -709,7 +710,10 @@ namespace GalaxyEggbert::CNA
             {
                 inputPad_.DrawWinLost(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                      phase_ == GalaxyEggbert::Def::GamePhase::Win, phaseTimeSeconds_);
-                if (demoNoticeSeconds_ > 0.0f)
+                if (NetMatchActive() && phase_ == GalaxyEggbert::Def::GamePhase::Win)
+                    inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                               {std::string(GalaxyEggbert::Net::kTextWon)});
+                else if (demoNoticeSeconds_ > 0.0f)
                     inputPad_.DrawActiveCheats(device, viewport.getWidthProperty(), viewport.getHeightProperty(),
                                                {demoNotice_});
             }
@@ -773,6 +777,13 @@ namespace GalaxyEggbert::CNA
                                         phaseTimeSeconds_, GalaxyEggbert::Def::GamePhase::None, false, false);
                     DrawDemoSlotsScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
                 }
+                else if (NetScreenShown())
+                {
+                    // The network game's screens, over the same picture.
+                    inputPad_.DrawPause(device, viewport.getWidthProperty(), viewport.getHeightProperty(), false, false,
+                                        phaseTimeSeconds_, GalaxyEggbert::Def::GamePhase::None, false, false);
+                    DrawNetScreen(device, viewport.getWidthProperty(), viewport.getHeightProperty());
+                }
             }
             else if (phase_ == GalaxyEggbert::Def::GamePhase::Play)
             {
@@ -790,7 +801,8 @@ namespace GalaxyEggbert::CNA
                 {
                     // Speedy Blupi's TX_DEMOREC ("REC") while the player records a demo (BD-0116), and
                     // what the last recording became.
-                    std::vector<std::string> names;
+                    // The network game's notices (the original's NotifPush) and another player's pause.
+                    std::vector<std::string> names = NetNotices();
                     if (demoRecording_ && demoRecordSlot_ > 0) names.push_back("REC");
                     const bool noticeApart = demoNoticeSeconds_ > 0.0f && trainingHintShown;
                     if (demoNoticeSeconds_ > 0.0f && !noticeApart) names.push_back(demoNotice_);

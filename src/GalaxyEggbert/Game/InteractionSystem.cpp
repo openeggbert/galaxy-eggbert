@@ -2142,7 +2142,9 @@ namespace GalaxyEggbert::Game
             // m_blupiRestart=true anywhere in this real block (shouldRespawn=false, same as the
             // generic-hazard list) -- but ALWAYS channel 10 + SmallShake + an ObjectType10 pop
             // effect (no fish/bird BigShake variant here, unlike the generic-hazard list).
-            if (GetObjectDefinition(obj.type).lethalDecorContactHazard)
+            // Another team's personal bomb (IsLethalPerso: 201-203 alone, the registry's
+            // lethalDecorContactHazard; in a network game every bomb but his team's).
+            if (IsLethalPerso(obj.type))
             {
                 const float sdx = obj.currentX - blupiX;
                 const float sdy = obj.currentY - blupiY;
@@ -2788,7 +2790,7 @@ namespace GalaxyEggbert::Game
         constexpr float kPersoRadius = 1.1f;
         for (auto& obj : objects)
         {
-            if (!obj.active || obj.type != GalaxyEggbert::Def::ObjectType::ObjectType200)
+            if (!obj.active || !IsOwnPerso(obj.type))
             {
                 continue;
             }
@@ -2839,7 +2841,7 @@ namespace GalaxyEggbert::Game
         --persoCount_;
 
         MobileObjSpec decoy;
-        decoy.type = GalaxyEggbert::Def::ObjectType::ObjectType200;
+        decoy.type = static_cast<GalaxyEggbert::Def::ObjectType>(200 + persoTeam_); // his team's
         decoy.posStartX = decoy.posEndX = decoy.currentX = x;
         decoy.posStartY = decoy.posEndY = decoy.currentY = y;
         decoy.posStartZ = decoy.posEndZ = decoy.currentZ = z;

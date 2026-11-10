@@ -757,7 +757,7 @@ namespace GalaxyEggbert::CNA
         // Only the settled main menu of the active window counts: not Play, Pause, Setup, the
         // editor, the help or a menu transition.
         const bool eligible = fadeOutPhase_ == GamePhase::None && getIsActiveProperty() && !controlsHelp_.shown &&
-                              !menuInputLatched_ && !demoSlotsShown_ && !goodbyeShown_;
+                              !menuInputLatched_ && !demoSlotsShown_ && !goodbyeShown_ && !NetScreenShown();
         if (!demoIdleTimer_.Update(demoClockSeconds_, eligible, activity)) return false;
         std::cout << "GalaxyEggbertCNA: " << GalaxyEggbert::Game::kDemoIdleSeconds
                   << " s without input in the main menu: the demos play." << std::endl;

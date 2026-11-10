@@ -787,6 +787,21 @@ namespace GalaxyEggbert::Game
         // vehicle clause at all) -- picking up an already-placed decoy must still work while
         // riding/ballooned/squashed.
         [[nodiscard]] int PersoCount() const noexcept { return persoCount_; }
+        // The team whose bombs are his own (Speedy Blupi 2's network game, decblupi.cpp:2382-2395,
+        // 3721-3745): he lays and takes back TYPE_BOMBEPERSO1 + m_team (200 + team), and another
+        // team's (any other of 200-203) kills him at a touch. Alone he is team 0, Mobile Eggbert's
+        // own case (200 his, 201-203 the lethal decorations).
+        void SetPersoTeam(int team) noexcept { persoTeam_ = team >= 0 && team < 4 ? team : 0; }
+        [[nodiscard]] int PersoTeam() const noexcept { return persoTeam_; }
+        [[nodiscard]] bool IsOwnPerso(GalaxyEggbert::Def::ObjectType type) const noexcept
+        {
+            return static_cast<int>(type) == 200 + persoTeam_;
+        }
+        [[nodiscard]] bool IsLethalPerso(GalaxyEggbert::Def::ObjectType type) const noexcept
+        {
+            const int t = static_cast<int>(type);
+            return t >= 200 && t <= 203 && t != 200 + persoTeam_;
+        }
         bool TryPerso(WorldRuntime& worldRuntime, float x, float y, float z, bool grounded,
                       bool blupiCanUseHands = true);
 
@@ -1181,6 +1196,7 @@ namespace GalaxyEggbert::Game
         float glueDropTimer_ = 0.0f; // > 0: a helicopter glue ball about to leave
         static constexpr int kPersoCap = 5; // real m_blupiPerso cap
         int persoCount_ = 0;
+        int persoTeam_ = 0;
         bool crateBeingPushedThisFrame_ = false; // set by UpdateCratePush(); NOT part of events_ (see its own comment)
         bool contactGrace_ = false;
         bool actionSpent_ = false;

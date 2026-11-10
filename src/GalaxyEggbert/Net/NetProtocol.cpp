@@ -138,7 +138,7 @@ namespace GalaxyEggbert::Net
             w.F32(m.pose.x);
             w.F32(m.pose.y);
             w.F32(m.pose.z);
-            w.F32(m.pose.yaw);
+            for (const float v : m.pose.world) w.F32(v);
             w.U16(m.pose.clip);
             w.F32(m.pose.clipSeconds);
             w.U8(m.pose.alpha);
@@ -162,9 +162,9 @@ namespace GalaxyEggbert::Net
             }
             break;
         case MessageKind::Die: w.U8(m.lives); break;
+        case MessageKind::Pause: w.U8(m.ready ? 1 : 0); break;
         case MessageKind::Lost:
-        case MessageKind::Abandon:
-        case MessageKind::End: break;
+        case MessageKind::Abandon: break;
         }
         return w.bytes;
     }
@@ -176,7 +176,7 @@ namespace GalaxyEggbert::Net
         std::uint16_t id = 0;
         std::uint8_t version = 0, kind = 0;
         if (!r.U16(id) || id != kProtocolId || !r.U8(version) || version != kProtocolVersion || !r.U8(kind) ||
-            kind < static_cast<std::uint8_t>(MessageKind::Hello) || kind > static_cast<std::uint8_t>(MessageKind::End))
+            kind < static_cast<std::uint8_t>(MessageKind::Hello) || kind > static_cast<std::uint8_t>(MessageKind::Pause))
             return std::nullopt;
         Message m;
         m.kind = static_cast<MessageKind>(kind);
@@ -187,7 +187,7 @@ namespace GalaxyEggbert::Net
             ok = r.U32(m.simulationRevision) && r.U64(m.contentHash) && r.Text(m.name, kMaxName) && !m.name.empty();
             break;
         case MessageKind::Lobby:
-            ok = r.U16(m.lobby.world) && m.lobby.world >= 1 && m.lobby.world <= 99;
+            ok = r.U16(m.lobby.world) && m.lobby.world >= 1 && m.lobby.world <= 999;
             for (auto& slot : m.lobby.slots)
             {
                 std::uint8_t flags = 0;
@@ -200,6 +200,7 @@ namespace GalaxyEggbert::Net
             break;
         case MessageKind::Team: ok = r.U8(m.team) && m.team < kTeams; break;
         case MessageKind::Ready:
+        case MessageKind::Pause:
         {
             std::uint8_t v = 0;
             ok = r.U8(v) && v <= 1;
@@ -207,11 +208,12 @@ namespace GalaxyEggbert::Net
             break;
         }
         case MessageKind::Chat: ok = r.Text(m.text, kMaxChat) && !m.text.empty(); break;
-        case MessageKind::Start: ok = r.U16(m.world) && m.world >= 1 && m.world <= 99 && r.U64(m.worldHash); break;
+        case MessageKind::Start: ok = r.U16(m.world) && m.world >= 1 && m.world <= 999 && r.U64(m.worldHash); break;
         case MessageKind::Pose:
-            ok = r.U32(m.pose.tick) && r.F32(m.pose.x) && r.F32(m.pose.y) && r.F32(m.pose.z) && r.F32(m.pose.yaw) &&
-                 r.U16(m.pose.clip) && r.F32(m.pose.clipSeconds) && r.U8(m.pose.alpha) && r.U8(m.pose.flags) &&
-                 r.U8(m.pose.lives) && m.pose.flags < 4 && m.pose.lives <= kMultiplayerLives;
+            ok = r.U32(m.pose.tick) && r.F32(m.pose.x) && r.F32(m.pose.y) && r.F32(m.pose.z);
+            for (auto& v : m.pose.world) ok = ok && r.F32(v);
+            ok = ok && r.U16(m.pose.clip) && r.F32(m.pose.clipSeconds) && r.U8(m.pose.alpha) && r.U8(m.pose.flags) &&
+                 r.U8(m.pose.lives) && m.pose.flags <= kPoseFlags && m.pose.lives <= kMultiplayerLives;
             break;
         case MessageKind::Events:
         {
@@ -235,8 +237,7 @@ namespace GalaxyEggbert::Net
         }
         case MessageKind::Die: ok = r.U8(m.lives) && m.lives <= kMultiplayerLives; break;
         case MessageKind::Lost:
-        case MessageKind::Abandon:
-        case MessageKind::End: break;
+        case MessageKind::Abandon: break;
         }
         if (!ok || !r.Done()) return std::nullopt;
         return m;

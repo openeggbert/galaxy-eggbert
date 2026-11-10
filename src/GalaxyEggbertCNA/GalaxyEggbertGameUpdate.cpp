@@ -1,6 +1,7 @@
 // GalaxyEggbertGame: Update() and the simulation tick (UpdateTick). Split out of GalaxyEggbertGame.cpp.
 #include "GalaxyEggbertGame.hpp"
 #include "GameInternal.hpp"
+#include "NetGame.hpp"
 
 #include <GalaxyEggbert/Game/WaterSurface.hpp>
 #include <GalaxyEggbert/Game/CheatConfig.hpp>
@@ -98,6 +99,8 @@ namespace GalaxyEggbert::CNA
             demoClock_ = now;
             demoClockStarted_ = true;
         }
+        // The network game's session, every update whatever the phase (GalaxyEggbertGameNet.cpp).
+        UpdateNet();
         if (replayingResume_)
         {
             ReplayBatch();
@@ -394,9 +397,21 @@ namespace GalaxyEggbert::CNA
         // the real, unscaled `dt` from the top of this function.
         const float simDt = dt * GameSpeedFactor(gameSpeed_);
 
+        // The network game: another player's pause stops the game here too (PK_PAUSE); else the
+        // others' changes go in before the step and ours out after it (NetReplication.hpp).
+        const bool netMatch = NetMatchActive();
+        if (netMatch)
+        {
+            NetAgePeers(dt);
+            if (NetRemotePaused()) return;
+            NetBeforeStep();
+        }
+
         worldRuntime_.Update(simDt);
 
-        if (terrainRenderer_ && UpdateTickWorld(dt, simDt, padPlayInput, inputPadClaimedMouse))
+        const bool worldLeft = terrainRenderer_ && UpdateTickWorld(dt, simDt, padPlayInput, inputPadClaimedMouse);
+        if (netMatch && NetMatchActive()) NetAfterStep();
+        if (worldLeft)
         {
             return; // the world left (a mission over, the bye) or a phase took over
         }
@@ -481,11 +496,12 @@ namespace GalaxyEggbert::CNA
         const bool editorBrowsing = phase_ == GalaxyEggbert::Def::GamePhase::Editor && worldEditor_.IsBrowsing();
         const bool demoSlotsUp = demoSlotsShown_ && (phase_ == GalaxyEggbert::Def::GamePhase::Pause ||
                                                      phase_ == GalaxyEggbert::Def::GamePhase::Init);
+        const bool netScreenUp = NetScreenShown() && phase_ == GalaxyEggbert::Def::GamePhase::Init;
         const bool padCursor = phase_ == GalaxyEggbert::Def::GamePhase::Editor || phase_ == GalaxyEggbert::Def::GamePhase::Init;
         GalaxyEggbert::Game::FocusNavigator::Output focus;
-        if ((editorBrowsing || demoSlotsUp) && !SuppressLiveInput())
+        if ((editorBrowsing || demoSlotsUp || netScreenUp) && !SuppressLiveInput())
         {
-            const bool naming = demoNaming_ || worldEditor_.WantsText();
+            const bool naming = demoNaming_ || worldEditor_.WantsText() || NetWantsText();
             unsigned now = 0;
             const auto bit = [&now](bool on, unsigned b) { if (on) now |= b; };
             bit(phaseKeys.IsKeyDown(Keys::Up) || (padCursor && pad.dpadUp), 1u);
@@ -509,9 +525,9 @@ namespace GalaxyEggbert::CNA
             const auto tilted = [](float v) { return std::fabs(v) > 0.3f; };
             const bool stick = padCursor && (tilted(pad.leftX) || tilted(pad.leftY) || tilted(pad.rightX) || tilted(pad.rightY));
             in.pointer = mouseMoved || (tickInput_.buttons & 1u) != 0 || !tickInput_.touches.empty() || stick;
-            const auto targets = editorBrowsing
-                                     ? worldEditor_.BrowserFocusTargets()
-                                     : DemoSlotsFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight);
+            const auto targets = editorBrowsing ? worldEditor_.BrowserFocusTargets()
+                                 : netScreenUp  ? NetFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight)
+                                                : DemoSlotsFocusTargets(tickInput_.viewportWidth, tickInput_.viewportHeight);
             focus = focusNavigator_.Update(targets, in);
             focusHighlight_.reset();
             if (focus.active && focus.focused >= 0 && static_cast<std::size_t>(focus.focused) < targets.size())
@@ -591,8 +607,9 @@ namespace GalaxyEggbert::CNA
             // level); Restart additionally hidden on decade-boundary
             // missions (real `mission % 10 != 0` gate).
             const int mission = worldRuntime_.GetMissionNumber();
-            const bool showBack = mission != 1;
-            const bool showRestart = mission != 1 && mission % 10 != 0;
+            // A network game has no mission to go back to or start again (Pause's Menu leaves it).
+            const bool showBack = mission != 1 && !NetMatchActive();
+            const bool showRestart = mission != 1 && mission % 10 != 0 && !NetMatchActive();
             if (demoSlotsShown_)
             {
                 UpdateDemoSlotsScreen(focusMouse(mouse), viewport.getWidthProperty(), viewport.getHeightProperty());
@@ -782,6 +799,15 @@ namespace GalaxyEggbert::CNA
                 pauseKeyWasDown_ = phaseKeys.IsKeyDown(Keys::Escape);
                 return true;
             }
+            if (NetScreenShown())
+            {
+                // The network game's screens (GalaxyEggbertGameNet.cpp): Escape goes back a step.
+                const bool escape = phaseKeys.IsKeyDown(Keys::Escape);
+                UpdateNetScreen(mouse, viewport.getWidthProperty(), viewport.getHeightProperty(),
+                                escape && !pauseKeyWasDown_);
+                pauseKeyWasDown_ = escape;
+                return true;
+            }
             if (demoSlotsShown_)
             {
                 // The demo positions from the menu's Demos button: Escape closes them, not the game.
@@ -797,6 +823,11 @@ namespace GalaxyEggbert::CNA
             }
             auto initInput = inputPad_.UpdateInit(
                 mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
+            if (initInput.multiplayerPressed)
+            {
+                OpenMultiplayer();
+                return true;
+            }
             if (initInput.demosPressed)
             {
                 demoSlotsShown_ = true;
@@ -1114,7 +1145,14 @@ namespace GalaxyEggbert::CNA
             const bool mouseReturnPressed = inputPad_.UpdateWinLost(
                 mouse, viewport.getWidthProperty(), viewport.getHeightProperty());
             const bool returnPressed = phaseKeys.IsKeyDown(Keys::Space) || confirmDown || mouseReturnPressed;
-            if (returnPressed && !phaseReturnKeyWasDown_)
+            if (returnPressed && !phaseReturnKeyWasDown_ && NetMatchActive())
+            {
+                // The network game is over for him (event.cpp:2688-2700 closes it as the phase
+                // changes): out of the session, back to the menu.
+                LeaveNetMatch();
+                SetPhase(GalaxyEggbert::Def::GamePhase::Init, /*bypassFade=*/true);
+            }
+            else if (returnPressed && !phaseReturnKeyWasDown_)
             {
                 if (editorPlayTestActive_)
                 {
@@ -3126,7 +3164,12 @@ namespace GalaxyEggbert::CNA
             // Skipped during a play-test session (plan.md EDITOR-108):
             // a sandbox custom world has no real mission number, so
             // persisting one here would corrupt real save progress.
-            if (!editorPlayTestActive_)
+            if (NetMatchActive())
+            {
+                // No life left in a network game: PK_LOST (decblupi.cpp:4088-4094), nothing saved.
+                NetSendLost();
+            }
+            else if (!editorPlayTestActive_)
             {
                 saveData_.SetLives(interaction_.Lives());
                 saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
@@ -3139,7 +3182,7 @@ namespace GalaxyEggbert::CNA
         {
             recordingResume_ = false;
             if (!replayingResume_) DeleteResumeFile();
-            if (!editorPlayTestActive_)
+            if (!editorPlayTestActive_ && !NetMatchActive())
             {
                 saveData_.SetLives(interaction_.Lives());
                 saveData_.SetMissionNumber(worldRuntime_.GetMissionNumber());
@@ -3166,7 +3209,7 @@ namespace GalaxyEggbert::CNA
         {
             winCheerActive_ = false;
             const int mission = worldRuntime_.GetMissionNumber();
-            if (editorPlayTestActive_ || mission == 199 || mission == 999)
+            if (editorPlayTestActive_ || NetMatchActive() || mission == 199 || mission == 999)
                 SetPhase(GalaxyEggbert::Def::GamePhase::Win);
             else
                 AdvanceAfterWin();

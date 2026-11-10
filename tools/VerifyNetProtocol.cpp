@@ -2,6 +2,8 @@
 // trip, a damaged or foreign packet is refused whole, and the lobby follows the original's rules.
 #include <GalaxyEggbert/Net/NetLobby.hpp>
 #include <GalaxyEggbert/Net/NetProtocol.hpp>
+#include <GalaxyEggbert/Net/NetReplication.hpp>
+#include <GalaxyEggbert/Net/NetRules.hpp>
 
 #include <cmath>
 #include <cstring>
@@ -31,23 +33,48 @@ int main()
 
     Message lobby;
     lobby.kind = MessageKind::Lobby;
-    lobby.lobby.world = 3;
+    lobby.lobby.world = 201;
     lobby.lobby.slots[0] = {true, true, 2, 17, "Ann"};
     lobby.lobby.slots[2] = {true, false, 0, 5, "Ben Two"};
     const auto lobbyBack = Decode(Encode(lobby));
-    check(lobbyBack && lobbyBack->lobby.world == 3 && lobbyBack->lobby.slots[0].ready &&
+    check(lobbyBack && lobbyBack->lobby.world == 201 && lobbyBack->lobby.slots[0].ready &&
               lobbyBack->lobby.slots[0].team == 2 && lobbyBack->lobby.slots[0].gamerId == 17 &&
               lobbyBack->lobby.slots[2].name == "Ben Two" && !lobbyBack->lobby.slots[1].present,
-          "Lobby: the world and the four places come back");
+          "Lobby: the world (SB2's 201-212) and the four places come back");
+    Message start;
+    start.kind = MessageKind::Start;
+    start.world = 212;
+    start.worldHash = 99;
+    const auto startBack = Decode(Encode(start));
+    check(startBack && startBack->world == 212 && startBack->worldHash == 99, "Start: the multiplayer world comes back");
+    start.world = 1000;
+    check(!Decode(Encode(start)), "a world number past 999 is refused");
 
     Message pose;
     pose.kind = MessageKind::Pose;
-    pose.pose = {123456u, -12.5f, 3.25f, 40.0f, 1.5f, 9, 0.75f, 77, kPoseShield, 6};
+    pose.pose.tick = 123456u;
+    pose.pose.x = -12.5f;
+    pose.pose.y = 3.25f;
+    pose.pose.z = 40.0f;
+    for (int i = 0; i < 12; ++i) pose.pose.world[static_cast<std::size_t>(i)] = 0.5f * static_cast<float>(i) - 2.0f;
+    pose.pose.clip = 9;
+    pose.pose.clipSeconds = 0.75f;
+    pose.pose.alpha = 77;
+    pose.pose.flags = kPoseShield;
+    pose.pose.lives = 6;
     const auto poseBack = Decode(Encode(pose));
     check(poseBack && poseBack->pose.tick == 123456u && poseBack->pose.x == -12.5f && poseBack->pose.clip == 9 &&
+              poseBack->pose.world == pose.pose.world &&
               poseBack->pose.clipSeconds == 0.75f && poseBack->pose.alpha == 77 && poseBack->pose.lives == 6 &&
               poseBack->pose.flags == kPoseShield && !IsReliable(MessageKind::Pose),
-          "Pose: position, clip, opacity, flags and lives come back; poses may be lost");
+          "Pose: position, the model's matrix, clip, opacity, flags and lives come back; poses may be lost");
+
+    Message pause;
+    pause.kind = MessageKind::Pause;
+    pause.ready = true;
+    const auto pauseBack = Decode(Encode(pause));
+    check(pauseBack && pauseBack->kind == MessageKind::Pause && pauseBack->ready && IsReliable(MessageKind::Pause),
+          "Pause: paused comes back, and must arrive");
 
     Message events;
     events.kind = MessageKind::Events;
@@ -116,6 +143,101 @@ int main()
     check(host.Add(6, "Fay") == -1, "a fifth player finds no place");
     host.ClearReady();
     check(!host.CanStart(), "after a match nobody is ready");
+
+    // Speedy Blupi 2's rules.
+    check(RemovedInMultiplayer(7) && RemovedInMultiplayer(12) && RemovedInMultiplayer(21) && RemovedInMultiplayer(32) &&
+              RemovedInMultiplayer(33) && !RemovedInMultiplayer(13) && !RemovedInMultiplayer(28) &&
+              !RemovedInMultiplayer(49) && !RemovedInMultiplayer(200),
+          "a network game takes out crates, goals and enemy Blupis only (decblock.cpp:1430)");
+    check(LastSurvivor(1) && !LastSurvivor(2) && LastSurvivor(0), "fewer than two present: the one left wins");
+    check(DieNotice("Ann", 3) == "Ann has 3 lives left !" && DieNotice("Ann", 1) == "Ann has only one more life left !" &&
+              DieNotice("Ann", 0) == "Ann has no life left !" && LeftNotice("Ben") == "Ben has left the game ..." &&
+              LostNotice("Cid") == "Cid has been just knocked out ...",
+          "the original's notices (sb2-eggbert-en.rc 257-261)");
+    check(HashBytes("a") != HashBytes("b") && HashBytes("ab") == HashBytes("b", HashBytes("a")),
+          "the content hash chains over the files");
+
+    // Replication: one machine's step, the other machine's world.
+    {
+        using GalaxyEggbert::Game::MobileObjSpec;
+        using GalaxyEggbert::Def::ObjectType;
+        const auto object = [](ObjectType type, float x) {
+            MobileObjSpec o;
+            o.type = type;
+            o.currentX = o.posStartX = o.posEndX = x;
+            o.currentY = o.posStartY = o.posEndY = 1.0f;
+            o.active = true;
+            return o;
+        };
+        const std::vector<MobileObjSpec> loaded{object(ObjectType::ObjectType5, 1.0f), object(ObjectType::ObjectType29, 2.0f),
+                                                object(ObjectType::ObjectType201, 3.0f)};
+        GalaxyEggbert::Worlds::World worldA, worldB;
+        auto objectsA = loaded, objectsB = loaded;
+        Replicator a, b;
+        a.Begin(objectsA, 0);
+        b.Begin(objectsB, 1);
+        a.Snapshot(worldA, objectsA);
+        // A's step: a pickup taken, a wall blown, a bomb laid in the taken one's slot, a shot fired.
+        objectsA[0].active = false;
+        worldA.setBlock(10, 2, 20, GalaxyEggbert::Worlds::Block::make(10));
+        objectsA[0] = object(ObjectType::ObjectType200, 4.0f);
+        auto shot = object(ObjectType::ObjectType23, 5.0f);
+        shot.posEndX = 9.0f;
+        shot.firedByBlupi = true;
+        objectsA.push_back(shot);
+        auto enemyShot = object(ObjectType::ObjectType23, 6.0f);
+        objectsA.push_back(enemyShot);
+        const auto events = a.Diff(worldA, objectsA);
+        int retired = 0, blocks = 0, spawned = 0;
+        for (const auto& e : events)
+        {
+            retired += e.kind == EventKind::ObjectRetired;
+            blocks += e.kind == EventKind::BlockChanged;
+            spawned += e.kind == EventKind::ObjectSpawned;
+        }
+        check(retired == 1 && blocks == 1 && spawned == 2,
+              "A's step: the pickup taken, the block changed, his bomb and his own shot (not another's)");
+        // Through the wire, into B.
+        Message m;
+        m.kind = MessageKind::Events;
+        m.events = events;
+        const auto wire = Decode(Encode(m));
+        check(wire && wire->events.size() == events.size(), "the events survive the wire");
+        for (const auto& e : wire->events) b.Apply(e, worldB, objectsB);
+        b.Snapshot(worldB, objectsB);
+        bool bomb = false, shotThere = false;
+        for (const auto& o : objectsB)
+        {
+            bomb = bomb || (o.active && o.type == ObjectType::ObjectType200 && o.currentX == 4.0f);
+            shotThere = shotThere || (o.active && o.type == ObjectType::ObjectType23 && !o.firedByBlupi && o.posEndX == 9.0f);
+        }
+        check(!objectsB[0].active || objectsB[0].type != ObjectType::ObjectType5, "B: the pickup is gone");
+        check(worldB.getBlock(10, 2, 20).type() == 10, "B: the block changed");
+        check(bomb && shotThere, "B: A's bomb is there, and A's shot flies at B's Blupi");
+        check(b.Diff(worldB, objectsB).empty(), "B sends nothing back of what it applied");
+        // B's Blupi touches A's bomb: it goes, and A hears it.
+        for (auto& o : objectsB)
+            if (o.type == ObjectType::ObjectType200) o.active = false;
+        const auto back = b.Diff(worldB, objectsB);
+        check(back.size() == 1 && back[0].kind == EventKind::SpawnRetired, "B: A's bomb blown, sent as SpawnRetired");
+        a.Snapshot(worldA, objectsA);
+        for (const auto& e : back) a.Apply(e, worldA, objectsA);
+        check(!objectsA[0].active, "A: his bomb is gone too");
+        // A late retirement of the world's object whose slot now holds something else is refused.
+        WorldEvent late;
+        late.kind = EventKind::ObjectRetired;
+        late.id = 0;
+        auto again = objectsA;
+        again[0] = object(ObjectType::ObjectType39, 7.0f);
+        const int refusedBefore = a.Refused();
+        a.Apply(late, worldA, again);
+        check(again[0].active && a.Refused() == refusedBefore + 1, "a stale retirement does not remove what took its slot");
+        WorldEvent outside;
+        outside.kind = EventKind::BlockChanged;
+        outside.a = 500;
+        a.Apply(outside, worldA, objectsA);
+        check(a.Refused() == refusedBefore + 2, "a block outside the world is refused");
+    }
 
     std::cout << (allOk ? "ALL CHECKS PASSED" : "SOME CHECKS FAILED") << std::endl;
     return allOk ? 0 : 1;

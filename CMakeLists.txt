@@ -245,6 +245,18 @@ if(GALAXY_EGGBERT_BUILD_CNA)
 
     target_link_libraries(GalaxyEggbertCNA PRIVATE CnaEngine::Graphics)
 
+    # The network game (plans/plan_gemultiplayer.md): CNA's SystemLink sessions where CNA builds
+    # networking (not the web build); without it the game has no Multiplayer entry.
+    # The screens and the match are built everywhere; NetSession.cpp is a stand-in without it.
+    target_sources(GalaxyEggbertCNA PRIVATE
+        src/GalaxyEggbertCNA/NetSession.cpp
+        src/GalaxyEggbertCNA/GalaxyEggbertGameNet.cpp
+        src/GalaxyEggbert/Net/NetReplication.cpp)
+    if(TARGET CNA::Net)
+        target_link_libraries(GalaxyEggbertCNA PRIVATE CNA::Net)
+        target_compile_definitions(GalaxyEggbertCNA PRIVATE GALAXY_EGGBERT_NET=1)
+    endif()
+
     if(TARGET SDL3::SDL3main)
         target_link_libraries(GalaxyEggbertCNA PRIVATE SDL3::SDL3main)
     endif()
@@ -763,6 +775,8 @@ target_include_directories(VerifyAutoplay PRIVATE
 add_executable(VerifyNetProtocol
         tools/VerifyNetProtocol.cpp
         src/GalaxyEggbert/Net/NetProtocol.cpp
+        src/GalaxyEggbert/Net/NetReplication.cpp
+        ${GE_SHARED_SOURCES}
 )
 target_include_directories(VerifyNetProtocol PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

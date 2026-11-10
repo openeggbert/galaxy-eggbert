@@ -4,6 +4,7 @@
 
 #include "GalaxyEggbertGame.hpp"
 #include "GameInternal.hpp"
+#include "NetGame.hpp"
 
 #include <GalaxyEggbert/BlockDefinitionRegistry.hpp>
 #include <GalaxyEggbert/BlockTypes.hpp>
@@ -135,6 +136,8 @@ namespace GalaxyEggbert::CNA
             {
                 AppendSceneBlupi(frame.translucentModels);
             }
+            // The other players of a network game, in their colours.
+            AppendSceneNetPlayers(frame.opaqueModels, frame.translucentModels);
             AppendSceneEditorStarts(frame.editorStarts);
         }
         AppendSceneBillboards(frame);
@@ -548,6 +551,14 @@ namespace GalaxyEggbert::CNA
             body.tint = gluePuddle ? Vector3(0.20f, 0.32f, 0.03f) : Vector3(kCharredShade, kCharredShade, kCharredShade);
         }
         body.partTextures = PartTextures(*blupiModel_, BlupiFaceTexture(), blupiFacePart_);
+        if (const int team = NetTeam(); team != 0 && blupiModelIsReal_)
+        {
+            // His team's colour in a network game (SB2's coloured Blupi channels, decor.cpp:211-224).
+            Texture2D* face = BlupiFaceTexture();
+            body.partTextures.clear();
+            for (const auto& part : blupiModel_->Parts)
+                body.partTextures.push_back(TeamTexture(team, face && part.Name == blupiFacePart_ ? face : part.Texture));
+        }
         models.push_back(std::move(body));
 
         // The vehicle he rides in this clip (helicopter, jeep, tank, overcraft, skateboard): its own
@@ -1177,6 +1188,92 @@ namespace GalaxyEggbert::CNA
         }
     }
 
+    Texture2D* GalaxyEggbertGame::TeamTexture(int team, Texture2D* source)
+    {
+        // The editor's player starts and a network game's teams: the original yellow material in
+        // the colour (RecolorPlayerStartPixel), a copy made once per texture.
+        if (!source || team <= 0 || team > 3) return source;
+        auto& textures = editorStartTextures_[static_cast<std::size_t>(team - 1)];
+        if (const auto found = textures.find(source); found != textures.end()) return found->second.get();
+        using Microsoft::Xna::Framework::Color;
+        const int width = source->getWidthProperty(), height = source->getHeightProperty();
+        std::vector<Color> pixels(static_cast<std::size_t>(width) * static_cast<std::size_t>(height));
+        source->GetData(pixels.data(), static_cast<int>(pixels.size()));
+        const auto color = static_cast<PlayerStartColor>(team);
+        for (auto& pixel : pixels)
+        {
+            std::uint8_t r = pixel.getRProperty(), g = pixel.getGProperty(), b = pixel.getBProperty();
+            GalaxyEggbert::Editor::RecolorPlayerStartPixel(color, r, g, b);
+            pixel = Color(r, g, b, pixel.getAProperty());
+        }
+        auto texture = std::make_unique<Texture2D>(getGraphicsDeviceProperty(), width, height);
+        texture->SetData(pixels.data(), static_cast<int>(pixels.size()));
+        auto* result = texture.get();
+        textures.emplace(source, std::move(texture));
+        return result;
+    }
+
+    void GalaxyEggbertGame::AppendSceneNetPlayers(std::vector<SceneModel>& opaque, std::vector<SceneModel>& translucent)
+    {
+        // A network game's other Blupis (the original draws them only, decblock.cpp:1252-1282): each
+        // as his own machine draws him (Pose: his model's matrix, clip and time), moved between his
+        // last two poses, in his team's colour, with the vehicle he rides.
+        if (!NetMatchActive() || !blupiModelLoaded_ || !blupiEffect_ || !blupiModel_ ||
+            phase_ == GalaxyEggbert::Def::GamePhase::Editor)
+            return;
+        const auto& n = *net_;
+        for (const auto& peer : n.peers)
+        {
+            const auto& p = peer.pose;
+            if (!peer.present || !peer.hasPose || (p.flags & GalaxyEggbert::Net::kPoseHidden) != 0 ||
+                p.clip >= n.clipNames.size())
+                continue;
+            const std::string& clip = n.clipNames[p.clip];
+            if (blupiModel_->Clips.count(clip) == 0) continue;
+            const auto& q = peer.previous;
+            float t = std::clamp(peer.age / std::max(peer.interval, 0.02f), 0.0f, 1.0f);
+            const float jump = std::fabs(p.world[9] - q.world[9]) + std::fabs(p.world[10] - q.world[10]) +
+                               std::fabs(p.world[11] - q.world[11]);
+            if (jump > 3.0f) t = 1.0f; // a new life, a teleport: there at once
+            const auto lerp = [t](float a, float b) { return a + (b - a) * t; };
+            SceneModel body;
+            body.model = blupiModel_.get();
+            body.clip = clip;
+            body.seconds = static_cast<double>(p.clipSeconds) + std::min(peer.age, 0.25f);
+            body.world = Matrix(p.world[0], p.world[1], p.world[2], 0.0f, p.world[3], p.world[4], p.world[5], 0.0f,
+                                p.world[6], p.world[7], p.world[8], 0.0f, lerp(q.world[9], p.world[9]),
+                                lerp(q.world[10], p.world[10]), lerp(q.world[11], p.world[11]), 1.0f);
+            body.alpha = static_cast<float>(p.alpha) / 255.0f;
+            body.translucent = body.alpha < 1.0f;
+            if ((p.flags & (GalaxyEggbert::Net::kPoseCharred | GalaxyEggbert::Net::kPoseGlued)) != 0)
+            {
+                body.tinted = true;
+                body.tint = (p.flags & GalaxyEggbert::Net::kPoseGlued) != 0 ? Vector3(0.20f, 0.32f, 0.03f)
+                                                                            : Vector3(0.07f, 0.07f, 0.07f);
+            }
+            Texture2D* face = BlupiFaceFor(clip, body.seconds);
+            for (const auto& part : blupiModel_->Parts)
+                body.partTextures.push_back(TeamTexture(peer.team, face && part.Name == blupiFacePart_ ? face : part.Texture));
+            auto& bucket = body.translucent ? translucent : opaque;
+            const Matrix world = body.world;
+            const float alpha = body.alpha;
+            const double seconds = body.seconds;
+            bucket.push_back(std::move(body));
+            for (const auto& [vehicleName, vehicle] : blupiVehicles_)
+            {
+                if (vehicle->Clips.find(clip) == vehicle->Clips.end()) continue;
+                SceneModel ride;
+                ride.model = vehicle.get();
+                ride.clip = clip;
+                ride.seconds = seconds;
+                ride.world = world;
+                ride.alpha = alpha;
+                ride.translucent = alpha < 1.0f;
+                bucket.push_back(std::move(ride));
+            }
+        }
+    }
+
     void GalaxyEggbertGame::AppendSceneEditorStarts(std::vector<SceneModel>& models)
     {
         // The editor's player starts: Blupi standing, in the start's colour, the selected colour last.
@@ -1200,23 +1297,7 @@ namespace GalaxyEggbert::CNA
         for (const auto& start : starts)
         {
             const auto coloredTexture = [&](Texture2D* source) -> Texture2D* {
-                if (!source || start.color == PlayerStartColor::Yellow) return source;
-                auto& textures = editorStartTextures_[static_cast<int>(start.color) - 1];
-                if (const auto found = textures.find(source); found != textures.end()) return found->second.get();
-                const int width = source->getWidthProperty(), height = source->getHeightProperty();
-                std::vector<Color> pixels(static_cast<std::size_t>(width) * height);
-                source->GetData(pixels.data(), static_cast<int>(pixels.size()));
-                for (auto& pixel : pixels)
-                {
-                    std::uint8_t r = pixel.getRProperty(), g = pixel.getGProperty(), b = pixel.getBProperty();
-                    GalaxyEggbert::Editor::RecolorPlayerStartPixel(start.color, r, g, b);
-                    pixel = Color(r, g, b, pixel.getAProperty());
-                }
-                auto texture = std::make_unique<Texture2D>(device, width, height);
-                texture->SetData(pixels.data(), static_cast<int>(pixels.size()));
-                auto* result = texture.get();
-                textures.emplace(source, std::move(texture));
-                return result;
+                return TeamTexture(static_cast<int>(start.color), source);
             };
             SceneModel model;
             model.model = blupiModel_.get();

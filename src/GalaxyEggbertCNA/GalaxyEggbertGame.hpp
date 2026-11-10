@@ -22,6 +22,7 @@
 #include <GalaxyEggbert/Game/InputPad.hpp>
 #include <GalaxyEggbert/Game/FocusNavigator.hpp>
 #include <GalaxyEggbert/Game/ScreenKeyboard.hpp>
+#include <GalaxyEggbert/Net/NetProtocol.hpp>
 #include <GalaxyEggbert/Editor/EditorDeviceControls.hpp>
 #include <GalaxyEggbert/Editor/EditorCommandKeys.hpp>
 #include <GalaxyEggbert/Game/ControlInput.hpp>
@@ -77,6 +78,8 @@ namespace GalaxyEggbert::CNA
     // indicator in the screen's bottom-right corner. F3 toggles between
     // them: it was "C" until 2026-10-25, but letters are typed cheats
     // ("ghost", "quick").
+    struct NetGame; // the network game's state (NetGame.hpp)
+
     class GalaxyEggbertGame final : public Microsoft::Xna::Framework::Game
     {
     public:
@@ -967,6 +970,57 @@ namespace GalaxyEggbert::CNA
         float goodbyeSeconds_ = 0.0f;
         GalaxyEggbert::Game::DemoLiveInput goodbyeInputWas_;
         void StartGoodbye();
+
+        // The network game (2026-11-10, the owner: Speedy Blupi 2's multiplayer;
+        // GalaxyEggbertGameNet.cpp, plans/plan_gemultiplayer.md): the menu's Multiplayer opens its
+        // screens over the menu (the games on the network, the lobby); a match is played in Play
+        // with NetMatchActive(). net_ exists once Multiplayer was opened.
+        std::unique_ptr<NetGame> net_;
+        struct NetScreenLayout;
+        [[nodiscard]] bool NetMatchActive() const noexcept;
+        [[nodiscard]] bool NetScreenShown() const noexcept;
+        [[nodiscard]] bool NetRemotePaused() const noexcept;
+        [[nodiscard]] bool NetWantsText() const noexcept;
+        [[nodiscard]] int NetTeam() const noexcept; // his team's colour in a match, 0 otherwise
+        void OpenMultiplayer();
+        void CloseMultiplayer();
+        void UpdateNet(); // every update: the session, what arrived, who came and went
+        void NetHandle(std::uint8_t sender, const GalaxyEggbert::Net::Message& message);
+        void NetPlayerLeft(std::uint8_t id);
+        void NetSessionEnded(const std::string& reason);
+        void NetBroadcastLobby();
+        void NetNotice(const std::string& text);
+        [[nodiscard]] std::vector<std::string> NetNotices() const;
+        [[nodiscard]] NetScreenLayout BuildNetScreen(int viewportW, int viewportH) const;
+        [[nodiscard]] std::vector<GalaxyEggbert::Game::QuadBatch::Rect> NetFocusTargets(int viewportW,
+                                                                                      int viewportH) const;
+        void UpdateNetScreen(const Microsoft::Xna::Framework::Input::MouseState& mouse, int viewportW, int viewportH,
+                             bool escapePressed);
+        void DrawNetScreen(Microsoft::Xna::Framework::Graphics::GraphicsDevice& device, int viewportW, int viewportH);
+        void NetStartTyping(int viewportW, int viewportH);
+        void NetFinishTyping(bool send);
+        void NetTypedKey(Microsoft::Xna::Framework::Input::Keys key, bool shift);
+        void NetLeaveLobby();
+        void StartNetMatch(int world);
+        // Around the step: the others' changes applied and a snapshot taken; then ours sent.
+        void NetBeforeStep();
+        void NetAfterStep();
+        void NetAgePeers(float dt);
+        void NetSendPose();
+        void NetCheckWin();
+        void NetSendDie(int livesLeft);
+        void NetSendLost();
+        void LeaveNetMatch();
+        void NetPhaseChanged(GalaxyEggbert::Def::GamePhase previous, GalaxyEggbert::Def::GamePhase next);
+        // The other players' Blupis, in their colours (GalaxyEggbertGameScene.cpp).
+        void AppendSceneNetPlayers(std::vector<GalaxyEggbert::Game::SceneModel>& opaque,
+                                   std::vector<GalaxyEggbert::Game::SceneModel>& translucent);
+        // A copy of @p source in a team's colour (the editor's starts' RecolorPlayerStartPixel), cached;
+        // team 0 (yellow) is the texture itself.
+        Microsoft::Xna::Framework::Graphics::Texture2D* TeamTexture(int team,
+                                                                    Microsoft::Xna::Framework::Graphics::Texture2D* source);
+        // The real model's face for a clip at a time (BlupiFaceTexture() for his own).
+        Microsoft::Xna::Framework::Graphics::Texture2D* BlupiFaceFor(const std::string& clip, double seconds);
         // Naming a recording (2026-11-10): Name (mode 4), then a recorded position; the keyboard on
         // the screen (or the real one) types it; OK, Enter or a click off the keyboard keeps it
         // (RenameDemo()), Cancel or Escape leaves it.
