@@ -532,6 +532,7 @@ namespace GalaxyEggbert::CNA
         bool accelSupportProbed_ = false;
         bool accelSupported_ = false;
         bool accelReported_ = false;
+        int accelTurnsReported_ = 0; // the first few turns it starts, logged
         int accelTicksWithoutData_ = 0;
         bool accelLastState_ = false;
         bool accelWaitZero_ = true;

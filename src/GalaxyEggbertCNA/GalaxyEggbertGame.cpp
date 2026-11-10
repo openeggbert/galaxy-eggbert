@@ -751,12 +751,22 @@ namespace GalaxyEggbert::CNA
             {
                 tickInput_.accelValid = true;
                 const auto acceleration = accel_->getCurrentValueProperty().getAccelerationProperty();
+                // The original read Windows Phone's Y: the device's long side, fixed to it, which in the
+                // landscape the game is held in runs left to right, so tilting the device like a wheel
+                // moves it. CNA hands Android's reading in the landscape screen's frame instead (x right,
+                // y up, z out of the screen; the device turned either way), where that is x, and y is how
+                // far the screen leans back (about 0.5 g as one holds it, which never let it turn). Its
+                // sign is the original's: the right side lowered reads x < 0, a turn right.
+#if defined(__ANDROID__)
+                tickInput_.accelY = acceleration.X;
+#else
                 tickInput_.accelY = acceleration.Y;
+#endif
                 if (!accelReported_)
                 {
                     accelReported_ = true;
                     std::cout << "GalaxyEggbertCNA: accelerometer reading (" << acceleration.X << ", " << acceleration.Y
-                              << ", " << acceleration.Z << ") g." << std::endl;
+                              << ", " << acceleration.Z << ") g, turning by " << tickInput_.accelY << "." << std::endl;
                 }
             }
             else if (accel_ && ++accelTicksWithoutData_ == 180)
@@ -786,14 +796,25 @@ namespace GalaxyEggbert::CNA
         {
             speed = std::min(-y * 0.25f / threshold + 0.25f, 1.0f);
         }
+        const bool started = speed != 0.0f && !accelLastState_;
         accelLastState_ = speed != 0.0f;
         if (accelWaitZero_)
         {
             if (speed == 0.0f)
             {
                 accelWaitZero_ = false;
+                if (!replayingResume_ && !demoActive_)
+                {
+                    std::cout << "GalaxyEggbertCNA: accelerometer level (" << y << " g): tilting turns." << std::endl;
+                }
             }
             return 0.0f;
+        }
+        if (started && !replayingResume_ && !demoActive_ && accelTurnsReported_ < 4)
+        {
+            ++accelTurnsReported_;
+            std::cout << "GalaxyEggbertCNA: accelerometer turns " << (speed > 0.0f ? "right" : "left") << " (" << y
+                      << " g)." << std::endl;
         }
         return speed;
     }
